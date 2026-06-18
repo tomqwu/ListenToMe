@@ -258,7 +258,42 @@ sequences delivery so a working tool exists after Phase 1, with proactive trigge
 - **Distribution:** local Xcode build / sideload; optional $99/yr Apple Developer cert for year-long
   signing. No App Store.
 
-## 10. Open Risks
+## 10. Lessons Applied from Natively (open-source Cluely alternative)
+
+Adopted into this design:
+- **VAD-based segmentation:** utterance boundaries and question detection use an RMS-threshold + voice
+  activity detector, not a naive punctuation check. (Refines ContextEngine §4.4.)
+- **Contextual action buttons:** in addition to the `⌘K` hotkey, the UI exposes *"What should I
+  answer?"*, *"Recap so far"*, *"Suggest a follow-up"*. (Refines ResponseEngine §4.6 / UI §4.8.)
+- **Anti-chatbot system prompt:** concise, conversational, no robotic preambles or lectures — their
+  highest-leverage quality lever. (Refines ResponseEngine system prompt §4.6.)
+- **Free-form notes/context injection:** a small notes field whose text is injected into every prompt.
+- **Rolling context window + separate dual-channel streams:** already in the design.
+
+Deliberately NOT adopted for the MVP: local RAG/SQLite-vec memory, screenshot/slide OCR, multiple
+persona modes, stealth/process-masquerading, multi-key API pools, calendar/task sync.
+
+## 11. Focused MVP Scope ("listen to meetings, get real-time suggestions")
+
+The first deliverable is intentionally narrow. **In scope:**
+1. Dual-channel `AudioCapture` (mic = `You`, system = `Others`).
+2. VAD utterance segmentation feeding the default on-device `Transcriber` (SpeechAnalyzer), behind the
+   swappable protocol.
+3. `ConversationStore` + live **Transcript pane** (source-labeled, partial + final).
+4. **Suggestion pane** streaming from `ModelRouter` → `OllamaProvider` (default, local, no key).
+5. Triggers — **both**:
+   - On-demand: global hotkey `⌘K` and three action buttons (*What should I answer?*, *Recap so far*,
+     *Suggest a follow-up*).
+   - Proactive: `ContextEngine` fires when an `Others` utterance is detected as a question (VAD +
+     heuristic), debounced, with an on/off toggle.
+6. Concise anti-preamble system prompt + optional free-form notes injected into prompts.
+7. Visible recording indicator (transparent, never stealth).
+
+**Out of MVP scope (later phases):** WhisperKit engine; Claude/OpenAI/DeepSeek providers; Settings
+window beyond a minimal toggle bar; session persistence/export; rolling auto-summary as a constant pane
+(replaced by the on-demand *Recap* action for the MVP); everything listed as not-adopted in §10.
+
+## 12. Open Risks
 
 - **System-audio capture UX:** ScreenCaptureKit audio requires screen-recording consent; verify the
   one-time grant flow is acceptable. Fallback: virtual audio device (BlackHole) if needed.
