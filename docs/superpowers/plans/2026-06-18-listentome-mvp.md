@@ -332,8 +332,8 @@ final class ConversationStoreTests: XCTestCase {
         store.apply(seg("aaaa", final: true))   // 4 chars
         store.apply(seg("bbbb", final: true))   // 4 chars
         store.apply(seg("cccc", final: true))   // 4 chars
-        // Budget 6 -> keep most recent until exceeding, but never empty.
-        let recent = store.recentContext(maxChars: 6)
+        // Budget 9: keep newest segments that fit (cccc=4, +bbbb=8 <= 9; +aaaa=12 > 9 stops).
+        let recent = store.recentContext(maxChars: 9)
         XCTAssertEqual(recent.map(\.text), ["bbbb", "cccc"])
     }
 
