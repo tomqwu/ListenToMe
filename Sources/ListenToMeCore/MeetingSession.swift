@@ -47,16 +47,22 @@ public final class MeetingSession {
         let myRun = runID
         let capture = makeCapture()
         let transcriber = makeTranscriber()
+        // Store before the await so stop() can reach an in-flight capture (whose mic may already
+        // be recording) if the user stops during permission/startup.
+        self.capture = capture
+        self.transcriber = transcriber
         do {
             try await capture.start()
         } catch {
             capture.stop()
-            if runID == myRun { isRunning = false }   // only reset state for the active run
+            if runID == myRun {
+                isRunning = false
+                self.capture = nil
+                self.transcriber = nil
+            }
             throw error
         }
         guard isRunning, runID == myRun else { capture.stop(); return }
-        self.capture = capture
-        self.transcriber = transcriber
 
         let captureStream = capture.chunks
         pumpTasks.append(Task {

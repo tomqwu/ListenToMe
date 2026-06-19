@@ -8,6 +8,7 @@ final class HotkeyMonitor {
     private var localMonitor: Any?
 
     func start(_ action: @escaping () -> Void) {
+        stop()   // idempotent: remove any existing monitors before re-registering
         // Show the system Accessibility prompt if we're not yet trusted; otherwise the global
         // key monitor silently receives nothing. The key string matches the imported
         // `kAXTrustedCheckOptionPrompt` constant, used as a literal to stay clear of Swift 6
