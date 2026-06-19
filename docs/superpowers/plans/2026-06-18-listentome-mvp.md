@@ -2058,23 +2058,48 @@ git commit -m "feat: add on-device VAD-segmented SpeechRecognizerTranscriber"
 
 ```swift
 import AppKit
+import ApplicationServices
 
-/// Listens for a global ⌘⇧Space keypress (works while another app is focused).
-/// Requires Accessibility permission, which macOS prompts for on first use.
+/// Listens for ⌘⇧Space both globally (other apps focused) and locally (this app focused).
+/// The global path requires Accessibility permission; we prompt for it on first use.
 final class HotkeyMonitor {
-    private var monitor: Any?
+    private var globalMonitor: Any?
+    private var localMonitor: Any?
+
     func start(_ action: @escaping () -> Void) {
-        monitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { event in
-            // 49 = Space; require Command + Shift.
-            if event.keyCode == 49,
-               event.modifierFlags.contains([.command, .shift]) {
+        // Show the system Accessibility prompt if we're not yet trusted; otherwise the global
+        // key monitor silently receives nothing. The key string matches the imported
+        // `kAXTrustedCheckOptionPrompt` constant, used as a literal to stay clear of Swift 6
+        // concurrency-safety on the imported global.
+        let promptKey = "AXTrustedCheckOptionPrompt"
+        _ = AXIsProcessTrustedWithOptions([promptKey: true] as CFDictionary)
+
+        // Global: fires when another app is focused.
+        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { event in
+            if Self.isHotkey(event) { action() }
+        }
+        // Local: fires when this app is focused; return nil to consume the event.
+        localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            if Self.isHotkey(event) {
                 action()
+                return nil
             }
+            return event
         }
     }
+
     func stop() {
-        if let monitor { NSEvent.removeMonitor(monitor) }
-        monitor = nil
+        if let globalMonitor { NSEvent.removeMonitor(globalMonitor) }
+        if let localMonitor { NSEvent.removeMonitor(localMonitor) }
+        globalMonitor = nil
+        localMonitor = nil
+    }
+
+    /// ⌘⇧Space, ignoring auto-repeat. 49 = Space.
+    private static func isHotkey(_ event: NSEvent) -> Bool {
+        event.keyCode == 49
+            && !event.isARepeat
+            && event.modifierFlags.contains([.command, .shift])
     }
 }
 ```
@@ -2090,6 +2115,7 @@ import ListenToMeCore
 struct MeetingView: View {
     @State private var session: MeetingSession
     @State private var store: ConversationStore
+    @State private var startError: String?
     private let hotkey = HotkeyMonitor()
 
     init() {
@@ -2106,12 +2132,20 @@ struct MeetingView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            toolbar
+        @Bindable var session = session
+        return VStack(spacing: 0) {
+            toolbar(session: session, proactiveEnabled: $session.proactiveEnabled)
+            if let startError {
+                Text("⚠️ \(startError)")
+                    .foregroundStyle(.red)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 10)
+                    .padding(.bottom, 4)
+            }
             Divider()
             HSplitView {
-                transcriptPane
-                suggestionPane
+                transcriptPane(session: session, notes: $session.notes)
+                suggestionPane(session)
             }
         }
         .frame(minWidth: 820, minHeight: 480)
@@ -2124,12 +2158,20 @@ struct MeetingView: View {
         }
     }
 
-    private var toolbar: some View {
+    private func toolbar(session: MeetingSession, proactiveEnabled: Binding<Bool>) -> some View {
         HStack(spacing: 12) {
             Button(session.isRunning ? "Stop" : "Listen") {
                 Task {
-                    if session.isRunning { session.stop() }
-                    else { try? await session.start() }
+                    if session.isRunning {
+                        session.stop()
+                    } else {
+                        do {
+                            startError = nil
+                            try await session.start()
+                        } catch {
+                            startError = error.localizedDescription
+                        }
+                    }
                 }
             }
             if session.isRunning {
@@ -2137,7 +2179,7 @@ struct MeetingView: View {
                 Text("Recording").foregroundStyle(.secondary)
             }
             Spacer()
-            Toggle("Proactive", isOn: $session.proactiveEnabled)
+            Toggle("Proactive", isOn: proactiveEnabled)
             Button("What should I answer?") { Task { await session.respond(.answerQuestion) } }
             Button("Recap so far") { Task { await session.respond(.recap) } }
             Button("Suggest a follow-up") { Task { await session.respond(.followUp) } }
@@ -2145,7 +2187,7 @@ struct MeetingView: View {
         .padding(10)
     }
 
-    private var transcriptPane: some View {
+    private func transcriptPane(session: MeetingSession, notes: Binding<String>) -> some View {
         VStack(alignment: .leading) {
             Text("Transcript").font(.headline).padding(.bottom, 4)
             ScrollView {
@@ -2159,7 +2201,7 @@ struct MeetingView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            TextField("Context notes (injected into prompts)", text: $session.notes, axis: .vertical)
+            TextField("Context notes (injected into prompts)", text: notes, axis: .vertical)
                 .lineLimit(2...4)
                 .textFieldStyle(.roundedBorder)
         }
@@ -2174,7 +2216,7 @@ struct MeetingView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var suggestionPane: some View {
+    private func suggestionPane(_ session: MeetingSession) -> some View {
         VStack(alignment: .leading) {
             HStack {
                 Text("Suggestion").font(.headline)
@@ -2204,7 +2246,7 @@ import SwiftUI
 @main
 struct ListenToMeApp: App {
     var body: some Scene {
-        WindowGroup {
+        Window("ListenToMe", id: "listentome") {
             MeetingView()
         }
         .windowResizability(.contentSize)
