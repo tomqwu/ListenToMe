@@ -1766,14 +1766,44 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
     // MARK: - Emit helpers
 
     private func emit(buffer: AVAudioPCMBuffer, source: SpeakerSource) {
-        guard let channel = buffer.floatChannelData?[0] else { return }
-        let count = Int(buffer.frameLength)
+        guard let mono = Self.convertToMonoFloat(buffer),
+              let channel = mono.floatChannelData?[0] else { return }
+        let count = Int(mono.frameLength)
+        guard count > 0 else { return }
         let samples = Array(UnsafeBufferPointer(start: channel, count: count))
         let chunk = AudioChunk(samples: samples,
-                               sampleRate: buffer.format.sampleRate,
+                               sampleRate: mono.format.sampleRate,
                                source: source,
                                timestamp: Date().timeIntervalSince(startTime))
         continuation.yield(chunk)
+    }
+
+    /// Downmixes/converts any PCM buffer to non-interleaved mono Float32 at the same sample rate.
+    /// Returns the input unchanged when it is already in that format.
+    private static func convertToMonoFloat(_ input: AVAudioPCMBuffer) -> AVAudioPCMBuffer? {
+        let inFormat = input.format
+        guard let outFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32,
+                                            sampleRate: inFormat.sampleRate,
+                                            channels: 1,
+                                            interleaved: false) else { return nil }
+        if inFormat == outFormat { return input }
+        guard input.frameLength > 0,
+              let converter = AVAudioConverter(from: inFormat, to: outFormat),
+              let output = AVAudioPCMBuffer(pcmFormat: outFormat,
+                                            frameCapacity: input.frameLength) else { return nil }
+        var consumed = false
+        var convError: NSError?
+        let status = converter.convert(to: output, error: &convError) { _, outStatus in
+            if consumed {
+                outStatus.pointee = .noDataNow
+                return nil
+            }
+            consumed = true
+            outStatus.pointee = .haveData
+            return input
+        }
+        if status == .error || convError != nil { return nil }
+        return output
     }
 }
 
