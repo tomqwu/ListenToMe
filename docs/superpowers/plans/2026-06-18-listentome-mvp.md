@@ -1324,8 +1324,8 @@ final class MeetingSessionTests: XCTestCase {
             store: store,
             router: router,
             context: ContextEngine(debounce: 5),
-            capture: MockCapture(),
-            transcriber: MockTranscriber(),
+            makeCapture: { MockCapture() },
+            makeTranscriber: { MockTranscriber() },
             clock: now
         )
         return (session, store)
@@ -1345,26 +1345,33 @@ final class MeetingSessionTests: XCTestCase {
         XCTAssertEqual(store.utterances.map(\.text), ["Hello"])
     }
 
-    func testIngestFiresProactiveOnRemoteQuestion() async {
+    func testIngestFiresProactiveOnRemoteQuestion() async throws {
         let (session, _) = makeSession(deltas: ["Tell ", "them yes."])
+        try await session.start()
         await session.ingest(TranscriptSegment(source: .others, text: "Are we ready?",
                                                isFinal: true, start: 0, end: 1))
+        await session.waitForResponse()
         XCTAssertEqual(session.suggestion, "Tell them yes.")
+        session.stop()
     }
 
-    func testIngestDoesNotFireWhenProactiveDisabled() async {
+    func testIngestDoesNotFireWhenProactiveDisabled() async throws {
         let (session, _) = makeSession(deltas: ["nope"])
+        try await session.start()
         session.proactiveEnabled = false
         await session.ingest(TranscriptSegment(source: .others, text: "Are we ready?",
                                                isFinal: true, start: 0, end: 1))
         XCTAssertEqual(session.suggestion, "")
+        session.stop()
     }
 
-    func testIngestIgnoresOwnSpeech() async {
+    func testIngestIgnoresOwnSpeech() async throws {
         let (session, _) = makeSession(deltas: ["should not run"])
+        try await session.start()
         await session.ingest(TranscriptSegment(source: .you, text: "What should I do?",
                                                isFinal: true, start: 0, end: 1))
         XCTAssertEqual(session.suggestion, "")
+        session.stop()
     }
 }
 ```
@@ -1396,34 +1403,50 @@ public final class MeetingSession {
     public let store: ConversationStore
     public let router: ModelRouter
     private var context: ContextEngine
-    private let capture: AudioCapturing
-    private let transcriber: Transcribing
+    private let makeCapture: @Sendable () -> any AudioCapturing
+    private let makeTranscriber: @Sendable () -> any Transcribing
+    private var capture: (any AudioCapturing)?
+    private var transcriber: (any Transcribing)?
     private let clock: @Sendable () -> TimeInterval
 
     private var pumpTasks: [Task<Void, Never>] = []
     private var responseTask: Task<Void, Never>?
+    private var responseGeneration = 0
+    private var runID = 0
 
     public init(store: ConversationStore,
                 router: ModelRouter,
                 context: ContextEngine,
-                capture: AudioCapturing,
-                transcriber: Transcribing,
+                makeCapture: @escaping @Sendable () -> any AudioCapturing,
+                makeTranscriber: @escaping @Sendable () -> any Transcribing,
                 clock: @escaping @Sendable () -> TimeInterval = { Date().timeIntervalSince1970 }) {
         self.store = store
         self.router = router
         self.context = context
-        self.capture = capture
-        self.transcriber = transcriber
+        self.makeCapture = makeCapture
+        self.makeTranscriber = makeTranscriber
         self.clock = clock
     }
 
     public func start() async throws {
         guard !isRunning else { return }
         isRunning = true
-        try await capture.start()
+        runID += 1
+        let myRun = runID
+        let capture = makeCapture()
+        let transcriber = makeTranscriber()
+        do {
+            try await capture.start()
+        } catch {
+            capture.stop()      // tear down a partially-started capture
+            if runID == myRun { isRunning = false }   // only reset state for the active run
+            throw error
+        }
+        guard isRunning, runID == myRun else { capture.stop(); return }   // stop() ran during the await
+        self.capture = capture
+        self.transcriber = transcriber
 
         let captureStream = capture.chunks
-        let transcriber = self.transcriber
         pumpTasks.append(Task {
             for await chunk in captureStream {
                 await transcriber.feed(chunk)
@@ -1433,7 +1456,9 @@ public final class MeetingSession {
         let segmentStream = transcriber.segments
         pumpTasks.append(Task { [weak self] in
             for await segment in segmentStream {
-                await self?.ingest(segment)
+                guard let self else { return }
+                guard self.runID == myRun else { continue }   // ignore stale-session segments
+                await self.ingest(segment)
             }
         })
     }
@@ -1441,36 +1466,66 @@ public final class MeetingSession {
     public func stop() {
         guard isRunning else { return }
         isRunning = false
-        capture.stop()
-        pumpTasks.forEach { $0.cancel() }
+        responseTask?.cancel()
+        capture?.stop()                          // chunks stream ends -> feed pump finishes on its own
+        if let transcriber { Task { await transcriber.finish() } }  // flush finals, close segments
+        capture = nil
+        transcriber = nil
         pumpTasks.removeAll()
-        Task { await transcriber.finish() }
     }
 
     /// Applies a segment to the store and fires a proactive response when warranted.
+    /// Proactive responses run in the background so the transcript pump never stalls.
     public func ingest(_ segment: TranscriptSegment) async {
         store.apply(segment)
-        guard proactiveEnabled,
+        guard isRunning, proactiveEnabled,
               context.shouldFireProactive(for: segment, now: clock()) else { return }
-        await respond(.proactive)
+        startResponse(.proactive)
     }
 
-    /// Streams a suggestion for the given action into `suggestion`.
+    /// On-demand response (hotkey / buttons). Awaits completion.
     public func respond(_ action: ResponseAction) async {
+        await startResponse(action).value
+    }
+
+    /// For tests/UI that need to await the most recent response.
+    public func waitForResponse() async {
+        await responseTask?.value
+    }
+
+    /// Starts a streaming response, cancelling any in-flight one. Returns the task.
+    @discardableResult
+    private func startResponse(_ action: ResponseAction) -> Task<Void, Never> {
         responseTask?.cancel()
+        responseGeneration += 1
+        let generation = responseGeneration
         let request = PromptBuilder.build(
             context: context.buildContext(from: store, notes: notes),
             action: action
         )
+        let task = Task { [weak self] in
+            guard let self else { return }
+            await self.runResponse(request, generation: generation)
+        }
+        responseTask = task
+        return task
+    }
+
+    private func runResponse(_ request: LLMRequest, generation: Int) async {
+        guard generation == responseGeneration, !Task.isCancelled else { return }
         suggestion = ""
         isStreaming = true
-        defer { isStreaming = false }
+        defer { if generation == responseGeneration { isStreaming = false } }
         do {
             for try await delta in router.stream(request) {
+                if Task.isCancelled { return }
+                if generation != responseGeneration { return }   // superseded by a newer response
                 suggestion += delta
             }
         } catch {
-            suggestion = "⚠️ \(error.localizedDescription)"
+            if generation == responseGeneration, !Task.isCancelled, !(error is CancellationError) {
+                suggestion = "⚠️ \(error.localizedDescription)"
+            }
         }
     }
 }
@@ -1938,8 +1993,8 @@ struct MeetingView: View {
             store: store,
             router: router,
             context: ContextEngine(debounce: 8),
-            capture: DualChannelCapture(),
-            transcriber: SpeechRecognizerTranscriber()
+            makeCapture: { DualChannelCapture() },
+            makeTranscriber: { SpeechRecognizerTranscriber() }
         ))
     }
 
