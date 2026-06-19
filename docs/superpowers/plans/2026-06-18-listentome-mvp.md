@@ -956,7 +956,14 @@ public struct OllamaProvider: LLMProvider {
                         urlRequest.httpMethod = "POST"
                         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
                         urlRequest.httpBody = requestBody(model: model, request: request)
-                        let (bytes, _) = try await URLSession.shared.bytes(for: urlRequest)
+                        let (bytes, response) = try await URLSession.shared.bytes(for: urlRequest)
+                        if let http = response as? HTTPURLResponse,
+                           !(200...299).contains(http.statusCode) {
+                            throw NSError(
+                                domain: "Ollama", code: http.statusCode,
+                                userInfo: [NSLocalizedDescriptionKey:
+                                    "Ollama returned HTTP \(http.statusCode). Is the server running and the model pulled?"])
+                        }
                         for try await line in bytes.lines {
                             continuation.yield(line)
                         }
