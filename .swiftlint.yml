@@ -1,0 +1,12 @@
+disabled_rules:
+  - todo
+  - trailing_comma
+line_length:
+  warning: 120
+  error: 160
+identifier_name:
+  min_length: 1
+included:
+  - Sources
+  - App
+  - Tests
