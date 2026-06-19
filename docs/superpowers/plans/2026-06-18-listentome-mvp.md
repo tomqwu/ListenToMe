@@ -1081,15 +1081,15 @@ import Observation
 /// Holds the registered providers and routes streaming requests to the active one.
 @Observable
 public final class ModelRouter {
-    private var providers: [String: LLMProvider] = [:]
+    private var providers: [String: any LLMProvider] = [:]
     public private(set) var activeID: String
 
-    public init(default provider: LLMProvider) {
-        providers[provider.id] = provider
+    public init(default provider: any LLMProvider) {
         activeID = provider.id
+        providers[provider.id] = provider
     }
 
-    public func register(_ provider: LLMProvider) {
+    public func register(_ provider: any LLMProvider) {
         providers[provider.id] = provider
     }
 
