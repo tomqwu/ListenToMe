@@ -21,10 +21,10 @@ final class OllamaProviderTests: XCTestCase {
     func testRequestBodyEncodesModelMessagesAndStream() throws {
         let req = LLMRequest(system: "SYS", messages: [ChatMessage(role: "user", content: "hi")])
         let data = OllamaProvider.requestBody(model: "llama3.1", request: req)
-        let obj = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        let obj = try XCTUnwrap(try JSONSerialization.jsonObject(with: data) as? [String: Any])
         XCTAssertEqual(obj["model"] as? String, "llama3.1")
         XCTAssertEqual(obj["stream"] as? Bool, true)
-        let messages = obj["messages"] as! [[String: String]]
+        let messages = try XCTUnwrap(obj["messages"] as? [[String: String]])
         XCTAssertEqual(messages.first?["role"], "system")
         XCTAssertEqual(messages.first?["content"], "SYS")
         XCTAssertEqual(messages.last?["role"], "user")
