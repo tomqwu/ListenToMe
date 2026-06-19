@@ -1876,77 +1876,142 @@ import Speech
 import AVFoundation
 import ListenToMeCore
 
-/// On-device transcription. Maintains one recognition pipeline per `SpeakerSource`,
-/// finalizing each pipeline's request when the VAD reports an utterance boundary.
-final class SpeechRecognizerTranscriber: NSObject, Transcribing, @unchecked Sendable {
-    let segments: AsyncStream<TranscriptSegment>
-    private let continuation: AsyncStream<TranscriptSegment>.Continuation
+/// On-device transcription: one SFSpeechRecognizer + recognition task per source.
+/// VAD detects utterance boundaries; at a boundary the request is ended (which makes the
+/// recognizer emit a FINAL result) and, once that task completes, a fresh task is started.
+/// Tasks for a source never overlap (the Speech framework rejects overlap with error 1100),
+/// and the brief gap between ending one task and starting the next falls during the detected
+/// silence, so little audio is lost. An actor so all shared state access is serialized.
+actor SpeechRecognizerTranscriber: Transcribing {
+    nonisolated let segments: AsyncStream<TranscriptSegment>
+    private nonisolated let continuation: AsyncStream<TranscriptSegment>.Continuation
 
-    private var pipelines: [SpeakerSource: Pipeline] = [:]
-    private let recognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
+    private var states: [SpeakerSource: SourceState] = [:]
+    private var authorized = false
+    private var stopped = false
 
-    override init() {
+    init() {
         var cont: AsyncStream<TranscriptSegment>.Continuation!
         segments = AsyncStream { cont = $0 }
         continuation = cont
-        super.init()
-        SFSpeechRecognizer.requestAuthorization { _ in }
+        SFSpeechRecognizer.requestAuthorization { [weak self] status in
+            Task { await self?.setAuthorized(status == .authorized) }
+        }
     }
 
+    private func setAuthorized(_ value: Bool) { authorized = value }
+
     func feed(_ chunk: AudioChunk) async {
-        guard let recognizer, recognizer.isAvailable else { return }
-        let pipeline = pipelines[chunk.source] ?? makePipeline(for: chunk.source)
-        pipelines[chunk.source] = pipeline
+        guard authorized, !stopped else { return }
+        guard let state = states[chunk.source] ?? startTask(for: chunk.source) else { return }
+        states[chunk.source] = state
 
-        // Drive VAD off the chunk's energy to decide utterance boundaries.
-        let energy = rms(of: chunk.samples)
-        let boundary = pipeline.segmenter.process(rms: energy, at: chunk.timestamp)
-
-        if let buffer = makeBuffer(from: chunk) {
-            pipeline.request.append(buffer)
+        if state.awaitingFinal {
+            // Carry onset audio across the finalization gap; replayed (through VAD) into the next task.
+            state.pendingChunks.append(chunk)
+            if state.pendingChunks.count > 64 { state.pendingChunks.removeFirst() }
+            return
         }
+
+        let boundary = state.segmenter.process(rms: rms(of: chunk.samples), at: chunk.timestamp)
+        if let buffer = makeBuffer(from: chunk) { state.request.append(buffer) }
         if boundary {
-            finalize(source: chunk.source)
+            // End the utterance -> recognizer emits a final result; await it before the next task.
+            state.awaitingFinal = true
+            state.request.endAudio()
         }
     }
 
     func finish() async {
-        for source in pipelines.keys { finalize(source: source) }
+        stopped = true
+        for state in states.values { state.request.endAudio() }
+        // Wait (up to ~3s) for in-flight tasks to deliver their final callbacks.
+        for _ in 0..<30 {
+            if states.values.allSatisfy({ $0.done }) { break }
+            try? await Task.sleep(nanoseconds: 100_000_000)
+        }
+        states.removeAll()
         continuation.finish()
     }
 
-    // MARK: - Pipeline
+    // MARK: - Per-source recognition
 
-    private final class Pipeline {
+    private final class SourceState {
+        let recognizer: SFSpeechRecognizer
         let request = SFSpeechAudioBufferRecognitionRequest()
         var task: SFSpeechRecognitionTask?
         var segmenter = VADSegmenter(speechThreshold: 0.02, silenceDuration: 0.8)
-        init() { request.requiresOnDeviceRecognition = true; request.shouldReportPartialResults = true }
-    }
-
-    private func makePipeline(for source: SpeakerSource) -> Pipeline {
-        let pipeline = Pipeline()
-        pipeline.task = recognizer?.recognitionTask(with: pipeline.request) { [weak self] result, _ in
-            guard let self, let result else { return }
-            self.continuation.yield(TranscriptSegment(
-                source: source,
-                text: result.bestTranscription.formattedString,
-                isFinal: result.isFinal,
-                start: 0,
-                end: 0
-            ))
+        var awaitingFinal = false
+        var done = false
+        var pendingChunks: [AudioChunk] = []
+        init(recognizer: SFSpeechRecognizer) {
+            self.recognizer = recognizer
+            request.requiresOnDeviceRecognition = true
+            request.shouldReportPartialResults = true
         }
-        return pipeline
     }
 
-    /// Ends the current request for `source` and starts a fresh pipeline for the next utterance.
-    private func finalize(source: SpeakerSource) {
-        pipelines[source]?.request.endAudio()
-        pipelines[source] = makePipeline(for: source)
+    private func startTask(for source: SpeakerSource) -> SourceState? {
+        guard let recognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US")),
+              recognizer.isAvailable else { return nil }
+        let state = SourceState(recognizer: recognizer)
+        state.task = recognizer.recognitionTask(with: state.request) { [weak self] result, error in
+            guard let self else { return }
+            if let result {
+                self.continuation.yield(TranscriptSegment(
+                    source: source,
+                    text: result.bestTranscription.formattedString,
+                    isFinal: result.isFinal,
+                    start: 0,
+                    end: 0
+                ))
+            }
+            if error != nil {
+                Task { await self.taskFailed(source) }
+            } else if result?.isFinal ?? false {
+                Task { await self.taskEnded(source) }
+            }
+        }
+        return state
+    }
+
+    /// Called when a source's task ends. Starts a fresh task so a long speaker, the framework's
+    /// duration limit, or a transient error doesn't permanently stop transcription for that source.
+    /// A source's utterance finalized normally: start a fresh task and replay any audio buffered
+    /// during the finalization gap (through the new VAD so its speech state stays consistent).
+    private func taskEnded(_ source: SpeakerSource) {
+        let pending = states[source]?.pendingChunks ?? []
+        states[source]?.done = true
+        guard !stopped else { return }
+        guard let fresh = startTask(for: source) else {
+            states[source] = nil
+            return
+        }
+        var sawBoundary = false
+        for chunk in pending {
+            if fresh.segmenter.process(rms: rms(of: chunk.samples), at: chunk.timestamp) {
+                sawBoundary = true
+            }
+            if let buffer = makeBuffer(from: chunk) { fresh.request.append(buffer) }
+        }
+        states[source] = fresh
+        if sawBoundary {
+            // Replayed audio contained a complete utterance; finalize it now.
+            fresh.awaitingFinal = true
+            fresh.request.endAudio()
+        }
+    }
+
+    /// A source's task errored. Tear it down WITHOUT an immediate restart so a persistent startup
+    /// error can't spin; the next incoming chunk for this source lazily creates a fresh task.
+    private func taskFailed(_ source: SpeakerSource) {
+        states[source]?.done = true
+        states[source] = nil
     }
 
     private func makeBuffer(from chunk: AudioChunk) -> AVAudioPCMBuffer? {
-        guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat32,
+        guard !chunk.samples.isEmpty,
+              let format = AVAudioFormat(commonFormat: .pcmFormatFloat32,
                                          sampleRate: chunk.sampleRate,
                                          channels: 1,
                                          interleaved: false),
@@ -2280,6 +2345,16 @@ git commit -m "docs: add README and manual smoke test; MVP complete"
 - Default transcriber is `SFSpeechRecognizer` (VAD-segmented), not `SpeechAnalyzer`, to avoid guessing
   a brand-new API. Same protocol; SpeechAnalyzer/WhisperKit remain a drop-in Phase-2 swap. The spec's
   §11 "SpeechAnalyzer default" should be read as "on-device engine behind the protocol" for the MVP.
+
+**Known limitation to validate in the Task 15 smoke test:**
+- **Concurrent dual-channel `SFSpeechRecognizer`:** the transcriber uses one recognizer instance per
+  source (`.you`/`.others`) so both channels recognize at once. If `SFSpeechRecognizer`'s active-
+  recognition limit turns out to be process-global on this OS (error `kAFAssistantErrorDomain 1100`
+  when a second task starts), the second channel will fail. This is unverifiable without audio hardware
+  and must be confirmed by the manual smoke test. **Fallback if it occurs:** transcribe a single source
+  for the MVP, or move to the Phase-2 `SpeechAnalyzer` engine, which natively supports concurrent
+  multi-stream recognition. `taskFailed` already tears a failed source down (no tight spin), so the
+  primary channel keeps working regardless.
 
 **Type consistency:** `MeetingSession`, `ConversationStore`, `ModelRouter`, `ContextEngine`,
 `PromptBuilder`, `OllamaProvider`, `AudioCapturing`, `Transcribing`, `AudioChunk`, `TranscriptSegment`,
