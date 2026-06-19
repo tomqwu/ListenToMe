@@ -553,6 +553,16 @@ final class QuestionDetectorTests: XCTestCase {
     func testEmptyIsNotQuestion() {
         XCTAssertFalse(QuestionDetector.isQuestion("   "))
     }
+
+    func testCuePrefixInsideWordIsNotQuestion() {
+        XCTAssertFalse(QuestionDetector.isQuestion("However, the release is ready"))
+        XCTAssertFalse(QuestionDetector.isQuestion("I tried whatever worked"))
+    }
+
+    func testInterrogativeWordMidSentenceIsNotQuestion() {
+        XCTAssertFalse(QuestionDetector.isQuestion("I know what happened"))
+        XCTAssertFalse(QuestionDetector.isQuestion("They explained why it failed"))
+    }
 }
 ```
 
@@ -568,8 +578,12 @@ import Foundation
 
 /// Heuristic detector for "someone is asking for input". Deliberately simple and swappable.
 public enum QuestionDetector {
-    private static let cues: [String] = [
-        "what", "why", "how", "when", "where", "who", "which", "whose",
+    /// Single interrogative words: only count when they START the utterance.
+    private static let leadingCues: [String] = [
+        "what", "why", "how", "when", "where", "who", "which", "whose"
+    ]
+    /// Phrase / imperative cues: count anywhere, matched on word boundaries.
+    private static let phraseCues: [String] = [
         "can you", "could you", "would you", "will you", "do you", "did you",
         "are you", "is there", "should we", "any thoughts", "what do you think",
         "thoughts on", "tell me", "explain", "walk me through"
@@ -579,11 +593,12 @@ public enum QuestionDetector {
         let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !normalized.isEmpty else { return false }
         if normalized.hasSuffix("?") { return true }
-        return cues.contains { cue in
-            normalized == cue
-                || normalized.hasPrefix(cue + " ")
-                || normalized.contains(" " + cue + " ")
-                || normalized.contains(" " + cue)
+        for cue in leadingCues where normalized == cue || normalized.hasPrefix(cue + " ") {
+            return true
+        }
+        return phraseCues.contains { cue in
+            let pattern = "\\b" + NSRegularExpression.escapedPattern(for: cue) + "\\b"
+            return normalized.range(of: pattern, options: .regularExpression) != nil
         }
     }
 }
