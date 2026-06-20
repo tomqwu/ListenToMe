@@ -87,7 +87,8 @@ public struct OllamaProvider: LLMProvider {
                             throw NSError(
                                 domain: "Ollama", code: http.statusCode,
                                 userInfo: [NSLocalizedDescriptionKey:
-                                    "Ollama returned HTTP \(http.statusCode). Is the server running and the model pulled?"])
+                                    "Ollama returned HTTP \(http.statusCode)." +
+                                    " Is the server running and the model pulled?"])
                         }
                         for try await line in bytes.lines {
                             continuation.yield(line)

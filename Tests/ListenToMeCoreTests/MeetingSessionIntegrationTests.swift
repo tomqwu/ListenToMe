@@ -12,12 +12,18 @@ final class MeetingSessionIntegrationTests: XCTestCase {
 
     // MARK: - Helpers
 
+    private struct SessionFixture {
+        let session: MeetingSession
+        let capture: MockCapture
+        let transcriber: MockTranscriber
+    }
+
     /// Builds a session where the factories capture the test-held mock instances.
     private func makeSession(
         deltas: [String] = ["ok"],
         debounce: TimeInterval = 0,
         now: @escaping @Sendable () -> TimeInterval = { 999_999 }
-    ) -> (session: MeetingSession, capture: MockCapture, transcriber: MockTranscriber) {
+    ) -> SessionFixture {
         let capture = MockCapture()
         let transcriber = MockTranscriber()
         let store = ConversationStore()
@@ -30,7 +36,7 @@ final class MeetingSessionIntegrationTests: XCTestCase {
             makeTranscriber: { transcriber },
             clock: now
         )
-        return (session, capture, transcriber)
+        return SessionFixture(session: session, capture: capture, transcriber: transcriber)
     }
 
     /// Polls `cond` up to `timeoutMs` milliseconds in 10 ms increments.
@@ -45,7 +51,9 @@ final class MeetingSessionIntegrationTests: XCTestCase {
     // MARK: - Test 1: Transcript flows through the pump (segments → ingest → store)
 
     func testTranscriptSegmentsFlowThroughPumpIntoStore() async throws {
-        let (session, _, transcriber) = makeSession()
+        let fixture = makeSession()
+        let session = fixture.session
+        let transcriber = fixture.transcriber
         try await session.start()
         XCTAssertTrue(session.isRunning)
 
@@ -66,7 +74,10 @@ final class MeetingSessionIntegrationTests: XCTestCase {
     // MARK: - Test 2: Chunks flow from capture → transcriber.feed
 
     func testAudioChunksFlowFromCaptureToTranscriberFeed() async throws {
-        let (session, capture, transcriber) = makeSession()
+        let fixture = makeSession()
+        let session = fixture.session
+        let capture = fixture.capture
+        let transcriber = fixture.transcriber
         try await session.start()
 
         let chunk = AudioChunk(samples: [0.1, 0.2], sampleRate: 16000,
@@ -84,11 +95,13 @@ final class MeetingSessionIntegrationTests: XCTestCase {
     // MARK: - Test 3: Proactive fires through the pump
 
     func testProactiveFiresThroughPumpOnRemoteQuestion() async throws {
-        let (session, _, transcriber) = makeSession(
+        let fixture = makeSession(
             deltas: ["Great ", "answer."],
             debounce: 0,
             now: { 999_999 }   // far future so debounce is always satisfied
         )
+        let session = fixture.session
+        let transcriber = fixture.transcriber
         session.proactiveEnabled = true
         try await session.start()
 
@@ -109,7 +122,7 @@ final class MeetingSessionIntegrationTests: XCTestCase {
     // MARK: - Test 4: stop() halts and is idempotent
 
     func testStopHaltsSessionAndIsIdempotent() async throws {
-        let (session, _, _) = makeSession()
+        let session = makeSession().session
         try await session.start()
         XCTAssertTrue(session.isRunning)
 

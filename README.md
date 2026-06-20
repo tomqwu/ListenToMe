@@ -18,6 +18,13 @@ make run      # build and launch
 make pre-push # lint + tests + build (the CI-equivalent gate)
 ```
 
+## CI
+GitHub Actions (`.github/workflows/ci.yml`) gates every PR to `main` on a macOS runner:
+SwiftLint, the full `ListenToMeCore` test suite (unit + headless integration/e2e), and a
+**coverage floor of 95%** enforced by `scripts/check-coverage.sh`. Because the app target deploys
+to macOS 26 and uses ScreenCaptureKit/Speech, the **app build and GUI/audio e2e cannot run on
+hosted runners** — those are verified locally via `docs/manual-smoke-test.md`.
+
 ## Permissions
 On first run, grant Microphone, Speech Recognition, Screen Recording (for system audio), and
 Accessibility (for the global hotkey) in System Settings → Privacy & Security.

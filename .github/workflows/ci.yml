@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core:
+    name: Lint + Unit/Integration tests + Coverage gate
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select latest Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.app || true
+
+      - name: Show toolchain
+        run: swift --version
+
+      - name: Install tools
+        run: brew install swiftlint || brew upgrade swiftlint || true
+
+      - name: SwiftLint
+        run: swiftlint lint --quiet
+
+      # Runs `swift test --enable-code-coverage` (45 unit + 8 integration/e2e tests
+      # in ListenToMeCore) and fails if total line coverage drops below 95%.
+      - name: Tests + coverage gate (>=95% on ListenToMeCore)
+        run: ./scripts/check-coverage.sh 95
+
+  # NOTE: The macOS app target (App/) deploys to macOS 26 and uses ScreenCaptureKit /
+  # Speech APIs, so `make build` and the GUI/audio smoke test cannot run on GitHub-hosted
+  # runners (no macOS 26 SDK, no audio/GUI). Those are verified locally per
+  # docs/manual-smoke-test.md. CI gates the headless-testable ListenToMeCore package.
