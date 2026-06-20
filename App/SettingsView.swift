@@ -15,12 +15,17 @@ enum ProviderSettings {
         get { UserDefaults.standard.string(forKey: "deepseekModel") ?? "deepseek-v4-flash" }
         set { UserDefaults.standard.set(newValue, forKey: "deepseekModel") }
     }
+    static var transcriptionEngine: String {
+        get { UserDefaults.standard.string(forKey: "transcriptionEngine") ?? "speechAnalyzer" }
+        set { UserDefaults.standard.set(newValue, forKey: "transcriptionEngine") }
+    }
 }
 
 struct SettingsView: View {
     let router: ModelRouter
     @Environment(\.dismiss) private var dismiss
 
+    @State private var engine: String
     @State private var provider: String
     @State private var ollamaModel: String
     @State private var deepseekModel: String
@@ -29,6 +34,7 @@ struct SettingsView: View {
 
     init(router: ModelRouter) {
         self.router = router
+        _engine = State(initialValue: ProviderSettings.transcriptionEngine)
         _provider = State(initialValue: ProviderSettings.provider)
         _ollamaModel = State(initialValue: ProviderSettings.ollamaModel)
         _deepseekModel = State(initialValue: ProviderSettings.deepseekModel)
@@ -38,6 +44,16 @@ struct SettingsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Model Settings").font(.title2).bold()
+
+            Picker("Transcription engine", selection: $engine) {
+                Text("SpeechAnalyzer (macOS 26, dual-channel)").tag("speechAnalyzer")
+                Text("SpeechRecognizer (legacy)").tag("speechRecognizer")
+            }
+            Text(
+                "SpeechAnalyzer transcribes both channels concurrently and downloads its model on first use; " +
+                "SpeechRecognizer is the fallback. Changing this takes effect when you next press Listen."
+            )
+            .font(.caption).foregroundStyle(.secondary)
 
             Picker("Provider", selection: $provider) {
                 Text("Ollama (local)").tag("ollama")
@@ -102,6 +118,7 @@ struct SettingsView: View {
             router.register(OllamaProvider(model: model))
             router.setActive("ollama")
         }
+        ProviderSettings.transcriptionEngine = engine   // only persisted on a successful save
         return true
     }
 }
