@@ -12,7 +12,7 @@ a local Ollama model, so nothing leaves your machine.
 
 ## Build & run
 ```bash
-make test     # run the ListenToMeCore unit tests (45)
+make test     # run the ListenToMeCore test suite (65: unit + integration)
 make build    # generate the Xcode project and build the app
 make run      # build and launch
 make pre-push # lint + tests + build (the CI-equivalent gate)
@@ -54,6 +54,7 @@ See `docs/superpowers/specs/2026-06-18-listentome-design.md` for the full design
   next finalized segment.
 
 ## Roadmap (post-MVP)
+- **Done:** DeepSeek provider (`deepseek-v4-flash` / `deepseek-v4-pro`) + Ollama, selectable in Settings, key in Keychain.
+- Claude / OpenAI providers (same `LLMProvider` pattern, Keychain-stored keys)
 - WhisperKit / SpeechAnalyzer transcription engines (Settings-switchable)
-- Claude / OpenAI / DeepSeek providers with Keychain-stored keys
 - Session persistence and export

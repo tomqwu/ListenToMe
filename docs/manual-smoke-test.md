@@ -15,6 +15,10 @@ Prereq: Ollama running with `llama3.1` pulled (`ollama pull llama3.1`).
    the answer reflects the note.
 8. Press **⌘⇧Space** while another app is focused → a suggestion is generated.
 9. Click **Stop** → the red recording indicator disappears and capture halts.
+10. Open **Settings** (gear icon). Switch the provider to **DeepSeek**, pick **V4 Flash**, paste a
+    DeepSeek API key, and **Save** → trigger a suggestion and confirm it streams from DeepSeek.
+    Switch back to **Ollama** and Save. (An empty key or blank Ollama model is rejected with a
+    message; the selection persists across relaunches.)
 
 If dual-channel transcription shows only one speaker (a console error mentioning
 `kAFAssistantErrorDomain 1100`), see the README "Known limitations" — the fallback is
