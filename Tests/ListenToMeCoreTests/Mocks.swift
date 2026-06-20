@@ -13,7 +13,7 @@ struct MockLLMProvider: LLMProvider {
     }
 }
 
-/// Capture mock that never emits on its own (the session test drives the transcriber directly).
+/// Capture mock that can emit chunks on demand (for integration tests).
 final class MockCapture: AudioCapturing, @unchecked Sendable {
     let chunks: AsyncStream<AudioChunk>
     private let continuation: AsyncStream<AudioChunk>.Continuation
@@ -24,18 +24,31 @@ final class MockCapture: AudioCapturing, @unchecked Sendable {
     }
     func start() async throws {}
     func stop() { continuation.finish() }
+    /// Push a chunk into the stream so the session's capture→transcriber pump can deliver it.
+    func emit(_ chunk: AudioChunk) { continuation.yield(chunk) }
 }
 
 /// Transcriber mock whose `segments` stream is fed by the test via `emit`.
+/// Also records every chunk delivered via `feed` for integration tests.
 final class MockTranscriber: Transcribing, @unchecked Sendable {
     let segments: AsyncStream<TranscriptSegment>
     private let continuation: AsyncStream<TranscriptSegment>.Continuation
+    /// `feed` runs on the session's pump task while tests read on the main actor;
+    /// the lock keeps appends and snapshot reads from racing (e.g. under TSAN).
+    private let lock = NSLock()
+    private var _fedChunks: [AudioChunk] = []
+    /// Synchronized snapshot of chunks delivered to `feed(_:)`.
+    var fedChunks: [AudioChunk] {
+        lock.withLock { _fedChunks }
+    }
     init() {
         var cont: AsyncStream<TranscriptSegment>.Continuation!
         segments = AsyncStream { cont = $0 }
         continuation = cont
     }
-    func feed(_ chunk: AudioChunk) async {}
+    func feed(_ chunk: AudioChunk) async {
+        lock.withLock { _fedChunks.append(chunk) }
+    }
     func finish() async { continuation.finish() }
     func emit(_ segment: TranscriptSegment) { continuation.yield(segment) }
 }
