@@ -42,7 +42,7 @@ private func makeDeepSeekStubSession() -> URLSession {
 }
 
 private func makeDeepSeekProvider(
-    model: String = "deepseek-chat",
+    model: String = "deepseek-v4-flash",
     apiKey: String = "test-key",
     baseURL: URL = URL(string: "http://stub.local")!,
     session: URLSession
@@ -101,9 +101,9 @@ final class DeepSeekProviderTests: XCTestCase {
 
     func testRequestBodyEncodesModelMessagesAndStream() throws {
         let req = LLMRequest(system: "SYS", messages: [ChatMessage(role: "user", content: "hi")])
-        let data = DeepSeekProvider.requestBody(model: "deepseek-chat", request: req)
+        let data = DeepSeekProvider.requestBody(model: "deepseek-v4-flash", request: req)
         let obj = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
-        XCTAssertEqual(obj["model"] as? String, "deepseek-chat")
+        XCTAssertEqual(obj["model"] as? String, "deepseek-v4-flash")
         XCTAssertEqual(obj["stream"] as? Bool, true)
         let messages = try XCTUnwrap(obj["messages"] as? [[String: String]])
         XCTAssertEqual(messages.first?["role"], "system")

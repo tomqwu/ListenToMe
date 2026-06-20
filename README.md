@@ -18,6 +18,12 @@ make run      # build and launch
 make pre-push # lint + tests + build (the CI-equivalent gate)
 ```
 
+## Models
+Pick the model in the in-app **Settings** (gear icon): **Ollama** (local, default) or **DeepSeek**
+(`deepseek-v4-flash` / `deepseek-v4-pro`). The DeepSeek API key is entered in Settings and stored in
+your macOS Keychain; the selection persists across launches. Adding Claude/OpenAI is the same pattern
+(a new `LLMProvider`).
+
 ## CI
 GitHub Actions (`.github/workflows/ci.yml`) gates every PR to `main` on a macOS runner:
 SwiftLint, the full `ListenToMeCore` test suite (unit + headless integration/e2e), and a
