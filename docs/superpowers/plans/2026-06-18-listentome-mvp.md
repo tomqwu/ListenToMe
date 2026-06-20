@@ -332,8 +332,8 @@ final class ConversationStoreTests: XCTestCase {
         store.apply(seg("aaaa", final: true))   // 4 chars
         store.apply(seg("bbbb", final: true))   // 4 chars
         store.apply(seg("cccc", final: true))   // 4 chars
-        // Budget 6 -> keep most recent until exceeding, but never empty.
-        let recent = store.recentContext(maxChars: 6)
+        // Budget 9: keep newest segments that fit (cccc=4, +bbbb=8 <= 9; +aaaa=12 > 9 stops).
+        let recent = store.recentContext(maxChars: 9)
         XCTAssertEqual(recent.map(\.text), ["bbbb", "cccc"])
     }
 
@@ -553,6 +553,16 @@ final class QuestionDetectorTests: XCTestCase {
     func testEmptyIsNotQuestion() {
         XCTAssertFalse(QuestionDetector.isQuestion("   "))
     }
+
+    func testCuePrefixInsideWordIsNotQuestion() {
+        XCTAssertFalse(QuestionDetector.isQuestion("However, the release is ready"))
+        XCTAssertFalse(QuestionDetector.isQuestion("I tried whatever worked"))
+    }
+
+    func testInterrogativeWordMidSentenceIsNotQuestion() {
+        XCTAssertFalse(QuestionDetector.isQuestion("I know what happened"))
+        XCTAssertFalse(QuestionDetector.isQuestion("They explained why it failed"))
+    }
 }
 ```
 
@@ -568,8 +578,12 @@ import Foundation
 
 /// Heuristic detector for "someone is asking for input". Deliberately simple and swappable.
 public enum QuestionDetector {
-    private static let cues: [String] = [
-        "what", "why", "how", "when", "where", "who", "which", "whose",
+    /// Single interrogative words: only count when they START the utterance.
+    private static let leadingCues: [String] = [
+        "what", "why", "how", "when", "where", "who", "which", "whose"
+    ]
+    /// Phrase / imperative cues: count anywhere, matched on word boundaries.
+    private static let phraseCues: [String] = [
         "can you", "could you", "would you", "will you", "do you", "did you",
         "are you", "is there", "should we", "any thoughts", "what do you think",
         "thoughts on", "tell me", "explain", "walk me through"
@@ -579,11 +593,12 @@ public enum QuestionDetector {
         let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !normalized.isEmpty else { return false }
         if normalized.hasSuffix("?") { return true }
-        return cues.contains { cue in
-            normalized == cue
-                || normalized.hasPrefix(cue + " ")
-                || normalized.contains(" " + cue + " ")
-                || normalized.contains(" " + cue)
+        for cue in leadingCues where normalized == cue || normalized.hasPrefix(cue + " ") {
+            return true
+        }
+        return phraseCues.contains { cue in
+            let pattern = "\\b" + NSRegularExpression.escapedPattern(for: cue) + "\\b"
+            return normalized.range(of: pattern, options: .regularExpression) != nil
         }
     }
 }
@@ -941,7 +956,14 @@ public struct OllamaProvider: LLMProvider {
                         urlRequest.httpMethod = "POST"
                         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
                         urlRequest.httpBody = requestBody(model: model, request: request)
-                        let (bytes, _) = try await URLSession.shared.bytes(for: urlRequest)
+                        let (bytes, response) = try await URLSession.shared.bytes(for: urlRequest)
+                        if let http = response as? HTTPURLResponse,
+                           !(200...299).contains(http.statusCode) {
+                            throw NSError(
+                                domain: "Ollama", code: http.statusCode,
+                                userInfo: [NSLocalizedDescriptionKey:
+                                    "Ollama returned HTTP \(http.statusCode). Is the server running and the model pulled?"])
+                        }
                         for try await line in bytes.lines {
                             continuation.yield(line)
                         }
@@ -1059,15 +1081,15 @@ import Observation
 /// Holds the registered providers and routes streaming requests to the active one.
 @Observable
 public final class ModelRouter {
-    private var providers: [String: LLMProvider] = [:]
+    private var providers: [String: any LLMProvider] = [:]
     public private(set) var activeID: String
 
-    public init(default provider: LLMProvider) {
-        providers[provider.id] = provider
+    public init(default provider: any LLMProvider) {
         activeID = provider.id
+        providers[provider.id] = provider
     }
 
-    public func register(_ provider: LLMProvider) {
+    public func register(_ provider: any LLMProvider) {
         providers[provider.id] = provider
     }
 
@@ -1302,8 +1324,8 @@ final class MeetingSessionTests: XCTestCase {
             store: store,
             router: router,
             context: ContextEngine(debounce: 5),
-            capture: MockCapture(),
-            transcriber: MockTranscriber(),
+            makeCapture: { MockCapture() },
+            makeTranscriber: { MockTranscriber() },
             clock: now
         )
         return (session, store)
@@ -1323,26 +1345,33 @@ final class MeetingSessionTests: XCTestCase {
         XCTAssertEqual(store.utterances.map(\.text), ["Hello"])
     }
 
-    func testIngestFiresProactiveOnRemoteQuestion() async {
+    func testIngestFiresProactiveOnRemoteQuestion() async throws {
         let (session, _) = makeSession(deltas: ["Tell ", "them yes."])
+        try await session.start()
         await session.ingest(TranscriptSegment(source: .others, text: "Are we ready?",
                                                isFinal: true, start: 0, end: 1))
+        await session.waitForResponse()
         XCTAssertEqual(session.suggestion, "Tell them yes.")
+        session.stop()
     }
 
-    func testIngestDoesNotFireWhenProactiveDisabled() async {
+    func testIngestDoesNotFireWhenProactiveDisabled() async throws {
         let (session, _) = makeSession(deltas: ["nope"])
+        try await session.start()
         session.proactiveEnabled = false
         await session.ingest(TranscriptSegment(source: .others, text: "Are we ready?",
                                                isFinal: true, start: 0, end: 1))
         XCTAssertEqual(session.suggestion, "")
+        session.stop()
     }
 
-    func testIngestIgnoresOwnSpeech() async {
+    func testIngestIgnoresOwnSpeech() async throws {
         let (session, _) = makeSession(deltas: ["should not run"])
+        try await session.start()
         await session.ingest(TranscriptSegment(source: .you, text: "What should I do?",
                                                isFinal: true, start: 0, end: 1))
         XCTAssertEqual(session.suggestion, "")
+        session.stop()
     }
 }
 ```
@@ -1374,34 +1403,50 @@ public final class MeetingSession {
     public let store: ConversationStore
     public let router: ModelRouter
     private var context: ContextEngine
-    private let capture: AudioCapturing
-    private let transcriber: Transcribing
+    private let makeCapture: @Sendable () -> any AudioCapturing
+    private let makeTranscriber: @Sendable () -> any Transcribing
+    private var capture: (any AudioCapturing)?
+    private var transcriber: (any Transcribing)?
     private let clock: @Sendable () -> TimeInterval
 
     private var pumpTasks: [Task<Void, Never>] = []
     private var responseTask: Task<Void, Never>?
+    private var responseGeneration = 0
+    private var runID = 0
 
     public init(store: ConversationStore,
                 router: ModelRouter,
                 context: ContextEngine,
-                capture: AudioCapturing,
-                transcriber: Transcribing,
+                makeCapture: @escaping @Sendable () -> any AudioCapturing,
+                makeTranscriber: @escaping @Sendable () -> any Transcribing,
                 clock: @escaping @Sendable () -> TimeInterval = { Date().timeIntervalSince1970 }) {
         self.store = store
         self.router = router
         self.context = context
-        self.capture = capture
-        self.transcriber = transcriber
+        self.makeCapture = makeCapture
+        self.makeTranscriber = makeTranscriber
         self.clock = clock
     }
 
     public func start() async throws {
         guard !isRunning else { return }
         isRunning = true
-        try await capture.start()
+        runID += 1
+        let myRun = runID
+        let capture = makeCapture()
+        let transcriber = makeTranscriber()
+        do {
+            try await capture.start()
+        } catch {
+            capture.stop()      // tear down a partially-started capture
+            if runID == myRun { isRunning = false }   // only reset state for the active run
+            throw error
+        }
+        guard isRunning, runID == myRun else { capture.stop(); return }   // stop() ran during the await
+        self.capture = capture
+        self.transcriber = transcriber
 
         let captureStream = capture.chunks
-        let transcriber = self.transcriber
         pumpTasks.append(Task {
             for await chunk in captureStream {
                 await transcriber.feed(chunk)
@@ -1411,7 +1456,9 @@ public final class MeetingSession {
         let segmentStream = transcriber.segments
         pumpTasks.append(Task { [weak self] in
             for await segment in segmentStream {
-                await self?.ingest(segment)
+                guard let self else { return }
+                guard self.runID == myRun else { continue }   // ignore stale-session segments
+                await self.ingest(segment)
             }
         })
     }
@@ -1419,36 +1466,66 @@ public final class MeetingSession {
     public func stop() {
         guard isRunning else { return }
         isRunning = false
-        capture.stop()
-        pumpTasks.forEach { $0.cancel() }
+        responseTask?.cancel()
+        capture?.stop()                          // chunks stream ends -> feed pump finishes on its own
+        if let transcriber { Task { await transcriber.finish() } }  // flush finals, close segments
+        capture = nil
+        transcriber = nil
         pumpTasks.removeAll()
-        Task { await transcriber.finish() }
     }
 
     /// Applies a segment to the store and fires a proactive response when warranted.
+    /// Proactive responses run in the background so the transcript pump never stalls.
     public func ingest(_ segment: TranscriptSegment) async {
         store.apply(segment)
-        guard proactiveEnabled,
+        guard isRunning, proactiveEnabled,
               context.shouldFireProactive(for: segment, now: clock()) else { return }
-        await respond(.proactive)
+        startResponse(.proactive)
     }
 
-    /// Streams a suggestion for the given action into `suggestion`.
+    /// On-demand response (hotkey / buttons). Awaits completion.
     public func respond(_ action: ResponseAction) async {
+        await startResponse(action).value
+    }
+
+    /// For tests/UI that need to await the most recent response.
+    public func waitForResponse() async {
+        await responseTask?.value
+    }
+
+    /// Starts a streaming response, cancelling any in-flight one. Returns the task.
+    @discardableResult
+    private func startResponse(_ action: ResponseAction) -> Task<Void, Never> {
         responseTask?.cancel()
+        responseGeneration += 1
+        let generation = responseGeneration
         let request = PromptBuilder.build(
             context: context.buildContext(from: store, notes: notes),
             action: action
         )
+        let task = Task { [weak self] in
+            guard let self else { return }
+            await self.runResponse(request, generation: generation)
+        }
+        responseTask = task
+        return task
+    }
+
+    private func runResponse(_ request: LLMRequest, generation: Int) async {
+        guard generation == responseGeneration, !Task.isCancelled else { return }
         suggestion = ""
         isStreaming = true
-        defer { isStreaming = false }
+        defer { if generation == responseGeneration { isStreaming = false } }
         do {
             for try await delta in router.stream(request) {
+                if Task.isCancelled { return }
+                if generation != responseGeneration { return }   // superseded by a newer response
                 suggestion += delta
             }
         } catch {
-            suggestion = "⚠️ \(error.localizedDescription)"
+            if generation == responseGeneration, !Task.isCancelled, !(error is CancellationError) {
+                suggestion = "⚠️ \(error.localizedDescription)"
+            }
         }
     }
 }
@@ -1525,10 +1602,22 @@ targets:
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>$(DEVELOPMENT_LANGUAGE)</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
     <key>CFBundleName</key>
-    <string>ListenToMe</string>
+    <string>$(PRODUCT_NAME)</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>$(MARKETING_VERSION)</string>
+    <key>CFBundleVersion</key>
+    <string>$(CURRENT_PROJECT_VERSION)</string>
     <key>LSMinimumSystemVersion</key>
     <string>26.0</string>
     <key>NSMicrophoneUsageDescription</key>
@@ -1677,14 +1766,44 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
     // MARK: - Emit helpers
 
     private func emit(buffer: AVAudioPCMBuffer, source: SpeakerSource) {
-        guard let channel = buffer.floatChannelData?[0] else { return }
-        let count = Int(buffer.frameLength)
+        guard let mono = Self.convertToMonoFloat(buffer),
+              let channel = mono.floatChannelData?[0] else { return }
+        let count = Int(mono.frameLength)
+        guard count > 0 else { return }
         let samples = Array(UnsafeBufferPointer(start: channel, count: count))
         let chunk = AudioChunk(samples: samples,
-                               sampleRate: buffer.format.sampleRate,
+                               sampleRate: mono.format.sampleRate,
                                source: source,
                                timestamp: Date().timeIntervalSince(startTime))
         continuation.yield(chunk)
+    }
+
+    /// Downmixes/converts any PCM buffer to non-interleaved mono Float32 at the same sample rate.
+    /// Returns the input unchanged when it is already in that format.
+    private static func convertToMonoFloat(_ input: AVAudioPCMBuffer) -> AVAudioPCMBuffer? {
+        let inFormat = input.format
+        guard let outFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32,
+                                            sampleRate: inFormat.sampleRate,
+                                            channels: 1,
+                                            interleaved: false) else { return nil }
+        if inFormat == outFormat { return input }
+        guard input.frameLength > 0,
+              let converter = AVAudioConverter(from: inFormat, to: outFormat),
+              let output = AVAudioPCMBuffer(pcmFormat: outFormat,
+                                            frameCapacity: input.frameLength) else { return nil }
+        var consumed = false
+        var convError: NSError?
+        let status = converter.convert(to: output, error: &convError) { _, outStatus in
+            if consumed {
+                outStatus.pointee = .noDataNow
+                return nil
+            }
+            consumed = true
+            outStatus.pointee = .haveData
+            return input
+        }
+        if status == .error || convError != nil { return nil }
+        return output
     }
 }
 
@@ -1757,77 +1876,142 @@ import Speech
 import AVFoundation
 import ListenToMeCore
 
-/// On-device transcription. Maintains one recognition pipeline per `SpeakerSource`,
-/// finalizing each pipeline's request when the VAD reports an utterance boundary.
-final class SpeechRecognizerTranscriber: NSObject, Transcribing, @unchecked Sendable {
-    let segments: AsyncStream<TranscriptSegment>
-    private let continuation: AsyncStream<TranscriptSegment>.Continuation
+/// On-device transcription: one SFSpeechRecognizer + recognition task per source.
+/// VAD detects utterance boundaries; at a boundary the request is ended (which makes the
+/// recognizer emit a FINAL result) and, once that task completes, a fresh task is started.
+/// Tasks for a source never overlap (the Speech framework rejects overlap with error 1100),
+/// and the brief gap between ending one task and starting the next falls during the detected
+/// silence, so little audio is lost. An actor so all shared state access is serialized.
+actor SpeechRecognizerTranscriber: Transcribing {
+    nonisolated let segments: AsyncStream<TranscriptSegment>
+    private nonisolated let continuation: AsyncStream<TranscriptSegment>.Continuation
 
-    private var pipelines: [SpeakerSource: Pipeline] = [:]
-    private let recognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
+    private var states: [SpeakerSource: SourceState] = [:]
+    private var authorized = false
+    private var stopped = false
 
-    override init() {
+    init() {
         var cont: AsyncStream<TranscriptSegment>.Continuation!
         segments = AsyncStream { cont = $0 }
         continuation = cont
-        super.init()
-        SFSpeechRecognizer.requestAuthorization { _ in }
+        SFSpeechRecognizer.requestAuthorization { [weak self] status in
+            Task { await self?.setAuthorized(status == .authorized) }
+        }
     }
 
+    private func setAuthorized(_ value: Bool) { authorized = value }
+
     func feed(_ chunk: AudioChunk) async {
-        guard let recognizer, recognizer.isAvailable else { return }
-        let pipeline = pipelines[chunk.source] ?? makePipeline(for: chunk.source)
-        pipelines[chunk.source] = pipeline
+        guard authorized, !stopped else { return }
+        guard let state = states[chunk.source] ?? startTask(for: chunk.source) else { return }
+        states[chunk.source] = state
 
-        // Drive VAD off the chunk's energy to decide utterance boundaries.
-        let energy = rms(of: chunk.samples)
-        let boundary = pipeline.segmenter.process(rms: energy, at: chunk.timestamp)
-
-        if let buffer = makeBuffer(from: chunk) {
-            pipeline.request.append(buffer)
+        if state.awaitingFinal {
+            // Carry onset audio across the finalization gap; replayed (through VAD) into the next task.
+            state.pendingChunks.append(chunk)
+            if state.pendingChunks.count > 64 { state.pendingChunks.removeFirst() }
+            return
         }
+
+        let boundary = state.segmenter.process(rms: rms(of: chunk.samples), at: chunk.timestamp)
+        if let buffer = makeBuffer(from: chunk) { state.request.append(buffer) }
         if boundary {
-            finalize(source: chunk.source)
+            // End the utterance -> recognizer emits a final result; await it before the next task.
+            state.awaitingFinal = true
+            state.request.endAudio()
         }
     }
 
     func finish() async {
-        for source in pipelines.keys { finalize(source: source) }
+        stopped = true
+        for state in states.values { state.request.endAudio() }
+        // Wait (up to ~3s) for in-flight tasks to deliver their final callbacks.
+        for _ in 0..<30 {
+            if states.values.allSatisfy({ $0.done }) { break }
+            try? await Task.sleep(nanoseconds: 100_000_000)
+        }
+        states.removeAll()
         continuation.finish()
     }
 
-    // MARK: - Pipeline
+    // MARK: - Per-source recognition
 
-    private final class Pipeline {
+    private final class SourceState {
+        let recognizer: SFSpeechRecognizer
         let request = SFSpeechAudioBufferRecognitionRequest()
         var task: SFSpeechRecognitionTask?
         var segmenter = VADSegmenter(speechThreshold: 0.02, silenceDuration: 0.8)
-        init() { request.requiresOnDeviceRecognition = true; request.shouldReportPartialResults = true }
-    }
-
-    private func makePipeline(for source: SpeakerSource) -> Pipeline {
-        let pipeline = Pipeline()
-        pipeline.task = recognizer?.recognitionTask(with: pipeline.request) { [weak self] result, _ in
-            guard let self, let result else { return }
-            self.continuation.yield(TranscriptSegment(
-                source: source,
-                text: result.bestTranscription.formattedString,
-                isFinal: result.isFinal,
-                start: 0,
-                end: 0
-            ))
+        var awaitingFinal = false
+        var done = false
+        var pendingChunks: [AudioChunk] = []
+        init(recognizer: SFSpeechRecognizer) {
+            self.recognizer = recognizer
+            request.requiresOnDeviceRecognition = true
+            request.shouldReportPartialResults = true
         }
-        return pipeline
     }
 
-    /// Ends the current request for `source` and starts a fresh pipeline for the next utterance.
-    private func finalize(source: SpeakerSource) {
-        pipelines[source]?.request.endAudio()
-        pipelines[source] = makePipeline(for: source)
+    private func startTask(for source: SpeakerSource) -> SourceState? {
+        guard let recognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US")),
+              recognizer.isAvailable else { return nil }
+        let state = SourceState(recognizer: recognizer)
+        state.task = recognizer.recognitionTask(with: state.request) { [weak self] result, error in
+            guard let self else { return }
+            if let result {
+                self.continuation.yield(TranscriptSegment(
+                    source: source,
+                    text: result.bestTranscription.formattedString,
+                    isFinal: result.isFinal,
+                    start: 0,
+                    end: 0
+                ))
+            }
+            if error != nil {
+                Task { await self.taskFailed(source) }
+            } else if result?.isFinal ?? false {
+                Task { await self.taskEnded(source) }
+            }
+        }
+        return state
+    }
+
+    /// Called when a source's task ends. Starts a fresh task so a long speaker, the framework's
+    /// duration limit, or a transient error doesn't permanently stop transcription for that source.
+    /// A source's utterance finalized normally: start a fresh task and replay any audio buffered
+    /// during the finalization gap (through the new VAD so its speech state stays consistent).
+    private func taskEnded(_ source: SpeakerSource) {
+        let pending = states[source]?.pendingChunks ?? []
+        states[source]?.done = true
+        guard !stopped else { return }
+        guard let fresh = startTask(for: source) else {
+            states[source] = nil
+            return
+        }
+        var sawBoundary = false
+        for chunk in pending {
+            if fresh.segmenter.process(rms: rms(of: chunk.samples), at: chunk.timestamp) {
+                sawBoundary = true
+            }
+            if let buffer = makeBuffer(from: chunk) { fresh.request.append(buffer) }
+        }
+        states[source] = fresh
+        if sawBoundary {
+            // Replayed audio contained a complete utterance; finalize it now.
+            fresh.awaitingFinal = true
+            fresh.request.endAudio()
+        }
+    }
+
+    /// A source's task errored. Tear it down WITHOUT an immediate restart so a persistent startup
+    /// error can't spin; the next incoming chunk for this source lazily creates a fresh task.
+    private func taskFailed(_ source: SpeakerSource) {
+        states[source]?.done = true
+        states[source] = nil
     }
 
     private func makeBuffer(from chunk: AudioChunk) -> AVAudioPCMBuffer? {
-        guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat32,
+        guard !chunk.samples.isEmpty,
+              let format = AVAudioFormat(commonFormat: .pcmFormatFloat32,
                                          sampleRate: chunk.sampleRate,
                                          channels: 1,
                                          interleaved: false),
@@ -1874,23 +2058,48 @@ git commit -m "feat: add on-device VAD-segmented SpeechRecognizerTranscriber"
 
 ```swift
 import AppKit
+import ApplicationServices
 
-/// Listens for a global ⌘⇧Space keypress (works while another app is focused).
-/// Requires Accessibility permission, which macOS prompts for on first use.
+/// Listens for ⌘⇧Space both globally (other apps focused) and locally (this app focused).
+/// The global path requires Accessibility permission; we prompt for it on first use.
 final class HotkeyMonitor {
-    private var monitor: Any?
+    private var globalMonitor: Any?
+    private var localMonitor: Any?
+
     func start(_ action: @escaping () -> Void) {
-        monitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { event in
-            // 49 = Space; require Command + Shift.
-            if event.keyCode == 49,
-               event.modifierFlags.contains([.command, .shift]) {
+        // Show the system Accessibility prompt if we're not yet trusted; otherwise the global
+        // key monitor silently receives nothing. The key string matches the imported
+        // `kAXTrustedCheckOptionPrompt` constant, used as a literal to stay clear of Swift 6
+        // concurrency-safety on the imported global.
+        let promptKey = "AXTrustedCheckOptionPrompt"
+        _ = AXIsProcessTrustedWithOptions([promptKey: true] as CFDictionary)
+
+        // Global: fires when another app is focused.
+        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { event in
+            if Self.isHotkey(event) { action() }
+        }
+        // Local: fires when this app is focused; return nil to consume the event.
+        localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            if Self.isHotkey(event) {
                 action()
+                return nil
             }
+            return event
         }
     }
+
     func stop() {
-        if let monitor { NSEvent.removeMonitor(monitor) }
-        monitor = nil
+        if let globalMonitor { NSEvent.removeMonitor(globalMonitor) }
+        if let localMonitor { NSEvent.removeMonitor(localMonitor) }
+        globalMonitor = nil
+        localMonitor = nil
+    }
+
+    /// ⌘⇧Space, ignoring auto-repeat. 49 = Space.
+    private static func isHotkey(_ event: NSEvent) -> Bool {
+        event.keyCode == 49
+            && !event.isARepeat
+            && event.modifierFlags.contains([.command, .shift])
     }
 }
 ```
@@ -1906,6 +2115,7 @@ import ListenToMeCore
 struct MeetingView: View {
     @State private var session: MeetingSession
     @State private var store: ConversationStore
+    @State private var startError: String?
     private let hotkey = HotkeyMonitor()
 
     init() {
@@ -1916,18 +2126,26 @@ struct MeetingView: View {
             store: store,
             router: router,
             context: ContextEngine(debounce: 8),
-            capture: DualChannelCapture(),
-            transcriber: SpeechRecognizerTranscriber()
+            makeCapture: { DualChannelCapture() },
+            makeTranscriber: { SpeechRecognizerTranscriber() }
         ))
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            toolbar
+        @Bindable var session = session
+        return VStack(spacing: 0) {
+            toolbar(session: session, proactiveEnabled: $session.proactiveEnabled)
+            if let startError {
+                Text("⚠️ \(startError)")
+                    .foregroundStyle(.red)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 10)
+                    .padding(.bottom, 4)
+            }
             Divider()
             HSplitView {
-                transcriptPane
-                suggestionPane
+                transcriptPane(session: session, notes: $session.notes)
+                suggestionPane(session)
             }
         }
         .frame(minWidth: 820, minHeight: 480)
@@ -1940,12 +2158,20 @@ struct MeetingView: View {
         }
     }
 
-    private var toolbar: some View {
+    private func toolbar(session: MeetingSession, proactiveEnabled: Binding<Bool>) -> some View {
         HStack(spacing: 12) {
             Button(session.isRunning ? "Stop" : "Listen") {
                 Task {
-                    if session.isRunning { session.stop() }
-                    else { try? await session.start() }
+                    if session.isRunning {
+                        session.stop()
+                    } else {
+                        do {
+                            startError = nil
+                            try await session.start()
+                        } catch {
+                            startError = error.localizedDescription
+                        }
+                    }
                 }
             }
             if session.isRunning {
@@ -1953,7 +2179,7 @@ struct MeetingView: View {
                 Text("Recording").foregroundStyle(.secondary)
             }
             Spacer()
-            Toggle("Proactive", isOn: $session.proactiveEnabled)
+            Toggle("Proactive", isOn: proactiveEnabled)
             Button("What should I answer?") { Task { await session.respond(.answerQuestion) } }
             Button("Recap so far") { Task { await session.respond(.recap) } }
             Button("Suggest a follow-up") { Task { await session.respond(.followUp) } }
@@ -1961,7 +2187,7 @@ struct MeetingView: View {
         .padding(10)
     }
 
-    private var transcriptPane: some View {
+    private func transcriptPane(session: MeetingSession, notes: Binding<String>) -> some View {
         VStack(alignment: .leading) {
             Text("Transcript").font(.headline).padding(.bottom, 4)
             ScrollView {
@@ -1975,7 +2201,7 @@ struct MeetingView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            TextField("Context notes (injected into prompts)", text: $session.notes, axis: .vertical)
+            TextField("Context notes (injected into prompts)", text: notes, axis: .vertical)
                 .lineLimit(2...4)
                 .textFieldStyle(.roundedBorder)
         }
@@ -1990,7 +2216,7 @@ struct MeetingView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var suggestionPane: some View {
+    private func suggestionPane(_ session: MeetingSession) -> some View {
         VStack(alignment: .leading) {
             HStack {
                 Text("Suggestion").font(.headline)
@@ -2020,7 +2246,7 @@ import SwiftUI
 @main
 struct ListenToMeApp: App {
     var body: some Scene {
-        WindowGroup {
+        Window("ListenToMe", id: "listentome") {
             MeetingView()
         }
         .windowResizability(.contentSize)
@@ -2161,6 +2387,16 @@ git commit -m "docs: add README and manual smoke test; MVP complete"
 - Default transcriber is `SFSpeechRecognizer` (VAD-segmented), not `SpeechAnalyzer`, to avoid guessing
   a brand-new API. Same protocol; SpeechAnalyzer/WhisperKit remain a drop-in Phase-2 swap. The spec's
   §11 "SpeechAnalyzer default" should be read as "on-device engine behind the protocol" for the MVP.
+
+**Known limitation to validate in the Task 15 smoke test:**
+- **Concurrent dual-channel `SFSpeechRecognizer`:** the transcriber uses one recognizer instance per
+  source (`.you`/`.others`) so both channels recognize at once. If `SFSpeechRecognizer`'s active-
+  recognition limit turns out to be process-global on this OS (error `kAFAssistantErrorDomain 1100`
+  when a second task starts), the second channel will fail. This is unverifiable without audio hardware
+  and must be confirmed by the manual smoke test. **Fallback if it occurs:** transcribe a single source
+  for the MVP, or move to the Phase-2 `SpeechAnalyzer` engine, which natively supports concurrent
+  multi-stream recognition. `taskFailed` already tears a failed source down (no tight spin), so the
+  primary channel keeps working regardless.
 
 **Type consistency:** `MeetingSession`, `ConversationStore`, `ModelRouter`, `ContextEngine`,
 `PromptBuilder`, `OllamaProvider`, `AudioCapturing`, `Transcribing`, `AudioChunk`, `TranscriptSegment`,

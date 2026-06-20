@@ -1,0 +1,28 @@
+name: ListenToMe
+options:
+  bundleIdPrefix: com.tomwu
+  deploymentTarget:
+    macOS: "26.0"
+  createIntermediateGroups: true
+packages:
+  ListenToMeCore:
+    path: .
+targets:
+  ListenToMe:
+    type: application
+    platform: macOS
+    sources:
+      - App
+    dependencies:
+      - package: ListenToMeCore
+        product: ListenToMeCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMe
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: App/Info.plist
+        CODE_SIGN_ENTITLEMENTS: App/ListenToMe.entitlements
+        CODE_SIGN_STYLE: Automatic
+        SWIFT_VERSION: "6.0"
