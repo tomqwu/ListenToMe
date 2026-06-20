@@ -37,9 +37,10 @@ public struct OllamaProvider: LLMProvider {
     }
 
     /// Live initializer that talks to a real Ollama server over HTTP.
-    public init(model: String, baseURL: URL = URL(string: "http://localhost:11434")!) {
+    public init(model: String, baseURL: URL = URL(string: "http://localhost:11434")!,
+                urlSession: URLSession = .shared) {
         self.init(model: model, baseURL: baseURL,
-                  lineSource: Self.makeLiveLineSource(model: model, baseURL: baseURL))
+                  lineSource: Self.makeLiveLineSource(model: model, baseURL: baseURL, session: urlSession))
     }
 
     public static func requestBody(model: String, request: LLMRequest) -> Data {
@@ -70,7 +71,7 @@ public struct OllamaProvider: LLMProvider {
     }
 
     private static func makeLiveLineSource(
-        model: String, baseURL: URL
+        model: String, baseURL: URL, session: URLSession
     ) -> @Sendable (LLMRequest) -> AsyncThrowingStream<String, Error> {
         return { request in
             AsyncThrowingStream { continuation in
@@ -80,7 +81,7 @@ public struct OllamaProvider: LLMProvider {
                         urlRequest.httpMethod = "POST"
                         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
                         urlRequest.httpBody = requestBody(model: model, request: request)
-                        let (bytes, response) = try await URLSession.shared.bytes(for: urlRequest)
+                        let (bytes, response) = try await session.bytes(for: urlRequest)
                         if let http = response as? HTTPURLResponse,
                            !(200...299).contains(http.statusCode) {
                             throw NSError(
