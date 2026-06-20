@@ -20,6 +20,13 @@ Prereq: Ollama running with `llama3.1` pulled (`ollama pull llama3.1`).
     Switch back to **Ollama** and Save. (An empty key or blank Ollama model is rejected with a
     message; the selection persists across relaunches.)
 
+11. In **Settings**, confirm **Transcription engine** = **SpeechAnalyzer**. Verify dual-channel:
+    speak (You) while other audio plays (Others) — both should transcribe concurrently. Confirm
+    finalized lines (not just live/volatile partials) accumulate in the Transcript and that
+    proactive suggestions fire on `Others` questions. If finalized lines never commit (only volatile
+    text shows), switch the engine to **SpeechRecognizer** and report — SpeechAnalyzer's
+    finalization semantics need on-device confirmation.
+
 If dual-channel transcription shows only one speaker (a console error mentioning
 `kAFAssistantErrorDomain 1100`), see the README "Known limitations" — the fallback is
 single-source for the MVP or the Phase-2 SpeechAnalyzer engine.

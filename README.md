@@ -22,7 +22,7 @@ make pre-push # lint + tests + build (the CI-equivalent gate)
 Pick the model in the in-app **Settings** (gear icon): **Ollama** (local, default) or **DeepSeek**
 (`deepseek-v4-flash` / `deepseek-v4-pro`). The DeepSeek API key is entered in Settings and stored in
 your macOS Keychain; the selection persists across launches. Adding Claude/OpenAI is the same pattern
-(a new `LLMProvider`).
+(a new `LLMProvider`). Settings also lets you choose the transcription engine (SpeechAnalyzer / SpeechRecognizer).
 
 ## CI
 GitHub Actions (`.github/workflows/ci.yml`) gates every PR to `main` on a macOS runner:
@@ -44,10 +44,10 @@ See `docs/superpowers/specs/2026-06-18-listentome-design.md` for the full design
 `docs/superpowers/plans/2026-06-18-listentome-mvp.md` for the implementation plan.
 
 ## Known limitations (MVP)
-- **Concurrent dual-channel transcription** uses one `SFSpeechRecognizer` per source. If this OS
-  enforces a process-global active-recognition limit (`kAFAssistantErrorDomain 1100`), the second
-  channel may fail; the primary channel keeps working. Fallback: single-source, or the Phase-2
-  `SpeechAnalyzer` engine (which supports concurrent multi-stream). Validate via the manual smoke test.
+- **Transcription engine (Settings):** the default **SpeechAnalyzer** (macOS 26) transcribes both
+  channels concurrently. The legacy **SpeechRecognizer** option uses one `SFSpeechRecognizer` per
+  source and may hit a process-global active-recognition limit (`kAFAssistantErrorDomain 1100`) on
+  some systems. SpeechAnalyzer downloads its language model on first use. Both are on-device.
 - **On-device `SFSpeechRecognizer`** is the MVP engine (behind a swappable `Transcribing` protocol);
   WhisperKit / SpeechAnalyzer are planned Phase-2 engines.
 - A short utterance spoken entirely within the brief recognizer-finalization gap may merge into the

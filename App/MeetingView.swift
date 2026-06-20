@@ -22,7 +22,11 @@ struct MeetingView: View {
             router: router,
             context: ContextEngine(debounce: 8),
             makeCapture: { DualChannelCapture() },
-            makeTranscriber: { SpeechRecognizerTranscriber() }
+            makeTranscriber: {
+                ProviderSettings.transcriptionEngine == "speechRecognizer"
+                    ? SpeechRecognizerTranscriber() as any Transcribing
+                    : SpeechAnalyzerTranscriber() as any Transcribing
+            }
         ))
     }
 
