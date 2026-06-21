@@ -19,9 +19,10 @@ lint:
 	swiftlint lint --quiet
 
 run: build
-	open ./build/Debug/ListenToMe.app 2>/dev/null || \
-	open $$(xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMe -showBuildSettings | \
-		awk '/BUILT_PRODUCTS_DIR/{d=$$3}/FULL_PRODUCT_NAME/{p=$$3}END{print d"/"p}')
+	@APP="$$(xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMe -showBuildSettings 2>/dev/null | \
+		awk -F' = ' '/ BUILT_PRODUCTS_DIR =/{d=$$2} / FULL_PRODUCT_NAME =/{p=$$2} END{print d"/"p}')"; \
+	echo "Launching $$APP"; \
+	open "$$APP"
 
 pre-push: lint test build
 	@echo "pre-push checks passed"
