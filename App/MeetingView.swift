@@ -8,29 +8,34 @@ struct MeetingView: View {
     @State private var showSettings = false
     @State private var permissions = PermissionsModel()
     @State private var showPermissions = false
+    @State private var chatModels: [String] = []
     private let hotkey = HotkeyMonitor()
 
     init() {
         let store = ConversationStore()
-        let router = ModelRouter(default: OllamaProvider(model: ProviderSettings.ollamaModel))
         _store = State(initialValue: store)
         _session = State(initialValue: MeetingSession(
             store: store,
-            router: router,
             context: ContextEngine(debounce: 8),
             makeCapture: { DualChannelCapture() },
             makeTranscriber: {
                 ProviderSettings.transcriptionEngine == "speechRecognizer"
-                    ? SpeechRecognizerTranscriber() as any Transcribing
-                    : SpeechAnalyzerTranscriber() as any Transcribing
-            }
+                    ? (SpeechRecognizerTranscriber() as any Transcribing)
+                    : (SpeechAnalyzerTranscriber() as any Transcribing)
+            },
+            makeProvider: { OllamaProvider(model: $0) },
+            models: [
+                .listener: ProviderSettings.model(for: .listener),
+                .quick: ProviderSettings.model(for: .quick),
+                .deep: ProviderSettings.model(for: .deep)
+            ]
         ))
     }
 
     var body: some View {
         @Bindable var session = session
         return VStack(spacing: 0) {
-            toolbar(
+            meetingToolbar(
                 session: session,
                 proactiveEnabled: $session.proactiveEnabled,
                 showSettings: $showSettings,
@@ -46,29 +51,34 @@ struct MeetingView: View {
             Divider()
             HSplitView {
                 transcriptPane(session: session, notes: $session.notes)
-                suggestionPane(session)
+                VSplitView {
+                    listenerPane(session: session)
+                    quickPane(session: session)
+                    deepPane(session: session)
+                }
+                .frame(minWidth: 360)
             }
         }
-        .frame(minWidth: 820, minHeight: 480)
+        .frame(minWidth: 1100, minHeight: 560)
         .sheet(isPresented: $showSettings) {
-            SettingsView(router: session.router)
+            SettingsView()
         }
         .sheet(isPresented: $showPermissions) {
             PermissionsView(permissions: permissions)
         }
         .onAppear {
-            hotkey.start { Task { await session.respond(.answerQuestion) } }
+            hotkey.start { Task { await session.respondQuick(.answerQuestion) } }
             permissions.refresh()
             if !permissions.allRequiredGranted { showPermissions = true }
         }
         .task {
-            let chat = await OllamaModels.chatModels()
-            guard !chat.isEmpty, !chat.contains(ProviderSettings.ollamaModel),
-                  let model = OllamaModels.preferredChatModel(from: chat) else { return }
-            ProviderSettings.ollamaModel = model
-            let router = session.router
-            router.register(OllamaProvider(model: model))
-            router.setActive("ollama")
+            await reloadModels()
+            let chat = chatModels
+            guard !chat.isEmpty, let preferred = OllamaModels.preferredChatModel(from: chat) else { return }
+            for role in CopilotRole.allCases where !chat.contains(session.models[role] ?? "") {
+                session.setModel(role, preferred)
+                ProviderSettings.setModel(preferred, for: role)
+            }
         }
         .onDisappear {
             hotkey.stop()
@@ -76,7 +86,12 @@ struct MeetingView: View {
         }
     }
 
-    private func toolbar(
+    /// Reloads the installed Ollama chat models into the per-pane pickers.
+    private func reloadModels() async { chatModels = await OllamaModels.chatModels() }
+
+    // MARK: - Toolbar
+
+    private func meetingToolbar(
         session: MeetingSession,
         proactiveEnabled: Binding<Bool>,
         showSettings: Binding<Bool>,
@@ -103,14 +118,15 @@ struct MeetingView: View {
             }
             Spacer()
             Toggle("Proactive", isOn: proactiveEnabled)
-            Button("What should I answer?") { Task { await session.respond(.answerQuestion) } }
-            Button("Recap so far") { Task { await session.respond(.recap) } }
-            Button("Suggest a follow-up") { Task { await session.respond(.followUp) } }
+            Button { Task { await reloadModels() } } label: { Image(systemName: "arrow.clockwise") }
+                .help("Refresh installed Ollama models")
             Button { showPermissions.wrappedValue = true } label: { Image(systemName: "lock.shield") }
             Button { showSettings.wrappedValue = true } label: { Image(systemName: "gearshape") }
         }
         .padding(10)
     }
+
+    // MARK: - Transcript pane
 
     private func transcriptPane(session: MeetingSession, notes: Binding<String>) -> some View {
         VStack(alignment: .leading) {
@@ -118,10 +134,10 @@ struct MeetingView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 6) {
                     ForEach(store.utterances) { seg in
-                        line(for: seg)
+                        transcriptLine(for: seg)
                     }
                     if let partial = store.partial {
-                        line(for: partial).opacity(0.5)
+                        transcriptLine(for: partial).opacity(0.5)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -134,37 +150,120 @@ struct MeetingView: View {
         .frame(minWidth: 360)
     }
 
-    private func line(for seg: TranscriptSegment) -> some View {
+    private func transcriptLine(for seg: TranscriptSegment) -> some View {
         (Text(seg.source == .you ? "You: " : "Others: ")
             .foregroundStyle(seg.source == .you ? .blue : .green).bold()
          + Text(seg.text))
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func suggestionPane(_ session: MeetingSession) -> some View {
-        VStack(alignment: .leading) {
+    // MARK: - AI panes
+
+    private func listenerPane(session: MeetingSession) -> some View {
+        AIPaneView(
+            title: "Listener",
+            role: .listener,
+            session: session,
+            chatModels: chatModels,
+            outputText: session.listenerSummary,
+            placeholder: "Live summary & open items will appear here.",
+            headerExtra: {
+                AnyView(Button("Refresh") { Task { await session.refreshListener() } })
+            },
+            actionButtons: { AnyView(EmptyView()) }
+        )
+    }
+
+    private func quickPane(session: MeetingSession) -> some View {
+        AIPaneView(
+            title: "Quick",
+            role: .quick,
+            session: session,
+            chatModels: chatModels,
+            outputText: session.quickSuggestion,
+            placeholder: "Press ⌘⇧Space or a button for a quick suggestion.",
+            headerExtra: { AnyView(EmptyView()) },
+            actionButtons: {
+                AnyView(HStack {
+                    Button("What should I answer?") { Task { await session.respondQuick(.answerQuestion) } }
+                    Button("Recap so far") { Task { await session.respondQuick(.recap) } }
+                    Button("Suggest a follow-up") { Task { await session.respondQuick(.followUp) } }
+                })
+            }
+        )
+    }
+
+    private func deepPane(session: MeetingSession) -> some View {
+        AIPaneView(
+            title: "Deep",
+            role: .deep,
+            session: session,
+            chatModels: chatModels,
+            outputText: session.deepAnswer,
+            placeholder: "Ask for a detailed/coding answer.",
+            headerExtra: { AnyView(EmptyView()) },
+            actionButtons: {
+                AnyView(Button("Deep answer") { Task { await session.respondDeep(.answerQuestion) } })
+            }
+        )
+    }
+}
+
+// MARK: - AIPaneView
+
+private struct AIPaneView: View {
+    let title: String
+    let role: CopilotRole
+    let session: MeetingSession
+    let chatModels: [String]
+    let outputText: String
+    let placeholder: String
+    let headerExtra: () -> AnyView
+    let actionButtons: () -> AnyView
+
+    private func modelOptions() -> [String] {
+        let current = session.models[role] ?? ""
+        if chatModels.contains(current) { return chatModels }
+        return current.isEmpty ? chatModels : [current] + chatModels
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text("Suggestion").font(.headline)
-                if session.isStreaming { ProgressView().controlSize(.small) }
+                Text(title).font(.headline)
+                if session.streamingRoles.contains(role) {
+                    ProgressView().controlSize(.small)
+                }
+                Spacer()
+                headerExtra()
+                Picker("Model", selection: Binding(
+                    get: { session.models[role] ?? "" },
+                    set: { session.setModel(role, $0); ProviderSettings.setModel($0, for: role) }
+                )) {
+                    ForEach(modelOptions(), id: \.self) { Text($0).tag($0) }
+                }
+                .labelsHidden()
+                .frame(maxWidth: 200)
             }
             ScrollView {
                 Group {
-                    if !session.suggestion.isEmpty {
-                        Text(session.suggestion)
+                    if !outputText.isEmpty {
+                        Text(outputText)
                             .foregroundStyle(.primary)
                             .textSelection(.enabled)
-                    } else if session.isStreaming {
+                    } else if session.streamingRoles.contains(role) {
                         Text("💭 Thinking…")
                             .foregroundStyle(.secondary)
                     } else {
-                        Text("Press ⌘⇧Space or a button to get a suggestion.")
+                        Text(placeholder)
                             .foregroundStyle(.secondary)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
+            actionButtons()
         }
         .padding(10)
-        .frame(minWidth: 360)
+        .frame(minHeight: 160)
     }
 }

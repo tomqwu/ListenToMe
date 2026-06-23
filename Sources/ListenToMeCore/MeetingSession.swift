@@ -1,44 +1,82 @@
 import Foundation
 import Observation
 
-/// Orchestrates capture -> transcription -> store -> proactive/on-demand responses.
+/// Orchestrates capture -> transcription -> store -> proactive/on-demand responses
+/// across three independent AI pane roles (Listener, Quick, Deep).
 /// Depends only on protocols, so it is fully unit-testable with mocks.
 @MainActor
 @Observable
 public final class MeetingSession {
     public private(set) var isRunning = false
-    public private(set) var isStreaming = false
-    public private(set) var suggestion = ""
     public var notes = ""
     public var proactiveEnabled = true
-
     public let store: ConversationStore
-    public let router: ModelRouter
+
+    /// Per-role output properties
+    public private(set) var listenerSummary = ""
+    public private(set) var quickSuggestion = ""
+    public private(set) var deepAnswer = ""
+
+    /// The set of roles currently streaming a response.
+    public private(set) var streamingRoles: Set<CopilotRole> = []
+
+    /// The model ID assigned to each role.
+    public private(set) var models: [CopilotRole: String]
+
     private var context: ContextEngine
     private let makeCapture: @Sendable () -> any AudioCapturing
     private let makeTranscriber: @Sendable () -> any Transcribing
+    private let makeProvider: @Sendable (String) -> any LLMProvider
+    private var providers: [CopilotRole: any LLMProvider]
     private var capture: (any AudioCapturing)?
     private var transcriber: (any Transcribing)?
     private let clock: @Sendable () -> TimeInterval
+    private let listenerDebounce: TimeInterval
 
     private var pumpTasks: [Task<Void, Never>] = []
-    private var responseTask: Task<Void, Never>?
-    private var responseGeneration = 0
+    private var responseTasks: [CopilotRole: Task<Void, Never>] = [:]
+    private var responseGenerations: [CopilotRole: Int] = [:]
     private var runID = 0
 
+    /// Tracks when the listener was last refreshed (for debouncing ingest-triggered refreshes).
+    private var lastListenerFire: TimeInterval = -.greatestFiniteMagnitude
+
+    /// True while a coalesced trailing listener refresh is scheduled (at most one in flight).
+    private var listenerRefreshPending = false
+
     public init(store: ConversationStore,
-                router: ModelRouter,
                 context: ContextEngine,
                 makeCapture: @escaping @Sendable () -> any AudioCapturing,
                 makeTranscriber: @escaping @Sendable () -> any Transcribing,
+                makeProvider: @escaping @Sendable (String) -> any LLMProvider,
+                models: [CopilotRole: String],
+                listenerDebounce: TimeInterval = 12,
                 clock: @escaping @Sendable () -> TimeInterval = { Date().timeIntervalSince1970 }) {
         self.store = store
-        self.router = router
         self.context = context
         self.makeCapture = makeCapture
         self.makeTranscriber = makeTranscriber
+        self.makeProvider = makeProvider
+        self.models = models
+        self.listenerDebounce = listenerDebounce
         self.clock = clock
+        // Build initial providers from models
+        var built: [CopilotRole: any LLMProvider] = [:]
+        for (role, modelID) in models {
+            built[role] = makeProvider(modelID)
+        }
+        self.providers = built
     }
+
+    // MARK: - Model management
+
+    /// Changes the model for a role and rebuilds its provider.
+    public func setModel(_ role: CopilotRole, _ model: String) {
+        models[role] = model
+        providers[role] = makeProvider(model)
+    }
+
+    // MARK: - Session lifecycle
 
     public func start() async throws {
         guard !isRunning else { return }
@@ -84,7 +122,8 @@ public final class MeetingSession {
     public func stop() {
         guard isRunning else { return }
         isRunning = false
-        responseTask?.cancel()
+        listenerRefreshPending = false
+        for (_, task) in responseTasks { task.cancel() }
         capture?.stop()
         if let transcriber { Task { await transcriber.finish() } }
         capture = nil
@@ -92,58 +131,152 @@ public final class MeetingSession {
         pumpTasks.removeAll()
     }
 
-    /// Applies a segment to the store and fires a proactive response when warranted.
-    /// Proactive responses run in the background so the transcript pump never stalls.
+    // MARK: - Ingest
+
+    /// Applies a segment to the store, fires proactive quick response when warranted,
+    /// and schedules a debounced listener refresh for finalized segments.
     public func ingest(_ segment: TranscriptSegment) async {
         store.apply(segment)
+
+        // Listener refresh: leading + trailing edge debounce on finalized segments while running.
+        // Leading edge fires immediately and registers responseTasks[.listener] synchronously
+        // (via startListenerRefresh) so stop()/waitForResponse(.listener) cannot miss it.
+        // Suppressed segments arm a single coalesced trailing refresh for the rest of the window,
+        // so a final utterance before the meeting goes quiet still gets summarized.
+        if segment.isFinal, isRunning {
+            let now = clock()
+            let elapsed = now - lastListenerFire
+            if elapsed >= listenerDebounce {
+                lastListenerFire = now
+                startListenerRefresh()
+            } else if !listenerRefreshPending {
+                listenerRefreshPending = true
+                let wait = listenerDebounce - elapsed
+                let scheduledRun = runID
+                Task { [weak self] in
+                    try? await Task.sleep(nanoseconds: UInt64(max(0, wait) * 1_000_000_000))
+                    self?.fireTrailingListenerRefresh(forRun: scheduledRun)
+                }
+            }
+        }
+
+        // Quick proactive: fires on finalized remote questions
         guard isRunning, proactiveEnabled,
               context.shouldFireProactive(for: segment, now: clock()) else { return }
-        startResponse(.proactive)
+        startRoleTask(.quick) {
+            PromptBuilder.build(context: self.context.buildContext(from: self.store, notes: self.notes),
+                                action: .proactive)
+        }
     }
 
-    /// On-demand response (hotkey / buttons). Awaits completion.
-    public func respond(_ action: ResponseAction) async {
-        await startResponse(action).value
+    // MARK: - On-demand responses (awaitable)
+
+    /// Streams a Quick response for the given action. Awaits completion.
+    public func respondQuick(_ action: ResponseAction) async {
+        await startRoleTask(.quick) {
+            PromptBuilder.build(context: self.context.buildContext(from: self.store, notes: self.notes),
+                                action: action)
+        }.value
     }
 
-    /// For tests/UI that need to await the most recent response.
-    public func waitForResponse() async {
-        await responseTask?.value
+    /// Streams a Deep response for the given action. Awaits completion.
+    public func respondDeep(_ action: ResponseAction) async {
+        await startRoleTask(.deep) {
+            PromptBuilder.buildDeep(context: self.context.buildContext(from: self.store, notes: self.notes),
+                                    action: action)
+        }.value
     }
 
-    /// Starts a streaming response, cancelling any in-flight one. Returns the task.
+    /// Streams a Listener refresh (rolling summary + open items). Awaits completion.
+    public func refreshListener() async {
+        await startListenerRefresh().value
+    }
+
+    // MARK: - Listener refresh starter
+
+    /// Synchronously registers responseTasks[.listener] for a listener refresh and returns it.
+    /// Shared by the ingest leading/trailing-edge debounce and the manual refreshListener().
     @discardableResult
-    private func startResponse(_ action: ResponseAction) -> Task<Void, Never> {
-        responseTask?.cancel()
-        responseGeneration += 1
-        let generation = responseGeneration
-        let request = PromptBuilder.build(
-            context: context.buildContext(from: store, notes: notes),
-            action: action
-        )
+    private func startListenerRefresh() -> Task<Void, Never> {
+        startRoleTask(.listener) {
+            PromptBuilder.buildListener(context: self.context.buildContext(from: self.store, notes: self.notes))
+        }
+    }
+
+    /// Fires a coalesced trailing listener refresh after the debounce window, unless stopped
+    /// or the session has been restarted (stale cross-session refresh).
+    private func fireTrailingListenerRefresh(forRun run: Int) {
+        listenerRefreshPending = false
+        guard isRunning, runID == run else { return }   // ignore stale cross-session refreshes
+        lastListenerFire = clock()
+        startListenerRefresh()
+    }
+
+    // MARK: - Wait helpers
+
+    /// Await the most recent in-flight task for the given role (for tests/UI).
+    public func waitForResponse(_ role: CopilotRole) async {
+        await responseTasks[role]?.value
+    }
+
+    // MARK: - Internal per-role streaming machinery
+
+    /// Cancels any prior task for `role`, starts a new one streaming `request` into
+    /// that role's output property. Returns the task so callers can await it.
+    @discardableResult
+    private func startRoleTask(_ role: CopilotRole,
+                               _ makeRequest: @escaping () -> LLMRequest) -> Task<Void, Never> {
+        responseTasks[role]?.cancel()
+        let generation = (responseGenerations[role] ?? 0) + 1
+        responseGenerations[role] = generation
         let task = Task { [weak self] in
             guard let self else { return }
-            await self.runResponse(request, generation: generation)
+            let request = makeRequest()
+            await self.run(role, request, generation: generation)
         }
-        responseTask = task
+        responseTasks[role] = task
         return task
     }
 
-    private func runResponse(_ request: LLMRequest, generation: Int) async {
-        guard generation == responseGeneration, !Task.isCancelled else { return }
-        suggestion = ""
-        isStreaming = true
-        defer { if generation == responseGeneration { isStreaming = false } }
+    private func run(_ role: CopilotRole, _ request: LLMRequest, generation: Int) async {
+        guard generation == responseGenerations[role], !Task.isCancelled else { return }
+        // Clear the output and mark streaming
+        setOutput(role, "")
+        streamingRoles.insert(role)
+        defer {
+            if generation == responseGenerations[role] {
+                streamingRoles.remove(role)
+            }
+        }
+        guard let provider = providers[role] else { return }
         do {
-            for try await delta in router.stream(request) {
+            for try await delta in provider.stream(request) {
                 if Task.isCancelled { return }
-                if generation != responseGeneration { return }   // superseded by a newer response
-                suggestion += delta
+                if generation != responseGenerations[role] { return }
+                appendOutput(role, delta)
             }
         } catch {
-            if generation == responseGeneration, !Task.isCancelled, !(error is CancellationError) {
-                suggestion = "⚠️ \(error.localizedDescription)"
+            if generation == responseGenerations[role],
+               !Task.isCancelled,
+               !(error is CancellationError) {
+                setOutput(role, "⚠️ \(error.localizedDescription)")
             }
+        }
+    }
+
+    private func setOutput(_ role: CopilotRole, _ value: String) {
+        switch role {
+        case .listener: listenerSummary = value
+        case .quick:    quickSuggestion = value
+        case .deep:     deepAnswer = value
+        }
+    }
+
+    private func appendOutput(_ role: CopilotRole, _ delta: String) {
+        switch role {
+        case .listener: listenerSummary += delta
+        case .quick:    quickSuggestion += delta
+        case .deep:     deepAnswer += delta
         }
     }
 }

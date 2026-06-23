@@ -48,6 +48,20 @@ public enum PromptBuilder {
     answer it directly first.
     """
 
+    public static let listenerSystemPrompt = """
+    You are a real-time meeting listener. Given a conversation transcript, produce:
+    (a) a 1-3 sentence rolling summary of what has been discussed so far, and
+    (b) a short bulleted list of any open questions or action items identified.
+    Be brief and factual. No preamble, no meta-commentary.
+    """
+
+    public static let deepSystemPrompt = """
+    You are a thorough meeting copilot for the user, labeled "You". The transcript labels remote \
+    participants as "Others". Provide a detailed, well-reasoned answer grounded in the transcript \
+    and any notes provided. Use longer-form explanation where helpful; include code blocks when \
+    relevant. Be thorough and precise — depth is valued over brevity here.
+    """
+
     private static func instruction(for action: ResponseAction) -> String {
         switch action {
         case .answerQuestion, .proactive:
@@ -59,7 +73,18 @@ public enum PromptBuilder {
         }
     }
 
-    public static func build(context: PromptContext, action: ResponseAction) -> LLMRequest {
+    private static func deepInstruction(for action: ResponseAction) -> String {
+        switch action {
+        case .answerQuestion, .proactive:
+            return "Based on the transcript, provide a detailed and well-reasoned answer the user can draw on."
+        case .recap:
+            return "Give a thorough recap of the conversation so far, covering all key points and nuances."
+        case .followUp:
+            return "Suggest a thoughtful follow-up question the user could ask, with reasoning for why it matters."
+        }
+    }
+
+    private static func buildUserMessage(context: PromptContext, instruction: String) -> String {
         let transcript = context.messages.map { seg in
             "\(seg.source == .you ? "You" : "Others"): \(seg.text)"
         }.joined(separator: "\n")
@@ -68,10 +93,41 @@ public enum PromptBuilder {
         if let notes = context.notes, !notes.trimmingCharacters(in: .whitespaces).isEmpty {
             user += "Context notes from the user:\n\(notes)\n\n"
         }
-        user += instruction(for: action)
+        user += instruction
+        return user
+    }
 
+    public static func build(context: PromptContext, action: ResponseAction) -> LLMRequest {
+        let user = buildUserMessage(context: context, instruction: instruction(for: action))
         return LLMRequest(
             system: systemPrompt,
+            messages: [ChatMessage(role: "user", content: user)]
+        )
+    }
+
+    /// Listener builder: rolling summary + open questions/action items.
+    public static func buildListener(context: PromptContext) -> LLMRequest {
+        let transcript = context.messages.map { seg in
+            "\(seg.source == .you ? "You" : "Others"): \(seg.text)"
+        }.joined(separator: "\n")
+
+        var user = "Transcript so far:\n\(transcript)\n\n"
+        if let notes = context.notes, !notes.trimmingCharacters(in: .whitespaces).isEmpty {
+            user += "Context notes from the user:\n\(notes)\n\n"
+        }
+        user += "Provide the rolling summary and list of open questions or action items."
+
+        return LLMRequest(
+            system: listenerSystemPrompt,
+            messages: [ChatMessage(role: "user", content: user)]
+        )
+    }
+
+    /// Deep builder: detailed, well-reasoned answer for complex / coding questions.
+    public static func buildDeep(context: PromptContext, action: ResponseAction) -> LLMRequest {
+        let user = buildUserMessage(context: context, instruction: deepInstruction(for: action))
+        return LLMRequest(
+            system: deepSystemPrompt,
             messages: [ChatMessage(role: "user", content: user)]
         )
     }
