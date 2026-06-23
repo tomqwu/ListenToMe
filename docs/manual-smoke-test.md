@@ -5,34 +5,38 @@
 > path that cannot be automated: mic capture, system-audio capture, and live speech-to-text — all
 > of which require a GUI session and manual permission grants.
 
-Prereq: Ollama running with `llama3.1` pulled (`ollama pull llama3.1`).
+Prereq: Ollama running with at least one chat-capable model installed (local or Ollama-cloud, e.g.
+`deepseek-v4-flash:cloud`). The app auto-picks an installed model per pane on first launch.
 
-1. `make run` — the app window opens with two panes.
+1. `make run` — the window opens with **four panes**: **Transcript** (left) and **Listener**,
+   **Quick**, **Deep** (right).
 2. On first launch, the app shows a **Permissions** panel automatically. Grant Microphone,
    Speech Recognition, Screen Recording (system audio), and Accessibility (global hotkey) directly
    from the panel. You can also reopen it anytime via the 🛡️ (lock.shield) toolbar button.
    Re-click **Listen** after granting if needed.
-3. Speak a sentence → it appears under **Transcript** labeled **You** (blue).
-4. Play speech from another app (e.g., a YouTube video or a meeting) → it appears labeled
-   **Others** (green).
-5. Click **What should I answer?** → a streamed suggestion appears in the right pane.
-6. With **Proactive** on, have the other audio ask a question (e.g., "what is the plan?") →
-   a suggestion appears automatically within ~1-2s of the utterance ending.
-7. Type into **Context notes** (e.g., "I am the backend lead"), then trigger a suggestion →
-   the answer reflects the note.
-8. Press **⌘⇧Space** while another app is focused → a suggestion is generated.
-9. Click **Stop** → the red recording indicator disappears and capture halts.
-10. Open **Settings** (gear icon). Switch the provider to **DeepSeek**, pick **V4 Flash**, paste a
-    DeepSeek API key, and **Save** → trigger a suggestion and confirm it streams from DeepSeek.
-    Switch back to **Ollama** and Save. (An empty key or blank Ollama model is rejected with a
-    message; the selection persists across relaunches.)
-
-11. In **Settings**, confirm **Transcription engine** = **SpeechAnalyzer**. Verify dual-channel:
-    speak (You) while other audio plays (Others) — both should transcribe concurrently. Confirm
-    finalized lines (not just live/volatile partials) accumulate in the Transcript and that
-    proactive suggestions fire on `Others` questions. If finalized lines never commit (only volatile
-    text shows), switch the engine to **SpeechRecognizer** and report — SpeechAnalyzer's
-    finalization semantics need on-device confirmation.
+3. In each AI pane's header, confirm a **model dropdown** is populated with your installed Ollama
+   models. Set different models per pane if you like (e.g. a fast model for **Quick**, a heavier one
+   for **Deep**, `deepseek-v4-flash:cloud` for any). The toolbar **↻** button re-scans models.
+4. Click **Listen**. Speak a sentence → it appears under **Transcript** labeled **You** (blue).
+5. Play speech from another app (a video/meeting) → it appears labeled **Others** (green).
+6. In the **Quick** pane, click **What should I answer?** → a streamed suggestion appears (a
+   "💭 Thinking…" state shows first for thinking models).
+7. With **Proactive** on, have the other audio ask a question → a Quick suggestion appears
+   automatically ~1-2s after the utterance ends. Press **⌘⇧Space** while another app is focused →
+   a Quick suggestion is generated.
+8. **Listener** pane: after some conversation, confirm a rolling summary + open questions/action
+   items appear (auto-refreshes; the pane's Refresh button forces it).
+9. **Deep** pane: click **Deep answer** → a longer, detailed response streams (using the Deep
+   pane's model).
+10. Type into **Context notes** (e.g., "I am the backend lead"), then trigger a Quick suggestion →
+    the answer reflects the note.
+11. Click **Stop** → the red recording indicator disappears and capture halts.
+12. In **Settings** (gear), confirm **Transcription engine** = **SpeechAnalyzer**. Verify
+    dual-channel: speak (You) while other audio plays (Others) — both should transcribe
+    concurrently. Confirm **finalized** lines (not just live/volatile partials) accumulate in the
+    Transcript and that proactive suggestions fire on `Others` questions. If finalized lines never
+    commit (only volatile text shows), switch the engine to **SpeechRecognizer** and report —
+    SpeechAnalyzer's finalization semantics need on-device confirmation.
 
 If dual-channel transcription shows only one speaker (a console error mentioning
 `kAFAssistantErrorDomain 1100`), see the README "Known limitations" — the fallback is
