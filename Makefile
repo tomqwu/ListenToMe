@@ -31,11 +31,15 @@ pre-push: lint test build
 	@echo "pre-push checks passed"
 
 e2e: build
-	@MODEL="$${LTM_E2E_MODEL:-llama3.1}"; \
-	curl -sf -m 5 http://localhost:11434/api/tags >/dev/null || { \
+	@curl -sf -m 5 http://localhost:11434/api/tags >/dev/null || { \
 		echo "e2e: Ollama not reachable at localhost:11434 — start Ollama first"; exit 1; }; \
+	MODEL="$${LTM_E2E_MODEL:-}"; \
+	if [ -z "$$MODEL" ]; then \
+		MODEL="$$(python3 scripts/pick-ollama-chat-model.py)"; \
+	fi; \
+	[ -n "$$MODEL" ] || { echo "e2e: no chat-capable Ollama model installed — pull one or set LTM_E2E_MODEL"; exit 1; }; \
 	curl -sf -m 10 http://localhost:11434/api/show -d "{\"model\":\"$$MODEL\"}" >/dev/null || { \
-		echo "e2e: model '$$MODEL' not available — run 'ollama pull $$MODEL' or set LTM_E2E_MODEL (e.g. deepseek-v4-flash:cloud)"; exit 1; }; \
+		echo "e2e: model '$$MODEL' not available — 'ollama pull $$MODEL' or set LTM_E2E_MODEL"; exit 1; }; \
 	APP="$$(xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMe -showBuildSettings 2>/dev/null | \
 		awk -F' = ' '/ BUILT_PRODUCTS_DIR =/{d=$$2} / FULL_PRODUCT_NAME =/{p=$$2} END{print d"/"p}')"; \
 	test -d "$$APP" && echo "e2e: app bundle present ($$APP)" || { echo "e2e: app bundle missing"; exit 1; }; \
