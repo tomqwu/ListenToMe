@@ -13,11 +13,6 @@ struct MeetingView: View {
     init() {
         let store = ConversationStore()
         let router = ModelRouter(default: OllamaProvider(model: ProviderSettings.ollamaModel))
-        if ProviderSettings.provider == "deepseek",
-           let key = KeychainStore.get("deepseek"), !key.isEmpty {
-            router.register(DeepSeekProvider(model: ProviderSettings.deepseekModel, apiKey: key))
-            router.setActive("deepseek")
-        }
         _store = State(initialValue: store)
         _session = State(initialValue: MeetingSession(
             store: store,
@@ -65,6 +60,15 @@ struct MeetingView: View {
             hotkey.start { Task { await session.respond(.answerQuestion) } }
             permissions.refresh()
             if !permissions.allRequiredGranted { showPermissions = true }
+        }
+        .task {
+            let chat = await OllamaModels.chatModels()
+            guard !chat.isEmpty, !chat.contains(ProviderSettings.ollamaModel),
+                  let model = OllamaModels.preferredChatModel(from: chat) else { return }
+            ProviderSettings.ollamaModel = model
+            let router = session.router
+            router.register(OllamaProvider(model: model))
+            router.setActive("ollama")
         }
         .onDisappear {
             hotkey.stop()
