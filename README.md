@@ -1,9 +1,13 @@
 # ListenToMe
 
 A personal, on-device macOS meeting copilot: it listens to your mic and the other participants'
-system audio, transcribes live, and gives real-time suggestions — on demand (⌘⇧Space or the
-buttons) and proactively when someone asks a question. Models are configurable; the MVP defaults to
-a local Ollama model, so nothing leaves your machine.
+system audio, transcribes live, and gives real-time AI help. The window has **four panes**:
+**Transcript** (live, source-labeled — no model), plus three AI panes that **each have their own
+selectable model** — **Listener** (rolling summary + open questions/action items), **Quick** (fast
+suggestions — ⌘⇧Space, buttons, or proactively when someone asks a question), and **Deep**
+(on-demand detailed/long-reasoning answer). Inference runs through Ollama: **local models stay
+on-device**; if you pick an Ollama **`:cloud`** model, the transcript/prompt is sent to that cloud
+model.
 
 ## Requirements
 - macOS 26+
@@ -12,19 +16,22 @@ a local Ollama model, so nothing leaves your machine.
 
 ## Build & run
 ```bash
-make test     # run the ListenToMeCore test suite (65: unit + integration)
+make test     # run the ListenToMeCore test suite (unit + integration)
 make build    # generate the Xcode project and build the app
 make run      # build and launch
 make pre-push # lint + tests + build (the CI-equivalent gate)
 ```
 
 ## Models
-Pick the model in the in-app **Settings** (gear icon) from your installed Ollama models — a live
-picker of what's available on your local Ollama server (`http://localhost:11434`), including both
-local models and Ollama-cloud models (e.g. `deepseek-v4-flash:cloud`, which runs via your Ollama
-cloud sign-in). On first launch the app auto-detects installed models and switches to one that works
-— no manual config needed. The transcription engine (SpeechAnalyzer / SpeechRecognizer) is also
-chosen here.
+Each AI pane (**Listener**, **Quick**, **Deep**) has its **own model dropdown in its header** —
+pick a different model per role (e.g. a fast model for Quick, a heavier reasoning model for Deep).
+The dropdowns list chat-capable models discovered from your local Ollama server
+(`http://localhost:11434` via `/api/tags` + `/api/show`), including local models and Ollama-cloud
+models (e.g. `deepseek-v4-flash:cloud`, which runs via your Ollama cloud sign-in). Per-role choices
+persist across launches; the toolbar **↻** button re-scans installed models (e.g. after you pull a
+new one). On first launch, any role whose saved model isn't installed auto-switches to one that
+works — no manual config needed. **Settings** (gear icon) holds the transcription engine
+(SpeechAnalyzer / SpeechRecognizer).
 
 ## CI
 GitHub Actions (`.github/workflows/ci.yml`) gates every PR to `main` on a macOS runner:
