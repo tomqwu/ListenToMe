@@ -46,4 +46,77 @@ final class PromptBuilderTests: XCTestCase {
         let req = PromptBuilder.build(context: ctx(), action: .proactive)
         XCTAssertEqual(req.system, PromptBuilder.systemPrompt)
     }
+
+    // MARK: - buildListener tests
+
+    func testListenerSystemPromptMentionsSummary() {
+        let req = PromptBuilder.buildListener(context: ctx())
+        XCTAssertTrue(req.system.lowercased().contains("summar"),
+                      "Listener system prompt should mention summary")
+    }
+
+    func testListenerSystemPromptMentionsQuestionsOrActionItems() {
+        let req = PromptBuilder.buildListener(context: ctx())
+        let lower = req.system.lowercased()
+        XCTAssertTrue(lower.contains("question") || lower.contains("action item"),
+                      "Listener system prompt should mention questions or action items")
+    }
+
+    func testListenerIncludesTranscript() {
+        let req = PromptBuilder.buildListener(context: ctx())
+        let user = req.messages.last!.content
+        XCTAssertTrue(user.contains("Others: What is our deploy plan?"),
+                      "Listener request should include transcript text")
+    }
+
+    func testListenerIncludesNotes() {
+        let req = PromptBuilder.buildListener(context: ctx(notes: "Topic: release planning"))
+        XCTAssertTrue(req.messages.last!.content.contains("release planning"),
+                      "Listener request should include notes when present")
+    }
+
+    func testListenerHasSystemMessage() {
+        let req = PromptBuilder.buildListener(context: ctx())
+        XCTAssertFalse(req.system.isEmpty, "Listener request must have a non-empty system message")
+    }
+
+    // MARK: - buildDeep tests
+
+    func testDeepSystemPromptContainsDetailedOrThoroughOrReasoned() {
+        let req = PromptBuilder.buildDeep(context: ctx(), action: .answerQuestion)
+        let lower = req.system.lowercased()
+        XCTAssertTrue(lower.contains("detail") || lower.contains("thorough") || lower.contains("reason"),
+                      "Deep system prompt should mention detail/thorough/reason")
+    }
+
+    func testDeepSystemPromptDiffersFromQuick() {
+        let quick = PromptBuilder.build(context: ctx(), action: .answerQuestion)
+        let deep = PromptBuilder.buildDeep(context: ctx(), action: .answerQuestion)
+        XCTAssertNotEqual(quick.system, deep.system,
+                          "Deep system prompt must differ from Quick system prompt")
+    }
+
+    func testDeepIncludesTranscript() {
+        let req = PromptBuilder.buildDeep(context: ctx(), action: .answerQuestion)
+        let user = req.messages.last!.content
+        XCTAssertTrue(user.contains("Others: What is our deploy plan?"),
+                      "Deep request should include transcript text")
+    }
+
+    func testDeepIncludesNotes() {
+        let req = PromptBuilder.buildDeep(context: ctx(notes: "Architecture notes"), action: .recap)
+        XCTAssertTrue(req.messages.last!.content.contains("Architecture notes"),
+                      "Deep request should include notes when present")
+    }
+
+    func testDeepHasSystemMessage() {
+        let req = PromptBuilder.buildDeep(context: ctx(), action: .answerQuestion)
+        XCTAssertFalse(req.system.isEmpty, "Deep request must have a non-empty system message")
+    }
+
+    func testDeepActionInstructionVaries() {
+        let answer = PromptBuilder.buildDeep(context: ctx(), action: .answerQuestion).messages.last!.content
+        let recap = PromptBuilder.buildDeep(context: ctx(), action: .recap).messages.last!.content
+        XCTAssertNotEqual(answer, recap, "Deep should vary instruction by action")
+    }
 }

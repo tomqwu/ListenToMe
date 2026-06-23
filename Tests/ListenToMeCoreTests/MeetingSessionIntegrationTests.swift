@@ -3,7 +3,7 @@ import XCTest
 
 /// Headless end-to-end tests that exercise the real start() pump:
 ///   capture.chunks → transcriber.feed
-///   transcriber.segments → ingest → store / proactive
+///   transcriber.segments → ingest → store / proactive / listener-refresh
 ///
 /// Each test holds direct references to the mock capture/transcriber so it can
 /// drive them from outside the session after start() is called.
@@ -20,20 +20,21 @@ final class MeetingSessionIntegrationTests: XCTestCase {
 
     /// Builds a session where the factories capture the test-held mock instances.
     private func makeSession(
-        deltas: [String] = ["ok"],
         debounce: TimeInterval = 0,
+        listenerDebounce: TimeInterval = 0,
         now: @escaping @Sendable () -> TimeInterval = { 999_999 }
     ) -> SessionFixture {
         let capture = MockCapture()
         let transcriber = MockTranscriber()
         let store = ConversationStore()
-        let router = ModelRouter(default: MockLLMProvider(id: "mock", deltas: deltas))
         let session = MeetingSession(
             store: store,
-            router: router,
             context: ContextEngine(debounce: debounce),
             makeCapture: { capture },
             makeTranscriber: { transcriber },
+            makeProvider: { model in MockLLMProvider(id: model, deltas: ["[\(model)]"]) },
+            models: [.listener: "L", .quick: "Q", .deep: "D"],
+            listenerDebounce: listenerDebounce,
             clock: now
         )
         return SessionFixture(session: session, capture: capture, transcriber: transcriber)
@@ -92,14 +93,10 @@ final class MeetingSessionIntegrationTests: XCTestCase {
         session.stop()
     }
 
-    // MARK: - Test 3: Proactive fires through the pump
+    // MARK: - Test 3: Proactive quick fires through the pump
 
     func testProactiveFiresThroughPumpOnRemoteQuestion() async throws {
-        let fixture = makeSession(
-            deltas: ["Great ", "answer."],
-            debounce: 0,
-            now: { 999_999 }   // far future so debounce is always satisfied
-        )
+        let fixture = makeSession(debounce: 0, now: { 999_999 })
         let session = fixture.session
         let transcriber = fixture.transcriber
         session.proactiveEnabled = true
@@ -110,11 +107,11 @@ final class MeetingSessionIntegrationTests: XCTestCase {
                                             isFinal: true, start: 0, end: 1)
         transcriber.emit(questionSeg)
 
-        // Wait for ingest to pick it up, then for the response task to complete
-        await waitUntil { !session.suggestion.isEmpty }
-        await session.waitForResponse()
+        // Wait for ingest to pick it up, then for the quick response task to complete
+        await waitUntil { !session.quickSuggestion.isEmpty }
+        await session.waitForResponse(.quick)
 
-        XCTAssertEqual(session.suggestion, "Great answer.")
+        XCTAssertEqual(session.quickSuggestion, "[Q]")
 
         session.stop()
     }
@@ -145,10 +142,8 @@ final class MeetingSessionIntegrationTests: XCTestCase {
         let tracker = InstanceTracker()
 
         let store = ConversationStore()
-        let router = ModelRouter(default: MockLLMProvider(id: "mock", deltas: ["ok"]))
         let session = MeetingSession(
             store: store,
-            router: router,
             context: ContextEngine(debounce: 0),
             makeCapture: {
                 let c = MockCapture()
@@ -160,6 +155,9 @@ final class MeetingSessionIntegrationTests: XCTestCase {
                 tracker.transcribers.append(t)
                 return t
             },
+            makeProvider: { model in MockLLMProvider(id: model, deltas: ["[\(model)]"]) },
+            models: [.listener: "L", .quick: "Q", .deep: "D"],
+            listenerDebounce: 0,
             clock: { 0 }
         )
 
@@ -185,6 +183,27 @@ final class MeetingSessionIntegrationTests: XCTestCase {
         await waitUntil { session.store.utterances.count >= 1 }
 
         XCTAssertEqual(session.store.utterances.map(\.text), ["After restart"])
+
+        session.stop()
+    }
+
+    // MARK: - Test 6: finalized segment triggers listener refresh through pump
+
+    func testFinalizedSegmentTriggersListenerRefreshThroughPump() async throws {
+        let fixture = makeSession(listenerDebounce: 0, now: { 0 })
+        let session = fixture.session
+        let transcriber = fixture.transcriber
+        try await session.start()
+
+        let seg = TranscriptSegment(source: .you, text: "Just said something final.",
+                                    isFinal: true, start: 0, end: 1)
+        transcriber.emit(seg)
+
+        await waitUntil { !session.listenerSummary.isEmpty }
+        await session.waitForResponse(.listener)
+
+        XCTAssertFalse(session.listenerSummary.isEmpty,
+                       "listenerSummary should be populated after finalized segment")
 
         session.stop()
     }
