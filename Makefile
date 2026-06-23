@@ -7,10 +7,13 @@ gen:
 	xcodegen generate
 
 build: gen
-	xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMe \
-		-destination 'platform=macOS' -configuration Debug build | xcbeautify || \
-	xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMe \
-		-destination 'platform=macOS' -configuration Debug build
+	@if command -v xcbeautify >/dev/null 2>&1; then \
+		xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMe \
+			-destination 'platform=macOS' -configuration Debug build | xcbeautify; \
+	else \
+		xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMe \
+			-destination 'platform=macOS' -configuration Debug build; \
+	fi
 
 test:
 	swift test
