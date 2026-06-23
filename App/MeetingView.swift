@@ -130,11 +130,20 @@ struct MeetingView: View {
                 if session.isStreaming { ProgressView().controlSize(.small) }
             }
             ScrollView {
-                Text(session.suggestion.isEmpty ? "Press ⌘⇧Space or a button to get a suggestion."
-                                                 : session.suggestion)
-                    .foregroundStyle(session.suggestion.isEmpty ? .secondary : .primary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .textSelection(.enabled)
+                Group {
+                    if !session.suggestion.isEmpty {
+                        Text(session.suggestion)
+                            .foregroundStyle(.primary)
+                            .textSelection(.enabled)
+                    } else if session.isStreaming {
+                        Text("💭 Thinking…")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("Press ⌘⇧Space or a button to get a suggestion.")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         .padding(10)
