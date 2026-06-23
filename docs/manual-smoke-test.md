@@ -8,8 +8,10 @@
 Prereq: Ollama running with `llama3.1` pulled (`ollama pull llama3.1`).
 
 1. `make run` — the app window opens with two panes.
-2. Click **Listen**. Grant: Microphone, Speech Recognition, Screen Recording (system audio),
-   and Accessibility (global hotkey) when prompted. Re-click Listen after granting if needed.
+2. On first launch, the app shows a **Permissions** panel automatically. Grant Microphone,
+   Speech Recognition, Screen Recording (system audio), and Accessibility (global hotkey) directly
+   from the panel. You can also reopen it anytime via the 🛡️ (lock.shield) toolbar button.
+   Re-click **Listen** after granting if needed.
 3. Speak a sentence → it appears under **Transcript** labeled **You** (blue).
 4. Play speech from another app (e.g., a YouTube video or a meeting) → it appears labeled
    **Others** (green).
