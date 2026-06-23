@@ -45,6 +45,7 @@ speech-to-text, which need a GUI session + Speech/Screen-Recording permission gr
 ## Permissions
 On first run, grant Microphone, Speech Recognition, Screen Recording (for system audio), and
 Accessibility (for the global hotkey) in System Settings → Privacy & Security.
+On launch the app shows a Permissions panel (also reachable from the toolbar 🛡️) to grant these up front.
 
 ## Architecture
 - `ListenToMeCore` (Swift package): all testable logic — conversation state, VAD, question

@@ -6,6 +6,8 @@ struct MeetingView: View {
     @State private var store: ConversationStore
     @State private var startError: String?
     @State private var showSettings = false
+    @State private var permissions = PermissionsModel()
+    @State private var showPermissions = false
     private let hotkey = HotkeyMonitor()
 
     init() {
@@ -33,7 +35,12 @@ struct MeetingView: View {
     var body: some View {
         @Bindable var session = session
         return VStack(spacing: 0) {
-            toolbar(session: session, proactiveEnabled: $session.proactiveEnabled, showSettings: $showSettings)
+            toolbar(
+                session: session,
+                proactiveEnabled: $session.proactiveEnabled,
+                showSettings: $showSettings,
+                showPermissions: $showPermissions
+            )
             if let startError {
                 Text("⚠️ \(startError)")
                     .foregroundStyle(.red)
@@ -51,8 +58,13 @@ struct MeetingView: View {
         .sheet(isPresented: $showSettings) {
             SettingsView(router: session.router)
         }
+        .sheet(isPresented: $showPermissions) {
+            PermissionsView(permissions: permissions)
+        }
         .onAppear {
             hotkey.start { Task { await session.respond(.answerQuestion) } }
+            permissions.refresh()
+            if !permissions.allRequiredGranted { showPermissions = true }
         }
         .onDisappear {
             hotkey.stop()
@@ -63,7 +75,8 @@ struct MeetingView: View {
     private func toolbar(
         session: MeetingSession,
         proactiveEnabled: Binding<Bool>,
-        showSettings: Binding<Bool>
+        showSettings: Binding<Bool>,
+        showPermissions: Binding<Bool>
     ) -> some View {
         HStack(spacing: 12) {
             Button(session.isRunning ? "Stop" : "Listen") {
@@ -89,6 +102,7 @@ struct MeetingView: View {
             Button("What should I answer?") { Task { await session.respond(.answerQuestion) } }
             Button("Recap so far") { Task { await session.respond(.recap) } }
             Button("Suggest a follow-up") { Task { await session.respond(.followUp) } }
+            Button { showPermissions.wrappedValue = true } label: { Image(systemName: "lock.shield") }
             Button { showSettings.wrappedValue = true } label: { Image(systemName: "gearshape") }
         }
         .padding(10)
