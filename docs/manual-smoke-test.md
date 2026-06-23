@@ -1,5 +1,10 @@
 # ListenToMe — Manual Smoke Test
 
+> **Note:** `make e2e` already covers the app build, app-bundle path resolution, and a real LLM
+> contract test (streaming through `OllamaProvider`). This document covers the audio/transcription
+> path that cannot be automated: mic capture, system-audio capture, and live speech-to-text — all
+> of which require a GUI session and manual permission grants.
+
 Prereq: Ollama running with `llama3.1` pulled (`ollama pull llama3.1`).
 
 1. `make run` — the app window opens with two panes.

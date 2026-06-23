@@ -31,6 +31,17 @@ SwiftLint, the full `ListenToMeCore` test suite (unit + headless integration/e2e
 to macOS 26 and uses ScreenCaptureKit/Speech, the **app build and GUI/audio e2e cannot run on
 hosted runners** — those are verified locally via `docs/manual-smoke-test.md`.
 
+## Local e2e (pre-push)
+`make e2e` runs the checks CI can't (it needs a real Mac + Ollama): it builds the **app target**,
+verifies `make run`'s app-path resolution, and runs a **real LLM contract test** against your local
+Ollama through the actual `OllamaProvider` — model defaults to **`llama3.1`** (pull it with
+`ollama pull llama3.1`), or set `LTM_E2E_MODEL=deepseek-v4-flash:cloud` (or any pulled model) to
+exercise the cloud thinking-model path. `make e2e` preflights that the model is available and fails
+with a clear message if not. Requires Ollama running at `localhost:11434`. The gated test is skipped
+by normal `swift test`/CI. **Not covered (still manual):** mic/system-audio capture and live
+speech-to-text, which need a GUI session + Speech/Screen-Recording permission grants — see
+`docs/manual-smoke-test.md`.
+
 ## Permissions
 On first run, grant Microphone, Speech Recognition, Screen Recording (for system audio), and
 Accessibility (for the global hotkey) in System Settings → Privacy & Security.
