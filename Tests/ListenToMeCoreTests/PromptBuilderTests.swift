@@ -2,13 +2,13 @@ import XCTest
 @testable import ListenToMeCore
 
 final class PromptBuilderTests: XCTestCase {
-    private func ctx(notes: String? = nil) -> PromptContext {
+    private func ctx(notes: String? = nil, summary: String? = nil) -> PromptContext {
         PromptContext(messages: [
             TranscriptSegment(source: .others, text: "What is our deploy plan?",
                               isFinal: true, start: 0, end: 1),
             TranscriptSegment(source: .you, text: "Good question.",
                               isFinal: true, start: 1, end: 2)
-        ], notes: notes)
+        ], notes: notes, summary: summary)
     }
 
     func testSystemPromptHasNoPreambleConstraint() {
@@ -40,6 +40,33 @@ final class PromptBuilderTests: XCTestCase {
     func testNotesOmittedWhenNil() {
         let req = PromptBuilder.build(context: ctx(notes: nil), action: .answerQuestion)
         XCTAssertFalse(req.messages.last!.content.contains("Context notes"))
+    }
+
+    func testListenerSummaryInjectedIntoQuickWhenPresent() {
+        let req = PromptBuilder.build(
+            context: ctx(summary: "Discussed the Friday deploy; owner is unclear."),
+            action: .answerQuestion)
+        let user = req.messages.last!.content
+        XCTAssertTrue(user.contains("Meeting summary so far"))
+        XCTAssertTrue(user.contains("owner is unclear"))
+    }
+
+    func testListenerSummaryInjectedIntoDeepWhenPresent() {
+        let req = PromptBuilder.buildDeep(
+            context: ctx(summary: "Discussed the Friday deploy; owner is unclear."),
+            action: .answerQuestion)
+        XCTAssertTrue(req.messages.last!.content.contains("Meeting summary so far"))
+    }
+
+    func testListenerSummaryOmittedWhenNil() {
+        let req = PromptBuilder.build(context: ctx(summary: nil), action: .answerQuestion)
+        XCTAssertFalse(req.messages.last!.content.contains("Meeting summary so far"))
+    }
+
+    func testListenerBuilderDoesNotIncludeSummaryBlock() {
+        // The listener generates the summary; it must not be fed its own summary back.
+        let req = PromptBuilder.buildListener(context: ctx(summary: "prior summary text"))
+        XCTAssertFalse(req.messages.last!.content.contains("Meeting summary so far"))
     }
 
     func testSystemMessageIsFirst() {

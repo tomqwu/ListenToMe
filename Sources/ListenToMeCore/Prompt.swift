@@ -22,9 +22,12 @@ public enum ResponseAction: Sendable, Equatable {
 public struct PromptContext: Sendable, Equatable {
     public let messages: [TranscriptSegment]
     public let notes: String?
-    public init(messages: [TranscriptSegment], notes: String?) {
+    /// The Listener pane's rolling summary, fed into Quick/Deep prompts as condensed grounding.
+    public let summary: String?
+    public init(messages: [TranscriptSegment], notes: String?, summary: String? = nil) {
         self.messages = messages
         self.notes = notes
+        self.summary = summary
     }
 }
 
@@ -90,6 +93,9 @@ public enum PromptBuilder {
         }.joined(separator: "\n")
 
         var user = "Transcript so far:\n\(transcript)\n\n"
+        if let summary = context.summary, !summary.trimmingCharacters(in: .whitespaces).isEmpty {
+            user += "Meeting summary so far (from the listener):\n\(summary)\n\n"
+        }
         if let notes = context.notes, !notes.trimmingCharacters(in: .whitespaces).isEmpty {
             user += "Context notes from the user:\n\(notes)\n\n"
         }

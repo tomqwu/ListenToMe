@@ -9,11 +9,14 @@ public struct ContextEngine {
         self.debounce = debounce
     }
 
-    public func buildContext(from store: ConversationStore, notes: String?, maxChars: Int = 4000) -> PromptContext {
+    public func buildContext(from store: ConversationStore, notes: String?, maxChars: Int = 4000,
+                             summary: String? = nil) -> PromptContext {
         let trimmed = notes?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedSummary = summary?.trimmingCharacters(in: .whitespacesAndNewlines)
         return PromptContext(
             messages: store.recentContext(maxChars: maxChars),
-            notes: (trimmed?.isEmpty == false) ? trimmed : nil
+            notes: (trimmed?.isEmpty == false) ? trimmed : nil,
+            summary: (trimmedSummary?.isEmpty == false) ? trimmedSummary : nil
         )
     }
 

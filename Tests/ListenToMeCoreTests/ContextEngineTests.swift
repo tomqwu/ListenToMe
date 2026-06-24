@@ -15,6 +15,21 @@ final class ContextEngineTests: XCTestCase {
         XCTAssertEqual(ctx.notes, "my notes")
     }
 
+    func testBuildContextIncludesTrimmedSummary() {
+        let store = ConversationStore()
+        store.apply(finalSeg("hello there", .others))
+        let engine = ContextEngine(debounce: 5)
+        let ctx = engine.buildContext(from: store, notes: nil, summary: "  rolling summary  ")
+        XCTAssertEqual(ctx.summary, "rolling summary")
+    }
+
+    func testBuildContextSummaryNilWhenEmpty() {
+        let store = ConversationStore()
+        let engine = ContextEngine(debounce: 5)
+        XCTAssertNil(engine.buildContext(from: store, notes: nil, summary: "   ").summary)
+        XCTAssertNil(engine.buildContext(from: store, notes: nil).summary)
+    }
+
     func testProactiveFiresForOthersQuestion() {
         var engine = ContextEngine(debounce: 5)
         XCTAssertTrue(engine.shouldFireProactive(for: finalSeg("what is the ETA?", .others), now: 0))
