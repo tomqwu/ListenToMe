@@ -23,13 +23,28 @@ struct MeetingView: View {
                     ? (SpeechRecognizerTranscriber() as any Transcribing)
                     : (SpeechAnalyzerTranscriber() as any Transcribing)
             },
-            makeProvider: { OllamaProvider(model: $0) },
+            makeProvider: { model in
+                OllamaProvider(model: model, baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey())
+            },
             models: [
                 .listener: ProviderSettings.model(for: .listener),
                 .quick: ProviderSettings.model(for: .quick),
                 .deep: ProviderSettings.model(for: .deep)
             ]
         ))
+    }
+
+    // MARK: - Ollama cloud routing
+
+    private static func ollamaKey() -> String? {
+        let k = KeychainStore.get("ollama")
+        return (k?.isEmpty == false) ? k : nil
+    }
+
+    private static func ollamaBaseURL() -> URL {
+        ollamaKey() != nil
+            ? URL(string: "https://ollama.com")!
+            : URL(string: "http://localhost:11434")!
     }
 
     var body: some View {
@@ -60,9 +75,11 @@ struct MeetingView: View {
             }
         }
         .frame(minWidth: 1100, minHeight: 560)
-        .sheet(isPresented: $showSettings) {
+        .sheet(isPresented: $showSettings, onDismiss: {
+            Task { await reloadAndHealModels() }
+        }, content: {
             SettingsView()
-        }
+        })
         .sheet(isPresented: $showPermissions) {
             PermissionsView(permissions: permissions)
         }
@@ -72,13 +89,7 @@ struct MeetingView: View {
             if !permissions.allRequiredGranted { showPermissions = true }
         }
         .task {
-            await reloadModels()
-            let chat = chatModels
-            guard !chat.isEmpty, let preferred = OllamaModels.preferredChatModel(from: chat) else { return }
-            for role in CopilotRole.allCases where !chat.contains(session.models[role] ?? "") {
-                session.setModel(role, preferred)
-                ProviderSettings.setModel(preferred, for: role)
-            }
+            await reloadAndHealModels()
         }
         .onDisappear {
             hotkey.stop()
@@ -87,7 +98,26 @@ struct MeetingView: View {
     }
 
     /// Reloads the installed Ollama chat models into the per-pane pickers.
-    private func reloadModels() async { chatModels = await OllamaModels.chatModels() }
+    private func reloadModels() async {
+        chatModels = await OllamaModels.chatModels(
+            baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey())
+    }
+
+    /// Reloads chat models for the current Ollama route (cloud vs local) and heals each role:
+    /// keep the current model if it exists on the new route, otherwise fall back to a preferred one.
+    /// Always rebuilds every role's provider so it picks up the current base URL/key.
+    private func reloadAndHealModels() async {
+        chatModels = await OllamaModels.chatModels(
+            baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey())
+        let preferred = OllamaModels.preferredChatModel(from: chatModels)
+        for role in CopilotRole.allCases {
+            let current = session.models[role] ?? ""
+            // keep the current model if it's valid on the new route, else fall back to a preferred one
+            let target = chatModels.contains(current) ? current : (preferred ?? current)
+            if target != current { ProviderSettings.setModel(target, for: role) }
+            session.setModel(role, target)   // always rebuild the provider so it picks up the new base URL/key
+        }
+    }
 
     // MARK: - Toolbar
 
