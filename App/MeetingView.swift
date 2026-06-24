@@ -1,4 +1,6 @@
 import SwiftUI
+import AppKit
+import UniformTypeIdentifiers
 import ListenToMeCore
 
 struct MeetingView: View {
@@ -125,6 +127,32 @@ struct MeetingView: View {
         }
     }
 
+    private static let fileStampFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd-HHmm"
+        return formatter
+    }()
+
+    /// Exports the current transcript + AI-pane outputs to a Markdown file via a save panel.
+    private func exportSession() {
+        let now = Date()
+        let markdown = SessionExporter.markdown(
+            title: "ListenToMe Session — \(now.formatted(date: .abbreviated, time: .shortened))",
+            transcript: store.utterances,
+            notes: session.notes,
+            listenerSummary: session.listenerSummary,
+            quickSuggestion: session.quickSuggestion,
+            deepAnswer: session.deepAnswer
+        )
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [UTType(filenameExtension: "md") ?? .plainText]
+        panel.nameFieldStringValue = "ListenToMe-\(Self.fileStampFormatter.string(from: now)).md"
+        panel.canCreateDirectories = true
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do { try markdown.write(to: url, atomically: true, encoding: .utf8) }
+        catch { startError = "Export failed: \(error.localizedDescription)" }
+    }
+
     /// Reloads the installed Ollama chat models into the per-pane pickers.
     private func reloadModels() async {
         chatModels = await OllamaModels.chatModels(
@@ -206,6 +234,8 @@ struct MeetingView: View {
             Toggle("Proactive", isOn: proactiveEnabled)
             Button { Task { await reloadModels() } } label: { Image(systemName: "arrow.clockwise") }
                 .help("Refresh installed Ollama models")
+            Button { exportSession() } label: { Image(systemName: "square.and.arrow.up") }
+                .help("Export the transcript and AI notes to a Markdown file")
             Button { showPermissions.wrappedValue = true } label: { Image(systemName: "lock.shield") }
             Button { showSettings.wrappedValue = true } label: { Image(systemName: "gearshape") }
         }
