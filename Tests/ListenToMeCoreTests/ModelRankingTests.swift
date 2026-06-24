@@ -70,6 +70,52 @@ final class ModelRankingTests: XCTestCase {
         XCTAssertEqual(defaults[.deep], "deepseek-v4-pro:cloud")
     }
 
+    func testRoleDefaultsPrefersProFlagshipForDeepOverLargerModels() {
+        // Realistic Ollama Cloud list: Deep should pick the curated "pro" flagship, NOT the model
+        // with the largest parameter count; Quick should pick the "flash" model.
+        let models = [
+            "mistral-large-3:675b", "qwen3-coder:480b", "deepseek-v4-pro",
+            "deepseek-v4-flash", "gemma3:12b", "gemini-3-flash-preview"
+        ]
+        let defaults = ModelRanking.roleDefaults(from: models)
+        XCTAssertEqual(defaults[.deep], "deepseek-v4-pro")
+        XCTAssertEqual(defaults[.quick], "deepseek-v4-flash")
+        // Listener is a balanced middle pick, distinct from Quick and Deep.
+        XCTAssertNotEqual(defaults[.listener], defaults[.quick])
+        XCTAssertNotEqual(defaults[.listener], defaults[.deep])
+    }
+
+    func testRoleDefaultsKeepsQuickAndDeepDistinctForDualTaggedModel() {
+        // "deepseek-coder-v2-lite:16b" matches both a fast pattern ("lite") and a strong one
+        // ("coder"); with another model present, Quick and Deep must not collapse onto it.
+        let models = ["deepseek-coder-v2-lite:16b", "llama3.1:70b"]
+        let defaults = ModelRanking.roleDefaults(from: models)
+        XCTAssertEqual(defaults[.quick], "deepseek-coder-v2-lite:16b")
+        XCTAssertEqual(defaults[.deep], "llama3.1:70b")
+        XCTAssertNotEqual(defaults[.quick], defaults[.deep])
+    }
+
+    func testGeminiProNotMisreadAsFastMiniModel() {
+        // "gemini" must NOT match the "mini" fast marker (token-boundary matching). The Pro model
+        // is the strong/Deep pick; the lighter 8B llama is Quick.
+        let models = ["gemini-3-pro-preview", "llama3.1:8b"]
+        let defaults = ModelRanking.roleDefaults(from: models)
+        XCTAssertEqual(defaults[.quick], "llama3.1:8b")
+        XCTAssertEqual(defaults[.deep], "gemini-3-pro-preview")
+        XCTAssertGreaterThan(
+            ModelRanking.weight("gemini-3-pro-preview"), ModelRanking.weight("llama3.1:8b"))
+    }
+
+    func testMarkerVariantsMatchByTokenPrefix() {
+        // Variant marker forms still count: "codellama"/"codegemma" ~ "code", "reasoning" ~
+        // "reason". These models should weigh as strong and win the Deep pane.
+        XCTAssertGreaterThan(ModelRanking.weight("codellama:13b"), ModelRanking.weight("llama3:13b"))
+        XCTAssertGreaterThan(
+            ModelRanking.weight("phi4-reasoning:14b"), ModelRanking.weight("phi4:14b"))
+        XCTAssertEqual(ModelRanking.roleDefaults(from: ["codellama:13b", "gemma3:27b"])[.deep],
+                       "codellama:13b")
+    }
+
     func testDefaultModelForRoleMatchesRoleDefaults() {
         let models = ["gemma3:12b", "deepseek-v4-flash", "qwen3-coder:30b"]
         XCTAssertEqual(ModelRanking.defaultModel(for: .deep, from: models), "qwen3-coder:30b")
