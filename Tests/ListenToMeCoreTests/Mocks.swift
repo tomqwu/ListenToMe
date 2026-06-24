@@ -46,9 +46,15 @@ final class MockTranscriber: Transcribing, @unchecked Sendable {
         segments = AsyncStream { cont = $0 }
         continuation = cont
     }
+    private var _finishCount = 0
+    /// Number of times `finish()` has been awaited (synchronized).
+    var finishCount: Int { lock.withLock { _finishCount } }
     func feed(_ chunk: AudioChunk) async {
         lock.withLock { _fedChunks.append(chunk) }
     }
-    func finish() async { continuation.finish() }
+    func finish() async {
+        lock.withLock { _finishCount += 1 }
+        continuation.finish()
+    }
     func emit(_ segment: TranscriptSegment) { continuation.yield(segment) }
 }
