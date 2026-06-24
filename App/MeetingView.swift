@@ -278,9 +278,8 @@ private struct AIPaneView: View {
             ScrollView {
                 Group {
                     if !outputText.isEmpty {
-                        Text(outputText)
+                        MarkdownText(text: outputText)
                             .foregroundStyle(.primary)
-                            .textSelection(.enabled)
                     } else if session.streamingRoles.contains(role) {
                         Text("💭 Thinking…")
                             .foregroundStyle(.secondary)
