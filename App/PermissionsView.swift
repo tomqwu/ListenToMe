@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct PermissionsView: View {
     let permissions: PermissionsModel
@@ -61,10 +62,22 @@ struct PermissionsView: View {
                 .foregroundStyle(.secondary)
                 .padding(.top, 14)
 
+            if permissions.screenRecording != .granted {
+                Text(
+                    "After enabling Screen Recording in System Settings, quit and reopen the app" +
+                    " — macOS only detects it after a relaunch."
+                )
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 8)
+            }
+
             Divider().padding(.vertical, 16)
 
             HStack {
                 Spacer()
+                Button("Quit & Reopen") { permissions.relaunch() }
                 Button("Done") { dismiss() }
                     .keyboardShortcut(.defaultAction)
             }
@@ -72,6 +85,9 @@ struct PermissionsView: View {
         .padding(24)
         .frame(width: 480)
         .onAppear { permissions.refresh() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            permissions.refresh()
+        }
     }
 }
 
