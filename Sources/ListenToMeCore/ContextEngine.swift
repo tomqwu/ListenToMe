@@ -10,13 +10,15 @@ public struct ContextEngine {
     }
 
     public func buildContext(from store: ConversationStore, notes: String?, maxChars: Int = 4000,
-                             summary: String? = nil) -> PromptContext {
+                             summary: String? = nil, responseLanguage: String? = nil) -> PromptContext {
         let trimmed = notes?.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedSummary = summary?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedLang = responseLanguage?.trimmingCharacters(in: .whitespacesAndNewlines)
         return PromptContext(
             messages: store.recentContext(maxChars: maxChars),
             notes: (trimmed?.isEmpty == false) ? trimmed : nil,
-            summary: (trimmedSummary?.isEmpty == false) ? trimmedSummary : nil
+            summary: (trimmedSummary?.isEmpty == false) ? trimmedSummary : nil,
+            responseLanguage: (trimmedLang?.isEmpty == false) ? trimmedLang : nil
         )
     }
 

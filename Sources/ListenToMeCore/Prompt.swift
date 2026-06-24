@@ -24,10 +24,14 @@ public struct PromptContext: Sendable, Equatable {
     public let notes: String?
     /// The Listener pane's rolling summary, fed into Quick/Deep prompts as condensed grounding.
     public let summary: String?
-    public init(messages: [TranscriptSegment], notes: String?, summary: String? = nil) {
+    /// Forces the model's reply into this language (e.g. "Simplified Chinese"); nil = no constraint.
+    public let responseLanguage: String?
+    public init(messages: [TranscriptSegment], notes: String?, summary: String? = nil,
+                responseLanguage: String? = nil) {
         self.messages = messages
         self.notes = notes
         self.summary = summary
+        self.responseLanguage = responseLanguage
     }
 }
 
@@ -103,10 +107,18 @@ public enum PromptBuilder {
         return user
     }
 
+    /// Appends a response-language directive to a system prompt when the context requests one.
+    private static func systemWithLanguage(_ base: String, _ context: PromptContext) -> String {
+        guard let lang = context.responseLanguage,
+              !lang.trimmingCharacters(in: .whitespaces).isEmpty else { return base }
+        return base + "\nAlways write your entire response in \(lang), regardless of the " +
+            "language spoken in the transcript."
+    }
+
     public static func build(context: PromptContext, action: ResponseAction) -> LLMRequest {
         let user = buildUserMessage(context: context, instruction: instruction(for: action))
         return LLMRequest(
-            system: systemPrompt,
+            system: systemWithLanguage(systemPrompt, context),
             messages: [ChatMessage(role: "user", content: user)]
         )
     }
@@ -124,7 +136,7 @@ public enum PromptBuilder {
         user += "Provide the rolling summary and list of open questions or action items."
 
         return LLMRequest(
-            system: listenerSystemPrompt,
+            system: systemWithLanguage(listenerSystemPrompt, context),
             messages: [ChatMessage(role: "user", content: user)]
         )
     }
@@ -133,7 +145,7 @@ public enum PromptBuilder {
     public static func buildDeep(context: PromptContext, action: ResponseAction) -> LLMRequest {
         let user = buildUserMessage(context: context, instruction: deepInstruction(for: action))
         return LLMRequest(
-            system: deepSystemPrompt,
+            system: systemWithLanguage(deepSystemPrompt, context),
             messages: [ChatMessage(role: "user", content: user)]
         )
     }

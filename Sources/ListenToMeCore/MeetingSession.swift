@@ -10,6 +10,9 @@ public final class MeetingSession {
     public private(set) var isRunning = false
     public var notes = ""
     public var proactiveEnabled = true
+    /// Forces all AI replies (Listener/Quick/Deep) into this language, e.g. "Simplified Chinese";
+    /// nil/empty leaves the model free to match the conversation. Set from the UI's Settings.
+    public var responseLanguage: String?
     public let store: ConversationStore
 
     /// Per-role output properties
@@ -200,7 +203,8 @@ public final class MeetingSession {
         startRoleTask(.quick) {
             PromptBuilder.build(
                 context: self.context.buildContext(from: self.store, notes: self.notes,
-                                                   summary: self.lastCompletedListenerSummary),
+                                                   summary: self.lastCompletedListenerSummary,
+                                                   responseLanguage: self.responseLanguage),
                 action: .proactive)
         }
     }
@@ -212,7 +216,8 @@ public final class MeetingSession {
         await startRoleTask(.quick) {
             PromptBuilder.build(
                 context: self.context.buildContext(from: self.store, notes: self.notes,
-                                                   summary: self.lastCompletedListenerSummary),
+                                                   summary: self.lastCompletedListenerSummary,
+                                                   responseLanguage: self.responseLanguage),
                 action: action)
         }.value
     }
@@ -222,7 +227,8 @@ public final class MeetingSession {
         await startRoleTask(.deep) {
             PromptBuilder.buildDeep(
                 context: self.context.buildContext(from: self.store, notes: self.notes,
-                                                   summary: self.lastCompletedListenerSummary),
+                                                   summary: self.lastCompletedListenerSummary,
+                                                   responseLanguage: self.responseLanguage),
                 action: action)
         }.value
     }
@@ -239,7 +245,8 @@ public final class MeetingSession {
     @discardableResult
     private func startListenerRefresh() -> Task<Void, Never> {
         startRoleTask(.listener) {
-            PromptBuilder.buildListener(context: self.context.buildContext(from: self.store, notes: self.notes))
+            PromptBuilder.buildListener(context: self.context.buildContext(from: self.store, notes: self.notes,
+                                        responseLanguage: self.responseLanguage))
         }
     }
 
