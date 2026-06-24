@@ -16,6 +16,30 @@ enum ProviderSettings {
         get { UserDefaults.standard.string(forKey: "transcriptionLocale") ?? "" }
         set { UserDefaults.standard.set(newValue, forKey: "transcriptionLocale") }
     }
+    /// Language the AI panes must reply in, independent of the spoken/transcription language.
+    /// Empty id = "Auto" (the model matches the conversation). Stored as an id; mapped to a prompt
+    /// directive via `responseLanguageOptions`.
+    static var responseLanguageID: String {
+        get { UserDefaults.standard.string(forKey: "responseLanguage") ?? "" }
+        set { UserDefaults.standard.set(newValue, forKey: "responseLanguage") }
+    }
+    /// (id, menu label, prompt directive). A nil directive means no language constraint.
+    static let responseLanguageOptions: [(id: String, label: String, directive: String?)] = [
+        ("", "Auto (match speaker)", nil),
+        ("en", "English", "English"),
+        ("zh-Hans", "\u{4e2d}\u{6587} (\u{7b80}\u{4f53})", "Simplified Chinese"),
+        ("zh-Hant", "\u{4e2d}\u{6587} (\u{7e41}\u{9ad4})", "Traditional Chinese"),
+        ("ja", "\u{65e5}\u{672c}\u{8a9e}", "Japanese"),
+        ("ko", "\u{d55c}\u{ad6d}\u{c5b4}", "Korean"),
+        ("es", "Espa\u{00f1}ol", "Spanish"),
+        ("fr", "Fran\u{00e7}ais", "French"),
+        ("de", "Deutsch", "German")
+    ]
+    /// The prompt directive for the current response-language selection, or nil for Auto.
+    static func responseLanguageDirective() -> String? {
+        responseLanguageOptions.first { $0.id == responseLanguageID }?.directive ?? nil
+    }
+
     /// Resolved transcription locale. An empty id follows the system language; Apple's on-device
     /// Speech does not auto-detect spoken language, so this selects the engine's primary language.
     /// Each transcriber further resolves this against *its* engine's supported locales (and falls
@@ -65,10 +89,12 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var engine: String
     @State private var ollamaKey: String
+    @State private var responseLanguageID: String
 
     init() {
         _engine = State(initialValue: ProviderSettings.transcriptionEngine)
         _ollamaKey = State(initialValue: KeychainStore.get("ollama") ?? "")
+        _responseLanguageID = State(initialValue: ProviderSettings.responseLanguageID)
     }
 
     var body: some View {
@@ -96,6 +122,20 @@ struct SettingsView: View {
             )
             .font(.caption).foregroundStyle(.secondary)
 
+            Divider()
+
+            Picker("Response language", selection: $responseLanguageID) {
+                ForEach(ProviderSettings.responseLanguageOptions, id: \.id) {
+                    Text($0.label).tag($0.id)
+                }
+            }
+            Text(
+                "Forces the AI panes (Listener, Quick, Deep) to reply in this language, whatever " +
+                "language is spoken. \u{201C}Auto\u{201D} lets the model match the conversation. " +
+                "Applies to your next response."
+            )
+            .font(.caption).foregroundStyle(.secondary)
+
             HStack {
                 Spacer()
                 Button("Cancel") { dismiss() }
@@ -109,6 +149,7 @@ struct SettingsView: View {
 
     private func save() {
         ProviderSettings.transcriptionEngine = engine
+        ProviderSettings.responseLanguageID = responseLanguageID
         KeychainStore.set(ollamaKey.isEmpty ? nil : ollamaKey, for: "ollama")
         dismiss()
     }

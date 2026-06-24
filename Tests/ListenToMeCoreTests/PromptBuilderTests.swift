@@ -2,13 +2,14 @@ import XCTest
 @testable import ListenToMeCore
 
 final class PromptBuilderTests: XCTestCase {
-    private func ctx(notes: String? = nil, summary: String? = nil) -> PromptContext {
+    private func ctx(notes: String? = nil, summary: String? = nil,
+                     responseLanguage: String? = nil) -> PromptContext {
         PromptContext(messages: [
             TranscriptSegment(source: .others, text: "What is our deploy plan?",
                               isFinal: true, start: 0, end: 1),
             TranscriptSegment(source: .you, text: "Good question.",
                               isFinal: true, start: 1, end: 2)
-        ], notes: notes, summary: summary)
+        ], notes: notes, summary: summary, responseLanguage: responseLanguage)
     }
 
     func testSystemPromptHasNoPreambleConstraint() {
@@ -67,6 +68,27 @@ final class PromptBuilderTests: XCTestCase {
         // The listener generates the summary; it must not be fed its own summary back.
         let req = PromptBuilder.buildListener(context: ctx(summary: "prior summary text"))
         XCTAssertFalse(req.messages.last!.content.contains("Meeting summary so far"))
+    }
+
+    func testResponseLanguageDirectiveAppendedToQuickAndDeep() {
+        let quick = PromptBuilder.build(context: ctx(responseLanguage: "Simplified Chinese"),
+                                        action: .answerQuestion)
+        let deep = PromptBuilder.buildDeep(context: ctx(responseLanguage: "Simplified Chinese"),
+                                           action: .answerQuestion)
+        XCTAssertTrue(quick.system.contains("Simplified Chinese"))
+        XCTAssertTrue(deep.system.contains("Simplified Chinese"))
+    }
+
+    func testResponseLanguageDirectiveAppendedToListener() {
+        let req = PromptBuilder.buildListener(context: ctx(responseLanguage: "Japanese"))
+        XCTAssertTrue(req.system.contains("Japanese"))
+    }
+
+    func testResponseLanguageOmittedWhenNilOrBlank() {
+        XCTAssertFalse(PromptBuilder.build(context: ctx(responseLanguage: nil),
+                                           action: .answerQuestion).system.contains("respond in"))
+        XCTAssertFalse(PromptBuilder.build(context: ctx(responseLanguage: "   "),
+                                           action: .answerQuestion).system.contains("respond in"))
     }
 
     func testSystemMessageIsFirst() {

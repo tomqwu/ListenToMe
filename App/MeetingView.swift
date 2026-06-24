@@ -100,6 +100,7 @@ struct MeetingView: View {
         }
         .frame(minWidth: 1100, minHeight: 560)
         .sheet(isPresented: $showSettings, onDismiss: {
+            session.responseLanguage = ProviderSettings.responseLanguageDirective()
             Task { await reloadAndHealModels() }
         }, content: {
             SettingsView()
@@ -108,6 +109,7 @@ struct MeetingView: View {
             PermissionsView(permissions: permissions)
         }
         .onAppear {
+            session.responseLanguage = ProviderSettings.responseLanguageDirective()
             hotkey.start { Task { await session.respondQuick(.answerQuestion) } }
             permissions.refresh()
             if !permissions.allRequiredGranted { showPermissions = true }
