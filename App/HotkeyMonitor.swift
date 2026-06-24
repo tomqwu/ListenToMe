@@ -1,20 +1,14 @@
 import AppKit
-import ApplicationServices
 
 /// Listens for ⌘⇧Space both globally (other apps focused) and locally (this app focused).
-/// The global path requires Accessibility permission; we prompt for it on first use.
+/// The global path requires Accessibility permission; users can enable it from the Permissions
+/// panel. We do NOT prompt automatically — Accessibility is optional for the global hotkey.
 final class HotkeyMonitor {
     private var globalMonitor: Any?
     private var localMonitor: Any?
 
     func start(_ action: @escaping () -> Void) {
         stop()   // idempotent: remove any existing monitors before re-registering
-        // Show the system Accessibility prompt if we're not yet trusted; otherwise the global
-        // key monitor silently receives nothing. The key string matches the imported
-        // `kAXTrustedCheckOptionPrompt` constant, used as a literal to stay clear of Swift 6
-        // concurrency-safety on the imported global.
-        let promptKey = "AXTrustedCheckOptionPrompt"
-        _ = AXIsProcessTrustedWithOptions([promptKey: true] as CFDictionary)
 
         // Global: fires when another app is focused.
         globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { event in

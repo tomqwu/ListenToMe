@@ -33,14 +33,14 @@ final class PermissionsModel {
             ? .granted : (accessibilityRequested ? .denied : .notDetermined)
     }
 
-    func requestMicrophone() {
+    nonisolated func requestMicrophone() {
         AVCaptureDevice.requestAccess(for: .audio) { _ in
-            Task { @MainActor in self.refresh() }
+            Task { @MainActor [weak self] in self?.refresh() }
         }
     }
-    func requestSpeech() {
+    nonisolated func requestSpeech() {
         SFSpeechRecognizer.requestAuthorization { _ in
-            Task { @MainActor in self.refresh() }
+            Task { @MainActor [weak self] in self?.refresh() }
         }
     }
     func requestScreenRecording() {

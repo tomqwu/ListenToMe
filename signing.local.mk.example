@@ -1,0 +1,5 @@
+# Copy to signing.local.mk (gitignored) for stable code signing so macOS permission
+# grants (mic/screen/accessibility) persist across rebuilds. Find your identity with:
+#   security find-identity -v -p codesigning
+# Then set the SHA-1 below (and your team id):
+# SIGN_FLAGS = CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=<your-sha1> DEVELOPMENT_TEAM=<your-team>

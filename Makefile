@@ -3,16 +3,20 @@
 SHELL := /bin/bash
 .SHELLFLAGS := -eo pipefail -c
 
+# Optional local signing override (gitignored) — define SIGN_FLAGS for a stable identity
+# so granted macOS permissions (TCC) persist across rebuilds. See signing.local.mk.example.
+-include signing.local.mk
+
 gen:
 	xcodegen generate
 
 build: gen
 	@if command -v xcbeautify >/dev/null 2>&1; then \
 		xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMe \
-			-destination 'platform=macOS' -configuration Debug build | xcbeautify; \
+			-destination 'platform=macOS' -configuration Debug build $(SIGN_FLAGS) | xcbeautify; \
 	else \
 		xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMe \
-			-destination 'platform=macOS' -configuration Debug build; \
+			-destination 'platform=macOS' -configuration Debug build $(SIGN_FLAGS); \
 	fi
 
 test:
