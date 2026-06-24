@@ -38,9 +38,10 @@ public struct OllamaProvider: LLMProvider {
 
     /// Live initializer that talks to a real Ollama server over HTTP.
     public init(model: String, baseURL: URL = URL(string: "http://localhost:11434")!,
-                urlSession: URLSession = .shared) {
+                apiKey: String? = nil, urlSession: URLSession = .shared) {
         self.init(model: model, baseURL: baseURL,
-                  lineSource: Self.makeLiveLineSource(model: model, baseURL: baseURL, session: urlSession))
+                  lineSource: Self.makeLiveLineSource(
+                    model: model, baseURL: baseURL, apiKey: apiKey, session: urlSession))
     }
 
     public static func requestBody(model: String, request: LLMRequest) -> Data {
@@ -71,7 +72,7 @@ public struct OllamaProvider: LLMProvider {
     }
 
     private static func makeLiveLineSource(
-        model: String, baseURL: URL, session: URLSession
+        model: String, baseURL: URL, apiKey: String? = nil, session: URLSession
     ) -> @Sendable (LLMRequest) -> AsyncThrowingStream<String, Error> {
         return { request in
             AsyncThrowingStream { continuation in
@@ -80,6 +81,9 @@ public struct OllamaProvider: LLMProvider {
                         var urlRequest = URLRequest(url: baseURL.appendingPathComponent("api/chat"))
                         urlRequest.httpMethod = "POST"
                         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                        if let apiKey, !apiKey.isEmpty {
+                            urlRequest.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+                        }
                         urlRequest.httpBody = requestBody(model: model, request: request)
                         let (bytes, response) = try await session.bytes(for: urlRequest)
                         if let http = response as? HTTPURLResponse,

@@ -31,7 +31,13 @@ models (e.g. `deepseek-v4-flash:cloud`, which runs via your Ollama cloud sign-in
 persist across launches; the toolbar **↻** button re-scans installed models (e.g. after you pull a
 new one). On first launch, any role whose saved model isn't installed auto-switches to one that
 works — no manual config needed. **Settings** (gear icon) holds the transcription engine
-(SpeechAnalyzer / SpeechRecognizer).
+(SpeechAnalyzer / SpeechRecognizer) and an optional **Ollama API key**.
+
+**Ollama Cloud:** paste your Ollama API key (from [ollama.com](https://ollama.com)) in **Settings**
+to use cloud models (e.g. `deepseek-v4-flash`, `deepseek-v4-pro`, `qwen3-coder`). With a key set, the
+app routes model discovery **and** inference to `https://ollama.com` with `Authorization: Bearer
+<key>`; leave it blank to use your local Ollama at `http://localhost:11434`. The key is stored in
+your macOS Keychain. (Note: cloud models send the transcript/prompt to Ollama Cloud.)
 
 ## CI
 GitHub Actions (`.github/workflows/ci.yml`) gates every PR to `main` on a macOS runner:

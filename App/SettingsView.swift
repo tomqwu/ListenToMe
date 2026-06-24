@@ -22,9 +22,11 @@ enum ProviderSettings {
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var engine: String
+    @State private var ollamaKey: String
 
     init() {
         _engine = State(initialValue: ProviderSettings.transcriptionEngine)
+        _ollamaKey = State(initialValue: KeychainStore.get("ollama") ?? "")
     }
 
     var body: some View {
@@ -41,6 +43,17 @@ struct SettingsView: View {
             )
             .font(.caption).foregroundStyle(.secondary)
 
+            Divider()
+
+            SecureField("Ollama API key", text: $ollamaKey)
+                .textFieldStyle(.roundedBorder)
+            Text(
+                "Optional — paste your Ollama Cloud key (ollama.com) to use cloud models like " +
+                "deepseek-v4-flash. Leave blank to use your local Ollama at localhost:11434. " +
+                "Stored in your macOS Keychain."
+            )
+            .font(.caption).foregroundStyle(.secondary)
+
             HStack {
                 Spacer()
                 Button("Cancel") { dismiss() }
@@ -54,6 +67,7 @@ struct SettingsView: View {
 
     private func save() {
         ProviderSettings.transcriptionEngine = engine
+        KeychainStore.set(ollamaKey.isEmpty ? nil : ollamaKey, for: "ollama")
         dismiss()
     }
 }

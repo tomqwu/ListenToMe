@@ -43,8 +43,9 @@ private func makeStubSession() -> URLSession {
 
 private func makeProvider(model: String = "testModel",
                           baseURL: URL = URL(string: "http://stub.local")!,
+                          apiKey: String? = nil,
                           session: URLSession) -> OllamaProvider {
-    OllamaProvider(model: model, baseURL: baseURL, urlSession: session)
+    OllamaProvider(model: model, baseURL: baseURL, apiKey: apiKey, urlSession: session)
 }
 
 private func sampleRequest() -> LLMRequest {
@@ -109,7 +110,52 @@ final class OllamaLiveTransportTests: XCTestCase {
         XCTAssertEqual(err.code, 404)
     }
 
-    // MARK: 3. Request body contains the model name
+    // MARK: 3. Authorization header is set when apiKey is provided
+
+    func testLivePathSendsAuthorizationHeaderWhenApiKeySet() async throws {
+        let expectedKey = "test-secret-key"
+        var capturedRequest: URLRequest?
+
+        let ndjson = #"{"done":true}"#
+        StubURLProtocol.handler = { request in
+            capturedRequest = request
+            let response = HTTPURLResponse(
+                url: URL(string: "http://stub.local/api/chat")!,
+                statusCode: 200,
+                httpVersion: nil,
+                headerFields: nil)!
+            return (response, Data(ndjson.utf8))
+        }
+
+        let provider = makeProvider(apiKey: expectedKey, session: makeStubSession())
+        for try await _ in provider.stream(sampleRequest()) {}
+
+        let req = try XCTUnwrap(capturedRequest)
+        XCTAssertEqual(req.value(forHTTPHeaderField: "Authorization"), "Bearer \(expectedKey)")
+    }
+
+    func testLivePathOmitsAuthorizationHeaderWhenApiKeyIsNil() async throws {
+        var capturedRequest: URLRequest?
+
+        let ndjson = #"{"done":true}"#
+        StubURLProtocol.handler = { request in
+            capturedRequest = request
+            let response = HTTPURLResponse(
+                url: URL(string: "http://stub.local/api/chat")!,
+                statusCode: 200,
+                httpVersion: nil,
+                headerFields: nil)!
+            return (response, Data(ndjson.utf8))
+        }
+
+        let provider = makeProvider(apiKey: nil, session: makeStubSession())
+        for try await _ in provider.stream(sampleRequest()) {}
+
+        let req = try XCTUnwrap(capturedRequest)
+        XCTAssertNil(req.value(forHTTPHeaderField: "Authorization"))
+    }
+
+    // MARK: 4. Request body contains the model name
 
     func testLivePathSendsModelInRequestBody() async throws {
         let expectedModel = "llama3.1"
