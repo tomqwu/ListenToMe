@@ -11,6 +11,19 @@ enum ProviderSettings {
         get { UserDefaults.standard.string(forKey: "transcriptionEngine") ?? "speechAnalyzer" }
         set { UserDefaults.standard.set(newValue, forKey: "transcriptionEngine") }
     }
+    /// BCP-47 locale id for transcription; empty means follow the system language ("Auto").
+    static var transcriptionLocaleID: String {
+        get { UserDefaults.standard.string(forKey: "transcriptionLocale") ?? "" }
+        set { UserDefaults.standard.set(newValue, forKey: "transcriptionLocale") }
+    }
+    /// Resolved transcription locale. An empty id follows the system language; Apple's on-device
+    /// Speech does not auto-detect spoken language, so this selects the engine's primary language.
+    /// Each transcriber further resolves this against *its* engine's supported locales (and falls
+    /// back) so an unsupported choice can't leave a recording session silently producing nothing.
+    static func transcriptionLocale() -> Locale {
+        let id = transcriptionLocaleID
+        return id.isEmpty ? Locale.current : Locale(identifier: id)
+    }
     static func model(for role: CopilotRole) -> String {
         UserDefaults.standard.string(forKey: "model_\(role.rawValue)") ?? ollamaModel
     }

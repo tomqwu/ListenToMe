@@ -9,10 +9,27 @@ struct MeetingView: View {
     @State private var permissions = PermissionsModel()
     @State private var showPermissions = false
     @State private var chatModels: [String] = []
+    @State private var transcriptionLocaleID: String
     private let hotkey = HotkeyMonitor()
+
+    /// Curated transcription languages. "" = follow the system language ("Auto"). Apple's
+    /// on-device Speech selects one primary language; it does not auto-detect or code-switch.
+    static let languageOptions: [(id: String, label: String)] = [
+        ("", "Auto (system)"),
+        ("en-US", "English (US)"),
+        ("zh-CN", "中文 · Mandarin (简体)"),
+        ("zh-TW", "中文 · Mandarin (繁體)"),
+        ("yue-CN", "粵語 · Cantonese"),
+        ("ja-JP", "日本語"),
+        ("ko-KR", "한국어"),
+        ("es-ES", "Español"),
+        ("fr-FR", "Français"),
+        ("de-DE", "Deutsch")
+    ]
 
     init() {
         ProviderSettings.migratePinningIfNeeded()
+        _transcriptionLocaleID = State(initialValue: ProviderSettings.transcriptionLocaleID)
         let store = ConversationStore()
         _store = State(initialValue: store)
         _session = State(initialValue: MeetingSession(
@@ -20,9 +37,10 @@ struct MeetingView: View {
             context: ContextEngine(debounce: 8),
             makeCapture: { DualChannelCapture() },
             makeTranscriber: {
-                ProviderSettings.transcriptionEngine == "speechRecognizer"
-                    ? (SpeechRecognizerTranscriber() as any Transcribing)
-                    : (SpeechAnalyzerTranscriber() as any Transcribing)
+                let locale = ProviderSettings.transcriptionLocale()
+                return ProviderSettings.transcriptionEngine == "speechRecognizer"
+                    ? (SpeechRecognizerTranscriber(locale: locale) as any Transcribing)
+                    : (SpeechAnalyzerTranscriber(locale: locale) as any Transcribing)
             },
             makeProvider: { model in
                 OllamaProvider(model: model, baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey())
@@ -151,6 +169,15 @@ struct MeetingView: View {
                 Text("Recording").foregroundStyle(.secondary)
             }
             Spacer()
+            Picker("Language", selection: $transcriptionLocaleID) {
+                ForEach(Self.languageOptions, id: \.id) { Text($0.label).tag($0.id) }
+            }
+            .labelsHidden()
+            .frame(maxWidth: 180)
+            .onChange(of: transcriptionLocaleID) { _, newValue in
+                ProviderSettings.transcriptionLocaleID = newValue
+            }
+            .help("Transcription language — applies the next time you press Listen")
             Toggle("Proactive", isOn: proactiveEnabled)
             Button { Task { await reloadModels() } } label: { Image(systemName: "arrow.clockwise") }
                 .help("Refresh installed Ollama models")
