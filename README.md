@@ -22,6 +22,10 @@ make run      # build and launch
 make pre-push # lint + tests + build (the CI-equivalent gate)
 ```
 
+Optional: copy `signing.local.mk.example` to `signing.local.mk` (gitignored) and set your
+code-signing identity so granted macOS permissions (mic/screen/accessibility) persist across
+rebuilds (otherwise each rebuild re-asks). Find it via `security find-identity -v -p codesigning`.
+
 ## Models
 Each AI pane (**Listener**, **Quick**, **Deep**) has its **own model dropdown in its header** —
 pick a different model per role (e.g. a fast model for Quick, a heavier reasoning model for Deep).
