@@ -1,5 +1,6 @@
 import Foundation
 import AVFoundation
+import CoreGraphics
 import ScreenCaptureKit
 import ListenToMeCore
 
@@ -22,10 +23,18 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
 
     func start() async throws {
         try startMic()                     // essential "You" channel — propagate if this fails
+        // Only touch ScreenCaptureKit when macOS already reports Screen Recording access.
+        // CGPreflightScreenCaptureAccess() checks the grant WITHOUT prompting; calling
+        // SCShareableContent without access is what re-triggers the system dialog every launch.
+        guard CGPreflightScreenCaptureAccess() else {
+            NSLog("ListenToMe: Screen Recording not granted; continuing with microphone only " +
+                  "(enable it in System Settings → Privacy & Security → Screen Recording, then relaunch).")
+            return
+        }
         do {
             try await startSystemAudio()   // "Others" channel — best-effort
         } catch {
-            // Screen Recording not granted/effective (e.g. needs relaunch) — continue mic-only.
+            // Granted but capture still failed (e.g. grant needs a relaunch) — continue mic-only.
             NSLog("ListenToMe: system audio capture unavailable (\(error.localizedDescription)); " +
                   "continuing with microphone only.")
         }

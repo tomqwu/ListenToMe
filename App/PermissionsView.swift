@@ -62,6 +62,18 @@ struct PermissionsView: View {
                 .foregroundStyle(.secondary)
                 .padding(.top, 14)
 
+            if permissions.accessibility != .granted {
+                Text(
+                    "If Accessibility already looks enabled in System Settings, toggle ListenToMe " +
+                    "off and back on there — rebuilding the app invalidates the previous grant, so " +
+                    "macOS reports it as not trusted until you re-enable it."
+                )
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 8)
+            }
+
             if permissions.screenRecording != .granted {
                 Text(
                     "After enabling Screen Recording in System Settings, quit and reopen the app" +
