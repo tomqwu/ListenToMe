@@ -12,6 +12,7 @@ struct MeetingView: View {
     private let hotkey = HotkeyMonitor()
 
     init() {
+        ProviderSettings.migratePinningIfNeeded()
         let store = ConversationStore()
         _store = State(initialValue: store)
         _session = State(initialValue: MeetingSession(
@@ -104,16 +105,19 @@ struct MeetingView: View {
     }
 
     /// Reloads chat models for the current Ollama route (cloud vs local) and heals each role:
-    /// keep the current model if it exists on the new route, otherwise fall back to a preferred one.
+    /// keep the current model if it exists on the new route, otherwise fall back to a
+    /// role-appropriate default (Quick = lightest, Deep = heaviest, Listener = balanced).
     /// Always rebuilds every role's provider so it picks up the current base URL/key.
     private func reloadAndHealModels() async {
         chatModels = await OllamaModels.chatModels(
             baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey())
-        let preferred = OllamaModels.preferredChatModel(from: chatModels)
+        let defaults = ModelRanking.roleDefaults(from: chatModels)
         for role in CopilotRole.allCases {
             let current = session.models[role] ?? ""
-            // keep the current model if it's valid on the new route, else fall back to a preferred one
-            let target = chatModels.contains(current) ? current : (preferred ?? current)
+            // Keep the user's explicit pick if it's still valid; otherwise follow the
+            // role-appropriate default so the three panes don't all collapse to one model.
+            let keepPinned = ProviderSettings.isPinned(role) && chatModels.contains(current)
+            let target = keepPinned ? current : (defaults[role] ?? current)
             if target != current { ProviderSettings.setModel(target, for: role) }
             session.setModel(role, target)   // always rebuild the provider so it picks up the new base URL/key
         }
@@ -268,7 +272,11 @@ private struct AIPaneView: View {
                 headerExtra()
                 Picker("Model", selection: Binding(
                     get: { session.models[role] ?? "" },
-                    set: { session.setModel(role, $0); ProviderSettings.setModel($0, for: role) }
+                    set: {
+                        session.setModel(role, $0)
+                        ProviderSettings.setModel($0, for: role)
+                        ProviderSettings.pin(role)   // explicit choice: stop auto-defaulting this pane
+                    }
                 )) {
                     ForEach(modelOptions(), id: \.self) { Text($0).tag($0) }
                 }

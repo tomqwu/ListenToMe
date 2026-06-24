@@ -17,6 +17,35 @@ enum ProviderSettings {
     static func setModel(_ model: String, for role: CopilotRole) {
         UserDefaults.standard.set(model, forKey: "model_\(role.rawValue)")
     }
+
+    /// True once the user has explicitly chosen a model for this role in its pane dropdown.
+    /// Unpinned roles follow the role-appropriate default and adapt as available models change.
+    static func isPinned(_ role: CopilotRole) -> Bool {
+        UserDefaults.standard.bool(forKey: "modelPinned_\(role.rawValue)")
+    }
+    static func pin(_ role: CopilotRole) {
+        UserDefaults.standard.set(true, forKey: "modelPinned_\(role.rawValue)")
+    }
+
+    /// One-time migration for the pinning model. Pre-pinning builds persisted a model per role but
+    /// couldn't tell an explicit pick from an auto-healed default. We preserve saved choices as
+    /// explicit pins, except in the one case the old auto-heal produced: a model saved for *every*
+    /// role with all values identical (panes collapsed onto one model). That collapse stays
+    /// unpinned so the new role-aware defaults can apply. Runs once, guarded by a flag.
+    static func migratePinningIfNeeded() {
+        let flag = "modelPinningMigrated"
+        guard !UserDefaults.standard.bool(forKey: flag) else { return }
+        let saved = CopilotRole.allCases.map {
+            (role: $0, model: UserDefaults.standard.string(forKey: "model_\($0.rawValue)"))
+        }
+        let present = saved.compactMap(\.model)
+        // Collapse signature: a model saved for every role and all the same value.
+        let collapsed = present.count == CopilotRole.allCases.count && Set(present).count == 1
+        if !collapsed {
+            for entry in saved where entry.model != nil { pin(entry.role) }
+        }
+        UserDefaults.standard.set(true, forKey: flag)
+    }
 }
 
 struct SettingsView: View {

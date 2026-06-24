@@ -57,9 +57,4 @@ enum OllamaModels {
 
         return zip(names, capable).compactMap { name, ok in ok ? name : nil }
     }
-
-    /// Preferred default: a local (non-`:cloud`) chat model if any, else the first chat model.
-    static func preferredChatModel(from chatModels: [String]) -> String? {
-        chatModels.first { !$0.contains(":cloud") } ?? chatModels.first
-    }
 }
