@@ -16,8 +16,10 @@ actor SpeechRecognizerTranscriber: Transcribing {
     private var states: [SpeakerSource: SourceState] = [:]
     private var authorized = false
     private var stopped = false
+    private let locale: Locale
 
-    init() {
+    init(locale: Locale = Locale(identifier: "en-US")) {
+        self.locale = locale
         var cont: AsyncStream<TranscriptSegment>.Continuation!
         segments = AsyncStream { cont = $0 }
         continuation = cont
@@ -78,8 +80,7 @@ actor SpeechRecognizerTranscriber: Transcribing {
     }
 
     private func startTask(for source: SpeakerSource) -> SourceState? {
-        guard let recognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US")),
-              recognizer.isAvailable else { return nil }
+        guard let recognizer = onDeviceRecognizer() else { return nil }
         let state = SourceState(recognizer: recognizer)
         state.task = recognizer.recognitionTask(with: state.request) { [weak self] result, error in
             guard let self else { return }
@@ -131,6 +132,19 @@ actor SpeechRecognizerTranscriber: Transcribing {
     private func taskFailed(_ source: SpeakerSource) {
         states[source]?.done = true
         states[source] = nil
+    }
+
+    /// A recognizer for the chosen locale that supports on-device recognition (this app forces
+    /// `requiresOnDeviceRecognition`). Some locales only work via Apple's servers; for those we
+    /// fall back to `en-US`, which supports on-device, rather than silently producing no transcript.
+    private func onDeviceRecognizer() -> SFSpeechRecognizer? {
+        if let recognizer = SFSpeechRecognizer(locale: locale),
+           recognizer.isAvailable, recognizer.supportsOnDeviceRecognition {
+            return recognizer
+        }
+        guard let fallback = SFSpeechRecognizer(locale: Locale(identifier: "en-US")),
+              fallback.isAvailable, fallback.supportsOnDeviceRecognition else { return nil }
+        return fallback
     }
 
     private func makeBuffer(from chunk: AudioChunk) -> AVAudioPCMBuffer? {

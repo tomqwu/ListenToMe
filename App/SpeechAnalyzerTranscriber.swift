@@ -14,8 +14,10 @@ actor SpeechAnalyzerTranscriber: Transcribing {
 
     private var pipelines: [SpeakerSource: Pipeline] = [:]
     private var stopped = false
+    private let locale: Locale
 
-    init() {
+    init(locale: Locale = .current) {
+        self.locale = locale
         var cont: AsyncStream<TranscriptSegment>.Continuation!
         segments = AsyncStream { cont = $0 }
         continuation = cont
@@ -54,8 +56,9 @@ actor SpeechAnalyzerTranscriber: Transcribing {
     }
 
     private func makePipeline(for source: SpeakerSource) async -> Pipeline? {
+        let resolvedLocale = await Self.supportedLocale(for: locale)
         let transcriber = SpeechTranscriber(
-            locale: Locale.current,
+            locale: resolvedLocale,
             transcriptionOptions: [],
             reportingOptions: [.volatileResults],
             attributeOptions: []
@@ -101,6 +104,18 @@ actor SpeechAnalyzerTranscriber: Transcribing {
             format: format,
             resultsTask: resultsTask
         )
+    }
+
+    /// Resolves a requested locale to one `SpeechTranscriber` actually supports (equivalent
+    /// language/region where possible), falling back to en-US, so an unsupported choice doesn't
+    /// build a dead module that yields an empty transcript.
+    private static func supportedLocale(for requested: Locale) async -> Locale {
+        if let equivalent = await SpeechTranscriber.supportedLocale(equivalentTo: requested) {
+            return equivalent
+        }
+        let supported = await SpeechTranscriber.supportedLocales
+        return supported.first(where: { $0.identifier(.bcp47) == "en-US" })
+            ?? supported.first ?? requested
     }
 
     /// A source's results stream ended. If we're still running and this is the current pipeline
