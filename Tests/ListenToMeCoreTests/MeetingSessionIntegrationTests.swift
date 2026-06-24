@@ -131,6 +131,21 @@ final class MeetingSessionIntegrationTests: XCTestCase {
         XCTAssertFalse(session.isRunning)
     }
 
+    func testStopAndWaitAwaitsTranscriberShutdown() async throws {
+        let fixture = makeSession()
+        try await fixture.session.start()
+        XCTAssertTrue(fixture.session.isRunning)
+
+        await fixture.session.stopAndWait()
+        XCTAssertFalse(fixture.session.isRunning)
+        // Teardown is awaited, so the transcriber has finished by the time the call returns.
+        XCTAssertEqual(fixture.transcriber.finishCount, 1)
+
+        // Idempotent: a second call is a no-op (no extra finish).
+        await fixture.session.stopAndWait()
+        XCTAssertEqual(fixture.transcriber.finishCount, 1)
+    }
+
     // MARK: - Test 5: restart creates fresh capture/transcriber and pump works again
 
     func testRestartCreatesFreshPumpAndDeliversSegments() async throws {

@@ -10,6 +10,11 @@ struct MeetingView: View {
     @State private var showPermissions = false
     @State private var chatModels: [String] = []
     @State private var transcriptionLocaleID: String
+    @State private var restartTask: Task<Void, Never>?
+    /// User intent to be capturing — the toolbar button's source of truth. Stays true across the
+    /// brief teardown window of a locale restart (when `session.isRunning` is transiently false),
+    /// so a Stop press is never lost.
+    @State private var wantsCapture = false
     private let hotkey = HotkeyMonitor()
 
     /// Curated transcription languages. "" = follow the system language ("Auto"). Apple's
@@ -112,6 +117,8 @@ struct MeetingView: View {
         }
         .onDisappear {
             hotkey.stop()
+            wantsCapture = false
+            restartTask?.cancel()   // don't let a pending locale restart resume capture after close
             session.stop()
         }
     }
@@ -150,16 +157,20 @@ struct MeetingView: View {
         showPermissions: Binding<Bool>
     ) -> some View {
         HStack(spacing: 12) {
-            Button(session.isRunning ? "Stop" : "Listen") {
+            Button(wantsCapture ? "Stop" : "Listen") {
                 Task {
-                    if session.isRunning {
+                    if wantsCapture {
+                        wantsCapture = false
+                        restartTask?.cancel()   // cancel any in-flight locale restart
                         session.stop()
                     } else {
+                        wantsCapture = true
                         do {
                             startError = nil
                             try await session.start()
                         } catch {
                             startError = error.localizedDescription
+                            wantsCapture = false
                         }
                     }
                 }
@@ -176,6 +187,18 @@ struct MeetingView: View {
             .frame(maxWidth: 180)
             .onChange(of: transcriptionLocaleID) { _, newValue in
                 ProviderSettings.transcriptionLocaleID = newValue
+                // The locale is read only when a transcriber is created (at start). Restart an
+                // active session so the new language applies immediately instead of next Listen.
+                guard wantsCapture else { return }
+                restartTask?.cancel()
+                restartTask = Task {
+                    await session.stopAndWait()   // await teardown so the new transcriber can't overlap the old
+                    // Bail if the user pressed Stop or closed the window during teardown — don't
+                    // resume recording against their intent.
+                    guard wantsCapture, !Task.isCancelled else { return }
+                    do { startError = nil; try await session.start() }
+                    catch { startError = error.localizedDescription; wantsCapture = false }
+                }
             }
             .help("Transcription language — applies the next time you press Listen")
             Toggle("Proactive", isOn: proactiveEnabled)

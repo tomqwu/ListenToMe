@@ -34,6 +34,9 @@ public final class MeetingSession {
     private let listenerDebounce: TimeInterval
 
     private var pumpTasks: [Task<Void, Never>] = []
+    /// In-flight transcriber teardown from the last stop. `start()` awaits it before creating a new
+    /// transcriber so a quick restart can't run two transcribers at once (SFSpeechRecognizer 1100).
+    private var stopDrain: Task<Void, Never>?
     private var responseTasks: [CopilotRole: Task<Void, Never>] = [:]
     private var responseGenerations: [CopilotRole: Int] = [:]
     private var runID = 0
@@ -83,6 +86,11 @@ public final class MeetingSession {
         isRunning = true
         runID += 1
         let myRun = runID
+        // Wait for any prior transcriber to finish draining before creating a new one, so two
+        // transcribers never run concurrently (even if start() is called mid-teardown).
+        await stopDrain?.value
+        stopDrain = nil
+        guard isRunning, runID == myRun else { return }
         let capture = makeCapture()
         let transcriber = makeTranscriber()
         // Store before the await so stop() can reach an in-flight capture (whose mic may already
@@ -120,15 +128,36 @@ public final class MeetingSession {
     }
 
     public func stop() {
-        guard isRunning else { return }
+        guard let transcriber = beginStop() else { return }
+        stopDrain = Task { await transcriber.finish() }
+    }
+
+    /// Like `stop()`, but awaits transcriber teardown before returning, so an immediately following
+    /// `start()` cannot overlap the previous transcriber (which can trigger SFSpeechRecognizer's
+    /// `kAFAssistantErrorDomain 1100` overlap error). Used when restarting to apply a new locale.
+    public func stopAndWait() async {
+        guard let transcriber = beginStop() else {
+            await stopDrain?.value   // a prior fire-and-forget stop() may still be draining
+            return
+        }
+        let drain = Task { await transcriber.finish() }
+        stopDrain = drain
+        await drain.value
+    }
+
+    /// Shared synchronous teardown. Returns the transcriber the caller should `finish()` (awaited
+    /// or not), or nil when there is nothing running / no transcriber to drain.
+    private func beginStop() -> (any Transcribing)? {
+        guard isRunning else { return nil }
         isRunning = false
         listenerRefreshPending = false
         for (_, task) in responseTasks { task.cancel() }
         capture?.stop()
-        if let transcriber { Task { await transcriber.finish() } }
+        let transcriber = self.transcriber
         capture = nil
-        transcriber = nil
+        self.transcriber = nil
         pumpTasks.removeAll()
+        return transcriber
     }
 
     // MARK: - Ingest
