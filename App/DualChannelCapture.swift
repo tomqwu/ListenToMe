@@ -21,8 +21,14 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
     }
 
     func start() async throws {
-        try startMic()
-        try await startSystemAudio()
+        try startMic()                     // essential "You" channel — propagate if this fails
+        do {
+            try await startSystemAudio()   // "Others" channel — best-effort
+        } catch {
+            // Screen Recording not granted/effective (e.g. needs relaunch) — continue mic-only.
+            NSLog("ListenToMe: system audio capture unavailable (\(error.localizedDescription)); " +
+                  "continuing with microphone only.")
+        }
     }
 
     func stop() {

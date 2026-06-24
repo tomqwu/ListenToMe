@@ -54,6 +54,17 @@ final class PermissionsModel {
         refresh()
     }
 
+    /// Relaunches the app — required for macOS to recognize a newly-granted Screen Recording
+    /// permission (`CGPreflightScreenCaptureAccess` only updates after a restart).
+    func relaunch() {
+        let url = Bundle.main.bundleURL
+        let config = NSWorkspace.OpenConfiguration()
+        config.createsNewApplicationInstance = true
+        NSWorkspace.shared.openApplication(at: url, configuration: config) { _, _ in
+            Task { @MainActor in NSApp.terminate(nil) }
+        }
+    }
+
     func openSettings(_ pane: String) {
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?\(pane)") {
             NSWorkspace.shared.open(url)
