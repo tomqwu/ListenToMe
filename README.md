@@ -87,7 +87,14 @@ See `docs/superpowers/specs/2026-06-18-listentome-design.md` for the full design
   next finalized segment.
 
 ## Roadmap (post-MVP)
-- **Done:** DeepSeek provider (`deepseek-v4-flash` / `deepseek-v4-pro`) + Ollama, selectable in Settings, key in Keychain.
-- Claude / OpenAI providers (same `LLMProvider` pattern, Keychain-stored keys)
-- WhisperKit / SpeechAnalyzer transcription engines (Settings-switchable)
-- Session persistence and export
+- **Done:** Ollama provider for both local and cloud models (key in Keychain), with **per-pane
+  model selection** (curated defaults: Quick = fast/`flash`, Deep = strong/`pro`), **transcription
+  language** selection, **AI response-language** selection, **Listener→Quick/Deep context sharing**,
+  and **Markdown session export** (toolbar ⬆️).
+- **Ollama-only by design.** Cloud already exposes GPT/DeepSeek/Qwen/etc. through one key, so
+  dedicated Claude/OpenAI providers are intentionally **not** planned.
+- **WhisperKit engine (deferred):** SpeechAnalyzer (macOS 26) is the on-device default. WhisperKit
+  would add an external dependency + model management; it's the likely path to true multilingual
+  **code-switching** (e.g. Mandarin↔English mid-sentence), which Apple's on-device Speech can't do.
+- **Cross-launch session history (deferred):** export covers sharing/review; a live copilot's
+  sessions are otherwise ephemeral.
