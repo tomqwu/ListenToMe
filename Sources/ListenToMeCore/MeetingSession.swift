@@ -17,6 +17,11 @@ public final class MeetingSession {
     public private(set) var quickSuggestion = ""
     public private(set) var deepAnswer = ""
 
+    /// The last *completed* listener summary, used as grounding for Quick/Deep prompts. Kept
+    /// separate from `listenerSummary` (the live display value, which is cleared to "" while a new
+    /// refresh streams) so a proactive Quick can't read an empty/partial in-flight summary.
+    private var lastCompletedListenerSummary = ""
+
     /// The set of roles currently streaming a response.
     public private(set) var streamingRoles: Set<CopilotRole> = []
 
@@ -193,8 +198,10 @@ public final class MeetingSession {
         guard isRunning, proactiveEnabled,
               context.shouldFireProactive(for: segment, now: clock()) else { return }
         startRoleTask(.quick) {
-            PromptBuilder.build(context: self.context.buildContext(from: self.store, notes: self.notes),
-                                action: .proactive)
+            PromptBuilder.build(
+                context: self.context.buildContext(from: self.store, notes: self.notes,
+                                                   summary: self.lastCompletedListenerSummary),
+                action: .proactive)
         }
     }
 
@@ -203,16 +210,20 @@ public final class MeetingSession {
     /// Streams a Quick response for the given action. Awaits completion.
     public func respondQuick(_ action: ResponseAction) async {
         await startRoleTask(.quick) {
-            PromptBuilder.build(context: self.context.buildContext(from: self.store, notes: self.notes),
-                                action: action)
+            PromptBuilder.build(
+                context: self.context.buildContext(from: self.store, notes: self.notes,
+                                                   summary: self.lastCompletedListenerSummary),
+                action: action)
         }.value
     }
 
     /// Streams a Deep response for the given action. Awaits completion.
     public func respondDeep(_ action: ResponseAction) async {
         await startRoleTask(.deep) {
-            PromptBuilder.buildDeep(context: self.context.buildContext(from: self.store, notes: self.notes),
-                                    action: action)
+            PromptBuilder.buildDeep(
+                context: self.context.buildContext(from: self.store, notes: self.notes,
+                                                   summary: self.lastCompletedListenerSummary),
+                action: action)
         }.value
     }
 
@@ -283,6 +294,11 @@ public final class MeetingSession {
                 if Task.isCancelled { return }
                 if generation != responseGenerations[role] { return }
                 appendOutput(role, delta)
+            }
+            // Listener finished: snapshot the completed summary for Quick/Deep grounding, so a
+            // later refresh clearing the live value can't strip context from a proactive prompt.
+            if role == .listener, generation == responseGenerations[role], !Task.isCancelled {
+                lastCompletedListenerSummary = listenerSummary
             }
         } catch {
             if generation == responseGenerations[role],

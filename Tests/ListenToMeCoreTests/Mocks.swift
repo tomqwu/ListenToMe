@@ -13,6 +13,23 @@ struct MockLLMProvider: LLMProvider {
     }
 }
 
+/// Provider that records the user-message content of the last request it streamed.
+final class RecordingProvider: LLMProvider, @unchecked Sendable {
+    let id = "recording"
+    let deltas: [String]
+    private let lock = NSLock()
+    private var _lastUser: String?
+    var lastUser: String? { lock.withLock { _lastUser } }
+    init(deltas: [String]) { self.deltas = deltas }
+    func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
+        lock.withLock { _lastUser = request.messages.last?.content }
+        return AsyncThrowingStream { continuation in
+            for delta in deltas { continuation.yield(delta) }
+            continuation.finish()
+        }
+    }
+}
+
 /// Capture mock that can emit chunks on demand (for integration tests).
 final class MockCapture: AudioCapturing, @unchecked Sendable {
     let chunks: AsyncStream<AudioChunk>

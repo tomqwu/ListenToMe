@@ -131,6 +131,31 @@ final class MeetingSessionIntegrationTests: XCTestCase {
         XCTAssertFalse(session.isRunning)
     }
 
+    func testQuickPromptIncludesCompletedListenerSummary() async throws {
+        let quickProvider = RecordingProvider(deltas: ["ok"])
+        let store = ConversationStore()
+        let session = MeetingSession(
+            store: store,
+            context: ContextEngine(debounce: 0),
+            makeCapture: { MockCapture() },
+            makeTranscriber: { MockTranscriber() },
+            makeProvider: { model in
+                model == "Q"
+                    ? (quickProvider as any LLMProvider)
+                    : MockLLMProvider(id: model, deltas: ["[\(model)]"])
+            },
+            models: [.listener: "L", .quick: "Q", .deep: "D"],
+            listenerDebounce: 0
+        )
+        store.apply(TranscriptSegment(source: .others, text: "What's the plan?",
+                                      isFinal: true, start: 0, end: 1))
+        await session.refreshListener()        // listener completes -> "[L]" is the saved summary
+        await session.respondQuick(.answerQuestion)
+        let user = quickProvider.lastUser ?? ""
+        XCTAssertTrue(user.contains("Meeting summary so far"), "quick prompt should carry the summary")
+        XCTAssertTrue(user.contains("[L]"), "quick prompt should include the completed summary text")
+    }
+
     func testStopAndWaitAwaitsTranscriberShutdown() async throws {
         let fixture = makeSession()
         try await fixture.session.start()
