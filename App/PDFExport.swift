@@ -7,14 +7,29 @@ enum PDFExport {
     /// parse/render failure.
     @MainActor
     static func data(fromMarkdown markdown: String, title: String) -> Data? {
-        // Preprocess block markdown (headings, bullets) the same way the on-screen panes do, so the
-        // PDF shows rendered headings/lists instead of raw "#"/"-" markers under inline-only parsing.
-        let prepared = MarkdownText.preprocess(markdown)
+        // Build the document block-by-block the same way the on-screen panes do: prose blocks get
+        // heading/bullet preprocessing + inline markdown; fenced code blocks render verbatim in a
+        // monospaced font (so diff/code lines aren't rewritten into bullets/headings).
         let options = AttributedString.MarkdownParsingOptions(
             interpretedSyntax: .inlineOnlyPreservingWhitespace,
             failurePolicy: .returnPartiallyParsedIfPossible)
-        guard let attributed = try? NSAttributedString(
-            AttributedString(markdown: prepared, options: options)) else { return nil }
+        let attributed = NSMutableAttributedString()
+        let mono = NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)
+        for block in MarkdownText.blocks(markdown) {
+            switch block {
+            case .markdown(let prose):
+                let prepared = MarkdownText.preprocess(prose)
+                if let attr = try? NSAttributedString(AttributedString(markdown: prepared, options: options)) {
+                    attributed.append(attr)
+                } else {
+                    attributed.append(NSAttributedString(string: prose))
+                }
+            case .code(let code):
+                attributed.append(NSAttributedString(string: code, attributes: [.font: mono]))
+            }
+            attributed.append(NSAttributedString(string: "\n\n"))
+        }
+        guard attributed.length > 0 else { return nil }
 
         let pageWidth: CGFloat = 612, pageHeight: CGFloat = 792, margin: CGFloat = 48   // US Letter, 0.5in margins
         let textWidth = pageWidth - margin * 2
