@@ -250,13 +250,17 @@ struct MeetingView: View {
                 ForEach(PresetCatalog.all) { preset in Text(preset.name).tag(preset.id) }
             }
             .labelsHidden()
-            .onChange(of: presetID) { _, newID in
+            .onChange(of: presetID) { oldID, newID in
                 let preset = PresetCatalog.preset(id: newID)
+                let previousTemplate = PresetCatalog.preset(id: oldID).notesTemplate
                 ProviderSettings.presetID = newID
                 session.personaGuidance = preset.personaGuidance
-                // Replace the notes scaffold with the preset's template; selecting None ("")
-                // clears it so a prior preset's scaffold can't keep biasing prompts.
-                session.notes = preset.notesTemplate
+                // Swap the notes scaffold only when the user hasn't edited it (notes still match the
+                // previous preset's template, or are empty). This clears an unedited scaffold on
+                // None, but preserves notes the user actually typed.
+                if session.notes.isEmpty || session.notes == previousTemplate {
+                    session.notes = preset.notesTemplate
+                }
             }
             .help("Use-case preset — fills Context notes and tailors the AI panes")
             TextField("Context notes (injected into prompts)", text: notes, axis: .vertical)
