@@ -300,6 +300,10 @@ struct MeetingView: View {
                 }
             }
             .help("Use-case preset — fills Context notes and tailors the AI panes")
+            Button { loadFromCalendar(session: session) } label: {
+                Label("Load from Calendar", systemImage: "calendar")
+            }
+            .help("Fill Context notes from your current or next calendar meeting")
             TextField("Context notes (injected into prompts)", text: notes, axis: .vertical)
                 .lineLimit(3...12)
                 .textFieldStyle(.roundedBorder)
@@ -468,6 +472,21 @@ extension MeetingView {
             await session.transcribeAudio(
                 nextChunk: { await producer.next() },
                 transcriber: { SpeechAnalyzerTranscriber(locale: locale) as any Transcribing })
+        }
+    }
+
+    /// Pre-fills the Context-notes field from the user's current or next calendar meeting.
+    /// Calendar access is async, so this runs on a Task; failures degrade to an inline message.
+    func loadFromCalendar(session: MeetingSession) {
+        startError = nil
+        Task {
+            if let info = await CalendarService.currentOrNextMeeting() {
+                session.notes = MeetingContext.notes(
+                    for: info,
+                    timeFormat: { $0.formatted(date: .omitted, time: .shortened) })
+            } else {
+                startError = "No current/upcoming calendar meeting found (or calendar access denied)."
+            }
         }
     }
 
