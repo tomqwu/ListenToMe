@@ -188,8 +188,10 @@ struct MeetingView: View {
                     if wantsCapture {
                         wantsCapture = false
                         restartTask?.cancel()   // cancel any in-flight locale restart
+                        // Await teardown so the transcriber flushes its final segments into the
+                        // store before we snapshot the transcript for search.
+                        await session.stopAndWait()
                         saveSessionIfEnabled(session: session)
-                        session.stop()
                     } else {
                         wantsCapture = true
                         do {
