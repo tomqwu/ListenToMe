@@ -24,5 +24,7 @@
     <string>ListenToMe transcribes meeting audio you choose to capture.</string>
     <key>NSSpeechRecognitionUsageDescription</key>
     <string>ListenToMe converts captured speech to text on your device.</string>
+    <key>NSCalendarsFullAccessUsageDescription</key>
+    <string>ListenToMe reads your calendar only to pre-fill meeting context you ask for; it stays on your Mac.</string>
 </dict>
 </plist>
