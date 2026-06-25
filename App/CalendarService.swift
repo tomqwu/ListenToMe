@@ -44,7 +44,12 @@ enum CalendarService {
     /// Picks an event happening now (start ≤ now ≤ end) if any, otherwise the soonest-starting
     /// upcoming event. Pure given the inputs, so it's straightforward to reason about.
     static func chooseEvent(from events: [EKEvent], now: Date) -> EKEvent? {
-        let inProgress = events
+        // Skip all-day items (holidays, birthdays, OOO) and events the user declined/marked free —
+        // they aren't the meeting the user wants context for.
+        let meetings = events.filter { event in
+            !event.isAllDay && event.status != .canceled && event.availability != .free
+        }
+        let inProgress = meetings
             .filter { event in
                 guard let start = event.startDate, let end = event.endDate else { return false }
                 return start <= now && now <= end
@@ -52,7 +57,7 @@ enum CalendarService {
             .min { ($0.startDate ?? .distantPast) < ($1.startDate ?? .distantPast) }
         if let inProgress { return inProgress }
 
-        return events
+        return meetings
             .filter { ($0.startDate ?? .distantPast) > now }
             .min { ($0.startDate ?? .distantFuture) < ($1.startDate ?? .distantFuture) }
     }
