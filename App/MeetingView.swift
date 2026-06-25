@@ -19,8 +19,11 @@ struct MeetingView: View {
     /// Identity of this app-window's session. Reused across Listen→Stop cycles so repeated Stops
     /// upsert one growing record instead of writing a fresh superset each time.
     @State private var currentSessionID = UUID().uuidString
-    /// Utterance count at the last save, so an unchanged transcript isn't re-saved on Stop.
-    @State private var lastSavedUtteranceCount = 0
+    /// `lastSavedUtteranceCount`: count at the last save, so an unchanged transcript isn't re-saved
+    /// on Stop. `saveFloorIndex`: index below which utterances are excluded from the saved record —
+    /// advanced whenever saving is disabled so opt-out-period audio is never persisted, even after
+    /// re-enabling. Both stay 0 in the normal (never-disabled) case = full transcript saved.
+    @State private var lastSavedUtteranceCount = 0; @State private var saveFloorIndex = 0
     @State private var chatModels: [String] = []
     @State private var transcriptionLocaleID: String
     @State private var presetID: String
@@ -587,13 +590,21 @@ extension MeetingView {
     /// in one window upsert a single growing record. Title = the active preset's name (or "Session")
     /// plus the date.
     func saveSessionIfEnabled(session: MeetingSession) {
-        guard ProviderSettings.saveSessionsForSearch,
-              store.utterances.count > lastSavedUtteranceCount else { return }
+        // Saving off: advance the floor (and baseline) past everything captured so far so these
+        // utterances stay excluded even if saving is re-enabled later — "turn off to keep nothing".
+        guard ProviderSettings.saveSessionsForSearch else {
+            saveFloorIndex = store.utterances.count
+            lastSavedUtteranceCount = store.utterances.count
+            return
+        }
+        guard store.utterances.count > lastSavedUtteranceCount else { return }
         let now = Date()
         let presetName = PresetCatalog.preset(id: presetID).name
         let base = (presetName.isEmpty || presetName == "None") ? "Session" : presetName
-        let transcript = store.utterances
-            .map { "\($0.source == .you ? "You" : "Others"): \($0.text)" }
+        // Persist only utterances at/after the floor, so opt-out-period audio is never written.
+        let saved = Array(store.utterances.dropFirst(saveFloorIndex))
+        guard !saved.isEmpty else { return }
+        let transcript = saved.map { "\($0.source == .you ? "You" : "Others"): \($0.text)" }
             .joined(separator: "\n")
         let record = SessionRecord(
             id: currentSessionID,

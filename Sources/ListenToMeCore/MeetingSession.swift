@@ -49,7 +49,12 @@ public final class MeetingSession {
     private let clock: @Sendable () -> TimeInterval
     private let listenerDebounce: TimeInterval
 
-    private var pumpTasks: [Task<Void, Never>] = []
+    /// Capture -> transcriber.feed pump. Drained (awaited) BEFORE finishing the transcriber so the
+    /// last buffered chunks are fed before finalization.
+    private var capturePump: Task<Void, Never>?
+    /// transcriber.segments -> ingest pump. Drained AFTER finishing the transcriber so every final
+    /// segment is ingested into the store.
+    private var segmentPump: Task<Void, Never>?
     /// In-flight transcriber teardown from the last stop. `start()` awaits it before creating a new
     /// transcriber so a quick restart can't run two transcribers at once (SFSpeechRecognizer 1100).
     private var stopDrain: Task<Void, Never>?
@@ -127,20 +132,20 @@ public final class MeetingSession {
         guard isRunning, runID == myRun else { capture.stop(); return }
 
         let captureStream = capture.chunks
-        pumpTasks.append(Task {
+        capturePump = Task {
             for await chunk in captureStream {
                 await transcriber.feed(chunk)
             }
-        })
+        }
 
         let segmentStream = transcriber.segments
-        pumpTasks.append(Task { [weak self] in
+        segmentPump = Task { [weak self] in
             for await segment in segmentStream {
                 guard let self else { return }
                 guard self.runID == myRun else { continue }   // ignore stale-session segments
                 await self.ingest(segment)
             }
-        })
+        }
     }
 
     public func stop() {
@@ -162,30 +167,38 @@ public final class MeetingSession {
         await drain.value
     }
 
-    /// Awaits full teardown: the transcriber finalizes (ending its segment stream), then the pump
-    /// tasks drain — so the last flushed segments are both fed and *ingested into the store* before
-    /// this returns. Static so it captures only the teardown payload, not `self`.
+    /// Awaits full teardown in feed-before-finalize order: drain the capture pump (feed every
+    /// remaining chunk), THEN finish the transcriber (finalize), THEN drain the segment pump (ingest
+    /// every final into the store). This guarantees the last buffered audio isn't dropped by an
+    /// early `finish()`. Static so it captures only the teardown payload, not `self`.
     private static func drain(
-        _ teardown: (transcriber: (any Transcribing)?, pumps: [Task<Void, Never>])
+        _ teardown: (transcriber: (any Transcribing)?,
+                     capturePump: Task<Void, Never>?,
+                     segmentPump: Task<Void, Never>?)
     ) async {
+        await teardown.capturePump?.value
         if let transcriber = teardown.transcriber { await transcriber.finish() }
-        for pump in teardown.pumps { await pump.value }
+        await teardown.segmentPump?.value
     }
 
-    /// Shared synchronous teardown. Returns the transcriber to `finish()` and the pump tasks to
+    /// Shared synchronous teardown. Returns the transcriber to `finish()` and the two pumps to
     /// drain (via `drain`), or nil when nothing is running.
-    private func beginStop() -> (transcriber: (any Transcribing)?, pumps: [Task<Void, Never>])? {
+    private func beginStop() -> (transcriber: (any Transcribing)?,
+                                 capturePump: Task<Void, Never>?,
+                                 segmentPump: Task<Void, Never>?)? {
         guard isRunning else { return nil }
         isRunning = false
         listenerRefreshPending = false
         for (_, task) in responseTasks { task.cancel() }
         capture?.stop()
         let transcriber = self.transcriber
-        let pumps = pumpTasks
+        let capturePump = self.capturePump
+        let segmentPump = self.segmentPump
         capture = nil
         self.transcriber = nil
-        pumpTasks = []
-        return (transcriber, pumps)
+        self.capturePump = nil
+        self.segmentPump = nil
+        return (transcriber, capturePump, segmentPump)
     }
 
     // MARK: - Audio file transcription
