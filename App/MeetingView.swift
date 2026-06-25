@@ -13,6 +13,7 @@ struct MeetingView: View {
     @State private var showSettings = false
     @State private var permissions = PermissionsModel()
     @State private var showPermissions = false
+    @State private var showOnboarding = false
     @State private var chatModels: [String] = []
     @State private var transcriptionLocaleID: String
     @State private var presetID: String
@@ -123,6 +124,13 @@ struct MeetingView: View {
         .sheet(isPresented: $showPermissions) {
             PermissionsView(permissions: permissions)
         }
+        .sheet(isPresented: $showOnboarding, onDismiss: {
+            // Onboarding may have set/cleared the Ollama key, which changes the route; rebuild
+            // every role's provider so the panes use the new local/cloud configuration.
+            Task { await reloadAndHealModels() }
+        }, content: {
+            OnboardingView()
+        })
         .onAppear {
             session.responseLanguage = ProviderSettings.responseLanguageDirective()
             let preset = PresetCatalog.preset(id: presetID)
@@ -131,7 +139,14 @@ struct MeetingView: View {
             if !referencePaths.isEmpty { loadReferences(into: session) }
             hotkey.start { Task { await session.respondQuick(.answerQuestion) } }
             permissions.refresh()
-            if !permissions.allRequiredGranted { showPermissions = true }
+            // First launch: walk the user through the guided onboarding (which includes the
+            // permission grants). On later launches, only nudge the bare permissions panel when
+            // a required grant is still missing; the shield button keeps it reachable otherwise.
+            if !UserDefaults.standard.bool(forKey: OnboardingView.completionKey) {
+                showOnboarding = true
+            } else if !permissions.allRequiredGranted {
+                showPermissions = true
+            }
         }
         .task {
             await reloadAndHealModels()
@@ -174,7 +189,7 @@ struct MeetingView: View {
             }
             .disabled(session.isTranscribingFile)   // no live capture while importing a file
             if session.isRunning {
-                Circle().fill(.red).frame(width: 10, height: 10)
+                RecordingIndicator()
                 Text("Recording").foregroundStyle(.secondary)
             }
             Spacer()
@@ -221,11 +236,20 @@ struct MeetingView: View {
     // MARK: - Transcript pane
 
     private func transcriptPane(session: MeetingSession, notes: Binding<String>) -> some View {
-        VStack(alignment: .leading) {
-            Text("Transcript").font(.headline).padding(.bottom, 4)
+        VStack(alignment: .leading, spacing: Theme.paneSpacing) {
+            HStack {
+                Text("Transcript").font(.headline)
+                Spacer()
+            }
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 6) {
+                        if store.utterances.isEmpty && store.partial == nil {
+                            PaneEmptyState(
+                                systemImage: "waveform",
+                                text: "Press Listen to start transcribing the conversation."
+                            )
+                        }
                         ForEach(store.utterances) { seg in
                             transcriptLine(for: seg)
                         }
@@ -270,7 +294,8 @@ struct MeetingView: View {
                 .textFieldStyle(.roundedBorder)
             referenceFilesRow(session: session)
         }
-        .padding(10)
+        .paneCard()
+        .padding(Theme.paneSpacing)
         .frame(minWidth: 360)
     }
 
@@ -346,9 +371,12 @@ struct MeetingView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: - AI panes
+}
 
-    private func listenerPane(session: MeetingSession) -> some View {
+// MARK: - AI panes
+
+extension MeetingView {
+    func listenerPane(session: MeetingSession) -> some View {
         AIPaneView(
             title: "Listener",
             role: .listener,
@@ -363,7 +391,7 @@ struct MeetingView: View {
         )
     }
 
-    private func quickPane(session: MeetingSession) -> some View {
+    func quickPane(session: MeetingSession) -> some View {
         AIPaneView(
             title: "Quick",
             role: .quick,
@@ -382,7 +410,7 @@ struct MeetingView: View {
         )
     }
 
-    private func deepPane(session: MeetingSession) -> some View {
+    func deepPane(session: MeetingSession) -> some View {
         AIPaneView(
             title: "Deep",
             role: .deep,
@@ -476,82 +504,5 @@ extension MeetingView {
             if target != current { ProviderSettings.setModel(target, for: role) }
             session.setModel(role, target)   // rebuild the provider so it picks up the new base URL/key
         }
-    }
-}
-
-// MARK: - AIPaneView
-
-private struct AIPaneView: View {
-    let title: String
-    let role: CopilotRole
-    let session: MeetingSession
-    let chatModels: [String]
-    let outputText: String
-    let placeholder: String
-    @State private var atBottom = true
-    let headerExtra: () -> AnyView
-    let actionButtons: () -> AnyView
-
-    private func modelOptions() -> [String] {
-        let current = session.models[role] ?? ""
-        if chatModels.contains(current) { return chatModels }
-        return current.isEmpty ? chatModels : [current] + chatModels
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text(title).font(.headline)
-                if session.streamingRoles.contains(role) {
-                    ProgressView().controlSize(.small)
-                }
-                Spacer()
-                headerExtra()
-                Picker("Model", selection: Binding(
-                    get: { session.models[role] ?? "" },
-                    set: {
-                        session.setModel(role, $0)
-                        ProviderSettings.setModel($0, for: role)
-                        ProviderSettings.pin(role)   // explicit choice: stop auto-defaulting this pane
-                    }
-                )) {
-                    ForEach(modelOptions(), id: \.self) { model in
-                        Text("\(model) — \(ModelRanking.describe(model))").tag(model)
-                    }
-                }
-                .labelsHidden()
-                .frame(maxWidth: 260)
-            }
-            ScrollViewReader { proxy in
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 0) {
-                        Group {
-                            if !outputText.isEmpty {
-                                MarkdownText(text: outputText)
-                                    .foregroundStyle(.primary)
-                            } else if session.streamingRoles.contains(role) {
-                                Text("💭 Thinking…")
-                                    .foregroundStyle(.secondary)
-                            } else {
-                                Text(placeholder)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        Color.clear.frame(height: 1).id(MeetingView.scrollBottomID)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                // Follow the streamed answer only while the user is at the bottom.
-                .onScrollGeometryChange(for: Bool.self) { geo in
-                    geo.contentOffset.y + geo.containerSize.height >= geo.contentSize.height - 24
-                } action: { _, isAtBottom in atBottom = isAtBottom }
-                .onChange(of: outputText) { _, _ in
-                    if atBottom { proxy.scrollTo(MeetingView.scrollBottomID, anchor: .bottom) }
-                }
-            }
-            actionButtons()
-        }
-        .padding(10)
-        .frame(minHeight: 160)
     }
 }
