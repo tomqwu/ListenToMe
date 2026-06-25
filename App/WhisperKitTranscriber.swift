@@ -18,9 +18,10 @@ import WhisperKit
 /// when it finishes. `finish()` flushes remaining audio and drains all in-flight tasks before
 /// closing the stream so the last utterance is never lost.
 ///
-/// The model is downloaded lazily on first audio (a few hundred MB for "base"); failures are
-/// logged via NSLog and the transcriber degrades to a no-op rather than crashing the session.
-/// An actor so all shared buffer/state access is serialized.
+/// The model downloads on first audio in a background Task that `feed` never awaits (so the
+/// download can't drop audio); per-source transcription Tasks await the model before transcribing.
+/// Load failures are logged via NSLog and the transcriber degrades to a no-op rather than crashing
+/// the session. An actor so all shared buffer/state access is serialized.
 actor WhisperKitTranscriber: Transcribing {
     nonisolated let segments: AsyncStream<TranscriptSegment>
     private nonisolated let continuation: AsyncStream<TranscriptSegment>.Continuation
@@ -41,10 +42,10 @@ actor WhisperKitTranscriber: Transcribing {
 
     private let language: String?
 
-    private var kitBox: KitBox?
-    /// nil before the first init attempt; set once we've tried (so we don't retry a hard failure
-    /// on every chunk and spin the download).
-    private var initAttempted = false
+    /// The model load runs as a background Task kicked off on first audio and is awaited only inside
+    /// per-source transcription Tasks (off the feed path), so the initial download never blocks the
+    /// capture pump. Resolves to nil on a hard load failure (transcriber degrades to a no-op).
+    private var loadTask: Task<KitBox?, Never>?
     private var stopped = false
 
     private var states: [SpeakerSource: SourceState] = [:]
@@ -61,8 +62,9 @@ actor WhisperKitTranscriber: Transcribing {
 
     func feed(_ chunk: ListenToMeCore.AudioChunk) async {
         guard !stopped else { return }
-        let box = await ensureWhisperKit()
-        guard let box, !stopped else { return }
+        // Kick off the (potentially long) model download in the background without awaiting it, so
+        // audio keeps accumulating while the model loads; transcription Tasks await it later.
+        startModelLoadIfNeeded()
 
         let state = states[chunk.source] ?? SourceState()
         states[chunk.source] = state
@@ -91,18 +93,16 @@ actor WhisperKitTranscriber: Transcribing {
         if boundary {
             // Snapshot+clear and transcribe off the feed path so the capture pump never blocks on a
             // WhisperKit batch (DualChannelCapture buffers only the newest chunks).
-            startTranscription(for: chunk.source, box: box)
+            startTranscription(for: chunk.source)
         }
     }
 
     func finish() async {
         stopped = true
-        // Flush any remaining buffered audio per source, then drain every in-flight transcription
+        // Flush any remaining buffered speech per source, then drain every in-flight transcription
         // so the last utterance's final segment is emitted before the stream closes.
-        if let box = kitBox {
-            for source in states.keys {
-                startTranscription(for: source, box: box)
-            }
+        for source in states.keys {
+            startTranscription(for: source)
         }
         // Drain in a loop: a finishing task may chain a queued follow-up (pending audio captured
         // during a long transcription), so keep awaiting until no source has a live task.
@@ -119,12 +119,15 @@ actor WhisperKitTranscriber: Transcribing {
 
     // MARK: - Transcription
 
-    /// Snapshot+clear the source's buffered audio and transcribe it on a separate Task so `feed`
+    /// Snapshot+clear the source's buffered speech and transcribe it on a separate Task so `feed`
     /// returns immediately and keeps buffering incoming chunks. Only one transcription runs per
     /// source at a time: if one is already in flight, this marks more audio pending so the in-flight
     /// task picks it up on completion, never blocking the capture pump.
-    private func startTranscription(for source: SpeakerSource, box: KitBox) {
+    private func startTranscription(for source: SpeakerSource) {
         guard let state = states[source] else { return }
+        // Only transcribe when real speech was buffered — never send a preroll-only silence tail to
+        // WhisperKit (it hallucinates text on near-silent audio).
+        guard !state.buffer.isEmpty else { return }
         // After a boundary we may resume buffering pre-speech silence for the next utterance.
         state.heardSpeech = false
 
@@ -136,22 +139,22 @@ actor WhisperKitTranscriber: Transcribing {
             state.pending.append(contentsOf: audio)
             return
         }
-        state.task = makeTranscriptionTask(for: source, audio: audio, box: box)
+        state.task = makeTranscriptionTask(for: source, audio: audio)
     }
 
     /// Build the Task that transcribes one utterance and, on completion, chains any audio that
     /// accumulated while it ran (so boundaries during a long transcription aren't dropped).
-    private func makeTranscriptionTask(
-        for source: SpeakerSource, audio: [Float], box: KitBox
-    ) -> Task<Void, Never> {
+    private func makeTranscriptionTask(for source: SpeakerSource, audio: [Float]) -> Task<Void, Never> {
         Task { [weak self] in
-            await self?.transcribe(audio, for: source, box: box)
-            await self?.transcriptionFinished(for: source, box: box)
+            await self?.transcribe(audio, for: source)
+            await self?.transcriptionFinished(for: source)
         }
     }
 
-    /// Run one batch transcription and emit its final segment. Off the actor's feed path.
-    private func transcribe(_ audio: [Float], for source: SpeakerSource, box: KitBox) async {
+    /// Run one batch transcription and emit its final segment. Off the actor's feed path: awaits the
+    /// model becoming ready (so the first-run download doesn't block `feed`) before transcribing.
+    private func transcribe(_ audio: [Float], for source: SpeakerSource) async {
+        guard let box = await loadTask?.value else { return }   // model unavailable — degrade to no-op
         let options = DecodingOptions(
             verbose: false,
             task: .transcribe,
@@ -177,44 +180,43 @@ actor WhisperKitTranscriber: Transcribing {
 
     /// A source's transcription Task finished: clear the slot and, if a boundary fired while it ran,
     /// kick off the queued audio so no utterance is lost.
-    private func transcriptionFinished(for source: SpeakerSource, box: KitBox) {
+    private func transcriptionFinished(for source: SpeakerSource) {
         guard let state = states[source] else { return }
         state.task = nil
         guard !state.pending.isEmpty else { return }
         let next = state.pending
         state.pending.removeAll(keepingCapacity: true)
         guard next.count >= Self.minUtteranceSamples else { return }
-        state.task = makeTranscriptionTask(for: source, audio: next, box: box)
+        state.task = makeTranscriptionTask(for: source, audio: next)
     }
 
     // MARK: - Lazy model load
 
-    /// Lazily create the WhisperKit instance, downloading the model on first call. Returns nil and
-    /// logs on failure; only one init is attempted for the lifetime of the transcriber.
-    private func ensureWhisperKit() async -> KitBox? {
-        if let kitBox { return kitBox }
-        guard !initAttempted else { return nil }
-        initAttempted = true
-        do {
-            let kit = try await WhisperKit(
-                model: Self.modelName,
-                verbose: false,
-                logLevel: .error,
-                download: true
-            )
-            let box = KitBox(kit: kit)
-            kitBox = box
-            return box
-        } catch {
-            NSLog("WhisperKitTranscriber: model load failed (\(Self.modelName)): \(error.localizedDescription)")
-            return nil
+    /// Start the WhisperKit model download/load once, in the background. The Task is awaited only by
+    /// per-source transcription Tasks, never by `feed`, so the initial download can't drop audio.
+    /// Resolves to nil and logs on a hard failure (only attempted once per transcriber lifetime).
+    private func startModelLoadIfNeeded() {
+        guard loadTask == nil else { return }
+        loadTask = Task {
+            do {
+                let kit = try await WhisperKit(
+                    model: Self.modelName,
+                    verbose: false,
+                    logLevel: .error,
+                    download: true
+                )
+                return KitBox(kit: kit)
+            } catch {
+                NSLog("WhisperKitTranscriber: model load failed (\(Self.modelName)): \(error.localizedDescription)")
+                return nil
+            }
         }
     }
 
     /// `WhisperKit` is a non-Sendable class but is internally thread-safe for `transcribe`. Boxing
     /// it as `@unchecked Sendable` lets the actor hand the instance to WhisperKit's nonisolated
     /// async `transcribe` without Swift 6 sending-violations (mirrors the `Pipeline` box pattern
-    /// in SpeechAnalyzerTranscriber). We serialize our own calls per source via `transcribing`.
+    /// in SpeechAnalyzerTranscriber). We serialize our own calls per source via `state.task`.
     private final class KitBox: @unchecked Sendable {
         let kit: WhisperKit
         init(kit: WhisperKit) { self.kit = kit }
