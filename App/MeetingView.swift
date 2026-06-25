@@ -16,6 +16,11 @@ struct MeetingView: View {
     @State private var showOnboarding = false
     @State private var showSearch = false
     @State private var sessionStore = SessionStore()
+    /// Identity of this app-window's session. Reused across Listen→Stop cycles so repeated Stops
+    /// upsert one growing record instead of writing a fresh superset each time.
+    @State private var currentSessionID = UUID().uuidString
+    /// Utterance count at the last save, so an unchanged transcript isn't re-saved on Stop.
+    @State private var lastSavedUtteranceCount = 0
     @State private var chatModels: [String] = []
     @State private var transcriptionLocaleID: String
     @State private var presetID: String
@@ -578,9 +583,12 @@ extension MeetingView {
     }
 
     /// On Stop, persist the finished session for cross-meeting search when the user has opted in
-    /// and there's something to save. Title = the active preset's name (or "Session") plus the date.
+    /// and there's new transcript to save. Reuses `currentSessionID` so repeated Listen→Stop cycles
+    /// in one window upsert a single growing record. Title = the active preset's name (or "Session")
+    /// plus the date.
     func saveSessionIfEnabled(session: MeetingSession) {
-        guard ProviderSettings.saveSessionsForSearch, !store.utterances.isEmpty else { return }
+        guard ProviderSettings.saveSessionsForSearch,
+              store.utterances.count > lastSavedUtteranceCount else { return }
         let now = Date()
         let presetName = PresetCatalog.preset(id: presetID).name
         let base = (presetName.isEmpty || presetName == "None") ? "Session" : presetName
@@ -588,13 +596,14 @@ extension MeetingView {
             .map { "\($0.source == .you ? "You" : "Others"): \($0.text)" }
             .joined(separator: "\n")
         let record = SessionRecord(
-            id: UUID().uuidString,
+            id: currentSessionID,
             title: "\(base) — \(now.formatted(date: .abbreviated, time: .shortened))",
             date: now,
             transcript: transcript,
             summary: session.listenerSummary
         )
         sessionStore.add(record)
+        lastSavedUtteranceCount = store.utterances.count
     }
 
     /// Reloads the installed Ollama chat models into the per-pane pickers.

@@ -197,6 +197,9 @@ struct SettingsView: View {
         ProviderSettings.responseLanguageID = responseLanguageID
         ProviderSettings.referenceBudget = referenceBudget
         ProviderSettings.saveSessionsForSearch = saveSessions
+        // Honor the "Turn off to keep nothing" promise: wipe stored history whenever the toggle is
+        // off. The store is file-backed, so a fresh instance's clear() deletes the JSON.
+        if !saveSessions { SessionStore().clear() }
         KeychainStore.set(ollamaKey.isEmpty ? nil : ollamaKey, for: "ollama")
         dismiss()
     }

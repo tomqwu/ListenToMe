@@ -31,9 +31,13 @@ final class SessionStore {
         return (try? JSONDecoder().decode([SessionRecord].self, from: data)) ?? []
     }
 
-    /// Prepends `record` and caps the store to the most-recent `cap` sessions.
+    /// Upserts `record`: if one with the same `id` already exists it is replaced and moved to the
+    /// front; otherwise the record is prepended. The store stays capped to the most-recent `cap`
+    /// sessions. Upserting lets one app-window session grow into a single record across repeated
+    /// Listen→Stop cycles instead of writing a fresh superset record each Stop.
     func add(_ record: SessionRecord) {
         var records = all()
+        records.removeAll { $0.id == record.id }
         records.insert(record, at: 0)
         if records.count > Self.cap { records = Array(records.prefix(Self.cap)) }
         write(records)
