@@ -22,9 +22,7 @@ transcript never leave the machine**.
 
 ## Screenshot
 
-> _Screenshot coming soon — build and run (`make run`), then capture the four-pane window with
-> ⌘⇧4 and save it to `docs/images/screenshot.png`._
-<!-- Once docs/images/screenshot.png exists, replace the line above with: ![ListenToMe](docs/images/screenshot.png) -->
+![ListenToMe — four-pane meeting copilot](docs/images/screenshot.png)
 
 ## Why ListenToMe
 

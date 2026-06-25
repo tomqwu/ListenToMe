@@ -7,11 +7,14 @@ enum PDFExport {
     /// parse/render failure.
     @MainActor
     static func data(fromMarkdown markdown: String, title: String) -> Data? {
+        // Preprocess block markdown (headings, bullets) the same way the on-screen panes do, so the
+        // PDF shows rendered headings/lists instead of raw "#"/"-" markers under inline-only parsing.
+        let prepared = MarkdownText.preprocess(markdown)
         let options = AttributedString.MarkdownParsingOptions(
             interpretedSyntax: .inlineOnlyPreservingWhitespace,
             failurePolicy: .returnPartiallyParsedIfPossible)
         guard let attributed = try? NSAttributedString(
-            AttributedString(markdown: markdown, options: options)) else { return nil }
+            AttributedString(markdown: prepared, options: options)) else { return nil }
 
         let pageWidth: CGFloat = 612, pageHeight: CGFloat = 792, margin: CGFloat = 48   // US Letter, 0.5in margins
         let textWidth = pageWidth - margin * 2
