@@ -114,6 +114,8 @@ struct MeetingView: View {
         .frame(minWidth: 1100, minHeight: 560)
         .sheet(isPresented: $showSettings, onDismiss: {
             session.responseLanguage = ProviderSettings.responseLanguageDirective()
+            // Rebuild attached references so a changed reference-budget takes effect immediately.
+            if !referencePaths.isEmpty { loadReferences(into: session) }
             Task { await reloadAndHealModels() }
         }, content: {
             SettingsView()
