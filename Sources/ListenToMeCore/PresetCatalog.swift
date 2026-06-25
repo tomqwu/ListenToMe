@@ -23,55 +23,175 @@ public enum PresetCatalog {
     public static let all: [Preset] = [
         none,
         Preset(id: "meeting", name: "Meeting",
-               notesTemplate: "Meeting topic:\nAttendees:\nMy role:\nGoals/decisions needed:",
+               notesTemplate: """
+               Meeting: <topic>
+               Date: <when>
+               Attendees / roles: <who's here>
+               My role: <yours>
+
+               Agenda:
+               - <item>
+
+               Decisions needed:
+               - <decision>
+
+               Action items:
+               - <owner — task>
+               """,
                personaGuidance: "This is a work meeting. Help the user contribute: surface decisions, "
                 + "action items, and crisp talking points they can say next."),
         Preset(id: "one-on-one", name: "1:1",
-               notesTemplate: "With (name/role):\nTopics to cover:\nMy goals:",
+               notesTemplate: """
+               1:1 with: <name / role>
+               My goals for this chat:
+               - <goal>
+
+               Topics to cover:
+               - <topic>
+
+               Their recent work / context:
+               - <note>
+               """,
                personaGuidance: "This is a 1:1 conversation. Favor thoughtful, candid, supportive "
                 + "responses and good follow-up questions."),
         Preset(id: "standup", name: "Standup",
-               notesTemplate: "Team:\nMy current work:\nBlockers:",
+               notesTemplate: """
+               Team: <name>
+               Yesterday: <what I did>
+               Today: <what I'm doing>
+               Blockers: <anything in my way>
+               """,
                personaGuidance: "This is a standup. Keep suggestions to brief status-style updates "
                 + "and concrete blockers/next steps."),
         Preset(id: "sales-call", name: "Sales call",
-               notesTemplate: "Prospect/company:\nProduct:\nDeal stage:\nObjections expected:",
+               notesTemplate: """
+               Prospect: <person / company>
+               Product / offer: <what I'm selling>
+               Deal stage: <discovery / demo / negotiation>
+               Their pain points: <known needs>
+
+               Likely objections:
+               - <objection>
+
+               Desired next step: <call to action>
+               """,
                personaGuidance: "This is a sales call. Help the user handle objections, qualify needs, "
                 + "and propose next steps persuasively but honestly."),
         Preset(id: "interview-candidate", name: "Interview (candidate)",
-               notesTemplate: "Role:\nCompany:\nKey JD points:\nMy relevant experience:",
+               notesTemplate: """
+               Role: <title>
+               Company: <name>
+               Interviewer: <name / role>
+
+               Key requirements from the JD:
+               - <requirement>
+
+               My relevant experience / wins:
+               - <example>
+
+               Questions I want to ask them:
+               - <question>
+               """,
                personaGuidance: "The user is the candidate in a job interview. Quick: suggest concise "
                 + "first-person answers they can say aloud. Deep: give structured answers "
                 + "(e.g. STAR) with reasoning."),
         Preset(id: "interview-interviewer", name: "Interview (interviewer)",
-               notesTemplate: "Role being filled:\nCandidate:\nSignals to assess:",
+               notesTemplate: """
+               Role being filled: <title>
+               Candidate: <name>
+
+               Must-have signals:
+               - <skill / trait>
+
+               Areas to probe:
+               - <topic>
+
+               Notes on their answers:
+               - <observation>
+               """,
                personaGuidance: "The user is the interviewer. Suggest probing follow-up questions "
                 + "and note signals about the candidate's answers."),
         Preset(id: "technical-interview", name: "Technical interview",
-               notesTemplate: "Role/stack:\nProblem area:\nMy approach:",
+               notesTemplate: """
+               Role / stack: <e.g. backend, Go>
+               Problem area: <algorithms / system design / debugging>
+               Constraints: <language, time limit>
+
+               My approach / plan:
+               - <step>
+               """,
                personaGuidance: "This is a technical/coding interview where the user is the candidate. "
                 + "Deep: provide correct, well-explained solutions with complexity analysis and code. "
                 + "Quick: concise hints the user can voice while thinking aloud."),
         Preset(id: "lecture", name: "Lecture / study",
-               notesTemplate: "Subject:\nTopic:\nWhat I want to understand:",
+               notesTemplate: """
+               Subject: <course>
+               Topic: <today's topic>
+
+               What I want to understand:
+               - <question>
+
+               Key terms to define:
+               - <term>
+               """,
                personaGuidance: "This is a lecture or study session. Summarize key concepts, define "
                 + "terms, and surface questions worth asking."),
         Preset(id: "support", name: "Customer support",
-               notesTemplate: "Product:\nCustomer issue:\nKnown fixes:",
+               notesTemplate: """
+               Product: <name / version>
+               Customer issue: <symptom>
+
+               Steps already tried:
+               - <step>
+
+               Known fixes / KB articles:
+               - <fix>
+               """,
                personaGuidance: "This is a customer support call. Help the user diagnose the issue "
                 + "and give clear, empathetic step-by-step guidance."),
         Preset(id: "medical", name: "Medical consult",
-               notesTemplate: "Context (clinician/patient):\nConcern:\nHistory notes:",
+               notesTemplate: """
+               Context: <clinician / patient>
+               Main concern: <chief complaint>
+
+               Symptoms (onset, duration):
+               - <symptom>
+
+               Relevant history / medications:
+               - <note>
+
+               Questions to cover:
+               - <question>
+               """,
                personaGuidance: "This is a medical consultation. Help organize symptoms, questions, "
                 + "and next steps. Be factual and cautious; do not give definitive diagnoses — "
                 + "defer to a professional."),
         Preset(id: "legal", name: "Legal consult",
-               notesTemplate: "Matter:\nParties:\nKey facts:",
+               notesTemplate: """
+               Matter: <subject>
+               Parties: <who's involved>
+
+               Key facts / timeline:
+               - <fact>
+
+               Documents / evidence:
+               - <item>
+
+               Questions / issues to resolve:
+               - <issue>
+               """,
                personaGuidance: "This is a legal consultation. Help organize facts, issues, and "
                 + "questions. Be factual and cautious; this is not legal advice — defer to a "
                 + "qualified professional."),
         Preset(id: "brainstorm", name: "Brainstorm",
-               notesTemplate: "Topic:\nConstraints:\nGoal:",
+               notesTemplate: """
+               Topic: <what we're exploring>
+               Goal / desired outcome: <what success looks like>
+               Constraints: <budget, time, scope>
+
+               Ideas so far:
+               - <idea>
+               """,
                personaGuidance: "This is a brainstorming session. Offer divergent ideas, build on "
                 + "what's said, and ask generative questions.")
     ]

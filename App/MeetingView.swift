@@ -299,7 +299,7 @@ struct MeetingView: View {
             }
             .help("Use-case preset — fills Context notes and tailors the AI panes")
             TextField("Context notes (injected into prompts)", text: notes, axis: .vertical)
-                .lineLimit(2...4)
+                .lineLimit(3...12)
                 .textFieldStyle(.roundedBorder)
             referenceFilesRow(session: session)
         }
