@@ -136,7 +136,7 @@ struct MeetingView: View {
             session.responseLanguage = ProviderSettings.responseLanguageDirective()
             // Rebuild attached references so a changed reference-budget takes effect immediately.
             if !referencePaths.isEmpty { loadReferences(into: session) }
-            Task { await reloadAndHealModels() }
+            advanceSaveFloorIfOptedOut(); Task { await reloadAndHealModels() }
         }, content: {
             SettingsView()
         })
@@ -585,18 +585,21 @@ extension MeetingView {
         Clipboard.copy(sessionMarkdown())
     }
 
+    /// When saving is off, advance the floor (and baseline) past everything captured so far so those
+    /// utterances stay excluded even if saving is re-enabled later — "turn off to keep nothing".
+    /// Called both on Stop and when Settings closes with the toggle off.
+    func advanceSaveFloorIfOptedOut() {
+        guard !ProviderSettings.saveSessionsForSearch else { return }
+        saveFloorIndex = store.utterances.count
+        lastSavedUtteranceCount = store.utterances.count
+    }
+
     /// On Stop, persist the finished session for cross-meeting search when the user has opted in
     /// and there's new transcript to save. Reuses `currentSessionID` so repeated Listen→Stop cycles
     /// in one window upsert a single growing record. Title = the active preset's name (or "Session")
     /// plus the date.
     func saveSessionIfEnabled(session: MeetingSession) {
-        // Saving off: advance the floor (and baseline) past everything captured so far so these
-        // utterances stay excluded even if saving is re-enabled later — "turn off to keep nothing".
-        guard ProviderSettings.saveSessionsForSearch else {
-            saveFloorIndex = store.utterances.count
-            lastSavedUtteranceCount = store.utterances.count
-            return
-        }
+        guard ProviderSettings.saveSessionsForSearch else { advanceSaveFloorIfOptedOut(); return }
         guard store.utterances.count > lastSavedUtteranceCount else { return }
         let now = Date()
         let presetName = PresetCatalog.preset(id: presetID).name

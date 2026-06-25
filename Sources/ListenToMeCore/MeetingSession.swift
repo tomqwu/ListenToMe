@@ -105,13 +105,15 @@ public final class MeetingSession {
     public func start() async throws {
         guard !isRunning, !isTranscribingFile else { return }
         isRunning = true
-        runID += 1
-        let myRun = runID
-        // Wait for any prior transcriber to finish draining before creating a new one, so two
-        // transcribers never run concurrently (even if start() is called mid-teardown).
+        // Wait for any prior transcriber to finish draining BEFORE bumping runID, so the old
+        // session's segment pump still ingests its final segments under its own runID (a bump here
+        // would make its `guard runID == myRun` fail and drop the just-stopped session's last audio).
+        // This also keeps two transcribers from running concurrently.
         await stopDrain?.value
         stopDrain = nil
-        guard isRunning, runID == myRun else { return }
+        guard isRunning else { return }   // a stop() during that await cancels this start
+        runID += 1
+        let myRun = runID
         let capture = makeCapture()
         let transcriber = makeTranscriber()
         // Store before the await so stop() can reach an in-flight capture (whose mic may already
