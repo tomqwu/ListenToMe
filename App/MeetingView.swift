@@ -236,6 +236,8 @@ struct MeetingView: View {
             }
             Button { exportSession() } label: { Image(systemName: "square.and.arrow.up") }
                 .help("Export the transcript and AI notes to a Markdown file")
+            Button { copySessionMarkdown() } label: { Image(systemName: "list.clipboard") }
+                .help("Copy the transcript + AI notes as Markdown")
             Button { showPermissions.wrappedValue = true } label: { Image(systemName: "lock.shield") }
             Button { showSettings.wrappedValue = true } label: { Image(systemName: "gearshape") }
         }
@@ -488,6 +490,20 @@ extension MeetingView {
         do { try markdown.write(to: url, atomically: true, encoding: .utf8) } catch {
             startError = "Export failed: \(error.localizedDescription)"
         }
+    }
+
+    /// Copies the current transcript + AI-pane outputs to the clipboard as Markdown,
+    /// mirroring `exportSession()`'s document but without a file save.
+    func copySessionMarkdown() {
+        let markdown = SessionExporter.markdown(
+            title: "ListenToMe Session — \(Date().formatted(date: .abbreviated, time: .shortened))",
+            transcript: store.utterances,
+            notes: session.notes,
+            listenerSummary: session.listenerSummary,
+            quickSuggestion: session.quickSuggestion,
+            deepAnswer: session.deepAnswer
+        )
+        Clipboard.copy(markdown)
     }
 
     /// Reloads the installed Ollama chat models into the per-pane pickers.
