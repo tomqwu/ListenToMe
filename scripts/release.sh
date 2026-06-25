@@ -59,10 +59,12 @@ build_config() {
   if command -v xcbeautify >/dev/null 2>&1; then
     xcodebuild -project "${PROJECT}" -scheme "${SCHEME}" \
       -configuration "${config}" -destination 'generic/platform=macOS' \
+      ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO \
       -derivedDataPath "${DERIVED}" build | xcbeautify
   else
     xcodebuild -project "${PROJECT}" -scheme "${SCHEME}" \
       -configuration "${config}" -destination 'generic/platform=macOS' \
+      ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO \
       -derivedDataPath "${DERIVED}" build
   fi
 }
@@ -135,6 +137,13 @@ ln -s /Applications "${STAGE}/Applications"
 
 rm -f "${DMG_PATH}"
 hdiutil create -volname "${VOLNAME}" -srcfolder "${STAGE}" -ov -format UDZO "${DMG_PATH}"
+
+# Sign the dmg container itself (hdiutil produces an unsigned dmg) so its primary signature is valid
+# before notarization, matching docs/RELEASING.md's verification step.
+if [[ "${SIGNED}" == "yes" ]]; then
+  echo "==> Signing the dmg container"
+  codesign --force --timestamp --sign "${DEVELOPER_ID_APP}" "${DMG_PATH}"
+fi
 
 # --- conditional notarization + stapling -----------------------------------------------
 NOTARIZED="no"
