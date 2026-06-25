@@ -11,17 +11,19 @@ public struct ContextEngine {
 
     public func buildContext(from store: ConversationStore, notes: String?, maxChars: Int = 4000,
                              summary: String? = nil, responseLanguage: String? = nil,
-                             references: String? = nil) -> PromptContext {
+                             references: String? = nil, personaGuidance: String? = nil) -> PromptContext {
         let trimmed = notes?.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedSummary = summary?.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedLang = responseLanguage?.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedRefs = references?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedPersona = personaGuidance?.trimmingCharacters(in: .whitespacesAndNewlines)
         return PromptContext(
             messages: store.recentContext(maxChars: maxChars),
             notes: (trimmed?.isEmpty == false) ? trimmed : nil,
             summary: (trimmedSummary?.isEmpty == false) ? trimmedSummary : nil,
             responseLanguage: (trimmedLang?.isEmpty == false) ? trimmedLang : nil,
-            references: (trimmedRefs?.isEmpty == false) ? trimmedRefs : nil
+            references: (trimmedRefs?.isEmpty == false) ? trimmedRefs : nil,
+            personaGuidance: (trimmedPersona?.isEmpty == false) ? trimmedPersona : nil
         )
     }
 

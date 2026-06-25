@@ -30,6 +30,20 @@ final class ContextEngineTests: XCTestCase {
         XCTAssertNil(engine.buildContext(from: store, notes: nil).summary)
     }
 
+    func testBuildContextIncludesTrimmedPersonaGuidance() {
+        let store = ConversationStore()
+        let engine = ContextEngine(debounce: 5)
+        let ctx = engine.buildContext(from: store, notes: nil, personaGuidance: "  interview  ")
+        XCTAssertEqual(ctx.personaGuidance, "interview")
+    }
+
+    func testBuildContextPersonaNilWhenEmpty() {
+        let store = ConversationStore()
+        let engine = ContextEngine(debounce: 5)
+        XCTAssertNil(engine.buildContext(from: store, notes: nil, personaGuidance: "  ").personaGuidance)
+        XCTAssertNil(engine.buildContext(from: store, notes: nil).personaGuidance)
+    }
+
     func testProactiveFiresForOthersQuestion() {
         var engine = ContextEngine(debounce: 5)
         XCTAssertTrue(engine.shouldFireProactive(for: finalSeg("what is the ETA?", .others), now: 0))
