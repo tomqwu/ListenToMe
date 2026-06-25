@@ -40,6 +40,12 @@ enum ProviderSettings {
         responseLanguageOptions.first { $0.id == responseLanguageID }?.directive ?? nil
     }
 
+    /// Max characters of attached file/folder content fed into prompts. Defaults to 16,000.
+    static var referenceBudget: Int {
+        get { let v = UserDefaults.standard.integer(forKey: "referenceBudget"); return v > 0 ? v : 16_000 }
+        set { UserDefaults.standard.set(newValue, forKey: "referenceBudget") }
+    }
+
     /// Selected use-case preset id; empty = none.
     static var presetID: String {
         get { UserDefaults.standard.string(forKey: "presetID") ?? "" }
@@ -96,11 +102,13 @@ struct SettingsView: View {
     @State private var engine: String
     @State private var ollamaKey: String
     @State private var responseLanguageID: String
+    @State private var referenceBudget: Int
 
     init() {
         _engine = State(initialValue: ProviderSettings.transcriptionEngine)
         _ollamaKey = State(initialValue: KeychainStore.get("ollama") ?? "")
         _responseLanguageID = State(initialValue: ProviderSettings.responseLanguageID)
+        _referenceBudget = State(initialValue: ProviderSettings.referenceBudget)
     }
 
     var body: some View {
@@ -142,6 +150,19 @@ struct SettingsView: View {
             )
             .font(.caption).foregroundStyle(.secondary)
 
+            Divider()
+            Picker("Reference file budget", selection: $referenceBudget) {
+                Text("8K characters").tag(8_000)
+                Text("16K characters").tag(16_000)
+                Text("32K characters").tag(32_000)
+                Text("64K characters").tag(64_000)
+            }
+            Text(
+                "Maximum characters of attached file/folder content sent to the AI panes. " +
+                "Larger uses more of the model's context."
+            )
+            .font(.caption).foregroundStyle(.secondary)
+
             HStack {
                 Spacer()
                 Button("Cancel") { dismiss() }
@@ -156,6 +177,7 @@ struct SettingsView: View {
     private func save() {
         ProviderSettings.transcriptionEngine = engine
         ProviderSettings.responseLanguageID = responseLanguageID
+        ProviderSettings.referenceBudget = referenceBudget
         KeychainStore.set(ollamaKey.isEmpty ? nil : ollamaKey, for: "ollama")
         dismiss()
     }

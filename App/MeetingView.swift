@@ -114,6 +114,8 @@ struct MeetingView: View {
         .frame(minWidth: 1100, minHeight: 560)
         .sheet(isPresented: $showSettings, onDismiss: {
             session.responseLanguage = ProviderSettings.responseLanguageDirective()
+            // Rebuild attached references so a changed reference-budget takes effect immediately.
+            if !referencePaths.isEmpty { loadReferences(into: session) }
             Task { await reloadAndHealModels() }
         }, content: {
             SettingsView()
@@ -330,7 +332,10 @@ struct MeetingView: View {
         Task {
             let documents = await Task.detached { FileContextLoader.load(urls) }.value
             guard token == referenceLoadToken else { return }   // superseded by a newer add/clear
-            session.referenceContext = ReferenceBuilder.build(documents: documents)
+            session.referenceContext = ReferenceBuilder.build(
+                documents: documents,
+                maxChars: ProviderSettings.referenceBudget
+            )
         }
     }
 
