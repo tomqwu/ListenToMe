@@ -174,7 +174,7 @@ struct MeetingView: View {
             }
             .disabled(session.isTranscribingFile)   // no live capture while importing a file
             if session.isRunning {
-                Circle().fill(.red).frame(width: 10, height: 10)
+                RecordingIndicator()
                 Text("Recording").foregroundStyle(.secondary)
             }
             Spacer()
@@ -221,11 +221,20 @@ struct MeetingView: View {
     // MARK: - Transcript pane
 
     private func transcriptPane(session: MeetingSession, notes: Binding<String>) -> some View {
-        VStack(alignment: .leading) {
-            Text("Transcript").font(.headline).padding(.bottom, 4)
+        VStack(alignment: .leading, spacing: Theme.paneSpacing) {
+            HStack {
+                Text("Transcript").font(.headline)
+                Spacer()
+            }
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 6) {
+                        if store.utterances.isEmpty && store.partial == nil {
+                            PaneEmptyState(
+                                systemImage: "waveform",
+                                text: "Press Listen to start transcribing the conversation."
+                            )
+                        }
                         ForEach(store.utterances) { seg in
                             transcriptLine(for: seg)
                         }
@@ -270,7 +279,8 @@ struct MeetingView: View {
                 .textFieldStyle(.roundedBorder)
             referenceFilesRow(session: session)
         }
-        .padding(10)
+        .paneCard()
+        .padding(Theme.paneSpacing)
         .frame(minWidth: 360)
     }
 
@@ -346,9 +356,12 @@ struct MeetingView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: - AI panes
+}
 
-    private func listenerPane(session: MeetingSession) -> some View {
+// MARK: - AI panes
+
+extension MeetingView {
+    func listenerPane(session: MeetingSession) -> some View {
         AIPaneView(
             title: "Listener",
             role: .listener,
@@ -363,7 +376,7 @@ struct MeetingView: View {
         )
     }
 
-    private func quickPane(session: MeetingSession) -> some View {
+    func quickPane(session: MeetingSession) -> some View {
         AIPaneView(
             title: "Quick",
             role: .quick,
@@ -382,7 +395,7 @@ struct MeetingView: View {
         )
     }
 
-    private func deepPane(session: MeetingSession) -> some View {
+    func deepPane(session: MeetingSession) -> some View {
         AIPaneView(
             title: "Deep",
             role: .deep,
@@ -479,6 +492,47 @@ extension MeetingView {
     }
 }
 
+// MARK: - Shared pane chrome
+
+/// A gently pulsing red dot used as the live-recording indicator.
+private struct RecordingIndicator: View {
+    @State private var pulsing = false
+
+    var body: some View {
+        Circle()
+            .fill(.red)
+            .frame(width: 10, height: 10)
+            .opacity(pulsing ? 0.35 : 1)
+            .scaleEffect(pulsing ? 0.8 : 1)
+            .onAppear {
+                withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) {
+                    pulsing = true
+                }
+            }
+            .accessibilityLabel("Recording")
+    }
+}
+
+/// Centered placeholder shown when a pane has no content: a subtle SF Symbol over secondary text.
+private struct PaneEmptyState: View {
+    let systemImage: String
+    let text: String
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: systemImage)
+                .font(.system(size: 28))
+                .foregroundStyle(.secondary)
+            Text(text)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 24)
+    }
+}
+
 // MARK: - AIPaneView
 
 private struct AIPaneView: View {
@@ -533,8 +587,10 @@ private struct AIPaneView: View {
                                 Text("💭 Thinking…")
                                     .foregroundStyle(.secondary)
                             } else {
-                                Text(placeholder)
-                                    .foregroundStyle(.secondary)
+                                PaneEmptyState(
+                                    systemImage: "bubble.left.and.text.bubble.right",
+                                    text: placeholder
+                                )
                             }
                         }
                         Color.clear.frame(height: 1).id(MeetingView.scrollBottomID)
@@ -551,7 +607,8 @@ private struct AIPaneView: View {
             }
             actionButtons()
         }
-        .padding(10)
+        .paneCard()
+        .padding(Theme.paneSpacing)
         .frame(minHeight: 160)
     }
 }
