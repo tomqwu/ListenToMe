@@ -234,8 +234,14 @@ struct MeetingView: View {
                 ProgressView().controlSize(.small)
                 Text("Transcribing…").foregroundStyle(.secondary)
             }
-            Button { exportSession() } label: { Image(systemName: "square.and.arrow.up") }
-                .help("Export the transcript and AI notes to a Markdown file")
+            Menu {
+                Button("Full transcript (Markdown)…") { exportSession() }
+                Button("Recap (Markdown)…") { exportRecap() }
+                Button("PDF…") { exportPDF() }
+            } label: {
+                Image(systemName: "square.and.arrow.up")
+            }
+            .help("Export the session as Markdown or PDF")
             Button { copySessionMarkdown() } label: { Image(systemName: "list.clipboard") }
                 .help("Copy the transcript + AI notes as Markdown")
             Button { showPermissions.wrappedValue = true } label: { Image(systemName: "lock.shield") }
@@ -490,10 +496,10 @@ extension MeetingView {
         }
     }
 
-    /// Exports the current transcript + AI-pane outputs to a Markdown file via a save panel.
-    func exportSession() {
-        let now = Date()
-        let markdown = SessionExporter.markdown(
+    /// Builds the full Markdown document (transcript + AI-pane outputs) for the given timestamp.
+    /// Shared by `exportSession()`, `exportPDF()`, and `copySessionMarkdown()`.
+    private func sessionMarkdown(now: Date = Date()) -> String {
+        SessionExporter.markdown(
             title: "ListenToMe Session — \(now.formatted(date: .abbreviated, time: .shortened))",
             transcript: store.utterances,
             notes: session.notes,
@@ -501,6 +507,12 @@ extension MeetingView {
             quickSuggestion: session.quickSuggestion,
             deepAnswer: session.deepAnswer
         )
+    }
+
+    /// Exports the current transcript + AI-pane outputs to a Markdown file via a save panel.
+    func exportSession() {
+        let now = Date()
+        let markdown = sessionMarkdown(now: now)
         let panel = NSSavePanel()
         panel.allowedContentTypes = [UTType(filenameExtension: "md") ?? .plainText]
         panel.nameFieldStringValue = "ListenToMe-\(Self.fileStampFormatter.string(from: now)).md"
@@ -511,18 +523,48 @@ extension MeetingView {
         }
     }
 
-    /// Copies the current transcript + AI-pane outputs to the clipboard as Markdown,
-    /// mirroring `exportSession()`'s document but without a file save.
-    func copySessionMarkdown() {
-        let markdown = SessionExporter.markdown(
-            title: "ListenToMe Session — \(Date().formatted(date: .abbreviated, time: .shortened))",
-            transcript: store.utterances,
-            notes: session.notes,
+    /// Exports a concise recap (summary + Quick/Deep notes, no transcript) to a Markdown file.
+    func exportRecap() {
+        let now = Date()
+        let markdown = SessionExporter.recap(
+            title: "ListenToMe Session — \(now.formatted(date: .abbreviated, time: .shortened))",
             listenerSummary: session.listenerSummary,
             quickSuggestion: session.quickSuggestion,
             deepAnswer: session.deepAnswer
         )
-        Clipboard.copy(markdown)
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [UTType(filenameExtension: "md") ?? .plainText]
+        panel.nameFieldStringValue = "ListenToMe-recap-\(Self.fileStampFormatter.string(from: now)).md"
+        panel.canCreateDirectories = true
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do { try markdown.write(to: url, atomically: true, encoding: .utf8) } catch {
+            startError = "Export failed: \(error.localizedDescription)"
+        }
+    }
+
+    /// Renders the full Markdown document to a PDF and saves it via a save panel.
+    func exportPDF() {
+        let now = Date()
+        let title = "ListenToMe Session — \(now.formatted(date: .abbreviated, time: .shortened))"
+        let markdown = sessionMarkdown(now: now)
+        guard let data = PDFExport.data(fromMarkdown: markdown, title: title) else {
+            startError = "Couldn't render the PDF."
+            return
+        }
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.pdf]
+        panel.nameFieldStringValue = "ListenToMe-\(Self.fileStampFormatter.string(from: now)).pdf"
+        panel.canCreateDirectories = true
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do { try data.write(to: url) } catch {
+            startError = "Export failed: \(error.localizedDescription)"
+        }
+    }
+
+    /// Copies the current transcript + AI-pane outputs to the clipboard as Markdown,
+    /// mirroring `exportSession()`'s document but without a file save.
+    func copySessionMarkdown() {
+        Clipboard.copy(sessionMarkdown())
     }
 
     /// Reloads the installed Ollama chat models into the per-pane pickers.
