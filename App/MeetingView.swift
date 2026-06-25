@@ -330,7 +330,10 @@ struct MeetingView: View {
         Task {
             let documents = await Task.detached { FileContextLoader.load(urls) }.value
             guard token == referenceLoadToken else { return }   // superseded by a newer add/clear
-            session.referenceContext = ReferenceBuilder.build(documents: documents)
+            session.referenceContext = ReferenceBuilder.build(
+                documents: documents,
+                maxChars: ProviderSettings.referenceBudget
+            )
         }
     }
 
