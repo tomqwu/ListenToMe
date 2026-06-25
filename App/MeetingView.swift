@@ -4,6 +4,9 @@ import UniformTypeIdentifiers
 import ListenToMeCore
 
 struct MeetingView: View {
+    /// Anchor id for keeping scroll views pinned to their newest content.
+    static let scrollBottomID = "scroll-bottom"
+
     @State private var session: MeetingSession
     @State private var store: ConversationStore
     @State private var startError: String?
@@ -16,6 +19,7 @@ struct MeetingView: View {
     @State private var referenceLoadToken = 0
     @State private var restartTask: Task<Void, Never>?
     @State private var importTask: Task<Void, Never>?
+    @State private var transcriptAtBottom = true
     /// User intent to be capturing — the toolbar button's source of truth. Stays true across the
     /// brief teardown window of a locale restart (when `session.isRunning` is transiently false),
     /// so a Stop press is never lost.
@@ -212,16 +216,30 @@ struct MeetingView: View {
     private func transcriptPane(session: MeetingSession, notes: Binding<String>) -> some View {
         VStack(alignment: .leading) {
             Text("Transcript").font(.headline).padding(.bottom, 4)
-            ScrollView {
-                VStack(alignment: .leading, spacing: 6) {
-                    ForEach(store.utterances) { seg in
-                        transcriptLine(for: seg)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 6) {
+                        ForEach(store.utterances) { seg in
+                            transcriptLine(for: seg)
+                        }
+                        if let partial = store.partial {
+                            transcriptLine(for: partial).opacity(0.5)
+                        }
+                        Color.clear.frame(height: 1).id(Self.scrollBottomID)
                     }
-                    if let partial = store.partial {
-                        transcriptLine(for: partial).opacity(0.5)
-                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                // Follow the newest line only while the user is at the bottom; if they scroll up
+                // to read history, stop auto-scrolling until they return to the bottom.
+                .onScrollGeometryChange(for: Bool.self) { geo in
+                    geo.contentOffset.y + geo.containerSize.height >= geo.contentSize.height - 24
+                } action: { _, atBottom in transcriptAtBottom = atBottom }
+                .onChange(of: store.utterances.count) { _, _ in
+                    if transcriptAtBottom { proxy.scrollTo(Self.scrollBottomID, anchor: .bottom) }
+                }
+                .onChange(of: store.partial?.text) { _, _ in
+                    if transcriptAtBottom { proxy.scrollTo(Self.scrollBottomID, anchor: .bottom) }
+                }
             }
             TextField("Context notes (injected into prompts)", text: notes, axis: .vertical)
                 .lineLimit(2...4)
@@ -443,6 +461,7 @@ private struct AIPaneView: View {
     let chatModels: [String]
     let outputText: String
     let placeholder: String
+    @State private var atBottom = true
     let headerExtra: () -> AnyView
     let actionButtons: () -> AnyView
 
@@ -476,20 +495,32 @@ private struct AIPaneView: View {
                 .labelsHidden()
                 .frame(maxWidth: 260)
             }
-            ScrollView {
-                Group {
-                    if !outputText.isEmpty {
-                        MarkdownText(text: outputText)
-                            .foregroundStyle(.primary)
-                    } else if session.streamingRoles.contains(role) {
-                        Text("💭 Thinking…")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Text(placeholder)
-                            .foregroundStyle(.secondary)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Group {
+                            if !outputText.isEmpty {
+                                MarkdownText(text: outputText)
+                                    .foregroundStyle(.primary)
+                            } else if session.streamingRoles.contains(role) {
+                                Text("💭 Thinking…")
+                                    .foregroundStyle(.secondary)
+                            } else {
+                                Text(placeholder)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        Color.clear.frame(height: 1).id(MeetingView.scrollBottomID)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                // Follow the streamed answer only while the user is at the bottom.
+                .onScrollGeometryChange(for: Bool.self) { geo in
+                    geo.contentOffset.y + geo.containerSize.height >= geo.contentSize.height - 24
+                } action: { _, isAtBottom in atBottom = isAtBottom }
+                .onChange(of: outputText) { _, _ in
+                    if atBottom { proxy.scrollTo(MeetingView.scrollBottomID, anchor: .bottom) }
+                }
             }
             actionButtons()
         }
