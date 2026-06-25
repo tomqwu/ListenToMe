@@ -193,7 +193,94 @@ public enum PresetCatalog {
                - <idea>
                """,
                personaGuidance: "This is a brainstorming session. Offer divergent ideas, build on "
-                + "what's said, and ask generative questions.")
+                + "what's said, and ask generative questions."),
+        Preset(id: "retro", name: "Retrospective",
+               notesTemplate: """
+               Team / sprint: <name / number>
+
+               What went well:
+               - <highlight>
+
+               What didn't go well:
+               - <pain point>
+
+               Action items:
+               - <owner — improvement>
+               """,
+               personaGuidance: "This is a sprint/project retrospective. Facilitate a blameless retro: "
+                + "surface themes, propose concrete improvements, and assign clear owners."),
+        Preset(id: "all-hands", name: "All-hands",
+               notesTemplate: """
+               Presenter(s): <name / role>
+
+               Topics / announcements:
+               - <topic>
+
+               Questions I want to ask:
+               - <question>
+               """,
+               personaGuidance: "This is a company all-hands / town-hall. Help the user follow "
+                + "announcements, summarize key updates, and draft good questions to ask."),
+        Preset(id: "performance-review", name: "Performance review",
+               notesTemplate: """
+               Reviewee / role: <name or "me">
+               Period: <timeframe>
+
+               Wins / impact:
+               - <achievement>
+
+               Growth areas:
+               - <area>
+
+               Goals next period:
+               - <goal>
+               """,
+               personaGuidance: "This is a performance review. Help structure balanced, specific, "
+                + "evidence-based feedback and forward-looking goals. Be constructive."),
+        Preset(id: "user-research", name: "User research",
+               notesTemplate: """
+               Participant: <name / segment>
+               Product / feature: <what we're studying>
+
+               Research goals:
+               - <goal>
+
+               Key questions:
+               - <question>
+               """,
+               personaGuidance: "The user is the researcher in a user/customer interview. Suggest open, "
+                + "non-leading follow-up questions and capture signals and quotes, not solutions."),
+        Preset(id: "negotiation", name: "Negotiation",
+               notesTemplate: """
+               Counterparty: <person / company>
+
+               What I want:
+               - <objective>
+
+               My limits / BATNA:
+               - <walk-away point>
+
+               Their likely position:
+               - <expected stance>
+               """,
+               personaGuidance: "This is a deal/terms negotiation. Help the user advance their "
+                + "interests, find trades, and stay calm and principled. Never advise anything deceptive."),
+        Preset(id: "journal", name: "Daily journal",
+               notesTemplate: """
+               Date: <when>
+               Focus today: <main intention>
+
+               Wins:
+               - <win>
+
+               Challenges:
+               - <challenge>
+
+               Tomorrow:
+               - <plan>
+               """,
+               personaGuidance: "This is a personal reflection / voice note. Help organize thoughts, "
+                + "surface patterns over time, and suggest gentle next steps.")
     ]
 
     /// The preset with this id, or `none` if unknown.
