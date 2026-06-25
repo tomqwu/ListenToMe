@@ -40,6 +40,12 @@ enum ProviderSettings {
         responseLanguageOptions.first { $0.id == responseLanguageID }?.directive ?? nil
     }
 
+    /// Selected use-case preset id; empty = none.
+    static var presetID: String {
+        get { UserDefaults.standard.string(forKey: "presetID") ?? "" }
+        set { UserDefaults.standard.set(newValue, forKey: "presetID") }
+    }
+
     /// Resolved transcription locale. An empty id follows the system language; Apple's on-device
     /// Speech does not auto-detect spoken language, so this selects the engine's primary language.
     /// Each transcriber further resolves this against *its* engine's supported locales (and falls
