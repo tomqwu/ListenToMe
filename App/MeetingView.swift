@@ -15,6 +15,7 @@ struct MeetingView: View {
     @State private var referencePaths: [URL]
     @State private var referenceLoadToken = 0
     @State private var restartTask: Task<Void, Never>?
+    @State private var importTask: Task<Void, Never>?
     /// User intent to be capturing — the toolbar button's source of truth. Stays true across the
     /// brief teardown window of a locale restart (when `session.isRunning` is transiently false),
     /// so a Stop press is never lost.
@@ -128,58 +129,8 @@ struct MeetingView: View {
             hotkey.stop()
             wantsCapture = false
             restartTask?.cancel()   // don't let a pending locale restart resume capture after close
+            importTask?.cancel()    // stop an in-flight file import when the window closes
             session.stop()
-        }
-    }
-
-    private static let fileStampFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd-HHmm"
-        return formatter
-    }()
-
-    /// Exports the current transcript + AI-pane outputs to a Markdown file via a save panel.
-    private func exportSession() {
-        let now = Date()
-        let markdown = SessionExporter.markdown(
-            title: "ListenToMe Session — \(now.formatted(date: .abbreviated, time: .shortened))",
-            transcript: store.utterances,
-            notes: session.notes,
-            listenerSummary: session.listenerSummary,
-            quickSuggestion: session.quickSuggestion,
-            deepAnswer: session.deepAnswer
-        )
-        let panel = NSSavePanel()
-        panel.allowedContentTypes = [UTType(filenameExtension: "md") ?? .plainText]
-        panel.nameFieldStringValue = "ListenToMe-\(Self.fileStampFormatter.string(from: now)).md"
-        panel.canCreateDirectories = true
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        do { try markdown.write(to: url, atomically: true, encoding: .utf8) }
-        catch { startError = "Export failed: \(error.localizedDescription)" }
-    }
-
-    /// Reloads the installed Ollama chat models into the per-pane pickers.
-    private func reloadModels() async {
-        chatModels = await OllamaModels.chatModels(
-            baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey())
-    }
-
-    /// Reloads chat models for the current Ollama route (cloud vs local) and heals each role:
-    /// keep the current model if it exists on the new route, otherwise fall back to a
-    /// role-appropriate default (Quick = lightest, Deep = heaviest, Listener = balanced).
-    /// Always rebuilds every role's provider so it picks up the current base URL/key.
-    private func reloadAndHealModels() async {
-        chatModels = await OllamaModels.chatModels(
-            baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey())
-        let defaults = ModelRanking.roleDefaults(from: chatModels)
-        for role in CopilotRole.allCases {
-            let current = session.models[role] ?? ""
-            // Keep the user's explicit pick if it's still valid; otherwise follow the
-            // role-appropriate default so the three panes don't all collapse to one model.
-            let keepPinned = ProviderSettings.isPinned(role) && chatModels.contains(current)
-            let target = keepPinned ? current : (defaults[role] ?? current)
-            if target != current { ProviderSettings.setModel(target, for: role) }
-            session.setModel(role, target)   // always rebuild the provider so it picks up the new base URL/key
         }
     }
 
@@ -210,6 +161,7 @@ struct MeetingView: View {
                     }
                 }
             }
+            .disabled(session.isTranscribingFile)   // no live capture while importing a file
             if session.isRunning {
                 Circle().fill(.red).frame(width: 10, height: 10)
                 Text("Recording").foregroundStyle(.secondary)
@@ -231,14 +183,22 @@ struct MeetingView: View {
                     // Bail if the user pressed Stop or closed the window during teardown — don't
                     // resume recording against their intent.
                     guard wantsCapture, !Task.isCancelled else { return }
-                    do { startError = nil; try await session.start() }
-                    catch { startError = error.localizedDescription; wantsCapture = false }
+                    do { startError = nil; try await session.start() } catch {
+                        startError = error.localizedDescription; wantsCapture = false
+                    }
                 }
             }
             .help("Transcription language — applies the next time you press Listen")
             Toggle("Proactive", isOn: proactiveEnabled)
             Button { Task { await reloadModels() } } label: { Image(systemName: "arrow.clockwise") }
                 .help("Refresh installed Ollama models")
+            Button { importAudioFile(session: session) } label: { Image(systemName: "waveform") }
+                .help("Import an audio file and transcribe it")
+                .disabled(wantsCapture || session.isTranscribingFile)   // wantsCapture covers the restart window
+            if session.isTranscribingFile {
+                ProgressView().controlSize(.small)
+                Text("Transcribing…").foregroundStyle(.secondary)
+            }
             Button { exportSession() } label: { Image(systemName: "square.and.arrow.up") }
                 .help("Export the transcript and AI notes to a Markdown file")
             Button { showPermissions.wrappedValue = true } label: { Image(systemName: "lock.shield") }
@@ -390,6 +350,87 @@ struct MeetingView: View {
                 AnyView(Button("Deep answer") { Task { await session.respondDeep(.answerQuestion) } })
             }
         )
+    }
+}
+
+// MARK: - Actions (import / export / model refresh)
+
+extension MeetingView {
+    private static let fileStampFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd-HHmm"
+        return formatter
+    }()
+
+    /// Imports an audio file and transcribes it into the Transcript pane (labeled "Others"),
+    /// using the currently-selected language. Independent of live recording.
+    func importAudioFile(session: MeetingSession) {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.allowsMultipleSelection = false
+        panel.allowedContentTypes = [.audio]
+        panel.message = "Choose an audio file to transcribe"
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        guard let producer = AudioFileChunkProducer(url: url, source: .others) else {
+            startError = "Couldn't read that audio file."
+            return
+        }
+        startError = nil
+        // Imports always use SpeechAnalyzer (it finalizes all fed audio, so fast-feeding a file is
+        // lossless), regardless of the live-capture engine setting; the chosen language still applies.
+        let locale = ProviderSettings.transcriptionLocale()
+        importTask?.cancel()
+        importTask = Task {
+            await session.transcribeAudio(
+                nextChunk: { await producer.next() },
+                transcriber: { SpeechAnalyzerTranscriber(locale: locale) as any Transcribing })
+        }
+    }
+
+    /// Exports the current transcript + AI-pane outputs to a Markdown file via a save panel.
+    func exportSession() {
+        let now = Date()
+        let markdown = SessionExporter.markdown(
+            title: "ListenToMe Session — \(now.formatted(date: .abbreviated, time: .shortened))",
+            transcript: store.utterances,
+            notes: session.notes,
+            listenerSummary: session.listenerSummary,
+            quickSuggestion: session.quickSuggestion,
+            deepAnswer: session.deepAnswer
+        )
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [UTType(filenameExtension: "md") ?? .plainText]
+        panel.nameFieldStringValue = "ListenToMe-\(Self.fileStampFormatter.string(from: now)).md"
+        panel.canCreateDirectories = true
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do { try markdown.write(to: url, atomically: true, encoding: .utf8) } catch {
+            startError = "Export failed: \(error.localizedDescription)"
+        }
+    }
+
+    /// Reloads the installed Ollama chat models into the per-pane pickers.
+    func reloadModels() async {
+        chatModels = await OllamaModels.chatModels(
+            baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey())
+    }
+
+    /// Reloads chat models for the current Ollama route (cloud vs local) and heals each role:
+    /// keep the current model if it exists on the new route, otherwise fall back to a
+    /// role-appropriate default (Quick = lightest, Deep = heaviest, Listener = balanced).
+    /// Always rebuilds every role's provider so it picks up the current base URL/key.
+    func reloadAndHealModels() async {
+        chatModels = await OllamaModels.chatModels(
+            baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey())
+        let defaults = ModelRanking.roleDefaults(from: chatModels)
+        for role in CopilotRole.allCases {
+            let current = session.models[role] ?? ""
+            // Keep the user's explicit pick if it's still valid; otherwise follow the
+            // role-appropriate default so the three panes don't all collapse to one model.
+            let keepPinned = ProviderSettings.isPinned(role) && chatModels.contains(current)
+            let target = keepPinned ? current : (defaults[role] ?? current)
+            if target != current { ProviderSettings.setModel(target, for: role) }
+            session.setModel(role, target)   // rebuild the provider so it picks up the new base URL/key
+        }
     }
 }
 

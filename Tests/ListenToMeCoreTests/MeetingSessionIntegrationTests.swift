@@ -156,6 +156,29 @@ final class MeetingSessionIntegrationTests: XCTestCase {
         XCTAssertTrue(user.contains("[L]"), "quick prompt should include the completed summary text")
     }
 
+    func testTranscribeAudioAppliesSegmentsAndTogglesFlag() async {
+        let echo = EchoTranscriber()
+        let store = ConversationStore()
+        let session = MeetingSession(
+            store: store,
+            context: ContextEngine(debounce: 0),
+            makeCapture: { MockCapture() },
+            makeTranscriber: { echo },
+            makeProvider: { model in MockLLMProvider(id: model, deltas: ["[\(model)]"]) },
+            models: [.listener: "L", .quick: "Q", .deep: "D"]
+        )
+        let producer = ArrayChunkProducer([
+            AudioChunk(samples: [0.1], sampleRate: 16_000, source: .others, timestamp: 0),
+            AudioChunk(samples: [0.2], sampleRate: 16_000, source: .others, timestamp: 1)
+        ])
+
+        XCTAssertFalse(session.isTranscribingFile)
+        await session.transcribeAudio(nextChunk: { await producer.next() })
+        XCTAssertFalse(session.isTranscribingFile)               // reset after completion
+        XCTAssertEqual(store.utterances.count, 2)                // one final per fed chunk
+        XCTAssertEqual(store.utterances.first?.source, .others)
+    }
+
     func testStopAndWaitAwaitsTranscriberShutdown() async throws {
         let fixture = makeSession()
         try await fixture.session.start()
