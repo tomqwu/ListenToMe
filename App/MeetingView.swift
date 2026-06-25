@@ -4,6 +4,9 @@ import UniformTypeIdentifiers
 import ListenToMeCore
 
 struct MeetingView: View {
+    /// Anchor id for keeping scroll views pinned to their newest content.
+    static let scrollBottomID = "scroll-bottom"
+
     @State private var session: MeetingSession
     @State private var store: ConversationStore
     @State private var startError: String?
@@ -212,16 +215,26 @@ struct MeetingView: View {
     private func transcriptPane(session: MeetingSession, notes: Binding<String>) -> some View {
         VStack(alignment: .leading) {
             Text("Transcript").font(.headline).padding(.bottom, 4)
-            ScrollView {
-                VStack(alignment: .leading, spacing: 6) {
-                    ForEach(store.utterances) { seg in
-                        transcriptLine(for: seg)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 6) {
+                        ForEach(store.utterances) { seg in
+                            transcriptLine(for: seg)
+                        }
+                        if let partial = store.partial {
+                            transcriptLine(for: partial).opacity(0.5)
+                        }
+                        Color.clear.frame(height: 1).id(Self.scrollBottomID)
                     }
-                    if let partial = store.partial {
-                        transcriptLine(for: partial).opacity(0.5)
-                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                // Keep the newest line in view as the transcript grows.
+                .onChange(of: store.utterances.count) { _, _ in
+                    proxy.scrollTo(Self.scrollBottomID, anchor: .bottom)
+                }
+                .onChange(of: store.partial?.text) { _, _ in
+                    proxy.scrollTo(Self.scrollBottomID, anchor: .bottom)
+                }
             }
             TextField("Context notes (injected into prompts)", text: notes, axis: .vertical)
                 .lineLimit(2...4)
@@ -476,20 +489,29 @@ private struct AIPaneView: View {
                 .labelsHidden()
                 .frame(maxWidth: 260)
             }
-            ScrollView {
-                Group {
-                    if !outputText.isEmpty {
-                        MarkdownText(text: outputText)
-                            .foregroundStyle(.primary)
-                    } else if session.streamingRoles.contains(role) {
-                        Text("💭 Thinking…")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Text(placeholder)
-                            .foregroundStyle(.secondary)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Group {
+                            if !outputText.isEmpty {
+                                MarkdownText(text: outputText)
+                                    .foregroundStyle(.primary)
+                            } else if session.streamingRoles.contains(role) {
+                                Text("💭 Thinking…")
+                                    .foregroundStyle(.secondary)
+                            } else {
+                                Text(placeholder)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        Color.clear.frame(height: 1).id(MeetingView.scrollBottomID)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                // Follow the streamed answer as it grows.
+                .onChange(of: outputText) { _, _ in
+                    proxy.scrollTo(MeetingView.scrollBottomID, anchor: .bottom)
+                }
             }
             actionButtons()
         }
