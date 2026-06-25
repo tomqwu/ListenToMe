@@ -9,10 +9,15 @@ This document describes how the maintainer builds and publishes an official, sig
 
 ## Prerequisites
 
-- **Apple Developer Program** membership.
+This project's Apple Developer **Team ID is `T32FW7PZ3S`** (already the default in `scripts/release.sh`
+and the `store-credentials` example below, so you don't need to pass it).
+
+- **Apple Developer Program** membership (Team `T32FW7PZ3S`).
 - A **"Developer ID Application"** certificate installed in your login keychain. This is the
   identity Gatekeeper requires for distribution outside the App Store — it is *not* the same as
-  the "Apple Development" certificate used for local debug builds. Verify it exists:
+  the "Apple Development" certificate used for local debug builds. Create one at
+  <https://developer.apple.com/account/resources/certificates> → **+** → *Developer ID Application*,
+  download it, and double-click to install. Verify it exists:
   ```bash
   security find-identity -v -p codesigning | grep "Developer ID Application"
   ```
@@ -21,11 +26,12 @@ This document describes how the maintainer builds and publishes an official, sig
     ```bash
     xcrun notarytool store-credentials "ListenToMe-Notary" \
       --apple-id "you@example.com" \
-      --team-id "ABCDE12345" \
+      --team-id "T32FW7PZ3S" \
       --password "<app-specific-password>"
     ```
     Generate the app-specific password at <https://appleid.apple.com> → Sign-In and Security.
-  - …or the raw **Apple ID / app-specific password / Team ID** trio, passed via env vars (below).
+  - …or the raw **Apple ID / app-specific password** via env vars (`NOTARY_TEAM_ID` defaults to
+    `T32FW7PZ3S`).
 - Build tooling: `brew install xcodegen` (and optionally `xcbeautify`). `gh` (GitHub CLI) to publish.
 
 ## Environment variables read by `scripts/release.sh`
@@ -48,8 +54,8 @@ Notarization is attempted only when the app was signed (`DEVELOPER_ID_APP` set) 
 
 2. Export your credentials and run the release target:
    ```bash
-   export DEVELOPER_ID_APP="Developer ID Application: Your Name (ABCDE12345)"
-   export NOTARY_PROFILE="ListenToMe-Notary"        # or the apple-id/password/team-id trio
+   export DEVELOPER_ID_APP="Developer ID Application: Qiang Wu (T32FW7PZ3S)"
+   export NOTARY_PROFILE="ListenToMe-Notary"        # or NOTARY_APPLE_ID + NOTARY_PASSWORD
 
    make release
    ```

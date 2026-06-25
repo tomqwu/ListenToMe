@@ -32,6 +32,8 @@ APP_NAME="ListenToMe"
 VOLNAME="ListenToMe"
 SCHEME="ListenToMe"
 PROJECT="ListenToMe.xcodeproj"
+# Default Apple Developer Team ID (not secret). Override by exporting NOTARY_TEAM_ID.
+NOTARY_TEAM_ID="${NOTARY_TEAM_ID:-T32FW7PZ3S}"
 DERIVED="${REPO_ROOT}/.build/release"
 DIST_DIR="${REPO_ROOT}/dist"
 
