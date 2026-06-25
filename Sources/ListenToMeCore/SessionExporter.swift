@@ -35,4 +35,24 @@ public enum SessionExporter {
         section("Deep answer", deepAnswer)
         return out
     }
+
+    /// A concise shareable recap: title, the listener summary, and any Quick/Deep notes — WITHOUT
+    /// the full transcript. Omits empty sections; returns the title alone if nothing else is present.
+    public static func recap(
+        title: String,
+        listenerSummary: String = "",
+        quickSuggestion: String = "",
+        deepAnswer: String = ""
+    ) -> String {
+        var out = "# \(title)\n"
+        func section(_ heading: String, _ body: String) {
+            let trimmed = body.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { return }
+            out += "\n## \(heading)\n\n\(trimmed)\n"
+        }
+        section("Summary", listenerSummary)
+        section("Quick suggestion", quickSuggestion)
+        section("Deep answer", deepAnswer)
+        return out
+    }
 }
