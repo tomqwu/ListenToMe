@@ -11,7 +11,10 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
     private let continuation: AsyncStream<AudioChunk>.Continuation
 
     private let engine = AVAudioEngine()
-    private var stream: SCStream?
+    private let lock = NSLock()
+    private var stream: SCStream?          // guarded by `lock`
+    private var stopped = false            // guarded by `lock`
+    private var systemAudioTask: Task<Void, Never>?
     private let startTime = Date()
 
     override init() {
@@ -23,28 +26,37 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
 
     func start() async throws {
         try startMic()                     // essential "You" channel — propagate if this fails
-        // Only touch ScreenCaptureKit when macOS already reports Screen Recording access.
-        // CGPreflightScreenCaptureAccess() checks the grant WITHOUT prompting; calling
-        // SCShareableContent without access is what re-triggers the system dialog every launch.
-        guard CGPreflightScreenCaptureAccess() else {
-            NSLog("ListenToMe: Screen Recording not granted; continuing with microphone only " +
-                  "(enable it in System Settings → Privacy & Security → Screen Recording, then relaunch).")
-            return
-        }
-        do {
-            try await startSystemAudio()   // "Others" channel — best-effort
-        } catch {
-            // Granted but capture still failed (e.g. grant needs a relaunch) — continue mic-only.
-            NSLog("ListenToMe: system audio capture unavailable (\(error.localizedDescription)); " +
-                  "continuing with microphone only.")
+        // Start system audio OFF the start() path so a Screen Recording prompt (when not yet
+        // granted) can't suspend here and stall mic transcription — the caller attaches the mic
+        // pump as soon as start() returns. We no longer gate on CGPreflightScreenCaptureAccess():
+        // it is cached for the process lifetime and returns a stale `false` even after the user
+        // grants access. SCShareableContent reflects the real grant — it succeeds (no prompt) when
+        // granted and prompts once when genuinely not granted; stable signing keeps the grant.
+        systemAudioTask = Task { [weak self] in
+            guard let self else { return }
+            // stop() may have run before this task was even assigned (so its cancel couldn't reach
+            // us); don't enter the prompt-bearing ScreenCaptureKit path if we're already stopped.
+            if Task.isCancelled || self.lock.withLock({ self.stopped }) { return }
+            do {
+                try await self.startSystemAudio()   // "Others" channel — best-effort
+            } catch {
+                NSLog("ListenToMe: system audio capture unavailable (\(error.localizedDescription)); " +
+                      "continuing with microphone only (grant Screen Recording, then relaunch).")
+            }
         }
     }
 
     func stop() {
         engine.inputNode.removeTap(onBus: 0)
         engine.stop()
-        stream?.stopCapture { _ in }
-        stream = nil
+        systemAudioTask?.cancel()
+        let toStop: SCStream? = lock.withLock {
+            stopped = true
+            let current = stream
+            stream = nil
+            return current
+        }
+        toStop?.stopCapture { _ in }
         continuation.finish()
     }
 
@@ -63,6 +75,7 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
     // MARK: - System audio (.others)
 
     private func startSystemAudio() async throws {
+        if Task.isCancelled || lock.withLock({ stopped }) { return }
         let content = try await SCShareableContent.excludingDesktopWindows(false,
                                                                            onScreenWindowsOnly: true)
         guard let display = content.displays.first else { return }
@@ -77,7 +90,14 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
         try stream.addStreamOutput(self, type: .audio,
                                    sampleHandlerQueue: DispatchQueue(label: "system-audio"))
         try await stream.startCapture()
-        self.stream = stream
+        // stop() may have run while we were awaiting the (possibly prompt-bearing) setup above;
+        // if so, don't retain a live stream that would never be stopped.
+        let keep: Bool = lock.withLock {
+            if stopped { return false }
+            self.stream = stream
+            return true
+        }
+        if !keep { stream.stopCapture { _ in } }
     }
 
     // MARK: - Emit helpers

@@ -3,6 +3,7 @@ import Observation
 import AVFoundation
 import Speech
 import CoreGraphics
+import ScreenCaptureKit
 import ApplicationServices
 import AppKit
 
@@ -18,6 +19,9 @@ final class PermissionsModel {
 
     private var screenRequested = false
     private var accessibilityRequested = false
+    /// Set once a live ScreenCaptureKit probe confirms the grant, so later `refresh()` calls don't
+    /// downgrade it from the stale (process-cached) CoreGraphics preflight value.
+    private var screenProbedGranted = false
 
     /// The three permissions required for core capture+transcription (Accessibility is optional).
     var allRequiredGranted: Bool {
@@ -27,10 +31,39 @@ final class PermissionsModel {
     func refresh() {
         microphone = Self.map(AVCaptureDevice.authorizationStatus(for: .audio))
         speech = Self.mapSpeech(SFSpeechRecognizer.authorizationStatus())
-        screenRecording = CGPreflightScreenCaptureAccess()
-            ? .granted : (screenRequested ? .denied : .notDetermined)
+        if screenProbedGranted {
+            screenRecording = .granted   // a live probe already confirmed it; don't downgrade
+        } else {
+            screenRecording = CGPreflightScreenCaptureAccess()
+                ? .granted : (screenRequested ? .denied : .notDetermined)
+        }
         accessibility = AXIsProcessTrusted()
             ? .granted : (accessibilityRequested ? .denied : .notDetermined)
+        // CGPreflightScreenCaptureAccess() is cached for the process lifetime, so it reports a
+        // stale `false` after the user enables Screen Recording without relaunching. Once the user
+        // has engaged the Grant flow, confirm the real grant with a live ScreenCaptureKit query and
+        // upgrade the badge when it actually works. Gated on `screenRequested` so the probe (which
+        // can surface the one-time system prompt) never fires before the user clicks Grant.
+        if screenRecording != .granted, screenRequested { probeScreenRecording() }
+    }
+
+    /// Asynchronously verifies Screen Recording access by querying ScreenCaptureKit (which reflects
+    /// the live grant, unlike the cached preflight). Only upgrades the status to `.granted`.
+    private func probeScreenRecording() {
+        Task { [weak self] in
+            guard await Self.canScreenCapture() else { return }
+            self?.screenProbedGranted = true
+            self?.screenRecording = .granted
+        }
+    }
+
+    nonisolated private static func canScreenCapture() async -> Bool {
+        do {
+            _ = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
+            return true
+        } catch {
+            return false
+        }
     }
 
     nonisolated func requestMicrophone() {
@@ -45,12 +78,21 @@ final class PermissionsModel {
     }
     func requestScreenRecording() {
         screenRequested = true
-        _ = CGRequestScreenCaptureAccess()
+        // Registers the app in the Screen Recording list and shows the one-time system prompt.
+        // macOS only ever presents that prompt once, so if access isn't already effective, send the
+        // user straight to the Screen Recording pane to toggle ListenToMe on (then Quit & Reopen).
+        if !CGRequestScreenCaptureAccess() {
+            openSettings("Privacy_ScreenCapture")
+        }
         refresh()
     }
     func requestAccessibility() {
         accessibilityRequested = true
-        _ = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
+        let trusted = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
+        // Same one-time-prompt limitation: open the pane directly when not yet trusted.
+        if !trusted {
+            openSettings("Privacy_Accessibility")
+        }
         refresh()
     }
 
