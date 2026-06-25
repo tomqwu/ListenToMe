@@ -116,6 +116,23 @@ final class ModelRankingTests: XCTestCase {
                        "codellama:13b")
     }
 
+    func testListenerDefaultPrefersSecondFastModelNotHeavyOne() {
+        // Two flash models + a heavy one: Listener (continuous refresh) should take the second
+        // flash, NOT the heavy glm model.
+        let models = ["deepseek-v4-flash", "gemini-3-flash-preview", "glm-5.2", "deepseek-v4-pro"]
+        let defaults = ModelRanking.roleDefaults(from: models)
+        XCTAssertEqual(defaults[.quick], "deepseek-v4-flash")
+        XCTAssertEqual(defaults[.deep], "deepseek-v4-pro")
+        XCTAssertEqual(defaults[.listener], "gemini-3-flash-preview")
+    }
+
+    func testListenerFallsBackToLightestRemainingWhenNoSecondFast() {
+        // No second fast model available -> Listener takes the lightest of what's left.
+        let models = ["deepseek-v4-flash", "glm-5.2", "deepseek-v4-pro"]
+        let defaults = ModelRanking.roleDefaults(from: models)
+        XCTAssertEqual(defaults[.listener], "glm-5.2")
+    }
+
     func testDescribeUsesCuratedHintsMostSpecificFirst() {
         XCTAssertEqual(ModelRanking.describe("deepseek-v4-pro"), "competitive coding & reasoning")
         XCTAssertEqual(ModelRanking.describe("deepseek-v4-flash"), "fast, cost-efficient")

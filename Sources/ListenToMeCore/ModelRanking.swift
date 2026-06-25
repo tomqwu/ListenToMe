@@ -64,9 +64,10 @@ public enum ModelRanking {
     }
 
     /// A default model per role from the available list: Quick = a curated fast model (else the
-    /// lightest), Deep = a curated strong/reasoning model (else the heaviest), Listener = a balanced
-    /// middle of the remaining models. Picks distinct models when enough are available and reuses
-    /// them when fewer exist. Returns empty when no models are available.
+    /// lightest), Deep = a curated strong/reasoning model (else the heaviest), Listener = another
+    /// fast model (it auto-refreshes continuously, so speed beats depth) distinct from Quick, else
+    /// the lightest remaining. Picks distinct models when enough are available and reuses them when
+    /// fewer exist. Returns empty when no models are available.
     ///
     /// Privacy: auto-defaults are **local-first**. When the list mixes local and `:cloud` models,
     /// only local models are considered, so an unpinned pane never silently sends transcripts to
@@ -83,8 +84,12 @@ public enum ModelRanking {
         let deepCandidates = deepPool.isEmpty ? rankedPool : deepPool
         let deep = match(in: deepCandidates, patterns: strongPatterns, heaviest: true)
             ?? deepCandidates.last ?? heaviest
+        // Listener refreshes continuously, so it also wants a fast model — a second fast pick
+        // distinct from Quick/Deep, falling back to the lightest remaining (then Quick).
         let rest = rankedPool.filter { $0 != quick && $0 != deep }
-        let listener = rest.isEmpty ? quick : rest[(rest.count - 1) / 2]
+        let listener = rest.isEmpty
+            ? quick
+            : (match(in: rest, patterns: fastPatterns, heaviest: false) ?? rest.first!)
         return [.quick: quick, .listener: listener, .deep: deep]
     }
 
