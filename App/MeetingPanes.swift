@@ -69,6 +69,11 @@ struct AIPaneView: View {
                     ProgressView().controlSize(.small)
                 }
                 Spacer()
+                if !outputText.isEmpty {
+                    Button { Clipboard.copy(outputText) } label: { Image(systemName: "doc.on.doc") }
+                        .buttonStyle(.borderless)
+                        .help("Copy this pane's text")
+                }
                 headerExtra()
                 Picker("Model", selection: Binding(
                     get: { session.models[role] ?? "" },
