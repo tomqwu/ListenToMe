@@ -28,13 +28,17 @@ public struct PromptContext: Sendable, Equatable {
     public let responseLanguage: String?
     /// Attached reference material (file/folder contents) to ground answers; nil = none.
     public let references: String?
+    /// Use-case persona/role guidance from a preset, appended to every pane's system prompt.
+    public let personaGuidance: String?
     public init(messages: [TranscriptSegment], notes: String?, summary: String? = nil,
-                responseLanguage: String? = nil, references: String? = nil) {
+                responseLanguage: String? = nil, references: String? = nil,
+                personaGuidance: String? = nil) {
         self.messages = messages
         self.notes = notes
         self.summary = summary
         self.responseLanguage = responseLanguage
         self.references = references
+        self.personaGuidance = personaGuidance
     }
 }
 
@@ -114,18 +118,25 @@ public enum PromptBuilder {
         return user
     }
 
-    /// Appends a response-language directive to a system prompt when the context requests one.
-    private static func systemWithLanguage(_ base: String, _ context: PromptContext) -> String {
-        guard let lang = context.responseLanguage,
-              !lang.trimmingCharacters(in: .whitespaces).isEmpty else { return base }
-        return base + "\nAlways write your entire response in \(lang), regardless of the " +
-            "language spoken in the transcript."
+    /// Appends preset persona guidance and a response-language directive to a system prompt.
+    private static func systemWithDirectives(_ base: String, _ context: PromptContext) -> String {
+        var system = base
+        if let persona = context.personaGuidance,
+           !persona.trimmingCharacters(in: .whitespaces).isEmpty {
+            system += "\nContext for this session: \(persona)"
+        }
+        if let lang = context.responseLanguage,
+           !lang.trimmingCharacters(in: .whitespaces).isEmpty {
+            system += "\nAlways write your entire response in \(lang), regardless of the " +
+                "language spoken in the transcript."
+        }
+        return system
     }
 
     public static func build(context: PromptContext, action: ResponseAction) -> LLMRequest {
         let user = buildUserMessage(context: context, instruction: instruction(for: action))
         return LLMRequest(
-            system: systemWithLanguage(systemPrompt, context),
+            system: systemWithDirectives(systemPrompt, context),
             messages: [ChatMessage(role: "user", content: user)]
         )
     }
@@ -143,7 +154,7 @@ public enum PromptBuilder {
         user += "Provide the rolling summary and list of open questions or action items."
 
         return LLMRequest(
-            system: systemWithLanguage(listenerSystemPrompt, context),
+            system: systemWithDirectives(listenerSystemPrompt, context),
             messages: [ChatMessage(role: "user", content: user)]
         )
     }
@@ -152,7 +163,7 @@ public enum PromptBuilder {
     public static func buildDeep(context: PromptContext, action: ResponseAction) -> LLMRequest {
         let user = buildUserMessage(context: context, instruction: deepInstruction(for: action))
         return LLMRequest(
-            system: systemWithLanguage(deepSystemPrompt, context),
+            system: systemWithDirectives(deepSystemPrompt, context),
             messages: [ChatMessage(role: "user", content: user)]
         )
     }

@@ -15,6 +15,7 @@ struct MeetingView: View {
     @State private var showPermissions = false
     @State private var chatModels: [String] = []
     @State private var transcriptionLocaleID: String
+    @State private var presetID: String
     @State private var referencePaths: [URL]
     @State private var referenceLoadToken = 0
     @State private var restartTask: Task<Void, Never>?
@@ -44,6 +45,7 @@ struct MeetingView: View {
     init() {
         ProviderSettings.migratePinningIfNeeded()
         _transcriptionLocaleID = State(initialValue: ProviderSettings.transcriptionLocaleID)
+        _presetID = State(initialValue: PresetCatalog.preset(id: ProviderSettings.presetID).id)
         let savedPaths = (UserDefaults.standard.array(forKey: "referencePaths") as? [String]) ?? []
         _referencePaths = State(initialValue: savedPaths.map { URL(fileURLWithPath: $0) })
         let store = ConversationStore()
@@ -121,6 +123,9 @@ struct MeetingView: View {
         }
         .onAppear {
             session.responseLanguage = ProviderSettings.responseLanguageDirective()
+            let preset = PresetCatalog.preset(id: presetID)
+            session.personaGuidance = preset.personaGuidance
+            if session.notes.isEmpty { session.notes = preset.notesTemplate }   // seed saved preset's scaffold
             if !referencePaths.isEmpty { loadReferences(into: session) }
             hotkey.start { Task { await session.respondQuick(.answerQuestion) } }
             permissions.refresh()
@@ -241,6 +246,23 @@ struct MeetingView: View {
                     if transcriptAtBottom { proxy.scrollTo(Self.scrollBottomID, anchor: .bottom) }
                 }
             }
+            Picker("Preset", selection: $presetID) {
+                ForEach(PresetCatalog.all) { preset in Text(preset.name).tag(preset.id) }
+            }
+            .labelsHidden()
+            .onChange(of: presetID) { oldID, newID in
+                let preset = PresetCatalog.preset(id: newID)
+                let previousTemplate = PresetCatalog.preset(id: oldID).notesTemplate
+                ProviderSettings.presetID = newID
+                session.personaGuidance = preset.personaGuidance
+                // Swap the notes scaffold only when the user hasn't edited it (notes still match the
+                // previous preset's template, or are empty). This clears an unedited scaffold on
+                // None, but preserves notes the user actually typed.
+                if session.notes.isEmpty || session.notes == previousTemplate {
+                    session.notes = preset.notesTemplate
+                }
+            }
+            .help("Use-case preset — fills Context notes and tailors the AI panes")
             TextField("Context notes (injected into prompts)", text: notes, axis: .vertical)
                 .lineLimit(2...4)
                 .textFieldStyle(.roundedBorder)

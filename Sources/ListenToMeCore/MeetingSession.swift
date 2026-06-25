@@ -16,6 +16,8 @@ public final class MeetingSession {
     /// Attached reference material (file/folder contents) fed into Quick/Deep prompts as grounding;
     /// nil/empty = none. Set from the UI when the user attaches files.
     public var referenceContext: String?
+    /// Use-case persona guidance from the selected preset, injected into all pane prompts.
+    public var personaGuidance: String?
     public let store: ConversationStore
 
     /// Per-role output properties
@@ -263,7 +265,8 @@ public final class MeetingSession {
                 context: self.context.buildContext(from: self.store, notes: self.notes,
                                                    summary: self.lastCompletedListenerSummary,
                                                    responseLanguage: self.responseLanguage,
-                                                   references: self.referenceContext),
+                                                   references: self.referenceContext,
+                                                   personaGuidance: self.personaGuidance),
                 action: .proactive)
         }
     }
@@ -277,7 +280,8 @@ public final class MeetingSession {
                 context: self.context.buildContext(from: self.store, notes: self.notes,
                                                    summary: self.lastCompletedListenerSummary,
                                                    responseLanguage: self.responseLanguage,
-                                                   references: self.referenceContext),
+                                                   references: self.referenceContext,
+                                                   personaGuidance: self.personaGuidance),
                 action: action)
         }.value
     }
@@ -289,7 +293,8 @@ public final class MeetingSession {
                 context: self.context.buildContext(from: self.store, notes: self.notes,
                                                    summary: self.lastCompletedListenerSummary,
                                                    responseLanguage: self.responseLanguage,
-                                                   references: self.referenceContext),
+                                                   references: self.referenceContext,
+                                                   personaGuidance: self.personaGuidance),
                 action: action)
         }.value
     }
@@ -307,7 +312,8 @@ public final class MeetingSession {
     private func startListenerRefresh() -> Task<Void, Never> {
         startRoleTask(.listener) {
             PromptBuilder.buildListener(context: self.context.buildContext(from: self.store, notes: self.notes,
-                                        responseLanguage: self.responseLanguage))
+                                        responseLanguage: self.responseLanguage,
+                                        personaGuidance: self.personaGuidance))
         }
     }
 
