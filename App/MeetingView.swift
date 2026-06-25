@@ -13,6 +13,7 @@ struct MeetingView: View {
     @State private var showSettings = false
     @State private var permissions = PermissionsModel()
     @State private var showPermissions = false
+    @State private var showOnboarding = false
     @State private var chatModels: [String] = []
     @State private var transcriptionLocaleID: String
     @State private var presetID: String
@@ -123,6 +124,9 @@ struct MeetingView: View {
         .sheet(isPresented: $showPermissions) {
             PermissionsView(permissions: permissions)
         }
+        .sheet(isPresented: $showOnboarding) {
+            OnboardingView()
+        }
         .onAppear {
             session.responseLanguage = ProviderSettings.responseLanguageDirective()
             let preset = PresetCatalog.preset(id: presetID)
@@ -131,7 +135,14 @@ struct MeetingView: View {
             if !referencePaths.isEmpty { loadReferences(into: session) }
             hotkey.start { Task { await session.respondQuick(.answerQuestion) } }
             permissions.refresh()
-            if !permissions.allRequiredGranted { showPermissions = true }
+            // First launch: walk the user through the guided onboarding (which includes the
+            // permission grants). On later launches, only nudge the bare permissions panel when
+            // a required grant is still missing; the shield button keeps it reachable otherwise.
+            if !UserDefaults.standard.bool(forKey: OnboardingView.completionKey) {
+                showOnboarding = true
+            } else if !permissions.allRequiredGranted {
+                showPermissions = true
+            }
         }
         .task {
             await reloadAndHealModels()
