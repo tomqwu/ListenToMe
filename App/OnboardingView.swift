@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 /// First-run onboarding sheet. Shown only once (gated by the `didCompleteOnboarding`
 /// UserDefaults flag). Walks through the app's value prop, permission grants, optional

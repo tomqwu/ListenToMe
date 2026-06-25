@@ -124,9 +124,13 @@ struct MeetingView: View {
         .sheet(isPresented: $showPermissions) {
             PermissionsView(permissions: permissions)
         }
-        .sheet(isPresented: $showOnboarding) {
+        .sheet(isPresented: $showOnboarding, onDismiss: {
+            // Onboarding may have set/cleared the Ollama key, which changes the route; rebuild
+            // every role's provider so the panes use the new local/cloud configuration.
+            Task { await reloadAndHealModels() }
+        }, content: {
             OnboardingView()
-        }
+        })
         .onAppear {
             session.responseLanguage = ProviderSettings.responseLanguageDirective()
             let preset = PresetCatalog.preset(id: presetID)
