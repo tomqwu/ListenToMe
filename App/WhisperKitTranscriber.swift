@@ -12,11 +12,12 @@ import WhisperKit
 /// FINAL `TranscriptSegment`. This trades live partials for Whisper's stronger multilingual /
 /// code-switching quality.
 ///
-/// Transcription runs on a per-source `Task`, never on the `feed` path, so the capture pump is
-/// never blocked while WhisperKit batches an utterance (it buffers only the newest chunks). Only
-/// one transcription runs per source at a time; audio arriving during one is queued and picked up
-/// when it finishes. `finish()` flushes remaining audio and drains all in-flight tasks before
-/// closing the stream so the last utterance is never lost.
+/// Transcription runs on `Task`s, never on the `feed` path, so the capture pump is never blocked
+/// while WhisperKit batches an utterance (it buffers only the newest chunks). All `transcribe` calls
+/// funnel through one global serial chain, so only a single batch is ever in flight across both
+/// sources and the shared non-Sendable `WhisperKit` instance is never used concurrently; per-source
+/// queuing still orders utterances within a source. `finish()` flushes remaining audio and drains
+/// all in-flight tasks (and the chain) before closing the stream so the last utterance isn't lost.
 ///
 /// The model downloads on first audio in a background Task that `feed` never awaits (so the
 /// download can't drop audio); per-source transcription Tasks await the model before transcribing.
@@ -50,6 +51,12 @@ actor WhisperKitTranscriber: Transcribing {
     private var loadTask: Task<KitBox?, Never>?
     private var stopped = false
 
+    /// Tail of a single global serial chain through which *all* `transcribe` calls run, so only one
+    /// WhisperKit batch is ever in flight across both sources — the shared non-Sendable `WhisperKit`
+    /// instance is never touched concurrently. Each new transcription awaits the previous link before
+    /// running. Per-source `state.task`/`pending` still order utterances *within* a source.
+    private var transcriptionChain: Task<Void, Never>?
+
     private var states: [SpeakerSource: SourceState] = [:]
 
     /// - Parameter locale: maps to WhisperKit's `language` decoding option. Pass `nil` (the "Auto"
@@ -75,14 +82,15 @@ actor WhisperKitTranscriber: Transcribing {
         let energy = rms(of: chunk.samples)
         let resampled = state.resample(chunk, to: Self.whisperSampleRate)
 
-        if energy >= state.segmenter.speechThreshold {
-            state.heardSpeech = true
-        }
+        let isSpeech = energy >= state.segmenter.speechThreshold
+        if isSpeech { state.heardSpeech = true }
 
         if let resampled {
             if state.heardSpeech {
                 state.buffer.append(contentsOf: resampled)
-                state.noteTimestamp(chunk.timestamp)
+                // Track the start from the first buffered chunk but only advance the speech-end on
+                // above-threshold chunks, so trailing silence can't inflate the measured span.
+                state.noteTimestamp(chunk.timestamp, isSpeech: isSpeech)
             } else {
                 // No speech yet: don't buffer indefinite silence; keep only a short pre-roll so the
                 // onset of the next utterance isn't clipped.
@@ -117,6 +125,9 @@ actor WhisperKitTranscriber: Transcribing {
                 await task.value
             }
         }
+        // Belt-and-suspenders: await the global serial chain's tail too, so any final transcribe is
+        // fully drained (and its segment emitted) before the stream closes.
+        await transcriptionChain?.value
         states.removeAll()
         continuation.finish()
     }
@@ -151,15 +162,32 @@ actor WhisperKitTranscriber: Transcribing {
                                            start: utterance.start, end: utterance.end)
     }
 
-    /// Build the Task that transcribes one utterance and, on completion, chains any audio that
-    /// accumulated while it ran (so boundaries during a long transcription aren't dropped).
+    /// Build the per-source Task for one utterance. The actual `transcribe` call is appended to the
+    /// global serial `transcriptionChain` (so it can't overlap a transcription for the other source);
+    /// this Task awaits that chain link, then chains any audio that accumulated for *this* source
+    /// while it ran (so boundaries during a long transcription aren't dropped).
     private func makeTranscriptionTask(
         for source: SpeakerSource, audio: [Float], start: TimeInterval, end: TimeInterval
     ) -> Task<Void, Never> {
-        Task { [weak self] in
-            await self?.transcribe(audio, for: source, start: start, end: end)
+        let link = enqueueTranscription(audio, for: source, start: start, end: end)
+        return Task { [weak self] in
+            await link.value
             await self?.transcriptionFinished(for: source)
         }
+    }
+
+    /// Append one transcription to the global serial chain and return its link. The link awaits the
+    /// previous chain tail before running, guaranteeing a single in-flight WhisperKit call overall.
+    private func enqueueTranscription(
+        _ audio: [Float], for source: SpeakerSource, start: TimeInterval, end: TimeInterval
+    ) -> Task<Void, Never> {
+        let previous = transcriptionChain
+        let link = Task { [weak self] in
+            await previous?.value
+            await self?.transcribe(audio, for: source, start: start, end: end)
+        }
+        transcriptionChain = link
+        return link
     }
 
     /// Run one batch transcription and emit its final segment. Off the actor's feed path: awaits the
@@ -236,7 +264,8 @@ actor WhisperKitTranscriber: Transcribing {
     /// `WhisperKit` is a non-Sendable class but is internally thread-safe for `transcribe`. Boxing
     /// it as `@unchecked Sendable` lets the actor hand the instance to WhisperKit's nonisolated
     /// async `transcribe` without Swift 6 sending-violations (mirrors the `Pipeline` box pattern
-    /// in SpeechAnalyzerTranscriber). We serialize our own calls per source via `state.task`.
+    /// in SpeechAnalyzerTranscriber). All our `transcribe` calls run on one global serial chain
+    /// (`transcriptionChain`), so the instance is never touched by two transcriptions at once.
     private final class KitBox: @unchecked Sendable {
         let kit: WhisperKit
         init(kit: WhisperKit) { self.kit = kit }
@@ -278,28 +307,31 @@ actor WhisperKitTranscriber: Transcribing {
         /// The single in-flight transcription Task for this source, or nil when idle.
         var task: Task<Void, Never>?
         var segmenter = VADSegmenter(speechThreshold: 0.02, silenceDuration: 0.8)
-        /// Capture timestamps (seconds) of the first and most-recent chunk buffered into the current
-        /// utterance, so an emitted final carries its real start/end instead of 0.
+        /// Capture time (seconds) of the first chunk buffered into the current utterance.
         var utteranceStart: TimeInterval?
-        var utteranceEnd: TimeInterval = 0
+        /// Capture time of the most-recent *above-threshold* (speech) chunk in the current utterance.
+        /// Excludes the ~0.8 s trailing silence so the span measures real speech, not the boundary
+        /// detector's silence tail — a 1-chunk click + silence then fails the `minSpeechDuration` guard.
+        var lastSpeechTime: TimeInterval = 0
         private var converter: AVAudioConverter?
 
-        /// Record a buffered chunk's capture time, extending the current utterance's time span.
-        func noteTimestamp(_ time: TimeInterval) {
+        /// Record a buffered chunk's capture time. `start` extends the utterance span from the first
+        /// buffered chunk (so its onset isn't clipped); the speech-end only advances on actual speech.
+        func noteTimestamp(_ time: TimeInterval, isSpeech: Bool) {
             if utteranceStart == nil { utteranceStart = time }
-            utteranceEnd = time
+            if isSpeech { lastSpeechTime = time }
         }
 
-        /// Snapshot the current utterance (pre-roll + buffered speech) and its time span, clearing
+        /// Snapshot the current utterance (pre-roll + buffered speech) and its speech span, clearing
         /// both buffers and the span for the next utterance.
         func takeBuffer() -> Utterance {
             let audio = preroll + buffer
-            let start = utteranceStart ?? utteranceEnd
-            let end = utteranceEnd
+            let start = utteranceStart ?? lastSpeechTime
+            let end = lastSpeechTime
             buffer.removeAll(keepingCapacity: true)
             preroll.removeAll(keepingCapacity: true)
             utteranceStart = nil
-            utteranceEnd = 0
+            lastSpeechTime = 0
             return Utterance(audio: audio, start: start, end: end)
         }
 
