@@ -144,36 +144,48 @@ public final class MeetingSession {
     }
 
     public func stop() {
-        guard let transcriber = beginStop() else { return }
-        stopDrain = Task { await transcriber.finish() }
+        guard let teardown = beginStop() else { return }
+        stopDrain = Task { await Self.drain(teardown) }
     }
 
-    /// Like `stop()`, but awaits transcriber teardown before returning, so an immediately following
+    /// Like `stop()`, but awaits full teardown before returning, so an immediately following
     /// `start()` cannot overlap the previous transcriber (which can trigger SFSpeechRecognizer's
-    /// `kAFAssistantErrorDomain 1100` overlap error). Used when restarting to apply a new locale.
+    /// `kAFAssistantErrorDomain 1100` overlap error), and so callers reading `store` afterward see
+    /// every final segment. Used when restarting to apply a new locale, and before saving a session.
     public func stopAndWait() async {
-        guard let transcriber = beginStop() else {
+        guard let teardown = beginStop() else {
             await stopDrain?.value   // a prior fire-and-forget stop() may still be draining
             return
         }
-        let drain = Task { await transcriber.finish() }
+        let drain = Task { await Self.drain(teardown) }
         stopDrain = drain
         await drain.value
     }
 
-    /// Shared synchronous teardown. Returns the transcriber the caller should `finish()` (awaited
-    /// or not), or nil when there is nothing running / no transcriber to drain.
-    private func beginStop() -> (any Transcribing)? {
+    /// Awaits full teardown: the transcriber finalizes (ending its segment stream), then the pump
+    /// tasks drain — so the last flushed segments are both fed and *ingested into the store* before
+    /// this returns. Static so it captures only the teardown payload, not `self`.
+    private static func drain(
+        _ teardown: (transcriber: (any Transcribing)?, pumps: [Task<Void, Never>])
+    ) async {
+        if let transcriber = teardown.transcriber { await transcriber.finish() }
+        for pump in teardown.pumps { await pump.value }
+    }
+
+    /// Shared synchronous teardown. Returns the transcriber to `finish()` and the pump tasks to
+    /// drain (via `drain`), or nil when nothing is running.
+    private func beginStop() -> (transcriber: (any Transcribing)?, pumps: [Task<Void, Never>])? {
         guard isRunning else { return nil }
         isRunning = false
         listenerRefreshPending = false
         for (_, task) in responseTasks { task.cancel() }
         capture?.stop()
         let transcriber = self.transcriber
+        let pumps = pumpTasks
         capture = nil
         self.transcriber = nil
-        pumpTasks.removeAll()
-        return transcriber
+        pumpTasks = []
+        return (transcriber, pumps)
     }
 
     // MARK: - Audio file transcription
