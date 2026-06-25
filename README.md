@@ -177,9 +177,10 @@ Ollama through the actual `OllamaProvider`, auto-selecting an installed chat mod
   next finalized segment.
 - **Ollama-only by design.** Ollama Cloud already exposes GPT/DeepSeek/Qwen/etc. through one key, so
   dedicated Claude/OpenAI providers are intentionally not planned.
-- **WhisperKit engine (deferred):** SpeechAnalyzer is the on-device default; WhisperKit would add an
-  external dependency but is the likely path to true multilingual code-switching (e.g. Mandarin↔English
-  mid-sentence), which Apple's on-device Speech can't do.
+- **WhisperKit engine (opt-in):** an opt-in third transcription engine for true multilingual
+  code-switching (e.g. Mandarin↔English mid-sentence) that Apple's on-device Speech can't do. It
+  downloads a model on first use, emits finalized segments only (no live partials), and its
+  dual-channel finals may occasionally interleave out of chronological order.
 - **Cross-launch session history (deferred):** Markdown export covers sharing/review; live sessions
   are otherwise ephemeral.
 
