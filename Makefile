@@ -1,4 +1,4 @@
-.PHONY: gen build test lint run pre-push e2e
+.PHONY: gen build test lint run pre-push e2e release
 
 SHELL := /bin/bash
 .SHELLFLAGS := -eo pipefail -c
@@ -50,3 +50,9 @@ e2e: build
 	echo "e2e: LLM contract model = $$MODEL"; \
 	LTM_E2E=1 LTM_E2E_MODEL="$$MODEL" swift test --filter OllamaContractE2ETests; \
 	echo "e2e checks passed (build + app bundle + real Ollama LLM contract: $$MODEL)"
+
+# Build, optionally sign+notarize, and package a distributable .dmg into dist/.
+# Reads signing/notary credentials from the environment; degrades to an UNSIGNED
+# dmg (with a warning) when DEVELOPER_ID_APP is unset. See docs/RELEASING.md.
+release:
+	bash scripts/release.sh
