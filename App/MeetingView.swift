@@ -252,7 +252,9 @@ struct MeetingView: View {
                 let preset = PresetCatalog.preset(id: newID)
                 ProviderSettings.presetID = newID
                 session.personaGuidance = preset.personaGuidance
-                if !preset.notesTemplate.isEmpty { session.notes = preset.notesTemplate }
+                // Replace the notes scaffold with the preset's template; selecting None ("")
+                // clears it so a prior preset's scaffold can't keep biasing prompts.
+                session.notes = preset.notesTemplate
             }
             .help("Use-case preset — fills Context notes and tailors the AI panes")
             TextField("Context notes (injected into prompts)", text: notes, axis: .vertical)
