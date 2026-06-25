@@ -54,12 +54,16 @@ USED_CONFIG="Release"
 build_config() {
   local config="$1"
   echo "==> xcodebuild (${config})"
+  # `-destination generic/platform=macOS` builds for the platform, not the host architecture, so the
+  # released app isn't accidentally arm64-only on an Apple Silicon release machine.
   if command -v xcbeautify >/dev/null 2>&1; then
     xcodebuild -project "${PROJECT}" -scheme "${SCHEME}" \
-      -configuration "${config}" -derivedDataPath "${DERIVED}" build | xcbeautify
+      -configuration "${config}" -destination 'generic/platform=macOS' \
+      -derivedDataPath "${DERIVED}" build | xcbeautify
   else
     xcodebuild -project "${PROJECT}" -scheme "${SCHEME}" \
-      -configuration "${config}" -derivedDataPath "${DERIVED}" build
+      -configuration "${config}" -destination 'generic/platform=macOS' \
+      -derivedDataPath "${DERIVED}" build
   fi
 }
 
