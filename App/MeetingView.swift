@@ -19,6 +19,7 @@ struct MeetingView: View {
     @State private var referenceLoadToken = 0
     @State private var restartTask: Task<Void, Never>?
     @State private var importTask: Task<Void, Never>?
+    @State private var transcriptAtBottom = true
     /// User intent to be capturing — the toolbar button's source of truth. Stays true across the
     /// brief teardown window of a locale restart (when `session.isRunning` is transiently false),
     /// so a Stop press is never lost.
@@ -228,12 +229,16 @@ struct MeetingView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                // Keep the newest line in view as the transcript grows.
+                // Follow the newest line only while the user is at the bottom; if they scroll up
+                // to read history, stop auto-scrolling until they return to the bottom.
+                .onScrollGeometryChange(for: Bool.self) { geo in
+                    geo.contentOffset.y + geo.containerSize.height >= geo.contentSize.height - 24
+                } action: { _, atBottom in transcriptAtBottom = atBottom }
                 .onChange(of: store.utterances.count) { _, _ in
-                    proxy.scrollTo(Self.scrollBottomID, anchor: .bottom)
+                    if transcriptAtBottom { proxy.scrollTo(Self.scrollBottomID, anchor: .bottom) }
                 }
                 .onChange(of: store.partial?.text) { _, _ in
-                    proxy.scrollTo(Self.scrollBottomID, anchor: .bottom)
+                    if transcriptAtBottom { proxy.scrollTo(Self.scrollBottomID, anchor: .bottom) }
                 }
             }
             TextField("Context notes (injected into prompts)", text: notes, axis: .vertical)
@@ -456,6 +461,7 @@ private struct AIPaneView: View {
     let chatModels: [String]
     let outputText: String
     let placeholder: String
+    @State private var atBottom = true
     let headerExtra: () -> AnyView
     let actionButtons: () -> AnyView
 
@@ -508,9 +514,12 @@ private struct AIPaneView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                // Follow the streamed answer as it grows.
+                // Follow the streamed answer only while the user is at the bottom.
+                .onScrollGeometryChange(for: Bool.self) { geo in
+                    geo.contentOffset.y + geo.containerSize.height >= geo.contentSize.height - 24
+                } action: { _, isAtBottom in atBottom = isAtBottom }
                 .onChange(of: outputText) { _, _ in
-                    proxy.scrollTo(MeetingView.scrollBottomID, anchor: .bottom)
+                    if atBottom { proxy.scrollTo(MeetingView.scrollBottomID, anchor: .bottom) }
                 }
             }
             actionButtons()
