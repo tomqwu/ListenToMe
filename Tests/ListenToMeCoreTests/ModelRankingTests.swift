@@ -116,6 +116,22 @@ final class ModelRankingTests: XCTestCase {
                        "codellama:13b")
     }
 
+    func testDescribeUsesCuratedHintsMostSpecificFirst() {
+        XCTAssertEqual(ModelRanking.describe("deepseek-v4-pro"), "competitive coding & reasoning")
+        XCTAssertEqual(ModelRanking.describe("deepseek-v4-flash"), "fast, cost-efficient")
+        XCTAssertEqual(ModelRanking.describe("deepseek-v3.1:671b"), "strong reasoning")
+        XCTAssertEqual(ModelRanking.describe("glm-5.1"), "long-horizon agentic")
+        XCTAssertEqual(ModelRanking.describe("glm-5.2"), "agentic, self-host")
+        XCTAssertEqual(ModelRanking.describe("qwen3-coder:480b"), "repo-level coding")
+    }
+
+    func testDescribeFallsBackToCapabilityHeuristic() {
+        XCTAssertEqual(ModelRanking.describe("codellama:13b"), "coding")
+        XCTAssertEqual(ModelRanking.describe("somemodel-reasoning:14b"), "strong reasoning")
+        XCTAssertEqual(ModelRanking.describe("acme-flash:7b"), "fast")
+        XCTAssertEqual(ModelRanking.describe("acme:7b"), "general")
+    }
+
     func testDefaultModelForRoleMatchesRoleDefaults() {
         let models = ["gemma3:12b", "deepseek-v4-flash", "qwen3-coder:30b"]
         XCTAssertEqual(ModelRanking.defaultModel(for: .deep, from: models), "qwen3-coder:30b")
