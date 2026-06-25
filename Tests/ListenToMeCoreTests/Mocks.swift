@@ -30,6 +30,37 @@ final class RecordingProvider: LLMProvider, @unchecked Sendable {
     }
 }
 
+/// Transcriber mock that emits one final segment per fed chunk (for file-transcription tests).
+final class EchoTranscriber: Transcribing, @unchecked Sendable {
+    let segments: AsyncStream<TranscriptSegment>
+    private let continuation: AsyncStream<TranscriptSegment>.Continuation
+    init() {
+        var cont: AsyncStream<TranscriptSegment>.Continuation!
+        segments = AsyncStream { cont = $0 }
+        continuation = cont
+    }
+    func feed(_ chunk: AudioChunk) async {
+        continuation.yield(TranscriptSegment(source: chunk.source, text: "seg",
+                                             isFinal: true, start: chunk.timestamp, end: chunk.timestamp))
+    }
+    func finish() async { continuation.finish() }
+}
+
+/// Hands out a fixed array of chunks one at a time (then nil), for `transcribeAudio` tests.
+final class ArrayChunkProducer: @unchecked Sendable {
+    private let chunks: [AudioChunk]
+    private let lock = NSLock()
+    private var index = 0
+    init(_ chunks: [AudioChunk]) { self.chunks = chunks }
+    func next() async -> AudioChunk? {
+        lock.withLock {
+            guard index < chunks.count else { return nil }
+            defer { index += 1 }
+            return chunks[index]
+        }
+    }
+}
+
 /// Capture mock that can emit chunks on demand (for integration tests).
 final class MockCapture: AudioCapturing, @unchecked Sendable {
     let chunks: AsyncStream<AudioChunk>

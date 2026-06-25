@@ -28,6 +28,9 @@ public final class MeetingSession {
     /// refresh streams) so a proactive Quick can't read an empty/partial in-flight summary.
     private var lastCompletedListenerSummary = ""
 
+    /// True while an imported audio file is being transcribed into the store.
+    public private(set) var isTranscribingFile = false
+
     /// The set of roles currently streaming a response.
     public private(set) var streamingRoles: Set<CopilotRole> = []
 
@@ -93,7 +96,7 @@ public final class MeetingSession {
     // MARK: - Session lifecycle
 
     public func start() async throws {
-        guard !isRunning else { return }
+        guard !isRunning, !isTranscribingFile else { return }
         isRunning = true
         runID += 1
         let myRun = runID
@@ -169,6 +172,58 @@ public final class MeetingSession {
         self.transcriber = nil
         pumpTasks.removeAll()
         return transcriber
+    }
+
+    // MARK: - Audio file transcription
+
+    /// Transcribes audio pulled from `nextChunk` (e.g. an imported file) into the store, independent
+    /// of live capture. `nextChunk` is called one chunk at a time and returns nil at end of input,
+    /// so the transcriber's feed rate paces reading (no unbounded buffering). Creates its own
+    /// transcriber, drains its segments into the store live, and finishes when input ends. Re-entry
+    /// is ignored, and it waits for any prior transcriber to finish draining so two transcribers
+    /// never run at once (avoids SFSpeechRecognizer's 1100 overlap error).
+    ///
+    /// `transcriber` lets the caller force a batch-friendly engine for imports (SpeechAnalyzer
+    /// finalizes all fed audio, so fast-feeding is lossless); when nil the session's live factory
+    /// is used.
+    public func transcribeAudio(
+        nextChunk: @escaping @Sendable () async -> AudioChunk?,
+        transcriber makeTranscriber: (@Sendable () -> any Transcribing)? = nil
+    ) async {
+        guard !isTranscribingFile, !isRunning else { return }
+        isTranscribingFile = true
+        defer { isTranscribingFile = false }
+        await stopDrain?.value
+        stopDrain = nil
+        let transcriber = (makeTranscriber ?? self.makeTranscriber)()
+        let segmentStream = transcriber.segments
+        let drain = Task { [weak self] in
+            for await segment in segmentStream {
+                await self?.applyTranscribedSegment(segment)
+            }
+        }
+        // Pace by audio duration so a long file can't be read into the transcriber's queue far
+        // faster than it's processed: cap how far (in audio seconds) reading runs ahead of an
+        // 8x-realtime budget. The clock starts AFTER the first feed so one-time SpeechAnalyzer
+        // model setup/download isn't credited as throughput. Stops promptly on cancellation.
+        var startWall = clock()
+        var audioSecondsFed = 0.0
+        var pacing = false
+        while !Task.isCancelled, let chunk = await nextChunk() {
+            await transcriber.feed(chunk)
+            if !pacing { startWall = clock(); pacing = true; continue }   // exclude setup time
+            audioSecondsFed += Double(chunk.samples.count) / max(chunk.sampleRate, 1)
+            let lead = audioSecondsFed - (clock() - startWall) * 8.0
+            if lead > 8.0 {
+                try? await Task.sleep(nanoseconds: UInt64(min(lead, 5.0) * 1_000_000_000))
+            }
+        }
+        await transcriber.finish()
+        await drain.value
+    }
+
+    private func applyTranscribedSegment(_ segment: TranscriptSegment) {
+        store.apply(segment)
     }
 
     // MARK: - Ingest
