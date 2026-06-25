@@ -273,11 +273,18 @@ public final class MeetingSession {
 
     // MARK: - On-demand responses (awaitable)
 
+    /// Transcript char budget for an action's prompt. A recap should cover the whole conversation,
+    /// not just the recent window, so it gets a far larger budget than on-the-spot answers.
+    static func transcriptBudget(for action: ResponseAction) -> Int {
+        action == .recap ? 100_000 : 4_000
+    }
+
     /// Streams a Quick response for the given action. Awaits completion.
     public func respondQuick(_ action: ResponseAction) async {
         await startRoleTask(.quick) {
             PromptBuilder.build(
                 context: self.context.buildContext(from: self.store, notes: self.notes,
+                                                   maxChars: Self.transcriptBudget(for: action),
                                                    summary: self.lastCompletedListenerSummary,
                                                    responseLanguage: self.responseLanguage,
                                                    references: self.referenceContext,
@@ -291,6 +298,7 @@ public final class MeetingSession {
         await startRoleTask(.deep) {
             PromptBuilder.buildDeep(
                 context: self.context.buildContext(from: self.store, notes: self.notes,
+                                                   maxChars: Self.transcriptBudget(for: action),
                                                    summary: self.lastCompletedListenerSummary,
                                                    responseLanguage: self.responseLanguage,
                                                    references: self.referenceContext,
