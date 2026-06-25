@@ -90,7 +90,8 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 ## Install
 
 **Download (recommended)**
-- Grab the notarized `.dmg` from [Releases](https://github.com/tomqwu/ListenToMe/releases).
+- Grab the notarized `.dmg` from [Releases](https://github.com/tomqwu/ListenToMe/releases),
+  open it, and drag **ListenToMe** to **Applications**.
   _(Available once v1.0 is published.)_
 
 **Build from source**
@@ -191,6 +192,10 @@ PRs welcome. Before pushing, run the CI-equivalent gate:
 ```bash
 make pre-push
 ```
+
+**Releasing.** Maintainers build the signed + notarized `.dmg` locally with `make release` —
+see [`docs/RELEASING.md`](docs/RELEASING.md) for prerequisites, the env vars it reads, and the
+publish step.
 
 ## License
 
