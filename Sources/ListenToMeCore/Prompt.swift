@@ -26,12 +26,15 @@ public struct PromptContext: Sendable, Equatable {
     public let summary: String?
     /// Forces the model's reply into this language (e.g. "Simplified Chinese"); nil = no constraint.
     public let responseLanguage: String?
+    /// Attached reference material (file/folder contents) to ground answers; nil = none.
+    public let references: String?
     public init(messages: [TranscriptSegment], notes: String?, summary: String? = nil,
-                responseLanguage: String? = nil) {
+                responseLanguage: String? = nil, references: String? = nil) {
         self.messages = messages
         self.notes = notes
         self.summary = summary
         self.responseLanguage = responseLanguage
+        self.references = references
     }
 }
 
@@ -102,6 +105,10 @@ public enum PromptBuilder {
         }
         if let notes = context.notes, !notes.trimmingCharacters(in: .whitespaces).isEmpty {
             user += "Context notes from the user:\n\(notes)\n\n"
+        }
+        if let references = context.references,
+           !references.trimmingCharacters(in: .whitespaces).isEmpty {
+            user += "Reference material the user attached (files/folders):\n\(references)\n\n"
         }
         user += instruction
         return user

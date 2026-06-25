@@ -3,13 +3,13 @@ import XCTest
 
 final class PromptBuilderTests: XCTestCase {
     private func ctx(notes: String? = nil, summary: String? = nil,
-                     responseLanguage: String? = nil) -> PromptContext {
+                     responseLanguage: String? = nil, references: String? = nil) -> PromptContext {
         PromptContext(messages: [
             TranscriptSegment(source: .others, text: "What is our deploy plan?",
                               isFinal: true, start: 0, end: 1),
             TranscriptSegment(source: .you, text: "Good question.",
                               isFinal: true, start: 1, end: 2)
-        ], notes: notes, summary: summary, responseLanguage: responseLanguage)
+        ], notes: notes, summary: summary, responseLanguage: responseLanguage, references: references)
     }
 
     func testSystemPromptHasNoPreambleConstraint() {
@@ -82,6 +82,27 @@ final class PromptBuilderTests: XCTestCase {
     func testResponseLanguageDirectiveAppendedToListener() {
         let req = PromptBuilder.buildListener(context: ctx(responseLanguage: "Japanese"))
         XCTAssertTrue(req.system.contains("Japanese"))
+    }
+
+    func testReferencesInjectedIntoQuickAndDeep() {
+        let quick = PromptBuilder.build(context: ctx(references: "### plan.md\nShip Friday"),
+                                        action: .answerQuestion)
+        let deep = PromptBuilder.buildDeep(context: ctx(references: "### plan.md\nShip Friday"),
+                                           action: .answerQuestion)
+        XCTAssertTrue(quick.messages.last!.content.contains("Reference material the user attached"))
+        XCTAssertTrue(quick.messages.last!.content.contains("Ship Friday"))
+        XCTAssertTrue(deep.messages.last!.content.contains("Reference material the user attached"))
+    }
+
+    func testReferencesNotIncludedInListener() {
+        // The listener summarizes the live conversation; attached files shouldn't bloat it.
+        let req = PromptBuilder.buildListener(context: ctx(references: "### plan.md\nShip Friday"))
+        XCTAssertFalse(req.messages.last!.content.contains("Reference material"))
+    }
+
+    func testReferencesOmittedWhenNil() {
+        let req = PromptBuilder.build(context: ctx(references: nil), action: .answerQuestion)
+        XCTAssertFalse(req.messages.last!.content.contains("Reference material"))
     }
 
     func testResponseLanguageOmittedWhenNilOrBlank() {
