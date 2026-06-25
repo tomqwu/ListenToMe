@@ -3,13 +3,15 @@ import XCTest
 
 final class PromptBuilderTests: XCTestCase {
     private func ctx(notes: String? = nil, summary: String? = nil,
-                     responseLanguage: String? = nil, references: String? = nil) -> PromptContext {
+                     responseLanguage: String? = nil, references: String? = nil,
+                     personaGuidance: String? = nil) -> PromptContext {
         PromptContext(messages: [
             TranscriptSegment(source: .others, text: "What is our deploy plan?",
                               isFinal: true, start: 0, end: 1),
             TranscriptSegment(source: .you, text: "Good question.",
                               isFinal: true, start: 1, end: 2)
-        ], notes: notes, summary: summary, responseLanguage: responseLanguage, references: references)
+        ], notes: notes, summary: summary, responseLanguage: responseLanguage,
+           references: references, personaGuidance: personaGuidance)
     }
 
     func testSystemPromptHasNoPreambleConstraint() {
@@ -110,6 +112,23 @@ final class PromptBuilderTests: XCTestCase {
                                            action: .answerQuestion).system.contains("respond in"))
         XCTAssertFalse(PromptBuilder.build(context: ctx(responseLanguage: "   "),
                                            action: .answerQuestion).system.contains("respond in"))
+    }
+
+    func testPersonaGuidanceAppendedToAllPanes() {
+        let guidance = "The user is the candidate in a job interview."
+        XCTAssertTrue(PromptBuilder.build(context: ctx(personaGuidance: guidance),
+                                          action: .answerQuestion).system.contains(guidance))
+        XCTAssertTrue(PromptBuilder.buildDeep(context: ctx(personaGuidance: guidance),
+                                              action: .answerQuestion).system.contains(guidance))
+        XCTAssertTrue(PromptBuilder.buildListener(context: ctx(personaGuidance: guidance))
+                        .system.contains(guidance))
+    }
+
+    func testPersonaGuidanceOmittedWhenNilOrBlank() {
+        XCTAssertFalse(PromptBuilder.build(context: ctx(personaGuidance: nil),
+                                           action: .answerQuestion).system.contains("Context for this session"))
+        XCTAssertFalse(PromptBuilder.build(context: ctx(personaGuidance: "  "),
+                                           action: .answerQuestion).system.contains("Context for this session"))
     }
 
     func testSystemMessageIsFirst() {
