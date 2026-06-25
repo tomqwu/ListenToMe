@@ -92,4 +92,46 @@ public enum ModelRanking {
     public static func defaultModel(for role: CopilotRole, from models: [String]) -> String? {
         roleDefaults(from: models)[role]
     }
+
+    /// Curated one-line "good for" hints for known Ollama model families, matched as the first
+    /// substring hit (most specific first). Used to annotate the per-pane model dropdowns.
+    static let descriptions: [(key: String, hint: String)] = [
+        ("deepseek-v4-pro", "competitive coding & reasoning"),
+        ("deepseek-v4-flash", "fast, cost-efficient"),
+        ("deepseek", "strong reasoning"),
+        ("glm-5.1", "long-horizon agentic"),
+        ("glm", "agentic, self-host"),
+        ("kimi", "agent swarms, long runs"),
+        ("qwen3-coder", "repo-level coding"),
+        ("qwen", "general & coding"),
+        ("minimax-m3", "frontier, multimodal"),
+        ("minimax", "high-throughput coding"),
+        ("gemini", "fast, general"),
+        ("gpt-oss", "fast, general"),
+        ("devstral", "agentic coding"),
+        ("nemotron", "NVIDIA-optimized agents"),
+        ("mistral-large", "large, general"),
+        ("ministral", "small & fast"),
+        ("codegemma", "coding"),
+        ("codellama", "coding"),
+        ("gemma", "general"),
+        ("llama", "general"),
+        ("phi", "small & fast")
+    ]
+
+    /// A short "good for" hint for a model name: a curated description when the family is known,
+    /// otherwise a capability heuristic (coding / reasoning / fast / general).
+    public static func describe(_ model: String) -> String {
+        let lower = model.lowercased()
+        if let match = descriptions.first(where: { lower.contains($0.key) }) { return match.hint }
+        if hasMarker(model, "coder") || hasMarker(model, "code") { return "coding" }
+        if hasMarker(model, "pro") || hasMarker(model, "reason") || hasMarker(model, "think") {
+            return "strong reasoning"
+        }
+        if hasMarker(model, "flash") || hasMarker(model, "mini") || hasMarker(model, "nano")
+            || hasMarker(model, "lite") || hasMarker(model, "fast") || hasMarker(model, "small") {
+            return "fast"
+        }
+        return "general"
+    }
 }

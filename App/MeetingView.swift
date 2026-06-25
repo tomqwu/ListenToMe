@@ -360,10 +360,12 @@ private struct AIPaneView: View {
                         ProviderSettings.pin(role)   // explicit choice: stop auto-defaulting this pane
                     }
                 )) {
-                    ForEach(modelOptions(), id: \.self) { Text($0).tag($0) }
+                    ForEach(modelOptions(), id: \.self) { model in
+                        Text("\(model) — \(ModelRanking.describe(model))").tag(model)
+                    }
                 }
                 .labelsHidden()
-                .frame(maxWidth: 200)
+                .frame(maxWidth: 260)
             }
             ScrollView {
                 Group {
