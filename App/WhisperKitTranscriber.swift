@@ -28,9 +28,11 @@ actor WhisperKitTranscriber: Transcribing {
 
     /// WhisperKit consumes 16 kHz mono Float32 audio.
     private static let whisperSampleRate: Double = 16_000
-    /// Skip transcribing utterances shorter than this many 16 kHz samples (~0.25 s) — Whisper
-    /// tends to hallucinate on near-silent fragments.
-    private static let minUtteranceSamples = 4_000
+    /// Minimum *speech span* (seconds) to transcribe — measured from the first to last
+    /// above-threshold chunk, so it excludes the pre-roll and the ~0.8 s trailing silence used to
+    /// detect the boundary. Guards against clicks/breaths that briefly cross the threshold but
+    /// aren't real speech (Whisper hallucinates on near-silent fragments).
+    private static let minSpeechDuration: TimeInterval = 0.2
     /// Pre-roll kept (in 16 kHz samples, ~0.3 s) so the onset of speech isn't clipped: we don't
     /// buffer indefinite pre-speech silence, but we retain a short tail of recent audio so the
     /// first word that crosses the VAD speech threshold isn't lost.
@@ -134,7 +136,9 @@ actor WhisperKitTranscriber: Transcribing {
         state.heardSpeech = false
 
         let utterance = state.takeBuffer()
-        guard utterance.audio.count >= Self.minUtteranceSamples else { return }   // too short to be real speech
+        // Gate on actual speech duration, not buffered sample count (which includes pre-roll +
+        // trailing silence and would almost always pass).
+        guard utterance.end - utterance.start >= Self.minSpeechDuration else { return }
 
         guard state.task == nil else {
             // A transcription is already running for this source; let it pick up the next snapshot.
@@ -202,7 +206,7 @@ actor WhisperKitTranscriber: Transcribing {
         state.pending.removeAll(keepingCapacity: true)
         state.pendingStart = 0
         state.pendingEnd = 0
-        guard next.count >= Self.minUtteranceSamples else { return }
+        guard end - start >= Self.minSpeechDuration else { return }   // skip too-short speech spans
         state.task = makeTranscriptionTask(for: source, audio: next, start: start, end: end)
     }
 
