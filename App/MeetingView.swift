@@ -123,7 +123,9 @@ struct MeetingView: View {
         }
         .onAppear {
             session.responseLanguage = ProviderSettings.responseLanguageDirective()
-            session.personaGuidance = PresetCatalog.preset(id: presetID).personaGuidance
+            let preset = PresetCatalog.preset(id: presetID)
+            session.personaGuidance = preset.personaGuidance
+            if session.notes.isEmpty { session.notes = preset.notesTemplate }   // seed saved preset's scaffold
             if !referencePaths.isEmpty { loadReferences(into: session) }
             hotkey.start { Task { await session.respondQuick(.answerQuestion) } }
             permissions.refresh()
