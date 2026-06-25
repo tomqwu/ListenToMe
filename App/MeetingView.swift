@@ -61,7 +61,11 @@ struct MeetingView: View {
                 case "speechRecognizer":
                     return SpeechRecognizerTranscriber(locale: locale) as any Transcribing
                 case "whisperKit":
-                    return WhisperKitTranscriber(locale: locale) as any Transcribing
+                    // "Auto" (empty id) → nil locale so WhisperKit auto-detects the language
+                    // (enables multilingual / code-switching); an explicit pick forces that language.
+                    let whisperLocale = ProviderSettings.transcriptionLocaleID.isEmpty
+                        ? nil : ProviderSettings.transcriptionLocale()
+                    return WhisperKitTranscriber(locale: whisperLocale) as any Transcribing
                 default:
                     return SpeechAnalyzerTranscriber(locale: locale) as any Transcribing
                 }

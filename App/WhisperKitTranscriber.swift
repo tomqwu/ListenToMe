@@ -50,11 +50,12 @@ actor WhisperKitTranscriber: Transcribing {
 
     private var states: [SpeakerSource: SourceState] = [:]
 
-    /// - Parameter locale: maps to WhisperKit's `language` decoding option. When the locale's
-    ///   language can't be determined (e.g. system "Auto"), we leave it nil and enable Whisper's
-    ///   own language detection — the right setting for multilingual / code-switching speech.
-    init(locale: Locale = .current) {
-        self.language = Self.whisperLanguageCode(for: locale)
+    /// - Parameter locale: maps to WhisperKit's `language` decoding option. Pass `nil` (the "Auto"
+    ///   picker setting) to leave `language` nil and enable Whisper's own language detection — the
+    ///   right setting for multilingual / code-switching speech. A non-nil locale forces its
+    ///   language code, and a locale whose language can't be determined also falls back to auto.
+    init(locale: Locale? = nil) {
+        self.language = locale.flatMap(Self.whisperLanguageCode(for:))
         var cont: AsyncStream<TranscriptSegment>.Continuation!
         segments = AsyncStream { cont = $0 }
         continuation = cont
@@ -79,6 +80,7 @@ actor WhisperKitTranscriber: Transcribing {
         if let resampled {
             if state.heardSpeech {
                 state.buffer.append(contentsOf: resampled)
+                state.noteTimestamp(chunk.timestamp)
             } else {
                 // No speech yet: don't buffer indefinite silence; keep only a short pre-roll so the
                 // onset of the next utterance isn't clipped.
@@ -131,29 +133,36 @@ actor WhisperKitTranscriber: Transcribing {
         // After a boundary we may resume buffering pre-speech silence for the next utterance.
         state.heardSpeech = false
 
-        let audio = state.takeBuffer()
-        guard audio.count >= Self.minUtteranceSamples else { return }   // too short to be real speech
+        let utterance = state.takeBuffer()
+        guard utterance.audio.count >= Self.minUtteranceSamples else { return }   // too short to be real speech
 
         guard state.task == nil else {
             // A transcription is already running for this source; let it pick up the next snapshot.
-            state.pending.append(contentsOf: audio)
+            if state.pending.isEmpty { state.pendingStart = utterance.start }
+            state.pending.append(contentsOf: utterance.audio)
+            state.pendingEnd = utterance.end
             return
         }
-        state.task = makeTranscriptionTask(for: source, audio: audio)
+        state.task = makeTranscriptionTask(for: source, audio: utterance.audio,
+                                           start: utterance.start, end: utterance.end)
     }
 
     /// Build the Task that transcribes one utterance and, on completion, chains any audio that
     /// accumulated while it ran (so boundaries during a long transcription aren't dropped).
-    private func makeTranscriptionTask(for source: SpeakerSource, audio: [Float]) -> Task<Void, Never> {
+    private func makeTranscriptionTask(
+        for source: SpeakerSource, audio: [Float], start: TimeInterval, end: TimeInterval
+    ) -> Task<Void, Never> {
         Task { [weak self] in
-            await self?.transcribe(audio, for: source)
+            await self?.transcribe(audio, for: source, start: start, end: end)
             await self?.transcriptionFinished(for: source)
         }
     }
 
     /// Run one batch transcription and emit its final segment. Off the actor's feed path: awaits the
     /// model becoming ready (so the first-run download doesn't block `feed`) before transcribing.
-    private func transcribe(_ audio: [Float], for source: SpeakerSource) async {
+    private func transcribe(
+        _ audio: [Float], for source: SpeakerSource, start: TimeInterval, end: TimeInterval
+    ) async {
         guard let box = await loadTask?.value else { return }   // model unavailable — degrade to no-op
         let options = DecodingOptions(
             verbose: false,
@@ -166,12 +175,15 @@ actor WhisperKitTranscriber: Transcribing {
             let text = results.map(\.text).joined(separator: " ")
                 .trimmingCharacters(in: .whitespacesAndNewlines)
             guard !text.isEmpty else { return }
+            // Real capture timestamps are recorded so any future ordering logic has correct data.
+            // Known limitation: dual-channel WhisperKit finals may still interleave out of order
+            // here because the shared `ConversationStore` appends in arrival order (opt-in engine).
             continuation.yield(TranscriptSegment(
                 source: source,
                 text: text,
                 isFinal: true,
-                start: 0,
-                end: 0
+                start: start,
+                end: end
             ))
         } catch {
             NSLog("WhisperKitTranscriber: transcribe failed for \(source.rawValue): \(error.localizedDescription)")
@@ -185,9 +197,13 @@ actor WhisperKitTranscriber: Transcribing {
         state.task = nil
         guard !state.pending.isEmpty else { return }
         let next = state.pending
+        let start = state.pendingStart
+        let end = state.pendingEnd
         state.pending.removeAll(keepingCapacity: true)
+        state.pendingStart = 0
+        state.pendingEnd = 0
         guard next.count >= Self.minUtteranceSamples else { return }
-        state.task = makeTranscriptionTask(for: source, audio: next)
+        state.task = makeTranscriptionTask(for: source, audio: next, start: start, end: end)
     }
 
     // MARK: - Lazy model load
@@ -233,29 +249,54 @@ actor WhisperKitTranscriber: Transcribing {
 
     // MARK: - Per-source state
 
+    /// A buffered utterance snapshot: its 16 kHz audio and real capture time span.
+    private struct Utterance {
+        let audio: [Float]
+        let start: TimeInterval
+        let end: TimeInterval
+    }
+
     private final class SourceState {
         /// Audio for the in-progress utterance (16 kHz). Empty until speech is first heard.
         var buffer: [Float] = []
         /// Short ring of recent pre-speech audio, prepended to `buffer` when speech starts so the
         /// utterance onset isn't clipped.
         var preroll: [Float] = []
-        /// Audio that arrived while a transcription Task was already running for this source; picked
-        /// up when that task finishes so boundaries during a long transcription aren't lost.
+        /// Audio (and its captured time span) that arrived while a transcription Task was already
+        /// running for this source; picked up when that task finishes so boundaries during a long
+        /// transcription aren't lost.
         var pending: [Float] = []
+        var pendingStart: TimeInterval = 0
+        var pendingEnd: TimeInterval = 0
         /// True once a chunk for this source has crossed the VAD speech threshold; reset at each
         /// boundary. Gates buffering so we never accumulate indefinite pre-speech silence.
         var heardSpeech = false
         /// The single in-flight transcription Task for this source, or nil when idle.
         var task: Task<Void, Never>?
         var segmenter = VADSegmenter(speechThreshold: 0.02, silenceDuration: 0.8)
+        /// Capture timestamps (seconds) of the first and most-recent chunk buffered into the current
+        /// utterance, so an emitted final carries its real start/end instead of 0.
+        var utteranceStart: TimeInterval?
+        var utteranceEnd: TimeInterval = 0
         private var converter: AVAudioConverter?
 
-        /// Snapshot the current utterance (pre-roll + buffered speech) and clear both for the next.
-        func takeBuffer() -> [Float] {
+        /// Record a buffered chunk's capture time, extending the current utterance's time span.
+        func noteTimestamp(_ time: TimeInterval) {
+            if utteranceStart == nil { utteranceStart = time }
+            utteranceEnd = time
+        }
+
+        /// Snapshot the current utterance (pre-roll + buffered speech) and its time span, clearing
+        /// both buffers and the span for the next utterance.
+        func takeBuffer() -> Utterance {
             let audio = preroll + buffer
+            let start = utteranceStart ?? utteranceEnd
+            let end = utteranceEnd
             buffer.removeAll(keepingCapacity: true)
             preroll.removeAll(keepingCapacity: true)
-            return audio
+            utteranceStart = nil
+            utteranceEnd = 0
+            return Utterance(audio: audio, start: start, end: end)
         }
 
         /// Resample a mono-Float32 chunk to the target rate, returning the converted samples.
