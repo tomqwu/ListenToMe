@@ -64,10 +64,15 @@ build_config() {
 }
 
 if ! build_config "Release"; then
-  echo "release: WARNING — Release-configuration build failed; falling back to Debug." >&2
-  echo "release:           The packaged dmg will contain the DEBUG app. Prefer Release." >&2
-  USED_CONFIG="Debug"
-  build_config "Debug"
+  if [[ "${ALLOW_DEBUG_PACKAGE:-0}" == "1" ]]; then
+    echo "release: WARNING — Release build failed; ALLOW_DEBUG_PACKAGE=1, packaging DEBUG (testing only)." >&2
+    USED_CONFIG="Debug"
+    build_config "Debug"
+  else
+    echo "release: Release-configuration build failed — aborting so an official dmg is never built" >&2
+    echo "release: from a Debug app. Set ALLOW_DEBUG_PACKAGE=1 only to test the pipeline." >&2
+    exit 1
+  fi
 fi
 
 # --- locate the built app --------------------------------------------------------------
@@ -85,8 +90,20 @@ echo "==> Built app: ${APP_PATH}"
 # --- conditional code signing ----------------------------------------------------------
 SIGNED="no"
 if [[ -n "${DEVELOPER_ID_APP:-}" ]]; then
-  echo "==> Code signing (deep, hardened runtime) with: ${DEVELOPER_ID_APP}"
-  codesign --force --deep --options runtime --timestamp \
+  echo "==> Code signing (hardened runtime) with: ${DEVELOPER_ID_APP}"
+  # Sign nested code (embedded frameworks/dylibs, e.g. WhisperKit's) inside-out FIRST, without the
+  # app entitlements — frameworks must not carry the app's entitlements.
+  if [[ -d "${APP_PATH}/Contents/Frameworks" ]]; then
+    find "${APP_PATH}/Contents/Frameworks" \( -name "*.framework" -o -name "*.dylib" \) -print0 \
+      | while IFS= read -r -d '' nested; do
+          codesign --force --options runtime --timestamp --sign "${DEVELOPER_ID_APP}" "${nested}"
+        done
+  fi
+  # Sign the outer app bundle LAST, WITH the release entitlements, so the notarized build keeps the
+  # microphone entitlement (com.apple.security.device.audio-input). Not --deep (would re-sign nested
+  # with the app's entitlements).
+  codesign --force --options runtime --timestamp \
+    --entitlements "App/ListenToMe.entitlements" \
     --sign "${DEVELOPER_ID_APP}" "${APP_PATH}"
   codesign --verify --deep --strict --verbose=2 "${APP_PATH}"
   SIGNED="yes"
