@@ -13,6 +13,9 @@ public final class MeetingSession {
     /// Forces all AI replies (Listener/Quick/Deep) into this language, e.g. "Simplified Chinese";
     /// nil/empty leaves the model free to match the conversation. Set from the UI's Settings.
     public var responseLanguage: String?
+    /// Attached reference material (file/folder contents) fed into Quick/Deep prompts as grounding;
+    /// nil/empty = none. Set from the UI when the user attaches files.
+    public var referenceContext: String?
     public let store: ConversationStore
 
     /// Per-role output properties
@@ -204,7 +207,8 @@ public final class MeetingSession {
             PromptBuilder.build(
                 context: self.context.buildContext(from: self.store, notes: self.notes,
                                                    summary: self.lastCompletedListenerSummary,
-                                                   responseLanguage: self.responseLanguage),
+                                                   responseLanguage: self.responseLanguage,
+                                                   references: self.referenceContext),
                 action: .proactive)
         }
     }
@@ -217,7 +221,8 @@ public final class MeetingSession {
             PromptBuilder.build(
                 context: self.context.buildContext(from: self.store, notes: self.notes,
                                                    summary: self.lastCompletedListenerSummary,
-                                                   responseLanguage: self.responseLanguage),
+                                                   responseLanguage: self.responseLanguage,
+                                                   references: self.referenceContext),
                 action: action)
         }.value
     }
@@ -228,7 +233,8 @@ public final class MeetingSession {
             PromptBuilder.buildDeep(
                 context: self.context.buildContext(from: self.store, notes: self.notes,
                                                    summary: self.lastCompletedListenerSummary,
-                                                   responseLanguage: self.responseLanguage),
+                                                   responseLanguage: self.responseLanguage,
+                                                   references: self.referenceContext),
                 action: action)
         }.value
     }

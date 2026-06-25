@@ -12,6 +12,8 @@ struct MeetingView: View {
     @State private var showPermissions = false
     @State private var chatModels: [String] = []
     @State private var transcriptionLocaleID: String
+    @State private var referencePaths: [URL]
+    @State private var referenceLoadToken = 0
     @State private var restartTask: Task<Void, Never>?
     /// User intent to be capturing — the toolbar button's source of truth. Stays true across the
     /// brief teardown window of a locale restart (when `session.isRunning` is transiently false),
@@ -37,6 +39,8 @@ struct MeetingView: View {
     init() {
         ProviderSettings.migratePinningIfNeeded()
         _transcriptionLocaleID = State(initialValue: ProviderSettings.transcriptionLocaleID)
+        let savedPaths = (UserDefaults.standard.array(forKey: "referencePaths") as? [String]) ?? []
+        _referencePaths = State(initialValue: savedPaths.map { URL(fileURLWithPath: $0) })
         let store = ConversationStore()
         _store = State(initialValue: store)
         _session = State(initialValue: MeetingSession(
@@ -112,6 +116,7 @@ struct MeetingView: View {
         }
         .onAppear {
             session.responseLanguage = ProviderSettings.responseLanguageDirective()
+            if !referencePaths.isEmpty { loadReferences(into: session) }
             hotkey.start { Task { await session.respondQuick(.answerQuestion) } }
             permissions.refresh()
             if !permissions.allRequiredGranted { showPermissions = true }
@@ -261,9 +266,72 @@ struct MeetingView: View {
             TextField("Context notes (injected into prompts)", text: notes, axis: .vertical)
                 .lineLimit(2...4)
                 .textFieldStyle(.roundedBorder)
+            referenceFilesRow(session: session)
         }
         .padding(10)
         .frame(minWidth: 360)
+    }
+
+    /// Attach/clear files & folders whose text is fed into Quick/Deep prompts as grounding.
+    private func referenceFilesRow(session: MeetingSession) -> some View {
+        HStack(spacing: 8) {
+            Button { addReferenceFiles(session: session) } label: {
+                Label("Add files / folders", systemImage: "paperclip")
+            }
+            .help("Attach local files or folders as reference context for Quick & Deep answers")
+            if !referencePaths.isEmpty {
+                Text(referenceSummary)
+                    .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                Button("Clear") { clearReferences(session: session) }
+                    .controlSize(.small)
+            }
+            Spacer()
+        }
+    }
+
+    private var referenceSummary: String {
+        let names = referencePaths.map { $0.lastPathComponent }
+        let shown = names.prefix(2).joined(separator: ", ")
+        return referencePaths.count > 2 ? "\(shown) +\(referencePaths.count - 2) more" : shown
+    }
+
+    private func addReferenceFiles(session: MeetingSession) {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = true
+        panel.message = "Choose files or folders to use as reference context"
+        guard panel.runModal() == .OK else { return }
+        // De-duplicate by standardized path while preserving order.
+        var seen = Set(referencePaths.map { $0.standardizedFileURL.path })
+        for url in panel.urls where seen.insert(url.standardizedFileURL.path).inserted {
+            referencePaths.append(url)
+        }
+        persistReferencePaths()
+        loadReferences(into: session)
+    }
+
+    private func clearReferences(session: MeetingSession) {
+        referencePaths = []
+        referenceLoadToken += 1   // supersede any in-flight load so it can't reapply old files
+        persistReferencePaths()
+        session.referenceContext = nil
+    }
+
+    private func persistReferencePaths() {
+        UserDefaults.standard.set(referencePaths.map(\.path), forKey: "referencePaths")
+    }
+
+    /// Reads the attached files/folders off the main actor and updates the session's grounding.
+    private func loadReferences(into session: MeetingSession) {
+        referenceLoadToken += 1
+        let token = referenceLoadToken
+        let urls = referencePaths
+        Task {
+            let documents = await Task.detached { FileContextLoader.load(urls) }.value
+            guard token == referenceLoadToken else { return }   // superseded by a newer add/clear
+            session.referenceContext = ReferenceBuilder.build(documents: documents)
+        }
     }
 
     private func transcriptLine(for seg: TranscriptSegment) -> some View {
