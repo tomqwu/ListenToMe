@@ -6,10 +6,17 @@ import WhisperKit
 /// Opt-in multilingual transcription via WhisperKit (https://github.com/argmaxinc/WhisperKit).
 ///
 /// WhisperKit is a batch (whole-utterance) transcriber, not a streaming one: we buffer each
-/// source's incoming mono-Float32 samples, run the Core `VADSegmenter` over per-chunk RMS to find
-/// end-of-utterance boundaries, and at each boundary transcribe the buffered audio for that source
-/// and emit a single FINAL `TranscriptSegment`. This trades live partials for Whisper's stronger
-/// multilingual / code-switching quality.
+/// source's incoming mono-Float32 samples (only once speech is detected, with a short pre-roll so
+/// the onset isn't clipped), run the Core `VADSegmenter` over per-chunk RMS to find end-of-utterance
+/// boundaries, and at each boundary transcribe the buffered audio for that source and emit a single
+/// FINAL `TranscriptSegment`. This trades live partials for Whisper's stronger multilingual /
+/// code-switching quality.
+///
+/// Transcription runs on a per-source `Task`, never on the `feed` path, so the capture pump is
+/// never blocked while WhisperKit batches an utterance (it buffers only the newest chunks). Only
+/// one transcription runs per source at a time; audio arriving during one is queued and picked up
+/// when it finishes. `finish()` flushes remaining audio and drains all in-flight tasks before
+/// closing the stream so the last utterance is never lost.
 ///
 /// The model is downloaded lazily on first audio (a few hundred MB for "base"); failures are
 /// logged via NSLog and the transcriber degrades to a no-op rather than crashing the session.
@@ -23,6 +30,10 @@ actor WhisperKitTranscriber: Transcribing {
     /// Skip transcribing utterances shorter than this many 16 kHz samples (~0.25 s) — Whisper
     /// tends to hallucinate on near-silent fragments.
     private static let minUtteranceSamples = 4_000
+    /// Pre-roll kept (in 16 kHz samples, ~0.3 s) so the onset of speech isn't clipped: we don't
+    /// buffer indefinite pre-speech silence, but we retain a short tail of recent audio so the
+    /// first word that crosses the VAD speech threshold isn't lost.
+    private static let prerollSamples = 4_800
 
     /// Small multilingual model. Other valid choices: "tiny", "small". "base" balances quality
     /// and the first-run download size.
@@ -51,26 +62,56 @@ actor WhisperKitTranscriber: Transcribing {
     func feed(_ chunk: ListenToMeCore.AudioChunk) async {
         guard !stopped else { return }
         let box = await ensureWhisperKit()
-        guard box != nil, !stopped else { return }
+        guard let box, !stopped else { return }
 
         let state = states[chunk.source] ?? SourceState()
         states[chunk.source] = state
 
-        // Resample to 16 kHz mono and buffer.
-        if let resampled = state.resample(chunk, to: Self.whisperSampleRate) {
-            state.buffer.append(contentsOf: resampled)
+        let energy = rms(of: chunk.samples)
+        let resampled = state.resample(chunk, to: Self.whisperSampleRate)
+
+        if energy >= state.segmenter.speechThreshold {
+            state.heardSpeech = true
         }
 
-        let boundary = state.segmenter.process(rms: rms(of: chunk.samples), at: chunk.timestamp)
+        if let resampled {
+            if state.heardSpeech {
+                state.buffer.append(contentsOf: resampled)
+            } else {
+                // No speech yet: don't buffer indefinite silence; keep only a short pre-roll so the
+                // onset of the next utterance isn't clipped.
+                state.preroll.append(contentsOf: resampled)
+                if state.preroll.count > Self.prerollSamples {
+                    state.preroll.removeFirst(state.preroll.count - Self.prerollSamples)
+                }
+            }
+        }
+
+        let boundary = state.segmenter.process(rms: energy, at: chunk.timestamp)
         if boundary {
-            await transcribeBuffered(for: chunk.source)
+            // Snapshot+clear and transcribe off the feed path so the capture pump never blocks on a
+            // WhisperKit batch (DualChannelCapture buffers only the newest chunks).
+            startTranscription(for: chunk.source, box: box)
         }
     }
 
     func finish() async {
         stopped = true
-        for source in states.keys {
-            await transcribeBuffered(for: source)
+        // Flush any remaining buffered audio per source, then drain every in-flight transcription
+        // so the last utterance's final segment is emitted before the stream closes.
+        if let box = kitBox {
+            for source in states.keys {
+                startTranscription(for: source, box: box)
+            }
+        }
+        // Drain in a loop: a finishing task may chain a queued follow-up (pending audio captured
+        // during a long transcription), so keep awaiting until no source has a live task.
+        while true {
+            let inFlight = states.values.compactMap(\.task)
+            if inFlight.isEmpty { break }
+            for task in inFlight {
+                await task.value
+            }
         }
         states.removeAll()
         continuation.finish()
@@ -78,21 +119,39 @@ actor WhisperKitTranscriber: Transcribing {
 
     // MARK: - Transcription
 
-    /// Transcribe (and clear) the buffered audio for a source, emitting a final segment.
-    /// Guards against overlapping transcribe calls per source: while one is in flight the buffer
-    /// keeps accumulating and is picked up by the next boundary / finish.
-    private func transcribeBuffered(for source: SpeakerSource) async {
-        guard let box = kitBox, let state = states[source], !state.transcribing else { return }
-        guard state.buffer.count >= Self.minUtteranceSamples else {
-            // Too short to be real speech; drop it so it can't accumulate stale onset noise.
-            state.buffer.removeAll(keepingCapacity: true)
+    /// Snapshot+clear the source's buffered audio and transcribe it on a separate Task so `feed`
+    /// returns immediately and keeps buffering incoming chunks. Only one transcription runs per
+    /// source at a time: if one is already in flight, this marks more audio pending so the in-flight
+    /// task picks it up on completion, never blocking the capture pump.
+    private func startTranscription(for source: SpeakerSource, box: KitBox) {
+        guard let state = states[source] else { return }
+        // After a boundary we may resume buffering pre-speech silence for the next utterance.
+        state.heardSpeech = false
+
+        let audio = state.takeBuffer()
+        guard audio.count >= Self.minUtteranceSamples else { return }   // too short to be real speech
+
+        guard state.task == nil else {
+            // A transcription is already running for this source; let it pick up the next snapshot.
+            state.pending.append(contentsOf: audio)
             return
         }
-        let audio = state.buffer
-        state.buffer.removeAll(keepingCapacity: true)
-        state.transcribing = true
-        defer { state.transcribing = false }
+        state.task = makeTranscriptionTask(for: source, audio: audio, box: box)
+    }
 
+    /// Build the Task that transcribes one utterance and, on completion, chains any audio that
+    /// accumulated while it ran (so boundaries during a long transcription aren't dropped).
+    private func makeTranscriptionTask(
+        for source: SpeakerSource, audio: [Float], box: KitBox
+    ) -> Task<Void, Never> {
+        Task { [weak self] in
+            await self?.transcribe(audio, for: source, box: box)
+            await self?.transcriptionFinished(for: source, box: box)
+        }
+    }
+
+    /// Run one batch transcription and emit its final segment. Off the actor's feed path.
+    private func transcribe(_ audio: [Float], for source: SpeakerSource, box: KitBox) async {
         let options = DecodingOptions(
             verbose: false,
             task: .transcribe,
@@ -114,6 +173,18 @@ actor WhisperKitTranscriber: Transcribing {
         } catch {
             NSLog("WhisperKitTranscriber: transcribe failed for \(source.rawValue): \(error.localizedDescription)")
         }
+    }
+
+    /// A source's transcription Task finished: clear the slot and, if a boundary fired while it ran,
+    /// kick off the queued audio so no utterance is lost.
+    private func transcriptionFinished(for source: SpeakerSource, box: KitBox) {
+        guard let state = states[source] else { return }
+        state.task = nil
+        guard !state.pending.isEmpty else { return }
+        let next = state.pending
+        state.pending.removeAll(keepingCapacity: true)
+        guard next.count >= Self.minUtteranceSamples else { return }
+        state.task = makeTranscriptionTask(for: source, audio: next, box: box)
     }
 
     // MARK: - Lazy model load
@@ -161,10 +232,29 @@ actor WhisperKitTranscriber: Transcribing {
     // MARK: - Per-source state
 
     private final class SourceState {
+        /// Audio for the in-progress utterance (16 kHz). Empty until speech is first heard.
         var buffer: [Float] = []
+        /// Short ring of recent pre-speech audio, prepended to `buffer` when speech starts so the
+        /// utterance onset isn't clipped.
+        var preroll: [Float] = []
+        /// Audio that arrived while a transcription Task was already running for this source; picked
+        /// up when that task finishes so boundaries during a long transcription aren't lost.
+        var pending: [Float] = []
+        /// True once a chunk for this source has crossed the VAD speech threshold; reset at each
+        /// boundary. Gates buffering so we never accumulate indefinite pre-speech silence.
+        var heardSpeech = false
+        /// The single in-flight transcription Task for this source, or nil when idle.
+        var task: Task<Void, Never>?
         var segmenter = VADSegmenter(speechThreshold: 0.02, silenceDuration: 0.8)
-        var transcribing = false
         private var converter: AVAudioConverter?
+
+        /// Snapshot the current utterance (pre-roll + buffered speech) and clear both for the next.
+        func takeBuffer() -> [Float] {
+            let audio = preroll + buffer
+            buffer.removeAll(keepingCapacity: true)
+            preroll.removeAll(keepingCapacity: true)
+            return audio
+        }
 
         /// Resample a mono-Float32 chunk to the target rate, returning the converted samples.
         /// Passes through unchanged when the chunk is already at the target rate.
