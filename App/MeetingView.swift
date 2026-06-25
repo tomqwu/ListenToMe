@@ -14,6 +14,8 @@ struct MeetingView: View {
     @State private var permissions = PermissionsModel()
     @State private var showPermissions = false
     @State private var showOnboarding = false
+    @State private var showSearch = false
+    @State private var sessionStore = SessionStore()
     @State private var chatModels: [String] = []
     @State private var transcriptionLocaleID: String
     @State private var presetID: String
@@ -133,6 +135,9 @@ struct MeetingView: View {
         .sheet(isPresented: $showPermissions) {
             PermissionsView(permissions: permissions)
         }
+        .sheet(isPresented: $showSearch) {
+            SessionSearchView(store: sessionStore)
+        }
         .sheet(isPresented: $showOnboarding, onDismiss: {
             // Onboarding may have set/cleared the Ollama key, which changes the route; rebuild
             // every role's provider so the panes use the new local/cloud configuration.
@@ -183,6 +188,7 @@ struct MeetingView: View {
                     if wantsCapture {
                         wantsCapture = false
                         restartTask?.cancel()   // cancel any in-flight locale restart
+                        saveSessionIfEnabled(session: session)
                         session.stop()
                     } else {
                         wantsCapture = true
@@ -244,6 +250,8 @@ struct MeetingView: View {
             .help("Export the session as Markdown or PDF")
             Button { copySessionMarkdown() } label: { Image(systemName: "list.clipboard") }
                 .help("Copy the transcript + AI notes as Markdown")
+            Button { showSearch = true } label: { Image(systemName: "magnifyingglass") }
+                .help("Search past meetings")
             Button { showPermissions.wrappedValue = true } label: { Image(systemName: "lock.shield") }
             Button { showSettings.wrappedValue = true } label: { Image(systemName: "gearshape") }
         }
@@ -565,6 +573,26 @@ extension MeetingView {
     /// mirroring `exportSession()`'s document but without a file save.
     func copySessionMarkdown() {
         Clipboard.copy(sessionMarkdown())
+    }
+
+    /// On Stop, persist the finished session for cross-meeting search when the user has opted in
+    /// and there's something to save. Title = the active preset's name (or "Session") plus the date.
+    func saveSessionIfEnabled(session: MeetingSession) {
+        guard ProviderSettings.saveSessionsForSearch, !store.utterances.isEmpty else { return }
+        let now = Date()
+        let presetName = PresetCatalog.preset(id: presetID).name
+        let base = (presetName.isEmpty || presetName == "None") ? "Session" : presetName
+        let transcript = store.utterances
+            .map { "\($0.source == .you ? "You" : "Others"): \($0.text)" }
+            .joined(separator: "\n")
+        let record = SessionRecord(
+            id: UUID().uuidString,
+            title: "\(base) — \(now.formatted(date: .abbreviated, time: .shortened))",
+            date: now,
+            transcript: transcript,
+            summary: session.listenerSummary
+        )
+        sessionStore.add(record)
     }
 
     /// Reloads the installed Ollama chat models into the per-pane pickers.
