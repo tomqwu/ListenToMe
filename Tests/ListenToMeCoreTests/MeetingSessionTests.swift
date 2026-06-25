@@ -33,6 +33,15 @@ final class MeetingSessionTests: XCTestCase {
         XCTAssertTrue(CopilotRole.allCases.contains(.deep))
     }
 
+    func testRecapGetsLargerTranscriptBudgetThanOtherActions() {
+        XCTAssertGreaterThan(MeetingSession.transcriptBudget(for: .recap),
+                             MeetingSession.transcriptBudget(for: .answerQuestion))
+        XCTAssertEqual(MeetingSession.transcriptBudget(for: .answerQuestion),
+                       MeetingSession.transcriptBudget(for: .followUp))
+        XCTAssertEqual(MeetingSession.transcriptBudget(for: .proactive),
+                       MeetingSession.transcriptBudget(for: .answerQuestion))
+    }
+
     // MARK: - Initial state
 
     func testInitialStateHasCorrectDefaults() {
