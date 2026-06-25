@@ -118,10 +118,13 @@ struct SettingsView: View {
             Picker("Transcription engine", selection: $engine) {
                 Text("SpeechAnalyzer (macOS 26, dual-channel)").tag("speechAnalyzer")
                 Text("SpeechRecognizer (legacy)").tag("speechRecognizer")
+                Text("WhisperKit (multilingual, downloads model)").tag("whisperKit")
             }
             Text(
                 "SpeechAnalyzer transcribes both channels concurrently and downloads its model on first use; " +
-                "SpeechRecognizer is the fallback. Changing this takes effect when you next press Listen."
+                "SpeechRecognizer is the fallback. WhisperKit adds multilingual / code-switching transcription " +
+                "and downloads a model on first use (segment-final only, no live partials). " +
+                "Changing this takes effect when you next press Listen."
             )
             .font(.caption).foregroundStyle(.secondary)
 

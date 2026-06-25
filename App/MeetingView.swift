@@ -57,9 +57,14 @@ struct MeetingView: View {
             makeCapture: { DualChannelCapture() },
             makeTranscriber: {
                 let locale = ProviderSettings.transcriptionLocale()
-                return ProviderSettings.transcriptionEngine == "speechRecognizer"
-                    ? (SpeechRecognizerTranscriber(locale: locale) as any Transcribing)
-                    : (SpeechAnalyzerTranscriber(locale: locale) as any Transcribing)
+                switch ProviderSettings.transcriptionEngine {
+                case "speechRecognizer":
+                    return SpeechRecognizerTranscriber(locale: locale) as any Transcribing
+                case "whisperKit":
+                    return WhisperKitTranscriber(locale: locale) as any Transcribing
+                default:
+                    return SpeechAnalyzerTranscriber(locale: locale) as any Transcribing
+                }
             },
             makeProvider: { model in
                 OllamaProvider(model: model, baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey())
