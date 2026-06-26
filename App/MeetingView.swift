@@ -609,7 +609,10 @@ extension MeetingView {
     /// untainted, so saving works normally for that window.
     func markSaveableAfterSettings() {
         let wasOff = !savingEnabledBeforeSettings || !ProviderSettings.saveSessionsForSearch
-        if wasOff && !store.utterances.isEmpty { sessionSaveable = false }
+        // "Has content" includes an in-progress partial, so audio captured mid-utterance while
+        // saving was off still taints the session.
+        let hasContent = !store.utterances.isEmpty || store.partial != nil
+        if wasOff && hasContent { sessionSaveable = false }
     }
 
     /// Drops the current in-memory session from future saves after the user clears history, so a
