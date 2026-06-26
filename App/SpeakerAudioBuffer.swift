@@ -14,6 +14,11 @@ final class SpeakerAudioBuffer: @unchecked Sendable {
     private let lock = NSLock()
     private var samples: [Float] = []          // guarded by `lock`
     private var truncated = false              // guarded by `lock`
+    /// Capture-time of the buffer's sample 0 — the timestamp of the first `.others` chunk after a
+    /// reset. System audio starts asynchronously after capture begins, so this is > 0; callers add it
+    /// to buffer-relative diarization times to realign them with the transcript's capture-time stamps.
+    private var offset: TimeInterval = 0       // guarded by `lock`
+    private var offsetSet = false              // guarded by `lock`
     /// AVAudioConverter cached per input sample rate — building one per callback is wasteful, and the
     /// `.others` rate is stable for a session (48 kHz). Guarded by `lock`.
     private var converter: AVAudioConverter?
@@ -22,13 +27,23 @@ final class SpeakerAudioBuffer: @unchecked Sendable {
     /// Whether the cap was hit and later audio was dropped — surfaced so the UI can be honest.
     var didTruncate: Bool { lock.withLock { truncated } }
 
+    /// Capture-time of the buffer's sample 0 (0 until the first append after a reset). Add this to
+    /// buffer-relative diarization times to convert them into the transcript's capture-time frame.
+    var startOffset: TimeInterval { lock.withLock { offset } }
+
     /// Resamples `samples` (mono Float at `sampleRate`) to 16 kHz and appends, up to the cap.
-    func append(samples input: [Float], sampleRate: Double) {
+    /// `timestamp` is the chunk's capture-time; the first append after a reset records it as the
+    /// buffer's `startOffset`.
+    func append(samples input: [Float], sampleRate: Double, timestamp: TimeInterval) {
         guard !input.isEmpty, sampleRate > 0 else { return }
         let resampled = (sampleRate == Self.targetSampleRate) ? input : resample(input, from: sampleRate)
         guard !resampled.isEmpty else { return }
         lock.withLock {
             guard !truncated else { return }
+            if !offsetSet {
+                offset = timestamp
+                offsetSet = true
+            }
             let room = Self.maxSamples - samples.count
             if resampled.count >= room {
                 samples.append(contentsOf: resampled.prefix(room))
@@ -45,6 +60,8 @@ final class SpeakerAudioBuffer: @unchecked Sendable {
         lock.withLock {
             samples.removeAll(keepingCapacity: false)
             truncated = false
+            offset = 0
+            offsetSet = false
         }
     }
 

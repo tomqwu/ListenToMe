@@ -51,6 +51,10 @@ struct MeetingView: View {
     @State var speakerSummary: SpeakerSummary?
     @State var speakerError: String?
     @State var speakerLoading = false
+    /// Per-line speaker labels (transcript-line id → "Speaker N") for the OTHERS channel, filled by
+    /// "Identify speakers" when the WhisperKit engine supplies real per-line timestamps. Reset at
+    /// each session start so stale labels from a previous meeting don't linger.
+    @State var speakerLabels: [UUID: String] = [:]
     private let diarizer = SpeakerDiarizer()
     private let hotkey = HotkeyMonitor()
 
@@ -187,7 +191,8 @@ struct MeetingView: View {
         .sheet(isPresented: $showSpeakerBreakdown) {
             SpeakerBreakdownView(
                 loading: speakerLoading, summary: speakerSummary, errorText: speakerError,
-                didTruncate: othersAudioSink.didTruncate)
+                didTruncate: othersAudioSink.didTruncate,
+                perLineLabelsUnavailable: ProviderSettings.transcriptionEngine != "whisperKit")
         }
         .sheet(isPresented: $showOnboarding, onDismiss: {
             // Onboarding may have set/cleared the Ollama key, which changes the route; rebuild
@@ -284,6 +289,9 @@ struct MeetingView: View {
                 wantsCapture = true
                 do {
                     startError = nil
+                    // Clear any speaker labels from a previous meeting so they don't linger over the
+                    // new session's transcript (the Others buffer is reset in makeCapture).
+                    speakerLabels = [:]
                     try await session.start()
                     now = Date(); recordingStartedAt = Date()
                 } catch {
@@ -576,10 +584,20 @@ extension MeetingView {
         speakerLoading = true
         showSpeakerBreakdown = true
         let samples = othersAudioSink.snapshot()
+        let offset = othersAudioSink.startOffset
+        // Inline per-line labels need real start/end timestamps; only WhisperKit populates those.
+        let canLabelInline = ProviderSettings.transcriptionEngine == "whisperKit"
+        let transcript = store.utterances
         Task {
             do {
-                let summary = try await diarizer.summarize(samples: samples)
-                speakerSummary = summary
+                let outcome = try await diarizer.analyze(samples: samples)
+                speakerSummary = outcome.summary
+                if canLabelInline {
+                    speakerLabels = SpeakerLabeling.label(
+                        transcript: transcript, diarized: outcome.segments, offset: offset)
+                } else {
+                    speakerLabels = [:]
+                }
             } catch {
                 speakerError = error.localizedDescription
             }

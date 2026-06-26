@@ -13,6 +13,10 @@ struct SpeakerBreakdownView: View {
     let errorText: String?
     /// Whether the capture buffer hit its ~2 h cap (later audio was dropped) — noted if results show.
     let didTruncate: Bool
+    /// True when the active transcription engine isn't WhisperKit, so per-line "Speaker N" labels in
+    /// the transcript can't be produced (only WhisperKit emits real per-line timestamps). Noted if
+    /// results show, so the breakdown is honest about what changed.
+    let perLineLabelsUnavailable: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -66,6 +70,11 @@ struct SpeakerBreakdownView: View {
         }
         if didTruncate {
             Text("Note: only the first ~2 hours of audio were analyzed.")
+                .font(.caption).foregroundStyle(Theme.ink3)
+        }
+        if perLineLabelsUnavailable {
+            Text("Per-line \u{201C}Speaker N\u{201D} labels in the transcript require the WhisperKit " +
+                 "engine (it provides per-line timestamps). Switch engines in Settings to enable them.")
                 .font(.caption).foregroundStyle(Theme.ink3)
         }
     }

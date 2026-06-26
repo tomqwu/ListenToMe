@@ -22,6 +22,13 @@ actor SpeakerDiarizer {
     /// True once `prepareModels()` has succeeded, so models are loaded only once per app run.
     private var prepared = false
 
+    /// Result of a diarization run: the whole-session `summary` plus the raw `segments` (buffer-
+    /// relative times, as FluidAudio returns them) so callers can align them onto the transcript.
+    struct DiarizationOutcome: Sendable {
+        let summary: SpeakerSummary
+        let segments: [DiarizedSegment]
+    }
+
     enum DiarizationError: LocalizedError {
         case notEnoughAudio
 
@@ -33,10 +40,11 @@ actor SpeakerDiarizer {
         }
     }
 
-    /// Runs diarization over the captured 16 kHz mono samples and summarizes per-speaker talk time.
-    /// Throws `DiarizationError.notEnoughAudio` for buffers shorter than ~3 s; propagates any
-    /// FluidAudio model-load/processing error.
-    func summarize(samples: [Float]) async throws -> SpeakerSummary {
+    /// Runs diarization over the captured 16 kHz mono samples, returning both the per-speaker talk-
+    /// time summary and the raw (buffer-relative) segments for transcript alignment. Throws
+    /// `DiarizationError.notEnoughAudio` for buffers shorter than ~3 s; propagates any FluidAudio
+    /// model-load/processing error.
+    func analyze(samples: [Float]) async throws -> DiarizationOutcome {
         guard samples.count >= Self.minSamples else { throw DiarizationError.notEnoughAudio }
         if !prepared {
             try await box.manager.prepareModels()
@@ -48,6 +56,6 @@ actor SpeakerDiarizer {
                             start: TimeInterval($0.startTimeSeconds),
                             duration: TimeInterval($0.durationSeconds))
         }
-        return SpeakerStats.summarize(segments)
+        return DiarizationOutcome(summary: SpeakerStats.summarize(segments), segments: segments)
     }
 }

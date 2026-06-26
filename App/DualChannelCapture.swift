@@ -112,12 +112,17 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
         let count = Int(mono.frameLength)
         guard count > 0 else { return }
         let samples = Array(UnsafeBufferPointer(start: channel, count: count))
-        // Feed the same mono samples to the diarization sink (it handles the 16 kHz resample).
-        if source == .others { othersSink?.append(samples: samples, sampleRate: mono.format.sampleRate) }
+        let timestamp = Date().timeIntervalSince(startTime)
+        // Feed the same mono samples to the diarization sink (it handles the 16 kHz resample). The
+        // chunk's capture-time `timestamp` is passed through so the buffer can record its sample-0
+        // offset for later alignment against the transcript's capture-time stamps.
+        if source == .others {
+            othersSink?.append(samples: samples, sampleRate: mono.format.sampleRate, timestamp: timestamp)
+        }
         let chunk = AudioChunk(samples: samples,
                                sampleRate: mono.format.sampleRate,
                                source: source,
-                               timestamp: Date().timeIntervalSince(startTime))
+                               timestamp: timestamp)
         continuation.yield(chunk)
     }
 

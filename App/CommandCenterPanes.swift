@@ -173,15 +173,22 @@ extension MeetingView {
                 .font(.system(size: 10.5, design: .monospaced))
                 .foregroundStyle(Theme.ink3)
                 .frame(width: 40, alignment: .leading)
-            Text(seg.source == .you ? "YOU" : "OTHERS")
+            Text(speakerRowLabel(for: seg))
                 .font(.system(size: 11, weight: .bold))
                 .foregroundStyle(seg.source == .you ? Theme.you : Theme.others)
-                .frame(width: 52, alignment: .leading)
+                .frame(width: 72, alignment: .leading)
             Text(seg.text)
                 .font(.system(size: 12.5)).foregroundStyle(Theme.ink)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.vertical, 3)
+    }
+
+    /// Channel/speaker label for a transcript row: "YOU" for the mic; for the Others channel the
+    /// resolved "SPEAKER N" (uppercased) when "Identify speakers" has labeled this line, else "OTHERS".
+    private func speakerRowLabel(for seg: TranscriptSegment) -> String {
+        guard seg.source == .others else { return "YOU" }
+        return speakerLabels[seg.id]?.uppercased() ?? "OTHERS"
     }
 
     private func transcriptInputZone(session: MeetingSession, notes: Binding<String>) -> some View {
