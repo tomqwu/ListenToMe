@@ -88,13 +88,21 @@ extension MeetingView {
 
     // MARK: Center transcript
 
+    /// "idle" when stopped; otherwise "live · N src" where N is the real number of distinct speaker
+    /// sources actually captured so far (so it never claims system audio that isn't being captured).
+    var transcriptStatusLabel: String {
+        guard session.isRunning else { return "idle" }
+        let sources = Set(store.utterances.map(\.source)).count
+        return sources > 0 ? "live · \(sources) src" : "live"
+    }
+
     func transcriptColumn(session: MeetingSession, notes: Binding<String>) -> some View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
                 Text("Transcript")
                     .font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ink)
                 Spacer()
-                Text(session.isRunning ? "live · 2 src" : "idle")
+                Text(transcriptStatusLabel)
                     .font(.system(size: 10.5, design: .monospaced))
                     .foregroundStyle(Theme.ink3)
                     .padding(.horizontal, 8).padding(.vertical, 3)

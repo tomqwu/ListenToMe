@@ -142,7 +142,7 @@ struct MeetingView: View {
                 copilotColumn(session: session)
             }
             .frame(maxHeight: .infinity)
-            CommandCenterFooter()
+            CommandCenterFooter(cloudActive: Self.ollamaKey() != nil)
         }
         .background(Theme.windowBackground)
         .preferredColorScheme(colorScheme(for: appearance))

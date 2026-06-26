@@ -53,6 +53,8 @@ struct KbdHint: View {
 /// The bottom footer: keyboard hints (labels only; only ⌘⇧Space is an actually-wired hotkey) and an
 /// honest privacy line — on-device transcription, but cloud models may send data.
 struct CommandCenterFooter: View {
+    /// True when an Ollama cloud key routes AI prompts off-device.
+    let cloudActive: Bool
     var body: some View {
         HStack(spacing: 18) {
             KbdHint(key: "⌘⇧Space", label: "quick")
@@ -60,9 +62,11 @@ struct CommandCenterFooter: View {
             KbdHint(key: "⌘F", label: "search")
             KbdHint(key: "⌘E", label: "export")
             Spacer()
-            Text("On-device transcription · local models stay private")
+            Text(cloudActive
+                 ? "On-device transcription · cloud model receives transcript & context"
+                 : "On-device transcription · local models stay private")
                 .font(.system(size: 10.5, design: .monospaced))
-                .foregroundStyle(Theme.ink3)
+                .foregroundStyle(cloudActive ? Theme.you : Theme.ink3)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 7)
