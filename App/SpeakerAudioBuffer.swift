@@ -39,10 +39,11 @@ final class SpeakerAudioBuffer: @unchecked Sendable {
         }
     }
 
-    /// Clears the buffer for a fresh session (resets the truncation flag too).
+    /// Clears the buffer for a fresh session (resets the truncation flag too). Releases the backing
+    /// store — it can grow to ~460 MB, so we don't keep that capacity alive between sessions.
     func reset() {
         lock.withLock {
-            samples.removeAll(keepingCapacity: true)
+            samples.removeAll(keepingCapacity: false)
             truncated = false
         }
     }

@@ -94,7 +94,14 @@ struct MeetingView: View {
         _session = State(initialValue: MeetingSession(
             store: store,
             context: ContextEngine(debounce: 8),
-            makeCapture: { othersSink.reset(); return DualChannelCapture(othersSink: othersSink) },
+            makeCapture: {
+                // Only accumulate the Others channel for diarization when the experimental setting
+                // is on — otherwise a normal meeting needlessly resamples + retains up to ~2 h of
+                // audio. Read at capture-creation time so toggling it before the next Listen applies.
+                let diarize = ProviderSettings.speakerDiarizationEnabled
+                if diarize { othersSink.reset() }
+                return DualChannelCapture(othersSink: diarize ? othersSink : nil)
+            },
             makeTranscriber: {
                 let locale = ProviderSettings.transcriptionLocale()
                 switch ProviderSettings.transcriptionEngine {
