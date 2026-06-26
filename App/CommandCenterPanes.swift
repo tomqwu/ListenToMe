@@ -53,6 +53,8 @@ extension MeetingView {
                     StatRow(key: "you / others", value: "\(youCount) / \(othersCount)")
                     StatRow(key: "~tok", value: "\(approxTokens)")
                 }
+
+                if ProviderSettings.speakerDiarizationEnabled { speakersRailSection() }
                 Spacer(minLength: 0)
             }
             .padding(14)
@@ -61,6 +63,19 @@ extension MeetingView {
         .frame(width: 210)
         .background(Theme.windowBackground)
         .overlay(Rectangle().fill(Theme.line).frame(width: 1), alignment: .trailing)
+    }
+
+    /// Experimental "Speakers" rail section: an on-demand button that diarizes the captured Others
+    /// channel into distinct voices. Shown only when the experimental setting is enabled.
+    private func speakersRailSection() -> some View {
+        railSection("Speakers") {
+            Button { identifySpeakers() } label: {
+                Label("Identify speakers", systemImage: "person.2.wave.2")
+            }
+            .controlSize(.small)
+            .disabled(speakerLoading)
+            .help("Experimental: group the Others channel into distinct voices (on-device)")
+        }
     }
 
     private func railSection<Content: View>(

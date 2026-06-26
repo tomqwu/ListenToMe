@@ -16,8 +16,12 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
     private var stopped = false            // guarded by `lock`
     private var systemAudioTask: Task<Void, Never>?
     private let startTime = Date()
+    /// Optional sink that accumulates the `.others` channel (resampled to 16 kHz) for speaker
+    /// diarization. `nil` (the default) leaves existing callers/tests untouched.
+    private let othersSink: SpeakerAudioBuffer?
 
-    override init() {
+    init(othersSink: SpeakerAudioBuffer? = nil) {
+        self.othersSink = othersSink
         var cont: AsyncStream<AudioChunk>.Continuation!
         chunks = AsyncStream(bufferingPolicy: .bufferingNewest(64)) { cont = $0 }
         continuation = cont
@@ -108,6 +112,8 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
         let count = Int(mono.frameLength)
         guard count > 0 else { return }
         let samples = Array(UnsafeBufferPointer(start: channel, count: count))
+        // Feed the same mono samples to the diarization sink (it handles the 16 kHz resample).
+        if source == .others { othersSink?.append(samples: samples, sampleRate: mono.format.sampleRate) }
         let chunk = AudioChunk(samples: samples,
                                sampleRate: mono.format.sampleRate,
                                source: source,

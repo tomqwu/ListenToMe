@@ -43,6 +43,15 @@ struct MeetingView: View {
     @State private var now = Date()
     /// Live appearance (System/Light/Dark) applied to the root via `.preferredColorScheme`.
     @State private var appearance = ProviderSettings.appearance
+    /// Accumulates the `.others` channel (16 kHz mono) across a session for on-demand speaker
+    /// diarization. Reset at each session start; read via `snapshot()` when identifying speakers.
+    @State private var othersAudioSink: SpeakerAudioBuffer
+    /// Drives the experimental "Speaker breakdown" sheet and holds its result/error/in-flight state.
+    @State var showSpeakerBreakdown = false
+    @State var speakerSummary: SpeakerSummary?
+    @State var speakerError: String?
+    @State var speakerLoading = false
+    private let diarizer = SpeakerDiarizer()
     private let hotkey = HotkeyMonitor()
 
     /// mm:ss since the current recording run started (00:00 when idle).
@@ -80,10 +89,12 @@ struct MeetingView: View {
         _referencePaths = State(initialValue: savedPaths.map { URL(fileURLWithPath: $0) })
         let store = ConversationStore()
         _store = State(initialValue: store)
+        let othersSink = SpeakerAudioBuffer()
+        _othersAudioSink = State(initialValue: othersSink)
         _session = State(initialValue: MeetingSession(
             store: store,
             context: ContextEngine(debounce: 8),
-            makeCapture: { DualChannelCapture() },
+            makeCapture: { othersSink.reset(); return DualChannelCapture(othersSink: othersSink) },
             makeTranscriber: {
                 let locale = ProviderSettings.transcriptionLocale()
                 switch ProviderSettings.transcriptionEngine {
@@ -165,6 +176,11 @@ struct MeetingView: View {
         }
         .sheet(isPresented: $showSearch) {
             SessionSearchView(store: sessionStore, onClear: { dropCurrentSessionFromSaving() })
+        }
+        .sheet(isPresented: $showSpeakerBreakdown) {
+            SpeakerBreakdownView(
+                loading: speakerLoading, summary: speakerSummary, errorText: speakerError,
+                didTruncate: othersAudioSink.didTruncate)
         }
         .sheet(isPresented: $showOnboarding, onDismiss: {
             // Onboarding may have set/cleared the Ollama key, which changes the route; rebuild
@@ -541,6 +557,27 @@ extension MeetingView {
         )
         sessionStore.add(record)
         lastSavedUtteranceCount = store.utterances.count
+    }
+
+    /// Experimental: presents the Speaker breakdown sheet and runs FluidAudio diarization over the
+    /// captured Others-channel snapshot off the main actor, publishing the summary or a friendly
+    /// error. The sheet (`SpeakerBreakdownView`) renders the loading / error / needs-more-audio /
+    /// results states from this same `@State`.
+    func identifySpeakers() {
+        speakerSummary = nil
+        speakerError = nil
+        speakerLoading = true
+        showSpeakerBreakdown = true
+        let samples = othersAudioSink.snapshot()
+        Task {
+            do {
+                let summary = try await diarizer.summarize(samples: samples)
+                speakerSummary = summary
+            } catch {
+                speakerError = error.localizedDescription
+            }
+            speakerLoading = false
+        }
     }
 
     /// Reloads the installed Ollama chat models into the per-pane pickers.
