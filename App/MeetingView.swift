@@ -345,9 +345,15 @@ struct MeetingView: View {
     /// any in-flight `identifySpeakers` drops its (now stale) results. Call this BEFORE `session.start()`
     /// — the run anchor is set only AFTER start returns (see `anchorDiarizationRun`), because
     /// `start()` awaits the prior Stop's drain, which can still append old final utterances first.
+    ///
+    /// Also release the breakdown UI: bumping the token makes a superseded `identifySpeakers` task
+    /// bail via its token guard WITHOUT clearing `speakerLoading`, so we clear the spinner/error state
+    /// here. This guarantees that starting/restarting always frees the "Identify speakers" button.
     private func beginDiarizationRunReset() {
         speakerLabels = [:]
         speakerOrder = [:]
+        speakerLoading = false
+        speakerError = nil
         diarizationRunToken &+= 1
     }
 
