@@ -174,13 +174,7 @@ struct MeetingView: View {
         .task {
             await reloadAndHealModels()
         }
-        .onDisappear {
-            hotkey.stop()
-            wantsCapture = false
-            restartTask?.cancel()   // don't let a pending locale restart resume capture after close
-            importTask?.cancel()    // stop an in-flight file import when the window closes
-            session.stop()
-        }
+        .onDisappear { tearDownOnDisappear(session: session) }
     }
 
     // MARK: - Toolbar
@@ -586,18 +580,36 @@ extension MeetingView {
         Clipboard.copy(sessionMarkdown())
     }
 
+    /// Window close/teardown: stop the hotkey and any pending restart/import. If recording, mirror
+    /// the Stop-button flow so a meeting ended by closing the window is still saved for search
+    /// (best-effort: the Task may not finish on a full app quit).
+    func tearDownOnDisappear(session: MeetingSession) {
+        hotkey.stop()
+        let wasCapturing = wantsCapture
+        wantsCapture = false
+        restartTask?.cancel()   // don't let a pending locale restart resume capture after close
+        importTask?.cancel()    // stop an in-flight file import when the window closes
+        if wasCapturing {
+            Task { await session.stopAndWait(); saveSessionIfEnabled(session: session) }
+        } else {
+            session.stop()
+        }
+    }
+
     /// Opens Settings, snapshotting the saving toggle first so an off→on round-trip is still caught
-    /// (see `markSaveableAfterSettings`).
+    /// on dismiss (see `markSaveableAfterSettings`).
     func openSettings(_ showSettings: Binding<Bool>) {
         savingEnabledBeforeSettings = ProviderSettings.saveSessionsForSearch
-        if !savingEnabledBeforeSettings { sessionSaveable = false }
         showSettings.wrappedValue = true
     }
 
-    /// Settings-dismiss: taint the session if saving was off at any point during the visit — off when
-    /// Settings opened OR off now — so the whole window-session is excluded once saving was ever off.
+    /// Settings-dismiss: taint the session only when saving was off at some point during the visit
+    /// (off when opened OR off now) AND content was already captured — that content was at risk, so
+    /// exclude the whole window-session. Turning saving ON before recording anything leaves it
+    /// untainted, so saving works normally for that window.
     func markSaveableAfterSettings() {
-        if !savingEnabledBeforeSettings || !ProviderSettings.saveSessionsForSearch { sessionSaveable = false }
+        let wasOff = !savingEnabledBeforeSettings || !ProviderSettings.saveSessionsForSearch
+        if wasOff && !store.utterances.isEmpty { sessionSaveable = false }
     }
 
     /// Drops the current in-memory session from future saves after the user clears history, so a
