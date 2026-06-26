@@ -17,6 +17,11 @@ struct SpeakerBreakdownView: View {
     /// the transcript can't be produced (only WhisperKit emits real per-line timestamps). Noted if
     /// results show, so the breakdown is honest about what changed.
     let perLineLabelsUnavailable: Bool
+    /// Canonical diarized-speakerId → "Speaker N" map from `SpeakerLabeling` (the same numbering the
+    /// transcript uses). When non-empty, each bar's LABEL text comes from here so the sheet and the
+    /// transcript agree on which number is which speaker; bars stay sorted by talk time. Empty on the
+    /// non-WhisperKit path, where we fall back to sequential numbering.
+    var speakerOrder: [String: String] = [:]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -65,7 +70,11 @@ struct SpeakerBreakdownView: View {
             .font(.headline).foregroundStyle(Theme.ink)
         VStack(alignment: .leading, spacing: 8) {
             ForEach(Array(summary.speakers.enumerated()), id: \.element.id) { index, speaker in
-                SpeakerBar(label: "Speaker \(index + 1)", fraction: speaker.fraction)
+                // Take the LABEL from the canonical order map so the number matches the transcript;
+                // keep the talk-time SORT (the enumeration order). Fall back to sequential numbering
+                // when no canonical map is available (non-WhisperKit path).
+                SpeakerBar(label: speakerOrder[speaker.id] ?? "Speaker \(index + 1)",
+                           fraction: speaker.fraction)
             }
         }
         if didTruncate {

@@ -55,6 +55,14 @@ struct MeetingView: View {
     /// "Identify speakers" when the WhisperKit engine supplies real per-line timestamps. Reset at
     /// each session start so stale labels from a previous meeting don't linger.
     @State var speakerLabels: [UUID: String] = [:]
+    /// Canonical diarized-speakerId → "Speaker N" map from the same labeling pass, so the breakdown
+    /// sheet numbers speakers the same way the transcript does. Empty when no inline labels apply.
+    @State var speakerOrder: [String: String] = [:]
+    /// Index into `store.utterances` where the current recording run's lines begin. Set at each
+    /// Listen-start/restart (when the Others buffer resets to a 0-based timeline), so diarization —
+    /// which is relative to that fresh buffer — only labels the current run's lines, never older ones
+    /// left in the store from a previous Listen→Stop→Listen cycle in the same window.
+    @State private var diarizationRunStartIndex = 0
     private let diarizer = SpeakerDiarizer()
     private let hotkey = HotkeyMonitor()
 
@@ -192,7 +200,8 @@ struct MeetingView: View {
             SpeakerBreakdownView(
                 loading: speakerLoading, summary: speakerSummary, errorText: speakerError,
                 didTruncate: othersAudioSink.didTruncate,
-                perLineLabelsUnavailable: ProviderSettings.transcriptionEngine != "whisperKit")
+                perLineLabelsUnavailable: ProviderSettings.transcriptionEngine != "whisperKit",
+                speakerOrder: speakerOrder)
         }
         .sheet(isPresented: $showOnboarding, onDismiss: {
             // Onboarding may have set/cleared the Ollama key, which changes the route; rebuild
@@ -289,9 +298,9 @@ struct MeetingView: View {
                 wantsCapture = true
                 do {
                     startError = nil
-                    // Clear any speaker labels from a previous meeting so they don't linger over the
-                    // new session's transcript (the Others buffer is reset in makeCapture).
-                    speakerLabels = [:]
+                    // The Others buffer is reset in makeCapture, restarting its 0-based timeline, so
+                    // clear stale labels and anchor diarization to the current run's lines only.
+                    resetDiarizationRun()
                     try await session.start()
                     now = Date(); recordingStartedAt = Date()
                 } catch {
@@ -312,10 +321,22 @@ struct MeetingView: View {
             // Bail if the user pressed Stop or closed the window during teardown — don't resume
             // recording against their intent.
             guard wantsCapture, !Task.isCancelled else { return }
+            // The restart rebuilds the capture, resetting the Others buffer's 0-based timeline, so
+            // re-anchor diarization to the current run and drop now-stale labels.
+            resetDiarizationRun()
             do { startError = nil; try await session.start() } catch {
                 startError = error.localizedDescription; wantsCapture = false
             }
         }
+    }
+
+    /// Clears inline speaker labels and anchors diarization to the current run. Called at every start
+    /// path that resets the Others buffer (Listen-start, locale restart) so diarization — which is
+    /// relative to that fresh, 0-based buffer — only labels the run's lines, never older store rows.
+    private func resetDiarizationRun() {
+        speakerLabels = [:]
+        speakerOrder = [:]
+        diarizationRunStartIndex = store.utterances.count
     }
 
     /// Attach/clear files & folders whose text is fed into Quick/Deep prompts as grounding.
@@ -587,16 +608,22 @@ extension MeetingView {
         let offset = othersAudioSink.startOffset
         // Inline per-line labels need real start/end timestamps; only WhisperKit populates those.
         let canLabelInline = ProviderSettings.transcriptionEngine == "whisperKit"
-        let transcript = store.utterances
+        // Only the current run's lines share the buffer's 0-based timeline; older store rows from a
+        // previous Listen→Stop→Listen cycle must not be labeled by this run's diarization.
+        let runStart = min(diarizationRunStartIndex, store.utterances.count)
+        let transcript = Array(store.utterances.suffix(from: runStart))
         Task {
             do {
                 let outcome = try await diarizer.analyze(samples: samples)
                 speakerSummary = outcome.summary
                 if canLabelInline {
-                    speakerLabels = SpeakerLabeling.label(
+                    let labeling = SpeakerLabeling.label(
                         transcript: transcript, diarized: outcome.segments, offset: offset)
+                    speakerLabels = labeling.lineLabels
+                    speakerOrder = labeling.order
                 } else {
                     speakerLabels = [:]
+                    speakerOrder = [:]
                 }
             } catch {
                 speakerError = error.localizedDescription

@@ -18,11 +18,13 @@ final class SpeakerLabelingTests: XCTestCase {
             DiarizedSegment(speakerId: "B", start: 4, duration: 2),
             DiarizedSegment(speakerId: "A", start: 6, duration: 2)
         ]
-        let labels = SpeakerLabeling.label(transcript: [l0, l1, l2, l3], diarized: diarized, offset: 0)
-        XCTAssertEqual(labels[l0.id], "Speaker 1")
-        XCTAssertEqual(labels[l1.id], "Speaker 2")
-        XCTAssertEqual(labels[l2.id], "Speaker 1")
-        XCTAssertEqual(labels[l3.id], "Speaker 2")
+        let result = SpeakerLabeling.label(transcript: [l0, l1, l2, l3], diarized: diarized, offset: 0)
+        XCTAssertEqual(result.lineLabels[l0.id], "Speaker 1")
+        XCTAssertEqual(result.lineLabels[l1.id], "Speaker 2")
+        XCTAssertEqual(result.lineLabels[l2.id], "Speaker 1")
+        XCTAssertEqual(result.lineLabels[l3.id], "Speaker 2")
+        // `order` is the canonical id->label map by first appearance.
+        XCTAssertEqual(result.order, ["B": "Speaker 1", "A": "Speaker 2"])
     }
 
     func testYouLinesExcluded() {
@@ -31,28 +33,24 @@ final class SpeakerLabelingTests: XCTestCase {
             DiarizedSegment(speakerId: "A", start: 0, duration: 2),
             DiarizedSegment(speakerId: "A", start: 2, duration: 2)
         ]
-        let labels = SpeakerLabeling.label(transcript: [youLine, othersLine], diarized: diarized, offset: 0)
-        XCTAssertNil(labels[youLine.id])
-        XCTAssertEqual(labels[othersLine.id], "Speaker 1")
+        let result = SpeakerLabeling.label(transcript: [youLine, othersLine], diarized: diarized, offset: 0)
+        XCTAssertNil(result.lineLabels[youLine.id])
+        XCTAssertEqual(result.lineLabels[othersLine.id], "Speaker 1")
     }
 
     func testOffsetShiftsAlignment() {
-        // Line at capture-time [10, 12]. Diarized segments are buffer-relative; the buffer began at
-        // capture-time t0 = 10, so segment B [0,2] truly covers [10,12]. Without the offset, segment
-        // A [10,12] would wrongly win.
         let line = others(10, 12)
         let diarized = [
             DiarizedSegment(speakerId: "B", start: 0, duration: 2),    // shifted -> [10,12]
             DiarizedSegment(speakerId: "A", start: 10, duration: 2)    // shifted -> [20,22]
         ]
         let withOffset = SpeakerLabeling.label(transcript: [line], diarized: diarized, offset: 10)
-        XCTAssertEqual(withOffset[line.id], "Speaker 1")   // B is first appearance
+        XCTAssertEqual(withOffset.lineLabels[line.id], "Speaker 1")   // B is first appearance
 
         let withoutOffset = SpeakerLabeling.label(transcript: [line], diarized: diarized, offset: 0)
         // Without offset, A [10,12] overlaps the line and B [0,2] does not -> A wins (Speaker 1).
-        XCTAssertEqual(withoutOffset[line.id], "Speaker 1")
-        // The two runs must disagree on which underlying speaker was matched: prove it via a 2-line
-        // case where offset changes the assignment outcome.
+        XCTAssertEqual(withoutOffset.lineLabels[line.id], "Speaker 1")
+        // Prove the offset changes the underlying assignment via a 2-line case.
         let lineA = others(0, 2), lineB = others(10, 12)
         let segs = [
             DiarizedSegment(speakerId: "X", start: 0, duration: 2),
@@ -60,12 +58,12 @@ final class SpeakerLabelingTests: XCTestCase {
         ]
         // offset 0: lineA->X (Speaker 1), lineB->Y (Speaker 2).
         let none = SpeakerLabeling.label(transcript: [lineA, lineB], diarized: segs, offset: 0)
-        XCTAssertEqual(none[lineA.id], "Speaker 1")
-        XCTAssertEqual(none[lineB.id], "Speaker 2")
+        XCTAssertEqual(none.lineLabels[lineA.id], "Speaker 1")
+        XCTAssertEqual(none.lineLabels[lineB.id], "Speaker 2")
         // offset 10 shifts both segments +10: X->[10,12] now matches lineB, Y->[20,22] matches nothing.
         let shifted = SpeakerLabeling.label(transcript: [lineA, lineB], diarized: segs, offset: 10)
-        XCTAssertNil(shifted[lineA.id])               // no segment overlaps [0,2] after the shift
-        XCTAssertEqual(shifted[lineB.id], "Speaker 1") // X now wins lineB
+        XCTAssertNil(shifted.lineLabels[lineA.id])               // no segment overlaps [0,2] after shift
+        XCTAssertEqual(shifted.lineLabels[lineB.id], "Speaker 1") // X now wins lineB
     }
 
     func testZeroLengthLinesExcluded() {
@@ -73,32 +71,51 @@ final class SpeakerLabelingTests: XCTestCase {
         let degenerate = others(0, 0)
         let real = others(0, 2)
         let diarized = [DiarizedSegment(speakerId: "A", start: 0, duration: 2)]
-        let labels = SpeakerLabeling.label(transcript: [degenerate, real], diarized: diarized, offset: 0)
-        XCTAssertNil(labels[degenerate.id])
-        XCTAssertEqual(labels[real.id], "Speaker 1")
+        let result = SpeakerLabeling.label(transcript: [degenerate, real], diarized: diarized, offset: 0)
+        XCTAssertNil(result.lineLabels[degenerate.id])
+        XCTAssertEqual(result.lineLabels[real.id], "Speaker 1")
     }
 
-    func testEmptyDiarizedYieldsEmptyMap() {
+    func testEmptyDiarizedYieldsEmptyResult() {
         let line = others(0, 2)
-        XCTAssertTrue(SpeakerLabeling.label(transcript: [line], diarized: [], offset: 0).isEmpty)
+        let result = SpeakerLabeling.label(transcript: [line], diarized: [], offset: 0)
+        XCTAssertTrue(result.lineLabels.isEmpty)
+        XCTAssertTrue(result.order.isEmpty)
     }
 
     func testNonOverlappingLineIsUnlabeled() {
         let line = others(100, 102)
         let diarized = [DiarizedSegment(speakerId: "A", start: 0, duration: 2)]
-        XCTAssertTrue(SpeakerLabeling.label(transcript: [line], diarized: diarized, offset: 0).isEmpty)
+        let result = SpeakerLabeling.label(transcript: [line], diarized: diarized, offset: 0)
+        XCTAssertTrue(result.lineLabels.isEmpty)
+        XCTAssertTrue(result.order.isEmpty)
     }
 
     func testTieBreaksToEarliestSegment() {
-        // Line [0,4] overlaps two segments by an equal 2 s; the earlier (input-order) segment wins.
+        // Line [0,4] overlaps two single-segment speakers by an equal 2 s; the one whose segment
+        // starts earlier ("first" at 0) wins.
         let line = others(0, 4)
         let diarized = [
-            DiarizedSegment(speakerId: "first", start: 0, duration: 2),   // overlap 2
-            DiarizedSegment(speakerId: "second", start: 2, duration: 2)   // overlap 2
+            DiarizedSegment(speakerId: "first", start: 0, duration: 2),   // overlap 2, starts at 0
+            DiarizedSegment(speakerId: "second", start: 2, duration: 2)   // overlap 2, starts at 2
         ]
-        let labels = SpeakerLabeling.label(transcript: [line], diarized: diarized, offset: 0)
-        XCTAssertEqual(labels[line.id], "Speaker 1")   // matched "first"
-        XCTAssertEqual(labels.count, 1)
+        let result = SpeakerLabeling.label(transcript: [line], diarized: diarized, offset: 0)
+        XCTAssertEqual(result.lineLabels[line.id], "Speaker 1")   // matched "first"
+        XCTAssertEqual(result.lineLabels.count, 1)
+        XCTAssertEqual(result.order, ["first": "Speaker 1"])
+    }
+
+    func testFullTieBreaksToSmallerSpeakerId() {
+        // Two speakers overlap the line equally (3 s each) AND their earliest segments start at the
+        // same time (0) — the final tie-break picks the smaller speakerId for determinism.
+        let line = others(0, 6)
+        let diarized = [
+            DiarizedSegment(speakerId: "zebra", start: 0, duration: 3),   // overlap 3, starts at 0
+            DiarizedSegment(speakerId: "alpha", start: 0, duration: 3)    // overlap 3, starts at 0
+        ]
+        let result = SpeakerLabeling.label(transcript: [line], diarized: diarized, offset: 0)
+        XCTAssertEqual(result.lineLabels[line.id], "Speaker 1")   // "alpha" wins (smaller id)
+        XCTAssertEqual(result.order["alpha"], "Speaker 1")
     }
 
     func testZeroDurationDiarizedSegmentsIgnored() {
@@ -107,7 +124,23 @@ final class SpeakerLabelingTests: XCTestCase {
             DiarizedSegment(speakerId: "A", start: 0, duration: 0),   // ignored
             DiarizedSegment(speakerId: "B", start: 0, duration: 2)
         ]
-        let labels = SpeakerLabeling.label(transcript: [line], diarized: diarized, offset: 0)
-        XCTAssertEqual(labels[line.id], "Speaker 1")   // B, since A had zero duration
+        let result = SpeakerLabeling.label(transcript: [line], diarized: diarized, offset: 0)
+        XCTAssertEqual(result.lineLabels[line.id], "Speaker 1")   // B, since A had zero duration
+    }
+
+    func testSummedOverlapPerSpeakerWins() {
+        // One OTHERS line spans [0, 10]. Speaker A speaks in two short pieces (split around a pause)
+        // totalling 6 s of overlap; speaker B has a single 4 s piece. Comparing segments
+        // independently, B's single 4 s would beat each of A's <=3 s pieces — but A's SUMMED 6 s
+        // must win.
+        let line = others(0, 10)
+        let diarized = [
+            DiarizedSegment(speakerId: "A", start: 0, duration: 3),   // overlap 3
+            DiarizedSegment(speakerId: "B", start: 3, duration: 4),   // overlap 4 (longest single)
+            DiarizedSegment(speakerId: "A", start: 7, duration: 3)    // overlap 3  (A total = 6)
+        ]
+        let result = SpeakerLabeling.label(transcript: [line], diarized: diarized, offset: 0)
+        XCTAssertEqual(result.lineLabels[line.id], "Speaker 1")   // A, by summed overlap (6 > 4)
+        XCTAssertEqual(result.order["A"], "Speaker 1")
     }
 }
