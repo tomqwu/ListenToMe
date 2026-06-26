@@ -70,9 +70,10 @@ struct SpeakerBreakdownView: View {
             .font(.headline).foregroundStyle(Theme.ink)
         VStack(alignment: .leading, spacing: 8) {
             ForEach(Array(summary.speakers.enumerated()), id: \.element.id) { index, speaker in
-                // Take the LABEL from the canonical order map so the number matches the transcript;
-                // keep the talk-time SORT (the enumeration order). Fall back to sequential numbering
-                // when no canonical map is available (non-WhisperKit path).
+                // Take the LABEL from the canonical, TOTAL order map (it covers every diarized
+                // speaker) so the number matches the transcript; keep the talk-time SORT (the
+                // enumeration order). The fallback fires only on the non-WhisperKit path where
+                // `order` is empty for all rows — so it can never collide with a mapped number.
                 SpeakerBar(label: speakerOrder[speaker.id] ?? "Speaker \(index + 1)",
                            fraction: speaker.fraction)
             }

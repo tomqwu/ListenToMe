@@ -116,7 +116,14 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
         // Feed the same mono samples to the diarization sink (it handles the 16 kHz resample). The
         // chunk's capture-time `timestamp` is passed through so the buffer can record its sample-0
         // offset for later alignment against the transcript's capture-time stamps.
-        if source == .others {
+        //
+        // Skip the sink append once we're stopped: a quick (or locale) restart spins up a NEW capture
+        // sharing the SAME buffer, while this OLD SCStream can still deliver queued `.others`
+        // callbacks. Appending that stale, old-timeline audio would contaminate the new run's samples
+        // and `startOffset`. The continuation.yield below is harmless (the consumer is detached), so
+        // only the sink append is guarded. `stop()` sets `stopped = true` under the lock before any
+        // new capture resets the buffer, so this is a reliable cutoff.
+        if source == .others, !lock.withLock({ stopped }) {
             othersSink?.append(samples: samples, sampleRate: mono.format.sampleRate, timestamp: timestamp)
         }
         let chunk = AudioChunk(samples: samples,

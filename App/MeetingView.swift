@@ -59,10 +59,14 @@ struct MeetingView: View {
     /// sheet numbers speakers the same way the transcript does. Empty when no inline labels apply.
     @State var speakerOrder: [String: String] = [:]
     /// Index into `store.utterances` where the current recording run's lines begin. Set at each
-    /// Listen-start/restart (when the Others buffer resets to a 0-based timeline), so diarization —
-    /// which is relative to that fresh buffer — only labels the current run's lines, never older ones
-    /// left in the store from a previous Listen→Stop→Listen cycle in the same window.
+    /// Listen-start/restart AFTER the prior Stop has drained (so old final utterances are already
+    /// appended) and the new capture is live, so diarization — relative to the fresh 0-based buffer —
+    /// only labels the current run's lines, never older ones from a previous Listen→Stop→Listen cycle.
     @State private var diarizationRunStartIndex = 0
+    /// Bumped at every start/restart that resets the Others buffer. An in-flight `identifySpeakers`
+    /// captures the token at launch and drops its results if the token changed before it finished, so
+    /// a stale run can't revive labels over a new session.
+    @State private var diarizationRunToken = 0
     private let diarizer = SpeakerDiarizer()
     private let hotkey = HotkeyMonitor()
 
@@ -298,10 +302,12 @@ struct MeetingView: View {
                 wantsCapture = true
                 do {
                     startError = nil
-                    // The Others buffer is reset in makeCapture, restarting its 0-based timeline, so
-                    // clear stale labels and anchor diarization to the current run's lines only.
-                    resetDiarizationRun()
+                    // The Others buffer is reset in makeCapture, restarting its 0-based timeline.
+                    // Clear stale labels + bump the token BEFORE start; anchor the run only AFTER
+                    // start returns, once the prior Stop's finals have drained into the store.
+                    beginDiarizationRunReset()
                     try await session.start()
+                    anchorDiarizationRun()
                     now = Date(); recordingStartedAt = Date()
                 } catch {
                     startError = error.localizedDescription
@@ -321,21 +327,34 @@ struct MeetingView: View {
             // Bail if the user pressed Stop or closed the window during teardown — don't resume
             // recording against their intent.
             guard wantsCapture, !Task.isCancelled else { return }
-            // The restart rebuilds the capture, resetting the Others buffer's 0-based timeline, so
-            // re-anchor diarization to the current run and drop now-stale labels.
-            resetDiarizationRun()
-            do { startError = nil; try await session.start() } catch {
+            // The restart rebuilds the capture, resetting the Others buffer's 0-based timeline. Drop
+            // stale labels + bump the token before start; anchor only after start returns (the prior
+            // teardown above already drained, but the new finals land after start re-attaches).
+            beginDiarizationRunReset()
+            do {
+                startError = nil
+                try await session.start()
+                anchorDiarizationRun()
+            } catch {
                 startError = error.localizedDescription; wantsCapture = false
             }
         }
     }
 
-    /// Clears inline speaker labels and anchors diarization to the current run. Called at every start
-    /// path that resets the Others buffer (Listen-start, locale restart) so diarization — which is
-    /// relative to that fresh, 0-based buffer — only labels the run's lines, never older store rows.
-    private func resetDiarizationRun() {
+    /// Pre-start half of a diarization-run reset: clear stale inline labels and bump the run token so
+    /// any in-flight `identifySpeakers` drops its (now stale) results. Call this BEFORE `session.start()`
+    /// — the run anchor is set only AFTER start returns (see `anchorDiarizationRun`), because
+    /// `start()` awaits the prior Stop's drain, which can still append old final utterances first.
+    private func beginDiarizationRunReset() {
         speakerLabels = [:]
         speakerOrder = [:]
+        diarizationRunToken &+= 1
+    }
+
+    /// Post-start half: anchor diarization to the current run. By the time `session.start()` returns,
+    /// the previous run's drain is complete (its finals are in the store) and the new 0-based capture
+    /// is live, so `store.utterances.count` correctly marks where this run's lines begin.
+    private func anchorDiarizationRun() {
         diarizationRunStartIndex = store.utterances.count
     }
 
@@ -612,9 +631,13 @@ extension MeetingView {
         // previous Listen→Stop→Listen cycle must not be labeled by this run's diarization.
         let runStart = min(diarizationRunStartIndex, store.utterances.count)
         let transcript = Array(store.utterances.suffix(from: runStart))
+        // Snapshot the run token; if a start/restart bumps it while we await, this result is stale and
+        // must not overwrite the new session's state.
+        let token = diarizationRunToken
         Task {
             do {
                 let outcome = try await diarizer.analyze(samples: samples)
+                guard token == diarizationRunToken else { return }   // superseded by a new run
                 speakerSummary = outcome.summary
                 if canLabelInline {
                     let labeling = SpeakerLabeling.label(
@@ -626,9 +649,12 @@ extension MeetingView {
                     speakerOrder = [:]
                 }
             } catch {
+                guard token == diarizationRunToken else { return }   // superseded — drop stale error
                 speakerError = error.localizedDescription
             }
-            speakerLoading = false
+            // Only clear the in-flight flag for the run that's still current, so a stale completion
+            // can't flip the spinner off under a freshly-launched run.
+            if token == diarizationRunToken { speakerLoading = false }
         }
     }
 

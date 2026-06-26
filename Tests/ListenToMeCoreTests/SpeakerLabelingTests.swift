@@ -48,8 +48,9 @@ final class SpeakerLabelingTests: XCTestCase {
         XCTAssertEqual(withOffset.lineLabels[line.id], "Speaker 1")   // B is first appearance
 
         let withoutOffset = SpeakerLabeling.label(transcript: [line], diarized: diarized, offset: 0)
-        // Without offset, A [10,12] overlaps the line and B [0,2] does not -> A wins (Speaker 1).
-        XCTAssertEqual(withoutOffset.lineLabels[line.id], "Speaker 1")
+        // Without offset, A [10,12] overlaps the line and B [0,2] does not -> A wins. Numbering is by
+        // earliest audio: B (start 0) is Speaker 1, A (start 10) is Speaker 2, so the line gets 2.
+        XCTAssertEqual(withoutOffset.lineLabels[line.id], "Speaker 2")
         // Prove the offset changes the underlying assignment via a 2-line case.
         let lineA = others(0, 2), lineB = others(10, 12)
         let segs = [
@@ -88,7 +89,42 @@ final class SpeakerLabelingTests: XCTestCase {
         let diarized = [DiarizedSegment(speakerId: "A", start: 0, duration: 2)]
         let result = SpeakerLabeling.label(transcript: [line], diarized: diarized, offset: 0)
         XCTAssertTrue(result.lineLabels.isEmpty)
-        XCTAssertTrue(result.order.isEmpty)
+        // `order` is total: it still numbers the diarized speaker even though no line matched.
+        XCTAssertEqual(result.order, ["A": "Speaker 1"])
+    }
+
+    func testOrderCoversEveryDiarizedSpeakerByEarliestAppearance() {
+        // Only speaker "mid" overlaps the single transcript line; "early" (starts first) and "late"
+        // never match a line. `order` must still number ALL three by earliest shifted start —
+        // early (0) -> Speaker 1, mid (5) -> Speaker 2, late (9) -> Speaker 3 — so the breakdown
+        // sheet can label every summary row without a colliding fallback.
+        let line = others(5, 7)
+        let diarized = [
+            DiarizedSegment(speakerId: "mid", start: 5, duration: 2),    // matches the line
+            DiarizedSegment(speakerId: "early", start: 0, duration: 2),  // no matching line
+            DiarizedSegment(speakerId: "late", start: 9, duration: 2)    // no matching line
+        ]
+        let result = SpeakerLabeling.label(transcript: [line], diarized: diarized, offset: 0)
+        XCTAssertEqual(result.order,
+                       ["early": "Speaker 1", "mid": "Speaker 2", "late": "Speaker 3"])
+        // The matched line is labeled with the same canonical numbering.
+        XCTAssertEqual(result.lineLabels[line.id], "Speaker 2")
+        XCTAssertEqual(result.lineLabels.count, 1)
+    }
+
+    func testNumberingIsByEarliestDiarizedAppearanceNotLineOrder() {
+        // The first transcript line is matched by the speaker whose audio appears LATER. Numbering is
+        // audio-driven, so the earlier-appearing speaker is still Speaker 1 even though it labels a
+        // later line.
+        let l0 = others(0, 2), l1 = others(10, 12)
+        let diarized = [
+            DiarizedSegment(speakerId: "late", start: 0, duration: 2),    // earliest audio -> Speaker 1
+            DiarizedSegment(speakerId: "early", start: 10, duration: 2)   // -> Speaker 2
+        ]
+        let result = SpeakerLabeling.label(transcript: [l0, l1], diarized: diarized, offset: 0)
+        XCTAssertEqual(result.order, ["late": "Speaker 1", "early": "Speaker 2"])
+        XCTAssertEqual(result.lineLabels[l0.id], "Speaker 1")   // matched "late"
+        XCTAssertEqual(result.lineLabels[l1.id], "Speaker 2")   // matched "early"
     }
 
     func testTieBreaksToEarliestSegment() {
@@ -102,7 +138,8 @@ final class SpeakerLabelingTests: XCTestCase {
         let result = SpeakerLabeling.label(transcript: [line], diarized: diarized, offset: 0)
         XCTAssertEqual(result.lineLabels[line.id], "Speaker 1")   // matched "first"
         XCTAssertEqual(result.lineLabels.count, 1)
-        XCTAssertEqual(result.order, ["first": "Speaker 1"])
+        // Both speakers are numbered by earliest start: first (0) -> 1, second (2) -> 2.
+        XCTAssertEqual(result.order, ["first": "Speaker 1", "second": "Speaker 2"])
     }
 
     func testFullTieBreaksToSmallerSpeakerId() {
@@ -115,7 +152,8 @@ final class SpeakerLabelingTests: XCTestCase {
         ]
         let result = SpeakerLabeling.label(transcript: [line], diarized: diarized, offset: 0)
         XCTAssertEqual(result.lineLabels[line.id], "Speaker 1")   // "alpha" wins (smaller id)
-        XCTAssertEqual(result.order["alpha"], "Speaker 1")
+        // Both start at 0, so numbering tie-breaks on id: alpha -> 1, zebra -> 2.
+        XCTAssertEqual(result.order, ["alpha": "Speaker 1", "zebra": "Speaker 2"])
     }
 
     func testZeroDurationDiarizedSegmentsIgnored() {
