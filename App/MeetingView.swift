@@ -19,13 +19,12 @@ struct MeetingView: View {
     /// Identity of this app-window's session. Reused across Listen→Stop cycles so repeated Stops
     /// upsert one growing record instead of writing a fresh superset each time.
     @State private var currentSessionID = UUID().uuidString
-    /// `lastSavedUtteranceCount`: count at the last save, so an unchanged transcript isn't re-saved
-    /// on Stop. `saveFloorIndex`: index below which utterances are excluded from the saved record —
-    /// advanced whenever saving is disabled so opt-out-period audio is never persisted, even after
-    /// re-enabling. Both stay 0 in the normal (never-disabled) case = full transcript saved.
-    /// `savingEnabledBeforeSettings`: saving-toggle value captured when Settings opened, so an off→on
-    /// visit still advances the floor.
-    @State private var lastSavedUtteranceCount = 0; @State private var saveFloorIndex = 0
+    /// `lastSavedUtteranceCount`: count at the last save, so an unchanged transcript isn't re-saved on
+    /// Stop. `sessionSaveable`: whether this window-session may be persisted — tainted to false the
+    /// moment saving is ever observed off (or history is cleared), so "turn off to keep nothing" holds
+    /// for the whole session. `savingEnabledBeforeSettings`: toggle value snapshotted when Settings
+    /// opened, so an off→on round-trip is still caught.
+    @State private var lastSavedUtteranceCount = 0; @State private var sessionSaveable = true
     @State private var savingEnabledBeforeSettings = true; @State private var chatModels: [String] = []
     @State private var transcriptionLocaleID: String
     @State private var presetID: String
@@ -138,7 +137,7 @@ struct MeetingView: View {
             session.responseLanguage = ProviderSettings.responseLanguageDirective()
             // Rebuild attached references so a changed reference-budget takes effect immediately.
             if !referencePaths.isEmpty { loadReferences(into: session) }
-            advanceSaveFloorAfterSettings(); Task { await reloadAndHealModels() }
+            markSaveableAfterSettings(); Task { await reloadAndHealModels() }
         }, content: {
             SettingsView()
         })
@@ -146,7 +145,7 @@ struct MeetingView: View {
             PermissionsView(permissions: permissions)
         }
         .sheet(isPresented: $showSearch) {
-            SessionSearchView(store: sessionStore)
+            SessionSearchView(store: sessionStore, onClear: { dropCurrentSessionFromSaving() })
         }
         .sheet(isPresented: $showOnboarding, onDismiss: {
             // Onboarding may have set/cleared the Ollama key, which changes the route; rebuild
@@ -587,46 +586,39 @@ extension MeetingView {
         Clipboard.copy(sessionMarkdown())
     }
 
-    /// Opens Settings, snapshotting the saving toggle first so an off→on visit still advances the
-    /// floor on dismiss (see `advanceSaveFloorAfterSettings`).
+    /// Opens Settings, snapshotting the saving toggle first so an off→on round-trip is still caught
+    /// (see `markSaveableAfterSettings`).
     func openSettings(_ showSettings: Binding<Bool>) {
         savingEnabledBeforeSettings = ProviderSettings.saveSessionsForSearch
+        if !savingEnabledBeforeSettings { sessionSaveable = false }
         showSettings.wrappedValue = true
     }
 
-    /// Advances the floor (and baseline) past everything captured so far so those utterances are
-    /// excluded from the saved record — "turn off to keep nothing".
-    func advanceSaveFloor() {
-        saveFloorIndex = store.utterances.count
-        lastSavedUtteranceCount = store.utterances.count
+    /// Settings-dismiss: taint the session if saving was off at any point during the visit — off when
+    /// Settings opened OR off now — so the whole window-session is excluded once saving was ever off.
+    func markSaveableAfterSettings() {
+        if !savingEnabledBeforeSettings || !ProviderSettings.saveSessionsForSearch { sessionSaveable = false }
     }
 
-    /// Stop-path: advance the floor only when saving is currently off.
-    func advanceSaveFloorIfOptedOut() {
-        if !ProviderSettings.saveSessionsForSearch { advanceSaveFloor() }
+    /// Drops the current in-memory session from future saves after the user clears history, so a
+    /// just-deleted transcript can't be re-persisted. A fresh id starts a new (still untainted)
+    /// upsert key once this session is sealed.
+    func dropCurrentSessionFromSaving() {
+        sessionSaveable = false
+        currentSessionID = UUID().uuidString
     }
 
-    /// Settings-dismiss path: advance the floor if saving was off at any point during the visit —
-    /// it was off when Settings opened OR is off now — so audio captured during an off interval is
-    /// never persisted even if the user re-enables before Stop.
-    func advanceSaveFloorAfterSettings() {
-        if !savingEnabledBeforeSettings || !ProviderSettings.saveSessionsForSearch { advanceSaveFloor() }
-    }
-
-    /// On Stop, persist the finished session for cross-meeting search when the user has opted in
-    /// and there's new transcript to save. Reuses `currentSessionID` so repeated Listen→Stop cycles
-    /// in one window upsert a single growing record. Title = the active preset's name (or "Session")
-    /// plus the date.
+    /// On Stop, persist the finished session for cross-meeting search when this window-session is
+    /// saveable (saving never observed off), saving is on, and there's new transcript. Reuses
+    /// `currentSessionID` so repeated Listen→Stop cycles upsert one growing record. Title = the
+    /// active preset's name (or "Session") plus the date.
     func saveSessionIfEnabled(session: MeetingSession) {
-        guard ProviderSettings.saveSessionsForSearch else { advanceSaveFloorIfOptedOut(); return }
-        guard store.utterances.count > lastSavedUtteranceCount else { return }
+        guard ProviderSettings.saveSessionsForSearch else { sessionSaveable = false; return }
+        guard sessionSaveable, store.utterances.count > lastSavedUtteranceCount else { return }
         let now = Date()
         let presetName = PresetCatalog.preset(id: presetID).name
         let base = (presetName.isEmpty || presetName == "None") ? "Session" : presetName
-        // Persist only utterances at/after the floor, so opt-out-period audio is never written.
-        let saved = Array(store.utterances.dropFirst(saveFloorIndex))
-        guard !saved.isEmpty else { return }
-        let transcript = saved.map { "\($0.source == .you ? "You" : "Others"): \($0.text)" }
+        let transcript = store.utterances.map { "\($0.source == .you ? "You" : "Others"): \($0.text)" }
             .joined(separator: "\n")
         let record = SessionRecord(
             id: currentSessionID,

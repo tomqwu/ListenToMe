@@ -6,12 +6,16 @@ import ListenToMeCore
 struct SessionSearchView: View {
     @Environment(\.dismiss) private var dismiss
     let store: SessionStore
+    /// Invoked after the user clears history, so the presenter can stop the current in-memory
+    /// session from being re-persisted.
+    let onClear: () -> Void
 
     @State private var query = ""
     @State private var records: [SessionRecord]
 
-    init(store: SessionStore) {
+    init(store: SessionStore, onClear: @escaping () -> Void = {}) {
         self.store = store
+        self.onClear = onClear
         _records = State(initialValue: store.all())
     }
 
@@ -62,6 +66,7 @@ struct SessionSearchView: View {
                 Button("Clear saved sessions", role: .destructive) {
                     store.clear()
                     records = []
+                    onClear()
                 }
                 .disabled(records.isEmpty)
             }
