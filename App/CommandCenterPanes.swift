@@ -90,7 +90,7 @@ extension MeetingView {
 
     /// "idle" when stopped; otherwise "live · N src" where N is the real number of distinct speaker
     /// sources actually captured so far (so it never claims system audio that isn't being captured).
-    var transcriptStatusLabel: String {
+    func transcriptStatusLabel(session: MeetingSession) -> String {
         guard session.isRunning else { return "idle" }
         let sources = Set(store.utterances.map(\.source)).count
         return sources > 0 ? "live · \(sources) src" : "live"
@@ -102,7 +102,7 @@ extension MeetingView {
                 Text("Transcript")
                     .font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ink)
                 Spacer()
-                Text(transcriptStatusLabel)
+                Text(transcriptStatusLabel(session: session))
                     .font(.system(size: 10.5, design: .monospaced))
                     .foregroundStyle(Theme.ink3)
                     .padding(.horizontal, 8).padding(.vertical, 3)
