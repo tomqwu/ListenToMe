@@ -260,12 +260,17 @@ extension MeetingView {
             placeholder: "Press ⌘⇧Space or a button for a quick suggestion.",
             headerExtra: { EmptyView() },
             actions: {
-                HStack(spacing: 7) {
+                FlowLayout(spacing: 7) {
                     Button("What should I answer?") {
                         Task { await session.respondQuick(.answerQuestion) }
                     }
                     Button("Recap so far") { Task { await session.respondQuick(.recap) } }
-                    Button("Suggest a follow-up") { Task { await session.respondQuick(.followUp) } }
+                    Button("Follow-up") { Task { await session.respondQuick(.followUp) } }
+                    Button("Action items") { Task { await session.respondQuick(.actionItems) } }
+                    Button("Clarify simply") { Task { await session.respondQuick(.clarify) } }
+                    Button("Counterpoint") { Task { await session.respondQuick(.counterpoint) } }
+                    Button("Key terms") { Task { await session.respondQuick(.keyTerms) } }
+                    Button("Draft reply") { Task { await session.respondQuick(.draftReply) } }
                 }
                 .controlSize(.small)
             })

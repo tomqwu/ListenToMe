@@ -16,6 +16,11 @@ public enum ResponseAction: Sendable, Equatable {
     case recap            // "Recap so far"
     case followUp         // "Suggest a follow-up"
     case proactive        // auto-detected incoming question
+    case actionItems      // "Action items" — concrete next steps & owners
+    case clarify          // "Clarify simply" — explain the latest point in plain language
+    case counterpoint     // "Counterpoint" — respectful devil's-advocate challenge
+    case keyTerms         // "Key terms" — define jargon/acronyms just used
+    case draftReply       // "Draft reply" — a concise reply the user can say/send now
 }
 
 /// The conversational context handed to the model.
@@ -84,6 +89,16 @@ public enum PromptBuilder {
             return "Give a brief recap (summary) of the conversation so far."
         case .followUp:
             return "Suggest one good follow-up question the user could ask next."
+        case .actionItems:
+            return "List the concrete action items and next steps from the conversation so far, with owners if mentioned."
+        case .clarify:
+            return "Explain the most recent point in plain, simple language anyone could follow."
+        case .counterpoint:
+            return "Offer a respectful devil's-advocate challenge or risk to what was just said."
+        case .keyTerms:
+            return "Briefly define the jargon, acronyms, or technical terms just used."
+        case .draftReply:
+            return "Draft a concise reply the user could say or send right now."
         }
     }
 
@@ -95,6 +110,21 @@ public enum PromptBuilder {
             return "Give a thorough recap of the conversation so far, covering all key points and nuances."
         case .followUp:
             return "Suggest a thoughtful follow-up question the user could ask, with reasoning for why it matters."
+        case .actionItems:
+            return "Extract every concrete action item and next step from the conversation so far. For each, name " +
+                "the owner if stated (otherwise note it's unassigned) and any deadline or dependency mentioned."
+        case .clarify:
+            return "Explain the most recent point or topic in plain, simple language, as if to a smart newcomer. " +
+                "Unpack any assumptions and use a brief analogy or example where it aids understanding."
+        case .counterpoint:
+            return "Give a respectful devil's-advocate challenge to what was just said: surface the strongest " +
+                "counterargument, hidden risks, or failure modes, and explain why each is worth weighing."
+        case .keyTerms:
+            return "Define the jargon, acronyms, and technical terms just used, one by one, in clear language with a " +
+                "short note on why each matters in this conversation's context."
+        case .draftReply:
+            return "Draft a concise, ready-to-use reply the user could say or send right now, grounded in the " +
+                "transcript and notes. Match a natural, professional tone and keep it to the point."
         }
     }
 
