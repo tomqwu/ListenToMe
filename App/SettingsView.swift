@@ -46,6 +46,22 @@ enum ProviderSettings {
         set { UserDefaults.standard.set(newValue, forKey: "referenceBudget") }
     }
 
+    /// App appearance: "system" / "light" / "dark". Defaults to "dark" (the command-center
+    /// direction is dark-native), but light stays fully usable.
+    static var appearance: String {
+        get { UserDefaults.standard.string(forKey: "appearance") ?? "dark" }
+        set { UserDefaults.standard.set(newValue, forKey: "appearance") }
+    }
+
+    /// The SwiftUI color scheme for the current `appearance` setting; nil = follow the system.
+    static func preferredColorScheme() -> ColorScheme? {
+        switch appearance {
+        case "light": return .light
+        case "dark": return .dark
+        default: return nil
+        }
+    }
+
     /// Selected use-case preset id; empty = none.
     static var presetID: String {
         get { UserDefaults.standard.string(forKey: "presetID") ?? "" }
@@ -110,6 +126,7 @@ struct SettingsView: View {
     @State private var responseLanguageID: String
     @State private var referenceBudget: Int
     @State private var saveSessions: Bool
+    @State private var appearance: String
 
     init() {
         _engine = State(initialValue: ProviderSettings.transcriptionEngine)
@@ -117,11 +134,23 @@ struct SettingsView: View {
         _responseLanguageID = State(initialValue: ProviderSettings.responseLanguageID)
         _referenceBudget = State(initialValue: ProviderSettings.referenceBudget)
         _saveSessions = State(initialValue: ProviderSettings.saveSessionsForSearch)
+        _appearance = State(initialValue: ProviderSettings.appearance)
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Settings").font(.title2).bold()
+
+            Picker("Appearance", selection: $appearance) {
+                Text("System").tag("system")
+                Text("Light").tag("light")
+                Text("Dark").tag("dark")
+            }
+            .pickerStyle(.segmented)
+            Text("ListenToMe defaults to the dark command-center look. Choose System to follow macOS.")
+                .font(.caption).foregroundStyle(.secondary)
+
+            Divider()
 
             Picker("Transcription engine", selection: $engine) {
                 Text("SpeechAnalyzer (macOS 26, dual-channel)").tag("speechAnalyzer")
@@ -197,6 +226,7 @@ struct SettingsView: View {
         ProviderSettings.responseLanguageID = responseLanguageID
         ProviderSettings.referenceBudget = referenceBudget
         ProviderSettings.saveSessionsForSearch = saveSessions
+        ProviderSettings.appearance = appearance
         // Honor the "Turn off to keep nothing" promise: wipe stored history whenever the toggle is
         // off. The store is file-backed, so a fresh instance's clear() deletes the JSON.
         if !saveSessions { SessionStore().clear() }
