@@ -616,8 +616,11 @@ extension MeetingView {
     /// just-deleted transcript can't be re-persisted. A fresh id starts a new (still untainted)
     /// upsert key once this session is sealed.
     func dropCurrentSessionFromSaving() {
-        sessionSaveable = false
+        // Only taint when the current window-session has content that was just cleared — clearing
+        // old records on a fresh/empty window must not silently disable future saving.
+        if !store.utterances.isEmpty { sessionSaveable = false }
         currentSessionID = UUID().uuidString
+        lastSavedUtteranceCount = store.utterances.count
     }
 
     /// On Stop, persist the finished session for cross-meeting search when this window-session is
