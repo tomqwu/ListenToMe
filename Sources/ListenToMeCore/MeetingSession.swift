@@ -200,6 +200,11 @@ public final class MeetingSession {
         self.transcriber = nil
         self.capturePump = nil
         self.segmentPump = nil
+        // Nothing installed yet (e.g. Stop while a new start() is still awaiting the previous
+        // stopDrain): there's nothing to tear down, so return nil and leave the in-flight stopDrain
+        // intact. stop() then no-ops and stopAndWait() falls through to `await stopDrain?.value`;
+        // the mid-await start() still aborts via its post-await `guard isRunning` (now false).
+        if transcriber == nil, capturePump == nil, segmentPump == nil { return nil }
         return (transcriber, capturePump, segmentPump)
     }
 

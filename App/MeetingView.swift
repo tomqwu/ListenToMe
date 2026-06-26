@@ -23,8 +23,10 @@ struct MeetingView: View {
     /// on Stop. `saveFloorIndex`: index below which utterances are excluded from the saved record —
     /// advanced whenever saving is disabled so opt-out-period audio is never persisted, even after
     /// re-enabling. Both stay 0 in the normal (never-disabled) case = full transcript saved.
+    /// `savingEnabledBeforeSettings`: saving-toggle value captured when Settings opened, so an off→on
+    /// visit still advances the floor.
     @State private var lastSavedUtteranceCount = 0; @State private var saveFloorIndex = 0
-    @State private var chatModels: [String] = []
+    @State private var savingEnabledBeforeSettings = true; @State private var chatModels: [String] = []
     @State private var transcriptionLocaleID: String
     @State private var presetID: String
     @State private var referencePaths: [URL]
@@ -136,7 +138,7 @@ struct MeetingView: View {
             session.responseLanguage = ProviderSettings.responseLanguageDirective()
             // Rebuild attached references so a changed reference-budget takes effect immediately.
             if !referencePaths.isEmpty { loadReferences(into: session) }
-            advanceSaveFloorIfOptedOut(); Task { await reloadAndHealModels() }
+            advanceSaveFloorAfterSettings(); Task { await reloadAndHealModels() }
         }, content: {
             SettingsView()
         })
@@ -263,7 +265,7 @@ struct MeetingView: View {
             Button { showSearch = true } label: { Image(systemName: "magnifyingglass") }
                 .help("Search past meetings")
             Button { showPermissions.wrappedValue = true } label: { Image(systemName: "lock.shield") }
-            Button { showSettings.wrappedValue = true } label: { Image(systemName: "gearshape") }
+            Button { openSettings(showSettings) } label: { Image(systemName: "gearshape") }
         }
         .padding(10)
     }
@@ -585,13 +587,30 @@ extension MeetingView {
         Clipboard.copy(sessionMarkdown())
     }
 
-    /// When saving is off, advance the floor (and baseline) past everything captured so far so those
-    /// utterances stay excluded even if saving is re-enabled later — "turn off to keep nothing".
-    /// Called both on Stop and when Settings closes with the toggle off.
-    func advanceSaveFloorIfOptedOut() {
-        guard !ProviderSettings.saveSessionsForSearch else { return }
+    /// Opens Settings, snapshotting the saving toggle first so an off→on visit still advances the
+    /// floor on dismiss (see `advanceSaveFloorAfterSettings`).
+    func openSettings(_ showSettings: Binding<Bool>) {
+        savingEnabledBeforeSettings = ProviderSettings.saveSessionsForSearch
+        showSettings.wrappedValue = true
+    }
+
+    /// Advances the floor (and baseline) past everything captured so far so those utterances are
+    /// excluded from the saved record — "turn off to keep nothing".
+    func advanceSaveFloor() {
         saveFloorIndex = store.utterances.count
         lastSavedUtteranceCount = store.utterances.count
+    }
+
+    /// Stop-path: advance the floor only when saving is currently off.
+    func advanceSaveFloorIfOptedOut() {
+        if !ProviderSettings.saveSessionsForSearch { advanceSaveFloor() }
+    }
+
+    /// Settings-dismiss path: advance the floor if saving was off at any point during the visit —
+    /// it was off when Settings opened OR is off now — so audio captured during an off interval is
+    /// never persisted even if the user re-enables before Stop.
+    func advanceSaveFloorAfterSettings() {
+        if !savingEnabledBeforeSettings || !ProviderSettings.saveSessionsForSearch { advanceSaveFloor() }
     }
 
     /// On Stop, persist the finished session for cross-meeting search when the user has opted in
