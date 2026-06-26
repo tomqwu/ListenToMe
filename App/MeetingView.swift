@@ -8,7 +8,7 @@ struct MeetingView: View {
     static let scrollBottomID = "scroll-bottom"
 
     @State private var session: MeetingSession
-    @State private var store: ConversationStore
+    @State var store: ConversationStore
     @State private var startError: String?
     @State private var showSettings = false
     @State private var permissions = PermissionsModel()
@@ -25,19 +25,37 @@ struct MeetingView: View {
     /// for the whole session. `savingEnabledBeforeSettings`: toggle value snapshotted when Settings
     /// opened, so an off→on round-trip is still caught.
     @State private var lastSavedUtteranceCount = 0; @State private var sessionSaveable = true
-    @State private var savingEnabledBeforeSettings = true; @State private var chatModels: [String] = []
-    @State private var transcriptionLocaleID: String
-    @State private var presetID: String
+    @State private var savingEnabledBeforeSettings = true; @State var chatModels: [String] = []
+    @State var transcriptionLocaleID: String
+    @State var presetID: String
     @State private var referencePaths: [URL]
     @State private var referenceLoadToken = 0
     @State private var restartTask: Task<Void, Never>?
     @State private var importTask: Task<Void, Never>?
-    @State private var transcriptAtBottom = true
+    @State var transcriptAtBottom = true
     /// User intent to be capturing — the toolbar button's source of truth. Stays true across the
     /// brief teardown window of a locale restart (when `session.isRunning` is transiently false),
     /// so a Stop press is never lost.
-    @State private var wantsCapture = false
+    @State var wantsCapture = false
+    /// When the current recording run began, for the elapsed mm:ss timer. nil while idle.
+    @State private var recordingStartedAt: Date?
+    /// Ticks while recording so the elapsed timer updates once per second.
+    @State private var now = Date()
+    /// Live appearance (System/Light/Dark) applied to the root via `.preferredColorScheme`.
+    @State private var appearance = ProviderSettings.appearance
     private let hotkey = HotkeyMonitor()
+
+    /// mm:ss since the current recording run started (00:00 when idle).
+    var elapsedLabel: String { CommandCenterLabels.elapsed(since: recordingStartedAt, now: now) }
+
+    /// SwiftUI color scheme for the stored appearance id; nil = follow the system.
+    private func colorScheme(for id: String) -> ColorScheme? {
+        switch id {
+        case "light": return .light
+        case "dark": return .dark
+        default: return nil
+        }
+    }
 
     /// Curated transcription languages. "" = follow the system language ("Auto"). Apple's
     /// on-device Speech selects one primary language; it does not auto-detect or code-switch.
@@ -108,33 +126,34 @@ struct MeetingView: View {
     var body: some View {
         @Bindable var session = session
         return VStack(spacing: 0) {
-            meetingToolbar(
-                session: session,
-                proactiveEnabled: $session.proactiveEnabled,
-                showSettings: $showSettings,
-                showPermissions: $showPermissions
-            )
+            topControlBar(session: session, showPermissions: $showPermissions)
             if let startError {
                 Text("⚠️ \(startError)")
                     .foregroundStyle(.red)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 10)
+                    .padding(.horizontal, 14)
                     .padding(.bottom, 4)
+                    .background(Theme.windowBackground)
             }
-            Divider()
-            HSplitView {
-                transcriptPane(session: session, notes: $session.notes)
-                VSplitView {
-                    listenerPane(session: session)
-                    quickPane(session: session)
-                    deepPane(session: session)
-                }
-                .frame(minWidth: 360)
+            HStack(spacing: 0) {
+                statusRail(session: session)
+                transcriptColumn(session: session, notes: $session.notes)
+                    .layoutPriority(1)
+                copilotColumn(session: session)
             }
+            .frame(maxHeight: .infinity)
+            CommandCenterFooter(cloudActive: Self.ollamaKey() != nil)
         }
+        .background(Theme.windowBackground)
+        .preferredColorScheme(colorScheme(for: appearance))
         .frame(minWidth: 1100, minHeight: 560)
+        // Tick the elapsed timer once per second while recording.
+        .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { date in
+            if recordingStartedAt != nil { now = date }
+        }
         .sheet(isPresented: $showSettings, onDismiss: {
             session.responseLanguage = ProviderSettings.responseLanguageDirective()
+            appearance = ProviderSettings.appearance   // apply an appearance change live
             // Rebuild attached references so a changed reference-budget takes effect immediately.
             if !referencePaths.isEmpty { loadReferences(into: session) }
             markSaveableAfterSettings(); Task { await reloadAndHealModels() }
@@ -177,74 +196,32 @@ struct MeetingView: View {
         .onDisappear { tearDownOnDisappear(session: session) }
     }
 
-    // MARK: - Toolbar
+    // MARK: - Top control bar
 
-    private func meetingToolbar(
-        session: MeetingSession,
-        proactiveEnabled: Binding<Bool>,
-        showSettings: Binding<Bool>,
-        showPermissions: Binding<Bool>
-    ) -> some View {
+    /// Replaces the old icon-row toolbar: Listen/Stop + pulsing indicator + elapsed timer on the
+    /// left; the same icon actions that existed before on the right (refresh-models, import audio,
+    /// export menu, copy-session, search, permissions, settings).
+    private func topControlBar(session: MeetingSession, showPermissions: Binding<Bool>) -> some View {
         HStack(spacing: 12) {
-            Button(wantsCapture ? "Stop" : "Listen") {
-                Task {
-                    if wantsCapture {
-                        wantsCapture = false
-                        restartTask?.cancel()   // cancel any in-flight locale restart
-                        // Await teardown so the transcriber flushes its final segments into the
-                        // store before we snapshot the transcript for search.
-                        await session.stopAndWait()
-                        saveSessionIfEnabled(session: session)
-                    } else {
-                        wantsCapture = true
-                        do {
-                            startError = nil
-                            try await session.start()
-                        } catch {
-                            startError = error.localizedDescription
-                            wantsCapture = false
-                        }
-                    }
-                }
-            }
-            .disabled(session.isTranscribingFile)   // no live capture while importing a file
+            Button(wantsCapture ? "Stop" : "Listen") { toggleCapture(session: session) }
+                .buttonStyle(.borderedProminent)
+                .disabled(session.isTranscribingFile)   // no live capture while importing a file
             if session.isRunning {
                 RecordingIndicator()
-                Text("Recording").foregroundStyle(.secondary)
+                Text(elapsedLabel)
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .foregroundStyle(Theme.ink2)
+            }
+            if session.isTranscribingFile {
+                ProgressView().controlSize(.small)
+                Text("Transcribing…").foregroundStyle(Theme.ink2)
             }
             Spacer()
-            Picker("Language", selection: $transcriptionLocaleID) {
-                ForEach(Self.languageOptions, id: \.id) { Text($0.label).tag($0.id) }
-            }
-            .labelsHidden()
-            .frame(maxWidth: 180)
-            .onChange(of: transcriptionLocaleID) { _, newValue in
-                ProviderSettings.transcriptionLocaleID = newValue
-                // The locale is read only when a transcriber is created (at start). Restart an
-                // active session so the new language applies immediately instead of next Listen.
-                guard wantsCapture else { return }
-                restartTask?.cancel()
-                restartTask = Task {
-                    await session.stopAndWait()   // await teardown so the new transcriber can't overlap the old
-                    // Bail if the user pressed Stop or closed the window during teardown — don't
-                    // resume recording against their intent.
-                    guard wantsCapture, !Task.isCancelled else { return }
-                    do { startError = nil; try await session.start() } catch {
-                        startError = error.localizedDescription; wantsCapture = false
-                    }
-                }
-            }
-            .help("Transcription language — applies the next time you press Listen")
-            Toggle("Proactive", isOn: proactiveEnabled)
             Button { Task { await reloadModels() } } label: { Image(systemName: "arrow.clockwise") }
                 .help("Refresh installed Ollama models")
             Button { importAudioFile(session: session) } label: { Image(systemName: "waveform") }
                 .help("Import an audio file and transcribe it")
                 .disabled(wantsCapture || session.isTranscribingFile)   // wantsCapture covers the restart window
-            if session.isTranscribingFile {
-                ProgressView().controlSize(.small)
-                Text("Transcribing…").foregroundStyle(.secondary)
-            }
             Menu {
                 Button("Full transcript (Markdown)…") { exportSession() }
                 Button("Recap (Markdown)…") { exportRecap() }
@@ -252,89 +229,66 @@ struct MeetingView: View {
             } label: {
                 Image(systemName: "square.and.arrow.up")
             }
+            .menuIndicator(.hidden)
             .help("Export the session as Markdown or PDF")
             Button { copySessionMarkdown() } label: { Image(systemName: "list.clipboard") }
                 .help("Copy the transcript + AI notes as Markdown")
             Button { showSearch = true } label: { Image(systemName: "magnifyingglass") }
                 .help("Search past meetings")
             Button { showPermissions.wrappedValue = true } label: { Image(systemName: "lock.shield") }
-            Button { openSettings(showSettings) } label: { Image(systemName: "gearshape") }
+                .help("Microphone / system-audio permissions")
+            Button { openSettings($showSettings) } label: { Image(systemName: "gearshape") }
+                .help("Settings")
         }
-        .padding(10)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(Theme.windowBackground)
+        .overlay(Rectangle().fill(Theme.line).frame(height: 1), alignment: .bottom)
     }
 
-    // MARK: - Transcript pane
-
-    private func transcriptPane(session: MeetingSession, notes: Binding<String>) -> some View {
-        VStack(alignment: .leading, spacing: Theme.paneSpacing) {
-            HStack {
-                Text("Transcript").font(.headline)
-                Spacer()
-            }
-            ScrollViewReader { proxy in
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 6) {
-                        if store.utterances.isEmpty && store.partial == nil {
-                            PaneEmptyState(
-                                systemImage: "waveform",
-                                text: "Press Listen to start transcribing the conversation."
-                            )
-                        }
-                        ForEach(store.utterances) { seg in
-                            transcriptLine(for: seg)
-                        }
-                        if let partial = store.partial {
-                            transcriptLine(for: partial).opacity(0.5)
-                        }
-                        Color.clear.frame(height: 1).id(Self.scrollBottomID)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                // Follow the newest line only while the user is at the bottom; if they scroll up
-                // to read history, stop auto-scrolling until they return to the bottom.
-                .onScrollGeometryChange(for: Bool.self) { geo in
-                    geo.contentOffset.y + geo.containerSize.height >= geo.contentSize.height - 24
-                } action: { _, atBottom in transcriptAtBottom = atBottom }
-                .onChange(of: store.utterances.count) { _, _ in
-                    if transcriptAtBottom { proxy.scrollTo(Self.scrollBottomID, anchor: .bottom) }
-                }
-                .onChange(of: store.partial?.text) { _, _ in
-                    if transcriptAtBottom { proxy.scrollTo(Self.scrollBottomID, anchor: .bottom) }
+    /// Listen/Stop press: start or stop capture, tracking the elapsed-timer anchor and saving on Stop.
+    private func toggleCapture(session: MeetingSession) {
+        Task {
+            if wantsCapture {
+                wantsCapture = false
+                recordingStartedAt = nil
+                restartTask?.cancel()   // cancel any in-flight locale restart
+                // Await teardown so the transcriber flushes its final segments into the store
+                // before we snapshot the transcript for search.
+                await session.stopAndWait()
+                saveSessionIfEnabled(session: session)
+            } else {
+                wantsCapture = true
+                do {
+                    startError = nil
+                    try await session.start()
+                    now = Date(); recordingStartedAt = Date()
+                } catch {
+                    startError = error.localizedDescription
+                    wantsCapture = false
                 }
             }
-            Picker("Preset", selection: $presetID) {
-                ForEach(PresetCatalog.all) { preset in Text(preset.name).tag(preset.id) }
-            }
-            .labelsHidden()
-            .onChange(of: presetID) { oldID, newID in
-                let preset = PresetCatalog.preset(id: newID)
-                let previousTemplate = PresetCatalog.preset(id: oldID).notesTemplate
-                ProviderSettings.presetID = newID
-                session.personaGuidance = preset.personaGuidance
-                // Swap the notes scaffold only when the user hasn't edited it (notes still match the
-                // previous preset's template, or are empty). This clears an unedited scaffold on
-                // None, but preserves notes the user actually typed.
-                if session.notes.isEmpty || session.notes == previousTemplate {
-                    session.notes = preset.notesTemplate
-                }
-            }
-            .help("Use-case preset — fills Context notes and tailors the AI panes")
-            Button { loadFromCalendar(session: session) } label: {
-                Label("Load from Calendar", systemImage: "calendar")
-            }
-            .help("Fill Context notes from your current or next calendar meeting")
-            TextField("Context notes (injected into prompts)", text: notes, axis: .vertical)
-                .lineLimit(3...12)
-                .textFieldStyle(.roundedBorder)
-            referenceFilesRow(session: session)
         }
-        .paneCard()
-        .padding(Theme.paneSpacing)
-        .frame(minWidth: 360)
+    }
+
+    /// Restarts an active session after a language change so the new transcriber applies immediately
+    /// (the locale is read only when a transcriber is created, at start). Called from the rail's
+    /// Language picker binding.
+    func restartForLocaleChange(session: MeetingSession) {
+        restartTask?.cancel()
+        restartTask = Task {
+            await session.stopAndWait()   // await teardown so the new transcriber can't overlap the old
+            // Bail if the user pressed Stop or closed the window during teardown — don't resume
+            // recording against their intent.
+            guard wantsCapture, !Task.isCancelled else { return }
+            do { startError = nil; try await session.start() } catch {
+                startError = error.localizedDescription; wantsCapture = false
+            }
+        }
     }
 
     /// Attach/clear files & folders whose text is fed into Quick/Deep prompts as grounding.
-    private func referenceFilesRow(session: MeetingSession) -> some View {
+    func referenceFilesRow(session: MeetingSession) -> some View {
         HStack(spacing: 8) {
             Button { addReferenceFiles(session: session) } label: {
                 Label("Add files / folders", systemImage: "paperclip")
@@ -350,13 +304,13 @@ struct MeetingView: View {
         }
     }
 
-    private var referenceSummary: String {
+    var referenceSummary: String {
         let names = referencePaths.map { $0.lastPathComponent }
         let shown = names.prefix(2).joined(separator: ", ")
         return referencePaths.count > 2 ? "\(shown) +\(referencePaths.count - 2) more" : shown
     }
 
-    private func addReferenceFiles(session: MeetingSession) {
+    func addReferenceFiles(session: MeetingSession) {
         let panel = NSOpenPanel()
         panel.canChooseFiles = true
         panel.canChooseDirectories = true
@@ -372,7 +326,7 @@ struct MeetingView: View {
         loadReferences(into: session)
     }
 
-    private func clearReferences(session: MeetingSession) {
+    func clearReferences(session: MeetingSession) {
         referencePaths = []
         referenceLoadToken += 1   // supersede any in-flight load so it can't reapply old files
         persistReferencePaths()
@@ -398,66 +352,6 @@ struct MeetingView: View {
         }
     }
 
-    private func transcriptLine(for seg: TranscriptSegment) -> some View {
-        (Text(seg.source == .you ? "You: " : "Others: ")
-            .foregroundStyle(seg.source == .you ? .blue : .green).bold()
-         + Text(seg.text))
-            .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-}
-
-// MARK: - AI panes
-
-extension MeetingView {
-    func listenerPane(session: MeetingSession) -> some View {
-        AIPaneView(
-            title: "Listener",
-            role: .listener,
-            session: session,
-            chatModels: chatModels,
-            outputText: session.listenerSummary,
-            placeholder: "Live summary & open items will appear here.",
-            headerExtra: {
-                AnyView(Button("Refresh") { Task { await session.refreshListener() } })
-            },
-            actionButtons: { AnyView(EmptyView()) }
-        )
-    }
-
-    func quickPane(session: MeetingSession) -> some View {
-        AIPaneView(
-            title: "Quick",
-            role: .quick,
-            session: session,
-            chatModels: chatModels,
-            outputText: session.quickSuggestion,
-            placeholder: "Press ⌘⇧Space or a button for a quick suggestion.",
-            headerExtra: { AnyView(EmptyView()) },
-            actionButtons: {
-                AnyView(HStack {
-                    Button("What should I answer?") { Task { await session.respondQuick(.answerQuestion) } }
-                    Button("Recap so far") { Task { await session.respondQuick(.recap) } }
-                    Button("Suggest a follow-up") { Task { await session.respondQuick(.followUp) } }
-                })
-            }
-        )
-    }
-
-    func deepPane(session: MeetingSession) -> some View {
-        AIPaneView(
-            title: "Deep",
-            role: .deep,
-            session: session,
-            chatModels: chatModels,
-            outputText: session.deepAnswer,
-            placeholder: "Ask for a detailed/coding answer.",
-            headerExtra: { AnyView(EmptyView()) },
-            actionButtons: {
-                AnyView(Button("Deep answer") { Task { await session.respondDeep(.answerQuestion) } })
-            }
-        )
-    }
 }
 
 // MARK: - Actions (import / export / model refresh)
