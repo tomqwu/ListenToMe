@@ -52,6 +52,12 @@ enum ProviderSettings {
         set { UserDefaults.standard.set(newValue, forKey: "presetID") }
     }
 
+    /// Whether finished sessions are persisted locally for cross-meeting search. Default `true`.
+    static var saveSessionsForSearch: Bool {
+        get { UserDefaults.standard.object(forKey: "saveSessionsForSearch") as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: "saveSessionsForSearch") }
+    }
+
     /// Resolved transcription locale. An empty id follows the system language; Apple's on-device
     /// Speech does not auto-detect spoken language, so this selects the engine's primary language.
     /// Each transcriber further resolves this against *its* engine's supported locales (and falls
@@ -103,12 +109,14 @@ struct SettingsView: View {
     @State private var ollamaKey: String
     @State private var responseLanguageID: String
     @State private var referenceBudget: Int
+    @State private var saveSessions: Bool
 
     init() {
         _engine = State(initialValue: ProviderSettings.transcriptionEngine)
         _ollamaKey = State(initialValue: KeychainStore.get("ollama") ?? "")
         _responseLanguageID = State(initialValue: ProviderSettings.responseLanguageID)
         _referenceBudget = State(initialValue: ProviderSettings.referenceBudget)
+        _saveSessions = State(initialValue: ProviderSettings.saveSessionsForSearch)
     }
 
     var body: some View {
@@ -166,6 +174,13 @@ struct SettingsView: View {
             )
             .font(.caption).foregroundStyle(.secondary)
 
+            Divider()
+            Toggle("Save sessions locally for search", isOn: $saveSessions)
+            Text(
+                "Stored only on this Mac; used for cross-meeting search. Turn off to keep nothing."
+            )
+            .font(.caption).foregroundStyle(.secondary)
+
             HStack {
                 Spacer()
                 Button("Cancel") { dismiss() }
@@ -181,6 +196,10 @@ struct SettingsView: View {
         ProviderSettings.transcriptionEngine = engine
         ProviderSettings.responseLanguageID = responseLanguageID
         ProviderSettings.referenceBudget = referenceBudget
+        ProviderSettings.saveSessionsForSearch = saveSessions
+        // Honor the "Turn off to keep nothing" promise: wipe stored history whenever the toggle is
+        // off. The store is file-backed, so a fresh instance's clear() deletes the JSON.
+        if !saveSessions { SessionStore().clear() }
         KeychainStore.set(ollamaKey.isEmpty ? nil : ollamaKey, for: "ollama")
         dismiss()
     }

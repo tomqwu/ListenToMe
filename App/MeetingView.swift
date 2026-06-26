@@ -14,7 +14,18 @@ struct MeetingView: View {
     @State private var permissions = PermissionsModel()
     @State private var showPermissions = false
     @State private var showOnboarding = false
-    @State private var chatModels: [String] = []
+    @State private var showSearch = false
+    @State private var sessionStore = SessionStore()
+    /// Identity of this app-window's session. Reused across Listen→Stop cycles so repeated Stops
+    /// upsert one growing record instead of writing a fresh superset each time.
+    @State private var currentSessionID = UUID().uuidString
+    /// `lastSavedUtteranceCount`: count at the last save, so an unchanged transcript isn't re-saved on
+    /// Stop. `sessionSaveable`: whether this window-session may be persisted — tainted to false the
+    /// moment saving is ever observed off (or history is cleared), so "turn off to keep nothing" holds
+    /// for the whole session. `savingEnabledBeforeSettings`: toggle value snapshotted when Settings
+    /// opened, so an off→on round-trip is still caught.
+    @State private var lastSavedUtteranceCount = 0; @State private var sessionSaveable = true
+    @State private var savingEnabledBeforeSettings = true; @State private var chatModels: [String] = []
     @State private var transcriptionLocaleID: String
     @State private var presetID: String
     @State private var referencePaths: [URL]
@@ -126,12 +137,15 @@ struct MeetingView: View {
             session.responseLanguage = ProviderSettings.responseLanguageDirective()
             // Rebuild attached references so a changed reference-budget takes effect immediately.
             if !referencePaths.isEmpty { loadReferences(into: session) }
-            Task { await reloadAndHealModels() }
+            markSaveableAfterSettings(); Task { await reloadAndHealModels() }
         }, content: {
             SettingsView()
         })
         .sheet(isPresented: $showPermissions) {
             PermissionsView(permissions: permissions)
+        }
+        .sheet(isPresented: $showSearch) {
+            SessionSearchView(store: sessionStore, onClear: { dropCurrentSessionFromSaving() })
         }
         .sheet(isPresented: $showOnboarding, onDismiss: {
             // Onboarding may have set/cleared the Ollama key, which changes the route; rebuild
@@ -160,13 +174,7 @@ struct MeetingView: View {
         .task {
             await reloadAndHealModels()
         }
-        .onDisappear {
-            hotkey.stop()
-            wantsCapture = false
-            restartTask?.cancel()   // don't let a pending locale restart resume capture after close
-            importTask?.cancel()    // stop an in-flight file import when the window closes
-            session.stop()
-        }
+        .onDisappear { tearDownOnDisappear(session: session) }
     }
 
     // MARK: - Toolbar
@@ -183,7 +191,10 @@ struct MeetingView: View {
                     if wantsCapture {
                         wantsCapture = false
                         restartTask?.cancel()   // cancel any in-flight locale restart
-                        session.stop()
+                        // Await teardown so the transcriber flushes its final segments into the
+                        // store before we snapshot the transcript for search.
+                        await session.stopAndWait()
+                        saveSessionIfEnabled(session: session)
                     } else {
                         wantsCapture = true
                         do {
@@ -244,8 +255,10 @@ struct MeetingView: View {
             .help("Export the session as Markdown or PDF")
             Button { copySessionMarkdown() } label: { Image(systemName: "list.clipboard") }
                 .help("Copy the transcript + AI notes as Markdown")
+            Button { showSearch = true } label: { Image(systemName: "magnifyingglass") }
+                .help("Search past meetings")
             Button { showPermissions.wrappedValue = true } label: { Image(systemName: "lock.shield") }
-            Button { showSettings.wrappedValue = true } label: { Image(systemName: "gearshape") }
+            Button { openSettings(showSettings) } label: { Image(systemName: "gearshape") }
         }
         .padding(10)
     }
@@ -565,6 +578,75 @@ extension MeetingView {
     /// mirroring `exportSession()`'s document but without a file save.
     func copySessionMarkdown() {
         Clipboard.copy(sessionMarkdown())
+    }
+
+    /// Window close/teardown: stop the hotkey and any pending restart/import. If recording, mirror
+    /// the Stop-button flow so a meeting ended by closing the window is still saved for search
+    /// (best-effort: the Task may not finish on a full app quit).
+    func tearDownOnDisappear(session: MeetingSession) {
+        hotkey.stop()
+        let wasCapturing = wantsCapture
+        wantsCapture = false
+        restartTask?.cancel()   // don't let a pending locale restart resume capture after close
+        importTask?.cancel()    // stop an in-flight file import when the window closes
+        if wasCapturing {
+            Task { await session.stopAndWait(); saveSessionIfEnabled(session: session) }
+        } else {
+            session.stop()
+        }
+    }
+
+    /// Opens Settings, snapshotting the saving toggle first so an off→on round-trip is still caught
+    /// on dismiss (see `markSaveableAfterSettings`).
+    func openSettings(_ showSettings: Binding<Bool>) {
+        savingEnabledBeforeSettings = ProviderSettings.saveSessionsForSearch
+        showSettings.wrappedValue = true
+    }
+
+    /// Settings-dismiss: taint the session only when saving was off at some point during the visit
+    /// (off when opened OR off now) AND content was already captured — that content was at risk, so
+    /// exclude the whole window-session. Turning saving ON before recording anything leaves it
+    /// untainted, so saving works normally for that window.
+    func markSaveableAfterSettings() {
+        let wasOff = !savingEnabledBeforeSettings || !ProviderSettings.saveSessionsForSearch
+        // "Has content" includes an in-progress partial, so audio captured mid-utterance while
+        // saving was off still taints the session.
+        let hasContent = !store.utterances.isEmpty || store.partial != nil
+        if wasOff && hasContent { sessionSaveable = false }
+    }
+
+    /// Drops the current in-memory session from future saves after the user clears history, so a
+    /// just-deleted transcript can't be re-persisted. A fresh id starts a new (still untainted)
+    /// upsert key once this session is sealed.
+    func dropCurrentSessionFromSaving() {
+        // Only taint when the current window-session has content that was just cleared — clearing
+        // old records on a fresh/empty window must not silently disable future saving.
+        if !store.utterances.isEmpty { sessionSaveable = false }
+        currentSessionID = UUID().uuidString
+        lastSavedUtteranceCount = store.utterances.count
+    }
+
+    /// On Stop, persist the finished session for cross-meeting search when this window-session is
+    /// saveable (saving never observed off), saving is on, and there's new transcript. Reuses
+    /// `currentSessionID` so repeated Listen→Stop cycles upsert one growing record. Title = the
+    /// active preset's name (or "Session") plus the date.
+    func saveSessionIfEnabled(session: MeetingSession) {
+        guard ProviderSettings.saveSessionsForSearch else { sessionSaveable = false; return }
+        guard sessionSaveable, store.utterances.count > lastSavedUtteranceCount else { return }
+        let now = Date()
+        let presetName = PresetCatalog.preset(id: presetID).name
+        let base = (presetName.isEmpty || presetName == "None") ? "Session" : presetName
+        let transcript = store.utterances.map { "\($0.source == .you ? "You" : "Others"): \($0.text)" }
+            .joined(separator: "\n")
+        let record = SessionRecord(
+            id: currentSessionID,
+            title: "\(base) — \(now.formatted(date: .abbreviated, time: .shortened))",
+            date: now,
+            transcript: transcript,
+            summary: session.listenerSummary
+        )
+        sessionStore.add(record)
+        lastSavedUtteranceCount = store.utterances.count
     }
 
     /// Reloads the installed Ollama chat models into the per-pane pickers.
