@@ -43,6 +43,42 @@ struct MeetingView: View {
     @State private var now = Date()
     /// Live appearance (System/Light/Dark) applied to the root via `.preferredColorScheme`.
     @State private var appearance = ProviderSettings.appearance
+    /// Accumulates the `.others` channel (16 kHz mono) across a session for on-demand speaker
+    /// diarization. Reset at each session start; read via `snapshot()` when identifying speakers.
+    @State private var othersAudioSink: SpeakerAudioBuffer
+    /// Drives the experimental "Speaker breakdown" sheet and holds its result/error/in-flight state.
+    @State var showSpeakerBreakdown = false
+    @State var speakerSummary: SpeakerSummary?
+    @State var speakerError: String?
+    @State var speakerLoading = false
+    /// Per-line speaker labels (transcript-line id → "Speaker N") for the OTHERS channel, filled by
+    /// "Identify speakers" when the WhisperKit engine supplies real per-line timestamps. Reset at
+    /// each session start so stale labels from a previous meeting don't linger.
+    @State var speakerLabels: [UUID: String] = [:]
+    /// Canonical diarized-speakerId → "Speaker N" map from the same labeling pass, so the breakdown
+    /// sheet numbers speakers the same way the transcript does. Empty when no inline labels apply.
+    @State var speakerOrder: [String: String] = [:]
+    /// Index into `store.utterances` where the current recording run's lines begin. Set at each
+    /// Listen-start/restart AFTER the prior Stop has drained (so old final utterances are already
+    /// appended) and the new capture is live, so diarization — relative to the fresh 0-based buffer —
+    /// only labels the current run's lines, never older ones from a previous Listen→Stop→Listen cycle.
+    @State private var diarizationRunStartIndex = 0
+    /// Bumped at every start/restart that resets the Others buffer. An in-flight `identifySpeakers`
+    /// captures the token at launch and drops its results if the token changed before it finished, so
+    /// a stale run can't revive labels over a new session.
+    @State private var diarizationRunToken = 0
+    /// Whether the current/most-recent run's `DualChannelCapture` actually attached the Others sink —
+    /// a snapshot of `ProviderSettings.speakerDiarizationEnabled` taken when that run started (the same
+    /// value `makeCapture` read to decide attachment). Persists after Stop so Identify still works on
+    /// the just-finished run's buffer; changes only at the next run start. Toggling the setting mid-run
+    /// must NOT enable Identify, because this run's capture has `othersSink: nil`.
+    @State var diarizationSinkAttached = false
+    /// Whether the current run's transcriber emits real per-line timestamps — a snapshot of
+    /// `ProviderSettings.transcriptionEngine == "whisperKit"` at run start (the engine the run's
+    /// transcriber was actually built with). Used to gate inline labeling so changing the engine in
+    /// Settings after starting doesn't retroactively gain/lose labels for the current run.
+    @State private var diarizationRunUsesTimestamps = false
+    private let diarizer = SpeakerDiarizer()
     private let hotkey = HotkeyMonitor()
 
     /// mm:ss since the current recording run started (00:00 when idle).
@@ -80,10 +116,27 @@ struct MeetingView: View {
         _referencePaths = State(initialValue: savedPaths.map { URL(fileURLWithPath: $0) })
         let store = ConversationStore()
         _store = State(initialValue: store)
+        let othersSink = SpeakerAudioBuffer()
+        _othersAudioSink = State(initialValue: othersSink)
         _session = State(initialValue: MeetingSession(
             store: store,
             context: ContextEngine(debounce: 8),
-            makeCapture: { DualChannelCapture() },
+            makeCapture: {
+                // Only accumulate the Others channel for diarization when the experimental setting
+                // is on — otherwise a normal meeting needlessly resamples + retains up to ~2 h of
+                // audio. Read at capture-creation time so toggling it before the next Listen applies.
+                let diarize = ProviderSettings.speakerDiarizationEnabled
+                // Always reset so a prior run's buffer is released even when the user has since
+                // turned diarization off (otherwise the old ~2 h/~460 MB samples stay resident in
+                // the @State-held sink). The reset also bumps the generation used below.
+                othersSink.reset()
+                // Capture the generation for THIS run right after the reset above. Any late append
+                // from a prior run's capture carries an older generation and is rejected by the
+                // buffer, so it can't contaminate this run. On the non-diarize path the sink is nil
+                // and the value is unused.
+                let gen = diarize ? othersSink.currentGeneration() : 0
+                return DualChannelCapture(othersSink: diarize ? othersSink : nil, sinkGeneration: gen)
+            },
             makeTranscriber: {
                 let locale = ProviderSettings.transcriptionLocale()
                 switch ProviderSettings.transcriptionEngine {
@@ -165,6 +218,13 @@ struct MeetingView: View {
         }
         .sheet(isPresented: $showSearch) {
             SessionSearchView(store: sessionStore, onClear: { dropCurrentSessionFromSaving() })
+        }
+        .sheet(isPresented: $showSpeakerBreakdown) {
+            SpeakerBreakdownView(
+                loading: speakerLoading, summary: speakerSummary, errorText: speakerError,
+                didTruncate: othersAudioSink.didTruncate,
+                perLineLabelsUnavailable: !diarizationRunUsesTimestamps,
+                speakerOrder: speakerOrder)
         }
         .sheet(isPresented: $showOnboarding, onDismiss: {
             // Onboarding may have set/cleared the Ollama key, which changes the route; rebuild
@@ -261,7 +321,12 @@ struct MeetingView: View {
                 wantsCapture = true
                 do {
                     startError = nil
+                    // The Others buffer is reset in makeCapture, restarting its 0-based timeline.
+                    // Clear stale labels + bump the token BEFORE start; anchor the run only AFTER
+                    // start returns, once the prior Stop's finals have drained into the store.
+                    beginDiarizationRunReset()
                     try await session.start()
+                    anchorDiarizationRun()
                     now = Date(); recordingStartedAt = Date()
                 } catch {
                     startError = error.localizedDescription
@@ -281,10 +346,55 @@ struct MeetingView: View {
             // Bail if the user pressed Stop or closed the window during teardown — don't resume
             // recording against their intent.
             guard wantsCapture, !Task.isCancelled else { return }
-            do { startError = nil; try await session.start() } catch {
+            // The restart rebuilds the capture, resetting the Others buffer's 0-based timeline. Drop
+            // stale labels + bump the token before start; anchor only after start returns (the prior
+            // teardown above already drained, but the new finals land after start re-attaches).
+            beginDiarizationRunReset()
+            do {
+                startError = nil
+                try await session.start()
+                anchorDiarizationRun()
+            } catch {
                 startError = error.localizedDescription; wantsCapture = false
             }
         }
+    }
+
+    /// Pre-start half of a diarization-run reset: clear stale inline labels and bump the run token so
+    /// any in-flight `identifySpeakers` drops its (now stale) results. Call this BEFORE `session.start()`
+    /// — the run anchor is set only AFTER start returns (see `anchorDiarizationRun`), because
+    /// `start()` awaits the prior Stop's drain, which can still append old final utterances first.
+    ///
+    /// Also release the breakdown UI: bumping the token makes a superseded `identifySpeakers` task
+    /// bail via its token guard WITHOUT clearing `speakerLoading`, so we clear the spinner/error state
+    /// here. This guarantees that starting/restarting always frees the "Identify speakers" button.
+    private func beginDiarizationRunReset() {
+        speakerLabels = [:]
+        speakerOrder = [:]
+        speakerLoading = false
+        speakerError = nil
+        diarizationRunToken &+= 1
+        // Disable Identify for the whole transition window: `session.start()` first awaits the prior
+        // Stop's drain, then `makeCapture` calls `othersSink.reset()`. Until that reset+attach happens
+        // the buffer still holds the PREVIOUS run's audio under the new token, so an Identify here
+        // would slip a stale result past the token guard. We re-enable in `anchorDiarizationRun()`,
+        // once start() has returned and the new run is fully live. The run snapshots are also taken
+        // there (not here), so they reflect what the new capture/transcriber actually used.
+        diarizationSinkAttached = false
+    }
+
+    /// Post-start half: anchor diarization to the current run and snapshot what it actually used. By
+    /// the time `session.start()` returns, the previous run's drain is complete (its finals are in the
+    /// store) and the new capture has reset+attached the sink, so `store.utterances.count` marks where
+    /// this run's lines begin and the live settings match the capture/transcriber just built.
+    private func anchorDiarizationRun() {
+        diarizationRunStartIndex = store.utterances.count
+        // Snapshot the settings the new run's capture/transcriber were built from. `makeCapture` read
+        // `speakerDiarizationEnabled` to decide sink attachment and `makeTranscriber` read the engine,
+        // both during the `start()` that just returned — so reading them now matches this run, and
+        // re-enables Identify only when the sink is actually attached and live.
+        diarizationSinkAttached = ProviderSettings.speakerDiarizationEnabled
+        diarizationRunUsesTimestamps = ProviderSettings.transcriptionEngine == "whisperKit"
     }
 
     /// Attach/clear files & folders whose text is fed into Quick/Deep prompts as grounding.
@@ -541,6 +651,56 @@ extension MeetingView {
         )
         sessionStore.add(record)
         lastSavedUtteranceCount = store.utterances.count
+    }
+
+    /// Experimental: presents the Speaker breakdown sheet and runs FluidAudio diarization over the
+    /// captured Others-channel snapshot off the main actor, publishing the summary or a friendly
+    /// error. The sheet (`SpeakerBreakdownView`) renders the loading / error / needs-more-audio /
+    /// results states from this same `@State`.
+    func identifySpeakers() {
+        speakerSummary = nil
+        speakerError = nil
+        speakerLoading = true        // main actor — let the loading sheet render immediately
+        showSpeakerBreakdown = true
+        // Inline per-line labels need real start/end timestamps; only WhisperKit populates those. Use
+        // the snapshot of the run's actual transcriber, not the live setting, so a post-start engine
+        // change in Settings can't make this run's WhisperKit transcript lose labels (or vice versa).
+        let canLabelInline = diarizationRunUsesTimestamps
+        // Only the current run's lines share the buffer's 0-based timeline; older store rows from a
+        // previous Listen→Stop→Listen cycle must not be labeled by this run's diarization.
+        let runStart = min(diarizationRunStartIndex, store.utterances.count)
+        let transcript = Array(store.utterances.suffix(from: runStart))
+        // Snapshot the run token; if a start/restart bumps it while we await, this result is stale and
+        // must not overwrite the new session's state.
+        let token = diarizationRunToken
+        let sink = othersAudioSink   // reference type — safe to hand to a detached task
+        Task {
+            // Take the ~460 MB samples copy OFF the main actor so the sheet renders first and the app
+            // never hangs on the button press. `startOffset` is read alongside it on the same thread.
+            let snapshot = await Task.detached { (samples: sink.snapshot(), offset: sink.startOffset) }.value
+            let samples = snapshot.samples
+            let offset = snapshot.offset
+            do {
+                let outcome = try await diarizer.analyze(samples: samples)
+                guard token == diarizationRunToken else { return }   // superseded by a new run
+                speakerSummary = outcome.summary
+                if canLabelInline {
+                    let labeling = SpeakerLabeling.label(
+                        transcript: transcript, diarized: outcome.segments, offset: offset)
+                    speakerLabels = labeling.lineLabels
+                    speakerOrder = labeling.order
+                } else {
+                    speakerLabels = [:]
+                    speakerOrder = [:]
+                }
+            } catch {
+                guard token == diarizationRunToken else { return }   // superseded — drop stale error
+                speakerError = error.localizedDescription
+            }
+            // Only clear the in-flight flag for the run that's still current, so a stale completion
+            // can't flip the spinner off under a freshly-launched run.
+            if token == diarizationRunToken { speakerLoading = false }
+        }
     }
 
     /// Reloads the installed Ollama chat models into the per-pane pickers.

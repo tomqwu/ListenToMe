@@ -16,8 +16,17 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
     private var stopped = false            // guarded by `lock`
     private var systemAudioTask: Task<Void, Never>?
     private let startTime = Date()
+    /// Optional sink that accumulates the `.others` channel (resampled to 16 kHz) for speaker
+    /// diarization. `nil` (the default) leaves existing callers/tests untouched.
+    private let othersSink: SpeakerAudioBuffer?
+    /// The sink's generation captured when this capture was built (right after its `reset()`). Passed
+    /// to every `othersSink.append` so the buffer rejects this capture's appends once a later run has
+    /// reset it. Unused (and irrelevant) when `othersSink` is nil.
+    private let sinkGeneration: Int
 
-    override init() {
+    init(othersSink: SpeakerAudioBuffer? = nil, sinkGeneration: Int = 0) {
+        self.othersSink = othersSink
+        self.sinkGeneration = sinkGeneration
         var cont: AsyncStream<AudioChunk>.Continuation!
         chunks = AsyncStream(bufferingPolicy: .bufferingNewest(64)) { cont = $0 }
         continuation = cont
@@ -108,10 +117,27 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
         let count = Int(mono.frameLength)
         guard count > 0 else { return }
         let samples = Array(UnsafeBufferPointer(start: channel, count: count))
+        let timestamp = Date().timeIntervalSince(startTime)
+        // Feed the same mono samples to the diarization sink (it handles the 16 kHz resample). The
+        // chunk's capture-time `timestamp` is passed through so the buffer can record its sample-0
+        // offset for later alignment against the transcript's capture-time stamps.
+        //
+        // Skip the sink append once we're stopped: a quick (or locale) restart spins up a NEW capture
+        // sharing the SAME buffer, while this OLD SCStream can still deliver queued `.others`
+        // callbacks. Appending that stale, old-timeline audio would contaminate the new run's samples
+        // and `startOffset`. The `stopped` check is a fast pre-filter; the buffer's generation guard
+        // (via `sinkGeneration`) is the authoritative cutoff — it rejects an append atomically under
+        // the buffer's lock even if this callback was mid-resample when the next run reset the buffer.
+        // The continuation.yield below is harmless (the consumer is detached), so only the append is
+        // guarded.
+        if source == .others, !lock.withLock({ stopped }) {
+            othersSink?.append(samples: samples, sampleRate: mono.format.sampleRate,
+                               timestamp: timestamp, generation: sinkGeneration)
+        }
         let chunk = AudioChunk(samples: samples,
                                sampleRate: mono.format.sampleRate,
                                source: source,
-                               timestamp: Date().timeIntervalSince(startTime))
+                               timestamp: timestamp)
         continuation.yield(chunk)
     }
 

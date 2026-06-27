@@ -34,6 +34,11 @@ These closed gaps that competitors had over the v1.0 MVP:
    On-device diarization of the "Others" channel into Speaker 1/2/… Effort: **large** — Apple
    provides no diarization API, so this needs a bundled CoreML speaker-embedding model
    (e.g. a pyannote/sherpa-onnx port) + clustering, with quality validation. The biggest single gap.
+   **Shipped (experimental first cut):** opt-in "Speaker breakdown" — FluidAudio (native Swift +
+   CoreML Pyannote, models auto-downloaded on first use) diarizes the captured Others channel and
+   shows each voice's talk-time share in a sheet. Default OFF, flagged experimental; quality is
+   user-validated. Core stays pure (`SpeakerStats` aggregation); FluidAudio lives only in the App
+   target. Follow-ups: inline who-said-what labeling in the transcript and accuracy tuning.
 
 2. **OpenAI-compatible endpoint support** — *Hyprnote supports LM Studio / OpenRouter / any
    OpenAI-compatible API.* Generalize `OllamaProvider` to also speak the OpenAI

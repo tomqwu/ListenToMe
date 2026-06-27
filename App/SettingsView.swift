@@ -68,6 +68,13 @@ enum ProviderSettings {
         set { UserDefaults.standard.set(newValue, forKey: "presetID") }
     }
 
+    /// Whether the experimental on-device speaker breakdown of the "Others" channel is available.
+    /// Default `false` — it downloads CoreML models on first use and quality is user-validated.
+    static var speakerDiarizationEnabled: Bool {
+        get { UserDefaults.standard.bool(forKey: "speakerDiarizationEnabled") }
+        set { UserDefaults.standard.set(newValue, forKey: "speakerDiarizationEnabled") }
+    }
+
     /// Whether finished sessions are persisted locally for cross-meeting search. Default `true`.
     static var saveSessionsForSearch: Bool {
         get { UserDefaults.standard.object(forKey: "saveSessionsForSearch") as? Bool ?? true }
@@ -127,6 +134,7 @@ struct SettingsView: View {
     @State private var referenceBudget: Int
     @State private var saveSessions: Bool
     @State private var appearance: String
+    @State private var speakerDiarization: Bool
 
     init() {
         _engine = State(initialValue: ProviderSettings.transcriptionEngine)
@@ -135,6 +143,7 @@ struct SettingsView: View {
         _referenceBudget = State(initialValue: ProviderSettings.referenceBudget)
         _saveSessions = State(initialValue: ProviderSettings.saveSessionsForSearch)
         _appearance = State(initialValue: ProviderSettings.appearance)
+        _speakerDiarization = State(initialValue: ProviderSettings.speakerDiarizationEnabled)
     }
 
     var body: some View {
@@ -149,6 +158,16 @@ struct SettingsView: View {
             .pickerStyle(.segmented)
             Text("ListenToMe defaults to the dark command-center look. Choose System to follow macOS.")
                 .font(.caption).foregroundStyle(.secondary)
+
+            Divider()
+            Toggle("Speaker diarization (experimental)", isOn: $speakerDiarization)
+            Text(
+                "Adds a \u{201C}Speakers\u{201D} action that groups the system-audio " +
+                "(\u{201C}Others\u{201D}) channel into distinct voices and shows each one's talk-time " +
+                "share. On-device; downloads a CoreML model on first use. Experimental \u{2014} " +
+                "accuracy varies and is yours to validate."
+            )
+            .font(.caption).foregroundStyle(.secondary)
 
             Divider()
 
@@ -227,6 +246,7 @@ struct SettingsView: View {
         ProviderSettings.referenceBudget = referenceBudget
         ProviderSettings.saveSessionsForSearch = saveSessions
         ProviderSettings.appearance = appearance
+        ProviderSettings.speakerDiarizationEnabled = speakerDiarization
         // Honor the "Turn off to keep nothing" promise: wipe stored history whenever the toggle is
         // off. The store is file-backed, so a fresh instance's clear() deletes the JSON.
         if !saveSessions { SessionStore().clear() }

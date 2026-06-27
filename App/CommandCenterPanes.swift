@@ -53,6 +53,8 @@ extension MeetingView {
                     StatRow(key: "you / others", value: "\(youCount) / \(othersCount)")
                     StatRow(key: "~tok", value: "\(approxTokens)")
                 }
+
+                if ProviderSettings.speakerDiarizationEnabled { speakersRailSection() }
                 Spacer(minLength: 0)
             }
             .padding(14)
@@ -61,6 +63,25 @@ extension MeetingView {
         .frame(width: 210)
         .background(Theme.windowBackground)
         .overlay(Rectangle().fill(Theme.line).frame(width: 1), alignment: .trailing)
+    }
+
+    /// Experimental "Speakers" rail section: an on-demand button that diarizes the captured Others
+    /// channel into distinct voices. Shown whenever the experimental setting is enabled (so it's
+    /// discoverable), but the button is only usable when the current/most-recent run actually attached
+    /// the Others sink — i.e. the setting was on when that run pressed Listen. Toggling the setting on
+    /// mid-run does NOT enable it, because this run's capture was built with `othersSink: nil` and its
+    /// buffer is empty/stale.
+    private func speakersRailSection() -> some View {
+        railSection("Speakers") {
+            Button { identifySpeakers() } label: {
+                Label("Identify speakers", systemImage: "person.2.wave.2")
+            }
+            .controlSize(.small)
+            .disabled(speakerLoading || !diarizationSinkAttached)
+            .help(diarizationSinkAttached
+                  ? "Experimental: group the Others channel into distinct voices (on-device)"
+                  : "Press Listen to start capturing speaker audio.")
+        }
     }
 
     private func railSection<Content: View>(
@@ -158,15 +179,22 @@ extension MeetingView {
                 .font(.system(size: 10.5, design: .monospaced))
                 .foregroundStyle(Theme.ink3)
                 .frame(width: 40, alignment: .leading)
-            Text(seg.source == .you ? "YOU" : "OTHERS")
+            Text(speakerRowLabel(for: seg))
                 .font(.system(size: 11, weight: .bold))
                 .foregroundStyle(seg.source == .you ? Theme.you : Theme.others)
-                .frame(width: 52, alignment: .leading)
+                .frame(width: 72, alignment: .leading)
             Text(seg.text)
                 .font(.system(size: 12.5)).foregroundStyle(Theme.ink)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.vertical, 3)
+    }
+
+    /// Channel/speaker label for a transcript row: "YOU" for the mic; for the Others channel the
+    /// resolved "SPEAKER N" (uppercased) when "Identify speakers" has labeled this line, else "OTHERS".
+    private func speakerRowLabel(for seg: TranscriptSegment) -> String {
+        guard seg.source == .others else { return "YOU" }
+        return speakerLabels[seg.id]?.uppercased() ?? "OTHERS"
     }
 
     private func transcriptInputZone(session: MeetingSession, notes: Binding<String>) -> some View {
