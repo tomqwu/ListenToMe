@@ -86,16 +86,13 @@ final class SpeakerAudioBuffer: @unchecked Sendable {
         }
     }
 
-    /// A copy of the accumulated 16 kHz mono samples. Detaches the live buffer's storage here (on the
-    /// Identify thread): the returned snapshot keeps the current backing store, and the live buffer
-    /// takes a fresh private copy now, so the NEXT capture-queue append is uniquely-referenced and
-    /// copy-free instead of cloning up to ~460 MB on the audio callback.
+    /// Returns the accumulated 16 kHz samples. Returns a copy-on-write handle under the lock (O(1));
+    /// we deliberately do NOT eagerly clone here — cloning under the lock would block capture-callback
+    /// appends and spike memory. In the common case Identify is pressed after Stop, so no further append
+    /// ever touches this storage; if the user identifies while still recording, at most one subsequent
+    /// append performs a single COW copy off this lock on the capture thread.
     func snapshot() -> [Float] {
-        lock.withLock {
-            let copy = samples          // returned snapshot keeps the current storage
-            samples = Array(samples)    // live buffer takes a fresh private copy now, on this thread
-            return copy
-        }
+        lock.withLock { samples }
     }
 
     /// Converts mono Float at `inputRate` to 16 kHz mono Float via a cached `AVAudioConverter`.
