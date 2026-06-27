@@ -374,19 +374,27 @@ struct MeetingView: View {
         speakerLoading = false
         speakerError = nil
         diarizationRunToken &+= 1
-        // Snapshot the settings the new run's capture/transcriber are about to be built from (read here,
-        // immediately before `session.start()`, which is when `makeCapture`/`makeTranscriber` read the
-        // same live values). Using these snapshots — not the live settings — keeps the UI consistent
-        // with what THIS run actually does, even if the user toggles the settings mid-run.
-        diarizationSinkAttached = ProviderSettings.speakerDiarizationEnabled
-        diarizationRunUsesTimestamps = ProviderSettings.transcriptionEngine == "whisperKit"
+        // Disable Identify for the whole transition window: `session.start()` first awaits the prior
+        // Stop's drain, then `makeCapture` calls `othersSink.reset()`. Until that reset+attach happens
+        // the buffer still holds the PREVIOUS run's audio under the new token, so an Identify here
+        // would slip a stale result past the token guard. We re-enable in `anchorDiarizationRun()`,
+        // once start() has returned and the new run is fully live. The run snapshots are also taken
+        // there (not here), so they reflect what the new capture/transcriber actually used.
+        diarizationSinkAttached = false
     }
 
-    /// Post-start half: anchor diarization to the current run. By the time `session.start()` returns,
-    /// the previous run's drain is complete (its finals are in the store) and the new 0-based capture
-    /// is live, so `store.utterances.count` correctly marks where this run's lines begin.
+    /// Post-start half: anchor diarization to the current run and snapshot what it actually used. By
+    /// the time `session.start()` returns, the previous run's drain is complete (its finals are in the
+    /// store) and the new capture has reset+attached the sink, so `store.utterances.count` marks where
+    /// this run's lines begin and the live settings match the capture/transcriber just built.
     private func anchorDiarizationRun() {
         diarizationRunStartIndex = store.utterances.count
+        // Snapshot the settings the new run's capture/transcriber were built from. `makeCapture` read
+        // `speakerDiarizationEnabled` to decide sink attachment and `makeTranscriber` read the engine,
+        // both during the `start()` that just returned — so reading them now matches this run, and
+        // re-enables Identify only when the sink is actually attached and live.
+        diarizationSinkAttached = ProviderSettings.speakerDiarizationEnabled
+        diarizationRunUsesTimestamps = ProviderSettings.transcriptionEngine == "whisperKit"
     }
 
     /// Attach/clear files & folders whose text is fed into Quick/Deep prompts as grounding.

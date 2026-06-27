@@ -83,6 +83,11 @@ final class SpeakerAudioBuffer: @unchecked Sendable {
             offset = 0
             offsetSet = false
             generation &+= 1   // invalidate any in-flight append from the prior run's capture
+            // Drop the cached converter: AVAudioConverter carries internal sample-rate-conversion
+            // filter state, so reusing it across runs would let the previous stream's tail taint the
+            // first converted samples of the next run. The next append rebuilds a fresh one.
+            converter = nil
+            converterInputRate = 0
         }
     }
 
