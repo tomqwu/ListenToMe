@@ -126,7 +126,10 @@ struct MeetingView: View {
                 // is on — otherwise a normal meeting needlessly resamples + retains up to ~2 h of
                 // audio. Read at capture-creation time so toggling it before the next Listen applies.
                 let diarize = ProviderSettings.speakerDiarizationEnabled
-                if diarize { othersSink.reset() }
+                // Always reset so a prior run's buffer is released even when the user has since
+                // turned diarization off (otherwise the old ~2 h/~460 MB samples stay resident in
+                // the @State-held sink). The reset also bumps the generation used below.
+                othersSink.reset()
                 // Capture the generation for THIS run right after the reset above. Any late append
                 // from a prior run's capture carries an older generation and is rejected by the
                 // buffer, so it can't contaminate this run. On the non-diarize path the sink is nil
