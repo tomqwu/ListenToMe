@@ -14,6 +14,11 @@ final class SpeakerAudioBuffer: @unchecked Sendable {
     private let lock = NSLock()
     private var samples: [Float] = []          // guarded by `lock`
     private var truncated = false              // guarded by `lock`
+    /// Bumped on every `reset()`. Each capture captures the generation for ITS run; an append whose
+    /// generation no longer matches is from a superseded capture and is rejected under the lock — even
+    /// if it was mid-resample when the next run reset the buffer. Closes the TOCTOU window that the
+    /// `stopped`-flag check in `DualChannelCapture.emit` alone cannot. Guarded by `lock`.
+    private var generation = 0
     /// Capture-time of the buffer's sample 0 — the timestamp of the first `.others` chunk after a
     /// reset. System audio starts asynchronously after capture begins, so this is > 0; callers add it
     /// to buffer-relative diarization times to realign them with the transcript's capture-time stamps.
@@ -31,14 +36,21 @@ final class SpeakerAudioBuffer: @unchecked Sendable {
     /// buffer-relative diarization times to convert them into the transcript's capture-time frame.
     var startOffset: TimeInterval { lock.withLock { offset } }
 
+    /// The current generation, to be captured by a freshly-built capture right after `reset()` and
+    /// handed back to every `append` so stale (pre-reset) appends can be rejected.
+    func currentGeneration() -> Int { lock.withLock { generation } }
+
     /// Resamples `samples` (mono Float at `sampleRate`) to 16 kHz and appends, up to the cap.
     /// `timestamp` is the chunk's capture-time; the first append after a reset records it as the
-    /// buffer's `startOffset`.
-    func append(samples input: [Float], sampleRate: Double, timestamp: TimeInterval) {
+    /// buffer's `startOffset`. `generation` is the value the calling capture captured at its creation;
+    /// the append is dropped if a later `reset()` has since bumped the buffer's generation — so an
+    /// append that was mid-resample across a restart can't contaminate the new run's samples/offset.
+    func append(samples input: [Float], sampleRate: Double, timestamp: TimeInterval, generation: Int) {
         guard !input.isEmpty, sampleRate > 0 else { return }
         let resampled = (sampleRate == Self.targetSampleRate) ? input : resample(input, from: sampleRate)
         guard !resampled.isEmpty else { return }
         lock.withLock {
+            guard generation == self.generation else { return }   // superseded by a later reset()
             guard !truncated else { return }
             if !offsetSet {
                 offset = timestamp
@@ -62,11 +74,21 @@ final class SpeakerAudioBuffer: @unchecked Sendable {
             truncated = false
             offset = 0
             offsetSet = false
+            generation &+= 1   // invalidate any in-flight append from the prior run's capture
         }
     }
 
-    /// A copy of the accumulated 16 kHz mono samples.
-    func snapshot() -> [Float] { lock.withLock { samples } }
+    /// A copy of the accumulated 16 kHz mono samples. Detaches the live buffer's storage here (on the
+    /// Identify thread): the returned snapshot keeps the current backing store, and the live buffer
+    /// takes a fresh private copy now, so the NEXT capture-queue append is uniquely-referenced and
+    /// copy-free instead of cloning up to ~460 MB on the audio callback.
+    func snapshot() -> [Float] {
+        lock.withLock {
+            let copy = samples          // returned snapshot keeps the current storage
+            samples = Array(samples)    // live buffer takes a fresh private copy now, on this thread
+            return copy
+        }
+    }
 
     /// Converts mono Float at `inputRate` to 16 kHz mono Float via a cached `AVAudioConverter`.
     /// Mirrors `DualChannelCapture.convertToMonoFloat`'s single-shot convert idiom, retargeted to

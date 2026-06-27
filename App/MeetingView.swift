@@ -127,7 +127,12 @@ struct MeetingView: View {
                 // audio. Read at capture-creation time so toggling it before the next Listen applies.
                 let diarize = ProviderSettings.speakerDiarizationEnabled
                 if diarize { othersSink.reset() }
-                return DualChannelCapture(othersSink: diarize ? othersSink : nil)
+                // Capture the generation for THIS run right after the reset above. Any late append
+                // from a prior run's capture carries an older generation and is rejected by the
+                // buffer, so it can't contaminate this run. On the non-diarize path the sink is nil
+                // and the value is unused.
+                let gen = diarize ? othersSink.currentGeneration() : 0
+                return DualChannelCapture(othersSink: diarize ? othersSink : nil, sinkGeneration: gen)
             },
             makeTranscriber: {
                 let locale = ProviderSettings.transcriptionLocale()
