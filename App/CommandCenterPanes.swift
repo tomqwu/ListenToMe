@@ -66,15 +66,21 @@ extension MeetingView {
     }
 
     /// Experimental "Speakers" rail section: an on-demand button that diarizes the captured Others
-    /// channel into distinct voices. Shown only when the experimental setting is enabled.
+    /// channel into distinct voices. Shown whenever the experimental setting is enabled (so it's
+    /// discoverable), but the button is only usable when the current/most-recent run actually attached
+    /// the Others sink — i.e. the setting was on when that run pressed Listen. Toggling the setting on
+    /// mid-run does NOT enable it, because this run's capture was built with `othersSink: nil` and its
+    /// buffer is empty/stale.
     private func speakersRailSection() -> some View {
         railSection("Speakers") {
             Button { identifySpeakers() } label: {
                 Label("Identify speakers", systemImage: "person.2.wave.2")
             }
             .controlSize(.small)
-            .disabled(speakerLoading)
-            .help("Experimental: group the Others channel into distinct voices (on-device)")
+            .disabled(speakerLoading || !diarizationSinkAttached)
+            .help(diarizationSinkAttached
+                  ? "Experimental: group the Others channel into distinct voices (on-device)"
+                  : "Press Listen to start capturing speaker audio.")
         }
     }
 

@@ -67,6 +67,17 @@ struct MeetingView: View {
     /// captures the token at launch and drops its results if the token changed before it finished, so
     /// a stale run can't revive labels over a new session.
     @State private var diarizationRunToken = 0
+    /// Whether the current/most-recent run's `DualChannelCapture` actually attached the Others sink —
+    /// a snapshot of `ProviderSettings.speakerDiarizationEnabled` taken when that run started (the same
+    /// value `makeCapture` read to decide attachment). Persists after Stop so Identify still works on
+    /// the just-finished run's buffer; changes only at the next run start. Toggling the setting mid-run
+    /// must NOT enable Identify, because this run's capture has `othersSink: nil`.
+    @State var diarizationSinkAttached = false
+    /// Whether the current run's transcriber emits real per-line timestamps — a snapshot of
+    /// `ProviderSettings.transcriptionEngine == "whisperKit"` at run start (the engine the run's
+    /// transcriber was actually built with). Used to gate inline labeling so changing the engine in
+    /// Settings after starting doesn't retroactively gain/lose labels for the current run.
+    @State private var diarizationRunUsesTimestamps = false
     private let diarizer = SpeakerDiarizer()
     private let hotkey = HotkeyMonitor()
 
@@ -204,7 +215,7 @@ struct MeetingView: View {
             SpeakerBreakdownView(
                 loading: speakerLoading, summary: speakerSummary, errorText: speakerError,
                 didTruncate: othersAudioSink.didTruncate,
-                perLineLabelsUnavailable: ProviderSettings.transcriptionEngine != "whisperKit",
+                perLineLabelsUnavailable: !diarizationRunUsesTimestamps,
                 speakerOrder: speakerOrder)
         }
         .sheet(isPresented: $showOnboarding, onDismiss: {
@@ -355,6 +366,12 @@ struct MeetingView: View {
         speakerLoading = false
         speakerError = nil
         diarizationRunToken &+= 1
+        // Snapshot the settings the new run's capture/transcriber are about to be built from (read here,
+        // immediately before `session.start()`, which is when `makeCapture`/`makeTranscriber` read the
+        // same live values). Using these snapshots — not the live settings — keeps the UI consistent
+        // with what THIS run actually does, even if the user toggles the settings mid-run.
+        diarizationSinkAttached = ProviderSettings.speakerDiarizationEnabled
+        diarizationRunUsesTimestamps = ProviderSettings.transcriptionEngine == "whisperKit"
     }
 
     /// Post-start half: anchor diarization to the current run. By the time `session.start()` returns,
@@ -631,8 +648,10 @@ extension MeetingView {
         showSpeakerBreakdown = true
         let samples = othersAudioSink.snapshot()
         let offset = othersAudioSink.startOffset
-        // Inline per-line labels need real start/end timestamps; only WhisperKit populates those.
-        let canLabelInline = ProviderSettings.transcriptionEngine == "whisperKit"
+        // Inline per-line labels need real start/end timestamps; only WhisperKit populates those. Use
+        // the snapshot of the run's actual transcriber, not the live setting, so a post-start engine
+        // change in Settings can't make this run's WhisperKit transcript lose labels (or vice versa).
+        let canLabelInline = diarizationRunUsesTimestamps
         // Only the current run's lines share the buffer's 0-based timeline; older store rows from a
         // previous Listen→Stop→Listen cycle must not be labeled by this run's diarization.
         let runStart = min(diarizationRunStartIndex, store.utterances.count)
