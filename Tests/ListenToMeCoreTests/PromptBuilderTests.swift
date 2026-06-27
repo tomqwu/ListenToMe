@@ -35,6 +35,43 @@ final class PromptBuilderTests: XCTestCase {
         XCTAssertTrue(follow.lowercased().contains("follow-up") || follow.lowercased().contains("question"))
     }
 
+    func testNewQuickActionsProduceDistinctNonEmptyInstructions() {
+        func quick(_ action: ResponseAction) -> String {
+            PromptBuilder.build(context: ctx(), action: action).messages.last!.content
+        }
+        let actionItems = quick(.actionItems)
+        let clarify = quick(.clarify)
+        let counterpoint = quick(.counterpoint)
+        let keyTerms = quick(.keyTerms)
+        let draftReply = quick(.draftReply)
+
+        for content in [actionItems, clarify, counterpoint, keyTerms, draftReply] {
+            XCTAssertFalse(content.isEmpty)
+        }
+        XCTAssertTrue(actionItems.lowercased().contains("action item"))
+        XCTAssertTrue(clarify.lowercased().contains("simpl") || clarify.lowercased().contains("plain"))
+        XCTAssertTrue(counterpoint.lowercased().contains("challenge") || counterpoint.lowercased().contains("counter")
+                      || counterpoint.lowercased().contains("devil"))
+        XCTAssertTrue(keyTerms.lowercased().contains("define") || keyTerms.lowercased().contains("term"))
+        XCTAssertTrue(draftReply.lowercased().contains("draft") || draftReply.lowercased().contains("reply"))
+
+        // Each new action's instruction must be distinct from the others.
+        let all = [actionItems, clarify, counterpoint, keyTerms, draftReply]
+        XCTAssertEqual(Set(all).count, all.count, "New quick actions should yield distinct instructions")
+    }
+
+    func testNewActionsHandledByDeep() {
+        func deep(_ action: ResponseAction) -> String {
+            PromptBuilder.buildDeep(context: ctx(), action: action).messages.last!.content
+        }
+        let all = [deep(.actionItems), deep(.clarify), deep(.counterpoint), deep(.keyTerms), deep(.draftReply)]
+        for content in all { XCTAssertFalse(content.isEmpty) }
+        // Deep should differ from the Quick instruction for at least one new action.
+        let quickActionItems = PromptBuilder.build(context: ctx(), action: .actionItems).messages.last!.content
+        XCTAssertNotEqual(deep(.actionItems), quickActionItems,
+                          "Deep instruction should differ from Quick for action items")
+    }
+
     func testNotesInjectedWhenPresent() {
         let req = PromptBuilder.build(context: ctx(notes: "I am the backend lead."), action: .answerQuestion)
         XCTAssertTrue(req.messages.last!.content.contains("I am the backend lead."))

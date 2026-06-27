@@ -305,10 +305,14 @@ public final class MeetingSession {
 
     // MARK: - On-demand responses (awaitable)
 
-    /// Transcript char budget for an action's prompt. A recap should cover the whole conversation,
-    /// not just the recent window, so it gets a far larger budget than on-the-spot answers.
+    /// Transcript char budget for an action's prompt. Actions that summarize the whole conversation
+    /// (a recap, or extracting every action item "so far") must cover the entire transcript, not just
+    /// the recent window, so they get a far larger budget than on-the-spot answers.
     static func transcriptBudget(for action: ResponseAction) -> Int {
-        action == .recap ? 100_000 : 4_000
+        switch action {
+        case .recap, .actionItems: return 100_000
+        default: return 4_000
+        }
     }
 
     /// Streams a Quick response for the given action. Awaits completion.

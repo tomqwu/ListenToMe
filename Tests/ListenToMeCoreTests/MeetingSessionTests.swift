@@ -40,6 +40,12 @@ final class MeetingSessionTests: XCTestCase {
                        MeetingSession.transcriptBudget(for: .followUp))
         XCTAssertEqual(MeetingSession.transcriptBudget(for: .proactive),
                        MeetingSession.transcriptBudget(for: .answerQuestion))
+        // Action items must cover the whole conversation, so they share the recap-sized budget,
+        // not the recent-only window used by on-the-spot answers.
+        XCTAssertEqual(MeetingSession.transcriptBudget(for: .actionItems),
+                       MeetingSession.transcriptBudget(for: .recap))
+        XCTAssertGreaterThan(MeetingSession.transcriptBudget(for: .actionItems),
+                             MeetingSession.transcriptBudget(for: .clarify))
     }
 
     // MARK: - Initial state
