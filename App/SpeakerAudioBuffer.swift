@@ -45,13 +45,21 @@ final class SpeakerAudioBuffer: @unchecked Sendable {
     /// buffer's `startOffset`. `generation` is the value the calling capture captured at its creation;
     /// the append is dropped if a later `reset()` has since bumped the buffer's generation — so an
     /// append that was mid-resample across a restart can't contaminate the new run's samples/offset.
+    ///
+    /// The ENTIRE body runs under `lock`: the generation guard is checked FIRST (before any resampling),
+    /// then the resample + append happen while the lock is held. This serializes use of the shared,
+    /// cached `AVAudioConverter` to one thread at a time — across a Listen→Stop→Listen restart the old
+    /// and new captures run on different DispatchQueues, so without this a stale append could race the
+    /// new one through the same converter and corrupt resampling. Per-chunk resample is tiny
+    /// (~1–4k samples), so holding the lock for it is fine.
     func append(samples input: [Float], sampleRate: Double, timestamp: TimeInterval, generation: Int) {
         guard !input.isEmpty, sampleRate > 0 else { return }
-        let resampled = (sampleRate == Self.targetSampleRate) ? input : resample(input, from: sampleRate)
-        guard !resampled.isEmpty else { return }
         lock.withLock {
-            guard generation == self.generation else { return }   // superseded by a later reset()
+            guard generation == self.generation else { return }   // superseded — reject before resampling
             guard !truncated else { return }
+            let resampled = (sampleRate == Self.targetSampleRate)
+                ? input : resampleLocked(input, from: sampleRate)
+            guard !resampled.isEmpty else { return }
             if !offsetSet {
                 offset = timestamp
                 offsetSet = true
@@ -93,20 +101,21 @@ final class SpeakerAudioBuffer: @unchecked Sendable {
     /// Converts mono Float at `inputRate` to 16 kHz mono Float via a cached `AVAudioConverter`.
     /// Mirrors `DualChannelCapture.convertToMonoFloat`'s single-shot convert idiom, retargeted to
     /// 16 kHz. Returns `[]` on any setup/convert failure (the sample run is simply skipped).
-    private func resample(_ input: [Float], from inputRate: Double) -> [Float] {
+    ///
+    /// PRECONDITION: `lock` is already held by the caller (`append`). This must NOT acquire `lock`
+    /// itself — NSLock is non-recursive, so re-entry would deadlock. Holding the lock here is what
+    /// serializes the shared converter across concurrent captures.
+    private func resampleLocked(_ input: [Float], from inputRate: Double) -> [Float] {
         guard let inFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: inputRate,
                                            channels: 1, interleaved: false),
               let outFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32,
                                             sampleRate: Self.targetSampleRate,
                                             channels: 1, interleaved: false) else { return [] }
-        let conv: AVAudioConverter? = lock.withLock {
-            if converter == nil || converterInputRate != inputRate {
-                converter = AVAudioConverter(from: inFormat, to: outFormat)
-                converterInputRate = inputRate
-            }
-            return converter
+        if converter == nil || converterInputRate != inputRate {
+            converter = AVAudioConverter(from: inFormat, to: outFormat)
+            converterInputRate = inputRate
         }
-        guard let converter = conv,
+        guard let converter,
               let inBuffer = AVAudioPCMBuffer(pcmFormat: inFormat,
                                               frameCapacity: AVAudioFrameCount(input.count)),
               let channel = inBuffer.floatChannelData?[0] else { return [] }

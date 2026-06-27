@@ -649,10 +649,8 @@ extension MeetingView {
     func identifySpeakers() {
         speakerSummary = nil
         speakerError = nil
-        speakerLoading = true
+        speakerLoading = true        // main actor — let the loading sheet render immediately
         showSpeakerBreakdown = true
-        let samples = othersAudioSink.snapshot()
-        let offset = othersAudioSink.startOffset
         // Inline per-line labels need real start/end timestamps; only WhisperKit populates those. Use
         // the snapshot of the run's actual transcriber, not the live setting, so a post-start engine
         // change in Settings can't make this run's WhisperKit transcript lose labels (or vice versa).
@@ -664,7 +662,13 @@ extension MeetingView {
         // Snapshot the run token; if a start/restart bumps it while we await, this result is stale and
         // must not overwrite the new session's state.
         let token = diarizationRunToken
+        let sink = othersAudioSink   // reference type — safe to hand to a detached task
         Task {
+            // Take the ~460 MB samples copy OFF the main actor so the sheet renders first and the app
+            // never hangs on the button press. `startOffset` is read alongside it on the same thread.
+            let snapshot = await Task.detached { (samples: sink.snapshot(), offset: sink.startOffset) }.value
+            let samples = snapshot.samples
+            let offset = snapshot.offset
             do {
                 let outcome = try await diarizer.analyze(samples: samples)
                 guard token == diarizationRunToken else { return }   // superseded by a new run
