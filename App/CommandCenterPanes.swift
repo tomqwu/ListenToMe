@@ -9,62 +9,6 @@ import ListenToMeCore
 
 extension MeetingView {
 
-    // MARK: Left status rail
-
-    func statusRail(session: MeetingSession) -> some View {
-        @Bindable var session = session
-        return ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                RailRecStatus(isRunning: session.isRunning, elapsed: elapsedLabel)
-
-                railSection("Engine") {
-                    Text(CommandCenterLabels.engine(ProviderSettings.transcriptionEngine))
-                        .font(.system(size: 12.5)).foregroundStyle(Theme.ink)
-                    Picker("Language", selection: languageBinding(session: session)) {
-                        ForEach(Self.languageOptions, id: \.id) { Text($0.label).tag($0.id) }
-                    }
-                    .labelsHidden().controlSize(.small)
-                    .help("Transcription language — applies the next time you press Listen")
-                }
-
-                railSection("Proactive") {
-                    Toggle("Proactive replies", isOn: $session.proactiveEnabled)
-                        .controlSize(.small).labelsHidden()
-                        .toggleStyle(.switch)
-                        .help("Let Quick/Listener react automatically as the conversation flows")
-                }
-
-                railSection("Preset") {
-                    Picker("Preset", selection: presetBinding(session: session)) {
-                        ForEach(PresetCatalog.all) { Text($0.name).tag($0.id) }
-                    }
-                    .labelsHidden().controlSize(.small)
-                    .help("Use-case preset — fills Context notes and tailors the AI panes")
-                }
-
-                railSection("Models") {
-                    ForEach(CopilotRole.allCases, id: \.self) { role in
-                        modelPicker(role: role, session: session, label: railRoleName(role))
-                    }
-                }
-
-                railSection("Session") {
-                    StatRow(key: "turns", value: "\(store.utterances.count)")
-                    StatRow(key: "you / others", value: "\(youCount) / \(othersCount)")
-                    StatRow(key: "~tok", value: "\(approxTokens)")
-                }
-
-                if ProviderSettings.speakerDiarizationEnabled { speakersRailSection() }
-                Spacer(minLength: 0)
-            }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .frame(minWidth: 180, idealWidth: 210, maxWidth: 360)
-        .background(Theme.windowBackground)
-        .overlay(Rectangle().fill(Theme.line).frame(width: 1), alignment: .trailing)
-    }
-
     /// Experimental "Speakers" rail section: an on-demand button that diarizes the captured Others
     /// channel into distinct voices. Shown whenever the experimental setting is enabled (so it's
     /// discoverable), but the button is only usable when the current/most-recent run actually attached
@@ -136,7 +80,7 @@ extension MeetingView {
 
             transcriptInputZone(session: session, notes: notes)
         }
-        .frame(minWidth: 380, idealWidth: 520, maxWidth: .infinity)
+        .frame(minWidth: 300, idealWidth: 360, maxWidth: 520)
         .background(Theme.cardBackground)
         .overlay(Rectangle().fill(Theme.line).frame(width: 1), alignment: .trailing)
     }
@@ -200,46 +144,13 @@ extension MeetingView {
 
     private func transcriptInputZone(session: MeetingSession, notes: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Button { loadFromCalendar(session: session) } label: {
-                Label("Load from Calendar", systemImage: "calendar")
-            }
-            .controlSize(.small)
-            .help("Fill Context notes from your current or next calendar meeting")
             TextField("Context notes (injected into prompts)", text: notes, axis: .vertical)
                 .lineLimit(2...6)
                 .textFieldStyle(.roundedBorder)
-            referenceFilesRow(session: session)
         }
         .padding(12)
         .background(Theme.cardBackground2)
         .overlay(Rectangle().fill(Theme.line).frame(height: 1), alignment: .top)
-    }
-
-    // MARK: Right Copilot column
-
-    func copilotColumn(session: MeetingSession) -> some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 8) {
-                Text("Copilot")
-                    .font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ink)
-                Spacer()
-                Text("3 models")
-                    .font(.system(size: 10.5, design: .monospaced))
-                    .foregroundStyle(Theme.ink3)
-                    .padding(.horizontal, 8).padding(.vertical, 3)
-                    .background(RoundedRectangle(cornerRadius: 7).fill(Theme.chip))
-            }
-            .padding(.horizontal, 14).padding(.vertical, 9)
-            .overlay(Rectangle().fill(Theme.line).frame(height: 1), alignment: .bottom)
-
-            VSplitView {
-                listenerBox(session: session)
-                quickBox(session: session)
-                deepBox(session: session)
-            }
-        }
-        .frame(minWidth: 340)
-        .background(Theme.cardBackground)
     }
 
     private func listenerBox(session: MeetingSession) -> some View {
@@ -287,6 +198,28 @@ extension MeetingView {
                 Button("Deep answer") { Task { await session.respondDeep(.answerQuestion) } }
                     .controlSize(.small)
             })
+    }
+
+    // MARK: Cockpit panes (center Listener · right Quick · bottom Deep)
+
+    /// The live center pane — situational awareness. The prominent "where are we right now"
+    /// instrument; gets the accent ring so it reads as the cockpit's focal point.
+    func listenerCenter(session: MeetingSession) -> some View {
+        listenerBox(session: session)
+            .frame(minWidth: 360, idealWidth: 460, maxWidth: .infinity)
+    }
+
+    /// The right Quick-reply column.
+    func quickColumn(session: MeetingSession) -> some View {
+        quickBox(session: session)
+            .frame(minWidth: 280, idealWidth: 320, maxWidth: 440)
+    }
+
+    /// The full-width bottom strip: the on-request Deep answer.
+    func deepStrip(session: MeetingSession) -> some View {
+        deepBox(session: session)
+            .frame(maxWidth: .infinity)
+            .frame(minHeight: 90, idealHeight: 150)
     }
 
     // MARK: Shared model picker (rail) — same set/pin behavior as the old AIPaneView dropdown

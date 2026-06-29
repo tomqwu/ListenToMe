@@ -189,12 +189,17 @@ struct MeetingView: View {
                     .padding(.bottom, 4)
                     .background(Theme.windowBackground)
             }
-            // HSplitView so the user can drag the rail/transcript/copilot dividers; each column
-            // carries its own min/ideal/max width so the handles have room to move.
-            HSplitView {
-                statusRail(session: session)
-                transcriptColumn(session: session, notes: $session.notes)
-                copilotColumn(session: session)
+            // Cockpit grid: transcript (left) · live Listener (center) · Quick (right), with the Deep
+            // answer as a full-width bottom strip. Outer VSplitView lets the user resize the Deep
+            // height; the inner HSplitView keeps the three columns horizontally draggable (PR #50).
+            VSplitView {
+                HSplitView {
+                    transcriptColumn(session: session, notes: $session.notes)
+                    listenerCenter(session: session)
+                    quickColumn(session: session)
+                }
+                .frame(maxHeight: .infinity)
+                deepStrip(session: session)
             }
             .frame(maxHeight: .infinity)
             CommandCenterFooter(cloudActive: Self.ollamaKey() != nil)
