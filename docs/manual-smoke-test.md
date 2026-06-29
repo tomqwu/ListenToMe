@@ -8,15 +8,19 @@
 Prereq: Ollama running with at least one chat-capable model installed (local or Ollama-cloud, e.g.
 `deepseek-v4-flash:cloud`). The app auto-picks an installed model per pane on first launch.
 
-1. `make run` — the window opens with **four panes**: **Transcript** (left) and **Listener**,
-   **Quick**, **Deep** (right).
+1. `make run` — the window opens as a **cockpit**: **Transcript** (left), the live **Listener**
+   (center, accent-ringed), **Quick** (right), and a full-width **Deep** strip along the bottom.
+   The slim top bar shows **Listen**, the elapsed timer, the **preset** dropdown, and a ⚙
+   **Configure** popover (language, per-pane models, proactive, references, calendar, identify
+   speakers, session stats).
 2. On first launch, the app shows a **Permissions** panel automatically. Grant Microphone,
    Speech Recognition, Screen Recording (system audio), and Accessibility (global hotkey) directly
    from the panel. You can also reopen it anytime via the 🛡️ (lock.shield) toolbar button.
    Re-click **Listen** after granting if needed.
-3. In each AI pane's header, confirm a **model dropdown** is populated with your installed Ollama
-   models. Set different models per pane if you like (e.g. a fast model for **Quick**, a heavier one
-   for **Deep**, `deepseek-v4-flash:cloud` for any). The toolbar **↻** button re-scans models.
+3. Open the ⚙ **Configure** popover and confirm each role's **model dropdown** (listener / quick /
+   deep) is populated with your installed Ollama models. Set different models per role if you like
+   (e.g. a fast model for **Quick**, a heavier one for **Deep**). The toolbar **↻** button re-scans
+   models.
 4. Click **Listen**. Speak a sentence → it appears under **Transcript** labeled **You** (blue).
 5. Play speech from another app (a video/meeting) → it appears labeled **Others** (green).
 6. In the **Quick** pane, click **What should I answer?** → a streamed suggestion appears (a
