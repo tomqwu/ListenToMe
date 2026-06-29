@@ -76,29 +76,6 @@ struct CommandCenterFooter: View {
     }
 }
 
-/// A compact "REC mm:ss" pill with a pulsing dot for the rail. Shows nothing while idle.
-struct RailRecStatus: View {
-    let isRunning: Bool
-    let elapsed: String
-    var body: some View {
-        if isRunning {
-            HStack(spacing: 7) {
-                RecordingIndicator()
-                Text("REC \(elapsed)")
-                    .font(.system(size: 11.5, weight: .medium, design: .monospaced))
-                    .foregroundStyle(.red)
-            }
-        } else {
-            HStack(spacing: 7) {
-                Circle().fill(Theme.ink3).frame(width: 7, height: 7)
-                Text("IDLE")
-                    .font(.system(size: 11.5, weight: .medium, design: .monospaced))
-                    .foregroundStyle(Theme.ink3)
-            }
-        }
-    }
-}
-
 /// A dense Copilot role box for the right column. Header (colored role name + model name + streaming
 /// spinner + Copy), a scrolling Markdown body with sticky auto-scroll, and the role's action buttons.
 struct RoleBox<Header: View, Actions: View>: View {

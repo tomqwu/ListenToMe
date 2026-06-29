@@ -273,7 +273,7 @@ struct MeetingView: View {
         HStack(spacing: 12) {
             Button(wantsCapture ? "Stop" : "Listen") { toggleCapture(session: session) }
                 .buttonStyle(.borderedProminent)
-                .disabled(session.isTranscribingFile)
+                .disabled(session.isTranscribingFile)   // no live capture while importing a file
             if session.isRunning {
                 RecordingIndicator()
                 Text(elapsedLabel)
@@ -307,7 +307,7 @@ struct MeetingView: View {
                 .help("Refresh installed Ollama models")
             Button { importAudioFile(session: session) } label: { Image(systemName: "waveform") }
                 .help("Import an audio file and transcribe it")
-                .disabled(wantsCapture || session.isTranscribingFile)
+                .disabled(wantsCapture || session.isTranscribingFile)   // wantsCapture covers the restart window
             Menu {
                 Button("Full transcript (Markdown)…") { exportSession() }
                 Button("Recap (Markdown)…") { exportRecap() }
