@@ -60,7 +60,7 @@ extension MeetingView {
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(width: 210)
+        .frame(minWidth: 180, idealWidth: 210, maxWidth: 360)
         .background(Theme.windowBackground)
         .overlay(Rectangle().fill(Theme.line).frame(width: 1), alignment: .trailing)
     }
@@ -136,6 +136,7 @@ extension MeetingView {
 
             transcriptInputZone(session: session, notes: notes)
         }
+        .frame(minWidth: 380, idealWidth: 520, maxWidth: .infinity)
         .background(Theme.cardBackground)
         .overlay(Rectangle().fill(Theme.line).frame(width: 1), alignment: .trailing)
     }
