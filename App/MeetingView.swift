@@ -188,10 +188,11 @@ struct MeetingView: View {
                     .padding(.bottom, 4)
                     .background(Theme.windowBackground)
             }
-            HStack(spacing: 0) {
+            // HSplitView so the user can drag the rail/transcript/copilot dividers; each column
+            // carries its own min/ideal/max width so the handles have room to move.
+            HSplitView {
                 statusRail(session: session)
                 transcriptColumn(session: session, notes: $session.notes)
-                    .layoutPriority(1)
                 copilotColumn(session: session)
             }
             .frame(maxHeight: .infinity)
