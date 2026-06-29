@@ -6,3 +6,6 @@ DerivedData/
 .swiftpm/
 signing.local.mk
 dist/
+
+# Brainstorm visual companion (local mockups)
+.superpowers/
