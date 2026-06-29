@@ -42,10 +42,35 @@ enum Theme {
     static let cornerRadius: CGFloat = 12
     static let paneSpacing: CGFloat = 10
 
+    // MARK: Glass HUD
+
+    /// Translucent panel fill layered over `.ultraThinMaterial` for the "instrument cluster" look.
+    /// dark = deep navy at ~55% / light = white at ~60%.
+    static let glassPanelFill = dynamicA(light: nsColorA(1, 1, 1, 0.60),
+                                         dark: nsColorA(0.075, 0.086, 0.149, 0.55))
+    /// HUD panel hairline — a cool indigo so the dark panels read as glowing instruments. ≈ `#2b3a6b`.
+    static let glassStroke = dynamic(light: nsColor(0.882, 0.871, 0.933),
+                                     dark: nsColor(0.169, 0.227, 0.420))
+    /// Brighter stroke for emphasis / hover. ≈ `#3a4a8b`.
+    static let glassStrokeStrong = dynamic(light: nsColor(0.804, 0.792, 0.882),
+                                           dark: nsColor(0.227, 0.290, 0.545))
+
     // MARK: Helpers
 
     private static func nsColor(_ r: CGFloat, _ g: CGFloat, _ b: CGFloat) -> NSColor {
         NSColor(srgbRed: r, green: g, blue: b, alpha: 1)
+    }
+
+    private static func nsColorA(_ r: CGFloat, _ g: CGFloat, _ b: CGFloat, _ a: CGFloat) -> NSColor {
+        NSColor(srgbRed: r, green: g, blue: b, alpha: a)
+    }
+
+    /// Alpha-preserving variant of `dynamic(light:dark:)`.
+    private static func dynamicA(light: NSColor, dark: NSColor) -> Color {
+        Color(nsColor: NSColor(name: nil) { appearance in
+            let isDark = appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+            return isDark ? dark : light
+        })
     }
 
     /// A `Color` that resolves to `light` in light appearance and `dark` in dark appearance.
@@ -74,11 +99,44 @@ enum Theme {
                 )
         }
     }
+
+    /// Glass-HUD panel chrome: translucent fill over `.ultraThinMaterial`, a glowing indigo stroke,
+    /// and an outer shadow. `ring: true` is the emphasized treatment for the live center pane
+    /// (accent stroke + accent glow), used to mark "where we are right now".
+    struct HudPanel: ViewModifier {
+        var ring: Bool = false
+        var padding: CGFloat = Theme.paneSpacing
+
+        func body(content: Content) -> some View {
+            content
+                .padding(padding)
+                .background(
+                    RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+                                .fill(Theme.glassPanelFill)
+                        )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+                        .stroke(ring ? Theme.accent.opacity(0.9) : Theme.glassStroke,
+                                lineWidth: ring ? 1.5 : 1)
+                )
+                .shadow(color: (ring ? Theme.accent : Color.black).opacity(ring ? 0.30 : 0.22),
+                        radius: ring ? 22 : 12, y: ring ? 0 : 4)
+        }
+    }
 }
 
 extension View {
     /// Wraps the view in the standard `Theme` card chrome (fill + hairline stroke + padding).
     func paneCard(padding: CGFloat = Theme.paneSpacing) -> some View {
         modifier(Theme.PaneCard(padding: padding))
+    }
+
+    /// Wraps the view in the Glass-HUD panel chrome. `ring: true` for the live center pane.
+    func hudPanel(ring: Bool = false, padding: CGFloat = Theme.paneSpacing) -> some View {
+        modifier(Theme.HudPanel(ring: ring, padding: padding))
     }
 }
