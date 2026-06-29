@@ -204,7 +204,7 @@ struct MeetingView: View {
             .frame(maxHeight: .infinity)
             CommandCenterFooter(cloudActive: Self.ollamaKey() != nil)
         }
-        .background(Theme.windowBackground)
+        .background(Theme.windowGradient)
         .preferredColorScheme(colorScheme(for: appearance))
         .frame(minWidth: 1100, minHeight: 560)
         // Tick the elapsed timer once per second while recording.

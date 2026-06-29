@@ -55,6 +55,14 @@ enum Theme {
     static let glassStrokeStrong = dynamic(light: nsColor(0.804, 0.792, 0.882),
                                            dark: nsColor(0.227, 0.290, 0.545))
 
+    /// Subtle top-to-bottom depth behind the cockpit panels (deep spaceship backdrop).
+    static let windowGradient = LinearGradient(
+        colors: [
+            dynamic(light: nsColor(0.973, 0.969, 0.988), dark: nsColor(0.055, 0.063, 0.110)),
+            dynamic(light: nsColor(0.945, 0.941, 0.969), dark: nsColor(0.086, 0.094, 0.157))
+        ],
+        startPoint: .top, endPoint: .bottom)
+
     // MARK: Helpers
 
     private static func nsColor(_ r: CGFloat, _ g: CGFloat, _ b: CGFloat) -> NSColor {

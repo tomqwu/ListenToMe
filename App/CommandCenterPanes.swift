@@ -3,9 +3,9 @@ import ListenToMeCore
 
 // MARK: - Command-center panes (need MeetingView's private state)
 //
-// The left status rail, the center timestamped transcript, and the right Copilot column. These live
-// on `MeetingView` because they read/write its `@State`; the leaf views they compose are in
-// `CommandCenter.swift`.
+// Cockpit layout: transcript (left) · live Listener (center, focal pane) · Quick (right) · Deep
+// (full-width bottom strip). These live on `MeetingView` because they read/write its `@State`;
+// the leaf views they compose are in `CommandCenter.swift`.
 
 extension MeetingView {
 
@@ -81,8 +81,9 @@ extension MeetingView {
             transcriptInputZone(session: session, notes: notes)
         }
         .frame(minWidth: 300, idealWidth: 360, maxWidth: 520)
-        .background(Theme.cardBackground)
-        .overlay(Rectangle().fill(Theme.line).frame(width: 1), alignment: .trailing)
+        .background(.ultraThinMaterial)
+        .background(Theme.glassPanelFill)
+        .overlay(Rectangle().fill(Theme.glassStroke).frame(width: 1), alignment: .trailing)
     }
 
     private func transcriptScroll(session: MeetingSession) -> some View {
@@ -206,18 +207,24 @@ extension MeetingView {
     /// instrument; gets the accent ring so it reads as the cockpit's focal point.
     func listenerCenter(session: MeetingSession) -> some View {
         listenerBox(session: session)
+            .hudPanel(ring: true, padding: 4)
+            .padding(6)
             .frame(minWidth: 360, idealWidth: 460, maxWidth: .infinity)
     }
 
     /// The right Quick-reply column.
     func quickColumn(session: MeetingSession) -> some View {
         quickBox(session: session)
+            .hudPanel(padding: 4)
+            .padding(6)
             .frame(minWidth: 280, idealWidth: 320, maxWidth: 440)
     }
 
     /// The full-width bottom strip: the on-request Deep answer.
     func deepStrip(session: MeetingSession) -> some View {
         deepBox(session: session)
+            .hudPanel(padding: 4)
+            .padding(6)
             .frame(maxWidth: .infinity)
             .frame(minHeight: 90, idealHeight: 150)
     }
