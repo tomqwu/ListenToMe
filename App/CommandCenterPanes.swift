@@ -71,7 +71,7 @@ extension MeetingView {
     /// the Others sink — i.e. the setting was on when that run pressed Listen. Toggling the setting on
     /// mid-run does NOT enable it, because this run's capture was built with `othersSink: nil` and its
     /// buffer is empty/stale.
-    private func speakersRailSection() -> some View {
+    func speakersRailSection() -> some View {
         railSection("Speakers") {
             Button { identifySpeakers() } label: {
                 Label("Identify speakers", systemImage: "person.2.wave.2")
@@ -84,7 +84,7 @@ extension MeetingView {
         }
     }
 
-    private func railSection<Content: View>(
+    func railSection<Content: View>(
         _ title: String, @ViewBuilder content: () -> Content
     ) -> some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -93,7 +93,7 @@ extension MeetingView {
         }
     }
 
-    private func railRoleName(_ role: CopilotRole) -> String {
+    func railRoleName(_ role: CopilotRole) -> String {
         switch role {
         case .listener: return "listener"
         case .quick: return "quick"
@@ -102,10 +102,10 @@ extension MeetingView {
     }
 
     // Real-only session stats.
-    private var youCount: Int { store.utterances.filter { $0.source == .you }.count }
-    private var othersCount: Int { store.utterances.filter { $0.source == .others }.count }
+    var youCount: Int { store.utterances.filter { $0.source == .you }.count }
+    var othersCount: Int { store.utterances.filter { $0.source == .others }.count }
     /// Explicit ~chars/4 estimate (labeled "~tok"), never a fabricated exact count.
-    private var approxTokens: Int { store.utterances.reduce(0) { $0 + $1.text.count } / 4 }
+    var approxTokens: Int { store.utterances.reduce(0) { $0 + $1.text.count } / 4 }
 
     // MARK: Center transcript
 
@@ -315,7 +315,7 @@ extension MeetingView {
 
     // MARK: Bindings that carry the original onChange side effects
 
-    private func languageBinding(session: MeetingSession) -> Binding<String> {
+    func languageBinding(session: MeetingSession) -> Binding<String> {
         Binding(
             get: { transcriptionLocaleID },
             set: { newValue in
@@ -328,7 +328,7 @@ extension MeetingView {
             })
     }
 
-    private func presetBinding(session: MeetingSession) -> Binding<String> {
+    func presetBinding(session: MeetingSession) -> Binding<String> {
         Binding(
             get: { presetID },
             set: { newID in
