@@ -6,7 +6,7 @@ import XCTest
 /// A URLProtocol subclass that intercepts all requests and returns canned responses.
 /// Uses `nonisolated(unsafe)` static mutable state so it is safe under Swift 6 strict
 /// concurrency, given that tests set the handler before making any URLSession calls.
-final class DeepSeekStubURLProtocol: URLProtocol, @unchecked Sendable {
+final class OpenAICompatibleStubURLProtocol: URLProtocol, @unchecked Sendable {
     /// Per-test handler. Set this before creating the session / provider.
     nonisolated(unsafe) static var handler: ((URLRequest) throws -> (HTTPURLResponse, Data))?
 
@@ -14,9 +14,9 @@ final class DeepSeekStubURLProtocol: URLProtocol, @unchecked Sendable {
     override static func canonicalRequest(for request: URLRequest) -> URLRequest { request }
 
     override func startLoading() {
-        guard let handler = DeepSeekStubURLProtocol.handler else {
+        guard let handler = OpenAICompatibleStubURLProtocol.handler else {
             client?.urlProtocol(self,
-                didFailWithError: NSError(domain: "DeepSeekStubURLProtocol", code: -1,
+                didFailWithError: NSError(domain: "OpenAICompatibleStubURLProtocol", code: -1,
                     userInfo: [NSLocalizedDescriptionKey: "No handler set"]))
             return
         }
@@ -35,30 +35,30 @@ final class DeepSeekStubURLProtocol: URLProtocol, @unchecked Sendable {
 
 // MARK: - Helpers
 
-private func makeDeepSeekStubSession() -> URLSession {
+private func makeStubSession() -> URLSession {
     let config = URLSessionConfiguration.ephemeral
-    config.protocolClasses = [DeepSeekStubURLProtocol.self]
+    config.protocolClasses = [OpenAICompatibleStubURLProtocol.self]
     return URLSession(configuration: config)
 }
 
-private func makeDeepSeekProvider(
-    model: String = "deepseek-v4-flash",
-    apiKey: String = "test-key",
+private func makeProvider(
+    model: String = "test-model",
+    apiKey: String? = "test-key",
     baseURL: URL = URL(string: "http://stub.local")!,
     session: URLSession
-) -> DeepSeekProvider {
-    DeepSeekProvider(model: model, apiKey: apiKey, baseURL: baseURL, urlSession: session)
+) -> OpenAICompatibleProvider {
+    OpenAICompatibleProvider(model: model, apiKey: apiKey, baseURL: baseURL, urlSession: session)
 }
 
-private func deepSeekSampleRequest() -> LLMRequest {
+private func sampleRequest() -> LLMRequest {
     LLMRequest(system: "sys", messages: [ChatMessage(role: "user", content: "hello")])
 }
 
 // MARK: - Tests
 
-final class DeepSeekProviderTests: XCTestCase {
+final class OpenAICompatibleProviderTests: XCTestCase {
     override func tearDown() {
-        DeepSeekStubURLProtocol.handler = nil
+        OpenAICompatibleStubURLProtocol.handler = nil
         super.tearDown()
     }
 
@@ -66,42 +66,42 @@ final class DeepSeekProviderTests: XCTestCase {
 
     func testParserExtractsDeltaContent() {
         let line = #"data: {"choices":[{"delta":{"content":"Hello"}}]}"#
-        XCTAssertEqual(DeepSeekParser.delta(fromLine: line), "Hello")
+        XCTAssertEqual(OpenAICompatibleParser.delta(fromLine: line), "Hello")
     }
 
     // MARK: 2. Parser returns nil for [DONE], non-json, and no delta content
 
     func testParserReturnsNilForDone() {
-        XCTAssertNil(DeepSeekParser.delta(fromLine: "data: [DONE]"))
+        XCTAssertNil(OpenAICompatibleParser.delta(fromLine: "data: [DONE]"))
     }
 
     func testParserReturnsNilForNonJson() {
-        XCTAssertNil(DeepSeekParser.delta(fromLine: "data: not-json"))
+        XCTAssertNil(OpenAICompatibleParser.delta(fromLine: "data: not-json"))
     }
 
     func testParserReturnsNilForNoDeltaContent() {
         let line = #"data: {"choices":[{"delta":{}}]}"#
-        XCTAssertNil(DeepSeekParser.delta(fromLine: line))
+        XCTAssertNil(OpenAICompatibleParser.delta(fromLine: line))
     }
 
     // MARK: 3. isDone
 
     func testIsDoneTrueForDoneLine() {
-        XCTAssertTrue(DeepSeekParser.isDone(line: "data: [DONE]"))
-        XCTAssertTrue(DeepSeekParser.isDone(line: "data:[DONE]"))
+        XCTAssertTrue(OpenAICompatibleParser.isDone(line: "data: [DONE]"))
+        XCTAssertTrue(OpenAICompatibleParser.isDone(line: "data:[DONE]"))
     }
 
     func testIsDoneFalseForOtherLines() {
-        XCTAssertFalse(DeepSeekParser.isDone(line: #"data: {"choices":[]}"#))
-        XCTAssertFalse(DeepSeekParser.isDone(line: ""))
-        XCTAssertFalse(DeepSeekParser.isDone(line: "garbage"))
+        XCTAssertFalse(OpenAICompatibleParser.isDone(line: #"data: {"choices":[]}"#))
+        XCTAssertFalse(OpenAICompatibleParser.isDone(line: ""))
+        XCTAssertFalse(OpenAICompatibleParser.isDone(line: "garbage"))
     }
 
     // MARK: 4. requestBody encodes model, stream, system + user messages
 
     func testRequestBodyEncodesModelMessagesAndStream() throws {
         let req = LLMRequest(system: "SYS", messages: [ChatMessage(role: "user", content: "hi")])
-        let data = DeepSeekProvider.requestBody(model: "deepseek-v4-flash", request: req)
+        let data = OpenAICompatibleProvider.requestBody(model: "deepseek-v4-flash", request: req)
         let obj = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
         XCTAssertEqual(obj["model"] as? String, "deepseek-v4-flash")
         XCTAssertEqual(obj["stream"] as? Bool, true)
@@ -121,7 +121,7 @@ final class DeepSeekProviderTests: XCTestCase {
             "data: [DONE]",
             #"data: {"choices":[{"delta":{"content":"IGNORED"}}]}"#
         ]
-        let provider = DeepSeekProvider(
+        let provider = OpenAICompatibleProvider(
             model: "m", apiKey: "key",
             baseURL: URL(string: "http://x")!
         ) { _ in
@@ -147,7 +147,7 @@ final class DeepSeekProviderTests: XCTestCase {
             "data: [DONE]"
         ].joined(separator: "\n")
 
-        DeepSeekStubURLProtocol.handler = { _ in
+        OpenAICompatibleStubURLProtocol.handler = { _ in
             let response = HTTPURLResponse(
                 url: URL(string: "http://stub.local/chat/completions")!,
                 statusCode: 200,
@@ -156,9 +156,9 @@ final class DeepSeekProviderTests: XCTestCase {
             return (response, Data(sseBody.utf8))
         }
 
-        let provider = makeDeepSeekProvider(session: makeDeepSeekStubSession())
+        let provider = makeProvider(session: makeStubSession())
         var collected = ""
-        for try await delta in provider.stream(deepSeekSampleRequest()) {
+        for try await delta in provider.stream(sampleRequest()) {
             collected += delta
         }
         XCTAssertEqual(collected, "Hello")
@@ -167,7 +167,7 @@ final class DeepSeekProviderTests: XCTestCase {
     // MARK: 6b. Live transport: HTTP 401 → stream throws
 
     func testLivePathThrowsOnNon2xxResponse() async throws {
-        DeepSeekStubURLProtocol.handler = { _ in
+        OpenAICompatibleStubURLProtocol.handler = { _ in
             let response = HTTPURLResponse(
                 url: URL(string: "http://stub.local/chat/completions")!,
                 statusCode: 401,
@@ -176,15 +176,15 @@ final class DeepSeekProviderTests: XCTestCase {
             return (response, Data())
         }
 
-        let provider = makeDeepSeekProvider(session: makeDeepSeekStubSession())
+        let provider = makeProvider(session: makeStubSession())
         var thrownError: Error?
         do {
-            for try await _ in provider.stream(deepSeekSampleRequest()) {}
+            for try await _ in provider.stream(sampleRequest()) {}
         } catch {
             thrownError = error
         }
         let err = try XCTUnwrap(thrownError as? NSError)
-        XCTAssertEqual(err.domain, "DeepSeek")
+        XCTAssertEqual(err.domain, "OpenAICompatible")
         XCTAssertEqual(err.code, 401)
     }
 
@@ -195,7 +195,7 @@ final class DeepSeekProviderTests: XCTestCase {
         var capturedRequest: URLRequest?
 
         let sseBody = "data: [DONE]"
-        DeepSeekStubURLProtocol.handler = { request in
+        OpenAICompatibleStubURLProtocol.handler = { request in
             capturedRequest = request
             let response = HTTPURLResponse(
                 url: URL(string: "http://stub.local/chat/completions")!,
@@ -205,11 +205,28 @@ final class DeepSeekProviderTests: XCTestCase {
             return (response, Data(sseBody.utf8))
         }
 
-        let provider = makeDeepSeekProvider(apiKey: expectedKey, session: makeDeepSeekStubSession())
-        for try await _ in provider.stream(deepSeekSampleRequest()) {}
+        let provider = makeProvider(apiKey: expectedKey, session: makeStubSession())
+        for try await _ in provider.stream(sampleRequest()) {}
 
         let req = try XCTUnwrap(capturedRequest)
         XCTAssertEqual(req.value(forHTTPHeaderField: "Authorization"), "Bearer \(expectedKey)")
+    }
+
+    // MARK: 9. No apiKey → no Authorization header (local servers need none)
+
+    func testLiveRequestOmitsAuthWhenNoKey() async throws {
+        var capturedRequest: URLRequest?
+        OpenAICompatibleStubURLProtocol.handler = { request in
+            capturedRequest = request
+            let response = HTTPURLResponse(
+                url: URL(string: "http://stub.local/chat/completions")!,
+                statusCode: 200, httpVersion: nil, headerFields: nil)!
+            return (response, Data("data: [DONE]".utf8))
+        }
+        let provider = makeProvider(apiKey: nil, session: makeStubSession())
+        for try await _ in provider.stream(sampleRequest()) {}
+        let req = try XCTUnwrap(capturedRequest)
+        XCTAssertNil(req.value(forHTTPHeaderField: "Authorization"))
     }
 
     // MARK: 8. Live request body contains model name (reads via httpBodyStream)
@@ -219,7 +236,7 @@ final class DeepSeekProviderTests: XCTestCase {
         var capturedBody: Data?
 
         let sseBody = "data: [DONE]"
-        DeepSeekStubURLProtocol.handler = { request in
+        OpenAICompatibleStubURLProtocol.handler = { request in
             if let data = request.httpBody {
                 capturedBody = data
             } else if let stream = request.httpBodyStream {
@@ -245,8 +262,8 @@ final class DeepSeekProviderTests: XCTestCase {
             return (response, Data(sseBody.utf8))
         }
 
-        let provider = makeDeepSeekProvider(model: expectedModel, session: makeDeepSeekStubSession())
-        for try await _ in provider.stream(deepSeekSampleRequest()) {}
+        let provider = makeProvider(model: expectedModel, session: makeStubSession())
+        for try await _ in provider.stream(sampleRequest()) {}
 
         let body = try XCTUnwrap(capturedBody)
         let obj = try XCTUnwrap(JSONSerialization.jsonObject(with: body) as? [String: Any])
