@@ -1,7 +1,7 @@
 import SwiftUI
 import ListenToMeCore
 
-/// UserDefaults-backed model selection. Ollama-only.
+/// UserDefaults-backed model + backend selection (Ollama or an OpenAI-compatible endpoint).
 enum ProviderSettings {
     static var ollamaModel: String {
         get { UserDefaults.standard.string(forKey: "ollamaModel") ?? "llama3.1" }

@@ -745,7 +745,7 @@ extension MeetingView {
         }
     }
 
-    /// Reloads the installed Ollama chat models into the per-pane pickers.
+    /// Reloads the current backend's chat models into the per-pane pickers.
     func reloadModels() async {
         chatModels = await Self.discoverModels()
     }
