@@ -287,7 +287,7 @@ struct SettingsView: View {
         if !saveSessions { SessionStore().clear() }
         KeychainStore.set(ollamaKey.isEmpty ? nil : ollamaKey, for: "ollama")
         ProviderSettings.aiBackend = aiBackend
-        ProviderSettings.openAIBaseURL = openAIBaseURL
+        ProviderSettings.openAIBaseURL = openAIBaseURL.trimmingCharacters(in: .whitespacesAndNewlines)
         KeychainStore.set(openAIKey.isEmpty ? nil : openAIKey, for: "openai-compatible")
         dismiss()
     }

@@ -184,6 +184,8 @@ struct MeetingView: View {
     /// Builds the per-pane provider for the currently-selected AI backend. Reads settings live so a
     /// backend change in Settings applies on the next provider rebuild (Settings dismiss → reloadAndHealModels).
     static func buildProvider(model: String) -> any LLMProvider {
+        // OpenAI backend only when a base URL is set. A non-empty but malformed URL intentionally
+        // still takes the OpenAI path and fails visibly in the pane — we never silently fall back.
         if ProviderSettings.aiBackend == "openai",
            !ProviderSettings.openAIBaseURL.isEmpty,
            let url = URL(string: ProviderSettings.openAIBaseURL) {
