@@ -46,10 +46,9 @@ enum ProviderSettings {
         set { UserDefaults.standard.set(newValue, forKey: "referenceBudget") }
     }
 
-    /// App appearance: "system" / "light" / "dark". Defaults to "dark" (the command-center
-    /// direction is dark-native), but light stays fully usable.
+    /// App appearance: "system" / "light" / "dark". Defaults to "system" (follows the OS appearance).
     static var appearance: String {
-        get { UserDefaults.standard.string(forKey: "appearance") ?? "dark" }
+        get { UserDefaults.standard.string(forKey: "appearance") ?? "system" }
         set { UserDefaults.standard.set(newValue, forKey: "appearance") }
     }
 
@@ -156,7 +155,7 @@ struct SettingsView: View {
                 Text("Dark").tag("dark")
             }
             .pickerStyle(.segmented)
-            Text("ListenToMe defaults to the dark command-center look. Choose System to follow macOS.")
+            Text("ListenToMe follows the system appearance by default. Choose Light or Dark to override.")
                 .font(.caption).foregroundStyle(.secondary)
 
             Divider()

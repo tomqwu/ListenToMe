@@ -81,9 +81,8 @@ extension MeetingView {
             transcriptInputZone(session: session, notes: notes)
         }
         .frame(minWidth: 300, idealWidth: 360, maxWidth: 520)
-        .background(.ultraThinMaterial)
-        .background(Theme.glassPanelFill)
-        .overlay(Rectangle().fill(Theme.glassStroke).frame(width: 1), alignment: .trailing)
+        .background(Theme.sidebarBackground)
+        .overlay(Rectangle().fill(Theme.line).frame(width: 1), alignment: .trailing)
     }
 
     private func transcriptScroll(session: MeetingSession) -> some View {
@@ -207,7 +206,7 @@ extension MeetingView {
     /// instrument; gets the accent ring so it reads as the cockpit's focal point.
     func listenerCenter(session: MeetingSession) -> some View {
         listenerBox(session: session)
-            .hudPanel(ring: true, padding: 4)
+            .macCard(focal: true, padding: 4)
             .padding(6)
             .frame(minWidth: 360, idealWidth: 460, maxWidth: .infinity)
     }
@@ -215,7 +214,7 @@ extension MeetingView {
     /// The right Quick-reply column.
     func quickColumn(session: MeetingSession) -> some View {
         quickBox(session: session)
-            .hudPanel(padding: 4)
+            .macCard(padding: 4)
             .padding(6)
             .frame(minWidth: 280, idealWidth: 320, maxWidth: 440)
     }
@@ -223,7 +222,7 @@ extension MeetingView {
     /// The full-width bottom strip: the on-request Deep answer.
     func deepStrip(session: MeetingSession) -> some View {
         deepBox(session: session)
-            .hudPanel(padding: 4)
+            .macCard(padding: 4)
             .padding(6)
             .frame(maxWidth: .infinity)
             .frame(minHeight: 90, idealHeight: 150)
