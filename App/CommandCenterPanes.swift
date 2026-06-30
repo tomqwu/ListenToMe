@@ -3,67 +3,11 @@ import ListenToMeCore
 
 // MARK: - Command-center panes (need MeetingView's private state)
 //
-// The left status rail, the center timestamped transcript, and the right Copilot column. These live
-// on `MeetingView` because they read/write its `@State`; the leaf views they compose are in
-// `CommandCenter.swift`.
+// Cockpit layout: transcript (left) · live Listener (center, focal pane) · Quick (right) · Deep
+// (full-width bottom strip). These live on `MeetingView` because they read/write its `@State`;
+// the leaf views they compose are in `CommandCenter.swift`.
 
 extension MeetingView {
-
-    // MARK: Left status rail
-
-    func statusRail(session: MeetingSession) -> some View {
-        @Bindable var session = session
-        return ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                RailRecStatus(isRunning: session.isRunning, elapsed: elapsedLabel)
-
-                railSection("Engine") {
-                    Text(CommandCenterLabels.engine(ProviderSettings.transcriptionEngine))
-                        .font(.system(size: 12.5)).foregroundStyle(Theme.ink)
-                    Picker("Language", selection: languageBinding(session: session)) {
-                        ForEach(Self.languageOptions, id: \.id) { Text($0.label).tag($0.id) }
-                    }
-                    .labelsHidden().controlSize(.small)
-                    .help("Transcription language — applies the next time you press Listen")
-                }
-
-                railSection("Proactive") {
-                    Toggle("Proactive replies", isOn: $session.proactiveEnabled)
-                        .controlSize(.small).labelsHidden()
-                        .toggleStyle(.switch)
-                        .help("Let Quick/Listener react automatically as the conversation flows")
-                }
-
-                railSection("Preset") {
-                    Picker("Preset", selection: presetBinding(session: session)) {
-                        ForEach(PresetCatalog.all) { Text($0.name).tag($0.id) }
-                    }
-                    .labelsHidden().controlSize(.small)
-                    .help("Use-case preset — fills Context notes and tailors the AI panes")
-                }
-
-                railSection("Models") {
-                    ForEach(CopilotRole.allCases, id: \.self) { role in
-                        modelPicker(role: role, session: session, label: railRoleName(role))
-                    }
-                }
-
-                railSection("Session") {
-                    StatRow(key: "turns", value: "\(store.utterances.count)")
-                    StatRow(key: "you / others", value: "\(youCount) / \(othersCount)")
-                    StatRow(key: "~tok", value: "\(approxTokens)")
-                }
-
-                if ProviderSettings.speakerDiarizationEnabled { speakersRailSection() }
-                Spacer(minLength: 0)
-            }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .frame(minWidth: 180, idealWidth: 210, maxWidth: 360)
-        .background(Theme.windowBackground)
-        .overlay(Rectangle().fill(Theme.line).frame(width: 1), alignment: .trailing)
-    }
 
     /// Experimental "Speakers" rail section: an on-demand button that diarizes the captured Others
     /// channel into distinct voices. Shown whenever the experimental setting is enabled (so it's
@@ -71,7 +15,7 @@ extension MeetingView {
     /// the Others sink — i.e. the setting was on when that run pressed Listen. Toggling the setting on
     /// mid-run does NOT enable it, because this run's capture was built with `othersSink: nil` and its
     /// buffer is empty/stale.
-    private func speakersRailSection() -> some View {
+    func speakersRailSection() -> some View {
         railSection("Speakers") {
             Button { identifySpeakers() } label: {
                 Label("Identify speakers", systemImage: "person.2.wave.2")
@@ -84,7 +28,7 @@ extension MeetingView {
         }
     }
 
-    private func railSection<Content: View>(
+    func railSection<Content: View>(
         _ title: String, @ViewBuilder content: () -> Content
     ) -> some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -93,7 +37,7 @@ extension MeetingView {
         }
     }
 
-    private func railRoleName(_ role: CopilotRole) -> String {
+    func railRoleName(_ role: CopilotRole) -> String {
         switch role {
         case .listener: return "listener"
         case .quick: return "quick"
@@ -102,10 +46,10 @@ extension MeetingView {
     }
 
     // Real-only session stats.
-    private var youCount: Int { store.utterances.filter { $0.source == .you }.count }
-    private var othersCount: Int { store.utterances.filter { $0.source == .others }.count }
+    var youCount: Int { store.utterances.filter { $0.source == .you }.count }
+    var othersCount: Int { store.utterances.filter { $0.source == .others }.count }
     /// Explicit ~chars/4 estimate (labeled "~tok"), never a fabricated exact count.
-    private var approxTokens: Int { store.utterances.reduce(0) { $0 + $1.text.count } / 4 }
+    var approxTokens: Int { store.utterances.reduce(0) { $0 + $1.text.count } / 4 }
 
     // MARK: Center transcript
 
@@ -136,8 +80,8 @@ extension MeetingView {
 
             transcriptInputZone(session: session, notes: notes)
         }
-        .frame(minWidth: 380, idealWidth: 520, maxWidth: .infinity)
-        .background(Theme.cardBackground)
+        .frame(minWidth: 300, idealWidth: 360, maxWidth: 520)
+        .background(Theme.sidebarBackground)
         .overlay(Rectangle().fill(Theme.line).frame(width: 1), alignment: .trailing)
     }
 
@@ -200,46 +144,13 @@ extension MeetingView {
 
     private func transcriptInputZone(session: MeetingSession, notes: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Button { loadFromCalendar(session: session) } label: {
-                Label("Load from Calendar", systemImage: "calendar")
-            }
-            .controlSize(.small)
-            .help("Fill Context notes from your current or next calendar meeting")
             TextField("Context notes (injected into prompts)", text: notes, axis: .vertical)
                 .lineLimit(2...6)
                 .textFieldStyle(.roundedBorder)
-            referenceFilesRow(session: session)
         }
         .padding(12)
         .background(Theme.cardBackground2)
         .overlay(Rectangle().fill(Theme.line).frame(height: 1), alignment: .top)
-    }
-
-    // MARK: Right Copilot column
-
-    func copilotColumn(session: MeetingSession) -> some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 8) {
-                Text("Copilot")
-                    .font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ink)
-                Spacer()
-                Text("3 models")
-                    .font(.system(size: 10.5, design: .monospaced))
-                    .foregroundStyle(Theme.ink3)
-                    .padding(.horizontal, 8).padding(.vertical, 3)
-                    .background(RoundedRectangle(cornerRadius: 7).fill(Theme.chip))
-            }
-            .padding(.horizontal, 14).padding(.vertical, 9)
-            .overlay(Rectangle().fill(Theme.line).frame(height: 1), alignment: .bottom)
-
-            VSplitView {
-                listenerBox(session: session)
-                quickBox(session: session)
-                deepBox(session: session)
-            }
-        }
-        .frame(minWidth: 340)
-        .background(Theme.cardBackground)
     }
 
     private func listenerBox(session: MeetingSession) -> some View {
@@ -289,6 +200,34 @@ extension MeetingView {
             })
     }
 
+    // MARK: Cockpit panes (center Listener · right Quick · bottom Deep)
+
+    /// The live center pane — situational awareness. The prominent "where are we right now"
+    /// instrument; gets the accent ring so it reads as the cockpit's focal point.
+    func listenerCenter(session: MeetingSession) -> some View {
+        listenerBox(session: session)
+            .macCard(focal: true, padding: 4)
+            .padding(6)
+            .frame(minWidth: 360, idealWidth: 460, maxWidth: .infinity)
+    }
+
+    /// The right Quick-reply column.
+    func quickColumn(session: MeetingSession) -> some View {
+        quickBox(session: session)
+            .macCard(padding: 4)
+            .padding(6)
+            .frame(minWidth: 280, idealWidth: 320, maxWidth: 440)
+    }
+
+    /// The full-width bottom strip: the on-request Deep answer.
+    func deepStrip(session: MeetingSession) -> some View {
+        deepBox(session: session)
+            .macCard(padding: 4)
+            .padding(6)
+            .frame(maxWidth: .infinity)
+            .frame(minHeight: 90, idealHeight: 150)
+    }
+
     // MARK: Shared model picker (rail) — same set/pin behavior as the old AIPaneView dropdown
 
     private func modelOptions(role: CopilotRole, session: MeetingSession) -> [String] {
@@ -315,7 +254,7 @@ extension MeetingView {
 
     // MARK: Bindings that carry the original onChange side effects
 
-    private func languageBinding(session: MeetingSession) -> Binding<String> {
+    func languageBinding(session: MeetingSession) -> Binding<String> {
         Binding(
             get: { transcriptionLocaleID },
             set: { newValue in
@@ -328,7 +267,7 @@ extension MeetingView {
             })
     }
 
-    private func presetBinding(session: MeetingSession) -> Binding<String> {
+    func presetBinding(session: MeetingSession) -> Binding<String> {
         Binding(
             get: { presetID },
             set: { newID in

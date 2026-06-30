@@ -15,6 +15,7 @@ struct MeetingView: View {
     @State private var showPermissions = false
     @State private var showOnboarding = false
     @State private var showSearch = false
+    @State private var showConfigure = false
     @State private var sessionStore = SessionStore()
     /// Identity of this app-window's session. Reused across Listen→Stop cycles so repeated Stops
     /// upsert one growing record instead of writing a fresh superset each time.
@@ -179,7 +180,7 @@ struct MeetingView: View {
     var body: some View {
         @Bindable var session = session
         return VStack(spacing: 0) {
-            topControlBar(session: session, showPermissions: $showPermissions)
+            slimTopBar(session: session, showPermissions: $showPermissions)
             if let startError {
                 Text("⚠️ \(startError)")
                     .foregroundStyle(.red)
@@ -188,12 +189,17 @@ struct MeetingView: View {
                     .padding(.bottom, 4)
                     .background(Theme.windowBackground)
             }
-            // HSplitView so the user can drag the rail/transcript/copilot dividers; each column
-            // carries its own min/ideal/max width so the handles have room to move.
-            HSplitView {
-                statusRail(session: session)
-                transcriptColumn(session: session, notes: $session.notes)
-                copilotColumn(session: session)
+            // Cockpit grid: transcript (left) · live Listener (center) · Quick (right), with the Deep
+            // answer as a full-width bottom strip. Outer VSplitView lets the user resize the Deep
+            // height; the inner HSplitView keeps the three columns horizontally draggable (PR #50).
+            VSplitView {
+                HSplitView {
+                    transcriptColumn(session: session, notes: $session.notes)
+                    listenerCenter(session: session)
+                    quickColumn(session: session)
+                }
+                .frame(maxHeight: .infinity)
+                deepStrip(session: session)
             }
             .frame(maxHeight: .infinity)
             CommandCenterFooter(cloudActive: Self.ollamaKey() != nil)
@@ -257,12 +263,13 @@ struct MeetingView: View {
         .onDisappear { tearDownOnDisappear(session: session) }
     }
 
-    // MARK: - Top control bar
+    // MARK: - Slim top bar (cockpit)
 
-    /// Replaces the old icon-row toolbar: Listen/Stop + pulsing indicator + elapsed timer on the
-    /// left; the same icon actions that existed before on the right (refresh-models, import audio,
-    /// export menu, copy-session, search, permissions, settings).
-    private func topControlBar(session: MeetingSession, showPermissions: Binding<Bool>) -> some View {
+    /// The cockpit's slim control strip. Always visible: Listen/Stop + elapsed timer + the current
+    /// preset. A single ⚙ Configure popover holds the deeper controls (language / proactive / models /
+    /// references / calendar / identify speakers / stats). The familiar icon actions (refresh-models,
+    /// import, export, copy, search, permissions, settings) stay on the right so nothing is lost.
+    private func slimTopBar(session: MeetingSession, showPermissions: Binding<Bool>) -> some View {
         HStack(spacing: 12) {
             Button(wantsCapture ? "Stop" : "Listen") { toggleCapture(session: session) }
                 .buttonStyle(.borderedProminent)
@@ -277,7 +284,25 @@ struct MeetingView: View {
                 ProgressView().controlSize(.small)
                 Text("Transcribing…").foregroundStyle(Theme.ink2)
             }
+
+            Divider().frame(height: 18)
+
+            Picker("Preset", selection: presetBinding(session: session)) {
+                ForEach(PresetCatalog.all) { Text($0.name).tag($0.id) }
+            }
+            .labelsHidden().controlSize(.small).fixedSize()
+            .help("Use-case preset — fills Context notes and tailors the AI panes")
+
+            Button { showConfigure = true } label: {
+                Label("Configure", systemImage: "slider.horizontal.3")
+            }
+            .help("Models, language, proactive, references, speakers…")
+            .popover(isPresented: $showConfigure, arrowEdge: .bottom) {
+                configurePopover(session: session)
+            }
+
             Spacer()
+
             Button { Task { await reloadModels() } } label: { Image(systemName: "arrow.clockwise") }
                 .help("Refresh installed Ollama models")
             Button { importAudioFile(session: session) } label: { Image(systemName: "waveform") }
