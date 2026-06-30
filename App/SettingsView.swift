@@ -7,6 +7,16 @@ enum ProviderSettings {
         get { UserDefaults.standard.string(forKey: "ollamaModel") ?? "llama3.1" }
         set { UserDefaults.standard.set(newValue, forKey: "ollamaModel") }
     }
+    /// Which AI backend the panes use: "ollama" (default) or "openai" (an OpenAI-compatible endpoint).
+    static var aiBackend: String {
+        get { UserDefaults.standard.string(forKey: "aiBackend") ?? "ollama" }
+        set { UserDefaults.standard.set(newValue, forKey: "aiBackend") }
+    }
+    /// Base URL for the OpenAI-compatible endpoint, including `/v1` (e.g. http://localhost:1234/v1).
+    static var openAIBaseURL: String {
+        get { UserDefaults.standard.string(forKey: "openAIBaseURL") ?? "" }
+        set { UserDefaults.standard.set(newValue, forKey: "openAIBaseURL") }
+    }
     static var transcriptionEngine: String {
         get { UserDefaults.standard.string(forKey: "transcriptionEngine") ?? "speechAnalyzer" }
         set { UserDefaults.standard.set(newValue, forKey: "transcriptionEngine") }
@@ -135,6 +145,9 @@ struct SettingsView: View {
     @State private var saveSessions: Bool
     @State private var appearance: String
     @State private var speakerDiarization: Bool
+    @State private var aiBackend: String
+    @State private var openAIBaseURL: String
+    @State private var openAIKey: String
 
     init() {
         _engine = State(initialValue: ProviderSettings.transcriptionEngine)
@@ -144,6 +157,9 @@ struct SettingsView: View {
         _saveSessions = State(initialValue: ProviderSettings.saveSessionsForSearch)
         _appearance = State(initialValue: ProviderSettings.appearance)
         _speakerDiarization = State(initialValue: ProviderSettings.speakerDiarizationEnabled)
+        _aiBackend = State(initialValue: ProviderSettings.aiBackend)
+        _openAIBaseURL = State(initialValue: ProviderSettings.openAIBaseURL)
+        _openAIKey = State(initialValue: KeychainStore.get("openai-compatible") ?? "")
     }
 
     var body: some View {
@@ -194,6 +210,25 @@ struct SettingsView: View {
                 "Stored in your macOS Keychain."
             )
             .font(.caption).foregroundStyle(.secondary)
+
+            Divider()
+
+            Picker("AI backend", selection: $aiBackend) {
+                Text("Ollama").tag("ollama")
+                Text("OpenAI-compatible endpoint").tag("openai")
+            }
+            if aiBackend == "openai" {
+                TextField("Base URL (e.g. http://localhost:1234/v1)", text: $openAIBaseURL)
+                    .textFieldStyle(.roundedBorder)
+                SecureField("API key (optional)", text: $openAIKey)
+                    .textFieldStyle(.roundedBorder)
+                Text(
+                    "Point at any OpenAI-compatible /v1 endpoint \u{2014} LM Studio, OpenRouter, vLLM, etc. " +
+                    "Include /v1 in the URL. The key is optional (local servers often need none) and is " +
+                    "stored in your macOS Keychain. Local endpoints (localhost) stay private."
+                )
+                .font(.caption).foregroundStyle(.secondary)
+            }
 
             Divider()
 
@@ -251,6 +286,9 @@ struct SettingsView: View {
         // off. The store is file-backed, so a fresh instance's clear() deletes the JSON.
         if !saveSessions { SessionStore().clear() }
         KeychainStore.set(ollamaKey.isEmpty ? nil : ollamaKey, for: "ollama")
+        ProviderSettings.aiBackend = aiBackend
+        ProviderSettings.openAIBaseURL = openAIBaseURL
+        KeychainStore.set(openAIKey.isEmpty ? nil : openAIKey, for: "openai-compatible")
         dismiss()
     }
 }
