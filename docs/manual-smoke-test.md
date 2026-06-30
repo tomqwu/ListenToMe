@@ -8,8 +8,10 @@
 Prereq: Ollama running with at least one chat-capable model installed (local or Ollama-cloud, e.g.
 `deepseek-v4-flash:cloud`). The app auto-picks an installed model per pane on first launch.
 
-1. `make run` — the window opens as a **cockpit**: **Transcript** (left), the live **Listener**
-   (center, accent-ringed), **Quick** (right), and a full-width **Deep** strip along the bottom.
+1. `make run` — the window opens as a **cockpit** in a Native-Mac style (floating cards, follows the
+   system light/dark appearance): **Transcript** (left sidebar), the live **Listener** (center, with
+   a thin accent edge marking it as the focal pane), **Quick** (right), and a full-width **Deep**
+   strip along the bottom.
    The slim top bar shows **Listen**, the elapsed timer, the **preset** dropdown, and a ⚙
    **Configure** popover (language, per-pane models, proactive, references, calendar, identify
    speakers, session stats).
