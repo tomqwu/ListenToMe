@@ -1,7 +1,7 @@
 import Foundation
 
-/// Pure parsing of DeepSeek's SSE streaming responses (`/chat/completions`).
-public enum DeepSeekParser {
+/// Pure parsing of OpenAI-compatible SSE streaming responses (`/chat/completions`).
+public enum OpenAICompatibleParser {
     public static func delta(fromLine line: String) -> String? {
         let stripped = stripDataPrefix(line)
         guard !stripped.isEmpty else { return nil }
@@ -31,28 +31,31 @@ public enum DeepSeekParser {
     }
 }
 
-/// Streams chat completions from the DeepSeek API.
-public struct DeepSeekProvider: LLMProvider {
-    public let id = "deepseek"
+/// Streams chat completions from any OpenAI-compatible `/v1/chat/completions` endpoint
+/// (LM Studio, OpenRouter, vLLM, DeepSeek, …). `baseURL` is the OpenAI base *including* `/v1`;
+/// the provider appends `chat/completions`. `apiKey` is optional — a Bearer header is sent only
+/// when it is non-empty (local servers like LM Studio / vLLM often need no key).
+public struct OpenAICompatibleProvider: LLMProvider {
+    public let id: String
     private let model: String
-    private let apiKey: String
+    private let apiKey: String?
     private let baseURL: URL
     private let lineSource: @Sendable (LLMRequest) -> AsyncThrowingStream<String, Error>
 
     /// Designated initializer. `lineSource` yields raw SSE lines; injectable for testing.
-    public init(model: String, apiKey: String, baseURL: URL,
+    public init(id: String = "openai-compatible", model: String, apiKey: String?, baseURL: URL,
                 lineSource: @escaping @Sendable (LLMRequest) -> AsyncThrowingStream<String, Error>) {
+        self.id = id
         self.model = model
         self.apiKey = apiKey
         self.baseURL = baseURL
         self.lineSource = lineSource
     }
 
-    /// Live initializer that talks to the real DeepSeek API over HTTP.
-    public init(model: String, apiKey: String,
-                baseURL: URL = URL(string: "https://api.deepseek.com")!,
+    /// Live initializer that talks to a real OpenAI-compatible endpoint over HTTP.
+    public init(id: String = "openai-compatible", model: String, apiKey: String?, baseURL: URL,
                 urlSession: URLSession = .shared) {
-        self.init(model: model, apiKey: apiKey, baseURL: baseURL,
+        self.init(id: id, model: model, apiKey: apiKey, baseURL: baseURL,
                   lineSource: Self.makeLiveLineSource(model: model, apiKey: apiKey,
                                                       baseURL: baseURL, session: urlSession))
     }
@@ -70,8 +73,8 @@ public struct DeepSeekProvider: LLMProvider {
                 do {
                     for try await line in lineSource(request) {
                         if Task.isCancelled { break }
-                        if DeepSeekParser.isDone(line: line) { break }
-                        if let delta = DeepSeekParser.delta(fromLine: line), !delta.isEmpty {
+                        if OpenAICompatibleParser.isDone(line: line) { break }
+                        if let delta = OpenAICompatibleParser.delta(fromLine: line), !delta.isEmpty {
                             continuation.yield(delta)
                         }
                     }
@@ -85,7 +88,7 @@ public struct DeepSeekProvider: LLMProvider {
     }
 
     private static func makeLiveLineSource(
-        model: String, apiKey: String, baseURL: URL, session: URLSession
+        model: String, apiKey: String?, baseURL: URL, session: URLSession
     ) -> @Sendable (LLMRequest) -> AsyncThrowingStream<String, Error> {
         return { request in
             AsyncThrowingStream { continuation in
@@ -95,16 +98,18 @@ public struct DeepSeekProvider: LLMProvider {
                             url: baseURL.appendingPathComponent("chat/completions"))
                         urlRequest.httpMethod = "POST"
                         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
-                        urlRequest.setValue("Bearer \(apiKey)",
-                                            forHTTPHeaderField: "Authorization")
+                        if let apiKey, !apiKey.isEmpty {
+                            urlRequest.setValue("Bearer \(apiKey)",
+                                                forHTTPHeaderField: "Authorization")
+                        }
                         urlRequest.httpBody = requestBody(model: model, request: request)
                         let (bytes, response) = try await session.bytes(for: urlRequest)
                         if let http = response as? HTTPURLResponse,
                            !(200...299).contains(http.statusCode) {
                             throw NSError(
-                                domain: "DeepSeek", code: http.statusCode,
+                                domain: "OpenAICompatible", code: http.statusCode,
                                 userInfo: [NSLocalizedDescriptionKey:
-                                    "DeepSeek returned HTTP \(http.statusCode)."])
+                                    "Endpoint returned HTTP \(http.statusCode)."])
                         }
                         for try await line in bytes.lines {
                             continuation.yield(line)

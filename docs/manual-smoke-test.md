@@ -41,3 +41,12 @@ Prereq: Ollama running with at least one chat-capable model installed (local or 
 If dual-channel transcription shows only one speaker (a console error mentioning
 `kAFAssistantErrorDomain 1100`), see the README "Known limitations" — the fallback is
 single-source for the MVP or the Phase-2 SpeechAnalyzer engine.
+
+## OpenAI-compatible endpoint (optional)
+
+1. Start any OpenAI-compatible server locally (e.g. LM Studio on `http://localhost:1234/v1`).
+2. **Settings → AI backend → OpenAI-compatible endpoint**; set the Base URL to that server's `/v1`
+   (key blank for a local server); Save.
+3. Confirm the per-pane model dropdowns populate from the endpoint's `/v1/models`, and that a Quick
+   action streams a reply. The footer should still read "local models stay private" for a localhost URL.
+4. Switch the backend back to **Ollama** and confirm normal operation resumes.

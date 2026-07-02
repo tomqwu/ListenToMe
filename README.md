@@ -125,6 +125,7 @@ Permissions panel on launch (also reachable from the toolbar 🛡️) to grant t
   **Settings** to use cloud models (e.g. `deepseek-v4-flash`, `qwen3-coder`). With a key set, the
   app routes discovery and inference to `https://ollama.com`; leave it blank to use local Ollama at
   `http://localhost:11434`. The key is stored in your macOS Keychain.
+- **OpenAI-compatible endpoint.** You can also point ListenToMe at any **OpenAI-compatible endpoint** (LM Studio, OpenRouter, vLLM, …) in **Settings → AI backend** — enter the base URL including `/v1` and an optional API key. Still bring-your-own-model, and fully private when the endpoint is local.
 - **Presets.** Pick a use-case preset to tailor how the copilot responds.
 - **Languages.** Independent **transcription-language** and **AI response-language** pickers.
 - **Reference files.** Add files/folders as context, with a configurable token budget.
