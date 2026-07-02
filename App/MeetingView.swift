@@ -163,62 +163,6 @@ struct MeetingView: View {
         ))
     }
 
-    // MARK: - Ollama cloud routing
-
-    private static func ollamaKey() -> String? {
-        let k = KeychainStore.get("ollama")
-        return (k?.isEmpty == false) ? k : nil
-    }
-
-    private static func ollamaBaseURL() -> URL {
-        ollamaKey() != nil
-            ? URL(string: "https://ollama.com")!
-            : URL(string: "http://localhost:11434")!
-    }
-
-    private static func openAIKey() -> String? {
-        let k = KeychainStore.get("openai-compatible")
-        return (k?.isEmpty == false) ? k : nil
-    }
-
-    /// Builds the per-pane provider for the currently-selected AI backend. Reads settings live so a
-    /// backend change in Settings applies on the next provider rebuild (Settings dismiss → reloadAndHealModels).
-    static func buildProvider(model: String) -> any LLMProvider {
-        // OpenAI backend only when a base URL is set. A non-empty but malformed URL intentionally
-        // still takes the OpenAI path and fails visibly in the pane — we never silently fall back.
-        if ProviderSettings.aiBackend == "openai",
-           !ProviderSettings.openAIBaseURL.isEmpty,
-           let url = URL(string: ProviderSettings.openAIBaseURL) {
-            return OpenAICompatibleProvider(model: model, apiKey: openAIKey(), baseURL: url)
-        }
-        return OllamaProvider(model: model, baseURL: ollamaBaseURL(), apiKey: ollamaKey())
-    }
-
-    /// Discovers selectable model ids for the current backend.
-    static func discoverModels() async -> [String] {
-        if ProviderSettings.aiBackend == "openai",
-           !ProviderSettings.openAIBaseURL.isEmpty,
-           let url = URL(string: ProviderSettings.openAIBaseURL) {
-            return await OpenAIModels.installed(baseURL: url, apiKey: openAIKey())
-        }
-        return await OllamaModels.chatModels(baseURL: ollamaBaseURL(), apiKey: ollamaKey())
-    }
-
-    private static func isLocalHost(_ url: URL) -> Bool {
-        let host = url.host?.lowercased()
-        return host == "localhost" || host == "127.0.0.1" || host == "::1" || host == "[::1]"
-    }
-
-    /// True when the active backend sends data off-device (drives the footer's privacy line).
-    static func isCloudActive() -> Bool {
-        if ProviderSettings.aiBackend == "openai" {
-            guard !ProviderSettings.openAIBaseURL.isEmpty,
-                  let url = URL(string: ProviderSettings.openAIBaseURL) else { return false }
-            return !isLocalHost(url)
-        }
-        return ollamaKey() != nil
-    }
-
     var body: some View {
         @Bindable var session = session
         return VStack(spacing: 0) {
@@ -506,6 +450,64 @@ struct MeetingView: View {
         }
     }
 
+}
+
+// MARK: - Backend routing (provider / model discovery / privacy)
+
+extension MeetingView {
+    private static func ollamaKey() -> String? {
+        let k = KeychainStore.get("ollama")
+        return (k?.isEmpty == false) ? k : nil
+    }
+
+    private static func ollamaBaseURL() -> URL {
+        ollamaKey() != nil
+            ? URL(string: "https://ollama.com")!
+            : URL(string: "http://localhost:11434")!
+    }
+
+    private static func openAIKey() -> String? {
+        let k = KeychainStore.get("openai-compatible")
+        return (k?.isEmpty == false) ? k : nil
+    }
+
+    /// Builds the per-pane provider for the currently-selected AI backend. Reads settings live so a
+    /// backend change in Settings applies on the next provider rebuild (Settings dismiss → reloadAndHealModels).
+    static func buildProvider(model: String) -> any LLMProvider {
+        // OpenAI backend only when a base URL is set. A non-empty but malformed URL intentionally
+        // still takes the OpenAI path and fails visibly in the pane — we never silently fall back.
+        if ProviderSettings.aiBackend == "openai",
+           !ProviderSettings.openAIBaseURL.isEmpty,
+           let url = URL(string: ProviderSettings.openAIBaseURL) {
+            return OpenAICompatibleProvider(model: model, apiKey: openAIKey(), baseURL: url)
+        }
+        return OllamaProvider(model: model, baseURL: ollamaBaseURL(), apiKey: ollamaKey())
+    }
+
+    /// Discovers selectable model ids for the current backend.
+    static func discoverModels() async -> [String] {
+        if ProviderSettings.aiBackend == "openai",
+           !ProviderSettings.openAIBaseURL.isEmpty,
+           let url = URL(string: ProviderSettings.openAIBaseURL) {
+            return await OpenAIModels.installed(baseURL: url, apiKey: openAIKey())
+        }
+        return await OllamaModels.chatModels(baseURL: ollamaBaseURL(), apiKey: ollamaKey())
+    }
+
+    private static func isLocalHost(_ url: URL) -> Bool {
+        let host = url.host?.lowercased()
+        return host == "localhost" || host == "127.0.0.1" || host == "::1" || host == "[::1]"
+    }
+
+    /// True when the active backend sends data off-device (drives the footer's privacy line).
+    static func isCloudActive() -> Bool {
+        if ProviderSettings.aiBackend == "openai" {
+            guard !ProviderSettings.openAIBaseURL.isEmpty,
+                  let url = URL(string: ProviderSettings.openAIBaseURL) else { return false }
+            return !isLocalHost(url)
+        }
+        return ollamaKey() != nil
+    }
 }
 
 // MARK: - Actions (import / export / model refresh)
