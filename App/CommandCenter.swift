@@ -99,6 +99,23 @@ struct RailRecStatus: View {
     }
 }
 
+/// Scroll geometry reduced to what sticky auto-follow needs. Tracking `contentHeight` alongside the
+/// bottom distance lets the observer tell a USER scroll (content height unchanged — may pin/unpin)
+/// from CONTENT GROWTH (a new line or longer partial pushes the bottom away before the auto-scroll
+/// catches up — must never unpin, no matter how big the growth step is).
+struct ScrollFollowMetrics: Equatable {
+    let distanceToBottom: CGFloat
+    let contentHeight: CGFloat
+
+    init(_ geo: ScrollGeometry) {
+        distanceToBottom = geo.contentSize.height - geo.contentOffset.y - geo.containerSize.height
+        contentHeight = geo.contentSize.height
+    }
+
+    /// Within this distance of the bottom counts as "at the bottom" (re-arms auto-follow).
+    var isAtBottom: Bool { distanceToBottom <= 24 }
+}
+
 /// A dense Copilot role box for the right column. Header (colored role name + model name + streaming
 /// spinner + Copy), a scrolling Markdown body with sticky auto-scroll, and the role's action buttons.
 struct RoleBox<Header: View, Actions: View>: View {
@@ -150,9 +167,13 @@ struct RoleBox<Header: View, Actions: View>: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .onScrollGeometryChange(for: Bool.self) { geo in
-                    geo.contentOffset.y + geo.containerSize.height >= geo.contentSize.height - 24
-                } action: { _, isAtBottom in atBottom = isAtBottom }
+                .onScrollGeometryChange(for: ScrollFollowMetrics.self) { geo in
+                    ScrollFollowMetrics(geo)
+                } action: { old, new in
+                    // Only a user scroll may pin/unpin; content growth is handled by the onChange below.
+                    guard old.contentHeight == new.contentHeight else { return }
+                    atBottom = new.isAtBottom
+                }
                 .onChange(of: outputText) { _, _ in
                     if atBottom { proxy.scrollTo(MeetingView.scrollBottomID, anchor: .bottom) }
                 }

@@ -42,7 +42,9 @@ actor SpeechRecognizerTranscriber: Transcribing {
             return
         }
 
-        let boundary = state.segmenter.process(rms: rms(of: chunk.samples), at: chunk.timestamp)
+        let energy = rms(of: chunk.samples)
+        state.timing.note(chunk.timestamp, isSpeech: energy >= state.segmenter.speechThreshold)
+        let boundary = state.segmenter.process(rms: energy, at: chunk.timestamp)
         if let buffer = makeBuffer(from: chunk) { state.request.append(buffer) }
         if boundary {
             // End the utterance -> recognizer emits a final result; await it before the next task.
@@ -72,6 +74,8 @@ actor SpeechRecognizerTranscriber: Transcribing {
         var awaitingFinal = false
         var done = false
         var pendingChunks: [AudioChunk] = []
+        /// One task ≈ one utterance, so the task's timing box carries that utterance's capture span.
+        let timing = UtteranceTiming()
         init(recognizer: SFSpeechRecognizer) {
             self.recognizer = recognizer
             request.requiresOnDeviceRecognition = true
@@ -79,18 +83,48 @@ actor SpeechRecognizerTranscriber: Transcribing {
         }
     }
 
+    /// Capture-time span of a task's utterance: written from the actor's feed path, read from the
+    /// recognizer's result callback (an arbitrary framework thread) — hence the locked box.
+    /// Start anchors at the first above-threshold chunk fed to the task; end tracks the latest
+    /// speech chunk, falling back to the latest fed chunk when nothing crossed the threshold.
+    private final class UtteranceTiming: @unchecked Sendable {
+        private let lock = NSLock()
+        private var speechStart: TimeInterval?
+        private var lastSpeech: TimeInterval = 0
+        private var lastFed: TimeInterval = 0
+
+        func note(_ timestamp: TimeInterval, isSpeech: Bool) {
+            lock.withLock {
+                lastFed = timestamp
+                if isSpeech {
+                    if speechStart == nil { speechStart = timestamp }
+                    lastSpeech = timestamp
+                }
+            }
+        }
+
+        func span() -> (start: TimeInterval, end: TimeInterval) {
+            lock.withLock {
+                let start = speechStart ?? lastFed
+                return (start, max(start, lastSpeech > 0 ? lastSpeech : lastFed))
+            }
+        }
+    }
+
     private func startTask(for source: SpeakerSource) -> SourceState? {
         guard let recognizer = onDeviceRecognizer() else { return nil }
         let state = SourceState(recognizer: recognizer)
+        let timing = state.timing
         state.task = recognizer.recognitionTask(with: state.request) { [weak self] result, error in
             guard let self else { return }
             if let result {
+                let span = timing.span()
                 self.continuation.yield(TranscriptSegment(
                     source: source,
                     text: result.bestTranscription.formattedString,
                     isFinal: result.isFinal,
-                    start: 0,
-                    end: 0
+                    start: span.start,
+                    end: span.end
                 ))
             }
             if error != nil {
@@ -114,7 +148,9 @@ actor SpeechRecognizerTranscriber: Transcribing {
         }
         var sawBoundary = false
         for chunk in pending {
-            if fresh.segmenter.process(rms: rms(of: chunk.samples), at: chunk.timestamp) {
+            let energy = rms(of: chunk.samples)
+            fresh.timing.note(chunk.timestamp, isSpeech: energy >= fresh.segmenter.speechThreshold)
+            if fresh.segmenter.process(rms: energy, at: chunk.timestamp) {
                 sawBoundary = true
             }
             if let buffer = makeBuffer(from: chunk) { fresh.request.append(buffer) }

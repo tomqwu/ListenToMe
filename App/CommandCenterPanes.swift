@@ -160,18 +160,51 @@ extension MeetingView {
                 .padding(.horizontal, 14).padding(.vertical, 12)
             }
             // Follow the newest line only while the user is at the bottom; if they scroll up to read
-            // history, stop auto-scrolling until they return to the bottom.
-            .onScrollGeometryChange(for: Bool.self) { geo in
-                geo.contentOffset.y + geo.containerSize.height >= geo.contentSize.height - 24
-            } action: { _, atBottom in transcriptAtBottom = atBottom }
+            // history, stop auto-scrolling until they return to the bottom (or tap "Latest").
+            // Pin/unpin only on USER scrolls (content height unchanged): a burst of new transcript
+            // grows the content before the scrollTo below catches up, and treating that as "the user
+            // left the bottom" used to silently break the follow mode.
+            .onScrollGeometryChange(for: ScrollFollowMetrics.self) { geo in
+                ScrollFollowMetrics(geo)
+            } action: { old, new in
+                guard old.contentHeight == new.contentHeight else { return }
+                transcriptAtBottom = new.isAtBottom
+            }
             .onChange(of: store.utterances.count) { _, _ in
                 if transcriptAtBottom { proxy.scrollTo(Self.scrollBottomID, anchor: .bottom) }
             }
             .onChange(of: store.partial?.text) { _, _ in
                 if transcriptAtBottom { proxy.scrollTo(Self.scrollBottomID, anchor: .bottom) }
             }
+            .overlay(alignment: .bottomTrailing) {
+                if !transcriptAtBottom {
+                    jumpToLatestButton(proxy: proxy)
+                }
+            }
         }
         .frame(maxHeight: .infinity)
+    }
+
+    /// Shown while the user has scrolled up into history: jumps back to the newest line and
+    /// re-arms the sticky auto-follow.
+    private func jumpToLatestButton(proxy: ScrollViewProxy) -> some View {
+        Button {
+            transcriptAtBottom = true
+            withAnimation(.easeOut(duration: 0.15)) {
+                proxy.scrollTo(Self.scrollBottomID, anchor: .bottom)
+            }
+        } label: {
+            Label("Latest", systemImage: "arrow.down.to.line")
+                .font(.system(size: 11, weight: .medium))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+        }
+        .buttonStyle(.borderless)
+        .foregroundStyle(Theme.ink)
+        .background(Capsule().fill(Theme.chip))
+        .overlay(Capsule().stroke(Theme.line, lineWidth: 1))
+        .padding(12)
+        .help("Jump to the newest line and resume following the live transcript")
     }
 
     private func transcriptRow(for seg: TranscriptSegment) -> some View {

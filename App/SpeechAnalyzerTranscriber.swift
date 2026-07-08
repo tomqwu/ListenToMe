@@ -16,6 +16,23 @@ actor SpeechAnalyzerTranscriber: Transcribing {
     private var stopped = false
     private let locale: Locale
 
+    /// SpeechAnalyzer results don't come tagged with our capture timeline, so utterance times are
+    /// tracked from the fed chunks' capture timestamps: an utterance starts at the first
+    /// above-threshold chunk after the previous final and ends at the most recent speech chunk.
+    /// Matches the `VADSegmenter` default threshold used by the other engines.
+    private static let speechRMSThreshold: Float = 0.02
+
+    private struct SourceTiming {
+        /// Capture time of the first speech chunk since the last final (the utterance onset).
+        var speechStart: TimeInterval?
+        /// Capture time of the most recent speech chunk.
+        var lastSpeech: TimeInterval = 0
+        /// Capture time of the most recently fed chunk (fallback when nothing crossed the threshold).
+        var lastFed: TimeInterval = 0
+    }
+
+    private var timings: [SpeakerSource: SourceTiming] = [:]
+
     init(locale: Locale = .current) {
         self.locale = locale
         var cont: AsyncStream<TranscriptSegment>.Continuation!
@@ -25,6 +42,13 @@ actor SpeechAnalyzerTranscriber: Transcribing {
 
     func feed(_ chunk: AudioChunk) async {
         guard !stopped else { return }
+        var timing = timings[chunk.source] ?? SourceTiming()
+        timing.lastFed = chunk.timestamp
+        if rms(of: chunk.samples) >= Self.speechRMSThreshold {
+            if timing.speechStart == nil { timing.speechStart = chunk.timestamp }
+            timing.lastSpeech = chunk.timestamp
+        }
+        timings[chunk.source] = timing
         let pipeline: Pipeline
         if let existing = pipelines[chunk.source] {
             pipeline = existing
@@ -77,11 +101,10 @@ actor SpeechAnalyzerTranscriber: Transcribing {
         let (inputSequence, inputContinuation) = AsyncStream<AnalyzerInput>.makeStream()
 
         let id = UUID()
-        let cont = continuation
         let resultsTask = Task { [weak self] in
             do {
                 for try await result in transcriber.results {
-                    Self.emit(result, from: source, to: cont)
+                    await self?.emit(result, from: source)
                 }
             } catch {
                 // results stream errored
@@ -125,22 +148,26 @@ actor SpeechAnalyzerTranscriber: Transcribing {
         pipelines[source] = nil
     }
 
-    /// Forward a transcriber result to the segment stream.
-    /// Finals are emitted only when non-empty; volatile hypotheses always flow through
-    /// (an empty volatile result revokes the current partial).
-    private static func emit(
-        _ result: SpeechTranscriber.Result,
-        from source: SpeakerSource,
-        to cont: AsyncStream<TranscriptSegment>.Continuation
-    ) {
+    /// Forward a transcriber result to the segment stream, stamped with the utterance's capture-time
+    /// span (see `SourceTiming`). Finals are emitted only when non-empty; volatile hypotheses always
+    /// flow through (an empty volatile result revokes the current partial). Every final re-anchors
+    /// the next utterance's start at its own speech onset.
+    private func emit(_ result: SpeechTranscriber.Result, from source: SpeakerSource) {
+        var timing = timings[source] ?? SourceTiming()
+        let start = timing.speechStart ?? timing.lastFed
+        let end = max(start, timing.lastSpeech > 0 ? timing.lastSpeech : timing.lastFed)
+        if result.isFinal {
+            timing.speechStart = nil
+            timings[source] = timing
+        }
         let text = String(result.text.characters)
         if result.isFinal, text.isEmpty { return }
-        cont.yield(TranscriptSegment(
+        continuation.yield(TranscriptSegment(
             source: source,
             text: text,
             isFinal: result.isFinal,
-            start: 0,
-            end: 0
+            start: start,
+            end: end
         ))
     }
 }
