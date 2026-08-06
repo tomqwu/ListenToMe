@@ -29,6 +29,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMe
+        BUNDLE_DISPLAY_NAME: ListenToMe
         MARKETING_VERSION: "1.2.0"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         CURRENT_PROJECT_VERSION: "4"
@@ -37,3 +38,14 @@ targets:
         CODE_SIGN_ENTITLEMENTS: App/ListenToMe.entitlements
         CODE_SIGN_STYLE: Automatic
         SWIFT_VERSION: "6.0"
+      configs:
+        # Debug builds use a separate bundle id so macOS treats them as a different app
+        # than the released dmg. TCC keys permission grants by (bundle id + code-signing
+        # requirement); local builds are signed with an Apple Development certificate and
+        # the release is signed with Developer ID, so those requirements can never match.
+        # Sharing one bundle id therefore makes each install silently invalidate the
+        # other's Screen Recording / Microphone / Calendar grants. With distinct ids they
+        # get their own rows in System Settings and coexist. See docs/RELEASING.md.
+        Debug:
+          PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMe.dev
+          BUNDLE_DISPLAY_NAME: "ListenToMe (Dev)"

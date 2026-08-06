@@ -90,7 +90,6 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 **Download (recommended)**
 - Grab the notarized `.dmg` from [Releases](https://github.com/tomqwu/ListenToMe/releases),
   open it, and drag **ListenToMe** to **Applications**.
-  _(Available once v1.0 is published.)_
 
 **Build from source**
 ```bash
@@ -114,6 +113,19 @@ rebuilds (otherwise each rebuild re-asks). Find it via `security find-identity -
 On first run, grant Microphone, Speech Recognition, Screen Recording (for system audio), and
 Accessibility (for the global hotkey) in System Settings → Privacy & Security. The app shows a
 Permissions panel on launch (also reachable from the toolbar 🛡️) to grant these up front.
+
+### Dev builds are a separate app
+
+Debug builds use bundle id `com.tomwu.ListenToMe.dev` and appear as **ListenToMe (Dev)**; the
+released dmg uses `com.tomwu.ListenToMe`. macOS keys permission grants by bundle id *and*
+code-signing requirement, and the two are signed with different certificates (Apple Development vs
+Developer ID), so a shared bundle id would make each install silently invalidate the other's
+grants. With separate ids they get their own rows in System Settings → Privacy & Security and can
+be installed side by side — you grant permissions once per app.
+
+The Ollama API key stays shared: `KeychainStore` uses a fixed service name, so you paste the key
+once. macOS asks each binary for keychain access the first time it reads the item — choose
+**Always Allow**.
 
 ## Models, presets & languages
 
@@ -180,8 +192,6 @@ Ollama through the actual `OllamaProvider`, auto-selecting an installed chat mod
   code-switching (e.g. Mandarin↔English mid-sentence) that Apple's on-device Speech can't do. It
   downloads a model on first use, emits finalized segments only (no live partials), and its
   dual-channel finals may occasionally interleave out of chronological order.
-- **Cross-launch session history (deferred):** Markdown export covers sharing/review; live sessions
-  are otherwise ephemeral.
 
 ## Contributing
 

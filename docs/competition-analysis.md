@@ -1,6 +1,6 @@
 # Competition Analysis
 
-_Last updated: 2026-06. All pricing and feature facts are stated as of 2026; where a detail could not be confirmed from a primary source, it is qualified with "approximately" or "reportedly."_
+_Last updated: 2026-08. All pricing and feature facts are stated as of 2026; where a detail could not be confirmed from a primary source, it is qualified with "approximately" or "reportedly."_
 
 ## The category: AI meeting assistants and real-time copilots
 
@@ -13,7 +13,7 @@ Over the last few years, "AI meeting assistant" has grown from a niche transcrip
 
 Two structural tensions define the category. First, **privacy vs. convenience**: nearly every commercial product processes audio and runs its AI in the cloud, even when it markets itself as "local-first" — the local part is usually just audio _capture_, while transcription and summarization happen on third-party servers. Second, **opinionated vs. open**: most products lock you into a single (often undisclosed) transcription engine and a single summarization LLM with no user choice, whereas a small set of privacy-first / open tools let you bring your own model.
 
-**ListenToMe** sits deliberately at the intersection of the privacy-first and copilot shapes: a fully on-device macOS meeting copilot that transcribes live with Apple's SpeechAnalyzer and gives real-time AI help through Ollama (local and cloud models), with per-pane model selection, language selection, use-case presets, file/folder context, and Markdown export — free and open-source.
+**ListenToMe** sits deliberately at the intersection of the privacy-first and copilot shapes: a fully on-device macOS meeting copilot that transcribes live with Apple's SpeechAnalyzer and gives real-time AI help through Ollama (local and cloud models), with per-pane model selection, language selection, use-case presets, file/folder context, local calendar context, opt-in on-device speaker diarization, cross-meeting search, and Markdown/recap/PDF export — free and open-source.
 
 ## Comparison table
 
@@ -30,7 +30,7 @@ Two structural tensions define the category. First, **privacy vs. convenience**:
 | **Natively** (open-source) | macOS 12+, Windows 10/11; Linux community | Yes (STT on-device; AI local or cloud) | Privacy-by-design; transcripts/embeddings/keys stored locally | Local ONNX Whisper variants (Moonshine, Whisper-large-v3-turbo) | Real-time copilot (<500ms), summaries, action items, local RAG, diarization, OCR, personas | Yes — Gemini, OpenAI, Claude, Groq, Ollama (local) | Free personal; Pro via lifetime/yearly | Local-first interview copilot + notes |
 | **Superpowered** | macOS, Windows | No (device capture, cloud AI) | No recordings stored; audio deleted after live transcription; transcripts 7 days; SOC 2 / GDPR | Not specified (reportedly Deepgram) | AI summaries/notes, templates, calendar integration, AI Chat (beta), 40+ languages | None advertised | Free (10 notes/mo); Basic $25/mo; Pro $50/mo | Bot-free AI meeting notes |
 | **MacWhisper** | macOS (Gumroad); macOS + iOS (App Store) | Yes (on-device by default) | Local-first; no audio uploaded by default; cloud only on explicit AI action | OpenAI Whisper, all sizes incl. Large-v3 | Summaries, action items, transcript chat, cleanup, translation, prompts | Yes (Gumroad) — OpenAI, Claude, Google, Groq via your keys | Free tier; Pro €59 (~$69) one-time; App Store $6.99/mo–$99.99 lifetime | On-device file/meeting transcription |
-| **ListenToMe** | macOS | **Yes (fully on-device transcription + local AI)** | **Privacy-first; on-device transcription; BYO local Ollama means no audio need leave the machine** | **Apple SpeechAnalyzer (on-device, live)** | **Real-time AI help, multi-pane responses, use-case presets, file/folder context, Markdown export** | **Yes — Ollama local + cloud models, per-pane model selection** | **Free & open-source** | **Private, multi-purpose real-time copilot** |
+| **ListenToMe** | macOS | **Yes (fully on-device transcription + local AI)** | **Privacy-first; on-device transcription; BYO local Ollama means no audio need leave the machine** | **Apple SpeechAnalyzer (on-device, live); opt-in WhisperKit for code-switching** | **Real-time AI help, multi-pane responses, use-case presets, file/folder context, local calendar auto-context, on-device speaker diarization (opt-in), cross-meeting search, Markdown/recap/PDF export** | **Yes — Ollama local + cloud models, per-pane model selection** | **Free & open-source** | **Private, multi-purpose real-time copilot** |
 
 ## Per-competitor detail
 
@@ -81,11 +81,12 @@ ListenToMe occupies a corner of the market that almost no commercial competitor 
 
 ## Gaps / opportunities
 
-These are **future ideas, not commitments** — areas where competitors are currently ahead and where ListenToMe could close the gap while staying true to its on-device, privacy-first principles.
+Several gaps this analysis originally identified have since closed, all on-device:
 
-1. **Calendar integration / auto-launch.** Granola, Fathom, Fellow, and Superpowered tie into the user's calendar to auto-start on scheduled meetings and pre-load context. A privacy-respecting local calendar hook (e.g. EventKit on macOS) could offer the same convenience without sending data anywhere.
-2. **Speaker diarization.** Otter, Fireflies, and Natively label who said what. On-device diarization (locally, without cloud) would meaningfully improve transcript usefulness for multi-person meetings.
-3. **Shareable summaries / structured exports.** Competitors generate polished, templated summaries and shareable links. ListenToMe already does Markdown export; richer summary templates and optional export targets (PDF, clipboard-ready recap, task lists) would help, ideally all generated locally.
-4. **Cross-meeting search / local knowledge base.** AskFred (Fireflies), Ask Granola, and Natively's local RAG let users query across past meetings. A fully on-device semantic index over past sessions would extend this without compromising privacy.
-5. **Templates / presets library for action items and follow-ups.** Many tools ship dozens of meeting templates (1-1s, sales discovery, interviews). Expanding the use-case preset library — community-contributed, since the project is open-source — could broaden reach.
-6. **Mobile / companion presence.** Several competitors offer iOS/Android companions. A lightweight companion or live-handoff experience could extend ListenToMe beyond the desktop while keeping processing on-device where possible.
+- **Calendar context.** EventKit reads the current/next event from the local Calendar and pre-loads it as meeting context — parity with the auto-context Granola, Fathom, Fellow, and Superpowered offer. (Auto-*starting* capture on a detected meeting is still open.)
+- **Speaker diarization.** An opt-in, experimental setting runs FluidAudio (CoreML Pyannote) over the Others channel locally, labels transcript lines "Speaker N", and shows per-voice talk-time — the axis Otter, Fireflies, and Natively led on.
+- **Richer exports.** Markdown, a concise shareable recap, PDF, and copy-to-clipboard, all generated locally.
+- **Cross-meeting search.** Local keyword search over persisted past sessions — the Ask Granola / AskFred / Natively-RAG use case. (A semantic on-device index is still open.)
+- **Presets library.** 18 use-case presets (1:1, standup, sales call, interviews, lecture, support, retro, negotiation, and more) against the dozens of templates the commercial tools ship.
+
+The ideas that remain — semantic cross-meeting search, meeting auto-detection / auto-start, export integrations (Notion / Obsidian) plus structured action items, OpenAI-compatible endpoints beyond Ollama — are **future ideas, not commitments**, and are tracked as [open GitHub issues](https://github.com/tomqwu/ListenToMe/issues) rather than duplicated here. Mobile / companion presence remains the one axis where competitors lead that ListenToMe deliberately cedes: iOS/Android companions are [intentionally out of scope](backlog.md#-intentionally-out-of-scope), not an unfiled idea.

@@ -9,7 +9,9 @@ Prereq: Ollama running with at least one chat-capable model installed (local or 
 `deepseek-v4-flash:cloud`). The app auto-picks an installed model per pane on first launch.
 
 1. `make run` — the window opens with **four panes**: **Transcript** (left) and **Listener**,
-   **Quick**, **Deep** (right).
+   **Quick**, **Deep** (right). This launches the Debug build, which is a separate app from any
+   installed release: it appears as **ListenToMe (Dev)** (bundle id `com.tomwu.ListenToMe.dev`)
+   and holds its own permission grants. Grant permissions to that row, not the release's.
 2. On first launch, the app shows a **Permissions** panel automatically. Grant Microphone,
    Speech Recognition, Screen Recording (system audio), and Accessibility (global hotkey) directly
    from the panel. You can also reopen it anytime via the 🛡️ (lock.shield) toolbar button.

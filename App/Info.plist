@@ -4,6 +4,11 @@
 <dict>
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
+    <!-- Debug builds override this to "ListenToMe (Dev)" so local builds and the released
+         app are distinguishable in the Dock and in System Settings → Privacy & Security,
+         where they hold separate permission grants. See project.yml. -->
+    <key>CFBundleDisplayName</key>
+    <string>$(BUNDLE_DISPLAY_NAME)</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
