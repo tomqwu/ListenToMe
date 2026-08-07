@@ -6,7 +6,11 @@
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <!-- Debug builds override this to "ListenToMe (Dev)" so local builds and the released
          app are distinguishable in the Dock and in System Settings → Privacy & Security,
-         where they hold separate permission grants. See project.yml. -->
+         where they hold separate permission grants. CFBundleName gets the same value because
+         some Privacy panes (e.g. Screen & System Audio Recording) label rows with the bundle
+         NAME, not the display name — without this, both apps' rows read "ListenToMe" there.
+         PRODUCT_NAME is untouched, so the bundle is ListenToMe.app in both configs.
+         See project.yml. -->
     <key>CFBundleDisplayName</key>
     <string>$(BUNDLE_DISPLAY_NAME)</string>
     <key>CFBundleExecutable</key>
@@ -16,7 +20,7 @@
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>$(PRODUCT_NAME)</string>
+    <string>$(BUNDLE_DISPLAY_NAME)</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
