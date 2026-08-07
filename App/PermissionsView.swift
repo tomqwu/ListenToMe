@@ -5,6 +5,13 @@ struct PermissionsView: View {
     let permissions: PermissionsModel
     @Environment(\.dismiss) private var dismiss
 
+    /// The name of this build's row in System Settings — "ListenToMe (Dev)" for Debug builds,
+    /// "ListenToMe" for the release (see project.yml). Hints must point at the right row: the two
+    /// builds hold separate TCC grants, and steering the user to the wrong row wastes the toggle.
+    private var appDisplayName: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? "ListenToMe"
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
@@ -43,8 +50,10 @@ struct PermissionsView: View {
                     purpose: "Captures other participants\u{2019} system audio (the \u{201C}Others\u{201D} channel).",
                     status: permissions.screenRecording,
                     isOptional: false,
+                    needsRelaunch: permissions.screenNeedsRelaunchHint,
                     onGrant: { permissions.requestScreenRecording() },
-                    onOpenSettings: { permissions.openSettings("Privacy_ScreenCapture") }
+                    onOpenSettings: { permissions.openSettings("Privacy_ScreenCapture") },
+                    onRelaunch: { permissions.relaunch() }
                 )
                 PermissionRow(
                     name: "Accessibility",
@@ -64,9 +73,9 @@ struct PermissionsView: View {
 
             if permissions.accessibility != .granted {
                 Text(
-                    "If Accessibility already looks enabled in System Settings, toggle ListenToMe " +
-                    "off and back on there — rebuilding the app invalidates the previous grant, so " +
-                    "macOS reports it as not trusted until you re-enable it."
+                    "If Accessibility already looks enabled in System Settings, toggle " +
+                    "\(appDisplayName) off and back on there — rebuilding the app invalidates the " +
+                    "previous grant, so macOS reports it as not trusted until you re-enable it."
                 )
                     .font(.footnote)
                     .foregroundStyle(.secondary)
@@ -74,10 +83,12 @@ struct PermissionsView: View {
                     .padding(.top, 8)
             }
 
-            if permissions.screenRecording != .granted {
+            // Also shown when the grant is live but this process predates it (needsRelaunchHint):
+            // the badge already reads Granted, yet capture may not work until a relaunch.
+            if permissions.screenRecording != .granted || permissions.screenNeedsRelaunchHint {
                 Text(
                     "After enabling Screen Recording in System Settings, quit and reopen the app" +
-                    " — macOS only detects it after a relaunch."
+                    " — capture can only use the new grant after a relaunch."
                 )
                     .font(.footnote)
                     .foregroundStyle(.secondary)
@@ -108,8 +119,10 @@ private struct PermissionRow: View {
     let purpose: String
     let status: PermissionsModel.Status
     let isOptional: Bool
+    var needsRelaunch: Bool = false
     let onGrant: () -> Void
     let onOpenSettings: () -> Void
+    var onRelaunch: () -> Void = {}
 
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
@@ -159,7 +172,15 @@ private struct PermissionRow: View {
     private var actionButton: some View {
         switch status {
         case .granted:
-            EmptyView()
+            // The grant is live in TCC but predates this process — a relaunch (not another trip
+            // to System Settings) is what makes capture start working.
+            if needsRelaunch {
+                Button("Quit & Reopen") { onRelaunch() }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+            } else {
+                EmptyView()
+            }
         case .denied:
             Button("Open Settings") { onOpenSettings() }
                 .buttonStyle(.bordered)

@@ -102,6 +102,19 @@ struct OnboardingView: View {
                     onOpenSettings: { permissions.openSettings("Privacy_ScreenCapture") }
                 )
             }
+            // Without this, a first-run user who granted in System Settings but dismissed the OS
+            // relaunch dialog sees "Granted" here while capture silently falls back to mic-only.
+            if permissions.screenNeedsRelaunchHint {
+                HStack(spacing: 8) {
+                    Text("Screen Recording is granted, but macOS needs the app to restart before " +
+                         "it can capture system audio.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Button("Quit & Reopen") { permissions.relaunch() }
+                        .controlSize(.small)
+                }
+            }
             Text("You can revisit these any time from the shield button in the toolbar.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
