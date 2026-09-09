@@ -75,6 +75,11 @@ enum ProviderSettings {
         set { UserDefaults.standard.set(newValue, forKey: "speakerDiarizationEnabled") }
     }
 
+    static var microphoneDiarizationEnabled: Bool {
+        get { UserDefaults.standard.bool(forKey: "microphoneDiarizationEnabled") }
+        set { UserDefaults.standard.set(newValue, forKey: "microphoneDiarizationEnabled") }
+    }
+
     /// Whether finished sessions are persisted locally for cross-meeting search. Default `true`.
     static var saveSessionsForSearch: Bool {
         get { UserDefaults.standard.object(forKey: "saveSessionsForSearch") as? Bool ?? true }
@@ -135,6 +140,7 @@ struct SettingsView: View {
     @State private var saveSessions: Bool
     @State private var appearance: String
     @State private var speakerDiarization: Bool
+    @State private var microphoneDiarization: Bool
 
     init() {
         _engine = State(initialValue: ProviderSettings.transcriptionEngine)
@@ -144,6 +150,7 @@ struct SettingsView: View {
         _saveSessions = State(initialValue: ProviderSettings.saveSessionsForSearch)
         _appearance = State(initialValue: ProviderSettings.appearance)
         _speakerDiarization = State(initialValue: ProviderSettings.speakerDiarizationEnabled)
+        _microphoneDiarization = State(initialValue: ProviderSettings.microphoneDiarizationEnabled)
     }
 
     var body: some View {
@@ -160,16 +167,13 @@ struct SettingsView: View {
                 .font(.caption).foregroundStyle(.secondary)
 
             Divider()
-            Toggle("Speaker diarization (experimental)", isOn: $speakerDiarization)
-            Text(
-                "Adds a \u{201C}Speakers\u{201D} action that groups the system-audio " +
-                "(\u{201C}Others\u{201D}) channel into distinct voices and shows each one's talk-time " +
-                "share. On-device; downloads a CoreML model on first use. Experimental \u{2014} " +
-                "accuracy varies and is yours to validate."
-            )
-            .font(.caption).foregroundStyle(.secondary)
-
-            Divider()
+            Toggle("Automatic speaker identification (experimental)", isOn: $speakerDiarization)
+            Toggle("Identify people sharing my microphone", isOn: $microphoneDiarization)
+                .disabled(!speakerDiarization)
+            Text("Analyzes voices on this Mac periodically and when you stop. Models download on first use. " +
+                 "Choose WhisperKit for transcript labels. Apply before pressing Listen. " +
+                 "Names can be edited in Speakers; overlapping speech may be misattributed.")
+                .font(.caption).foregroundStyle(.secondary)
 
             Picker("Transcription engine", selection: $engine) {
                 Text("SpeechAnalyzer (macOS 26, dual-channel)").tag("speechAnalyzer")
@@ -247,6 +251,7 @@ struct SettingsView: View {
         ProviderSettings.saveSessionsForSearch = saveSessions
         ProviderSettings.appearance = appearance
         ProviderSettings.speakerDiarizationEnabled = speakerDiarization
+        ProviderSettings.microphoneDiarizationEnabled = microphoneDiarization
         // Honor the "Turn off to keep nothing" promise: wipe stored history whenever the toggle is
         // off. The store is file-backed, so a fresh instance's clear() deletes the JSON.
         if !saveSessions { SessionStore().clear() }

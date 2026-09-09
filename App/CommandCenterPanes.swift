@@ -74,12 +74,12 @@ extension MeetingView {
     private func speakersRailSection() -> some View {
         railSection("Speakers") {
             Button { identifySpeakers() } label: {
-                Label("Identify speakers", systemImage: "person.2.wave.2")
+                Label("Speakers / edit names", systemImage: "person.2.wave.2")
             }
             .controlSize(.small)
-            .disabled(speakerLoading || !diarizationSinkAttached)
+            .disabled(!diarizationSinkAttached)
             .help(diarizationSinkAttached
-                  ? "Experimental: group the Others channel into distinct voices (on-device)"
+                  ? "View automatic speaker identification and edit names"
                   : "Press Listen to start capturing speaker audio.")
         }
     }
@@ -183,7 +183,9 @@ extension MeetingView {
             Text(speakerRowLabel(for: seg))
                 .font(.system(size: 11, weight: .bold))
                 .foregroundStyle(seg.source == .you ? Theme.you : Theme.others)
-                .frame(width: 72, alignment: .leading)
+                .frame(width: 100, alignment: .leading)
+                .lineLimit(2)
+                .help(seg.speakerLabel)
             Text(seg.text)
                 .font(.system(size: 12.5)).foregroundStyle(Theme.ink)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -194,8 +196,7 @@ extension MeetingView {
     /// Channel/speaker label for a transcript row: "YOU" for the mic; for the Others channel the
     /// resolved "SPEAKER N" (uppercased) when "Identify speakers" has labeled this line, else "OTHERS".
     private func speakerRowLabel(for seg: TranscriptSegment) -> String {
-        guard seg.source == .others else { return "YOU" }
-        return speakerLabels[seg.id]?.uppercased() ?? "OTHERS"
+        seg.speakerLabel.uppercased()
     }
 
     private func transcriptInputZone(session: MeetingSession, notes: Binding<String>) -> some View {

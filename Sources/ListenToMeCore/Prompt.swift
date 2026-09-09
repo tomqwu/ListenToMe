@@ -130,7 +130,7 @@ public enum PromptBuilder {
 
     private static func buildUserMessage(context: PromptContext, instruction: String) -> String {
         let transcript = context.messages.map { seg in
-            "\(seg.source == .you ? "You" : "Others"): \(seg.text)"
+            "\(seg.speakerLabel): \(seg.text)"
         }.joined(separator: "\n")
 
         var user = "Transcript so far:\n\(transcript)\n\n"
@@ -174,7 +174,7 @@ public enum PromptBuilder {
     /// Listener builder: rolling summary + open questions/action items.
     public static func buildListener(context: PromptContext) -> LLMRequest {
         let transcript = context.messages.map { seg in
-            "\(seg.source == .you ? "You" : "Others"): \(seg.text)"
+            "\(seg.speakerLabel): \(seg.text)"
         }.joined(separator: "\n")
 
         var user = "Transcript so far:\n\(transcript)\n\n"

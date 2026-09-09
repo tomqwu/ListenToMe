@@ -348,6 +348,25 @@ public final class MeetingSession {
         await startListenerRefresh().value
     }
 
+    /// New attribution should ground the next answer in the labeled transcript, not an older recap.
+    public func speakerAttributionsChanged() {
+        lastCompletedListenerSummary = ""
+        listenerSummary = ""
+        startListenerRefresh()
+    }
+
+    /// Renaming invalidates prose produced with old names; rebuild the listener from the transcript.
+    public func speakerNamesChanged() {
+        for role in CopilotRole.allCases {
+            responseTasks[role]?.cancel()
+            responseGenerations[role, default: 0] += 1
+        }
+        streamingRoles = []
+        quickSuggestion = ""
+        deepAnswer = ""
+        speakerAttributionsChanged()
+    }
+
     // MARK: - Listener refresh starter
 
     /// Synchronously registers responseTasks[.listener] for a listener refresh and returns it.

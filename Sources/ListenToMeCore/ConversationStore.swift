@@ -20,6 +20,26 @@ public final class ConversationStore {
         }
     }
 
+    /// Apply a complete attribution pass only to the supplied run/channel's lines.
+    public func attributeSpeakers(_ assignments: [UUID: SpeakerIdentity], replacing ids: Set<UUID>) {
+        utterances = utterances.map { original in
+            guard ids.contains(original.id) else { return original }
+            var segment = original
+            segment.speakerID = assignments[segment.id]?.id
+            segment.speakerName = assignments[segment.id]?.name
+            return segment
+        }
+    }
+
+    public func renameSpeaker(id: String, name: String) {
+        utterances = utterances.map { original in
+            guard original.speakerID == id else { return original }
+            var segment = original
+            segment.speakerName = name
+            return segment
+        }
+    }
+
     /// Most-recent finalized utterances kept within `maxChars` (always at least the latest).
     public func recentContext(maxChars: Int) -> [TranscriptSegment] {
         var total = 0

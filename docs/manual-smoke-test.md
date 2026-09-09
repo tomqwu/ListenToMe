@@ -43,3 +43,23 @@ Prereq: Ollama running with at least one chat-capable model installed (local or 
 If dual-channel transcription shows only one speaker (a console error mentioning
 `kAFAssistantErrorDomain 1100`), see the README "Known limitations" — the fallback is
 single-source for the MVP or the Phase-2 SpeechAnalyzer engine.
+
+## Automatic speakers (1.3.0)
+
+1. Before Listen, choose WhisperKit and enable Automatic speaker identification. For a room sharing
+   one microphone, also enable Identify people sharing my microphone.
+2. Record alternating voices for at least 30 seconds. Open Speakers / edit names. Confirm source
+   labels and talk time, then save a name. Confirm transcript lines use the name after analysis.
+3. Keep talking through another automatic pass. Confirm the name remains attached to the same
+   voice; introduce a new voice and confirm it gets a distinct label. Expect uncertain splits/merges
+   to get new names rather than silently reusing an edited name.
+4. Ask for Action items and Deep answer. Confirm names in the transcript reach the prompts. Rename
+   a speaker: old Quick/Deep answers clear and the listener refreshes.
+5. Stop and allow final analysis to finish. Export Markdown/PDF and inspect saved-session search:
+   named transcript lines should agree, including the final utterance.
+6. Restart recording. Older lines must keep their names. New generic labels must distinguish the
+   new run. Change language while recording and rapidly Stop/Listen: old analysis must not label
+   new audio or leave a stuck spinner.
+7. With SpeechAnalyzer selected, check the speaker sheet explains that only voice breakdown is
+   available. With identification disabled, capture must not accumulate speaker-analysis audio.
+8. Try overlapping voices and document recognition errors; do not infer accuracy from unit tests.

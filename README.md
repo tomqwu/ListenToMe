@@ -143,6 +143,30 @@ once. macOS asks each binary for keychain access the first time it reads the ite
 - **Audio import.** Import an audio file to transcribe it.
 - **Export.** Save the session as Markdown (toolbar ⬆️).
 
+### Automatic speaker identification (experimental)
+
+In Settings, enable **Automatic speaker identification** and choose **WhisperKit** before
+pressing Listen. The app analyzes captured system audio on-device about every 20 seconds
+(longer when analysis takes more time), and runs a final pass after Stop. The first use downloads
+speaker models. Open **Speakers / edit names** to name voices, for example Speaker 1 → Alice.
+
+Names appear in transcript lines and flow into subsequent AI prompts, refreshed listener summaries,
+saved-session search, and Markdown/PDF exports. Saving a name clears older Quick/Deep answers;
+request them again to use the new name. Speaker identities are matched across analysis passes by
+shared audio timing. Ambiguous splits or merges may receive new labels instead of inheriting an
+incorrect name. Labels and names are scoped to each recording run; starting another run preserves
+older transcript labels but does not recognize people from past runs.
+
+Enable **Identify people sharing my microphone** to also separate voices on the microphone channel.
+The two audio channels are analyzed independently; the same person heard on both is not automatically
+merged. Without this option, microphone speech remains **You**. SpeechAnalyzer and SpeechRecognizer
+support the voice breakdown only; per-line attribution requires WhisperKit timestamps.
+
+This is delayed, periodic identification, with one speaker assigned per transcript line. Overlapping
+speech can be misattributed. Analysis covers the first approximately two hours of each enabled channel.
+Imported audio files do not use this live-capture speaker analysis. Audio is buffered in memory for
+analysis; speaker names are included in saved transcript text when session saving is enabled.
+
 ## Privacy
 
 - **On-device transcription.** Speech-to-text runs locally via Apple SpeechAnalyzer (or

@@ -19,12 +19,17 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
     /// Optional sink that accumulates the `.others` channel (resampled to 16 kHz) for speaker
     /// diarization. `nil` (the default) leaves existing callers/tests untouched.
     private let othersSink: SpeakerAudioBuffer?
+    private let microphoneSink: SpeakerAudioBuffer?
+    private let microphoneGeneration: Int
     /// The sink's generation captured when this capture was built (right after its `reset()`). Passed
     /// to every `othersSink.append` so the buffer rejects this capture's appends once a later run has
     /// reset it. Unused (and irrelevant) when `othersSink` is nil.
     private let sinkGeneration: Int
 
-    init(othersSink: SpeakerAudioBuffer? = nil, sinkGeneration: Int = 0) {
+    init(othersSink: SpeakerAudioBuffer? = nil, sinkGeneration: Int = 0,
+         microphoneSink: SpeakerAudioBuffer? = nil, microphoneGeneration: Int = 0) {
+        self.microphoneSink = microphoneSink
+        self.microphoneGeneration = microphoneGeneration
         self.othersSink = othersSink
         self.sinkGeneration = sinkGeneration
         var cont: AsyncStream<AudioChunk>.Continuation!
@@ -130,9 +135,11 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
         // the buffer's lock even if this callback was mid-resample when the next run reset the buffer.
         // The continuation.yield below is harmless (the consumer is detached), so only the append is
         // guarded.
-        if source == .others, !lock.withLock({ stopped }) {
-            othersSink?.append(samples: samples, sampleRate: mono.format.sampleRate,
-                               timestamp: timestamp, generation: sinkGeneration)
+        if !lock.withLock({ stopped }) {
+            let sink = source == .others ? othersSink : microphoneSink
+            let generation = source == .others ? sinkGeneration : microphoneGeneration
+            sink?.append(samples: samples, sampleRate: mono.format.sampleRate,
+                         timestamp: timestamp, generation: generation)
         }
         let chunk = AudioChunk(samples: samples,
                                sampleRate: mono.format.sampleRate,
