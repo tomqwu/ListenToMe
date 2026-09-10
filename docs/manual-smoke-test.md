@@ -63,3 +63,19 @@ single-source for the MVP or the Phase-2 SpeechAnalyzer engine.
 7. With SpeechAnalyzer selected, check the speaker sheet explains that only voice breakdown is
    available. With identification disabled, capture must not accumulate speaker-analysis audio.
 8. Try overlapping voices and document recognition errors; do not infer accuracy from unit tests.
+
+## Enabled Screen Recording switch but capture is refused
+
+If the installed production app repeatedly returns ScreenCaptureKit `-3801` despite an enabled
+switch, confirm the app is `/Applications/ListenToMe.app` and quit it. A targeted recovery that
+worked on September 10, 2026 was:
+
+```bash
+tccutil reset ScreenCapture com.tomwu.ListenToMe
+```
+
+Then open System Settings → Privacy & Security → Screen & System Audio Recording, use **+**
+to select that exact app, authenticate if requested, and relaunch it. This resets only production
+Screen Recording authorization; it does not reset microphone, speech, history, or the Dev app.
+Verify **System: active** and transcribed playback labeled **OTHERS**. Do not treat microphone
+pickup labeled YOU or an enabled toggle alone as proof of system-audio capture.

@@ -36,3 +36,22 @@ Signed and notarized build 9 was installed and accepted by Gatekeeper. Native UI
 the main conversation window directly, without the Permissions sheet. Permission-refresh attempts
 were interrupted by user interaction, and System Settings subsequently showed an OS update in
 progress. No successful permission toggle or restored system-audio access is claimed.
+
+## System-audio repair verified — September 10, 15:55
+
+Authentication completed. Toggling both existing ListenToMe entries off/on, relaunching, and
+adding the exact installed app without a reset did not restore capture. With the production app
+closed, ran `tccutil reset ScreenCapture com.tomwu.ListenToMe`, then used System Settings →
+Screen & System Audio Recording → Add to select `/Applications/ListenToMe.app` by exact path.
+The Dev bundle ID was not reset. This repaired effective capture authorization; the precise
+internal cause of the inconsistent old authorization record is not established.
+
+On fresh launch, Start listening showed **Mic: active · System: active** without another prompt.
+Played a synthetic AIFF through `afplay`; the native transcript displayed **OTHERS This is the
+listen to me system audio test.** and **OTHERS The project review is scheduled for Friday.**
+The microphone also picked up playback, independently labeled YOU. This demonstrates direct
+system-audio transcription, not merely an enabled Settings toggle or microphone pickup.
+Stopped capture and observed **Saved at 3:55:02 PM**. No recording remains running from the test.
+
+This supersedes the earlier unresolved authorization notes. The repair was applied to the
+installed 1.3.2 build 9 app; no additional binary or public release was created during this repair.
