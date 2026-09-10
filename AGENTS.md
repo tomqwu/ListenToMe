@@ -24,3 +24,7 @@ must be completed by the user, but do not request publication approval again for
 
 Never reset broad macOS permissions. For the known ScreenCaptureKit -3801 issue, use the targeted
 production-app recovery and verification procedure in `docs/manual-smoke-test.md` when authorized.
+
+For iOS-only changes, use the platform-specific build, physical-device acceptance and
+archive/TestFlight distribution procedure in `docs/IOS.md` instead of the macOS DMG steps.
+Do not call simulator checks a physical-device pass or publish an unvalidated build as production.

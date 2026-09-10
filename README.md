@@ -20,6 +20,18 @@ real-time AI help — all on your Mac. It runs transcription on-device with Appl
 routes AI inference through [Ollama](https://ollama.com), so with a local model **your audio and
 transcript never leave the machine**.
 
+## iPhone and iPad
+
+A native standalone iOS 26 app is now available in source as the **ListenToMeIOS** target.
+It includes microphone transcription, local saved conversations, notes, Markdown sharing and
+optional on-device Apple Intelligence summaries. It does not capture other apps' audio or sync
+with the Mac. See [iOS setup, validation and distribution](docs/IOS.md).
+
+```sh
+make ios-build
+make ios-test
+```
+
 ## Screenshot
 
 ![ListenToMe — four-pane meeting copilot](docs/images/screenshot.png)
@@ -196,6 +208,7 @@ analysis; speaker names are included in saved transcript text when session savin
 
 - **`ListenToMeCore`** (Swift package): all testable logic — conversation state, VAD, question
   detection, prompt building, Ollama provider, model router, context engine, `MeetingSession`.
+- **`iOS/`**: iPhone/iPad SwiftUI app, foreground microphone capture with SpeechAnalyzer, optional Foundation Models summaries.
 - **`App/`**: macOS glue — `DualChannelCapture`, `SpeechRecognizerTranscriber`, SwiftUI UI, hotkey.
 
 See [`docs/superpowers/specs/2026-06-18-listentome-design.md`](docs/superpowers/specs/2026-06-18-listentome-design.md)

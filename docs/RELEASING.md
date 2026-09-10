@@ -1,7 +1,8 @@
 # Releasing ListenToMe
 
 This document describes how the maintainer builds and publishes an official, signed +
-**notarized** `.dmg` for ListenToMe.
+**notarized** `.dmg` for ListenToMe on macOS. For the separate iPhone/iPad target, follow
+[iOS validation and distribution](IOS.md#validation-and-release).
 
 > **Build and validate the distributable locally.** CI compiles the app on a `macos-26` runner.
 > Signing, notarization, GUI, permissions and real-audio acceptance still require a local Mac.

@@ -7,6 +7,7 @@ import Foundation
 // centered white "waveform" SF Symbol) and writes every macOS app-icon size, plus a matching
 // Contents.json, into App/Assets.xcassets/AppIcon.appiconset/. Run: swift scripts/make-app-icon.swift
 
+let isIOS = CommandLine.arguments.contains("--ios")
 let master: CGFloat = 1024
 
 func renderMaster() -> NSImage {
@@ -19,9 +20,9 @@ func renderMaster() -> NSImage {
 
     let rect = CGRect(x: 0, y: 0, width: master, height: master)
     // macOS icon grid: a rounded square inset slightly from the canvas edges.
-    let inset: CGFloat = master * 0.08
+    let inset: CGFloat = isIOS ? 0 : master * 0.08
     let bgRect = rect.insetBy(dx: inset, dy: inset)
-    let radius = bgRect.width * 0.235   // ~ the macOS continuous-corner squircle proportion
+    let radius = isIOS ? 0 : bgRect.width * 0.235   // ~ the macOS continuous-corner squircle proportion
     let bgPath = CGPath(roundedRect: bgRect, cornerWidth: radius, cornerHeight: radius,
                         transform: nil)
 
@@ -68,7 +69,7 @@ func renderMaster() -> NSImage {
 func pngData(from image: NSImage, pixels: Int) -> Data? {
     guard let rep = NSBitmapImageRep(
         bitmapDataPlanes: nil, pixelsWide: pixels, pixelsHigh: pixels,
-        bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+        bitsPerSample: 8, samplesPerPixel: isIOS ? 3 : 4, hasAlpha: !isIOS, isPlanar: false,
         colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0) else { return nil }
     rep.size = NSSize(width: pixels, height: pixels)
     NSGraphicsContext.saveGraphicsState()
@@ -89,12 +90,20 @@ let fm = FileManager.default
 let scriptURL = URL(fileURLWithPath: CommandLine.arguments[0]).deletingLastPathComponent()
 let repoRoot = scriptURL.deletingLastPathComponent()
 let assetsDir = repoRoot
-    .appendingPathComponent("App/Assets.xcassets", isDirectory: true)
+    .appendingPathComponent(isIOS ? "iOS/Assets.xcassets" : "App/Assets.xcassets", isDirectory: true)
 let iconSetDir = assetsDir
     .appendingPathComponent("AppIcon.appiconset", isDirectory: true)
 try? fm.createDirectory(at: iconSetDir, withIntermediateDirectories: true)
 
 let masterImage = renderMaster()
+
+// iOS applies its own icon mask. Supply an opaque, full-bleed 1024px source.
+if isIOS {
+    guard let data = pngData(from: masterImage, pixels: 1024) else { fatalError("Cannot render iOS icon") }
+    try data.write(to: iconSetDir.appendingPathComponent("AppIcon.png"))
+    print("Wrote opaque iOS icon")
+    exit(0)
+}
 
 struct Entry {
     let idiom = "mac"

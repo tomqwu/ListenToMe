@@ -44,4 +44,15 @@ jobs:
         run: make build SIGN_FLAGS='CODE_SIGNING_ALLOWED=NO'
       - name: Verify dependency resolution stayed locked
         run: diff -u Config/Package.resolved ListenToMe.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+  ios:
+    name: iOS 26 simulator build
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install project generator
+        run: brew install xcodegen
+      - name: Compile iPhone and iPad app
+        run: make ios-build
+      - name: Verify locked dependencies
+        run: diff -u Config/Package.resolved ListenToMe.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
   # GUI, permissions, real audio and distribution still require local artifact testing.
