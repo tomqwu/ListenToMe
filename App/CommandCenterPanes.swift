@@ -24,14 +24,15 @@ extension MeetingView {
                         ForEach(Self.languageOptions, id: \.id) { Text($0.label).tag($0.id) }
                     }
                     .labelsHidden().controlSize(.small)
-                    .help("Transcription language — applies the next time you press Listen")
+                    .help("Transcription language — applies the next time you press Start listening")
                 }
 
-                railSection("Proactive") {
-                    Toggle("Proactive replies", isOn: $session.proactiveEnabled)
-                        .controlSize(.small).labelsHidden()
+                railSection("Automatic AI") {
+                    Toggle("Auto summary", isOn: $session.autoSummaryEnabled).controlSize(.small)
+                    Toggle("Quick suggestions", isOn: $session.proactiveEnabled)
+                        .controlSize(.small)
                         .toggleStyle(.switch)
-                        .help("Let Quick/Listener react automatically as the conversation flows")
+                        .help("Let Quick suggest replies when a question is detected")
                 }
 
                 railSection("Preset") {
@@ -80,7 +81,7 @@ extension MeetingView {
             .disabled(!diarizationSinkAttached)
             .help(diarizationSinkAttached
                   ? "View automatic speaker identification and edit names"
-                  : "Press Listen to start capturing speaker audio.")
+                  : "Press Start listening to start capturing speaker audio.")
         }
     }
 
@@ -144,15 +145,15 @@ extension MeetingView {
     private func transcriptScroll(session: MeetingSession) -> some View {
         ScrollViewReader { proxy in
             ScrollView {
-                VStack(alignment: .leading, spacing: 2) {
+                LazyVStack(alignment: .leading, spacing: 2) {
                     if store.utterances.isEmpty && store.partial == nil {
                         PaneEmptyState(
                             systemImage: "waveform",
-                            text: "Press Listen to start transcribing the conversation.")
+                            text: "Press Start listening to start transcribing the conversation.")
                     }
                     ForEach(store.utterances) { transcriptRow(for: $0) }
-                    if let partial = store.partial {
-                        transcriptRow(for: partial).opacity(0.5)
+                    ForEach([SpeakerSource.you, .others], id: \.self) { source in
+                        if let partial = store.partials[source] { transcriptRow(for: partial).opacity(0.7) }
                     }
                     Color.clear.frame(height: 1).id(Self.scrollBottomID)
                 }

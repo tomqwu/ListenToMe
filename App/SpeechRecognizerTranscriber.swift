@@ -10,6 +10,8 @@ import ListenToMeCore
 /// and the brief gap between ending one task and starting the next falls during the detected
 /// silence, so little audio is lost. An actor so all shared state access is serialized.
 actor SpeechRecognizerTranscriber: Transcribing {
+    nonisolated let statusUpdates: AsyncStream<String>
+    private nonisolated let statusContinuation: AsyncStream<String>.Continuation
     nonisolated let segments: AsyncStream<TranscriptSegment>
     private nonisolated let continuation: AsyncStream<TranscriptSegment>.Continuation
 
@@ -23,12 +25,17 @@ actor SpeechRecognizerTranscriber: Transcribing {
         var cont: AsyncStream<TranscriptSegment>.Continuation!
         segments = AsyncStream { cont = $0 }
         continuation = cont
+        (statusUpdates, statusContinuation) = AsyncStream<String>.makeStream()
         SFSpeechRecognizer.requestAuthorization { [weak self] status in
             Task { await self?.setAuthorized(status == .authorized) }
         }
     }
 
-    private func setAuthorized(_ value: Bool) { authorized = value }
+    private func setAuthorized(_ value: Bool) {
+        authorized = value
+        statusContinuation.yield(value ? "Transcription: on-device speech ready"
+            : "Speech permission denied. Open Permissions, then restart listening.")
+    }
 
     func feed(_ chunk: AudioChunk) async {
         guard authorized, !stopped else { return }
@@ -60,6 +67,7 @@ actor SpeechRecognizerTranscriber: Transcribing {
         }
         states.removeAll()
         continuation.finish()
+        statusContinuation.finish()
     }
 
     // MARK: - Per-source recognition
@@ -80,7 +88,10 @@ actor SpeechRecognizerTranscriber: Transcribing {
     }
 
     private func startTask(for source: SpeakerSource) -> SourceState? {
-        guard let recognizer = onDeviceRecognizer() else { return nil }
+        guard let recognizer = onDeviceRecognizer() else {
+            statusContinuation.yield("On-device speech unavailable. Choose another language or engine.")
+            return nil
+        }
         let state = SourceState(recognizer: recognizer)
         state.task = recognizer.recognitionTask(with: state.request) { [weak self] result, error in
             guard let self else { return }
@@ -93,7 +104,8 @@ actor SpeechRecognizerTranscriber: Transcribing {
                     end: 0
                 ))
             }
-            if error != nil {
+            if let error {
+                self.statusContinuation.yield("Speech recognition failed: \(error.localizedDescription)")
                 Task { await self.taskFailed(source) }
             } else if result?.isFinal ?? false {
                 Task { await self.taskEnded(source) }

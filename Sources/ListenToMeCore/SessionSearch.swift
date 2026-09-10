@@ -7,9 +7,18 @@ public struct SessionRecord: Sendable, Equatable, Identifiable, Codable {
     public let date: Date
     public let transcript: String   // joined "You: …\nOthers: …" lines
     public let summary: String
-    public init(id: String, title: String, date: Date, transcript: String, summary: String) {
+    public let segments: [TranscriptSegment]?
+    public let notes: String?
+    public let quickSuggestion: String?
+    public let deepAnswer: String?
+    public let isComplete: Bool?
+    public init(id: String, title: String, date: Date, transcript: String, summary: String,
+                segments: [TranscriptSegment]? = nil, notes: String? = nil,
+                quickSuggestion: String? = nil, deepAnswer: String? = nil, isComplete: Bool? = nil) {
         self.id = id; self.title = title; self.date = date
         self.transcript = transcript; self.summary = summary
+        self.segments = segments; self.notes = notes
+        self.quickSuggestion = quickSuggestion; self.deepAnswer = deepAnswer; self.isComplete = isComplete
     }
 }
 

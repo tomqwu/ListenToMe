@@ -9,11 +9,14 @@ import ListenToMeCore
 /// Actor-isolated for safe shared-state access.
 @available(macOS 26.0, *)
 actor SpeechAnalyzerTranscriber: Transcribing {
+    nonisolated let statusUpdates: AsyncStream<String>
+    private nonisolated let statusContinuation: AsyncStream<String>.Continuation
     nonisolated let segments: AsyncStream<TranscriptSegment>
     private nonisolated let continuation: AsyncStream<TranscriptSegment>.Continuation
 
     private var pipelines: [SpeakerSource: Pipeline] = [:]
     private var stopped = false
+    private var failedSources = Set<SpeakerSource>()
     private let locale: Locale
 
     init(locale: Locale = .current) {
@@ -21,10 +24,11 @@ actor SpeechAnalyzerTranscriber: Transcribing {
         var cont: AsyncStream<TranscriptSegment>.Continuation!
         segments = AsyncStream { cont = $0 }
         continuation = cont
+        (statusUpdates, statusContinuation) = AsyncStream<String>.makeStream()
     }
 
     func feed(_ chunk: AudioChunk) async {
-        guard !stopped else { return }
+        guard !stopped, !failedSources.contains(chunk.source) else { return }
         let pipeline: Pipeline
         if let existing = pipelines[chunk.source] {
             pipeline = existing
@@ -48,14 +52,23 @@ actor SpeechAnalyzerTranscriber: Transcribing {
         stopped = true
         for pipeline in pipelines.values {
             pipeline.inputContinuation.finish()
-            try? await pipeline.analyzer.finalizeAndFinishThroughEndOfInput()
+            do { try await pipeline.analyzer.finalizeAndFinishThroughEndOfInput() } catch {
+                statusContinuation.yield("Transcript finalization failed: \(error.localizedDescription)")
+            }
             await pipeline.resultsTask.value   // drain finalized results; the stream ends after finalize
         }
         pipelines.removeAll()
         continuation.finish()
+        statusContinuation.finish()
     }
 
     private func makePipeline(for source: SpeakerSource) async -> Pipeline? {
+        guard SpeechTranscriber.isAvailable else {
+            statusContinuation.yield("SpeechAnalyzer is unavailable on this Mac. Choose another engine in Settings.")
+            failedSources.insert(source)
+            return nil
+        }
+        statusContinuation.yield("Transcription: preparing on-device speech model…")
         let resolvedLocale = await Self.supportedLocale(for: locale)
         let transcriber = SpeechTranscriber(
             locale: resolvedLocale,
@@ -68,9 +81,13 @@ actor SpeechAnalyzerTranscriber: Transcribing {
                 try await req.downloadAndInstall()
             }
         } catch {
-            // Proceed: model may already be installed; if not, start() will surface an error.
+            statusContinuation.yield("Speech model installation failed: \(error.localizedDescription). Stop and restart to retry.")
+            failedSources.insert(source)
+            return nil
         }
         guard let format = await SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith: [transcriber]) else {
+            statusContinuation.yield("Speech model unavailable. Check language and restart.")
+            failedSources.insert(source)
             return nil
         }
         let analyzer = SpeechAnalyzer(modules: [transcriber])
@@ -84,7 +101,8 @@ actor SpeechAnalyzerTranscriber: Transcribing {
                     Self.emit(result, from: source, to: cont)
                 }
             } catch {
-                // results stream errored
+                self?.statusContinuation.yield("Transcription failed: \(error.localizedDescription). Stop and restart.")
+                await self?.markFailed(source)
             }
             // Stream ended (error or completion): drop this pipeline so the next feed recreates it.
             await self?.resultsEnded(source: source, id: id)
@@ -92,10 +110,13 @@ actor SpeechAnalyzerTranscriber: Transcribing {
         do {
             try await analyzer.start(inputSequence: inputSequence)
         } catch {
+            statusContinuation.yield("Transcription could not start: \(error.localizedDescription)")
+            failedSources.insert(source)
             resultsTask.cancel()
             inputContinuation.finish()
             return nil
         }
+        statusContinuation.yield("Transcription: on-device · \(resolvedLocale.identifier)")
         return Pipeline(
             id: id,
             transcriber: transcriber,
@@ -120,6 +141,8 @@ actor SpeechAnalyzerTranscriber: Transcribing {
 
     /// A source's results stream ended. If we're still running and this is the current pipeline
     /// for the source, drop it so the next `feed` lazily recreates a fresh analyzer.
+    private func markFailed(_ source: SpeakerSource) { failedSources.insert(source) }
+
     private func resultsEnded(source: SpeakerSource, id: UUID) {
         guard !stopped, pipelines[source]?.id == id else { return }
         pipelines[source] = nil

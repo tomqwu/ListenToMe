@@ -14,12 +14,12 @@ Prereq: Ollama running with at least one chat-capable model installed (local or 
    and holds its own permission grants. Grant permissions to that row, not the release's.
 2. On first launch, the app shows a **Permissions** panel automatically. Grant Microphone,
    Speech Recognition, Screen Recording (system audio), and Accessibility (global hotkey) directly
-   from the panel. You can also reopen it anytime via the 🛡️ (lock.shield) toolbar button.
+   from the panel. You can also reopen it anytime via **More → Permissions**.
    Re-click **Listen** after granting if needed.
 3. In each AI pane's header, confirm a **model dropdown** is populated with your installed Ollama
    models. Set different models per pane if you like (e.g. a fast model for **Quick**, a heavier one
-   for **Deep**, `deepseek-v4-flash:cloud` for any). The toolbar **↻** button re-scans models.
-4. Click **Listen**. Speak a sentence → it appears under **Transcript** labeled **You** (blue).
+   for **Deep**, `deepseek-v4-flash:cloud` for any). **More → Refresh models** re-scans models.
+4. Click **Start listening**. Speak a sentence → it appears under **Transcript** labeled **You** (blue).
 5. Play speech from another app (a video/meeting) → it appears labeled **Others** (green).
 6. In the **Quick** pane, click **What should I answer?** → a streamed suggestion appears (a
    "💭 Thinking…" state shows first for thinking models).

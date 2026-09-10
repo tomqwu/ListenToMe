@@ -130,18 +130,32 @@ once. macOS asks each binary for keychain access the first time it reads the ite
 ## Models, presets & languages
 
 - **Per-pane models.** Each of Listener, Quick, and Deep has a model dropdown in its header with
-  "good for" hints. Choices persist across launches; the toolbar **↻** button re-scans installed
+  "good for" hints. Choices persist across launches; **More → Refresh models** re-scans installed
   models (e.g. after `ollama pull`). On first launch any role whose saved model isn't installed
   auto-switches to one that works — no manual config needed.
-- **Ollama Cloud.** Paste your Ollama API key (from [ollama.com](https://ollama.com)) in
-  **Settings** to use cloud models (e.g. `deepseek-v4-flash`, `qwen3-coder`). With a key set, the
-  app routes discovery and inference to `https://ollama.com`; leave it blank to use local Ollama at
-  `http://localhost:11434`. The key is stored in your macOS Keychain.
+- **AI processing mode.** In **Settings**, explicitly choose **Local only**, **Cloud**, or **AI off**.
+  Local mode verifies downloaded-model metadata before every request and rejects remote/cloud-backed
+  models and redirects. Cloud mode uses `https://ollama.com` and the key stored in macOS Keychain.
+  It sends transcript, notes, summary and attached reference context to Ollama Cloud. Adding a key
+  alone does not switch modes. AI off leaves capture, transcription and saving available.
 - **Presets.** Pick a use-case preset to tailor how the copilot responds.
 - **Languages.** Independent **transcription-language** and **AI response-language** pickers.
 - **Reference files.** Add files/folders as context, with a configurable token budget.
 - **Audio import.** Import an audio file to transcribe it.
-- **Export.** Save the session as Markdown (toolbar ⬆️).
+- **Save conversation (⌘S).** Saves finalized transcript, speaker names, notes and available AI outputs
+  without stopping capture. A visible saved time acknowledges success. Failed saves offer Retry / Save As.
+- **New conversation (⌘N).** Finishes and saves the current conversation, then clears transcript,
+  AI context, notes, names and attached references. Model/language/appearance preferences remain.
+- **History (⌘F).** Search saved conversations, open their full contents, and copy/export Markdown.
+- **Export (⌘E).** Export the current conversation as Markdown; PDF and recap are also in Export.
+  With autosaving off, Save opens Save As and New/Close offers Save As, Cancel or explicit discard.
+
+Autosaving checkpoints finalized text as it changes and available outputs once per second. Current
+partial speech is not acknowledged as saved. An interrupted session is available in History through
+its last successful checkpoint. Release history lives in `~/Library/Application Support/ListenToMe/Conversations`;
+Debug uses `ListenToMe Dev/Conversations`. Legacy `sessions.json` imports once and remains for rollback
+until **Clear history** deletes it in the Release app. Turning autosaving off keeps existing history.
+History is local, unencrypted JSON and currently reopens for reading/export, not editing or resuming.
 
 ### Automatic speaker identification (experimental)
 
@@ -171,11 +185,12 @@ analysis; speaker names are included in saved transcript text when session savin
 
 - **On-device transcription.** Speech-to-text runs locally via Apple SpeechAnalyzer (or
   SpeechRecognizer) — both on-device.
-- **Local models never leave the Mac.** If you use a local Ollama model, audio and transcript stay
-  entirely on your machine.
-- **Cloud only when you choose it.** A cloud (`:cloud`) model is used only if you explicitly select
-  one and set an Ollama API key; in that case the transcript/prompt is sent to Ollama Cloud and
-  nowhere else.
+- **Local-only AI.** The app accepts only models whose local Ollama metadata identifies downloaded
+  weights without a remote destination. Unknown routing is rejected, including cloud model aliases
+  served through a local daemon. This trusts the installed local Ollama service and its metadata.
+- **Explicit cloud choice.** Select Cloud in Settings to send AI prompt context to Ollama Cloud.
+  Audio transcription and experimental speaker processing remain on-device; their models may download
+  on first use. Select AI off to stop model requests while continuing to capture and save.
 
 ## Architecture
 
@@ -190,11 +205,10 @@ for the implementation plan.
 
 ### CI
 
-GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) gates every PR to `main` on a
+GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs checks for PRs to `main` on a
 macOS runner: SwiftLint, the full `ListenToMeCore` test suite (unit + headless integration/e2e), and
-a **coverage floor of 95%** enforced by `scripts/check-coverage.sh`. Because the app target deploys to
-macOS 26 and uses ScreenCaptureKit/Speech, the **app build and GUI/audio e2e cannot run on hosted
-runners** — those are verified locally via [`docs/manual-smoke-test.md`](docs/manual-smoke-test.md).
+a **coverage floor of 95%** enforced by `scripts/check-coverage.sh`. The app also compiles on a `macos-26` runner using the checked-in dependency lock.
+GUI/audio and distribution checks require local validation via [`docs/manual-smoke-test.md`](docs/manual-smoke-test.md).
 
 `make e2e` runs the checks CI can't (it needs a real Mac + Ollama): it builds the app target,
 verifies `make run`'s app-path resolution, and runs a real LLM contract test against your local

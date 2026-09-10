@@ -9,36 +9,36 @@ struct MeetingView: View {
 
     @State var session: MeetingSession
     @State var store: ConversationStore
-    @State private var startError: String?
-    @State private var showSettings = false
+    @State var startError: String?
+    @State var showSettings = false
     @State private var permissions = PermissionsModel()
     @State private var showPermissions = false
     @State private var showOnboarding = false
-    @State private var showSearch = false
-    @State private var sessionStore = SessionStore()
+    @State var showSearch = false
+    @State var sessionStore = SessionStore()
     /// Identity of this app-window's session. Reused across Listen→Stop cycles so repeated Stops
     /// upsert one growing record instead of writing a fresh superset each time.
-    @State private var currentSessionID = UUID().uuidString
+    @State var currentSessionID = UUID().uuidString
     /// `lastSavedUtteranceCount`: count at the last save, so an unchanged transcript isn't re-saved on
     /// Stop. `sessionSaveable`: whether this window-session may be persisted — tainted to false the
     /// moment saving is ever observed off (or history is cleared), so "turn off to keep nothing" holds
     /// for the whole session. `savingEnabledBeforeSettings`: toggle value snapshotted when Settings
     /// opened, so an off→on round-trip is still caught.
-    @State private var lastSavedUtteranceCount = 0; @State private var sessionSaveable = true
+    @State var sessionSaveable = true
     @State private var savingEnabledBeforeSettings = true; @State var chatModels: [String] = []
     @State var transcriptionLocaleID: String
     @State var presetID: String
-    @State private var referencePaths: [URL]
+    @State var referencePaths: [URL]
     @State private var referenceLoadToken = 0
-    @State private var restartTask: Task<Void, Never>?
-    @State private var importTask: Task<Void, Never>?
+    @State var restartTask: Task<Void, Never>?
+    @State var importTask: Task<Void, Never>?
     @State var transcriptAtBottom = true
     /// User intent to be capturing — the toolbar button's source of truth. Stays true across the
     /// brief teardown window of a locale restart (when `session.isRunning` is transiently false),
     /// so a Stop press is never lost.
     @State var wantsCapture = false
     /// When the current recording run began, for the elapsed mm:ss timer. nil while idle.
-    @State private var recordingStartedAt: Date?
+    @State var recordingStartedAt: Date?
     /// Ticks while recording so the elapsed timer updates once per second.
     @State private var now = Date()
     /// Live appearance (System/Light/Dark) applied to the root via `.preferredColorScheme`.
@@ -58,6 +58,14 @@ struct MeetingView: View {
     @State var microphoneSinkAttached = false
     @State var diarizationRunUsesTimestamps = false
     @State var diarizer = SpeakerDiarizer()
+    @State var modelStatus = ""
+    @State private var modelLoadToken = 0
+    @State private var showLicenses = false
+    @State var lifecycleBusy = false
+    @State var conversationTitle = "Conversation — " + Date().formatted(date: .abbreviated, time: .shortened)
+    @State var saveMessage = "Not saved yet"
+    @State var saveFailed = false
+    @State var lastSavedSignature = ""
     private let hotkey = HotkeyMonitor()
 
     /// mm:ss since the current recording run started (00:00 when idle).
@@ -138,7 +146,8 @@ struct MeetingView: View {
                 }
             },
             makeProvider: { model in
-                OllamaProvider(model: model, baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey())
+                OllamaProvider(model: model, baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey(),
+                               localOnly: ProviderSettings.aiMode != .cloud)
             },
             models: [
                 .listener: ProviderSettings.model(for: .listener),
@@ -150,13 +159,14 @@ struct MeetingView: View {
 
     // MARK: - Ollama cloud routing
 
-    private static func ollamaKey() -> String? {
+    nonisolated private static func ollamaKey() -> String? {
+        guard ProviderSettings.aiMode == .cloud else { return nil }
         let k = KeychainStore.get("ollama")
         return (k?.isEmpty == false) ? k : nil
     }
 
-    private static func ollamaBaseURL() -> URL {
-        ollamaKey() != nil
+    nonisolated private static func ollamaBaseURL() -> URL {
+        ProviderSettings.aiMode == .cloud
             ? URL(string: "https://ollama.com")!
             : URL(string: "http://localhost:11434")!
     }
@@ -165,6 +175,11 @@ struct MeetingView: View {
         @Bindable var session = session
         return VStack(spacing: 0) {
             topControlBar(session: session, showPermissions: $showPermissions)
+            conversationStatus
+            if !modelStatus.isEmpty && ProviderSettings.aiMode != .off {
+                Text(modelStatus).font(.callout).foregroundStyle(.orange)
+                    .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 14)
+            }
             if let startError {
                 Text("⚠️ \(startError)")
                     .foregroundStyle(.red)
@@ -181,7 +196,7 @@ struct MeetingView: View {
                 copilotColumn(session: session)
             }
             .frame(maxHeight: .infinity)
-            CommandCenterFooter(cloudActive: Self.ollamaKey() != nil)
+            CommandCenterFooter(mode: ProviderSettings.aiMode)
         }
         .background(Theme.windowBackground)
         .preferredColorScheme(colorScheme(for: appearance))
@@ -189,11 +204,14 @@ struct MeetingView: View {
         // Tick the elapsed timer once per second while recording.
         .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { date in
             if recordingStartedAt != nil { now = date }
+            if !saveFailed { _ = checkpoint(complete: !wantsCapture && !lifecycleBusy && !session.isTranscribingFile) }
             if wantsCapture && session.isRunning && date >= nextSpeakerAnalysis {
                 identifySpeakers(showSheet: false)
             }
         }
+        .onChange(of: store.revision) { _, _ in _ = checkpoint() }
         .sheet(isPresented: $showSettings, onDismiss: {
+            session.aiEnabled = ProviderSettings.aiMode != .off
             session.responseLanguage = ProviderSettings.responseLanguageDirective()
             appearance = ProviderSettings.appearance   // apply an appearance change live
             // Rebuild attached references so a changed reference-budget takes effect immediately.
@@ -204,6 +222,18 @@ struct MeetingView: View {
         })
         .sheet(isPresented: $showPermissions) {
             PermissionsView(permissions: permissions)
+        }
+        .sheet(isPresented: $showLicenses) {
+            VStack {
+                Text("Open-source licenses").font(.title2)
+                ScrollView {
+                    Text(Bundle.main.url(forResource: "ThirdPartyNotices", withExtension: "txt").flatMap {
+                        try? String(contentsOf: $0, encoding: .utf8)
+                    } ?? "Notices are unavailable in this build.")
+                        .font(.body).textSelection(.enabled).padding()
+                }
+                Button("Done") { showLicenses = false }
+            }.padding().frame(width: 700, height: 560)
         }
         .sheet(isPresented: $showSearch) {
             SessionSearchView(store: sessionStore, onClear: { dropCurrentSessionFromSaving() })
@@ -223,10 +253,11 @@ struct MeetingView: View {
             OnboardingView()
         })
         .onAppear {
+            session.aiEnabled = ProviderSettings.aiMode != .off
             session.responseLanguage = ProviderSettings.responseLanguageDirective()
             let preset = PresetCatalog.preset(id: presetID)
             session.personaGuidance = preset.personaGuidance
-            if session.notes.isEmpty { session.notes = preset.notesTemplate }   // seed saved preset's scaffold
+            ApplicationLifecycle.shared.prepareToClose = { await prepareToClose() }
             if !referencePaths.isEmpty { loadReferences(into: session) }
             hotkey.start { Task { await session.respondQuick(.answerQuestion) } }
             permissions.refresh()
@@ -242,71 +273,76 @@ struct MeetingView: View {
         .task {
             await reloadAndHealModels()
         }
+        .background(WindowCloseHandler())
+        .focusedSceneValue(\.conversationCommands, conversationCommands)
         .onDisappear { tearDownOnDisappear(session: session) }
     }
 
+}
+
+extension MeetingView {
     // MARK: - Top control bar
 
     /// Replaces the old icon-row toolbar: Listen/Stop + pulsing indicator + elapsed timer on the
     /// left; the same icon actions that existed before on the right (refresh-models, import audio,
     /// export menu, copy-session, search, permissions, settings).
     private func topControlBar(session: MeetingSession, showPermissions: Binding<Bool>) -> some View {
-        HStack(spacing: 12) {
-            Button(wantsCapture ? "Stop" : "Listen") { toggleCapture(session: session) }
-                .buttonStyle(.borderedProminent)
-                .disabled(session.isTranscribingFile)   // no live capture while importing a file
-            if session.isRunning {
-                RecordingIndicator()
-                Text(elapsedLabel)
-                    .font(.system(size: 12, weight: .medium, design: .monospaced))
-                    .foregroundStyle(Theme.ink2)
+        HStack(spacing: 8) {
+            Button { toggleCapture(session: session) } label: {
+                Label(wantsCapture ? "Stop listening" : "Start listening", systemImage: wantsCapture ? "stop.fill" : "mic.fill")
             }
-            if session.isTranscribingFile {
-                ProgressView().controlSize(.small)
-                Text("Transcribing…").foregroundStyle(Theme.ink2)
-            }
-            Spacer()
-            Button { Task { await reloadModels() } } label: { Image(systemName: "arrow.clockwise") }
-                .help("Refresh installed Ollama models")
-            Button { importAudioFile(session: session) } label: { Image(systemName: "waveform") }
-                .help("Import an audio file and transcribe it")
-                .disabled(wantsCapture || session.isTranscribingFile)   // wantsCapture covers the restart window
+            .buttonStyle(.borderedProminent)
+            .help("Start or stop capturing microphone and system audio")
+            .disabled(lifecycleBusy || session.isTranscribingFile)
+            Button { saveConversation() } label: { Label("Save conversation", systemImage: "square.and.arrow.down") }
+                .disabled(!hasConversation)
+                .help("Save without stopping capture (Command-S)")
+            Button { newConversation() } label: { Label("New conversation", systemImage: "plus") }
+                .disabled(lifecycleBusy || session.isTranscribingFile)
+                .help("Save this conversation, then start a clean one (Command-N)")
+            Button { showSearch = true } label: { Label("History", systemImage: "clock") }
+                .help("Open saved conversations (Command-F)")
             Menu {
                 Button("Full transcript (Markdown)…") { exportSession() }
                 Button("Recap (Markdown)…") { exportRecap() }
                 Button("PDF…") { exportPDF() }
-            } label: {
-                Image(systemName: "square.and.arrow.up")
-            }
-            .menuIndicator(.hidden)
-            .help("Export the session as Markdown or PDF")
-            Button { copySessionMarkdown() } label: { Image(systemName: "list.clipboard") }
-                .help("Copy the transcript + AI notes as Markdown")
-            Button { showSearch = true } label: { Image(systemName: "magnifyingglass") }
-                .help("Search past meetings")
-            Button { showPermissions.wrappedValue = true } label: { Image(systemName: "lock.shield") }
-                .help("Microphone / system-audio permissions")
-            Button { openSettings($showSettings) } label: { Image(systemName: "gearshape") }
-                .help("Settings")
+                Button("Copy conversation") { copySessionMarkdown() }
+            } label: { Label("Export", systemImage: "square.and.arrow.up") }
+                .help("Export or copy this conversation")
+            Button { openSettings($showSettings) } label: { Label("Settings", systemImage: "gearshape") }
+                .help("Configure transcription, AI, and saving (Command-comma)")
+            Menu {
+                Button("Refresh models") { Task { await reloadAndHealModels() } }
+                Button("Import audio file…") { importAudioFile(session: session) }
+                    .disabled(wantsCapture || lifecycleBusy || session.isTranscribingFile)
+                Button("Permissions…") { showPermissions.wrappedValue = true }
+                Button("Open-source licenses…") { showLicenses = true }
+            } label: { Label("More", systemImage: "ellipsis") }
+            Spacer(minLength: 0)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+        .font(.system(size: 13, weight: .medium))
+        .controlSize(.large)
+        .imageScale(.large)
+        .padding(.horizontal, 14).padding(.vertical, 10)
         .background(Theme.windowBackground)
-        .overlay(Rectangle().fill(Theme.line).frame(height: 1), alignment: .bottom)
     }
 
     /// Listen/Stop press: start or stop capture, tracking the elapsed-timer anchor and saving on Stop.
     private func toggleCapture(session: MeetingSession) {
+        guard !lifecycleBusy else { return }
         Task {
             if wantsCapture {
+                lifecycleBusy = true
+                defer { lifecycleBusy = false }
+                _ = checkpoint()
                 wantsCapture = false
                 recordingStartedAt = nil
                 restartTask?.cancel()   // cancel any in-flight locale restart
                 // Await teardown so the transcriber flushes its final segments into the store
                 // before we snapshot the transcript for search.
                 await session.stopAndWait()
-                await finishSpeakerAnalysis()
-                saveSessionIfEnabled(session: session)
+                _ = checkpoint(complete: true, force: true)
+                Task { await finishSpeakerAnalysis() }
             } else {
                 wantsCapture = true
                 do {
@@ -316,6 +352,7 @@ struct MeetingView: View {
                     // start returns, once the prior Stop's finals have drained into the store.
                     beginDiarizationRunReset()
                     try await session.start()
+                    guard wantsCapture, session.isRunning else { return }
                     anchorDiarizationRun()
                     now = Date(); recordingStartedAt = Date()
                 } catch {
@@ -343,6 +380,7 @@ struct MeetingView: View {
             do {
                 startError = nil
                 try await session.start()
+                guard wantsCapture, session.isRunning, !Task.isCancelled else { return }
                 anchorDiarizationRun()
             } catch {
                 startError = error.localizedDescription; wantsCapture = false
@@ -358,7 +396,7 @@ struct MeetingView: View {
     /// Also release the breakdown UI: bumping the token makes a superseded `identifySpeakers` task
     /// bail via its token guard WITHOUT clearing `speakerLoading`, so we clear the spinner/error state
     /// here. This guarantees that starting/restarting always frees the "Identify speakers" button.
-    private func beginDiarizationRunReset() {
+    func beginDiarizationRunReset() {
         speakerTask?.cancel()
         speakerTask = nil
         let run = diarizationRunToken + 1
@@ -515,9 +553,9 @@ extension MeetingView {
 
     /// Builds the full Markdown document (transcript + AI-pane outputs) for the given timestamp.
     /// Shared by `exportSession()`, `exportPDF()`, and `copySessionMarkdown()`.
-    private func sessionMarkdown(now: Date = Date()) -> String {
+    func sessionMarkdown(now: Date = Date()) -> String {
         SessionExporter.markdown(
-            title: "ListenToMe Session — \(now.formatted(date: .abbreviated, time: .shortened))",
+            title: conversationTitle,
             transcript: store.utterances,
             notes: session.notes,
             listenerSummary: session.listenerSummary,
@@ -544,7 +582,7 @@ extension MeetingView {
     func exportRecap() {
         let now = Date()
         let markdown = SessionExporter.recap(
-            title: "ListenToMe Session — \(now.formatted(date: .abbreviated, time: .shortened))",
+            title: conversationTitle,
             listenerSummary: session.listenerSummary,
             quickSuggestion: session.quickSuggestion,
             deepAnswer: session.deepAnswer
@@ -594,10 +632,10 @@ extension MeetingView {
         restartTask?.cancel()   // don't let a pending locale restart resume capture after close
         importTask?.cancel()    // stop an in-flight file import when the window closes
         if wasCapturing {
+            _ = checkpoint()
             Task {
                 await session.stopAndWait()
-                await finishSpeakerAnalysis()
-                saveSessionIfEnabled(session: session)
+                _ = checkpoint(complete: true, force: true)
             }
         } else {
             session.stop()
@@ -629,9 +667,9 @@ extension MeetingView {
     func dropCurrentSessionFromSaving() {
         // Only taint when the current window-session has content that was just cleared — clearing
         // old records on a fresh/empty window must not silently disable future saving.
-        if !store.utterances.isEmpty { sessionSaveable = false }
+        if hasConversation { sessionSaveable = false }
         currentSessionID = UUID().uuidString
-        lastSavedUtteranceCount = store.utterances.count
+        lastSavedSignature = ""
     }
 
     /// On Stop, persist the finished session for cross-meeting search when this window-session is
@@ -639,29 +677,13 @@ extension MeetingView {
     /// `currentSessionID` so repeated Listen→Stop cycles upsert one growing record. Title = the
     /// active preset's name (or "Session") plus the date.
     func saveSessionIfEnabled(session: MeetingSession, force: Bool = false) {
-        guard ProviderSettings.saveSessionsForSearch else { sessionSaveable = false; return }
-        guard sessionSaveable, !store.utterances.isEmpty,
-              force || store.utterances.count > lastSavedUtteranceCount else { return }
-        let now = Date()
-        let presetName = PresetCatalog.preset(id: presetID).name
-        let base = (presetName.isEmpty || presetName == "None") ? "Session" : presetName
-        let transcript = store.utterances.map { "\($0.speakerLabel): \($0.text)" }
-            .joined(separator: "\n")
-        let record = SessionRecord(
-            id: currentSessionID,
-            title: "\(base) — \(now.formatted(date: .abbreviated, time: .shortened))",
-            date: now,
-            transcript: transcript,
-            summary: session.listenerSummary
-        )
-        sessionStore.add(record)
-        lastSavedUtteranceCount = store.utterances.count
+        _ = checkpoint(complete: !wantsCapture && !lifecycleBusy, force: force)
     }
 
     /// Reloads the installed Ollama chat models into the per-pane pickers.
     func reloadModels() async {
         chatModels = await OllamaModels.chatModels(
-            baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey())
+            baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey(), localOnly: ProviderSettings.aiMode != .cloud)
     }
 
     /// Reloads chat models for the current Ollama route (cloud vs local) and heals each role:
@@ -669,8 +691,17 @@ extension MeetingView {
     /// role-appropriate default (Quick = lightest, Deep = heaviest, Listener = balanced).
     /// Always rebuilds every role's provider so it picks up the current base URL/key.
     func reloadAndHealModels() async {
-        chatModels = await OllamaModels.chatModels(
-            baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey())
+        session.aiEnabled = ProviderSettings.aiMode != .off
+        // Cancel old-route work immediately, before asynchronous discovery can suspend this task.
+        for role in CopilotRole.allCases { session.setModel(role, session.models[role] ?? "") }
+        modelLoadToken += 1
+        let token = modelLoadToken
+        let discovered = await OllamaModels.chatModels(
+            baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey(), localOnly: ProviderSettings.aiMode != .cloud)
+        guard token == modelLoadToken else { return }
+        chatModels = discovered
+        modelStatus = ProviderSettings.aiMode == .off ? "AI is off" : (chatModels.isEmpty
+            ? "No available AI models. Check Ollama and AI mode in Settings, then Refresh models." : "")
         let defaults = ModelRanking.roleDefaults(from: chatModels)
         for role in CopilotRole.allCases {
             let current = session.models[role] ?? ""

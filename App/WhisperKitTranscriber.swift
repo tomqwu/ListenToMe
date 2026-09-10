@@ -24,6 +24,8 @@ import WhisperKit
 /// Load failures are logged via NSLog and the transcriber degrades to a no-op rather than crashing
 /// the session. An actor so all shared buffer/state access is serialized.
 actor WhisperKitTranscriber: Transcribing {
+    nonisolated let statusUpdates: AsyncStream<String>
+    private nonisolated let statusContinuation: AsyncStream<String>.Continuation
     nonisolated let segments: AsyncStream<TranscriptSegment>
     private nonisolated let continuation: AsyncStream<TranscriptSegment>.Continuation
 
@@ -68,6 +70,7 @@ actor WhisperKitTranscriber: Transcribing {
         var cont: AsyncStream<TranscriptSegment>.Continuation!
         segments = AsyncStream { cont = $0 }
         continuation = cont
+        (statusUpdates, statusContinuation) = AsyncStream<String>.makeStream()
     }
 
     func feed(_ chunk: ListenToMeCore.AudioChunk) async {
@@ -130,6 +133,7 @@ actor WhisperKitTranscriber: Transcribing {
         await transcriptionChain?.value
         states.removeAll()
         continuation.finish()
+        statusContinuation.finish()
     }
 
     // MARK: - Transcription
@@ -218,7 +222,7 @@ actor WhisperKitTranscriber: Transcribing {
                 end: end
             ))
         } catch {
-            NSLog("WhisperKitTranscriber: transcribe failed for \(source.rawValue): \(error.localizedDescription)")
+            statusContinuation.yield("Whisper transcription failed: \(error.localizedDescription). Stop and restart.")
         }
     }
 
@@ -245,6 +249,7 @@ actor WhisperKitTranscriber: Transcribing {
     /// Resolves to nil and logs on a hard failure (only attempted once per transcriber lifetime).
     private func startModelLoadIfNeeded() {
         guard loadTask == nil else { return }
+        statusContinuation.yield("Transcription: downloading/loading Whisper model…")
         loadTask = Task {
             do {
                 let kit = try await WhisperKit(
@@ -253,9 +258,10 @@ actor WhisperKitTranscriber: Transcribing {
                     logLevel: .error,
                     download: true
                 )
+                statusContinuation.yield("Transcription: Whisper ready")
                 return KitBox(kit: kit)
             } catch {
-                NSLog("WhisperKitTranscriber: model load failed (\(Self.modelName)): \(error.localizedDescription)")
+                statusContinuation.yield("Whisper model failed: \(error.localizedDescription). Stop and restart to retry.")
                 return nil
             }
         }

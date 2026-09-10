@@ -1,4 +1,5 @@
 import Foundation
+import ListenToMeCore
 
 /// Queries the Ollama server (local or cloud) for installed models and their capabilities.
 enum OllamaModels {
@@ -19,7 +20,7 @@ enum OllamaModels {
     /// True if the model advertises chat/completion capability (not embedding-only).
     static func isChatCapable(_ name: String,
                               baseURL: URL = URL(string: "http://localhost:11434")!,
-                              apiKey: String? = nil) async -> Bool {
+                              apiKey: String? = nil, localOnly: Bool = false) async -> Bool {
         var req = URLRequest(url: baseURL.appendingPathComponent("api/show"))
         req.httpMethod = "POST"
         req.timeoutInterval = 10
@@ -31,13 +32,13 @@ enum OllamaModels {
               (resp as? HTTPURLResponse)?.statusCode == 200,
               let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let caps = obj["capabilities"] as? [String] else { return false }
-        return caps.contains("completion")
+        return caps.contains("completion") && (!localOnly || ModelPrivacy.isVerifiedLocal(data))
     }
 
     /// Installed models that can chat (capabilities include "completion").
     /// Probes capabilities concurrently for fast cloud responses.
     static func chatModels(baseURL: URL = URL(string: "http://localhost:11434")!,
-                           apiKey: String? = nil) async -> [String] {
+                           apiKey: String? = nil, localOnly: Bool = false) async -> [String] {
         let names = await installed(baseURL: baseURL, apiKey: apiKey)
         guard !names.isEmpty else { return [] }
 
@@ -45,7 +46,7 @@ enum OllamaModels {
         let capable: [Bool] = await withTaskGroup(of: (Int, Bool).self) { group in
             for (index, name) in names.enumerated() {
                 group.addTask {
-                    let ok = await isChatCapable(name, baseURL: baseURL, apiKey: apiKey)
+                    let ok = await isChatCapable(name, baseURL: baseURL, apiKey: apiKey, localOnly: localOnly)
                     return (index, ok)
                 }
             }

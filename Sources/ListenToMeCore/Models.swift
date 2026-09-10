@@ -23,7 +23,7 @@ public struct AudioChunk: Sendable, Equatable {
 
 /// One unit of transcribed speech. Partial segments (`isFinal == false`) are replaced as more
 /// audio arrives; finalized segments are appended to the conversation log.
-public struct TranscriptSegment: Identifiable, Sendable, Equatable {
+public struct TranscriptSegment: Identifiable, Sendable, Equatable, Codable {
     public let id: UUID
     public let source: SpeakerSource
     public let text: String

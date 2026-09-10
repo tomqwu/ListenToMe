@@ -37,7 +37,7 @@ enum Theme {
     /// Secondary text. dark `#a9a7b8` / light `#5b5966`.
     static let ink2 = dynamic(light: nsColor(0.357, 0.349, 0.400), dark: nsColor(0.663, 0.655, 0.722))
     /// Tertiary / faint text & labels. dark `#6f6d80` / light `#9a98a6`.
-    static let ink3 = dynamic(light: nsColor(0.604, 0.596, 0.651), dark: nsColor(0.435, 0.427, 0.502))
+    static let ink3 = dynamic(light: nsColor(0.39, 0.38, 0.44), dark: nsColor(0.66, 0.65, 0.73))
 
     static let cornerRadius: CGFloat = 12
     static let paneSpacing: CGFloat = 10

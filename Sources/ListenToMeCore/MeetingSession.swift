@@ -10,6 +10,18 @@ public final class MeetingSession {
     public private(set) var isRunning = false
     public var notes = ""
     public var proactiveEnabled = true
+    public var autoSummaryEnabled = true
+    public var aiEnabled = true {
+        didSet { if !aiEnabled { for role in CopilotRole.allCases { cancelResponse(role) } } }
+    }
+    public private(set) var captureMessages: [SpeakerSource: String] = [:]
+    public private(set) var transcriptionStatus = "Transcription: idle"
+    public var captureStatus: String {
+        "Mic: \(captureMessages[.you] ?? "idle") · System: \(captureMessages[.others] ?? "idle")"
+    }
+    private var captureStatusTask: Task<Void, Never>?
+    private var transcriptionStatusTask: Task<Void, Never>?
+
     /// Forces all AI replies (Listener/Quick/Deep) into this language, e.g. "Simplified Chinese";
     /// nil/empty leaves the model free to match the conversation. Set from the UI's Settings.
     public var responseLanguage: String?
@@ -29,6 +41,8 @@ public final class MeetingSession {
     /// separate from `listenerSummary` (the live display value, which is cleared to "" while a new
     /// refresh streams) so a proactive Quick can't read an empty/partial in-flight summary.
     private var lastCompletedListenerSummary = ""
+    private var summarizedSegmentIDs = Set<UUID>()
+    private var pendingSummaryIDs: [Int: Set<UUID>] = [:]
 
     /// True while an imported audio file is being transcribed into the store.
     public private(set) var isTranscribingFile = false
@@ -96,8 +110,30 @@ public final class MeetingSession {
 
     /// Changes the model for a role and rebuilds its provider.
     public func setModel(_ role: CopilotRole, _ model: String) {
+        cancelResponse(role)
         models[role] = model
         providers[role] = makeProvider(model)
+    }
+
+    public func cancelResponse(_ role: CopilotRole) {
+        responseTasks[role]?.cancel()
+        responseGenerations[role, default: 0] += 1
+        streamingRoles.remove(role)
+    }
+
+    public func resetConversation() {
+        guard !isRunning, !isTranscribingFile else { return }
+        for role in CopilotRole.allCases { cancelResponse(role) }
+        store.reset()
+        notes = ""; referenceContext = nil
+        listenerSummary = ""; quickSuggestion = ""; deepAnswer = ""
+        lastCompletedListenerSummary = ""
+        summarizedSegmentIDs = []
+        pendingSummaryIDs = [:]
+        listenerRefreshPending = false
+        context = ContextEngine(debounce: context.debounce)
+        lastListenerFire = -.greatestFiniteMagnitude
+        runID += 1
     }
 
     // MARK: - Session lifecycle
@@ -120,12 +156,30 @@ public final class MeetingSession {
         // be recording) if the user stops during permission/startup.
         self.capture = capture
         self.transcriber = transcriber
+        captureMessages = [.you: "starting…", .others: "starting…"]
+        transcriptionStatus = "Transcription: waiting for audio"
+        captureStatusTask?.cancel(); transcriptionStatusTask?.cancel()
+        captureStatusTask = Task {
+            for await status in capture.statusUpdates {
+                guard self.runID == myRun, self.isRunning else { break }
+                self.captureMessages[status.source] = status.message
+            }
+        }
+        transcriptionStatusTask = Task {
+            for await status in transcriber.statusUpdates {
+                guard self.runID == myRun else { break }
+                self.transcriptionStatus = status
+            }
+        }
         do {
             try await capture.start()
         } catch {
             capture.stop()
             if runID == myRun {
                 isRunning = false
+                captureStatusTask?.cancel(); transcriptionStatusTask?.cancel()
+                captureMessages = [.you: "start failed", .others: "stopped"]
+                transcriptionStatus = "Transcription: not started"
                 self.capture = nil
                 self.transcriber = nil
             }
@@ -167,6 +221,8 @@ public final class MeetingSession {
         let drain = Task { await Self.drain(teardown) }
         stopDrain = drain
         await drain.value
+        transcriptionStatusTask?.cancel()
+        if transcriptionStatus.hasPrefix("Transcription:") { transcriptionStatus = "Transcription: stopped" }
     }
 
     /// Awaits full teardown in feed-before-finalize order: drain the capture pump (feed every
@@ -190,8 +246,11 @@ public final class MeetingSession {
                                  segmentPump: Task<Void, Never>?)? {
         guard isRunning else { return nil }
         isRunning = false
+        captureStatusTask?.cancel()
+        captureMessages = [.you: "stopped", .others: "stopped"]
+        transcriptionStatus = "Transcription: finalizing…"
         listenerRefreshPending = false
-        for (_, task) in responseTasks { task.cancel() }
+        for role in CopilotRole.allCases { cancelResponse(role) }
         capture?.stop()
         let transcriber = self.transcriber
         let capturePump = self.capturePump
@@ -208,6 +267,9 @@ public final class MeetingSession {
         return (transcriber, capturePump, segmentPump)
     }
 
+}
+
+extension MeetingSession {
     // MARK: - Audio file transcription
 
     /// Transcribes audio pulled from `nextChunk` (e.g. an imported file) into the store, independent
@@ -230,10 +292,15 @@ public final class MeetingSession {
         await stopDrain?.value
         stopDrain = nil
         let transcriber = (makeTranscriber ?? self.makeTranscriber)()
+        transcriptionStatusTask?.cancel()
+        transcriptionStatusTask = Task {
+            for await status in transcriber.statusUpdates { self.transcriptionStatus = status }
+        }
+        defer { transcriptionStatusTask?.cancel() }
         let segmentStream = transcriber.segments
         let drain = Task { [weak self] in
             for await segment in segmentStream {
-                await self?.applyTranscribedSegment(segment)
+                self?.applyTranscribedSegment(segment)
             }
         }
         // Pace by audio duration so a long file can't be read into the transcriber's queue far
@@ -272,7 +339,7 @@ public final class MeetingSession {
         // (via startListenerRefresh) so stop()/waitForResponse(.listener) cannot miss it.
         // Suppressed segments arm a single coalesced trailing refresh for the rest of the window,
         // so a final utterance before the meeting goes quiet still gets summarized.
-        if segment.isFinal, isRunning {
+        if segment.isFinal, isRunning, aiEnabled, autoSummaryEnabled {
             let now = clock()
             let elapsed = now - lastListenerFire
             if elapsed >= listenerDebounce {
@@ -290,7 +357,7 @@ public final class MeetingSession {
         }
 
         // Quick proactive: fires on finalized remote questions
-        guard isRunning, proactiveEnabled,
+        guard isRunning, aiEnabled, proactiveEnabled,
               context.shouldFireProactive(for: segment, now: clock()) else { return }
         startRoleTask(.quick) {
             PromptBuilder.build(
@@ -345,11 +412,14 @@ public final class MeetingSession {
 
     /// Streams a Listener refresh (rolling summary + open items). Awaits completion.
     public func refreshListener() async {
-        await startListenerRefresh().value
+        startListenerRefresh()
+        await waitForResponse(.listener)
     }
 
     /// New attribution should ground the next answer in the labeled transcript, not an older recap.
     public func speakerAttributionsChanged() {
+        // Replay raw transcript when labels change so old names cannot survive only in generated prose.
+        summarizedSegmentIDs = []
         lastCompletedListenerSummary = ""
         listenerSummary = ""
         startListenerRefresh()
@@ -373,18 +443,29 @@ public final class MeetingSession {
     /// Shared by the ingest leading/trailing-edge debounce and the manual refreshListener().
     @discardableResult
     private func startListenerRefresh() -> Task<Void, Never> {
-        startRoleTask(.listener) {
-            PromptBuilder.buildListener(context: self.context.buildContext(from: self.store, notes: self.notes,
-                                        responseLanguage: self.responseLanguage,
-                                        personaGuidance: self.personaGuidance))
+        let task = startRoleTask(.listener) {
+            let remaining = self.store.utterances.filter { !self.summarizedSegmentIDs.contains($0.id) }
+            // Process oldest unseen speech first. A failed/cancelled request never advances the ledger.
+            var characters = 0
+            let batch = remaining.prefix { segment in
+                if characters > 0 && characters + segment.text.count > 16_000 { return false }
+                characters += segment.text.count
+                return true
+            }
+            let generation = self.responseGenerations[.listener] ?? 0
+            self.pendingSummaryIDs[generation] = Set(batch.map(\.id))
+            return PromptBuilder.buildListener(context: PromptContext(
+                messages: Array(batch), notes: self.notes, summary: self.lastCompletedListenerSummary,
+                responseLanguage: self.responseLanguage, personaGuidance: self.personaGuidance))
         }
+        return task
     }
 
     /// Fires a coalesced trailing listener refresh after the debounce window, unless stopped
     /// or the session has been restarted (stale cross-session refresh).
     private func fireTrailingListenerRefresh(forRun run: Int) {
+        guard isRunning, aiEnabled, autoSummaryEnabled, runID == run else { return }   // ignore stale cross-session refreshes
         listenerRefreshPending = false
-        guard isRunning, runID == run else { return }   // ignore stale cross-session refreshes
         lastListenerFire = clock()
         startListenerRefresh()
     }
@@ -393,7 +474,11 @@ public final class MeetingSession {
 
     /// Await the most recent in-flight task for the given role (for tests/UI).
     public func waitForResponse(_ role: CopilotRole) async {
-        await responseTasks[role]?.value
+        while let task = responseTasks[role] {
+            let generation = responseGenerations[role]
+            await task.value
+            if generation == responseGenerations[role] { break }
+        }
     }
 
     // MARK: - Internal per-role streaming machinery
@@ -403,12 +488,13 @@ public final class MeetingSession {
     @discardableResult
     private func startRoleTask(_ role: CopilotRole,
                                _ makeRequest: @escaping () -> LLMRequest) -> Task<Void, Never> {
+        guard aiEnabled else { return Task {} }
         responseTasks[role]?.cancel()
         let generation = (responseGenerations[role] ?? 0) + 1
         responseGenerations[role] = generation
+        let request = makeRequest()
         let task = Task { [weak self] in
             guard let self else { return }
-            let request = makeRequest()
             await self.run(role, request, generation: generation)
         }
         responseTasks[role] = task
@@ -436,12 +522,17 @@ public final class MeetingSession {
             // later refresh clearing the live value can't strip context from a proactive prompt.
             if role == .listener, generation == responseGenerations[role], !Task.isCancelled {
                 lastCompletedListenerSummary = listenerSummary
+                summarizedSegmentIDs.formUnion(pendingSummaryIDs[generation] ?? [])
+                pendingSummaryIDs = [:]
+                if aiEnabled && store.utterances.contains(where: { !summarizedSegmentIDs.contains($0.id) }) {
+                    startListenerRefresh()
+                }
             }
         } catch {
             if generation == responseGenerations[role],
                !Task.isCancelled,
                !(error is CancellationError) {
-                setOutput(role, "⚠️ \(error.localizedDescription)")
+                appendOutput(role, "\n\n⚠️ \(error.localizedDescription)")
             }
         }
     }

@@ -7,6 +7,9 @@ import ListenToMeCore
 /// Captures the local microphone (source `.you`) and system audio (source `.others`),
 /// converting both to mono Float PCM and emitting `AudioChunk`s.
 final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
+    let statusUpdates: AsyncStream<CaptureStatus>
+    private let statusContinuation: AsyncStream<CaptureStatus>.Continuation
+    private var configurationObserver: NSObjectProtocol?
     let chunks: AsyncStream<AudioChunk>
     private let continuation: AsyncStream<AudioChunk>.Continuation
 
@@ -14,6 +17,7 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
     private let lock = NSLock()
     private var stream: SCStream?          // guarded by `lock`
     private var stopped = false            // guarded by `lock`
+    private var reportedDrops = Set<SpeakerSource>()   // guarded by `lock`
     private var systemAudioTask: Task<Void, Never>?
     private let startTime = Date()
     /// Optional sink that accumulates the `.others` channel (resampled to 16 kHz) for speaker
@@ -32,6 +36,8 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
         self.microphoneGeneration = microphoneGeneration
         self.othersSink = othersSink
         self.sinkGeneration = sinkGeneration
+        let statuses = AsyncStream<CaptureStatus>.makeStream()
+        statusUpdates = statuses.stream; statusContinuation = statuses.continuation
         var cont: AsyncStream<AudioChunk>.Continuation!
         chunks = AsyncStream(bufferingPolicy: .bufferingNewest(64)) { cont = $0 }
         continuation = cont
@@ -39,7 +45,12 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
     }
 
     func start() async throws {
-        try startMic()                     // essential "You" channel — propagate if this fails
+        try startMic()
+        statusContinuation.yield(CaptureStatus(source: .you, message: "active"))
+        configurationObserver = NotificationCenter.default.addObserver(
+            forName: .AVAudioEngineConfigurationChange, object: engine, queue: nil) { [weak self] _ in
+                self?.statusContinuation.yield(CaptureStatus(source: .you, message: "input changed — stop and restart"))
+            }
         // Start system audio OFF the start() path so a Screen Recording prompt (when not yet
         // granted) can't suspend here and stall mic transcription — the caller attaches the mic
         // pump as soon as start() returns. We no longer gate on CGPreflightScreenCaptureAccess():
@@ -54,6 +65,8 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
             do {
                 try await self.startSystemAudio()   // "Others" channel — best-effort
             } catch {
+                self.statusContinuation.yield(CaptureStatus(source: .others,
+                    message: "unavailable — check Permissions, then stop and restart"))
                 NSLog("ListenToMe: system audio capture unavailable (\(error.localizedDescription)); " +
                       "continuing with microphone only (grant Screen Recording, then relaunch).")
             }
@@ -61,6 +74,8 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
     }
 
     func stop() {
+        if let configurationObserver { NotificationCenter.default.removeObserver(configurationObserver) }
+        statusContinuation.finish()
         engine.inputNode.removeTap(onBus: 0)
         engine.stop()
         systemAudioTask?.cancel()
@@ -79,6 +94,10 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
     private func startMic() throws {
         let input = engine.inputNode
         let format = input.outputFormat(forBus: 0)
+        guard format.channelCount > 0, format.sampleRate > 0 else {
+            throw NSError(domain: "ListenToMe.Capture", code: 1,
+                          userInfo: [NSLocalizedDescriptionKey: "No usable microphone. Connect an input and retry."])
+        }
         input.installTap(onBus: 0, bufferSize: 4096, format: format) { [weak self] buffer, _ in
             self?.emit(buffer: buffer, source: .you)
         }
@@ -92,7 +111,10 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
         if Task.isCancelled || lock.withLock({ stopped }) { return }
         let content = try await SCShareableContent.excludingDesktopWindows(false,
                                                                            onScreenWindowsOnly: true)
-        guard let display = content.displays.first else { return }
+        guard let display = content.displays.first else {
+            statusContinuation.yield(CaptureStatus(source: .others, message: "no display available"))
+            return
+        }
         let filter = SCContentFilter(display: display, excludingWindows: [])
         let config = SCStreamConfiguration()
         config.capturesAudio = true
@@ -100,10 +122,11 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
         config.sampleRate = 48000
         config.channelCount = 1
 
-        let stream = SCStream(filter: filter, configuration: config, delegate: nil)
+        let stream = SCStream(filter: filter, configuration: config, delegate: self)
         try stream.addStreamOutput(self, type: .audio,
                                    sampleHandlerQueue: DispatchQueue(label: "system-audio"))
         try await stream.startCapture()
+        statusContinuation.yield(CaptureStatus(source: .others, message: "active"))
         // stop() may have run while we were awaiting the (possibly prompt-bearing) setup above;
         // if so, don't retain a live stream that would never be stopped.
         let keep: Bool = lock.withLock {
@@ -145,7 +168,11 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
                                sampleRate: mono.format.sampleRate,
                                source: source,
                                timestamp: timestamp)
-        continuation.yield(chunk)
+        if case .dropped(let lost) = continuation.yield(chunk),
+           lock.withLock({ reportedDrops.insert(lost.source).inserted }) {
+            statusContinuation.yield(CaptureStatus(source: lost.source,
+                message: "audio dropped during overload/model setup — stop and restart"))
+        }
     }
 
     /// Downmixes/converts any PCM buffer to non-interleaved mono Float32 at the same sample rate.
@@ -202,5 +229,12 @@ private extension CMSampleBuffer {
             self, at: 0, frameCount: Int32(frames), into: buffer.mutableAudioBufferList)
         // If not already mono Float32, return as-is; the recognizer adapts to buffer.format.
         return buffer
+    }
+}
+
+extension DualChannelCapture: SCStreamDelegate {
+    func stream(_ stream: SCStream, didStopWithError error: Error) {
+        statusContinuation.yield(CaptureStatus(source: .others,
+            message: "stopped: \(error.localizedDescription). Restart capture."))
     }
 }

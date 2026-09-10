@@ -4,20 +4,31 @@ import Observation
 /// The single source of truth for transcribed conversation. UI and engines read from it.
 @Observable
 public final class ConversationStore {
-    /// Finalized utterances in chronological order.
+    /// Finalized utterances in arrival order; capture timestamps remain available per engine.
     public private(set) var utterances: [TranscriptSegment] = []
     /// The current in-progress (non-final) segment, if any.
-    public private(set) var partial: TranscriptSegment?
+    public private(set) var partials: [SpeakerSource: TranscriptSegment] = [:]
+    public var partial: TranscriptSegment? { partials[.others] ?? partials[.you] }
+    public private(set) var revision = 0
 
     public init() {}
 
     public func apply(_ segment: TranscriptSegment) {
         if segment.isFinal {
             utterances.append(segment)
-            partial = nil
+            partials[segment.source] = nil
+            revision += 1
         } else {
-            partial = segment
+            partials[segment.source] = segment.text.isEmpty ? nil : segment
         }
+    }
+
+    public func reset() {
+        utterances = []; partials = [:]; revision += 1
+    }
+
+    public func restore(_ segments: [TranscriptSegment]) {
+        utterances = segments; partials = [:]; revision += 1
     }
 
     /// Apply a complete attribution pass only to the supplied run/channel's lines.
@@ -29,6 +40,7 @@ public final class ConversationStore {
             segment.speakerName = assignments[segment.id]?.name
             return segment
         }
+        revision += 1
     }
 
     public func renameSpeaker(id: String, name: String) {
@@ -38,6 +50,7 @@ public final class ConversationStore {
             segment.speakerName = name
             return segment
         }
+        revision += 1
     }
 
     /// Most-recent finalized utterances kept within `maxChars` (always at least the latest).
