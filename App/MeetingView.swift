@@ -261,13 +261,10 @@ struct MeetingView: View {
             if !referencePaths.isEmpty { loadReferences(into: session) }
             hotkey.start { Task { await session.respondQuick(.answerQuestion) } }
             permissions.refresh()
-            // First launch: walk the user through the guided onboarding (which includes the
-            // permission grants). On later launches, only nudge the bare permissions panel when
-            // a required grant is still missing; the shield button keeps it reachable otherwise.
+            // Setup appears once. Inconclusive permission checks must not reopen a modal on
+            // every launch; permissions remain available explicitly from More.
             if !UserDefaults.standard.bool(forKey: OnboardingView.completionKey) {
                 showOnboarding = true
-            } else if !permissions.allRequiredGranted {
-                showPermissions = true
             }
         }
         .task {

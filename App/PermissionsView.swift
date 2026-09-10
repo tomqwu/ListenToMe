@@ -16,11 +16,11 @@ struct PermissionsView: View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
             VStack(alignment: .leading, spacing: 6) {
-                Text("Permissions Required")
+                Text("Permissions")
                     .font(.title2).bold()
                 Text(
                     "ListenToMe needs the following permissions to capture audio and transcribe " +
-                    "your meetings. Grant them below or open System Settings."
+                    "your meetings. Check access below or open System Settings."
                 )
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

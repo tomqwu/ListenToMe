@@ -22,7 +22,7 @@ final class PermissionsModel {
     /// so capture can actually use the grant.
     private(set) var screenNeedsRelaunchHint = false
 
-    private var screenRequested = UserDefaults.standard.bool(forKey: "screenVerificationRequested")
+    private var screenRequested = false
     private var screenProbeInFlight = false
     private(set) var screenVerificationMessage: String?
     private var accessibilityRequested = false
@@ -59,15 +59,9 @@ final class PermissionsModel {
         screenNeedsRelaunchHint = resolution.needsRelaunchHint
         accessibility = AXIsProcessTrusted()
             ? .granted : (accessibilityRequested ? .denied : .notDetermined)
-        // Once the user has engaged the Grant flow, confirm the real grant with a live
-        // ScreenCaptureKit query and upgrade the badge when it actually works. Gated on
-        // `screenRequested` so the probe (which can surface the one-time system prompt) never
-        // fires before the user clicks Grant. Also probe in the granted-with-hint state (the name
-        // check proved the grant live, so SCShareableContent cannot prompt): on success the hint
-        // clears, sparing the user a Quit & Reopen that capture doesn't actually need.
-        if (screenRecording != .granted && screenRequested) || screenNeedsRelaunchHint {
-            probeScreenRecording()
-        }
+        // Refresh must stay prompt-free. ScreenCaptureKit may show a system consent dialog,
+        // so run it only from the explicit Recheck action, never on launch or activation.
+
     }
 
     /// Prompt-free live check for Screen Recording: `kCGWindowName` of OTHER processes' windows is
@@ -134,7 +128,6 @@ final class PermissionsModel {
     }
     func requestScreenRecording() {
         screenRequested = true
-        UserDefaults.standard.set(true, forKey: "screenVerificationRequested")
         // ScreenCaptureKit performs the actual check/request. A false CoreGraphics return
         // used to send already-authorized users to Settings and briefly label them Denied.
         probeScreenRecording()

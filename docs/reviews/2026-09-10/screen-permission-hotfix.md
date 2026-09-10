@@ -1,4 +1,4 @@
-# Screen Recording status hotfix — 1.3.2 / build 8
+# Screen Recording status hotfix — 1.3.2 / build 9
 
 ## Reproduction
 
@@ -10,8 +10,9 @@ CoreGraphics/window-name result as denial, while discarding ScreenCaptureKit err
 
 Negative/inconclusive checks now show Not verified, with Recheck and Open Settings actions.
 Recheck uses ScreenCaptureKit directly, coalesces concurrent probes, surfaces failures and
-remembers an explicit request across launches so verification can resume after returning from
-Settings or restarting. A successful probe still shows Granted and clears the relaunch hint.
+runs only after an explicit Recheck action. Launch and activation refreshes never invoke a
+prompt-bearing ScreenCaptureKit query. Once onboarding is completed, launch no longer opens
+the Permissions sheet automatically; it remains available from More. A successful probe still shows Granted and clears the relaunch hint.
 No permission reset or security setting changes are included in the fix.
 
 ## Validation
@@ -27,3 +28,5 @@ No permission reset or security setting changes are included in the fix.
 - No capture was started. Refreshing the existing OS permission requires user confirmation and
   remains pending. The detection UI is repaired; effective screen access is not yet restored.
 - 1.3.2 has not been published; 1.3.1 remains the public release.
+
+User subsequently confirmed authorization to refresh the existing permission. An attempted Settings action was interrupted by user interaction; no permission change was verified.
