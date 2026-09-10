@@ -7,78 +7,65 @@ struct MeetingView: View {
     /// Anchor id for keeping scroll views pinned to their newest content.
     static let scrollBottomID = "scroll-bottom"
 
-    @State private var session: MeetingSession
+    @State var session: MeetingSession
     @State var store: ConversationStore
-    @State private var startError: String?
-    @State private var showSettings = false
+    @State var startError: String?
+    @State var showSettings = false
     @State private var permissions = PermissionsModel()
     @State private var showPermissions = false
     @State private var showOnboarding = false
-    @State private var showSearch = false
-    @State private var sessionStore = SessionStore()
+    @State var showSearch = false
+    @State var sessionStore = SessionStore()
     /// Identity of this app-window's session. Reused across Listen→Stop cycles so repeated Stops
     /// upsert one growing record instead of writing a fresh superset each time.
-    @State private var currentSessionID = UUID().uuidString
+    @State var currentSessionID = UUID().uuidString
     /// `lastSavedUtteranceCount`: count at the last save, so an unchanged transcript isn't re-saved on
     /// Stop. `sessionSaveable`: whether this window-session may be persisted — tainted to false the
     /// moment saving is ever observed off (or history is cleared), so "turn off to keep nothing" holds
     /// for the whole session. `savingEnabledBeforeSettings`: toggle value snapshotted when Settings
     /// opened, so an off→on round-trip is still caught.
-    @State private var lastSavedUtteranceCount = 0; @State private var sessionSaveable = true
+    @State var sessionSaveable = true
     @State private var savingEnabledBeforeSettings = true; @State var chatModels: [String] = []
     @State var transcriptionLocaleID: String
     @State var presetID: String
-    @State private var referencePaths: [URL]
+    @State var referencePaths: [URL]
     @State private var referenceLoadToken = 0
-    @State private var restartTask: Task<Void, Never>?
-    @State private var importTask: Task<Void, Never>?
+    @State var restartTask: Task<Void, Never>?
+    @State var importTask: Task<Void, Never>?
     @State var transcriptAtBottom = true
     /// User intent to be capturing — the toolbar button's source of truth. Stays true across the
     /// brief teardown window of a locale restart (when `session.isRunning` is transiently false),
     /// so a Stop press is never lost.
     @State var wantsCapture = false
     /// When the current recording run began, for the elapsed mm:ss timer. nil while idle.
-    @State private var recordingStartedAt: Date?
+    @State var recordingStartedAt: Date?
     /// Ticks while recording so the elapsed timer updates once per second.
     @State private var now = Date()
     /// Live appearance (System/Light/Dark) applied to the root via `.preferredColorScheme`.
     @State private var appearance = ProviderSettings.appearance
-    /// Accumulates the `.others` channel (16 kHz mono) across a session for on-demand speaker
-    /// diarization. Reset at each session start; read via `snapshot()` when identifying speakers.
-    @State private var othersAudioSink: SpeakerAudioBuffer
-    /// Drives the experimental "Speaker breakdown" sheet and holds its result/error/in-flight state.
+    @State var othersAudioSink: SpeakerAudioBuffer
+    @State var microphoneAudioSink: SpeakerAudioBuffer
     @State var showSpeakerBreakdown = false
-    @State var speakerSummary: SpeakerSummary?
     @State var speakerError: String?
     @State var speakerLoading = false
-    /// Per-line speaker labels (transcript-line id → "Speaker N") for the OTHERS channel, filled by
-    /// "Identify speakers" when the WhisperKit engine supplies real per-line timestamps. Reset at
-    /// each session start so stale labels from a previous meeting don't linger.
-    @State var speakerLabels: [UUID: String] = [:]
-    /// Canonical diarized-speakerId → "Speaker N" map from the same labeling pass, so the breakdown
-    /// sheet numbers speakers the same way the transcript does. Empty when no inline labels apply.
-    @State var speakerOrder: [String: String] = [:]
-    /// Index into `store.utterances` where the current recording run's lines begin. Set at each
-    /// Listen-start/restart AFTER the prior Stop has drained (so old final utterances are already
-    /// appended) and the new capture is live, so diarization — relative to the fresh 0-based buffer —
-    /// only labels the current run's lines, never older ones from a previous Listen→Stop→Listen cycle.
-    @State private var diarizationRunStartIndex = 0
-    /// Bumped at every start/restart that resets the Others buffer. An in-flight `identifySpeakers`
-    /// captures the token at launch and drops its results if the token changed before it finished, so
-    /// a stale run can't revive labels over a new session.
-    @State private var diarizationRunToken = 0
-    /// Whether the current/most-recent run's `DualChannelCapture` actually attached the Others sink —
-    /// a snapshot of `ProviderSettings.speakerDiarizationEnabled` taken when that run started (the same
-    /// value `makeCapture` read to decide attachment). Persists after Stop so Identify still works on
-    /// the just-finished run's buffer; changes only at the next run start. Toggling the setting mid-run
-    /// must NOT enable Identify, because this run's capture has `othersSink: nil`.
+    @State var speakerParticipants: [SpeakerParticipant] = []
+    @State var speakerTrackers: [SpeakerSource: SpeakerIdentityTracker] = [:]
+    @State var speakerTask: Task<Void, Never>?
+    @State var nextSpeakerAnalysis = Date.distantFuture
+    @State var diarizationRunStartIndex = 0
+    @State var diarizationRunToken = 0
     @State var diarizationSinkAttached = false
-    /// Whether the current run's transcriber emits real per-line timestamps — a snapshot of
-    /// `ProviderSettings.transcriptionEngine == "whisperKit"` at run start (the engine the run's
-    /// transcriber was actually built with). Used to gate inline labeling so changing the engine in
-    /// Settings after starting doesn't retroactively gain/lose labels for the current run.
-    @State private var diarizationRunUsesTimestamps = false
-    private let diarizer = SpeakerDiarizer()
+    @State var microphoneSinkAttached = false
+    @State var diarizationRunUsesTimestamps = false
+    @State var diarizer = SpeakerDiarizer()
+    @State var modelStatus = ""
+    @State private var modelLoadToken = 0
+    @State private var showLicenses = false
+    @State var lifecycleBusy = false
+    @State var conversationTitle = "Conversation — " + Date().formatted(date: .abbreviated, time: .shortened)
+    @State var saveMessage = "Not saved yet"
+    @State var saveFailed = false
+    @State var lastSavedSignature = ""
     private let hotkey = HotkeyMonitor()
 
     /// mm:ss since the current recording run started (00:00 when idle).
@@ -118,6 +105,8 @@ struct MeetingView: View {
         _store = State(initialValue: store)
         let othersSink = SpeakerAudioBuffer()
         _othersAudioSink = State(initialValue: othersSink)
+        let microphoneSink = SpeakerAudioBuffer()
+        _microphoneAudioSink = State(initialValue: microphoneSink)
         _session = State(initialValue: MeetingSession(
             store: store,
             context: ContextEngine(debounce: 8),
@@ -130,12 +119,16 @@ struct MeetingView: View {
                 // turned diarization off (otherwise the old ~2 h/~460 MB samples stay resident in
                 // the @State-held sink). The reset also bumps the generation used below.
                 othersSink.reset()
+                microphoneSink.reset()
                 // Capture the generation for THIS run right after the reset above. Any late append
                 // from a prior run's capture carries an older generation and is rejected by the
                 // buffer, so it can't contaminate this run. On the non-diarize path the sink is nil
                 // and the value is unused.
                 let gen = diarize ? othersSink.currentGeneration() : 0
-                return DualChannelCapture(othersSink: diarize ? othersSink : nil, sinkGeneration: gen)
+                let identifyMic = diarize && ProviderSettings.microphoneDiarizationEnabled
+                return DualChannelCapture(othersSink: diarize ? othersSink : nil, sinkGeneration: gen,
+                                          microphoneSink: identifyMic ? microphoneSink : nil,
+                                          microphoneGeneration: microphoneSink.currentGeneration())
             },
             makeTranscriber: {
                 let locale = ProviderSettings.transcriptionLocale()
@@ -153,7 +146,8 @@ struct MeetingView: View {
                 }
             },
             makeProvider: { model in
-                OllamaProvider(model: model, baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey())
+                OllamaProvider(model: model, baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey(),
+                               localOnly: ProviderSettings.aiMode != .cloud)
             },
             models: [
                 .listener: ProviderSettings.model(for: .listener),
@@ -165,13 +159,14 @@ struct MeetingView: View {
 
     // MARK: - Ollama cloud routing
 
-    private static func ollamaKey() -> String? {
+    nonisolated private static func ollamaKey() -> String? {
+        guard ProviderSettings.aiMode == .cloud else { return nil }
         let k = KeychainStore.get("ollama")
         return (k?.isEmpty == false) ? k : nil
     }
 
-    private static func ollamaBaseURL() -> URL {
-        ollamaKey() != nil
+    nonisolated private static func ollamaBaseURL() -> URL {
+        ProviderSettings.aiMode == .cloud
             ? URL(string: "https://ollama.com")!
             : URL(string: "http://localhost:11434")!
     }
@@ -180,6 +175,11 @@ struct MeetingView: View {
         @Bindable var session = session
         return VStack(spacing: 0) {
             topControlBar(session: session, showPermissions: $showPermissions)
+            conversationStatus
+            if !modelStatus.isEmpty && ProviderSettings.aiMode != .off {
+                Text(modelStatus).font(.callout).foregroundStyle(.orange)
+                    .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 14)
+            }
             if let startError {
                 Text("⚠️ \(startError)")
                     .foregroundStyle(.red)
@@ -196,7 +196,7 @@ struct MeetingView: View {
                 copilotColumn(session: session)
             }
             .frame(maxHeight: .infinity)
-            CommandCenterFooter(cloudActive: Self.ollamaKey() != nil)
+            CommandCenterFooter(mode: ProviderSettings.aiMode)
         }
         .background(Theme.windowBackground)
         .preferredColorScheme(colorScheme(for: appearance))
@@ -204,8 +204,14 @@ struct MeetingView: View {
         // Tick the elapsed timer once per second while recording.
         .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { date in
             if recordingStartedAt != nil { now = date }
+            if !saveFailed { _ = checkpoint(complete: !wantsCapture && !lifecycleBusy && !session.isTranscribingFile) }
+            if wantsCapture && session.isRunning && date >= nextSpeakerAnalysis {
+                identifySpeakers(showSheet: false)
+            }
         }
+        .onChange(of: store.revision) { _, _ in _ = checkpoint() }
         .sheet(isPresented: $showSettings, onDismiss: {
+            session.aiEnabled = ProviderSettings.aiMode != .off
             session.responseLanguage = ProviderSettings.responseLanguageDirective()
             appearance = ProviderSettings.appearance   // apply an appearance change live
             // Rebuild attached references so a changed reference-budget takes effect immediately.
@@ -217,15 +223,27 @@ struct MeetingView: View {
         .sheet(isPresented: $showPermissions) {
             PermissionsView(permissions: permissions)
         }
+        .sheet(isPresented: $showLicenses) {
+            VStack {
+                Text("Open-source licenses").font(.title2)
+                ScrollView {
+                    Text(Bundle.main.url(forResource: "ThirdPartyNotices", withExtension: "txt").flatMap {
+                        try? String(contentsOf: $0, encoding: .utf8)
+                    } ?? "Notices are unavailable in this build.")
+                        .font(.body).textSelection(.enabled).padding()
+                }
+                Button("Done") { showLicenses = false }
+            }.padding().frame(width: 700, height: 560)
+        }
         .sheet(isPresented: $showSearch) {
             SessionSearchView(store: sessionStore, onClear: { dropCurrentSessionFromSaving() })
         }
         .sheet(isPresented: $showSpeakerBreakdown) {
             SpeakerBreakdownView(
-                loading: speakerLoading, summary: speakerSummary, errorText: speakerError,
-                didTruncate: othersAudioSink.didTruncate,
+                loading: speakerLoading, participants: speakerParticipants, errorText: speakerError,
+                didTruncate: othersAudioSink.didTruncate || microphoneAudioSink.didTruncate,
                 perLineLabelsUnavailable: !diarizationRunUsesTimestamps,
-                speakerOrder: speakerOrder)
+                onRename: renameSpeaker)
         }
         .sheet(isPresented: $showOnboarding, onDismiss: {
             // Onboarding may have set/cleared the Ollama key, which changes the route; rebuild
@@ -235,89 +253,93 @@ struct MeetingView: View {
             OnboardingView()
         })
         .onAppear {
+            session.aiEnabled = ProviderSettings.aiMode != .off
             session.responseLanguage = ProviderSettings.responseLanguageDirective()
             let preset = PresetCatalog.preset(id: presetID)
             session.personaGuidance = preset.personaGuidance
-            if session.notes.isEmpty { session.notes = preset.notesTemplate }   // seed saved preset's scaffold
+            ApplicationLifecycle.shared.prepareToClose = { await prepareToClose() }
             if !referencePaths.isEmpty { loadReferences(into: session) }
             hotkey.start { Task { await session.respondQuick(.answerQuestion) } }
             permissions.refresh()
-            // First launch: walk the user through the guided onboarding (which includes the
-            // permission grants). On later launches, only nudge the bare permissions panel when
-            // a required grant is still missing; the shield button keeps it reachable otherwise.
+            // Setup appears once. Inconclusive permission checks must not reopen a modal on
+            // every launch; permissions remain available explicitly from More.
             if !UserDefaults.standard.bool(forKey: OnboardingView.completionKey) {
                 showOnboarding = true
-            } else if !permissions.allRequiredGranted {
-                showPermissions = true
             }
         }
         .task {
             await reloadAndHealModels()
         }
+        .background(WindowCloseHandler())
+        .focusedSceneValue(\.conversationCommands, conversationCommands)
         .onDisappear { tearDownOnDisappear(session: session) }
     }
 
+}
+
+extension MeetingView {
     // MARK: - Top control bar
 
     /// Replaces the old icon-row toolbar: Listen/Stop + pulsing indicator + elapsed timer on the
     /// left; the same icon actions that existed before on the right (refresh-models, import audio,
     /// export menu, copy-session, search, permissions, settings).
     private func topControlBar(session: MeetingSession, showPermissions: Binding<Bool>) -> some View {
-        HStack(spacing: 12) {
-            Button(wantsCapture ? "Stop" : "Listen") { toggleCapture(session: session) }
-                .buttonStyle(.borderedProminent)
-                .disabled(session.isTranscribingFile)   // no live capture while importing a file
-            if session.isRunning {
-                RecordingIndicator()
-                Text(elapsedLabel)
-                    .font(.system(size: 12, weight: .medium, design: .monospaced))
-                    .foregroundStyle(Theme.ink2)
+        HStack(spacing: 8) {
+            Button { toggleCapture(session: session) } label: {
+                Label(wantsCapture ? "Stop listening" : "Start listening", systemImage: wantsCapture ? "stop.fill" : "mic.fill")
             }
-            if session.isTranscribingFile {
-                ProgressView().controlSize(.small)
-                Text("Transcribing…").foregroundStyle(Theme.ink2)
-            }
-            Spacer()
-            Button { Task { await reloadModels() } } label: { Image(systemName: "arrow.clockwise") }
-                .help("Refresh installed Ollama models")
-            Button { importAudioFile(session: session) } label: { Image(systemName: "waveform") }
-                .help("Import an audio file and transcribe it")
-                .disabled(wantsCapture || session.isTranscribingFile)   // wantsCapture covers the restart window
+            .buttonStyle(.borderedProminent)
+            .help("Start or stop capturing microphone and system audio")
+            .disabled(lifecycleBusy || session.isTranscribingFile)
+            Button { saveConversation() } label: { Label("Save conversation", systemImage: "square.and.arrow.down") }
+                .disabled(!hasConversation)
+                .help("Save without stopping capture (Command-S)")
+            Button { newConversation() } label: { Label("New conversation", systemImage: "plus") }
+                .disabled(lifecycleBusy || session.isTranscribingFile)
+                .help("Save this conversation, then start a clean one (Command-N)")
+            Button { showSearch = true } label: { Label("History", systemImage: "clock") }
+                .help("Open saved conversations (Command-F)")
             Menu {
                 Button("Full transcript (Markdown)…") { exportSession() }
                 Button("Recap (Markdown)…") { exportRecap() }
                 Button("PDF…") { exportPDF() }
-            } label: {
-                Image(systemName: "square.and.arrow.up")
-            }
-            .menuIndicator(.hidden)
-            .help("Export the session as Markdown or PDF")
-            Button { copySessionMarkdown() } label: { Image(systemName: "list.clipboard") }
-                .help("Copy the transcript + AI notes as Markdown")
-            Button { showSearch = true } label: { Image(systemName: "magnifyingglass") }
-                .help("Search past meetings")
-            Button { showPermissions.wrappedValue = true } label: { Image(systemName: "lock.shield") }
-                .help("Microphone / system-audio permissions")
-            Button { openSettings($showSettings) } label: { Image(systemName: "gearshape") }
-                .help("Settings")
+                Button("Copy conversation") { copySessionMarkdown() }
+            } label: { Label("Export", systemImage: "square.and.arrow.up") }
+                .help("Export or copy this conversation")
+            Button { openSettings($showSettings) } label: { Label("Settings", systemImage: "gearshape") }
+                .help("Configure transcription, AI, and saving (Command-comma)")
+            Menu {
+                Button("Refresh models") { Task { await reloadAndHealModels() } }
+                Button("Import audio file…") { importAudioFile(session: session) }
+                    .disabled(wantsCapture || lifecycleBusy || session.isTranscribingFile)
+                Button("Permissions…") { showPermissions.wrappedValue = true }
+                Button("Open-source licenses…") { showLicenses = true }
+            } label: { Label("More", systemImage: "ellipsis") }
+            Spacer(minLength: 0)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+        .font(.system(size: 13, weight: .medium))
+        .controlSize(.large)
+        .imageScale(.large)
+        .padding(.horizontal, 14).padding(.vertical, 10)
         .background(Theme.windowBackground)
-        .overlay(Rectangle().fill(Theme.line).frame(height: 1), alignment: .bottom)
     }
 
     /// Listen/Stop press: start or stop capture, tracking the elapsed-timer anchor and saving on Stop.
     private func toggleCapture(session: MeetingSession) {
+        guard !lifecycleBusy else { return }
         Task {
             if wantsCapture {
+                lifecycleBusy = true
+                defer { lifecycleBusy = false }
+                _ = checkpoint()
                 wantsCapture = false
                 recordingStartedAt = nil
                 restartTask?.cancel()   // cancel any in-flight locale restart
                 // Await teardown so the transcriber flushes its final segments into the store
                 // before we snapshot the transcript for search.
                 await session.stopAndWait()
-                saveSessionIfEnabled(session: session)
+                _ = checkpoint(complete: true, force: true)
+                Task { await finishSpeakerAnalysis() }
             } else {
                 wantsCapture = true
                 do {
@@ -327,6 +349,7 @@ struct MeetingView: View {
                     // start returns, once the prior Stop's finals have drained into the store.
                     beginDiarizationRunReset()
                     try await session.start()
+                    guard wantsCapture, session.isRunning else { return }
                     anchorDiarizationRun()
                     now = Date(); recordingStartedAt = Date()
                 } catch {
@@ -354,6 +377,7 @@ struct MeetingView: View {
             do {
                 startError = nil
                 try await session.start()
+                guard wantsCapture, session.isRunning, !Task.isCancelled else { return }
                 anchorDiarizationRun()
             } catch {
                 startError = error.localizedDescription; wantsCapture = false
@@ -369,9 +393,16 @@ struct MeetingView: View {
     /// Also release the breakdown UI: bumping the token makes a superseded `identifySpeakers` task
     /// bail via its token guard WITHOUT clearing `speakerLoading`, so we clear the spinner/error state
     /// here. This guarantees that starting/restarting always frees the "Identify speakers" button.
-    private func beginDiarizationRunReset() {
-        speakerLabels = [:]
-        speakerOrder = [:]
+    func beginDiarizationRunReset() {
+        speakerTask?.cancel()
+        speakerTask = nil
+        let run = diarizationRunToken + 1
+        let remotePrefix = run == 1 ? "Speaker" : "Run \(run) speaker"
+        let micPrefix = run == 1 ? "Mic speaker" : "Run \(run) mic speaker"
+        speakerTrackers = [.others: SpeakerIdentityTracker(prefix: remotePrefix),
+                           .you: SpeakerIdentityTracker(prefix: micPrefix)]
+        speakerParticipants = []
+        nextSpeakerAnalysis = .distantFuture
         speakerLoading = false
         speakerError = nil
         diarizationRunToken &+= 1
@@ -382,6 +413,7 @@ struct MeetingView: View {
         // once start() has returned and the new run is fully live. The run snapshots are also taken
         // there (not here), so they reflect what the new capture/transcriber actually used.
         diarizationSinkAttached = false
+        microphoneSinkAttached = false
     }
 
     /// Post-start half: anchor diarization to the current run and snapshot what it actually used. By
@@ -396,6 +428,8 @@ struct MeetingView: View {
         // re-enables Identify only when the sink is actually attached and live.
         diarizationSinkAttached = ProviderSettings.speakerDiarizationEnabled
         diarizationRunUsesTimestamps = ProviderSettings.transcriptionEngine == "whisperKit"
+        microphoneSinkAttached = diarizationSinkAttached && ProviderSettings.microphoneDiarizationEnabled
+        nextSpeakerAnalysis = Date().addingTimeInterval(20)
     }
 
     /// Attach/clear files & folders whose text is fed into Quick/Deep prompts as grounding.
@@ -516,9 +550,9 @@ extension MeetingView {
 
     /// Builds the full Markdown document (transcript + AI-pane outputs) for the given timestamp.
     /// Shared by `exportSession()`, `exportPDF()`, and `copySessionMarkdown()`.
-    private func sessionMarkdown(now: Date = Date()) -> String {
+    func sessionMarkdown(now: Date = Date()) -> String {
         SessionExporter.markdown(
-            title: "ListenToMe Session — \(now.formatted(date: .abbreviated, time: .shortened))",
+            title: conversationTitle,
             transcript: store.utterances,
             notes: session.notes,
             listenerSummary: session.listenerSummary,
@@ -545,7 +579,7 @@ extension MeetingView {
     func exportRecap() {
         let now = Date()
         let markdown = SessionExporter.recap(
-            title: "ListenToMe Session — \(now.formatted(date: .abbreviated, time: .shortened))",
+            title: conversationTitle,
             listenerSummary: session.listenerSummary,
             quickSuggestion: session.quickSuggestion,
             deepAnswer: session.deepAnswer
@@ -590,12 +624,19 @@ extension MeetingView {
     /// (best-effort: the Task may not finish on a full app quit).
     func tearDownOnDisappear(session: MeetingSession) {
         hotkey.stop()
+        for role in CopilotRole.allCases { session.cancelResponse(role) }
+        speakerTask?.cancel()
+        diarizationRunToken &+= 1
         let wasCapturing = wantsCapture
         wantsCapture = false
         restartTask?.cancel()   // don't let a pending locale restart resume capture after close
         importTask?.cancel()    // stop an in-flight file import when the window closes
         if wasCapturing {
-            Task { await session.stopAndWait(); saveSessionIfEnabled(session: session) }
+            _ = checkpoint()
+            Task {
+                await session.stopAndWait()
+                _ = checkpoint(complete: true, force: true)
+            }
         } else {
             session.stop()
         }
@@ -626,88 +667,23 @@ extension MeetingView {
     func dropCurrentSessionFromSaving() {
         // Only taint when the current window-session has content that was just cleared — clearing
         // old records on a fresh/empty window must not silently disable future saving.
-        if !store.utterances.isEmpty { sessionSaveable = false }
+        if hasConversation { sessionSaveable = false }
         currentSessionID = UUID().uuidString
-        lastSavedUtteranceCount = store.utterances.count
+        lastSavedSignature = ""
     }
 
     /// On Stop, persist the finished session for cross-meeting search when this window-session is
     /// saveable (saving never observed off), saving is on, and there's new transcript. Reuses
     /// `currentSessionID` so repeated Listen→Stop cycles upsert one growing record. Title = the
     /// active preset's name (or "Session") plus the date.
-    func saveSessionIfEnabled(session: MeetingSession) {
-        guard ProviderSettings.saveSessionsForSearch else { sessionSaveable = false; return }
-        guard sessionSaveable, store.utterances.count > lastSavedUtteranceCount else { return }
-        let now = Date()
-        let presetName = PresetCatalog.preset(id: presetID).name
-        let base = (presetName.isEmpty || presetName == "None") ? "Session" : presetName
-        let transcript = store.utterances.map { "\($0.source == .you ? "You" : "Others"): \($0.text)" }
-            .joined(separator: "\n")
-        let record = SessionRecord(
-            id: currentSessionID,
-            title: "\(base) — \(now.formatted(date: .abbreviated, time: .shortened))",
-            date: now,
-            transcript: transcript,
-            summary: session.listenerSummary
-        )
-        sessionStore.add(record)
-        lastSavedUtteranceCount = store.utterances.count
-    }
-
-    /// Experimental: presents the Speaker breakdown sheet and runs FluidAudio diarization over the
-    /// captured Others-channel snapshot off the main actor, publishing the summary or a friendly
-    /// error. The sheet (`SpeakerBreakdownView`) renders the loading / error / needs-more-audio /
-    /// results states from this same `@State`.
-    func identifySpeakers() {
-        speakerSummary = nil
-        speakerError = nil
-        speakerLoading = true        // main actor — let the loading sheet render immediately
-        showSpeakerBreakdown = true
-        // Inline per-line labels need real start/end timestamps; only WhisperKit populates those. Use
-        // the snapshot of the run's actual transcriber, not the live setting, so a post-start engine
-        // change in Settings can't make this run's WhisperKit transcript lose labels (or vice versa).
-        let canLabelInline = diarizationRunUsesTimestamps
-        // Only the current run's lines share the buffer's 0-based timeline; older store rows from a
-        // previous Listen→Stop→Listen cycle must not be labeled by this run's diarization.
-        let runStart = min(diarizationRunStartIndex, store.utterances.count)
-        let transcript = Array(store.utterances.suffix(from: runStart))
-        // Snapshot the run token; if a start/restart bumps it while we await, this result is stale and
-        // must not overwrite the new session's state.
-        let token = diarizationRunToken
-        let sink = othersAudioSink   // reference type — safe to hand to a detached task
-        Task {
-            // Take the ~460 MB samples copy OFF the main actor so the sheet renders first and the app
-            // never hangs on the button press. `startOffset` is read alongside it on the same thread.
-            let snapshot = await Task.detached { (samples: sink.snapshot(), offset: sink.startOffset) }.value
-            let samples = snapshot.samples
-            let offset = snapshot.offset
-            do {
-                let outcome = try await diarizer.analyze(samples: samples)
-                guard token == diarizationRunToken else { return }   // superseded by a new run
-                speakerSummary = outcome.summary
-                if canLabelInline {
-                    let labeling = SpeakerLabeling.label(
-                        transcript: transcript, diarized: outcome.segments, offset: offset)
-                    speakerLabels = labeling.lineLabels
-                    speakerOrder = labeling.order
-                } else {
-                    speakerLabels = [:]
-                    speakerOrder = [:]
-                }
-            } catch {
-                guard token == diarizationRunToken else { return }   // superseded — drop stale error
-                speakerError = error.localizedDescription
-            }
-            // Only clear the in-flight flag for the run that's still current, so a stale completion
-            // can't flip the spinner off under a freshly-launched run.
-            if token == diarizationRunToken { speakerLoading = false }
-        }
+    func saveSessionIfEnabled(session: MeetingSession, force: Bool = false) {
+        _ = checkpoint(complete: !wantsCapture && !lifecycleBusy, force: force)
     }
 
     /// Reloads the installed Ollama chat models into the per-pane pickers.
     func reloadModels() async {
         chatModels = await OllamaModels.chatModels(
-            baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey())
+            baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey(), localOnly: ProviderSettings.aiMode != .cloud)
     }
 
     /// Reloads chat models for the current Ollama route (cloud vs local) and heals each role:
@@ -715,8 +691,17 @@ extension MeetingView {
     /// role-appropriate default (Quick = lightest, Deep = heaviest, Listener = balanced).
     /// Always rebuilds every role's provider so it picks up the current base URL/key.
     func reloadAndHealModels() async {
-        chatModels = await OllamaModels.chatModels(
-            baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey())
+        session.aiEnabled = ProviderSettings.aiMode != .off
+        // Cancel old-route work immediately, before asynchronous discovery can suspend this task.
+        for role in CopilotRole.allCases { session.setModel(role, session.models[role] ?? "") }
+        modelLoadToken += 1
+        let token = modelLoadToken
+        let discovered = await OllamaModels.chatModels(
+            baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey(), localOnly: ProviderSettings.aiMode != .cloud)
+        guard token == modelLoadToken else { return }
+        chatModels = discovered
+        modelStatus = ProviderSettings.aiMode == .off ? "AI is off" : (chatModels.isEmpty
+            ? "No available AI models. Check Ollama and AI mode in Settings, then Refresh models." : "")
         let defaults = ModelRanking.roleDefaults(from: chatModels)
         for role in CopilotRole.allCases {
             let current = session.models[role] ?? ""

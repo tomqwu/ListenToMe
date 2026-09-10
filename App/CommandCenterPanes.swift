@@ -24,14 +24,15 @@ extension MeetingView {
                         ForEach(Self.languageOptions, id: \.id) { Text($0.label).tag($0.id) }
                     }
                     .labelsHidden().controlSize(.small)
-                    .help("Transcription language — applies the next time you press Listen")
+                    .help("Transcription language — applies the next time you press Start listening")
                 }
 
-                railSection("Proactive") {
-                    Toggle("Proactive replies", isOn: $session.proactiveEnabled)
-                        .controlSize(.small).labelsHidden()
+                railSection("Automatic AI") {
+                    Toggle("Auto summary", isOn: $session.autoSummaryEnabled).controlSize(.small)
+                    Toggle("Quick suggestions", isOn: $session.proactiveEnabled)
+                        .controlSize(.small)
                         .toggleStyle(.switch)
-                        .help("Let Quick/Listener react automatically as the conversation flows")
+                        .help("Let Quick suggest replies when a question is detected")
                 }
 
                 railSection("Preset") {
@@ -74,13 +75,13 @@ extension MeetingView {
     private func speakersRailSection() -> some View {
         railSection("Speakers") {
             Button { identifySpeakers() } label: {
-                Label("Identify speakers", systemImage: "person.2.wave.2")
+                Label("Speakers / edit names", systemImage: "person.2.wave.2")
             }
             .controlSize(.small)
-            .disabled(speakerLoading || !diarizationSinkAttached)
+            .disabled(!diarizationSinkAttached)
             .help(diarizationSinkAttached
-                  ? "Experimental: group the Others channel into distinct voices (on-device)"
-                  : "Press Listen to start capturing speaker audio.")
+                  ? "View automatic speaker identification and edit names"
+                  : "Press Start listening to start capturing speaker audio.")
         }
     }
 
@@ -144,15 +145,15 @@ extension MeetingView {
     private func transcriptScroll(session: MeetingSession) -> some View {
         ScrollViewReader { proxy in
             ScrollView {
-                VStack(alignment: .leading, spacing: 2) {
+                LazyVStack(alignment: .leading, spacing: 2) {
                     if store.utterances.isEmpty && store.partial == nil {
                         PaneEmptyState(
                             systemImage: "waveform",
-                            text: "Press Listen to start transcribing the conversation.")
+                            text: "Press Start listening to start transcribing the conversation.")
                     }
                     ForEach(store.utterances) { transcriptRow(for: $0) }
-                    if let partial = store.partial {
-                        transcriptRow(for: partial).opacity(0.5)
+                    ForEach([SpeakerSource.you, .others], id: \.self) { source in
+                        if let partial = store.partials[source] { transcriptRow(for: partial).opacity(0.7) }
                     }
                     Color.clear.frame(height: 1).id(Self.scrollBottomID)
                 }
@@ -183,7 +184,9 @@ extension MeetingView {
             Text(speakerRowLabel(for: seg))
                 .font(.system(size: 11, weight: .bold))
                 .foregroundStyle(seg.source == .you ? Theme.you : Theme.others)
-                .frame(width: 72, alignment: .leading)
+                .frame(width: 100, alignment: .leading)
+                .lineLimit(2)
+                .help(seg.speakerLabel)
             Text(seg.text)
                 .font(.system(size: 12.5)).foregroundStyle(Theme.ink)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -194,8 +197,7 @@ extension MeetingView {
     /// Channel/speaker label for a transcript row: "YOU" for the mic; for the Others channel the
     /// resolved "SPEAKER N" (uppercased) when "Identify speakers" has labeled this line, else "OTHERS".
     private func speakerRowLabel(for seg: TranscriptSegment) -> String {
-        guard seg.source == .others else { return "YOU" }
-        return speakerLabels[seg.id]?.uppercased() ?? "OTHERS"
+        seg.speakerLabel.uppercased()
     }
 
     private func transcriptInputZone(session: MeetingSession, notes: Binding<String>) -> some View {

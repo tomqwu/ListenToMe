@@ -50,7 +50,7 @@ public enum SpeakerLabeling {
     /// collide. Only OTHERS lines that overlap a segment get a `lineLabels` entry.
     public static func label(transcript: [TranscriptSegment],
                              diarized: [DiarizedSegment],
-                             offset: TimeInterval) -> Labeling {
+                             offset: TimeInterval, source: SpeakerSource = .others) -> Labeling {
         // Shift diarized segments into capture-time and drop empty/degenerate ones.
         let shifted = diarized.compactMap { seg -> Shifted? in
             guard seg.duration > 0 else { return nil }
@@ -76,7 +76,7 @@ public enum SpeakerLabeling {
 
         // Match transcript lines to speakers, then label them with the same canonical numbering.
         var lineLabels: [UUID: String] = [:]
-        for entry in matches(transcript: transcript, shifted: shifted) {
+        for entry in matches(transcript: transcript, shifted: shifted, source: source) {
             lineLabels[entry.lineID] = labelForSpeaker[entry.speakerId]
         }
         return Labeling(lineLabels: lineLabels, order: labelForSpeaker)
@@ -85,9 +85,9 @@ public enum SpeakerLabeling {
     /// For each OTHERS line with real timestamps, sums overlap per speaker across all that speaker's
     /// shifted segments and picks the speaker with the greatest summed overlap. Ties break to the
     /// speaker whose earliest overlapping segment starts first, then by speakerId for determinism.
-    private static func matches(transcript: [TranscriptSegment], shifted: [Shifted]) -> [Match] {
+    private static func matches(transcript: [TranscriptSegment], shifted: [Shifted], source: SpeakerSource) -> [Match] {
         var chosen: [Match] = []
-        for line in transcript where line.source == .others && line.end > line.start {
+        for line in transcript where line.source == source && line.end > line.start {
             var totalOverlap: [String: TimeInterval] = [:]
             var earliestStart: [String: TimeInterval] = [:]
             for seg in shifted {

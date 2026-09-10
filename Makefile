@@ -9,14 +9,16 @@ SHELL := /bin/bash
 
 gen:
 	xcodegen generate
+	mkdir -p ListenToMe.xcodeproj/project.xcworkspace/xcshareddata/swiftpm
+	cp Config/Package.resolved ListenToMe.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
 
 build: gen
 	@if command -v xcbeautify >/dev/null 2>&1; then \
 		xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMe \
-			-destination 'platform=macOS' -configuration Debug build $(SIGN_FLAGS) | xcbeautify; \
+			-destination 'platform=macOS' -configuration Debug -onlyUsePackageVersionsFromResolvedFile build $(SIGN_FLAGS) | xcbeautify; \
 	else \
 		xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMe \
-			-destination 'platform=macOS' -configuration Debug build $(SIGN_FLAGS); \
+			-destination 'platform=macOS' -configuration Debug -onlyUsePackageVersionsFromResolvedFile build $(SIGN_FLAGS); \
 	fi
 
 test:
