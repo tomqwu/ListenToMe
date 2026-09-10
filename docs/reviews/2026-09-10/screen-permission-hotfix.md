@@ -25,8 +25,14 @@ No permission reset or security setting changes are included in the fix.
 - Recheck in the installed app reports `com.apple.ScreenCaptureKit.SCStreamErrorDomain`, -3801.
   This is an OS authorization refusal despite the enabled Settings entries. The app's designated
   signing requirement matches 1.3.1. The cause of the OS/Settings discrepancy is not established.
-- No capture was started. Refreshing the existing OS permission requires user confirmation and
-  remains pending. The detection UI is repaired; effective screen access is not yet restored.
+- No capture was started. The user authorized refreshing the existing OS permission; it remains unverified. The detection UI is repaired; effective screen access is not yet restored.
 - 1.3.2 has not been published; 1.3.1 remains the public release.
 
 User subsequently confirmed authorization to refresh the existing permission. An attempted Settings action was interrupted by user interaction; no permission change was verified.
+
+## Build 9 installed verification
+
+Signed and notarized build 9 was installed and accepted by Gatekeeper. Native UI launch opens
+the main conversation window directly, without the Permissions sheet. Permission-refresh attempts
+were interrupted by user interaction, and System Settings subsequently showed an OS update in
+progress. No successful permission toggle or restored system-audio access is claimed.
