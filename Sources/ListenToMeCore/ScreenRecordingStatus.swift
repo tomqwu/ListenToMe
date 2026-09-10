@@ -14,7 +14,7 @@ import Foundation
 public enum ScreenRecordingStatus {
     /// Mirror of the app-facing permission states, kept AppKit-free so Core stays pure.
     public enum Grant: Sendable, Equatable {
-        case granted, denied, notDetermined
+        case granted, denied, notDetermined, unverified
     }
 
     /// The resolved badge state plus whether the UI should steer the user to relaunch the app
@@ -36,9 +36,8 @@ public enum ScreenRecordingStatus {
     ///    says `false`, this process may need a relaunch before capture starts, so the hint is set.
     /// 3. `preflight == true` is the OS's own answer for this process — a negative name check is
     ///    a weak signal (windows may legitimately all be untitled) and must not downgrade it.
-    /// 4. Otherwise not granted: `.denied` once the user engaged the Grant flow this session
-    ///    (macOS only shows the system prompt once), `.notDetermined` before that. This is also
-    ///    the exact pre-resolver fallback when `liveNameCheck` is inconclusive (`nil`).
+    /// 4. Negative or inconclusive checks cannot distinguish an absent grant from a stale
+    ///    process/identity. Clicking Grant is not evidence of denial: report unverified.
     public static func resolve(
         preflight: Bool,
         liveNameCheck: Bool?,
@@ -54,7 +53,7 @@ public enum ScreenRecordingStatus {
         if preflight {
             return Resolution(status: .granted, needsRelaunchHint: false)
         }
-        return Resolution(status: requestedThisSession ? .denied : .notDetermined,
+        return Resolution(status: .unverified,
                           needsRelaunchHint: false)
     }
 }

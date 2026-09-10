@@ -1,8 +1,47 @@
 # 1.3.1 / build 7 candidate — implementation and release evidence
 
-Status: **implemented candidate; production publication held**. The design audit remains the
+Status: **1.3.1 published as the latest production release at the user's explicit request**. The design audit remains the
 baseline, not a description of current code. The branch `feat/production-hardening` includes the
 previous 1.2.1 release fixes, opt-in speaker work, the review, and this hardening increment.
+
+## Publication
+
+Published [v1.3.1](https://github.com/tomqwu/ListenToMe/releases/tag/v1.3.1) as the latest stable
+release from the exact artifact source commit `b3cf8c304527e36632f142cf93fd6842d7b4ec64`.
+Downloaded the published DMG and verified its SHA-256 matches the notarized local artifact.
+The release notes disclose the incomplete UI/audio acceptance. PR #67 remains draft; publication
+did not merge it or change branch rules. Earlier publication holds below are historical.
+
+## Resumed verification — September 10, afternoon
+
+The signing blocker cleared on retry. The universal Release candidate was rebuilt from
+`b3cf8c304527e36632f142cf93fd6842d7b4ec64`, signed with the existing Developer ID identity,
+accepted by Apple notarization and stapled. Gatekeeper accepted both the DMG and the app inside
+its read-only mounted image. The packaged app has bundle ID `com.tomwu.ListenToMe`, version
+1.3.1, and both arm64/x86_64 architectures. This verifies packaging, not clean install or upgrade.
+
+- Artifact: `dist/ListenToMe-1.3.1.dmg`.
+- SHA-256: `8cf940d3211b8979aad2e38997764f8166fe5759eb301ded2fc543b336b3934b`.
+- Notary submission: `3cc95112-721e-4bc0-9d13-a8635551e1ef`.
+- Build/notary log: `dist/1.3.1-candidate-evidence/resumed-release.log`.
+- GitHub CLI access now works; both hosted checks pass on the candidate commit. PR #67 remains
+  draft and has no review decision. The effective main branch rules API returns an empty list.
+- Native automation reached the Dev permissions sheet and main accessibility tree. Subsequent
+  screenshot and keyboard calls timed out. Rendered UI acceptance is still incomplete; audio
+  permissions were not granted and no recording or audio soak was performed.
+
+No public release was created. Outstanding gates are source review/merge and branch enforcement,
+full native UI/audio acceptance, and clean install/upgrade. Earlier blocker descriptions below
+are retained as the historical record and superseded by this update where stated.
+
+## Production app trial
+
+Installed the notarized DMG's app into `/Applications/ListenToMe.app`, preserving the prior
+1.2.1 app under `dist/pre-131-install.*`. The installed signature verifies and Gatekeeper accepts
+it. The main window launches, and **ListenToMe → About ListenToMe** displays **Version 1.3.1 (7)**.
+Microphone and Speech Recognition show Granted; Screen Recording and Accessibility show Not set.
+No additional permissions were granted and no audio capture was started. This is a successful
+upgrade launch/version check; full upgrade, audio and workflow acceptance remain open.
 
 ## Delivered behavior
 

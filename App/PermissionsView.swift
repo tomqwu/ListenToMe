@@ -55,6 +55,12 @@ struct PermissionsView: View {
                     onOpenSettings: { permissions.openSettings("Privacy_ScreenCapture") },
                     onRelaunch: { permissions.relaunch() }
                 )
+                if let message = permissions.screenVerificationMessage {
+                    Text(message)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 PermissionRow(
                     name: "Accessibility",
                     purpose: "Enables the global \u{2318}\u{21E7}Space hotkey while other apps are focused.",
@@ -161,6 +167,10 @@ private struct PermissionRow: View {
             Label("Denied", systemImage: "xmark.circle.fill")
                 .foregroundStyle(.red)
                 .font(.caption).fontWeight(.medium)
+        case .unverified:
+            Label("Not verified", systemImage: "questionmark.circle")
+                .foregroundStyle(.secondary)
+                .font(.caption).fontWeight(.medium)
         case .notDetermined:
             Label("Not set", systemImage: "circle.dotted")
                 .foregroundStyle(.secondary)
@@ -185,6 +195,12 @@ private struct PermissionRow: View {
             Button("Open Settings") { onOpenSettings() }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
+        case .unverified:
+            HStack(spacing: 6) {
+                Button("Recheck") { onGrant() }
+                Button("Open Settings") { onOpenSettings() }
+            }
+            .buttonStyle(.bordered).controlSize(.small)
         case .notDetermined:
             Button("Grant") { onGrant() }
                 .buttonStyle(.borderedProminent)

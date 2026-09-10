@@ -269,6 +269,9 @@ private struct OnboardingPermissionRow: View {
         case .denied:
             Label("Denied", systemImage: "xmark.circle.fill")
                 .foregroundStyle(.red).font(.caption).fontWeight(.medium)
+        case .unverified:
+            Label("Not verified", systemImage: "questionmark.circle")
+                .foregroundStyle(.secondary).font(.caption).fontWeight(.medium)
         case .notDetermined:
             Label("Not set", systemImage: "circle.dotted")
                 .foregroundStyle(.secondary).font(.caption).fontWeight(.medium)
@@ -283,6 +286,12 @@ private struct OnboardingPermissionRow: View {
         case .denied:
             Button("Open Settings") { onOpenSettings() }
                 .buttonStyle(.bordered).controlSize(.small)
+        case .unverified:
+            HStack(spacing: 6) {
+                Button("Recheck") { onGrant() }
+                Button("Open Settings") { onOpenSettings() }
+            }
+            .buttonStyle(.bordered).controlSize(.small)
         case .notDetermined:
             Button("Grant") { onGrant() }
                 .buttonStyle(.borderedProminent).controlSize(.small)

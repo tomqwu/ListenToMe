@@ -55,18 +55,18 @@ final class ScreenRecordingStatusTests: XCTestCase {
 
     // MARK: - Rule 3: candidates existed but no names readable → not granted (weak signal)
 
-    func testNegativeLiveCheckAfterRequestThisSessionIsDenied() {
+    func testNegativeLiveCheckAfterRequestThisSessionIsUnverified() {
         let resolution = SRS.resolve(
             preflight: false, liveNameCheck: false, requestedThisSession: true, probeConfirmed: false
         )
-        XCTAssertEqual(resolution, SRS.Resolution(status: .denied, needsRelaunchHint: false))
+        XCTAssertEqual(resolution, SRS.Resolution(status: .unverified, needsRelaunchHint: false))
     }
 
-    func testNegativeLiveCheckBeforeAnyRequestIsNotDetermined() {
+    func testNegativeLiveCheckBeforeAnyRequestIsUnverified() {
         let resolution = SRS.resolve(
             preflight: false, liveNameCheck: false, requestedThisSession: false, probeConfirmed: false
         )
-        XCTAssertEqual(resolution, SRS.Resolution(status: .notDetermined, needsRelaunchHint: false))
+        XCTAssertEqual(resolution, SRS.Resolution(status: .unverified, needsRelaunchHint: false))
     }
 
     func testWeakNegativeLiveCheckDoesNotDowngradeFreshPreflight() {
@@ -87,18 +87,18 @@ final class ScreenRecordingStatusTests: XCTestCase {
         XCTAssertEqual(resolution, SRS.Resolution(status: .granted, needsRelaunchHint: false))
     }
 
-    func testInconclusiveLiveCheckFallsBackToDeniedWhenRequested() {
+    func testInconclusiveLiveCheckDoesNotInferDenialFromRequest() {
         let resolution = SRS.resolve(
             preflight: false, liveNameCheck: nil, requestedThisSession: true, probeConfirmed: false
         )
-        XCTAssertEqual(resolution, SRS.Resolution(status: .denied, needsRelaunchHint: false))
+        XCTAssertEqual(resolution, SRS.Resolution(status: .unverified, needsRelaunchHint: false))
     }
 
-    func testInconclusiveLiveCheckFallsBackToNotDeterminedWhenNotRequested() {
+    func testInconclusiveLiveCheckIsUnverifiedBeforeRequest() {
         let resolution = SRS.resolve(
             preflight: false, liveNameCheck: nil, requestedThisSession: false, probeConfirmed: false
         )
-        XCTAssertEqual(resolution, SRS.Resolution(status: .notDetermined, needsRelaunchHint: false))
+        XCTAssertEqual(resolution, SRS.Resolution(status: .unverified, needsRelaunchHint: false))
     }
 
     // MARK: - Invariant: the relaunch hint exists ONLY for the live-upgrade-over-stale-preflight case

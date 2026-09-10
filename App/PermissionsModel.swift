@@ -11,7 +11,7 @@ import ListenToMeCore
 @MainActor
 @Observable
 final class PermissionsModel {
-    enum Status { case granted, denied, notDetermined }
+    enum Status { case granted, denied, notDetermined, unverified }
 
     private(set) var microphone: Status = .notDetermined
     private(set) var speech: Status = .notDetermined
@@ -22,7 +22,9 @@ final class PermissionsModel {
     /// so capture can actually use the grant.
     private(set) var screenNeedsRelaunchHint = false
 
-    private var screenRequested = false
+    private var screenRequested = UserDefaults.standard.bool(forKey: "screenVerificationRequested")
+    private var screenProbeInFlight = false
+    private(set) var screenVerificationMessage: String?
     private var accessibilityRequested = false
     /// Set once a live ScreenCaptureKit probe confirms the grant, so later `refresh()` calls don't
     /// downgrade it from the stale (process-cached) CoreGraphics preflight value.
@@ -91,24 +93,32 @@ final class PermissionsModel {
         return sawCandidate ? false : nil
     }
 
-    /// Asynchronously verifies Screen Recording access by querying ScreenCaptureKit (which reflects
-    /// the live grant, unlike the cached preflight). Only upgrades the status to `.granted`.
+    /// Query the same framework used for system audio, only after an explicit request or
+    /// positive evidence of an existing grant. Coalesce activation/refresh notifications.
     private func probeScreenRecording() {
+        guard !screenProbeInFlight else { return }
+        screenProbeInFlight = true
+        screenVerificationMessage = "Checking access…"
         Task { [weak self] in
-            guard await Self.canScreenCapture() else { return }
-            self?.screenProbedGranted = true
-            self?.screenRecording = .granted
-            // Capture demonstrably works in THIS process, so no relaunch is needed.
-            self?.screenNeedsRelaunchHint = false
-        }
-    }
-
-    nonisolated private static func canScreenCapture() async -> Bool {
-        do {
-            _ = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
-            return true
-        } catch {
-            return false
+            do {
+                _ = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
+                guard let self else { return }
+                screenProbeInFlight = false
+                screenProbedGranted = true
+                screenRecording = .granted
+                screenNeedsRelaunchHint = false
+                screenVerificationMessage = nil
+            } catch {
+                guard let self else { return }
+                screenProbeInFlight = false
+                let failure = error as NSError
+                // Enumeration can fail for reasons other than permission. Do not label every
+                // error Denied, and retain the error code so support can distinguish failures.
+                screenProbedGranted = false
+                screenRecording = .unverified
+                screenVerificationMessage = "Could not verify access (\(failure.domain), \(failure.code)). " +
+                    "If ListenToMe is already enabled in System Settings, quit and reopen this app, then Recheck."
+            }
         }
     }
 
@@ -124,13 +134,10 @@ final class PermissionsModel {
     }
     func requestScreenRecording() {
         screenRequested = true
-        // Registers the app in the Screen Recording list and shows the one-time system prompt.
-        // macOS only ever presents that prompt once, so if access isn't already effective, send the
-        // user straight to the Screen Recording pane to toggle ListenToMe on (then Quit & Reopen).
-        if !CGRequestScreenCaptureAccess() {
-            openSettings("Privacy_ScreenCapture")
-        }
-        refresh()
+        UserDefaults.standard.set(true, forKey: "screenVerificationRequested")
+        // ScreenCaptureKit performs the actual check/request. A false CoreGraphics return
+        // used to send already-authorized users to Settings and briefly label them Denied.
+        probeScreenRecording()
     }
     func requestAccessibility() {
         accessibilityRequested = true
@@ -164,6 +171,7 @@ final class PermissionsModel {
         case .granted: return .granted
         case .denied: return .denied
         case .notDetermined: return .notDetermined
+        case .unverified: return .unverified
         }
     }
     private static func map(_ s: AVAuthorizationStatus) -> Status {
