@@ -67,9 +67,18 @@ func renderMaster() -> NSImage {
 }
 
 func pngData(from image: NSImage, pixels: Int) -> Data? {
+    if isIOS {
+        guard let source = image.cgImage(forProposedRect: nil, context: nil, hints: nil),
+              let context = CGContext(data: nil, width: pixels, height: pixels, bitsPerComponent: 8,
+                                      bytesPerRow: pixels * 4, space: CGColorSpaceCreateDeviceRGB(),
+                                      bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) else { return nil }
+        context.draw(source, in: CGRect(x: 0, y: 0, width: pixels, height: pixels))
+        guard let rendered = context.makeImage() else { return nil }
+        return NSBitmapImageRep(cgImage: rendered).representation(using: .png, properties: [:])
+    }
     guard let rep = NSBitmapImageRep(
         bitmapDataPlanes: nil, pixelsWide: pixels, pixelsHigh: pixels,
-        bitsPerSample: 8, samplesPerPixel: isIOS ? 3 : 4, hasAlpha: !isIOS, isPlanar: false,
+        bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
         colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0) else { return nil }
     rep.size = NSSize(width: pixels, height: pixels)
     NSGraphicsContext.saveGraphicsState()

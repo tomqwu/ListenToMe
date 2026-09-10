@@ -9,7 +9,7 @@ Verified locally:
 - iPhone 17 Pro / iOS 26.5: microphone denial returns to idle, retry does not reprompt or claim
   recording; notes survive Save, New, History and restart; an empty New remains empty on restart;
   version information exists in Settings. Two XCUITests passed.
-- iPad Pro 11-inch (M5) / iOS 26.5: save/history/relaunch and Settings UI test passed.
+- iPad Pro 11-inch (M5) / iOS 26.5: the same two permission and persistence UI tests passed.
 - iPhone interface and Settings were inspected in Simulator.
 - Core suite: 239 tests, two opt-in network tests skipped, no failures; line coverage 96.74%.
 - SwiftLint: no errors (repository style warnings remain).
