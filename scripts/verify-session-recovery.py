@@ -27,6 +27,7 @@ if CommandLine.arguments[1] == "write" {
     let records = try archive.all()
     precondition(records.count == 1)
     precondition(records[0].transcript == "Alice ships Wednesday")
+    precondition(records[0].notes == "Synthetic only")
     precondition(records[0].segments?[0].speakerName == "Alice")
     precondition(records[0].isComplete == false)
     print("PASS: acknowledged transcript, notes, and speaker identity recovered after SIGKILL")
