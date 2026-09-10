@@ -220,7 +220,7 @@ for the implementation plan.
 
 GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs checks for PRs to `main` on a
 macOS runner: SwiftLint, the full `ListenToMeCore` test suite (unit + headless integration/e2e), and
-a **coverage floor of 95%** enforced by `scripts/check-coverage.sh`. The app also compiles on a `macos-26` runner using the checked-in dependency lock.
+a **coverage floor of 95%** enforced by `scripts/check-coverage.sh`. Both app targets compile on `macos-26` runners using the checked-in dependency lock; the iOS target also runs simulator UI tests.
 GUI/audio and distribution checks require local validation via [`docs/manual-smoke-test.md`](docs/manual-smoke-test.md).
 
 `make e2e` runs the checks CI can't (it needs a real Mac + Ollama): it builds the app target,

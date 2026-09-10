@@ -43,7 +43,7 @@ and Foundation Models. iOS does not depend on the Mac WhisperKit or FluidAudio b
 
 Run lint, shared core tests/coverage, the iOS build and UI tests, and a macOS build to protect the
 existing product. The UI tests verify microphone denial/retry, saving notes, New, History and restoration across app restart.
-Hosted CI builds both apps. Before marking iOS production-ready, test on a physical iPhone/iPad:
+Hosted CI builds both apps and runs the iOS UI tests. Before marking iOS production-ready, test on a physical iPhone/iPad:
 
 1. First-use microphone denial, retry after granting, and unsupported language/model errors.
 2. Model installation, then at least two minutes of real speech with live/final transcript text.
