@@ -49,7 +49,7 @@ DMG_PATH="${DIST_DIR}/${APP_NAME}-${VERSION}.dmg"
 
 # --- regenerate the Xcode project ------------------------------------------------------
 echo "==> xcodegen generate"
-xcodegen generate
+make gen
 
 # --- build a Release .app --------------------------------------------------------------
 USED_CONFIG="Release"
@@ -61,12 +61,14 @@ build_config() {
   if command -v xcbeautify >/dev/null 2>&1; then
     xcodebuild -project "${PROJECT}" -scheme "${SCHEME}" \
       -configuration "${config}" -destination 'generic/platform=macOS' \
-      ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO \
+      ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO \
+      -onlyUsePackageVersionsFromResolvedFile \
       -derivedDataPath "${DERIVED}" build | xcbeautify
   else
     xcodebuild -project "${PROJECT}" -scheme "${SCHEME}" \
       -configuration "${config}" -destination 'generic/platform=macOS' \
-      ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO \
+      ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO \
+      -onlyUsePackageVersionsFromResolvedFile \
       -derivedDataPath "${DERIVED}" build
   fi
 }

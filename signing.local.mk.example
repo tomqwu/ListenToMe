@@ -3,3 +3,17 @@
 #   security find-identity -v -p codesigning
 # Then set the SHA-1 below (and your team id):
 # SIGN_FLAGS = CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=<your-sha1> DEVELOPMENT_TEAM=<your-team>
+#
+# Why this matters: macOS (TCC) keys a permission grant by bundle id *plus* the binary's
+# code-signing requirement. Without a stable identity, Xcode signs ad-hoc and the requirement
+# is pinned to the binary's cdhash — which changes on every build, so every rebuild is a new
+# app to macOS and you re-grant Screen Recording each time.
+#
+# An "Apple Development" certificate gives a stable requirement, but note it expires in about a
+# year; when it renews, the requirement changes and dev grants reset once. A "Developer ID
+# Application" certificate lasts ~5 years if you prefer fewer resets.
+#
+# This does NOT collide with the released app: Debug builds use bundle id
+# com.tomwu.ListenToMe.dev ("ListenToMe (Dev)") while the release dmg uses
+# com.tomwu.ListenToMe, so the two hold independent grants. See project.yml and
+# docs/RELEASING.md.

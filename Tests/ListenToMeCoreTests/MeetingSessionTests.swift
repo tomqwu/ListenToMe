@@ -48,6 +48,20 @@ final class MeetingSessionTests: XCTestCase {
                              MeetingSession.transcriptBudget(for: .clarify))
     }
 
+    func testRenamingClearsOldAnswersAndRebuildsListener() async {
+        let (session, _) = makeSession()
+        await session.respondQuick(.answerQuestion)
+        await session.respondDeep(.answerQuestion)
+        XCTAssertFalse(session.quickSuggestion.isEmpty)
+        XCTAssertFalse(session.deepAnswer.isEmpty)
+        session.speakerNamesChanged()
+        XCTAssertTrue(session.quickSuggestion.isEmpty)
+        XCTAssertTrue(session.deepAnswer.isEmpty)
+        XCTAssertTrue(session.listenerSummary.isEmpty)
+        await session.waitForResponse(.listener)
+        XCTAssertEqual(session.listenerSummary, "[L]")
+    }
+
     // MARK: - Initial state
 
     func testInitialStateHasCorrectDefaults() {

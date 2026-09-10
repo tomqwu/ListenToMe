@@ -9,15 +9,17 @@ Prereq: Ollama running with at least one chat-capable model installed (local or 
 `deepseek-v4-flash:cloud`). The app auto-picks an installed model per pane on first launch.
 
 1. `make run` — the window opens with **four panes**: **Transcript** (left) and **Listener**,
-   **Quick**, **Deep** (right).
+   **Quick**, **Deep** (right). This launches the Debug build, which is a separate app from any
+   installed release: it appears as **ListenToMe (Dev)** (bundle id `com.tomwu.ListenToMe.dev`)
+   and holds its own permission grants. Grant permissions to that row, not the release's.
 2. On first launch, the app shows a **Permissions** panel automatically. Grant Microphone,
    Speech Recognition, Screen Recording (system audio), and Accessibility (global hotkey) directly
-   from the panel. You can also reopen it anytime via the 🛡️ (lock.shield) toolbar button.
+   from the panel. You can also reopen it anytime via **More → Permissions**.
    Re-click **Listen** after granting if needed.
 3. In each AI pane's header, confirm a **model dropdown** is populated with your installed Ollama
    models. Set different models per pane if you like (e.g. a fast model for **Quick**, a heavier one
-   for **Deep**, `deepseek-v4-flash:cloud` for any). The toolbar **↻** button re-scans models.
-4. Click **Listen**. Speak a sentence → it appears under **Transcript** labeled **You** (blue).
+   for **Deep**, `deepseek-v4-flash:cloud` for any). **More → Refresh models** re-scans models.
+4. Click **Start listening**. Speak a sentence → it appears under **Transcript** labeled **You** (blue).
 5. Play speech from another app (a video/meeting) → it appears labeled **Others** (green).
 6. In the **Quick** pane, click **What should I answer?** → a streamed suggestion appears (a
    "💭 Thinking…" state shows first for thinking models).
@@ -41,3 +43,39 @@ Prereq: Ollama running with at least one chat-capable model installed (local or 
 If dual-channel transcription shows only one speaker (a console error mentioning
 `kAFAssistantErrorDomain 1100`), see the README "Known limitations" — the fallback is
 single-source for the MVP or the Phase-2 SpeechAnalyzer engine.
+
+## Automatic speakers (1.3.0)
+
+1. Before Listen, choose WhisperKit and enable Automatic speaker identification. For a room sharing
+   one microphone, also enable Identify people sharing my microphone.
+2. Record alternating voices for at least 30 seconds. Open Speakers / edit names. Confirm source
+   labels and talk time, then save a name. Confirm transcript lines use the name after analysis.
+3. Keep talking through another automatic pass. Confirm the name remains attached to the same
+   voice; introduce a new voice and confirm it gets a distinct label. Expect uncertain splits/merges
+   to get new names rather than silently reusing an edited name.
+4. Ask for Action items and Deep answer. Confirm names in the transcript reach the prompts. Rename
+   a speaker: old Quick/Deep answers clear and the listener refreshes.
+5. Stop and allow final analysis to finish. Export Markdown/PDF and inspect saved-session search:
+   named transcript lines should agree, including the final utterance.
+6. Restart recording. Older lines must keep their names. New generic labels must distinguish the
+   new run. Change language while recording and rapidly Stop/Listen: old analysis must not label
+   new audio or leave a stuck spinner.
+7. With SpeechAnalyzer selected, check the speaker sheet explains that only voice breakdown is
+   available. With identification disabled, capture must not accumulate speaker-analysis audio.
+8. Try overlapping voices and document recognition errors; do not infer accuracy from unit tests.
+
+## Enabled Screen Recording switch but capture is refused
+
+If the installed production app repeatedly returns ScreenCaptureKit `-3801` despite an enabled
+switch, confirm the app is `/Applications/ListenToMe.app` and quit it. A targeted recovery that
+worked on September 10, 2026 was:
+
+```bash
+tccutil reset ScreenCapture com.tomwu.ListenToMe
+```
+
+Then open System Settings → Privacy & Security → Screen & System Audio Recording, use **+**
+to select that exact app, authenticate if requested, and relaunch it. This resets only production
+Screen Recording authorization; it does not reset microphone, speech, history, or the Dev app.
+Verify **System: active** and transcribed playback labeled **OTHERS**. Do not treat microphone
+pickup labeled YOU or an enabled toggle alone as proof of system-audio capture.

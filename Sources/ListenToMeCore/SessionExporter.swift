@@ -25,7 +25,7 @@ public enum SessionExporter {
         section("Context notes", notes)
 
         let lines = transcript.map { seg in
-            "- **\(seg.source == .you ? "You" : "Others"):** \(seg.text)"
+            "- **\(seg.speakerLabel):** \(seg.text)"
         }
         let transcriptBody = lines.isEmpty ? "_(no transcript captured)_" : lines.joined(separator: "\n")
         out += "\n## Transcript\n\n\(transcriptBody)\n"

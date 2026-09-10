@@ -3,6 +3,11 @@ import ListenToMeCore
 
 /// UserDefaults-backed model selection. Ollama-only.
 enum ProviderSettings {
+    static var aiMode: AIProcessingMode {
+        get { AIProcessingMode(rawValue: UserDefaults.standard.string(forKey: "aiProcessingMode") ?? "local") ?? .local }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: "aiProcessingMode") }
+    }
+
     static var ollamaModel: String {
         get { UserDefaults.standard.string(forKey: "ollamaModel") ?? "llama3.1" }
         set { UserDefaults.standard.set(newValue, forKey: "ollamaModel") }
@@ -75,6 +80,11 @@ enum ProviderSettings {
         set { UserDefaults.standard.set(newValue, forKey: "speakerDiarizationEnabled") }
     }
 
+    static var microphoneDiarizationEnabled: Bool {
+        get { UserDefaults.standard.bool(forKey: "microphoneDiarizationEnabled") }
+        set { UserDefaults.standard.set(newValue, forKey: "microphoneDiarizationEnabled") }
+    }
+
     /// Whether finished sessions are persisted locally for cross-meeting search. Default `true`.
     static var saveSessionsForSearch: Bool {
         get { UserDefaults.standard.object(forKey: "saveSessionsForSearch") as? Bool ?? true }
@@ -128,28 +138,42 @@ enum ProviderSettings {
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
+    @State private var aiMode: AIProcessingMode
+    @State private var saveError: String?
     @State private var engine: String
+    private let originalKey: String
     @State private var ollamaKey: String
     @State private var responseLanguageID: String
     @State private var referenceBudget: Int
     @State private var saveSessions: Bool
     @State private var appearance: String
     @State private var speakerDiarization: Bool
+    @State private var microphoneDiarization: Bool
 
     init() {
+        _aiMode = State(initialValue: ProviderSettings.aiMode)
         _engine = State(initialValue: ProviderSettings.transcriptionEngine)
-        _ollamaKey = State(initialValue: KeychainStore.get("ollama") ?? "")
+        originalKey = KeychainStore.get("ollama") ?? ""
+        _ollamaKey = State(initialValue: originalKey)
         _responseLanguageID = State(initialValue: ProviderSettings.responseLanguageID)
         _referenceBudget = State(initialValue: ProviderSettings.referenceBudget)
         _saveSessions = State(initialValue: ProviderSettings.saveSessionsForSearch)
         _appearance = State(initialValue: ProviderSettings.appearance)
         _speakerDiarization = State(initialValue: ProviderSettings.speakerDiarizationEnabled)
+        _microphoneDiarization = State(initialValue: ProviderSettings.microphoneDiarizationEnabled)
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Settings").font(.title2).bold()
-
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+            Picker("AI processing", selection: $aiMode) {
+                ForEach(AIProcessingMode.allCases, id: \.self) { Text($0.label).tag($0) }
+            }
+            Text("Cloud mode sends meeting text and attached context to Ollama Cloud. Local mode verifies " +
+                 "the model before each request. AI off keeps transcription and saving available.")
+                .font(.caption).foregroundStyle(.secondary)
             Picker("Appearance", selection: $appearance) {
                 Text("System").tag("system")
                 Text("Light").tag("light")
@@ -160,16 +184,13 @@ struct SettingsView: View {
                 .font(.caption).foregroundStyle(.secondary)
 
             Divider()
-            Toggle("Speaker diarization (experimental)", isOn: $speakerDiarization)
-            Text(
-                "Adds a \u{201C}Speakers\u{201D} action that groups the system-audio " +
-                "(\u{201C}Others\u{201D}) channel into distinct voices and shows each one's talk-time " +
-                "share. On-device; downloads a CoreML model on first use. Experimental \u{2014} " +
-                "accuracy varies and is yours to validate."
-            )
-            .font(.caption).foregroundStyle(.secondary)
-
-            Divider()
+            Toggle("Automatic speaker identification (experimental)", isOn: $speakerDiarization)
+            Toggle("Identify people sharing my microphone", isOn: $microphoneDiarization)
+                .disabled(!speakerDiarization)
+            Text("Analyzes voices on this Mac periodically and when you stop. Models download on first use. " +
+                 "Choose WhisperKit for transcript labels. Apply before pressing Start listening. " +
+                 "Names can be edited in Speakers; overlapping speech may be misattributed.")
+                .font(.caption).foregroundStyle(.secondary)
 
             Picker("Transcription engine", selection: $engine) {
                 Text("SpeechAnalyzer (macOS 26, dual-channel)").tag("speechAnalyzer")
@@ -180,7 +201,7 @@ struct SettingsView: View {
                 "SpeechAnalyzer transcribes both channels concurrently and downloads its model on first use; " +
                 "SpeechRecognizer is the fallback. WhisperKit adds multilingual / code-switching transcription " +
                 "and downloads a model on first use (segment-final only, no live partials). " +
-                "Changing this takes effect when you next press Listen."
+                "Changing this takes effect when you next press Start listening."
             )
             .font(.caption).foregroundStyle(.secondary)
 
@@ -189,8 +210,8 @@ struct SettingsView: View {
             SecureField("Ollama API key", text: $ollamaKey)
                 .textFieldStyle(.roundedBorder)
             Text(
-                "Optional — paste your Ollama Cloud key (ollama.com) to use cloud models like " +
-                "deepseek-v4-flash. Leave blank to use your local Ollama at localhost:11434. " +
+                "Used only when AI processing is set to Cloud. Local mode uses verified downloaded " +
+                "models at localhost:11434. Changing the key alone does not change AI mode. " +
                 "Stored in your macOS Keychain."
             )
             .font(.caption).foregroundStyle(.secondary)
@@ -225,10 +246,14 @@ struct SettingsView: View {
             Divider()
             Toggle("Save sessions locally for search", isOn: $saveSessions)
             Text(
-                "Stored only on this Mac; used for cross-meeting search. Turn off to keep nothing."
+                "Autosaves finalized text on this Mac. Turning off stops automatic saving for this conversation. " +
+                "Existing history is kept; use Clear history to delete it."
             )
             .font(.caption).foregroundStyle(.secondary)
 
+                }
+            }
+            if let saveError { Text(saveError).foregroundStyle(.red) }
             HStack {
                 Spacer()
                 Button("Cancel") { dismiss() }
@@ -237,20 +262,23 @@ struct SettingsView: View {
             }
         }
         .padding(20)
-        .frame(width: 440)
+        .frame(width: 560, height: 610)
     }
 
     private func save() {
+        guard ollamaKey == originalKey || KeychainStore.set(ollamaKey.isEmpty ? nil : ollamaKey, for: "ollama") else {
+            saveError = "Could not save the API key in Keychain. Settings have not been applied."
+            return
+        }
+        ProviderSettings.aiMode = aiMode
         ProviderSettings.transcriptionEngine = engine
         ProviderSettings.responseLanguageID = responseLanguageID
         ProviderSettings.referenceBudget = referenceBudget
         ProviderSettings.saveSessionsForSearch = saveSessions
         ProviderSettings.appearance = appearance
         ProviderSettings.speakerDiarizationEnabled = speakerDiarization
-        // Honor the "Turn off to keep nothing" promise: wipe stored history whenever the toggle is
-        // off. The store is file-backed, so a fresh instance's clear() deletes the JSON.
-        if !saveSessions { SessionStore().clear() }
-        KeychainStore.set(ollamaKey.isEmpty ? nil : ollamaKey, for: "ollama")
+        ProviderSettings.microphoneDiarizationEnabled = microphoneDiarization
+        // Turning autosave off does not delete existing conversations. History has explicit deletion.
         dismiss()
     }
 }

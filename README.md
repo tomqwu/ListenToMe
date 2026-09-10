@@ -90,7 +90,6 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 **Download (recommended)**
 - Grab the notarized `.dmg` from [Releases](https://github.com/tomqwu/ListenToMe/releases),
   open it, and drag **ListenToMe** to **Applications**.
-  _(Available once v1.0 is published.)_
 
 **Build from source**
 ```bash
@@ -115,31 +114,83 @@ On first run, grant Microphone, Speech Recognition, Screen Recording (for system
 Accessibility (for the global hotkey) in System Settings → Privacy & Security. The app shows a
 Permissions panel on launch (also reachable from the toolbar 🛡️) to grant these up front.
 
+### Dev builds are a separate app
+
+Debug builds use bundle id `com.tomwu.ListenToMe.dev` and appear as **ListenToMe (Dev)**; the
+released dmg uses `com.tomwu.ListenToMe`. macOS keys permission grants by bundle id *and*
+code-signing requirement, and the two are signed with different certificates (Apple Development vs
+Developer ID), so a shared bundle id would make each install silently invalidate the other's
+grants. With separate ids they get their own rows in System Settings → Privacy & Security and can
+be installed side by side — you grant permissions once per app.
+
+The Ollama API key stays shared: `KeychainStore` uses a fixed service name, so you paste the key
+once. macOS asks each binary for keychain access the first time it reads the item — choose
+**Always Allow**.
+
 ## Models, presets & languages
 
 - **Per-pane models.** Each of Listener, Quick, and Deep has a model dropdown in its header with
-  "good for" hints. Choices persist across launches; the toolbar **↻** button re-scans installed
+  "good for" hints. Choices persist across launches; **More → Refresh models** re-scans installed
   models (e.g. after `ollama pull`). On first launch any role whose saved model isn't installed
   auto-switches to one that works — no manual config needed.
-- **Ollama Cloud.** Paste your Ollama API key (from [ollama.com](https://ollama.com)) in
-  **Settings** to use cloud models (e.g. `deepseek-v4-flash`, `qwen3-coder`). With a key set, the
-  app routes discovery and inference to `https://ollama.com`; leave it blank to use local Ollama at
-  `http://localhost:11434`. The key is stored in your macOS Keychain.
+- **AI processing mode.** In **Settings**, explicitly choose **Local only**, **Cloud**, or **AI off**.
+  Local mode verifies downloaded-model metadata before every request and rejects remote/cloud-backed
+  models and redirects. Cloud mode uses `https://ollama.com` and the key stored in macOS Keychain.
+  It sends transcript, notes, summary and attached reference context to Ollama Cloud. Adding a key
+  alone does not switch modes. AI off leaves capture, transcription and saving available.
 - **Presets.** Pick a use-case preset to tailor how the copilot responds.
 - **Languages.** Independent **transcription-language** and **AI response-language** pickers.
 - **Reference files.** Add files/folders as context, with a configurable token budget.
 - **Audio import.** Import an audio file to transcribe it.
-- **Export.** Save the session as Markdown (toolbar ⬆️).
+- **Save conversation (⌘S).** Saves finalized transcript, speaker names, notes and available AI outputs
+  without stopping capture. A visible saved time acknowledges success. Failed saves offer Retry / Save As.
+- **New conversation (⌘N).** Finishes and saves the current conversation, then clears transcript,
+  AI context, notes, names and attached references. Model/language/appearance preferences remain.
+- **History (⌘F).** Search saved conversations, open their full contents, and copy/export Markdown.
+- **Export (⌘E).** Export the current conversation as Markdown; PDF and recap are also in Export.
+  With autosaving off, Save opens Save As and New/Close offers Save As, Cancel or explicit discard.
+
+Autosaving checkpoints finalized text as it changes and available outputs once per second. Current
+partial speech is not acknowledged as saved. An interrupted session is available in History through
+its last successful checkpoint. Release history lives in `~/Library/Application Support/ListenToMe/Conversations`;
+Debug uses `ListenToMe Dev/Conversations`. Legacy `sessions.json` imports once and remains for rollback
+until **Clear history** deletes it in the Release app. Turning autosaving off keeps existing history.
+History is local, unencrypted JSON and currently reopens for reading/export, not editing or resuming.
+
+### Automatic speaker identification (experimental)
+
+In Settings, enable **Automatic speaker identification** and choose **WhisperKit** before
+pressing Listen. The app analyzes captured system audio on-device about every 20 seconds
+(longer when analysis takes more time), and runs a final pass after Stop. The first use downloads
+speaker models. Open **Speakers / edit names** to name voices, for example Speaker 1 → Alice.
+
+Names appear in transcript lines and flow into subsequent AI prompts, refreshed listener summaries,
+saved-session search, and Markdown/PDF exports. Saving a name clears older Quick/Deep answers;
+request them again to use the new name. Speaker identities are matched across analysis passes by
+shared audio timing. Ambiguous splits or merges may receive new labels instead of inheriting an
+incorrect name. Labels and names are scoped to each recording run; starting another run preserves
+older transcript labels but does not recognize people from past runs.
+
+Enable **Identify people sharing my microphone** to also separate voices on the microphone channel.
+The two audio channels are analyzed independently; the same person heard on both is not automatically
+merged. Without this option, microphone speech remains **You**. SpeechAnalyzer and SpeechRecognizer
+support the voice breakdown only; per-line attribution requires WhisperKit timestamps.
+
+This is delayed, periodic identification, with one speaker assigned per transcript line. Overlapping
+speech can be misattributed. Analysis covers the first approximately two hours of each enabled channel.
+Imported audio files do not use this live-capture speaker analysis. Audio is buffered in memory for
+analysis; speaker names are included in saved transcript text when session saving is enabled.
 
 ## Privacy
 
 - **On-device transcription.** Speech-to-text runs locally via Apple SpeechAnalyzer (or
   SpeechRecognizer) — both on-device.
-- **Local models never leave the Mac.** If you use a local Ollama model, audio and transcript stay
-  entirely on your machine.
-- **Cloud only when you choose it.** A cloud (`:cloud`) model is used only if you explicitly select
-  one and set an Ollama API key; in that case the transcript/prompt is sent to Ollama Cloud and
-  nowhere else.
+- **Local-only AI.** The app accepts only models whose local Ollama metadata identifies downloaded
+  weights without a remote destination. Unknown routing is rejected, including cloud model aliases
+  served through a local daemon. This trusts the installed local Ollama service and its metadata.
+- **Explicit cloud choice.** Select Cloud in Settings to send AI prompt context to Ollama Cloud.
+  Audio transcription and experimental speaker processing remain on-device; their models may download
+  on first use. Select AI off to stop model requests while continuing to capture and save.
 
 ## Architecture
 
@@ -154,11 +205,10 @@ for the implementation plan.
 
 ### CI
 
-GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) gates every PR to `main` on a
+GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs checks for PRs to `main` on a
 macOS runner: SwiftLint, the full `ListenToMeCore` test suite (unit + headless integration/e2e), and
-a **coverage floor of 95%** enforced by `scripts/check-coverage.sh`. Because the app target deploys to
-macOS 26 and uses ScreenCaptureKit/Speech, the **app build and GUI/audio e2e cannot run on hosted
-runners** — those are verified locally via [`docs/manual-smoke-test.md`](docs/manual-smoke-test.md).
+a **coverage floor of 95%** enforced by `scripts/check-coverage.sh`. The app also compiles on a `macos-26` runner using the checked-in dependency lock.
+GUI/audio and distribution checks require local validation via [`docs/manual-smoke-test.md`](docs/manual-smoke-test.md).
 
 `make e2e` runs the checks CI can't (it needs a real Mac + Ollama): it builds the app target,
 verifies `make run`'s app-path resolution, and runs a real LLM contract test against your local
@@ -180,8 +230,6 @@ Ollama through the actual `OllamaProvider`, auto-selecting an installed chat mod
   code-switching (e.g. Mandarin↔English mid-sentence) that Apple's on-device Speech can't do. It
   downloads a model on first use, emits finalized segments only (no live partials), and its
   dual-channel finals may occasionally interleave out of chronological order.
-- **Cross-launch session history (deferred):** Markdown export covers sharing/review; live sessions
-  are otherwise ephemeral.
 
 ## Contributing
 

@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import ListenToMeCore
 
 /// First-run onboarding sheet. Shown only once (gated by the `didCompleteOnboarding`
 /// UserDefaults flag). Walks through the app's value prop, permission grants, optional
@@ -10,16 +11,20 @@ struct OnboardingView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var step = 0
     @State private var permissions = PermissionsModel()
+    @State private var aiMode = ProviderSettings.aiMode
+    @State private var saveError: String?
+    @State private var originalKey = KeychainStore.get("ollama") ?? ""
     @State private var ollamaKey = KeychainStore.get("ollama") ?? ""
 
     private static let stepCount = 4
 
     var body: some View {
         VStack(spacing: 0) {
-            stepContent
+            ScrollView { stepContent }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 .padding(28)
 
+            if let saveError { Text(saveError).foregroundStyle(.red).padding(.horizontal, 24) }
             Divider()
             footer
                 .padding(.horizontal, 24)
@@ -102,7 +107,20 @@ struct OnboardingView: View {
                     onOpenSettings: { permissions.openSettings("Privacy_ScreenCapture") }
                 )
             }
-            Text("You can revisit these any time from the shield button in the toolbar.")
+            // Without this, a first-run user who granted in System Settings but dismissed the OS
+            // relaunch dialog sees "Granted" here while capture silently falls back to mic-only.
+            if permissions.screenNeedsRelaunchHint {
+                HStack(spacing: 8) {
+                    Text("Screen Recording is granted, but macOS needs the app to restart before " +
+                         "it can capture system audio.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Button("Quit & Reopen") { permissions.relaunch() }
+                        .controlSize(.small)
+                }
+            }
+            Text("Revisit these any time from More → Permissions in the toolbar.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }
@@ -116,12 +134,15 @@ struct OnboardingView: View {
                 subtitle: "ListenToMe runs its AI panes through Ollama."
             )
             VStack(alignment: .leading, spacing: 8) {
-                Text("Ollama API key (optional)").fontWeight(.medium)
+                Picker("AI processing", selection: $aiMode) {
+                    ForEach(AIProcessingMode.allCases, id: \.self) { Text($0.label).tag($0) }
+                }
+                Text("Ollama Cloud API key").fontWeight(.medium)
                 SecureField("Paste an ollama.com API key", text: $ollamaKey)
                     .textFieldStyle(.roundedBorder)
                 Text(
-                    "Leave this blank to use a local Ollama at localhost:11434. " +
-                    "Add a key to route the AI panes through ollama.com instead."
+                    "Local mode verifies that your model runs on this Mac. Cloud mode sends meeting text " +
+                    "and attached context to ollama.com. AI off keeps transcription and saving available."
                 )
                 .font(.footnote)
                 .foregroundStyle(.secondary)
@@ -136,9 +157,9 @@ struct OnboardingView: View {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 52))
                 .foregroundStyle(Theme.accent)
-            Text("You\u{2019}re all set")
+            Text("Ready to begin")
                 .font(.title2).bold()
-            Text("Press Listen in the toolbar to start your first session.")
+            Text("Press Start listening in the toolbar. Capture and model status appear below it.")
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
             Spacer()
@@ -204,7 +225,11 @@ struct OnboardingView: View {
     }
 
     private func complete() {
-        KeychainStore.set(ollamaKey, for: "ollama")   // empty string clears the key (local Ollama)
+        guard ollamaKey == originalKey || KeychainStore.set(ollamaKey, for: "ollama") else {
+            saveError = "Could not save the API key in Keychain. Go Back to retry or leave the key unchanged."
+            return
+        }
+        ProviderSettings.aiMode = aiMode
         UserDefaults.standard.set(true, forKey: Self.completionKey)
         dismiss()
     }
@@ -244,6 +269,9 @@ private struct OnboardingPermissionRow: View {
         case .denied:
             Label("Denied", systemImage: "xmark.circle.fill")
                 .foregroundStyle(.red).font(.caption).fontWeight(.medium)
+        case .unverified:
+            Label("Not verified", systemImage: "questionmark.circle")
+                .foregroundStyle(.secondary).font(.caption).fontWeight(.medium)
         case .notDetermined:
             Label("Not set", systemImage: "circle.dotted")
                 .foregroundStyle(.secondary).font(.caption).fontWeight(.medium)
@@ -258,6 +286,12 @@ private struct OnboardingPermissionRow: View {
         case .denied:
             Button("Open Settings") { onOpenSettings() }
                 .buttonStyle(.bordered).controlSize(.small)
+        case .unverified:
+            HStack(spacing: 6) {
+                Button("Recheck") { onGrant() }
+                Button("Open Settings") { onOpenSettings() }
+            }
+            .buttonStyle(.bordered).controlSize(.small)
         case .notDetermined:
             Button("Grant") { onGrant() }
                 .buttonStyle(.borderedProminent).controlSize(.small)

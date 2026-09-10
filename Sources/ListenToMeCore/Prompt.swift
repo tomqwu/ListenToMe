@@ -70,8 +70,11 @@ public enum PromptBuilder {
     public static let listenerSystemPrompt = """
     You are a real-time meeting listener. Given a conversation transcript, produce:
     (a) a 1-3 sentence rolling summary of what has been discussed so far, and
-    (b) a short bulleted list of any open questions or action items identified.
-    Be brief and factual. No preamble, no meta-commentary.
+    (b) decisions, action items with stated owners/deadlines, and open questions.
+    Merge new evidence with the previous meeting record. Preserve earlier decisions and unresolved
+    actions even when the topic changes. Only change them when new transcript evidence says so.
+    Never invent an owner, deadline, agreement, or completion. Mark missing details as unstated.
+    Keep the summary brief; retain every distinct decision and action. No preamble or meta-commentary.
     """
 
     public static let deepSystemPrompt = """
@@ -130,7 +133,7 @@ public enum PromptBuilder {
 
     private static func buildUserMessage(context: PromptContext, instruction: String) -> String {
         let transcript = context.messages.map { seg in
-            "\(seg.source == .you ? "You" : "Others"): \(seg.text)"
+            "\(seg.speakerLabel): \(seg.text)"
         }.joined(separator: "\n")
 
         var user = "Transcript so far:\n\(transcript)\n\n"
@@ -174,10 +177,14 @@ public enum PromptBuilder {
     /// Listener builder: rolling summary + open questions/action items.
     public static func buildListener(context: PromptContext) -> LLMRequest {
         let transcript = context.messages.map { seg in
-            "\(seg.source == .you ? "You" : "Others"): \(seg.text)"
+            "\(seg.speakerLabel): \(seg.text)"
         }.joined(separator: "\n")
 
-        var user = "Transcript so far:\n\(transcript)\n\n"
+        var user = "New transcript evidence:\n\(transcript)\n\n"
+        if let summary = context.summary, !summary.isEmpty {
+            user += "Previous meeting record (retain earlier decisions, owners, deadlines, and open items unless " +
+                "the new evidence explicitly changes them):\n\(summary)\n\n"
+        }
         if let notes = context.notes, !notes.trimmingCharacters(in: .whitespaces).isEmpty {
             user += "Context notes from the user:\n\(notes)\n\n"
         }

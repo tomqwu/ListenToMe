@@ -1,0 +1,26 @@
+# ListenToMe repository workflow
+
+## Definition of done for fixes and features
+
+The maintainer expects fixes and features to be released, not left at a local build or install.
+Unless the user explicitly requests a draft, investigation, or local-only change, complete the
+release workflow without asking again whether to publish:
+
+1. Implement the change and run relevant tests, lint, coverage, and the app build.
+2. Verify affected behavior in the installed production app. For audio changes, verify actual
+   system-audio transcription labeled OTHERS; a permission toggle or microphone pickup is not proof.
+3. Update version/build numbers and release notes. Follow `docs/RELEASING.md` for stable production
+   identity, dependency locking, signing, notarization, and stapling.
+4. Commit and push the source, verify hosted CI, and complete the release PR/merge workflow.
+5. Publish the signed, notarized production DMG as the latest GitHub release, targeting the exact
+   source commit used for the artifact. Never replace an already-published version's binary.
+6. Download the published asset and verify its checksum and release/tag metadata. Report the
+   release link, verification, and any remaining material limitations.
+
+Documentation-only changes do not require a new binary release. If an actual blocker prevents
+publication, name the blocker and preserve the candidate/evidence; do not describe the work as
+released. Existing user authorization persists across turns. OS authentication such as Touch ID
+must be completed by the user, but do not request publication approval again for authorized work.
+
+Never reset broad macOS permissions. For the known ScreenCaptureKit -3801 issue, use the targeted
+production-app recovery and verification procedure in `docs/manual-smoke-test.md` when authorized.

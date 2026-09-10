@@ -116,7 +116,7 @@ final class OllamaLiveTransportTests: XCTestCase {
         let expectedKey = "test-secret-key"
         var capturedRequest: URLRequest?
 
-        let ndjson = #"{"done":true}"#
+        let ndjson = #"{"message":{"content":"OK"},"done":true}"#
         StubURLProtocol.handler = { request in
             capturedRequest = request
             let response = HTTPURLResponse(
@@ -137,7 +137,7 @@ final class OllamaLiveTransportTests: XCTestCase {
     func testLivePathOmitsAuthorizationHeaderWhenApiKeyIsNil() async throws {
         var capturedRequest: URLRequest?
 
-        let ndjson = #"{"done":true}"#
+        let ndjson = #"{"message":{"content":"OK"},"done":true}"#
         StubURLProtocol.handler = { request in
             capturedRequest = request
             let response = HTTPURLResponse(
@@ -161,7 +161,7 @@ final class OllamaLiveTransportTests: XCTestCase {
         let expectedModel = "llama3.1"
         var capturedBody: Data?
 
-        let ndjson = #"{"done":true}"#
+        let ndjson = #"{"message":{"content":"OK"},"done":true}"#
         StubURLProtocol.handler = { request in
             // URLSession may pass the body via httpBodyStream instead of httpBody
             if let data = request.httpBody {
