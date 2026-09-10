@@ -58,3 +58,22 @@ e2e: build
 # dmg (with a warning) when DEVELOPER_ID_APP is unset. See docs/RELEASING.md.
 release:
 	bash scripts/release.sh
+
+# iPhone/iPad target (iOS 26+). Override IOS_DESTINATION with a connected device/simulator.
+IOS_DESTINATION ?= platform=iOS Simulator,name=iPhone 17 Pro
+
+.PHONY: ios-build ios-test ios-archive
+ios-build: gen
+	xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMeIOS -configuration Debug \
+		-destination 'generic/platform=iOS Simulator' -derivedDataPath .build/ios \
+		-onlyUsePackageVersionsFromResolvedFile CODE_SIGNING_ALLOWED=NO build
+
+ios-test: gen
+	xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMeIOS -configuration Debug \
+		-destination '$(IOS_DESTINATION)' -derivedDataPath .build/ios \
+		-onlyUsePackageVersionsFromResolvedFile CODE_SIGNING_ALLOWED=NO test
+
+ios-archive: gen
+	xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMeIOS -configuration Release \
+		-destination 'generic/platform=iOS' -archivePath dist/ListenToMe-iOS.xcarchive \
+		-derivedDataPath .build/ios-release -onlyUsePackageVersionsFromResolvedFile -allowProvisioningUpdates archive

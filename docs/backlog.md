@@ -25,7 +25,9 @@ See [the September triage](reviews/2026-09-10/backlog-triage.md) for the disposi
 
 ## Intentionally out of scope
 
-- Mobile/Windows companion products.
+- Android/Windows products and Mac companion/sync features.
+
+The standalone iOS app is now in scope at the maintainer's request; see [iOS](IOS.md).
 - Cloud accounts, team workspaces, and public sharing links.
 - Per-vendor AI SDK integrations; the current backend is Ollama.
 

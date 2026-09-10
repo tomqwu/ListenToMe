@@ -1,0 +1,194 @@
+import SwiftUI
+import ListenToMeCore
+
+struct MobileMeetingView: View {
+    @Bindable var session: MobileSession
+    @State private var showHistory = false
+    @State private var showSettings = false
+    @State private var section = 0
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                status
+                Picker("Conversation section", selection: $section) {
+                    Text("Transcript").tag(0)
+                    Text("Notes").tag(1)
+                    Text("Summary").tag(2)
+                }
+                .pickerStyle(.segmented).padding()
+                if section == 0 { transcript }
+                if section == 1 {
+                    TextEditor(text: $session.notes)
+                        .accessibilityLabel("Conversation notes")
+                        .disabled(session.isSummarizing)
+                        .padding(.horizontal)
+                        .onChange(of: session.notes) { _, _ in session.save(announce: false) }
+                }
+                if section == 2 { summary }
+            }
+            .navigationTitle("ListenToMe")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("History", systemImage: "clock") { showHistory = true }.disabled(session.busy)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Settings", systemImage: "gearshape") { showSettings = true }
+                }
+            }
+            .safeAreaInset(edge: .bottom) { controls }
+            .sheet(isPresented: $showHistory) { history }
+            .sheet(isPresented: $showSettings) { settings }
+        }
+    }
+
+    private var status: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            TextField("Conversation title", text: $session.title)
+                .font(.title2.bold()).accessibilityIdentifier("conversationTitle")
+                .disabled(session.isSummarizing)
+                .onChange(of: session.title) { _, _ in session.save(announce: false) }
+            Label(statusText, systemImage: session.state == .recording ? "waveform" : "mic")
+                .font(.subheadline).foregroundStyle(session.state == .recording ? .red : .secondary)
+            Text("Microphone only · On-device transcription")
+                .font(.caption).foregroundStyle(.secondary)
+            if let message = session.message {
+                Text(message).font(.callout).accessibilityIdentifier("sessionMessage")
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding().background(.indigo.opacity(0.07))
+    }
+
+    private var statusText: String {
+        switch session.state {
+        case .idle: return "Ready to listen"
+        case .preparing: return "Preparing speech model… First use may download a model."
+        case .recording: return "Listening"
+        case .stopping: return "Finishing transcript…"
+        }
+    }
+
+    private var transcript: some View {
+        Group {
+            if session.allSegments.isEmpty {
+                ContentUnavailableView("Capture the conversation", systemImage: "waveform",
+                                       description: Text("Tap Start listening for live microphone transcription. Keep the app open while recording."))
+            } else {
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 18) {
+                        ForEach(session.allSegments) { segment in
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(segment.isFinal ? "MICROPHONE" : "MICROPHONE · UNFINALIZED")
+                                    .font(.caption.weight(.semibold)).foregroundStyle(.indigo)
+                                Text(segment.text).textSelection(.enabled)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                    }.padding()
+                }
+            }
+        }
+    }
+
+    private var summary: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("On-device summary").font(.title2.bold())
+                Text("Apple Intelligence summarizes your notes and transcript on this device. Review the result for accuracy.")
+                    .foregroundStyle(.secondary)
+                if let reason = session.summaryAvailability { Text(reason).font(.callout) }
+                Button {
+                    Task { await session.summarize() }
+                } label: {
+                    Label(session.isSummarizing ? "Summarizing…" : "Summarize conversation", systemImage: "sparkles")
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(session.busy || !session.hasContent || session.summaryAvailability != nil)
+                if !session.summary.isEmpty { Text(session.summary).textSelection(.enabled) }
+            }.frame(maxWidth: .infinity, alignment: .leading).padding()
+        }
+    }
+
+    private var controls: some View {
+        VStack(spacing: 12) {
+            Button {
+                if session.state == .idle { session.start() } else { Task { await session.stop() } }
+            } label: {
+                Label(session.state == .idle ? "Start listening" : "Stop listening",
+                      systemImage: session.state == .idle ? "mic.fill" : "stop.fill")
+                    .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 8)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(session.state == .idle ? .indigo : .red)
+            .disabled(session.state == .stopping || session.isSummarizing)
+            HStack {
+                Button("Save", systemImage: "square.and.arrow.down") { session.save() }.disabled(!session.hasContent)
+                Spacer()
+                Button("New", systemImage: "plus") { session.newConversation(); section = 0 }.disabled(session.busy)
+                Spacer()
+                ShareLink(item: session.markdown) { Label("Share", systemImage: "square.and.arrow.up") }
+                    .disabled(!session.hasContent)
+            }.font(.subheadline.weight(.semibold))
+        }.padding().background(.bar)
+    }
+
+    private var history: some View {
+        NavigationStack {
+            List(session.history) { record in
+                Button {
+                    session.open(record); showHistory = false
+                } label: {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(record.title).font(.headline).foregroundStyle(.primary)
+                        Text(record.date.formatted(date: .abbreviated, time: .shortened)).font(.caption)
+                        Text(record.summary.isEmpty ? (record.notes ?? record.transcript) : record.summary)
+                            .lineLimit(2).foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .overlay { if session.history.isEmpty { ContentUnavailableView("No saved conversations", systemImage: "clock") } }
+            .navigationTitle("History")
+            .toolbar { Button("Done") { showHistory = false } }
+        }
+    }
+
+    private var releaseVersion: String {
+        let info = Bundle.main.infoDictionary ?? [:]
+        return "\(info["CFBundleShortVersionString"] as? String ?? "—") (\(info["CFBundleVersion"] as? String ?? "—"))"
+    }
+
+    private var settings: some View {
+        NavigationStack {
+            Form {
+                Section("Transcription") {
+                    Picker("Language", selection: $session.language) {
+                        Text("System (\(Locale.current.identifier))").tag(Locale.current.identifier)
+                        ForEach(["en-US", "en-GB", "zh-CN", "zh-TW", "fr-FR", "de-DE", "ja-JP", "es-ES"]
+                            .filter { $0 != Locale.current.identifier }, id: \.self) { locale in
+                            Text(Locale.current.localizedString(forIdentifier: locale) ?? locale).tag(locale)
+                        }
+                    }.disabled(session.busy)
+                    Text("Speech models may download on first use. Audio is transcribed on your device and is not saved.")
+                }
+                Section("Recording") {
+                    Text("This version records the microphone while the app is open. " +
+                         "Backgrounding, calls, or disconnecting the microphone stops recording and saves the conversation.")
+                    Text("System audio, call recording, Mac sync and speaker identification are not included.")
+                }
+                Section("Privacy") {
+                    Text("Conversations stay in this app's storage. Apple Intelligence summaries are optional and run on-device. " +
+                         "Share exports text to the destination you choose. No cloud AI or account is required.")
+                    Link("Open app settings", destination: URL(string: UIApplication.openSettingsURLString)!)
+                }
+                Section("Release") {
+                    LabeledContent("Version", value: releaseVersion)
+                    Text("iPhone & iPad · iOS 26 or later")
+                }
+            }
+            .navigationTitle("Settings")
+            .toolbar { Button("Done") { showSettings = false } }
+        }
+    }
+}
