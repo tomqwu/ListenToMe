@@ -1,40 +1,32 @@
-# ListenToMe — Backlog
+# ListenToMe backlog
 
-> **The candidate backlog now lives in [GitHub Issues](https://github.com/tomqwu/ListenToMe/issues) — not this doc.**
-> Browse by priority label: `priority: P1` · `priority: P2` · `priority: P3` (all also carry `enhancement`).
-> A static list goes stale; issues are trackable, closeable, and linkable to PRs. This file keeps only the
-> guiding constraint, the shipped history, and what's intentionally out of scope.
+The active backlog lives in [GitHub Issues](https://github.com/tomqwu/ListenToMe/issues).
+Use the existing P1/P2/P3 labels to distinguish priorities. An open enhancement is a proposal,
+not a claim that the released app is broken. Do not duplicate the candidate list here.
 
-**Guiding constraint:** every item must stay true to the product's principles — **on-device, private,
-bring-your-own-model, free & open-source**. Anything that would send data off-device by default is out.
+## Product constraints
 
----
+Transcription stays on-device. AI uses explicit Local only / Cloud / AI off modes; adding a key
+must not silently change routing. The released backend is Ollama. Any proposed compatible-endpoint
+support must preserve these guarantees, including local relays and redirects, before it can ship.
 
-## ✅ Shipped
+## Shipped through 1.3.2
 
-Gaps closed since the v1.0 MVP (newest last):
+Presets, reference files and budgets, audio import, optional WhisperKit, calendar context,
+keyword History search, Markdown/recap/PDF export, resizable panes, and experimental on-device
+speaker identification/naming are available. Production hardening added atomic conversation saves,
+full History details, Save/New controls, explicit AI routing, and surfaced runtime failures.
+1.3.2 fixed repeated/inconclusive permission UI and documented verified production capture recovery.
 
-- **v1.0 → v1.1** — use-case presets (persona guidance), configurable reference budget, file/folder
-  context, audio-file import, WhisperKit engine (opt-in, multilingual), calendar auto-context (EventKit,
-  local), cross-meeting search (local keyword), richer exports (Markdown / recap / PDF + copy).
-- **v1.1 → v1.2** — on-device **speaker diarization** + inline transcript labels (FluidAudio, #47), more
-  one-tap **Quick** prompts (#48), horizontally **resizable panes** (#50).
-- **In progress** — cockpit UI redesign in a **Native-Mac** style (slim top bar + ⚙ Configure popover;
-  transcript-left · Listener-center · Quick-right · Deep-bottom) — PR #51.
+The earlier cockpit redesign PR #51 is superseded by the shipped save/new/history layout and the
+[September design direction](reviews/2026-09-10/production-roadmap.md). It is not in progress.
 
-## 🔜 Candidate backlog → GitHub Issues
+See [the September triage](reviews/2026-09-10/backlog-triage.md) for the disposition of older PRs.
 
-Moved to [Issues](https://github.com/tomqwu/ListenToMe/issues). Each issue notes **why** (which competitor
-is ahead) and a rough **effort**. Sourced from `docs/competition-analysis.md` plus a pass over the
-open-source competitors' repos — [Meetily](https://github.com/Zackriya-Solutions/meetily),
-[Hyprnote / Anarlog](https://github.com/fastrepl/anarlog),
-[Screenpipe](https://github.com/mediar-ai/screenpipe).
+## Intentionally out of scope
 
-## ❌ Intentionally out of scope
+- Mobile/Windows companion products.
+- Cloud accounts, team workspaces, and public sharing links.
+- Per-vendor AI SDK integrations; the current backend is Ollama.
 
-- **iOS / Android / Windows companions** — ListenToMe is a focused macOS app; a mobile companion is a
-  separate product, not a backlog item.
-- **Cloud accounts / team workspaces / shareable cloud links** — conflicts with the on-device, private,
-  no-account positioning.
-- **Dedicated Claude / OpenAI provider SDKs** — superseded by one OpenAI-compatible endpoint (issue #52)
-  and the existing Ollama-cloud route; we don't ship per-vendor SDKs.
+Exploratory work must preserve explicit consent, local storage and truthful privacy/accuracy claims.
