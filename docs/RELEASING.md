@@ -7,6 +7,13 @@ This document describes how the maintainer builds and publishes an official, sig
 > Signing, notarization, GUI, permissions and real-audio acceptance still require a local Mac.
 > Use the mandatory gates in [the production roadmap](reviews/2026-09-10/production-roadmap.md).
 
+## Completion policy
+
+Fixes and features include production publication by default, as specified in [AGENTS.md](../AGENTS.md).
+A local build, local install, or draft PR is not the end of the workflow. After publishing, download
+the hosted asset and compare its SHA-256 against the verified local DMG. Use `--target` with the exact
+artifact source commit when creating a release so the tag cannot silently point at another commit.
+
 ## Bundle identifiers: release vs. dev
 
 | Configuration | Bundle id | Display name | Signed with |
