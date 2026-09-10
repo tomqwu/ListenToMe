@@ -627,6 +627,9 @@ extension MeetingView {
     /// (best-effort: the Task may not finish on a full app quit).
     func tearDownOnDisappear(session: MeetingSession) {
         hotkey.stop()
+        for role in CopilotRole.allCases { session.cancelResponse(role) }
+        speakerTask?.cancel()
+        diarizationRunToken &+= 1
         let wasCapturing = wantsCapture
         wantsCapture = false
         restartTask?.cancel()   // don't let a pending locale restart resume capture after close
