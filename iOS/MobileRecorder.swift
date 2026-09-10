@@ -60,6 +60,7 @@ final class MobileRecorder {
                                                 start: result.range.start.seconds, end: result.range.end.seconds,
                                                 speakerName: "Microphone"))
                 }
+                if engine.isRunning { onFailure("Transcription ended. Recording stopped; captured text is kept.") }
             } catch {
                 if !Task.isCancelled { onFailure("Transcription stopped: \(error.localizedDescription)") }
             }

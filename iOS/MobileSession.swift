@@ -74,7 +74,7 @@ final class MobileSession {
                         self.partial = timed.text.isEmpty ? nil : timed
                     }
                 } onFailure: { [weak self] error in
-                    guard let self, self.state == .recording else { return }
+                    guard let self, self.state == .recording || self.state == .preparing else { return }
                     self.message = error
                     Task { await self.stop() }
                 }
