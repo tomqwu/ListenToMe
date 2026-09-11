@@ -18,10 +18,55 @@ final class MobileAppTests: XCTestCase {
         app.launch()
         app.buttons["Settings"].tap()
         XCTAssertTrue(app.staticTexts["savedAPIKey"].waitForExistence(timeout: 3))
+        app.secureTextFields["ollamaAPIKey"].tap()
+        app.secureTextFields["ollamaAPIKey"].typeText("replacement-ui-key")
+        let saveAndTest = app.buttons["Save key and test connection"]
+        for _ in 0..<4 where !saveAndTest.exists { app.swipeUp() }
+        XCTAssertTrue(saveAndTest.exists)
+        for _ in 0..<4 where !app.buttons["Save API key"].isHittable { app.swipeDown() }
+        app.buttons["Save API key"].tap()
+        app.buttons["modelRole"].tap()
+        app.buttons["Quick Summary"].tap()
+        app.buttons["modelRole"].tap()
+        app.buttons["Deep Think"].tap()
         app.buttons["Remove API key"].tap()
         XCTAssertFalse(app.staticTexts["savedAPIKey"].exists)
         app.buttons["summaryProvider"].tap()
         app.buttons["Apple Intelligence · on-device"].tap()
+    }
+
+    func testDeleteConversationAndSummaryModes() {
+        let app = XCUIApplication()
+        app.launch()
+        app.buttons["New"].tap()
+        app.segmentedControls.buttons["Notes"].tap()
+        let notes = app.textViews["Conversation notes"]
+        notes.tap()
+        let text = "Delete UI test " + UUID().uuidString
+        notes.typeText(text)
+        app.buttons["Save"].tap()
+        app.segmentedControls.buttons["Summary"].tap()
+        app.buttons["summaryMode"].tap()
+        app.buttons["Quick Summary"].tap()
+        XCTAssertTrue(app.buttons["Generate Quick Summary"].exists)
+        app.buttons["summaryMode"].tap()
+        app.buttons["Deep Think"].tap()
+        XCTAssertTrue(app.buttons["Generate Deep Think"].exists)
+        app.buttons["History"].tap()
+        let row = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 3))
+        row.swipeLeft()
+        app.buttons["Delete"].firstMatch.tap()
+        app.buttons["Cancel"].tap()
+        XCTAssertTrue(row.exists)
+        row.swipeLeft()
+        app.buttons["Delete"].firstMatch.tap()
+        app.buttons["Delete conversation"].tap()
+        XCTAssertFalse(row.exists)
+        app.terminate()
+        app.launch()
+        app.buttons["History"].tap()
+        XCTAssertFalse(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch.exists)
     }
 
     func testSimulatorExplainsUnavailableSpeechWithoutRequestingMicrophone() {

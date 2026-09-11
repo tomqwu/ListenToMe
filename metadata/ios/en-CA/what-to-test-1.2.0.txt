@@ -1,0 +1,9 @@
+New in 1.2.0 (4)
+
+• History: tap the trash button or swipe to delete a conversation. Check Cancel, confirm deletion, then restart the app. The deleted session should stay deleted; other sessions should remain.
+• Summary: switch between Summary, Quick Summary and Deep Think. Generate each, reopen the conversation and share it. Each result should remain separate and appear in the export.
+• Settings → Ollama Cloud: choose a Model role, then choose that role's model from the live API catalog. Verify all three selections survive relaunch.
+• Entering a new key changes the test action to Save key and test connection. It saves the entered key before testing, instead of silently testing an older saved key. Keys remain in this device's Keychain.
+• Cloud generation sends notes and transcript to Ollama when requested. Check cancellation and errors preserve previously completed results. Apple Intelligence remains available on supported devices.
+
+Deep Think provides a more detailed analysis prompt; results depend on the selected model. This build does not claim to resolve every HTTP 401. Please report the selected model and error if connection testing fails, without sharing your key. Physical-device acceptance remains pending.

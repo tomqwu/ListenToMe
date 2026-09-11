@@ -6,6 +6,9 @@ struct MobileMeetingView: View {
     @State private var showHistory = false
     @State private var showSettings = false
     @State private var section = 0
+    @State private var summaryMode = MobileSummaryMode.summary
+    @State private var pendingDeletion: SessionRecord?
+    @State private var showDeletion = false
     @FocusState private var focusedField: EditingField?
     private enum EditingField { case title, notes }
 
@@ -100,25 +103,28 @@ struct MobileMeetingView: View {
     private var summary: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text("Conversation summary").font(.title2.bold())
+                Picker("AI output", selection: $summaryMode) {
+                    ForEach(MobileSummaryMode.allCases) { mode in Text(mode.title).tag(mode) }
+                }.accessibilityIdentifier("summaryMode").disabled(session.isSummarizing)
+                Text(summaryMode.title).font(.title2.bold())
                 Text(session.ai.provider == .ollama
-                     ? "Ollama Cloud · \(session.ai.model). Summarize sends your notes and transcript to Ollama. Review the result."
+                     ? "Ollama Cloud · \(session.ai.selectedModel(for: summaryMode)). Summarize sends your notes and transcript to Ollama. Review the result."
                      : "Apple Intelligence summarizes your notes and transcript on this device. Review the result for accuracy.")
                     .foregroundStyle(.secondary)
-                if let reason = session.summaryAvailability { Text(reason).font(.callout) }
+                if let reason = session.summaryAvailability(for: summaryMode) { Text(reason).font(.callout) }
                 Button {
-                    session.requestSummary()
+                    session.requestSummary(for: summaryMode)
                 } label: {
-                    Label(session.isSummarizing ? "Summarizing…" : "Summarize conversation", systemImage: "sparkles")
+                    Label(session.isSummarizing ? "Summarizing…" : "Generate \(summaryMode.title)", systemImage: "sparkles")
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(session.busy || !session.hasContent || session.summaryAvailability != nil)
+                .disabled(session.busy || !session.hasContent || session.summaryAvailability(for: summaryMode) != nil)
                 if session.isSummarizing {
                     Button("Cancel summary") { session.cancelSummary() }
                     Text(session.summaryDraft).textSelection(.enabled)
                 }
-                if !session.summary.isEmpty {
-                    Text(session.summary).textSelection(.enabled).accessibilityIdentifier("savedSummary")
+                if !session.output(for: summaryMode).isEmpty {
+                    Text(session.output(for: summaryMode)).textSelection(.enabled).accessibilityIdentifier("savedSummary")
                 }
             }.frame(maxWidth: .infinity, alignment: .leading).padding()
         }
@@ -151,16 +157,34 @@ struct MobileMeetingView: View {
     private var history: some View {
         NavigationStack {
             List(session.history) { record in
-                Button {
-                    session.open(record); showHistory = false
-                } label: {
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text(record.title).font(.headline).foregroundStyle(.primary)
-                        Text(record.date.formatted(date: .abbreviated, time: .shortened)).font(.caption)
-                        Text(record.summary.isEmpty ? (record.notes ?? record.transcript) : record.summary)
-                            .lineLimit(2).foregroundStyle(.secondary)
-                    }
+                HStack {
+                    Button {
+                        session.open(record); showHistory = false
+                    } label: {
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text(record.title).font(.headline).foregroundStyle(.primary)
+                            Text(record.date.formatted(date: .abbreviated, time: .shortened)).font(.caption)
+                            Text(record.summary.isEmpty ? (record.notes ?? record.transcript) : record.summary)
+                                .lineLimit(2).foregroundStyle(.secondary)
+                        }
+                    }.buttonStyle(.plain)
+                    Spacer()
+                    Button("Delete", systemImage: "trash", role: .destructive) { pendingDeletion = record; showDeletion = true }
+                        .labelStyle(.iconOnly).buttonStyle(.borderless)
+                        .accessibilityLabel("Delete \(record.title)")
                 }
+                .swipeActions {
+                    Button("Delete", role: .destructive) { pendingDeletion = record; showDeletion = true }
+                }
+            }
+            .alert("Delete conversation?", isPresented: $showDeletion, presenting: pendingDeletion) { record in
+                Button("Delete conversation", role: .destructive) {
+                    session.deleteConversation(id: record.id)
+                    pendingDeletion = nil
+                }
+                Button("Cancel", role: .cancel) { pendingDeletion = nil }
+            } message: { _ in
+                Text("This removes the transcript, notes and all AI outputs from this device. It cannot be undone.")
             }
             .overlay { if session.history.isEmpty { ContentUnavailableView("No saved conversations", systemImage: "clock") } }
             .navigationTitle("History")

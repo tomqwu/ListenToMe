@@ -92,6 +92,18 @@ final class SessionArchiveTests: XCTestCase {
         XCTAssertThrowsError(try SessionArchive(directory: root).save(record("../escape")))
     }
 
+    func testDeleteOnlyRemovesSelectedSessionAndDoesNotRemigrateIt() throws {
+        let legacy = root.appendingPathComponent("legacy.json")
+        try JSONEncoder().encode([record("A"), record("B")]).write(to: legacy)
+        let directory = root.appendingPathComponent("history")
+        let archive = SessionArchive(directory: directory, legacyURL: legacy)
+        try archive.delete(id: "A")
+        try archive.delete(id: "A")
+        XCTAssertEqual(try SessionArchive(directory: directory, legacyURL: legacy).all().map(\.id), ["B"])
+        XCTAssertThrowsError(try archive.delete(id: "../legacy"))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: legacy.path))
+    }
+
     func testHistoryHasNoSilentTwoHundredConversationLimit() throws {
         let archive = SessionArchive(directory: root)
         for index in 0..<205 { try archive.save(record(String(index))) }
