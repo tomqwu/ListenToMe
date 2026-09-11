@@ -3,6 +3,24 @@ import XCTest
 
 @MainActor
 final class MobileSessionTests: XCTestCase {
+    func testSummaryReadinessAllowsRecordingAndExplainsEveryBlockedState() {
+        for state in [MobileSession.State.idle, .recording] {
+            XCTAssertNil(MobileSession.summaryBlockReason(state: state, generating: false,
+                                                          source: "Meeting notes", providerReason: nil))
+            XCTAssertEqual(MobileSession.summaryBlockReason(state: state, generating: false,
+                                                            source: "Meeting notes", providerReason: "Model not ready"),
+                           "Model not ready")
+        }
+        XCTAssertTrue(MobileSession.summaryBlockReason(state: .idle, generating: false,
+                                                       source: " \n ", providerReason: nil)!.contains("Add notes"))
+        XCTAssertTrue(MobileSession.summaryBlockReason(state: .recording, generating: true,
+                                                       source: "Notes", providerReason: nil)!.contains("Cancel summary"))
+        for state in [MobileSession.State.preparing, .stopping] {
+            XCTAssertNotNil(MobileSession.summaryBlockReason(state: state, generating: false,
+                                                             source: "Notes", providerReason: nil))
+        }
+    }
+
     func testOutputsPersistIndependentlyAndDeleteActiveDoesNotResurrect() throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }

@@ -1,7 +1,7 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.2.0 (4).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.2.0 (5).
 
 ## Included
 
@@ -21,6 +21,11 @@ System/call audio, background recording, Mac sync, calendar import, audio-file i
 per-person speaker identification and local/LAN Ollama server connections are not included. Notes and saved
 transcripts remain usable when the speech model or Apple Intelligence is unavailable.
 App data is local to the sandbox; normal OS backup policy applies. Sharing explicitly exports text.
+
+Summaries can run while recording: each request uses a snapshot of the notes and transcript at
+that moment. Stop listening remains available during generation. A disabled summary action shows
+its reason (empty text, model unavailability, microphone transition or an in-flight response).
+Check again re-reads readiness. Apple model-not-ready status does not prove a download is active.
 
 ## Conversation actions
 
