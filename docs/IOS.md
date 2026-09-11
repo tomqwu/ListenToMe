@@ -1,7 +1,7 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.3.0 (6).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.3.1 (7).
 
 ## Included
 
@@ -26,6 +26,8 @@ Summaries can run while recording: each request uses a snapshot of the notes and
 that moment. Stop listening remains available during generation. A disabled summary action shows
 its reason (empty text, model unavailability, microphone transition or an in-flight response).
 Check again re-reads readiness. Apple model-not-ready status does not prove a download is active.
+
+Summaries render headings, bullets, bold, italics and inline code, including streamed responses. Fenced code remains monospaced. Saved conversations and Markdown exports keep the original output.
 
 ## Conversation actions
 

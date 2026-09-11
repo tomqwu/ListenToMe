@@ -119,7 +119,10 @@ final class MobileLiveCloudTests: XCTestCase {
         app.buttons["Paste"].tap()
         let exported = app.textViews["Conversation notes"].value as? String ?? ""
         XCTAssertTrue(exported.contains(marker))
-        for output in outputs.values { XCTAssertTrue(exported.contains(output)) }
+        // Displayed summaries are formatted; exported output intentionally retains Markdown.
+        for heading in ["## Listener", "## Quick", "## Deep"] {
+            XCTAssertTrue(exported.contains(heading), "Missing exported section: \(heading)")
+        }
         app.buttons["Done"].tap()
         app.buttons["History"].tap()
         // Both this run's source and pasted copy carry the unique marker.

@@ -156,12 +156,12 @@ struct MobileMeetingView: View {
                             .accessibilityIdentifier("reason-\(mode.rawValue)")
                     }
                     if session.generatingMode == mode {
-                        Text(session.summaryDraft).font(.subheadline).textSelection(.enabled)
+                        MarkdownText(text: session.summaryDraft).font(.subheadline).textSelection(.enabled)
                     }
                     let output = session.output(for: mode)
-                    Text(output.isEmpty ? "Your \(mode == .quick ? "quick summary" : "deep analysis") appears here." : output)
+                    MarkdownText(text: output.isEmpty ? "Your \(mode == .quick ? "quick summary" : "deep analysis") appears here." : output)
                         .font(.subheadline).textSelection(.enabled)
-                        .accessibilityIdentifier("output-\(mode.rawValue)")
+                        .accessibilityElement(children: .combine).accessibilityIdentifier("output-\(mode.rawValue)")
                 }.frame(maxWidth: .infinity, alignment: .leading)
             }
         }.padding(10).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -220,10 +220,11 @@ struct MobileMeetingView: View {
                 .disabled(session.summaryBlockReason(for: summaryMode) != nil)
                 if session.isSummarizing {
                     Button("Cancel summary") { session.cancelSummary() }
-                    Text(session.summaryDraft).textSelection(.enabled)
+                    MarkdownText(text: session.summaryDraft).textSelection(.enabled)
                 }
                 if !session.output(for: summaryMode).isEmpty {
-                    Text(session.output(for: summaryMode)).textSelection(.enabled).accessibilityIdentifier("savedSummary")
+                    MarkdownText(text: session.output(for: summaryMode))
+                        .accessibilityElement(children: .combine).accessibilityIdentifier("savedSummary")
                 }
             }.frame(maxWidth: .infinity, alignment: .leading).padding()
         }
@@ -264,7 +265,8 @@ struct MobileMeetingView: View {
                         VStack(alignment: .leading, spacing: 5) {
                             Text(record.title).font(.headline).foregroundStyle(.primary)
                             Text(record.date.formatted(date: .abbreviated, time: .shortened)).font(.caption)
-                            Text(record.summary.isEmpty ? (record.notes ?? record.transcript) : record.summary)
+                            Text(record.summary.isEmpty ? AttributedString(record.notes ?? record.transcript)
+                                 : MarkdownText.inlineAttributed(record.summary))
                                 .lineLimit(2).foregroundStyle(.secondary)
                         }
                     }.buttonStyle(.plain)
