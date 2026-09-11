@@ -5,7 +5,7 @@ import ListenToMeCore
 /// Foreground microphone capture. Model preparation completes before the audio tap starts.
 @MainActor
 final class MobileRecorder {
-    private let engine = AVAudioEngine()
+    private lazy var engine = AVAudioEngine()
     private var analyzer: SpeechAnalyzer?
     private var input: AsyncStream<AnalyzerInput>.Continuation?
     private var audio: AsyncStream<AudioChunk>.Continuation?
@@ -15,6 +15,11 @@ final class MobileRecorder {
 
     func start(locale: Locale, onSegment: @escaping @MainActor (TranscriptSegment) -> Void,
                onFailure: @escaping @MainActor (String) -> Void) async throws {
+        #if targetEnvironment(simulator)
+        throw RecordingError.message("Live transcription is unavailable in the iPhone simulator. " +
+            "Run ListenToMe on a physical iPhone or iPad to record. Microphone permission will not fix this; " +
+            "notes, history and export still work here.")
+        #else
         guard await AVAudioApplication.requestRecordPermission() else {
             throw RecordingError.message("Microphone access is off. Enable ListenToMe in Settings → Privacy & Security → Microphone.")
         }
@@ -80,7 +85,7 @@ final class MobileRecorder {
             }
             input.finish()
         }
-        microphone.installTap(onBus: 0, bufferSize: 2_048, format: native) { buffer, _ in
+        microphone.installTap(onBus: 0, bufferSize: 2_048, format: native) { @Sendable buffer, _ in
             guard let channels = buffer.floatChannelData else { return }
             let samples = Array(UnsafeBufferPointer(start: channels[0], count: Int(buffer.frameLength)))
             if case .dropped = audio.yield(AudioChunk(samples: samples, sampleRate: buffer.format.sampleRate,
@@ -91,11 +96,15 @@ final class MobileRecorder {
         hasTap = true
         engine.prepare()
         try engine.start()
+        #endif
     }
 
     func stop() async throws {
-        engine.stop()
-        if hasTap { engine.inputNode.removeTap(onBus: 0); hasTap = false }
+        if hasTap {
+            engine.stop()
+            engine.inputNode.removeTap(onBus: 0)
+            hasTap = false
+        }
         audio?.finish()
         await feedTask?.value
         input?.finish()
