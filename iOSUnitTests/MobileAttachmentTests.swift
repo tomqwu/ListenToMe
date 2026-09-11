@@ -44,6 +44,9 @@ final class MobileAttachmentTests: XCTestCase {
         session.addAttachment(data: Data("Alex will prepare the checklist.".utf8), name: "meeting.txt")
         let attachment = try XCTUnwrap(session.attachments.first)
         let file = try session.attachmentStore().url(for: attachment)
+        let presentation = try session.attachmentPresentationURL(for: attachment)
+        XCTAssertEqual(presentation.lastPathComponent, "meeting.txt")
+        XCTAssertEqual(try Data(contentsOf: presentation), try Data(contentsOf: file))
         XCTAssertTrue(FileManager.default.fileExists(atPath: file.path))
         XCTAssertEqual(MobileSession(storageDirectory: root).attachments, [attachment])
         session.addAttachmentTextToNotes(attachment)
@@ -51,11 +54,15 @@ final class MobileAttachmentTests: XCTestCase {
         XCTAssertTrue(session.markdown.contains("meeting.txt"))
         session.removeAttachment(attachment)
         XCTAssertFalse(FileManager.default.fileExists(atPath: file.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: presentation.path))
         XCTAssertTrue(MobileSession(storageDirectory: root).attachments.isEmpty)
         session.addAttachment(data: Data([1, 2, 3]), name: "photo.jpg")
+        _ = try session.attachmentPresentationURL(for: XCTUnwrap(session.attachments.first))
+        let presentations = session.attachmentPresentationDirectory()
         let directory = session.attachmentStore().directory
         session.deleteConversation(id: session.id)
         XCTAssertFalse(FileManager.default.fileExists(atPath: directory.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: presentations.path))
         XCTAssertTrue(MobileSession(storageDirectory: root).history.isEmpty)
     }
 

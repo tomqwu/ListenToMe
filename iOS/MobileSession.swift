@@ -209,6 +209,8 @@ final class MobileSession {
             refreshHistory()
             let files = attachmentStore(for: targetID).directory
             if FileManager.default.fileExists(atPath: files.path) { try FileManager.default.removeItem(at: files) }
+            let presentations = attachmentPresentationDirectory(for: targetID)
+            if FileManager.default.fileExists(atPath: presentations.path) { try FileManager.default.removeItem(at: presentations) }
             message = "Conversation and attachments deleted from this device."
         } catch {
             if deletingActive && !committed { save(announce: false) }

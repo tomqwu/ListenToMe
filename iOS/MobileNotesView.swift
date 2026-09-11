@@ -12,6 +12,8 @@ struct MobileNotesView: View {
     @State private var showFiles = false
     @State private var showCamera = false
     @State private var preview: URL?
+    @State private var sharedFile: SharedFile?
+    private struct SharedFile: Identifiable { let id = UUID(); let url: URL }
 
     var body: some View {
         NavigationStack {
@@ -43,7 +45,7 @@ struct MobileNotesView: View {
                         ForEach(session.attachments) { item in
                             HStack {
                                 Button {
-                                    do { preview = try session.attachmentStore().url(for: item) }
+                                    do { preview = try session.attachmentPresentationURL(for: item) }
                                     catch { session.message = error.localizedDescription }
                                 } label: {
                                     Label(item.name, systemImage: "doc").lineLimit(2)
@@ -52,8 +54,9 @@ struct MobileNotesView: View {
                                 Menu("Attachment actions", systemImage: "ellipsis.circle") {
                                     Button("Add text to notes") { session.addAttachmentTextToNotes(item) }
                                         .disabled(session.isSummarizing)
-                                    if let url = try? session.attachmentStore().url(for: item) {
-                                        ShareLink(item: url) { Text("Share original") }
+                                    Button("Share original") {
+                                        do { sharedFile = SharedFile(url: try session.attachmentPresentationURL(for: item)) }
+                                        catch { session.message = "Could not share file: \(error.localizedDescription)" }
                                     }
                                     Button("Remove attachment", role: .destructive) { session.removeAttachment(item) }
                                 }
@@ -92,6 +95,7 @@ struct MobileNotesView: View {
                 }.ignoresSafeArea()
             }
             .quickLookPreview($preview)
+            .sheet(item: $sharedFile) { file in MobileFileShareSheet(url: file.url) }
         }
     }
 
@@ -106,6 +110,14 @@ struct MobileNotesView: View {
             else { session.message = "Camera access is disabled. Allow it in iPhone Settings → ListenToMe." }
         }
     }
+}
+
+private struct MobileFileShareSheet: UIViewControllerRepresentable {
+    let url: URL
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: [url], applicationActivities: nil)
+    }
+    func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
 }
 
 private struct MobileCamera: UIViewControllerRepresentable {

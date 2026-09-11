@@ -3,6 +3,32 @@ import ListenToMeCore
 import PDFKit
 
 extension MobileSession {
+    func attachmentPresentationDirectory(for sessionID: String? = nil) -> URL {
+        let safeID = (sessionID ?? id).filter { $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "-" || $0 == "_") }
+        return FileManager.default.temporaryDirectory.appendingPathComponent("ConversationAttachments")
+            .appendingPathComponent(safeID, isDirectory: true)
+    }
+
+    func attachmentPresentationURL(for item: SessionAttachment) throws -> URL {
+        let source = try attachmentStore().url(for: item)
+        let directory = try presentationDirectory(for: item)
+        let name = URL(fileURLWithPath: item.name).lastPathComponent
+        guard !name.isEmpty, name != ".", name != "..", name != "/" else { throw CocoaError(.fileReadInvalidFileName) }
+        let destination = directory.appendingPathComponent(name)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        if !FileManager.default.fileExists(atPath: destination.path) {
+            try FileManager.default.copyItem(at: source, to: destination)
+        }
+        return destination
+    }
+
+    private func presentationDirectory(for item: SessionAttachment) throws -> URL {
+        guard !item.id.isEmpty, item.id.allSatisfy({ $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "-") }) else {
+            throw CocoaError(.fileReadInvalidFileName)
+        }
+        return attachmentPresentationDirectory().appendingPathComponent(item.id, isDirectory: true)
+    }
+
     func attachmentStore(for sessionID: String? = nil) -> SessionAttachmentStore {
         let safeID = (sessionID ?? id).filter { $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "-" || $0 == "_") }
         return SessionAttachmentStore(directory: attachmentRoot.appendingPathComponent(safeID, isDirectory: true))
@@ -33,7 +59,11 @@ extension MobileSession {
         let old = attachments
         attachments.removeAll { $0.id == item.id }
         guard save(announce: false) else { attachments = old; return }
-        do { try attachmentStore().remove(item) }
+        do {
+            try attachmentStore().remove(item)
+            let presentation = try presentationDirectory(for: item)
+            if FileManager.default.fileExists(atPath: presentation.path) { try FileManager.default.removeItem(at: presentation) }
+        }
         catch { message = "Attachment removed from the conversation, but its local file could not be deleted." }
     }
 
