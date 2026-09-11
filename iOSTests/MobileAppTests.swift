@@ -2,6 +2,19 @@ import XCTest
 
 @MainActor
 final class MobileAppTests: XCTestCase {
+    func testEmptySummaryExplainsDisabledActionAndSupportsRecheck() {
+        let app = XCUIApplication()
+        app.launch()
+        app.buttons["New"].tap()
+        app.segmentedControls.buttons["Summary"].tap()
+        let reason = app.staticTexts["summaryBlockReason"]
+        XCTAssertTrue(reason.waitForExistence(timeout: 5))
+        XCTAssertTrue(reason.label.contains("Add notes"))
+        XCTAssertFalse(app.buttons["Generate Summary"].isEnabled)
+        app.buttons["Check again"].tap()
+        XCTAssertTrue(app.staticTexts["sessionMessage"].label.contains("Add notes"))
+    }
+
     func testOllamaSettingsKeyPersistenceAndRemoval() {
         let app = XCUIApplication()
         app.launch()

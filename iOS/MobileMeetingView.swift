@@ -111,14 +111,19 @@ struct MobileMeetingView: View {
                      ? "Ollama Cloud · \(session.ai.selectedModel(for: summaryMode)). Summarize sends your notes and transcript to Ollama. Review the result."
                      : "Apple Intelligence summarizes your notes and transcript on this device. Review the result for accuracy.")
                     .foregroundStyle(.secondary)
-                if let reason = session.summaryAvailability(for: summaryMode) { Text(reason).font(.callout) }
+                if let reason = session.summaryBlockReason(for: summaryMode) {
+                    Text(reason).font(.callout).accessibilityIdentifier("summaryBlockReason")
+                    if !session.isSummarizing {
+                        Button("Check again") { session.recheckSummary(for: summaryMode) }
+                    }
+                }
                 Button {
                     session.requestSummary(for: summaryMode)
                 } label: {
                     Label(session.isSummarizing ? "Summarizing…" : "Generate \(summaryMode.title)", systemImage: "sparkles")
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(session.busy || !session.hasContent || session.summaryAvailability(for: summaryMode) != nil)
+                .disabled(session.summaryBlockReason(for: summaryMode) != nil)
                 if session.isSummarizing {
                     Button("Cancel summary") { session.cancelSummary() }
                     Text(session.summaryDraft).textSelection(.enabled)
@@ -142,7 +147,7 @@ struct MobileMeetingView: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(session.state == .idle ? .indigo : .red)
-            .disabled(session.state == .stopping || session.isSummarizing)
+            .disabled(session.state == .stopping || (session.isSummarizing && session.state == .idle))
             HStack {
                 Button("Save", systemImage: "square.and.arrow.down") { session.save() }.disabled(!session.hasContent)
                 Spacer()

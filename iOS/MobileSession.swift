@@ -54,9 +54,30 @@ final class MobileSession {
         case .available: return nil
         case .unavailable(.deviceNotEligible): return "On-device summaries require an Apple Intelligence capable device."
         case .unavailable(.appleIntelligenceNotEnabled): return "Turn on Apple Intelligence in Settings to use on-device summaries."
-        case .unavailable(.modelNotReady): return "Apple Intelligence is downloading its model. Try again when it is ready."
+        case .unavailable(.modelNotReady):
+            return "Apple Intelligence’s on-device model is not ready. Check setup in Settings → Apple Intelligence & Siri."
         default: return "On-device summaries are unavailable on this device."
         }
+    }
+
+    var summarySource: String { notes + "\n" + allSegments.map(\.text).joined(separator: "\n") }
+
+    func summaryBlockReason(for mode: MobileSummaryMode) -> String? {
+        Self.summaryBlockReason(state: state, generating: isSummarizing, source: summarySource,
+                                providerReason: summaryAvailability(for: mode))
+    }
+
+    static func summaryBlockReason(state: State, generating: Bool, source: String, providerReason: String?) -> String? {
+        if generating { return "Generating an AI response. Wait for it to finish or tap Cancel summary." }
+        if state == .preparing || state == .stopping { return "Wait for microphone setup or stopping to finish." }
+        if source.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return "Add notes or wait for transcript text before generating a summary."
+        }
+        return providerReason
+    }
+
+    func recheckSummary(for mode: MobileSummaryMode) {
+        message = summaryBlockReason(for: mode) ?? "Ready to generate \(mode.title)."
     }
 
     func start() {
@@ -199,16 +220,17 @@ final class MobileSession {
     }
 
     func requestSummary(for mode: MobileSummaryMode = .summary) {
-        guard !busy else { return }
+        guard summaryTask == nil else { return }
+        if let reason = summaryBlockReason(for: mode) { message = reason; return }
         summaryTask = Task { await summarize(mode: mode); summaryTask = nil }
     }
 
     func cancelSummary() { summaryTask?.cancel() }
 
     func summarize(mode: MobileSummaryMode = .summary) async {
-        guard !busy, hasContent else { return }
-        if let reason = summaryAvailability(for: mode) { message = reason; return }
-        let source = notes + "\n" + allSegments.map(\.text).joined(separator: "\n")
+        if let reason = summaryBlockReason(for: mode) { message = reason; return }
+        // Capture a stable input snapshot; recording can continue while this request runs.
+        let source = summarySource
         guard !source.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             message = "Add notes or record a transcript before summarizing."
             return

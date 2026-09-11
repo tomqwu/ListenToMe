@@ -13,7 +13,7 @@ App Store Connect. Apply and verify the online fields during the iOS release wor
 | `description.txt` | Distribution → iOS version 1.2.0 → Description |
 | `beta-description.txt` | TestFlight → Test Information → Beta App Description |
 | `what-to-test-1.1.0.txt` | TestFlight → build 1.1.0 (3) → What to Test |
-| `what-to-test-1.2.0.txt` | TestFlight → build 1.2.0 (4) → What to Test |
+| `what-to-test-1.2.0.txt` | TestFlight → build 1.2.0 (5) → What to Test |
 
 The full store description targets 1.2.0. The beta description explicitly identifies the version
 that adds Ollama so it remains accurate while testers still have 1.0.1. Do not mark a candidate
