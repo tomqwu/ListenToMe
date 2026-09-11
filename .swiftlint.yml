@@ -12,3 +12,4 @@ included:
   - Tests
   - iOS
   - iOSTests
+  - iOSUnitTests

@@ -1,7 +1,7 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.0.1 (2).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.1.0 (3).
 
 ## Included
 
@@ -11,16 +11,36 @@ The first iOS version is a standalone app, separate from the macOS release. It r
   this version does not infer who is speaking. Unfinalized text is retained and labeled accordingly.
 - Editable titles and notes; atomic local saves after finalized utterances/notes, explicit Save,
   save-before-New, local History, restoration on launch and Markdown through the share sheet.
-- Optional Apple Intelligence summaries with availability checks and surfaced generation failures.
-  Inputs above 8,000 characters are rejected explicitly, not silently truncated. AI output needs review.
+- Optional Apple Intelligence summaries, or Ollama Cloud summaries with streamed results and secure API-key storage.
+  Apple Intelligence accepts up to 8,000 characters; Ollama accepts up to 60,000. Oversized input is rejected explicitly. AI output needs review.
 - Recording stops/saves on backgrounding, audio interruption or microphone disconnection. The screen
   stays awake during active recording. No raw audio is saved.
 - Version/build information in Settings.
 
 System/call audio, background recording, Mac sync, calendar import, audio-file import, WhisperKit,
-per-person speaker identification and Ollama/cloud routing are not included. Notes and saved
+per-person speaker identification and local/LAN Ollama server connections are not included. Notes and saved
 transcripts remain usable when the speech model or Apple Intelligence is unavailable.
 App data is local to the sandbox; normal OS backup policy applies. Sharing explicitly exports text.
+
+## Ollama Cloud
+
+Open **Settings → Summary provider → Ollama Cloud**. Enter your key and tap **Save API key**,
+then **Refresh models from API**, **Choose model**, and **Test connection**. Keys are stored in
+iOS Keychain with `WhenUnlockedThisDeviceOnly`, never in preferences, session exports or the app binary.
+Enter the key separately on each device. Remove API key deletes it from this device.
+
+Refresh calls `https://ollama.com/api/tags` with Bearer authentication and preserves exact returned
+model IDs. The recent-family section picks the newest API modification time for each advertised
+standard/Pro/Flash variant of DeepSeek, GLM, Qwen and Kimi. All API models remain available, including
+other families. This is API update recency, not an independently verified release chronology.
+No unavailable Flash/Pro name is invented. Refresh preserves your selected model; if it disappears,
+choose another. Model refresh does not prove key validity: Test connection verifies a complete streamed
+`/api/chat` response using only a synthetic prompt. Cloud models run remotely; `/api/pull` is not needed.
+
+Selecting Ollama is opt-in. **Summarize conversation** sends the current notes and transcript to
+Ollama; microphone audio continues to be transcribed on-device. No automatic cloud summary runs.
+The last complete summary is preserved on HTTP errors, incomplete streams and cancellation. Streamed
+text is shown separately until completion. Backgrounding cancels an active summary request.
 
 ## Build and run
 
@@ -33,7 +53,8 @@ make ios-test IOS_DESTINATION='platform=iOS Simulator,name=iPhone 17 Pro'
 
 Open `ListenToMe.xcodeproj`, choose **ListenToMeIOS**, then a simulator or connected iPhone/iPad.
 For a physical device, trust the Mac, enable Developer Mode and select your development team under
-Signing & Capabilities if building with a different account. `make ios-archive` creates a signed
+Signing & Capabilities if building with a different account. For device tests, override
+`IOS_SIGN_FLAGS=-allowProvisioningUpdates`; the default test signing is for simulators. `make ios-archive` creates a signed
 Release archive with automatic provisioning using the configured team.
 
 **Simulator limitation:** live speech transcription is unavailable in the tested iOS 26.5 simulator.
@@ -49,7 +70,7 @@ and Foundation Models. iOS does not depend on the Mac WhisperKit or FluidAudio b
 
 Run lint, shared core tests/coverage, the iOS build and UI tests, and a macOS build to protect the
 existing product. The simulator UI tests verify the unsupported-speech explanation without a microphone prompt, retry, saving notes, New, History and restoration across app restart.
-Hosted CI builds both apps and runs the iOS UI tests. Before marking iOS production-ready, test on a physical iPhone/iPad:
+Hosted CI builds both apps and runs the iOS UI and app-hosted tests. Simulator builds use ad-hoc signing so Keychain tests exercise actual storage. The credential-dependent live cloud test is opt-in and skips on CI. Before marking iOS production-ready, test on a physical iPhone/iPad:
 
 1. First-use microphone denial, retry after granting, and unsupported language/model errors.
 2. Model installation, then at least two minutes of real speech with live/final transcript text.
