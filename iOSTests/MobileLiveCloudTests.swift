@@ -43,6 +43,7 @@ final class MobileLiveCloudTests: XCTestCase {
             if role != "Summary" {
                 reveal(app.buttons["modelRole"], in: app, upwards: false)
                 app.buttons["modelRole"].tap()
+                XCTAssertTrue(app.buttons[role].waitForExistence(timeout: 5))
                 app.buttons[role].tap()
             }
             reveal(app.buttons["Choose model"], in: app, upwards: false)
@@ -131,8 +132,13 @@ final class MobileLiveCloudTests: XCTestCase {
     }
 
     private func reveal(_ element: XCUIElement, in app: XCUIApplication, upwards: Bool = true) {
-        for _ in 0..<6 where !element.isHittable {
-            if upwards { app.swipeUp() } else { app.swipeDown() }
+        for _ in 0..<8 {
+            let top = app.navigationBars["Settings"].frame.maxY + 20
+            let bottom = app.frame.maxY - 100
+            if element.exists, element.frame.minY >= top, element.frame.maxY <= bottom, element.isHittable { return }
+            if element.exists, element.frame.minY < top { app.swipeDown() }
+            else if element.exists, element.frame.maxY > bottom { app.swipeUp() }
+            else if upwards { app.swipeUp() } else { app.swipeDown() }
         }
     }
 

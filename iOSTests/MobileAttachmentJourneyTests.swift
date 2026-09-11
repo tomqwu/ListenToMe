@@ -41,11 +41,13 @@ final class MobileAttachmentJourneyTests: XCTestCase {
         app.buttons["Add files"].tap()
         XCTAssertTrue(app.buttons["Cancel"].waitForExistence(timeout: 10))
         app.tabBars.buttons["Browse"].tap()
-        app.staticTexts["On My iPhone"].tap()
-        let folder = app.collectionViews["File View"].staticTexts["ListenToMe"]
-        XCTAssertTrue(folder.waitForExistence(timeout: 10), app.debugDescription)
-        folder.tap()
         let file = app.cells.matching(NSPredicate(format: "label CONTAINS %@", "meeting")).firstMatch
+        if !file.waitForExistence(timeout: 5) {
+            app.staticTexts["On My iPhone"].tap()
+            let folder = app.collectionViews["File View"].staticTexts["ListenToMe"]
+            XCTAssertTrue(folder.waitForExistence(timeout: 10), app.debugDescription)
+            folder.tap()
+        }
         XCTAssertTrue(file.waitForExistence(timeout: 10), app.debugDescription)
         file.tap()
         if app.buttons["Open"].exists { app.buttons["Open"].tap() }
