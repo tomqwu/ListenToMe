@@ -90,6 +90,26 @@ final class MobileAITests: XCTestCase {
             XCTAssertEqual(session.summary, fullSummary)
             XCTAssertEqual(MobileSession(storageDirectory: root).output(for: mode), session.output(for: mode))
         }
+        // Exercise the automatic tick with a synthetic recording state; this does not validate microphone capture.
+        let completedDeep = session.deepThought
+        session.notes += " New decision: move the review to Monday. Jordan owns the final sign-off."
+        session.state = .recording
+        await session.updateQuickAutomatically()
+        XCTAssertFalse(session.isSummarizing, "Auto must be opt-in")
+        session.quickSummary = "Old quick summary"
+        session.autoQuick = true
+        await session.updateQuickAutomatically()
+        for _ in 0..<480 {
+            try await Task.sleep(for: .seconds(1))
+            if !session.isSummarizing && (session.quickSummary != "Old quick summary" || session.message != nil) { break }
+        }
+        XCTAssertNil(session.message)
+        XCTAssertNotEqual(session.quickSummary, "Old quick summary")
+        XCTAssertEqual(session.deepThought, completedDeep)
+        await session.updateQuickAutomatically()
+        await Task.yield()
+        XCTAssertFalse(session.isSummarizing, "An unchanged transcript must not send another request")
+        session.state = .idle
         let goodSummary = session.summary
         session.ai.saveKey("invalid-key-for-negative-test")
         await session.summarize()

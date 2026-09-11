@@ -12,13 +12,17 @@ public struct SessionRecord: Sendable, Equatable, Identifiable, Codable {
     public let quickSuggestion: String?
     public let deepAnswer: String?
     public let isComplete: Bool?
+    public let attachments: [SessionAttachment]?
+    public let sourceImportID: String?
     public init(id: String, title: String, date: Date, transcript: String, summary: String,
                 segments: [TranscriptSegment]? = nil, notes: String? = nil,
-                quickSuggestion: String? = nil, deepAnswer: String? = nil, isComplete: Bool? = nil) {
+                quickSuggestion: String? = nil, deepAnswer: String? = nil, isComplete: Bool? = nil,
+                attachments: [SessionAttachment]? = nil, sourceImportID: String? = nil) {
         self.id = id; self.title = title; self.date = date
         self.transcript = transcript; self.summary = summary
         self.segments = segments; self.notes = notes
         self.quickSuggestion = quickSuggestion; self.deepAnswer = deepAnswer; self.isComplete = isComplete
+        self.attachments = attachments; self.sourceImportID = sourceImportID
     }
 }
 

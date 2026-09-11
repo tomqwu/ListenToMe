@@ -13,6 +13,11 @@ final class MobileSession {
     var summary = ""
     var quickSummary = ""
     var deepThought = ""
+    var attachments: [SessionAttachment] = []
+    var generatingMode: MobileSummaryMode?
+    var autoQuick = false
+    private var lastAutoSource = ""
+    private var sourceImportID: String?
     var segments: [TranscriptSegment] = []
     var partial: TranscriptSegment?
     var history: [SessionRecord] = []
@@ -22,15 +27,17 @@ final class MobileSession {
     var summaryDraft = ""
     private var summaryTask: Task<Void, Never>?
     var language = Locale.current.identifier
-    private var id = UUID().uuidString
+    private(set) var id = UUID().uuidString
     private var date = Date()
     private var recorder: MobileRecorder?
     private var startTask: Task<Void, Never>?
     private let archive: SessionArchive
     private let activeURL: URL
+    let attachmentRoot: URL
 
     init(storageDirectory: URL = .applicationSupportDirectory) {
         activeURL = storageDirectory.appendingPathComponent("ActiveConversation.json")
+        attachmentRoot = storageDirectory.appendingPathComponent("Attachments", isDirectory: true)
         let directory = storageDirectory.appendingPathComponent("Conversations", isDirectory: true)
         archive = SessionArchive(directory: directory)
         refreshHistory()
@@ -41,11 +48,15 @@ final class MobileSession {
     }
 
     var busy: Bool { state != .idle || isSummarizing }
-    var hasContent: Bool { !segments.isEmpty || partial != nil || !notes.isEmpty || !summary.isEmpty || !quickSummary.isEmpty || !deepThought.isEmpty }
+    var hasContent: Bool {
+        !segments.isEmpty || partial != nil || !notes.isEmpty || !summary.isEmpty
+            || !quickSummary.isEmpty || !deepThought.isEmpty || !attachments.isEmpty
+    }
     var allSegments: [TranscriptSegment] { segments + (partial.map { [$0] } ?? []) }
     var markdown: String {
-        SessionExporter.markdown(title: title, transcript: allSegments, notes: notes, listenerSummary: summary,
-                                 quickSuggestion: quickSummary, deepAnswer: deepThought)
+        let text = SessionExporter.markdown(title: title, transcript: allSegments, notes: notes, listenerSummary: summary,
+                                            quickSuggestion: quickSummary, deepAnswer: deepThought)
+        return text + (attachments.isEmpty ? "" : "\n## Attachments\n" + attachments.map { "- \($0.name)" }.joined(separator: "\n"))
     }
     var summaryAvailability: String? { summaryAvailability(for: .summary) }
     func summaryAvailability(for mode: MobileSummaryMode) -> String? {
@@ -149,9 +160,10 @@ final class MobileSession {
                                    transcript: allSegments.map { "Microphone: \($0.text)" }.joined(separator: "\n"),
                                    summary: summary, segments: allSegments, notes: notes,
                                    quickSuggestion: quickSummary, deepAnswer: deepThought,
-                                   isComplete: state == .idle && allSegments.allSatisfy(\.isFinal))
+                                   isComplete: state == .idle && allSegments.allSatisfy(\.isFinal),
+                                   attachments: attachments, sourceImportID: sourceImportID)
         do {
-            if hasContent { try archive.save(record) }
+            if hasContent || history.contains(where: { $0.id == id }) { try archive.save(record) }
             try FileManager.default.createDirectory(at: activeURL.deletingLastPathComponent(),
                                                     withIntermediateDirectories: true)
             try JSONEncoder().encode(record).write(to: activeURL, options: .atomic)
@@ -168,7 +180,7 @@ final class MobileSession {
         guard !busy, save(announce: false) else { return }
         id = UUID().uuidString; date = Date()
         title = "New conversation"; notes = ""; summary = ""; quickSummary = ""; deepThought = ""
-        segments = []; partial = nil; message = nil
+        segments = []; partial = nil; message = nil; attachments = []; sourceImportID = nil; lastAutoSource = ""
         save(announce: false)
     }
 
@@ -181,6 +193,7 @@ final class MobileSession {
     func deleteConversation(id targetID: String) {
         guard !busy else { return }
         let deletingActive = targetID == id
+        var committed = false
         do {
             // Persist an empty active snapshot first so a deleted session cannot return on relaunch.
             let empty = SessionRecord(id: UUID().uuidString, title: "New conversation", date: Date(),
@@ -191,11 +204,14 @@ final class MobileSession {
                 try JSONEncoder().encode(empty).write(to: activeURL, options: .atomic)
             }
             try archive.delete(id: targetID)
+            committed = true
             if deletingActive { restore(empty) }
             refreshHistory()
-            message = "Conversation deleted from this device."
+            let files = attachmentStore(for: targetID).directory
+            if FileManager.default.fileExists(atPath: files.path) { try FileManager.default.removeItem(at: files) }
+            message = "Conversation and attachments deleted from this device."
         } catch {
-            if deletingActive { save(announce: false) }
+            if deletingActive && !committed { save(announce: false) }
             message = "Could not delete conversation: \(error.localizedDescription)"
         }
     }
@@ -204,7 +220,55 @@ final class MobileSession {
         id = record.id; date = record.date; title = record.title
         notes = record.notes ?? ""; summary = record.summary
         quickSummary = record.quickSuggestion ?? ""; deepThought = record.deepAnswer ?? ""
+        attachments = record.attachments ?? []; sourceImportID = record.sourceImportID; lastAutoSource = ""
         segments = record.segments ?? []; partial = nil; message = nil
+    }
+
+    func importSharedInbox(from inbox: URL? = nil) {
+        guard !busy else { return }
+        do {
+            let root = try inbox ?? SharedInbox.root()
+            for folder in try FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil) {
+                let manifest = folder.appendingPathComponent("manifest.json")
+                guard FileManager.default.fileExists(atPath: manifest.path) else { continue }
+                guard (try manifest.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? Int.max) < 2 * 1024 * 1024 else {
+                    throw CocoaError(.fileReadTooLarge)
+                }
+                let batch = try JSONDecoder().decode(SharedImport.self, from: Data(contentsOf: manifest))
+                if history.contains(where: { $0.sourceImportID == batch.id }) {
+                    try FileManager.default.removeItem(at: folder); continue
+                }
+                guard save(announce: false) else { return }
+                let newID = UUID().uuidString
+                let store = attachmentStore(for: newID)
+                var imported: [SessionAttachment] = []
+                var committed = false
+                do {
+                    guard batch.files.count <= 20, batch.text.count <= 100_000 else { throw CocoaError(.fileReadTooLarge) }
+                    for file in batch.files {
+                        guard !file.storedName.contains("/"), !file.storedName.contains("\\"),
+                              file.storedName != "..", file.storedName != "." else { throw CocoaError(.fileReadInvalidFileName) }
+                        let url = folder.appendingPathComponent(file.storedName)
+                        guard (try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? Int.max)
+                                <= SessionAttachmentStore.maximumBytes else { throw CocoaError(.fileReadTooLarge) }
+                        let data = try Data(contentsOf: url)
+                        imported.append(try store.add(data: data, name: file.name))
+                    }
+                    let record = SessionRecord(id: newID, title: "Imported notes", date: Date(), transcript: "",
+                                               summary: "", segments: [], notes: batch.text,
+                                               attachments: imported, sourceImportID: batch.id)
+                    try archive.save(record)
+                    committed = true
+                    restore(record)
+                    guard save(announce: false) else { return }
+                    try FileManager.default.removeItem(at: folder)
+                    message = "Shared content imported into a new conversation."
+                } catch {
+                    if !committed { try? FileManager.default.removeItem(at: store.directory) }
+                    throw error
+                }
+            }
+        } catch { message = "Could not import shared content: \(error.localizedDescription)" }
     }
 
     private func refreshHistory() {
@@ -225,6 +289,15 @@ final class MobileSession {
         summaryTask = Task { await summarize(mode: mode); summaryTask = nil }
     }
 
+    func updateQuickAutomatically() async {
+        guard autoQuick, state == .recording, !isSummarizing else { return }
+        let source = summarySource
+        guard source.count >= 80, source != lastAutoSource else { return }
+        guard summaryBlockReason(for: .quick) == nil else { return }
+        lastAutoSource = source
+        requestSummary(for: .quick)
+    }
+
     func cancelSummary() { summaryTask?.cancel() }
 
     func summarize(mode: MobileSummaryMode = .summary) async {
@@ -240,10 +313,11 @@ final class MobileSession {
             message = "This conversation exceeds the selected provider's summary limit. Export it or shorten your notes."
             return
         }
+        generatingMode = mode
         isSummarizing = true
         message = nil
         summaryDraft = ""
-        defer { isSummarizing = false; summaryDraft = "" }
+        defer { isSummarizing = false; summaryDraft = ""; generatingMode = nil }
         do {
             let instructions = mode.instructions
             if cloud {

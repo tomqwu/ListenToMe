@@ -1,7 +1,7 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.2.0 (5).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.3.0 (6).
 
 ## Included
 
@@ -30,19 +30,37 @@ Check again re-reads readiness. Apple model-not-ready status does not prove a do
 ## Conversation actions
 
 History shows a trash button for each conversation and supports swipe-to-delete. Deletion asks for
-confirmation and removes that conversation's transcript, notes and all three AI outputs. Deleting
+confirmation and removes that conversation's transcript, notes, original attachments and all three AI outputs. Deleting
 an active conversation creates an empty active snapshot so the deleted content does not reappear
 on restart. Other conversations are preserved.
 
-The Summary tab offers **Summary**, **Quick Summary** (up to five concise bullets) and **Deep Think**
+The main screen shows the live transcript above **Quick Summary** and **Deep Summary** side by side on iPhone. On wide iPad layouts, transcript and Quick Summary are on the left and Deep Summary is on the right. Large accessibility text stacks scrollable panels. **More → Full summary** also offers **Summary**, **Quick Summary** (up to five concise bullets) and **Deep Think**
 (a deeper analysis of decisions, tradeoffs, risks and unresolved questions). Each result is stored
 separately, restored with its conversation and included when sharing. These are distinct prompts;
 Deep Think does not promise a provider-specific reasoning mode. Requests use the selected provider
 and preserve previous completed output on failure or cancellation.
 
+## Photos, files and Apple Notes
+
+Open **Notes** from the main toolbar. Take a photo, choose an image from Photo library, or use
+**Add files** to copy a document into the current conversation. Each conversation supports up to
+20 attachments, each nonempty and no larger than 20 MB. Tap a filename to preview it; its menu
+shares the original, removes it, or copies selectable text into Notes. Text extraction supports
+PDF, UTF-8 TXT, Markdown, CSV and JSON; scanned images need OCR elsewhere. Summaries receive only
+notes and transcript text, never the original photo/file. The main Share action exports Markdown
+and attachment names; use **Share original** to export an attachment's bytes.
+
+For Apple Notes, choose **Share → Send Copy → ListenToMe → Import**, then return to ListenToMe.
+This creates a new local conversation while preserving the current one. The share extension also
+accepts compatible text, images and files from other apps. It queues imports in the signed App Group
+`group.com.tomwu.ListenToMe.ios`; repeated delivery of the same batch does not duplicate conversations.
+It does not browse or synchronize your Apple Notes library. Paste text or add an exported PDF if a
+source app does not offer a compatible share representation. Apple Notes rich formatting may be
+flattened; verify that any scans or embedded documents you need were included.
+
 ## Ollama Cloud
 
-Open **Settings → Summary provider → Ollama Cloud**. Enter your key and tap **Save API key**,
+Open **More → Settings → Summary provider → Ollama Cloud**. Enter your key and tap **Save API key**,
 then **Refresh models from API**, select a **Model role**, **Choose model**, and **Test connection**.
 Each of the three roles has an independent model selection. When a new key is entered, the test
 button becomes **Save key and test connection** and saves that key before sending the request. Keys are stored in
@@ -58,7 +76,7 @@ choose another. Model refresh does not prove key validity: Test connection verif
 `/api/chat` response using only a synthetic prompt. Cloud models run remotely; `/api/pull` is not needed.
 
 Selecting Ollama is opt-in. Generating any of the three AI outputs sends the current notes and transcript to
-Ollama; microphone audio continues to be transcribed on-device. No automatic cloud summary runs.
+Ollama; microphone audio continues to be transcribed on-device. Quick Summary has an opt-in **Auto** toggle (off at launch). While listening, it checks every 30 seconds and generates a new Quick Summary if the source changed and contains at least 80 characters. Enabling Auto with Ollama selected sends those snapshots to Ollama. Deep Summary stays on-demand. Existing output remains visible while the next response streams; failures keep the last completed result.
 The last complete summary is preserved on HTTP errors, incomplete streams and cancellation. Streamed
 text is shown separately until completion. Backgrounding cancels an active summary request.
 
@@ -103,7 +121,8 @@ Hosted CI builds both apps and runs the iOS UI and app-hosted tests. Simulator b
 5. New preserves the old conversation; History and sharing include notes, transcript and summary.
 6. On an Apple Intelligence eligible device, generate a factual summary and verify unavailable,
    oversized-input and failure states keep the transcript and previous summary.
-7. Portrait/landscape iPhone and iPad layouts, large text and VoiceOver controls.
+7. Camera permission denial/retry, photo capture, photo library, Files and Apple Notes Send Copy imports. Preview, share originals, extract document text, remove attachments and delete/reopen conversations.
+8. Portrait/landscape iPhone and iPad layouts, large text and VoiceOver controls.
 
 iOS distribution uses an Xcode archive/export and App Store Connect/TestFlight, not a DMG or macOS
 notarization. A Mac Developer ID certificate cannot distribute an iPhone app. TestFlight needs an

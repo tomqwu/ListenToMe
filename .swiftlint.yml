@@ -13,3 +13,5 @@ included:
   - iOS
   - iOSTests
   - iOSUnitTests
+  - iOSShared
+  - ShareExtension

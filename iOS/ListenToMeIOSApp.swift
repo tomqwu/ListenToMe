@@ -10,8 +10,12 @@ struct ListenToMeIOSApp: App {
         WindowGroup {
             MobileMeetingView(session: session)
                 .tint(.indigo)
+                .task { session.importSharedInbox() }
+                .onOpenURL { session.importFile($0) }
+                .onChange(of: session.busy) { _, busy in if !busy { session.importSharedInbox() } }
                 .onChange(of: scenePhase) { _, phase in
                     if phase == .background { Task { await session.background() } }
+                    if phase == .active { session.importSharedInbox() }
                 }
                 .onReceive(NotificationCenter.default.publisher(for: AVAudioSession.interruptionNotification)) { note in
                     guard let value = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
