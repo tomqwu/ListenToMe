@@ -55,9 +55,32 @@ final class MobileAttachmentJourneyTests: XCTestCase {
         for _ in 0..<5 where !attachment.isHittable { app.swipeUp() }
         XCTAssertTrue(attachment.waitForExistence(timeout: 10), app.debugDescription)
         attachment.tap()
+        let renderedText = app.textViews.matching(NSPredicate(
+            format: "label BEGINSWITH %@", "Synthetic import: Alex")).firstMatch
+        XCTAssertTrue(renderedText.waitForExistence(timeout: 10))
         let preview = XCTAttachment(screenshot: app.screenshot())
         preview.name = "Imported document preview"; preview.lifetime = .keepAlways; add(preview)
-        app.buttons.matching(identifier: "Done").allElementsBoundByIndex.first(where: { $0.isHittable })?.tap()
+        let closePreview = app.buttons["QLOverlayDoneButtonAccessibilityIdentifier"]
+        XCTAssertTrue(closePreview.waitForExistence(timeout: 5))
+        closePreview.tap()
+        for _ in 0..<3 where !app.buttons["Attachment actions"].isHittable { app.swipeUp() }
+        app.buttons["Attachment actions"].tap()
+        app.buttons["Add text to notes"].tap()
+        for _ in 0..<5 where !app.textViews["Conversation notes"].isHittable { app.swipeDown() }
+        XCTAssertTrue((app.textViews["Conversation notes"].value as? String ?? "").contains("Synthetic import: Alex"))
+        for _ in 0..<5 where !app.buttons["Attachment actions"].isHittable { app.swipeUp() }
+        app.buttons["Attachment actions"].tap()
+        app.buttons["Share original"].tap()
+        XCTAssertTrue(app.cells["ListenToMe"].waitForExistence(timeout: 10))
+        app.cells["ListenToMe"].tap()
+        XCTAssertTrue(app.buttons["Import"].waitForExistence(timeout: 10))
+        app.buttons["Import"].tap()
+        XCTAssertTrue(app.buttons["Saved"].waitForExistence(timeout: 10))
+        try XCTUnwrap(app.buttons.matching(identifier: "Done").allElementsBoundByIndex.last).tap()
+        app.terminate(); app.launch()
+        XCTAssertEqual(app.textFields["conversationTitle"].value as? String, "Imported notes")
+        app.buttons["Notes"].tap()
+        for _ in 0..<5 where !app.buttons["Attachment actions"].isHittable { app.swipeUp() }
         app.buttons["Attachment actions"].tap()
         app.buttons["Add text to notes"].tap()
         for _ in 0..<5 where !app.textViews["Conversation notes"].isHittable { app.swipeDown() }

@@ -1,5 +1,4 @@
 import XCTest
-import UIKit
 
 /// Opt-in, synthetic-data UI journey. Stage the token in the runner's Application Support directory.
 /// The token is consumed immediately, typed only into SecureField and removed through Settings afterward.
@@ -72,8 +71,10 @@ final class MobileLiveCloudTests: XCTestCase {
         }
         app.buttons["Done"].tap()
         app.buttons["New"].tap()
-        app.buttons["Notes"].tap()
         let marker = "UI cloud journey " + UUID().uuidString
+        app.textFields["conversationTitle"].tap()
+        app.textFields["conversationTitle"].typeText(" " + marker)
+        app.buttons["Notes"].tap()
         app.textViews["Conversation notes"].tap()
         app.textViews["Conversation notes"].typeText(
             marker + ". Decision: review the mobile release on Friday. Alex will prepare the checklist.")
@@ -113,22 +114,27 @@ final class MobileLiveCloudTests: XCTestCase {
         let copy = app.cells["Copy"]
         guard copy.waitForExistence(timeout: 10) else { XCTFail("Share sheet did not offer Copy"); return }
         copy.tap()
-        let exported = UIPasteboard.general.string ?? ""
+        app.buttons["New"].tap()
+        app.buttons["Notes"].tap()
+        app.buttons["Paste"].tap()
+        let exported = app.textViews["Conversation notes"].value as? String ?? ""
         XCTAssertTrue(exported.contains(marker))
         for output in outputs.values { XCTAssertTrue(exported.contains(output)) }
-        UIPasteboard.general.items = []
+        app.buttons["Done"].tap()
         app.buttons["History"].tap()
-        // The test conversation is the newest row; identify it through its saved summary.
-        let row = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", outputs["Summary"]!)).firstMatch
+        // Both this run's source and pasted copy carry the unique marker.
+        let row = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", marker)).firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 5))
-        row.swipeLeft()
-        app.buttons["Delete"].firstMatch.tap()
-        app.buttons["Delete conversation"].tap()
+        for _ in 0..<2 {
+            row.swipeLeft()
+            app.buttons["Delete"].firstMatch.tap()
+            app.buttons["Delete conversation"].tap()
+        }
         XCTAssertFalse(row.exists)
         app.terminate()
         app.launch()
         app.buttons["History"].tap()
-        XCTAssertFalse(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", outputs["Summary"]!)).firstMatch.exists)
+        XCTAssertFalse(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", marker)).firstMatch.exists)
     }
 
     private func reveal(_ element: XCUIElement, in app: XCUIApplication, upwards: Bool = true) {
