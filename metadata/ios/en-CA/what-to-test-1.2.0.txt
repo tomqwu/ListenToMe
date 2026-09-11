@@ -1,5 +1,6 @@
-New in 1.2.0 (4)
+New in 1.2.0 (5)
 
+• While listening, generate a summary after transcript text appears. Check that Stop listening remains usable during generation. Disabled AI actions now explain the reason; Check again refreshes readiness.
 • History: tap the trash button or swipe to delete a conversation. Check Cancel, confirm deletion, then restart the app. The deleted session should stay deleted; other sessions should remain.
 • Summary: switch between Summary, Quick Summary and Deep Think. Generate each, reopen the conversation and share it. Each result should remain separate and appear in the export.
 • Settings → Ollama Cloud: choose a Model role, then choose that role's model from the live API catalog. Verify all three selections survive relaunch.
