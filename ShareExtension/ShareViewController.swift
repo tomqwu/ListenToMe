@@ -18,6 +18,7 @@ final class ShareViewController: UIViewController {
         importButton.addTarget(self, action: #selector(importContent), for: .touchUpInside)
         let cancel = UIButton(type: .system)
         cancel.setTitle("Done", for: .normal)
+        cancel.accessibilityIdentifier = "finishSharedImport"
         cancel.addTarget(self, action: #selector(finish), for: .touchUpInside)
         let stack = UIStackView(arrangedSubviews: [title, status, importButton, cancel])
         stack.axis = .vertical; stack.spacing = 24; stack.translatesAutoresizingMaskIntoConstraints = false

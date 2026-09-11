@@ -76,7 +76,7 @@ final class MobileAttachmentJourneyTests: XCTestCase {
         XCTAssertTrue(app.buttons["Import"].waitForExistence(timeout: 10))
         app.buttons["Import"].tap()
         XCTAssertTrue(app.buttons["Saved"].waitForExistence(timeout: 10))
-        try XCTUnwrap(app.buttons.matching(identifier: "Done").allElementsBoundByIndex.last).tap()
+        app.buttons["finishSharedImport"].tap()
         app.terminate(); app.launch()
         XCTAssertEqual(app.textFields["conversationTitle"].value as? String, "Imported notes")
         app.buttons["Notes"].tap()

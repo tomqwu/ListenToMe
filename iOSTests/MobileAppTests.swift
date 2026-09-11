@@ -94,7 +94,7 @@ final class MobileAppTests: XCTestCase {
         XCTAssertTrue(app.buttons["Import"].waitForExistence(timeout: 10))
         app.buttons["Import"].tap()
         XCTAssertTrue(app.buttons["Saved"].waitForExistence(timeout: 10))
-        app.buttons["Done"].firstMatch.tap()
+        app.buttons["finishSharedImport"].tap()
         app.terminate(); app.launch()
         XCTAssertEqual(app.textFields["conversationTitle"].value as? String, "Imported notes")
         app.buttons["Notes"].tap()
