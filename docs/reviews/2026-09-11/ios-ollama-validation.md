@@ -32,7 +32,9 @@ deletes it. It uses the actual app API/catalog/summary path with synthetic notes
 output and invalid-key failure preservation, then restores the prior Keychain/settings. No key is
 committed, logged, packaged or provided to hosted CI.
 
-At source review preparation, that live test is waiting for OS Keychain authorization. Do not count
-the skipped hosted test as a real cloud pass. Local execution/export logs are retained in
+The authenticated app-hosted live test passed on iPhone 17 Pro / iOS 26.5: API catalog, complete
+chat response, summary containing the expected Friday/Alex facts, restoration of the saved result,
+and preservation after an invalid-key request. Its credential staging file was deleted by the test.
+Hosted CI skips this credential-dependent test; the live pass is local evidence. Logs are retained in
 `dist/ios-1.1.0-evidence`. Physical-device acceptance of this new cloud feature remains pending;
 this is a TestFlight beta, not a claim of production readiness.
