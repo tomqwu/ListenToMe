@@ -1,7 +1,9 @@
 Listen To Me helps you capture conversations with live on-device microphone transcription, editable notes and local conversation history on iPhone and iPad. Save your work, reopen it later and share it as Markdown. Optional Apple Intelligence summaries are available on supported devices.
 
-Starting with version 1.1.0, you can also choose Ollama Cloud summaries. Enter your own API key in Settings, refresh the model catalog from Ollama, choose an available model and test the connection. Your key is stored in this device's Keychain. Notes and transcripts are sent to Ollama only when you request an Ollama summary; microphone audio stays on-device.
+Starting with version 1.1.0, you can also choose Ollama Cloud summaries. Enter your own API key in Settings, refresh the model catalog from Ollama, choose an available model and test the connection. Your key is stored in this device's Keychain. Notes and transcripts are sent to Ollama when you request a summary or enable Auto Quick Summary; microphone audio stays on-device.
 
 Requires iOS or iPadOS 26 or later and a supported speech language. Live transcription requires a physical device. Recording works in the foreground and does not capture other apps or phone calls. Please test recording, saved conversations, sharing and summaries on your device, and report problems through TestFlight feedback.
 
 Version 1.2.0 adds confirmed session deletion from History, separate Summary, Quick Summary and Deep Think outputs, and a model selection for each mode. Connection testing saves a newly entered key before sending the request.
+
+Version 1.3.0 brings a unified transcript, Quick Summary and Deep Summary screen, optional Quick Summary updates every 30 seconds while listening, and local photo/file attachments. Import compatible copies from Apple Notes through the ListenToMe share extension. Originals stay local; only text added to Notes is included in AI summaries.

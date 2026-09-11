@@ -1,0 +1,9 @@
+New in 1.3.0 (6)
+
+• See the live transcript, Quick Summary and Deep Summary on one screen. On iPhone, transcript is above the two summary panels; on wide iPad layouts, Deep Summary is on the right.
+• Quick Summary: turn on Auto for updates every 30 seconds while listening when text changes (at least 80 characters). Auto is off at launch. Deep Summary is on-demand. Check that recording continues during generation and older completed results remain visible.
+• Notes: take a photo, choose from Photo library, or add a file. Tap an attachment to preview; its menu shares the original, removes it, or adds selectable document text to Notes. Limits: 20 attachments per conversation, 20 MB each.
+• Apple Notes: Share → Send Copy → ListenToMe → Import, then return to ListenToMe. Verify a new conversation contains the shared text/files and your previous conversation is preserved. This imports copies; it does not sync the Notes library.
+• Save, reopen, share originals and delete a conversation with attachments. Check iPhone/iPad layouts and large text.
+
+With Ollama selected, generating a summary or enabling Auto sends notes and transcript to Ollama. Original attachments stay local; only text explicitly added to Notes goes into summaries. Apple Intelligence uses the device model on supported devices. Recording and camera acceptance require a physical device. Please report device-specific problems through TestFlight feedback.

@@ -2,22 +2,127 @@ import XCTest
 
 @MainActor
 final class MobileAppTests: XCTestCase {
+    func testLandscapeDashboardKeepsAllPanelsReachable() {
+        let app = XCUIApplication()
+        app.launch()
+        XCUIDevice.shared.orientation = .landscapeLeft
+        defer { XCUIDevice.shared.orientation = .portrait }
+        XCTAssertTrue(app.staticTexts["Live transcript"].isHittable)
+        XCTAssertTrue(app.staticTexts["Quick Summary"].isHittable)
+        XCTAssertTrue(app.staticTexts["Deep Summary"].isHittable)
+        XCTAssertTrue(app.buttons["Start listening"].isHittable)
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Landscape dashboard"; screenshot.lifetime = .keepAlways; add(screenshot)
+    }
+
+    func testLargeTextDashboardCanScrollToDeepSummary() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch()
+        let dashboard = app.scrollViews["dashboardScroll"].firstMatch
+        XCTAssertTrue(dashboard.waitForExistence(timeout: 5))
+        let deep = app.staticTexts["Deep Summary"]
+        for _ in 0..<6 where !deep.isHittable { dashboard.swipeUp() }
+        XCTAssertTrue(deep.isHittable)
+        XCTAssertTrue(app.buttons["Start listening"].isHittable)
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Accessibility text dashboard"; screenshot.lifetime = .keepAlways; add(screenshot)
+    }
+
+    func testDashboardKeepsTranscriptQuickAndDeepVisible() {
+        let app = XCUIApplication()
+        app.launch()
+        app.buttons["New"].tap()
+        XCTAssertTrue(app.staticTexts["Live transcript"].isHittable)
+        XCTAssertTrue(app.staticTexts["Quick Summary"].isHittable)
+        XCTAssertTrue(app.staticTexts["Deep Summary"].isHittable)
+        XCTAssertTrue(app.buttons["Generate Quick Summary"].exists)
+        XCTAssertTrue(app.buttons["Generate Deep Think"].exists)
+        XCTAssertTrue(app.switches["Auto Quick Summary"].isHittable)
+        app.switches["Auto Quick Summary"].switches.firstMatch.tap()
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Updates every 30 seconds")).firstMatch.exists)
+        app.switches["Auto Quick Summary"].switches.firstMatch.tap()
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Unified dashboard"; screenshot.lifetime = .keepAlways; add(screenshot)
+    }
+
+    func testNotesCameraExplanationAndFilePicker() {
+        let app = XCUIApplication()
+        app.launch()
+        app.buttons["Notes"].tap()
+        app.buttons["Take photo"].tap()
+        let explanation = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Camera capture requires")).firstMatch
+        for _ in 0..<4 where !explanation.isHittable { app.swipeUp() }
+        XCTAssertTrue(explanation.exists)
+        for _ in 0..<4 where !app.buttons["Add files"].isHittable { app.swipeDown() }
+        app.buttons["Add files"].tap()
+        XCTAssertTrue(app.buttons["Cancel"].waitForExistence(timeout: 10))
+        app.buttons["Cancel"].tap()
+        XCTAssertTrue(app.navigationBars["Notes"].exists)
+    }
+
+    func testPhotoLibraryPickerCanBeOpenedAndDismissed() {
+        let app = XCUIApplication()
+        app.launch()
+        app.buttons["Notes"].tap()
+        app.buttons["Photo library"].tap()
+        _ = app.staticTexts["Loading..."].firstMatch.waitForNonExistence(timeout: 30)
+        XCTAssertTrue(app.buttons["Cancel"].waitForExistence(timeout: 10), app.debugDescription)
+        app.buttons["Cancel"].tap()
+        XCTAssertTrue(app.navigationBars["Notes"].exists)
+    }
+
+    func testShareExtensionImportsNotesAndPreservesSource() {
+        let app = XCUIApplication()
+        app.launch()
+        app.buttons["New"].tap()
+        app.buttons["Notes"].tap()
+        let marker = "Shared note " + UUID().uuidString
+        app.textViews["Conversation notes"].tap()
+        app.textViews["Conversation notes"].typeText(marker)
+        app.buttons["Done"].tap()
+        app.buttons["Share"].tap()
+        let destination = app.cells["ListenToMe"]
+        if !destination.waitForExistence(timeout: 5) {
+            let more = app.cells["More"].firstMatch
+            if more.exists { more.tap() }
+        }
+        guard destination.waitForExistence(timeout: 5) else {
+            XCTFail("Share destination missing: \(app.debugDescription)"); return
+        }
+        destination.tap()
+        XCTAssertTrue(app.buttons["Import"].waitForExistence(timeout: 10))
+        app.buttons["Import"].tap()
+        XCTAssertTrue(app.buttons["Saved"].waitForExistence(timeout: 10))
+        app.buttons["finishSharedImport"].tap()
+        app.terminate(); app.launch()
+        XCTAssertEqual(app.textFields["conversationTitle"].value as? String, "Imported notes")
+        app.buttons["Notes"].tap()
+        XCTAssertTrue((app.textViews["Conversation notes"].value as? String ?? "").contains(marker))
+        app.buttons["Done"].tap()
+        app.buttons["History"].tap()
+        XCTAssertEqual(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", marker)).count, 2)
+    }
+
     func testEmptySummaryExplainsDisabledActionAndSupportsRecheck() {
         let app = XCUIApplication()
         app.launch()
         app.buttons["New"].tap()
-        app.segmentedControls.buttons["Summary"].tap()
+        app.buttons["More"].tap()
+        app.buttons["Full summary"].tap()
         let reason = app.staticTexts["summaryBlockReason"]
         XCTAssertTrue(reason.waitForExistence(timeout: 5))
         XCTAssertTrue(reason.label.contains("Add notes"))
         XCTAssertFalse(app.buttons["Generate Summary"].isEnabled)
         app.buttons["Check again"].tap()
+        app.buttons["Done"].tap()
         XCTAssertTrue(app.staticTexts["sessionMessage"].label.contains("Add notes"))
     }
 
     func testOllamaSettingsKeyPersistenceAndRemoval() {
         let app = XCUIApplication()
         app.launch()
+        app.buttons["More"].tap()
         app.buttons["Settings"].tap()
         app.buttons["summaryProvider"].tap()
         app.buttons["Ollama Cloud"].tap()
@@ -29,6 +134,7 @@ final class MobileAppTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["savedAPIKey"].waitForExistence(timeout: 3))
         app.terminate()
         app.launch()
+        app.buttons["More"].tap()
         app.buttons["Settings"].tap()
         XCTAssertTrue(app.staticTexts["savedAPIKey"].waitForExistence(timeout: 3))
         app.secureTextFields["ollamaAPIKey"].tap()
@@ -52,19 +158,22 @@ final class MobileAppTests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
         app.buttons["New"].tap()
-        app.segmentedControls.buttons["Notes"].tap()
+        app.buttons["Notes"].tap()
         let notes = app.textViews["Conversation notes"]
         notes.tap()
         let text = "Delete UI test " + UUID().uuidString
         notes.typeText(text)
+        app.buttons["Done"].tap()
         app.buttons["Save"].tap()
-        app.segmentedControls.buttons["Summary"].tap()
+        app.buttons["More"].tap()
+        app.buttons["Full summary"].tap()
         app.buttons["summaryMode"].tap()
         app.buttons["Quick Summary"].tap()
         XCTAssertTrue(app.buttons["Generate Quick Summary"].exists)
         app.buttons["summaryMode"].tap()
         app.buttons["Deep Think"].tap()
         XCTAssertTrue(app.buttons["Generate Deep Think"].exists)
+        app.buttons["Done"].tap()
         app.buttons["History"].tap()
         let row = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 3))
@@ -106,24 +215,28 @@ final class MobileAppTests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
         app.buttons["New"].tap()
-        app.segmentedControls.buttons["Notes"].tap()
+        app.buttons["Notes"].tap()
         let notes = app.textViews["Conversation notes"]
         notes.tap()
         notes.typeText("Decision: review the mobile release on Friday.")
+        app.buttons["Done"].tap()
         app.buttons["Save"].tap()
         app.buttons["New"].tap()
         app.terminate()
         app.launch()
-        app.segmentedControls.buttons["Notes"].tap()
+        app.buttons["Notes"].tap()
         XCTAssertEqual(app.textViews["Conversation notes"].value as? String, "")
+        app.buttons["Done"].tap()
         app.buttons["History"].tap()
         app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Decision: review the mobile release")).firstMatch.tap()
-        app.segmentedControls.buttons["Notes"].tap()
+        app.buttons["Notes"].tap()
         XCTAssertTrue((notes.value as? String ?? "").contains("review the mobile release"))
         app.terminate()
         app.launch()
-        app.segmentedControls.buttons["Notes"].tap()
+        app.buttons["Notes"].tap()
         XCTAssertTrue((app.textViews["Conversation notes"].value as? String ?? "").contains("review the mobile release"))
+        app.buttons["Done"].tap()
+        app.buttons["More"].tap()
         app.buttons["Settings"].tap()
         let release = app.staticTexts["iPhone & iPad · iOS 26 or later"]
         for _ in 0..<5 where !release.isHittable { app.swipeUp() }
