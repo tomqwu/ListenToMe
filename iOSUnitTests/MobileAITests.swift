@@ -55,11 +55,15 @@ final class MobileAITests: XCTestCase {
         let original = try MobileKeychain.read()
         let key = try String(contentsOf: keyFile, encoding: .utf8)
         try FileManager.default.removeItem(at: keyFile)
-        let session = MobileSession()
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let session = MobileSession(storageDirectory: root)
         let originalProvider = session.ai.provider, originalModel = session.ai.model
+        let originalQuick = session.ai.quickModel, originalDeep = session.ai.deepModel
         defer {
             try? MobileKeychain.save(original)
             session.ai.provider = originalProvider; session.ai.model = originalModel
+            session.ai.quickModel = originalQuick; session.ai.deepModel = originalDeep
         }
         session.ai.saveKey(key)
         session.ai.provider = .ollama
@@ -76,7 +80,16 @@ final class MobileAITests: XCTestCase {
         XCTAssertTrue(session.summary.localizedCaseInsensitiveContains("Friday"))
         XCTAssertTrue(session.summary.localizedCaseInsensitiveContains("Alex"))
         XCTAssertFalse(session.isSummarizing)
-        XCTAssertEqual(MobileSession().summary, session.summary)
+        XCTAssertEqual(MobileSession(storageDirectory: root).summary, session.summary)
+        let fullSummary = session.summary
+        for mode in [MobileSummaryMode.quick, .deep] {
+            session.ai.selectModel(session.ai.model, for: mode)
+            await session.summarize(mode: mode)
+            XCTAssertNil(session.message)
+            XCTAssertFalse(session.output(for: mode).isEmpty)
+            XCTAssertEqual(session.summary, fullSummary)
+            XCTAssertEqual(MobileSession(storageDirectory: root).output(for: mode), session.output(for: mode))
+        }
         let goodSummary = session.summary
         session.ai.saveKey("invalid-key-for-negative-test")
         await session.summarize()

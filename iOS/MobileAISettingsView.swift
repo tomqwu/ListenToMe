@@ -4,6 +4,7 @@ import ListenToMeCore
 struct MobileAISettingsView: View {
     @Bindable var ai: MobileAISettings
     @State private var key = ""
+    @State private var mode = MobileSummaryMode.summary
     @State private var operation: Task<Void, Never>?
     @FocusState private var editingKey: Bool
 
@@ -19,7 +20,7 @@ struct MobileAISettingsView: View {
                 Text("Server: https://ollama.com").font(.caption)
                 SecureField(ai.hasKey ? "Replace saved API key" : "Ollama API key", text: $key)
                     .textInputAutocapitalization(.never).autocorrectionDisabled()
-                    .accessibilityIdentifier("ollamaAPIKey").focused($editingKey)
+                    .accessibilityIdentifier("ollamaAPIKey").focused($editingKey).disabled(ai.testing)
                 Button("Save API key") {
                     if ai.saveKey(key) { key = ""; editingKey = false }
                 }.disabled(key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || ai.testing)
@@ -31,7 +32,10 @@ struct MobileAISettingsView: View {
                     editingKey = false
                     operation = Task { await ai.refresh() }
                 }.disabled(ai.refreshing || ai.testing)
-                if !ai.model.isEmpty { Text("Selected: \(ai.model)").accessibilityIdentifier("selectedOllamaModel") }
+                Picker("Model role", selection: $mode) {
+                    ForEach(MobileSummaryMode.allCases) { role in Text(role.title).tag(role) }
+                }.accessibilityIdentifier("modelRole").disabled(ai.testing)
+                Text("Selected: \(ai.selectedModel(for: mode))").accessibilityIdentifier("selectedOllamaModel")
                 if !ai.models.isEmpty {
                     NavigationLink("Choose model") {
                         modelList
@@ -40,10 +44,14 @@ struct MobileAISettingsView: View {
                 Text("Cloud models run on Ollama; no model download to your phone is needed. " +
                      "The list comes from the API, including Flash and Pro variants when available.")
                     .font(.caption)
-                Button(ai.testing ? "Testing connection…" : "Test connection") {
+                Button(ai.testing ? "Testing connection…" : (key.isEmpty ? "Test connection" : "Save key and test connection")) {
                     editingKey = false
-                    operation = Task { await ai.testConnection() }
-                }.disabled(ai.availability != nil || ai.testing || ai.refreshing)
+                    if !key.isEmpty {
+                        guard ai.saveKey(key) else { return }
+                        key = ""
+                    }
+                    operation = Task { await ai.testConnection(for: mode) }
+                }.disabled(ai.selectedModel(for: mode).isEmpty || (!ai.hasKey && key.isEmpty) || ai.testing || ai.refreshing)
                 Text("Test connection sends only a short test prompt, not your conversation.").font(.caption)
                 if ai.testing { Button("Cancel connection test") { operation?.cancel() } }
                 if let status = ai.status {
@@ -66,17 +74,17 @@ struct MobileAISettingsView: View {
             Section("All API models") {
                 ForEach(ai.models) { model in modelRow(model) }
             }
-        }.navigationTitle("Ollama models")
+        }.navigationTitle("\(mode.title) model")
     }
 
     private func modelRow(_ model: OllamaCloudModel) -> some View {
         Button {
-            ai.model = model.name
+            ai.selectModel(model.name, for: mode)
         } label: {
             HStack {
                 Text(model.name).foregroundStyle(.primary)
                 Spacer()
-                if ai.model == model.name { Image(systemName: "checkmark").accessibilityLabel("Selected") }
+                if ai.selectedModel(for: mode) == model.name { Image(systemName: "checkmark").accessibilityLabel("Selected") }
             }
         }.accessibilityIdentifier("model-\(model.name)")
     }

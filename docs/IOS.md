@@ -1,7 +1,7 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.1.0 (3).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.2.0 (4).
 
 ## Included
 
@@ -22,10 +22,25 @@ per-person speaker identification and local/LAN Ollama server connections are no
 transcripts remain usable when the speech model or Apple Intelligence is unavailable.
 App data is local to the sandbox; normal OS backup policy applies. Sharing explicitly exports text.
 
+## Conversation actions
+
+History shows a trash button for each conversation and supports swipe-to-delete. Deletion asks for
+confirmation and removes that conversation's transcript, notes and all three AI outputs. Deleting
+an active conversation creates an empty active snapshot so the deleted content does not reappear
+on restart. Other conversations are preserved.
+
+The Summary tab offers **Summary**, **Quick Summary** (up to five concise bullets) and **Deep Think**
+(a deeper analysis of decisions, tradeoffs, risks and unresolved questions). Each result is stored
+separately, restored with its conversation and included when sharing. These are distinct prompts;
+Deep Think does not promise a provider-specific reasoning mode. Requests use the selected provider
+and preserve previous completed output on failure or cancellation.
+
 ## Ollama Cloud
 
 Open **Settings → Summary provider → Ollama Cloud**. Enter your key and tap **Save API key**,
-then **Refresh models from API**, **Choose model**, and **Test connection**. Keys are stored in
+then **Refresh models from API**, select a **Model role**, **Choose model**, and **Test connection**.
+Each of the three roles has an independent model selection. When a new key is entered, the test
+button becomes **Save key and test connection** and saves that key before sending the request. Keys are stored in
 iOS Keychain with `WhenUnlockedThisDeviceOnly`, never in preferences, session exports or the app binary.
 Enter the key separately on each device. Remove API key deletes it from this device.
 
@@ -37,7 +52,7 @@ No unavailable Flash/Pro name is invented. Refresh preserves your selected model
 choose another. Model refresh does not prove key validity: Test connection verifies a complete streamed
 `/api/chat` response using only a synthetic prompt. Cloud models run remotely; `/api/pull` is not needed.
 
-Selecting Ollama is opt-in. **Summarize conversation** sends the current notes and transcript to
+Selecting Ollama is opt-in. Generating any of the three AI outputs sends the current notes and transcript to
 Ollama; microphone audio continues to be transcribed on-device. No automatic cloud summary runs.
 The last complete summary is preserved on HTTP errors, incomplete streams and cancellation. Streamed
 text is shown separately until completion. Backgrounding cancels an active summary request.

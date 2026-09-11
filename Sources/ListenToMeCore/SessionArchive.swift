@@ -39,6 +39,12 @@ public final class SessionArchive {
         }
     }
 
+    public func delete(id: String) throws {
+        try prepare()
+        let url = try location(id)
+        if fileManager.fileExists(atPath: url.path) { try fileManager.removeItem(at: url) }
+    }
+
     private func prepare() throws {
         try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
         let marker = directory.appendingPathComponent("legacy-migrated")
