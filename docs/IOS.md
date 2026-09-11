@@ -1,7 +1,7 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.0.0 (1).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.0.1 (2).
 
 ## Included
 
@@ -36,13 +36,19 @@ For a physical device, trust the Mac, enable Developer Mode and select your deve
 Signing & Capabilities if building with a different account. `make ios-archive` creates a signed
 Release archive with automatic provisioning using the configured team.
 
+**Simulator limitation:** live speech transcription is unavailable in the tested iOS 26.5 simulator.
+Start listening explains this before requesting microphone permission. Notes, History and export
+remain usable. Granting permission or changing language cannot enable the missing speech engine.
+Use a physical iPhone/iPad for recording acceptance. Simulator builds and UI tests do not validate
+live speech. The legacy recognizer also failed to load its model despite reporting local support.
+
 The shared Swift package supports iOS 18+ for reuse; the actual app requires iOS 26 for SpeechAnalyzer
 and Foundation Models. iOS does not depend on the Mac WhisperKit or FluidAudio binaries.
 
 ## Validation and release
 
 Run lint, shared core tests/coverage, the iOS build and UI tests, and a macOS build to protect the
-existing product. The UI tests verify microphone denial/retry, saving notes, New, History and restoration across app restart.
+existing product. The simulator UI tests verify the unsupported-speech explanation without a microphone prompt, retry, saving notes, New, History and restoration across app restart.
 Hosted CI builds both apps and runs the iOS UI tests. Before marking iOS production-ready, test on a physical iPhone/iPad:
 
 1. First-use microphone denial, retry after granting, and unsupported language/model errors.

@@ -6,6 +6,8 @@ struct MobileMeetingView: View {
     @State private var showHistory = false
     @State private var showSettings = false
     @State private var section = 0
+    @FocusState private var focusedField: EditingField?
+    private enum EditingField { case title, notes }
 
     var body: some View {
         NavigationStack {
@@ -20,6 +22,7 @@ struct MobileMeetingView: View {
                 if section == 0 { transcript }
                 if section == 1 {
                     TextEditor(text: $session.notes)
+                        .focused($focusedField, equals: .notes)
                         .accessibilityLabel("Conversation notes")
                         .disabled(session.isSummarizing)
                         .padding(.horizontal)
@@ -46,6 +49,7 @@ struct MobileMeetingView: View {
     private var status: some View {
         VStack(alignment: .leading, spacing: 10) {
             TextField("Conversation title", text: $session.title)
+                .focused($focusedField, equals: .title)
                 .font(.title2.bold()).accessibilityIdentifier("conversationTitle")
                 .disabled(session.isSummarizing)
                 .onChange(of: session.title) { _, _ in session.save(announce: false) }
@@ -54,7 +58,8 @@ struct MobileMeetingView: View {
             Text("Microphone only · On-device transcription")
                 .font(.caption).foregroundStyle(.secondary)
             if let message = session.message {
-                Text(message).font(.callout).accessibilityIdentifier("sessionMessage")
+                Text(message).font(.callout).fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("sessionMessage")
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -114,6 +119,7 @@ struct MobileMeetingView: View {
     private var controls: some View {
         VStack(spacing: 12) {
             Button {
+                focusedField = nil
                 if session.state == .idle { session.start() } else { Task { await session.stop() } }
             } label: {
                 Label(session.state == .idle ? "Start listening" : "Stop listening",
