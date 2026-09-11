@@ -2,6 +2,28 @@ import XCTest
 
 @MainActor
 final class MobileAppTests: XCTestCase {
+    func testOllamaSettingsKeyPersistenceAndRemoval() {
+        let app = XCUIApplication()
+        app.launch()
+        app.buttons["Settings"].tap()
+        app.buttons["summaryProvider"].tap()
+        app.buttons["Ollama Cloud"].tap()
+        let field = app.secureTextFields["ollamaAPIKey"]
+        XCTAssertTrue(field.waitForExistence(timeout: 3))
+        field.tap()
+        field.typeText("synthetic-ui-test-key")
+        app.buttons["Save API key"].tap()
+        XCTAssertTrue(app.staticTexts["savedAPIKey"].waitForExistence(timeout: 3))
+        app.terminate()
+        app.launch()
+        app.buttons["Settings"].tap()
+        XCTAssertTrue(app.staticTexts["savedAPIKey"].waitForExistence(timeout: 3))
+        app.buttons["Remove API key"].tap()
+        XCTAssertFalse(app.staticTexts["savedAPIKey"].exists)
+        app.buttons["summaryProvider"].tap()
+        app.buttons["Apple Intelligence · on-device"].tap()
+    }
+
     func testSimulatorExplainsUnavailableSpeechWithoutRequestingMicrophone() {
         let app = XCUIApplication()
         app.resetAuthorizationStatus(for: .microphone)
@@ -45,7 +67,8 @@ final class MobileAppTests: XCTestCase {
         app.segmentedControls.buttons["Notes"].tap()
         XCTAssertTrue((app.textViews["Conversation notes"].value as? String ?? "").contains("review the mobile release"))
         app.buttons["Settings"].tap()
-        app.swipeUp()
-        XCTAssertTrue(app.staticTexts["iPhone & iPad · iOS 26 or later"].waitForExistence(timeout: 3))
+        let release = app.staticTexts["iPhone & iPad · iOS 26 or later"]
+        for _ in 0..<5 where !release.isHittable { app.swipeUp() }
+        XCTAssertTrue(release.isHittable)
     }
 }

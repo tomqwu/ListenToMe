@@ -61,17 +61,18 @@ release:
 
 # iPhone/iPad target (iOS 26+). Override IOS_DESTINATION with a connected device/simulator.
 IOS_DESTINATION ?= platform=iOS Simulator,name=iPhone 17 Pro
+IOS_SIGN_FLAGS ?= CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=-
 
 .PHONY: ios-build ios-test ios-archive
 ios-build: gen
 	xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMeIOS -configuration Debug \
 		-destination 'generic/platform=iOS Simulator' -derivedDataPath .build/ios \
-		-onlyUsePackageVersionsFromResolvedFile CODE_SIGNING_ALLOWED=NO build
+		-onlyUsePackageVersionsFromResolvedFile $(IOS_SIGN_FLAGS) build
 
 ios-test: gen
 	xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMeIOS -configuration Debug \
 		-destination '$(IOS_DESTINATION)' -derivedDataPath .build/ios \
-		-onlyUsePackageVersionsFromResolvedFile CODE_SIGNING_ALLOWED=NO test
+		-onlyUsePackageVersionsFromResolvedFile $(IOS_SIGN_FLAGS) test
 
 ios-archive: gen
 	xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMeIOS -configuration Release \

@@ -100,18 +100,26 @@ struct MobileMeetingView: View {
     private var summary: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text("On-device summary").font(.title2.bold())
-                Text("Apple Intelligence summarizes your notes and transcript on this device. Review the result for accuracy.")
+                Text("Conversation summary").font(.title2.bold())
+                Text(session.ai.provider == .ollama
+                     ? "Ollama Cloud · \(session.ai.model). Summarize sends your notes and transcript to Ollama. Review the result."
+                     : "Apple Intelligence summarizes your notes and transcript on this device. Review the result for accuracy.")
                     .foregroundStyle(.secondary)
                 if let reason = session.summaryAvailability { Text(reason).font(.callout) }
                 Button {
-                    Task { await session.summarize() }
+                    session.requestSummary()
                 } label: {
                     Label(session.isSummarizing ? "Summarizing…" : "Summarize conversation", systemImage: "sparkles")
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(session.busy || !session.hasContent || session.summaryAvailability != nil)
-                if !session.summary.isEmpty { Text(session.summary).textSelection(.enabled) }
+                if session.isSummarizing {
+                    Button("Cancel summary") { session.cancelSummary() }
+                    Text(session.summaryDraft).textSelection(.enabled)
+                }
+                if !session.summary.isEmpty {
+                    Text(session.summary).textSelection(.enabled).accessibilityIdentifier("savedSummary")
+                }
             }.frame(maxWidth: .infinity, alignment: .leading).padding()
         }
     }
@@ -168,6 +176,7 @@ struct MobileMeetingView: View {
     private var settings: some View {
         NavigationStack {
             Form {
+                MobileAISettingsView(ai: session.ai).disabled(session.busy)
                 Section("Transcription") {
                     Picker("Language", selection: $session.language) {
                         Text("System (\(Locale.current.identifier))").tag(Locale.current.identifier)
@@ -185,7 +194,8 @@ struct MobileMeetingView: View {
                 }
                 Section("Privacy") {
                     Text("Conversations stay in this app's storage. Apple Intelligence summaries are optional and run on-device. " +
-                         "Share exports text to the destination you choose. No cloud AI or account is required.")
+                         "Ollama Cloud summaries send notes and transcript to Ollama only when you choose Summarize. " +
+                         "API keys stay in this device's Keychain. Share exports text to the destination you choose.")
                     Link("Open app settings", destination: URL(string: UIApplication.openSettingsURLString)!)
                 }
                 Section("Release") {
