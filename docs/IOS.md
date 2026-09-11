@@ -36,7 +36,7 @@ confirmation and removes that conversation's transcript, notes, original attachm
 an active conversation creates an empty active snapshot so the deleted content does not reappear
 on restart. Other conversations are preserved.
 
-The main screen shows the live transcript above **Quick Summary** and **Deep Summary** side by side on iPhone. On wide iPad layouts, transcript and Quick Summary are on the left and Deep Summary is on the right. Large accessibility text stacks scrollable panels. **More → Full summary** also offers **Summary**, **Quick Summary** (up to five concise bullets) and **Deep Think**
+The main screen shows the live transcript above **Quick Summary** and **Deep Summary** side by side on iPhone. On wide iPad layouts, transcript and Quick Summary are on the left and Deep Summary is on the right. Large accessibility text stacks expanding panels and the header in one scrollable page. Start/Stop stays visible; Save, New and Share move to More in that layout. **More → Full summary** also offers **Summary**, **Quick Summary** (up to five concise bullets) and **Deep Think**
 (a deeper analysis of decisions, tradeoffs, risks and unresolved questions). Each result is stored
 separately, restored with its conversation and included when sharing. These are distinct prompts;
 Deep Think does not promise a provider-specific reasoning mode. Requests use the selected provider
