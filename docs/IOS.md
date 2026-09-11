@@ -68,6 +68,10 @@ and Foundation Models. iOS does not depend on the Mac WhisperKit or FluidAudio b
 
 ## Validation and release
 
+Maintain the [iOS listing metadata](../metadata/ios/README.md) alongside release changes. Apply the
+Beta App Description and per-build What to Test in App Store Connect, and verify the uploaded app
+icon and the installed Home Screen icon. Repository metadata files alone do not update the listing.
+
 Run lint, shared core tests/coverage, the iOS build and UI tests, and a macOS build to protect the
 existing product. The simulator UI tests verify the unsupported-speech explanation without a microphone prompt, retry, saving notes, New, History and restoration across app restart.
 Hosted CI builds both apps and runs the iOS UI and app-hosted tests. Simulator builds use ad-hoc signing so Keychain tests exercise actual storage. The credential-dependent live cloud test is opt-in and skips on CI. Before marking iOS production-ready, test on a physical iPhone/iPad:

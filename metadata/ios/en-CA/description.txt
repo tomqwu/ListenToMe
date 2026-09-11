@@ -1,0 +1,17 @@
+Turn conversations into notes you can return to.
+
+Listen To Me brings live microphone transcription, editable notes and conversation summaries to iPhone and iPad. Follow the transcript as you speak, capture your own thoughts alongside it, and keep everything together in local conversation history.
+
+CAPTURE AND ORGANIZE
+• Transcribe speech on-device with Apple's SpeechAnalyzer.
+• Add notes and give each conversation a title.
+• Save conversations and reopen them from History.
+• Share transcripts, notes and summaries as Markdown.
+
+CHOOSE HOW TO SUMMARIZE
+Use Apple Intelligence on a supported device, or choose Ollama Cloud with your own API key. Refresh the model list directly from Ollama and select from available models, including DeepSeek, GLM, Qwen and Kimi. Available models and variants depend on Ollama's current catalog.
+
+YOU CONTROL CLOUD USE
+Microphone speech is transcribed on-device; raw audio is not saved. Conversations are stored locally. When you choose Ollama Cloud and tap Summarize conversation, your notes and transcript are sent to Ollama. Your API key is stored in this device's Keychain. Ollama Cloud requires an internet connection and your own account access.
+
+Requires iOS or iPadOS 26 or later. Speech transcription depends on device and language support, with language assets downloaded when needed. Apple Intelligence summaries require a supported device and enabled Apple Intelligence. Recording uses the microphone while the app is in the foreground; it does not capture other apps or phone calls. Review AI-generated summaries for accuracy.

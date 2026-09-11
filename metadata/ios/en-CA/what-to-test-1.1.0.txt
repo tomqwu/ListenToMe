@@ -1,0 +1,10 @@
+New in 1.1.0: Ollama Cloud summaries with your own API key and a live model catalog.
+
+1. Open Settings → Summary provider → Ollama Cloud. Enter your own key and tap Save API key. Close and reopen the app to check that the saved-key indicator persists.
+2. Tap Refresh models from API, then Choose model. Check the available DeepSeek, GLM, Qwen and Kimi options. Flash and Pro variants appear only when Ollama returns them; no model download to your phone is needed.
+3. Tap Test connection. This sends a short test prompt, without your conversation.
+4. Add notes or record a conversation, then tap Summarize conversation. This sends your notes and transcript to Ollama Cloud. Check the streamed result and save/reopen the conversation.
+5. Try cancelling a summary and testing an invalid key. Your previous completed summary should remain available. Remove the key and confirm the saved-key indicator clears.
+6. Check the purple waveform icon on your Home Screen, and test layouts on iPhone and iPad.
+
+Apple Intelligence remains the default summary option. Microphone audio is transcribed on-device and is not saved. Recording requires a physical iPhone or iPad running iOS 26 or later. Simulator and live cloud API checks have passed; physical-device acceptance of the new cloud feature is still pending. Please review summary accuracy and send feedback through TestFlight.
