@@ -109,21 +109,19 @@ struct MobileWorkspaceView<Header: View>: View {
     private func summaryPanel(_ mode: MobileSummaryMode) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 10) {
-                HStack(alignment: .top) {
-                    MobileRoleIcon(symbol: MobileStyle.symbol(for: mode), tint: MobileStyle.tint(for: mode))
-                    Text(mode.title).font(.headline).foregroundStyle(MobileStyle.ink).padding(.top, 4)
-                    Spacer(minLength: 8)
-                    if session.generatingMode == mode {
-                        Button("Cancel", systemImage: "stop.circle") { session.cancelSummary() }
-                            .labelStyle(.iconOnly).accessibilityLabel("Cancel \(mode.title)")
-                    } else {
-                        Button { session.requestSummary(for: mode) } label: {
-                            Image(systemName: session.output(for: mode).isEmpty ? "sparkles" : "arrow.clockwise")
-                                .frame(minWidth: 32, minHeight: 32)
-                        }.buttonStyle(.bordered).controlSize(.small)
-                            .tint(MobileStyle.tint(for: mode))
-                            .accessibilityLabel("Generate \(mode.title)")
-                            .disabled(session.summaryBlockReason(for: mode) != nil)
+                if typeSize.isAccessibilitySize {
+                    HStack {
+                        MobileRoleIcon(symbol: MobileStyle.symbol(for: mode), tint: MobileStyle.tint(for: mode))
+                        Spacer()
+                        generateButton(mode)
+                    }
+                    Text(mode.title).font(.headline).foregroundStyle(MobileStyle.ink)
+                } else {
+                    HStack(alignment: .top) {
+                        MobileRoleIcon(symbol: MobileStyle.symbol(for: mode), tint: MobileStyle.tint(for: mode))
+                        Text(mode.title).font(.headline).foregroundStyle(MobileStyle.ink).padding(.top, 4)
+                        Spacer(minLength: 8)
+                        generateButton(mode)
                     }
                 }
                 if typeSize.isAccessibilitySize {
@@ -171,6 +169,22 @@ struct MobileWorkspaceView<Header: View>: View {
         }.frame(maxWidth: .infinity, maxHeight: stacked ? nil : .infinity, alignment: .topLeading)
             .modifier(MobileCard())
             .accessibilityElement(children: .contain).accessibilityIdentifier("summary-panel-\(mode.rawValue)")
+    }
+
+    @ViewBuilder
+    private func generateButton(_ mode: MobileSummaryMode) -> some View {
+        if session.generatingMode == mode {
+            Button("Cancel", systemImage: "stop.circle") { session.cancelSummary() }
+                .labelStyle(.iconOnly).font(.system(size: 20))
+                .frame(minWidth: 44, minHeight: 44).accessibilityLabel("Cancel \(mode.title)")
+        } else {
+            Button { session.requestSummary(for: mode) } label: {
+                Image(systemName: session.output(for: mode).isEmpty ? "sparkles" : "arrow.clockwise")
+                    .font(.system(size: 18, weight: .semibold)).frame(minWidth: 32, minHeight: 32)
+            }.buttonStyle(.bordered).controlSize(.small).tint(MobileStyle.tint(for: mode))
+                .accessibilityLabel("Generate \(mode.title)")
+                .disabled(session.summaryBlockReason(for: mode) != nil)
+        }
     }
 
     private func modelButton(_ mode: MobileSummaryMode) -> some View {
