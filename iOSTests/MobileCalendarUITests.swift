@@ -21,7 +21,16 @@ final class MobileCalendarUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Refresh events"].exists)
         app.buttons["Done"].tap()
         app.buttons["Notes"].tap()
-        XCTAssertTrue(app.buttons["Import from Calendar"].exists)
+        XCTAssertTrue(app.navigationBars["Notes"].waitForExistence(timeout: 5))
+        let importButton = app.buttons["Import from Calendar"]
+        let form = app.collectionViews.firstMatch
+        for _ in 0..<4 where !importButton.exists || !importButton.isHittable {
+            form.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.85))
+                .press(forDuration: 0.05, thenDragTo: form.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.3)))
+        }
+        XCTAssertTrue(importButton.isHittable)
+        importButton.tap()
+        XCTAssertTrue(app.datePickers["calendarDate"].waitForExistence(timeout: 5))
     }
 
     func testImportStagedEventThroughPreviewIntoNotes() throws {
