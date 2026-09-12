@@ -27,10 +27,21 @@ struct MobileMeetingView: View {
                 }, accessibilityHeader: { status })
                     .padding(.horizontal, 20).padding(.bottom, 12)
             }
-            .background(Color(uiColor: .systemGroupedBackground))
+            .background {
+                LinearGradient(colors: [MobileStyle.accent.opacity(0.07), .clear], startPoint: .top, endPoint: .center)
+                    .background(MobileStyle.canvas).ignoresSafeArea()
+            }
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    ViewThatFits(in: .horizontal) {
+                        MobileBrand(compact: true).fixedSize()
+                        Image("BrandMark").resizable().frame(width: 28, height: 28)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .accessibilityLabel("Listen to Me").accessibilityIdentifier("appBrand")
+                    }
+                }
                 ToolbarItem(placement: .topBarLeading) {
                     Button("History", systemImage: "clock") { showHistory = true }
                         .labelStyle(.titleAndIcon).disabled(session.busy)
@@ -76,11 +87,13 @@ struct MobileMeetingView: View {
             TextField("Conversation title", text: $session.title)
                 .focused($focusedField, equals: .title)
                 .font(verticalSizeClass == .compact ? .headline : .title2.weight(.semibold))
+                .foregroundStyle(MobileStyle.ink)
                 .accessibilityIdentifier("conversationTitle")
                 .disabled(session.isSummarizing)
                 .onChange(of: session.title) { _, _ in session.save(announce: false) }
             Label(statusText, systemImage: session.state == .recording ? "record.circle" : "mic")
-                .font(.caption).foregroundStyle(session.state == .recording ? .red : .secondary)
+                .font(.caption.weight(.medium))
+                .foregroundStyle(session.state == .recording ? .red : MobileStyle.muted)
             if let message = session.message {
                 Text(message).font(.caption).lineLimit(2).foregroundStyle(.secondary)
                     .accessibilityIdentifier("sessionMessage")
@@ -143,7 +156,8 @@ struct MobileMeetingView: View {
                     VStack(spacing: 3) {
                         Image(systemName: "square.and.arrow.down").font(.body)
                         Text("Save").font(.caption2)
-                    }.frame(minWidth: 40, minHeight: 44)
+                    }.frame(minWidth: 44, minHeight: 48)
+                        .foregroundStyle(MobileStyle.accent)
                 }.disabled(!session.hasContent).accessibilityLabel("Save")
             }
             Button {
@@ -153,21 +167,22 @@ struct MobileMeetingView: View {
                 Label(session.state == .idle ? (dynamicTypeSize.isAccessibilitySize ? "Listen" : "Start listening")
                       : (dynamicTypeSize.isAccessibilitySize ? "Stop" : "Stop listening"),
                       systemImage: session.state == .idle ? "mic.fill" : "stop.fill")
-                    .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 10)
-            }.buttonStyle(.borderedProminent)
+                    .font(.headline).frame(maxWidth: .infinity, minHeight: 24)
+            }.buttonStyle(MobileRecordStyle(recording: session.state != .idle))
                 .accessibilityLabel(session.state == .idle ? "Start listening" : "Stop listening")
-                .tint(session.state == .idle ? .indigo : .red)
                 .disabled(session.state == .stopping || (session.isSummarizing && session.state == .idle))
             if !dynamicTypeSize.isAccessibilitySize {
                 Button { showNotes = true } label: {
                     VStack(spacing: 3) {
                         Image(systemName: "note.text").font(.body)
                         Text("Notes").font(.caption2)
-                    }.frame(minWidth: 40, minHeight: 44)
+                    }.frame(minWidth: 44, minHeight: 48)
+                        .foregroundStyle(MobileStyle.accent)
                 }.accessibilityLabel("Notes")
             }
         }.frame(maxWidth: 600).frame(maxWidth: .infinity)
-            .padding(.horizontal, 16).padding(.vertical, 10).background(.bar)
+            .padding(.horizontal, 20).padding(.vertical, 12)
+            .background(MobileStyle.canvas.opacity(0.96))
     }
 
     private var history: some View {
@@ -203,7 +218,13 @@ struct MobileMeetingView: View {
             } message: { _ in
                 Text("This removes the transcript, notes, attachments and all AI outputs from this device. It cannot be undone.")
             }
-            .overlay { if session.history.isEmpty { ContentUnavailableView("No saved conversations", systemImage: "clock") } }
+            .scrollContentBackground(.hidden).background(MobileStyle.canvas)
+            .overlay {
+                if session.history.isEmpty {
+                    ContentUnavailableView("No saved conversations", systemImage: "clock",
+                                           description: Text("Save a conversation to return to its words, notes and summaries."))
+                }
+            }
             .navigationTitle("History")
             .toolbar { Button("Done") { showHistory = false } }
         }
@@ -217,6 +238,12 @@ struct MobileMeetingView: View {
     private var settings: some View {
         NavigationStack {
             Form {
+                Section {
+                    VStack(alignment: .leading, spacing: 12) {
+                        MobileBrand()
+                        Text("Transcripts, notes & ideas").font(.subheadline).foregroundStyle(MobileStyle.muted)
+                    }.padding(.vertical, 10)
+                }
                 MobileAISettingsView(ai: session.ai)
                 Section("Transcription") {
                     Picker("Language", selection: $session.language) {
@@ -245,6 +272,7 @@ struct MobileMeetingView: View {
                 }
             }
             .accessibilityIdentifier("aiSettingsForm")
+            .scrollContentBackground(.hidden).background(MobileStyle.canvas)
             .navigationTitle("Settings")
             .toolbar { Button("Done") { showSettings = false } }
         }

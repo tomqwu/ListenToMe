@@ -1,7 +1,15 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.4.1 (12).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.5.0 (13).
+
+## iOS 1.5.0 (13)
+
+The waveform logo now appears in the workspace and Settings. A violet canvas, distinct accents for
+transcript and each summary role, refined cards and a prominent recording button give the app a
+consistent identity in light and dark mode. Empty states show what belongs in each panel. The compact
+transcript, auto-follow behavior and independent model controls remain available. See the
+[GUI review and design decisions](IOS-GUI-REVIEW-1.5.md).
 
 ## iOS 1.4.1 (12)
 
@@ -55,7 +63,7 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   stays awake during active recording. No raw audio is saved.
 - Version/build information in Settings.
 
-System/call audio, background recording, Mac sync, calendar import, audio-file import, WhisperKit,
+System/call audio, background recording, Mac sync, audio-file import, WhisperKit,
 per-person speaker identification and local/LAN Ollama server connections are not included. Notes and saved
 transcripts remain usable when the speech model or Apple Intelligence is unavailable.
 App data is local to the sandbox; normal OS backup policy applies. Sharing explicitly exports text.
