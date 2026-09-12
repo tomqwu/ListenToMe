@@ -141,6 +141,28 @@ continue the CLI upload and report that online availability/metadata verificatio
 
 ## Troubleshooting and handoff
 
+### Verified upload baseline (September 11, 2026)
+
+Build 7 was successfully uploaded by the agent using `xcodebuild -exportArchive` with
+`-allowProvisioningUpdates`. Its saved `TestFlightExportOptions.plist` is semantically identical
+to `Config/iOS/TestFlightExportOptions.plist`. Build 8 failed at `IDEDistributionUploadAccountStep`
+using that same command/settings, while Xcode Settings showed the signed-in Admin team.
+The maintainer then uploaded build 8 through Organizer at 2026-09-12 01:32:36 UTC.
+Both successful uploads used `DVTServicesSessionProviderCredential`. This establishes a CLI
+account-lookup failure, but does not establish its cause or prove that CLI access has recovered.
+
+Local evidence is under `dist/ios-1.3.1-build7-evidence/` and
+`dist/ios-1.3.1-build8-evidence/`; the latter contains `upload-accepted.json` for the Organizer
+upload. Build 8 is accepted and tagged `ios-v1.3.1-build8`; do not retry it. Tester availability
+must still be checked separately. The original IPA checksum predates Organizer's export and must
+not be described as a verified checksum of Apple's uploaded payload.
+
+The agent owns code through publication. If CLI account lookup fails, investigate and use native
+Organizer automation when available; do not routinely delegate the publish click to the maintainer.
+If both routes are unavailable, report the concrete automation blocker and keep publication open.
+Offline helper tests and dry runs validate safeguards, not live authentication. Do not claim the
+publishing workflow is operationally repaired until an agent-operated upload actually succeeds.
+
 - **`Failed to Use Accounts` / `Failed to find an account with App Store Connect access`:** inspect
   the `.xcdistributionlogs` path printed in the upload log, especially `IDEDistribution.standard.log`.
   Compare the credential/provider path with the last successful upload before requesting account changes.
