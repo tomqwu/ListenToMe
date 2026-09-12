@@ -90,9 +90,12 @@ struct MobileTranscriptReader: View {
             }
         }
         .sheet(item: $reviewing) { segment in
-            MobileSpeechCorrectionReview(segment: segment) {
-                restoreOriginal?($0)
-                if readingSnapshot != nil { readingSnapshot = segments }
+            MobileSpeechCorrectionReview(segment: segment) { id in
+                restoreOriginal?(id)
+                if var snapshot = readingSnapshot, let index = snapshot.firstIndex(where: { $0.id == id }) {
+                    snapshot[index] = snapshot[index].restoringOriginal
+                    readingSnapshot = snapshot
+                }
             }
         }
     }
