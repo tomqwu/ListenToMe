@@ -108,6 +108,8 @@ and Foundation Models. iOS does not depend on the Mac WhisperKit or FluidAudio b
 
 ## Validation and release
 
+Follow [the TestFlight release runbook](IOS-RELEASING.md) for exact archive, export, upload, account-recovery and tester-verification steps. A connected device is not required to upload an authorized beta; physical-device acceptance remains a separate production-readiness gate.
+
 Maintain the [iOS listing metadata](../metadata/ios/README.md) alongside release changes. Apply the
 Beta App Description and per-build What to Test in App Store Connect, and verify the uploaded app
 icon and the installed Home Screen icon. Repository metadata files alone do not update the listing.
@@ -132,7 +134,7 @@ App Store Connect app record and matching iOS distribution provisioning. A devel
 installs on devices in its provisioning profile; a simulator `.app` is not an iPhone installation.
 Keep iOS tags (`ios-v…`) separate and never overwrite the latest macOS GitHub release with an iOS
 preview. Publish a production iOS release only after device validation and successful distribution.
-If provisioning or a connected device blocks that step, preserve the archive and report the blocker.
+If provisioning or upload authentication fails, preserve the archive and report the exact error. Missing physical-device acceptance blocks a production-ready claim, not an authorized TestFlight beta upload.
 
 Apple references: [SpeechAnalyzer](https://developer.apple.com/documentation/speech/speechanalyzer),
 [Foundation Models](https://developer.apple.com/documentation/foundationmodels),
