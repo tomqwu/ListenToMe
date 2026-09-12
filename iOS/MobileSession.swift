@@ -7,7 +7,7 @@ import UIKit
 @MainActor @Observable
 final class MobileSession {
     enum State { case idle, preparing, recording, stopping }
-    var state = State.idle
+    var state = State.idle { didSet { scheduleAutoQuick() } }
     var title = "New conversation"
     var notes = ""
     var summary = ""
@@ -16,9 +16,13 @@ final class MobileSession {
     var attachments: [SessionAttachment] = []
     var generatingMode: MobileSummaryMode?
     var autoQuick = UserDefaults.standard.bool(forKey: "autoQuickSummary") {
-        didSet { UserDefaults.standard.set(autoQuick, forKey: "autoQuickSummary") }
+        didSet { UserDefaults.standard.set(autoQuick, forKey: "autoQuickSummary"); scheduleAutoQuick() }
     }
     private var lastAutoSource = ""
+    private var lastAutoAttempt: ContinuousClock.Instant?
+    private var autoTask: Task<Void, Never>?
+    private let autoInterval: Duration
+    private let summaryProvider: (any LLMProvider)?
     private var sourceImportID: String?
     var segments: [TranscriptSegment] = []
     var partial: TranscriptSegment?
@@ -37,7 +41,10 @@ final class MobileSession {
     private let activeURL: URL
     let attachmentRoot: URL
 
-    init(storageDirectory: URL = .applicationSupportDirectory) {
+    init(storageDirectory: URL = .applicationSupportDirectory,
+         summaryProvider: (any LLMProvider)? = nil, autoInterval: Duration = .seconds(15)) {
+        self.summaryProvider = summaryProvider
+        self.autoInterval = autoInterval
         activeURL = storageDirectory.appendingPathComponent("ActiveConversation.json")
         attachmentRoot = storageDirectory.appendingPathComponent("Attachments", isDirectory: true)
         let directory = storageDirectory.appendingPathComponent("Conversations", isDirectory: true)
@@ -62,6 +69,7 @@ final class MobileSession {
     }
     var summaryAvailability: String? { summaryAvailability(for: .summary) }
     func summaryAvailability(for mode: MobileSummaryMode) -> String? {
+        if summaryProvider != nil { return nil }
         if ai.provider == .ollama { return ai.availability(for: mode) }
         switch SystemLanguageModel.default.availability {
         case .available: return nil
@@ -116,6 +124,7 @@ final class MobileSession {
                     } else {
                         self.partial = timed.text.isEmpty ? nil : timed
                     }
+                    Task { await self.updateQuickAutomatically() }
                 } onFailure: { [weak self] error in
                     guard let self, self.state == .recording || self.state == .preparing else { return }
                     self.message = error
@@ -182,7 +191,7 @@ final class MobileSession {
         guard !busy, save(announce: false) else { return }
         id = UUID().uuidString; date = Date()
         title = "New conversation"; notes = ""; summary = ""; quickSummary = ""; deepThought = ""
-        segments = []; partial = nil; message = nil; attachments = []; sourceImportID = nil; lastAutoSource = ""
+        segments = []; partial = nil; message = nil; attachments = []; sourceImportID = nil; lastAutoSource = ""; lastAutoAttempt = nil
         save(announce: false)
     }
 
@@ -293,13 +302,30 @@ final class MobileSession {
         summaryTask = Task { await summarize(mode: mode); summaryTask = nil }
     }
 
+    private func scheduleAutoQuick() {
+        autoTask?.cancel()
+        autoTask = nil
+        guard autoQuick, state == .recording else { return }
+        let interval = autoInterval
+        autoTask = Task { [weak self] in
+            while !Task.isCancelled {
+                guard self != nil else { return }
+                await self?.updateQuickAutomatically()
+                do { try await Task.sleep(for: interval) } catch { return }
+            }
+        }
+    }
+
     func updateQuickAutomatically() async {
-        guard autoQuick, state == .recording, !isSummarizing else { return }
-        let source = summarySource
-        guard source.count >= 80, source != lastAutoSource else { return }
+        guard autoQuick, state == .recording, !isSummarizing, summaryTask == nil else { return }
+        let source = summarySource.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !source.isEmpty, source != lastAutoSource else { return }
         guard summaryBlockReason(for: .quick) == nil else { return }
-        lastAutoSource = source
+        let now = ContinuousClock.now
+        if let lastAutoAttempt, now - lastAutoAttempt < autoInterval { return }
+        lastAutoAttempt = now
         requestSummary(for: .quick)
+        await summaryTask?.value
     }
 
     func cancelSummary() { summaryTask?.cancel() }
@@ -312,7 +338,7 @@ final class MobileSession {
             message = "Add notes or record a transcript before summarizing."
             return
         }
-        let cloud = ai.provider == .ollama
+        let cloud = summaryProvider != nil || ai.provider == .ollama
         guard source.count <= (cloud ? 60_000 : 8_000) else {
             message = "This conversation exceeds the selected provider's summary limit. Export it or shorten your notes."
             return
@@ -325,7 +351,7 @@ final class MobileSession {
         do {
             let instructions = mode.instructions
             if cloud {
-                let client = try ai.client(for: mode)
+                let client: any LLMProvider = try summaryProvider ?? ai.client(for: mode)
                 for try await delta in client.stream(LLMRequest(system: instructions,
                     messages: [ChatMessage(role: "user", content: source)])) {
                     try Task.checkCancellation()
@@ -339,7 +365,9 @@ final class MobileSession {
             try Task.checkCancellation()
             switch mode {
             case .summary: summary = summaryDraft
-            case .quick: quickSummary = summaryDraft
+            case .quick:
+                quickSummary = summaryDraft
+                lastAutoSource = source.trimmingCharacters(in: .whitespacesAndNewlines)
             case .deep: deepThought = summaryDraft
             }
             save(announce: false)

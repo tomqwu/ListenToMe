@@ -1,3 +1,9 @@
+## iOS 1.3.2 (9)
+
+Fixes automatic Quick Summary for short transcripts and failed-request retries. The recording session
+owns automatic updates, independently of the visible screen. Settings remains usable while listening
+and offers separate Quick Summary, Summary, and Deep Think model pages with a cached API catalog.
+
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS

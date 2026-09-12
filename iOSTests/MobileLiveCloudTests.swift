@@ -39,35 +39,31 @@ final class MobileLiveCloudTests: XCTestCase {
             XCTFail("Catalog refresh failed: \(app.staticTexts["ollamaStatus"].label)"); return
         }
         for role in ["Summary", "Quick Summary", "Deep Think"] {
-            if role != "Summary" {
-                reveal(app.buttons["modelRole"], in: app, upwards: false)
-                app.buttons["modelRole"].tap()
-                XCTAssertTrue(app.buttons[role].waitForExistence(timeout: 5))
-                app.buttons[role].tap()
-            }
-            reveal(app.buttons["Choose model"], in: app, upwards: false)
-            app.buttons["Choose model"].tap()
+            let roleID = role == "Summary" ? "summary" : (role == "Quick Summary" ? "quick" : "deep")
+            let choose = app.buttons["choose-model-\(roleID)"]
+            reveal(choose, in: app, upwards: false)
+            choose.tap()
             let variant = role == "Deep Think" ? "pro" : "flash"
             let preferred = app.buttons.matching(NSPredicate(
                 format: "identifier BEGINSWITH %@ AND identifier CONTAINS %@", "model-", variant)).firstMatch
             let fallback = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "model-")).firstMatch
             (preferred.exists ? preferred : fallback).tap()
             let navigation = app.navigationBars["\(role) model"]
-            if navigation.exists { navigation.buttons.firstMatch.tap() }
-            reveal(app.buttons["Test connection"], in: app)
-            app.buttons["Test connection"].tap()
+            reveal(app.buttons["Test this model"], in: app)
+            app.buttons["Test this model"].tap()
             let verified = app.staticTexts.matching(NSPredicate(
                 format: "label BEGINSWITH %@", "Connection verified:")).firstMatch
             for _ in 0..<3 where !app.staticTexts["ollamaStatus"].exists { app.swipeUp() }
             let finished = app.staticTexts.matching(NSPredicate(
                 format: "label BEGINSWITH %@ OR label BEGINSWITH %@", "Connection verified:", "Connection test failed:")).firstMatch
-            _ = app.buttons["Test connection"].waitForExistence(timeout: 120)
+            _ = app.buttons["Test this model"].waitForExistence(timeout: 120)
             _ = finished.waitForExistence(timeout: 5)
             guard verified.exists else {
                 let screenshot = XCTAttachment(screenshot: app.screenshot())
                 screenshot.name = "Connection result"; screenshot.lifetime = .keepAlways; add(screenshot)
                 XCTFail("\(role) connection failed: \(app.staticTexts["ollamaStatus"].label)"); return
             }
+            navigation.buttons.firstMatch.tap()
         }
         app.buttons["Done"].tap()
         app.buttons["New"].tap()

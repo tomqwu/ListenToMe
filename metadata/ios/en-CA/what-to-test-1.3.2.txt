@@ -1,0 +1,5 @@
+Quick Summary now updates automatically from short transcript text while listening and retries failed requests. Enable Auto summary to opt in.
+
+Settings has separate model selections for Quick Summary, Summary, and Deep Think, available while listening. Model pages load the API catalog automatically and retain the last fetched catalog for later use. Test each selected model from its own page.
+
+Check that each role keeps its own selection after relaunch, that automatic quick summaries update with new speech, and that previous completed summaries survive a failed request.

@@ -77,13 +77,7 @@ struct MobileMeetingView: View {
             .sheet(isPresented: $showFullSummary) {
                 NavigationStack { summary.navigationTitle("Full summary").toolbar { Button("Done") { showFullSummary = false } } }
             }
-            .task(id: session.autoQuick && session.state == .recording) {
-                guard session.autoQuick, session.state == .recording else { return }
-                while !Task.isCancelled {
-                    do { try await Task.sleep(for: .seconds(30)) } catch { return }
-                    await session.updateQuickAutomatically()
-                }
-            }
+
         }
     }
 
@@ -159,7 +153,7 @@ struct MobileMeetingView: View {
             panelScroll {
                 VStack(alignment: .leading, spacing: 8) {
                     if mode == .quick && session.autoQuick {
-                        Text("Updates every 30 seconds while listening when text changes (at least 80 characters). " +
+                        Text("Updates while listening when text changes, checked every 15 seconds. " +
                              "No need to tap Summarize now. Uses your selected provider.")
                             .font(.caption2).foregroundStyle(.secondary)
                     }
@@ -328,7 +322,7 @@ struct MobileMeetingView: View {
     private var settings: some View {
         NavigationStack {
             Form {
-                MobileAISettingsView(ai: session.ai).disabled(session.busy)
+                MobileAISettingsView(ai: session.ai)
                 Section("Transcription") {
                     Picker("Language", selection: $session.language) {
                         Text("System (\(Locale.current.identifier))").tag(Locale.current.identifier)
