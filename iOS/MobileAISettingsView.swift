@@ -3,12 +3,12 @@ import ListenToMeCore
 
 struct MobileAISettingsView: View {
     @Bindable var ai: MobileAISettings
+    var includeSpeechCorrection = true
     @State private var key = ""
     @State private var operation: Task<Void, Never>?
     @FocusState private var editingKey: Bool
 
     var body: some View {
-        MobileSpeechCorrectionSettings(ai: ai)
         Section("AI summaries") {
             Picker("Summary provider", selection: $ai.provider) {
                 Text("Apple Intelligence · on-device").tag(MobileAISettings.Provider.apple)
@@ -62,6 +62,7 @@ struct MobileAISettingsView: View {
             }
         }
         .onDisappear { operation?.cancel(); key = "" }
+        if includeSpeechCorrection { MobileSpeechCorrectionSettings(ai: ai) }
     }
 
 }

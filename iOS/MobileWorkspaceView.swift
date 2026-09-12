@@ -66,7 +66,10 @@ struct MobileWorkspaceView<Header: View>: View {
         }
         .sheet(isPresented: $showSpeechSettings) {
             NavigationStack {
-                Form { MobileAISettingsView(ai: session.ai) }
+                Form {
+                    MobileSpeechCorrectionSettings(ai: session.ai)
+                    MobileAISettingsView(ai: session.ai, includeSpeechCorrection: false)
+                }
                     .navigationTitle("AI settings").navigationBarTitleDisplayMode(.inline)
                     .toolbar { Button("Done") { showSpeechSettings = false } }
             }
