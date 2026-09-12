@@ -95,6 +95,18 @@ Keep the IPA checksum and verification results with the evidence.
 
 ## 4. Upload — this is the publishing step
 
+After the preceding checks, the repeatable repository entry point is:
+
+```sh
+make ios-testflight IOS_ARCHIVE="$IOS_ARCHIVE" IOS_RELEASE_SOURCE="$(cat "$IOS_EVIDENCE/source-commit.txt")"
+```
+
+Add `IOS_RELEASE_FLAGS=--dry-run` to check archive identity without uploading. The helper checks app/extension
+identity and matching versions, requires explicit upload acceptance, records a status receipt, and refuses
+an upload already recorded by this helper. It cannot discover previous uploads made outside it: check App
+Store Connect and existing logs first. It does not prove archive/source provenance; verify that in step 2.
+The raw command below is the equivalent diagnostic path:
+
 ```sh
 xcodebuild -exportArchive -archivePath "$IOS_ARCHIVE" \
   -exportPath "dist/${IOS_RELEASE}-upload" \

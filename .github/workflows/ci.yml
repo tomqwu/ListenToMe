@@ -11,6 +11,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  release-workflow:
+    name: TestFlight upload workflow checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate upload decisions without network access
+        run: |
+          bash -n scripts/ios-testflight.sh
+          python3 scripts/test-ios-testflight.py
   core:
     name: Lint + Unit/Integration tests + Coverage gate
     runs-on: macos-15

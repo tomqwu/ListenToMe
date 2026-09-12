@@ -1,5 +1,15 @@
 # ListenToMe repository workflow
 
+## Standing iOS release instruction
+
+Every iOS app fix or feature includes TestFlight publication by default, including work merged by
+another session. Do not ask the maintainer to repeat "publish" or offer publication as optional
+follow-up work. Read `.agents/skills/listentome-testflight/SKILL.md` and `docs/IOS-RELEASING.md` when
+starting or resuming that work. An explicit draft/local-only request overrides this default.
+Use `make ios-testflight IOS_ARCHIVE=<validated.xcarchive> IOS_RELEASE_SOURCE=<commit>` for upload.
+A genuine credential/tool blocker must be reported precisely with preserved evidence; never claim
+publication without upload acceptance. This does not authorize a public production App Store release.
+
 ## Definition of done for fixes and features
 
 The maintainer expects fixes and features to be released, not left at a local build or install.
