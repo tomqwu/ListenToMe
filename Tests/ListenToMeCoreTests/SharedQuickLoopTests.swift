@@ -21,7 +21,7 @@ final class SharedQuickLoopTests: XCTestCase {
     }
 
     func testMacEventLoopUsesSameContractForEveryProviderAndDoesNotRunReviews() async throws {
-        for name in ["apple-intelligence", "ollama-cloud", "ollama-local"] {
+        for name in ["ollama-cloud", "ollama-local"] {
             let provider = MockLLMProvider(id: name, deltas: [publish])
             let session = MeetingSession(store: ConversationStore(), context: ContextEngine(),
                 makeCapture: { MockCapture() }, makeTranscriber: { MockTranscriber() },

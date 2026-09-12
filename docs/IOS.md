@@ -243,3 +243,7 @@ If provisioning or upload authentication fails, preserve the archive and report 
 Apple references: [SpeechAnalyzer](https://developer.apple.com/documentation/speech/speechanalyzer),
 [Foundation Models](https://developer.apple.com/documentation/foundationmodels),
 [ReplayKit](https://developer.apple.com/documentation/replaykit).
+
+## iOS 1.9.0 (17)
+
+Uses the [shared live-summary scheduler](SHARED-LIVE-SUMMARY.md) with macOS 1.4.0. Ollama is the fresh-install default; existing choices remain saved. Auto requires Ollama and opt-in. Apple Intelligence remains available for manual summaries. See [What to Test](../metadata/ios/en-CA/what-to-test-1.9.0.txt).

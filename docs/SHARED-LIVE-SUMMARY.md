@@ -1,4 +1,4 @@
-# Shared live-summary implementation (candidate)
+# Shared live-summary scheduler and provider policy
 
 macOS and iOS use `ListenToMeCore.LiveSummaryScheduler`, `QuickSummaryContext` and
 `QuickSummaryReader`. Platform adapters report finalized transcript, note, recording,
@@ -17,20 +17,21 @@ thinking disabled, temperature zero and 1600 output tokens. The shared reader va
 same final decision shape and applies a 15-second/16-KiB response limit. Local Ollama and
 Ollama Cloud use that contract; a device does not need Apple Intelligence for either.
 
-`SharedPlatform/AppleIntelligenceProvider.swift` is compiled into both apps. It adapts the
-same incremental input to Foundation Models guided generation, then returns the common
-decision shape for validation. Manual Apple summaries use ordinary native generation.
-Unavailable native models report their availability reason and do not silently select Cloud.
+Ollama is the default provider on both platforms. Existing explicit provider/model choices are
+preserved. macOS retains its local versus Cloud privacy setting; iOS uses the configured Ollama
+Cloud connection. Apple Intelligence is available for manual summaries on supported devices.
+Selecting Apple pauses Auto with an explanation; it never silently routes speech to Cloud.
 
-## Release gate
+The native Auto experiment failed the quality gate (3/7 cases, including failures on repetition,
+a bilingual correction and transcript instructions). It is isolated in
+`scripts/ExperimentalAppleQuickProvider.swift`, outside both app targets. The benchmark runner
+`scripts/benchmark-quick-apple.swift` uses that experiment for reproducibility. Shipping native
+transport rejects automatic evaluation. This does not change the common scheduler's behavior
+based on hardware capability.
 
-This candidate is not released. Shared scheduling tests pass, but the live Apple evaluator
-still fails factual/semantic quality cases, including greetings, repetition, a bilingual
-correction and an instruction embedded in speech. Guided structure does not establish factual
-correctness. Current tests do not justify claiming Apple Auto is equivalent in quality to
-Ollama. The pending product decision is whether this release uses a chosen Ollama model on
-all devices, or must also meet the quality gate using Apple's on-device model for Auto.
+## Validation and release evidence
 
-The existing iOS1.8.0(16) release is unchanged. Evidence for this candidate is kept separately
-in `dist/shared-summary-evidence/`. Do not upload the candidate or call it production-ready
-until the provider policy, quality gate and platform acceptance are resolved.
+Target versions are macOS 1.4.0 (10) and iOS 1.9.0 (17). Candidate checks and native benchmark
+results are in `dist/shared-summary-evidence/`; per-release upload and artifact evidence live in
+the respective versioned `dist/` directories. A candidate or simulator pass alone is not a
+production acceptance claim. Physical iPhone/iPad acceptance remains separate from TestFlight.

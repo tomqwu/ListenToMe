@@ -156,7 +156,7 @@ struct MeetingView: View {
                 .deep: ProviderSettings.model(for: .deep)
             ],
             providerAvailability: { _ in
-                ProviderSettings.aiMode == .apple ? AppleIntelligenceProvider.unavailableReason : nil
+                ProviderSettings.aiMode == .apple ? AppleIntelligenceProvider.automaticQuickUnavailableReason : nil
             }
         ))
     }

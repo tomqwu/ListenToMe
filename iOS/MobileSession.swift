@@ -84,7 +84,9 @@ final class MobileSession {
     }
     var summaryAvailability: String? { summaryAvailability(for: .summary) }
     var automaticQuickAvailability: String? {
-        summaryAvailability(for: .quick)
+        if summaryProvider != nil { return nil }
+        if ai.provider == .apple { return AppleIntelligenceProvider.automaticQuickUnavailableReason }
+        return summaryAvailability(for: .quick)
     }
     func summaryAvailability(for mode: MobileSummaryMode) -> String? {
         if summaryProvider != nil { return nil }
@@ -384,7 +386,6 @@ extension MobileSession {
                 reviewsCompleted: quickReader.reviewsCompleted, pendingReviews: quickReader.recommendations) else { return }
             let provider: any LLMProvider
             if let summaryProvider { provider = summaryProvider }
-            else if ai.provider == .apple { provider = AppleIntelligenceProvider() }
             else { provider = try ai.client(for: .quick) }
             manualQuickError = nil
             let sessionID = id

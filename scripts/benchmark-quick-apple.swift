@@ -11,7 +11,7 @@ struct AppleQuickBenchmark {
         var output: [String: Any] = [:]
         do {
             var text = ""
-            for try await delta in AppleIntelligenceProvider().stream(request) { text += delta }
+            for try await delta in ExperimentalAppleQuickProvider().stream(request) { text += delta }
             _ = try QuickSummaryDecision.parse(text)
             output["response"] = text
         } catch { output["error"] = String(describing: error) }
