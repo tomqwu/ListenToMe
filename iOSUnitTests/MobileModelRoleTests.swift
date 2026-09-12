@@ -59,7 +59,9 @@ final class MobileModelRoleTests: XCTestCase {
             XCTAssertEqual(settings.deepModel, "")
             settings.deepModel = "GLM-5.3-FLASH"
             XCTAssertNotNil(settings.availability(for: .deep))
-            XCTAssertThrowsError(try settings.client(for: .deep))
+            XCTAssertThrowsError(try settings.client(for: .deep)) { error in
+                XCTAssertTrue(error.localizedDescription.contains("Flash models cannot be used"))
+            }
         
         }
     }
