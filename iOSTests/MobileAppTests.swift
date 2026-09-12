@@ -144,7 +144,7 @@ final class MobileAppTests: XCTestCase {
         app.buttons["modelRole"].tap()
         app.buttons["Quick Summary"].tap()
         app.buttons["modelRole"].tap()
-        app.buttons["summary-option-deep"].tap()
+        app.buttons["role-option-deep"].tap()
         app.buttons["Remove API key"].tap()
         XCTAssertFalse(app.staticTexts["savedAPIKey"].exists)
         app.buttons["summaryProvider"].tap()
