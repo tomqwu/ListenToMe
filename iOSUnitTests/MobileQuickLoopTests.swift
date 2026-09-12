@@ -189,7 +189,7 @@ final class MobileQuickLoopTests: XCTestCase {
         XCTAssertEqual(inputs.last?.changes[0].text, "Sarah confirms.")
     }
 
-    func testAppleAutomaticEvaluationPausesWithoutEnablingCloud() {
+    func testAppleAutomaticEvaluationUsesSameAvailabilityWithoutEnablingCloud() {
         let local = MobileSession(storageDirectory: root.appendingPathComponent("local"))
         let original = local.ai.provider
         defer { local.state = .idle; local.ai.provider = original }
@@ -197,8 +197,7 @@ final class MobileQuickLoopTests: XCTestCase {
         local.notes = "A meeting decision"
         local.autoQuick = true
         local.state = .recording
-        XCTAssertTrue(local.autoQuickStatus.contains("Auto paused"))
-        XCTAssertTrue(local.automaticQuickAvailability?.contains("Ollama Cloud") == true)
+        XCTAssertEqual(local.automaticQuickAvailability, local.summaryAvailability(for: .quick))
         XCTAssertEqual(local.ai.provider, .apple)
         XCTAssertFalse(local.quickReader.isReading)
         XCTAssertEqual(local.quickReader.completedReads, 0)

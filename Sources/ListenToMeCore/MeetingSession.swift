@@ -8,11 +8,11 @@ import Observation
 @Observable
 public final class MeetingSession {
     public private(set) var isRunning = false
-    public var notes = ""
+    public var notes = "" { didSet { handleLiveEvent(.notesChanged) } }
     public var proactiveEnabled = true
-    public var autoSummaryEnabled = true
+    public var autoSummaryEnabled = false { didSet { handleLiveEvent(.automationChanged) } }
     public var aiEnabled = true {
-        didSet { if !aiEnabled { for role in CopilotRole.allCases { cancelResponse(role) } } }
+        didSet { if !aiEnabled { for role in CopilotRole.allCases { cancelResponse(role) } }; handleLiveEvent(.providerChanged) }
     }
     public private(set) var captureMessages: [SpeakerSource: String] = [:]
     public private(set) var transcriptionStatus = "Transcription: idle"
@@ -53,15 +53,19 @@ public final class MeetingSession {
     /// The model ID assigned to each role.
     public private(set) var models: [CopilotRole: String]
 
+    public let quickReader = QuickSummaryReader()
+    private var liveScheduler = LiveSummaryScheduler()
+    private var liveWake: Task<Void, Never>?
+
     private var context: ContextEngine
     private let makeCapture: @Sendable () -> any AudioCapturing
     private let makeTranscriber: @Sendable () -> any Transcribing
+    private let providerAvailability: @Sendable (String) -> String?
     private let makeProvider: @Sendable (String) -> any LLMProvider
     private var providers: [CopilotRole: any LLMProvider]
     private var capture: (any AudioCapturing)?
     private var transcriber: (any Transcribing)?
     private let clock: @Sendable () -> TimeInterval
-    private let listenerDebounce: TimeInterval
 
     /// Capture -> transcriber.feed pump. Drained (awaited) BEFORE finishing the transcriber so the
     /// last buffered chunks are fed before finalization.
@@ -76,12 +80,6 @@ public final class MeetingSession {
     private var responseGenerations: [CopilotRole: Int] = [:]
     private var runID = 0
 
-    /// Tracks when the listener was last refreshed (for debouncing ingest-triggered refreshes).
-    private var lastListenerFire: TimeInterval = -.greatestFiniteMagnitude
-
-    /// True while a coalesced trailing listener refresh is scheduled (at most one in flight).
-    private var listenerRefreshPending = false
-
     public init(store: ConversationStore,
                 context: ContextEngine,
                 makeCapture: @escaping @Sendable () -> any AudioCapturing,
@@ -89,14 +87,17 @@ public final class MeetingSession {
                 makeProvider: @escaping @Sendable (String) -> any LLMProvider,
                 models: [CopilotRole: String],
                 listenerDebounce: TimeInterval = 12,
+                autoInterval: Duration = .seconds(5),
+                providerAvailability: @escaping @Sendable (String) -> String? = { _ in nil },
                 clock: @escaping @Sendable () -> TimeInterval = { Date().timeIntervalSince1970 }) {
         self.store = store
         self.context = context
         self.makeCapture = makeCapture
         self.makeTranscriber = makeTranscriber
+        self.providerAvailability = providerAvailability
         self.makeProvider = makeProvider
         self.models = models
-        self.listenerDebounce = listenerDebounce
+        self.liveScheduler = LiveSummaryScheduler(interval: autoInterval)
         self.clock = clock
         // Build initial providers from models
         var built: [CopilotRole: any LLMProvider] = [:]
@@ -113,6 +114,7 @@ public final class MeetingSession {
         cancelResponse(role)
         models[role] = model
         providers[role] = makeProvider(model)
+        if role == .quick { quickReader.clearError(); handleLiveEvent(.providerChanged) }
     }
 
     public func cancelResponse(_ role: CopilotRole) {
@@ -124,15 +126,14 @@ public final class MeetingSession {
     public func resetConversation() {
         guard !isRunning, !isTranscribingFile else { return }
         for role in CopilotRole.allCases { cancelResponse(role) }
+        quickReader.reset(); handleLiveEvent(.conversationChanged)
         store.reset()
         notes = ""; referenceContext = nil
         listenerSummary = ""; quickSuggestion = ""; deepAnswer = ""
         lastCompletedListenerSummary = ""
         summarizedSegmentIDs = []
         pendingSummaryIDs = [:]
-        listenerRefreshPending = false
         context = ContextEngine(debounce: context.debounce)
-        lastListenerFire = -.greatestFiniteMagnitude
         runID += 1
     }
 
@@ -141,6 +142,7 @@ public final class MeetingSession {
     public func start() async throws {
         guard !isRunning, !isTranscribingFile else { return }
         isRunning = true
+        handleLiveEvent(.recordingChanged)
         // Wait for any prior transcriber to finish draining BEFORE bumping runID, so the old
         // session's segment pump still ingests its final segments under its own runID (a bump here
         // would make its `guard runID == myRun` fail and drop the just-stopped session's last audio).
@@ -246,10 +248,10 @@ public final class MeetingSession {
                                  segmentPump: Task<Void, Never>?)? {
         guard isRunning else { return nil }
         isRunning = false
+        handleLiveEvent(.recordingChanged)
         captureStatusTask?.cancel()
         captureMessages = [.you: "stopped", .others: "stopped"]
         transcriptionStatus = "Transcription: finalizing…"
-        listenerRefreshPending = false
         for role in CopilotRole.allCases { cancelResponse(role) }
         capture?.stop()
         let transcriber = self.transcriber
@@ -334,40 +336,7 @@ extension MeetingSession {
     public func ingest(_ segment: TranscriptSegment) async {
         store.apply(segment)
 
-        // Listener refresh: leading + trailing edge debounce on finalized segments while running.
-        // Leading edge fires immediately and registers responseTasks[.listener] synchronously
-        // (via startListenerRefresh) so stop()/waitForResponse(.listener) cannot miss it.
-        // Suppressed segments arm a single coalesced trailing refresh for the rest of the window,
-        // so a final utterance before the meeting goes quiet still gets summarized.
-        if segment.isFinal, isRunning, aiEnabled, autoSummaryEnabled {
-            let now = clock()
-            let elapsed = now - lastListenerFire
-            if elapsed >= listenerDebounce {
-                lastListenerFire = now
-                startListenerRefresh()
-            } else if !listenerRefreshPending {
-                listenerRefreshPending = true
-                let wait = listenerDebounce - elapsed
-                let scheduledRun = runID
-                Task { [weak self] in
-                    try? await Task.sleep(nanoseconds: UInt64(max(0, wait) * 1_000_000_000))
-                    self?.fireTrailingListenerRefresh(forRun: scheduledRun)
-                }
-            }
-        }
-
-        // Quick proactive: fires on finalized remote questions
-        guard isRunning, aiEnabled, proactiveEnabled,
-              context.shouldFireProactive(for: segment, now: clock()) else { return }
-        startRoleTask(.quick) {
-            PromptBuilder.build(
-                context: self.context.buildContext(from: self.store, notes: self.notes,
-                                                   summary: self.lastCompletedListenerSummary,
-                                                   responseLanguage: self.responseLanguage,
-                                                   references: self.referenceContext,
-                                                   personaGuidance: self.personaGuidance),
-                action: .proactive)
-        }
+        if segment.isFinal { handleLiveEvent(.transcriptChanged) }
     }
 
     // MARK: - On-demand responses (awaitable)
@@ -461,15 +430,6 @@ extension MeetingSession {
         return task
     }
 
-    /// Fires a coalesced trailing listener refresh after the debounce window, unless stopped
-    /// or the session has been restarted (stale cross-session refresh).
-    private func fireTrailingListenerRefresh(forRun run: Int) {
-        guard isRunning, aiEnabled, autoSummaryEnabled, runID == run else { return }   // ignore stale cross-session refreshes
-        listenerRefreshPending = false
-        lastListenerFire = clock()
-        startListenerRefresh()
-    }
-
     // MARK: - Wait helpers
 
     /// Await the most recent in-flight task for the given role (for tests/UI).
@@ -489,6 +449,7 @@ extension MeetingSession {
     private func startRoleTask(_ role: CopilotRole,
                                _ makeRequest: @escaping () -> LLMRequest) -> Task<Void, Never> {
         guard aiEnabled else { return Task {} }
+        if role == .quick { handleLiveEvent(.manualQuickStarted) }
         responseTasks[role]?.cancel()
         let generation = (responseGenerations[role] ?? 0) + 1
         responseGenerations[role] = generation
@@ -503,12 +464,14 @@ extension MeetingSession {
 
     private func run(_ role: CopilotRole, _ request: LLMRequest, generation: Int) async {
         guard generation == responseGenerations[role], !Task.isCancelled else { return }
+        let reviewedPieces = livePieces
         // Clear the output and mark streaming
         setOutput(role, "")
         streamingRoles.insert(role)
         defer {
             if generation == responseGenerations[role] {
                 streamingRoles.remove(role)
+                if role == .quick { handleLiveEvent(.manualQuickFinished) }
             }
         }
         guard let provider = providers[role] else { return }
@@ -517,6 +480,9 @@ extension MeetingSession {
                 if Task.isCancelled { return }
                 if generation != responseGenerations[role] { return }
                 appendOutput(role, delta)
+            }
+            if generation == responseGenerations[role], !Task.isCancelled, reviewedPieces == livePieces {
+                quickReader.markReviewed(role == .listener ? "summary" : role.rawValue)
             }
             // Listener finished: snapshot the completed summary for Quick/Deep grounding, so a
             // later refresh clearing the live value can't strip context from a proactive prompt.
@@ -551,5 +517,56 @@ extension MeetingSession {
         case .quick:    quickSuggestion += delta
         case .deep:     deepAnswer += delta
         }
+    }
+}
+
+
+extension MeetingSession {
+    private var livePieces: [QuickSummaryContext.Piece] {
+        QuickSummaryContext.pieces(notes: notes, segments: store.utterances)
+    }
+
+    public var autoQuickStatus: String {
+        guard autoSummaryEnabled else { return "Auto off" }
+        guard aiEnabled else { return "Auto paused · AI is off" }
+        if let reason = providerAvailability(models[.quick] ?? "") { return "Auto paused · " + reason }
+        if let error = quickReader.error { return error }
+        if quickReader.isReading { return "Checking new completed speech…" }
+        return isRunning ? "Listening for meaningful changes" : "Auto checks while listening"
+    }
+
+    private func handleLiveEvent(_ event: LiveSummaryScheduler.Event) {
+        let state = LiveSummaryScheduler.Snapshot(recording: isRunning, automatic: autoSummaryEnabled,
+            pending: quickReader.context.hasChanges(livePieces), reading: quickReader.isReading,
+            manualQuick: streamingRoles.contains(.quick), available: aiEnabled && providers[.quick] != nil && providerAvailability(models[.quick] ?? "") == nil,
+            failures: quickReader.failures)
+        for action in liveScheduler.plan(event, state: state) {
+            switch action {
+            case .cancelWake: liveWake?.cancel(); liveWake = nil
+            case .cancelEvaluation: quickReader.cancel()
+            case .schedule(let delay):
+                liveWake = Task { [weak self] in
+                    do { try await Task.sleep(for: delay) } catch { return }
+                    self?.handleLiveEvent(.timerFired)
+                }
+            case .evaluate: Task { [weak self] in await self?.evaluateLiveQuick() }
+            }
+        }
+    }
+
+    private func evaluateLiveQuick() async {
+        guard isRunning, aiEnabled, autoSummaryEnabled, !quickReader.isReading,
+              !streamingRoles.contains(.quick), providerAvailability(models[.quick] ?? "") == nil, let provider = providers[.quick] else { return }
+        defer { handleLiveEvent(.evaluationFinished) }
+        if livePieces.isEmpty { quickReader.reset(); quickSuggestion = ""; return }
+        do {
+            guard let batch = try quickReader.context.batch(livePieces, summary: quickSuggestion,
+                reviewsCompleted: quickReader.reviewsCompleted, pendingReviews: quickReader.recommendations) else { return }
+            let run = runID
+            await quickReader.read(batch, provider: provider, isCurrent: { [weak self] in
+                guard let self, self.runID == run, self.isRunning, self.autoSummaryEnabled, self.aiEnabled else { return false }
+                return self.quickReader.context.isCurrent(batch, pieces: self.livePieces)
+            }, apply: { [weak self] in self?.quickSuggestion = $0 })
+        } catch { /* Encoding consists only of validated string data. A later event retries. */ }
     }
 }

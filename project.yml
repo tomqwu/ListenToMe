@@ -19,6 +19,7 @@ targets:
     platform: macOS
     sources:
       - App
+      - SharedPlatform
     dependencies:
       - package: ListenToMeCore
         product: ListenToMeCore
@@ -55,6 +56,7 @@ targets:
     deploymentTarget: "26.0"
     sources:
       - iOS
+      - SharedPlatform
       - App/MarkdownText.swift
       - iOSShared
     dependencies:

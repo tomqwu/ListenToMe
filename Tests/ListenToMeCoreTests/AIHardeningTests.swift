@@ -10,7 +10,7 @@ final class AIHardeningTests: XCTestCase {
         }
         XCTAssertTrue(ModelPrivacy.isVerifiedLocal(Data(
             #"{"details":{"format":"gguf"},"model_info":{"architecture":"qwen"}}"#.utf8)))
-        XCTAssertEqual(AIProcessingMode.allCases.map(\.label).count, 3)
+        XCTAssertEqual(AIProcessingMode.allCases.map(\.label).count, 4)
     }
 
     func testInBandErrorPreservesPartialTextAndThrows() async {

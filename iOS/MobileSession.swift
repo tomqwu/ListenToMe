@@ -84,11 +84,7 @@ final class MobileSession {
     }
     var summaryAvailability: String? { summaryAvailability(for: .summary) }
     var automaticQuickAvailability: String? {
-        if summaryProvider != nil { return nil }
-        guard ai.provider == .ollama else {
-            return "Auto needs Ollama Cloud. Choose it in Settings, or use Refresh for an Apple Intelligence summary."
-        }
-        return ai.availability(for: .quick)
+        summaryAvailability(for: .quick)
     }
     func summaryAvailability(for mode: MobileSummaryMode) -> String? {
         if summaryProvider != nil { return nil }
@@ -386,7 +382,10 @@ extension MobileSession {
         do {
             guard let batch = try quickReader.context.batch(quickPieces, summary: quickSummary,
                 reviewsCompleted: quickReader.reviewsCompleted, pendingReviews: quickReader.recommendations) else { return }
-            let provider: any LLMProvider = try summaryProvider ?? ai.client(for: .quick)
+            let provider: any LLMProvider
+            if let summaryProvider { provider = summaryProvider }
+            else if ai.provider == .apple { provider = AppleIntelligenceProvider() }
+            else { provider = try ai.client(for: .quick) }
             manualQuickError = nil
             let sessionID = id
             await quickReader.read(batch, provider: provider, isCurrent: { [weak self] in
@@ -457,7 +456,7 @@ extension MobileSession {
                 quickSummary = summaryDraft
             case .deep: deepThought = summaryDraft
             }
-            if summarySource == source { quickReader.markReviewed(mode) }
+            if summarySource == source { quickReader.markReviewed(mode.rawValue) }
             save(announce: false)
         } catch {
             let failure = "\(mode.title) failed: \(MobileAISettings.errorMessage(error)) Your previous summary is kept."

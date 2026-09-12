@@ -184,13 +184,13 @@ final class MeetingSessionTests: XCTestCase {
 
     // MARK: - Proactive (quick role)
 
-    func testIngestFiresProactiveQuickOnRemoteQuestion() async throws {
+    func testIngestDoesNotGenerateWithoutAutoOptIn() async throws {
         let (session, _) = makeSession(now: { 999_999 })
         try await session.start()
         await session.ingest(TranscriptSegment(source: .others, text: "Are we ready?",
                                                isFinal: true, start: 0, end: 1))
         await session.waitForResponse(.quick)
-        XCTAssertEqual(session.quickSuggestion, "[Q]")
+        XCTAssertEqual(session.quickSuggestion, "")
         session.stop()
     }
 
@@ -223,7 +223,7 @@ final class MeetingSessionTests: XCTestCase {
 
     // MARK: - Listener debounce via ingest
 
-    func testIngestFinalSegmentTriggersListenerRefreshAfterDebounce() async throws {
+    func testIngestLeavesFullSummaryManual() async throws {
         let (session, _) = makeSession(now: { 999_999 }, listenerDebounce: 0)
         try await session.start()
         await session.ingest(TranscriptSegment(source: .you, text: "Here is my update.",
@@ -231,6 +231,8 @@ final class MeetingSessionTests: XCTestCase {
         // Yield to let the background listener Task register in responseTasks, then await it.
         for _ in 0 ..< 10 { await Task.yield() }
         await session.waitForResponse(.listener)
+        XCTAssertEqual(session.listenerSummary, "")
+        await session.refreshListener()
         XCTAssertEqual(session.listenerSummary, "[L]")
         session.stop()
     }

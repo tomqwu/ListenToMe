@@ -86,7 +86,7 @@ def main():
             latest[family] = model
     models = [m['name'] for m in latest.values()]
     (args.output / 'catalog.json').write_text(json.dumps(flash, indent=2))
-    prompt = (ROOT / 'iOS/MobileQuickContext.swift').read_text().split('static let instructions = """')[1].split('"""')[0].strip()
+    prompt = (ROOT / 'Sources/ListenToMeCore/QuickSummaryContext.swift').read_text().split('static let instructions = """')[1].split('"""')[0].strip()
     (args.output / 'prompt.txt').write_text(prompt)
     cases = json.loads((ROOT / 'scripts/fixtures/quick-evaluator-cases.json').read_text())
     records = []
