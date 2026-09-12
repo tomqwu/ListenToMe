@@ -1,2 +1,4 @@
 Fixed raw Markdown appearing in summaries. Quick Summary, Deep Summary, full Summary and streaming responses now render headings, bullets, emphasis and code using the desktop renderer. Reopen existing conversations to verify formatting; exported Markdown keeps its original content.
 Large accessibility text now uses one scrollable page so Deep Summary remains reachable without nested panel scrolling.
+
+Build 8: Live now stacks the transcript above a full-width Quick Summary. Deep Think has a separate tab. Verify switching tabs while listening, portrait/landscape and accessibility text. Auto summary is opt-in and remembered across launches; when enabled it checks changed text every 30 seconds while listening (minimum 80 characters). Summarize now is optional. Verify Ollama disclosure and manual Deep Think generation.

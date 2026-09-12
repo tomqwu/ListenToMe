@@ -1,7 +1,7 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.3.1 (7).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.3.1 (8).
 
 ## Included
 
@@ -36,7 +36,7 @@ confirmation and removes that conversation's transcript, notes, original attachm
 an active conversation creates an empty active snapshot so the deleted content does not reappear
 on restart. Other conversations are preserved.
 
-The main screen shows the live transcript above **Quick Summary** and **Deep Summary** side by side on iPhone. On wide iPad layouts, transcript and Quick Summary are on the left and Deep Summary is on the right. Large accessibility text stacks expanding panels and the header in one scrollable page. Start/Stop stays visible; Save, New and Share move to More in that layout. **More → Full summary** also offers **Summary**, **Quick Summary** (up to five concise bullets) and **Deep Think**
+The **Live** tab shows the transcript above a full-width **Quick Summary**. **Deep Think** has its own tab with room for longer analysis. Landscape and accessibility text use a scrollable page. Start/Stop remains available in either tab. **More → Full summary** also offers **Summary**, **Quick Summary** (up to five concise bullets) and **Deep Think**
 (a deeper analysis of decisions, tradeoffs, risks and unresolved questions). Each result is stored
 separately, restored with its conversation and included when sharing. These are distinct prompts;
 Deep Think does not promise a provider-specific reasoning mode. Requests use the selected provider
@@ -78,7 +78,7 @@ choose another. Model refresh does not prove key validity: Test connection verif
 `/api/chat` response using only a synthetic prompt. Cloud models run remotely; `/api/pull` is not needed.
 
 Selecting Ollama is opt-in. Generating any of the three AI outputs sends the current notes and transcript to
-Ollama; microphone audio continues to be transcribed on-device. Quick Summary has an opt-in **Auto** toggle (off at launch). While listening, it checks every 30 seconds and generates a new Quick Summary if the source changed and contains at least 80 characters. Enabling Auto with Ollama selected sends those snapshots to Ollama. Deep Summary stays on-demand. Existing output remains visible while the next response streams; failures keep the last completed result.
+Ollama; microphone audio continues to be transcribed on-device. Quick Summary has an opt-in **Auto** toggle (off initially; your choice is remembered across launches). While listening, it checks every 30 seconds and generates a new Quick Summary if the source changed and contains at least 80 characters. Enabling Auto with Ollama selected sends those snapshots to Ollama. Deep Think stays on-demand. Existing output remains visible while the next response streams; failures keep the last completed result.
 The last complete summary is preserved on HTTP errors, incomplete streams and cancellation. Streamed
 text is shown separately until completion. Backgrounding cancels an active summary request.
 

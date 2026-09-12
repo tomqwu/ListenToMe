@@ -4,6 +4,8 @@ import ListenToMeCore
 struct MobileMeetingView: View {
     @Bindable var session: MobileSession
     @State private var showHistory = false
+    @State private var workspace = Workspace.live
+    private enum Workspace: String, CaseIterable { case live = "Live", deep = "Deep Think" }
     @State private var showSettings = false
     @State private var showNotes = false
     @State private var showFullSummary = false
@@ -19,38 +21,30 @@ struct MobileMeetingView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 if !dynamicTypeSize.isAccessibilitySize { status }
+                Picker("Workspace", selection: $workspace) {
+                    ForEach(Workspace.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                }.pickerStyle(.segmented).padding(.horizontal, 10).padding(.top, 8)
+                    .accessibilityIdentifier("workspaceTabs")
                 GeometryReader { geometry in
-                    if dynamicTypeSize.isAccessibilitySize {
+                    if dynamicTypeSize.isAccessibilitySize || verticalSizeClass == .compact {
                         ScrollView {
                             VStack(spacing: 10) {
-                                status
-                                transcriptPanel
-                                aiPanel(.quick)
-                                aiPanel(.deep)
+                                if dynamicTypeSize.isAccessibilitySize { status }
+                                if workspace == .live {
+                                    transcriptPanel
+                                    aiPanel(.quick)
+                                } else {
+                                    aiPanel(.deep)
+                                }
                             }
                         }.accessibilityIdentifier("dashboardScroll")
-                    } else if verticalSizeClass == .compact {
-                        HStack(spacing: 10) {
-                            transcriptPanel
-                            aiPanel(.quick)
-                            aiPanel(.deep)
-                        }
-                    } else if geometry.size.width >= 700 {
-                        HStack(spacing: 10) {
-                            VStack(spacing: 10) {
-                                transcriptPanel.frame(maxHeight: .infinity)
-                                aiPanel(.quick).frame(maxHeight: .infinity)
-                            }
-                            aiPanel(.deep).frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else if workspace == .live {
+                        VStack(spacing: 10) {
+                            transcriptPanel.frame(height: max(110, geometry.size.height * 0.48))
+                            aiPanel(.quick).frame(maxHeight: .infinity)
                         }
                     } else {
-                        VStack(spacing: 10) {
-                            transcriptPanel.frame(height: max(110, geometry.size.height * 0.42))
-                            HStack(spacing: 8) {
-                                aiPanel(.quick)
-                                aiPanel(.deep)
-                            }.frame(maxHeight: .infinity)
-                        }
+                        aiPanel(.deep)
                     }
                 }.padding(10)
 
@@ -128,7 +122,7 @@ struct MobileMeetingView: View {
     private var transcriptPanel: some View {
         VStack(alignment: .leading, spacing: 4) {
             Label("Live transcript", systemImage: "waveform").font(.headline).padding([.top, .horizontal], 10)
-            transcript.frame(maxWidth: .infinity, maxHeight: dynamicTypeSize.isAccessibilitySize ? nil : .infinity)
+            transcript.frame(maxWidth: .infinity, maxHeight: (dynamicTypeSize.isAccessibilitySize || verticalSizeClass == .compact) ? nil : .infinity)
         }.background(.background, in: RoundedRectangle(cornerRadius: 14))
             .overlay(RoundedRectangle(cornerRadius: 14).stroke(.quaternary))
             .accessibilityIdentifier("transcriptPanel")
@@ -136,7 +130,7 @@ struct MobileMeetingView: View {
 
     @ViewBuilder
     private func panelScroll<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        if dynamicTypeSize.isAccessibilitySize {
+        if dynamicTypeSize.isAccessibilitySize || verticalSizeClass == .compact {
             // The accessibility layout already has one outer scroll view. Nested scrolling
             // can trap swipes inside a panel and make later summaries unreachable.
             content()
@@ -147,13 +141,13 @@ struct MobileMeetingView: View {
 
     private func aiPanel(_ mode: MobileSummaryMode) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(mode == .quick ? "Quick Summary" : "Deep Summary").font(.headline)
+            Text(mode.title).font(.headline)
             if mode == .quick {
-                Toggle("Auto", isOn: $session.autoQuick).font(.caption)
+                Toggle("Auto summary", isOn: $session.autoQuick).font(.caption)
                     .accessibilityLabel("Auto Quick Summary")
             }
             HStack {
-                Button(session.generatingMode == mode ? "Updating…" : "Update") {
+                Button(session.generatingMode == mode ? "Updating…" : (mode == .quick ? "Summarize now" : "Analyze")) {
                     session.requestSummary(for: mode)
                 }.buttonStyle(.borderedProminent).controlSize(.small)
                     .accessibilityLabel("Generate \(mode.title)")
@@ -165,8 +159,17 @@ struct MobileMeetingView: View {
             panelScroll {
                 VStack(alignment: .leading, spacing: 8) {
                     if mode == .quick && session.autoQuick {
-                        Text("Updates every 30 seconds while listening when text changes (at least 80 characters). Uses your selected provider.")
+                        Text("Updates every 30 seconds while listening when text changes (at least 80 characters). " +
+                             "No need to tap Summarize now. Uses your selected provider.")
                             .font(.caption2).foregroundStyle(.secondary)
+                    }
+                    if mode == .quick && !session.autoQuick {
+                        Text("Enable Auto summary to update while listening. With Ollama Cloud, your notes and transcript are sent automatically.")
+                            .font(.caption2).foregroundStyle(.secondary)
+                    }
+                    if mode == .deep {
+                        Text("Explore decisions, tradeoffs and open questions when you need a deeper review.")
+                            .font(.caption).foregroundStyle(.secondary)
                     }
                     if let reason = session.summaryBlockReason(for: mode), !session.isSummarizing {
                         Text(reason).font(.caption).foregroundStyle(.secondary)
@@ -181,7 +184,9 @@ struct MobileMeetingView: View {
                         .accessibilityElement(children: .combine).accessibilityIdentifier("output-\(mode.rawValue)")
                 }.frame(maxWidth: .infinity, alignment: .leading)
             }
-        }.padding(10).frame(maxWidth: .infinity, maxHeight: dynamicTypeSize.isAccessibilitySize ? nil : .infinity, alignment: .topLeading)
+        }.padding(10).frame(maxWidth: .infinity,
+                            maxHeight: (dynamicTypeSize.isAccessibilitySize || verticalSizeClass == .compact) ? nil : .infinity,
+                            alignment: .topLeading)
             .background(mode == .quick ? Color.indigo.opacity(0.06) : Color.purple.opacity(0.06),
                         in: RoundedRectangle(cornerRadius: 14))
     }
@@ -215,7 +220,9 @@ struct MobileMeetingView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 Picker("AI output", selection: $summaryMode) {
-                    ForEach(MobileSummaryMode.allCases) { mode in Text(mode.title).tag(mode) }
+                    ForEach(MobileSummaryMode.allCases) { mode in
+                        Text(mode.title).tag(mode).accessibilityIdentifier("summary-option-\(mode.rawValue)")
+                    }
                 }.accessibilityIdentifier("summaryMode").disabled(session.isSummarizing)
                 Text(summaryMode.title).font(.title2.bold())
                 Text(session.ai.provider == .ollama

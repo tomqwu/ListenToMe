@@ -15,7 +15,9 @@ final class MobileSession {
     var deepThought = ""
     var attachments: [SessionAttachment] = []
     var generatingMode: MobileSummaryMode?
-    var autoQuick = false
+    var autoQuick = UserDefaults.standard.bool(forKey: "autoQuickSummary") {
+        didSet { UserDefaults.standard.set(autoQuick, forKey: "autoQuickSummary") }
+    }
     private var lastAutoSource = ""
     private var sourceImportID: String?
     var segments: [TranscriptSegment] = []
