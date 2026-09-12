@@ -230,6 +230,7 @@ final class MobileSession {
     }
 
     private func restore(_ record: SessionRecord) {
+        lastAutoAttempt = nil
         id = record.id; date = record.date; title = record.title
         notes = record.notes ?? ""; summary = record.summary
         quickSummary = record.quickSuggestion ?? ""; deepThought = record.deepAnswer ?? ""
