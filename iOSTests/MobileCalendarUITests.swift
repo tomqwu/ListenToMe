@@ -8,8 +8,13 @@ final class MobileCalendarUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Import from Calendar"].waitForExistence(timeout: 5))
         if app.buttons["connectCalendar"].waitForExistence(timeout: 2) {
             app.buttons["connectCalendar"].tap()
-            let allow = XCUIApplication(bundleIdentifier: "com.apple.springboard").buttons["Allow Full Access"]
-            if allow.waitForExistence(timeout: 5) { allow.tap() }
+            let alert = XCUIApplication(bundleIdentifier: "com.apple.springboard").alerts
+                .matching(NSPredicate(format: "label CONTAINS[c] 'Calendar'")).firstMatch
+            XCTAssertTrue(alert.waitForExistence(timeout: 10), "Expected Calendar permission prompt")
+            // The approval label differs between iOS simulator runtime versions.
+            let allow = alert.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Allow'")).firstMatch
+            XCTAssertTrue(allow.waitForExistence(timeout: 5), alert.debugDescription)
+            if allow.exists { allow.tap() }
         }
     }
 
