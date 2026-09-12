@@ -106,19 +106,31 @@ final class MobileAppTests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
         let toggle = app.switches["Auto Quick Summary"].switches.firstMatch
+        XCTAssertTrue(toggle.waitForExistence(timeout: 15))
         let original = try XCTUnwrap(toggle.value as? String)
+        XCTAssertTrue(["0", "1"].contains(original))
         let selected = original == "1" ? "0" : "1"
-        func expectValue(_ value: String) {
+        func waitForValue(_ value: String, timeout: TimeInterval) -> Bool {
             let changed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", value), object: toggle)
-            XCTAssertEqual(XCTWaiter.wait(for: [changed], timeout: 10), .completed)
+            return XCTWaiter.wait(for: [changed], timeout: timeout) == .completed
         }
-        toggle.tap()
-        expectValue(selected)
+        func setValue(_ value: String) {
+            // A freshly booted CI simulator can drop its first synthesized tap. Confirm the
+            // actual setting before testing persistence; retry only while it is still unchanged.
+            for _ in 0..<2 {
+                if toggle.value as? String == value { return }
+                XCTAssertTrue(toggle.isHittable)
+                toggle.tap()
+                if waitForValue(value, timeout: 5) { return }
+            }
+            XCTAssertEqual(toggle.value as? String, value)
+        }
+        setValue(selected)
         app.terminate()
         app.launch()
-        expectValue(selected)
-        toggle.tap()
-        expectValue(original)
+        // Never tap or repair the value after relaunch: persistence must work on its own.
+        XCTAssertTrue(waitForValue(selected, timeout: 15))
+        setValue(original)
     }
 
     func testNotesCameraExplanationAndFilePicker() {
