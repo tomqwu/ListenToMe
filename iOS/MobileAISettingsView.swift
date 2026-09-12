@@ -15,7 +15,9 @@ struct MobileAISettingsView: View {
                 Text("Ollama Cloud").tag(MobileAISettings.Provider.ollama)
             }.accessibilityIdentifier("summaryProvider")
             if ai.provider == .ollama || ai.correctTranscript {
-                Text("Summarize sends your notes and transcript to Ollama Cloud using the selected model. " +
+                Text((ai.provider == .ollama
+                      ? "Summarize sends your notes and transcript to Ollama Cloud using the selected model. "
+                      : "Speech correction uses Ollama Cloud. Your summaries still use Apple Intelligence on-device. ") +
                      "Microphone audio stays on your device. Your Ollama account's usage limits apply.")
                 Text("Server: https://ollama.com").font(.caption)
                 SecureField(ai.hasKey ? "Replace saved API key" : "Ollama API key", text: $key)
