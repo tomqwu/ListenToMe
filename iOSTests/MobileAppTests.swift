@@ -19,7 +19,7 @@ final class MobileAppTests: XCTestCase {
             revealModelControl(model, in: app.collectionViews["roleModelList"])
             XCTAssertTrue(model.isHittable)
             model.tap()
-            let title = role == "quick" ? "Quick Summary" : (role == "summary" ? "Summary" : "Deep Think")
+            let title = role == "quick" ? "Quick Summary" : (role == "summary" ? "Summary" : "Deep Summary")
             app.navigationBars["\(title) model"].buttons.firstMatch.tap()
             XCTAssertTrue(link.label.contains("\(role)-fixture"))
             app.buttons["Done"].tap()
@@ -56,9 +56,9 @@ final class MobileAppTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Live transcript"].isHittable)
         XCTAssertTrue(app.staticTexts["Quick Summary"].isHittable)
         XCTAssertGreaterThan(app.staticTexts["Quick Summary"].frame.minY, app.staticTexts["Live transcript"].frame.maxY)
-        XCTAssertFalse(app.buttons["Generate Deep Think"].exists)
-        app.segmentedControls["workspaceTabs"].buttons["Deep Think"].tap()
-        XCTAssertTrue(app.buttons["Generate Deep Think"].isHittable)
+        XCTAssertFalse(app.buttons["Generate Deep Summary"].exists)
+        app.segmentedControls["workspaceTabs"].buttons["Deep"].tap()
+        XCTAssertTrue(app.buttons["Generate Deep Summary"].isHittable)
         XCTAssertFalse(app.staticTexts["Live transcript"].exists)
         XCTAssertTrue(app.buttons["Start listening"].isHittable)
         app.segmentedControls["workspaceTabs"].buttons["Live"].tap()
@@ -72,9 +72,11 @@ final class MobileAppTests: XCTestCase {
         XCUIDevice.shared.orientation = .landscapeLeft
         defer { XCUIDevice.shared.orientation = .portrait }
         XCTAssertTrue(app.scrollViews["dashboardScroll"].exists)
-        app.segmentedControls["workspaceTabs"].buttons["Deep Think"].tap()
-        XCTAssertTrue(app.buttons["Generate Deep Think"].exists)
+        app.segmentedControls["workspaceTabs"].buttons["Deep"].tap()
+        XCTAssertTrue(app.buttons["Generate Deep Summary"].exists)
         XCTAssertTrue(app.buttons["Start listening"].isHittable)
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Landscape accessibility layout"; screenshot.lifetime = .keepAlways; add(screenshot)
     }
 
     func testAutoSummaryPreferenceSurvivesRelaunch() {
@@ -213,7 +215,7 @@ final class MobileAppTests: XCTestCase {
         XCTAssertTrue(app.buttons["Generate Quick Summary"].exists)
         app.buttons["summaryMode"].tap()
         app.buttons["summary-option-deep"].tap()
-        XCTAssertTrue(app.buttons["Generate Deep Think"].exists)
+        XCTAssertTrue(app.buttons["Generate Deep Summary"].exists)
         app.buttons["Done"].tap()
         app.buttons["History"].tap()
         let row = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch

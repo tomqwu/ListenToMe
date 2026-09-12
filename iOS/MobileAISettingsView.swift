@@ -33,7 +33,7 @@ struct MobileAISettingsView: View {
                 }.disabled(ai.refreshing || ai.testing)
                 ForEach(MobileSummaryMode.allCases) { role in
                     NavigationLink {
-                        modelList(for: role)
+                        MobileRoleModelView(ai: ai, role: role)
                     } label: {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(role.title + " model")
@@ -63,41 +63,4 @@ struct MobileAISettingsView: View {
         .onDisappear { operation?.cancel(); key = "" }
     }
 
-    private func modelList(for role: MobileSummaryMode) -> some View {
-        List {
-            Section {
-                Button(ai.refreshing ? "Refreshing models…" : "Refresh models from API") {
-                    operation = Task { await ai.refresh() }
-                }.disabled(ai.refreshing || ai.testing)
-                if let status = ai.status { Text(status).font(.caption).accessibilityIdentifier("ollamaStatus") }
-                Button(ai.testing ? "Testing connection…" : "Test this model") {
-                    operation = Task { await ai.testConnection(for: role) }
-                }.disabled(ai.availability(for: role) != nil || ai.testing)
-            }
-            Section {
-                Text("Newest API update per DeepSeek, GLM, Qwen and Kimi variant. " +
-                     "Models absent from the API are not offered. Your selection stays fixed until you change it.")
-            }
-            Section("Recent family variants") {
-                ForEach(OllamaCloudModel.recentVariants(in: ai.models)) { model in modelRow(model, for: role) }
-            }
-            Section("All API models") {
-                ForEach(ai.models) { model in modelRow(model, for: role) }
-            }
-        }.accessibilityIdentifier("roleModelList")
-            .navigationTitle("\(role.title) model")
-            .task { if ai.models.isEmpty { await ai.refresh() } }
-    }
-
-    private func modelRow(_ model: OllamaCloudModel, for role: MobileSummaryMode) -> some View {
-        Button {
-            ai.selectModel(model.name, for: role)
-        } label: {
-            HStack {
-                Text(model.name).foregroundStyle(.primary)
-                Spacer()
-                if ai.selectedModel(for: role) == model.name { Image(systemName: "checkmark").accessibilityLabel("Selected") }
-            }
-        }.accessibilityIdentifier("model-\(model.name)")
-    }
 }

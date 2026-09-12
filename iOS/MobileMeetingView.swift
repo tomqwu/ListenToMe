@@ -4,8 +4,8 @@ import ListenToMeCore
 struct MobileMeetingView: View {
     @Bindable var session: MobileSession
     @State private var showHistory = false
-    @State private var workspace = Workspace.live
-    private enum Workspace: String, CaseIterable { case live = "Live", deep = "Deep Think" }
+    @State private var workspace = MobileWorkspace.live
+    @State private var modelRole: MobileSummaryMode?
     @State private var showSettings = false
     @State private var showNotes = false
     @State private var showCalendar = false
@@ -21,50 +21,26 @@ struct MobileMeetingView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                if !dynamicTypeSize.isAccessibilitySize { status }
-                Picker("Workspace", selection: $workspace) {
-                    ForEach(Workspace.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                }.pickerStyle(.segmented).padding(.horizontal, 10).padding(.top, 8)
-                    .accessibilityIdentifier("workspaceTabs")
-                GeometryReader { geometry in
-                    if dynamicTypeSize.isAccessibilitySize || verticalSizeClass == .compact {
-                        ScrollView {
-                            VStack(spacing: 10) {
-                                if dynamicTypeSize.isAccessibilitySize { status }
-                                if workspace == .live {
-                                    transcriptPanel
-                                    aiPanel(.quick)
-                                } else {
-                                    aiPanel(.deep)
-                                }
-                            }
-                        }.accessibilityIdentifier("dashboardScroll")
-                    } else if workspace == .live {
-                        VStack(spacing: 10) {
-                            transcriptPanel.frame(height: max(110, geometry.size.height * 0.48))
-                            aiPanel(.quick).frame(maxHeight: .infinity)
-                        }
-                    } else {
-                        aiPanel(.deep)
-                    }
-                }.padding(10)
-
+                status
+                MobileWorkspaceView(session: session, selection: $workspace) { role in
+                    if session.ai.provider == .apple { showSettings = true } else { modelRole = role }
+                }.padding(.horizontal, 20).padding(.bottom, 12)
             }
+            .background(Color(uiColor: .systemGroupedBackground))
             .navigationTitle("ListenToMe")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("History", systemImage: "clock") { showHistory = true }.disabled(session.busy)
+                    HStack(spacing: 16) {
+                        Button("History", systemImage: "clock") { showHistory = true }.disabled(session.busy)
+                        Button("New", systemImage: "plus") { session.newConversation() }.disabled(session.busy)
+                    }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack {
-                        Button("Notes", systemImage: "note.text") { showNotes = true }
                         Menu("More", systemImage: "ellipsis.circle") {
-                            if dynamicTypeSize.isAccessibilitySize {
-                                Button("Save") { session.save() }.disabled(!session.hasContent)
-                                Button("New") { session.newConversation() }.disabled(session.busy)
-                                ShareLink(item: session.markdown) { Text("Share") }.disabled(!session.hasContent)
-                            }
+                            ShareLink(item: session.markdown) { Label("Share", systemImage: "square.and.arrow.up") }
+                                .disabled(!session.hasContent)
                             Button("Import from Calendar", systemImage: "calendar") { showCalendar = true }
                             Button("Full summary") { showFullSummary = true }
                             Button("Settings", systemImage: "gearshape") { showSettings = true }
@@ -75,6 +51,12 @@ struct MobileMeetingView: View {
             .safeAreaInset(edge: .bottom) { controls }
             .sheet(isPresented: $showHistory) { history }
             .sheet(isPresented: $showSettings) { settings }
+            .sheet(item: $modelRole) { role in
+                NavigationStack {
+                    MobileRoleModelView(ai: session.ai, role: role)
+                        .toolbar { Button("Done") { modelRole = nil } }
+                }
+            }
             .sheet(isPresented: $showCalendar) { MobileCalendarView(session: session) }
             .sheet(isPresented: $showNotes) { MobileNotesView(session: session) }
             .sheet(isPresented: $showFullSummary) {
@@ -85,26 +67,21 @@ struct MobileMeetingView: View {
     }
 
     private var status: some View {
-        VStack(alignment: .leading, spacing: verticalSizeClass == .compact ? 2 : 10) {
+        VStack(alignment: .leading, spacing: 6) {
             TextField("Conversation title", text: $session.title)
                 .focused($focusedField, equals: .title)
-                .font(verticalSizeClass == .compact ? .headline : .title2.bold())
+                .font(verticalSizeClass == .compact ? .headline : .title2.weight(.semibold))
                 .accessibilityIdentifier("conversationTitle")
                 .disabled(session.isSummarizing)
                 .onChange(of: session.title) { _, _ in session.save(announce: false) }
-            Label(statusText, systemImage: session.state == .recording ? "waveform" : "mic")
-                .font(.subheadline).foregroundStyle(session.state == .recording ? .red : .secondary)
-            if verticalSizeClass != .compact {
-                Text("Microphone only · On-device transcription")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
+            Label(statusText, systemImage: session.state == .recording ? "record.circle" : "mic")
+                .font(.caption).foregroundStyle(session.state == .recording ? .red : .secondary)
             if let message = session.message {
-                Text(message).font(.caption).lineLimit(3)
+                Text(message).font(.caption).lineLimit(2).foregroundStyle(.secondary)
                     .accessibilityIdentifier("sessionMessage")
             }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(verticalSizeClass == .compact ? 6 : 16).background(.indigo.opacity(0.07))
+        }.frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 20).padding(.vertical, verticalSizeClass == .compact ? 6 : 14)
     }
 
     private var statusText: String {
@@ -113,103 +90,6 @@ struct MobileMeetingView: View {
         case .preparing: return "Preparing speech model… First use may download a model."
         case .recording: return "Listening"
         case .stopping: return "Finishing transcript…"
-        }
-    }
-
-    private var transcriptPanel: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Label("Live transcript", systemImage: "waveform").font(.headline).padding([.top, .horizontal], 10)
-            transcript.frame(maxWidth: .infinity, maxHeight: (dynamicTypeSize.isAccessibilitySize || verticalSizeClass == .compact) ? nil : .infinity)
-        }.background(.background, in: RoundedRectangle(cornerRadius: 14))
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(.quaternary))
-            .accessibilityIdentifier("transcriptPanel")
-    }
-
-    @ViewBuilder
-    private func panelScroll<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        if dynamicTypeSize.isAccessibilitySize || verticalSizeClass == .compact {
-            // The accessibility layout already has one outer scroll view. Nested scrolling
-            // can trap swipes inside a panel and make later summaries unreachable.
-            content()
-        } else {
-            ScrollView { content() }
-        }
-    }
-
-    private func aiPanel(_ mode: MobileSummaryMode) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(mode.title).font(.headline)
-            if mode == .quick {
-                Toggle("Auto summary", isOn: $session.autoQuick).font(.caption)
-                    .accessibilityLabel("Auto Quick Summary")
-            }
-            HStack {
-                Button(session.generatingMode == mode ? "Updating…" : (mode == .quick ? "Summarize now" : "Analyze")) {
-                    session.requestSummary(for: mode)
-                }.buttonStyle(.borderedProminent).controlSize(.small)
-                    .accessibilityLabel("Generate \(mode.title)")
-                    .disabled(session.summaryBlockReason(for: mode) != nil)
-                if session.generatingMode == mode {
-                    Button("Cancel") { session.cancelSummary() }.font(.caption)
-                }
-            }
-            panelScroll {
-                VStack(alignment: .leading, spacing: 8) {
-                    if mode == .quick && session.autoQuick {
-                        Text("Updates while listening when text changes, checked every 15 seconds. " +
-                             "No need to tap Summarize now. Uses your selected provider.")
-                            .font(.caption2).foregroundStyle(.secondary)
-                    }
-                    if mode == .quick && !session.autoQuick {
-                        Text("Enable Auto summary to update while listening. With Ollama Cloud, your notes and transcript are sent automatically.")
-                            .font(.caption2).foregroundStyle(.secondary)
-                    }
-                    if mode == .deep {
-                        Text("Explore decisions, tradeoffs and open questions when you need a deeper review.")
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
-                    if let reason = session.summaryBlockReason(for: mode), !session.isSummarizing {
-                        Text(reason).font(.caption).foregroundStyle(.secondary)
-                            .accessibilityIdentifier("reason-\(mode.rawValue)")
-                    }
-                    if session.generatingMode == mode {
-                        MarkdownText(text: session.summaryDraft).font(.subheadline).textSelection(.enabled)
-                    }
-                    let output = session.output(for: mode)
-                    MarkdownText(text: output.isEmpty ? "Your \(mode == .quick ? "quick summary" : "deep analysis") appears here." : output)
-                        .font(.subheadline).textSelection(.enabled)
-                        .accessibilityElement(children: .combine).accessibilityIdentifier("output-\(mode.rawValue)")
-                }.frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }.padding(10).frame(maxWidth: .infinity,
-                            maxHeight: (dynamicTypeSize.isAccessibilitySize || verticalSizeClass == .compact) ? nil : .infinity,
-                            alignment: .topLeading)
-            .background(mode == .quick ? Color.indigo.opacity(0.06) : Color.purple.opacity(0.06),
-                        in: RoundedRectangle(cornerRadius: 14))
-    }
-
-    private var transcript: some View {
-        Group {
-            if session.allSegments.isEmpty {
-                panelScroll {
-                    Text("Tap Start listening for live microphone transcription. Keep the app open while recording.")
-                        .font(.subheadline).foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .leading).padding()
-                }
-            } else {
-                panelScroll {
-                    LazyVStack(alignment: .leading, spacing: 18) {
-                        ForEach(session.allSegments) { segment in
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(segment.isFinal ? "MICROPHONE" : "MICROPHONE · UNFINALIZED")
-                                    .font(.caption.weight(.semibold)).foregroundStyle(.indigo)
-                                Text(segment.text).textSelection(.enabled)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                    }.padding()
-                }
-            }
         }
     }
 
@@ -252,30 +132,31 @@ struct MobileMeetingView: View {
     }
 
     private var controls: some View {
-        let layout = verticalSizeClass == .compact ? AnyLayout(HStackLayout(spacing: 20)) : AnyLayout(VStackLayout(spacing: 12))
-        return layout {
+        HStack(spacing: 12) {
+            Button { session.save() } label: {
+                VStack(spacing: 3) {
+                    Image(systemName: "square.and.arrow.down").font(.body)
+                    Text("Save").font(.caption2)
+                }.frame(minWidth: 40, minHeight: 44)
+            }.disabled(!session.hasContent).accessibilityLabel("Save")
             Button {
                 focusedField = nil
                 if session.state == .idle { session.start() } else { Task { await session.stop() } }
             } label: {
                 Label(session.state == .idle ? "Start listening" : "Stop listening",
                       systemImage: session.state == .idle ? "mic.fill" : "stop.fill")
-                    .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 8)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(session.state == .idle ? .indigo : .red)
-            .disabled(session.state == .stopping || (session.isSummarizing && session.state == .idle))
-            if !dynamicTypeSize.isAccessibilitySize {
-                HStack {
-                    Button("Save", systemImage: "square.and.arrow.down") { session.save() }.disabled(!session.hasContent)
-                    Spacer()
-                    Button("New", systemImage: "plus") { session.newConversation() }.disabled(session.busy)
-                    Spacer()
-                    ShareLink(item: session.markdown) { Label("Share", systemImage: "square.and.arrow.up") }
-                        .disabled(!session.hasContent)
-                }.font(.subheadline.weight(.semibold))
-            }
-        }.padding(verticalSizeClass == .compact ? 8 : 16).background(.bar)
+                    .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 10)
+            }.buttonStyle(.borderedProminent)
+                .tint(session.state == .idle ? .indigo : .red)
+                .disabled(session.state == .stopping || (session.isSummarizing && session.state == .idle))
+            Button { showNotes = true } label: {
+                VStack(spacing: 3) {
+                    Image(systemName: "note.text").font(.body)
+                    Text("Notes").font(.caption2)
+                }.frame(minWidth: 40, minHeight: 44)
+            }.accessibilityLabel("Notes")
+        }.frame(maxWidth: 600).frame(maxWidth: .infinity)
+            .padding(.horizontal, 16).padding(.vertical, 10).background(.bar)
     }
 
     private var history: some View {

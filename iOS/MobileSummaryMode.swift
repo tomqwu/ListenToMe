@@ -7,7 +7,7 @@ enum MobileSummaryMode: String, CaseIterable, Identifiable {
         switch self {
         case .summary: return "Summary"
         case .quick: return "Quick Summary"
-        case .deep: return "Deep Think"
+        case .deep: return "Deep Summary"
         }
     }
     var instructions: String {

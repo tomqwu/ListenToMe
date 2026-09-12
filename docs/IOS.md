@@ -1,7 +1,18 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.3.3 (10).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.4.0 (11).
+
+## iOS 1.4.0 (11)
+
+The meeting workspace now has direct Live, Summary and Deep tabs on iPhone. Live keeps the transcript
+above Quick Summary; iPad displays review beside the live conversation. A compact recording bar keeps
+Notes close at hand. See [the design rationale](IOS-DESIGN.md).
+
+Each summary shows its provider/model and opens that role's chooser. Quick Summary can use Flash;
+Deep Summary requires a non-Flash model. Existing inherited Flash assignments are repaired using the
+API catalog, while valid full-model choices are preserved. A fresh setup prefers Flash for Quick,
+a full model for Summary and an available Pro variant for Deep. No Flash fallback is used for Deep.
 
 ## iOS 1.3.3 (10)
 
