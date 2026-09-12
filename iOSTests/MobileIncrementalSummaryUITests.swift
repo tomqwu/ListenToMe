@@ -25,6 +25,7 @@ final class MobileIncrementalSummaryUITests: XCTestCase {
         wait(app.staticTexts["output-summary"], contains: "reviewed")
         XCTAssertFalse(app.staticTexts["review-suggestion-summary"].exists)
         liveTab(app)
+        revealQuick(app)
         capture(app, "Quick publishes a meaningful decision")
         speech("speechRepeat", app: app)
         wait(app.staticTexts["quickReadCount"], contains: "Checks: 4")
@@ -110,6 +111,10 @@ final class MobileIncrementalSummaryUITests: XCTestCase {
 
     private func speech(_ identifier: String, app: XCUIApplication) {
         app.buttons["testSpeechMenu"].tap()
+        // Large Dynamic Type makes the native fixture menu scroll; its final row is initially unmounted.
+        for _ in 0..<4 where !app.buttons[identifier].exists {
+            app.collectionViews.firstMatch.swipeUp()
+        }
         app.buttons[identifier].tap()
     }
 
@@ -123,6 +128,14 @@ final class MobileIncrementalSummaryUITests: XCTestCase {
         changed.isInverted = true
         XCTAssertEqual(XCTWaiter.wait(for: [changed], timeout: seconds), .completed)
         XCTAssertEqual(element.label, expected)
+    }
+
+    private func revealQuick(_ app: XCUIApplication) {
+        let output = app.staticTexts["output-quick"]
+        for _ in 0..<6 where !output.isHittable {
+            app.scrollViews["dashboardScroll"].swipeUp()
+        }
+        XCTAssertTrue(output.isHittable)
     }
 
     private func capture(_ app: XCUIApplication, _ name: String) {

@@ -69,6 +69,24 @@ final class MobileQuickLoopTests: XCTestCase {
         XCTAssertTrue(session.quickReader.recommendations.isEmpty)
     }
 
+    func testRepeatedManualReviewDuringReadCannotResurrectSuggestion() async throws {
+        await provider.suggestSummary()
+        session.start()
+        try await wait { self.session.state == .recording }
+        recorder.send("Monday is agreed.")
+        try await wait { self.session.quickReader.completedReads == 1 }
+        XCTAssertEqual(session.quickReader.recommendations.count, 1)
+        session.quickReader.markReviewed(.summary)
+        await provider.holdNextQuick()
+        recorder.send("Tuesday is now agreed.")
+        try await wait { self.session.quickReader.isReading }
+        session.quickReader.markReviewed(.summary)
+        await provider.finishHeldQuick()
+        try await wait { self.session.quickReader.completedReads == 2 }
+        XCTAssertTrue(session.quickReader.recommendations.isEmpty)
+        XCTAssertEqual(session.quickReader.reviewsCompleted, ["summary"])
+    }
+
     func testPartialSpeechNeverReadsUntilFinalizedAndBurstCoalesces() async throws {
         session.start()
         try await wait { self.session.state == .recording }
@@ -229,6 +247,8 @@ private actor QuickTestProvider: LLMProvider {
     private var fail = false
     private var active = 0
     private var maximum = 0
+    private var reviews: [[String: String]] = []
+    func suggestSummary() { reviews = [["mode": "summary", "confidence": "high", "reason": "Decision changed"]] }
     func inputs() -> [MobileQuickContext.Input] { captured }
     func count() -> Int { captured.count }
     func maxQuick() -> Int { maximum }
@@ -245,7 +265,7 @@ private actor QuickTestProvider: LLMProvider {
         if let input { captured.append(input) }
         let text = input?.changes.map(\.text).filter { !$0.isEmpty }.joined(separator: " ") ?? ""
         let keep = text == "Friday is a proposal." || text == "Yes, understood."
-        let data = try? JSONSerialization.data(withJSONObject: ["reviews": [], "action": keep ? "keep" : "publish",
+        let data = try? JSONSerialization.data(withJSONObject: ["reviews": reviews, "action": keep ? "keep" : "publish",
             "context": text, "bullets": keep ? [] : [text]])
         let response = String(decoding: data ?? Data(), as: UTF8.self)
         if hold { hold = false; held = continuation; heldText = response; return }

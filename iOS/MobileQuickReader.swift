@@ -50,6 +50,7 @@ final class MobileQuickReader {
     private(set) var failures = 0
     private(set) var recommendations: [MobileQuickDecision.Review] = []
     private(set) var reviewsCompleted: [String] = []
+    private var reviewRevisions: [String: Int] = [:]
     private var pendingOutput: String?
     private var task: Task<Void, Never>?
     private var generation = UUID()
@@ -61,11 +62,12 @@ final class MobileQuickReader {
 
     func reset() {
         cancel(); context = MobileQuickContext(); error = nil; unchanged = false; completedReads = 0; failures = 0
-        recommendations = []; reviewsCompleted = []; pendingOutput = nil
+        recommendations = []; reviewsCompleted = []; reviewRevisions = [:]; pendingOutput = nil
     }
 
     func markReviewed(_ mode: MobileSummaryMode) {
         guard mode != .quick else { return }
+        reviewRevisions[mode.rawValue, default: 0] += 1
         recommendations.removeAll { $0.mode == mode.rawValue }
         if !reviewsCompleted.contains(mode.rawValue) { reviewsCompleted.append(mode.rawValue) }
     }
@@ -77,6 +79,7 @@ final class MobileQuickReader {
         guard task == nil else { return }
         let token = generation
         let completedBeforeRead = reviewsCompleted
+        let revisionsBeforeRead = reviewRevisions
         isReading = true
         task = Task {
             defer { if generation == token { isReading = false; task = nil } }
@@ -87,7 +90,7 @@ final class MobileQuickReader {
                 context.accept(batch, memory: decision.context)
                 error = nil; failures = 0; completedReads += 1
                 // A manual review may finish during this evaluation. Do not resurrect its stale suggestion.
-                let completedDuringRead = Set(reviewsCompleted).subtracting(completedBeforeRead)
+                let completedDuringRead = Set(reviewRevisions.keys.filter { reviewRevisions[$0] != revisionsBeforeRead[$0] })
                 recommendations = []
                 for action in MobileSummaryScheduler.actions(for: decision) {
                     switch action {
@@ -101,7 +104,7 @@ final class MobileQuickReader {
                         if !batch.hasMore, !completedDuringRead.contains(review.mode) { recommendations.append(review) }
                     }
                 }
-                reviewsCompleted.removeAll { completedBeforeRead.contains($0) }
+                reviewsCompleted.removeAll { completedBeforeRead.contains($0) && !completedDuringRead.contains($0) }
             } catch {
                 guard generation == token, !Task.isCancelled else { return }
                 failures += 1
