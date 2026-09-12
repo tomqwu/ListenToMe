@@ -4,6 +4,14 @@ import ListenToMeCore
 
 @MainActor
 final class MobileAITests: XCTestCase {
+    func testCatalogIsAvailableAfterSettingsRelaunch() {
+        let previous = UserDefaults.standard.string(forKey: "mobileOllamaCatalog")
+        defer { UserDefaults.standard.set(previous, forKey: "mobileOllamaCatalog") }
+        let settings = MobileAISettings()
+        settings.models = [.init(name: "quick-test"), .init(name: "deep-test")]
+        XCTAssertEqual(MobileAISettings().models, settings.models)
+    }
+
     func testCloudFailureMessagesDoNotClaimUnsavedPartialIsKept() {
         XCTAssertEqual(MobileAISettings.errorMessage(OllamaStreamError.incomplete),
                        "Ollama's response ended before completion.")
@@ -58,9 +66,12 @@ final class MobileAITests: XCTestCase {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
         let session = MobileSession(storageDirectory: root)
+        let originalAuto = session.autoQuick
+        session.autoQuick = false
         let originalProvider = session.ai.provider, originalModel = session.ai.model
         let originalQuick = session.ai.quickModel, originalDeep = session.ai.deepModel
         defer {
+            session.state = .idle; session.autoQuick = originalAuto
             try? MobileKeychain.save(original)
             session.ai.provider = originalProvider; session.ai.model = originalModel
             session.ai.quickModel = originalQuick; session.ai.deepModel = originalDeep

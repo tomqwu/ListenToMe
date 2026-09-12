@@ -17,7 +17,13 @@ final class MobileAISettings {
     var deepModel: String {
         didSet { UserDefaults.standard.set(deepModel, forKey: "mobileOllamaDeepModel") }
     }
-    var models: [OllamaCloudModel] = []
+    var models: [OllamaCloudModel] = [] {
+        didSet {
+            if let data = try? JSONEncoder().encode(models) {
+                UserDefaults.standard.set(data.base64EncodedString(), forKey: "mobileOllamaCatalog")
+            }
+        }
+    }
     var status: String?
     var refreshing = false
     var testing = false
@@ -29,6 +35,9 @@ final class MobileAISettings {
         model = savedModel
         quickModel = UserDefaults.standard.string(forKey: "mobileOllamaQuickModel") ?? savedModel
         deepModel = UserDefaults.standard.string(forKey: "mobileOllamaDeepModel") ?? savedModel
+        if let value = UserDefaults.standard.string(forKey: "mobileOllamaCatalog"),
+           let data = Data(base64Encoded: value),
+           let cached = try? JSONDecoder().decode([OllamaCloudModel].self, from: data) { models = cached }
         hasKey = (try? MobileKeychain.read().isEmpty) == false
     }
 

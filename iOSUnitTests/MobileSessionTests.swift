@@ -1,8 +1,52 @@
 import XCTest
+import ListenToMeCore
 @testable import ListenToMeIOS
 
 @MainActor
 final class MobileSessionTests: XCTestCase {
+    func testAutomaticQuickSummaryRunsWithoutViewRetriesFailureAndTracksNewText() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let provider = AutoSummaryProvider()
+        let session = MobileSession(storageDirectory: root, summaryProvider: provider,
+                                    autoInterval: .milliseconds(50))
+        let originalAuto = session.autoQuick
+        defer { session.state = .idle; session.autoQuick = originalAuto }
+        session.autoQuick = false
+        session.partial = TranscriptSegment(source: .you, text: "Review Friday.", isFinal: false, start: 0, end: 1)
+        session.state = .recording
+        try await Task.sleep(for: .milliseconds(100))
+        let beforeOptIn = await provider.count()
+        XCTAssertEqual(beforeOptIn, 0)
+        session.autoQuick = true
+        for _ in 0..<100 where session.quickSummary.isEmpty {
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        XCTAssertEqual(session.quickSummary, "Quick: Review Friday.")
+        let afterRetry = await provider.count()
+        XCTAssertEqual(afterRetry, 2, "A failed request must retry unchanged text")
+        try await Task.sleep(for: .milliseconds(120))
+        let withoutChanges = await provider.count()
+        XCTAssertEqual(withoutChanges, 2, "Successful unchanged input must not be resent")
+        session.partial = TranscriptSegment(source: .you, text: "Review Monday.", isFinal: false, start: 0, end: 2)
+        for _ in 0..<100 where session.quickSummary != "Quick: Review Monday." {
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        XCTAssertEqual(session.quickSummary, "Quick: Review Monday.")
+        XCTAssertEqual(session.summary, "")
+        XCTAssertEqual(session.deepThought, "")
+        session.autoQuick = false
+        session.notes = "Do not send this."
+        try await Task.sleep(for: .milliseconds(120))
+        let afterDisabling = await provider.count()
+        XCTAssertEqual(afterDisabling, 3)
+        session.state = .idle
+        session.autoQuick = true
+        try await Task.sleep(for: .milliseconds(120))
+        let whileIdle = await provider.count()
+        XCTAssertEqual(whileIdle, 3, "Idle sessions must not auto-send")
+    }
+
     func testSummaryReadinessAllowsRecordingAndExplainsEveryBlockedState() {
         for state in [MobileSession.State.idle, .recording] {
             XCTAssertNil(MobileSession.summaryBlockReason(state: state, generating: false,
@@ -74,5 +118,24 @@ final class MobileSessionTests: XCTestCase {
         XCTAssertNotNil(restored.availability(for: .deep))
         XCTAssertTrue(MobileSummaryMode.quick.instructions.contains("five"))
         XCTAssertTrue(MobileSummaryMode.deep.instructions.contains("tradeoffs"))
+    }
+}
+
+private actor AutoSummaryProvider: LLMProvider {
+    nonisolated let id = "auto-test"
+    private var requests = 0
+    func count() -> Int { requests }
+    private func response(_ request: LLMRequest) throws -> String {
+        requests += 1
+        if requests == 1 { throw URLError(.networkConnectionLost) }
+        return "Quick: " + (request.messages.last?.content ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    nonisolated func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
+        AsyncThrowingStream { continuation in
+            Task {
+                do { continuation.yield(try await response(request)); continuation.finish() }
+                catch { continuation.finish(throwing: error) }
+            }
+        }
     }
 }

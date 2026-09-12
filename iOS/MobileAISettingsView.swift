@@ -4,7 +4,6 @@ import ListenToMeCore
 struct MobileAISettingsView: View {
     @Bindable var ai: MobileAISettings
     @State private var key = ""
-    @State private var mode = MobileSummaryMode.summary
     @State private var operation: Task<Void, Never>?
     @FocusState private var editingKey: Bool
 
@@ -32,16 +31,16 @@ struct MobileAISettingsView: View {
                     editingKey = false
                     operation = Task { await ai.refresh() }
                 }.disabled(ai.refreshing || ai.testing)
-                Picker("Model role", selection: $mode) {
-                    ForEach(MobileSummaryMode.allCases) { role in
-                        Text(role.title).tag(role).accessibilityIdentifier("role-option-\(role.rawValue)")
-                    }
-                }.accessibilityIdentifier("modelRole").disabled(ai.testing)
-                Text("Selected: \(ai.selectedModel(for: mode))").accessibilityIdentifier("selectedOllamaModel")
-                if !ai.models.isEmpty {
-                    NavigationLink("Choose model") {
-                        modelList
-                    }.disabled(ai.testing)
+                ForEach(MobileSummaryMode.allCases) { role in
+                    NavigationLink {
+                        modelList(for: role)
+                    } label: {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(role.title + " model")
+                            Text(ai.selectedModel(for: role).isEmpty ? "Choose model" : ai.selectedModel(for: role))
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                    }.accessibilityIdentifier("choose-model-\(role.rawValue)").disabled(ai.testing)
                 }
                 Text("Cloud models run on Ollama; no model download to your phone is needed. " +
                      "The list comes from the API, including Flash and Pro variants when available.")
@@ -52,8 +51,8 @@ struct MobileAISettingsView: View {
                         guard ai.saveKey(key) else { return }
                         key = ""
                     }
-                    operation = Task { await ai.testConnection(for: mode) }
-                }.disabled(ai.selectedModel(for: mode).isEmpty || (!ai.hasKey && key.isEmpty) || ai.testing || ai.refreshing)
+                    operation = Task { await ai.testConnection(for: .summary) }
+                }.disabled(ai.selectedModel(for: .summary).isEmpty || (!ai.hasKey && key.isEmpty) || ai.testing || ai.refreshing)
                 Text("Test connection sends only a short test prompt, not your conversation.").font(.caption)
                 if ai.testing { Button("Cancel connection test") { operation?.cancel() } }
                 if let status = ai.status {
@@ -64,29 +63,40 @@ struct MobileAISettingsView: View {
         .onDisappear { operation?.cancel(); key = "" }
     }
 
-    private var modelList: some View {
+    private func modelList(for role: MobileSummaryMode) -> some View {
         List {
+            Section {
+                Button(ai.refreshing ? "Refreshing models…" : "Refresh models from API") {
+                    operation = Task { await ai.refresh() }
+                }.disabled(ai.refreshing || ai.testing)
+                if let status = ai.status { Text(status).font(.caption).accessibilityIdentifier("ollamaStatus") }
+                Button(ai.testing ? "Testing connection…" : "Test this model") {
+                    operation = Task { await ai.testConnection(for: role) }
+                }.disabled(ai.availability(for: role) != nil || ai.testing)
+            }
             Section {
                 Text("Newest API update per DeepSeek, GLM, Qwen and Kimi variant. " +
                      "Models absent from the API are not offered. Your selection stays fixed until you change it.")
             }
             Section("Recent family variants") {
-                ForEach(OllamaCloudModel.recentVariants(in: ai.models)) { model in modelRow(model) }
+                ForEach(OllamaCloudModel.recentVariants(in: ai.models)) { model in modelRow(model, for: role) }
             }
             Section("All API models") {
-                ForEach(ai.models) { model in modelRow(model) }
+                ForEach(ai.models) { model in modelRow(model, for: role) }
             }
-        }.navigationTitle("\(mode.title) model")
+        }.accessibilityIdentifier("roleModelList")
+            .navigationTitle("\(role.title) model")
+            .task { if ai.models.isEmpty { await ai.refresh() } }
     }
 
-    private func modelRow(_ model: OllamaCloudModel) -> some View {
+    private func modelRow(_ model: OllamaCloudModel, for role: MobileSummaryMode) -> some View {
         Button {
-            ai.selectModel(model.name, for: mode)
+            ai.selectModel(model.name, for: role)
         } label: {
             HStack {
                 Text(model.name).foregroundStyle(.primary)
                 Spacer()
-                if ai.selectedModel(for: mode) == model.name { Image(systemName: "checkmark").accessibilityLabel("Selected") }
+                if ai.selectedModel(for: role) == model.name { Image(systemName: "checkmark").accessibilityLabel("Selected") }
             }
         }.accessibilityIdentifier("model-\(model.name)")
     }

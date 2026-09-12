@@ -1,7 +1,13 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.3.1 (8).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.3.2 (9).
+
+## iOS 1.3.2 (9)
+
+Fixes automatic Quick Summary for short transcripts and failed-request retries. The recording session
+owns automatic updates, independently of the visible screen. Settings remains usable while listening
+and offers separate Quick Summary, Summary, and Deep Think model pages with a cached API catalog.
 
 ## Included
 
@@ -78,7 +84,7 @@ choose another. Model refresh does not prove key validity: Test connection verif
 `/api/chat` response using only a synthetic prompt. Cloud models run remotely; `/api/pull` is not needed.
 
 Selecting Ollama is opt-in. Generating any of the three AI outputs sends the current notes and transcript to
-Ollama; microphone audio continues to be transcribed on-device. Quick Summary has an opt-in **Auto** toggle (off initially; your choice is remembered across launches). While listening, it checks every 30 seconds and generates a new Quick Summary if the source changed and contains at least 80 characters. Enabling Auto with Ollama selected sends those snapshots to Ollama. Deep Think stays on-demand. Existing output remains visible while the next response streams; failures keep the last completed result.
+Ollama; microphone audio continues to be transcribed on-device. Quick Summary has an opt-in **Auto** toggle (off initially; your choice is remembered across launches). While listening, incoming transcript text triggers a Quick Summary, throttled to one request every 15 seconds; a session-owned timer also retries changed text or failed requests. Enabling Auto with Ollama selected sends those snapshots to Ollama. Deep Think stays on-demand. Existing output remains visible while the next response streams; failures keep the last completed result.
 The last complete summary is preserved on HTTP errors, incomplete streams and cancellation. Streamed
 text is shown separately until completion. Backgrounding cancels an active summary request.
 
