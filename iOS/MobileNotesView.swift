@@ -68,6 +68,7 @@ struct MobileNotesView: View {
                 }
                 if let message = session.message { Section { Text(message).font(.callout) } }
             }
+            .scrollContentBackground(.hidden).background(MobileStyle.canvas)
             .navigationTitle("Notes")
             .toolbar { Button("Done") { dismiss() } }
             .fileImporter(isPresented: $showFiles, allowedContentTypes: [.item], allowsMultipleSelection: true) { result in

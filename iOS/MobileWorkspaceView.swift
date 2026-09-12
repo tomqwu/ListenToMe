@@ -74,19 +74,25 @@ struct MobileWorkspaceView<Header: View>: View {
     private var transcriptPanel: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
-                Label("Live transcript", systemImage: "waveform").font(.headline)
+                MobileRoleIcon(symbol: "waveform", tint: MobileStyle.transcript)
+                Text("Live transcript").font(.headline).foregroundStyle(MobileStyle.ink)
                 Spacer()
                 if session.state == .recording {
                     Circle().fill(.red).frame(width: 6, height: 6).accessibilityLabel("Recording")
                 }
                 Button("Expand transcript", systemImage: "arrow.up.left.and.arrow.down.right") { showTranscript = true }
                     .labelStyle(.iconOnly).buttonStyle(.plain)
+                    .foregroundStyle(MobileStyle.muted)
                     .frame(minWidth: 44, minHeight: 44)
             }.padding(.horizontal, 16).padding(.vertical, 8)
-            Divider().padding(.horizontal, 16)
+            Rectangle().fill(MobileStyle.line).frame(height: 0.75).padding(.horizontal, 16)
             if session.allSegments.isEmpty {
-                Text("Start listening and your words will appear here.")
-                    .font(.subheadline).foregroundStyle(.secondary).padding(16)
+                HStack(spacing: 12) {
+                    Image(systemName: "waveform").font(.title2).foregroundStyle(MobileStyle.transcript.opacity(0.6))
+                        .accessibilityHidden(true)
+                    Text("Start listening and your words will appear here.")
+                        .font(.subheadline).foregroundStyle(MobileStyle.muted)
+                }.padding(16)
             } else if stacked {
                 // Keep one outer scroll at large text sizes/short heights. Full history has its own reader.
                 Text(session.allSegments.last?.text ?? "").font(.body).lineSpacing(4)
@@ -96,27 +102,26 @@ struct MobileWorkspaceView<Header: View>: View {
                 MobileTranscriptReader(segments: session.allSegments).id(session.id)
             }
         }.frame(maxWidth: .infinity, maxHeight: stacked ? nil : .infinity, alignment: .topLeading)
-            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20))
-            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .modifier(MobileCard())
             .accessibilityElement(children: .contain).accessibilityIdentifier("transcriptPanel")
     }
 
     private func summaryPanel(_ mode: MobileSummaryMode) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 10) {
-                HStack(alignment: .top) {
-                    Text(mode.title).font(.headline)
-                    Spacer(minLength: 8)
-                    if session.generatingMode == mode {
-                        Button("Cancel", systemImage: "stop.circle") { session.cancelSummary() }
-                            .labelStyle(.iconOnly).accessibilityLabel("Cancel \(mode.title)")
-                    } else {
-                        Button { session.requestSummary(for: mode) } label: {
-                            Image(systemName: session.output(for: mode).isEmpty ? "sparkles" : "arrow.clockwise")
-                                .frame(minWidth: 32, minHeight: 28)
-                        }.buttonStyle(.bordered).controlSize(.small)
-                            .accessibilityLabel("Generate \(mode.title)")
-                            .disabled(session.summaryBlockReason(for: mode) != nil)
+                if typeSize.isAccessibilitySize {
+                    HStack {
+                        MobileRoleIcon(symbol: MobileStyle.symbol(for: mode), tint: MobileStyle.tint(for: mode))
+                        Spacer()
+                        generateButton(mode)
+                    }
+                    Text(mode.title).font(.headline).foregroundStyle(MobileStyle.ink)
+                } else {
+                    HStack(alignment: .top) {
+                        MobileRoleIcon(symbol: MobileStyle.symbol(for: mode), tint: MobileStyle.tint(for: mode))
+                        Text(mode.title).font(.headline).foregroundStyle(MobileStyle.ink).padding(.top, 4)
+                        Spacer(minLength: 8)
+                        generateButton(mode)
                     }
                 }
                 if typeSize.isAccessibilitySize {
@@ -130,11 +135,16 @@ struct MobileWorkspaceView<Header: View>: View {
                     }
                 }
             }.padding(16)
-            Divider().padding(.horizontal, 16)
+                .background {
+                    LinearGradient(colors: [MobileStyle.tint(for: mode).opacity(0.05), .clear],
+                                   startPoint: .topLeading, endPoint: .bottomTrailing)
+                }
+            Rectangle().fill(MobileStyle.line).frame(height: 0.75).padding(.horizontal, 16)
             readingArea {
                 VStack(alignment: .leading, spacing: 12) {
                     if session.generatingMode == mode {
-                        Label("Updating…", systemImage: "sparkles").font(.caption).foregroundStyle(.secondary)
+                        Label("Updating…", systemImage: "sparkles").font(.caption)
+                            .foregroundStyle(MobileStyle.tint(for: mode))
                         MarkdownText(text: session.summaryDraft).textSelection(.enabled)
                     }
                     let output = session.output(for: mode)
@@ -142,13 +152,12 @@ struct MobileWorkspaceView<Header: View>: View {
                         MarkdownText(text: output).font(.body).lineSpacing(3).textSelection(.enabled)
                             .accessibilityElement(children: .combine).accessibilityIdentifier("output-\(mode.rawValue)")
                     } else if session.generatingMode != mode {
-                        Text(mode == .quick ? "Key points, as the conversation unfolds." :
-                             (mode == .summary ? "The key points, decisions and next steps." : "A closer look at decisions, risks and open questions."))
-                            .font(.subheadline).foregroundStyle(.secondary)
+                        MobileOutputPlaceholder(mode: mode)
+                            .accessibilityElement(children: .combine)
                             .accessibilityIdentifier("output-\(mode.rawValue)")
                     }
                     if let reason = session.summaryBlockReason(for: mode), !session.isSummarizing {
-                        Text(reason).font(.caption).foregroundStyle(.secondary)
+                        Text(reason).font(.caption).foregroundStyle(MobileStyle.muted)
                             .accessibilityIdentifier("reason-\(mode.rawValue)")
                     } else if mode == .quick && session.autoQuick {
                         Text(session.ai.provider == .ollama ? "Auto sends notes and transcript to Ollama Cloud." :
@@ -158,8 +167,24 @@ struct MobileWorkspaceView<Header: View>: View {
                 }.frame(maxWidth: .infinity, alignment: .leading).padding(16)
             }
         }.frame(maxWidth: .infinity, maxHeight: stacked ? nil : .infinity, alignment: .topLeading)
-            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20))
+            .modifier(MobileCard())
             .accessibilityElement(children: .contain).accessibilityIdentifier("summary-panel-\(mode.rawValue)")
+    }
+
+    @ViewBuilder
+    private func generateButton(_ mode: MobileSummaryMode) -> some View {
+        if session.generatingMode == mode {
+            Button("Cancel", systemImage: "stop.circle") { session.cancelSummary() }
+                .labelStyle(.iconOnly).font(.system(size: 20))
+                .frame(minWidth: 44, minHeight: 44).accessibilityLabel("Cancel \(mode.title)")
+        } else {
+            Button { session.requestSummary(for: mode) } label: {
+                Image(systemName: session.output(for: mode).isEmpty ? "sparkles" : "arrow.clockwise")
+                    .font(.system(size: 18, weight: .semibold)).frame(minWidth: 32, minHeight: 32)
+            }.buttonStyle(.bordered).controlSize(.small).tint(MobileStyle.tint(for: mode))
+                .accessibilityLabel("Generate \(mode.title)")
+                .disabled(session.summaryBlockReason(for: mode) != nil)
+        }
     }
 
     private func modelButton(_ mode: MobileSummaryMode) -> some View {
@@ -169,7 +194,10 @@ struct MobileWorkspaceView<Header: View>: View {
                      (session.ai.selectedModel(for: mode).isEmpty ? "Choose model" : session.ai.selectedModel(for: mode)))
                     .lineLimit(typeSize.isAccessibilitySize ? nil : 2).multilineTextAlignment(.leading)
                 Image(systemName: "chevron.down").font(.caption2)
-            }.font(.caption).foregroundStyle(.indigo)
+            }.font(.caption.weight(.medium)).foregroundStyle(MobileStyle.muted)
+                .padding(.horizontal, 9).padding(.vertical, 6)
+                .background(MobileStyle.tint(for: mode).opacity(0.07), in: RoundedRectangle(cornerRadius: 9))
+                .frame(minHeight: 44).contentShape(Rectangle())
         }.buttonStyle(.plain).accessibilityIdentifier("panel-model-\(mode.rawValue)")
     }
 

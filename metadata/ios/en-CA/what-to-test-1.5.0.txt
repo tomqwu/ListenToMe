@@ -1,0 +1,5 @@
+A refreshed Listen to Me design, with the waveform logo in the app, a violet palette and clearer visual roles for transcript, Quick Summary, Summary and Deep Summary.
+
+Check the new cards, recording controls, empty states and Settings in light and dark mode, on iPhone and iPad, and with larger text. Notes, Save, History and each model chooser should remain easy to reach.
+
+The compact transcript still follows the latest words. Scroll back to pause following, tap Latest to resume, or expand the transcript. Please check readability while recording and while summaries update.

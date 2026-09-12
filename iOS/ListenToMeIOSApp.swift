@@ -9,7 +9,7 @@ struct ListenToMeIOSApp: App {
     var body: some Scene {
         WindowGroup {
             meeting
-                .tint(.indigo)
+                .tint(MobileStyle.accent)
                 .task { session.importSharedInbox() }
                 .onOpenURL { session.importFile($0) }
                 .onChange(of: session.busy) { _, busy in if !busy { session.importSharedInbox() } }
@@ -34,6 +34,8 @@ struct ListenToMeIOSApp: App {
         #if DEBUG && targetEnvironment(simulator)
         if ProcessInfo.processInfo.arguments.contains("--transcript-scroll-fixture") {
             MobileTranscriptFixture()
+        } else if ProcessInfo.processInfo.arguments.contains("--design-review-fixture") {
+            MobileDesignFixture()
         } else {
             MobileMeetingView(session: session)
         }

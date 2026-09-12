@@ -19,7 +19,7 @@ struct MobileTranscriptReader: View {
                     ForEach(segments) { segment in
                         VStack(alignment: .leading, spacing: 5) {
                             if !segment.isFinal {
-                                Text("LIVE").font(.caption2.weight(.semibold)).foregroundStyle(.indigo)
+                                Text("LIVE").font(.caption2.weight(.semibold)).foregroundStyle(MobileStyle.transcript)
                             }
                             Text(segment.text).font(.body).lineSpacing(4).textSelection(.enabled)
                                 .foregroundStyle(segment.isFinal ? .primary : .secondary)
