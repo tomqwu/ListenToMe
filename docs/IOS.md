@@ -27,8 +27,9 @@ filters, not proof of accuracy. Review edits where wording matters.
 
 The Cloud request uses streaming chat, `think: false`, temperature 0 and a small output budget.
 [Ollama Cloud does not support schema-constrained output](https://docs.ollama.com/capabilities/structured-outputs),
-so responses are parsed and validated locally. An explicit final-answer boundary handles the GLM
-Cloud reasoning preamble observed during live testing. Neither reasoning nor partial JSON is shown.
+so responses are parsed and validated locally. A complete final JSON object with exactly one text
+field handles the GLM Cloud reasoning preambles observed with and without a closing think marker.
+Trailing prose, malformed objects and partial JSON are rejected; reasoning is never shown.
 
 ## iOS 1.6.0 (14)
 

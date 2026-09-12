@@ -18,16 +18,7 @@ enum MobileTranscriptCorrection {
     }
 
     static func validatedText(_ response: String, original: String) throws -> String {
-        struct Reply: Decodable { let text: String }
-        // Some Cloud models emit a reasoning preamble in content even with think=false.
-        // Accept only the explicit final-answer boundary, never arbitrary JSON found in prose.
-        var answer = response.components(separatedBy: "</think>").last ?? response
-        answer = answer.trimmingCharacters(in: .whitespacesAndNewlines)
-        if answer.hasPrefix("```json\n"), answer.hasSuffix("\n```") {
-            answer = String(answer.dropFirst(8).dropLast(4))
-        }
-        let text = try JSONDecoder().decode(Reply.self, from: Data(answer.utf8)).text
-            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let text = try finalText(response).trimmingCharacters(in: .whitespacesAndNewlines)
         let before = original.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty, text.count <= 1_200, !text.contains("\n"),
               protectedTerms(text) == protectedTerms(before),
@@ -36,6 +27,24 @@ enum MobileTranscriptCorrection {
         }
         return text
     }
+
+    private static func finalText(_ response: String) throws -> String {
+        // Cloud can prepend reasoning with or without a </think> marker despite think=false.
+        // Decode only a complete final JSON object, with exactly one string field. Never show
+        // the preamble, accept trailing prose, or recover incomplete JSON.
+        var answer = response.trimmingCharacters(in: .whitespacesAndNewlines)
+        if answer.hasSuffix("```") { answer = String(answer.dropLast(3)).trimmingCharacters(in: .whitespacesAndNewlines) }
+        guard answer.hasSuffix("}") else { throw invalidResponse }
+        let starts = answer.indices.reversed().filter { answer[$0] == "{" }.prefix(64)
+        for start in starts {
+            guard let object = try? JSONSerialization.jsonObject(with: Data(answer[start...].utf8)) as? [String: Any],
+                  object.count == 1, let text = object["text"] as? String else { continue }
+            return text
+        }
+        throw invalidResponse
+    }
+
+    private static var invalidResponse: RecordingError { .message("The model did not return a usable correction.") }
 
     // Conservatively reject changes to numerical expressions and common negation words.
     // This is an extra guard, not proof that a model has preserved meaning in every language.

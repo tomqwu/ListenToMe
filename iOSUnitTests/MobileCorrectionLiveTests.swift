@@ -46,5 +46,12 @@ final class MobileCorrectionLiveTests: XCTestCase {
         session.restoreSpeech(corrected.id)
         XCTAssertEqual(session.segments.last?.text, corrected.originalText)
         XCTAssertNil(session.segments.last?.originalText)
+        // Repeated live calls caught an intermittent Cloud preamble without a closing think tag.
+        // Keep this a local, credential-gated contract check rather than relying on one lucky response.
+        for _ in 0..<5 {
+            let text = try await MobileTranscriptCorrector.correct("Please send the meeting goats to Alex.",
+                context: "We are discussing meeting notes and action items.", provider: session.ai.correctionClient())
+            XCTAssertEqual(text, "Please send the meeting notes to Alex.")
+        }
     }
 }

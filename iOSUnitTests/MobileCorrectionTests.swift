@@ -12,7 +12,11 @@ final class MobileCorrectionTests: XCTestCase {
         XCTAssertEqual(try MobileTranscriptCorrection.validatedText(reply(fixed), original: raw), fixed)
         XCTAssertEqual(try MobileTranscriptCorrection.validatedText("Reasoning omitted</think>" + reply(fixed), original: raw), fixed)
         XCTAssertEqual(try MobileTranscriptCorrection.validatedText("```json\n" + reply(fixed) + "\n```", original: raw), fixed)
-        XCTAssertThrowsError(try MobileTranscriptCorrection.validatedText("Sure, here is JSON: " + reply(fixed), original: raw))
+        XCTAssertEqual(try MobileTranscriptCorrection.validatedText("Return JSON." + reply(fixed), original: raw), fixed)
+        XCTAssertThrowsError(try MobileTranscriptCorrection.validatedText(reply(fixed) + " trailing prose", original: raw))
+        XCTAssertThrowsError(try MobileTranscriptCorrection.validatedText(#"{"text":"notes","extra":"unrequested"}"#, original: raw))
+        let braces = "Keep {value} and </think> as written."
+        XCTAssertEqual(try MobileTranscriptCorrection.validatedText(reply(braces), original: braces), braces)
         for pair in [("Do not approve 150 dollars.", "Do approve 150 dollars."),
                      ("Approve 150 dollars.", "Approve 1500 dollars."),
                      (raw, "Alex agreed to publish tomorrow."), (raw, ""), (raw, "Sure!\n" + fixed),
