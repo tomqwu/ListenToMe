@@ -28,7 +28,7 @@ final class MobileTranscriptUITests: XCTestCase {
         }
         XCTAssertNotNil(visible)
         guard let visible else { return }
-        let position = visible.frame.minY
+        let position = settledPosition(of: visible)
         app.buttons["fixture-grow"].tap()
         XCTAssertEqual(visible.frame.minY, position, accuracy: 2, "Incoming speech must preserve the reading position")
         XCTAssertTrue(latest.exists)
@@ -72,6 +72,22 @@ final class MobileTranscriptUITests: XCTestCase {
         }
         XCTAssertTrue(app.windows.firstMatch.frame.contains(quick.frame))
         capture(app, "Large text summary remains reachable")
+    }
+
+    private func settledPosition(of element: XCUIElement) -> CGFloat {
+        var previous: CGFloat?
+        var stableSamples = 0
+        let settled = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            let current = element.frame.minY
+            if let previous, abs(previous - current) < 0.25 { stableSamples += 1 }
+            else { stableSamples = 0 }
+            previous = current
+            return stableSamples >= 2
+        }, object: nil)
+        // Swipe completion can precede the end of scroll deceleration. Establish a stationary
+        // baseline before introducing speech, without relaxing the two-point preservation check.
+        XCTAssertEqual(XCTWaiter.wait(for: [settled], timeout: 6), .completed)
+        return element.frame.minY
     }
 
     private func latestText(in scroll: XCUIElement) -> XCUIElement {
