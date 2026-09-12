@@ -51,4 +51,20 @@ final class OllamaProviderTests: XCTestCase {
         }
         XCTAssertEqual(collected, "Hello")
     }
+
+    func testFastOptionsAreOptInAndEncodeWithoutUnsupportedCloudSchema() throws {
+        let request = LLMRequest(system: "Repair", messages: [])
+        let defaults = try XCTUnwrap(JSONSerialization.jsonObject(with:
+            OllamaProvider.requestBody(model: "flash", request: request)) as? [String: Any])
+        XCTAssertNil(defaults["think"])
+        XCTAssertNil(defaults["options"])
+        let fast = try XCTUnwrap(JSONSerialization.jsonObject(with:
+            OllamaProvider.requestBody(model: "flash", request: request,
+                                       options: .init(thinking: false, temperature: 0, maximumTokens: 700))) as? [String: Any])
+        XCTAssertEqual(fast["think"] as? Bool, false)
+        XCTAssertNil(fast["format"])
+        let options = try XCTUnwrap(fast["options"] as? [String: Any])
+        XCTAssertEqual(options["temperature"] as? Int, 0)
+        XCTAssertEqual(options["num_predict"] as? Int, 700)
+    }
 }

@@ -8,12 +8,13 @@ struct MobileAISettingsView: View {
     @FocusState private var editingKey: Bool
 
     var body: some View {
+        MobileSpeechCorrectionSettings(ai: ai)
         Section("AI summaries") {
             Picker("Summary provider", selection: $ai.provider) {
                 Text("Apple Intelligence · on-device").tag(MobileAISettings.Provider.apple)
                 Text("Ollama Cloud").tag(MobileAISettings.Provider.ollama)
             }.accessibilityIdentifier("summaryProvider")
-            if ai.provider == .ollama {
+            if ai.provider == .ollama || ai.correctTranscript {
                 Text("Summarize sends your notes and transcript to Ollama Cloud using the selected model. " +
                      "Microphone audio stays on your device. Your Ollama account's usage limits apply.")
                 Text("Server: https://ollama.com").font(.caption)

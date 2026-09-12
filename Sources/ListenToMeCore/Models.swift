@@ -32,12 +32,16 @@ public struct TranscriptSegment: Identifiable, Sendable, Equatable, Codable {
     public let end: TimeInterval
     public var speakerID: String?
     public var speakerName: String?
+    /// Present only after an opt-in speech correction; the recognizer's wording remains recoverable.
+    public let originalText: String?
+    public let correctionModel: String?
 
     public var speakerLabel: String { speakerName ?? (source == .you ? "You" : "Others") }
 
     public init(id: UUID = UUID(), source: SpeakerSource, text: String,
                 isFinal: Bool, start: TimeInterval, end: TimeInterval,
-                speakerID: String? = nil, speakerName: String? = nil) {
+                speakerID: String? = nil, speakerName: String? = nil,
+                originalText: String? = nil, correctionModel: String? = nil) {
         self.id = id
         self.source = source
         self.text = text
@@ -46,5 +50,7 @@ public struct TranscriptSegment: Identifiable, Sendable, Equatable, Codable {
         self.speakerID = speakerID
         self.speakerName = speakerName
         self.end = end
+        self.originalText = originalText
+        self.correctionModel = correctionModel
     }
 }

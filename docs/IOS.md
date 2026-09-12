@@ -1,7 +1,34 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.6.0 (14).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.7.0 (15).
+
+## iOS 1.7.0 (15)
+
+Intelligent speech correction is optional and off by default. Tap the sparkles row in Live transcript,
+or open Settings, then enable **Correct speech with AI** and select an API-listed Flash model.
+The correction role is independent of Quick, Summary and Deep; it can also run alongside Apple
+Intelligence summaries using your Ollama key. It sends only new completed phrases and up to 2,000
+characters of nearby recognized speech. Notes, attachments and microphone audio are excluded.
+
+Apple's live partial text appears immediately. A separate bounded queue checks finalized phrases,
+with a 350 ms delay and a 12-second deadline per request. At most six phrases wait behind the active
+request; under sustained overload the oldest waiting phrase stays as recognized. Phrases longer than
+1,200 characters are kept unchanged. Failures never stop recording or replace the original; later
+phrases are still checked. Turning correction off, changing its model/key, backgrounding or opening
+another conversation cancels pending work. Stopping normally lets the final check finish.
+
+Applied edits show **AI corrected**. Tap to compare the original and corrected wording or **Restore
+original**. Both wording versions persist with the segment, and Markdown exports include an originals
+section. Future summaries use the current transcript; existing summaries refresh only through their
+normal manual/Auto updates. The model is instructed to preserve names, dates, numbers and negation;
+local checks also reject number/negation changes and large rewrites. These checks are conservative
+filters, not proof of accuracy. Review edits where wording matters.
+
+The Cloud request uses streaming chat, `think: false`, temperature 0 and a small output budget.
+[Ollama Cloud does not support schema-constrained output](https://docs.ollama.com/capabilities/structured-outputs),
+so responses are parsed and validated locally. An explicit final-answer boundary handles the GLM
+Cloud reasoning preamble observed during live testing. Neither reasoning nor partial JSON is shown.
 
 ## iOS 1.6.0 (14)
 

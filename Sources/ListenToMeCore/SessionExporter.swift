@@ -29,6 +29,11 @@ public enum SessionExporter {
         }
         let transcriptBody = lines.isEmpty ? "_(no transcript captured)_" : lines.joined(separator: "\n")
         out += "\n## Transcript\n\n\(transcriptBody)\n"
+        let corrections = transcript.compactMap { segment -> String? in
+            guard let original = segment.originalText else { return nil }
+            return "- Original: \(original)\n  AI correction: \(segment.text)"
+        }
+        section("Speech corrections (original wording)", corrections.joined(separator: "\n"))
 
         section("Listener summary", listenerSummary)
         section("Quick suggestion", quickSuggestion)

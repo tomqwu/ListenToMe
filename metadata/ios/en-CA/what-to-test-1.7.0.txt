@@ -1,0 +1,9 @@
+Intelligent speech correction with a separate Flash model.
+
+• Open the sparkles row in Live transcript or Settings. Enable Correct speech with AI, add your Ollama key if needed, and choose a Flash model from the API catalog. It is off by default.
+• Start listening. Live words appear immediately; completed phrases are checked in the background using nearby speech as context. Quick/Summary/Deep model choices stay independent.
+• Tap AI corrected to compare Apple’s original with the corrected phrase. Restore original should update the transcript and survive Save, History and relaunch. Exports include original wording for corrected phrases.
+• Try names, numbers, negation, multilingual speech and unusual but valid wording. Uncertain/large edits, network failures and timeouts should keep the original and never stop recording.
+• Turn correction off during a request, stop recording, or open a new conversation. Late results must not change another conversation.
+
+Correction sends completed phrases and nearby transcript text to Ollama Cloud, not audio, notes or files. AI can misinterpret speech; review edits. Existing summaries update only on their next manual/Auto refresh. Physical iPhone/iPad speech quality and latency still need device acceptance; local simulator UI and actual Cloud API checks use synthetic speech.
