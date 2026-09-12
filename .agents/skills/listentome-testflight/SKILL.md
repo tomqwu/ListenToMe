@@ -29,6 +29,10 @@ Read [the release runbook](../../../docs/IOS-RELEASING.md) from the repository r
 - Stop retrying unchanged failures. Preserve the archive, checksum, source, sanitized error and exact
   next command. Request only the specific interactive action that tools cannot complete. Resume the
   same validated artifact after recovery; do not ask for publication permission again.
+- Own the publish action: use native Organizer automation as a fallback when available, rather than
+  routinely asking the maintainer to publish. A manual upload by the maintainer completes that build's
+  upload but does not prove agent automation is repaired. Offline tests and dry runs do not prove live
+  publishing works. Consult the runbook's verified build-7/build-8 baseline before diagnosing accounts.
 
 Publication is the default completion condition, not a follow-up offer. Documentation-only workflow
 updates do not require another app build. This authorization does not extend to public App Store
