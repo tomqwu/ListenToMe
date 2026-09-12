@@ -170,33 +170,25 @@ final class MobileAppTests: XCTestCase {
         app.buttons["Done"].tap()
         app.buttons["More"].tap()
         app.buttons["Share"].tap()
-        // Some iOS runtimes label the cell; others expose the title inside a generic shareCell.
-        func activity(_ name: String) -> XCUIElement {
-            let cell = app.cells[name].firstMatch
-            return cell.exists ? cell : app.staticTexts[name].firstMatch
+        // Use the Apps list consistently. The original carousel remains in the accessibility
+        // hierarchy underneath it, so selecting its first matching cell can tap the wrong app.
+        let more = app.cells["More"].firstMatch
+        guard more.waitForExistence(timeout: 15) else {
+            XCTFail("Share More activity missing: \(app.debugDescription)"); return
         }
-        func waitForDestination() -> Bool {
-            let shown = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
-                activity("ListenToMe").exists
-            }, object: nil)
-            return XCTWaiter.wait(for: [shown], timeout: 5) == .completed
+        more.tap()
+        let destination = app.cells.containing(.staticText, identifier: "ListenToMe")
+            .matching(NSPredicate(format: "identifier != %@", "shareCell")).firstMatch
+        let ready = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "exists == true AND hittable == true"), object: destination
+        )
+        guard XCTWaiter.wait(for: [ready], timeout: 15) == .completed else {
+            XCTFail("Apps list destination missing: \(app.debugDescription)"); return
         }
-        func tapActivity(_ name: String) {
-            let frame = activity(name).frame
-            let center = CGPoint(x: frame.midX, y: frame.midY)
-            guard !frame.isEmpty, app.windows.firstMatch.frame.contains(center) else {
-                XCTFail("Share activity must be on screen before tapping"); return
-            }
-            // The hosted runtime reports visible remote Share cells as not hittable. Use their
-            // observed on-screen center, then require the real extension's Import/Saved workflow.
-            app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: center.x, dy: center.y)).tap()
+        destination.tap()
+        guard app.buttons["Import"].waitForExistence(timeout: 15) else {
+            XCTFail("Share import did not open: \(app.debugDescription)"); return
         }
-        if !waitForDestination(), activity("More").exists { tapActivity("More") }
-        guard waitForDestination() else {
-            XCTFail("Share destination missing: \(app.debugDescription)"); return
-        }
-        tapActivity("ListenToMe")
-        XCTAssertTrue(app.buttons["Import"].waitForExistence(timeout: 10))
         app.buttons["Import"].tap()
         XCTAssertTrue(app.buttons["Saved"].waitForExistence(timeout: 10))
         app.buttons["finishSharedImport"].tap()
