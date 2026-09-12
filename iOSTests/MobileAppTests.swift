@@ -181,11 +181,21 @@ final class MobileAppTests: XCTestCase {
             }, object: nil)
             return XCTWaiter.wait(for: [shown], timeout: 5) == .completed
         }
-        if !waitForDestination(), activity("More").exists { activity("More").tap() }
+        func tapActivity(_ name: String) {
+            let frame = activity(name).frame
+            let center = CGPoint(x: frame.midX, y: frame.midY)
+            guard !frame.isEmpty, app.windows.firstMatch.frame.contains(center) else {
+                XCTFail("Share activity must be on screen before tapping"); return
+            }
+            // The hosted runtime reports visible remote Share cells as not hittable. Use their
+            // observed on-screen center, then require the real extension's Import/Saved workflow.
+            app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: center.x, dy: center.y)).tap()
+        }
+        if !waitForDestination(), activity("More").exists { tapActivity("More") }
         guard waitForDestination() else {
             XCTFail("Share destination missing: \(app.debugDescription)"); return
         }
-        activity("ListenToMe").tap()
+        tapActivity("ListenToMe")
         XCTAssertTrue(app.buttons["Import"].waitForExistence(timeout: 10))
         app.buttons["Import"].tap()
         XCTAssertTrue(app.buttons["Saved"].waitForExistence(timeout: 10))
