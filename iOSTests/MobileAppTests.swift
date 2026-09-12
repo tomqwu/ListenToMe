@@ -170,15 +170,22 @@ final class MobileAppTests: XCTestCase {
         app.buttons["Done"].tap()
         app.buttons["More"].tap()
         app.buttons["Share"].tap()
-        let destination = app.cells["ListenToMe"]
-        if !destination.waitForExistence(timeout: 5) {
-            let more = app.cells["More"].firstMatch
-            if more.exists { more.tap() }
+        // Some iOS runtimes label the cell; others expose the title inside a generic shareCell.
+        func activity(_ name: String) -> XCUIElement {
+            let cell = app.cells[name].firstMatch
+            return cell.exists ? cell : app.staticTexts[name].firstMatch
         }
-        guard destination.waitForExistence(timeout: 5) else {
+        func waitForDestination() -> Bool {
+            let shown = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+                activity("ListenToMe").exists
+            }, object: nil)
+            return XCTWaiter.wait(for: [shown], timeout: 5) == .completed
+        }
+        if !waitForDestination(), activity("More").exists { activity("More").tap() }
+        guard waitForDestination() else {
             XCTFail("Share destination missing: \(app.debugDescription)"); return
         }
-        destination.tap()
+        activity("ListenToMe").tap()
         XCTAssertTrue(app.buttons["Import"].waitForExistence(timeout: 10))
         app.buttons["Import"].tap()
         XCTAssertTrue(app.buttons["Saved"].waitForExistence(timeout: 10))
