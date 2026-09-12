@@ -50,7 +50,12 @@ final class MobileNativeInteractionTests: XCTestCase {
                                "-autoQuickSummary", "YES", "-mobileAIProvider", "apple"]
         app.launch()
         app.buttons["Start listening"].tap()
-        XCTAssertTrue(app.staticTexts["quickSummaryError"].waitForExistence(timeout: 4))
+        let error = app.staticTexts["quickSummaryError"]
+        XCTAssertTrue(error.waitForExistence(timeout: 4))
+        XCTAssertTrue(error.isHittable)
+        let panel = app.otherElements["summary-panel-quick"].firstMatch
+        XCTAssertLessThanOrEqual(error.frame.maxY, panel.frame.maxY)
+        XCTAssertTrue(error.label.contains("internet connection was lost"))
         capture(app, "Automatic summary failure and retry status")
         expect(app.staticTexts["output-quick"], containing: "Thursday")
         XCTAssertFalse(app.staticTexts["quickSummaryError"].exists)

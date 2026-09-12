@@ -142,20 +142,6 @@ struct MobileWorkspaceView<Header: View>: View {
             Rectangle().fill(MobileStyle.line).frame(height: 0.75).padding(.horizontal, 16)
             readingArea {
                 VStack(alignment: .leading, spacing: 12) {
-                    if session.generatingMode == mode {
-                        Label("Updating…", systemImage: "sparkles").font(.caption)
-                            .foregroundStyle(MobileStyle.tint(for: mode))
-                        MarkdownText(text: session.summaryDraft).textSelection(.enabled)
-                    }
-                    let output = session.output(for: mode)
-                    if !output.isEmpty {
-                        MarkdownText(text: output).font(.body).lineSpacing(3).textSelection(.enabled)
-                            .accessibilityElement(children: .combine).accessibilityIdentifier("output-\(mode.rawValue)")
-                    } else if session.generatingMode != mode {
-                        MobileOutputPlaceholder(mode: mode)
-                            .accessibilityElement(children: .combine)
-                            .accessibilityIdentifier("output-\(mode.rawValue)")
-                    }
                     if mode == .quick {
                         Text(session.autoQuickStatus).font(.caption).foregroundStyle(MobileStyle.muted)
                             .accessibilityIdentifier("autoQuickStatus")
@@ -167,6 +153,20 @@ struct MobileWorkspaceView<Header: View>: View {
                             Text("Auto sends notes and transcript to Ollama Cloud.")
                                 .font(.caption).foregroundStyle(.secondary)
                         }
+                    }
+                    if session.generatingMode == mode {
+                        Label("Updating…", systemImage: "sparkles").font(.caption)
+                            .foregroundStyle(MobileStyle.tint(for: mode))
+                        MarkdownText(text: session.summaryDraft).textSelection(.enabled)
+                    }
+                    let output = session.output(for: mode)
+                    if !output.isEmpty {
+                        MarkdownText(text: output).font(.body).lineSpacing(3).textSelection(.enabled)
+                            .accessibilityElement(children: .combine).accessibilityIdentifier("output-\(mode.rawValue)")
+                    } else if session.generatingMode != mode && (mode != .quick || session.quickSummaryError == nil) {
+                        MobileOutputPlaceholder(mode: mode)
+                            .accessibilityElement(children: .combine)
+                            .accessibilityIdentifier("output-\(mode.rawValue)")
                     }
                     if let reason = session.summaryBlockReason(for: mode), !session.isSummarizing {
                         Text(reason).font(.caption).foregroundStyle(MobileStyle.muted)
