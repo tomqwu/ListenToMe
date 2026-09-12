@@ -21,12 +21,23 @@ final class MobileAppTests: XCTestCase {
         app.launch()
         let dashboard = app.scrollViews["dashboardScroll"].firstMatch
         XCTAssertTrue(dashboard.waitForExistence(timeout: 5))
+        XCTAssertEqual(app.scrollViews.count, 1, "Large text uses one page scroll, without nested panel scrolling")
         let deep = app.staticTexts["Deep Summary"]
-        for _ in 0..<6 where !deep.isHittable { dashboard.swipeUp() }
+        for _ in 0..<20 {
+            if deep.isHittable, deep.frame.minY >= dashboard.frame.minY, deep.frame.maxY <= dashboard.frame.maxY { break }
+            let down = deep.frame.midY < dashboard.frame.minY
+            let start = dashboard.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: down ? 0.35 : 0.65))
+            let end = dashboard.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: down ? 0.65 : 0.35))
+            start.press(forDuration: 0.1, thenDragTo: end)
+        }
         XCTAssertTrue(deep.isHittable)
+        XCTAssertGreaterThanOrEqual(deep.frame.minY, dashboard.frame.minY)
+        XCTAssertLessThanOrEqual(deep.frame.maxY, dashboard.frame.maxY)
         XCTAssertTrue(app.buttons["Start listening"].isHittable)
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "Accessibility text dashboard"; screenshot.lifetime = .keepAlways; add(screenshot)
+        app.buttons["More"].tap()
+        for action in ["Save", "New", "Share"] { XCTAssertTrue(app.buttons[action].exists) }
     }
 
     func testDashboardKeepsTranscriptQuickAndDeepVisible() {

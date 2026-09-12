@@ -18,14 +18,15 @@ struct MobileMeetingView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                status
+                if !dynamicTypeSize.isAccessibilitySize { status }
                 GeometryReader { geometry in
                     if dynamicTypeSize.isAccessibilitySize {
                         ScrollView {
                             VStack(spacing: 10) {
-                                transcriptPanel.frame(height: 300)
-                                aiPanel(.quick).frame(height: 360)
-                                aiPanel(.deep).frame(height: 360)
+                                status
+                                transcriptPanel
+                                aiPanel(.quick)
+                                aiPanel(.deep)
                             }
                         }.accessibilityIdentifier("dashboardScroll")
                     } else if verticalSizeClass == .compact {
@@ -64,6 +65,11 @@ struct MobileMeetingView: View {
                     HStack {
                         Button("Notes", systemImage: "note.text") { showNotes = true }
                         Menu("More", systemImage: "ellipsis.circle") {
+                            if dynamicTypeSize.isAccessibilitySize {
+                                Button("Save") { session.save() }.disabled(!session.hasContent)
+                                Button("New") { session.newConversation() }.disabled(session.busy)
+                                ShareLink(item: session.markdown) { Text("Share") }.disabled(!session.hasContent)
+                            }
                             Button("Full summary") { showFullSummary = true }
                             Button("Settings", systemImage: "gearshape") { showSettings = true }
                         }
@@ -122,10 +128,21 @@ struct MobileMeetingView: View {
     private var transcriptPanel: some View {
         VStack(alignment: .leading, spacing: 4) {
             Label("Live transcript", systemImage: "waveform").font(.headline).padding([.top, .horizontal], 10)
-            transcript.frame(maxWidth: .infinity, maxHeight: .infinity)
+            transcript.frame(maxWidth: .infinity, maxHeight: dynamicTypeSize.isAccessibilitySize ? nil : .infinity)
         }.background(.background, in: RoundedRectangle(cornerRadius: 14))
             .overlay(RoundedRectangle(cornerRadius: 14).stroke(.quaternary))
             .accessibilityIdentifier("transcriptPanel")
+    }
+
+    @ViewBuilder
+    private func panelScroll<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            // The accessibility layout already has one outer scroll view. Nested scrolling
+            // can trap swipes inside a panel and make later summaries unreachable.
+            content()
+        } else {
+            ScrollView { content() }
+        }
     }
 
     private func aiPanel(_ mode: MobileSummaryMode) -> some View {
@@ -145,7 +162,7 @@ struct MobileMeetingView: View {
                     Button("Cancel") { session.cancelSummary() }.font(.caption)
                 }
             }
-            ScrollView {
+            panelScroll {
                 VStack(alignment: .leading, spacing: 8) {
                     if mode == .quick && session.autoQuick {
                         Text("Updates every 30 seconds while listening when text changes (at least 80 characters). Uses your selected provider.")
@@ -156,15 +173,15 @@ struct MobileMeetingView: View {
                             .accessibilityIdentifier("reason-\(mode.rawValue)")
                     }
                     if session.generatingMode == mode {
-                        Text(session.summaryDraft).font(.subheadline).textSelection(.enabled)
+                        MarkdownText(text: session.summaryDraft).font(.subheadline).textSelection(.enabled)
                     }
                     let output = session.output(for: mode)
-                    Text(output.isEmpty ? "Your \(mode == .quick ? "quick summary" : "deep analysis") appears here." : output)
+                    MarkdownText(text: output.isEmpty ? "Your \(mode == .quick ? "quick summary" : "deep analysis") appears here." : output)
                         .font(.subheadline).textSelection(.enabled)
-                        .accessibilityIdentifier("output-\(mode.rawValue)")
+                        .accessibilityElement(children: .combine).accessibilityIdentifier("output-\(mode.rawValue)")
                 }.frame(maxWidth: .infinity, alignment: .leading)
             }
-        }.padding(10).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }.padding(10).frame(maxWidth: .infinity, maxHeight: dynamicTypeSize.isAccessibilitySize ? nil : .infinity, alignment: .topLeading)
             .background(mode == .quick ? Color.indigo.opacity(0.06) : Color.purple.opacity(0.06),
                         in: RoundedRectangle(cornerRadius: 14))
     }
@@ -172,13 +189,13 @@ struct MobileMeetingView: View {
     private var transcript: some View {
         Group {
             if session.allSegments.isEmpty {
-                ScrollView {
+                panelScroll {
                     Text("Tap Start listening for live microphone transcription. Keep the app open while recording.")
                         .font(.subheadline).foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading).padding()
                 }
             } else {
-                ScrollView {
+                panelScroll {
                     LazyVStack(alignment: .leading, spacing: 18) {
                         ForEach(session.allSegments) { segment in
                             VStack(alignment: .leading, spacing: 4) {
@@ -220,10 +237,11 @@ struct MobileMeetingView: View {
                 .disabled(session.summaryBlockReason(for: summaryMode) != nil)
                 if session.isSummarizing {
                     Button("Cancel summary") { session.cancelSummary() }
-                    Text(session.summaryDraft).textSelection(.enabled)
+                    MarkdownText(text: session.summaryDraft).textSelection(.enabled)
                 }
                 if !session.output(for: summaryMode).isEmpty {
-                    Text(session.output(for: summaryMode)).textSelection(.enabled).accessibilityIdentifier("savedSummary")
+                    MarkdownText(text: session.output(for: summaryMode))
+                        .accessibilityElement(children: .combine).accessibilityIdentifier("savedSummary")
                 }
             }.frame(maxWidth: .infinity, alignment: .leading).padding()
         }
@@ -243,14 +261,16 @@ struct MobileMeetingView: View {
             .buttonStyle(.borderedProminent)
             .tint(session.state == .idle ? .indigo : .red)
             .disabled(session.state == .stopping || (session.isSummarizing && session.state == .idle))
-            HStack {
-                Button("Save", systemImage: "square.and.arrow.down") { session.save() }.disabled(!session.hasContent)
-                Spacer()
-                Button("New", systemImage: "plus") { session.newConversation() }.disabled(session.busy)
-                Spacer()
-                ShareLink(item: session.markdown) { Label("Share", systemImage: "square.and.arrow.up") }
-                    .disabled(!session.hasContent)
-            }.font(.subheadline.weight(.semibold))
+            if !dynamicTypeSize.isAccessibilitySize {
+                HStack {
+                    Button("Save", systemImage: "square.and.arrow.down") { session.save() }.disabled(!session.hasContent)
+                    Spacer()
+                    Button("New", systemImage: "plus") { session.newConversation() }.disabled(session.busy)
+                    Spacer()
+                    ShareLink(item: session.markdown) { Label("Share", systemImage: "square.and.arrow.up") }
+                        .disabled(!session.hasContent)
+                }.font(.subheadline.weight(.semibold))
+            }
         }.padding(verticalSizeClass == .compact ? 8 : 16).background(.bar)
     }
 
@@ -264,7 +284,8 @@ struct MobileMeetingView: View {
                         VStack(alignment: .leading, spacing: 5) {
                             Text(record.title).font(.headline).foregroundStyle(.primary)
                             Text(record.date.formatted(date: .abbreviated, time: .shortened)).font(.caption)
-                            Text(record.summary.isEmpty ? (record.notes ?? record.transcript) : record.summary)
+                            Text(record.summary.isEmpty ? AttributedString(record.notes ?? record.transcript)
+                                 : MarkdownText.inlineAttributed(record.summary))
                                 .lineLimit(2).foregroundStyle(.secondary)
                         }
                     }.buttonStyle(.plain)

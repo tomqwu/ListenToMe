@@ -1,0 +1,2 @@
+Fixed raw Markdown appearing in summaries. Quick Summary, Deep Summary, full Summary and streaming responses now render headings, bullets, emphasis and code using the desktop renderer. Reopen existing conversations to verify formatting; exported Markdown keeps its original content.
+Large accessibility text now uses one scrollable page so Deep Summary remains reachable without nested panel scrolling.

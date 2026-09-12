@@ -1,7 +1,7 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.3.0 (6).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.3.1 (7).
 
 ## Included
 
@@ -27,6 +27,8 @@ that moment. Stop listening remains available during generation. A disabled summ
 its reason (empty text, model unavailability, microphone transition or an in-flight response).
 Check again re-reads readiness. Apple model-not-ready status does not prove a download is active.
 
+Summaries render headings, bullets, bold, italics and inline code, including streamed responses. Fenced code remains monospaced. Saved conversations and Markdown exports keep the original output.
+
 ## Conversation actions
 
 History shows a trash button for each conversation and supports swipe-to-delete. Deletion asks for
@@ -34,7 +36,7 @@ confirmation and removes that conversation's transcript, notes, original attachm
 an active conversation creates an empty active snapshot so the deleted content does not reappear
 on restart. Other conversations are preserved.
 
-The main screen shows the live transcript above **Quick Summary** and **Deep Summary** side by side on iPhone. On wide iPad layouts, transcript and Quick Summary are on the left and Deep Summary is on the right. Large accessibility text stacks scrollable panels. **More → Full summary** also offers **Summary**, **Quick Summary** (up to five concise bullets) and **Deep Think**
+The main screen shows the live transcript above **Quick Summary** and **Deep Summary** side by side on iPhone. On wide iPad layouts, transcript and Quick Summary are on the left and Deep Summary is on the right. Large accessibility text stacks expanding panels and the header in one scrollable page. Start/Stop stays visible; Save, New and Share move to More in that layout. **More → Full summary** also offers **Summary**, **Quick Summary** (up to five concise bullets) and **Deep Think**
 (a deeper analysis of decisions, tradeoffs, risks and unresolved questions). Each result is stored
 separately, restored with its conversation and included when sharing. These are distinct prompts;
 Deep Think does not promise a provider-specific reasoning mode. Requests use the selected provider

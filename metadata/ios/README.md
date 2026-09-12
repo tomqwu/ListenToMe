@@ -17,7 +17,9 @@ App Store Connect. Apply and verify the online fields during the iOS release wor
 
 | `what-to-test-1.3.0.txt` | TestFlight → build 1.3.0 (6) → What to Test |
 
-The full store description targets 1.3.0. The beta description explicitly identifies the version
+| `what-to-test-1.3.1.txt` | TestFlight → build 1.3.1 (7) → What to Test |
+
+The full store description targets 1.3.1. The beta description explicitly identifies the version
 that adds Ollama so it remains accurate while testers still have 1.0.1. Do not mark a candidate
 uploaded or tested on a physical device until that is verified. Contact and privacy fields require
 the maintainer's actual details and are not supplied by these files.
