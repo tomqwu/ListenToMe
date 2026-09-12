@@ -79,11 +79,18 @@ final class MobileAppTests: XCTestCase {
         XCTAssertGreaterThan(window.frame.width, window.frame.height)
         let scroll = app.scrollViews["dashboardScroll"]
         let model = app.buttons["panel-model-deep"]
-        for _ in 0..<8 {
-            if model.isHittable { break }
-            scroll.swipeUp(velocity: .slow)
+        // Large text can put the model above or below the viewport. Avoid swiping past it to the end.
+        for _ in 0..<20 {
+            let viewport = scroll.frame.intersection(window.frame)
+            let center = CGPoint(x: model.frame.midX, y: model.frame.midY)
+            if viewport.contains(center) && model.isHittable { break }
+            let delta = min(viewport.height * 0.35, max(-viewport.height * 0.35, viewport.midY - center.y))
+            let start = scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+            start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 0, dy: delta)),
+                        withVelocity: .slow, thenHoldForDuration: 0.1)
         }
         XCTAssertTrue(model.isHittable)
+        XCTAssertTrue(scroll.frame.contains(CGPoint(x: model.frame.midX, y: model.frame.midY)))
         let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         screenshot.name = "Landscape accessibility layout"; screenshot.lifetime = .keepAlways; add(screenshot)
     }

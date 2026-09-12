@@ -11,6 +11,7 @@ struct MobileWorkspaceView<Header: View>: View {
     @Binding var selection: MobileWorkspace
     let chooseModel: (MobileSummaryMode) -> Void
     let accessibilityHeader: () -> Header
+    @State private var showTranscript = false
     @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(\.verticalSizeClass) private var verticalSize
     private var stacked: Bool { typeSize.isAccessibilitySize || verticalSize == .compact }
@@ -53,11 +54,19 @@ struct MobileWorkspaceView<Header: View>: View {
                 }
             }
         }
+        .sheet(isPresented: $showTranscript) {
+            NavigationStack {
+                MobileTranscriptReader(segments: session.allSegments, scrollIdentifier: "expandedTranscriptScroll")
+                    .id(session.id)
+                    .navigationTitle("Transcript").navigationBarTitleDisplayMode(.inline)
+                    .toolbar { Button("Done") { showTranscript = false } }
+            }
+        }
     }
 
     private func livePanels(height: CGFloat) -> some View {
         VStack(spacing: 16) {
-            transcriptPanel.frame(height: max(160, (height - 16) * 0.50))
+            transcriptPanel.frame(height: min(260, max(160, (height - 16) * 0.34)))
             summaryPanel(.quick).frame(maxHeight: .infinity)
         }
     }
@@ -70,27 +79,25 @@ struct MobileWorkspaceView<Header: View>: View {
                 if session.state == .recording {
                     Circle().fill(.red).frame(width: 6, height: 6).accessibilityLabel("Recording")
                 }
-            }.padding(16)
+                Button("Expand transcript", systemImage: "arrow.up.left.and.arrow.down.right") { showTranscript = true }
+                    .labelStyle(.iconOnly).buttonStyle(.plain)
+                    .frame(minWidth: 44, minHeight: 44)
+            }.padding(.horizontal, 16).padding(.vertical, 8)
             Divider().padding(.horizontal, 16)
-            readingArea {
-                if session.allSegments.isEmpty {
-                    emptyState("Nothing recorded yet", detail: "Start listening and your words will appear here.", icon: "waveform")
-                } else {
-                    LazyVStack(alignment: .leading, spacing: 18) {
-                        ForEach(session.allSegments) { segment in
-                            VStack(alignment: .leading, spacing: 5) {
-                                if !segment.isFinal {
-                                    Text("LIVE").font(.caption2.weight(.semibold)).foregroundStyle(.indigo)
-                                }
-                                Text(segment.text).font(.body).lineSpacing(4).textSelection(.enabled)
-                                    .foregroundStyle(segment.isFinal ? .primary : .secondary)
-                            }.frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                    }.padding(16)
-                }
+            if session.allSegments.isEmpty {
+                Text("Start listening and your words will appear here.")
+                    .font(.subheadline).foregroundStyle(.secondary).padding(16)
+            } else if stacked {
+                // Keep one outer scroll at large text sizes/short heights. Full history has its own reader.
+                Text(session.allSegments.last?.text ?? "").font(.body).lineSpacing(4)
+                    .lineLimit(4).truncationMode(.head).padding(16)
+                    .accessibilityIdentifier("latestTranscriptPreview")
+            } else {
+                MobileTranscriptReader(segments: session.allSegments).id(session.id)
             }
         }.frame(maxWidth: .infinity, maxHeight: stacked ? nil : .infinity, alignment: .topLeading)
             .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20))
+            .clipShape(RoundedRectangle(cornerRadius: 20))
             .accessibilityElement(children: .contain).accessibilityIdentifier("transcriptPanel")
     }
 
@@ -112,22 +119,14 @@ struct MobileWorkspaceView<Header: View>: View {
                             .disabled(session.summaryBlockReason(for: mode) != nil)
                     }
                 }
-                HStack(alignment: .center, spacing: 10) {
-                    Button { chooseModel(mode) } label: {
-                        HStack(spacing: 4) {
-                            Text(session.ai.provider == .apple ? "Apple Intelligence" :
-                                 (session.ai.selectedModel(for: mode).isEmpty ? "Choose model" : session.ai.selectedModel(for: mode)))
-                                .lineLimit(2).multilineTextAlignment(.leading)
-                            Image(systemName: "chevron.down").font(.caption2)
-                        }.font(.caption).foregroundStyle(.indigo)
-                    }.buttonStyle(.plain).accessibilityIdentifier("panel-model-\(mode.rawValue)")
-                    Spacer(minLength: 0)
-                    if mode == .quick {
-                        Toggle("Auto", isOn: $session.autoQuick).font(.caption).fixedSize()
-                            .accessibilityLabel("Auto Quick Summary")
-                            .accessibilityHint(session.ai.provider == .ollama
-                                ? "Automatically sends notes and transcript to Ollama Cloud while listening."
-                                : "Automatically summarizes on this device while listening.")
+                if typeSize.isAccessibilitySize {
+                    modelButton(mode)
+                    if mode == .quick { autoToggle }
+                } else {
+                    HStack(alignment: .center, spacing: 10) {
+                        modelButton(mode)
+                        Spacer(minLength: 0)
+                        if mode == .quick { autoToggle.fixedSize() }
                     }
                 }
             }.padding(16)
@@ -163,16 +162,27 @@ struct MobileWorkspaceView<Header: View>: View {
             .accessibilityElement(children: .contain).accessibilityIdentifier("summary-panel-\(mode.rawValue)")
     }
 
+    private func modelButton(_ mode: MobileSummaryMode) -> some View {
+        Button { chooseModel(mode) } label: {
+            HStack(spacing: 4) {
+                Text(session.ai.provider == .apple ? "Apple Intelligence" :
+                     (session.ai.selectedModel(for: mode).isEmpty ? "Choose model" : session.ai.selectedModel(for: mode)))
+                    .lineLimit(typeSize.isAccessibilitySize ? nil : 2).multilineTextAlignment(.leading)
+                Image(systemName: "chevron.down").font(.caption2)
+            }.font(.caption).foregroundStyle(.indigo)
+        }.buttonStyle(.plain).accessibilityIdentifier("panel-model-\(mode.rawValue)")
+    }
+
+    private var autoToggle: some View {
+        Toggle("Auto", isOn: $session.autoQuick).font(.caption)
+            .accessibilityLabel("Auto Quick Summary")
+            .accessibilityHint(session.ai.provider == .ollama
+                ? "Automatically sends notes and transcript to Ollama Cloud while listening."
+                : "Automatically summarizes on this device while listening.")
+    }
+
     @ViewBuilder
     private func readingArea<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         if stacked { content() } else { ScrollView { content() } }
-    }
-
-    private func emptyState(_ title: String, detail: String, icon: String) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Image(systemName: icon).font(.title2).foregroundStyle(.tertiary)
-            Text(title).font(.subheadline.weight(.medium))
-            Text(detail).font(.subheadline).foregroundStyle(.secondary)
-        }.frame(maxWidth: .infinity, alignment: .leading).padding(20)
     }
 }

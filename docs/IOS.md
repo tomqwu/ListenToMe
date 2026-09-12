@@ -1,7 +1,15 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.4.0 (11).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.4.1 (12).
+
+## iOS 1.4.1 (12)
+
+Live now gives more space to Quick Summary. The transcript takes about one-third of the reading
+area, capped at 260 points, and follows the latest words as partial and final text arrive.
+Scrolling back pauses following; scroll to the end or tap **Latest** to resume. Use the expand
+icon to read the full transcript. Landscape and accessibility text sizes show a short latest-text
+preview with the same expand action, keeping Quick Summary reachable in one scrolling column.
 
 ## iOS 1.4.0 (11)
 

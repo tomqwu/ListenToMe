@@ -1,0 +1,5 @@
+Live gives Quick Summary more room, with a smaller transcript area above it.
+
+The transcript follows the latest words automatically, including an unfinished phrase as it grows. Scroll back to read earlier text without being pulled to the bottom; tap Latest or scroll to the end to resume following.
+
+Use the expand icon for a full transcript reader. Check iPhone, iPad, landscape and larger text sizes, including returning from the expanded transcript while listening.
