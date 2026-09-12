@@ -28,3 +28,9 @@ production-app recovery and verification procedure in `docs/manual-smoke-test.md
 For iOS-only changes, use the platform-specific build, physical-device acceptance and
 archive/TestFlight distribution procedure in `docs/IOS.md` instead of the macOS DMG steps.
 Do not call simulator checks a physical-device pass or publish an unvalidated build as production.
+
+For every iOS publication, follow `docs/IOS-RELEASING.md` and the checked-in `Config/iOS/` export
+settings through actual upload and tester-status verification. No connected iPhone is required for
+an authorized TestFlight beta upload. Keep missing physical-device acceptance separate from upload
+blockers; it prevents a production-ready claim, not beta distribution. A successful archive/export
+is not a successful upload. Xcode account failures require account recovery, not a new build.
