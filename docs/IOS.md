@@ -1,7 +1,20 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.3.2 (9).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.3.3 (10).
+
+## iOS 1.3.3 (10)
+
+Use **More → Import from Calendar**, or the same action in **Notes**. Connect Calendar when prompted,
+choose a date and event, preview the details, then tap **Import**. The app appends meeting context to
+existing notes and names an untitled conversation after the event. It does not edit Calendar events.
+Imported notes are included in the selected AI provider's summaries, including Auto summary.
+Only calendars configured on this device are available; no direct server login is needed.
+
+Reading existing events uses Apple's full Calendar access level and
+[`NSCalendarsFullAccessUsageDescription`](https://developer.apple.com/documentation/eventkit/accessing-the-event-store).
+Denied/restricted access and dates without events have distinct messages. Permissions are requested
+only through Connect Calendar, and rechecked when returning from Settings.
 
 ## iOS 1.3.2 (9)
 

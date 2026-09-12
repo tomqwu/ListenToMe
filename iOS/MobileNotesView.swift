@@ -10,6 +10,7 @@ struct MobileNotesView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var photo: PhotosPickerItem?
     @State private var showFiles = false
+    @State private var showCalendar = false
     @State private var showCamera = false
     @State private var preview: URL?
     @State private var sharedFile: SharedFile?
@@ -31,6 +32,7 @@ struct MobileNotesView: View {
                     Button("Take photo", systemImage: "camera") { requestCamera() }
                     PhotosPicker(selection: $photo, matching: .images) { Label("Photo library", systemImage: "photo") }
                     Button("Add files", systemImage: "paperclip") { showFiles = true }
+                    Button("Import from Calendar", systemImage: "calendar") { showCalendar = true }
                     Text("Up to 20 attachments, 20 MB each. Originals stay on this device. " +
                          "Only text you add to Notes is included in AI summaries.")
                         .font(.caption).foregroundStyle(.secondary)
@@ -86,6 +88,7 @@ struct MobileNotesView: View {
                     photo = nil
                 }
             }
+            .sheet(isPresented: $showCalendar) { MobileCalendarView(session: session) }
             .sheet(isPresented: $showCamera) {
                 MobileCamera { image in
                     if let data = image?.jpegData(compressionQuality: 0.85) {

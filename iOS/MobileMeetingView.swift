@@ -8,6 +8,7 @@ struct MobileMeetingView: View {
     private enum Workspace: String, CaseIterable { case live = "Live", deep = "Deep Think" }
     @State private var showSettings = false
     @State private var showNotes = false
+    @State private var showCalendar = false
     @State private var showFullSummary = false
     @State private var summaryMode = MobileSummaryMode.summary
     @State private var pendingDeletion: SessionRecord?
@@ -64,6 +65,7 @@ struct MobileMeetingView: View {
                                 Button("New") { session.newConversation() }.disabled(session.busy)
                                 ShareLink(item: session.markdown) { Text("Share") }.disabled(!session.hasContent)
                             }
+                            Button("Import from Calendar", systemImage: "calendar") { showCalendar = true }
                             Button("Full summary") { showFullSummary = true }
                             Button("Settings", systemImage: "gearshape") { showSettings = true }
                         }
@@ -73,6 +75,7 @@ struct MobileMeetingView: View {
             .safeAreaInset(edge: .bottom) { controls }
             .sheet(isPresented: $showHistory) { history }
             .sheet(isPresented: $showSettings) { settings }
+            .sheet(isPresented: $showCalendar) { MobileCalendarView(session: session) }
             .sheet(isPresented: $showNotes) { MobileNotesView(session: session) }
             .sheet(isPresented: $showFullSummary) {
                 NavigationStack { summary.navigationTitle("Full summary").toolbar { Button("Done") { showFullSummary = false } } }
