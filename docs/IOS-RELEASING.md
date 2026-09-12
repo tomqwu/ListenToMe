@@ -131,8 +131,12 @@ continue the CLI upload and report that online availability/metadata verificatio
 
 - **`Failed to Use Accounts` / `Failed to find an account with App Store Connect access`:** inspect
   the `.xcdistributionlogs` path printed in the upload log, especially `IDEDistribution.standard.log`.
-  Open Xcode → Settings → Accounts; refresh/sign in to the intended Apple account and verify team
-  `T32FW7PZ3S` and its App Store Connect access. Browser login and successful signing are not proof of
+  Compare the credential/provider path with the last successful upload before requesting account changes.
+  A browser session or an empty legacy account-list preference alone does not establish the state of
+  Xcode team-session credentials. Do not delete accounts, reset keychains, or rewrite credential registries.
+  Check Xcode → Settings → Accounts and verify team
+  `T32FW7PZ3S` and its App Store Connect access; refresh/sign in only if that account actually needs it.
+  Browser login and successful signing are not proof of
   upload access. Ask the user only for the required interactive sign-in/2FA if tools cannot do it.
   Retry the same validated archive after the account state changes; do not repeatedly retry unchanged
   credentials or rebuild to fix an authentication failure. Do not print tokens or reset the keychain.
