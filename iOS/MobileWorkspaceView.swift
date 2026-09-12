@@ -156,13 +156,21 @@ struct MobileWorkspaceView<Header: View>: View {
                             .accessibilityElement(children: .combine)
                             .accessibilityIdentifier("output-\(mode.rawValue)")
                     }
+                    if mode == .quick {
+                        Text(session.autoQuickStatus).font(.caption).foregroundStyle(MobileStyle.muted)
+                            .accessibilityIdentifier("autoQuickStatus")
+                        if let error = session.quickSummaryError {
+                            Label(error, systemImage: "exclamationmark.circle").font(.caption)
+                                .foregroundStyle(.secondary).accessibilityIdentifier("quickSummaryError")
+                        }
+                        if session.autoQuick && session.ai.provider == .ollama {
+                            Text("Auto sends notes and transcript to Ollama Cloud.")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
                     if let reason = session.summaryBlockReason(for: mode), !session.isSummarizing {
                         Text(reason).font(.caption).foregroundStyle(MobileStyle.muted)
                             .accessibilityIdentifier("reason-\(mode.rawValue)")
-                    } else if mode == .quick && session.autoQuick {
-                        Text(session.ai.provider == .ollama ? "Auto sends notes and transcript to Ollama Cloud." :
-                             (session.state == .recording ? "Updates automatically while you listen." : "Auto updates when listening starts."))
-                            .font(.caption).foregroundStyle(.secondary)
                     }
                 }.frame(maxWidth: .infinity, alignment: .leading).padding(16)
             }

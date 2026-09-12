@@ -11,8 +11,6 @@ struct MobileMeetingView: View {
     @State private var showCalendar = false
     @State private var showFullSummary = false
     @State private var summaryMode = MobileSummaryMode.summary
-    @State private var pendingDeletion: SessionRecord?
-    @State private var showDeletion = false
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @FocusState private var focusedField: EditingField?
@@ -65,7 +63,7 @@ struct MobileMeetingView: View {
                 }
             }
             .safeAreaInset(edge: .bottom) { controls }
-            .sheet(isPresented: $showHistory) { history }
+            .sheet(isPresented: $showHistory) { MobileHistoryView(session: session) }
             .sheet(isPresented: $showSettings) { settings }
             .sheet(item: $modelRole) { role in
                 NavigationStack {
@@ -183,51 +181,6 @@ struct MobileMeetingView: View {
         }.frame(maxWidth: 600).frame(maxWidth: .infinity)
             .padding(.horizontal, 20).padding(.vertical, 12)
             .background(MobileStyle.canvas.opacity(0.96))
-    }
-
-    private var history: some View {
-        NavigationStack {
-            List(session.history) { record in
-                HStack {
-                    Button {
-                        session.open(record); showHistory = false
-                    } label: {
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text(record.title).font(.headline).foregroundStyle(.primary)
-                            Text(record.date.formatted(date: .abbreviated, time: .shortened)).font(.caption)
-                            Text(record.summary.isEmpty ? AttributedString(record.notes ?? record.transcript)
-                                 : MarkdownText.inlineAttributed(record.summary))
-                                .lineLimit(2).foregroundStyle(.secondary)
-                        }
-                    }.buttonStyle(.plain)
-                    Spacer()
-                    Button("Delete", systemImage: "trash", role: .destructive) { pendingDeletion = record; showDeletion = true }
-                        .labelStyle(.iconOnly).buttonStyle(.borderless)
-                        .accessibilityLabel("Delete \(record.title)")
-                }
-                .swipeActions {
-                    Button("Delete", role: .destructive) { pendingDeletion = record; showDeletion = true }
-                }
-            }
-            .alert("Delete conversation?", isPresented: $showDeletion, presenting: pendingDeletion) { record in
-                Button("Delete conversation", role: .destructive) {
-                    session.deleteConversation(id: record.id)
-                    pendingDeletion = nil
-                }
-                Button("Cancel", role: .cancel) { pendingDeletion = nil }
-            } message: { _ in
-                Text("This removes the transcript, notes, attachments and all AI outputs from this device. It cannot be undone.")
-            }
-            .scrollContentBackground(.hidden).background(MobileStyle.canvas)
-            .overlay {
-                if session.history.isEmpty {
-                    ContentUnavailableView("No saved conversations", systemImage: "clock",
-                                           description: Text("Save a conversation to return to its words, notes and summaries."))
-                }
-            }
-            .navigationTitle("History")
-            .toolbar { Button("Done") { showHistory = false } }
-        }
     }
 
     private var releaseVersion: String {

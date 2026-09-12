@@ -32,7 +32,9 @@ struct ListenToMeIOSApp: App {
 
     @ViewBuilder private var meeting: some View {
         #if DEBUG && targetEnvironment(simulator)
-        if ProcessInfo.processInfo.arguments.contains("--transcript-scroll-fixture") {
+        if ProcessInfo.processInfo.arguments.contains("--automatic-summary-fixture") {
+            MobileAutomaticSummaryFixture()
+        } else if ProcessInfo.processInfo.arguments.contains("--transcript-scroll-fixture") {
             MobileTranscriptFixture()
         } else if ProcessInfo.processInfo.arguments.contains("--design-review-fixture") {
             MobileDesignFixture()

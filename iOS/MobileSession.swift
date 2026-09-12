@@ -23,6 +23,8 @@ final class MobileSession {
     private var autoTask: Task<Void, Never>?
     private let autoInterval: Duration
     private let summaryProvider: (any LLMProvider)?
+    private let makeRecorder: () -> any MobileRecording
+    private(set) var quickSummaryError: String?
     private var sourceImportID: String?
     var segments: [TranscriptSegment] = []
     var partial: TranscriptSegment?
@@ -35,16 +37,18 @@ final class MobileSession {
     var language = Locale.current.identifier
     private(set) var id = UUID().uuidString
     private var date = Date()
-    private var recorder: MobileRecorder?
+    private var recorder: (any MobileRecording)?
     private var startTask: Task<Void, Never>?
     private let archive: SessionArchive
     private let activeURL: URL
     let attachmentRoot: URL
 
     init(storageDirectory: URL = .applicationSupportDirectory,
-         summaryProvider: (any LLMProvider)? = nil, autoInterval: Duration = .seconds(15)) {
+         summaryProvider: (any LLMProvider)? = nil, autoInterval: Duration = .seconds(15),
+         makeRecorder: @escaping () -> any MobileRecording = { MobileRecorder() }) {
         self.summaryProvider = summaryProvider
         self.autoInterval = autoInterval
+        self.makeRecorder = makeRecorder
         activeURL = storageDirectory.appendingPathComponent("ActiveConversation.json")
         attachmentRoot = storageDirectory.appendingPathComponent("Attachments", isDirectory: true)
         let directory = storageDirectory.appendingPathComponent("Conversations", isDirectory: true)
@@ -107,7 +111,7 @@ final class MobileSession {
         // Keep any unfinished hypothesis from an interrupted earlier run.
         if let partial { segments.append(partial); self.partial = nil }
         state = .preparing
-        let recorder = MobileRecorder()
+        let recorder = makeRecorder()
         self.recorder = recorder
         let offset = segments.map(\.end).max() ?? 0
         startTask = Task {
@@ -189,6 +193,7 @@ final class MobileSession {
 
     func newConversation() {
         guard !busy, save(announce: false) else { return }
+        quickSummaryError = nil
         id = UUID().uuidString; date = Date()
         title = "New conversation"; notes = ""; summary = ""; quickSummary = ""; deepThought = ""
         segments = []; partial = nil; message = nil; attachments = []; sourceImportID = nil; lastAutoSource = ""; lastAutoAttempt = nil
@@ -230,7 +235,7 @@ final class MobileSession {
     }
 
     private func restore(_ record: SessionRecord) {
-        lastAutoAttempt = nil
+        lastAutoAttempt = nil; quickSummaryError = nil
         id = record.id; date = record.date; title = record.title
         notes = record.notes ?? ""; summary = record.summary
         quickSummary = record.quickSuggestion ?? ""; deepThought = record.deepAnswer ?? ""
@@ -297,10 +302,19 @@ final class MobileSession {
         }
     }
 
+}
+
+extension MobileSession {
     func requestSummary(for mode: MobileSummaryMode = .summary) {
         guard summaryTask == nil else { return }
         if let reason = summaryBlockReason(for: mode) { message = reason; return }
-        summaryTask = Task { await summarize(mode: mode); summaryTask = nil }
+        summaryTask = Task {
+            await summarize(mode: mode)
+            summaryTask = nil
+            // New speech can arrive during any request. Resume at the remaining cooldown,
+            // instead of adding another full interval after the response finishes.
+            scheduleAutoQuick()
+        }
     }
 
     private func scheduleAutoQuick() {
@@ -308,7 +322,9 @@ final class MobileSession {
         autoTask = nil
         guard autoQuick, state == .recording else { return }
         let interval = autoInterval
+        let remaining = lastAutoAttempt.map { max(.zero, interval - (ContinuousClock.now - $0)) } ?? .zero
         autoTask = Task { [weak self] in
+            do { try await Task.sleep(for: remaining) } catch { return }
             while !Task.isCancelled {
                 guard self != nil else { return }
                 await self?.updateQuickAutomatically()
@@ -331,6 +347,22 @@ final class MobileSession {
 
     func cancelSummary() { summaryTask?.cancel() }
 
+    var autoQuickStatus: String {
+        guard autoQuick else { return "Auto off · Turn on Auto for live updates, or tap Refresh." }
+        if generatingMode == .quick { return "Updating Quick Summary…" }
+        if state != .recording { return "Auto on · Updates while you listen." }
+        if isSummarizing { return "Auto on · Waiting for the current AI response." }
+        if summarySource.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return "Auto on · Waiting for speech."
+        }
+        if let reason = summaryAvailability(for: .quick) { return "Auto paused · " + reason }
+        if quickSummaryError != nil { return "Auto on · Update failed; retrying automatically." }
+        if summarySource.trimmingCharacters(in: .whitespacesAndNewlines) == lastAutoSource {
+            return "Auto on · Up to date."
+        }
+        return "Auto on · New speech is waiting for the next update."
+    }
+
     func summarize(mode: MobileSummaryMode = .summary) async {
         if let reason = summaryBlockReason(for: mode) { message = reason; return }
         // Capture a stable input snapshot; recording can continue while this request runs.
@@ -346,6 +378,7 @@ final class MobileSession {
         }
         generatingMode = mode
         isSummarizing = true
+        if mode == .quick { quickSummaryError = nil }
         message = nil
         summaryDraft = ""
         defer { isSummarizing = false; summaryDraft = ""; generatingMode = nil }
@@ -372,6 +405,10 @@ final class MobileSession {
             case .deep: deepThought = summaryDraft
             }
             save(announce: false)
-        } catch { message = "\(mode.title) failed: \(MobileAISettings.errorMessage(error)) Your previous summary is kept." }
+        } catch {
+            let failure = "\(mode.title) failed: \(MobileAISettings.errorMessage(error)) Your previous summary is kept."
+            message = failure
+            if mode == .quick { quickSummaryError = failure }
+        }
     }
 }

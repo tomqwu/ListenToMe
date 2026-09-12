@@ -1,0 +1,5 @@
+Native History gestures: swipe right on a saved conversation to share it with the iOS share sheet. Swipe left to delete, or touch and hold for Share and Delete. Deletion asks for confirmation; Cancel must keep the conversation. Sharing an older conversation should export its transcript, notes and all summaries without changing the active conversation.
+
+Automatic Quick Summary: turn on Auto, start listening and speak. Quick Summary should update without Refresh, including when more speech arrives during a slow response or while you are viewing Summary or Deep. Auto has a 15-second minimum interval between requests. Auto off, waiting, updating and retry status are now visible. Failures keep the previous summary and show an error. Turning Auto off stops new automatic requests.
+
+Please check the gestures and live updates on your iPhone/iPad, including light/dark mode and larger text. Recording and Apple Intelligence require a supported physical device; cloud summaries require your own Ollama key.

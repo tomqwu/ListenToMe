@@ -4,7 +4,14 @@ import ListenToMeCore
 
 /// Foreground microphone capture. Model preparation completes before the audio tap starts.
 @MainActor
-final class MobileRecorder {
+protocol MobileRecording: AnyObject {
+    func start(locale: Locale, onSegment: @escaping @MainActor (TranscriptSegment) -> Void,
+               onFailure: @escaping @MainActor (String) -> Void) async throws
+    func stop() async throws
+}
+
+@MainActor
+final class MobileRecorder: MobileRecording {
     private lazy var engine = AVAudioEngine()
     private var analyzer: SpeechAnalyzer?
     private var input: AsyncStream<AnalyzerInput>.Continuation?

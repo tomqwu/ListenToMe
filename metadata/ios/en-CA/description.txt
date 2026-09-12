@@ -7,11 +7,11 @@ CAPTURE AND ORGANIZE
 • See transcript, Quick Summary and Deep Summary together.
 • Add notes, photos and files, and give each conversation a title.
 • Import compatible copies from Apple Notes through the share extension.
-• Save conversations, reopen them from History and delete sessions you no longer need.
+• Save conversations and reopen them from History. Swipe right to share, left to delete, or touch and hold for actions.
 • Share transcripts, notes and summaries as Markdown.
 
 CHOOSE HOW TO SUMMARIZE
-Choose a full Summary, a brief Quick Summary or a Deep Think analysis of decisions, risks and next steps. Each output is saved separately. Enable Auto Quick Summary for updates every 30 seconds while listening when the text changes. Use Apple Intelligence on a supported device, or choose Ollama Cloud with your own API key. Refresh the model list directly from Ollama and select a model for each mode from available models, including DeepSeek, GLM, Qwen and Kimi. Available models and variants depend on Ollama's current catalog.
+Choose a full Summary, a brief Quick Summary or a Deep Think analysis of decisions, risks and next steps. Each output is saved separately. Enable Auto Quick Summary for live updates while listening when the text changes, with a 15-second minimum interval between automatic requests. A visible status shows when Auto is off, waiting, updating or retrying. Use Apple Intelligence on a supported device, or choose Ollama Cloud with your own API key. Refresh the model list directly from Ollama and select a model for each mode from available models, including DeepSeek, GLM, Qwen and Kimi. Available models and variants depend on Ollama's current catalog.
 
 YOU CONTROL CLOUD USE
 Microphone speech is transcribed on-device; raw audio is not saved. Conversations are stored locally. When you choose Ollama Cloud and generate an AI output or enable Auto Quick Summary, your notes and transcript are sent to Ollama. Your API key is stored in this device's Keychain. Ollama Cloud requires an internet connection and your own account access.
