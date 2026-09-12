@@ -89,6 +89,7 @@ final class MobileLiveCloudTests: XCTestCase {
         outputs["Summary"] = full.label
         app.buttons["Done"].tap()
         for mode in [("Quick Summary", "quick"), ("Deep Think", "deep")] {
+            app.segmentedControls["workspaceTabs"].buttons[mode.1 == "quick" ? "Live" : "Deep Think"].tap()
             app.buttons["Generate \(mode.0)"].tap()
             let output = app.staticTexts["output-\(mode.1)"]
             let completed = XCTNSPredicateExpectation(
@@ -101,6 +102,7 @@ final class MobileLiveCloudTests: XCTestCase {
         dashboard.name = "Live cloud dashboard outputs"; dashboard.lifetime = .keepAlways; add(dashboard)
         app.terminate(); app.launch()
         XCTAssertEqual(app.staticTexts["output-quick"].label, outputs["Quick Summary"])
+        app.segmentedControls["workspaceTabs"].buttons["Deep Think"].tap()
         XCTAssertEqual(app.staticTexts["output-deep"].label, outputs["Deep Think"])
         app.buttons["More"].tap()
         app.buttons["Full summary"].tap()

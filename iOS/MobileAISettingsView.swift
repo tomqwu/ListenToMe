@@ -33,7 +33,9 @@ struct MobileAISettingsView: View {
                     operation = Task { await ai.refresh() }
                 }.disabled(ai.refreshing || ai.testing)
                 Picker("Model role", selection: $mode) {
-                    ForEach(MobileSummaryMode.allCases) { role in Text(role.title).tag(role) }
+                    ForEach(MobileSummaryMode.allCases) { role in
+                        Text(role.title).tag(role).accessibilityIdentifier("role-option-\(role.rawValue)")
+                    }
                 }.accessibilityIdentifier("modelRole").disabled(ai.testing)
                 Text("Selected: \(ai.selectedModel(for: mode))").accessibilityIdentifier("selectedOllamaModel")
                 if !ai.models.isEmpty {

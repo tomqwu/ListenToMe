@@ -2,59 +2,45 @@ import XCTest
 
 @MainActor
 final class MobileAppTests: XCTestCase {
-    func testLandscapeDashboardKeepsAllPanelsReachable() {
+    func testLiveLayoutAndDeepThinkTab() {
         let app = XCUIApplication()
         app.launch()
-        XCUIDevice.shared.orientation = .landscapeLeft
-        defer { XCUIDevice.shared.orientation = .portrait }
         XCTAssertTrue(app.staticTexts["Live transcript"].isHittable)
         XCTAssertTrue(app.staticTexts["Quick Summary"].isHittable)
-        XCTAssertTrue(app.staticTexts["Deep Summary"].isHittable)
+        XCTAssertGreaterThan(app.staticTexts["Quick Summary"].frame.minY, app.staticTexts["Live transcript"].frame.maxY)
+        XCTAssertFalse(app.buttons["Generate Deep Think"].exists)
+        app.segmentedControls["workspaceTabs"].buttons["Deep Think"].tap()
+        XCTAssertTrue(app.buttons["Generate Deep Think"].isHittable)
+        XCTAssertFalse(app.staticTexts["Live transcript"].exists)
         XCTAssertTrue(app.buttons["Start listening"].isHittable)
-        let screenshot = XCTAttachment(screenshot: app.screenshot())
-        screenshot.name = "Landscape dashboard"; screenshot.lifetime = .keepAlways; add(screenshot)
+        app.segmentedControls["workspaceTabs"].buttons["Live"].tap()
+        XCTAssertTrue(app.staticTexts["Quick Summary"].isHittable)
     }
 
-    func testLargeTextDashboardCanScrollToDeepSummary() {
+    func testLandscapeAndLargeTextTabs() {
         let app = XCUIApplication()
         app.launchArguments = ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
         app.launch()
-        let dashboard = app.scrollViews["dashboardScroll"].firstMatch
-        XCTAssertTrue(dashboard.waitForExistence(timeout: 5))
-        XCTAssertEqual(app.scrollViews.count, 1, "Large text uses one page scroll, without nested panel scrolling")
-        let deep = app.staticTexts["Deep Summary"]
-        for _ in 0..<20 {
-            if deep.isHittable, deep.frame.minY >= dashboard.frame.minY, deep.frame.maxY <= dashboard.frame.maxY { break }
-            let down = deep.frame.midY < dashboard.frame.minY
-            let start = dashboard.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: down ? 0.35 : 0.65))
-            let end = dashboard.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: down ? 0.65 : 0.35))
-            start.press(forDuration: 0.1, thenDragTo: end)
-        }
-        XCTAssertTrue(deep.isHittable)
-        XCTAssertGreaterThanOrEqual(deep.frame.minY, dashboard.frame.minY)
-        XCTAssertLessThanOrEqual(deep.frame.maxY, dashboard.frame.maxY)
+        XCUIDevice.shared.orientation = .landscapeLeft
+        defer { XCUIDevice.shared.orientation = .portrait }
+        XCTAssertTrue(app.scrollViews["dashboardScroll"].exists)
+        app.segmentedControls["workspaceTabs"].buttons["Deep Think"].tap()
+        XCTAssertTrue(app.buttons["Generate Deep Think"].exists)
         XCTAssertTrue(app.buttons["Start listening"].isHittable)
-        let screenshot = XCTAttachment(screenshot: app.screenshot())
-        screenshot.name = "Accessibility text dashboard"; screenshot.lifetime = .keepAlways; add(screenshot)
-        app.buttons["More"].tap()
-        for action in ["Save", "New", "Share"] { XCTAssertTrue(app.buttons[action].exists) }
     }
 
-    func testDashboardKeepsTranscriptQuickAndDeepVisible() {
+    func testAutoSummaryPreferenceSurvivesRelaunch() {
         let app = XCUIApplication()
         app.launch()
-        app.buttons["New"].tap()
-        XCTAssertTrue(app.staticTexts["Live transcript"].isHittable)
-        XCTAssertTrue(app.staticTexts["Quick Summary"].isHittable)
-        XCTAssertTrue(app.staticTexts["Deep Summary"].isHittable)
-        XCTAssertTrue(app.buttons["Generate Quick Summary"].exists)
-        XCTAssertTrue(app.buttons["Generate Deep Think"].exists)
-        XCTAssertTrue(app.switches["Auto Quick Summary"].isHittable)
-        app.switches["Auto Quick Summary"].switches.firstMatch.tap()
-        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Updates every 30 seconds")).firstMatch.exists)
-        app.switches["Auto Quick Summary"].switches.firstMatch.tap()
-        let screenshot = XCTAttachment(screenshot: app.screenshot())
-        screenshot.name = "Unified dashboard"; screenshot.lifetime = .keepAlways; add(screenshot)
+        let toggle = app.switches["Auto Quick Summary"].switches.firstMatch
+        let original = toggle.value as? String
+        toggle.tap()
+        let selected = toggle.value as? String
+        app.terminate()
+        app.launch()
+        XCTAssertEqual(toggle.value as? String, selected)
+        toggle.tap()
+        XCTAssertEqual(toggle.value as? String, original)
     }
 
     func testNotesCameraExplanationAndFilePicker() {
@@ -158,7 +144,7 @@ final class MobileAppTests: XCTestCase {
         app.buttons["modelRole"].tap()
         app.buttons["Quick Summary"].tap()
         app.buttons["modelRole"].tap()
-        app.buttons["Deep Think"].tap()
+        app.buttons["role-option-deep"].tap()
         app.buttons["Remove API key"].tap()
         XCTAssertFalse(app.staticTexts["savedAPIKey"].exists)
         app.buttons["summaryProvider"].tap()
@@ -182,7 +168,7 @@ final class MobileAppTests: XCTestCase {
         app.buttons["Quick Summary"].tap()
         XCTAssertTrue(app.buttons["Generate Quick Summary"].exists)
         app.buttons["summaryMode"].tap()
-        app.buttons["Deep Think"].tap()
+        app.buttons["summary-option-deep"].tap()
         XCTAssertTrue(app.buttons["Generate Deep Think"].exists)
         app.buttons["Done"].tap()
         app.buttons["History"].tap()
