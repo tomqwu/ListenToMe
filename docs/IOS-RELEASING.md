@@ -32,6 +32,45 @@ for upload. Both use automatic signing, `app-store-connect`, this team, and disa
 version/build rewriting. They contain no credentials. Do not depend on plists left in ignored `dist/`
 folders by a previous session.
 
+### Persistent API-key authentication for automated uploads
+
+Use an explicit **App Store Connect team API key** when CLI Xcode account lookup fails even though
+Organizer is signed in. This is a different credential path, not a retry of the failed session.
+Apple documents the three `xcodebuild` authentication arguments in
+[Distribute apps in Xcode with cloud signing](https://developer.apple.com/videos/play/wwdc2021/10204/).
+
+The one-time maintainer input is a **Key ID**, **Issuer ID**, and the **local path** to the downloaded
+`.p8` private key. Never paste the key contents into chat or commit them. Use an existing suitable
+team key if available. Otherwise, in App Store Connect → Users and Access → Integrations →
+App Store Connect API → Team Keys, generate a key named `ListenToMe Upload` with **Developer** access.
+Team keys grant the chosen role across the team's apps; they cannot be restricted to this app.
+If API access has not been enabled, the Account Holder must request it first. See
+[Apple's key setup instructions](https://developer.apple.com/help/app-store-connect/get-started/app-store-connect-api).
+
+Store the key outside the checkout, for example in `~/.appstoreconnect/private_keys/`, with access
+restricted to your user. Store its non-secret references in `~/.config/listentome/testflight.json`:
+
+```json
+{
+  "key_path": "/absolute/path/to/AuthKey_YOURKEYID.p8",
+  "key_id": "YOURKEYID",
+  "issuer_id": "YOUR-ISSUER-UUID"
+}
+```
+
+Replace these placeholders with the actual values. The existing `make ios-testflight` command
+automatically passes `-authenticationKeyPath`, `-authenticationKeyID` and
+`-authenticationKeyIssuerID` to Xcode. No extra publishing prompt or new app archive is needed.
+Alternatively, provide all three environment variables `ASC_KEY_PATH`, `ASC_KEY_ID` and
+`ASC_ISSUER_ID`; these take precedence as a complete group. `IOS_ASC_CONFIG` selects a different
+JSON file, and `LISTENTOME_CONFIG_DIR` selects a different configuration directory. JSON is read
+as data, never sourced as a shell script. Incomplete configuration fails before any upload.
+
+Without a configured key, the helper retains the existing Xcode-session route. Its dry-run reports
+the chosen route and validates local configuration only; it does **not** authenticate with Apple.
+Offline helper tests prove argument handling and receipt safeguards, not working credentials.
+Require a real accepted upload before claiming the API-key path has repaired publishing.
+
 ## 1. Identify the exact release and validate it
 
 Read `AGENTS.md`, inspect `git status`, and fetch the merged branch. Preserve unrelated work; use a
@@ -174,6 +213,10 @@ publishing workflow is operationally repaired until an agent-operated upload act
   upload access. Ask the user only for the required interactive sign-in/2FA if tools cannot do it.
   Retry the same validated archive after the account state changes; do not repeatedly retry unchanged
   credentials or rebuild to fix an authentication failure. Do not print tokens or reset the keychain.
+  If Organizer works but CLI lookup remains broken, configure the explicit team API key above and
+  use the same validated archive. Ask for the Key ID, Issuer ID and local `.p8` path, not the private
+  key contents or another manual upload. API-key setup is not proof of recovery until Apple accepts
+  an agent-operated upload.
 - **Provisioning or signing errors:** verify bundle IDs, team and App Group entitlements, and automatic
   provisioning access. Report the exact entitlement/profile error; a missing phone is not the generic
   remedy for App Store distribution signing.
