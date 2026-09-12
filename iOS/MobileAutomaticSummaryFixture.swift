@@ -12,7 +12,7 @@ struct MobileAutomaticSummaryFixture: View {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("AutoUI-\(UUID())")
         let failFirst = ProcessInfo.processInfo.arguments.contains("--automatic-failure-fixture")
         let session = MobileSession(storageDirectory: root, summaryProvider: FixtureSummaryProvider(failFirst: failFirst),
-                                    autoInterval: .seconds(failFirst ? 6 : 2), makeRecorder: { recorder })
+                                    autoInterval: .seconds(2), makeRecorder: { recorder })
         session.title = "Live summary check"
         _recorder = State(initialValue: recorder)
         _session = State(initialValue: session)
@@ -50,7 +50,11 @@ private actor FixtureSummaryProvider: LLMProvider {
             continuation.finish(throwing: URLError(.networkConnectionLost))
         } else {
             let input = request.messages.last?.content ?? ""
-            continuation.yield(input.contains("Alex") ? "- **Alex** owns onboarding.\n- Review on Thursday." : "- Review on **Thursday**.")
+            let bullets = input.contains("Alex") ? ["**Alex** owns onboarding.", "Review on Thursday."] : ["Review on **Thursday**."]
+            if request.system == MobileQuickContext.instructions,
+               let data = try? JSONSerialization.data(withJSONObject: ["reviews": [], "action": "publish", "context": bullets.joined(), "bullets": bullets]) {
+                continuation.yield(String(decoding: data, as: UTF8.self))
+            } else { continuation.yield(bullets.map { "- " + $0 }.joined(separator: "\n")) }
             continuation.finish()
         }
     }

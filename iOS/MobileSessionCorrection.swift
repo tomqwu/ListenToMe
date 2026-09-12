@@ -20,7 +20,7 @@ extension MobileSession {
                       let index = self.segments.firstIndex(where: { $0.id == segment.id && $0.text == segment.text }) else { return }
                 self.segments[index] = result
                 self.save(announce: false)
-                Task { await self.updateQuickAutomatically() }
+                self.scheduleAutoQuick()
             }
         } catch {
             speechCorrection.reportFailure(error)
@@ -31,6 +31,6 @@ extension MobileSession {
         guard let index = segments.firstIndex(where: { $0.id == segmentID }), segments[index].originalText != nil else { return }
         segments[index] = segments[index].restoringOriginal
         save(announce: false)
-        Task { await updateQuickAutomatically() }
+        scheduleAutoQuick()
     }
 }

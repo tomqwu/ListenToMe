@@ -1,0 +1,101 @@
+#if DEBUG && targetEnvironment(simulator)
+import SwiftUI
+import ListenToMeCore
+
+/// Only the speech input and model transport are substituted; controls, scheduling and storage are real.
+struct MobileIncrementalSummaryFixture: View {
+    @State private var recorder: IncrementalFixtureRecorder
+    @State private var session: MobileSession
+
+    init() {
+        let recorder = IncrementalFixtureRecorder()
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("IncrementalUI-\(UUID())")
+        let slow = ProcessInfo.processInfo.arguments.contains("--incremental-slow-fixture")
+        let session = MobileSession(storageDirectory: root, summaryProvider: IncrementalFixtureProvider(slow: slow),
+                                    makeRecorder: { recorder })
+        session.title = "Delivery discussion"
+        _recorder = State(initialValue: recorder)
+        _session = State(initialValue: session)
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Menu("Test speech") {
+                    Button("Add concern") { recorder.send("QA needs more time before we choose a date.") }
+                        .accessibilityIdentifier("speechConcern")
+                    Button("Agree decision") { recorder.send("We agree delivery on Monday. Sarah will confirm.") }
+                        .accessibilityIdentifier("speechDecision")
+                    Button("Repeat agreement") { recorder.send("Yes, understood. That is what we agreed.") }
+                        .accessibilityIdentifier("speechRepeat")
+                    Button("Revise decision") { recorder.send("改到周二交付，Peter负责确认。") }
+                        .accessibilityIdentifier("speechRevision")
+                    Button("Discuss tradeoff") {
+                        recorder.send("Shipping sooner risks data loss; delaying could lose a customer. The tradeoff is unresolved.")
+                    }.accessibilityIdentifier("speechTradeoff")
+                    Button("Unfinished words") { recorder.send("Maybe we should", final: false) }
+                        .accessibilityIdentifier("speechPartial")
+                }.accessibilityIdentifier("testSpeechMenu")
+                Spacer()
+                Text("Checks: \(session.quickReader.completedReads)").font(.caption)
+                    .accessibilityIdentifier("quickReadCount")
+            }.padding(.horizontal)
+            MobileMeetingView(session: session)
+        }
+    }
+}
+
+@MainActor
+private final class IncrementalFixtureRecorder: MobileRecording {
+    private var receive: (@MainActor (TranscriptSegment) -> Void)?
+    private var index = 0
+    func start(locale: Locale, onSegment: @escaping @MainActor (TranscriptSegment) -> Void,
+               onFailure: @escaping @MainActor (String) -> Void) async throws {
+        receive = onSegment
+        send("Friday is only a proposal; no decision yet.")
+    }
+    func send(_ text: String, final: Bool = true) {
+        receive?(.init(source: .you, text: text, isFinal: final, start: Double(index * 5), end: Double(index * 5 + 4)))
+        if final { index += 1 }
+    }
+    func stop() async throws { receive = nil }
+}
+
+private struct IncrementalFixtureProvider: LLMProvider {
+    let id = "incremental-ui-fixture"
+    let slow: Bool
+    func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
+        AsyncThrowingStream { continuation in
+            let task = Task {
+                do {
+                    try await Task.sleep(for: slow ? .seconds(8) : .milliseconds(150))
+                    if request.system != MobileQuickContext.instructions {
+                        continuation.yield("- The delivery discussion has been reviewed.")
+                        continuation.finish()
+                        return
+                    }
+                    let input = try JSONDecoder().decode(MobileQuickContext.Input.self,
+                        from: Data((request.messages.first?.content ?? "").utf8))
+                    let speech = input.changes.map(\.text).joined(separator: " ")
+                    let bullets: [String]
+                    if speech.contains("周二") { bullets = ["周二交付，Peter负责确认。"] }
+                    else if speech.contains("We agree delivery") { bullets = ["Delivery agreed for Monday.", "Sarah will confirm."] }
+                    else { bullets = [] }
+                    var reviews: [[String: String]] = []
+                    if speech.contains("We agree delivery") || speech.contains("周二") {
+                        reviews = [["mode": "summary", "confidence": "high", "reason": "The delivery date and owner changed."]]
+                    }
+                    if speech.contains("tradeoff") {
+                        reviews = [["mode": "deep", "confidence": "high", "reason": "Speed and reliability have an unresolved tradeoff."]]
+                    }
+                    let body: [String: Any] = ["reviews": reviews, "action": bullets.isEmpty ? "keep" : "publish",
+                        "context": String((input.runningContext + " " + speech).suffix(2_000)), "bullets": bullets]
+                    continuation.yield(String(decoding: try JSONSerialization.data(withJSONObject: body), as: UTF8.self))
+                    continuation.finish()
+                } catch { continuation.finish(throwing: error) }
+            }
+            continuation.onTermination = { _ in task.cancel() }
+        }
+    }
+}
+#endif

@@ -8,7 +8,8 @@ struct MobileTranscriptFixture: View {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("TranscriptUI-\(UUID())")
         let session = MobileSession(storageDirectory: root)
         session.title = "Transcript scroll check"
-        session.segments = (1...40).map { index in
+        let count = ProcessInfo.processInfo.arguments.contains("--long-transcript-fixture") ? 1_000 : 40
+        session.segments = (1...count).map { index in
             TranscriptSegment(source: .you, text: "Point \(index). We reviewed the plan and agreed on the next step.",
                               isFinal: true, start: Double(index), end: Double(index + 1))
         }

@@ -15,7 +15,7 @@ final class MobileAutomaticSummaryTests: XCTestCase {
         defer { session.state = .idle; session.autoQuick = originalAuto }
         session.autoQuick = true
         session.start()
-        try await waitUntil { session.state == .recording && session.isSummarizing }
+        try await waitUntil { session.state == .recording && session.quickReader.isReading }
         XCTAssertEqual(session.segments.first?.text, "First phrase")
         recorder.send("Second phrase")
         // Hold the first response past the cooldown. No speech callback follows its completion.
@@ -82,11 +82,14 @@ private actor SlowSummaryProvider: LLMProvider {
     private var requests = 0
     private var first: AsyncThrowingStream<String, Error>.Continuation?
     func count() -> Int { requests }
-    func finishFirst() { first?.yield("First summary"); first?.finish(); first = nil }
+    func finishFirst() {
+        first?.yield("{\"reviews\":[],\"action\":\"publish\",\"context\":\"First phrase\",\"bullets\":[\"First summary\"]}")
+        first?.finish(); first = nil
+    }
     private func respond(_ request: LLMRequest, to continuation: AsyncThrowingStream<String, Error>.Continuation) {
         requests += 1
         if requests == 1 { first = continuation } else {
-            continuation.yield(request.messages.last?.content ?? "")
+            continuation.yield("{\"reviews\":[],\"action\":\"publish\",\"context\":\"First and second phrases\",\"bullets\":[\"Second phrase\"]}")
             continuation.finish()
         }
     }

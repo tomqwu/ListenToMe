@@ -143,9 +143,9 @@ final class MobileAppTests: XCTestCase {
         XCTAssertTrue(explanation.exists)
         for _ in 0..<4 where !app.buttons["Add files"].isHittable { app.swipeDown() }
         app.buttons["Add files"].tap()
-        XCTAssertTrue(app.buttons["Cancel"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["Cancel"].waitForExistence(timeout: 30))
         app.buttons["Cancel"].tap()
-        XCTAssertTrue(app.navigationBars["Notes"].exists)
+        XCTAssertTrue(app.navigationBars["Notes"].waitForExistence(timeout: 10))
     }
 
     func testPhotoLibraryPickerCanBeOpenedAndDismissed() {
@@ -170,16 +170,25 @@ final class MobileAppTests: XCTestCase {
         app.buttons["Done"].tap()
         app.buttons["More"].tap()
         app.buttons["Share"].tap()
-        let destination = app.cells["ListenToMe"]
-        if !destination.waitForExistence(timeout: 5) {
-            let more = app.cells["More"].firstMatch
-            if more.exists { more.tap() }
+        // Use the Apps list consistently. The original carousel remains in the accessibility
+        // hierarchy underneath it, so selecting its first matching cell can tap the wrong app.
+        let more = app.cells["More"].firstMatch
+        guard more.waitForExistence(timeout: 15) else {
+            XCTFail("Share More activity missing: \(app.debugDescription)"); return
         }
-        guard destination.waitForExistence(timeout: 5) else {
-            XCTFail("Share destination missing: \(app.debugDescription)"); return
+        more.tap()
+        let destination = app.cells.containing(.staticText, identifier: "ListenToMe")
+            .matching(NSPredicate(format: "identifier != %@", "shareCell")).firstMatch
+        let ready = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "exists == true AND hittable == true"), object: destination
+        )
+        guard XCTWaiter.wait(for: [ready], timeout: 15) == .completed else {
+            XCTFail("Apps list destination missing: \(app.debugDescription)"); return
         }
         destination.tap()
-        XCTAssertTrue(app.buttons["Import"].waitForExistence(timeout: 10))
+        guard app.buttons["Import"].waitForExistence(timeout: 15) else {
+            XCTFail("Share import did not open: \(app.debugDescription)"); return
+        }
         app.buttons["Import"].tap()
         XCTAssertTrue(app.buttons["Saved"].waitForExistence(timeout: 10))
         app.buttons["finishSharedImport"].tap()

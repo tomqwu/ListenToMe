@@ -13,7 +13,7 @@ final class MobileSessionTests: XCTestCase {
         let originalAuto = session.autoQuick
         defer { session.state = .idle; session.autoQuick = originalAuto }
         session.autoQuick = false
-        session.partial = TranscriptSegment(source: .you, text: "Review Friday.", isFinal: false, start: 0, end: 1)
+        session.segments = [TranscriptSegment(source: .you, text: "Review Friday.", isFinal: true, start: 0, end: 1)]
         session.state = .recording
         try await Task.sleep(for: .milliseconds(100))
         let beforeOptIn = await provider.count()
@@ -22,17 +22,17 @@ final class MobileSessionTests: XCTestCase {
         for _ in 0..<100 where session.quickSummary.isEmpty {
             try await Task.sleep(for: .milliseconds(20))
         }
-        XCTAssertEqual(session.quickSummary, "Quick: Review Friday.")
+        XCTAssertEqual(session.quickSummary, "- Review Friday.")
         let afterRetry = await provider.count()
         XCTAssertEqual(afterRetry, 2, "A failed request must retry unchanged text")
         try await Task.sleep(for: .milliseconds(120))
         let withoutChanges = await provider.count()
         XCTAssertEqual(withoutChanges, 2, "Successful unchanged input must not be resent")
-        session.partial = TranscriptSegment(source: .you, text: "Review Monday.", isFinal: false, start: 0, end: 2)
-        for _ in 0..<100 where session.quickSummary != "Quick: Review Monday." {
+        session.segments = [TranscriptSegment(source: .you, text: "Review Monday.", isFinal: true, start: 0, end: 2)]
+        for _ in 0..<100 where session.quickSummary != "- Review Monday." {
             try await Task.sleep(for: .milliseconds(20))
         }
-        XCTAssertEqual(session.quickSummary, "Quick: Review Monday.")
+        XCTAssertEqual(session.quickSummary, "- Review Monday.")
         XCTAssertEqual(session.summary, "")
         XCTAssertEqual(session.deepThought, "")
         session.autoQuick = false
@@ -128,7 +128,10 @@ private actor AutoSummaryProvider: LLMProvider {
     private func response(_ request: LLMRequest) throws -> String {
         requests += 1
         if requests == 1 { throw URLError(.networkConnectionLost) }
-        return "Quick: " + (request.messages.last?.content ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let input = try JSONDecoder().decode(MobileQuickContext.Input.self, from: Data((request.messages.last?.content ?? "").utf8))
+        let text = input.changes.last(where: { !$0.text.isEmpty })?.text ?? ""
+        let data = try JSONSerialization.data(withJSONObject: ["reviews": [], "action": "publish", "context": text, "bullets": [text]])
+        return String(decoding: data, as: UTF8.self)
     }
     nonisolated func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
         AsyncThrowingStream { continuation in

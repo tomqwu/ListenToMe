@@ -170,9 +170,18 @@ struct MobileWorkspaceView<Header: View>: View {
                                 .foregroundStyle(.secondary).accessibilityIdentifier("quickSummaryError")
                         }
                         if session.autoQuick && session.ai.provider == .ollama {
-                            Text("Auto sends notes and transcript to Ollama Cloud.")
+                            Text("Auto checks new speech about every 5 seconds with Ollama Cloud. Notes and recent context are included.")
                                 .font(.caption).foregroundStyle(.secondary)
                         }
+                    }
+                    if mode != .quick, let review = session.quickReader.recommendations.first(where: { $0.mode == mode.rawValue }) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Label("Review suggested", systemImage: "sparkles").font(.subheadline.weight(.medium))
+                            Text(review.reason).font(.caption)
+                            Text("AI confidence: \(review.confidence) · Generate when ready.")
+                                .font(.caption2).foregroundStyle(MobileStyle.muted)
+                        }.foregroundStyle(MobileStyle.tint(for: mode))
+                            .accessibilityElement(children: .combine).accessibilityIdentifier("review-suggestion-\(mode.rawValue)")
                     }
                     if session.generatingMode == mode {
                         Label("Updating…", systemImage: "sparkles").font(.caption)
@@ -233,8 +242,8 @@ struct MobileWorkspaceView<Header: View>: View {
         Toggle("Auto", isOn: $session.autoQuick).font(.caption)
             .accessibilityLabel("Auto Quick Summary")
             .accessibilityHint(session.ai.provider == .ollama
-                ? "Automatically sends notes and transcript to Ollama Cloud while listening."
-                : "Automatically summarizes on this device while listening.")
+                ? "Checks new completed speech with Ollama Cloud every five seconds. Updates only for meaningful changes."
+                : "Continuous evaluation requires Ollama Cloud. Apple Intelligence summaries are available with Refresh.")
     }
 
     @ViewBuilder
