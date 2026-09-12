@@ -33,6 +33,11 @@ Read [the release runbook](../../../docs/IOS-RELEASING.md) from the repository r
   routinely asking the maintainer to publish. A manual upload by the maintainer completes that build's
   upload but does not prove agent automation is repaired. Offline tests and dry runs do not prove live
   publishing works. Consult the runbook's verified build-7/build-8 baseline before diagnosing accounts.
+- When Organizer is signed in but CLI account lookup fails, use the runbook's explicit App Store
+  Connect team API-key route. The helper reads `~/.config/listentome/testflight.json` or the complete
+  `ASC_KEY_PATH`/`ASC_KEY_ID`/`ASC_ISSUER_ID` environment group. Ask only for the Key ID, Issuer ID and
+  local `.p8` path when missing; keep key contents out of chat and the repository. Resume the same
+  validated archive and require actual upload acceptance before calling authentication repaired.
 
 Publication is the default completion condition, not a follow-up offer. Documentation-only workflow
 updates do not require another app build. This authorization does not extend to public App Store

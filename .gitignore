@@ -6,3 +6,4 @@ DerivedData/
 .swiftpm/
 signing.local.mk
 dist/
+*.p8
