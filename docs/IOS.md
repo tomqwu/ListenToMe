@@ -1,7 +1,21 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.7.0 (15).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.8.0 (16).
+
+## iOS 1.8.0 (16)
+
+Auto Quick Summary now uses an event-driven evaluator: completed speech and note changes enqueue
+five-second batches, with no model polling during silence. Each read accumulates context and decides
+whether to keep the displayed bullets or publish a meaningful update. Corrections send the previous
+and current wording. Summary/Deep recommendations show a grounded reason and qualitative AI confidence;
+they remain manual actions. Quick reads can run alongside a manual Summary or Deep response.
+
+See [the scheduler's events, actions and tests](IOS-LIVE-SUMMARY-SCHEDULER.md). Calls have a 15-second
+deadline; failures keep previous results and retry with backoff. Stop cancels pending reads, and manual
+Refresh includes the stopped transcript. Automatic evaluation reads long input in bounded batches;
+manual full-snapshot summaries retain their provider input limits. Working context is rebuilt from
+original finalized text after reopening a conversation. Auto remains opt-in.
 
 ## iOS 1.7.0 (15)
 
@@ -165,7 +179,7 @@ choose another. Model refresh does not prove key validity: Test connection verif
 `/api/chat` response using only a synthetic prompt. Cloud models run remotely; `/api/pull` is not needed.
 
 Selecting Ollama is opt-in. Generating any of the three AI outputs sends the current notes and transcript to
-Ollama; microphone audio continues to be transcribed on-device. Quick Summary has an opt-in **Auto** toggle (off initially; your choice is remembered across launches). While listening, incoming transcript text triggers a Quick Summary, throttled to one request every 15 seconds; a session-owned timer also retries changed text or failed requests. Enabling Auto with Ollama selected sends those snapshots to Ollama. Deep Think stays on-demand. Existing output remains visible while the next response streams; failures keep the last completed result.
+Ollama; microphone audio continues to be transcribed on-device. Quick Summary has an opt-in **Auto** toggle (off initially; your choice is remembered across launches). While listening, new completed transcript text triggers an evaluation in five-second batches. A valid evaluation either keeps or updates the visible Quick Summary and may recommend a manual Summary/Deep review. No unchanged-input requests are sent; failed reads retry with backoff. Enabling Auto with Ollama selected sends those snapshots to Ollama. Deep Think stays on-demand. Existing output remains visible while the next response streams; failures keep the last completed result.
 The last complete summary is preserved on HTTP errors, incomplete streams and cancellation. Streamed
 text is shown separately until completion. Backgrounding cancels an active summary request.
 

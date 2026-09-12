@@ -1,4 +1,4 @@
-Listen To Me captures conversations with live on-device microphone transcription, editable notes and local history on iPhone and iPad. Follow the compact transcript alongside Quick Summary, then switch to a complete Summary or Deep Summary. Each output has its own model selection and readable formatting.
+Listen To Me captures conversations with live on-device microphone transcription, editable notes and local history on iPhone and iPad. Follow the compact transcript alongside Quick Summary, which can evaluate new completed speech and update only when information changes. Review suggestions help you decide when to generate a complete Summary or Deep Summary. Each output has its own model selection and readable formatting.
 
 Use optional Apple Intelligence summaries on supported devices, or enter your own Ollama Cloud API key in Settings. The key is stored in this device's Keychain. Refresh models from the API and test the connection. Notes and transcripts are sent to Ollama when you request a summary or enable Auto Quick Summary; microphone audio stays on-device.
 

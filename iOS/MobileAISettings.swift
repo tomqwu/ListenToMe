@@ -6,13 +6,13 @@ import ListenToMeCore
 final class MobileAISettings {
     enum Provider: String, CaseIterable { case apple, ollama }
     var provider: Provider {
-        didSet { UserDefaults.standard.set(provider.rawValue, forKey: "mobileAIProvider") }
+        didSet { UserDefaults.standard.set(provider.rawValue, forKey: "mobileAIProvider"); quickSettingsChanged?() }
     }
     var model: String {
         didSet { UserDefaults.standard.set(model, forKey: "mobileOllamaModel") }
     }
     var quickModel: String {
-        didSet { UserDefaults.standard.set(quickModel, forKey: "mobileOllamaQuickModel") }
+        didSet { UserDefaults.standard.set(quickModel, forKey: "mobileOllamaQuickModel"); quickSettingsChanged?() }
     }
     var deepModel: String {
         didSet { UserDefaults.standard.set(deepModel, forKey: "mobileOllamaDeepModel") }
@@ -29,6 +29,7 @@ final class MobileAISettings {
             correctionSettingsChanged?()
         }
     }
+    @ObservationIgnored var quickSettingsChanged: (() -> Void)?
     @ObservationIgnored var correctionSettingsChanged: (() -> Void)?
     var models: [OllamaCloudModel] = [] {
         didSet {
@@ -62,7 +63,7 @@ final class MobileAISettings {
         do {
             try MobileKeychain.save(value.trimmingCharacters(in: .whitespacesAndNewlines))
             hasKey = !(try MobileKeychain.read()).isEmpty
-            correctionSettingsChanged?()
+            correctionSettingsChanged?(); quickSettingsChanged?()
             status = hasKey ? "API key saved in this device's Keychain." : "API key removed."
             return true
         } catch { status = error.localizedDescription; return false }
@@ -153,7 +154,8 @@ final class MobileAISettings {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.timeoutIntervalForResource = 480
         return OllamaProvider(model: model, baseURL: OllamaCloudCatalog.baseURL, apiKey: key,
-                              urlSession: URLSession(configuration: configuration))
+                              urlSession: URLSession(configuration: configuration),
+                              options: mode == .quick ? .init(thinking: false, temperature: 0, maximumTokens: 1_600) : .init())
     }
 
     func testConnection(for mode: MobileSummaryMode = .summary) async {

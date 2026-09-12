@@ -7,29 +7,29 @@ import UIKit
 @MainActor @Observable
 final class MobileSession {
     enum State { case idle, preparing, recording, stopping }
-    var state = State.idle { didSet { scheduleAutoQuick() } }
+    var state = State.idle { didSet { handleSummaryEvent(.recordingChanged) } }
     var title = "New conversation"
-    var notes = ""
+    var notes = "" { didSet { handleSummaryEvent(.notesChanged) } }
     var summary = ""
     var quickSummary = ""
     var deepThought = ""
     var attachments: [SessionAttachment] = []
     var generatingMode: MobileSummaryMode?
     var autoQuick = UserDefaults.standard.bool(forKey: "autoQuickSummary") {
-        didSet { UserDefaults.standard.set(autoQuick, forKey: "autoQuickSummary"); scheduleAutoQuick() }
+        didSet { UserDefaults.standard.set(autoQuick, forKey: "autoQuickSummary"); handleSummaryEvent(.automationChanged) }
     }
-    private var lastAutoSource = ""
-    private var lastAutoAttempt: ContinuousClock.Instant?
+    let quickReader = MobileQuickReader()
+    private var quickScheduler: MobileSummaryScheduler
     private var autoTask: Task<Void, Never>?
-    private let autoInterval: Duration
     private let summaryProvider: (any LLMProvider)?
     let correctionProvider: (any LLMProvider)?
     let speechCorrection = MobileTranscriptCorrector()
     var acceptsSpeechCorrection = false
     private let makeRecorder: () -> any MobileRecording
-    private(set) var quickSummaryError: String?
+    private var manualQuickError: String?
+    var quickSummaryError: String? { manualQuickError ?? quickReader.error }
     private var sourceImportID: String?
-    var segments: [TranscriptSegment] = []
+    var segments: [TranscriptSegment] = [] { didSet { scheduleAutoQuick() } }
     var partial: TranscriptSegment?
     var history: [SessionRecord] = []
     var message: String?
@@ -47,12 +47,12 @@ final class MobileSession {
     let attachmentRoot: URL
 
     init(storageDirectory: URL = .applicationSupportDirectory,
-         summaryProvider: (any LLMProvider)? = nil, autoInterval: Duration = .seconds(15),
+         summaryProvider: (any LLMProvider)? = nil, autoInterval: Duration = .seconds(5),
          correctionProvider: (any LLMProvider)? = nil,
          makeRecorder: @escaping () -> any MobileRecording = { MobileRecorder() }) {
         self.summaryProvider = summaryProvider
         self.correctionProvider = correctionProvider
-        self.autoInterval = autoInterval
+        quickScheduler = MobileSummaryScheduler(interval: autoInterval)
         self.makeRecorder = makeRecorder
         activeURL = storageDirectory.appendingPathComponent("ActiveConversation.json")
         attachmentRoot = storageDirectory.appendingPathComponent("Attachments", isDirectory: true)
@@ -64,6 +64,11 @@ final class MobileSession {
             catch { message = "Could not restore the current conversation: \(error.localizedDescription). Check History." }
         } else if let latest = history.first { restore(latest) }
         ai.correctionSettingsChanged = { [weak self] in self?.speechCorrection.cancel() }
+        ai.quickSettingsChanged = { [weak self] in
+            guard let self else { return }
+            self.quickReader.clearError()
+            self.handleSummaryEvent(.providerChanged)
+        }
     }
 
     var busy: Bool { state != .idle || isSummarizing }
@@ -78,6 +83,13 @@ final class MobileSession {
         return text + (attachments.isEmpty ? "" : "\n## Attachments\n" + attachments.map { "- \($0.name)" }.joined(separator: "\n"))
     }
     var summaryAvailability: String? { summaryAvailability(for: .summary) }
+    var automaticQuickAvailability: String? {
+        if summaryProvider != nil { return nil }
+        guard ai.provider == .ollama else {
+            return "Auto needs Ollama Cloud. Choose it in Settings, or use Refresh for an Apple Intelligence summary."
+        }
+        return ai.availability(for: .quick)
+    }
     func summaryAvailability(for mode: MobileSummaryMode) -> String? {
         if summaryProvider != nil { return nil }
         if ai.provider == .ollama { return ai.availability(for: mode) }
@@ -137,7 +149,7 @@ final class MobileSession {
                     } else {
                         self.partial = timed.text.isEmpty ? nil : timed
                     }
-                    Task { await self.updateQuickAutomatically() }
+                    self.scheduleAutoQuick()
                 } onFailure: { [weak self] error in
                     guard let self, self.state == .recording || self.state == .preparing else { return }
                     self.message = error
@@ -174,6 +186,7 @@ final class MobileSession {
         acceptsSpeechCorrection = false
         speechCorrection.cancel()
         summaryTask?.cancel()
+        quickReader.cancel()
         let token = UIApplication.shared.beginBackgroundTask(withName: "Save conversation")
         defer { if token != .invalid { UIApplication.shared.endBackgroundTask(token) } }
         await stop()
@@ -206,10 +219,11 @@ final class MobileSession {
         guard !busy, save(announce: false) else { return }
         speechCorrection.cancel()
         acceptsSpeechCorrection = false
-        quickSummaryError = nil
+        manualQuickError = nil; quickReader.reset()
+        handleSummaryEvent(.conversationChanged)
         id = UUID().uuidString; date = Date()
         title = "New conversation"; notes = ""; summary = ""; quickSummary = ""; deepThought = ""
-        segments = []; partial = nil; message = nil; attachments = []; sourceImportID = nil; lastAutoSource = ""; lastAutoAttempt = nil
+        segments = []; partial = nil; message = nil; attachments = []; sourceImportID = nil
         save(announce: false)
     }
 
@@ -250,11 +264,12 @@ final class MobileSession {
     private func restore(_ record: SessionRecord) {
         speechCorrection.cancel()
         acceptsSpeechCorrection = false
-        lastAutoAttempt = nil; quickSummaryError = nil
+        manualQuickError = nil; quickReader.reset()
+        handleSummaryEvent(.conversationChanged)
         id = record.id; date = record.date; title = record.title
         notes = record.notes ?? ""; summary = record.summary
         quickSummary = record.quickSuggestion ?? ""; deepThought = record.deepAnswer ?? ""
-        attachments = record.attachments ?? []; sourceImportID = record.sourceImportID; lastAutoSource = ""
+        attachments = record.attachments ?? []; sourceImportID = record.sourceImportID
         segments = record.segments ?? []; partial = nil; message = nil
     }
 
@@ -323,41 +338,67 @@ extension MobileSession {
     func requestSummary(for mode: MobileSummaryMode = .summary) {
         guard summaryTask == nil else { return }
         if let reason = summaryBlockReason(for: mode) { message = reason; return }
+        if mode == .quick { handleSummaryEvent(.manualQuickStarted); quickReader.clearError() }
         summaryTask = Task {
             await summarize(mode: mode)
             summaryTask = nil
             // New speech can arrive during any request. Resume at the remaining cooldown,
             // instead of adding another full interval after the response finishes.
-            scheduleAutoQuick()
+            handleSummaryEvent(.manualQuickFinished)
         }
     }
 
-    private func scheduleAutoQuick() {
-        autoTask?.cancel()
-        autoTask = nil
-        guard autoQuick, state == .recording else { return }
-        let interval = autoInterval
-        let remaining = lastAutoAttempt.map { max(.zero, interval - (ContinuousClock.now - $0)) } ?? .zero
-        autoTask = Task { [weak self] in
-            do { try await Task.sleep(for: remaining) } catch { return }
-            while !Task.isCancelled {
-                guard self != nil else { return }
-                await self?.updateQuickAutomatically()
-                do { try await Task.sleep(for: interval) } catch { return }
+    func scheduleAutoQuick() { handleSummaryEvent(.transcriptChanged) }
+
+    private func handleSummaryEvent(_ event: MobileSummaryScheduler.Event) {
+        let snapshot = MobileSummaryScheduler.Snapshot(recording: state == .recording, automatic: autoQuick,
+            pending: quickReader.context.hasChanges(quickPieces), reading: quickReader.isReading,
+            manualQuick: generatingMode == .quick, available: automaticQuickAvailability == nil,
+            correctingSpeech: speechCorrection.working, failures: quickReader.failures)
+        for action in quickScheduler.plan(event, state: snapshot) {
+            switch action {
+            case .cancelWake: autoTask?.cancel(); autoTask = nil
+            case .cancelEvaluation: quickReader.cancel()
+            case .schedule(let delay):
+                autoTask = Task { [weak self] in
+                    do { try await Task.sleep(for: delay) } catch { return }
+                    self?.handleSummaryEvent(.timerFired)
+                }
+            case .evaluate:
+                Task { [weak self] in await self?.updateQuickAutomatically() }
             }
         }
     }
 
+    private var quickPieces: [MobileQuickContext.Piece] {
+        MobileQuickContext.pieces(notes: notes, segments: segments)
+    }
+
     func updateQuickAutomatically() async {
-        guard autoQuick, state == .recording, !isSummarizing, summaryTask == nil else { return }
-        let source = summarySource.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !source.isEmpty, source != lastAutoSource else { return }
-        guard summaryBlockReason(for: .quick) == nil else { return }
-        let now = ContinuousClock.now
-        if let lastAutoAttempt, now - lastAutoAttempt < autoInterval { return }
-        lastAutoAttempt = now
-        requestSummary(for: .quick)
-        await summaryTask?.value
+        guard autoQuick, state == .recording, !quickReader.isReading, generatingMode != .quick else { return }
+        guard automaticQuickAvailability == nil else { return }
+        defer { handleSummaryEvent(.evaluationFinished) }
+        if quickPieces.isEmpty {
+            quickReader.reset()
+            if !quickSummary.isEmpty { quickSummary = ""; save(announce: false) }
+            return
+        }
+        do {
+            guard let batch = try quickReader.context.batch(quickPieces, summary: quickSummary,
+                reviewsCompleted: quickReader.reviewsCompleted, pendingReviews: quickReader.recommendations) else { return }
+            let provider: any LLMProvider = try summaryProvider ?? ai.client(for: .quick)
+            manualQuickError = nil
+            let sessionID = id
+            await quickReader.read(batch, provider: provider, isCurrent: { [weak self] in
+                guard let self, self.id == sessionID, self.autoQuick, self.state == .recording else { return false }
+                return self.quickReader.context.isCurrent(batch, pieces: self.quickPieces)
+            }, apply: { [weak self] output in
+                guard let self else { return }
+                if self.quickSummary != output { self.quickSummary = output; self.save(announce: false) }
+            })
+        } catch {
+            manualQuickError = "Quick Summary check failed: \(MobileAISettings.errorMessage(error)) Your previous summary is kept."
+        }
     }
 
     func cancelSummary() { summaryTask?.cancel() }
@@ -365,17 +406,15 @@ extension MobileSession {
     var autoQuickStatus: String {
         guard autoQuick else { return "Auto off · Turn on Auto for live updates, or tap Refresh." }
         if generatingMode == .quick { return "Updating Quick Summary…" }
-        if state != .recording { return "Auto on · Updates while you listen." }
-        if isSummarizing { return "Auto on · Waiting for the current AI response." }
-        if summarySource.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            return "Auto on · Waiting for speech."
+        if state != .recording { return "Auto on · Checks new completed speech while you listen." }
+        if quickReader.isReading { return "Listening · Checking new speech…" }
+        if let reason = automaticQuickAvailability { return "Auto paused · " + reason }
+        if quickSummaryError != nil { return "Auto on · Check failed; retrying automatically." }
+        if !quickReader.context.hasChanges(quickPieces) {
+            if quickReader.completedReads == 0 { return "Auto on · Waiting for completed speech." }
+            return quickReader.unchanged ? "Up to date · Summary unchanged." : "Up to date · Listening for new information."
         }
-        if let reason = summaryAvailability(for: .quick) { return "Auto paused · " + reason }
-        if quickSummaryError != nil { return "Auto on · Update failed; retrying automatically." }
-        if summarySource.trimmingCharacters(in: .whitespacesAndNewlines) == lastAutoSource {
-            return "Auto on · Up to date."
-        }
-        return "Auto on · New speech is waiting for the next update."
+        return "Auto on · New speech is waiting for the next check."
     }
 
     func summarize(mode: MobileSummaryMode = .summary) async {
@@ -393,7 +432,7 @@ extension MobileSession {
         }
         generatingMode = mode
         isSummarizing = true
-        if mode == .quick { quickSummaryError = nil }
+        if mode == .quick { manualQuickError = nil; quickReader.clearError() }
         message = nil
         summaryDraft = ""
         defer { isSummarizing = false; summaryDraft = ""; generatingMode = nil }
@@ -416,14 +455,14 @@ extension MobileSession {
             case .summary: summary = summaryDraft
             case .quick:
                 quickSummary = summaryDraft
-                lastAutoSource = source.trimmingCharacters(in: .whitespacesAndNewlines)
             case .deep: deepThought = summaryDraft
             }
+            if summarySource == source { quickReader.markReviewed(mode) }
             save(announce: false)
         } catch {
             let failure = "\(mode.title) failed: \(MobileAISettings.errorMessage(error)) Your previous summary is kept."
             message = failure
-            if mode == .quick { quickSummaryError = failure }
+            if mode == .quick { manualQuickError = failure }
         }
     }
 }

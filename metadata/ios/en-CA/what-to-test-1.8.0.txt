@@ -1,0 +1,11 @@
+Quick Summary now listens for meaningful changes.
+
+Choose Ollama Cloud and a Flash Quick model, then enable Auto in Live. Apple Intelligence remains available for manual summaries. New completed speech triggers an evaluation, normally batched about every five seconds. The AI combines it with running context and either keeps the current bullets or publishes an update. Repetition and silence should not cause constant rewrites.
+
+Try agreeing a decision, repeating it, then changing the date or owner. Check that the summary updates accurately, preserves other important facts, and responds to AI speech corrections or Restore original.
+
+Summary and Deep may show a review suggestion with a reason and low/medium/high AI confidence. These are suggestions, not probabilities. Tap Generate when ready; recommendations do not run those models automatically. Quick can continue while a manual Summary or Deep response is running.
+
+Test Auto off/on, slow/offline connections, Stop, History and reopening. Failed reads preserve your previous summary and retry with backoff. Stop cancels pending reads; Refresh includes the stopped transcript. Long conversations are read in batches.
+
+Auto remains opt-in. With Ollama Cloud selected, new speech, notes and compact context are sent to that provider; audio stays on-device. The five-second window is scheduling cadence, not a guaranteed response time. Please report real-device speech quality, latency and any stale decisions using TestFlight feedback.
