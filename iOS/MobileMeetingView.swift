@@ -349,6 +349,7 @@ struct MobileMeetingView: View {
                     Text("iPhone & iPad · iOS 26 or later")
                 }
             }
+            .accessibilityIdentifier("aiSettingsForm")
             .navigationTitle("Settings")
             .toolbar { Button("Done") { showSettings = false } }
         }

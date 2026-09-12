@@ -84,7 +84,8 @@ struct MobileAISettingsView: View {
             Section("All API models") {
                 ForEach(ai.models) { model in modelRow(model, for: role) }
             }
-        }.navigationTitle("\(role.title) model")
+        }.accessibilityIdentifier("roleModelList")
+            .navigationTitle("\(role.title) model")
             .task { if ai.models.isEmpty { await ai.refresh() } }
     }
 

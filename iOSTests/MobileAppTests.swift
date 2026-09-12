@@ -12,11 +12,11 @@ final class MobileAppTests: XCTestCase {
             app.buttons["More"].tap()
             app.buttons["Settings"].tap()
             let link = app.buttons["choose-model-\(role)"]
-            for _ in 0..<6 where !link.isHittable { app.swipeUp() }
+            revealModelControl(link, in: app.collectionViews["aiSettingsForm"])
             XCTAssertTrue(link.isHittable)
             link.tap()
             let model = app.buttons["model-\(role)-fixture"]
-            for _ in 0..<5 where !model.isHittable { app.swipeUp() }
+            revealModelControl(model, in: app.collectionViews["roleModelList"])
             XCTAssertTrue(model.isHittable)
             model.tap()
             let title = role == "quick" ? "Quick Summary" : (role == "summary" ? "Summary" : "Deep Think")
@@ -28,12 +28,26 @@ final class MobileAppTests: XCTestCase {
         app.buttons["More"].tap(); app.buttons["Settings"].tap()
         for role in ["quick", "summary", "deep"] {
             let link = app.buttons["choose-model-\(role)"]
-            for _ in 0..<6 where !link.isHittable { app.swipeUp() }
+            revealModelControl(link, in: app.collectionViews["aiSettingsForm"])
             XCTAssertTrue(link.label.contains("\(role)-fixture"))
         }
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "Independent model settings"; screenshot.lifetime = .keepAlways; add(screenshot)
         app.buttons["Done"].tap()
+    }
+
+    private func revealModelControl(_ element: XCUIElement, in container: XCUIElement) {
+        XCTAssertTrue(container.waitForExistence(timeout: 5))
+        for _ in 0..<12 {
+            let bounds = container.frame
+            if element.exists, element.isHittable,
+               element.frame.minY > bounds.minY + 90, element.frame.maxY < bounds.maxY - 5 { return }
+            let moveDown = element.exists && element.frame.minY <= bounds.minY + 90
+            let start = container.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: moveDown ? 0.4 : 0.65))
+            let end = container.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: moveDown ? 0.65 : 0.4))
+            start.press(forDuration: 0.1, thenDragTo: end)
+        }
+        XCTAssertTrue(element.isHittable)
     }
 
     func testLiveLayoutAndDeepThinkTab() {
