@@ -108,6 +108,7 @@ final class MobileLiveCloudTests: XCTestCase {
     }
 
     private func shareAndDelete(_ app: XCUIApplication, outputs: [String: String], marker: String) {
+        app.buttons["More"].tap()
         app.buttons["Share"].tap()
         let copy = app.cells["Copy"]
         guard copy.waitForExistence(timeout: 10) else { XCTFail("Share sheet did not offer Copy"); return }

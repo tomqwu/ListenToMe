@@ -34,7 +34,6 @@ final class MobileModelRoleTests: XCTestCase {
             settings.selectModel("deepseek-v4-pro:0813", for: .deep)
             settings.resolveRoleModels()
             XCTAssertEqual(MobileAISettings().deepModel, "deepseek-v4-pro:0813")
-        
         }
     }
     func testNewSetupAssignsFlashQuickFullSummaryAndProDeep() throws {
@@ -44,7 +43,6 @@ final class MobileModelRoleTests: XCTestCase {
             XCTAssertEqual(settings.quickModel, "glm-5.3-flash")
             XCTAssertEqual(settings.model, "glm-5.3")
             XCTAssertEqual(settings.deepModel, "deepseek-v4-pro:0813")
-        
         }
     }
     func testFlashCannotBeSelectedOrSentForDeepAndNoFlashFallbackExists() throws {
@@ -62,7 +60,6 @@ final class MobileModelRoleTests: XCTestCase {
             XCTAssertThrowsError(try settings.client(for: .deep)) { error in
                 XCTAssertTrue(error.localizedDescription.contains("Flash models cannot be used"))
             }
-        
         }
     }
 }

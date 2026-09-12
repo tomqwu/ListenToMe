@@ -21,24 +21,29 @@ struct MobileMeetingView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                status
-                MobileWorkspaceView(session: session, selection: $workspace) { role in
+                if !dynamicTypeSize.isAccessibilitySize { status }
+                MobileWorkspaceView(session: session, selection: $workspace, chooseModel: { role in
                     if session.ai.provider == .apple { showSettings = true } else { modelRole = role }
-                }.padding(.horizontal, 20).padding(.bottom, 12)
+                }, accessibilityHeader: { status })
+                    .padding(.horizontal, 20).padding(.bottom, 12)
             }
             .background(Color(uiColor: .systemGroupedBackground))
-            .navigationTitle("ListenToMe")
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    HStack(spacing: 16) {
-                        Button("History", systemImage: "clock") { showHistory = true }.disabled(session.busy)
-                        Button("New", systemImage: "plus") { session.newConversation() }.disabled(session.busy)
-                    }
+                    Button("History", systemImage: "clock") { showHistory = true }
+                        .labelStyle(.titleAndIcon).disabled(session.busy)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    HStack {
+                    HStack(spacing: 16) {
+                        Button("New", systemImage: "plus") { session.newConversation() }
+                            .labelStyle(.titleAndIcon).disabled(session.busy)
                         Menu("More", systemImage: "ellipsis.circle") {
+                            if dynamicTypeSize.isAccessibilitySize {
+                                Button("Notes", systemImage: "note.text") { showNotes = true }
+                                Button("Save", systemImage: "square.and.arrow.down") { session.save() }.disabled(!session.hasContent)
+                            }
                             ShareLink(item: session.markdown) { Label("Share", systemImage: "square.and.arrow.up") }
                                 .disabled(!session.hasContent)
                             Button("Import from Calendar", systemImage: "calendar") { showCalendar = true }
@@ -86,9 +91,9 @@ struct MobileMeetingView: View {
 
     private var statusText: String {
         switch session.state {
-        case .idle: return "Ready to listen"
+        case .idle: return "Microphone · Ready to listen"
         case .preparing: return "Preparing speech model… First use may download a model."
-        case .recording: return "Listening"
+        case .recording: return "Listening · Microphone"
         case .stopping: return "Finishing transcript…"
         }
     }
@@ -133,28 +138,34 @@ struct MobileMeetingView: View {
 
     private var controls: some View {
         HStack(spacing: 12) {
-            Button { session.save() } label: {
-                VStack(spacing: 3) {
-                    Image(systemName: "square.and.arrow.down").font(.body)
-                    Text("Save").font(.caption2)
-                }.frame(minWidth: 40, minHeight: 44)
-            }.disabled(!session.hasContent).accessibilityLabel("Save")
+            if !dynamicTypeSize.isAccessibilitySize {
+                Button { session.save() } label: {
+                    VStack(spacing: 3) {
+                        Image(systemName: "square.and.arrow.down").font(.body)
+                        Text("Save").font(.caption2)
+                    }.frame(minWidth: 40, minHeight: 44)
+                }.disabled(!session.hasContent).accessibilityLabel("Save")
+            }
             Button {
                 focusedField = nil
                 if session.state == .idle { session.start() } else { Task { await session.stop() } }
             } label: {
-                Label(session.state == .idle ? "Start listening" : "Stop listening",
+                Label(session.state == .idle ? (dynamicTypeSize.isAccessibilitySize ? "Listen" : "Start listening")
+                      : (dynamicTypeSize.isAccessibilitySize ? "Stop" : "Stop listening"),
                       systemImage: session.state == .idle ? "mic.fill" : "stop.fill")
                     .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 10)
             }.buttonStyle(.borderedProminent)
+                .accessibilityLabel(session.state == .idle ? "Start listening" : "Stop listening")
                 .tint(session.state == .idle ? .indigo : .red)
                 .disabled(session.state == .stopping || (session.isSummarizing && session.state == .idle))
-            Button { showNotes = true } label: {
-                VStack(spacing: 3) {
-                    Image(systemName: "note.text").font(.body)
-                    Text("Notes").font(.caption2)
-                }.frame(minWidth: 40, minHeight: 44)
-            }.accessibilityLabel("Notes")
+            if !dynamicTypeSize.isAccessibilitySize {
+                Button { showNotes = true } label: {
+                    VStack(spacing: 3) {
+                        Image(systemName: "note.text").font(.body)
+                        Text("Notes").font(.caption2)
+                    }.frame(minWidth: 40, minHeight: 44)
+                }.accessibilityLabel("Notes")
+            }
         }.frame(maxWidth: 600).frame(maxWidth: .infinity)
             .padding(.horizontal, 16).padding(.vertical, 10).background(.bar)
     }

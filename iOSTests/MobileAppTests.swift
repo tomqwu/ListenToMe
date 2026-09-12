@@ -75,7 +75,16 @@ final class MobileAppTests: XCTestCase {
         app.segmentedControls["workspaceTabs"].buttons["Deep"].tap()
         XCTAssertTrue(app.buttons["Generate Deep Summary"].exists)
         XCTAssertTrue(app.buttons["Start listening"].isHittable)
-        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        let window = app.windows.firstMatch
+        XCTAssertGreaterThan(window.frame.width, window.frame.height)
+        let scroll = app.scrollViews["dashboardScroll"]
+        let model = app.buttons["panel-model-deep"]
+        for _ in 0..<8 {
+            if model.isHittable { break }
+            scroll.swipeUp(velocity: .slow)
+        }
+        XCTAssertTrue(model.isHittable)
+        let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         screenshot.name = "Landscape accessibility layout"; screenshot.lifetime = .keepAlways; add(screenshot)
     }
 
@@ -128,6 +137,7 @@ final class MobileAppTests: XCTestCase {
         app.textViews["Conversation notes"].tap()
         app.textViews["Conversation notes"].typeText(marker)
         app.buttons["Done"].tap()
+        app.buttons["More"].tap()
         app.buttons["Share"].tap()
         let destination = app.cells["ListenToMe"]
         if !destination.waitForExistence(timeout: 5) {

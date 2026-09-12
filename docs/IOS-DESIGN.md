@@ -4,8 +4,8 @@ The primary task is following a conversation while seeing its evolving summary. 
 
 ## Layout
 
-- iPhone: a compact conversation header, Live / Summary / Deep navigation, and one recording control anchored at the bottom. Live gives the transcript slightly more room than Quick Summary. Notes remains a labeled action beside recording; New and History stay in the navigation bar. Save and Share live in More.
-- iPad: the transcript and Quick Summary remain in the left column while Summary or Deep Summary is visible on the right. Each column has its own reading area. At large accessibility sizes or short heights, use one outer scrolling column rather than nested scrolling.
+- iPhone: a compact conversation header, Live / Summary / Deep navigation, and one recording control anchored at the bottom. Live shares the reading area between transcript and Quick Summary. Save and Notes remain labeled actions beside recording; New and History stay in the navigation bar. Share lives in More.
+- iPad: the transcript and Quick Summary remain in the left column while Summary or Deep Summary is visible on the right. Each column has its own reading area. At large accessibility sizes or short heights, use one outer scrolling column rather than nested scrolling. At accessibility sizes, the title scrolls with content and Save/Notes move into More to preserve reading space.
 - Use a neutral grouped background, white/system cards, consistent 20-point insets and restrained indigo accents. Status, model, action and content have distinct typography. Avoid tinted blocks and repeated explanatory paragraphs competing with the conversation.
 - Empty states explain the next action once. Populated states prioritize readable Markdown and transcript text. Settings and provider disclosures remain reachable through the model control and Settings.
 

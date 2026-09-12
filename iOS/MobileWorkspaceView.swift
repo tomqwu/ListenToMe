@@ -6,10 +6,11 @@ enum MobileWorkspace: String, CaseIterable {
     var mode: MobileSummaryMode { self == .summary ? .summary : .deep }
 }
 
-struct MobileWorkspaceView: View {
+struct MobileWorkspaceView<Header: View>: View {
     @Bindable var session: MobileSession
     @Binding var selection: MobileWorkspace
     let chooseModel: (MobileSummaryMode) -> Void
+    let accessibilityHeader: () -> Header
     @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(\.verticalSizeClass) private var verticalSize
     private var stacked: Bool { typeSize.isAccessibilitySize || verticalSize == .compact }
@@ -39,6 +40,7 @@ struct MobileWorkspaceView: View {
                     if stacked {
                         ScrollView {
                             VStack(spacing: 16) {
+                                if typeSize.isAccessibilitySize { accessibilityHeader() }
                                 if selection == .live { transcriptPanel; summaryPanel(.quick) }
                                 else { summaryPanel(selection.mode) }
                             }
@@ -104,7 +106,7 @@ struct MobileWorkspaceView: View {
                     } else {
                         Button { session.requestSummary(for: mode) } label: {
                             Image(systemName: session.output(for: mode).isEmpty ? "sparkles" : "arrow.clockwise")
-                                .frame(width: 32, height: 28)
+                                .frame(minWidth: 32, minHeight: 28)
                         }.buttonStyle(.bordered).controlSize(.small)
                             .accessibilityLabel("Generate \(mode.title)")
                             .disabled(session.summaryBlockReason(for: mode) != nil)
