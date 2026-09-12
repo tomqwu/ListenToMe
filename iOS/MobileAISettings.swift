@@ -39,6 +39,7 @@ final class MobileAISettings {
            let data = Data(base64Encoded: value),
            let cached = try? JSONDecoder().decode([OllamaCloudModel].self, from: data) { models = cached }
         hasKey = (try? MobileKeychain.read().isEmpty) == false
+        resolveRoleModels()
     }
 
     @discardableResult
@@ -59,16 +60,7 @@ final class MobileAISettings {
             let fetched = try await OllamaCloudCatalog().fetch(apiKey: MobileKeychain.read())
             guard !fetched.isEmpty else { throw RecordingError.message("Ollama returned an empty model catalog. Try again later.") }
             models = fetched
-            let recent = OllamaCloudModel.recentVariants(in: fetched)
-            if model.isEmpty {
-                model = recent.first(where: { $0.family == "glm" && $0.name.contains("flash") })?.name
-                    ?? recent.first?.name ?? fetched[0].name
-            }
-            if quickModel.isEmpty { quickModel = recent.first(where: { $0.name.contains("flash") })?.name ?? model }
-            if deepModel.isEmpty {
-                deepModel = recent.first(where: { $0.name.contains("pro") })?.name
-                    ?? recent.first(where: { !$0.name.contains("flash") })?.name ?? model
-            }
+            resolveRoleModels()
             status = fetched.contains(where: { $0.name == model })
                 ? "Fetched \(fetched.count) models from Ollama. Refresh does not verify your API key; use Test connection."
                 : "Your selected model is no longer listed. Choose an available model before summarizing."
@@ -83,7 +75,33 @@ final class MobileAISettings {
         }
     }
 
+    static func isFlash(_ name: String) -> Bool { name.lowercased().contains("flash") }
+
+    func models(for role: MobileSummaryMode) -> [OllamaCloudModel] {
+        role == .deep ? models.filter { !Self.isFlash($0.name) } : models
+    }
+
+    func resolveRoleModels() {
+        let recent = OllamaCloudModel.recentVariants(in: models)
+        let full = recent.filter { !Self.isFlash($0.name) }
+        if model.isEmpty { model = full.first(where: { $0.family == "glm" })?.name ?? full.first?.name ?? "" }
+        if quickModel.isEmpty {
+            quickModel = recent.first(where: { $0.family == "glm" && Self.isFlash($0.name) })?.name
+                ?? recent.first(where: { Self.isFlash($0.name) })?.name ?? model
+        }
+        if deepModel.isEmpty || Self.isFlash(deepModel) {
+            let family = OllamaCloudModel(name: deepModel).family
+            deepModel = full.first(where: { $0.family == family && $0.name.lowercased().contains("pro") })?.name
+                ?? full.first(where: { $0.family == family })?.name
+                ?? full.first(where: { $0.name.lowercased().contains("pro") })?.name ?? full.first?.name ?? ""
+        }
+    }
+
     func selectModel(_ value: String, for mode: MobileSummaryMode) {
+        guard mode != .deep || !Self.isFlash(value) else {
+            status = "Deep Summary needs a full model. Flash models are available for Quick Summary."
+            return
+        }
         switch mode {
         case .summary: model = value
         case .quick: quickModel = value
@@ -95,6 +113,7 @@ final class MobileAISettings {
 
     func availability(for mode: MobileSummaryMode) -> String? {
         let model = selectedModel(for: mode)
+        if mode == .deep && (model.isEmpty || Self.isFlash(model)) { return "Choose a full model for Deep Summary." }
         if !hasKey { return "Add your Ollama API key in Settings." }
         if model.isEmpty { return "Refresh models and choose a model in Settings." }
         if !models.isEmpty && !models.contains(where: { $0.name == model }) {
@@ -105,6 +124,9 @@ final class MobileAISettings {
 
     func client(for mode: MobileSummaryMode = .summary) throws -> OllamaProvider {
         let model = selectedModel(for: mode)
+        if mode == .deep && (model.isEmpty || Self.isFlash(model)) {
+            throw RecordingError.message("Choose a full model for Deep Summary. Flash models cannot be used for this role.")
+        }
         let key = try MobileKeychain.read()
         guard !key.isEmpty else { throw RecordingError.message("Add your Ollama API key in Settings.") }
         guard !model.isEmpty else { throw RecordingError.message("Choose an Ollama model in Settings.") }

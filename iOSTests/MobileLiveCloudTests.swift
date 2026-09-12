@@ -38,12 +38,12 @@ final class MobileLiveCloudTests: XCTestCase {
         guard fetched.waitForExistence(timeout: 60) else {
             XCTFail("Catalog refresh failed: \(app.staticTexts["ollamaStatus"].label)"); return
         }
-        for role in ["Summary", "Quick Summary", "Deep Think"] {
+        for role in ["Summary", "Quick Summary", "Deep Summary"] {
             let roleID = role == "Summary" ? "summary" : (role == "Quick Summary" ? "quick" : "deep")
             let choose = app.buttons["choose-model-\(roleID)"]
             reveal(choose, in: app, upwards: false)
             choose.tap()
-            let variant = role == "Deep Think" ? "pro" : "flash"
+            let variant = role == "Deep Summary" ? "pro" : "flash"
             let preferred = app.buttons.matching(NSPredicate(
                 format: "identifier BEGINSWITH %@ AND identifier CONTAINS %@", "model-", variant)).firstMatch
             let fallback = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "model-")).firstMatch
@@ -84,8 +84,8 @@ final class MobileLiveCloudTests: XCTestCase {
         XCTAssertTrue(full.waitForExistence(timeout: 180))
         outputs["Summary"] = full.label
         app.buttons["Done"].tap()
-        for mode in [("Quick Summary", "quick"), ("Deep Think", "deep")] {
-            app.segmentedControls["workspaceTabs"].buttons[mode.1 == "quick" ? "Live" : "Deep Think"].tap()
+        for mode in [("Quick Summary", "quick"), ("Deep Summary", "deep")] {
+            app.segmentedControls["workspaceTabs"].buttons[mode.1 == "quick" ? "Live" : "Deep"].tap()
             app.buttons["Generate \(mode.0)"].tap()
             let output = app.staticTexts["output-\(mode.1)"]
             let completed = XCTNSPredicateExpectation(
@@ -98,8 +98,8 @@ final class MobileLiveCloudTests: XCTestCase {
         dashboard.name = "Live cloud dashboard outputs"; dashboard.lifetime = .keepAlways; add(dashboard)
         app.terminate(); app.launch()
         XCTAssertEqual(app.staticTexts["output-quick"].label, outputs["Quick Summary"])
-        app.segmentedControls["workspaceTabs"].buttons["Deep Think"].tap()
-        XCTAssertEqual(app.staticTexts["output-deep"].label, outputs["Deep Think"])
+        app.segmentedControls["workspaceTabs"].buttons["Deep"].tap()
+        XCTAssertEqual(app.staticTexts["output-deep"].label, outputs["Deep Summary"])
         app.buttons["More"].tap()
         app.buttons["Full summary"].tap()
         XCTAssertEqual(app.staticTexts["savedSummary"].label, outputs["Summary"])
@@ -108,6 +108,7 @@ final class MobileLiveCloudTests: XCTestCase {
     }
 
     private func shareAndDelete(_ app: XCUIApplication, outputs: [String: String], marker: String) {
+        app.buttons["More"].tap()
         app.buttons["Share"].tap()
         let copy = app.cells["Copy"]
         guard copy.waitForExistence(timeout: 10) else { XCTFail("Share sheet did not offer Copy"); return }

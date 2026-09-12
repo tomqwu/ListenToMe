@@ -9,7 +9,7 @@ final class MobileMarkdownUITests: XCTestCase {
             throw XCTSkip("Requires the locally staged Markdown conversation fixture.")
         }
         for mode in ["quick", "deep"] {
-            app.segmentedControls["workspaceTabs"].buttons[mode == "quick" ? "Live" : "Deep Think"].tap()
+            app.segmentedControls["workspaceTabs"].buttons[mode == "quick" ? "Live" : "Deep"].tap()
             let output = app.staticTexts["output-\(mode)"]
             XCTAssertTrue(output.waitForExistence(timeout: 5))
             XCTAssertTrue(output.label.contains("Decisions"))

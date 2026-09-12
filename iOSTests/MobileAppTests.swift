@@ -19,7 +19,7 @@ final class MobileAppTests: XCTestCase {
             revealModelControl(model, in: app.collectionViews["roleModelList"])
             XCTAssertTrue(model.isHittable)
             model.tap()
-            let title = role == "quick" ? "Quick Summary" : (role == "summary" ? "Summary" : "Deep Think")
+            let title = role == "quick" ? "Quick Summary" : (role == "summary" ? "Summary" : "Deep Summary")
             app.navigationBars["\(title) model"].buttons.firstMatch.tap()
             XCTAssertTrue(link.label.contains("\(role)-fixture"))
             app.buttons["Done"].tap()
@@ -56,9 +56,9 @@ final class MobileAppTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Live transcript"].isHittable)
         XCTAssertTrue(app.staticTexts["Quick Summary"].isHittable)
         XCTAssertGreaterThan(app.staticTexts["Quick Summary"].frame.minY, app.staticTexts["Live transcript"].frame.maxY)
-        XCTAssertFalse(app.buttons["Generate Deep Think"].exists)
-        app.segmentedControls["workspaceTabs"].buttons["Deep Think"].tap()
-        XCTAssertTrue(app.buttons["Generate Deep Think"].isHittable)
+        XCTAssertFalse(app.buttons["Generate Deep Summary"].exists)
+        app.segmentedControls["workspaceTabs"].buttons["Deep"].tap()
+        XCTAssertTrue(app.buttons["Generate Deep Summary"].isHittable)
         XCTAssertFalse(app.staticTexts["Live transcript"].exists)
         XCTAssertTrue(app.buttons["Start listening"].isHittable)
         app.segmentedControls["workspaceTabs"].buttons["Live"].tap()
@@ -72,23 +72,39 @@ final class MobileAppTests: XCTestCase {
         XCUIDevice.shared.orientation = .landscapeLeft
         defer { XCUIDevice.shared.orientation = .portrait }
         XCTAssertTrue(app.scrollViews["dashboardScroll"].exists)
-        app.segmentedControls["workspaceTabs"].buttons["Deep Think"].tap()
-        XCTAssertTrue(app.buttons["Generate Deep Think"].exists)
+        app.segmentedControls["workspaceTabs"].buttons["Deep"].tap()
+        XCTAssertTrue(app.buttons["Generate Deep Summary"].exists)
         XCTAssertTrue(app.buttons["Start listening"].isHittable)
+        let window = app.windows.firstMatch
+        XCTAssertGreaterThan(window.frame.width, window.frame.height)
+        let scroll = app.scrollViews["dashboardScroll"]
+        let model = app.buttons["panel-model-deep"]
+        for _ in 0..<8 {
+            if model.isHittable { break }
+            scroll.swipeUp(velocity: .slow)
+        }
+        XCTAssertTrue(model.isHittable)
+        let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        screenshot.name = "Landscape accessibility layout"; screenshot.lifetime = .keepAlways; add(screenshot)
     }
 
-    func testAutoSummaryPreferenceSurvivesRelaunch() {
+    func testAutoSummaryPreferenceSurvivesRelaunch() throws {
         let app = XCUIApplication()
         app.launch()
         let toggle = app.switches["Auto Quick Summary"].switches.firstMatch
-        let original = toggle.value as? String
+        let original = try XCTUnwrap(toggle.value as? String)
+        let selected = original == "1" ? "0" : "1"
+        func expectValue(_ value: String) {
+            let changed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", value), object: toggle)
+            XCTAssertEqual(XCTWaiter.wait(for: [changed], timeout: 10), .completed)
+        }
         toggle.tap()
-        let selected = toggle.value as? String
+        expectValue(selected)
         app.terminate()
         app.launch()
-        XCTAssertEqual(toggle.value as? String, selected)
+        expectValue(selected)
         toggle.tap()
-        XCTAssertEqual(toggle.value as? String, original)
+        expectValue(original)
     }
 
     func testNotesCameraExplanationAndFilePicker() {
@@ -126,6 +142,7 @@ final class MobileAppTests: XCTestCase {
         app.textViews["Conversation notes"].tap()
         app.textViews["Conversation notes"].typeText(marker)
         app.buttons["Done"].tap()
+        app.buttons["More"].tap()
         app.buttons["Share"].tap()
         let destination = app.cells["ListenToMe"]
         if !destination.waitForExistence(timeout: 5) {
@@ -213,7 +230,7 @@ final class MobileAppTests: XCTestCase {
         XCTAssertTrue(app.buttons["Generate Quick Summary"].exists)
         app.buttons["summaryMode"].tap()
         app.buttons["summary-option-deep"].tap()
-        XCTAssertTrue(app.buttons["Generate Deep Think"].exists)
+        XCTAssertTrue(app.buttons["Generate Deep Summary"].exists)
         app.buttons["Done"].tap()
         app.buttons["History"].tap()
         let row = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch

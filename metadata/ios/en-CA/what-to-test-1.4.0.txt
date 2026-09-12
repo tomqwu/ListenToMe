@@ -1,0 +1,5 @@
+Redesigned meeting workspace: Live, Summary and Deep are directly accessible on iPhone; iPad keeps live transcript and Quick Summary beside the review pane. Notes stays beside the recording button. Check populated summaries, landscape and larger text sizes.
+
+Every summary displays its model and opens its own model chooser. Deep Summary no longer inherits or falls back to Flash; old Flash choices migrate to an available full model. Quick, Summary and Deep selections stay independent.
+
+Includes Calendar import and previous automatic Quick Summary fixes.
