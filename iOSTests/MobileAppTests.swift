@@ -88,18 +88,23 @@ final class MobileAppTests: XCTestCase {
         screenshot.name = "Landscape accessibility layout"; screenshot.lifetime = .keepAlways; add(screenshot)
     }
 
-    func testAutoSummaryPreferenceSurvivesRelaunch() {
+    func testAutoSummaryPreferenceSurvivesRelaunch() throws {
         let app = XCUIApplication()
         app.launch()
         let toggle = app.switches["Auto Quick Summary"].switches.firstMatch
-        let original = toggle.value as? String
+        let original = try XCTUnwrap(toggle.value as? String)
+        let selected = original == "1" ? "0" : "1"
+        func expectValue(_ value: String) {
+            let changed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", value), object: toggle)
+            XCTAssertEqual(XCTWaiter.wait(for: [changed], timeout: 10), .completed)
+        }
         toggle.tap()
-        let selected = toggle.value as? String
+        expectValue(selected)
         app.terminate()
         app.launch()
-        XCTAssertEqual(toggle.value as? String, selected)
+        expectValue(selected)
         toggle.tap()
-        XCTAssertEqual(toggle.value as? String, original)
+        expectValue(original)
     }
 
     func testNotesCameraExplanationAndFilePicker() {
