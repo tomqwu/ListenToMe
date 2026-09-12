@@ -1,0 +1,3 @@
+Import events from calendars configured on your iPhone or iPad: choose More → Import from Calendar, or open Notes and choose Import from Calendar. Connect Calendar, choose a date, preview an event, and import its title, time, location, attendees, event notes and link. Existing notes and custom conversation titles are preserved. Calendar events are not changed. Imported notes are included in AI summaries, including Auto summary.
+
+Also includes the automatic Quick Summary and independent per-role model settings fixes from build 9.

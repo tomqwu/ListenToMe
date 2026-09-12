@@ -67,6 +67,13 @@ jobs:
           xcrun simctl bootstatus "$DEVICE_ID" -b
           xcrun simctl addmedia "$DEVICE_ID" iOS/Assets.xcassets/AppIcon.appiconset/AppIcon.png
           make ios-test IOS_DESTINATION="platform=iOS Simulator,id=$DEVICE_ID"
+      - name: Preserve failed iOS test screenshots and diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-test-results
+          path: .build/ios/Logs/Test/
+          retention-days: 3
       - name: Verify locked dependencies
         run: diff -u Config/Package.resolved ListenToMe.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
   # GUI, permissions, real audio and distribution still require local artifact testing.

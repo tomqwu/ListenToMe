@@ -23,5 +23,6 @@
 <key>LSHandlerRank</key><string>Alternate</string>
 <key>LSItemContentTypes</key><array><string>public.data</string></array>
 </dict></array>
+<key>NSCalendarsFullAccessUsageDescription</key><string>ListenToMe reads Calendar when you choose an event to import into your notes. Imported details are included in summaries using your selected AI provider. ListenToMe does not change calendar events.</string>
 <key>ITSAppUsesNonExemptEncryption</key><false/>
 </dict></plist>
