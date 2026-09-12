@@ -66,6 +66,26 @@ final class SharedQuickLoopTests: XCTestCase {
         reader.clearError(); reader.reset(); XCTAssertEqual(reader.completedReads, 0)
     }
 
+    func testNetworkFailureKeepsSummaryAndUnreadInputUntilRetrySucceeds() async throws {
+        for (code, message) in [(URLError.networkConnectionLost, "internet connection was lost"),
+                                (.notConnectedToInternet, "offline"), (.timedOut, "timed out")] {
+            let reader = QuickSummaryReader()
+            let pieces = [QuickSummaryContext.Piece(id: "decision", text: "Sarah confirms Monday.")]
+            let batch = try XCTUnwrap(reader.context.batch(pieces, summary: "Existing summary"))
+            var output = "Existing summary"
+            await reader.read(batch, provider: NetworkFailureProvider(code: code), isCurrent: { true }, apply: { output = $0 })
+            XCTAssertTrue(reader.error?.contains(message) == true)
+            XCTAssertEqual(output, "Existing summary")
+            XCTAssertTrue(reader.context.hasChanges(pieces))
+            XCTAssertFalse(reader.isReading)
+            await reader.read(batch, provider: MockLLMProvider(id: "retry", deltas: [publish]),
+                              isCurrent: { true }, apply: { output = $0 })
+            XCTAssertNil(reader.error)
+            XCTAssertEqual(output, "- Sarah confirms Monday.")
+            XCTAssertFalse(reader.context.hasChanges(pieces))
+        }
+    }
+
     func testUnavailableProviderPausesWithoutChangingSelection() async throws {
         let session = MeetingSession(store: ConversationStore(), context: ContextEngine(),
             makeCapture: { MockCapture() }, makeTranscriber: { MockTranscriber() },
@@ -77,5 +97,13 @@ final class SharedQuickLoopTests: XCTestCase {
         XCTAssertEqual(session.models[.quick], "apple-intelligence")
         XCTAssertEqual(session.quickReader.completedReads, 0)
         session.stop()
+    }
+}
+
+private struct NetworkFailureProvider: LLMProvider {
+    let id = "network-failure"
+    let code: URLError.Code
+    func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
+        AsyncThrowingStream { $0.finish(throwing: URLError(code)) }
     }
 }

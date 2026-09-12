@@ -109,10 +109,22 @@ public final class QuickSummaryReader {
             } catch {
                 guard generation == token, !Task.isCancelled else { return }
                 failures += 1
-                self.error = "Quick Summary check failed: \(error.localizedDescription) Your previous summary is kept."
+                self.error = "Quick Summary check failed: \(Self.failureMessage(error)) Your previous summary is kept."
             }
         }
         await task?.value
+    }
+
+    private static func failureMessage(_ error: Error) -> String {
+        if let network = error as? URLError {
+            switch network.code {
+            case .networkConnectionLost: return "The internet connection was lost."
+            case .notConnectedToInternet: return "This device is offline. Connect to the internet to continue."
+            case .timedOut: return "The request timed out. Try again when the connection improves."
+            default: break
+            }
+        }
+        return error.localizedDescription
     }
 
     public static func evaluate(_ request: LLMRequest, provider: any LLMProvider,
