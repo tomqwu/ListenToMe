@@ -9,3 +9,5 @@ Summary and Deep may show a review suggestion with a reason and low/medium/high 
 Test Auto off/on, slow/offline connections, Stop, History and reopening. Failed reads preserve your previous summary and retry with backoff. Stop cancels pending reads; Refresh includes the stopped transcript. Long conversations are read in batches.
 
 Auto remains opt-in. With Ollama Cloud selected, new speech, notes and compact context are sent to that provider; audio stays on-device. The five-second window is scheduling cadence, not a guaranteed response time. Please report real-device speech quality, latency and any stale decisions using TestFlight feedback.
+
+- While listening, scroll back in the transcript. New speech should preserve your reading position; Latest resumes following.

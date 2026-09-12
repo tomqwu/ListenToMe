@@ -11,6 +11,9 @@ whether to keep the displayed bullets or publish a meaningful update. Correction
 and current wording. Summary/Deep recommendations show a grounded reason and qualitative AI confidence;
 they remain manual actions. Quick reads can run alongside a manual Summary or Deep response.
 
+This release also stabilizes the transcript's reading position while new speech arrives. The history
+view stays still while recording continues; Latest reveals the newest text and resumes following.
+
 See [the scheduler's events, actions and tests](IOS-LIVE-SUMMARY-SCHEDULER.md). Calls have a 15-second
 deadline; failures keep previous results and retry with backoff. Stop cancels pending reads, and manual
 Refresh includes the stopped transcript. Automatic evaluation reads long input in bounded batches;

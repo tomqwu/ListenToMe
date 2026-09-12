@@ -74,6 +74,27 @@ final class MobileTranscriptUITests: XCTestCase {
         capture(app, "Large text summary remains reachable")
     }
 
+    func testLongTranscriptRemainsResponsiveAndPreservesReadingPosition() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--transcript-scroll-fixture", "--long-transcript-fixture"]
+        app.launch()
+        let scroll = app.scrollViews["transcriptScroll"]
+        XCTAssertTrue(scroll.waitForExistence(timeout: 10))
+        expectLatestVisible(in: scroll)
+        scroll.swipeDown()
+        XCTAssertTrue(app.buttons["Jump to latest transcript"].waitForExistence(timeout: 5))
+        let visible = scroll.staticTexts.allElementsBoundByIndex.reversed().first {
+            scroll.frame.intersection($0.frame).height > 24 && $0.identifier.hasPrefix("transcript-text-")
+        }
+        guard let visible else { XCTFail("Expected readable history"); return }
+        let position = settledPosition(of: visible)
+        app.buttons["fixture-grow"].tap()
+        XCTAssertEqual(visible.frame.minY, position, accuracy: 2)
+        app.buttons["Jump to latest transcript"].tap()
+        expectLatestVisible(in: scroll)
+        capture(app, "One thousand transcript segments remain readable")
+    }
+
     private func settledPosition(of element: XCUIElement) -> CGFloat {
         var previous: CGFloat?
         var stableSamples = 0
