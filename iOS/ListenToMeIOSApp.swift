@@ -8,7 +8,7 @@ struct ListenToMeIOSApp: App {
 
     var body: some Scene {
         WindowGroup {
-            MobileMeetingView(session: session)
+            meeting
                 .tint(.indigo)
                 .task { session.importSharedInbox() }
                 .onOpenURL { session.importFile($0) }
@@ -28,5 +28,17 @@ struct ListenToMeIOSApp: App {
                     Task { await session.stop() }
                 }
         }
+    }
+
+    @ViewBuilder private var meeting: some View {
+        #if DEBUG && targetEnvironment(simulator)
+        if ProcessInfo.processInfo.arguments.contains("--transcript-scroll-fixture") {
+            MobileTranscriptFixture()
+        } else {
+            MobileMeetingView(session: session)
+        }
+        #else
+        MobileMeetingView(session: session)
+        #endif
     }
 }
