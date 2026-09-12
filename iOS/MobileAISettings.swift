@@ -17,6 +17,19 @@ final class MobileAISettings {
     var deepModel: String {
         didSet { UserDefaults.standard.set(deepModel, forKey: "mobileOllamaDeepModel") }
     }
+    var correctTranscript: Bool {
+        didSet {
+            UserDefaults.standard.set(correctTranscript, forKey: "mobileCorrectTranscript")
+            correctionSettingsChanged?()
+        }
+    }
+    var correctionModel: String {
+        didSet {
+            UserDefaults.standard.set(correctionModel, forKey: "mobileCorrectionModel")
+            correctionSettingsChanged?()
+        }
+    }
+    @ObservationIgnored var correctionSettingsChanged: (() -> Void)?
     var models: [OllamaCloudModel] = [] {
         didSet {
             if let data = try? JSONEncoder().encode(models) {
@@ -35,6 +48,8 @@ final class MobileAISettings {
         model = savedModel
         quickModel = UserDefaults.standard.string(forKey: "mobileOllamaQuickModel") ?? savedModel
         deepModel = UserDefaults.standard.string(forKey: "mobileOllamaDeepModel") ?? savedModel
+        correctTranscript = UserDefaults.standard.bool(forKey: "mobileCorrectTranscript")
+        correctionModel = UserDefaults.standard.string(forKey: "mobileCorrectionModel") ?? ""
         if let value = UserDefaults.standard.string(forKey: "mobileOllamaCatalog"),
            let data = Data(base64Encoded: value),
            let cached = try? JSONDecoder().decode([OllamaCloudModel].self, from: data) { models = cached }
@@ -47,6 +62,7 @@ final class MobileAISettings {
         do {
             try MobileKeychain.save(value.trimmingCharacters(in: .whitespacesAndNewlines))
             hasKey = !(try MobileKeychain.read()).isEmpty
+            correctionSettingsChanged?()
             status = hasKey ? "API key saved in this device's Keychain." : "API key removed."
             return true
         } catch { status = error.localizedDescription; return false }
@@ -84,6 +100,10 @@ final class MobileAISettings {
     func resolveRoleModels() {
         let recent = OllamaCloudModel.recentVariants(in: models)
         let full = recent.filter { !Self.isFlash($0.name) }
+        if correctionModel.isEmpty {
+            correctionModel = recent.first(where: { $0.family == "glm" && Self.isFlash($0.name) })?.name
+                ?? recent.first(where: { Self.isFlash($0.name) })?.name ?? ""
+        }
         if model.isEmpty { model = full.first(where: { $0.family == "glm" })?.name ?? full.first?.name ?? "" }
         if quickModel.isEmpty {
             quickModel = recent.first(where: { $0.family == "glm" && Self.isFlash($0.name) })?.name

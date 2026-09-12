@@ -3,6 +3,7 @@ import ListenToMeCore
 
 struct MobileAISettingsView: View {
     @Bindable var ai: MobileAISettings
+    var includeSpeechCorrection = true
     @State private var key = ""
     @State private var operation: Task<Void, Never>?
     @FocusState private var editingKey: Bool
@@ -13,8 +14,10 @@ struct MobileAISettingsView: View {
                 Text("Apple Intelligence · on-device").tag(MobileAISettings.Provider.apple)
                 Text("Ollama Cloud").tag(MobileAISettings.Provider.ollama)
             }.accessibilityIdentifier("summaryProvider")
-            if ai.provider == .ollama {
-                Text("Summarize sends your notes and transcript to Ollama Cloud using the selected model. " +
+            if ai.provider == .ollama || ai.correctTranscript {
+                Text((ai.provider == .ollama
+                      ? "Summarize sends your notes and transcript to Ollama Cloud using the selected model. "
+                      : "Speech correction uses Ollama Cloud. Your summaries still use Apple Intelligence on-device. ") +
                      "Microphone audio stays on your device. Your Ollama account's usage limits apply.")
                 Text("Server: https://ollama.com").font(.caption)
                 SecureField(ai.hasKey ? "Replace saved API key" : "Ollama API key", text: $key)
@@ -61,6 +64,7 @@ struct MobileAISettingsView: View {
             }
         }
         .onDisappear { operation?.cancel(); key = "" }
+        if includeSpeechCorrection { MobileSpeechCorrectionSettings(ai: ai) }
     }
 
 }

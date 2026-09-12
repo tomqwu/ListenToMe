@@ -23,6 +23,9 @@ final class MobileSession {
     private var autoTask: Task<Void, Never>?
     private let autoInterval: Duration
     private let summaryProvider: (any LLMProvider)?
+    let correctionProvider: (any LLMProvider)?
+    let speechCorrection = MobileTranscriptCorrector()
+    var acceptsSpeechCorrection = false
     private let makeRecorder: () -> any MobileRecording
     private(set) var quickSummaryError: String?
     private var sourceImportID: String?
@@ -45,8 +48,10 @@ final class MobileSession {
 
     init(storageDirectory: URL = .applicationSupportDirectory,
          summaryProvider: (any LLMProvider)? = nil, autoInterval: Duration = .seconds(15),
+         correctionProvider: (any LLMProvider)? = nil,
          makeRecorder: @escaping () -> any MobileRecording = { MobileRecorder() }) {
         self.summaryProvider = summaryProvider
+        self.correctionProvider = correctionProvider
         self.autoInterval = autoInterval
         self.makeRecorder = makeRecorder
         activeURL = storageDirectory.appendingPathComponent("ActiveConversation.json")
@@ -58,6 +63,7 @@ final class MobileSession {
             do { restore(try JSONDecoder().decode(SessionRecord.self, from: Data(contentsOf: activeURL))) }
             catch { message = "Could not restore the current conversation: \(error.localizedDescription). Check History." }
         } else if let latest = history.first { restore(latest) }
+        ai.correctionSettingsChanged = { [weak self] in self?.speechCorrection.cancel() }
     }
 
     var busy: Bool { state != .idle || isSummarizing }
@@ -108,6 +114,8 @@ final class MobileSession {
     func start() {
         guard state == .idle, !isSummarizing else { return }
         message = nil
+        speechCorrection.cancel()
+        acceptsSpeechCorrection = true
         // Keep any unfinished hypothesis from an interrupted earlier run.
         if let partial { segments.append(partial); self.partial = nil }
         state = .preparing
@@ -125,6 +133,7 @@ final class MobileSession {
                         self.segments.append(timed)
                         self.partial = nil
                         self.save(announce: false)
+                        self.checkSpeech(timed)
                     } else {
                         self.partial = timed.text.isEmpty ? nil : timed
                     }
@@ -162,6 +171,8 @@ final class MobileSession {
     }
 
     func background() async {
+        acceptsSpeechCorrection = false
+        speechCorrection.cancel()
         summaryTask?.cancel()
         let token = UIApplication.shared.beginBackgroundTask(withName: "Save conversation")
         defer { if token != .invalid { UIApplication.shared.endBackgroundTask(token) } }
@@ -193,6 +204,8 @@ final class MobileSession {
 
     func newConversation() {
         guard !busy, save(announce: false) else { return }
+        speechCorrection.cancel()
+        acceptsSpeechCorrection = false
         quickSummaryError = nil
         id = UUID().uuidString; date = Date()
         title = "New conversation"; notes = ""; summary = ""; quickSummary = ""; deepThought = ""
@@ -235,6 +248,8 @@ final class MobileSession {
     }
 
     private func restore(_ record: SessionRecord) {
+        speechCorrection.cancel()
+        acceptsSpeechCorrection = false
         lastAutoAttempt = nil; quickSummaryError = nil
         id = record.id; date = record.date; title = record.title
         notes = record.notes ?? ""; summary = record.summary

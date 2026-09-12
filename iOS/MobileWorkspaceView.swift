@@ -12,6 +12,7 @@ struct MobileWorkspaceView<Header: View>: View {
     let chooseModel: (MobileSummaryMode) -> Void
     let accessibilityHeader: () -> Header
     @State private var showTranscript = false
+    @State private var showSpeechSettings = false
     @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(\.verticalSizeClass) private var verticalSize
     private var stacked: Bool { typeSize.isAccessibilitySize || verticalSize == .compact }
@@ -56,10 +57,21 @@ struct MobileWorkspaceView<Header: View>: View {
         }
         .sheet(isPresented: $showTranscript) {
             NavigationStack {
-                MobileTranscriptReader(segments: session.allSegments, scrollIdentifier: "expandedTranscriptScroll")
+                MobileTranscriptReader(segments: session.allSegments, scrollIdentifier: "expandedTranscriptScroll",
+                                       restoreOriginal: session.restoreSpeech)
                     .id(session.id)
                     .navigationTitle("Transcript").navigationBarTitleDisplayMode(.inline)
                     .toolbar { Button("Done") { showTranscript = false } }
+            }
+        }
+        .sheet(isPresented: $showSpeechSettings) {
+            NavigationStack {
+                Form {
+                    MobileSpeechCorrectionSettings(ai: session.ai)
+                    MobileAISettingsView(ai: session.ai, includeSpeechCorrection: false)
+                }
+                    .navigationTitle("AI settings").navigationBarTitleDisplayMode(.inline)
+                    .toolbar { Button("Done") { showSpeechSettings = false } }
             }
         }
     }
@@ -86,6 +98,14 @@ struct MobileWorkspaceView<Header: View>: View {
                     .frame(minWidth: 44, minHeight: 44)
             }.padding(.horizontal, 16).padding(.vertical, 8)
             Rectangle().fill(MobileStyle.line).frame(height: 0.75).padding(.horizontal, 16)
+            Button { showSpeechSettings = true } label: {
+                Label(session.ai.correctTranscript ? session.speechCorrectionStatus : "Improve speech · Set up AI correction",
+                      systemImage: session.speechCorrection.working ? "ellipsis" : "sparkles")
+                    .font(.caption).lineLimit(stacked ? nil : 2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16).padding(.vertical, 6)
+            }.buttonStyle(.plain).foregroundStyle(MobileStyle.accent)
+                .accessibilityIdentifier("speechCorrectionSettings")
             if session.allSegments.isEmpty {
                 HStack(spacing: 12) {
                     Image(systemName: "waveform").font(.title2).foregroundStyle(MobileStyle.transcript.opacity(0.6))
@@ -99,7 +119,7 @@ struct MobileWorkspaceView<Header: View>: View {
                     .lineLimit(4).truncationMode(.head).padding(16)
                     .accessibilityIdentifier("latestTranscriptPreview")
             } else {
-                MobileTranscriptReader(segments: session.allSegments).id(session.id)
+                MobileTranscriptReader(segments: session.allSegments, restoreOriginal: session.restoreSpeech).id(session.id)
             }
         }.frame(maxWidth: .infinity, maxHeight: stacked ? nil : .infinity, alignment: .topLeading)
             .modifier(MobileCard())

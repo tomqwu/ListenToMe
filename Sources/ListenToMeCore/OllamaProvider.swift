@@ -38,16 +38,22 @@ public struct OllamaProvider: LLMProvider {
 
     /// Live initializer that talks to a real Ollama server over HTTP.
     public init(model: String, baseURL: URL = URL(string: "http://localhost:11434")!,
-                apiKey: String? = nil, urlSession: URLSession = .shared, localOnly: Bool = false) {
+                apiKey: String? = nil, urlSession: URLSession = .shared, localOnly: Bool = false,
+                options: OllamaGenerationOptions = .init()) {
         self.init(model: model, baseURL: baseURL,
                   lineSource: Self.makeLiveLineSource(
-                    model: model, baseURL: baseURL, apiKey: apiKey, session: urlSession, localOnly: localOnly))
+                    model: model, baseURL: baseURL, apiKey: apiKey, session: urlSession, localOnly: localOnly, options: options))
     }
 
-    public static func requestBody(model: String, request: LLMRequest) -> Data {
+    public static func requestBody(model: String, request: LLMRequest, options: OllamaGenerationOptions = .init()) -> Data {
         var messages: [[String: String]] = [["role": "system", "content": request.system]]
         messages += request.messages.map { ["role": $0.role, "content": $0.content] }
-        let body: [String: Any] = ["model": model, "messages": messages, "stream": true]
+        var body: [String: Any] = ["model": model, "messages": messages, "stream": true]
+        if let thinking = options.thinking { body["think"] = thinking }
+        var generation: [String: Any] = [:]
+        if let temperature = options.temperature { generation["temperature"] = temperature }
+        if let maximumTokens = options.maximumTokens { generation["num_predict"] = maximumTokens }
+        if !generation.isEmpty { body["options"] = generation }
         return (try? JSONSerialization.data(withJSONObject: body)) ?? Data()
     }
 
@@ -81,7 +87,8 @@ public struct OllamaProvider: LLMProvider {
     }
 
     private static func makeLiveLineSource(
-        model: String, baseURL: URL, apiKey: String? = nil, session: URLSession, localOnly: Bool
+        model: String, baseURL: URL, apiKey: String? = nil, session: URLSession, localOnly: Bool,
+        options: OllamaGenerationOptions
     ) -> @Sendable (LLMRequest) -> AsyncThrowingStream<String, Error> {
         return { request in
             AsyncThrowingStream { continuation in
@@ -114,7 +121,7 @@ public struct OllamaProvider: LLMProvider {
                         if let apiKey, !apiKey.isEmpty {
                             urlRequest.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
                         }
-                        urlRequest.httpBody = requestBody(model: model, request: request)
+                        urlRequest.httpBody = requestBody(model: model, request: request, options: options)
                         let (bytes, response) = try await transport.bytes(for: urlRequest)
                         if let http = response as? HTTPURLResponse,
                            !(200...299).contains(http.statusCode) {

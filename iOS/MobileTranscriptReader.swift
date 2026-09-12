@@ -5,6 +5,8 @@ import ListenToMeCore
 struct MobileTranscriptReader: View {
     let segments: [TranscriptSegment]
     var scrollIdentifier = "transcriptScroll"
+    var restoreOriginal: ((UUID) -> Void)?
+    @State private var reviewing: TranscriptSegment?
     @State private var following = true
     @State private var userScrolling = false
     private let endID = "transcript-end"
@@ -24,6 +26,11 @@ struct MobileTranscriptReader: View {
                             Text(segment.text).font(.body).lineSpacing(4).textSelection(.enabled)
                                 .foregroundStyle(segment.isFinal ? .primary : .secondary)
                                 .accessibilityIdentifier("transcript-text-\(segment.id)")
+                            if segment.originalText != nil, restoreOriginal != nil {
+                                Button("AI corrected", systemImage: "sparkles") { reviewing = segment }
+                                    .font(.caption).buttonStyle(.borderless)
+                                    .accessibilityIdentifier("review-correction-\(segment.id)")
+                            }
                         }.frame(maxWidth: .infinity, alignment: .leading)
                     }
                     Color.clear.frame(height: 1).id(endID)
@@ -31,12 +38,25 @@ struct MobileTranscriptReader: View {
             }
             .accessibilityIdentifier(scrollIdentifier)
             .defaultScrollAnchor(.bottom, for: .initialOffset)
-            .onChange(of: segments.last) { _, _ in
+            // Follow once after a text update. Scrolling inside a content-size geometry callback
+            // can repeatedly invalidate layout when a correction badge changes a short viewport.
+            .task(id: segments) {
+                // Coalesce incoming hypotheses and let the lazy stack resolve wrapped row heights.
+                do { try await Task.sleep(for: .milliseconds(100)) } catch { return }
+                guard !Task.isCancelled else { return }
                 if following && !userScrolling { proxy.scrollTo(endID, anchor: .bottom) }
             }
-            // Also follow wrapping partial text after layout, not only newly finalized segment IDs.
-            .onScrollGeometryChange(for: CGFloat.self) { $0.contentSize.height } action: { _, _ in
-                if following && !userScrolling { proxy.scrollTo(endID, anchor: .bottom) }
+            .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                let target = max(0, geometry.contentSize.height - geometry.containerSize.height + geometry.contentInsets.bottom)
+                // Lazy rows can revise the initial size estimate after scrolling. Align only
+                // when actually displaced, including an offset beyond the newly resolved end.
+                return abs(geometry.contentOffset.y - target) > 2 ? geometry.contentSize.height.rounded() : 0
+            } action: { _, displacedHeight in
+                guard displacedHeight > 0, following, !userScrolling else { return }
+                Task { @MainActor in
+                    await Task.yield()
+                    if following && !userScrolling { proxy.scrollTo(endID, anchor: .bottom) }
+                }
             }
             .onScrollGeometryChange(for: Bool.self) { nearEnd($0) } action: { _, atEnd in
                 if userScrolling { following = atEnd }
@@ -61,6 +81,9 @@ struct MobileTranscriptReader: View {
                         .background(.regularMaterial)
                 }
             }
+        }
+        .sheet(item: $reviewing) { segment in
+            MobileSpeechCorrectionReview(segment: segment) { restoreOriginal?($0) }
         }
     }
 
