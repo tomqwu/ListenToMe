@@ -78,3 +78,9 @@ ios-archive: gen
 	xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMeIOS -configuration Release \
 		-destination 'generic/platform=iOS' -archivePath dist/ListenToMe-iOS.xcarchive \
 		-derivedDataPath .build/ios-release -onlyUsePackageVersionsFromResolvedFile -allowProvisioningUpdates archive
+
+# Upload a validated archive; source/CI checks and tester verification are in docs/IOS-RELEASING.md.
+.PHONY: ios-testflight
+ios-testflight:
+	@test -n "$(IOS_ARCHIVE)" -a -n "$(IOS_RELEASE_SOURCE)" || { echo 'Set IOS_ARCHIVE and IOS_RELEASE_SOURCE'; exit 2; }
+	bash scripts/ios-testflight.sh "$(IOS_ARCHIVE)" "$(IOS_RELEASE_SOURCE)" $(IOS_RELEASE_FLAGS)
