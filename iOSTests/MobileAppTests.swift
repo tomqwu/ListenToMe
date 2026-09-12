@@ -12,11 +12,11 @@ final class MobileAppTests: XCTestCase {
             app.buttons["More"].tap()
             app.buttons["Settings"].tap()
             let link = app.buttons["choose-model-\(role)"]
-            revealModelControl(link, in: app.collectionViews["aiSettingsForm"])
+            revealSettingsControl(link, in: app.collectionViews["aiSettingsForm"])
             XCTAssertTrue(link.isHittable)
             link.tap()
             let model = app.buttons["model-\(role)-fixture"]
-            revealModelControl(model, in: app.collectionViews["roleModelList"])
+            revealSettingsControl(model, in: app.collectionViews["roleModelList"])
             XCTAssertTrue(model.isHittable)
             model.tap()
             let title = role == "quick" ? "Quick Summary" : (role == "summary" ? "Summary" : "Deep Summary")
@@ -28,7 +28,7 @@ final class MobileAppTests: XCTestCase {
         app.buttons["More"].tap(); app.buttons["Settings"].tap()
         for role in ["quick", "summary", "deep"] {
             let link = app.buttons["choose-model-\(role)"]
-            revealModelControl(link, in: app.collectionViews["aiSettingsForm"])
+            revealSettingsControl(link, in: app.collectionViews["aiSettingsForm"])
             XCTAssertTrue(link.label.contains("\(role)-fixture"))
         }
         let screenshot = XCTAttachment(screenshot: app.screenshot())
@@ -36,15 +36,22 @@ final class MobileAppTests: XCTestCase {
         app.buttons["Done"].tap()
     }
 
-    private func revealModelControl(_ element: XCUIElement, in container: XCUIElement) {
+    private func revealSettingsControl(_ element: XCUIElement, in container: XCUIElement, towardTop: Bool = false) {
         XCTAssertTrue(container.waitForExistence(timeout: 5))
         for _ in 0..<12 {
-            let bounds = container.frame
+            let app = XCUIApplication()
+            var bounds = container.frame.intersection(app.windows.firstMatch.frame)
+            if app.keyboards.firstMatch.exists {
+                bounds.size.height = max(0, min(bounds.maxY, app.keyboards.firstMatch.frame.minY) - bounds.minY)
+            }
             if element.exists, element.isHittable,
                element.frame.minY > bounds.minY + 90, element.frame.maxY < bounds.maxY - 5 { return }
-            let moveDown = element.exists && element.frame.minY <= bounds.minY + 90
-            let start = container.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: moveDown ? 0.4 : 0.65))
-            let end = container.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: moveDown ? 0.65 : 0.4))
+            let moveDown = element.exists ? element.frame.minY <= bounds.minY + 90 : towardTop
+            let origin = container.coordinate(withNormalizedOffset: .zero)
+            let xOffset = bounds.midX - container.frame.minX
+            let yOffset = bounds.minY - container.frame.minY
+            let start = origin.withOffset(CGVector(dx: xOffset, dy: yOffset + bounds.height * (moveDown ? 0.4 : 0.65)))
+            let end = origin.withOffset(CGVector(dx: xOffset, dy: yOffset + bounds.height * (moveDown ? 0.65 : 0.4)))
             start.press(forDuration: 0.1, thenDragTo: end)
         }
         XCTAssertTrue(element.isHittable)
@@ -208,13 +215,16 @@ final class MobileAppTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["savedAPIKey"].waitForExistence(timeout: 3))
         app.secureTextFields["ollamaAPIKey"].tap()
         app.secureTextFields["ollamaAPIKey"].typeText("replacement-ui-key")
+        let form = app.collectionViews["aiSettingsForm"]
         let saveAndTest = app.buttons["Save key and test connection"]
-        for _ in 0..<4 where !saveAndTest.exists { app.swipeUp() }
-        XCTAssertTrue(saveAndTest.exists)
-        for _ in 0..<4 where !app.buttons["Save API key"].isHittable { app.swipeDown() }
+        revealSettingsControl(saveAndTest, in: form)
+        XCTAssertTrue(saveAndTest.isHittable)
+        revealSettingsControl(app.buttons["Save API key"], in: form, towardTop: true)
         app.buttons["Save API key"].tap()
+        revealSettingsControl(app.buttons["Remove API key"], in: form)
         app.buttons["Remove API key"].tap()
         XCTAssertFalse(app.staticTexts["savedAPIKey"].exists)
+        revealSettingsControl(app.buttons["summaryProvider"], in: form, towardTop: true)
         app.buttons["summaryProvider"].tap()
         app.buttons["Apple Intelligence · on-device"].tap()
     }
