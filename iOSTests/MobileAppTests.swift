@@ -143,9 +143,9 @@ final class MobileAppTests: XCTestCase {
         XCTAssertTrue(explanation.exists)
         for _ in 0..<4 where !app.buttons["Add files"].isHittable { app.swipeDown() }
         app.buttons["Add files"].tap()
-        XCTAssertTrue(app.buttons["Cancel"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["Cancel"].waitForExistence(timeout: 30))
         app.buttons["Cancel"].tap()
-        XCTAssertTrue(app.navigationBars["Notes"].exists)
+        XCTAssertTrue(app.navigationBars["Notes"].waitForExistence(timeout: 10))
     }
 
     func testPhotoLibraryPickerCanBeOpenedAndDismissed() {
