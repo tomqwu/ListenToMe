@@ -1,7 +1,20 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.5.0 (13).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.6.0 (14).
+
+## iOS 1.6.0 (14)
+
+History uses native row actions: swipe right to Share, left to Delete, or touch and hold for both.
+Sharing opens the system share sheet for the selected conversation without switching the active one.
+Delete always asks for confirmation, including from the context menu; a full swipe cannot delete it.
+VoiceOver exposes Share and Delete as custom actions. See [the interaction design and checks](IOS-NATIVE-INTERACTIONS.md).
+
+Auto Quick Summary resumes at the remaining 15-second cooldown after an AI request finishes. Speech
+received during a slow response is picked up as soon as the cooldown has elapsed, without another full
+interval or a Refresh tap. Auto remains opt-in. Its panel shows off, waiting, updating, paused, up-to-date
+and retry status, plus the actual error if generation fails. Failed updates keep the previous result.
+The timer belongs to the recording session and continues when another workspace tab is selected.
 
 ## iOS 1.5.0 (13)
 
@@ -77,7 +90,7 @@ Summaries render headings, bullets, bold, italics and inline code, including str
 
 ## Conversation actions
 
-History shows a trash button for each conversation and supports swipe-to-delete. Deletion asks for
+History supports swipe right to share, swipe left to delete, and a touch-and-hold menu. Deletion asks for
 confirmation and removes that conversation's transcript, notes, original attachments and all three AI outputs. Deleting
 an active conversation creates an empty active snapshot so the deleted content does not reappear
 on restart. Other conversations are preserved.

@@ -153,6 +153,14 @@ final class MobileAISettings {
 
     static func errorMessage(_ error: Error) -> String {
         if error is CancellationError || (error as? URLError)?.code == .cancelled { return "Request cancelled." }
+        if let network = error as? URLError {
+            switch network.code {
+            case .networkConnectionLost: return "The internet connection was lost."
+            case .notConnectedToInternet: return "This device is offline. Connect to the internet to continue."
+            case .timedOut: return "The request timed out. Try again when the connection improves."
+            default: break
+            }
+        }
         if case OllamaStreamError.incomplete = error { return "Ollama's response ended before completion." }
         let code = (error as NSError).code
         if (error as NSError).domain == "Ollama", code == 401 || code == 403 {

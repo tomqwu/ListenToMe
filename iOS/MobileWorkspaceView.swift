@@ -142,6 +142,18 @@ struct MobileWorkspaceView<Header: View>: View {
             Rectangle().fill(MobileStyle.line).frame(height: 0.75).padding(.horizontal, 16)
             readingArea {
                 VStack(alignment: .leading, spacing: 12) {
+                    if mode == .quick {
+                        Text(session.autoQuickStatus).font(.caption).foregroundStyle(MobileStyle.muted)
+                            .accessibilityIdentifier("autoQuickStatus")
+                        if let error = session.quickSummaryError {
+                            Label(error, systemImage: "exclamationmark.circle").font(.caption)
+                                .foregroundStyle(.secondary).accessibilityIdentifier("quickSummaryError")
+                        }
+                        if session.autoQuick && session.ai.provider == .ollama {
+                            Text("Auto sends notes and transcript to Ollama Cloud.")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
                     if session.generatingMode == mode {
                         Label("Updating…", systemImage: "sparkles").font(.caption)
                             .foregroundStyle(MobileStyle.tint(for: mode))
@@ -151,7 +163,7 @@ struct MobileWorkspaceView<Header: View>: View {
                     if !output.isEmpty {
                         MarkdownText(text: output).font(.body).lineSpacing(3).textSelection(.enabled)
                             .accessibilityElement(children: .combine).accessibilityIdentifier("output-\(mode.rawValue)")
-                    } else if session.generatingMode != mode {
+                    } else if session.generatingMode != mode && (mode != .quick || session.quickSummaryError == nil) {
                         MobileOutputPlaceholder(mode: mode)
                             .accessibilityElement(children: .combine)
                             .accessibilityIdentifier("output-\(mode.rawValue)")
@@ -159,10 +171,6 @@ struct MobileWorkspaceView<Header: View>: View {
                     if let reason = session.summaryBlockReason(for: mode), !session.isSummarizing {
                         Text(reason).font(.caption).foregroundStyle(MobileStyle.muted)
                             .accessibilityIdentifier("reason-\(mode.rawValue)")
-                    } else if mode == .quick && session.autoQuick {
-                        Text(session.ai.provider == .ollama ? "Auto sends notes and transcript to Ollama Cloud." :
-                             (session.state == .recording ? "Updates automatically while you listen." : "Auto updates when listening starts."))
-                            .font(.caption).foregroundStyle(.secondary)
                     }
                 }.frame(maxWidth: .infinity, alignment: .leading).padding(16)
             }

@@ -16,6 +16,9 @@ final class MobileAITests: XCTestCase {
         XCTAssertEqual(MobileAISettings.errorMessage(OllamaStreamError.incomplete),
                        "Ollama's response ended before completion.")
         XCTAssertEqual(MobileAISettings.errorMessage(CancellationError()), "Request cancelled.")
+        XCTAssertEqual(MobileAISettings.errorMessage(URLError(.networkConnectionLost)), "The internet connection was lost.")
+        XCTAssertTrue(MobileAISettings.errorMessage(URLError(.notConnectedToInternet)).contains("offline"))
+        XCTAssertTrue(MobileAISettings.errorMessage(URLError(.timedOut)).contains("timed out"))
         XCTAssertTrue(MobileAISettings.errorMessage(NSError(domain: "Ollama", code: 401)).contains("HTTP 401"))
     }
 
