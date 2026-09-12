@@ -7,6 +7,10 @@ another session. Do not ask the maintainer to repeat "publish" or offer publicat
 follow-up work. Read `.agents/skills/listentome-testflight/SKILL.md` and `docs/IOS-RELEASING.md` when
 starting or resuming that work. An explicit draft/local-only request overrides this default.
 Use `make ios-testflight IOS_ARCHIVE=<validated.xcarchive> IOS_RELEASE_SOURCE=<commit>` for upload.
+The verified default is the configured App Store Connect API key in
+`~/.config/listentome/testflight.json` (successful agent upload: iOS 1.4.0 build 11, September 12, 2026).
+Check that configuration before requesting login or credentials. Native GUI automation failure does
+not block this CLI/API route. Follow the current repo skill over historical account-failure notes.
 A genuine credential/tool blocker must be reported precisely with preserved evidence; never claim
 publication without upload acceptance. This does not authorize a public production App Store release.
 

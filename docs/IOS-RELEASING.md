@@ -21,9 +21,10 @@ submitting a production App Store release. Missing hardware must not be reported
 | Existing internal testing group | `Dev` |
 | Scheme | `ListenToMeIOS` |
 
-Use the full Xcode installation (`xcode-select -p`), XcodeGen, and an Xcode account with App Store
-Connect access to this team. The account needs an upload-capable role: Account Holder, Admin,
-App Manager, or Developer. Browser login alone does not establish Xcode's upload session.
+Use the full Xcode installation (`xcode-select -p`), XcodeGen, and the configured App Store Connect
+team API key for uploads. A usable Xcode account is an alternate credential route. Upload access
+requires Account Holder, Admin, App Manager, or Developer permissions. Browser login alone does not
+establish Xcode's upload session.
 A signing certificate can produce a valid archive/IPA even when upload authentication is broken.
 
 The checked-in export settings are [AppStoreExportOptions.plist](../Config/iOS/AppStoreExportOptions.plist)
@@ -34,12 +35,15 @@ folders by a previous session.
 
 ### Persistent API-key authentication for automated uploads
 
-Use an explicit **App Store Connect team API key** when CLI Xcode account lookup fails even though
-Organizer is signed in. This is a different credential path, not a retry of the failed session.
+Use the configured **App Store Connect team API key by default**. This route completed the agent's
+1.4.0 (11) upload; it is not an untested fallback. Check `~/.config/listentome/testflight.json` and its
+referenced key before asking for credentials or Xcode login. An unavailable native/browser automation
+connection does not prevent CLI uploads or API verification. This is a different credential path
+from Xcode-session lookup; the old session failure need not be repaired to use it.
 Apple documents the three `xcodebuild` authentication arguments in
 [Distribute apps in Xcode with cloud signing](https://developer.apple.com/videos/play/wwdc2021/10204/).
 
-The one-time maintainer input is a **Key ID**, **Issuer ID**, and the **local path** to the downloaded
+Only if configuration is missing, the one-time maintainer input is a **Key ID**, **Issuer ID**, and the **local path** to the downloaded
 `.p8` private key. Never paste the key contents into chat or commit them. Use an existing suitable
 team key if available. Otherwise, in App Store Connect → Users and Access → Integrations →
 App Store Connect API → Team Keys, generate a key named `ListenToMe Upload` with **Developer** access.
@@ -91,8 +95,8 @@ Documentation-only follow-ups do not require a new binary. Do not bump the macOS
 Run from the repo root. Set the release values from `project.yml`, not an older chat reply:
 
 ```sh
-IOS_VERSION=1.3.1
-IOS_BUILD=8
+: "${IOS_VERSION:?Set the version from project.yml after checking App Store Connect}"
+: "${IOS_BUILD:?Set the unaccepted build number from project.yml}"
 IOS_RELEASE="ios-${IOS_VERSION}-build${IOS_BUILD}"
 IOS_ARCHIVE="dist/ListenToMe-${IOS_RELEASE}.xcarchive"
 IOS_EXPORT="dist/${IOS_RELEASE}-export"
@@ -144,7 +148,9 @@ Add `IOS_RELEASE_FLAGS=--dry-run` to check archive identity without uploading. T
 identity and matching versions, requires explicit upload acceptance, records a status receipt, and refuses
 an upload already recorded by this helper. It cannot discover previous uploads made outside it: check App
 Store Connect and existing logs first. It does not prove archive/source provenance; verify that in step 2.
-The raw command below is the equivalent diagnostic path:
+The raw command below is the Xcode-session diagnostic path; it does **not** read the helper's JSON
+configuration. Prefer the helper for normal publishing. An API-key diagnostic command must also
+pass the three `-authenticationKey*` arguments from the configured references:
 
 ```sh
 xcodebuild -exportArchive -archivePath "$IOS_ARCHIVE" \
@@ -176,11 +182,66 @@ TestFlight App Review. Never invite unrelated testers merely to work around a vi
 
 Report separately: source/CI verified, archive exported, upload accepted, Apple processing completed,
 tester availability verified, and physical-device acceptance. If browser/native control is unavailable,
-continue the CLI upload and report that online availability/metadata verification remains unverified.
+use the authenticated API path below. Missing GUI control alone is not an online-verification blocker.
+
+### API verification when GUI control is unavailable
+
+Authenticate requests to `https://api.appstoreconnect.apple.com` with the configured team key.
+Use a short-lived ES256 JWT with `kid` and `typ: JWT` headers and `iss`, `iat`, `exp` and
+`aud: appstoreconnect-v1` claims. Keep the JWT and private key in process memory, never in command
+arguments, saved evidence or printed output. Use a standard JWT library (the verified local route
+used `uv run --with 'PyJWT[crypto]' python ...`). See
+[Apple's JWT instructions](https://developer.apple.com/documentation/appstoreconnectapi/generating-tokens-for-api-requests).
+
+Use the following checks and metadata operations. Build 11 already had automatic Dev access, so
+no group-assignment write was needed. Substitute the new build/resource IDs from responses; do
+not reuse build 11's IDs for a later release.
+
+| Check/action | API request and evidence |
+| --- | --- |
+| App identity | `GET /v1/apps/6811155732?fields[apps]=name,bundleId`; require `com.tomwu.ListenToMe.ios`. |
+| Duplicate preflight and processing | `GET /v1/builds?filter[app]=6811155732&filter[version]=<BUILD>&include=preReleaseVersion,buildBetaDetail,betaGroups`; check the included marketing version too. |
+| Processing complete | Build `processingState=VALID`, `expired=false`, and `buildBetaDetail.internalBuildState=IN_BETA_TESTING`. An accepted upload can take time to appear here; wait without re-uploading. |
+| Intended internal audience | `GET /v1/betaGroups?filter[app]=6811155732&include=betaTesters`; select **Dev** with `isInternalGroup=true`, not the separate external group named `dev`. Verify the intended tester's accepted membership and the build/group relationship. |
+| Build in Dev | `GET /v1/betaGroups/<GROUP_ID>/builds`; follow pagination. If automatic access already includes the build, do not add a redundant assignment. |
+| Missing group assignment | `POST /v1/betaGroups/<GROUP_ID>/relationships/builds` with `{"data":[{"type":"builds","id":"<BUILD_ID>"}]}`; then read back. |
+| What to Test | `GET /v1/betaBuildLocalizations?filter[build]=<BUILD_ID>`, then `PATCH /v1/betaBuildLocalizations/<LOCALIZATION_ID>` with that resource's `type`, `id`, and `attributes.whatsNew` from the prepared version file. |
+| Beta description | `GET /v1/betaAppLocalizations?filter[app]=6811155732`, then `PATCH /v1/betaAppLocalizations/<LOCALIZATION_ID>` with `attributes.description` from the prepared beta description. Preserve other fields. |
+
+PATCH bodies use `{"data":{"type":"<RESOURCE_TYPE>","id":"<ID>","attributes":{...}}}`.
+Select the `en-CA` localization; if absent, create it using Apple's resource-specific create endpoint
+and required relationships. Read back metadata after writes. Save sanitized resource/status responses
+with the release evidence. Never add unrelated testers or enable external/public distribution.
+
+`GET /v1/betaTesters/<TESTER_ID>/builds` lists **individually assigned builds**, not all builds
+accessible through a group. In build 11's verified release it returned an old direct assignment;
+Dev group access still worked. Do not misdiagnose that response as missing access or create another
+testing group. Membership plus the correct build/group state establishes group availability; it does
+not prove the tester installed or exercised the new build on a phone.
 
 ## Troubleshooting and handoff
 
-### Verified upload baseline (September 11, 2026)
+### Current verified baseline: API key, September 12, 2026
+
+The agent uploaded **1.4.0 (11)** through the repository helper with explicit API-key authentication.
+Apple accepted it at **12:12:56 UTC**, then reported `VALID` and `IN_BETA_TESTING`. Dev build access,
+the existing tester membership, en-CA description and What to Test were verified through the API.
+This completed the automated path without native Organizer control or another manual upload.
+
+- App source/tag: `9e3930844e9872cd252c6222c1d08c617543e8b4`, `ios-v1.4.0-build11` (already accepted).
+- Archive: `dist/ListenToMe-ios-1.4.0-build11-release.xcarchive`.
+- Receipt and verification: `dist/ios-1.4.0-build11-evidence/upload-accepted.json`,
+  `PUBLISH-STATUS.md`, `api-build-current.json`, `api-dev-builds.json` and metadata responses.
+- Persistent configuration: `~/.config/listentome/testflight.json`; look up current key references
+  there, rather than storing credentials or their values in skills/memory.
+- Workflow implementation: [PR #85](https://github.com/tomqwu/ListenToMe/pull/85), merged with all CI
+  green; 12 helper tests passed and a real API-key upload proved the route.
+
+Use this evidence to distinguish the working path from historical Xcode-session failures. Recheck
+live state for a new release; do not treat this historical build number as the next build to upload.
+Native GUI automation remained unavailable and physical-device acceptance was not performed for build 11.
+
+### Historical Xcode-session baseline (September 11, 2026)
 
 Build 7 was successfully uploaded by the agent using `xcodebuild -exportArchive` with
 `-allowProvisioningUpdates`. Its saved `TestFlightExportOptions.plist` is semantically identical
@@ -196,9 +257,10 @@ upload. Build 8 is accepted and tagged `ios-v1.3.1-build8`; do not retry it. Tes
 must still be checked separately. The original IPA checksum predates Organizer's export and must
 not be described as a verified checksum of Apple's uploaded payload.
 
-The agent owns code through publication. If CLI account lookup fails, investigate and use native
-Organizer automation when available; do not routinely delegate the publish click to the maintainer.
-If both routes are unavailable, report the concrete automation blocker and keep publication open.
+The agent owns code through publication. If Xcode-session lookup fails, check the configured API-key
+route first. Native Organizer automation is another fallback when available; do not routinely delegate
+the publish click to the maintainer. Report a blocker only for the actual usable routes and preserve
+the evidence; a failed GUI connection does not negate working API authentication.
 Offline helper tests and dry runs validate safeguards, not live authentication. Do not claim the
 publishing workflow is operationally repaired until an agent-operated upload actually succeeds.
 
@@ -228,10 +290,10 @@ publishing workflow is operationally repaired until an agent-operated upload act
 - **No connected device:** publish the authorized TestFlight beta after local checks; record outstanding
   physical-device tests. Stop only the production-readiness claim, not beta distribution.
 
-If blocked, preserve the source commit/tree, archive, IPA checksum, exact failing command and sanitized
-error log, remaining action and next command. A useful handoff says "build 8 exported; upload failed
-because Xcode has no App Store Connect account for this team; sign in then rerun step 4," not "release
-blocked because no iPhone is connected."
+If blocked, preserve the source commit/tree, archive, IPA checksum, selected authentication route,
+exact failing command and sanitized error, remaining action and next command. For example: "the API
+configuration references a missing local key file; restore that file, then resume the validated archive."
+Do not infer missing account access from an old preference or ask for a phone to repair upload auth.
 
 Apple references: [upload builds](https://developer.apple.com/help/app-store-connect/manage-builds/upload-builds),
 [distribution workflow](https://developer.apple.com/documentation/xcode/distributing-your-app-for-beta-testing-and-releases),
