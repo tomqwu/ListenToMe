@@ -1,0 +1,5 @@
+Save now confirms "Saved to History on this device" beside the bottom controls and announces the result for VoiceOver. Save writes to the app's local History; use Share to send content elsewhere.
+
+Share now sends readable text with headings and bullets instead of raw Markdown, from both the current conversation and History. Code and link addresses are retained. Share Markdown remains a separate option in More.
+
+Test Save, reopen the app, and find the conversation in History. Share to Messages/email or Copy and check readability. Check the controls with larger text and while recording. Physical-device acceptance remains separate from simulator validation.

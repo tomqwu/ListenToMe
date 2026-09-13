@@ -62,6 +62,47 @@ final class MobileNativeInteractionTests: XCTestCase {
         app.buttons["Stop listening"].tap()
     }
 
+    func testBottomSaveConfirmsPersistenceAndShareCopiesReadableText() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-autoQuickSummary", "NO", "-mobileAIProvider", "apple"]
+        app.launch()
+        app.buttons["New"].tap()
+        let marker = "Readable share " + UUID().uuidString
+        app.textFields["conversationTitle"].tap()
+        app.textFields["conversationTitle"].typeText(marker)
+        app.buttons["Notes"].tap()
+        app.textViews["Conversation notes"].tap()
+        app.textViews["Conversation notes"].typeText("## Decision\n- **Alex** owns the Friday review.")
+        app.buttons["Done"].tap()
+        app.buttons["Save"].tap()
+        let feedback = app.staticTexts["saveFeedback"]
+        XCTAssertTrue(feedback.waitForExistence(timeout: 5))
+        XCTAssertTrue(feedback.isHittable)
+        XCTAssertTrue(feedback.label.contains("Saved to History"))
+        capture(app, "Bottom Save confirms local History storage")
+        app.terminate(); app.launch()
+        app.buttons["History"].tap()
+        let record = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label CONTAINS %@",
+                                                     "history-record-", marker)).firstMatch
+        XCTAssertTrue(record.waitForExistence(timeout: 5))
+        record.tap()
+        app.buttons["More"].tap()
+        app.buttons["Share"].tap()
+        let copy = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Copy")).firstMatch
+        XCTAssertTrue(copy.waitForExistence(timeout: 10))
+        copy.tap()
+        app.buttons["New"].tap()
+        app.buttons["Notes"].tap()
+        app.buttons["Paste"].tap()
+        let text = app.textViews["Conversation notes"].value as? String ?? ""
+        XCTAssertTrue(text.contains(marker))
+        XCTAssertTrue(text.contains("Alex owns the Friday review."))
+        XCTAssertFalse(text.contains("## Decision"))
+        XCTAssertFalse(text.contains("**Alex**"))
+        capture(app, "Share Copy contains readable text without Markdown markers")
+        app.buttons["Done"].tap()
+    }
+
     func testHistorySwipeShareAndDeleteConfirmation() {
         let app = XCUIApplication()
         app.launchArguments = ["--design-review-fixture", "-autoQuickSummary", "NO", "-mobileAIProvider", "apple"]

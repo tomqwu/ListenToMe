@@ -4,6 +4,9 @@ import ListenToMeCore
 struct MobileMeetingView: View {
     @Bindable var session: MobileSession
     @State private var showHistory = false
+    @State private var saveFeedback: String?
+    @State private var saveSucceeded = false
+    @State private var saveFeedbackID = 0
     @State private var workspace = MobileWorkspace.live
     @State private var modelRole: MobileSummaryMode?
     @State private var showSettings = false
@@ -51,9 +54,11 @@ struct MobileMeetingView: View {
                         Menu("More", systemImage: "ellipsis.circle") {
                             if dynamicTypeSize.isAccessibilitySize {
                                 Button("Notes", systemImage: "note.text") { showNotes = true }
-                                Button("Save", systemImage: "square.and.arrow.down") { session.save() }.disabled(!session.hasContent)
+                                Button("Save", systemImage: "square.and.arrow.down") { saveManually() }.disabled(!session.hasContent)
                             }
-                            ShareLink(item: session.markdown) { Label("Share", systemImage: "square.and.arrow.up") }
+                            ShareLink(item: session.readableShareText) { Label("Share", systemImage: "square.and.arrow.up") }
+                                .disabled(!session.hasContent)
+                            ShareLink(item: session.markdown) { Label("Share Markdown", systemImage: "doc.text") }
                                 .disabled(!session.hasContent)
                             Button("Import from Calendar", systemImage: "calendar") { showCalendar = true }
                             Button("Full summary") { showFullSummary = true }
@@ -62,7 +67,22 @@ struct MobileMeetingView: View {
                     }
                 }
             }
-            .safeAreaInset(edge: .bottom) { controls }
+            .safeAreaInset(edge: .bottom) {
+                VStack(spacing: 0) {
+                    if let saveFeedback {
+                        Label(saveFeedback, systemImage: saveSucceeded ? "checkmark.circle.fill" : "exclamationmark.circle")
+                            .font(.callout).foregroundStyle(saveSucceeded ? MobileStyle.accent : .red)
+                            .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 20).padding(.top, 10)
+                            .accessibilityIdentifier("saveFeedback")
+                    }
+                    controls
+                }.background(MobileStyle.canvas)
+            }
+            .task(id: saveFeedbackID) {
+                guard saveSucceeded else { return }
+                do { try await Task.sleep(for: .seconds(4)) } catch { return }
+                saveFeedback = nil
+            }
             .sheet(isPresented: $showHistory) { MobileHistoryView(session: session) }
             .sheet(isPresented: $showSettings) { settings }
             .sheet(item: $modelRole) { role in
@@ -147,10 +167,18 @@ struct MobileMeetingView: View {
         }
     }
 
+    private func saveManually() {
+        focusedField = nil
+        saveSucceeded = session.save()
+        saveFeedback = saveSucceeded ? "Saved to History on this device." : session.message
+        saveFeedbackID += 1
+        UIAccessibility.post(notification: .announcement, argument: saveFeedback)
+    }
+
     private var controls: some View {
         HStack(spacing: 12) {
             if !dynamicTypeSize.isAccessibilitySize {
-                Button { session.save() } label: {
+                Button { saveManually() } label: {
                     VStack(spacing: 3) {
                         Image(systemName: "square.and.arrow.down").font(.body)
                         Text("Save").font(.caption2)

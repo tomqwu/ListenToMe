@@ -251,3 +251,7 @@ Uses the [shared live-summary scheduler](SHARED-LIVE-SUMMARY.md) with macOS 1.4.
 ## iOS 1.9.1 (18)
 
 Quick publishes useful interim recaps while catching up with a backlog, with an explicit progress status. Quick requests prioritize three short bullets; manual generation displays only validated recap bullets. [What to Test](../metadata/ios/en-CA/what-to-test-1.9.1.txt).
+
+## iOS 1.9.2 (19)
+
+Save confirms local History storage beside the bottom controls. Default Share sends readable text from the current conversation and History; More offers Share Markdown separately. [What to Test](../metadata/ios/en-CA/what-to-test-1.9.2.txt).
