@@ -155,7 +155,7 @@ final class MobileAISettings {
         configuration.timeoutIntervalForResource = 480
         return OllamaProvider(model: model, baseURL: OllamaCloudCatalog.baseURL, apiKey: key,
                               urlSession: URLSession(configuration: configuration),
-                              options: mode == .quick ? .init(thinking: false, temperature: 0, maximumTokens: 1_600) : .init())
+                              options: mode == .quick ? .init(thinking: false, temperature: 0, maximumTokens: 350) : .init())
     }
 
     func testConnection(for mode: MobileSummaryMode = .summary) async {

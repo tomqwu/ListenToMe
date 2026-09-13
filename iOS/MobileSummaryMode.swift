@@ -17,7 +17,9 @@ enum MobileSummaryMode: String, CaseIterable, Identifiable {
         case .summary:
             return grounding + "Summarize faithfully. Include key points, explicit decisions, and stated action items."
         case .quick:
-            return grounding + "Give a brief summary in at most five concise bullets, prioritizing decisions and next actions."
+            return grounding + "Return only 1–3 short bullets: the main takeaway, latest decision, and next action if stated. " +
+                "Use at most 60 words and 480 characters total. " +
+                "No heading, introduction, reasoning, background detail, or repeated points."
         case .deep:
             return grounding + "Analyze the conversation in depth. Separate stated facts and decisions from your suggestions. " +
                 "Discuss tradeoffs, risks, unresolved questions and useful next steps. Explain conclusions without inventing evidence."

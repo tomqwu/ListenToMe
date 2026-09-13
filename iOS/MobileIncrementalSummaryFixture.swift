@@ -14,6 +14,9 @@ struct MobileIncrementalSummaryFixture: View {
         let session = MobileSession(storageDirectory: root, summaryProvider: IncrementalFixtureProvider(slow: slow),
                                     makeRecorder: { recorder })
         session.title = "Delivery discussion"
+        if ProcessInfo.processInfo.arguments.contains("--incremental-backlog-fixture") {
+            session.notes = "We agree delivery on Monday. Sarah will confirm. " + String(repeating: "Background discussion. ", count: 400)
+        }
         _recorder = State(initialValue: recorder)
         _session = State(initialValue: session)
     }

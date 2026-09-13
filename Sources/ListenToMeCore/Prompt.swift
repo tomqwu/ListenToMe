@@ -92,7 +92,9 @@ public enum PromptBuilder {
         case .answerQuestion, .proactive:
             return "Based on the transcript, give the user the best answer or response to say next."
         case .recap:
-            return "Give a brief recap (summary) of the conversation so far."
+            return "Return only 1–3 short recap bullets: main takeaway, latest decision, and next action if stated. " +
+                "At most 60 words and 480 characters total. " +
+                "No heading, preamble, reasoning, or background detail."
         case .followUp:
             return "Suggest one good follow-up question the user could ask next."
         case .actionItems:

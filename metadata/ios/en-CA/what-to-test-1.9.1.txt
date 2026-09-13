@@ -1,0 +1,3 @@
+Quick Summary now shows useful updates while catching up with a long conversation instead of waiting for the entire backlog. A Catching up status identifies an interim recap. Quick requests use at most three short bullets; manual Quick requests use a smaller generation budget.
+
+With Auto on and GLM-5.3-Flash selected, listen through a decision, verify Quick updates without Refresh, then correct the owner or deadline. Repeat with a long existing conversation and confirm a recap appears while processing continues. Summary and Deep remain manual. Verify on a physical iPhone/iPad; simulator tests use synthetic speech.

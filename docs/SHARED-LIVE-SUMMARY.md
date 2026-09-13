@@ -35,3 +35,7 @@ Target versions are macOS 1.4.0 (10) and iOS 1.9.0 (17). Candidate checks and na
 results are in `dist/shared-summary-evidence/`; per-release upload and artifact evidence live in
 the respective versioned `dist/` directories. A candidate or simulator pass alone is not a
 production acceptance claim. Physical iPhone/iPad acceptance remains separate from TestFlight.
+
+## Backlog progress and concise recaps (1.4.1 / iOS 1.9.1)
+
+A successful Quick update is visible immediately while remaining batches continue. Catching up labels the partial coverage; full review suggestions still wait for complete context. Automatic responses allow at most three bullets and 480 characters. Manual Quick prompts request the same short format.

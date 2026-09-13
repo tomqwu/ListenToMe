@@ -407,9 +407,12 @@ extension MobileSession {
         guard autoQuick else { return "Auto off · Turn on Auto for live updates, or tap Refresh." }
         if generatingMode == .quick { return "Updating Quick Summary…" }
         if state != .recording { return "Auto on · Checks new completed speech while you listen." }
-        if quickReader.isReading { return "Listening · Checking new speech…" }
+        if quickReader.isReading {
+            return quickReader.isCatchingUp ? "Catching up · Recap covers speech processed so far." : "Listening · Checking new speech…"
+        }
         if let reason = automaticQuickAvailability { return "Auto paused · " + reason }
         if quickSummaryError != nil { return "Auto on · Check failed; retrying automatically." }
+        if quickReader.isCatchingUp { return "Catching up · Recap covers speech processed so far." }
         if !quickReader.context.hasChanges(quickPieces) {
             if quickReader.completedReads == 0 { return "Auto on · Waiting for completed speech." }
             return quickReader.unchanged ? "Up to date · Summary unchanged." : "Up to date · Listening for new information."

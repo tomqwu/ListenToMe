@@ -27,9 +27,9 @@ def parse_response(text):
             assert value['action'] in ('keep', 'publish')
             assert isinstance(value['context'], str) and len(value['context']) <= 2000
             bullets = value['bullets']
-            assert isinstance(bullets, list) and len(bullets) <= 5
+            assert isinstance(bullets, list) and len(bullets) <= 3
             assert all(isinstance(b, str) and b.strip() and '\n' not in b for b in bullets)
-            assert len(''.join(bullets)) <= 1500
+            assert len(''.join(bullets)) <= 480
             assert (not bullets) if value['action'] == 'keep' else bool(bullets)
             reviews = value['reviews']
             assert isinstance(reviews, list) and len(reviews) <= 2
