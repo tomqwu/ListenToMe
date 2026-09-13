@@ -40,6 +40,22 @@ final class MobileAutomaticSummaryTests: XCTestCase {
         XCTAssertEqual(MobileSession(storageDirectory: root).quickSummary, session.quickSummary)
     }
 
+    func testManualQuickHidesModelPlanningAndKeepsOnlyValidatedBullets() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let response = """
+        The user wants a recap. Let me count words and reason about the instructions.
+        {"action":"publish","context":"Peter Wednesday","bullets":["Peter delivers Wednesday."],"reviews":[]}
+        """
+        let session = MobileSession(storageDirectory: root,
+            summaryProvider: ManualQuickPlanningProvider(response: response))
+        session.notes = "Peter delivers Wednesday."
+        await session.summarize(mode: .quick)
+        XCTAssertEqual(session.quickSummary, "- Peter delivers Wednesday.")
+        XCTAssertFalse(session.markdown.contains("count words"))
+        XCTAssertFalse(session.markdown.contains("\"action\""))
+    }
+
     func testSharingOlderAndLegacyRecordsPreservesChosenContentAndActiveSession() throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
@@ -108,5 +124,13 @@ private actor SlowSummaryProvider: LLMProvider {
     }
     nonisolated func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
         AsyncThrowingStream { continuation in Task { await respond(request, to: continuation) } }
+    }
+}
+
+private struct ManualQuickPlanningProvider: LLMProvider {
+    let id = "glm-style-response"
+    let response: String
+    func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
+        AsyncThrowingStream { $0.yield(response); $0.finish() }
     }
 }

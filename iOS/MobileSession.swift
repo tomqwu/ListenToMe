@@ -440,24 +440,28 @@ extension MobileSession {
         summaryDraft = ""
         defer { isSummarizing = false; summaryDraft = ""; generatingMode = nil }
         do {
-            let instructions = mode.instructions
+            let request = mode == .quick ? try MobileQuickContext.manualRequest(source: source)
+                : LLMRequest(system: mode.instructions, messages: [ChatMessage(role: "user", content: source)])
+            var quickResponse = ""
             if cloud {
                 let client: any LLMProvider = try summaryProvider ?? ai.client(for: mode)
-                for try await delta in client.stream(LLMRequest(system: instructions,
-                    messages: [ChatMessage(role: "user", content: source)])) {
+                for try await delta in client.stream(request) {
                     try Task.checkCancellation()
-                    summaryDraft += delta
-                    guard summaryDraft.count <= 100_000 else { throw RecordingError.message("Summary response was too large.") }
+                    if mode == .quick { quickResponse += delta } else { summaryDraft += delta }
+                    guard summaryDraft.count <= 100_000, quickResponse.utf8.count <= 16_384 else {
+                        throw RecordingError.message("Summary response was too large.")
+                    }
                 }
             } else {
-                let model = LanguageModelSession(instructions: instructions)
-                summaryDraft = try await model.respond(to: source).content
+                let model = LanguageModelSession(instructions: request.system)
+                let response = try await model.respond(to: request.messages[0].content).content
+                if mode == .quick { quickResponse = response } else { summaryDraft = response }
             }
             try Task.checkCancellation()
             switch mode {
             case .summary: summary = summaryDraft
             case .quick:
-                quickSummary = summaryDraft
+                quickSummary = try QuickSummaryDecision.parse(quickResponse).summary ?? "No key takeaway yet."
             case .deep: deepThought = summaryDraft
             }
             if summarySource == source { quickReader.markReviewed(mode.rawValue) }

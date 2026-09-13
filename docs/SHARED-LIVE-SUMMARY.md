@@ -38,4 +38,4 @@ production acceptance claim. Physical iPhone/iPad acceptance remains separate fr
 
 ## Backlog progress and concise recaps (1.4.1 / iOS 1.9.1)
 
-A successful Quick update is visible immediately while remaining batches continue. Catching up labels the partial coverage; full review suggestions still wait for complete context. Automatic responses allow at most three bullets and 480 characters. Manual Quick prompts request the same short format.
+A successful Quick update is visible immediately while remaining batches continue. Catching up labels the partial coverage; full review suggestions still wait for complete context. Automatic responses allow at most three bullets and 480 characters. iOS manual Quick uses the same validated response contract and never displays model planning or JSON.
