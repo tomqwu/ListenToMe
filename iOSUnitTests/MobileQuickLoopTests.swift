@@ -87,7 +87,24 @@ final class MobileQuickLoopTests: XCTestCase {
         XCTAssertEqual(session.quickReader.reviewsCompleted, ["summary"])
     }
 
-    func testPartialSpeechNeverReadsUntilFinalizedAndBurstCoalesces() async throws {
+    func testSubstantialLiveSpeechTriggersQuickBeforeRecognizerFinalizes() async throws {
+        session.start()
+        try await wait { self.session.state == .recording }
+        recorder.send("Peter will deliver the prototype on Wednesday.", final: false)
+        try await wait { self.session.quickReader.completedReads == 1 }
+        XCTAssertTrue(session.segments.isEmpty, "The recognizer has not finalized any speech")
+        XCTAssertEqual(session.quickSummary, "- Peter will deliver the prototype on Wednesday.")
+        let count = await provider.count()
+        try await Task.sleep(for: .milliseconds(250))
+        let unchangedCount = await provider.count()
+        XCTAssertEqual(unchangedCount, count, "Idle time alone must not poll the model")
+        recorder.send("Correction: Peter will deliver on Thursday.")
+        try await wait { self.session.quickReader.completedReads == 2 }
+        XCTAssertTrue(session.quickSummary.contains("Thursday"))
+        XCTAssertFalse(session.quickSummary.contains("Wednesday"))
+    }
+
+    func testShortSpeechFragmentsWaitAndFinalBurstCoalesces() async throws {
         session.start()
         try await wait { self.session.state == .recording }
         recorder.send("Monday", final: false)

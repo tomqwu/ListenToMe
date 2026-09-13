@@ -19,6 +19,21 @@ final class MobileSession {
         didSet { UserDefaults.standard.set(autoQuick, forKey: "autoQuickSummary"); handleSummaryEvent(.automationChanged) }
     }
     let quickReader = MobileQuickReader()
+    private(set) var speechEventCount = 0
+    private(set) var finalizedSpeechEventCount = 0
+    private(set) var quickWakeCount = 0
+    private(set) var quickEvaluationCount = 0
+    private(set) var lastSpeechEvent: Date?
+    var quickDiagnostics: String {
+        [autoQuickStatus, "Recording: \(state == .recording ? "yes" : "no")",
+         "Speech events: \(speechEventCount) (final: \(finalizedSpeechEventCount))",
+         "Last speech: \(lastSpeechEvent?.formatted(date: .omitted, time: .standard) ?? "none")",
+         "Scheduled checks fired: \(quickWakeCount)", "Model checks started: \(quickEvaluationCount)",
+         "Completed reads: \(quickReader.completedReads)",
+         "Unread speech: \(quickReader.context.hasChanges(quickPieces) ? "yes" : "no")",
+         "Provider: \(automaticQuickAvailability ?? "available")",
+         quickSummaryError ?? "No summary error"].joined(separator: "\n")
+    }
     private var quickScheduler: MobileSummaryScheduler
     private var autoTask: Task<Void, Never>?
     private let summaryProvider: (any LLMProvider)?
@@ -136,6 +151,9 @@ final class MobileSession {
             do {
                 try await recorder.start(locale: Locale(identifier: language)) { [weak self] segment in
                     guard let self else { return }
+                    self.speechEventCount += 1
+                    if segment.isFinal { self.finalizedSpeechEventCount += 1 }
+                    self.lastSpeechEvent = Date()
                     let timed = TranscriptSegment(source: .you, text: segment.text, isFinal: segment.isFinal,
                                                   start: offset + segment.start, end: offset + segment.end,
                                                   speakerName: "Microphone")
@@ -349,6 +367,7 @@ extension MobileSession {
     func scheduleAutoQuick() { handleSummaryEvent(.transcriptChanged) }
 
     private func handleSummaryEvent(_ event: MobileSummaryScheduler.Event) {
+        if event == .timerFired { quickWakeCount += 1 }
         let snapshot = MobileSummaryScheduler.Snapshot(recording: state == .recording, automatic: autoQuick,
             pending: quickReader.context.hasChanges(quickPieces), reading: quickReader.isReading,
             manualQuick: generatingMode == .quick, available: automaticQuickAvailability == nil,
@@ -369,7 +388,7 @@ extension MobileSession {
     }
 
     private var quickPieces: [MobileQuickContext.Piece] {
-        MobileQuickContext.pieces(notes: notes, segments: segments)
+        MobileQuickContext.pieces(notes: notes, segments: segments, liveSegments: partial.map { [$0] } ?? [])
     }
 
     func updateQuickAutomatically() async {
@@ -389,6 +408,7 @@ extension MobileSession {
             else { provider = try ai.client(for: .quick) }
             manualQuickError = nil
             let sessionID = id
+            quickEvaluationCount += 1
             await quickReader.read(batch, provider: provider, isCurrent: { [weak self] in
                 guard let self, self.id == sessionID, self.autoQuick, self.state == .recording else { return false }
                 return self.quickReader.context.isCurrent(batch, pieces: self.quickPieces)
@@ -406,7 +426,7 @@ extension MobileSession {
     var autoQuickStatus: String {
         guard autoQuick else { return "Auto off · Turn on Auto for live updates, or tap Refresh." }
         if generatingMode == .quick { return "Updating Quick Summary…" }
-        if state != .recording { return "Auto on · Checks new completed speech while you listen." }
+        if state != .recording { return "Auto on · Checks new speech while you listen." }
         if quickReader.isReading {
             return quickReader.isCatchingUp ? "Catching up · Recap covers speech processed so far." : "Listening · Checking new speech…"
         }
@@ -414,7 +434,7 @@ extension MobileSession {
         if quickSummaryError != nil { return "Auto on · Check failed; retrying automatically." }
         if quickReader.isCatchingUp { return "Catching up · Recap covers speech processed so far." }
         if !quickReader.context.hasChanges(quickPieces) {
-            if quickReader.completedReads == 0 { return "Auto on · Waiting for completed speech." }
+            if quickReader.completedReads == 0 { return "Auto on · Waiting for more speech." }
             return quickReader.unchanged ? "Up to date · Summary unchanged." : "Up to date · Listening for new information."
         }
         return "Auto on · New speech is waiting for the next check."

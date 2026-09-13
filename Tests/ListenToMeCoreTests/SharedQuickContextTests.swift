@@ -41,6 +41,31 @@ final class QuickSummaryContextTests: XCTestCase {
         XCTAssertFalse(context.hasChanges([]))
     }
 
+    func testLiveSpeechAppendRevisionAndFinalReplacement() throws {
+        var context = QuickSummaryContext()
+        func pieces(_ text: String) -> [QuickSummaryContext.Piece] {
+            QuickSummaryContext.pieces(notes: "", segments: [], liveSegments: [
+                .init(source: .you, text: text, isFinal: false, start: 0, end: 2)])
+        }
+        XCTAssertTrue(pieces("Maybe we should").isEmpty)
+        let text = "Peter will deliver the prototype on Wednesday."
+        let initial = pieces(text)
+        let batch = try XCTUnwrap(context.batch(initial, summary: ""))
+        XCTAssertTrue(context.isCurrent(batch, pieces: pieces(text + " Sarah will review it.")))
+        XCTAssertFalse(context.isCurrent(batch, pieces: pieces(text.replacingOccurrences(of: "Wednesday", with: "Thursday"))))
+        context.accept(batch, memory: text)
+        XCTAssertFalse(context.hasChanges(pieces(text)), "Changing ASR UUIDs must not re-read identical wording")
+        let final = QuickSummaryContext.pieces(notes: "", segments: [
+            .init(source: .you, text: "Peter will deliver on Thursday.", isFinal: true, start: 0, end: 3)])
+        XCTAssertFalse(context.isCurrent(batch, pieces: final))
+        let replacement = try XCTUnwrap(context.batch(final, summary: text))
+        XCTAssertEqual(replacement.changes.first?.previousText, text)
+        XCTAssertEqual(replacement.changes.first?.text, "")
+        XCTAssertEqual(replacement.changes.last?.text, "Peter will deliver on Thursday.")
+        context.accept(replacement, memory: "Thursday")
+        XCTAssertFalse(context.hasChanges(final))
+    }
+
     func testLongChineseInputIsBatchedWithoutDroppingTextOrExceedingBudget() throws {
         let original = String(repeating: "讨论交付安排与尚未确认的负责人。", count: 600)
         let segment = TranscriptSegment(source: .you, text: original, isFinal: true, start: 0, end: 300)

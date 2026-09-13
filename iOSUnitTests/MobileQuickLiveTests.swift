@@ -38,25 +38,28 @@ final class MobileQuickLiveTests: XCTestCase {
         try await wait { session.quickReader.completedReads == 1 }
         XCTAssertEqual(session.quickSummary, "")
         print("Live evaluator completed reads: \(session.quickReader.completedReads); error: \(session.quickReader.error ?? "none")")
-        recorder.send("We agree delivery on Monday. Sarah will confirm. The budget is 150 dollars.")
+        recorder.send("We agree delivery on Monday. Sarah will confirm. The budget is 150 dollars.", final: false)
         try await wait { session.quickReader.completedReads == 2 }
         XCTAssertTrue(session.quickSummary.contains("Monday"))
         XCTAssertTrue(session.quickSummary.contains("Sarah"))
         XCTAssertTrue(session.quickSummary.contains("150"))
+        XCTAssertEqual(session.finalizedSpeechEventCount, 1, "Decision must publish before recognition finalizes")
+        recorder.send("We agree delivery on Monday. Sarah will confirm. The budget is 150 dollars.")
+        try await wait { session.quickReader.completedReads == 3 }
         let decision = session.quickSummary
         print("Live evaluator completed reads: \(session.quickReader.completedReads); error: \(session.quickReader.error ?? "none")")
         recorder.send("Yes, understood. That is what we agreed.")
-        try await wait { session.quickReader.completedReads == 3 }
+        try await wait { session.quickReader.completedReads == 4 }
         XCTAssertEqual(session.quickSummary, decision, "Repetition should be read without rewriting the bullets")
         print("Live evaluator completed reads: \(session.quickReader.completedReads); error: \(session.quickReader.error ?? "none")")
         recorder.send("改到周二交付，Peter负责确认。预算仍然是150美元。")
-        try await wait { session.quickReader.completedReads == 4 }
+        try await wait { session.quickReader.completedReads == 5 }
         XCTAssertTrue(session.quickSummary.contains("Peter"))
         XCTAssertFalse(session.quickSummary.contains("Sarah"))
         XCTAssertTrue(session.quickSummary.contains("150"))
         print("Live evaluator completed reads: \(session.quickReader.completedReads); error: \(session.quickReader.error ?? "none")")
         recorder.send("Shipping sooner risks data loss; delaying could lose a customer. This tradeoff remains unresolved.")
-        try await wait { session.quickReader.completedReads == 5 }
+        try await wait { session.quickReader.completedReads == 6 }
         XCTAssertTrue(session.quickReader.recommendations.contains { $0.mode == "deep" })
         XCTAssertTrue(session.deepThought.isEmpty, "Recommendations do not run Deep automatically")
         XCTAssertFalse(session.quickSummary.contains("\"action\""))
