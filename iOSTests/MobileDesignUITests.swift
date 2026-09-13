@@ -5,7 +5,7 @@ final class MobileDesignUITests: XCTestCase {
     func testBrandAndConversationToolsRemainVisibleAcrossTheWorkspace() {
         let app = XCUIApplication()
         app.launchArguments = ["--design-review-fixture", "-autoQuickSummary", "NO", "-mobileAIProvider", "apple"]
-        app.launch()
+        app.launchPastReleaseNotes()
         let brand = app.descendants(matching: .any).matching(identifier: "appBrand").firstMatch
         XCTAssertTrue(brand.waitForExistence(timeout: 5))
         XCTAssertTrue(app.windows.firstMatch.frame.contains(brand.frame))

@@ -5,7 +5,7 @@ final class MobileNativeInteractionTests: XCTestCase {
     func testStartListeningUpdatesQuickSummaryWithoutRefreshAcrossTabs() {
         let app = XCUIApplication()
         app.launchArguments = ["--automatic-summary-fixture", "-autoQuickSummary", "YES", "-mobileAIProvider", "apple"]
-        app.launch()
+        app.launchPastReleaseNotes()
         app.buttons["Start listening"].tap()
         let output = app.staticTexts["output-quick"]
         expect(output, containing: "Thursday")
@@ -29,7 +29,7 @@ final class MobileNativeInteractionTests: XCTestCase {
     func testAutoIsOptInAndCanBeDisabledWhileListening() {
         let app = XCUIApplication()
         app.launchArguments = ["--automatic-summary-fixture", "-autoQuickSummary", "NO", "-mobileAIProvider", "apple"]
-        app.launch()
+        app.launchPastReleaseNotes()
         app.buttons["Start listening"].tap()
         expect(app.staticTexts["autoQuickStatus"], containing: "Auto off")
         let output = app.staticTexts["output-quick"]
@@ -48,7 +48,7 @@ final class MobileNativeInteractionTests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["--automatic-summary-fixture", "--automatic-failure-fixture",
                                "-autoQuickSummary", "YES", "-mobileAIProvider", "apple"]
-        app.launch()
+        app.launchPastReleaseNotes()
         app.buttons["Start listening"].tap()
         let error = app.staticTexts["quickSummaryError"]
         XCTAssertTrue(error.waitForExistence(timeout: 4))
@@ -65,7 +65,7 @@ final class MobileNativeInteractionTests: XCTestCase {
     func testBottomSaveConfirmsPersistenceAndShareCopiesReadableText() {
         let app = XCUIApplication()
         app.launchArguments = ["-autoQuickSummary", "NO", "-mobileAIProvider", "apple"]
-        app.launch()
+        app.launchPastReleaseNotes()
         app.buttons["New"].tap()
         let marker = "Readable share " + UUID().uuidString
         app.textFields["conversationTitle"].tap()
@@ -80,7 +80,7 @@ final class MobileNativeInteractionTests: XCTestCase {
         XCTAssertTrue(feedback.isHittable)
         XCTAssertTrue(feedback.label.contains("Saved to History"))
         capture(app, "Bottom Save confirms local History storage")
-        app.terminate(); app.launch()
+        app.terminate(); app.launchPastReleaseNotes()
         app.buttons["History"].tap()
         let record = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label CONTAINS %@",
                                                      "history-record-", marker)).firstMatch
@@ -106,7 +106,7 @@ final class MobileNativeInteractionTests: XCTestCase {
     func testHistorySwipeShareAndDeleteConfirmation() {
         let app = XCUIApplication()
         app.launchArguments = ["--design-review-fixture", "-autoQuickSummary", "NO", "-mobileAIProvider", "apple"]
-        app.launch()
+        app.launchPastReleaseNotes()
         app.buttons["History"].tap()
         let row = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "history-record-")).firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 5))

@@ -1,7 +1,13 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.10.0 (22).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.10.1 (23).
+
+## iOS 1.10.1 (23)
+
+An in-app What’s New screen shows the installed version/build and recent changes after an update. Continue acknowledges that exact build; future launches go straight to the workspace. More → What’s New reopens the offline changelog. Large text scrolls independently of the pinned Continue button. [What to Test](../metadata/ios/en-CA/what-to-test-1.10.1.txt).
+
+Release notes live in `iOS/MobileReleaseNotes.swift`. Update its newest release entry when bumping the marketing version; an app-hosted test checks it against the installed bundle. The shown build number always comes from the bundle. This screen belongs to the app; Apple's TestFlight introduction remains managed by TestFlight.
 
 ## iOS 1.10.0 (22)
 

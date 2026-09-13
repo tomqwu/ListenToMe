@@ -4,7 +4,7 @@ import XCTest
 final class MobileAttachmentJourneyTests: XCTestCase {
     func testPhotoImportPersistsAndCanBeRemoved() {
         let app = XCUIApplication()
-        app.launch()
+        app.launchPastReleaseNotes()
         app.buttons["New"].tap()
         app.buttons["Notes"].tap()
         app.buttons["Photo library"].tap()
@@ -15,14 +15,14 @@ final class MobileAttachmentJourneyTests: XCTestCase {
         for _ in 0..<5 where !attachment.isHittable { app.swipeUp() }
         XCTAssertTrue(attachment.waitForExistence(timeout: 10))
         let name = attachment.label
-        app.terminate(); app.launch()
+        app.terminate(); app.launchPastReleaseNotes()
         app.buttons["Notes"].tap()
         for _ in 0..<5 where !attachment.isHittable { app.swipeUp() }
         XCTAssertEqual(attachment.label, name)
         app.buttons["Attachment actions"].tap()
         app.buttons["Remove attachment"].tap()
         XCTAssertFalse(attachment.exists)
-        app.terminate(); app.launch()
+        app.terminate(); app.launchPastReleaseNotes()
         app.buttons["Notes"].tap()
         for _ in 0..<3 { app.swipeUp() }
         XCTAssertFalse(attachment.exists)
@@ -35,7 +35,7 @@ final class MobileAttachmentJourneyTests: XCTestCase {
             throw XCTSkip("Requires the locally staged synthetic Files fixture.")
         }
         let app = XCUIApplication()
-        app.launch()
+        app.launchPastReleaseNotes()
         app.buttons["New"].tap()
         app.buttons["Notes"].tap()
         app.buttons["Add files"].tap()
@@ -77,7 +77,7 @@ final class MobileAttachmentJourneyTests: XCTestCase {
         app.buttons["Import"].tap()
         XCTAssertTrue(app.buttons["Saved"].waitForExistence(timeout: 10))
         app.buttons["finishSharedImport"].tap()
-        app.terminate(); app.launch()
+        app.terminate(); app.launchPastReleaseNotes()
         XCTAssertEqual(app.textFields["conversationTitle"].value as? String, "Imported notes")
         app.buttons["Notes"].tap()
         for _ in 0..<5 where !app.buttons["Attachment actions"].isHittable { app.swipeUp() }

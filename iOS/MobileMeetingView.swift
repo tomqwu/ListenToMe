@@ -10,6 +10,7 @@ struct MobileMeetingView: View {
     @State private var workspace = MobileWorkspace.live
     @State private var modelRole: MobileSummaryMode?
     @State private var showSettings = false
+    @State private var showReleaseNotes = MobileReleaseNotes.shouldPresent()
     @State private var showNotes = false
     @State private var showCalendar = false
     @State private var showFullSummary = false
@@ -63,6 +64,7 @@ struct MobileMeetingView: View {
                             Button("Import from Calendar", systemImage: "calendar") { showCalendar = true }
                             Button("Full summary") { showFullSummary = true }
                             Button("Settings", systemImage: "gearshape") { showSettings = true }
+                            Button("What’s New", systemImage: "sparkles") { showReleaseNotes = true }
                         }
                     }
                 }
@@ -82,6 +84,9 @@ struct MobileMeetingView: View {
                 guard saveSucceeded else { return }
                 do { try await Task.sleep(for: .seconds(4)) } catch { return }
                 saveFeedback = nil
+            }
+            .fullScreenCover(isPresented: $showReleaseNotes, onDismiss: { MobileReleaseNotes.acknowledge() }) {
+                MobileReleaseNotesView { showReleaseNotes = false }
             }
             .sheet(isPresented: $showHistory) { MobileHistoryView(session: session) }
             .sheet(isPresented: $showSettings) { settings }
@@ -211,11 +216,6 @@ struct MobileMeetingView: View {
             .background(MobileStyle.canvas.opacity(0.96))
     }
 
-    private var releaseVersion: String {
-        let info = Bundle.main.infoDictionary ?? [:]
-        return "\(info["CFBundleShortVersionString"] as? String ?? "—") (\(info["CFBundleVersion"] as? String ?? "—"))"
-    }
-
     private var settings: some View {
         NavigationStack {
             Form {
@@ -249,7 +249,7 @@ struct MobileMeetingView: View {
                     Link("Open app settings", destination: URL(string: UIApplication.openSettingsURLString)!)
                 }
                 Section("Release") {
-                    LabeledContent("Version", value: releaseVersion)
+                    LabeledContent("Version", value: MobileReleaseNotes.identity)
                     Text("iPhone & iPad · iOS 26 or later")
                 }
             }

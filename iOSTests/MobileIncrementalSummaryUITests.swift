@@ -147,7 +147,7 @@ final class MobileIncrementalSummaryUITests: XCTestCase {
                                "-mobileAIProvider", "apple", "-mobileCorrectTranscript", "NO"]
         if slow { app.launchArguments.append("--incremental-slow-fixture") }
         if backlog { app.launchArguments.append("--incremental-backlog-fixture") }
-        app.launch()
+        app.launchPastReleaseNotes()
         return app
     }
 

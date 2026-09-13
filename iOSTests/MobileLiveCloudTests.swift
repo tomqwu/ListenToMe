@@ -19,7 +19,7 @@ final class MobileLiveCloudTests: XCTestCase {
         let token = try String(contentsOf: file, encoding: .utf8)
         try FileManager.default.removeItem(at: file)
         let app = XCUIApplication()
-        app.launch()
+        app.launchPastReleaseNotes()
         usedCredential = true
         app.buttons["More"].tap()
         app.buttons["Settings"].tap()
@@ -96,7 +96,7 @@ final class MobileLiveCloudTests: XCTestCase {
         }
         let dashboard = XCTAttachment(screenshot: app.screenshot())
         dashboard.name = "Live cloud dashboard outputs"; dashboard.lifetime = .keepAlways; add(dashboard)
-        app.terminate(); app.launch()
+        app.terminate(); app.launchPastReleaseNotes()
         XCTAssertEqual(app.staticTexts["output-quick"].label, outputs["Quick Summary"])
         app.segmentedControls["workspaceTabs"].buttons["Deep"].tap()
         XCTAssertEqual(app.staticTexts["output-deep"].label, outputs["Deep Summary"])
@@ -134,7 +134,7 @@ final class MobileLiveCloudTests: XCTestCase {
         }
         XCTAssertFalse(row.exists)
         app.terminate()
-        app.launch()
+        app.launchPastReleaseNotes()
         app.buttons["History"].tap()
         XCTAssertFalse(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", marker)).firstMatch.exists)
     }
@@ -152,7 +152,7 @@ final class MobileLiveCloudTests: XCTestCase {
 
     private func removeTestKey(_ app: XCUIApplication) {
         app.terminate()
-        app.launch()
+        app.launchPastReleaseNotes()
         app.buttons["More"].tap()
         app.buttons["Settings"].tap()
         let remove = app.buttons["Remove API key"]

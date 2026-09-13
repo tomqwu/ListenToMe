@@ -1,0 +1,3 @@
+What’s New now appears inside Listen to Me after each app update, showing the installed version/build and a short, readable changelog. Tap Continue to enter the workspace; the screen does not repeat after acknowledgement for the same build. Reopen it anytime from More → What’s New. Release history works offline and supports larger text.
+
+Please test: launch after installing 1.10.1 (23), verify the version, scroll through recent changes, tap Continue, then close and reopen the app. The startup screen should stay dismissed. Reopen What’s New from More. Check large text and iPad layout, and confirm recording, Auto summaries and saved conversations still work normally.

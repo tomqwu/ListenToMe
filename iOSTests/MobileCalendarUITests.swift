@@ -20,7 +20,7 @@ final class MobileCalendarUITests: XCTestCase {
 
     func testCalendarPermissionAndDatePicker() {
         let app = XCUIApplication()
-        app.launch()
+        app.launchPastReleaseNotes()
         openCalendar(app)
         XCTAssertTrue(app.datePickers["calendarDate"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.buttons["Refresh events"].exists)
@@ -40,7 +40,7 @@ final class MobileCalendarUITests: XCTestCase {
 
     func testImportStagedEventThroughPreviewIntoNotes() throws {
         let app = XCUIApplication()
-        app.launch()
+        app.launchPastReleaseNotes()
         app.buttons["New"].tap()
         app.buttons["Notes"].tap()
         app.textViews["Conversation notes"].tap()
@@ -64,7 +64,7 @@ final class MobileCalendarUITests: XCTestCase {
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "Imported calendar context"; screenshot.lifetime = .keepAlways; add(screenshot)
         app.buttons["Done"].tap()
-        app.terminate(); app.launch()
+        app.terminate(); app.launchPastReleaseNotes()
         XCTAssertEqual(app.textFields["conversationTitle"].value as? String, "ListenToMe Calendar UI Test")
         app.buttons["Notes"].tap()
         XCTAssertEqual(app.textViews["Conversation notes"].value as? String, text)

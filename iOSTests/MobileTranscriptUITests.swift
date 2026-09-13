@@ -6,7 +6,7 @@ final class MobileTranscriptUITests: XCTestCase {
         let app = XCUIApplication()
         // A preceding correction test must not add a setup banner to this geometry fixture.
         app.launchArguments = ["--transcript-scroll-fixture", "-mobileCorrectTranscript", "NO"]
-        app.launch()
+        app.launchPastReleaseNotes()
         let scroll = app.scrollViews["transcriptScroll"]
         XCTAssertTrue(scroll.waitForExistence(timeout: 5))
         let transcript = app.otherElements["transcriptPanel"]
@@ -56,7 +56,7 @@ final class MobileTranscriptUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["--transcript-scroll-fixture", "-mobileCorrectTranscript", "NO", "-UIPreferredContentSizeCategoryName",
                                "UICTContentSizeCategoryAccessibilityXXXL"]
-        app.launch()
+        app.launchPastReleaseNotes()
         let outer = app.scrollViews["dashboardScroll"]
         XCTAssertTrue(outer.waitForExistence(timeout: 5))
         XCTAssertFalse(app.scrollViews["transcriptScroll"].exists, "The preview must not create nested scrolling")
@@ -78,7 +78,7 @@ final class MobileTranscriptUITests: XCTestCase {
     func testLongTranscriptRemainsResponsiveAndPreservesReadingPosition() {
         let app = XCUIApplication()
         app.launchArguments = ["--transcript-scroll-fixture", "--long-transcript-fixture", "-mobileCorrectTranscript", "NO"]
-        app.launch()
+        app.launchPastReleaseNotes()
         let scroll = app.scrollViews["transcriptScroll"]
         XCTAssertTrue(scroll.waitForExistence(timeout: 10))
         expectLatestVisible(in: scroll)

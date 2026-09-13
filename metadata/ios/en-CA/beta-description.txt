@@ -5,3 +5,5 @@ Use optional Apple Intelligence summaries on supported devices, or enter your ow
 Add local photos and files, import context from Calendar, or send compatible copies from Apple Notes through the share extension. Original attachments stay local; only text added to Notes is included in summaries. Save, reopen, delete and share conversations in readable text or Markdown.
 
 Requires iOS or iPadOS 26 or later and a supported speech language. Live transcription requires a physical device. Recording works in the foreground and does not capture other apps or phone calls. Please test recording, summaries, imports and the refreshed light/dark design, and report problems through TestFlight feedback.
+
+See the installed version and recent changes in What’s New after an update, or reopen the changelog from the More menu.
