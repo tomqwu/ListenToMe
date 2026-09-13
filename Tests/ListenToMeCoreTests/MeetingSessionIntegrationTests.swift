@@ -95,7 +95,7 @@ final class MeetingSessionIntegrationTests: XCTestCase {
 
     // MARK: - Test 3: Proactive quick fires through the pump
 
-    func testProactiveFiresThroughPumpOnRemoteQuestion() async throws {
+    func testPumpPreservesQuestionWithoutAutoOptIn() async throws {
         let fixture = makeSession(debounce: 0, now: { 999_999 })
         let session = fixture.session
         let transcriber = fixture.transcriber
@@ -108,10 +108,10 @@ final class MeetingSessionIntegrationTests: XCTestCase {
         transcriber.emit(questionSeg)
 
         // Wait for ingest to pick it up, then for the quick response task to complete
-        await waitUntil { !session.quickSuggestion.isEmpty }
+        await waitUntil { !session.store.utterances.isEmpty }
         await session.waitForResponse(.quick)
 
-        XCTAssertEqual(session.quickSuggestion, "[Q]")
+        XCTAssertEqual(session.quickSuggestion, "")
 
         session.stop()
     }
@@ -252,7 +252,7 @@ final class MeetingSessionIntegrationTests: XCTestCase {
 
     // MARK: - Test 6: finalized segment triggers listener refresh through pump
 
-    func testFinalizedSegmentTriggersListenerRefreshThroughPump() async throws {
+    func testFinalizedSegmentWaitsForManualFullSummary() async throws {
         let fixture = makeSession(listenerDebounce: 0, now: { 0 })
         let session = fixture.session
         let transcriber = fixture.transcriber
@@ -262,7 +262,9 @@ final class MeetingSessionIntegrationTests: XCTestCase {
                                     isFinal: true, start: 0, end: 1)
         transcriber.emit(seg)
 
-        await waitUntil { !session.listenerSummary.isEmpty }
+        await waitUntil { !session.store.utterances.isEmpty }
+        XCTAssertTrue(session.listenerSummary.isEmpty)
+        await session.refreshListener()
         await session.waitForResponse(.listener)
 
         XCTAssertFalse(session.listenerSummary.isEmpty,

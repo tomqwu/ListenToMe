@@ -220,7 +220,7 @@ icon and the installed Home Screen icon. Repository metadata files alone do not 
 
 Run lint, shared core tests/coverage, the iOS build and UI tests, and a macOS build to protect the
 existing product. The simulator UI tests verify the unsupported-speech explanation without a microphone prompt, retry, saving notes, New, History and restoration across app restart.
-Hosted CI builds both apps and runs the iOS UI and app-hosted tests. Simulator builds use ad-hoc signing so Keychain tests exercise actual storage. The credential-dependent live cloud test is opt-in and skips on CI. Before marking iOS production-ready, test on a physical iPhone/iPad:
+GitHub Actions builds both apps only. All tests run on the local Mac with `make validate-local`, including iOS UI and app-hosted tests. Simulator builds use ad-hoc signing so Keychain tests exercise actual storage. The credential-dependent live cloud test is opt-in and skips unless configured locally. Before marking iOS production-ready, test on a physical iPhone/iPad:
 
 1. First-use microphone denial, retry after granting, and unsupported language/model errors.
 2. Model installation, then at least two minutes of real speech with live/final transcript text.
@@ -243,3 +243,7 @@ If provisioning or upload authentication fails, preserve the archive and report 
 Apple references: [SpeechAnalyzer](https://developer.apple.com/documentation/speech/speechanalyzer),
 [Foundation Models](https://developer.apple.com/documentation/foundationmodels),
 [ReplayKit](https://developer.apple.com/documentation/replaykit).
+
+## iOS 1.9.0 (17)
+
+Uses the [shared live-summary scheduler](SHARED-LIVE-SUMMARY.md) with macOS 1.4.0. Ollama is the fresh-install default; existing choices remain saved. Auto requires Ollama and opt-in. Apple Intelligence remains available for manual summaries. See [What to Test](../metadata/ios/en-CA/what-to-test-1.9.0.txt).

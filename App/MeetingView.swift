@@ -146,14 +146,18 @@ struct MeetingView: View {
                 }
             },
             makeProvider: { model in
-                OllamaProvider(model: model, baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey(),
+                if ProviderSettings.aiMode == .apple { return AppleIntelligenceProvider() as any LLMProvider }
+                return OllamaProvider(model: model, baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey(),
                                localOnly: ProviderSettings.aiMode != .cloud)
             },
             models: [
                 .listener: ProviderSettings.model(for: .listener),
                 .quick: ProviderSettings.model(for: .quick),
                 .deep: ProviderSettings.model(for: .deep)
-            ]
+            ],
+            providerAvailability: { _ in
+                ProviderSettings.aiMode == .apple ? AppleIntelligenceProvider.automaticQuickUnavailableReason : nil
+            }
         ))
     }
 
@@ -253,6 +257,7 @@ struct MeetingView: View {
             OnboardingView()
         })
         .onAppear {
+            session.autoSummaryEnabled = UserDefaults.standard.bool(forKey: "autoQuickSummary")
             session.aiEnabled = ProviderSettings.aiMode != .off
             session.responseLanguage = ProviderSettings.responseLanguageDirective()
             let preset = PresetCatalog.preset(id: presetID)
@@ -682,6 +687,7 @@ extension MeetingView {
 
     /// Reloads the installed Ollama chat models into the per-pane pickers.
     func reloadModels() async {
+        if ProviderSettings.aiMode == .apple { chatModels = ["Apple Intelligence"]; return }
         chatModels = await OllamaModels.chatModels(
             baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey(), localOnly: ProviderSettings.aiMode != .cloud)
     }
@@ -696,6 +702,12 @@ extension MeetingView {
         for role in CopilotRole.allCases { session.setModel(role, session.models[role] ?? "") }
         modelLoadToken += 1
         let token = modelLoadToken
+        if ProviderSettings.aiMode == .apple {
+            chatModels = ["Apple Intelligence"]
+            modelStatus = AppleIntelligenceProvider.unavailableReason ?? ""
+            for role in CopilotRole.allCases { session.setModel(role, "Apple Intelligence") }
+            return
+        }
         let discovered = await OllamaModels.chatModels(
             baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey(), localOnly: ProviderSettings.aiMode != .cloud)
         guard token == modelLoadToken else { return }
@@ -704,7 +716,7 @@ extension MeetingView {
             ? "No available AI models. Check Ollama and AI mode in Settings, then Refresh models." : "")
         let defaults = ModelRanking.roleDefaults(from: chatModels)
         for role in CopilotRole.allCases {
-            let current = session.models[role] ?? ""
+            let current = ProviderSettings.model(for: role)
             // Keep the user's explicit pick if it's still valid; otherwise follow the
             // role-appropriate default so the three panes don't all collapse to one model.
             let keepPinned = ProviderSettings.isPinned(role) && chatModels.contains(current)

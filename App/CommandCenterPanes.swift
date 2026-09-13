@@ -28,11 +28,13 @@ extension MeetingView {
                 }
 
                 railSection("Automatic AI") {
-                    Toggle("Auto summary", isOn: $session.autoSummaryEnabled).controlSize(.small)
-                    Toggle("Quick suggestions", isOn: $session.proactiveEnabled)
-                        .controlSize(.small)
-                        .toggleStyle(.switch)
-                        .help("Let Quick suggest replies when a question is detected")
+                    Toggle("Auto Quick Summary", isOn: Binding(get: { session.autoSummaryEnabled }, set: {
+                        session.autoSummaryEnabled = $0
+                        UserDefaults.standard.set($0, forKey: "autoQuickSummary")
+                    })).controlSize(.small)
+                    Text(session.autoQuickStatus).font(.caption).foregroundStyle(.secondary)
+                    Text("Evaluates completed speech with the selected provider. Summary and Deep run when requested.")
+                        .font(.caption2).foregroundStyle(.secondary)
                 }
 
                 railSection("Preset") {
@@ -246,21 +248,21 @@ extension MeetingView {
 
     private func listenerBox(session: MeetingSession) -> some View {
         RoleBox(
-            title: "Listener", accent: Theme.others, role: .listener, session: session,
+            title: "Summary", accent: Theme.others, role: .listener, session: session,
             outputText: session.listenerSummary,
-            placeholder: "Live summary & open items will appear here.",
+            placeholder: "Generate a full summary and open items when ready.",
             headerExtra: {
                 Button("Refresh") { Task { await session.refreshListener() } }
                     .controlSize(.small)
             },
-            actions: { EmptyView() })
+            actions: { reviewSuggestion("summary", session: session) })
     }
 
     private func quickBox(session: MeetingSession) -> some View {
         RoleBox(
-            title: "Quick", accent: Theme.accent, role: .quick, session: session,
+            title: "Quick Summary", accent: Theme.accent, role: .quick, session: session,
             outputText: session.quickSuggestion,
-            placeholder: "Press ⌘⇧Space or a button for a quick suggestion.",
+            placeholder: "Enable Auto while listening, or request a recap.",
             headerExtra: { EmptyView() },
             actions: {
                 FlowLayout(spacing: 7) {
@@ -286,9 +288,18 @@ extension MeetingView {
             placeholder: "Ask for a detailed/coding answer.",
             headerExtra: { EmptyView() },
             actions: {
+                reviewSuggestion("deep", session: session)
                 Button("Deep answer") { Task { await session.respondDeep(.answerQuestion) } }
                     .controlSize(.small)
             })
+    }
+
+    @ViewBuilder
+    private func reviewSuggestion(_ mode: String, session: MeetingSession) -> some View {
+        if let review = session.quickReader.recommendations.first(where: { $0.mode == mode }) {
+            Text("Suggested review · \(review.confidence) confidence: \(review.reason)")
+                .font(.caption).foregroundStyle(.secondary)
+        }
     }
 
     // MARK: Shared model picker (rail) — same set/pin behavior as the old AIPaneView dropdown

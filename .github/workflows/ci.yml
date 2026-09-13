@@ -11,37 +11,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  release-workflow:
-    name: TestFlight upload workflow checks
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Validate upload decisions without network access
-        run: |
-          bash -n scripts/ios-testflight.sh
-          python3 scripts/test-ios-testflight.py
-  core:
-    name: Lint + Unit/Integration tests + Coverage gate
-    runs-on: macos-15
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Select latest Xcode
-        run: sudo xcode-select -s /Applications/Xcode_16.app || true
-
-      - name: Show toolchain
-        run: swift --version
-
-      - name: Install tools
-        run: brew install swiftlint || brew upgrade swiftlint || true
-
-      - name: SwiftLint
-        run: swiftlint lint --quiet
-
-      # Core regressions, including persistence, routing and conversation lifecycle.
-      - name: Tests + coverage gate (>=95% on ListenToMeCore)
-        run: ./scripts/check-coverage.sh 95
-
   app:
     name: macOS 26 app build
     runs-on: macos-26
@@ -54,26 +23,14 @@ jobs:
       - name: Verify dependency resolution stayed locked
         run: diff -u Config/Package.resolved ListenToMe.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
   ios:
-    name: iOS 26 build + UI tests
+    name: iOS 26 app build
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
       - name: Install project generator
         run: brew install xcodegen
-      - name: Build and test on an available iPhone simulator
-        shell: bash
-        run: |
-          DEVICE_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; print(next(d["udid"] for runtime, ds in json.load(sys.stdin)["devices"].items() if "iOS-26-" in runtime for d in ds if d["name"].startswith("iPhone")))')
-          xcrun simctl bootstatus "$DEVICE_ID" -b
-          xcrun simctl addmedia "$DEVICE_ID" iOS/Assets.xcassets/AppIcon.appiconset/AppIcon.png
-          make ios-test IOS_DESTINATION="platform=iOS Simulator,id=$DEVICE_ID"
-      - name: Preserve failed iOS test screenshots and diagnostics
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-test-results
-          path: .build/ios/Logs/Test/
-          retention-days: 3
+      - name: Compile app with locked dependencies
+        run: make ios-build
       - name: Verify locked dependencies
         run: diff -u Config/Package.resolved ListenToMe.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
-  # GUI, permissions, real audio and distribution still require local artifact testing.
+  # All tests, lint, coverage, GUI and audio acceptance run on the maintainer's Mac.

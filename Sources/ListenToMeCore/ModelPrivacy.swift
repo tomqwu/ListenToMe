@@ -1,11 +1,12 @@
 import Foundation
 
 public enum AIProcessingMode: String, CaseIterable, Sendable {
-    case off, local, cloud
+    case off, local, apple, cloud
     public var label: String {
         switch self {
         case .off: return "AI off — transcript only"
-        case .local: return "Local models only"
+        case .local: return "Local Ollama models only"
+        case .apple: return "Apple Intelligence — on this device"
         case .cloud: return "Ollama Cloud — sends transcript and context"
         }
     }

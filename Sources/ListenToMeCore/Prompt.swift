@@ -49,9 +49,12 @@ public struct PromptContext: Sendable, Equatable {
 
 /// A provider-agnostic request: a system prompt plus chat messages.
 public struct LLMRequest: Sendable, Equatable {
+    public enum Purpose: Sendable { case chat, quickEvaluation }
+    public let purpose: Purpose
     public let system: String
     public let messages: [ChatMessage]
-    public init(system: String, messages: [ChatMessage]) {
+    public init(system: String, messages: [ChatMessage], purpose: Purpose = .chat) {
+        self.purpose = purpose
         self.system = system
         self.messages = messages
     }

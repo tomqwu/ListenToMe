@@ -44,7 +44,7 @@ final class MobileAISettings {
     var hasKey = false
 
     init() {
-        provider = Provider(rawValue: UserDefaults.standard.string(forKey: "mobileAIProvider") ?? "") ?? .apple
+        provider = Provider(rawValue: UserDefaults.standard.string(forKey: "mobileAIProvider") ?? "") ?? .ollama
         let savedModel = UserDefaults.standard.string(forKey: "mobileOllamaModel") ?? ""
         model = savedModel
         quickModel = UserDefaults.standard.string(forKey: "mobileOllamaQuickModel") ?? savedModel

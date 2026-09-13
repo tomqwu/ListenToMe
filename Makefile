@@ -84,3 +84,15 @@ ios-archive: gen
 ios-testflight:
 	@test -n "$(IOS_ARCHIVE)" -a -n "$(IOS_RELEASE_SOURCE)" || { echo 'Set IOS_ARCHIVE and IOS_RELEASE_SOURCE'; exit 2; }
 	bash scripts/ios-testflight.sh "$(IOS_ARCHIVE)" "$(IOS_RELEASE_SOURCE)" $(IOS_RELEASE_FLAGS)
+
+# Complete automated validation runs locally; GitHub Actions only builds apps.
+.PHONY: validate-local
+validate-local:
+	@test "$$(uname -s)" = Darwin || { echo 'Run validation on a local Mac'; exit 1; }
+	@test "$${GITHUB_ACTIONS:-false}" != true || { echo 'Tests must run locally, not in GitHub Actions'; exit 1; }
+	bash -n scripts/ios-testflight.sh
+	python3 scripts/test-ios-testflight.py
+	$(MAKE) lint
+	./scripts/check-coverage.sh 95
+	$(MAKE) ios-test
+	$(MAKE) e2e

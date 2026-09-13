@@ -4,6 +4,16 @@ import ListenToMeCore
 
 @MainActor
 final class MobileAITests: XCTestCase {
+    func testFreshSettingsDefaultToOllamaAndPreserveExplicitAppleChoice() {
+        let previous = UserDefaults.standard.object(forKey: "mobileAIProvider")
+        defer { UserDefaults.standard.set(previous, forKey: "mobileAIProvider") }
+        UserDefaults.standard.removeObject(forKey: "mobileAIProvider")
+        XCTAssertEqual(MobileAISettings().provider, .ollama)
+        let settings = MobileAISettings()
+        settings.provider = .apple
+        XCTAssertEqual(MobileAISettings().provider, .apple)
+    }
+
     func testCatalogIsAvailableAfterSettingsRelaunch() {
         let previous = UserDefaults.standard.string(forKey: "mobileOllamaCatalog")
         defer { UserDefaults.standard.set(previous, forKey: "mobileOllamaCatalog") }

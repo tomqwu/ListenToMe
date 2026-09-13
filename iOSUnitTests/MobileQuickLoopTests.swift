@@ -197,8 +197,7 @@ final class MobileQuickLoopTests: XCTestCase {
         local.notes = "A meeting decision"
         local.autoQuick = true
         local.state = .recording
-        XCTAssertTrue(local.autoQuickStatus.contains("Auto paused"))
-        XCTAssertTrue(local.automaticQuickAvailability?.contains("Ollama Cloud") == true)
+        XCTAssertEqual(local.automaticQuickAvailability, AppleIntelligenceProvider.automaticQuickUnavailableReason)
         XCTAssertEqual(local.ai.provider, .apple)
         XCTAssertFalse(local.quickReader.isReading)
         XCTAssertEqual(local.quickReader.completedReads, 0)

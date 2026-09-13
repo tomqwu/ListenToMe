@@ -4,24 +4,33 @@ import ListenToMeCore
 
 @MainActor
 final class MobileAutomaticSummaryTests: XCTestCase {
-    func testStartReceivesSpeechAndCatchesUpImmediatelyAfterSlowResponse() async throws {
+    func testStartReceivesSpeechAndCatchesUpAfterSlowResponseWithoutNewSpeech() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
         let provider = SlowSummaryProvider()
         let recorder = TestRecorder()
         let session = MobileSession(storageDirectory: root, summaryProvider: provider,
-                                    autoInterval: .seconds(2), makeRecorder: { recorder })
+                                    autoInterval: .milliseconds(100), makeRecorder: { recorder })
         let originalAuto = session.autoQuick
-        defer { session.state = .idle; session.autoQuick = originalAuto }
+        let originalCorrection = session.ai.correctTranscript
+        defer {
+            session.state = .idle; session.autoQuick = originalAuto
+            session.ai.correctTranscript = originalCorrection
+        }
+        session.ai.correctTranscript = false
         session.autoQuick = true
         session.start()
         try await waitUntil { session.state == .recording && session.quickReader.isReading }
+        try await waitUntil { await provider.hasPendingFirst() }
         XCTAssertEqual(session.segments.first?.text, "First phrase")
         recorder.send("Second phrase")
         // Hold the first response past the cooldown. No speech callback follows its completion.
-        try await Task.sleep(for: .milliseconds(2100))
-        await provider.finishFirst()
-        try await waitUntil(timeout: .seconds(1)) { session.quickSummary.contains("Second phrase") }
+        try await Task.sleep(for: .milliseconds(150))
+        let finished = await provider.finishFirst()
+        XCTAssertTrue(finished, "The provider must have received the first request before it is released")
+        // Exact catch-up deadlines are asserted with an injected clock in LiveSummarySchedulerTests.
+        // This integration check waits for the event-driven result without requiring CI to run within one second.
+        try await waitUntil { session.quickSummary.contains("Second phrase") }
         let requests = await provider.count()
         XCTAssertEqual(requests, 2)
         XCTAssertTrue(session.autoQuickStatus.contains("Up to date"))
@@ -57,10 +66,11 @@ final class MobileAutomaticSummaryTests: XCTestCase {
         XCTAssertTrue(MobileSession.markdown(for: legacy).contains("Legacy speech"))
     }
 
-    private func waitUntil(timeout: Duration = .seconds(3), _ predicate: () -> Bool) async throws {
+    private func waitUntil(timeout: Duration = .seconds(5), _ predicate: () async -> Bool) async throws {
         let deadline = ContinuousClock.now + timeout
-        while !predicate(), ContinuousClock.now < deadline { try await Task.sleep(for: .milliseconds(20)) }
-        XCTAssertTrue(predicate())
+        while !(await predicate()), ContinuousClock.now < deadline { try await Task.sleep(for: .milliseconds(20)) }
+        let satisfied = await predicate()
+        XCTAssertTrue(satisfied)
     }
 }
 
@@ -82,9 +92,12 @@ private actor SlowSummaryProvider: LLMProvider {
     private var requests = 0
     private var first: AsyncThrowingStream<String, Error>.Continuation?
     func count() -> Int { requests }
-    func finishFirst() {
-        first?.yield("{\"reviews\":[],\"action\":\"publish\",\"context\":\"First phrase\",\"bullets\":[\"First summary\"]}")
-        first?.finish(); first = nil
+    func hasPendingFirst() -> Bool { first != nil }
+    func finishFirst() -> Bool {
+        guard let first else { return false }
+        first.yield("{\"reviews\":[],\"action\":\"publish\",\"context\":\"First phrase\",\"bullets\":[\"First summary\"]}")
+        first.finish(); self.first = nil
+        return true
     }
     private func respond(_ request: LLMRequest, to continuation: AsyncThrowingStream<String, Error>.Continuation) {
         requests += 1

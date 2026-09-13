@@ -1,0 +1,7 @@
+Shared live summaries across Mac, iPhone and iPad.
+
+Ollama is now the default provider. Existing provider and model choices are preserved. Enable Auto Quick Summary to evaluate new finalized speech and notes in five-second batches. Greetings and repetition should keep the current summary; new decisions and corrections should update it. Summary and Deep Think recommendations explain why a manual review may help.
+
+Check that Stop, Auto off and provider changes cancel pending work. Offline or malformed responses should preserve the current summary and retry unread changes. Selecting Apple Intelligence should pause Auto and keep manual native summaries available on supported devices, without switching to Cloud.
+
+Test real speech, corrections, saving/reopening conversations, manual Summary/Deep Think, and iPhone/iPad layouts. Physical-device acceptance is requested; simulator checks do not establish audio or device readiness.
