@@ -29,6 +29,7 @@ final class MobileQuickLiveTests: XCTestCase {
         session.ai.quickModel = ""
         await session.ai.refresh()
         session.ai.quickModel = "glm-5.3-flash"
+        session.ai.model = "glm-5.3"; session.ai.deepModel = "glm-5.3"
         XCTAssertNil(session.ai.availability(for: .quick))
         XCTAssertTrue(MobileAISettings.isFlash(session.ai.quickModel))
         session.autoQuick = true
@@ -36,40 +37,44 @@ final class MobileQuickLiveTests: XCTestCase {
         try await wait { session.state == .recording }
         print("Live evaluator completed reads: \(session.quickReader.completedReads); error: \(session.quickReader.error ?? "none")")
         recorder.send("Hello everyone. Good morning.")
-        try await wait { session.quickReader.completedReads == 1 }
+        try await waitForRead(1, session: session)
         XCTAssertEqual(session.quickSummary, "")
         print("Live evaluator completed reads: \(session.quickReader.completedReads); error: \(session.quickReader.error ?? "none")")
         recorder.send("Uh, this is a test for Azure Cloud.")
-        try await wait { session.quickReader.completedReads == 2 }
+        try await waitForRead(2, session: session)
         XCTAssertTrue(session.quickSummary.contains("Azure"), "A named topic should produce the first recap")
         recorder.send("Help me understand the APM management.")
-        try await wait { session.quickReader.completedReads == 3 }
+        try await waitForRead(3, session: session)
         XCTAssertTrue(session.quickSummary.contains("APM"), "A question is useful summary material without a decision")
         XCTAssertFalse(session.quickSummary.lowercased().contains("application performance"), "Do not expand an ambiguous acronym")
+        try await wait { (session.automaticReviews.completedCounts[.summary] ?? 0) > 0 }
+        try await wait { (session.automaticReviews.completedCounts[.deep] ?? 0) > 0 }
+        XCTAssertFalse(session.summary.isEmpty)
+        XCTAssertFalse(session.deepThought.isEmpty)
+        XCTAssertTrue(session.deepThought.localizedCaseInsensitiveContains("APM"))
         recorder.send("We agree delivery on Monday. Sarah will confirm. The budget is 150 dollars.", final: false)
-        try await wait { session.quickReader.completedReads == 4 }
+        try await waitForRead(4, session: session)
         XCTAssertTrue(session.quickSummary.contains("Monday"))
         XCTAssertTrue(session.quickSummary.contains("Sarah"))
         XCTAssertTrue(session.quickSummary.contains("150"))
         XCTAssertEqual(session.finalizedSpeechEventCount, 3, "Decision must publish before recognition finalizes")
         recorder.send("We agree delivery on Monday. Sarah will confirm. The budget is 150 dollars.")
-        try await wait { session.quickReader.completedReads == 5 }
+        try await waitForRead(5, session: session)
         let decision = session.quickSummary
         print("Live evaluator completed reads: \(session.quickReader.completedReads); error: \(session.quickReader.error ?? "none")")
         recorder.send("Yes, understood. That is what we agreed.")
-        try await wait { session.quickReader.completedReads == 6 }
+        try await waitForRead(6, session: session)
         XCTAssertEqual(session.quickSummary, decision, "Repetition should be read without rewriting the bullets")
         print("Live evaluator completed reads: \(session.quickReader.completedReads); error: \(session.quickReader.error ?? "none")")
         recorder.send("改到周二交付，Peter负责确认。预算仍然是150美元。")
-        try await wait { session.quickReader.completedReads == 7 }
+        try await waitForRead(7, session: session)
         XCTAssertTrue(session.quickSummary.contains("Peter"))
-        XCTAssertFalse(session.quickSummary.contains("Sarah"))
+        XCTAssertFalse(session.quickSummary.contains("Sarah"), "Corrected recap: \(session.quickSummary)")
         XCTAssertTrue(session.quickSummary.contains("150"))
         print("Live evaluator completed reads: \(session.quickReader.completedReads); error: \(session.quickReader.error ?? "none")")
         recorder.send("Shipping sooner risks data loss; delaying could lose a customer. This tradeoff remains unresolved.")
-        try await wait { session.quickReader.completedReads == 8 }
-        XCTAssertTrue(session.quickReader.recommendations.contains { $0.mode == "deep" })
-        XCTAssertTrue(session.deepThought.isEmpty, "Recommendations do not run Deep automatically")
+        try await waitForRead(8, session: session)
+        XCTAssertFalse(session.deepThought.isEmpty, "The earlier APM question should have triggered Deep automatically")
         XCTAssertFalse(session.quickSummary.contains("\"action\""))
         await session.stop()
         await session.summarize(mode: .quick)
@@ -82,8 +87,23 @@ final class MobileQuickLiveTests: XCTestCase {
         XCTAssertTrue(session.markdown.contains("Peter"))
     }
 
+    private func waitForRead(_ count: Int, session: MobileSession) async throws {
+        let deadline = ContinuousClock.now + .seconds(90)
+        var last = ""
+        while session.quickReader.completedReads < count, ContinuousClock.now < deadline {
+            let status = "reads=\(session.quickReader.completedReads), failures=\(session.quickReader.failures)"
+                + ", error=\(session.quickReader.error ?? "none")"
+                + ", full=\(session.automaticReviews.activeMode?.rawValue ?? "idle")"
+            if status != last { print("Live diagnostics: " + status); last = status }
+            try await Task.sleep(for: .milliseconds(100))
+        }
+        XCTAssertEqual(session.quickReader.completedReads, count, last)
+        print("Live recap: " + session.quickSummary)
+        if session.quickReader.completedReads != count { throw URLError(.timedOut) }
+    }
+
     private func wait(file: StaticString = #filePath, line: UInt = #line, _ condition: () -> Bool) async throws {
-        let deadline = ContinuousClock.now + .seconds(40)
+        let deadline = ContinuousClock.now + .seconds(90)
         while !condition(), ContinuousClock.now < deadline { try await Task.sleep(for: .milliseconds(100)) }
         XCTAssertTrue(condition(), "Live evaluator did not reach expected state", file: file, line: line)
         if !condition() { throw URLError(.timedOut) }

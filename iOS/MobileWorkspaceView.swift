@@ -177,14 +177,19 @@ struct MobileWorkspaceView<Header: View>: View {
                                 .foregroundStyle(.secondary).accessibilityIdentifier("quickSummaryError")
                         }
                         if session.autoQuick && session.ai.provider == .ollama {
-                            Text("Auto checks new speech about every 5 seconds with Ollama Cloud. "
-                                 + "Live wording may change; notes and recent context are included.")
+                            Text("New speech triggers Quick evaluation; related words are batched briefly. "
+                                 + "Auto also updates Summary and Deep when relevant. These use the selected Ollama Cloud models.")
                                 .font(.caption).foregroundStyle(.secondary)
                         }
                     }
+                    if mode != .quick {
+                        Text(session.automaticReviewStatus(mode)).font(.caption).foregroundStyle(MobileStyle.muted)
+                            .accessibilityIdentifier("autoReviewStatus-\(mode.rawValue)")
+                    }
                     if mode != .quick, let review = session.quickReader.recommendations.first(where: { $0.mode == mode.rawValue }) {
                         VStack(alignment: .leading, spacing: 4) {
-                            Label("Review suggested", systemImage: "sparkles").font(.subheadline.weight(.medium))
+                            Label(session.autoQuick && review.confidence != "low" ? "Automatic review trigger" : "Review suggested",
+                                  systemImage: "sparkles").font(.subheadline.weight(.medium))
                             Text(review.reason).font(.caption)
                             Text("AI confidence: \(review.confidence) · Generate when ready.")
                                 .font(.caption2).foregroundStyle(MobileStyle.muted)
@@ -248,9 +253,9 @@ struct MobileWorkspaceView<Header: View>: View {
 
     private var autoToggle: some View {
         Toggle("Auto", isOn: $session.autoQuick).font(.caption)
-            .accessibilityLabel("Auto Quick Summary")
+            .accessibilityLabel("Auto summaries")
             .accessibilityHint(session.ai.provider == .ollama
-                ? "Checks new speech with Ollama Cloud every five seconds. Updates only for meaningful changes."
+                ? "New speech triggers Quick evaluation and relevant Summary or Deep reviews using their selected Ollama Cloud models."
                 : "Continuous evaluation requires Ollama Cloud. Apple Intelligence summaries are available with Refresh.")
     }
 

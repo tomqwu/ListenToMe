@@ -48,12 +48,13 @@ public final class MeetingSession {
     public private(set) var isTranscribingFile = false
 
     /// The set of roles currently streaming a response.
-    public private(set) var streamingRoles: Set<CopilotRole> = []
+    public private(set) var streamingRoles: Set<CopilotRole> = [] { didSet { synchronizeAutomaticReviews() } }
 
     /// The model ID assigned to each role.
     public private(set) var models: [CopilotRole: String]
 
     public let quickReader = QuickSummaryReader()
+    public let automaticReviews = AutomaticReviewCoordinator()
     private var liveScheduler = LiveSummaryScheduler()
     private var liveWake: Task<Void, Never>?
 
@@ -114,7 +115,8 @@ public final class MeetingSession {
         cancelResponse(role)
         models[role] = model
         providers[role] = makeProvider(model)
-        if role == .quick { quickReader.clearError(); handleLiveEvent(.providerChanged) }
+        if role == .quick { quickReader.clearError() }
+        handleLiveEvent(.providerChanged)
     }
 
     public func cancelResponse(_ role: CopilotRole) {
@@ -450,6 +452,7 @@ extension MeetingSession {
                                _ makeRequest: @escaping () -> LLMRequest) -> Task<Void, Never> {
         guard aiEnabled else { return Task {} }
         if role == .quick { handleLiveEvent(.manualQuickStarted) }
+        streamingRoles.insert(role)
         responseTasks[role]?.cancel()
         let generation = (responseGenerations[role] ?? 0) + 1
         responseGenerations[role] = generation
@@ -480,6 +483,10 @@ extension MeetingSession {
                 if Task.isCancelled { return }
                 if generation != responseGenerations[role] { return }
                 appendOutput(role, delta)
+            }
+            if generation == responseGenerations[role], !Task.isCancelled,
+               let mode = AutomaticReviewMode(rawValue: role == .listener ? "summary" : role.rawValue) {
+                automaticReviews.markManualCompletion(mode, source: reviewedPieces.map(\.text).joined(separator: "\n"))
             }
             if generation == responseGenerations[role], !Task.isCancelled, reviewedPieces == livePieces {
                 quickReader.markReviewed(role == .listener ? "summary" : role.rawValue)
@@ -538,7 +545,44 @@ extension MeetingSession {
         return isRunning ? "Listening for meaningful changes" : "Auto checks while listening"
     }
 
+    private var automaticReviewSource: String { livePieces.map(\.text).joined(separator: "\n") }
+
+    public func automaticReviewStatus(_ mode: AutomaticReviewMode) -> String {
+        guard autoSummaryEnabled else { return "Auto off · Generate manually." }
+        guard isRunning else { return "Auto reviews run while listening. Generate is also available." }
+        guard aiEnabled else { return "Auto paused · AI is off." }
+        if let reason = providerAvailability(models[.quick] ?? "") { return "Auto paused · " + reason }
+        guard providers[.quick] != nil else { return "Auto paused · Choose a Quick model." }
+        return automaticReviews.status(mode)
+    }
+
+    private func synchronizeAutomaticReviews() {
+        automaticReviews.synchronize(enabled: autoSummaryEnabled && isRunning && aiEnabled
+            && providers[.quick] != nil && providerAvailability(models[.quick] ?? "") == nil,
+            manualBusy: !streamingRoles.isEmpty, source: automaticReviewSource, provider: { [weak self] mode in
+                guard let self else { throw CancellationError() }
+                let role: CopilotRole = mode == .summary ? .listener : .deep
+                if let reason = self.providerAvailability(self.models[role] ?? "") { throw QuickSummaryError.message(reason) }
+                guard let provider = self.providers[role] else { throw QuickSummaryError.message("Choose a review model.") }
+                return provider
+            }, apply: { [weak self] mode, output, source in
+                guard let self else { return }
+                self.setOutput(mode == .summary ? .listener : .deep, output)
+                if mode == .summary { self.lastCompletedListenerSummary = output }
+                if AutomaticReviewCoordinator.normalized(self.automaticReviewSource) == source {
+                    self.quickReader.markReviewed(mode.rawValue)
+                    if mode == .summary { self.summarizedSegmentIDs.formUnion(self.store.utterances.map(\.id)) }
+                }
+            })
+    }
+
     private func handleLiveEvent(_ event: LiveSummaryScheduler.Event) {
+        if event == .conversationChanged || event == .providerChanged { automaticReviews.reset() }
+        synchronizeAutomaticReviews()
+        if event == .automationChanged || event == .providerChanged,
+           !quickReader.context.hasChanges(livePieces), !quickReader.isCatchingUp {
+            automaticReviews.offer(quickReader.recommendations, source: automaticReviewSource)
+        }
         let state = LiveSummaryScheduler.Snapshot(recording: isRunning, automatic: autoSummaryEnabled,
             pending: quickReader.context.hasChanges(livePieces), reading: quickReader.isReading,
             manualQuick: streamingRoles.contains(.quick), available: aiEnabled && providers[.quick] != nil && providerAvailability(models[.quick] ?? "") == nil,
@@ -566,10 +610,15 @@ extension MeetingSession {
             guard let batch = try quickReader.context.batch(livePieces, summary: quickSuggestion,
                 reviewsCompleted: quickReader.reviewsCompleted, pendingReviews: quickReader.recommendations) else { return }
             let run = runID
+            let previousReads = quickReader.completedReads
             await quickReader.read(batch, provider: provider, isCurrent: { [weak self] in
                 guard let self, self.runID == run, self.isRunning, self.autoSummaryEnabled, self.aiEnabled else { return false }
                 return self.quickReader.context.isCurrent(batch, pieces: self.livePieces)
             }, apply: { [weak self] in self?.quickSuggestion = $0 })
+            if quickReader.completedReads > previousReads, !quickReader.isCatchingUp {
+                synchronizeAutomaticReviews()
+                automaticReviews.offer(quickReader.recommendations, source: automaticReviewSource)
+            }
         } catch { /* Encoding consists only of validated string data. A later event retries. */ }
     }
 }

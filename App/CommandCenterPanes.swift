@@ -28,12 +28,12 @@ extension MeetingView {
                 }
 
                 railSection("Automatic AI") {
-                    Toggle("Auto Quick Summary", isOn: Binding(get: { session.autoSummaryEnabled }, set: {
+                    Toggle("Auto summaries", isOn: Binding(get: { session.autoSummaryEnabled }, set: {
                         session.autoSummaryEnabled = $0
                         UserDefaults.standard.set($0, forKey: "autoQuickSummary")
                     })).controlSize(.small)
                     Text(session.autoQuickStatus).font(.caption).foregroundStyle(.secondary)
-                    Text("Evaluates new speech with the selected provider. Summary and Deep run when requested.")
+                    Text("New speech triggers Quick evaluation. Auto also runs relevant Summary and Deep reviews; manual controls remain available.")
                         .font(.caption2).foregroundStyle(.secondary)
                 }
 
@@ -296,6 +296,9 @@ extension MeetingView {
 
     @ViewBuilder
     private func reviewSuggestion(_ mode: String, session: MeetingSession) -> some View {
+        if let reviewMode = AutomaticReviewMode(rawValue: mode) {
+            Text(session.automaticReviewStatus(reviewMode)).font(.caption).foregroundStyle(.secondary)
+        }
         if let review = session.quickReader.recommendations.first(where: { $0.mode == mode }) {
             Text("Suggested review · \(review.confidence) confidence: \(review.reason)")
                 .font(.caption).foregroundStyle(.secondary)

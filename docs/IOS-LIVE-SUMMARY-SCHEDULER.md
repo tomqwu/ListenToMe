@@ -17,13 +17,13 @@ content to Cloud as a fallback.
 | Event | Planned action |
 | --- | --- |
 | New completed transcript or edited notes | Enqueue a coalesced Quick evaluation if Auto is enabled and recording. |
-| Partial hypothesis | Display immediately; do not send it to the evaluator. |
+| Partial hypothesis | Display immediately; enqueue once the live text reaches 24 trimmed characters. |
 | Source correction or Restore original | Enqueue the changed source, including its previous wording. |
 | Five-second batch deadline | Evaluate if new source data is pending and the model is available. |
 | New speech during an evaluation | Retain it for the next batch; never run a second Quick evaluation concurrently. |
 | Valid `keep` result | Commit running context and acknowledged sources, preserving the visible summary exactly. |
 | Valid `publish` result | Commit context and replace the complete Quick bullet list. |
-| Summary/Deep recommendation | Show its grounded reason and qualitative confidence in the relevant panel; do not run it automatically. |
+| Summary/Deep recommendation | Enqueue the selected full model for medium/high confidence when Auto is on; low confidence stays manual. |
 | Manual review completes | Clear the suggestion only if its source snapshot is still current; tell the next evaluator that review was performed. |
 | Error, timeout, or malformed result | Keep output/context/source acknowledgements unchanged and retry unread data with backoff. |
 | Auto off, Stop, background, or conversation change | Cancel the pending wake/evaluation; reject late results. |
@@ -35,10 +35,10 @@ The normal cadence is five seconds between request starts. A slow request is fol
 read once finished if its cooldown has elapsed. Speech correction gets up to two extra seconds relative
 to the batch deadline, without indefinitely postponing Quick under continuous speech. There is no
 repeating idle polling loop and no Cloud call for unchanged input. Summary and Deep requests have their
-own manual slot and can run alongside the single automatic Quick evaluator.
+own shared serial automatic coordinator and can run alongside the single automatic Quick evaluator. Manual Generate takes priority; see [full-review scheduling](SHARED-LIVE-SUMMARY.md#automatic-full-reviews-ios-1100).
 
 Failures retry at 10, 20, 40, then at most 60 seconds with the default cadence. Each evaluator call has
-a 15-second deadline and a 16 KiB streamed-response cap. New speech remains queued while retrying.
+a 30-second deadline and a 16 KiB streamed-response cap. New speech remains queued while retrying.
 The actual completion time depends on the selected model and network; five seconds is a scheduling
 window, not a latency guarantee.
 
@@ -58,16 +58,15 @@ instructions. An example response:
 }
 ```
 
-`keep` requires an empty bullet list; `publish` requires one to five bullets. Context is limited to
-2,000 characters and bullets to 1,500 total characters. At most one recommendation is accepted per
+`keep` requires an empty bullet list; `publish` requires one to three bullets. Context is limited to
+2,000 characters and bullets to 480 total characters. At most one recommendation is accepted per
 review mode, with a reason of at most 160 characters. Confidence is low/medium/high, representing the
-model's assessment of the recommendation, not a measured probability. Reviews are suggestions only.
+model's assessment of the recommendation, not a measured probability. Medium/high review recommendations may trigger automatic full reviews.
 Malformed or incomplete objects never reach the UI. Only a complete final object is decoded when a
 Cloud model prepends reasoning; the preamble and protocol JSON are not displayed.
 
 Long notes/transcripts are split into 600-character source pieces and evaluated in bounded batches
-(up to 1,200 new/previous-text characters, at most eight pieces). No transcript is discarded. Intermediate
-reconstruction output is held until that backlog has been read. Source edits arriving during a request
+(up to 1,200 new/previous-text characters, at most eight pieces). No transcript is discarded. Valid Quick output publishes during reconstruction; full review triggers wait until the backlog has been read. Source edits arriving during a request
 invalidate its result; later new pieces are kept pending without invalidating already-read pieces.
 
 The original transcript and published summaries are saved as before. Working evaluation context and
@@ -83,8 +82,8 @@ manual Refresh can summarize the complete stopped transcript. Original audio is 
   deletion, stale snapshots and malformed output.
 - App-hosted loop tests drive Start/Stop with synthetic recorder events, including Auto off, corrections,
   slow providers, deadlines, duplicate prevention, separate Deep work and saved-output recovery.
-- Native UI tests drive Start → accumulate → decision → repetition → revision → suggested review →
-  Generate → Stop → History, plus cancellation, partial speech and visible failure/retry. The fixture
+- Native UI tests drive Start → accumulate → decision → repetition → revision → automatic full review →
+  manual Generate → Stop → History, plus cancellation, partial speech and visible failure/retry. The fixture
   substitutes only speech and model transport and is excluded from device Release builds.
 - Credential-gated live tests use the real Cloud client with synthetic speech. They do not establish
   microphone recognition quality or physical-device latency.

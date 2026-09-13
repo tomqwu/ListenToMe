@@ -9,13 +9,13 @@ final class MobileAISettings {
         didSet { UserDefaults.standard.set(provider.rawValue, forKey: "mobileAIProvider"); quickSettingsChanged?() }
     }
     var model: String {
-        didSet { UserDefaults.standard.set(model, forKey: "mobileOllamaModel") }
+        didSet { UserDefaults.standard.set(model, forKey: "mobileOllamaModel"); quickSettingsChanged?() }
     }
     var quickModel: String {
         didSet { UserDefaults.standard.set(quickModel, forKey: "mobileOllamaQuickModel"); quickSettingsChanged?() }
     }
     var deepModel: String {
-        didSet { UserDefaults.standard.set(deepModel, forKey: "mobileOllamaDeepModel") }
+        didSet { UserDefaults.standard.set(deepModel, forKey: "mobileOllamaDeepModel"); quickSettingsChanged?() }
     }
     var correctTranscript: Bool {
         didSet {
@@ -155,7 +155,7 @@ final class MobileAISettings {
         configuration.timeoutIntervalForResource = 480
         return OllamaProvider(model: model, baseURL: OllamaCloudCatalog.baseURL, apiKey: key,
                               urlSession: URLSession(configuration: configuration),
-                              options: mode == .quick ? .init(thinking: false, temperature: 0, maximumTokens: 1_600) : .init())
+                              options: mode == .quick ? .init(thinking: false, temperature: 0, maximumTokens: 3_072) : .init())
     }
 
     func testConnection(for mode: MobileSummaryMode = .summary) async {

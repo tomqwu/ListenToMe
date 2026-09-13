@@ -19,6 +19,7 @@ final class MobileSession {
         didSet { UserDefaults.standard.set(autoQuick, forKey: "autoQuickSummary"); handleSummaryEvent(.automationChanged) }
     }
     let quickReader = MobileQuickReader()
+    let automaticReviews = AutomaticReviewCoordinator()
     private(set) var speechEventCount = 0
     private(set) var finalizedSpeechEventCount = 0
     private(set) var quickWakeCount = 0
@@ -48,7 +49,7 @@ final class MobileSession {
     var partial: TranscriptSegment?
     var history: [SessionRecord] = []
     var message: String?
-    var isSummarizing = false
+    var isSummarizing = false { didSet { synchronizeAutomaticReviews() } }
     let ai = MobileAISettings()
     var summaryDraft = ""
     private var summaryTask: Task<Void, Never>?
@@ -367,6 +368,12 @@ extension MobileSession {
     func scheduleAutoQuick() { handleSummaryEvent(.transcriptChanged) }
 
     private func handleSummaryEvent(_ event: MobileSummaryScheduler.Event) {
+        if event == .conversationChanged || event == .providerChanged { automaticReviews.reset() }
+        synchronizeAutomaticReviews()
+        if event == .automationChanged || event == .providerChanged,
+           !quickReader.context.hasChanges(quickPieces), !quickReader.isCatchingUp {
+            automaticReviews.offer(quickReader.recommendations, source: summarySource)
+        }
         if event == .timerFired { quickWakeCount += 1 }
         let snapshot = MobileSummaryScheduler.Snapshot(recording: state == .recording, automatic: autoQuick,
             pending: quickReader.context.hasChanges(quickPieces), reading: quickReader.isReading,
@@ -409,6 +416,7 @@ extension MobileSession {
             manualQuickError = nil
             let sessionID = id
             quickEvaluationCount += 1
+            let previousReads = quickReader.completedReads
             await quickReader.read(batch, provider: provider, isCurrent: { [weak self] in
                 guard let self, self.id == sessionID, self.autoQuick, self.state == .recording else { return false }
                 return self.quickReader.context.isCurrent(batch, pieces: self.quickPieces)
@@ -416,9 +424,37 @@ extension MobileSession {
                 guard let self else { return }
                 if self.quickSummary != output { self.quickSummary = output; self.save(announce: false) }
             })
+            if quickReader.completedReads > previousReads, !quickReader.isCatchingUp {
+                synchronizeAutomaticReviews()
+                automaticReviews.offer(quickReader.recommendations, source: summarySource)
+            }
         } catch {
             manualQuickError = "Quick Summary check failed: \(MobileAISettings.errorMessage(error)) Your previous summary is kept."
         }
+    }
+
+    private func synchronizeAutomaticReviews() {
+        automaticReviews.synchronize(enabled: autoQuick && state == .recording && automaticQuickAvailability == nil,
+            manualBusy: isSummarizing, source: summarySource, provider: { [weak self] mode in
+                guard let self, let mobileMode = MobileSummaryMode(rawValue: mode.rawValue) else { throw CancellationError() }
+                if let reason = self.summaryAvailability(for: mobileMode) { throw QuickSummaryError.message(reason) }
+                return try self.summaryProvider ?? self.ai.client(for: mobileMode)
+            }, apply: { [weak self] mode, output, source in
+                guard let self else { return }
+                if mode == .summary { self.summary = output } else { self.deepThought = output }
+                if AutomaticReviewCoordinator.normalized(self.summarySource) == source {
+                    self.quickReader.markReviewed(mode.rawValue)
+                }
+                self.save(announce: false)
+            })
+    }
+
+    func automaticReviewStatus(_ mode: MobileSummaryMode) -> String {
+        guard autoQuick else { return "Auto off · Generate manually." }
+        guard state == .recording else { return "Auto reviews run while listening. Generate is also available." }
+        if let reason = automaticQuickAvailability { return "Auto paused · " + reason }
+        guard let reviewMode = AutomaticReviewMode(rawValue: mode.rawValue) else { return autoQuickStatus }
+        return automaticReviews.status(reviewMode)
     }
 
     func cancelSummary() { summaryTask?.cancel() }
@@ -489,6 +525,9 @@ extension MobileSession {
             case .quick:
                 quickSummary = try QuickSummaryDecision.parse(quickResponse).summary ?? "No key takeaway yet."
             case .deep: deepThought = summaryDraft
+            }
+            if let reviewMode = AutomaticReviewMode(rawValue: mode.rawValue) {
+                automaticReviews.markManualCompletion(reviewMode, source: source)
             }
             if summarySource == source { quickReader.markReviewed(mode.rawValue) }
             save(announce: false)

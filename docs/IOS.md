@@ -1,7 +1,11 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.8.0 (16).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.10.0 (22).
+
+## iOS 1.10.0 (22)
+
+Auto now connects Quick evaluation to automatic Summary and Deep generation with the selected models. Medium/high recommendations run serially, coalesce pending context and preserve previous output on failure. Manual Generate takes priority and remains available after Stop. The UI describes event-triggered evaluation and shows full-review status. Quick allows enough bounded response room for GLM planning preambles, with a 30-second deadline; displayed recaps remain limited to three short bullets. See [the shared policy](SHARED-LIVE-SUMMARY.md#automatic-full-reviews-ios-1100) and [What to Test](../metadata/ios/en-CA/what-to-test-1.10.0.txt).
 
 ## iOS 1.8.0 (16)
 

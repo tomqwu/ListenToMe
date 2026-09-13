@@ -139,12 +139,14 @@ public struct QuickSummaryContext {
     Once a recap exists, publish for a useful new topic/question, meaningful detail or changed decision/action.
     Keep only the three most useful current takeaways, prioritizing the main point, decision and next action.
     Drop lower-priority detail as the conversation develops. Return the complete short recap, never additions.
-    Always include a summary review for a new or corrected explicit decision/action, even if Quick already
-    covers it: Summary is a separate full meeting record. Include deep for unresolved tradeoffs/conflicts.
+    Recommend summary for the first clear topic/question or meaningful new context, and for each new or corrected
+    decision/action, even if Quick covers it. Recommend deep for a substantive explanation/analysis question,
+    unresolved tradeoff, conflict or risk. A generic greeting or named test alone does not need Deep.
+    Recommendations with medium or high confidence may automatically run the corresponding full review.
     Confidence: high for an explicit trigger, medium for an inferred trigger, low when uncertain. It is
     an assessment, not a probability. Retain unresolved review needs; reviewsCompleted lists reviews
     already generated, which need fresh material before suggesting again. pendingReviews remain outstanding:
-    retain them unless completed or contradicted by current speech. Do not execute reviews.
+    retain them unless completed or contradicted by current speech. Return recommendations only; do not write the reviews here.
     Return exactly {"action":"keep" or "publish","context":"compact record, <=2000 characters",
     "bullets":["bullet"],"reviews":[{"mode":"summary" or "deep","confidence":"low" or "medium" or "high",
     "reason":"grounded reason, <=160 characters"}]}.

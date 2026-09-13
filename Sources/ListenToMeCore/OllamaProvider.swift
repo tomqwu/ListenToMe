@@ -47,7 +47,7 @@ public struct OllamaProvider: LLMProvider {
 
     public static func requestBody(model: String, request: LLMRequest, options: OllamaGenerationOptions = .init()) -> Data {
         let options = request.purpose == .quickEvaluation
-            ? OllamaGenerationOptions(thinking: false, temperature: 0, maximumTokens: 1600) : options
+            ? OllamaGenerationOptions(thinking: false, temperature: 0, maximumTokens: 3072) : options
         var messages: [[String: String]] = [["role": "system", "content": request.system]]
         messages += request.messages.map { ["role": $0.role, "content": $0.content] }
         var body: [String: Any] = ["model": model, "messages": messages, "stream": true]
