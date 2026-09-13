@@ -51,9 +51,9 @@ iOS Status details shows received speech callbacks, final callbacks, fired sched
 
 Physical-device diagnostics showed three completed reads, no unread input and no error despite an empty recap. A live GLM-5.3-flash replay reproduced the old prompt withholding both “test for Azure Cloud” and “Help me understand the APM management.” The revised shared prompt treats a named topic or substantive question as sufficient for the first recap, without requiring a decision. It summarizes questions without answering them or expanding ambiguous acronyms. Pure greetings and generic subject-free microphone tests can still return keep; repetition already covered by the recap remains unchanged. Empty successful reads now have an explicit “No takeaway yet” status.
 
-## Automatic full reviews (1.5.0 / iOS 1.10.0)
+## Automatic full reviews (iOS 1.10.0)
 
-`AutomaticReviewCoordinator` is shared by both platforms. After a completed Quick evaluation catches up with input, medium/high recommendations enqueue Summary for meaningful context and Deep for substantive questions, risks or tradeoffs. Each uses its selected model. Auto remains opt-in and manual Generate remains available.
+`AutomaticReviewCoordinator` is shared by both platforms. The macOS binary release is deferred at the maintainer’s request. After a completed Quick evaluation catches up with input, medium/high recommendations enqueue Summary for meaningful context and Deep for substantive questions, risks or tradeoffs. Each uses its selected model. Auto remains opt-in and manual Generate remains available.
 
 Full reviews run serially while Quick can continue evaluating new speech. Summary has a 30-second minimum between starts, Deep 60 seconds; the first eligible review starts immediately. Pending work coalesces to the latest context. These are one-shot deadlines for queued work, never periodic model polling. Unchanged input cannot regenerate a completed review.
 

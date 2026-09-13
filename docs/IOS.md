@@ -5,7 +5,7 @@ The first iOS version is a standalone app, separate from the macOS release. It r
 
 ## iOS 1.10.0 (22)
 
-Auto now connects Quick evaluation to automatic Summary and Deep generation with the selected models. Medium/high recommendations run serially, coalesce pending context and preserve previous output on failure. Manual Generate takes priority and remains available after Stop. The UI describes event-triggered evaluation and shows full-review status. See [the shared policy](SHARED-LIVE-SUMMARY.md#automatic-full-reviews-150--ios-1100) and [What to Test](../metadata/ios/en-CA/what-to-test-1.10.0.txt).
+Auto now connects Quick evaluation to automatic Summary and Deep generation with the selected models. Medium/high recommendations run serially, coalesce pending context and preserve previous output on failure. Manual Generate takes priority and remains available after Stop. The UI describes event-triggered evaluation and shows full-review status. See [the shared policy](SHARED-LIVE-SUMMARY.md#automatic-full-reviews-ios-1100) and [What to Test](../metadata/ios/en-CA/what-to-test-1.10.0.txt).
 
 ## iOS 1.8.0 (16)
 

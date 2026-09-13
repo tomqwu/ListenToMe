@@ -35,7 +35,7 @@ The normal cadence is five seconds between request starts. A slow request is fol
 read once finished if its cooldown has elapsed. Speech correction gets up to two extra seconds relative
 to the batch deadline, without indefinitely postponing Quick under continuous speech. There is no
 repeating idle polling loop and no Cloud call for unchanged input. Summary and Deep requests have their
-own shared serial automatic coordinator and can run alongside the single automatic Quick evaluator. Manual Generate takes priority; see [full-review scheduling](SHARED-LIVE-SUMMARY.md#automatic-full-reviews-150--ios-1100).
+own shared serial automatic coordinator and can run alongside the single automatic Quick evaluator. Manual Generate takes priority; see [full-review scheduling](SHARED-LIVE-SUMMARY.md#automatic-full-reviews-ios-1100).
 
 Failures retry at 10, 20, 40, then at most 60 seconds with the default cadence. Each evaluator call has
 a 15-second deadline and a 16 KiB streamed-response cap. New speech remains queued while retrying.
