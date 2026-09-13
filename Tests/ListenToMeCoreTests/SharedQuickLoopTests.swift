@@ -66,6 +66,19 @@ final class SharedQuickLoopTests: XCTestCase {
         reader.clearError(); reader.reset(); XCTAssertEqual(reader.completedReads, 0)
     }
 
+    func testBacklogPublishesFirstUsefulResultBeforeAllBatchesFinish() async throws {
+        let reader = QuickSummaryReader()
+        let pieces = (0..<12).map { QuickSummaryContext.Piece(id: "s\($0)", text: String(repeating: "Meeting detail. ", count: 40)) }
+        let batch = try XCTUnwrap(reader.context.batch(pieces, summary: ""))
+        XCTAssertTrue(batch.hasMore)
+        var output = ""
+        await reader.read(batch, provider: MockLLMProvider(id: "first", deltas: [publish]),
+                          isCurrent: { true }, apply: { output = $0 })
+        XCTAssertEqual(output, "- Sarah confirms Monday.", "Do not hide a successful recap behind the remaining backlog")
+        XCTAssertTrue(reader.context.hasChanges(pieces), "Remaining speech must still be evaluated")
+        XCTAssertTrue(reader.recommendations.isEmpty, "Full review suggestions wait for the complete context")
+    }
+
     func testNetworkFailureKeepsSummaryAndUnreadInputUntilRetrySucceeds() async throws {
         for (code, message) in [(URLError.networkConnectionLost, "internet connection was lost"),
                                 (.notConnectedToInternet, "offline"), (.timedOut, "timed out")] {

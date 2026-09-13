@@ -61,6 +61,12 @@ final class MobileQuickLiveTests: XCTestCase {
         XCTAssertTrue(session.deepThought.isEmpty, "Recommendations do not run Deep automatically")
         XCTAssertFalse(session.quickSummary.contains("\"action\""))
         await session.stop()
+        await session.summarize(mode: .quick)
+        XCTAssertNil(session.quickSummaryError)
+        XCTAssertTrue(session.quickSummary.contains("Peter"))
+        XCTAssertFalse(session.quickSummary.contains("\"action\""))
+        XCTAssertLessThanOrEqual(session.quickSummary.count, 490)
+        XCTAssertLessThanOrEqual(session.quickSummary.split(separator: "\n").count, 3)
         XCTAssertEqual(MobileSession(storageDirectory: root).quickSummary, session.quickSummary)
         XCTAssertTrue(session.markdown.contains("Peter"))
     }

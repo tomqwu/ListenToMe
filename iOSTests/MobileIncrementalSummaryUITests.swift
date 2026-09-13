@@ -88,11 +88,24 @@ final class MobileIncrementalSummaryUITests: XCTestCase {
         app.buttons["Stop listening"].tap()
     }
 
-    private func launch(slow: Bool = false) -> XCUIApplication {
+    func testLongConversationShowsQuickBeforeBacklogFinishesWithoutRefresh() {
+        let app = launch(backlog: true)
+        app.buttons["Start listening"].tap()
+        revealQuick(app)
+        wait(app.staticTexts["output-quick"], contains: "Monday")
+        XCTAssertTrue(app.staticTexts["output-quick"].label.contains("Sarah"))
+        XCTAssertTrue(app.staticTexts["autoQuickStatus"].label.contains("Catching up"))
+        XCTAssertLessThanOrEqual(app.staticTexts["output-quick"].label.count, 480)
+        capture(app, "Quick visible while long conversation is still being processed")
+        app.buttons["Stop listening"].tap()
+    }
+
+    private func launch(slow: Bool = false, backlog: Bool = false) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["--incremental-summary-fixture", "-autoQuickSummary", "YES",
                                "-mobileAIProvider", "apple", "-mobileCorrectTranscript", "NO"]
         if slow { app.launchArguments.append("--incremental-slow-fixture") }
+        if backlog { app.launchArguments.append("--incremental-backlog-fixture") }
         app.launch()
         return app
     }

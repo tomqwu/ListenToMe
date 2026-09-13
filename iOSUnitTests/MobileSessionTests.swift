@@ -116,7 +116,6 @@ final class MobileSessionTests: XCTestCase {
         restored.models = [.init(name: "summary-model"), .init(name: "quick-model")]
         XCTAssertNil(restored.availability(for: .quick))
         XCTAssertNotNil(restored.availability(for: .deep))
-        XCTAssertTrue(MobileSummaryMode.quick.instructions.contains("five"))
         XCTAssertTrue(MobileSummaryMode.deep.instructions.contains("tradeoffs"))
     }
 }

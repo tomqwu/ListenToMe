@@ -30,7 +30,7 @@ public struct QuickSummaryDecision: Decodable, Sendable {
                   result.reviews.allSatisfy({ ["summary", "deep"].contains($0.mode)
                       && ["low", "medium", "high"].contains($0.confidence)
                       && !$0.reason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && $0.reason.count <= 160 }),
-                  result.bullets.count <= 5, result.bullets.joined().count <= 1_500,
+                  result.bullets.count <= 3, result.bullets.joined().count <= 480,
                   result.bullets.allSatisfy({ !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !$0.contains("\n") }),
                   result.action == "keep" ? result.bullets.isEmpty : !result.bullets.isEmpty else { throw invalidResponse }
             return result
@@ -52,7 +52,7 @@ public final class QuickSummaryReader {
     public private(set) var recommendations: [QuickSummaryDecision.Review] = []
     public private(set) var reviewsCompleted: [String] = []
     private var reviewRevisions: [String: Int] = [:]
-    private var pendingOutput: String?
+    public private(set) var isCatchingUp = false
     private var task: Task<Void, Never>?
     private var generation = UUID()
 
@@ -63,7 +63,7 @@ public final class QuickSummaryReader {
 
     public func reset() {
         cancel(); context = QuickSummaryContext(); error = nil; unchanged = false; completedReads = 0; failures = 0
-        recommendations = []; reviewsCompleted = []; reviewRevisions = [:]; pendingOutput = nil
+        recommendations = []; reviewsCompleted = []; reviewRevisions = [:]; isCatchingUp = false
     }
 
     public func markReviewed(_ mode: String) {
@@ -89,6 +89,7 @@ public final class QuickSummaryReader {
                 try Task.checkCancellation()
                 guard generation == token, isCurrent() else { return }
                 context.accept(batch, memory: decision.context)
+                isCatchingUp = batch.hasMore
                 error = nil; failures = 0; completedReads += 1
                 // A manual review may finish during this evaluation. Do not resurrect its stale suggestion.
                 let completedDuringRead = Set(reviewRevisions.keys.filter { reviewRevisions[$0] != revisionsBeforeRead[$0] })
@@ -97,10 +98,9 @@ public final class QuickSummaryReader {
                     switch action {
                     case .keepQuick:
                         unchanged = true
-                        if !batch.hasMore, let output = pendingOutput { apply(output); pendingOutput = nil; unchanged = false }
                     case .publishQuick(let output):
                         unchanged = false
-                        if batch.hasMore { pendingOutput = output } else { apply(output); pendingOutput = nil }
+                        apply(output)
                     case .suggestReview(let review):
                         if !batch.hasMore, !completedDuringRead.contains(review.mode) { recommendations.append(review) }
                     }

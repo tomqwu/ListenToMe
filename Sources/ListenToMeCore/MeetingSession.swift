@@ -531,6 +531,7 @@ extension MeetingSession {
         guard aiEnabled else { return "Auto paused · AI is off" }
         if let reason = providerAvailability(models[.quick] ?? "") { return "Auto paused · " + reason }
         if let error = quickReader.error { return error }
+        if quickReader.isCatchingUp { return "Catching up · Recap covers speech processed so far." }
         if quickReader.isReading { return "Checking new completed speech…" }
         return isRunning ? "Listening for meaningful changes" : "Auto checks while listening"
     }
