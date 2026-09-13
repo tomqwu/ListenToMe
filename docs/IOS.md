@@ -259,3 +259,7 @@ Save confirms local History storage beside the bottom controls. Default Share se
 ## iOS 1.9.3 (20)
 
 Automatic Quick Summary now evaluates substantial live recognition text at the shared five-second batching interval, even before Speech marks a phrase final. Short fragments wait for more words; silence does not poll. Final recognition replaces provisional wording. Status details exposes speech event, timer and model-read counts for device diagnosis without including transcript text. [What to Test](../metadata/ios/en-CA/what-to-test-1.9.3.txt).
+
+## iOS 1.9.4 (21)
+
+Quick publishes its first short recap for a clear topic, problem, tentative proposal or substantive question without waiting for a decision. Questions are summarized, not answered, and ambiguous acronyms are preserved. Repetition still avoids unnecessary changes. Empty results say “Speech checked · No takeaway yet,” including after recording stops. [What to Test](../metadata/ios/en-CA/what-to-test-1.9.4.txt).

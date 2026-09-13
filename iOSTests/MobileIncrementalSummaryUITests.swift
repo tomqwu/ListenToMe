@@ -7,8 +7,8 @@ final class MobileIncrementalSummaryUITests: XCTestCase {
         app.buttons["Start listening"].tap()
         wait(app.staticTexts["quickReadCount"], contains: "Checks: 1")
         let output = app.staticTexts["output-quick"]
-        XCTAssertFalse(output.label.contains("Friday"), "A tentative discussion should accumulate without publishing")
-        wait(app.staticTexts["autoQuickStatus"], contains: "Summary unchanged")
+        XCTAssertFalse(output.label.contains("Friday"), "A greeting should be checked without publishing")
+        wait(app.staticTexts["autoQuickStatus"], contains: "Speech checked · No takeaway yet")
         speech("speechConcern", app: app)
         wait(app.staticTexts["quickReadCount"], contains: "Checks: 2")
         XCTAssertFalse(output.label.contains("QA"))
@@ -65,6 +65,20 @@ final class MobileIncrementalSummaryUITests: XCTestCase {
         row.tap()
         wait(output, contains: "Peter")
         XCTAssertEqual(output.label, corrected, "The last published result survives opening History")
+    }
+
+    func testFirstTopicAndQuestionPublishWithoutWaitingForDecision() {
+        let app = launch()
+        app.buttons["Start listening"].tap()
+        wait(app.staticTexts["autoQuickStatus"], contains: "Speech checked · No takeaway yet")
+        speech("speechTopic", app: app)
+        wait(app.staticTexts["output-quick"], contains: "Azure")
+        speech("speechQuestion", app: app)
+        wait(app.staticTexts["output-quick"], contains: "APM")
+        XCTAssertLessThanOrEqual(app.staticTexts["output-quick"].label.count, 480)
+        capture(app, "First topic and unanswered question are visible without any decision")
+        app.buttons["Stop listening"].tap()
+        XCTAssertTrue(app.staticTexts["output-quick"].label.contains("APM"))
     }
 
     func testShortPartialAndSilenceDoNotPollAndAutoCanStopAnInFlightRead() {

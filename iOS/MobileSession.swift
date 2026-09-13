@@ -426,7 +426,12 @@ extension MobileSession {
     var autoQuickStatus: String {
         guard autoQuick else { return "Auto off · Turn on Auto for live updates, or tap Refresh." }
         if generatingMode == .quick { return "Updating Quick Summary…" }
-        if state != .recording { return "Auto on · Checks new speech while you listen." }
+        if state != .recording {
+            if quickReader.completedReads > 0, quickSummary.isEmpty, !quickReader.context.hasChanges(quickPieces) {
+                return "Speech checked · No takeaway yet. Start listening to continue."
+            }
+            return "Auto on · Checks new speech while you listen."
+        }
         if quickReader.isReading {
             return quickReader.isCatchingUp ? "Catching up · Recap covers speech processed so far." : "Listening · Checking new speech…"
         }
@@ -435,6 +440,7 @@ extension MobileSession {
         if quickReader.isCatchingUp { return "Catching up · Recap covers speech processed so far." }
         if !quickReader.context.hasChanges(quickPieces) {
             if quickReader.completedReads == 0 { return "Auto on · Waiting for more speech." }
+            if quickSummary.isEmpty { return "Speech checked · No takeaway yet." }
             return quickReader.unchanged ? "Up to date · Summary unchanged." : "Up to date · Listening for new information."
         }
         return "Auto on · New speech is waiting for the next check."

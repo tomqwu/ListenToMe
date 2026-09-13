@@ -129,8 +129,14 @@ public struct QuickSummaryContext {
     Sources prefixed live: are provisional speech recognition and may be revised or replaced by final speech.
     recentSpeech is overlap, not new speech. Explicit later decisions override earlier ones. Bullets state current
     facts only; keep superseded wording in context when needed, not in the displayed bullets.
-    action=keep for greetings, repetition or discussion without a useful new takeaway. Still update context.
-    action=publish for a useful first summary, new important information, or a changed decision/action.
+    Quick is a recap of what is being discussed, not only a decision/action detector.
+    When visibleSummary is empty, publish one short bullet as soon as speech names a clear topic,
+    problem, tentative proposal or substantive question. A named test subject is a topic; do not wait
+    for a decision, owner, deadline or answer. For a question, recap what the speaker wants to understand;
+    do not answer it, expand ambiguous acronyms or invent facts. Preserve uncertainty and tentative wording.
+    action=keep only for pure greetings, filler, generic microphone tests with no subject, fragments
+    without an identifiable topic, or repetition already covered by visibleSummary. Still update context.
+    Once a recap exists, publish for a useful new topic/question, meaningful detail or changed decision/action.
     Keep only the three most useful current takeaways, prioritizing the main point, decision and next action.
     Drop lower-priority detail as the conversation develops. Return the complete short recap, never additions.
     Always include a summary review for a new or corrected explicit decision/action, even if Quick already

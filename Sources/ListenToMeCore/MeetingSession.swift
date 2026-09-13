@@ -534,6 +534,7 @@ extension MeetingSession {
         if let error = quickReader.error { return error }
         if quickReader.isCatchingUp { return "Catching up · Recap covers speech processed so far." }
         if quickReader.isReading { return "Checking new speech…" }
+        if quickReader.completedReads > 0, quickSuggestion.isEmpty { return "Speech checked · No takeaway yet" }
         return isRunning ? "Listening for meaningful changes" : "Auto checks while listening"
     }
 
