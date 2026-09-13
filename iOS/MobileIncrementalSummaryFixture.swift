@@ -25,6 +25,10 @@ struct MobileIncrementalSummaryFixture: View {
         VStack(spacing: 0) {
             HStack {
                 Menu("Test speech") {
+                    Button("Name topic") { recorder.send("Uh, this is a test for Azure Cloud.") }
+                        .accessibilityIdentifier("speechTopic")
+                    Button("Ask question") { recorder.send("Help me understand the APM management.") }
+                        .accessibilityIdentifier("speechQuestion")
                     Button("Add concern") { recorder.send("QA needs more time before we choose a date.") }
                         .accessibilityIdentifier("speechConcern")
                     Button("Live decision") { recorder.send("We agree delivery on Monday. Sarah will confirm.", final: false) }
@@ -57,7 +61,7 @@ private final class IncrementalFixtureRecorder: MobileRecording {
     func start(locale: Locale, onSegment: @escaping @MainActor (TranscriptSegment) -> Void,
                onFailure: @escaping @MainActor (String) -> Void) async throws {
         receive = onSegment
-        send("Friday is only a proposal; no decision yet.")
+        send("Hello everyone. Good morning.")
     }
     func send(_ text: String, final: Bool = true) {
         receive?(.init(source: .you, text: text, isFinal: final, start: Double(index * 5), end: Double(index * 5 + 4)))
@@ -83,7 +87,9 @@ private struct IncrementalFixtureProvider: LLMProvider {
                         from: Data((request.messages.first?.content ?? "").utf8))
                     let speech = input.changes.map(\.text).joined(separator: " ")
                     let bullets: [String]
-                    if speech.contains("周二") { bullets = ["周二交付，Peter负责确认。"] }
+                    if speech.contains("APM") { bullets = ["Discussing Azure Cloud.", "Question: understanding APM management."] }
+                    else if speech.contains("Azure") { bullets = ["Discussing Azure Cloud."] }
+                    else if speech.contains("周二") { bullets = ["周二交付，Peter负责确认。"] }
                     else if speech.contains("We agree delivery") { bullets = ["Delivery agreed for Monday.", "Sarah will confirm."] }
                     else { bullets = [] }
                     var reviews: [[String: String]] = []

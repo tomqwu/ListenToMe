@@ -31,13 +31,17 @@ final class MobileQuickLoopTests: XCTestCase {
         session = nil; provider = nil; recorder = nil
     }
 
-    func testRecordingAccumulatesKeepPublishesDecisionAndPreservesOutputOnRepetition() async throws {
+    func testRecordingChecksGreetingPublishesDecisionAndPreservesOutputOnRepetition() async throws {
         session.start()
         try await wait { self.session.state == .recording }
-        recorder.send("Friday is a proposal.")
+        recorder.send("Hello everyone.")
         try await wait { self.session.quickReader.completedReads == 1 }
         XCTAssertEqual(session.quickSummary, "")
-        XCTAssertTrue(session.autoQuickStatus.contains("Summary unchanged"))
+        XCTAssertTrue(session.autoQuickStatus.contains("Speech checked · No takeaway yet"))
+        await session.stop()
+        XCTAssertTrue(session.autoQuickStatus.contains("Speech checked · No takeaway yet"))
+        session.start()
+        try await wait { self.session.state == .recording }
         recorder.send("Monday is agreed. Sarah confirms.")
         try await wait { self.session.quickReader.completedReads == 2 }
         let decision = session.quickSummary
@@ -47,7 +51,7 @@ final class MobileQuickLoopTests: XCTestCase {
         XCTAssertEqual(session.quickSummary, decision)
         XCTAssertTrue(session.autoQuickStatus.contains("Summary unchanged"))
         let inputs = await provider.inputs()
-        XCTAssertEqual(inputs[1].runningContext, "Friday is a proposal.")
+        XCTAssertEqual(inputs[1].runningContext, "Hello everyone.")
         XCTAssertEqual(inputs[1].changes.map(\.text), ["Monday is agreed. Sarah confirms."])
         try await Task.sleep(for: .milliseconds(250))
         let count = await provider.count()
@@ -79,7 +83,7 @@ final class MobileQuickLoopTests: XCTestCase {
         session.quickReader.markReviewed(.summary)
         await provider.holdNextQuick()
         recorder.send("Tuesday is now agreed.")
-        try await wait { self.session.quickReader.isReading }
+        try await wait { await self.provider.hasHeldQuick() }
         session.quickReader.markReviewed(.summary)
         await provider.finishHeldQuick()
         try await wait { self.session.quickReader.completedReads == 2 }
@@ -127,7 +131,7 @@ final class MobileQuickLoopTests: XCTestCase {
         session.start()
         try await wait { self.session.state == .recording }
         recorder.send("Monday is agreed.")
-        try await wait { self.session.quickReader.isReading }
+        try await wait { await self.provider.hasHeldQuick() }
         recorder.send("Sarah confirms.")
         recorder.send("Peter helps.")
         try await Task.sleep(for: .milliseconds(150))
@@ -152,7 +156,7 @@ final class MobileQuickLoopTests: XCTestCase {
         session.start()
         try await wait { self.session.state == .recording }
         recorder.send("Monday is agreed.")
-        try await wait { self.session.quickReader.isReading }
+        try await wait { await self.provider.hasHeldQuick() }
         session.autoQuick = false
         await provider.finishHeldQuick()
         try await Task.sleep(for: .milliseconds(150))
@@ -162,7 +166,7 @@ final class MobileQuickLoopTests: XCTestCase {
         try await wait { self.session.quickReader.completedReads == 1 }
         await provider.holdNextQuick()
         recorder.send("A late decision.")
-        try await wait { self.session.quickReader.isReading }
+        try await wait { await self.provider.hasHeldQuick() }
         await session.stop()
         session.newConversation()
         await provider.finishHeldQuick()
@@ -193,7 +197,7 @@ final class MobileQuickLoopTests: XCTestCase {
         session.start()
         try await wait { self.session.state == .recording }
         recorder.send("Sarah confirms.")
-        try await wait { self.session.quickReader.isReading }
+        try await wait { await self.provider.hasHeldQuick() }
         session.segments[0] = session.segments[0].withCorrection("Peter confirms.", model: "test")
         await provider.finishHeldQuick()
         try await wait { self.session.quickReader.completedReads == 1 }
@@ -233,10 +237,11 @@ final class MobileQuickLoopTests: XCTestCase {
         await provider.finishAll()
     }
 
-    private func wait(_ predicate: () -> Bool) async throws {
+    private func wait(_ predicate: () async -> Bool) async throws {
         let deadline = ContinuousClock.now + .seconds(3)
-        while !predicate(), ContinuousClock.now < deadline { try await Task.sleep(for: .milliseconds(10)) }
-        XCTAssertTrue(predicate())
+        while !(await predicate()), ContinuousClock.now < deadline { try await Task.sleep(for: .milliseconds(10)) }
+        let satisfied = await predicate()
+        XCTAssertTrue(satisfied)
     }
 }
 
@@ -269,6 +274,7 @@ private actor QuickTestProvider: LLMProvider {
     func count() -> Int { captured.count }
     func maxQuick() -> Int { maximum }
     func holdNextQuick() { hold = true }
+    func hasHeldQuick() -> Bool { held != nil }
     func failNextQuick() { fail = true }
     func finishHeldQuick() { held?.yield(heldText); held?.finish(); held = nil }
     func finishAll() { finishHeldQuick(); deep?.finish(); deep = nil }
@@ -280,7 +286,7 @@ private actor QuickTestProvider: LLMProvider {
         let input = try? JSONDecoder().decode(MobileQuickContext.Input.self, from: Data((request.messages.first?.content ?? "").utf8))
         if let input { captured.append(input) }
         let text = input?.changes.map(\.text).filter { !$0.isEmpty }.joined(separator: " ") ?? ""
-        let keep = text == "Friday is a proposal." || text == "Yes, understood."
+        let keep = text == "Hello everyone." || text == "Yes, understood."
         let data = try? JSONSerialization.data(withJSONObject: ["reviews": reviews, "action": keep ? "keep" : "publish",
             "context": text, "bullets": keep ? [] : [text]])
         let response = String(decoding: data ?? Data(), as: UTF8.self)

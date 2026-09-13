@@ -1,0 +1,5 @@
+Quick now recaps a clear topic or question without waiting for a decision, owner or deadline.
+
+Enable Auto and say “This is a test for Azure Cloud,” then “Help me understand the APM management.” Expect a short recap of the topic and question. It should not invent an answer or expand APM. Repeating the same question should keep the recap unchanged.
+
+Greetings alone can leave the card empty, but the status now says “Speech checked · No takeaway yet,” including after stopping. Status details continues to show event and model-read counts.
