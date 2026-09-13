@@ -19,6 +19,25 @@ final class MobileMarkdownTests: XCTestCase {
         XCTAssertTrue(String(MarkdownText.inlineAttributed("- **Decision").characters).contains("Decision"))
     }
 
+    func testReadableShareRemovesMarkupButPreservesCodeLinksAndSavedContent() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let session = MobileSession(storageDirectory: root)
+        session.title = "Planning"
+        session.notes = "## Decision\n- **Alex** owns *Friday*.\n[Checklist](https://example.com/check)\n```swift\nlet tag = \"#literal\"\n```"
+        session.quickSummary = "- **Alex** confirms Friday."
+        XCTAssertTrue(session.save())
+        let text = session.readableShareText
+        XCTAssertFalse(text.contains("## Decision"))
+        XCTAssertFalse(text.contains("**Alex**"))
+        XCTAssertFalse(text.contains("```"))
+        XCTAssertTrue(text.contains("Alex owns Friday."))
+        XCTAssertTrue(text.contains("https://example.com/check"))
+        XCTAssertTrue(text.contains("let tag = \"#literal\""))
+        XCTAssertEqual(text, MobileSession.readableShareText(for: try XCTUnwrap(session.history.first)))
+        XCTAssertTrue(session.markdown.contains("**Alex**"), "Markdown export remains available")
+    }
+
     func testRenderingDoesNotChangeSavedOrExportedMarkdown() throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }

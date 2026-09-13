@@ -42,7 +42,7 @@ struct MobileHistoryView: View {
                 Text("This removes the transcript, notes, attachments and all AI outputs from this device. It cannot be undone.")
             }
             .sheet(item: $sharing) { record in
-                ConversationShareSheet(text: MobileSession.markdown(for: record))
+                ConversationShareSheet(text: MobileSession.readableShareText(for: record))
                     .presentationDetents([.medium, .large])
             }
             .scrollContentBackground(.hidden).background(MobileStyle.canvas)
