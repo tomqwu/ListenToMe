@@ -1,5 +1,12 @@
 # ListenToMe repository workflow
 
+## Local validation policy
+
+Run all tests on the local Mac using `make validate-local`, including core coverage, iOS simulator
+unit/UI tests, release-helper tests and the real Ollama contract. GitHub Actions builds apps only;
+never add or run tests there. Record local results before merging or publishing. Installed-app
+GUI/audio acceptance remains required separately.
+
 ## Standing iOS release instruction
 
 Every iOS app fix or feature includes TestFlight publication by default, including work merged by

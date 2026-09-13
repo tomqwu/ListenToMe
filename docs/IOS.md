@@ -220,7 +220,7 @@ icon and the installed Home Screen icon. Repository metadata files alone do not 
 
 Run lint, shared core tests/coverage, the iOS build and UI tests, and a macOS build to protect the
 existing product. The simulator UI tests verify the unsupported-speech explanation without a microphone prompt, retry, saving notes, New, History and restoration across app restart.
-Hosted CI builds both apps and runs the iOS UI and app-hosted tests. Simulator builds use ad-hoc signing so Keychain tests exercise actual storage. The credential-dependent live cloud test is opt-in and skips on CI. Before marking iOS production-ready, test on a physical iPhone/iPad:
+GitHub Actions builds both apps only. All tests run on the local Mac with `make validate-local`, including iOS UI and app-hosted tests. Simulator builds use ad-hoc signing so Keychain tests exercise actual storage. The credential-dependent live cloud test is opt-in and skips unless configured locally. Before marking iOS production-ready, test on a physical iPhone/iPad:
 
 1. First-use microphone denial, retry after granting, and unsupported language/model errors.
 2. Model installation, then at least two minutes of real speech with live/final transcript text.

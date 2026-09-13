@@ -81,8 +81,8 @@ Read `AGENTS.md`, inspect `git status`, and fetch the merged branch. Preserve un
 clean checkout/worktree if needed. Inspect the new PR's code, test evidence, and hosted CI. Reuse
 valid evidence for the exact source rather than rerunning tests solely because the agent changed.
 Run missing relevant checks: lint, core coverage, iOS build/UI tests and macOS build. Exercise the
-changed user flow locally and inspect its rendered UI; credential-dependent tests skip on CI and
-must be run locally when relevant. Never place credentials in source, logs, fixtures committed to Git,
+changed user flow locally and inspect its rendered UI; all tests run locally with `make validate-local`; GitHub Actions builds apps only.
+Credential-dependent tests must be configured locally when relevant. Never place credentials in source, logs, fixtures committed to Git,
 or the app bundle. Do not label simulator tests as physical-device validation.
 
 In `project.yml`, keep the app and share extension's `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION`
