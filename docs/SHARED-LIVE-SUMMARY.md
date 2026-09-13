@@ -14,8 +14,8 @@ wording. Duplicate final segment IDs use their latest revision. Stop, Auto off a
 changes cancel obsolete work. Auto is opt-in on both platforms.
 
 `LLMRequest.Purpose.quickEvaluation` gives both apps identical Ollama generation controls:
-thinking disabled, temperature zero and 1600 output tokens. The shared reader validates the
-same final decision shape and applies a 15-second/16-KiB response limit. Local Ollama and
+thinking disabled, temperature zero and 3072 output tokens. The shared reader validates the
+same final decision shape and applies a 30-second/16-KiB response limit. Local Ollama and
 Ollama Cloud use that contract; a device does not need Apple Intelligence for either.
 
 Ollama is the default provider on both platforms. Existing explicit provider/model choices are
@@ -60,3 +60,5 @@ Full reviews run serially while Quick can continue evaluating new speech. Summar
 Stop, Auto off, provider changes and conversation changes cancel automatic work. Manual generation takes priority and suppresses older queued work it covers. Appended speech can follow an in-flight snapshot; wording revisions invalidate stale output. Complete valid responses replace previous output atomically. Failures preserve previous output and retry at most three attempts, with 5/10-second backoff. Requests time out after 60 seconds; input is capped at 60,000 normalized characters and output at 100,000 characters. Provider unavailability is shown without silently switching models.
 
 The panels report waiting, queued, updating, up-to-date or failure status. The visible Auto label now describes all summaries, and explanatory text correctly describes speech-triggered evaluation with brief batching.
+
+Live GLM testing exposed planning text despite `think: false`, exhausting the former 1,600-token budget halfway through valid final JSON. Quick now allows 3,072 generated tokens and a 30-second deadline while retaining the 16-KiB response cap and three-bullet/480-character display limit. Planning is never displayed; truncated JSON remains rejected. This budget change prevents the observed truncation without using unsupported Cloud structured-output options.

@@ -128,7 +128,7 @@ public final class QuickSummaryReader {
     }
 
     public static func evaluate(_ request: LLMRequest, provider: any LLMProvider,
-                         timeout: Duration = .seconds(15)) async throws -> QuickSummaryDecision {
+                         timeout: Duration = .seconds(30)) async throws -> QuickSummaryDecision {
         try await withThrowingTaskGroup(of: QuickSummaryDecision.self) { group in
             group.addTask {
                 var response = ""

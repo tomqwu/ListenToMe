@@ -38,7 +38,7 @@ repeating idle polling loop and no Cloud call for unchanged input. Summary and D
 own shared serial automatic coordinator and can run alongside the single automatic Quick evaluator. Manual Generate takes priority; see [full-review scheduling](SHARED-LIVE-SUMMARY.md#automatic-full-reviews-ios-1100).
 
 Failures retry at 10, 20, 40, then at most 60 seconds with the default cadence. Each evaluator call has
-a 15-second deadline and a 16 KiB streamed-response cap. New speech remains queued while retrying.
+a 30-second deadline and a 16 KiB streamed-response cap. New speech remains queued while retrying.
 The actual completion time depends on the selected model and network; five seconds is a scheduling
 window, not a latency guarantee.
 

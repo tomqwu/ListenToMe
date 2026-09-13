@@ -16,8 +16,21 @@ final class SharedQuickLoopTests: XCTestCase {
             model: "flash", request: batch.request, options: .init(thinking: true, maximumTokens: 9000))) as? [String: Any])
         XCTAssertEqual(body["think"] as? Bool, false)
         let options = try XCTUnwrap(body["options"] as? [String: Any])
-        XCTAssertEqual(options["num_predict"] as? Int, 1600)
+        XCTAssertEqual(options["num_predict"] as? Int, 3072)
         XCTAssertEqual(options["temperature"] as? Int, 0)
+    }
+
+    func testLongPlanningPreambleNeedsCompleteFinalDecisionAndNeverReachesDisplay() async throws {
+        let request = try QuickSummaryContext.manualRequest(source: "Sarah confirms Monday.")
+        let planning = String(repeating: "Internal planning. ", count: 420)
+        let result = try await QuickSummaryReader.evaluate(request,
+            provider: MockLLMProvider(id: "flash", deltas: [planning, publish]))
+        XCTAssertEqual(result.summary, "- Sarah confirms Monday.")
+        do {
+            _ = try await QuickSummaryReader.evaluate(request,
+                provider: MockLLMProvider(id: "flash", deltas: [planning, String(publish.dropLast(10))]))
+            XCTFail("A token-truncated final decision must not publish planning or partial JSON")
+        } catch { XCTAssertTrue(error is QuickSummaryError) }
     }
 
     func testMacEventLoopRoutesRecommendationsToFullModelsAndDoesNotPoll() async throws {
