@@ -4,7 +4,8 @@ import XCTest
 final class MobileTranscriptUITests: XCTestCase {
     func testCompactTranscriptFollowsPartialAndFinalTextButRespectsReadingHistory() {
         let app = XCUIApplication()
-        app.launchArguments = ["--transcript-scroll-fixture"]
+        // A preceding correction test must not add a setup banner to this geometry fixture.
+        app.launchArguments = ["--transcript-scroll-fixture", "-mobileCorrectTranscript", "NO"]
         app.launch()
         let scroll = app.scrollViews["transcriptScroll"]
         XCTAssertTrue(scroll.waitForExistence(timeout: 5))
@@ -53,7 +54,7 @@ final class MobileTranscriptUITests: XCTestCase {
 
     func testLargeTextUsesLatestPreviewAndExpandedHistory() {
         let app = XCUIApplication()
-        app.launchArguments = ["--transcript-scroll-fixture", "-UIPreferredContentSizeCategoryName",
+        app.launchArguments = ["--transcript-scroll-fixture", "-mobileCorrectTranscript", "NO", "-UIPreferredContentSizeCategoryName",
                                "UICTContentSizeCategoryAccessibilityXXXL"]
         app.launch()
         let outer = app.scrollViews["dashboardScroll"]
@@ -76,7 +77,7 @@ final class MobileTranscriptUITests: XCTestCase {
 
     func testLongTranscriptRemainsResponsiveAndPreservesReadingPosition() {
         let app = XCUIApplication()
-        app.launchArguments = ["--transcript-scroll-fixture", "--long-transcript-fixture"]
+        app.launchArguments = ["--transcript-scroll-fixture", "--long-transcript-fixture", "-mobileCorrectTranscript", "NO"]
         app.launch()
         let scroll = app.scrollViews["transcriptScroll"]
         XCTAssertTrue(scroll.waitForExistence(timeout: 10))
