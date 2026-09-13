@@ -1,0 +1,7 @@
+Quick Summary now reacts to substantial live speech before the recognizer finalizes it.
+
+Enable Auto, start listening, and speak a decision with its owner and date continuously. Quick should update without tapping Refresh or stopping recording. Correct the date and check that the recap changes. Silence should not trigger repeated model checks.
+
+Open Status details under Quick to see speech events, scheduled checks and model reads. If Quick remains idle, copy these details along with your model and build number.
+
+Quick stays limited to three short bullets. Summary and Deep remain available through Generate; review suggestions do not automatically run them.

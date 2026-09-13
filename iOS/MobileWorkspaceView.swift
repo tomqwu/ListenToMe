@@ -11,6 +11,7 @@ struct MobileWorkspaceView<Header: View>: View {
     @Binding var selection: MobileWorkspace
     let chooseModel: (MobileSummaryMode) -> Void
     let accessibilityHeader: () -> Header
+    @State private var showQuickStatus = false
     @State private var showTranscript = false
     @State private var showSpeechSettings = false
     @Environment(\.dynamicTypeSize) private var typeSize
@@ -165,12 +166,19 @@ struct MobileWorkspaceView<Header: View>: View {
                     if mode == .quick {
                         Text(session.autoQuickStatus).font(.caption).foregroundStyle(MobileStyle.muted)
                             .accessibilityIdentifier("autoQuickStatus")
+                        Button("Status details") { showQuickStatus = true }
+                            .font(.caption).accessibilityIdentifier("quickStatusDetails")
+                            .alert("Quick Summary status", isPresented: $showQuickStatus) {
+                                Button("Copy") { UIPasteboard.general.string = session.quickDiagnostics }
+                                Button("Close", role: .cancel) {}
+                            } message: { Text(session.quickDiagnostics) }
                         if let error = session.quickSummaryError {
                             Label(error, systemImage: "exclamationmark.circle").font(.caption)
                                 .foregroundStyle(.secondary).accessibilityIdentifier("quickSummaryError")
                         }
                         if session.autoQuick && session.ai.provider == .ollama {
-                            Text("Auto checks new speech about every 5 seconds with Ollama Cloud. Notes and recent context are included.")
+                            Text("Auto checks new speech about every 5 seconds with Ollama Cloud. "
+                                 + "Live wording may change; notes and recent context are included.")
                                 .font(.caption).foregroundStyle(.secondary)
                         }
                     }
@@ -242,7 +250,7 @@ struct MobileWorkspaceView<Header: View>: View {
         Toggle("Auto", isOn: $session.autoQuick).font(.caption)
             .accessibilityLabel("Auto Quick Summary")
             .accessibilityHint(session.ai.provider == .ollama
-                ? "Checks new completed speech with Ollama Cloud every five seconds. Updates only for meaningful changes."
+                ? "Checks new speech with Ollama Cloud every five seconds. Updates only for meaningful changes."
                 : "Continuous evaluation requires Ollama Cloud. Apple Intelligence summaries are available with Refresh.")
     }
 

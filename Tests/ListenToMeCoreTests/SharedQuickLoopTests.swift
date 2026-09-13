@@ -49,6 +49,23 @@ final class SharedQuickLoopTests: XCTestCase {
         }
     }
 
+    func testMacLiveSpeechTriggersWithoutFinalEventAndSilenceDoesNotPoll() async throws {
+        let provider = MockLLMProvider(id: "live", deltas: [publish])
+        let session = MeetingSession(store: ConversationStore(), context: ContextEngine(),
+            makeCapture: { MockCapture() }, makeTranscriber: { MockTranscriber() },
+            makeProvider: { _ in provider }, models: [.quick: "live"], autoInterval: .milliseconds(15))
+        try await session.start()
+        session.autoSummaryEnabled = true
+        await session.ingest(.init(source: .others, text: "Sarah confirms delivery on Monday.", isFinal: false, start: 0, end: 2))
+        for _ in 0..<100 where session.quickReader.completedReads == 0 { try await Task.sleep(for: .milliseconds(5)) }
+        XCTAssertEqual(session.quickSuggestion, "- Sarah confirms Monday.")
+        XCTAssertTrue(session.store.utterances.isEmpty)
+        let count = session.quickReader.completedReads
+        try await Task.sleep(for: .milliseconds(60))
+        XCTAssertEqual(session.quickReader.completedReads, count)
+        session.stop()
+    }
+
     func testReaderKeepsOutputRejectsMalformedAndRetriesUnreadChanges() async throws {
         let reader = QuickSummaryReader()
         let pieces = [QuickSummaryContext.Piece(id: "s1", text: "Sarah confirms Monday.")]

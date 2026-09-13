@@ -1,12 +1,13 @@
 # Shared live-summary scheduler and provider policy
 
 macOS and iOS use `ListenToMeCore.LiveSummaryScheduler`, `QuickSummaryContext` and
-`QuickSummaryReader`. Platform adapters report finalized transcript, note, recording,
+`QuickSummaryReader`. Platform adapters report live and finalized transcript, note, recording,
 provider and manual-review events, execute the planned wake/cancel/read actions, and persist
 accepted output. The scheduler never branches on platform or Apple Intelligence capability.
 
-The common contract batches pending finalized speech for five seconds, ignores partials and
-unchanged input, keeps the previous output on failure, and retries with bounded backoff.
+The common contract batches pending speech for five seconds. Non-final hypotheses become eligible
+at 24 trimmed characters; shorter fragments wait for more speech or final recognition. Unchanged
+input does not poll. Failed reads keep previous output and retry with bounded backoff.
 A valid evaluation keeps or replaces Quick and recommends Summary/Deep with qualitative
 confidence. Those reviews require a manual action. Transcript revisions replace previous
 wording. Duplicate final segment IDs use their latest revision. Stop, Auto off and provider
@@ -39,3 +40,9 @@ production acceptance claim. Physical iPhone/iPad acceptance remains separate fr
 ## Backlog progress and concise recaps (1.4.1 / iOS 1.9.1)
 
 A successful Quick update is visible immediately while remaining batches continue. Catching up labels the partial coverage; full review suggestions still wait for complete context. Automatic responses allow at most three bullets and 480 characters. iOS manual Quick uses the same validated response contract and never displays model planning or JSON.
+
+## Live speech events (1.4.2 / iOS 1.9.3)
+
+Previously, transcript text could remain non-final throughout a recording and never reach Quick. Both adapters now include eligible provisional text, using one stable source ID per speaker. Append-only speech can extend a pending read without invalidating the prefix already evaluated; wording revisions invalidate stale responses. Final recognition explicitly replaces the provisional source.
+
+iOS Status details shows received speech callbacks, final callbacks, fired scheduler checks, model checks and completed reads. These diagnostics help distinguish recognition, scheduling, provider and response failures on a real device. Tests reproduce the old failure, exercise non-final speech through the visible iOS controls and macOS session, and verify final correction and no polling during silence. Physical iPhone acceptance remains unverified until tested on a device.

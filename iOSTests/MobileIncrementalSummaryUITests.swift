@@ -67,7 +67,7 @@ final class MobileIncrementalSummaryUITests: XCTestCase {
         XCTAssertEqual(output.label, corrected, "The last published result survives opening History")
     }
 
-    func testPartialAndSilenceDoNotPollAndAutoCanStopAnInFlightRead() {
+    func testShortPartialAndSilenceDoNotPollAndAutoCanStopAnInFlightRead() {
         let app = launch(slow: true)
         app.buttons["Start listening"].tap()
         wait(app.staticTexts["autoQuickStatus"], contains: "Checking new speech")
@@ -85,6 +85,27 @@ final class MobileIncrementalSummaryUITests: XCTestCase {
         unchanged(app.staticTexts["quickReadCount"], expected: "Checks: 1", seconds: 6)
         XCTAssertEqual(app.staticTexts["output-quick"].label, output)
         capture(app, "Unfinished speech does not trigger another read")
+        app.buttons["Stop listening"].tap()
+    }
+
+    func testLiveRecognitionPublishesBeforeFinalAndStatusShowsEventFlow() {
+        let app = launch()
+        app.buttons["Start listening"].tap()
+        wait(app.staticTexts["quickReadCount"], contains: "Checks: 1")
+        speech("speechLiveDecision", app: app)
+        wait(app.staticTexts["output-quick"], contains: "Monday")
+        wait(app.staticTexts["quickReadCount"], contains: "Checks: 2")
+        app.buttons["quickStatusDetails"].tap()
+        let details = app.alerts["Quick Summary status"]
+        XCTAssertTrue(details.waitForExistence(timeout: 3))
+        XCTAssertTrue(details.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "Speech events: 2 (final: 1)")).firstMatch.exists)
+        capture(app, "Live speech reaches scheduler and model before final recognition")
+        details.buttons["Close"].tap()
+        unchanged(app.staticTexts["quickReadCount"], expected: "Checks: 2", seconds: 6)
+        speech("speechRevision", app: app)
+        wait(app.staticTexts["output-quick"], contains: "Peter")
+        XCTAssertFalse(app.staticTexts["output-quick"].label.contains("Monday"))
+        capture(app, "Final recognition replaces provisional Quick wording")
         app.buttons["Stop listening"].tap()
     }
 

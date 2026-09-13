@@ -33,7 +33,7 @@ extension MeetingView {
                         UserDefaults.standard.set($0, forKey: "autoQuickSummary")
                     })).controlSize(.small)
                     Text(session.autoQuickStatus).font(.caption).foregroundStyle(.secondary)
-                    Text("Evaluates completed speech with the selected provider. Summary and Deep run when requested.")
+                    Text("Evaluates new speech with the selected provider. Summary and Deep run when requested.")
                         .font(.caption2).foregroundStyle(.secondary)
                 }
 

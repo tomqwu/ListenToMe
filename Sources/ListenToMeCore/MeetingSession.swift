@@ -332,11 +332,11 @@ extension MeetingSession {
     // MARK: - Ingest
 
     /// Applies a segment to the store, fires proactive quick response when warranted,
-    /// and schedules a debounced listener refresh for finalized segments.
+    /// and schedules a batched evaluation for eligible live or finalized speech.
     public func ingest(_ segment: TranscriptSegment) async {
         store.apply(segment)
 
-        if segment.isFinal { handleLiveEvent(.transcriptChanged) }
+        handleLiveEvent(.transcriptChanged)
     }
 
     // MARK: - On-demand responses (awaitable)
@@ -523,7 +523,8 @@ extension MeetingSession {
 
 extension MeetingSession {
     private var livePieces: [QuickSummaryContext.Piece] {
-        QuickSummaryContext.pieces(notes: notes, segments: store.utterances)
+        QuickSummaryContext.pieces(notes: notes, segments: store.utterances,
+                                   liveSegments: [SpeakerSource.you, .others].compactMap { store.partials[$0] })
     }
 
     public var autoQuickStatus: String {
@@ -532,7 +533,7 @@ extension MeetingSession {
         if let reason = providerAvailability(models[.quick] ?? "") { return "Auto paused · " + reason }
         if let error = quickReader.error { return error }
         if quickReader.isCatchingUp { return "Catching up · Recap covers speech processed so far." }
-        if quickReader.isReading { return "Checking new completed speech…" }
+        if quickReader.isReading { return "Checking new speech…" }
         return isRunning ? "Listening for meaningful changes" : "Auto checks while listening"
     }
 

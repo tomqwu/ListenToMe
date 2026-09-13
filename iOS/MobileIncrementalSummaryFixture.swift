@@ -27,6 +27,8 @@ struct MobileIncrementalSummaryFixture: View {
                 Menu("Test speech") {
                     Button("Add concern") { recorder.send("QA needs more time before we choose a date.") }
                         .accessibilityIdentifier("speechConcern")
+                    Button("Live decision") { recorder.send("We agree delivery on Monday. Sarah will confirm.", final: false) }
+                        .accessibilityIdentifier("speechLiveDecision")
                     Button("Agree decision") { recorder.send("We agree delivery on Monday. Sarah will confirm.") }
                         .accessibilityIdentifier("speechDecision")
                     Button("Repeat agreement") { recorder.send("Yes, understood. That is what we agreed.") }
