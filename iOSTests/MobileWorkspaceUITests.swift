@@ -7,7 +7,7 @@ final class MobileWorkspaceUITests: XCTestCase {
         let catalog = "[{\"name\":\"glm-5.3-flash\"},{\"name\":\"glm-5.3\"},{\"name\":\"deepseek-v4-pro:0813\"}]"
         app.launchArguments = ["-mobileAIProvider", "ollama", "-mobileOllamaCatalog", Data(catalog.utf8).base64EncodedString(),
                                "-mobileOllamaDeepModel", "glm-5.3-flash", "-mobileOllamaQuickModel", "glm-5.3-flash"]
-        app.launch()
+        app.launchPastReleaseNotes()
         if app.segmentedControls["workspaceTabs"].exists {
             app.segmentedControls["workspaceTabs"].buttons["Deep"].tap()
         }
@@ -29,7 +29,7 @@ final class MobileWorkspaceUITests: XCTestCase {
     }
 
     func testReviewModesAndRecordingControlsStayAccessible() {
-        let app = XCUIApplication(); app.launch()
+        let app = XCUIApplication(); app.launchPastReleaseNotes()
         if app.segmentedControls["workspaceTabs"].exists {
             for (tab, role) in [("Live", "quick"), ("Summary", "summary"), ("Deep", "deep")] {
                 app.segmentedControls["workspaceTabs"].buttons[tab].tap()

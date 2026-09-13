@@ -4,7 +4,7 @@ import XCTest
 final class MobileMarkdownUITests: XCTestCase {
     func testSavedSummariesRenderOnDashboardAndFullSummary() throws {
         let app = XCUIApplication()
-        app.launch()
+        app.launchPastReleaseNotes()
         guard app.textFields["conversationTitle"].value as? String == "Markdown rendering fixture" else {
             throw XCTSkip("Requires the locally staged Markdown conversation fixture.")
         }

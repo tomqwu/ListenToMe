@@ -7,7 +7,7 @@ final class MobileAppTests: XCTestCase {
         let catalog = "[{\"name\":\"quick-fixture\"},{\"name\":\"summary-fixture\"},{\"name\":\"deep-fixture\"}]"
         app.launchArguments = ["-mobileAIProvider", "ollama", "-mobileOllamaCatalog",
                                Data(catalog.utf8).base64EncodedString()]
-        app.launch()
+        app.launchPastReleaseNotes()
         for role in ["quick", "summary", "deep"] {
             app.buttons["More"].tap()
             app.buttons["Settings"].tap()
@@ -24,7 +24,7 @@ final class MobileAppTests: XCTestCase {
             XCTAssertTrue(link.label.contains("\(role)-fixture"))
             app.buttons["Done"].tap()
         }
-        app.terminate(); app.launch()
+        app.terminate(); app.launchPastReleaseNotes()
         app.buttons["More"].tap(); app.buttons["Settings"].tap()
         for role in ["quick", "summary", "deep"] {
             let link = app.buttons["choose-model-\(role)"]
@@ -59,7 +59,7 @@ final class MobileAppTests: XCTestCase {
 
     func testLiveLayoutAndDeepThinkTab() {
         let app = XCUIApplication()
-        app.launch()
+        app.launchPastReleaseNotes()
         XCTAssertTrue(app.staticTexts["Live transcript"].isHittable)
         XCTAssertTrue(app.staticTexts["Quick Summary"].isHittable)
         XCTAssertGreaterThan(app.staticTexts["Quick Summary"].frame.minY, app.staticTexts["Live transcript"].frame.maxY)
@@ -75,7 +75,7 @@ final class MobileAppTests: XCTestCase {
     func testLandscapeAndLargeTextTabs() {
         let app = XCUIApplication()
         app.launchArguments = ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
-        app.launch()
+        app.launchPastReleaseNotes()
         XCUIDevice.shared.orientation = .landscapeLeft
         defer { XCUIDevice.shared.orientation = .portrait }
         XCTAssertTrue(app.scrollViews["dashboardScroll"].exists)
@@ -104,7 +104,7 @@ final class MobileAppTests: XCTestCase {
 
     func testAutoSummaryPreferenceSurvivesRelaunch() throws {
         let app = XCUIApplication()
-        app.launch()
+        app.launchPastReleaseNotes()
         let toggle = app.switches["Auto summaries"].switches.firstMatch
         XCTAssertTrue(toggle.waitForExistence(timeout: 15))
         let original = try XCTUnwrap(toggle.value as? String)
@@ -127,7 +127,7 @@ final class MobileAppTests: XCTestCase {
         }
         setValue(selected)
         app.terminate()
-        app.launch()
+        app.launchPastReleaseNotes()
         // Never tap or repair the value after relaunch: persistence must work on its own.
         XCTAssertTrue(waitForValue(selected, timeout: 15))
         setValue(original)
@@ -135,7 +135,7 @@ final class MobileAppTests: XCTestCase {
 
     func testNotesCameraExplanationAndFilePicker() {
         let app = XCUIApplication()
-        app.launch()
+        app.launchPastReleaseNotes()
         app.buttons["Notes"].tap()
         app.buttons["Take photo"].tap()
         let explanation = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Camera capture requires")).firstMatch
@@ -150,7 +150,7 @@ final class MobileAppTests: XCTestCase {
 
     func testPhotoLibraryPickerCanBeOpenedAndDismissed() {
         let app = XCUIApplication()
-        app.launch()
+        app.launchPastReleaseNotes()
         app.buttons["Notes"].tap()
         app.buttons["Photo library"].tap()
         _ = app.staticTexts["Loading..."].firstMatch.waitForNonExistence(timeout: 30)
@@ -161,7 +161,7 @@ final class MobileAppTests: XCTestCase {
 
     func testShareExtensionImportsNotesAndPreservesSource() {
         let app = XCUIApplication()
-        app.launch()
+        app.launchPastReleaseNotes()
         app.buttons["New"].tap()
         app.buttons["Notes"].tap()
         let marker = "Shared note " + UUID().uuidString
@@ -192,7 +192,7 @@ final class MobileAppTests: XCTestCase {
         app.buttons["Import"].tap()
         XCTAssertTrue(app.buttons["Saved"].waitForExistence(timeout: 10))
         app.buttons["finishSharedImport"].tap()
-        app.terminate(); app.launch()
+        app.terminate(); app.launchPastReleaseNotes()
         XCTAssertEqual(app.textFields["conversationTitle"].value as? String, "Imported notes")
         app.buttons["Notes"].tap()
         XCTAssertTrue((app.textViews["Conversation notes"].value as? String ?? "").contains(marker))
@@ -203,7 +203,7 @@ final class MobileAppTests: XCTestCase {
 
     func testEmptySummaryExplainsDisabledActionAndSupportsRecheck() {
         let app = XCUIApplication()
-        app.launch()
+        app.launchPastReleaseNotes()
         app.buttons["New"].tap()
         app.buttons["More"].tap()
         app.buttons["Full summary"].tap()
@@ -218,7 +218,7 @@ final class MobileAppTests: XCTestCase {
 
     func testOllamaSettingsKeyPersistenceAndRemoval() {
         let app = XCUIApplication()
-        app.launch()
+        app.launchPastReleaseNotes()
         app.buttons["More"].tap()
         app.buttons["Settings"].tap()
         app.buttons["summaryProvider"].tap()
@@ -230,7 +230,7 @@ final class MobileAppTests: XCTestCase {
         app.buttons["Save API key"].tap()
         XCTAssertTrue(app.staticTexts["savedAPIKey"].waitForExistence(timeout: 3))
         app.terminate()
-        app.launch()
+        app.launchPastReleaseNotes()
         app.buttons["More"].tap()
         app.buttons["Settings"].tap()
         XCTAssertTrue(app.staticTexts["savedAPIKey"].waitForExistence(timeout: 3))
@@ -252,7 +252,7 @@ final class MobileAppTests: XCTestCase {
 
     func testDeleteConversationAndSummaryModes() {
         let app = XCUIApplication()
-        app.launch()
+        app.launchPastReleaseNotes()
         app.buttons["New"].tap()
         app.buttons["Notes"].tap()
         let notes = app.textViews["Conversation notes"]
@@ -282,7 +282,7 @@ final class MobileAppTests: XCTestCase {
         app.buttons["Delete conversation"].tap()
         XCTAssertFalse(row.exists)
         app.terminate()
-        app.launch()
+        app.launchPastReleaseNotes()
         app.buttons["History"].tap()
         XCTAssertFalse(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch.exists)
     }
@@ -290,7 +290,7 @@ final class MobileAppTests: XCTestCase {
     func testSimulatorExplainsUnavailableSpeechWithoutRequestingMicrophone() {
         let app = XCUIApplication()
         app.resetAuthorizationStatus(for: .microphone)
-        app.launch()
+        app.launchPastReleaseNotes()
         app.buttons["Start listening"].tap()
         let message = app.staticTexts["sessionMessage"]
         XCTAssertTrue(message.waitForExistence(timeout: 5))
@@ -309,7 +309,7 @@ final class MobileAppTests: XCTestCase {
 
     func testNotesSurviveNewConversationAndRelaunch() {
         let app = XCUIApplication()
-        app.launch()
+        app.launchPastReleaseNotes()
         app.buttons["New"].tap()
         app.buttons["Notes"].tap()
         let notes = app.textViews["Conversation notes"]
@@ -319,7 +319,7 @@ final class MobileAppTests: XCTestCase {
         app.buttons["Save"].tap()
         app.buttons["New"].tap()
         app.terminate()
-        app.launch()
+        app.launchPastReleaseNotes()
         app.buttons["Notes"].tap()
         XCTAssertEqual(app.textViews["Conversation notes"].value as? String, "")
         app.buttons["Done"].tap()
@@ -328,7 +328,7 @@ final class MobileAppTests: XCTestCase {
         app.buttons["Notes"].tap()
         XCTAssertTrue((notes.value as? String ?? "").contains("review the mobile release"))
         app.terminate()
-        app.launch()
+        app.launchPastReleaseNotes()
         app.buttons["Notes"].tap()
         XCTAssertTrue((app.textViews["Conversation notes"].value as? String ?? "").contains("review the mobile release"))
         app.buttons["Done"].tap()

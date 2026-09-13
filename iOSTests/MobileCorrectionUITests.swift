@@ -5,7 +5,7 @@ final class MobileCorrectionUITests: XCTestCase {
     func testOptInFlashChoiceLiveCorrectionReviewAndRestore() {
         let app = XCUIApplication()
         app.launchArguments = ["--speech-correction-fixture", "-mobileCorrectTranscript", "NO", "-autoQuickSummary", "NO"]
-        app.launch()
+        app.launchPastReleaseNotes()
         app.buttons["Start listening"].tap()
         let setup = app.buttons["speechCorrectionSettings"]
         XCTAssertTrue(setup.waitForExistence(timeout: 10))
