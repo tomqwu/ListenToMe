@@ -105,7 +105,7 @@ final class MobileAppTests: XCTestCase {
     func testAutoSummaryPreferenceSurvivesRelaunch() throws {
         let app = XCUIApplication()
         app.launch()
-        let toggle = app.switches["Auto Quick Summary"].switches.firstMatch
+        let toggle = app.switches["Auto summaries"].switches.firstMatch
         XCTAssertTrue(toggle.waitForExistence(timeout: 15))
         let original = try XCTUnwrap(toggle.value as? String)
         XCTAssertTrue(["0", "1"].contains(original))

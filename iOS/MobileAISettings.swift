@@ -9,13 +9,13 @@ final class MobileAISettings {
         didSet { UserDefaults.standard.set(provider.rawValue, forKey: "mobileAIProvider"); quickSettingsChanged?() }
     }
     var model: String {
-        didSet { UserDefaults.standard.set(model, forKey: "mobileOllamaModel") }
+        didSet { UserDefaults.standard.set(model, forKey: "mobileOllamaModel"); quickSettingsChanged?() }
     }
     var quickModel: String {
         didSet { UserDefaults.standard.set(quickModel, forKey: "mobileOllamaQuickModel"); quickSettingsChanged?() }
     }
     var deepModel: String {
-        didSet { UserDefaults.standard.set(deepModel, forKey: "mobileOllamaDeepModel") }
+        didSet { UserDefaults.standard.set(deepModel, forKey: "mobileOllamaDeepModel"); quickSettingsChanged?() }
     }
     var correctTranscript: Bool {
         didSet {

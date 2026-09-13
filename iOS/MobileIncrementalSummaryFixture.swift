@@ -14,6 +14,9 @@ struct MobileIncrementalSummaryFixture: View {
         let session = MobileSession(storageDirectory: root, summaryProvider: IncrementalFixtureProvider(slow: slow),
                                     makeRecorder: { recorder })
         session.title = "Delivery discussion"
+        session.ai.provider = .ollama
+        session.ai.models = [.init(name: "glm-5.3-flash"), .init(name: "glm-5.3")]
+        session.ai.quickModel = "glm-5.3-flash"; session.ai.model = "glm-5.3"; session.ai.deepModel = "glm-5.3"
         if ProcessInfo.processInfo.arguments.contains("--incremental-backlog-fixture") {
             session.notes = "We agree delivery on Monday. Sarah will confirm. " + String(repeating: "Background discussion. ", count: 400)
         }
@@ -79,7 +82,8 @@ private struct IncrementalFixtureProvider: LLMProvider {
                 do {
                     try await Task.sleep(for: slow ? .seconds(8) : .milliseconds(150))
                     if request.system != MobileQuickContext.instructions {
-                        continuation.yield("- The delivery discussion has been reviewed.")
+                        let automatic = AutomaticReviewMode.allCases.contains { $0.instructions == request.system }
+                        continuation.yield("- The delivery discussion has been reviewed " + (automatic ? "automatically." : "manually."))
                         continuation.finish()
                         return
                     }
@@ -93,10 +97,10 @@ private struct IncrementalFixtureProvider: LLMProvider {
                     else if speech.contains("We agree delivery") { bullets = ["Delivery agreed for Monday.", "Sarah will confirm."] }
                     else { bullets = [] }
                     var reviews: [[String: String]] = []
-                    if speech.contains("We agree delivery") || speech.contains("周二") {
+                    if speech.contains("We agree delivery") || speech.contains("周二") || speech.contains("Azure") || speech.contains("APM") {
                         reviews = [["mode": "summary", "confidence": "high", "reason": "The delivery date and owner changed."]]
                     }
-                    if speech.contains("tradeoff") {
+                    if speech.contains("tradeoff") || speech.contains("APM") {
                         reviews = [["mode": "deep", "confidence": "high", "reason": "Speed and reliability have an unresolved tradeoff."]]
                     }
                     let body: [String: Any] = ["reviews": reviews, "action": bullets.isEmpty ? "keep" : "publish",

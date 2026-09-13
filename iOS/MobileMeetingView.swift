@@ -243,7 +243,7 @@ struct MobileMeetingView: View {
                 }
                 Section("Privacy") {
                     Text("Conversations stay in this app's storage. Apple Intelligence summaries are optional and run on-device. " +
-                         "Ollama Cloud sends notes and transcript when you generate a summary or enable Auto Quick Summary. " +
+                         "Ollama Cloud sends notes and transcript when you generate a summary or enable Auto summaries. " +
                          "AI speech correction sends new phrases and nearby transcript text when enabled. " +
                          "API keys stay in this device's Keychain. Share exports text to the destination you choose.")
                     Link("Open app settings", destination: URL(string: UIApplication.openSettingsURLString)!)

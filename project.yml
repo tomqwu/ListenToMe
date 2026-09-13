@@ -31,9 +31,9 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMe
         BUNDLE_DISPLAY_NAME: ListenToMe
-        MARKETING_VERSION: "1.4.3"
+        MARKETING_VERSION: "1.5.0"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        CURRENT_PROJECT_VERSION: "13"
+        CURRENT_PROJECT_VERSION: "14"
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: App/Info.plist
         CODE_SIGN_ENTITLEMENTS: App/ListenToMe.entitlements
@@ -68,8 +68,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMe.ios
         PRODUCT_NAME: ListenToMeIOS
-        MARKETING_VERSION: "1.9.4"
-        CURRENT_PROJECT_VERSION: "21"
+        MARKETING_VERSION: "1.10.0"
+        CURRENT_PROJECT_VERSION: "22"
         DEVELOPMENT_TEAM: T32FW7PZ3S
         TARGETED_DEVICE_FAMILY: "1,2"
         GENERATE_INFOPLIST_FILE: NO
@@ -90,8 +90,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMe.ios.share
         PRODUCT_NAME: ListenToMeShare
-        MARKETING_VERSION: "1.9.4"
-        CURRENT_PROJECT_VERSION: "21"
+        MARKETING_VERSION: "1.10.0"
+        CURRENT_PROJECT_VERSION: "22"
         INFOPLIST_FILE: ShareExtension/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_ENTITLEMENTS: ShareExtension/ListenToMeShare.entitlements

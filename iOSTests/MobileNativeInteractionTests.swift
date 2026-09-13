@@ -34,7 +34,7 @@ final class MobileNativeInteractionTests: XCTestCase {
         expect(app.staticTexts["autoQuickStatus"], containing: "Auto off")
         let output = app.staticTexts["output-quick"]
         XCTAssertFalse(output.label.contains("Thursday"))
-        let toggle = app.switches["Auto Quick Summary"].switches.firstMatch
+        let toggle = app.switches["Auto summaries"].switches.firstMatch
         toggle.tap()
         expect(output, containing: "Thursday")
         toggle.tap()

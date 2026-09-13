@@ -20,12 +20,14 @@ final class SharedQuickLoopTests: XCTestCase {
         XCTAssertEqual(options["temperature"] as? Int, 0)
     }
 
-    func testMacEventLoopUsesSameContractForEveryProviderAndDoesNotRunReviews() async throws {
+    func testMacEventLoopRoutesRecommendationsToFullModelsAndDoesNotPoll() async throws {
         for name in ["ollama-cloud", "ollama-local"] {
             let provider = MockLLMProvider(id: name, deltas: [publish])
             let session = MeetingSession(store: ConversationStore(), context: ContextEngine(),
                 makeCapture: { MockCapture() }, makeTranscriber: { MockTranscriber() },
-                makeProvider: { _ in provider }, models: [.quick: name, .listener: name, .deep: name],
+                makeProvider: { model in
+                    model == name ? provider : MockLLMProvider(id: model, deltas: ["Full review from " + model])
+                }, models: [.quick: name, .listener: name + "-summary", .deep: name + "-deep"],
                 autoInterval: .milliseconds(15))
             try await session.start()
             let speech = TranscriptSegment(source: .others, text: "Sarah confirms Monday.", isFinal: true, start: 0, end: 1)
@@ -35,8 +37,10 @@ final class SharedQuickLoopTests: XCTestCase {
             session.autoSummaryEnabled = true
             for _ in 0..<100 where session.quickReader.completedReads == 0 { try await Task.sleep(for: .milliseconds(5)) }
             XCTAssertEqual(session.quickSuggestion, "- Sarah confirms Monday.", name)
-            XCTAssertEqual(session.quickReader.recommendations.first?.mode, "summary")
-            XCTAssertTrue(session.listenerSummary.isEmpty)
+            for _ in 0..<100 where session.automaticReviews.completedCounts[.summary] == nil {
+                try await Task.sleep(for: .milliseconds(5))
+            }
+            XCTAssertEqual(session.listenerSummary, "Full review from " + name + "-summary")
             XCTAssertTrue(session.deepAnswer.isEmpty)
             let count = session.quickReader.completedReads
             await session.ingest(speech)

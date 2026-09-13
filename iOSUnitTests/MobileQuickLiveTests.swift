@@ -29,6 +29,7 @@ final class MobileQuickLiveTests: XCTestCase {
         session.ai.quickModel = ""
         await session.ai.refresh()
         session.ai.quickModel = "glm-5.3-flash"
+        session.ai.model = "glm-5.3"; session.ai.deepModel = "glm-5.3"
         XCTAssertNil(session.ai.availability(for: .quick))
         XCTAssertTrue(MobileAISettings.isFlash(session.ai.quickModel))
         session.autoQuick = true
@@ -46,6 +47,11 @@ final class MobileQuickLiveTests: XCTestCase {
         try await wait { session.quickReader.completedReads == 3 }
         XCTAssertTrue(session.quickSummary.contains("APM"), "A question is useful summary material without a decision")
         XCTAssertFalse(session.quickSummary.lowercased().contains("application performance"), "Do not expand an ambiguous acronym")
+        try await wait { (session.automaticReviews.completedCounts[.summary] ?? 0) > 0 }
+        try await wait { (session.automaticReviews.completedCounts[.deep] ?? 0) > 0 }
+        XCTAssertFalse(session.summary.isEmpty)
+        XCTAssertFalse(session.deepThought.isEmpty)
+        XCTAssertTrue(session.deepThought.localizedCaseInsensitiveContains("APM"))
         recorder.send("We agree delivery on Monday. Sarah will confirm. The budget is 150 dollars.", final: false)
         try await wait { session.quickReader.completedReads == 4 }
         XCTAssertTrue(session.quickSummary.contains("Monday"))
@@ -68,8 +74,7 @@ final class MobileQuickLiveTests: XCTestCase {
         print("Live evaluator completed reads: \(session.quickReader.completedReads); error: \(session.quickReader.error ?? "none")")
         recorder.send("Shipping sooner risks data loss; delaying could lose a customer. This tradeoff remains unresolved.")
         try await wait { session.quickReader.completedReads == 8 }
-        XCTAssertTrue(session.quickReader.recommendations.contains { $0.mode == "deep" })
-        XCTAssertTrue(session.deepThought.isEmpty, "Recommendations do not run Deep automatically")
+        XCTAssertFalse(session.deepThought.isEmpty, "The earlier APM question should have triggered Deep automatically")
         XCTAssertFalse(session.quickSummary.contains("\"action\""))
         await session.stop()
         await session.summarize(mode: .quick)
@@ -83,7 +88,7 @@ final class MobileQuickLiveTests: XCTestCase {
     }
 
     private func wait(file: StaticString = #filePath, line: UInt = #line, _ condition: () -> Bool) async throws {
-        let deadline = ContinuousClock.now + .seconds(40)
+        let deadline = ContinuousClock.now + .seconds(90)
         while !condition(), ContinuousClock.now < deadline { try await Task.sleep(for: .milliseconds(100)) }
         XCTAssertTrue(condition(), "Live evaluator did not reach expected state", file: file, line: line)
         if !condition() { throw URLError(.timedOut) }
