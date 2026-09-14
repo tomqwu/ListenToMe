@@ -1,7 +1,11 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.10.2 (24).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.10.3 (25).
+
+## iOS 1.10.3 (25)
+
+Recording lifecycle: interruptions, route changes and backgrounding no longer stop capture silently; the app states why it stopped and resumes after an interruption ends, and connecting a new microphone rebuilds capture instead of stalling. Notes and title edits are debounced and flushed when the app leaves the foreground. Calendar imports redact join-link secrets and e-mail addresses from the event body and location. Apple Intelligence manual Quick uses a prose prompt with mapped error messages and a per-conversation language check. Ollama HTTP errors surface the server's own message, and Apple Intelligence prompts are clamped to the on-device window with a visible notice. Automatic reviews survive notes typing, never overwrite a fresh manual Quick answer, and use a size-scaled deadline. [What to Test](../metadata/ios/en-CA/what-to-test-1.10.3.txt).
 
 ## iOS 1.10.2 (24)
 

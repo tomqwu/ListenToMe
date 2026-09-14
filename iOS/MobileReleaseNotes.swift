@@ -21,6 +21,10 @@ enum MobileReleaseNotes {
         var id: String { version }
     }
     static let releases: [Release] = [
+        .init(version: "1.10.3", title: "Recording that survives the real world", details: [
+            "Calls, AirPods and switching apps no longer end a recording silently; you are told why it stopped and can resume.",
+            "Calendar imports keep meeting links private, Apple Intelligence Quick answers are plain bullets, and typing no longer costs a save per keystroke."
+        ]),
         .init(version: "1.10.2", title: "On-device by default, or your own server", details: [
             "New installs summarize on-device with Apple Intelligence. A provider you already chose is kept.",
             "Optional Ollama server URL: use a server you run. Your cloud key is never sent there.",
