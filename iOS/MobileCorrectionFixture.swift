@@ -42,6 +42,8 @@ private final class CorrectionFixtureRecorder: MobileRecording {
         receive?(.init(source: .you, text: "Please send the meeting goats to Alex.", isFinal: true, start: 1, end: 3))
     }
     func stop() async throws { receive = nil }
+    /// No real capture to rebuild in a fixture.
+    func reconfigure() async throws {}
 }
 
 private struct CorrectionFixtureProvider: LLMProvider {

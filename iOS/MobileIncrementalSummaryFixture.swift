@@ -71,6 +71,8 @@ private final class IncrementalFixtureRecorder: MobileRecording {
         if final { index += 1 }
     }
     func stop() async throws { receive = nil }
+    /// No real capture to rebuild in a fixture.
+    func reconfigure() async throws {}
 }
 
 private struct IncrementalFixtureProvider: LLMProvider {

@@ -13,10 +13,6 @@ protocol MobileRecording: AnyObject {
     func reconfigure() async throws
 }
 
-extension MobileRecording {
-    func reconfigure() async throws {}
-}
-
 /// Audio lost before the transcriber sees it. One dropped buffer is a hiccup, not a reason to end a
 /// meeting, so drops are tolerated until this much continuous audio has been lost.
 private let tolerableLostSeconds = 2.0
@@ -33,6 +29,11 @@ final class MobileRecorder: MobileRecording {
     private var analyzerFormat: AVAudioFormat?
     private var report: (@MainActor (String) -> Void)?
     private var configurationObserver: (any NSObjectProtocol)?
+    /// The input format the installed tap was built for, and whether a rebuild is already running.
+    /// One AirPods connection posts both a route change and an engine configuration change, and a
+    /// restart on a new format can post another: without these, rebuilds chase each other.
+    private var tapFormat: AVAudioFormat?
+    private var isReconfiguring = false
 
     func start(locale: Locale, onSegment: @escaping @MainActor (TranscriptSegment) -> Void,
                onFailure: @escaping @MainActor (String) -> Void) async throws {
@@ -110,7 +111,14 @@ final class MobileRecorder: MobileRecording {
     }
 
     func reconfigure() async throws {
-        guard analyzerFormat != nil, hasTap || engine.isRunning else { return }
+        guard analyzerFormat != nil, hasTap || engine.isRunning, !isReconfiguring else { return }
+        // The engine already matches the current input, so the tap is live and there is nothing to
+        // rebuild. This is the common duplicate: a route change and a configuration change for the
+        // same physical event, and the extra change a successful restart posts itself.
+        if hasTap, engine.isRunning, let tapFormat,
+           engine.inputNode.outputFormat(forBus: 0).isEqual(tapFormat) { return }
+        isReconfiguring = true
+        defer { isReconfiguring = false }
         await stopCapture()
         try startCapture()
     }
@@ -172,6 +180,7 @@ final class MobileRecorder: MobileRecording {
             }
         }
         hasTap = true
+        tapFormat = native
         engine.prepare()
         try engine.start()
     }
@@ -181,6 +190,7 @@ final class MobileRecorder: MobileRecording {
             engine.stop()
             engine.inputNode.removeTap(onBus: 0)
             hasTap = false
+            tapFormat = nil
         }
         audio?.finish()
         audio = nil
@@ -209,7 +219,7 @@ final class MobileRecorder: MobileRecording {
 
     private func cleanup() {
         analyzer = nil; input = nil; audio = nil; feedTask = nil; resultsTask = nil
-        analyzerFormat = nil; report = nil
+        analyzerFormat = nil; report = nil; tapFormat = nil
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 }

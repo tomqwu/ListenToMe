@@ -55,22 +55,42 @@ final class MobileSaveCostTests: XCTestCase {
         XCTAssertNotEqual(try String(contentsOf: url, encoding: .utf8), "sentinel")
     }
 
-    func testTypingIsDebouncedAndFlushedWhenTheAppLeavesTheForeground() async throws {
+    func testTypingIsDebouncedAndFlushedBeforeSuspension() async throws {
         let root = makeRoot()
         defer { try? FileManager.default.removeItem(at: root) }
-        let session = MobileSession(storageDirectory: root, saveDebounce: .milliseconds(120))
+        let session = MobileSession(storageDirectory: root, saveDebounce: .seconds(30))
         session.notes = "t"
         session.scheduleSave()
         session.notes = "ty"
         session.scheduleSave()
         XCTAssertTrue(session.history.isEmpty, "Keystrokes must not each write the archive")
 
-        for _ in 0..<100 where session.history.isEmpty { try await Task.sleep(for: .milliseconds(20)) }
+        // flushPendingSave is the only thing that can have written this; the debounce is 30 s away.
+        session.flushPendingSave()
         XCTAssertEqual(session.history.first?.notes, "ty")
 
+        // .inactive is the last phase guaranteed to run before suspension, and it does not end in
+        // background()'s unconditional save — so this asserts the flush itself.
         session.notes = "typed"
         session.scheduleSave()
-        await session.handleScenePhase(.background)
-        XCTAssertEqual(session.history.first?.notes, "typed", "Backgrounding must flush pending typing")
+        await session.handleScenePhase(.inactive)
+        XCTAssertEqual(session.history.first?.notes, "typed", "Going inactive must flush pending typing")
+        XCTAssertEqual(session.state, .idle, "Going inactive must not stop or save anything else")
+
+        // With nothing pending, a flush writes nothing new.
+        session.notes = "unsaved"
+        session.flushPendingSave()
+        XCTAssertEqual(session.history.first?.notes, "typed")
+    }
+
+    func testTheDebounceFiresOnItsOwnWhenTypingStops() async throws {
+        let root = makeRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let session = MobileSession(storageDirectory: root, saveDebounce: .milliseconds(120))
+        session.notes = "typed"
+        session.scheduleSave()
+        XCTAssertTrue(session.history.isEmpty)
+        for _ in 0..<100 where session.history.isEmpty { try await Task.sleep(for: .milliseconds(20)) }
+        XCTAssertEqual(session.history.first?.notes, "typed")
     }
 }

@@ -159,7 +159,8 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
 - Editable titles and notes; atomic local saves after finalized utterances, explicit Save,
   save-before-New, local History, restoration on launch and Markdown through the share sheet.
   Title and Notes typing is saved about a second after you stop typing, and is flushed when
-  recording stops or the app is backgrounded, so a keystroke never costs a full archive write. A
+  recording stops or the app leaves the foreground — before the system can suspend it — so a
+  keystroke never costs a full archive write. A
   save whose bytes are identical to the last one is skipped, and History is kept in memory: the
   conversation files are read on launch, after a delete and after a share-sheet import, not on
   every save.
@@ -172,7 +173,9 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   interruption is over and asks for the audio back, recording resumes automatically and the status
   line says so; otherwise tap Listen to continue. Connecting or losing a microphone mid-recording
   (AirPods, a Bluetooth headset, a wired mic) rebuilds capture on whatever input remains instead of
-  ending the meeting; only a rebuild that fails stops recording, with the reason shown. The screen
+  ending the meeting; one physical device change posts several notifications, so rebuilds within
+  half a second collapse into one and a rebuild is skipped when the input format has not actually
+  changed. Only a rebuild that fails stops recording, with the reason shown. The screen
   stays awake during active recording. No raw audio is saved.
 - Version/build information in Settings.
 

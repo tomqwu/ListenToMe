@@ -38,6 +38,8 @@ private final class FixtureRecorder: MobileRecording {
         receive?(TranscriptSegment(source: .you, text: "Alex owns onboarding.", isFinal: true, start: 3, end: 6))
     }
     func stop() async throws { receive = nil }
+    /// No real capture to rebuild in a fixture.
+    func reconfigure() async throws {}
 }
 
 private actor FixtureSummaryProvider: LLMProvider {

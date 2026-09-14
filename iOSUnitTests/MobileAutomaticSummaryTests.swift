@@ -130,6 +130,7 @@ private final class TestRecorder: MobileRecording {
     }
     func send(_ text: String) { receive?(.init(source: .you, text: text, isFinal: true, start: 0, end: 1)) }
     func stop() async throws { stopped = true; receive = nil }
+    func reconfigure() async throws {}
 }
 
 private actor SlowSummaryProvider: LLMProvider {

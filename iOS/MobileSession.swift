@@ -73,6 +73,10 @@ final class MobileSession {
     private var lastSavedData: Data?
     private let saveDebounce: Duration
     private var pendingSave: Task<Void, Never>?
+    /// Capture rebuilds are coalesced: several notifications describe one physical device change.
+    static let captureRebuildWindow = Duration.milliseconds(500)
+    private var lastCaptureRebuild: ContinuousClock.Instant?
+    private var isRebuildingCapture = false
     let attachmentRoot: URL
 
     init(storageDirectory: URL = .applicationSupportDirectory,
@@ -681,12 +685,20 @@ extension MobileSession {
         guard state == .recording, let recorder else { return }
         switch reason {
         case .newDeviceAvailable, .oldDeviceUnavailable, .override:
+            // One physical event can post several route changes (and the recorder sees an engine
+            // configuration change for the same event), so rebuilds are coalesced.
+            guard !isRebuildingCapture else { return }
+            if let lastCaptureRebuild, ContinuousClock.now - lastCaptureRebuild < Self.captureRebuildWindow { return }
+            isRebuildingCapture = true
             do {
                 try await recorder.reconfigure()
+                isRebuildingCapture = false
+                lastCaptureRebuild = ContinuousClock.now
                 message = reason == .newDeviceAvailable
                     ? "Microphone changed: recording continues on the newly connected microphone."
                     : "Microphone changed: recording continues on the available microphone."
             } catch {
+                isRebuildingCapture = false
                 await stopCapture(reason: .routeLost,
                                   message: "Recording stopped: the microphone changed and capture could not " +
                                            "restart (\(error.localizedDescription)). Your transcript is saved; " +
@@ -698,6 +710,9 @@ extension MobileSession {
 
     func handleScenePhase(_ phase: ScenePhase) async {
         isForeground = phase != .background
+        // Suspension can follow .inactive without another chance to run, so pending typing is
+        // written here as well as from the App body's synchronous forwarder.
+        flushPendingSave()
         switch phase {
         case .active:
             importSharedInbox()

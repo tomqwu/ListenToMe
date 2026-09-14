@@ -83,10 +83,31 @@ final class MobileAudioLifecycleTests: XCTestCase {
         XCTAssertTrue(try XCTUnwrap(session.message).lowercased().contains("microphone"))
 
         // Losing a headset re-arms on the remaining input rather than ending the meeting.
+        try await Task.sleep(for: MobileSession.captureRebuildWindow + .milliseconds(100))
         await session.handleRouteChange(.oldDeviceUnavailable)
         XCTAssertEqual(recorder.reconfigureCount, 2)
         XCTAssertEqual(session.state, .recording)
         XCTAssertEqual(recorder.stopCount, 0)
+    }
+
+    /// One AirPods connection posts several notifications for the same physical change, and the
+    /// restart can post another. Rebuilds inside the window must collapse into one.
+    func testRepeatedRouteChangesForOneDeviceChangeRebuildCaptureOnce() async throws {
+        let recorder = LifecycleTestRecorder()
+        let (session, root) = makeSession(recorder)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try await record(session)
+
+        await session.handleRouteChange(.newDeviceAvailable)
+        await session.handleRouteChange(.newDeviceAvailable)
+        await session.handleRouteChange(.override)
+        XCTAssertEqual(recorder.reconfigureCount, 1, "Duplicates for one device change must coalesce")
+        XCTAssertEqual(session.state, .recording)
+
+        // A genuinely later change still rebuilds.
+        try await Task.sleep(for: MobileSession.captureRebuildWindow + .milliseconds(100))
+        await session.handleRouteChange(.newDeviceAvailable)
+        XCTAssertEqual(recorder.reconfigureCount, 2)
     }
 
     func testARouteChangeThatCannotRestartCaptureStopsWithAMessage() async throws {
