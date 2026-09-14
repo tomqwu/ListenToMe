@@ -25,7 +25,8 @@ public enum OllamaParser {
 public struct OllamaProvider: LLMProvider {
     public let id = "ollama"
     private let model: String
-    private let baseURL: URL
+    /// The endpoint this provider talks to; exposed so callers can show the destination host.
+    public let baseURL: URL
     private let lineSource: @Sendable (LLMRequest) -> AsyncThrowingStream<String, Error>
 
     /// Designated initializer. `lineSource` yields raw NDJSON lines; injectable for testing.

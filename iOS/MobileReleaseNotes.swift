@@ -21,6 +21,10 @@ enum MobileReleaseNotes {
         var id: String { version }
     }
     static let releases: [Release] = [
+        .init(version: "1.10.2", title: "On-device by default, or your own server", details: [
+            "New installs summarize on-device with Apple Intelligence. A provider you already chose is kept.",
+            "Optional Ollama server URL: use a server you run. Your cloud key is never sent there."
+        ]),
         .init(version: "1.10.1", title: "Know what changed", details: [
             "See the installed version and release highlights after an update.",
             "Reopen this changelog anytime from More → What’s New."
@@ -28,9 +32,6 @@ enum MobileReleaseNotes {
         .init(version: "1.10.0", title: "Automatic reviews", details: [
             "Auto updates Quick, Summary and Deep when new speech calls for a review. Manual Generate is still available.",
             "Quick stays concise, with clearer progress and recovery when a model response needs another try."
-        ]),
-        .init(version: "1.9.4", title: "A recap from the first topic", details: [
-            "Quick can summarize a clear topic or question without waiting for a decision."
         ])
     ]
 }

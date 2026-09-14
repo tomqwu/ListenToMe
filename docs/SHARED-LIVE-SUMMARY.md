@@ -18,9 +18,11 @@ thinking disabled, temperature zero and 3072 output tokens. The shared reader va
 same final decision shape and applies a 30-second/16-KiB response limit. Local Ollama and
 Ollama Cloud use that contract; a device does not need Apple Intelligence for either.
 
-Ollama is the default provider on both platforms. Existing explicit provider/model choices are
-preserved. macOS retains its local versus Cloud privacy setting; iOS uses the configured Ollama
-Cloud connection. Apple Intelligence is available for manual summaries on supported devices.
+macOS defaults to Ollama with its local versus Cloud privacy setting. iOS defaults a fresh install to
+on-device Apple Intelligence and falls back to Ollama only where Apple Intelligence cannot run, so
+Auto starts paused there until Ollama is selected. Existing explicit provider/model choices are
+preserved on both platforms. iOS uses the configured Ollama connection — Ollama Cloud, or a server
+the user entered. Apple Intelligence is available for manual summaries on supported devices.
 Selecting Apple pauses Auto with an explanation; it never silently routes speech to Cloud.
 
 The native Auto experiment failed the quality gate (3/7 cases, including failures on repetition,

@@ -30,6 +30,41 @@ final class OllamaCloudCatalogTests: XCTestCase {
         XCTAssertEqual(Set(result.map(\.name)), ["deepseek-v99-pro:0911", "qwen99-flash"])
     }
 
+    func testFetchTargetsAUserSuppliedBaseURLAndOmitsAuthorizationWithoutAKey() async throws {
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [StubURLProtocol.self]
+        let session = URLSession(configuration: config)
+        defer { session.invalidateAndCancel(); StubURLProtocol.handler = nil }
+        StubURLProtocol.handler = { request in
+            XCTAssertEqual(request.url?.absoluteString, "http://studio.local:11434/api/tags")
+            XCTAssertNil(request.value(forHTTPHeaderField: "Authorization"))
+            return (HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!,
+                    Data(#"{"models":[{"name":"glm-5.3:local"}]}"#.utf8))
+        }
+        let result = try await OllamaCloudCatalog(session: session)
+            .fetch(apiKey: "", baseURL: URL(string: "http://studio.local:11434")!)
+        XCTAssertEqual(result.map(\.name), ["glm-5.3:local"])
+    }
+
+    func testFetchDefaultsToTheCloudBaseURLAndStillSendsTheKeyThere() async throws {
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [StubURLProtocol.self]
+        let session = URLSession(configuration: config)
+        defer { session.invalidateAndCancel(); StubURLProtocol.handler = nil }
+        var seen: URLRequest?
+        StubURLProtocol.handler = { request in
+            seen = request
+            return (HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!,
+                    Data(#"{"models":[{"name":"glm-5.3"}]}"#.utf8))
+        }
+        // No baseURL argument at all: the default must be Ollama Cloud, with Bearer auth.
+        let result = try await OllamaCloudCatalog(session: session).fetch(apiKey: "synthetic-test-key")
+        XCTAssertEqual(result.map(\.name), ["glm-5.3"])
+        XCTAssertEqual(seen?.url?.absoluteString, "https://ollama.com/api/tags")
+        XCTAssertEqual(seen?.value(forHTTPHeaderField: "Authorization"), "Bearer synthetic-test-key")
+        XCTAssertEqual(OllamaCloudCatalog.baseURL.absoluteString, "https://ollama.com")
+    }
+
     func testCatalogHTTPAndMalformedDataFailInsteadOfPretendingNoModels() async throws {
         let config = URLSessionConfiguration.ephemeral
         config.protocolClasses = [StubURLProtocol.self]

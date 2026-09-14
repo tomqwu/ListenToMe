@@ -53,8 +53,9 @@ public struct OllamaCloudCatalog: Sendable {
     private let session: URLSession
     public init(session: URLSession = .shared) { self.session = session }
 
-    public func fetch(apiKey: String) async throws -> [OllamaCloudModel] {
-        var request = URLRequest(url: Self.baseURL.appendingPathComponent("api/tags"))
+    /// `baseURL` defaults to Ollama Cloud; pass a user-supplied server to list models it hosts.
+    public func fetch(apiKey: String, baseURL: URL = OllamaCloudCatalog.baseURL) async throws -> [OllamaCloudModel] {
+        var request = URLRequest(url: baseURL.appendingPathComponent("api/tags"))
         request.timeoutInterval = 30
         request.cachePolicy = .reloadIgnoringLocalCacheData
         if !apiKey.isEmpty { request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization") }

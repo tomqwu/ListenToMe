@@ -245,6 +245,11 @@ final class MobileAppTests: XCTestCase {
         revealSettingsControl(app.buttons["Remove API key"], in: form)
         app.buttons["Remove API key"].tap()
         XCTAssertFalse(app.staticTexts["savedAPIKey"].exists)
+        // The endpoint is user-entered and defaults to Ollama Cloud; it is never chosen for the user.
+        let serverField = app.textFields["ollamaBaseURL"]
+        revealSettingsControl(serverField, in: form)
+        XCTAssertTrue(serverField.exists)
+        XCTAssertTrue(app.staticTexts["ollamaServer"].label.contains("https://ollama.com"))
         revealSettingsControl(app.buttons["summaryProvider"], in: form, towardTop: true)
         app.buttons["summaryProvider"].tap()
         app.buttons["Apple Intelligence · on-device"].tap()
