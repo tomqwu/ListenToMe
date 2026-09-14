@@ -24,6 +24,12 @@ Auto starts paused there until Ollama is selected. Existing explicit provider/mo
 preserved on both platforms. iOS uses the configured Ollama connection — Ollama Cloud, or a server
 the user entered. Apple Intelligence is available for manual summaries on supported devices.
 Selecting Apple pauses Auto with an explanation; it never silently routes speech to Cloud.
+The JSON decision contract above therefore applies to Ollama-backed reads only. A manual Quick
+Summary on Apple Intelligence uses `QuickSummaryContext.manualProseInstructions` and
+`proseSummary(_:)` instead: the on-device model is asked for the displayed bullets in prose rather
+than for the evaluator envelope it cannot be held to, and both platforms share one Apple transport
+(`AppleIntelligenceProvider`), which refuses `quickEvaluation`, reports an unsupported locale as an
+availability reason and translates `LanguageModelSession.GenerationError` into user-facing text.
 
 The native Auto experiment failed the quality gate (3/7 cases, including failures on repetition,
 a bilingual correction and transcript instructions). It is isolated in

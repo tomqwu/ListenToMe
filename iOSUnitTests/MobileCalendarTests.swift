@@ -47,6 +47,30 @@ final class MobileCalendarTests: XCTestCase {
         XCTAssertEqual(session.notes, notes)
     }
 
+    /// #125: imported details become notes that every summary sends to the selected provider, so the
+    /// join secret in a meeting URL and attendee e-mail addresses must never reach them.
+    func testImportedDetailsKeepJoinSecretsAndAttendeeAddressesOutOfNotes() throws {
+        let store = EKEventStore()
+        let source = EKEvent(eventStore: store)
+        source.title = "Zoom sync"
+        source.startDate = Date(timeIntervalSince1970: 1_800_000_000)
+        source.endDate = source.startDate.addingTimeInterval(1800)
+        source.url = URL(string: "https://zoom.us/j/123456789?pwd=AbCdEfSecret#success")
+        let context = MobileCalendar.event(source).context
+        XCTAssertTrue(context.contains("Event link: https://zoom.us/j/123456789"), context)
+        XCTAssertFalse(context.contains("pwd"), "A join passcode must not be copied into notes")
+        XCTAssertFalse(context.contains("success"), "The URL fragment must not be copied into notes")
+
+        XCTAssertEqual(MobileCalendarEvent.link(URL(string: "https://zoom.us/j/1?pwd=x")!), "https://zoom.us/j/1")
+        XCTAssertEqual(MobileCalendarEvent.link(URL(string: "https://user:pass@teams.example.com/meet/9")!),
+                       "https://teams.example.com/meet/9")
+        XCTAssertNil(MobileCalendarEvent.link(URL(string: "meeting-relative-path")!))
+
+        // EventKit reports the address as the name when an attendee has no display name.
+        let named = MobileCalendar.attendeeNames(["Alice Smith", "bob@example.com", "   ", nil])
+        XCTAssertEqual(named, ["Alice Smith"], "Names only, as macOS does")
+    }
+
     func testAllDayContextUsesCalendarDayRange() {
         let store = EKEventStore()
         let event = EKEvent(eventStore: store)

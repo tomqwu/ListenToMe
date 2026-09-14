@@ -22,8 +22,18 @@ struct MobileCalendarEvent: Identifiable {
             date.formatted(date: .abbreviated, time: allDay ? .omitted : .shortened)
         }
         if allDay { text += "\nAll-day event" }
-        if let url { text += "\nEvent link: \(url.absoluteString)" }
+        if let link = url.flatMap(Self.link) { text += "\nEvent link: \(link)" }
         return text
+    }
+
+    /// Imported details become part of the notes every summary sends to the selected provider, so the
+    /// link is reduced to where the meeting is, never how to join it: a join URL's query and fragment
+    /// carry the passcode (`?pwd=…`) and any user info carries credentials.
+    static func link(_ url: URL) -> String? {
+        guard var parts = URLComponents(url: url, resolvingAgainstBaseURL: false), parts.scheme != nil,
+              parts.host != nil else { return nil }
+        parts.query = nil; parts.fragment = nil; parts.user = nil; parts.password = nil
+        return parts.url?.absoluteString
     }
 }
 
@@ -68,12 +78,18 @@ final class MobileCalendar {
         } catch { message = "Could not read Calendar: \(error.localizedDescription)" }
     }
 
-    static func event(_ event: EKEvent) -> MobileCalendarEvent {
-        let people = (event.attendees ?? []).compactMap { person -> String? in
-            if let name = person.name, !name.isEmpty { return name }
-            let address = person.url.absoluteString.replacingOccurrences(of: "mailto:", with: "")
-            return address.isEmpty ? nil : address
+    /// Names only, as macOS does (App/CalendarService.swift): an attendee with no display name is
+    /// left out rather than published as an e-mail address in notes sent to the selected provider.
+    /// EventKit reports the address itself as `name` for an unnamed invitee, hence the "@" check.
+    static func attendeeNames(_ names: [String?]) -> [String] {
+        names.compactMap { name in
+            let trimmed = (name ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.isEmpty || trimmed.contains("@") ? nil : trimmed
         }
+    }
+
+    static func event(_ event: EKEvent) -> MobileCalendarEvent {
+        let people = attendeeNames((event.attendees ?? []).map(\.name))
         let meeting = MeetingInfo(title: event.title ?? "Untitled event", start: event.startDate,
                                   end: event.endDate, location: event.location, attendees: people, notes: event.notes)
         // Include occurrence time so recurring events do not share a row identity.

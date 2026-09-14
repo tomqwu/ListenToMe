@@ -23,7 +23,7 @@
 <key>LSHandlerRank</key><string>Alternate</string>
 <key>LSItemContentTypes</key><array><string>public.data</string></array>
 </dict></array>
-<key>NSCalendarsFullAccessUsageDescription</key><string>ListenToMe reads Calendar when you choose an event to import into your notes. Imported details are included in summaries using your selected AI provider. ListenToMe does not change calendar events.</string>
+<key>NSCalendarsFullAccessUsageDescription</key><string>ListenToMe reads Calendar when you choose an event to import into your notes. The imported title, time, location, attendee names, event notes and event link become part of your notes, which are sent to the AI provider you select in Settings — Ollama Cloud or your own Ollama server if you choose Ollama — and are included when you share a conversation. Attendee e-mail addresses and the part of a meeting link that carries a join passcode are never imported. ListenToMe does not change calendar events.</string>
 <key>ITSAppUsesNonExemptEncryption</key><false/>
 <key>NSLocalNetworkUsageDescription</key><string>ListenToMe connects to the Ollama server you enter in Settings, such as one running on your own Mac on this network.</string>
 <key>NSAppTransportSecurity</key><dict><key>NSAllowsLocalNetworking</key><true/></dict>

@@ -38,6 +38,9 @@ final class MobileSession {
     private var quickScheduler: MobileSummaryScheduler
     private var autoTask: Task<Void, Never>?
     private let summaryProvider: (any LLMProvider)?
+    /// The on-device transport used when the provider is Apple Intelligence. Only tests replace it,
+    /// so the simulator can exercise the on-device path without an Apple Intelligence capable host.
+    var onDeviceProviderOverride: (any LLMProvider)?
     let correctionProvider: (any LLMProvider)?
     let speechCorrection = MobileTranscriptCorrector()
     var acceptsSpeechCorrection = false
@@ -105,10 +108,17 @@ final class MobileSession {
         return summaryAvailability(for: .quick)
     }
     func summaryAvailability(for mode: MobileSummaryMode) -> String? {
-        if summaryProvider != nil { return nil }
+        if summaryProvider != nil || onDeviceProviderOverride != nil { return nil }
         if ai.provider == .ollama { return ai.availability(for: mode) }
         switch SystemLanguageModel.default.availability {
-        case .available: return nil
+        case .available:
+            // An unsupported language fails only at generation time, so it is reported like any
+            // other blocker instead of surfacing as a raw FoundationModels error after Generate.
+            let locale = Locale(identifier: language)
+            guard SystemLanguageModel.default.supportsLocale(locale) else {
+                return AppleIntelligenceProvider.unsupportedLocaleReason(for: locale)
+            }
+            return nil
         case .unavailable(.deviceNotEligible): return "On-device summaries require an Apple Intelligence capable device."
         case .unavailable(.appleIntelligenceNotEnabled): return "Turn on Apple Intelligence in Settings to use on-device summaries."
         case .unavailable(.modelNotReady):
@@ -519,28 +529,36 @@ extension MobileSession {
         summaryDraft = ""
         defer { isSummarizing = false; summaryDraft = ""; generatingMode = nil }
         do {
-            let request = mode == .quick ? try MobileQuickContext.manualRequest(source: source)
-                : LLMRequest(system: mode.instructions, messages: [ChatMessage(role: "user", content: source)])
+            // Apple Intelligence's on-device model cannot be held to the evaluator's JSON envelope,
+            // so manual Quick asks it for the bullets directly. See docs/IOS.md → Apple Intelligence.
+            let proseQuick = mode == .quick && !cloud
+            let request: LLMRequest
+            switch mode {
+            case .quick where proseQuick:
+                request = LLMRequest(system: MobileQuickContext.manualProseInstructions,
+                                     messages: [ChatMessage(role: "user", content: source)])
+            case .quick: request = try MobileQuickContext.manualRequest(source: source)
+            default: request = LLMRequest(system: mode.instructions,
+                                          messages: [ChatMessage(role: "user", content: source)])
+            }
             var quickResponse = ""
-            if cloud {
-                let client: any LLMProvider = try summaryProvider ?? ai.client(for: mode)
-                for try await delta in client.stream(request) {
-                    try Task.checkCancellation()
-                    if mode == .quick { quickResponse += delta } else { summaryDraft += delta }
-                    guard summaryDraft.count <= 100_000, quickResponse.utf8.count <= 16_384 else {
-                        throw RecordingError.message("Summary response was too large.")
-                    }
+            // One transport per provider: the Apple path streams through AppleIntelligenceProvider,
+            // which maps FoundationModels generation failures to messages a user can act on.
+            let client: any LLMProvider = try summaryProvider
+                ?? (cloud ? ai.client(for: mode) : (onDeviceProviderOverride ?? AppleIntelligenceProvider()))
+            for try await delta in client.stream(request) {
+                try Task.checkCancellation()
+                if mode == .quick { quickResponse += delta } else { summaryDraft += delta }
+                guard summaryDraft.count <= 100_000, quickResponse.utf8.count <= 16_384 else {
+                    throw RecordingError.message("Summary response was too large.")
                 }
-            } else {
-                let model = LanguageModelSession(instructions: request.system)
-                let response = try await model.respond(to: request.messages[0].content).content
-                if mode == .quick { quickResponse = response } else { summaryDraft = response }
             }
             try Task.checkCancellation()
             switch mode {
             case .summary: summary = summaryDraft
             case .quick:
-                quickSummary = try QuickSummaryDecision.parse(quickResponse).summary ?? "No key takeaway yet."
+                quickSummary = (proseQuick ? MobileQuickContext.proseSummary(quickResponse)
+                    : try QuickSummaryDecision.parse(quickResponse).summary) ?? "No key takeaway yet."
             case .deep: deepThought = summaryDraft
             }
             if let reviewMode = AutomaticReviewMode(rawValue: mode.rawValue) {
