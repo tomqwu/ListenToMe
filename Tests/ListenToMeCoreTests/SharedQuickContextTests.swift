@@ -2,6 +2,69 @@ import XCTest
 @testable import ListenToMeCore
 
 final class QuickSummaryContextTests: XCTestCase {
+    func testPiecesCarrySpeakerAttributionAndMarkTypedNotes() throws {
+        let alice = TranscriptSegment(source: .others, text: "Can you own the rollout?", isFinal: true,
+                                      start: 0, end: 1, speakerName: "Alice")
+        let you = TranscriptSegment(source: .you, text: "Yes, by Friday.", isFinal: true, start: 1, end: 2)
+        let live = TranscriptSegment(source: .others, text: "One more thing about the budget line.",
+                                     isFinal: false, start: 2, end: 3)
+        let pieces = QuickSummaryContext.pieces(notes: "Ask about budget", segments: [alice, you], liveSegments: [live])
+        XCTAssertEqual(pieces.map(\.text), ["Notes: Ask about budget", "Alice: Can you own the rollout?",
+                                            "You: Yes, by Friday.", "Others: One more thing about the budget line."])
+        XCTAssertEqual(pieces.map(\.id), ["notes:0", alice.id.uuidString + ":0", you.id.uuidString + ":0", "live:others:0"])
+        XCTAssertTrue(QuickSummaryContext.pieces(notes: "   ", segments: []).isEmpty,
+                      "Blank notes must not become a labelled piece")
+    }
+
+    func testLabelledLiveSpeechStillAppendsWithoutInvalidatingTheReadPrefix() throws {
+        let context = QuickSummaryContext()
+        func pieces(_ text: String) -> [QuickSummaryContext.Piece] {
+            QuickSummaryContext.pieces(notes: "", segments: [], liveSegments: [
+                .init(source: .others, text: text, isFinal: false, start: 0, end: 2)])
+        }
+        let text = "Peter will deliver the prototype on Wednesday."
+        let batch = try XCTUnwrap(context.batch(pieces(text), summary: ""))
+        XCTAssertEqual(batch.changes[0].text, "Others: " + text)
+        XCTAssertTrue(context.isCurrent(batch, pieces: pieces(text + " Sarah will review it.")))
+    }
+
+    func testResponseLanguageReplacesTheFollowTheTranscriptRuleInsteadOfContradictingIt() throws {
+        let pieces = [QuickSummaryContext.Piece(id: "a", text: "You: Sarah confirms Monday.")]
+        let plain = try XCTUnwrap(QuickSummaryContext().batch(pieces, summary: ""))
+        XCTAssertEqual(plain.request.system, QuickSummaryContext.instructions)
+        XCTAssertTrue(plain.request.system.contains("keep visibleSummary's language"),
+                      "Without a setting the evaluator still follows the transcript")
+        let localized = try XCTUnwrap(QuickSummaryContext().batch(pieces, summary: "",
+                                                                 responseLanguage: " Simplified Chinese "))
+        XCTAssertTrue(localized.request.system.contains(
+            "Language: always write context and bullets in Simplified Chinese"), localized.request.system)
+        XCTAssertFalse(localized.request.system.contains("keep visibleSummary's language"),
+                       "The prompt must state one language rule, not two contradictory ones")
+        XCTAssertEqual(localized.request.system.count,
+                       QuickSummaryContext.instructions.count
+                       - QuickSummaryContext.followTheTranscriptLanguage.count
+                       + "Language: always write context and bullets in Simplified Chinese, regardless of the language spoken in the transcript.".count)
+    }
+
+    func testTypedNotesAreExplainedToEveryReviewer() {
+        XCTAssertTrue(QuickSummaryContext.instructions.contains("\"Notes: \" is the user's typed"))
+        for mode in AutomaticReviewMode.allCases {
+            XCTAssertTrue(mode.instructions.contains("\"Notes: \" is the user's typed"), mode.rawValue)
+        }
+    }
+
+    func testEveryChunkOfALongUtteranceKeepsItsSpeakerLabel() throws {
+        let long = String(repeating: "We keep discussing the rollout schedule. ", count: 60)
+        let segment = TranscriptSegment(source: .others, text: long, isFinal: true,
+                                        start: 0, end: 90, speakerName: "Alice")
+        let pieces = QuickSummaryContext.pieces(notes: "", segments: [segment])
+        XCTAssertGreaterThan(pieces.count, 1, "This utterance must span several chunks")
+        XCTAssertTrue(pieces.allSatisfy { $0.text.hasPrefix("Alice: ") },
+                      "A later chunk must not reach the model unattributed")
+        let recovered = pieces.map { $0.text.dropFirst("Alice: ".count) }.joined()
+        XCTAssertEqual(recovered, long.trimmingCharacters(in: .whitespacesAndNewlines))
+    }
+
     func testKeepAdvancesMemoryAndOnlyUnreadSpeechIsSentNext() throws {
         var context = QuickSummaryContext()
         let first = TranscriptSegment(source: .you, text: "Friday is a proposal.", isFinal: true, start: 0, end: 2)
@@ -14,8 +77,8 @@ final class QuickSummaryContextTests: XCTestCase {
         let next = try XCTUnwrap(context.batch(pieces, summary: ""))
         let input = try JSONDecoder().decode(QuickSummaryContext.Input.self, from: Data(next.request.messages[0].content.utf8))
         XCTAssertEqual(input.runningContext, "Friday proposed, not agreed.")
-        XCTAssertEqual(input.changes.map(\.text), ["QA needs longer."])
-        XCTAssertEqual(input.recentSpeech.map(\.text), [first.text])
+        XCTAssertEqual(input.changes.map(\.text), ["You: QA needs longer."])
+        XCTAssertEqual(input.recentSpeech.map(\.text), ["You: " + first.text])
     }
 
     func testPartialIsExcludedAndCorrectionAndRemovalAreExplicit() throws {
@@ -31,12 +94,12 @@ final class QuickSummaryContextTests: XCTestCase {
         XCTAssertFalse(context.isCurrent(batch, pieces: changed), "An old response must not acknowledge a corrected phrase")
         context.accept(batch, memory: "Sarah confirms")
         let revision = try XCTUnwrap(context.batch(changed, summary: "Sarah confirms"))
-        XCTAssertEqual(revision.changes[0].previousText, "Sarah confirms.")
-        XCTAssertEqual(revision.changes[0].text, "Peter confirms.")
+        XCTAssertEqual(revision.changes[0].previousText, "You: Sarah confirms.")
+        XCTAssertEqual(revision.changes[0].text, "You: Peter confirms.")
         context.accept(revision, memory: "Peter confirms")
         let removal = try XCTUnwrap(context.batch([], summary: "Peter confirms"))
         XCTAssertEqual(removal.changes[0].text, "")
-        XCTAssertEqual(removal.changes[0].previousText, "Peter confirms.")
+        XCTAssertEqual(removal.changes[0].previousText, "You: Peter confirms.")
         context.accept(removal, memory: "")
         XCTAssertFalse(context.hasChanges([]))
     }
@@ -59,9 +122,9 @@ final class QuickSummaryContextTests: XCTestCase {
             .init(source: .you, text: "Peter will deliver on Thursday.", isFinal: true, start: 0, end: 3)])
         XCTAssertFalse(context.isCurrent(batch, pieces: final))
         let replacement = try XCTUnwrap(context.batch(final, summary: text))
-        XCTAssertEqual(replacement.changes.first?.previousText, text)
+        XCTAssertEqual(replacement.changes.first?.previousText, "You: " + text)
         XCTAssertEqual(replacement.changes.first?.text, "")
-        XCTAssertEqual(replacement.changes.last?.text, "Peter will deliver on Thursday.")
+        XCTAssertEqual(replacement.changes.last?.text, "You: Peter will deliver on Thursday.")
         context.accept(replacement, memory: "Thursday")
         XCTAssertFalse(context.hasChanges(final))
     }
@@ -80,7 +143,7 @@ final class QuickSummaryContextTests: XCTestCase {
             context.accept(batch, memory: String(repeating: "忆", count: 2_000))
         }
         XCTAssertGreaterThan(batches, 2)
-        XCTAssertEqual(recovered, original)
+        XCTAssertEqual(recovered.replacingOccurrences(of: "You: ", with: ""), original)
     }
 
     func testEvaluationContainsTypedReviewRecommendationsAndRejectsInvalidConfidence() throws {

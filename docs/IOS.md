@@ -3,6 +3,21 @@
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
 26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.10.1 (23).
 
+## Attributed summary input
+
+Summary, Deep and Quick all read the transcript with speaker labels and the user's typed notes
+marked as `Notes:`. Summaries can therefore attribute a question or a commitment instead of
+reporting the owner as unstated, and never present a typed note as something that was said.
+
+Local speech is labelled `You` in prompts, the same label macOS uses, even though the transcript and
+the Markdown export display it as `Microphone`: a device name is not a participant, and the review
+prompts are told never to invent names. Remote or diarized speakers keep their own label.
+
+The label format and the `Notes:` marker are shared with macOS; the two platforms still assemble the
+full-review source differently (chunking and provisional-speech handling).
+See [the shared policy](SHARED-LIVE-SUMMARY.md#attributed-input-and-user-directives-for-automatic-output)
+for the exact rule and the known differences.
+
 ## iOS 1.10.1 (23)
 
 An in-app What’s New screen shows the installed version/build and recent changes after an update. Continue acknowledges that exact build; future launches go straight to the workspace. More → What’s New reopens the offline changelog. Large text scrolls independently of the pinned Continue button. [What to Test](../metadata/ios/en-CA/what-to-test-1.10.1.txt).

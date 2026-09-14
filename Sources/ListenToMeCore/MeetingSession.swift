@@ -618,7 +618,16 @@ extension MeetingSession {
         return isRunning ? "Listening for meaningful changes" : "Auto checks while listening"
     }
 
+    /// The pieces already carry speaker labels and a Notes marker, so the automatic reviews read the
+    /// same attributed evidence every manual prompt does.
     private var automaticReviewSource: String { livePieces.map(\.text).joined(separator: "\n") }
+
+    /// The user's language, persona and reference settings, applied to automatic reviews exactly as
+    /// they are applied to the manual panes.
+    private var automaticReviewDirectives: AutomaticReviewDirectives {
+        AutomaticReviewDirectives(responseLanguage: responseLanguage, personaGuidance: personaGuidance,
+                                  references: referenceContext)
+    }
 
     public func automaticReviewStatus(_ mode: AutomaticReviewMode) -> String {
         guard autoSummaryEnabled else { return "Auto off · Generate manually." }
@@ -632,7 +641,8 @@ extension MeetingSession {
     private func synchronizeAutomaticReviews() {
         automaticReviews.synchronize(enabled: autoSummaryEnabled && isRunning && aiEnabled
             && providers[.quick] != nil && providerAvailability(models[.quick] ?? "") == nil,
-            manualBusy: !streamingRoles.isEmpty, source: automaticReviewSource, provider: { [weak self] mode in
+            manualBusy: !streamingRoles.isEmpty, source: automaticReviewSource,
+            directives: automaticReviewDirectives, provider: { [weak self] mode in
                 guard let self else { throw CancellationError() }
                 let role: CopilotRole = mode == .summary ? .listener : .deep
                 if let reason = self.providerAvailability(self.models[role] ?? "") { throw QuickSummaryError.message(reason) }
@@ -681,7 +691,8 @@ extension MeetingSession {
         if livePieces.isEmpty { quickReader.reset(); quickSuggestion = ""; return }
         do {
             guard let batch = try quickReader.context.batch(livePieces, summary: quickSuggestion,
-                reviewsCompleted: quickReader.reviewsCompleted, pendingReviews: quickReader.recommendations) else { return }
+                reviewsCompleted: quickReader.reviewsCompleted, pendingReviews: quickReader.recommendations,
+                responseLanguage: responseLanguage) else { return }
             let run = runID
             let previousReads = quickReader.completedReads
             await quickReader.read(batch, provider: provider, isCurrent: { [weak self] in

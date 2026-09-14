@@ -62,3 +62,60 @@ Stop, Auto off, provider changes and conversation changes cancel automatic work.
 The panels report waiting, queued, updating, up-to-date or failure status. The visible Auto label now describes all summaries, and explanatory text correctly describes speech-triggered evaluation with brief batching.
 
 Live GLM testing exposed planning text despite `think: false`, exhausting the former 1,600-token budget halfway through valid final JSON. Quick now allows 3,072 generated tokens and a 30-second deadline while retaining the 16-KiB response cap and three-bullet/480-character display limit. Planning is never displayed; truncated JSON remains rejected. This budget change prevents the observed truncation without using unsupported Cloud structured-output options.
+
+## Attributed input and user directives for automatic output
+
+Automatic output previously read an anonymous wall of text and ignored the user's prompt settings,
+so it could not say who committed to what, treated typed notes as speech, and overwrote a manual
+answer in a different language.
+
+### The shared attribution rule
+
+Both platforms label every prompt line the way the manual prompts do:
+
+- A transcript line is `"<speaker label>: <text>"`. The label is the diarized speaker name when
+  there is one, otherwise `You` for the local speaker and `Others` for remote audio. iOS stamps
+  `Microphone` as the *display* label for local speech; prompts map that back to `You`, because a
+  device name is not a participant and the review prompts are told never to invent names. The iOS
+  Markdown export keeps `Microphone`.
+- The user's typed notes are one `"Notes: "` line. Blank notes produce no line. Both the evaluator
+  prompt and the full-review prompts state that a `Notes: ` line is typed input, not speech.
+- `QuickSummaryContext.pieces` repeats the label on **every** 600-character chunk, so a long
+  utterance stays attributed past its first chunk.
+
+Piece IDs are unchanged by attribution, so the acknowledged ledger, append-only live speech and
+revision invalidation behave exactly as before; the label is a constant prefix, so appended words
+still extend a piece already read. Renaming a speaker revises the affected pieces.
+
+### Where the two sources still differ
+
+The label format and the `Notes: ` marker are identical, but the two sources are assembled
+differently and are *not* byte-identical for the same conversation:
+
+| | macOS `automaticReviewSource` | iOS `summarySource` |
+|---|---|---|
+| Built from | `QuickSummaryContext.pieces` | the segment list, joined directly |
+| Long utterances | split into 600-character chunks, each labelled | kept whole, labelled once |
+| Provisional speech | only when 24+ trimmed characters, one source per speaker | the current partial is always included |
+| Order | notes, then finals, then live | notes, then segments in order, partial last |
+
+The Quick evaluator sees the same `pieces` on both platforms; only the full-review source differs.
+Converging the two is tracked separately; nothing here depends on them matching byte for byte.
+
+### User directives
+
+`AutomaticReviewCoordinator.synchronize` takes an `AutomaticReviewDirectives` value carrying the
+response language, the preset persona guidance and the attached reference material. The automatic
+system prompt is built through `PromptBuilder.systemWithDirectives`, the same path the manual panes
+use, so persona and language wording is identical. Automatic Deep also receives the attached
+reference material in its user message, matching manual Deep; automatic Summary keeps the manual
+listener contract of transcript evidence only.
+
+`QuickSummaryContext.instructions(responseLanguage:)` carries the same setting into the Quick
+evaluator by **replacing** the default follow-the-transcript rule, so the prompt never states two
+contradictory language rules.
+
+A queued or in-flight review keeps the directives it was created with, so a settings change
+mid-request never relabels output produced from older context; the next review uses the new
+settings. With no directives set, the review prompts and the Quick evaluator prompt are unchanged.
+iOS exposes no response-language, persona or reference settings yet, so it passes none.

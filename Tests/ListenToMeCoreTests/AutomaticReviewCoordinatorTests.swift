@@ -176,6 +176,61 @@ final class AutomaticReviewCoordinatorTests: XCTestCase {
         XCTAssertTrue(runner.status(.deep).contains("Waiting"))
     }
 
+    func testUserDirectivesShapeAutomaticRequestsAndStaleJobsKeepTheirOwn() async throws {
+        let runner = AutomaticReviewCoordinator(summaryInterval: .milliseconds(10), deepInterval: .milliseconds(10))
+        let provider = ReviewTestProvider(delay: .milliseconds(40))
+        let chinese = AutomaticReviewDirectives(responseLanguage: "Simplified Chinese",
+            personaGuidance: "Act as the hiring manager.", references: "SPEC: rollout gates")
+        runner.synchronize(enabled: true, manualBusy: false, source: "Why is Azure slow?", directives: chinese,
+            provider: { _ in provider }, apply: { _, _, _ in })
+        runner.offer(recommendations, source: "Why is Azure slow?")
+        try await wait { await provider.requests().count == 1 }
+        // A settings change mid-flight must not relabel work already queued with the old directives.
+        runner.synchronize(enabled: true, manualBusy: false, source: "Why is Azure slow?",
+            directives: .init(responseLanguage: "French"), provider: { _ in provider }, apply: { _, _, _ in })
+        try await wait { runner.completedCounts[.deep] == 1 }
+        let requests = await provider.requests()
+        XCTAssertEqual(requests.count, 2)
+        for request in requests {
+            XCTAssertTrue(request.system.contains("Simplified Chinese"), request.system)
+            XCTAssertTrue(request.system.contains("Act as the hiring manager."), request.system)
+            XCTAssertFalse(request.system.contains("French"), "A stale job must not be relabelled")
+        }
+        XCTAssertTrue(requests[1].messages[0].content.contains("SPEC: rollout gates"),
+                      "Deep must receive the attached reference material")
+        XCTAssertFalse(requests[0].messages[0].content.contains("SPEC: rollout gates"),
+                       "Summary keeps the manual listener contract: transcript evidence only")
+    }
+
+    func testNewDirectivesApplyToLaterAutomaticReviews() async throws {
+        let runner = AutomaticReviewCoordinator(summaryInterval: .zero, deepInterval: .zero)
+        let provider = ReviewTestProvider()
+        func update(_ source: String, _ directives: AutomaticReviewDirectives) {
+            runner.synchronize(enabled: true, manualBusy: false, source: source, directives: directives,
+                provider: { _ in provider }, apply: { _, _, _ in })
+            runner.offer([recommendations[0]], source: source)
+        }
+        update("Azure", .init(responseLanguage: "Simplified Chinese"))
+        try await wait { runner.completedCounts[.summary] == 1 }
+        update("Azure latency", .init(responseLanguage: "French"))
+        try await wait { runner.completedCounts[.summary] == 2 }
+        let requests = await provider.requests()
+        XCTAssertTrue(requests[0].system.contains("Simplified Chinese"))
+        XCTAssertTrue(requests[1].system.contains("French"))
+    }
+
+    func testAbsentDirectivesLeaveTheReviewInstructionsUnchanged() async throws {
+        let runner = AutomaticReviewCoordinator(summaryInterval: .zero)
+        let provider = ReviewTestProvider()
+        runner.synchronize(enabled: true, manualBusy: false, source: "Azure",
+            provider: { _ in provider }, apply: { _, _, _ in })
+        runner.offer([recommendations[0]], source: "Azure")
+        try await wait { runner.completedCounts[.summary] == 1 }
+        let requests = await provider.requests()
+        XCTAssertEqual(requests[0].system, AutomaticReviewMode.summary.instructions)
+        XCTAssertEqual(requests[0].messages[0].content, "Azure")
+    }
+
     private func wait(_ condition: () async -> Bool) async throws {
         let deadline = ContinuousClock.now + .seconds(2)
         while !(await condition()), ContinuousClock.now < deadline { try await Task.sleep(for: .milliseconds(5)) }
