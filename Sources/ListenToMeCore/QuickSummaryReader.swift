@@ -153,15 +153,18 @@ public final class QuickSummaryReader {
 /// separately and stays the evaluator's `visibleSummary`; only the *displayed* value is held back.
 public struct ManualQuickAnswer: Sendable {
     /// How long a completed manual answer keeps the Quick pane. Requesting another answer, clearing
-    /// the conversation or dismissing the answer ends it sooner.
-    public static let freshness: Duration = .seconds(120)
-    private var completedAt: ContinuousClock.Instant?
+    /// the conversation or dismissing the answer ends it sooner. Once it elapses the pane follows the
+    /// recap again on the next automatic apply; the answer stays reachable until then, and "Show
+    /// recap" stays available the whole time, so an expired answer can never strand a newer recap.
+    public static let freshness: TimeInterval = 120
+    /// Seconds on the session's injected clock, so expiry is testable without waiting.
+    private var completedAt: TimeInterval?
     public init() {}
     /// A manual answer finished streaming and is now on screen.
-    public mutating func completed(at now: ContinuousClock.Instant = .now) { completedAt = now }
+    public mutating func completed(at now: TimeInterval) { completedAt = now }
     /// The user dismissed the answer, started a new request, or the conversation was reset.
     public mutating func dismiss() { completedAt = nil }
-    public func isFresh(at now: ContinuousClock.Instant = .now) -> Bool {
+    public func isFresh(at now: TimeInterval) -> Bool {
         guard let completedAt else { return false }
         return now - completedAt < Self.freshness
     }

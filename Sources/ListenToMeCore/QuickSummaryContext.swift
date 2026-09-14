@@ -125,6 +125,11 @@ public struct QuickSummaryContext {
             // flight produces new material for the next batch; it never discards the read, whose
             // acknowledged text is then simply the previous wording of that note.
             if change.id.hasPrefix("notes:") { return true }
+            // Deliberately stricter than `isContinuation` for a `live:` piece that disappeared: a
+            // finalized hypothesis arrives with its own (possibly corrected) wording, and a read
+            // *acknowledges* text into the incremental ledger, so accepting the provisional wording
+            // would leave a superseded fact in memory. A full review is regenerated from the whole
+            // transcript by the next review, so there it is safe to let the job finish.
             let text = current[change.id] ?? ""
             if change.id.hasPrefix("live:"), !change.text.isEmpty {
                 // New words need another read; they do not invalidate the prefix already read.

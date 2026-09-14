@@ -79,6 +79,9 @@ final class MobileAutomaticSummaryTests: XCTestCase {
         XCTAssertTrue(released)
         try await waitUntil { (session.automaticReviews.completedCounts[.summary] ?? 0) == 1 }
         XCTAssertEqual(session.summary, "Full review")
+        // The finished review still satisfies the recommendation, so it is not offered a second time.
+        XCTAssertTrue(session.quickReader.reviewsCompleted.contains("summary"))
+        XCTAssertFalse(session.quickReader.recommendations.contains { $0.mode == "summary" })
         await session.stop()
     }
 

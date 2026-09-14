@@ -50,9 +50,11 @@ public final class MeetingSession {
     public private(set) var quickRecap = ""
     private var manualQuickAnswer = ManualQuickAnswer()
 
-    /// True while the Quick pane is holding a manual answer over a newer automatic recap.
+    /// True while the Quick pane shows something other than the current automatic recap. Deliberately
+    /// independent of freshness: once the window elapses the pane keeps the answer until the next
+    /// automatic apply, and the user must still be able to reach the newer recap in the meantime.
     public var quickAnswerOverridesRecap: Bool {
-        manualQuickAnswer.isFresh() && !quickRecap.isEmpty && quickRecap != quickSuggestion
+        !quickRecap.isEmpty && quickRecap != quickSuggestion
     }
 
     /// Drops the manual answer so the Quick pane follows the automatic recap again.
@@ -601,13 +603,17 @@ extension MeetingSession {
             // against the automatic recap for a bounded time.
             if role == .quick, generation == responseGenerations[role], !Task.isCancelled,
                !quickSuggestion.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                manualQuickAnswer.completed()
+                manualQuickAnswer.completed(at: clock())
             }
             if generation == responseGenerations[role], !Task.isCancelled,
                let mode = AutomaticReviewMode(rawValue: role == .listener ? "summary" : role.rawValue) {
                 automaticReviews.markManualCompletion(mode, source: reviewedPieces.map(\.text).joined(separator: "\n"))
             }
-            if generation == responseGenerations[role], !Task.isCancelled, reviewedPieces == livePieces {
+            // Notes typed, or speech appended, while the manual answer streamed do not make the
+            // answer stale: the same continuation rule that keeps an automatic review alive decides
+            // whether this one still covers what is on screen.
+            if generation == responseGenerations[role], !Task.isCancelled,
+               QuickSummaryContext.isContinuation(of: reviewedPieces, in: livePieces) {
                 quickReader.markReviewed(role == .listener ? "summary" : role.rawValue)
             }
             // Listener finished: snapshot the completed summary for Quick/Deep grounding, so a
@@ -634,7 +640,7 @@ extension MeetingSession {
     /// never replaced mid-read by three automatic bullets.
     private func applyQuickRecap(_ output: String) {
         quickRecap = output
-        guard !manualQuickAnswer.isFresh() else { return }
+        guard !manualQuickAnswer.isFresh(at: clock()) else { return }
         quickSuggestion = output
     }
 
@@ -704,15 +710,27 @@ extension MeetingSession {
                 if let reason = self.providerAvailability(self.models[role] ?? "") { throw QuickSummaryError.message(reason) }
                 guard let provider = self.providers[role] else { throw QuickSummaryError.message("Choose a review model.") }
                 return provider
-            }, apply: { [weak self] mode, output, source in
+            }, apply: { [weak self] mode, output, reviewed in
                 guard let self else { return }
                 self.setOutput(mode == .summary ? .listener : .deep, output)
                 if mode == .summary { self.lastCompletedListenerSummary = output }
-                if AutomaticReviewCoordinator.normalized(self.automaticReviewSource) == source {
-                    self.quickReader.markReviewed(mode.rawValue)
-                    if mode == .summary { self.summarizedSegmentIDs.formUnion(self.store.utterances.map(\.id)) }
+                // The review still answers the current input when that input merely continued the
+                // snapshot it read; otherwise the recommendation stays outstanding. Comparing the
+                // joined source instead would re-run the identical review after a notes keystroke.
+                guard QuickSummaryContext.isContinuation(of: reviewed, in: self.livePieces) else { return }
+                self.quickReader.markReviewed(mode.rawValue)
+                // Only the segments this review actually read advance the listener ledger; speech
+                // that arrived after the snapshot still needs summarizing.
+                if mode == .summary {
+                    self.summarizedSegmentIDs.formUnion(Self.segmentIDs(in: reviewed))
                 }
             })
+    }
+
+    /// The transcript segments a piece snapshot covers. Piece IDs are "<segment UUID>:<chunk>";
+    /// notes and provisional `live:` pieces have no segment and are skipped.
+    static func segmentIDs(in pieces: [QuickSummaryContext.Piece]) -> Set<UUID> {
+        Set(pieces.compactMap { UUID(uuidString: $0.id.components(separatedBy: ":").first ?? "") })
     }
 
     private func handleLiveEvent(_ event: LiveSummaryScheduler.Event) {

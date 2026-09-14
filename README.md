@@ -95,7 +95,8 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 - An answer you asked for in Quick ("Draft reply", "Key terms"…) stays on screen: the automatic
   recap keeps updating behind it and **Show recap** switches back. Typing in Notes never cancels a
   running automatic review, and a review that exceeds its deadline says so instead of repeating the
-  same request — the deadline scales with the conversation's length and is twice as long for Deep.
+  same request — the deadline scales with the conversation's length and is exactly twice as long for
+  Deep. A dropped or stalled connection is still retried normally.
 
 **Bring-your-own-model**
 - Each AI pane has its **own model dropdown** with "good for" hints, listing chat-capable models

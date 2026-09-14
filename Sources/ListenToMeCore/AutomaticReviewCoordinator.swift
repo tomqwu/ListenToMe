@@ -48,6 +48,11 @@ public struct AutomaticReviewDirectives: Sendable, Equatable {
     }
 }
 
+/// Raised only by the coordinator's own deadline race. A provider's `URLError.timedOut` (for example
+/// URLSession's idle timeout on a stalled connection) is an ordinary transient failure that must keep
+/// the retry backoff; only exceeding *this* deadline is terminal for the input.
+struct AutomaticReviewDeadlineExceeded: Error {}
+
 /// Event-driven, serial full reviews. Timers exist only for queued work or a failed request.
 @MainActor @Observable
 public final class AutomaticReviewCoordinator {
@@ -85,7 +90,9 @@ public final class AutomaticReviewCoordinator {
     private let retryInterval: Duration
     private let timeout: Duration
     @ObservationIgnored private var makeProvider: ((AutomaticReviewMode) throws -> any LLMProvider)?
-    @ObservationIgnored private var apply: ((AutomaticReviewMode, String, String) -> Void)?
+    /// `(mode, output, the snapshot the review read)`. Callers compare that snapshot per piece, so
+    /// bookkeeping after a review is decided by the same rule that kept the review alive.
+    @ObservationIgnored private var apply: ((AutomaticReviewMode, String, [QuickSummaryContext.Piece]) -> Void)?
 
     public init(summaryInterval: Duration = .seconds(30), deepInterval: Duration = .seconds(60),
                 retryInterval: Duration = .seconds(5), timeout: Duration = .seconds(60)) {
@@ -104,7 +111,7 @@ public final class AutomaticReviewCoordinator {
     public func synchronize(enabled: Bool, manualBusy: Bool, pieces: [QuickSummaryContext.Piece], source: String,
                             directives: AutomaticReviewDirectives = .init(),
                             provider: @escaping (AutomaticReviewMode) throws -> any LLMProvider,
-                            apply: @escaping (AutomaticReviewMode, String, String) -> Void) {
+                            apply: @escaping (AutomaticReviewMode, String, [QuickSummaryContext.Piece]) -> Void) {
         self.enabled = enabled; self.manualBusy = manualBusy
         currentInput = Self.normalized(source); currentPieces = pieces; currentDirectives = directives
         makeProvider = provider; self.apply = apply
@@ -210,10 +217,10 @@ public final class AutomaticReviewCoordinator {
                 self.completedInputs[job.mode] = job.input; self.completedCounts[job.mode, default: 0] += 1
                 self.failures[job.mode] = 0; self.errors[job.mode] = nil
                 self.nextAllowed[job.mode] = .now + self.interval(job.mode)
-                self.apply?(job.mode, output, job.input)
+                self.apply?(job.mode, output, job.snapshot)
             } catch {
                 guard token == self.generation, !Task.isCancelled else { return }
-                if (error as? URLError)?.code == .timedOut {
+                if error is AutomaticReviewDeadlineExceeded {
                     // Re-running the identical oversized request would only spend the same time
                     // again. Wait for new context, or let the user pick a faster model.
                     self.timedOutInputs[job.mode] = job.input
@@ -240,13 +247,14 @@ public final class AutomaticReviewCoordinator {
     /// The request deadline for one review. A flat deadline fails long local reviews that the same
     /// model completes when generated manually, so it scales with mode and input size:
     ///
-    ///     deadline = (base + base x characters / 20,000) x (Deep ? 2 : 1), capped at 10 minutes
+    ///     deadline = min(base + base x characters / 20,000, 5 min) x (Deep ? 2 : 1)
     ///
-    /// With the default 60-second base: 60 s for a short Summary, 195 s for a 45,000-character
-    /// Summary and 390 s for the same input as Deep, which is at least twice Summary at every size.
+    /// The cap applies *before* doubling, so Deep is exactly twice Summary at every input size and no
+    /// single review can run longer than ten minutes. With the default 60-second base: 60 s for a
+    /// short Summary, 195 s for a 45,000-character Summary and 390 s for the same input as Deep.
     static func deadline(base: Duration, mode: AutomaticReviewMode, characters: Int) -> Duration {
-        let scaled = base + base * (Double(max(0, characters)) / 20_000)
-        return min(.seconds(600), mode == .deep ? scaled * 2 : scaled)
+        let scaled = min(.seconds(300), base + base * (Double(max(0, characters)) / 20_000))
+        return mode == .deep ? scaled * 2 : scaled
     }
 
     /// Whole seconds of a deadline, for the message a user reads when a review took too long.
@@ -268,7 +276,7 @@ public final class AutomaticReviewCoordinator {
                 }
                 return output
             }
-            group.addTask { try await Task.sleep(for: timeout); throw URLError(.timedOut) }
+            group.addTask { try await Task.sleep(for: timeout); throw AutomaticReviewDeadlineExceeded() }
             defer { group.cancelAll() }
             guard let output = try await group.next() else { throw CancellationError() }
             return output

@@ -190,12 +190,14 @@ final class AutomaticReviewCoordinatorTests: XCTestCase {
         XCTAssertEqual(AutomaticReviewCoordinator.deadline(base: base, mode: .deep, characters: 45_000), .seconds(390))
         XCTAssertEqual(AutomaticReviewCoordinator.deadline(base: base, mode: .deep, characters: 60_000), .seconds(480),
                        "The largest accepted input still gets a finite deadline")
+        XCTAssertEqual(AutomaticReviewCoordinator.deadline(base: .seconds(300), mode: .summary, characters: 60_000),
+                       .seconds(300), "Summary is capped at five minutes")
         XCTAssertEqual(AutomaticReviewCoordinator.deadline(base: .seconds(300), mode: .deep, characters: 60_000),
-                       .seconds(600), "The deadline is capped at ten minutes")
+                       .seconds(600), "The cap applies before doubling, so Deep tops out at ten minutes")
         for size in [0, 1_000, 60_000] {
-            XCTAssertGreaterThanOrEqual(AutomaticReviewCoordinator.deadline(base: base, mode: .deep, characters: size),
+            XCTAssertEqual(AutomaticReviewCoordinator.deadline(base: base, mode: .deep, characters: size),
                 AutomaticReviewCoordinator.deadline(base: base, mode: .summary, characters: size) * 2,
-                "Deep must always get at least twice Summary's deadline")
+                "Deep gets exactly twice Summary's deadline at every size, cap included")
         }
     }
 
@@ -208,6 +210,24 @@ final class AutomaticReviewCoordinatorTests: XCTestCase {
         runner.offer([recommendations[0]], source: source)
         XCTAssertTrue(runner.status(.summary).contains("exceeds the review limit"))
         XCTAssertTrue(runner.status(.deep).contains("Waiting"))
+    }
+
+    /// A provider's own timeout (URLSession's idle timeout on a stalled connection) is transient,
+    /// not "this model is too slow for this input", so it must keep the retry backoff.
+    func testProviderNetworkTimeoutStillRetriesWithBackoff() async throws {
+        let runner = AutomaticReviewCoordinator(summaryInterval: .zero, retryInterval: .milliseconds(5))
+        let provider = ReviewTestProvider(failFirst: true, failure: URLError(.timedOut))
+        var output = "Previous"
+        runner.synchronize(enabled: true, manualBusy: false, pieces: live("A question"), source: "A question",
+            provider: { _ in provider }, apply: { _, value, _ in output = value })
+        runner.offer([recommendations[0]], source: "A question")
+        try await wait { runner.errors[.summary] != nil }
+        XCTAssertEqual(output, "Previous")
+        XCTAssertTrue(runner.status(.summary).contains("Retrying"), runner.status(.summary))
+        XCTAssertFalse(runner.status(.summary).contains("needed more than"),
+                       "A network timeout must not be reported as the model being too slow")
+        try await wait { runner.completedCounts[.summary] == 1 }
+        XCTAssertEqual(output, "Reviewed: A question", "The identical input is retried after backoff")
     }
 
     /// #111: the joined input moves whenever an earlier piece changes, so a notes keystroke, a
@@ -339,8 +359,10 @@ private actor ReviewTestProvider: LLMProvider {
     var captured: [LLMRequest] = []
     var active = 0
     var maxActive = 0
-    init(delay: Duration = .milliseconds(10), failFirst: Bool = false, response: String? = nil) {
-        self.delay = delay; self.failFirst = failFirst; self.response = response
+    let failure: any Error
+    init(delay: Duration = .milliseconds(10), failFirst: Bool = false, response: String? = nil,
+         failure: any Error = URLError(.networkConnectionLost)) {
+        self.delay = delay; self.failFirst = failFirst; self.response = response; self.failure = failure
     }
     func requests() -> [LLMRequest] { captured }
     func maximum() -> Int { maxActive }
@@ -349,7 +371,7 @@ private actor ReviewTestProvider: LLMProvider {
         defer { active -= 1 }
         do {
             try await Task.sleep(for: delay)
-            if failFirst { failFirst = false; throw URLError(.networkConnectionLost) }
+            if failFirst { failFirst = false; throw failure }
             continuation.yield(response ?? ("Reviewed: " + request.messages[0].content)); continuation.finish()
         } catch { continuation.finish(throwing: error) }
     }

@@ -145,7 +145,18 @@ piece:
 
 `QuickSummaryContext.isCurrent` applies the same notes rule to Quick reads: a note edited during a
 read no longer discards the completed evaluation (and model call); the newer note is simply read in
-the next batch, with the acknowledged text as its `previousText`.
+the next batch, with the acknowledged text as its `previousText`. It stays stricter than
+`isContinuation` in one place — a `live:` piece that disappeared still invalidates a *read* — because
+a read acknowledges wording into the incremental ledger, where accepting text that recognition has
+since corrected would leave a superseded fact in memory; a full review is regenerated from the whole
+transcript by the next review, so there the job may finish.
+
+The same rule decides the bookkeeping *after* a review finishes on both platforms: when the current
+input still continues the snapshot the review read, the mode is marked reviewed and the
+recommendation is cleared. Comparing joined sources there would leave the recommendation outstanding
+after a notes keystroke and re-run the identical model call. Only the transcript segments the
+snapshot actually covered advance the listener ledger, so speech that arrived after the snapshot is
+still summarized.
 
 A mode's cooldown (Summary 30 s, Deep 60 s) now starts when a review **finishes**, not when it
 starts, so a cancelled attempt never spends the window a completed review is entitled to.
@@ -155,13 +166,16 @@ starts, so a cancelled attempt never spends the window a completed review is ent
 A flat 60-second deadline failed long local reviews that the same model completes from the manual
 pane, and the timeout was retried twice more with the identical request. The deadline is now
 
-    deadline = (base + base x characters / 20,000) x (Deep ? 2 : 1), capped at 10 minutes
+    deadline = min(base + base x characters / 20,000, 5 min) x (Deep ? 2 : 1)
 
-With the default 60-second base: 60 s for a short Summary, 195 s for a 45,000-character Summary and
-390 s for the same input as Deep — at least twice Summary at every size. A timeout is terminal for
-that exact input: it is not retried, the pane says the review needed more than N seconds on the
-selected model and suggests generating manually or choosing a faster model, and new speech (a
-different input) tries again. Other failures keep the three-attempt 5/10-second backoff.
+The cap applies *before* doubling, so Deep is exactly twice Summary at every input size and no single
+review runs longer than ten minutes. With the default 60-second base: 60 s for a short Summary, 195 s
+for a 45,000-character Summary and 390 s for the same input as Deep. Exceeding *this* deadline is
+terminal for that exact input: it is not retried, the pane says the review needed more than N seconds
+on the selected model and suggests generating manually or choosing a faster model, and new speech (a
+different input) tries again. Only the coordinator's own deadline counts — a provider's
+`URLError.timedOut` (URLSession's idle timeout on a stalled connection) is an ordinary transient
+failure, so it keeps the three-attempt 5/10-second backoff like any other.
 
 ### The automatic recap and manual Quick answers are separate
 
@@ -173,9 +187,11 @@ recap's language.
 
 `MeetingSession.quickRecap` now holds the automatic recap and is always what the evaluator receives
 as `visibleSummary`. A completed manual answer is *fresh* for `ManualQuickAnswer.freshness`
-(120 seconds); while it is fresh an automatic recap updates `quickRecap` but not the pane, the
-status reads "Recap updated · Showing your generated answer", and a **Show recap** button returns to
-the recap immediately. Requesting another answer, clearing the conversation, renaming speakers or
+(120 seconds on the session's injected clock, so expiry is testable); while it is fresh an automatic
+recap updates `quickRecap` but not the pane, and the status reads "Recap updated · Showing your
+generated answer". The **Show recap** button is offered whenever the pane differs from the current
+recap, *including after the window has elapsed* — expiry releases the pane on the next automatic
+apply, and until then the user must still be able to reach the newer recap. Requesting another answer, clearing the conversation, renaming speakers or
 the window elapsing ends the protection. Quick has no automatic review mode, so a manual Quick
 answer is not registered as a completed review; it takes priority through `manualBusy` while it
 streams and through this freshness window afterwards.
