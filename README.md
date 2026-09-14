@@ -236,13 +236,18 @@ Ollama through the actual `OllamaProvider`, auto-selecting an installed chat mod
   channels concurrently. The legacy **SpeechRecognizer** option uses one `SFSpeechRecognizer` per
   source and may hit a process-global active-recognition limit (`kAFAssistantErrorDomain 1100`) on
   some systems. SpeechAnalyzer downloads its language model on first use. Both are on-device.
+- **First run downloads the speech model before listening starts.** Pressing Listen the first time
+  shows "Transcription: preparing on-device speech model…" and capture only starts once the model is
+  ready, so nothing said afterwards is lost. The download can take several minutes on a slow
+  connection; Stop, New conversation, closing the window and Cmd-Q all cancel it immediately.
 - A short utterance spoken entirely within the brief recognizer-finalization gap may merge into the
   next finalized segment.
 - **Ollama-only by design.** Ollama Cloud already exposes GPT/DeepSeek/Qwen/etc. through one key, so
   dedicated Claude/OpenAI providers are intentionally not planned.
 - **WhisperKit engine (opt-in):** an opt-in third transcription engine for true multilingual
   code-switching (e.g. Mandarin↔English mid-sentence) that Apple's on-device Speech can't do. It
-  downloads a model on first use, emits finalized segments only (no live partials), and its
+  downloads a model on first use (before capture starts, same as above), emits finalized segments
+  only (no live partials), and its
   dual-channel finals may occasionally interleave out of chronological order.
 
 ## Contributing

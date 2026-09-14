@@ -61,16 +61,35 @@ final class ArrayChunkProducer: @unchecked Sendable {
     }
 }
 
+/// Thread-safe ordered event log shared by mocks so tests can assert call ORDER across the
+/// capture and the transcriber (e.g. `prepare` before `capture.start`).
+final class OrderLog: @unchecked Sendable {
+    private let lock = NSLock()
+    private var _events: [String] = []
+    func record(_ event: String) { lock.withLock { _events.append(event) } }
+    var events: [String] { lock.withLock { _events } }
+    func index(of event: String) -> Int? { events.firstIndex(of: event) }
+}
+
 /// Capture mock that can emit chunks on demand (for integration tests).
 final class MockCapture: AudioCapturing, @unchecked Sendable {
     let chunks: AsyncStream<AudioChunk>
     private let continuation: AsyncStream<AudioChunk>.Continuation
-    init() {
+    private let log: OrderLog?
+    private let lock = NSLock()
+    private var _startCount = 0
+    /// Number of times `start()` was called (synchronized).
+    var startCount: Int { lock.withLock { _startCount } }
+    init(log: OrderLog? = nil) {
+        self.log = log
         var cont: AsyncStream<AudioChunk>.Continuation!
         chunks = AsyncStream { cont = $0 }
         continuation = cont
     }
-    func start() async throws {}
+    func start() async throws {
+        lock.withLock { _startCount += 1 }
+        log?.record("capture.start")
+    }
     func stop() { continuation.finish() }
     /// Push a chunk into the stream so the session's capture→transcriber pump can deliver it.
     func emit(_ chunk: AudioChunk) { continuation.yield(chunk) }
@@ -89,7 +108,32 @@ final class MockTranscriber: Transcribing, @unchecked Sendable {
     var fedChunks: [AudioChunk] {
         lock.withLock { _fedChunks }
     }
-    init() {
+    private let log: OrderLog?
+    /// When true, `prepare()`/`feed(_:)` block (like a first-run speech-model download) until
+    /// `release()` is called or the surrounding Task is cancelled.
+    private let slowPrepare: Bool
+    private let slowFeed: Bool
+    private var _released = false
+    private var _prepareCount = 0
+    private var _prepareEntered = false
+    private var _prepareCancelled = false
+    private var _feedEntered = false
+    private var _feedCancelled = false
+    /// Number of times `prepare()` was called (synchronized).
+    var prepareCount: Int { lock.withLock { _prepareCount } }
+    /// True once `prepare()` has started running.
+    var prepareEntered: Bool { lock.withLock { _prepareEntered } }
+    /// True when a blocked `prepare()` returned because its Task was cancelled.
+    var prepareCancelled: Bool { lock.withLock { _prepareCancelled } }
+    /// True once `feed(_:)` has started running.
+    var feedEntered: Bool { lock.withLock { _feedEntered } }
+    /// True when a blocked `feed(_:)` returned because its Task was cancelled.
+    var feedCancelled: Bool { lock.withLock { _feedCancelled } }
+
+    init(log: OrderLog? = nil, slowPrepare: Bool = false, slowFeed: Bool = false) {
+        self.log = log
+        self.slowPrepare = slowPrepare
+        self.slowFeed = slowFeed
         var cont: AsyncStream<TranscriptSegment>.Continuation!
         segments = AsyncStream { cont = $0 }
         continuation = cont
@@ -97,11 +141,36 @@ final class MockTranscriber: Transcribing, @unchecked Sendable {
     private var _finishCount = 0
     /// Number of times `finish()` has been awaited (synchronized).
     var finishCount: Int { lock.withLock { _finishCount } }
+    /// Unblocks a slow `prepare()`/`feed(_:)` without cancelling it.
+    func release() { lock.withLock { _released = true } }
+
+    /// Blocks until `release()` or Task cancellation. Returns true when it was cancelled.
+    private func blockUntilReleasedOrCancelled() async -> Bool {
+        while !Task.isCancelled {
+            if lock.withLock({ _released }) { return false }
+            try? await Task.sleep(nanoseconds: 2_000_000)
+        }
+        return true
+    }
+
+    func prepare() async {
+        lock.withLock { _prepareCount += 1; _prepareEntered = true }
+        log?.record("transcriber.prepare")
+        guard slowPrepare else { return }
+        let cancelled = await blockUntilReleasedOrCancelled()
+        lock.withLock { _prepareCancelled = cancelled }
+    }
+
     func feed(_ chunk: AudioChunk) async {
-        lock.withLock { _fedChunks.append(chunk) }
+        lock.withLock { _fedChunks.append(chunk); _feedEntered = true }
+        log?.record("transcriber.feed")
+        guard slowFeed else { return }
+        let cancelled = await blockUntilReleasedOrCancelled()
+        lock.withLock { _feedCancelled = cancelled }
     }
     func finish() async {
         lock.withLock { _finishCount += 1 }
+        log?.record("transcriber.finish")
         continuation.finish()
     }
     func emit(_ segment: TranscriptSegment) { continuation.yield(segment) }

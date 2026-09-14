@@ -68,9 +68,14 @@ public final class MeetingSession {
     private var transcriber: (any Transcribing)?
     private let clock: @Sendable () -> TimeInterval
 
-    /// Capture -> transcriber.feed pump. Drained (awaited) BEFORE finishing the transcriber so the
-    /// last buffered chunks are fed before finalization.
+    /// Capture -> transcriber.feed pump. Cancelled by `beginStop()` and then awaited by `drain`, so
+    /// teardown never blocks behind a `feed` stuck in a one-time model download (issue #99). Because
+    /// `prepare()` warms the pipeline before capture starts, a healthy `feed` is a non-blocking
+    /// hand-off, so cancelling here costs at most the chunks still sitting in the capture buffer.
     private var capturePump: Task<Void, Never>?
+    /// In-flight `transcriber.prepare()` (first-run speech-model download). Held so `beginStop()`
+    /// can cancel it: otherwise Stop/New/window-close/Cmd-Q stay blocked for the whole download.
+    private var prepareTask: Task<Void, Never>?
     /// transcriber.segments -> ingest pump. Drained AFTER finishing the transcriber so every final
     /// segment is ingested into the store.
     private var segmentPump: Task<Void, Never>?
@@ -175,6 +180,17 @@ public final class MeetingSession {
                 self.transcriptionStatus = status
             }
         }
+        // Warm the transcription pipeline BEFORE any audio flows: on a first run this downloads the
+        // on-device speech model (minutes), and doing it lazily on the feed path dropped the opening
+        // seconds of both channels. Run it as a cancellable child Task so a Stop/close/quit during
+        // the download tears down promptly instead of freezing the UI (issue #99).
+        let prepare = Task { await transcriber.prepare() }
+        prepareTask = prepare
+        await prepare.value
+        if runID == myRun, isRunning { prepareTask = nil }
+        // A stop() during prepare already took ownership of the transcriber via beginStop().
+        guard isRunning, runID == myRun else { return }
+
         do {
             try await capture.start()
         } catch {
@@ -194,6 +210,9 @@ public final class MeetingSession {
         let captureStream = capture.chunks
         capturePump = Task {
             for await chunk in captureStream {
+                // beginStop() cancels this pump so teardown can't hang behind a blocked feed;
+                // stop feeding as soon as that happens.
+                if Task.isCancelled { break }
                 await transcriber.feed(chunk)
             }
         }
@@ -229,8 +248,8 @@ public final class MeetingSession {
         if transcriptionStatus.hasPrefix("Transcription:") { transcriptionStatus = "Transcription: stopped" }
     }
 
-    /// Awaits full teardown in feed-before-finalize order: drain the capture pump (feed every
-    /// remaining chunk), THEN finish the transcriber (finalize), THEN drain the segment pump (ingest
+    /// Awaits full teardown in feed-before-finalize order: drain the (already cancelled) capture
+    /// pump, THEN finish the transcriber (finalize), THEN drain the segment pump (ingest
     /// every final into the store). This guarantees the last buffered audio isn't dropped by an
     /// early `finish()`. Static so it captures only the teardown payload, not `self`.
     private static func drain(
@@ -238,6 +257,8 @@ public final class MeetingSession {
                      capturePump: Task<Void, Never>?,
                      segmentPump: Task<Void, Never>?)
     ) async {
+        // The pump was cancelled in beginStop(); awaiting it here just waits for it to unwind
+        // (promptly, even when a feed is parked inside a first-run model download).
         await teardown.capturePump?.value
         if let transcriber = teardown.transcriber { await transcriber.finish() }
         await teardown.segmentPump?.value
@@ -256,6 +277,11 @@ public final class MeetingSession {
         transcriptionStatus = "Transcription: finalizing…"
         for role in CopilotRole.allCases { cancelResponse(role) }
         capture?.stop()
+        // Cancel, don't await: a first-run model download inside prepare()/feed() takes minutes,
+        // and awaiting it kept lifecycleBusy true — freezing Stop, New, window close and Cmd-Q.
+        prepareTask?.cancel()
+        prepareTask = nil
+        capturePump?.cancel()
         let transcriber = self.transcriber
         let capturePump = self.capturePump
         let segmentPump = self.segmentPump
@@ -311,6 +337,9 @@ extension MeetingSession {
         // faster than it's processed: cap how far (in audio seconds) reading runs ahead of an
         // 8x-realtime budget. The clock starts AFTER the first feed so one-time SpeechAnalyzer
         // model setup/download isn't credited as throughput. Stops promptly on cancellation.
+        // Warm the pipeline before reading the file so the first chunks don't sit behind one-time
+        // model setup, and so a cancelled import (window close) isn't stuck inside `feed`.
+        await transcriber.prepare()
         var startWall = clock()
         var audioSecondsFed = 0.0
         var pacing = false
