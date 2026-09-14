@@ -105,7 +105,12 @@ extension MeetingView {
                 Text(ProviderSettings.aiMode.label)
             }
             HStack(alignment: .top, spacing: 16) {
-                Text(session.captureStatus).frame(maxWidth: .infinity, alignment: .leading)
+                // A dead channel must be visible: the rail still says REC and the elapsed timer
+                // keeps counting, so a grey caption hid the failure entirely (issue #107).
+                Text(session.captureDegraded ? "⚠️ \(session.captureStatus)" : session.captureStatus)
+                    .foregroundStyle(session.captureDegraded ? AnyShapeStyle(.red) : AnyShapeStyle(.primary))
+                    .fontWeight(session.captureDegraded ? .semibold : .regular)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 Text(session.transcriptionStatus).frame(maxWidth: .infinity, alignment: .leading)
                 VStack(alignment: .trailing, spacing: 4) {
                     Text(saveMessage).foregroundStyle(saveFailed ? .red : .secondary)

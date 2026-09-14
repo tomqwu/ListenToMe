@@ -75,6 +75,10 @@ final class OrderLog: @unchecked Sendable {
 final class MockCapture: AudioCapturing, @unchecked Sendable {
     let chunks: AsyncStream<AudioChunk>
     private let continuation: AsyncStream<AudioChunk>.Continuation
+    /// Status channel, so tests can drive the session's capture-status handling (e.g. the
+    /// degraded-capture banner) exactly like the real DualChannelCapture does.
+    let statusUpdates: AsyncStream<CaptureStatus>
+    private let statusContinuation: AsyncStream<CaptureStatus>.Continuation
     private let log: OrderLog?
     private let lock = NSLock()
     private var _startCount = 0
@@ -85,12 +89,17 @@ final class MockCapture: AudioCapturing, @unchecked Sendable {
         var cont: AsyncStream<AudioChunk>.Continuation!
         chunks = AsyncStream { cont = $0 }
         continuation = cont
+        let statuses = AsyncStream<CaptureStatus>.makeStream()
+        statusUpdates = statuses.stream
+        statusContinuation = statuses.continuation
     }
     func start() async throws {
         lock.withLock { _startCount += 1 }
         log?.record("capture.start")
     }
-    func stop() { continuation.finish() }
+    func stop() { continuation.finish(); statusContinuation.finish() }
+    /// Push a capture status (e.g. a degraded recovery status) into the session's status pump.
+    func emitStatus(_ status: CaptureStatus) { statusContinuation.yield(status) }
     /// Push a chunk into the stream so the session's capture→transcriber pump can deliver it.
     func emit(_ chunk: AudioChunk) { continuation.yield(chunk) }
 }

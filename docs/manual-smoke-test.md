@@ -96,6 +96,36 @@ single-source for the MVP or the Phase-2 SpeechAnalyzer engine.
    available. With identification disabled, capture must not accumulate speaker-analysis audio.
 8. Try overlapping voices and document recognition errors; do not infer accuracy from unit tests.
 
+## Capture recovery and microphone denial
+
+These two paths are AVFoundation/ScreenCaptureKit glue that unit tests cannot reach; the decision
+tables behind them are covered by `CaptureRecoveryTests`.
+
+1. **Input-device change (issue #107).** Start listening on the built-in mic and speak so **You**
+   lines appear. Connect AirPods (or plug/unplug a USB interface, or dock/undock) mid-run. The
+   status line must report **Mic: input changed — resumed** and new speech must keep appearing as
+   **You** for the rest of the run — no restart required. Switch back to the built-in mic and
+   confirm it recovers again.
+2. **Unrecoverable input.** Start listening on a USB interface and unplug it with no other input
+   available. The capture line must turn **red with a ⚠️** (`Mic: input changed — mic stopped …
+   Stop and restart.`) instead of staying a grey caption while the header still counts *Recording*.
+   Reconnect an input, press Stop then Listen, and confirm the red state clears.
+3. **Sleep/wake.** Start listening, sleep the Mac (closing the lid) for ~30 seconds, wake it and
+   speak. Both channels must resume (or say, in red, that they did not).
+4. **System audio stop.** While listening with system audio active, disconnect/reconfigure the
+   display (or stop the stream from Screen Recording settings). Expect **System: system audio
+   stopped — resumed**; if the restart fails, expect a red **system audio stopped: … Stop and
+   restart.** and no silent loss of the **Others** channel.
+5. **Microphone denied (issue #110).** Deny microphone access for the app under test
+   (`tccutil reset Microphone com.tomwu.ListenToMe.dev`, then decline the prompt — or turn the app
+   off in System Settings → Privacy & Security → Microphone) and press **Listen**. The app must
+   **not** start: no *Recording* timer, no "Mic: active", and a red banner explaining that
+   microphone access is off, with an **Open Settings** button that opens the Microphone pane. Grant
+   access, press Listen again, and confirm normal capture resumes.
+6. **First-run prompt.** On an app that has never asked (after a `tccutil reset Microphone`),
+   pressing Listen must show the system microphone prompt first; allowing it starts capture in the
+   same press, declining it shows the same red banner instead of recording silence.
+
 ## Enabled Screen Recording switch but capture is refused
 
 If the installed production app repeatedly returns ScreenCaptureKit `-3801` despite an enabled
