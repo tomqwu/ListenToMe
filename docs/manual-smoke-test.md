@@ -75,6 +75,16 @@ single-source for the MVP or the Phase-2 SpeechAnalyzer engine.
    rather than reporting it as unstated.
 4. Type a line into Notes that was never spoken. The automatic Summary must not present it as
    something said in the meeting.
+5. While an automatic review is running ("Auto · Updating from new context…"), type continuously in
+   Notes and keep talking on both channels. The review must stay running and finish; it must not
+   flip back to "Queued" or "Waiting", and the Quick status must not stop showing completed reads.
+6. With a recap on screen, click **Draft reply** in Quick and keep speaking. The drafted answer must
+   stay visible, the Quick status must read "Recap updated · Showing your generated answer", and
+   **Show recap** must return to the current automatic recap. The recap must not be written in the
+   draft's style, and the next recap must not simply repeat the draft.
+7. On a slow local model with a long meeting, an automatic review that exceeds its deadline must say
+   it needed more than N seconds on the selected model and must not repeat the identical request;
+   manual Generate must still work, and new speech must start a fresh attempt.
 
 ## Automatic speakers (1.3.0)
 

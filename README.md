@@ -92,6 +92,10 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
   response-language and the selected use-case preset. Attached reference files reach automatic
   Deep only, matching manual Deep; automatic Quick and Listener get none. Auto output cannot flip
   the pane's language or drop your persona.
+- An answer you asked for in Quick ("Draft reply", "Key terms"…) stays on screen: the automatic
+  recap keeps updating behind it and **Show recap** switches back. Typing in Notes never cancels a
+  running automatic review, and a review that exceeds its deadline says so instead of repeating the
+  same request — the deadline scales with the conversation's length and is twice as long for Deep.
 
 **Bring-your-own-model**
 - Each AI pane has its **own model dropdown** with "good for" hints, listing chat-capable models

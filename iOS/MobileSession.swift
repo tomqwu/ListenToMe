@@ -452,7 +452,8 @@ extension MobileSession {
 
     private func synchronizeAutomaticReviews() {
         automaticReviews.synchronize(enabled: autoQuick && state == .recording && automaticQuickAvailability == nil,
-            manualBusy: isSummarizing, source: summarySource, provider: { [weak self] mode in
+            manualBusy: isSummarizing, pieces: quickPieces, source: summarySource,
+            provider: { [weak self] mode in
                 guard let self, let mobileMode = MobileSummaryMode(rawValue: mode.rawValue) else { throw CancellationError() }
                 if let reason = self.summaryAvailability(for: mobileMode) { throw QuickSummaryError.message(reason) }
                 return try self.summaryProvider ?? self.ai.client(for: mobileMode)

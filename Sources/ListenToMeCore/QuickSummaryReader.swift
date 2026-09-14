@@ -148,6 +148,25 @@ public final class QuickSummaryReader {
     }
 }
 
+/// Tracks a manual Quick answer the user asked for (Draft reply, Key terms, Counterpoint…) so the
+/// automatic recap cannot replace it while they are still reading it. The automatic recap is kept
+/// separately and stays the evaluator's `visibleSummary`; only the *displayed* value is held back.
+public struct ManualQuickAnswer: Sendable {
+    /// How long a completed manual answer keeps the Quick pane. Requesting another answer, clearing
+    /// the conversation or dismissing the answer ends it sooner.
+    public static let freshness: Duration = .seconds(120)
+    private var completedAt: ContinuousClock.Instant?
+    public init() {}
+    /// A manual answer finished streaming and is now on screen.
+    public mutating func completed(at now: ContinuousClock.Instant = .now) { completedAt = now }
+    /// The user dismissed the answer, started a new request, or the conversation was reset.
+    public mutating func dismiss() { completedAt = nil }
+    public func isFresh(at now: ContinuousClock.Instant = .now) -> Bool {
+        guard let completedAt else { return false }
+        return now - completedAt < Self.freshness
+    }
+}
+
 public enum QuickSummaryError: LocalizedError {
     case message(String)
     public var errorDescription: String? { switch self { case .message(let message): return message } }

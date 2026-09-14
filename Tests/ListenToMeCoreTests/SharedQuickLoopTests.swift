@@ -97,6 +97,59 @@ final class SharedQuickLoopTests: XCTestCase {
         session.stop()
     }
 
+    /// #115: the automatic recap and a manual Quick answer are two different things. The recap must
+    /// never replace an answer the user just asked for, and the evaluator must be grounded in the
+    /// recap, never in the answer.
+    func testAutomaticRecapNeitherReplacesNorGroundsOnAFreshManualQuickAnswer() async throws {
+        let second = """
+        {"action":"publish","context":"Monday, Sarah, Tuesday review","bullets":["Review moves to Tuesday."],"reviews":[]}
+        """
+        let quick = QuickPaneTestProvider(evaluations: [publish, second], answer: "Draft: Hi Sarah, Monday works.")
+        let session = MeetingSession(store: ConversationStore(), context: ContextEngine(),
+            makeCapture: { MockCapture() }, makeTranscriber: { MockTranscriber() },
+            makeProvider: { _ in quick }, models: [.quick: "quick"], autoInterval: .milliseconds(15))
+        try await session.start()
+        session.autoSummaryEnabled = true
+        await session.ingest(.init(source: .others, text: "Sarah confirms Monday.", isFinal: true, start: 0, end: 1))
+        for _ in 0..<200 where session.quickReader.completedReads == 0 { try await Task.sleep(for: .milliseconds(5)) }
+        XCTAssertEqual(session.quickRecap, "- Sarah confirms Monday.")
+        XCTAssertEqual(session.quickSuggestion, session.quickRecap)
+
+        await session.respondQuick(.draftReply)
+        XCTAssertEqual(session.quickSuggestion, "Draft: Hi Sarah, Monday works.")
+        XCTAssertEqual(session.quickRecap, "- Sarah confirms Monday.", "A manual answer is not the recap")
+
+        await session.ingest(.init(source: .others, text: "The review moves to Tuesday.", isFinal: true, start: 2, end: 3))
+        for _ in 0..<200 where session.quickReader.completedReads < 2 { try await Task.sleep(for: .milliseconds(5)) }
+        XCTAssertEqual(session.quickSuggestion, "Draft: Hi Sarah, Monday works.",
+                       "A fresh manual answer must survive the next automatic recap")
+        XCTAssertEqual(session.quickRecap, "- Review moves to Tuesday.")
+        XCTAssertTrue(session.quickAnswerOverridesRecap)
+        XCTAssertEqual(session.autoQuickStatus, "Recap updated · Showing your generated answer")
+        let visible = await quick.visibleSummaries()
+        XCTAssertEqual(visible.last, "- Sarah confirms Monday.",
+                       "The evaluator is grounded in the recap, never in the manual answer")
+        XCTAssertFalse(visible.contains { $0.contains("Draft:") })
+
+        session.dismissQuickAnswer()
+        XCTAssertEqual(session.quickSuggestion, "- Review moves to Tuesday.")
+        XCTAssertFalse(session.quickAnswerOverridesRecap)
+        session.stop()
+    }
+
+    func testAManualAnswerStopsProtectingThePaneOnceItIsNoLongerFresh() {
+        var answer = ManualQuickAnswer()
+        XCTAssertFalse(answer.isFresh(), "No answer has been generated yet")
+        let now = ContinuousClock.now
+        answer.completed(at: now)
+        XCTAssertTrue(answer.isFresh(at: now + .seconds(119)))
+        XCTAssertFalse(answer.isFresh(at: now + ManualQuickAnswer.freshness),
+                       "After the freshness window the recap owns the pane again")
+        answer.completed(at: now)
+        answer.dismiss()
+        XCTAssertFalse(answer.isFresh(at: now))
+    }
+
     func testMacLiveSpeechTriggersWithoutFinalEventAndSilenceDoesNotPoll() async throws {
         let provider = MockLLMProvider(id: "live", deltas: [publish])
         let session = MeetingSession(store: ConversationStore(), context: ContextEngine(),
@@ -187,6 +240,33 @@ private struct NetworkFailureProvider: LLMProvider {
 }
 
 /// Records every full-review request the automatic coordinator dispatches.
+/// Answers Quick evaluations with prepared decisions and every other request with a manual answer,
+/// recording the `visibleSummary` each evaluation was grounded in.
+private actor QuickPaneTestProvider: LLMProvider {
+    nonisolated let id = "quick-pane"
+    private var evaluations: [String]
+    private let answer: String
+    private var grounding: [String] = []
+    init(evaluations: [String], answer: String) { self.evaluations = evaluations; self.answer = answer }
+    func visibleSummaries() -> [String] { grounding }
+    private func next(_ request: LLMRequest) -> String {
+        guard request.purpose == .quickEvaluation else { return answer }
+        if let data = request.messages[0].content.data(using: .utf8),
+           let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            grounding.append(object["visibleSummary"] as? String ?? "")
+        }
+        return evaluations.count > 1 ? evaluations.removeFirst() : (evaluations.first ?? "")
+    }
+    nonisolated func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
+        AsyncThrowingStream { continuation in
+            Task {
+                continuation.yield(await self.next(request))
+                continuation.finish()
+            }
+        }
+    }
+}
+
 private actor CapturingReviewProvider: LLMProvider {
     nonisolated let id = "capturing-review"
     private var captured: [LLMRequest] = []

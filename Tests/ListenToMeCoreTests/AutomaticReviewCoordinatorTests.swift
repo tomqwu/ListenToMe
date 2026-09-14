@@ -12,7 +12,7 @@ final class AutomaticReviewCoordinatorTests: XCTestCase {
         let runner = AutomaticReviewCoordinator(summaryInterval: .milliseconds(30), deepInterval: .milliseconds(30))
         let provider = ReviewTestProvider()
         var outputs: [AutomaticReviewMode: String] = [:]
-        runner.synchronize(enabled: true, manualBusy: false, source: "Why is Azure slow?",
+        runner.synchronize(enabled: true, manualBusy: false, pieces: live("Why is Azure slow?"), source: "Why is Azure slow?",
             provider: { _ in provider }, apply: { mode, text, _ in outputs[mode] = text })
         runner.offer(recommendations, source: "Why is Azure slow?")
         try await wait { runner.completedCounts[.deep] == 1 }
@@ -29,7 +29,7 @@ final class AutomaticReviewCoordinatorTests: XCTestCase {
         let runner = AutomaticReviewCoordinator(summaryInterval: .milliseconds(80))
         let provider = ReviewTestProvider()
         func update(_ source: String) {
-            runner.synchronize(enabled: true, manualBusy: false, source: source, provider: { _ in provider }, apply: { _, _, _ in })
+            runner.synchronize(enabled: true, manualBusy: false, pieces: live(source), source: source, provider: { _ in provider }, apply: { _, _, _ in })
             runner.offer([recommendations[0]], source: source)
         }
         update("Azure")
@@ -50,7 +50,7 @@ final class AutomaticReviewCoordinatorTests: XCTestCase {
         let provider = ReviewTestProvider(delay: .seconds(1))
         var output = "Previous"
         func sync(_ busy: Bool) {
-            runner.synchronize(enabled: true, manualBusy: busy, source: "Azure question", provider: { _ in provider },
+            runner.synchronize(enabled: true, manualBusy: busy, pieces: live("Azure question"), source: "Azure question", provider: { _ in provider },
                 apply: { _, value, _ in output = value })
         }
         sync(false)
@@ -71,7 +71,7 @@ final class AutomaticReviewCoordinatorTests: XCTestCase {
         let provider = ReviewTestProvider(delay: .milliseconds(70))
         var output = "Previous"
         func sync(_ source: String, enabled: Bool = true) {
-            runner.synchronize(enabled: enabled, manualBusy: false, source: source, provider: { _ in provider },
+            runner.synchronize(enabled: enabled, manualBusy: false, pieces: live(source), source: source, provider: { _ in provider },
                 apply: { _, value, _ in output = value })
         }
         sync("Sarah owns it")
@@ -96,7 +96,7 @@ final class AutomaticReviewCoordinatorTests: XCTestCase {
         let runner = AutomaticReviewCoordinator(retryInterval: .milliseconds(30))
         let provider = ReviewTestProvider(failFirst: true)
         var output = "Previous"
-        runner.synchronize(enabled: true, manualBusy: false, source: "A question", provider: { _ in provider },
+        runner.synchronize(enabled: true, manualBusy: false, pieces: live("A question"), source: "A question", provider: { _ in provider },
             apply: { _, value, _ in output = value })
         runner.offer([recommendations[0]], source: "A question")
         try await wait { runner.errors[.summary] != nil }
@@ -109,7 +109,7 @@ final class AutomaticReviewCoordinatorTests: XCTestCase {
     func testUnavailableProviderDoesNotFallbackOrPoll() async throws {
         let runner = AutomaticReviewCoordinator()
         var attempts = 0
-        runner.synchronize(enabled: true, manualBusy: false, source: "A question", provider: { _ in
+        runner.synchronize(enabled: true, manualBusy: false, pieces: live("A question"), source: "A question", provider: { _ in
             attempts += 1; throw QuickSummaryError.message("Selected model unavailable")
         }, apply: { _, _, _ in XCTFail("No alternate provider is authorized") })
         runner.offer([recommendations[0]], source: "A question")
@@ -122,7 +122,7 @@ final class AutomaticReviewCoordinatorTests: XCTestCase {
         let runner = AutomaticReviewCoordinator(summaryInterval: .milliseconds(20))
         let provider = ReviewTestProvider(delay: .milliseconds(100))
         func sync(_ source: String, busy: Bool) {
-            runner.synchronize(enabled: true, manualBusy: busy, source: source, provider: { _ in provider },
+            runner.synchronize(enabled: true, manualBusy: busy, pieces: live(source), source: source, provider: { _ in provider },
                 apply: { _, _, _ in XCTFail("A covered automatic review must not publish") })
         }
         sync("First topic", busy: false)
@@ -143,7 +143,7 @@ final class AutomaticReviewCoordinatorTests: XCTestCase {
             let runner = AutomaticReviewCoordinator(summaryInterval: .zero, retryInterval: .milliseconds(5))
             let provider = ReviewTestProvider(response: response)
             func update(_ source: String) {
-                runner.synchronize(enabled: true, manualBusy: false, source: source, provider: { _ in provider },
+                runner.synchronize(enabled: true, manualBusy: false, pieces: live(source), source: source, provider: { _ in provider },
                     apply: { _, _, _ in XCTFail("Invalid output must not publish") })
                 runner.offer([recommendations[0]], source: source)
             }
@@ -158,22 +158,109 @@ final class AutomaticReviewCoordinatorTests: XCTestCase {
         }
     }
 
-    func testTimeoutAndSourceLimitPreservePreviousOutput() async throws {
-        let runner = AutomaticReviewCoordinator(retryInterval: .milliseconds(5), timeout: .milliseconds(10))
+    func testTimeoutIsTerminalForThatInputAndNewSpeechTriesAgain() async throws {
+        let runner = AutomaticReviewCoordinator(summaryInterval: .zero, retryInterval: .milliseconds(5),
+                                                timeout: .milliseconds(10))
         let provider = ReviewTestProvider(delay: .seconds(1))
-        runner.synchronize(enabled: true, manualBusy: false, source: "A question", provider: { _ in provider },
-            apply: { _, _, _ in XCTFail("Timed out output must not publish") })
-        runner.offer([recommendations[0]], source: "A question")
-        try await wait { runner.errors[.summary]?.contains("paused after repeated failures") == true }
+        func update(_ source: String) {
+            runner.synchronize(enabled: true, manualBusy: false, pieces: live(source), source: source,
+                provider: { _ in provider }, apply: { _, _, _ in XCTFail("Timed out output must not publish") })
+            runner.offer([recommendations[0]], source: source)
+        }
+        update("A question")
+        try await wait { runner.errors[.summary]?.contains("needed more than") == true }
+        try await Task.sleep(for: .milliseconds(60))
         let count = await provider.requests().count
-        XCTAssertEqual(count, 3)
-        runner.reset()
+        XCTAssertEqual(count, 1, "The identical oversized request must not be retried")
+        XCTAssertTrue(runner.status(.summary).contains("choose a faster model"), runner.status(.summary))
+        update("A question")
+        try await Task.sleep(for: .milliseconds(30))
+        let repeated = await provider.requests().count
+        XCTAssertEqual(repeated, 1, "Unchanged input stays terminal")
+        update("A question with new context")
+        try await wait { await provider.requests().count == 2 }
+    }
+
+    func testDeadlineScalesWithModeAndInputSize() {
+        let base = Duration.seconds(60)
+        XCTAssertEqual(AutomaticReviewCoordinator.deadline(base: base, mode: .summary, characters: 0), base)
+        XCTAssertEqual(AutomaticReviewCoordinator.deadline(base: base, mode: .deep, characters: 0), .seconds(120))
+        // 45,000 characters: 60 s + 60 s x 2.25 = 195 s for Summary, twice that for Deep.
+        XCTAssertEqual(AutomaticReviewCoordinator.deadline(base: base, mode: .summary, characters: 45_000), .seconds(195))
+        XCTAssertEqual(AutomaticReviewCoordinator.deadline(base: base, mode: .deep, characters: 45_000), .seconds(390))
+        XCTAssertEqual(AutomaticReviewCoordinator.deadline(base: base, mode: .deep, characters: 60_000), .seconds(480),
+                       "The largest accepted input still gets a finite deadline")
+        XCTAssertEqual(AutomaticReviewCoordinator.deadline(base: .seconds(300), mode: .deep, characters: 60_000),
+                       .seconds(600), "The deadline is capped at ten minutes")
+        for size in [0, 1_000, 60_000] {
+            XCTAssertGreaterThanOrEqual(AutomaticReviewCoordinator.deadline(base: base, mode: .deep, characters: size),
+                AutomaticReviewCoordinator.deadline(base: base, mode: .summary, characters: size) * 2,
+                "Deep must always get at least twice Summary's deadline")
+        }
+    }
+
+    func testOversizedSourceIsRefusedWithoutSendingIt() {
+        let runner = AutomaticReviewCoordinator()
         let source = String(repeating: "a", count: 60_001)
-        runner.synchronize(enabled: true, manualBusy: false, source: source,
-            provider: { _ in XCTFail("Oversized source must not be sent"); return provider }, apply: { _, _, _ in })
+        runner.synchronize(enabled: true, manualBusy: false, pieces: live(source), source: source,
+            provider: { _ in XCTFail("Oversized source must not be sent"); return ReviewTestProvider() },
+            apply: { _, _, _ in })
         runner.offer([recommendations[0]], source: source)
         XCTAssertTrue(runner.status(.summary).contains("exceeds the review limit"))
         XCTAssertTrue(runner.status(.deep).contains("Waiting"))
+    }
+
+    /// #111: the joined input moves whenever an earlier piece changes, so a notes keystroke, a
+    /// second channel's partial or a finalized hypothesis used to cancel an in-flight review.
+    func testNotesTypingAndSecondChannelSpeechDoNotCancelAnInFlightReview() async throws {
+        let runner = AutomaticReviewCoordinator(summaryInterval: .zero)
+        let provider = ReviewTestProvider(delay: .milliseconds(120))
+        var output = "Previous"
+        func sync(_ pieces: [QuickSummaryContext.Piece]) {
+            runner.synchronize(enabled: true, manualBusy: false, pieces: pieces,
+                source: pieces.map(\.text).joined(separator: "\n"), provider: { _ in provider },
+                apply: { _, value, _ in output = value })
+        }
+        let started: [QuickSummaryContext.Piece] = [
+            .init(id: "notes:0", text: "Notes: ask about budget"),
+            .init(id: "live:you:0", text: "You: why is Azure slow"),
+            .init(id: "live:others:0", text: "Others: the region is far")
+        ]
+        sync(started)
+        runner.offer([recommendations[0]], source: started.map(\.text).joined(separator: "\n"))
+        try await wait { await provider.requests().count == 1 }
+        // A notes keystroke, an append in one channel and a finalized hypothesis in the other.
+        sync([.init(id: "notes:0", text: "Notes: ask about budget a"),
+              .init(id: "live:you:0", text: "You: why is Azure slow today"),
+              .init(id: "final:0", text: "Others: the region is far away")])
+        XCTAssertEqual(runner.activeMode, .summary, "The running review must survive all three")
+        try await wait { runner.completedCounts[.summary] == 1 }
+        XCTAssertTrue(output.hasPrefix("Reviewed:"))
+        XCTAssertEqual(runner.errors[.summary], nil)
+    }
+
+    /// A genuine rewrite of already-final speech still invalidates, and the cancelled attempt must
+    /// not spend the mode's cooldown.
+    func testFinalRevisionCancelsAndDoesNotBurnTheCooldown() async throws {
+        let runner = AutomaticReviewCoordinator(summaryInterval: .seconds(30))
+        let provider = ReviewTestProvider(delay: .milliseconds(60))
+        var output = "Previous"
+        func sync(_ pieces: [QuickSummaryContext.Piece]) {
+            runner.synchronize(enabled: true, manualBusy: false, pieces: pieces,
+                source: pieces.map(\.text).joined(separator: "\n"), provider: { _ in provider },
+                apply: { _, value, _ in output = value })
+        }
+        func offer(_ pieces: [QuickSummaryContext.Piece]) {
+            sync(pieces)
+            runner.offer([recommendations[0]], source: pieces.map(\.text).joined(separator: "\n"))
+        }
+        offer([.init(id: "final:0", text: "You: Sarah owns it")])
+        try await wait { await provider.requests().count == 1 }
+        offer([.init(id: "final:0", text: "You: Peter owns it")])
+        XCTAssertEqual(output, "Previous", "A revised final must cancel the stale review")
+        // The cancelled attempt never completed, so the 30-second cooldown must not apply to it.
+        try await wait { runner.completedCounts[.summary] == 1 }
+        XCTAssertEqual(output, "Reviewed: You: Peter owns it")
     }
 
     func testUserDirectivesShapeAutomaticRequestsAndStaleJobsKeepTheirOwn() async throws {
@@ -181,12 +268,12 @@ final class AutomaticReviewCoordinatorTests: XCTestCase {
         let provider = ReviewTestProvider(delay: .milliseconds(40))
         let chinese = AutomaticReviewDirectives(responseLanguage: "Simplified Chinese",
             personaGuidance: "Act as the hiring manager.", references: "SPEC: rollout gates")
-        runner.synchronize(enabled: true, manualBusy: false, source: "Why is Azure slow?", directives: chinese,
+        runner.synchronize(enabled: true, manualBusy: false, pieces: live("Why is Azure slow?"), source: "Why is Azure slow?", directives: chinese,
             provider: { _ in provider }, apply: { _, _, _ in })
         runner.offer(recommendations, source: "Why is Azure slow?")
         try await wait { await provider.requests().count == 1 }
         // A settings change mid-flight must not relabel work already queued with the old directives.
-        runner.synchronize(enabled: true, manualBusy: false, source: "Why is Azure slow?",
+        runner.synchronize(enabled: true, manualBusy: false, pieces: live("Why is Azure slow?"), source: "Why is Azure slow?",
             directives: .init(responseLanguage: "French"), provider: { _ in provider }, apply: { _, _, _ in })
         try await wait { runner.completedCounts[.deep] == 1 }
         let requests = await provider.requests()
@@ -206,7 +293,7 @@ final class AutomaticReviewCoordinatorTests: XCTestCase {
         let runner = AutomaticReviewCoordinator(summaryInterval: .zero, deepInterval: .zero)
         let provider = ReviewTestProvider()
         func update(_ source: String, _ directives: AutomaticReviewDirectives) {
-            runner.synchronize(enabled: true, manualBusy: false, source: source, directives: directives,
+            runner.synchronize(enabled: true, manualBusy: false, pieces: live(source), source: source, directives: directives,
                 provider: { _ in provider }, apply: { _, _, _ in })
             runner.offer([recommendations[0]], source: source)
         }
@@ -222,13 +309,18 @@ final class AutomaticReviewCoordinatorTests: XCTestCase {
     func testAbsentDirectivesLeaveTheReviewInstructionsUnchanged() async throws {
         let runner = AutomaticReviewCoordinator(summaryInterval: .zero)
         let provider = ReviewTestProvider()
-        runner.synchronize(enabled: true, manualBusy: false, source: "Azure",
+        runner.synchronize(enabled: true, manualBusy: false, pieces: live("Azure"), source: "Azure",
             provider: { _ in provider }, apply: { _, _, _ in })
         runner.offer([recommendations[0]], source: "Azure")
         try await wait { runner.completedCounts[.summary] == 1 }
         let requests = await provider.requests()
         XCTAssertEqual(requests[0].system, AutomaticReviewMode.summary.instructions)
         XCTAssertEqual(requests[0].messages[0].content, "Azure")
+    }
+
+    /// One provisional live piece per snapshot: appended speech extends it, a rewrite replaces it.
+    private func live(_ source: String) -> [QuickSummaryContext.Piece] {
+        [.init(id: "live:you:0", text: source)]
     }
 
     private func wait(_ condition: () async -> Bool) async throws {

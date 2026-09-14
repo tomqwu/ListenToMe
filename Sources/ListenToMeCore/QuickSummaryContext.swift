@@ -121,12 +121,35 @@ public struct QuickSummaryContext {
     public func isCurrent(_ batch: Batch, pieces: [Piece]) -> Bool {
         let current = Dictionary(uniqueKeysWithValues: pieces.map { ($0.id, $0.text) })
         return batch.changes.allSatisfy { change in
+            // Typed notes are the user's own context, not speech. A keystroke while a read is in
+            // flight produces new material for the next batch; it never discards the read, whose
+            // acknowledged text is then simply the previous wording of that note.
+            if change.id.hasPrefix("notes:") { return true }
             let text = current[change.id] ?? ""
             if change.id.hasPrefix("live:"), !change.text.isEmpty {
                 // New words need another read; they do not invalidate the prefix already read.
                 return text.hasPrefix(change.text)
             }
             return text == change.text
+        }
+    }
+
+    /// True when `current` still supports work dispatched against the `snapshot` taken earlier,
+    /// compared per piece instead of on the joined transcript, where an append in one channel moves
+    /// every later channel's text and looks like a rewrite.
+    ///
+    /// - Typed notes never invalidate speech-driven work: they are the user's own context, and a
+    ///   keystroke during a 60-second review must not cancel it.
+    /// - A provisional `live:` piece may only grow; appended words extend what was read. Its
+    ///   disappearance means recognition finalized it, which republishes the wording as a final
+    ///   piece and enqueues its own work, so it does not invalidate the running job either.
+    /// - A final piece that changed or vanished is a transcript revision, which does invalidate.
+    public static func isContinuation(of snapshot: [Piece], in current: [Piece]) -> Bool {
+        let now = Dictionary(current.map { ($0.id, $0.text) }, uniquingKeysWith: { _, newer in newer })
+        return snapshot.allSatisfy { piece in
+            if piece.id.hasPrefix("notes:") { return true }
+            guard let text = now[piece.id] else { return piece.id.hasPrefix("live:") }
+            return piece.id.hasPrefix("live:") ? text.hasPrefix(piece.text) : text == piece.text
         }
     }
 
