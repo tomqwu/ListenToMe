@@ -55,7 +55,7 @@ Physical-device diagnostics showed three completed reads, no unread input and no
 
 ## Automatic full reviews (iOS 1.10.0)
 
-`AutomaticReviewCoordinator` is shared by both platforms. The macOS binary release is deferred at the maintainer’s request. After a completed Quick evaluation catches up with input, medium/high recommendations enqueue Summary for meaningful context and Deep for substantive questions, risks or tradeoffs. Each uses its selected model. Auto remains opt-in and manual Generate remains available.
+`AutomaticReviewCoordinator` is shared by both platforms. After a completed Quick evaluation catches up with input, medium/high recommendations enqueue Summary for meaningful context and Deep for substantive questions, risks or tradeoffs. Each uses its selected model. Auto remains opt-in and manual Generate remains available.
 
 Full reviews run serially while Quick can continue evaluating new speech. Summary has a 30-second minimum between starts, Deep 60 seconds; the first eligible review starts immediately. Pending work coalesces to the latest context. These are one-shot deadlines for queued work, never periodic model polling. Unchanged input cannot regenerate a completed review.
 
@@ -65,7 +65,7 @@ The panels report waiting, queued, updating, up-to-date or failure status. The v
 
 Live GLM testing exposed planning text despite `think: false`, exhausting the former 1,600-token budget halfway through valid final JSON. Quick now allows 3,072 generated tokens and a 30-second deadline while retaining the 16-KiB response cap and three-bullet/480-character display limit. Planning is never displayed; truncated JSON remains rejected. This budget change prevents the observed truncation without using unsupported Cloud structured-output options.
 
-## Attributed input and user directives for automatic output
+## Attributed input and user directives for automatic output (1.4.4 / iOS 1.10.2)
 
 Automatic output previously read an anonymous wall of text and ignored the user's prompt settings,
 so it could not say who committed to what, treated typed notes as speech, and overwrote a manual

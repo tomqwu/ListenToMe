@@ -279,4 +279,13 @@ final class MobileAITests: XCTestCase {
         XCTAssertNotNil(session.message)
         XCTAssertEqual(session.summary, goodSummary, "Failed cloud requests must keep the completed summary")
     }
+
+    func testManualSummaryAndDeepGroundingExplainsTypedNotes() {
+        let notesExplanation = "a line prefixed \"Notes: \" is the user's typed " +
+            "note, not speech, and must never be reported as something that was said in the meeting."
+        for mode in [MobileSummaryMode.summary, .deep] {
+            XCTAssertTrue(mode.instructions.contains(notesExplanation),
+                          "\(mode) instructions must ground the model on typed notes")
+        }
+    }
 }

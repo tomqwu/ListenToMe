@@ -80,10 +80,11 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
   question.
 - **Deep** — on-demand, detailed long-reasoning answers.
 - Listener context is shared into Quick and Deep so on-demand answers stay grounded in the meeting.
-- **Auto** writes the same panes automatically while you listen, from the same speaker-labeled
-  transcript and under the same settings as a manual Generate: your AI response-language, the
-  selected use-case preset and any attached reference files. Auto output cannot flip the pane's
-  language or drop your persona and references.
+- **Auto** writes Quick, Listener and Deep automatically while you listen, from the same
+  speaker-labeled transcript and under the same settings as a manual Generate: your AI
+  response-language and the selected use-case preset. Attached reference files reach automatic
+  Deep only, matching manual Deep; automatic Quick and Listener get none. Auto output cannot flip
+  the pane's language or drop your persona.
 
 **Bring-your-own-model**
 - Each AI pane has its **own model dropdown** with "good for" hints, listing chat-capable models

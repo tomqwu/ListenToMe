@@ -81,7 +81,9 @@ Read `AGENTS.md`, inspect `git status`, and fetch the merged branch. Preserve un
 clean checkout/worktree if needed. Inspect the new PR's code, test evidence, and hosted CI. Reuse
 valid evidence for the exact source rather than rerunning tests solely because the agent changed.
 Run missing relevant checks: lint, core coverage, iOS build/UI tests and macOS build. Exercise the
-changed user flow locally and inspect its rendered UI; all tests run locally with `make validate-local`; GitHub Actions builds apps only.
+changed user flow locally and inspect its rendered UI; GitHub Actions builds both apps and runs the
+headless `ListenToMeCore` unit/integration test suite plus the 95% coverage floor as a CI check; GUI,
+audio, device and Ollama-e2e acceptance stay local, run with `make validate-local`.
 Credential-dependent tests must be configured locally when relevant. Never place credentials in source, logs, fixtures committed to Git,
 or the app bundle. Do not label simulator tests as physical-device validation.
 
