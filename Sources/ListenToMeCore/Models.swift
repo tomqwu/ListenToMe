@@ -38,6 +38,12 @@ public struct TranscriptSegment: Identifiable, Sendable, Equatable, Codable {
 
     public var speakerLabel: String { speakerName ?? (source == .you ? "You" : "Others") }
 
+    /// What one segment costs in an assembled prompt: `"<label>: <text>"` plus the newline that
+    /// joins it to the next line. Prompt budgets must charge this, not `text.count` alone.
+    public static func promptCharacterCost(_ segment: TranscriptSegment) -> Int {
+        segment.text.count + segment.speakerLabel.count + 3
+    }
+
     public init(id: UUID = UUID(), source: SpeakerSource, text: String,
                 isFinal: Bool, start: TimeInterval, end: TimeInterval,
                 speakerID: String? = nil, speakerName: String? = nil,

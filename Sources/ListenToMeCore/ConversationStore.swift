@@ -54,13 +54,17 @@ public final class ConversationStore {
     }
 
     /// Most-recent finalized utterances kept within `maxChars` (always at least the latest).
+    /// The budget charges each segment what it actually costs in the prompt — the speaker label,
+    /// the `": "` separator and the joining newline as well as the text — so a window sized to a
+    /// provider's context limit cannot be blown by hundreds of short, heavily labeled lines.
     public func recentContext(maxChars: Int) -> [TranscriptSegment] {
         var total = 0
         var collected: [TranscriptSegment] = []
         for segment in utterances.reversed() {
+            let cost = TranscriptSegment.promptCharacterCost(segment)
             // Always include the most recent; otherwise stop before exceeding the budget.
-            if !collected.isEmpty && total + segment.text.count > maxChars { break }
-            total += segment.text.count
+            if !collected.isEmpty && total + cost > maxChars { break }
+            total += cost
             collected.append(segment)
         }
         return collected.reversed()

@@ -128,16 +128,19 @@ public struct OllamaProvider: LLMProvider {
                         let (bytes, response) = try await transport.bytes(for: urlRequest)
                         if let http = response as? HTTPURLResponse,
                            !(200...299).contains(http.statusCode) {
-                            throw NSError(
-                                domain: "Ollama", code: http.statusCode,
-                                userInfo: [NSLocalizedDescriptionKey:
-                                    "Ollama returned HTTP \(http.statusCode)." +
-                                    " Is the server running and the model pulled?"])
+                            // Read (a bounded prefix of) the body so the server's own explanation —
+                            // bad key, exhausted quota, unsupported option — reaches the user.
+                            let body = await Self.boundedBody(bytes)
+                            throw OllamaStreamError.fromHTTP(status: http.statusCode, body: body)
                         }
                         for try await line in bytes.lines {
                             continuation.yield(line)
                         }
                         continuation.finish()
+                    } catch let error as URLError {
+                        // Connection-level failure: this is the only case where "is the server
+                        // running / the model pulled" is the right advice.
+                        continuation.finish(throwing: OllamaStreamError.unreachable(error.localizedDescription))
                     } catch {
                         continuation.finish(throwing: error)
                     }
@@ -145,6 +148,21 @@ public struct OllamaProvider: LLMProvider {
                 continuation.onTermination = { _ in task.cancel() }
             }
         }
+    }
+
+    /// Collects at most `OllamaStreamError.maximumErrorBodyBytes` of an error response body.
+    private static func boundedBody(_ bytes: URLSession.AsyncBytes) async -> Data {
+        var data = Data()
+        data.reserveCapacity(OllamaStreamError.maximumErrorBodyBytes)
+        do {
+            for try await byte in bytes {
+                data.append(byte)
+                if data.count >= OllamaStreamError.maximumErrorBodyBytes { break }
+            }
+        } catch {
+            // A truncated body is still better than no explanation at all.
+        }
+        return data
     }
 }
 
@@ -158,13 +176,74 @@ private final class RejectRedirects: NSObject, URLSessionTaskDelegate {
 
 public enum OllamaStreamError: LocalizedError {
     case server(String)
+    /// The request never reached a server (connection refused, DNS, timeout, TLS).
+    case unreachable(String)
     case incomplete
     case empty
     public var errorDescription: String? {
         switch self {
         case .server(let message): return "Model error: " + message
+        case .unreachable(let message):
+            return message + " Is the server running and the model pulled?"
         case .incomplete: return "The response ended before completion. Partial text is kept; retry the request."
         case .empty: return "The model completed without an answer. Retry or choose another model."
         }
+    }
+
+    /// Bytes of an error body we are willing to read and show. Bounded so an HTML error page or a
+    /// runaway server cannot flood a pane (or memory).
+    public static let maximumErrorBodyBytes = 8 * 1024
+
+    /// Builds the error for a non-2xx response, using the server's own `{"error": ...}` text when
+    /// present. Status-specific hints keep cloud auth/quota failures from reading as "model not
+    /// pulled" (issue #118).
+    public static func fromHTTP(status: Int, body: Data) -> OllamaStreamError {
+        var text = "HTTP \(status)"
+        let hint = statusHint(status)
+        let detail = serverDetail(body)
+        switch (hint, detail) {
+        case let (hint?, detail?): text += ": \(hint) (\(detail))"
+        case let (hint?, nil):     text += ": \(hint)"
+        case let (nil, detail?):   text += ": \(detail)"
+        case (nil, nil):           text += ": the server returned no error details."
+        }
+        return .server(text)
+    }
+
+    private static func statusHint(_ status: Int) -> String? {
+        switch status {
+        case 401, 403:
+            return "API key rejected — check the Ollama API key in Settings."
+        case 429:
+            return "Rate limited or out of quota — wait and retry, or check your Ollama plan."
+        case 404:
+            return "Model or endpoint not found — check the model name and that it is pulled."
+        case 500...599:
+            return "The Ollama server failed to handle the request."
+        default:
+            return nil
+        }
+    }
+
+    /// The server's own explanation: a top-level `error` string, `error.message`, or (failing JSON)
+    /// the raw body. Always bounded to `maximumErrorBodyBytes`.
+    private static func serverDetail(_ body: Data) -> String? {
+        let bounded = body.prefix(maximumErrorBodyBytes)
+        if let object = try? JSONSerialization.jsonObject(with: Data(bounded)) as? [String: Any] {
+            if let message = object["error"] as? String { return normalize(message) }
+            if let nested = object["error"] as? [String: Any], let message = nested["message"] as? String {
+                return normalize(message)
+            }
+        }
+        // The 8 KiB cut can land mid-codepoint; drop the replacement character it decodes to
+        // rather than showing the user a stray "".
+        var text = String(decoding: bounded, as: UTF8.self)
+        while text.last == "\u{FFFD}" { text.removeLast() }
+        return normalize(text)
+    }
+
+    private static func normalize(_ value: String) -> String? {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
     }
 }

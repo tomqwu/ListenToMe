@@ -514,7 +514,8 @@ extension MobileSession {
             return
         }
         let cloud = summaryProvider != nil || ai.provider == .ollama
-        guard source.count <= (cloud ? 60_000 : 8_000) else {
+        // The on-device Apple path shares its character cap with macOS (PromptBudget).
+        guard source.count <= (cloud ? 60_000 : PromptBudget.appleIntelligenceCharacters) else {
             message = "This conversation exceeds the selected provider's summary limit. Export it or shorten your notes."
             return
         }

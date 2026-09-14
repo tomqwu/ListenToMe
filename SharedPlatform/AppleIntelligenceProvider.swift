@@ -7,6 +7,9 @@ import FoundationModels
 @available(macOS 26, iOS 26, *)
 public struct AppleIntelligenceProvider: LLMProvider {
     public let id = "apple-intelligence"
+    /// The on-device Foundation model has a ~4k-token window shared by input and output, so the
+    /// prompt is capped at the same character budget iOS already enforces (issue #119).
+    public let maxPromptCharacters: Int? = PromptBudget.appleIntelligenceCharacters
     public init() {}
     /// Whether the provider can run at all. Deliberately independent of any locale: the device's UI
     /// language says nothing about the language a meeting is held in, and this value decides the
@@ -70,8 +73,17 @@ public struct AppleIntelligenceProvider: LLMProvider {
                         throw QuickSummaryError.message(Self.automaticQuickUnavailableReason)
                     }
                     if let reason = Self.unavailableReason { throw QuickSummaryError.message(reason) }
-                    let session = LanguageModelSession(instructions: request.system)
                     let prompt = request.messages.map(\.content).joined(separator: "\n")
+                    // Callers bound the assembled prompt with PromptBudget before it gets here.
+                    // If one did not, say so rather than silently answering from a prompt whose
+                    // front — including the transcript header — was cut away (issue #119).
+                    guard request.system.count + prompt.count
+                            <= PromptBudget.appleIntelligenceCharacters - PromptBudget.answerReserve else {
+                        throw QuickSummaryError.message(
+                            "This request is too long for Apple Intelligence's on-device context " +
+                            "window. Shorten your notes or attached reference material, or choose Ollama.")
+                    }
+                    let session = LanguageModelSession(instructions: request.system)
                     let response = try await session.respond(to: prompt).content
                     try Task.checkCancellation()
                     continuation.yield(response); continuation.finish()

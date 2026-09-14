@@ -62,6 +62,47 @@ public struct LLMRequest: Sendable, Equatable {
 
 /// Builds the system prompt and user message for a given context + action.
 public enum PromptBuilder {
+    /// Which pane's prompt is being assembled. Lets callers measure and build a prompt without
+    /// duplicating the per-pane builder choice.
+    public enum Kind: Sendable, CaseIterable { case quick, deep, listener }
+
+    public static func build(kind: Kind, context: PromptContext, action: ResponseAction) -> LLMRequest {
+        switch kind {
+        case .quick:    return build(context: context, action: action)
+        case .deep:     return buildDeep(context: context, action: action)
+        case .listener: return buildListener(context: context)
+        }
+    }
+
+    private static func present(_ value: String?) -> Bool {
+        guard let value else { return false }
+        return !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    /// Exact character cost of everything in the assembled prompt that is *not* transcript,
+    /// reference, notes or summary text: the system prompt, persona/language directives, the block
+    /// headers for whichever blocks will be present, and the action instruction.
+    ///
+    /// Measured by building the real prompt with a one-character placeholder in each block that will
+    /// be present (and then subtracting those placeholders), so it can never drift from the
+    /// builders themselves.
+    public static func scaffoldCharacterCost(kind: Kind, context: PromptContext,
+                                             action: ResponseAction) -> Int {
+        var placeholders = 0
+        func probe(_ value: String?) -> String? {
+            guard present(value) else { return nil }
+            placeholders += 1
+            return "x"
+        }
+        let probeContext = PromptContext(
+            messages: [], notes: probe(context.notes), summary: probe(context.summary),
+            responseLanguage: context.responseLanguage, references: probe(context.references),
+            personaGuidance: context.personaGuidance)
+        let request = build(kind: kind, context: probeContext, action: action)
+        let total = request.system.count + request.messages.reduce(0) { $0 + $1.content.count }
+        return total - placeholders
+    }
+
     public static let systemPrompt = """
     You are a real-time meeting copilot for the user, labeled "You". The transcript labels remote \
     participants as "Others". Give the user something they can say or act on immediately.

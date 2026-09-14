@@ -82,6 +82,27 @@ final class OllamaCloudCatalogTests: XCTestCase {
         }
     }
 
+    /// Issue #118: a rejected key must read as a rejected key, with the server's own text.
+    func testCatalogSurfacesServerErrorBodyAndKeyHint() async throws {
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [StubURLProtocol.self]
+        let session = URLSession(configuration: config)
+        defer { session.invalidateAndCancel(); StubURLProtocol.handler = nil }
+        StubURLProtocol.handler = { request in
+            (HTTPURLResponse(url: request.url!, statusCode: 401, httpVersion: nil, headerFields: nil)!,
+             Data(#"{"error":"invalid api key"}"#.utf8))
+        }
+        do {
+            _ = try await OllamaCloudCatalog(session: session).fetch(apiKey: "synthetic-test-key")
+            XCTFail("Expected a 401 failure")
+        } catch {
+            let text = error.localizedDescription
+            XCTAssertTrue(text.contains("HTTP 401"), text)
+            XCTAssertTrue(text.lowercased().contains("api key"), text)
+            XCTAssertTrue(text.contains("invalid api key"), text)
+        }
+    }
+
     func testNewestPerFamilyAndVariantWithoutInventingMissingFlash() {
         let names = [
             OllamaCloudModel(name: "deepseek-v4-pro:0813", modifiedAt: "2026-08-13T08:00:00-07:00"),

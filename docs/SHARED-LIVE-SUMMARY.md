@@ -33,6 +33,21 @@ than for the evaluator envelope it cannot be held to, and both platforms share o
 stays locale-independent; iOS checks `supportsLocale` only against the conversation's own language,
 where that language is known, so no device-locale check can disable the provider or change the default.
 
+Providers declare their prompt window through `LLMProvider.maxPromptCharacters`. Ollama (local or
+Cloud) declares none and keeps the provider-agnostic transcript and reference budgets unchanged.
+Apple Intelligence declares `PromptBudget.appleIntelligenceCharacters` (8,000 — the same cap the iOS
+manual summary path enforces), so macOS bounds every Listener/Quick/Deep prompt to that window and
+reports the trim in the status line instead of failing with a context-window error.
+
+The bound is on the *assembled* prompt, not on raw transcript text. `PromptBuilder.scaffoldCharacterCost`
+measures the system prompt, persona/language directives, block headers and action instruction by
+building the real prompt with placeholders, and `PromptBudget.allocate` divides what is left between
+transcript, references, rolling summary and notes, holding back `answerReserve` for the reply.
+Transcript characters are charged through `TranscriptSegment.promptCharacterCost`, which includes the
+speaker label, so hundreds of short labeled lines cannot overrun the window. If a prompt still
+arrives oversized, `AppleIntelligenceProvider` raises a clear error rather than silently answering
+from a prompt whose front was cut away.
+
 The native Auto experiment failed the quality gate (3/7 cases, including failures on repetition,
 a bilingual correction and transcript instructions). It is isolated in
 `scripts/ExperimentalAppleQuickProvider.swift`, outside both app targets. The benchmark runner

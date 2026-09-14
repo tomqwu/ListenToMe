@@ -88,26 +88,51 @@ final class OllamaLiveTransportTests: XCTestCase {
 
     // MARK: 2. non-2xx → stream throws
 
-    func testLivePathThrowsOnNon2xxResponse() async throws {
+    private func streamFailureMessage(status: Int, body: String) async -> String? {
         StubURLProtocol.handler = { _ in
             let response = HTTPURLResponse(
                 url: URL(string: "http://stub.local/api/chat")!,
-                statusCode: 404,
+                statusCode: status,
                 httpVersion: nil,
                 headerFields: nil)!
-            return (response, Data())
+            return (response, Data(body.utf8))
         }
-
         let provider = makeProvider(session: makeStubSession())
-        var thrownError: Error?
         do {
             for try await _ in provider.stream(sampleRequest()) {}
+            return nil
         } catch {
-            thrownError = error
+            return error.localizedDescription
         }
-        let err = try XCTUnwrap(thrownError as? NSError)
-        XCTAssertEqual(err.domain, "Ollama")
-        XCTAssertEqual(err.code, 404)
+    }
+
+    func testLivePathThrowsOnNon2xxResponse() async throws {
+        let raw = await streamFailureMessage(status: 404, body: "")
+        let message = try XCTUnwrap(raw)
+        XCTAssertTrue(message.contains("HTTP 404"), message)
+    }
+
+    /// Issue #118: the server's own explanation must reach the pane instead of a canned guess.
+    func testLivePathSurfacesTheServerErrorBody() async throws {
+        let raw = await streamFailureMessage(status: 400, body: #"{"error":"unsupported option think"}"#)
+        let message = try XCTUnwrap(raw)
+        XCTAssertTrue(message.contains("HTTP 400"), message)
+        XCTAssertTrue(message.contains("unsupported option think"), message)
+    }
+
+    func testLivePathReportsRejectedKeyOn401NotAMissingModel() async throws {
+        let raw = await streamFailureMessage(status: 401, body: #"{"error":"unauthorized"}"#)
+        let message = try XCTUnwrap(raw)
+        XCTAssertTrue(message.lowercased().contains("api key"), message)
+        XCTAssertFalse(message.contains("model pulled"), message)
+        XCTAssertTrue(message.contains("unauthorized"), message)
+    }
+
+    func testLivePathReportsRateLimitOn429() async throws {
+        let raw = await streamFailureMessage(status: 429, body: "")
+        let message = try XCTUnwrap(raw)
+        XCTAssertTrue(message.lowercased().contains("rate"), message)
+        XCTAssertFalse(message.contains("model pulled"), message)
     }
 
     // MARK: 3. Authorization header is set when apiKey is provided

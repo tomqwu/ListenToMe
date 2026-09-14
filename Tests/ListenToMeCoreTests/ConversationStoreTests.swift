@@ -23,12 +23,23 @@ final class ConversationStoreTests: XCTestCase {
 
     func testRecentContextRespectsCharBudget() {
         let store = ConversationStore()
-        store.apply(seg("aaaa", final: true))   // 4 chars
-        store.apply(seg("bbbb", final: true))   // 4 chars
-        store.apply(seg("cccc", final: true))   // 4 chars
-        // Budget 9: keep newest segments that fit (cccc=4, +bbbb=8 <= 9; +aaaa=12 > 9 stops).
-        let recent = store.recentContext(maxChars: 9)
+        store.apply(seg("aaaa", final: true))
+        store.apply(seg("bbbb", final: true))
+        store.apply(seg("cccc", final: true))
+        // Each segment costs what it costs in the prompt: "Others: cccc" plus the joining newline.
+        let perSegment = "Others: cccc\n".count
+        XCTAssertEqual(TranscriptSegment.promptCharacterCost(store.utterances[0]), perSegment)
+        let recent = store.recentContext(maxChars: perSegment * 2 + 1)
         XCTAssertEqual(recent.map(\.text), ["bbbb", "cccc"])
+    }
+
+    /// The speaker label is charged, so a budget that would fit the raw text alone does not fit the
+    /// rendered line (issue #119 — hundreds of short labeled lines used to overrun a small window).
+    func testRecentContextChargesTheSpeakerLabel() {
+        let store = ConversationStore()
+        store.apply(seg("aaaa", final: true))
+        store.apply(seg("bbbb", final: true))
+        XCTAssertEqual(store.recentContext(maxChars: 9).map(\.text), ["bbbb"])
     }
 
     func testRecentContextKeepsAtLeastOne() {

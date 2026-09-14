@@ -61,7 +61,9 @@ public struct OllamaCloudCatalog: Sendable {
         if !apiKey.isEmpty { request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization") }
         let (data, response) = try await session.data(for: request)
         guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
-            throw OllamaStreamError.server("Model catalog returned HTTP \((response as? HTTPURLResponse)?.statusCode ?? 0).")
+            // Surface the server's own explanation (bad key, quota) rather than a bare status.
+            throw OllamaStreamError.fromHTTP(status: (response as? HTTPURLResponse)?.statusCode ?? 0,
+                                             body: data)
         }
         struct Catalog: Decodable { let models: [OllamaCloudModel] }
         let models = try JSONDecoder().decode(Catalog.self, from: data).models
