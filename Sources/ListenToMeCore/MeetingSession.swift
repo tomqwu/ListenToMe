@@ -15,6 +15,12 @@ public final class MeetingSession {
         didSet { if !aiEnabled { for role in CopilotRole.allCases { cancelResponse(role) } }; handleLiveEvent(.providerChanged) }
     }
     public private(set) var captureMessages: [SpeakerSource: String] = [:]
+    /// Channels whose capture has failed mid-run (see `CaptureStatus.Severity.degraded`).
+    private var degradedSources: Set<SpeakerSource> = []
+    /// True while any channel is degraded — a dead mic after an input-device change, or a stopped
+    /// system-audio stream. The UI shows this as a visible alert instead of a grey caption, because
+    /// the rail keeps saying Recording and the elapsed timer keeps counting (issue #107).
+    public var captureDegraded: Bool { !degradedSources.isEmpty }
     public private(set) var transcriptionStatus = "Transcription: idle"
     public var captureStatus: String {
         "Mic: \(captureMessages[.you] ?? "idle") · System: \(captureMessages[.others] ?? "idle")"
@@ -167,12 +173,20 @@ public final class MeetingSession {
         self.capture = capture
         self.transcriber = transcriber
         captureMessages = [.you: "starting…", .others: "starting…"]
+        degradedSources = []
         transcriptionStatus = "Transcription: waiting for audio"
         captureStatusTask?.cancel(); transcriptionStatusTask?.cancel()
         captureStatusTask = Task {
             for await status in capture.statusUpdates {
                 guard self.runID == myRun, self.isRunning else { break }
                 self.captureMessages[status.source] = status.message
+                // A degraded status latches until that same channel reports a healthy one again,
+                // so one healthy channel can never hide the other's failure.
+                if status.severity == .degraded {
+                    self.degradedSources.insert(status.source)
+                } else {
+                    self.degradedSources.remove(status.source)
+                }
             }
         }
         transcriptionStatusTask = Task {
@@ -201,6 +215,7 @@ public final class MeetingSession {
                 isRunning = false
                 captureStatusTask?.cancel(); transcriptionStatusTask?.cancel()
                 captureMessages = [.you: "start failed", .others: "stopped"]
+                degradedSources = []
                 transcriptionStatus = "Transcription: not started"
                 self.capture = nil
                 self.transcriber = nil
@@ -314,6 +329,7 @@ public final class MeetingSession {
         handleLiveEvent(.recordingChanged)
         captureStatusTask?.cancel()
         captureMessages = [.you: "stopped", .others: "stopped"]
+        degradedSources = []
         transcriptionStatus = "Transcription: finalizing…"
         for role in CopilotRole.allCases { cancelResponse(role) }
         capture?.stop()

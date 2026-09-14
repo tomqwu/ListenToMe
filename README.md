@@ -72,6 +72,13 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 - On-device transcription via **Apple SpeechAnalyzer** (default) or the legacy **SpeechRecognizer**.
 - **Transcription-language** picker (English, Mandarin, and more) and **audio-file import** to
   transcribe an existing recording.
+- **Survives device changes:** connecting AirPods, docking/undocking or sleep/wake re-installs the
+  microphone tap and restarts capture in place ("Mic: input changed — resumed"); a stopped
+  system-audio stream gets the same one-shot restart. If a channel really cannot be recovered, the
+  capture line turns red with ⚠️ instead of leaving a dead channel under a running timer.
+- **No silent recordings:** Listen checks microphone authorization first. If access is denied (or
+  restricted by device management), the app explains it and offers **Open Settings** rather than
+  reporting "Mic: active" while recording silence.
 
 **Four-pane AI copilot**
 - **Transcript** — live, source-labeled, no model.
@@ -132,6 +139,9 @@ rebuilds (otherwise each rebuild re-asks). Find it via `security find-identity -
 On first run, grant Microphone, Speech Recognition, Screen Recording (for system audio), and
 Accessibility (for the global hotkey) in System Settings → Privacy & Security. The app shows a
 Permissions panel on launch (also reachable from the toolbar 🛡️) to grant these up front.
+Microphone access is also re-checked every time you press **Listen**: without it macOS hands the
+app silence rather than an error, so the app refuses to start and points you at the Microphone
+pane (a managed/restricted Mac gets the explanation without the Settings shortcut).
 
 ### Dev builds are a separate app
 

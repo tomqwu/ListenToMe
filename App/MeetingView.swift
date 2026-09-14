@@ -185,12 +185,20 @@ struct MeetingView: View {
                     .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 14)
             }
             if let startError {
-                Text("⚠️ \(startError)")
-                    .foregroundStyle(.red)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 14)
-                    .padding(.bottom, 4)
-                    .background(Theme.windowBackground)
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text("⚠️ \(startError)")
+                        .foregroundStyle(.red)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    // Only the denied case is fixable by the user in their own Privacy pane; a
+                    // restricted (managed) Mac gets the explanation without a dead-end button.
+                    if startError == CapturePreflight.deniedMessage {
+                        Button("Open Settings") { permissions.openSettings("Privacy_Microphone") }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 14)
+                .padding(.bottom, 4)
+                .background(Theme.windowBackground)
             }
             // HSplitView so the user can drag the rail/transcript/copilot dividers; each column
             // carries its own min/ideal/max width so the handles have room to move.
@@ -346,9 +354,12 @@ extension MeetingView {
                 _ = checkpoint(complete: true, force: true)
                 Task { await finishSpeakerAnalysis() }
             } else {
+                startError = nil
+                // A denied microphone doesn't fail AVAudioEngine.start() — it records silence — so
+                // decide BEFORE starting whether we may listen at all (issue #110).
+                guard await ensureMicrophoneAccess() else { wantsCapture = false; return }
                 wantsCapture = true
                 do {
-                    startError = nil
                     // The Others buffer is reset in makeCapture, restarting its 0-based timeline.
                     // Clear stale labels + bump the token BEFORE start; anchor the run only AFTER
                     // start returns, once the prior Stop's finals have drained into the store.
@@ -363,6 +374,23 @@ extension MeetingView {
                 }
             }
         }
+    }
+
+    /// Listen pre-flight for microphone authorization (issue #110). Returns true when capture may
+    /// start; otherwise sets `startError` (the banner offers Open Settings when the user can fix it
+    /// themselves) and leaves the session stopped rather than recording silence.
+    private func ensureMicrophoneAccess() async -> Bool {
+        var decision = CapturePreflight.decide(microphone: PermissionsModel.currentMicrophoneAuthorization())
+        if decision == .requestAccess {
+            let granted = await PermissionsModel.requestMicrophoneAccess()
+            permissions.refresh()
+            decision = CapturePreflight.decideAfterRequest(granted: granted)
+        }
+        if case .blocked(let message, _) = decision {
+            startError = message
+            return false
+        }
+        return true
     }
 
     /// Restarts an active session after a language change so the new transcriber applies immediately

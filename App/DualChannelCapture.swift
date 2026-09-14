@@ -1,4 +1,5 @@
 import Foundation
+import AppKit
 import AVFoundation
 import CoreGraphics
 import ScreenCaptureKit
@@ -10,6 +11,7 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
     let statusUpdates: AsyncStream<CaptureStatus>
     private let statusContinuation: AsyncStream<CaptureStatus>.Continuation
     private var configurationObserver: NSObjectProtocol?
+    private var wakeObserver: NSObjectProtocol?
     let chunks: AsyncStream<AudioChunk>
     private let continuation: AsyncStream<AudioChunk>.Continuation
 
@@ -18,6 +20,12 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
     private var stream: SCStream?          // guarded by `lock`
     private var stopped = false            // guarded by `lock`
     private var reportedDrops = Set<SpeakerSource>()   // guarded by `lock`
+    /// One restart attempt per channel (re-armed by a successful restart), so a permanently dead
+    /// input device can't spin us in a restart loop. Guarded by `lock`.
+    private var recovery = CaptureRecovery.Policy()    // guarded by `lock`
+    /// True once the system-audio stream has actually been running, so a post-wake restart only
+    /// re-arms a channel that worked (and never re-prompts a user who declined Screen Recording).
+    private var systemAudioWasActive = false           // guarded by `lock`
     private var systemAudioTask: Task<Void, Never>?
     private let startTime = Date()
     /// Optional sink that accumulates the `.others` channel (resampled to 16 kHz) for speaker
@@ -47,9 +55,21 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
     func start() async throws {
         try startMic()
         statusContinuation.yield(CaptureStatus(source: .you, message: "active"))
+        // An input-device change (AirPods connect, dock/undock, sleep/wake) stops AVAudioEngine and
+        // invalidates the installed tap: recover in place instead of only telling the user, who
+        // would otherwise record the rest of the meeting with no "You" channel (issue #107).
         configurationObserver = NotificationCenter.default.addObserver(
             forName: .AVAudioEngineConfigurationChange, object: engine, queue: nil) { [weak self] _ in
-                self?.statusContinuation.yield(CaptureStatus(source: .you, message: "input changed — stop and restart"))
+                self?.restartMicrophone()
+            }
+        // Sleep/wake doesn't always deliver a configuration change; re-arm whichever channel
+        // actually died rather than disturbing healthy ones.
+        wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didWakeNotification, object: nil, queue: nil) { [weak self] _ in
+                guard let self, !self.lock.withLock({ self.stopped }) else { return }
+                if !self.engine.isRunning { self.restartMicrophone() }
+                let needsSystemAudio = self.lock.withLock { self.stream == nil && self.systemAudioWasActive }
+                if needsSystemAudio { self.restartSystemAudio(reason: "woke from sleep") }
             }
         // Start system audio OFF the start() path so a Screen Recording prompt (when not yet
         // granted) can't suspend here and stall mic transcription — the caller attaches the mic
@@ -74,13 +94,22 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
     }
 
     func stop() {
+        // Publish the stop BEFORE tearing anything down. A configuration-change notification runs
+        // on its own thread; if it could observe `stopped == false` while we are already stopping,
+        // its restart would re-install the tap and start the engine again after the user pressed
+        // Stop — a live microphone with no status path. `markStopped()` makes every later restart
+        // request refuse, and the restart path re-checks it after starting (see restartMicrophone).
+        lock.withLock {
+            stopped = true
+            recovery.markStopped()
+        }
         if let configurationObserver { NotificationCenter.default.removeObserver(configurationObserver) }
+        if let wakeObserver { NSWorkspace.shared.notificationCenter.removeObserver(wakeObserver) }
         statusContinuation.finish()
         engine.inputNode.removeTap(onBus: 0)
         engine.stop()
         systemAudioTask?.cancel()
         let toStop: SCStream? = lock.withLock {
-            stopped = true
             let current = stream
             stream = nil
             return current
@@ -92,6 +121,18 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
     // MARK: - Microphone (.you)
 
     private func startMic() throws {
+        // A denied microphone does NOT make engine.start() throw on macOS — the input node just
+        // delivers silence — so check authorization first and fail loudly instead of recording a
+        // whole meeting with no "You" lines (issue #110). The UI pre-flights this too; this guard
+        // covers any caller that skips it.
+        switch CapturePreflight.decide(microphone: PermissionsModel.currentMicrophoneAuthorization()) {
+        case .blocked(let message, _):
+            statusContinuation.yield(CapturePreflight.noAccessStatus)
+            throw NSError(domain: "ListenToMe.Capture", code: 2,
+                          userInfo: [NSLocalizedDescriptionKey: message])
+        case .start, .requestAccess:
+            break   // .requestAccess: starting the engine raises the one-time system prompt
+        }
         let input = engine.inputNode
         let format = input.outputFormat(forBus: 0)
         guard format.channelCount > 0, format.sampleRate > 0 else {
@@ -103,6 +144,76 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
         }
         engine.prepare()
         try engine.start()
+    }
+
+    /// Removes the stale tap, re-reads the (possibly new) input format, re-installs the tap and
+    /// restarts the engine. Yields "input changed — resumed" on success, and a degraded status the
+    /// UI shows as an alert when it fails.
+    private func restartMicrophone() {
+        if lock.withLock({ stopped }) { return }
+        let decision = lock.withLock { recovery.shouldAttemptRestart(for: .you) }
+        guard decision == .attempt else {
+            // Only an exhausted budget means the channel is down; a suppressed refusal (a second
+            // change moments after a successful restart, or a stopping session) stays silent.
+            if let status = CaptureRecovery.status(for: .microphoneInputChanged, refusal: decision) {
+                statusContinuation.yield(status)
+            }
+            return
+        }
+        engine.inputNode.removeTap(onBus: 0)
+        engine.stop()
+        do {
+            try startMic()   // re-reads inputNode.outputFormat(forBus: 0) for the new device
+            // stop() may have run while we were restarting (it tears the engine down BEFORE we
+            // re-installed the tap, so its teardown would be undone by ours): tear our own restart
+            // down again rather than leaving the microphone live after Stop.
+            let cancelled: Bool = lock.withLock {
+                if stopped { return true }
+                recovery.restartSucceeded(for: .you)
+                return false
+            }
+            if cancelled {
+                engine.inputNode.removeTap(onBus: 0)
+                engine.stop()
+                return
+            }
+            statusContinuation.yield(CaptureRecovery.status(for: .microphoneInputChanged,
+                                                            outcome: .resumed))
+        } catch {
+            statusContinuation.yield(CaptureRecovery.status(
+                for: .microphoneInputChanged, outcome: .failed(reason: error.localizedDescription)))
+        }
+    }
+
+    /// One-shot restart of the system-audio stream after ScreenCaptureKit stopped it (or after a
+    /// wake). A failure leaves a visible "system audio stopped" status rather than silent loss.
+    private func restartSystemAudio(reason: String) {
+        if lock.withLock({ stopped }) { return }
+        let event = CaptureRecovery.Event.systemAudioStopped(reason: reason)
+        let decision = lock.withLock { recovery.shouldAttemptRestart(for: .others) }
+        guard decision == .attempt else {
+            if let status = CaptureRecovery.status(for: event, refusal: decision) {
+                statusContinuation.yield(status)
+            }
+            return
+        }
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                try await self.startSystemAudio()
+                // startSystemAudio returns without a stream when there is no display to capture.
+                guard self.lock.withLock({ self.stream != nil }) else {
+                    self.statusContinuation.yield(CaptureRecovery.status(
+                        for: event, outcome: .failed(reason: "no display available")))
+                    return
+                }
+                self.lock.withLock { self.recovery.restartSucceeded(for: .others) }
+                self.statusContinuation.yield(CaptureRecovery.status(for: event, outcome: .resumed))
+            } catch {
+                self.statusContinuation.yield(CaptureRecovery.status(
+                    for: event, outcome: .failed(reason: error.localizedDescription)))
+            }
+        }
     }
 
     // MARK: - System audio (.others)
@@ -132,6 +243,7 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
         let keep: Bool = lock.withLock {
             if stopped { return false }
             self.stream = stream
+            self.systemAudioWasActive = true
             return true
         }
         if !keep { stream.stopCapture { _ in } }
@@ -234,7 +346,15 @@ private extension CMSampleBuffer {
 
 extension DualChannelCapture: SCStreamDelegate {
     func stream(_ stream: SCStream, didStopWithError error: Error) {
-        statusContinuation.yield(CaptureStatus(source: .others,
-            message: "stopped: \(error.localizedDescription). Restart capture."))
+        // Only the CURRENT stream's failure is ours to recover. A late callback from a stream we
+        // already replaced (or stopped) must not start a second SCStream feeding `.others`; drop
+        // the handle when it is ours, then make one recovery attempt (issue #107).
+        let isCurrent: Bool = lock.withLock {
+            guard self.stream === stream else { return false }
+            self.stream = nil
+            return true
+        }
+        guard isCurrent else { return }
+        restartSystemAudio(reason: error.localizedDescription)
     }
 }

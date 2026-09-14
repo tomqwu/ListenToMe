@@ -116,6 +116,23 @@ final class PermissionsModel {
         }
     }
 
+    /// Live microphone authorization in the Core vocabulary, for the Listen pre-flight
+    /// (`CapturePreflight`). Prompt-free.
+    nonisolated static func currentMicrophoneAuthorization() -> MicrophoneAuthorization {
+        switch AVCaptureDevice.authorizationStatus(for: .audio) {
+        case .authorized: return .authorized
+        case .denied: return .denied
+        case .restricted: return .restricted
+        case .notDetermined: return .notDetermined
+        @unknown default: return .denied
+        }
+    }
+
+    /// Shows the one-time system microphone prompt and reports the answer.
+    nonisolated static func requestMicrophoneAccess() async -> Bool {
+        await AVCaptureDevice.requestAccess(for: .audio)
+    }
+
     nonisolated func requestMicrophone() {
         AVCaptureDevice.requestAccess(for: .audio) { _ in
             Task { @MainActor [weak self] in self?.refresh() }
