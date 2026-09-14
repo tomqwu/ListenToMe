@@ -25,4 +25,6 @@
 </dict></array>
 <key>NSCalendarsFullAccessUsageDescription</key><string>ListenToMe reads Calendar when you choose an event to import into your notes. Imported details are included in summaries using your selected AI provider. ListenToMe does not change calendar events.</string>
 <key>ITSAppUsesNonExemptEncryption</key><false/>
+<key>NSLocalNetworkUsageDescription</key><string>ListenToMe connects to the Ollama server you enter in Settings, such as one running on your own Mac on this network.</string>
+<key>NSAppTransportSecurity</key><dict><key>NSAllowsLocalNetworking</key><true/></dict>
 </dict></plist>

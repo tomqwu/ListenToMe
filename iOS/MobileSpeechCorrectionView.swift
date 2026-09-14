@@ -8,8 +8,9 @@ struct MobileSpeechCorrectionSettings: View {
         Section {
             Toggle("Correct speech with AI", isOn: $ai.correctTranscript)
                 .accessibilityIdentifier("correctSpeechToggle")
-            Text("When enabled, new completed phrases and nearby transcript text are sent automatically to Ollama Cloud. " +
-                 "Audio, notes and files are not sent for correction. Your account's usage limits apply.")
+            Text("When enabled, new completed phrases and nearby transcript text are sent automatically to " +
+                 "\(ai.endpointDescription). Audio, notes and files are not sent for correction. " +
+                 "Your account's usage limits apply on Ollama Cloud.")
                 .font(.footnote).foregroundStyle(.secondary)
             NavigationLink {
                 MobileCorrectionModelView(ai: ai)

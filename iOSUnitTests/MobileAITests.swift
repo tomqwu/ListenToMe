@@ -4,14 +4,91 @@ import ListenToMeCore
 
 @MainActor
 final class MobileAITests: XCTestCase {
-    func testFreshSettingsDefaultToOllamaAndPreserveExplicitAppleChoice() {
+    func testFreshSettingsDefaultToOnDeviceAndPreserveAnyExplicitChoice() {
         let previous = UserDefaults.standard.object(forKey: "mobileAIProvider")
         defer { UserDefaults.standard.set(previous, forKey: "mobileAIProvider") }
         UserDefaults.standard.removeObject(forKey: "mobileAIProvider")
-        XCTAssertEqual(MobileAISettings().provider, .ollama)
+        let expected: MobileAISettings.Provider =
+            AppleIntelligenceProvider.unavailableReason == nil ? .apple : .ollama
+        XCTAssertEqual(MobileAISettings.defaultProvider, expected)
+        XCTAssertEqual(MobileAISettings().provider, expected)
+        // A saved choice from an earlier build must survive the new default.
+        for choice in MobileAISettings.Provider.allCases {
+            UserDefaults.standard.set(choice.rawValue, forKey: "mobileAIProvider")
+            XCTAssertEqual(MobileAISettings().provider, choice)
+        }
+        UserDefaults.standard.set("no-longer-a-provider", forKey: "mobileAIProvider")
+        XCTAssertEqual(MobileAISettings().provider, expected)
+    }
+
+    func testOnDeviceFallbackExplainsWhyOllamaWasChosen() {
+        if AppleIntelligenceProvider.unavailableReason == nil {
+            XCTAssertEqual(MobileAISettings.defaultProvider, .apple)
+            XCTAssertNil(MobileAISettings.defaultProviderReason)
+        } else {
+            XCTAssertEqual(MobileAISettings.defaultProvider, .ollama)
+            XCTAssertEqual(MobileAISettings.defaultProviderReason, AppleIntelligenceProvider.unavailableReason)
+        }
+    }
+
+    func testCustomBaseURLIsValidatedAndNeverAutoSelected() {
+        let previous = UserDefaults.standard.object(forKey: "mobileOllamaBaseURL")
+        defer { UserDefaults.standard.set(previous, forKey: "mobileOllamaBaseURL") }
+        UserDefaults.standard.removeObject(forKey: "mobileOllamaBaseURL")
         let settings = MobileAISettings()
-        settings.provider = .apple
-        XCTAssertEqual(MobileAISettings().provider, .apple)
+        XCTAssertEqual(settings.ollamaBaseURL, "")
+        XCTAssertFalse(settings.usesCustomEndpoint)
+        XCTAssertEqual(settings.resolvedBaseURL, OllamaCloudCatalog.baseURL)
+        XCTAssertEqual(settings.endpointDescription, "https://ollama.com")
+
+        XCTAssertTrue(settings.saveBaseURL("  http://studio.local:11434/  "))
+        XCTAssertTrue(settings.usesCustomEndpoint)
+        XCTAssertEqual(settings.resolvedBaseURL.absoluteString, "http://studio.local:11434")
+        XCTAssertEqual(settings.endpointDescription, "http://studio.local:11434")
+        XCTAssertEqual(MobileAISettings().resolvedBaseURL.absoluteString, "http://studio.local:11434")
+
+        for invalid in ["studio.local:11434", "ftp://studio.local", "http://", "not a url"] {
+            XCTAssertFalse(settings.saveBaseURL(invalid), invalid)
+            XCTAssertEqual(settings.resolvedBaseURL.absoluteString, "http://studio.local:11434", invalid)
+            XCTAssertTrue(settings.status?.isEmpty == false)
+        }
+
+        XCTAssertTrue(settings.saveBaseURL(""))
+        XCTAssertFalse(settings.usesCustomEndpoint)
+        XCTAssertEqual(settings.resolvedBaseURL, OllamaCloudCatalog.baseURL)
+    }
+
+    func testCustomEndpointMakesTheAPIKeyOptionalAndRoutesEveryClient() throws {
+        let original = try MobileKeychain.read()
+        let previousURL = UserDefaults.standard.object(forKey: "mobileOllamaBaseURL")
+        let settings = MobileAISettings()
+        let provider = settings.provider, model = settings.model
+        let quick = settings.quickModel, deep = settings.deepModel, correction = settings.correctionModel
+        defer {
+            settings.provider = provider; settings.model = model
+            settings.quickModel = quick; settings.deepModel = deep; settings.correctionModel = correction
+            UserDefaults.standard.set(previousURL, forKey: "mobileOllamaBaseURL")
+            try? MobileKeychain.save(original)
+        }
+        settings.saveKey("")
+        settings.saveBaseURL("")
+        settings.provider = .ollama
+        settings.models = [OllamaCloudModel(name: "glm-5.3:local"), OllamaCloudModel(name: "glm-5.3-flash:local")]
+        settings.model = "glm-5.3:local"; settings.deepModel = "glm-5.3:local"
+        settings.quickModel = "glm-5.3-flash:local"
+        settings.correctionModel = "glm-5.3-flash:local"
+        // Cloud still demands a key.
+        XCTAssertEqual(settings.availability(for: .summary), "Add your Ollama API key in Settings.")
+        XCTAssertEqual(settings.correctionAvailability, "Add your Ollama API key in AI settings.")
+        XCTAssertThrowsError(try settings.client())
+
+        XCTAssertTrue(settings.saveBaseURL("http://studio.local:11434"))
+        XCTAssertNil(settings.availability(for: .summary))
+        XCTAssertNil(settings.correctionAvailability)
+        for mode in MobileSummaryMode.allCases {
+            XCTAssertEqual(try settings.client(for: mode).baseURL.absoluteString, "http://studio.local:11434")
+        }
+        XCTAssertEqual(try settings.correctionClient().baseURL.absoluteString, "http://studio.local:11434")
     }
 
     func testCatalogIsAvailableAfterSettingsRelaunch() {

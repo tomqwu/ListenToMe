@@ -25,7 +25,8 @@ transcript never leave the machine**.
 A native standalone iOS 26 app is now available in source as the **ListenToMeIOS** target.
 It includes microphone transcription, a unified live transcript/Quick Summary/Deep Summary dashboard,
 local conversations, photo/file attachments, Apple Notes share imports and Markdown sharing. Choose
-on-device Apple Intelligence or Ollama Cloud with your own key. It does not capture other apps' audio or sync
+on-device Apple Intelligence — the default on capable devices — or Ollama: Ollama Cloud with your own
+key, or an Ollama server you run on your own network. It does not capture other apps' audio or sync
 with the Mac. See [iOS setup, validation and distribution](docs/IOS.md).
 
 ```sh

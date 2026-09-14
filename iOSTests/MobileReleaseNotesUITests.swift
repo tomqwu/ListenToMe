@@ -4,11 +4,11 @@ import XCTest
 final class MobileReleaseNotesUITests: XCTestCase {
     func testUpdateShowsVersionOnceAndChangelogCanBeReopened() {
         let app = XCUIApplication()
-        app.launchArguments = ["-lastAcknowledgedReleaseBuild", "1.10.0 (22)"]
+        app.launchArguments = ["-lastAcknowledgedReleaseBuild", "1.10.1 (23)"]
         app.launch()
         XCTAssertTrue(app.buttons["releaseNotesContinue"].waitForExistence(timeout: 5))
-        XCTAssertEqual(app.staticTexts["releaseVersion"].label, "Version 1.10.1 · Build 23")
-        XCTAssertTrue(app.staticTexts["Know what changed"].exists)
+        XCTAssertEqual(app.staticTexts["releaseVersion"].label, "Version 1.10.2 · Build 24")
+        XCTAssertTrue(app.staticTexts["On-device by default, or your own server"].exists)
         capture(app, "What’s New on update")
         app.buttons["releaseNotesContinue"].tap()
         XCTAssertTrue(app.buttons["More"].waitForExistence(timeout: 5))
@@ -20,7 +20,7 @@ final class MobileReleaseNotesUITests: XCTestCase {
         app.buttons["More"].tap()
         app.buttons["What’s New"].tap()
         XCTAssertTrue(app.staticTexts["releaseVersion"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Automatic reviews"].exists)
+        XCTAssertTrue(app.staticTexts["Know what changed"].exists)
         app.buttons["releaseNotesContinue"].tap()
     }
 
@@ -33,8 +33,8 @@ final class MobileReleaseNotesUITests: XCTestCase {
         XCTAssertTrue(button.waitForExistence(timeout: 5))
         XCTAssertTrue(button.isHittable)
         let scroll = app.scrollViews["releaseNotesScroll"]
-        for _ in 0..<5 where !app.staticTexts["A recap from the first topic"].isHittable { scroll.swipeUp() }
-        XCTAssertTrue(app.staticTexts["A recap from the first topic"].isHittable)
+        for _ in 0..<5 where !app.staticTexts["Automatic reviews"].isHittable { scroll.swipeUp() }
+        XCTAssertTrue(app.staticTexts["Automatic reviews"].isHittable)
         capture(app, "Large text release history with reachable Continue")
         button.tap()
         XCTAssertTrue(app.buttons["More"].waitForExistence(timeout: 5))

@@ -178,7 +178,8 @@ struct MobileWorkspaceView<Header: View>: View {
                         }
                         if session.autoQuick && session.ai.provider == .ollama {
                             Text("New speech triggers Quick evaluation; related words are batched briefly. "
-                                 + "Auto also updates Summary and Deep when relevant. These use the selected Ollama Cloud models.")
+                                 + "Auto also updates Summary and Deep when relevant. These use the selected "
+                                 + "models on \(session.ai.endpointDescription).")
                                 .font(.caption).foregroundStyle(.secondary)
                         }
                     }
@@ -255,8 +256,9 @@ struct MobileWorkspaceView<Header: View>: View {
         Toggle("Auto", isOn: $session.autoQuick).font(.caption)
             .accessibilityLabel("Auto summaries")
             .accessibilityHint(session.ai.provider == .ollama
-                ? "New speech triggers Quick evaluation and relevant Summary or Deep reviews using their selected Ollama Cloud models."
-                : "Continuous evaluation requires Ollama Cloud. Apple Intelligence summaries are available with Refresh.")
+                ? "New speech triggers Quick evaluation and relevant Summary or Deep reviews using their "
+                  + "selected models on \(session.ai.endpointDescription)."
+                : "Continuous evaluation requires Ollama. Apple Intelligence summaries are available with Refresh.")
     }
 
     @ViewBuilder

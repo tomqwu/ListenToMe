@@ -144,7 +144,8 @@ struct MobileMeetingView: View {
                 }.accessibilityIdentifier("summaryMode").disabled(session.isSummarizing)
                 Text(summaryMode.title).font(.title2.bold())
                 Text(session.ai.provider == .ollama
-                     ? "Ollama Cloud · \(session.ai.selectedModel(for: summaryMode)). Summarize sends your notes and transcript to Ollama. Review the result."
+                     ? "\(session.ai.endpointDescription) · \(session.ai.selectedModel(for: summaryMode)). "
+                       + "Summarize sends your notes and transcript there. Review the result."
                      : "Apple Intelligence summarizes your notes and transcript on this device. Review the result for accuracy.")
                     .foregroundStyle(.secondary)
                 if let reason = session.summaryBlockReason(for: summaryMode) {
@@ -243,7 +244,9 @@ struct MobileMeetingView: View {
                 }
                 Section("Privacy") {
                     Text("Conversations stay in this app's storage. Apple Intelligence summaries are optional and run on-device. " +
-                         "Ollama Cloud sends notes and transcript when you generate a summary or enable Auto summaries. " +
+                         "Ollama sends notes and transcript to the server shown in AI settings " +
+                         "(Ollama Cloud unless you entered your own) when you generate a summary " +
+                         "or enable Auto summaries. " +
                          "AI speech correction sends new phrases and nearby transcript text when enabled. " +
                          "API keys stay in this device's Keychain. Share exports text to the destination you choose.")
                     Link("Open app settings", destination: URL(string: UIApplication.openSettingsURLString)!)

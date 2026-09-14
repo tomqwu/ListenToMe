@@ -1,7 +1,11 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.10.1 (23).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.10.2 (24).
+
+## iOS 1.10.2 (24)
+
+A fresh install now defaults to on-device Apple Intelligence, falling back to Ollama with a stated reason only where Apple Intelligence cannot run. A provider chosen in an earlier build is untouched. Settings gains an optional **Server URL** so Ollama requests — summaries, Quick, Deep and speech correction — can go to an Ollama server you run on your own network instead of ollama.com; the API key is optional for your own server, and the destination host is shown in the status text. [What to Test](../metadata/ios/en-CA/what-to-test-1.10.2.txt).
 
 ## iOS 1.10.1 (23)
 
@@ -125,14 +129,16 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   this version does not infer who is speaking. Unfinalized text is retained and labeled accordingly.
 - Editable titles and notes; atomic local saves after finalized utterances/notes, explicit Save,
   save-before-New, local History, restoration on launch and Markdown through the share sheet.
-- Optional Apple Intelligence summaries, or Ollama Cloud summaries with streamed results and secure API-key storage.
+- On-device Apple Intelligence summaries by default, or Ollama summaries — Ollama Cloud, or an Ollama
+  server you run — with streamed results and secure API-key storage.
   Apple Intelligence accepts up to 8,000 characters; Ollama accepts up to 60,000. Oversized input is rejected explicitly. AI output needs review.
 - Recording stops/saves on backgrounding, audio interruption or microphone disconnection. The screen
   stays awake during active recording. No raw audio is saved.
 - Version/build information in Settings.
 
-System/call audio, background recording, Mac sync, audio-file import, WhisperKit,
-per-person speaker identification and local/LAN Ollama server connections are not included. Notes and saved
+System/call audio, background recording, Mac sync, audio-file import, WhisperKit and
+per-person speaker identification are not included. A local/LAN Ollama server is supported only when you
+enter its address yourself; the app performs no discovery and never switches servers on its own. Notes and saved
 transcripts remain usable when the speech model or Apple Intelligence is unavailable.
 App data is local to the sandbox; normal OS backup policy applies. Sharing explicitly exports text.
 
@@ -174,7 +180,16 @@ It does not browse or synchronize your Apple Notes library. Paste text or add an
 source app does not offer a compatible share representation. Apple Notes rich formatting may be
 flattened; verify that any scans or embedded documents you need were included.
 
-## Ollama Cloud
+## Provider default
+
+A fresh install defaults to **Apple Intelligence · on-device** whenever
+`AppleIntelligenceProvider.unavailableReason` is nil. On a device that cannot run it (ineligible
+hardware, Apple Intelligence turned off, model not ready) the default falls back to Ollama and
+Settings states the reason. A provider you have chosen before is always kept across updates — the
+default applies only when no choice has been saved. Automatic Quick Summary requires Ollama, so it
+stays unavailable with an explanation until you select Ollama yourself.
+
+## Ollama (Cloud or your own server)
 
 Open **More → Settings → Summary provider → Ollama Cloud**. Enter your key and tap **Save API key**,
 then **Refresh models from API**, select a **Model role**, **Choose model**, and **Test connection**.
@@ -183,7 +198,21 @@ button becomes **Save key and test connection** and saves that key before sendin
 iOS Keychain with `WhenUnlockedThisDeviceOnly`, never in preferences, session exports or the app binary.
 Enter the key separately on each device. Remove API key deletes it from this device.
 
-Refresh calls `https://ollama.com/api/tags` with Bearer authentication and preserves exact returned
+### Your own Ollama server
+
+**Server URL** is blank by default, which means `https://ollama.com`. Enter an `http://` or `https://`
+address — for example `http://your-mac.local:11434` for an Ollama server running on your own Mac on the
+same Wi-Fi network — and tap **Save server URL**. Only the scheme, host and port are kept; anything that
+is not a valid http(s) URL with a host is rejected and the previous server stays in place. **Use Ollama
+Cloud instead** clears it. The API key is optional for your own server and still required for Ollama
+Cloud. Nothing is discovered automatically and the app never changes the server for you: the destination
+is shown as **Server: …** in Settings and repeated in the refresh, connection-test and error status text
+so you can always see where a summary would go. A server you enter is your own machine, not ollama.com.
+Reaching an `http://` LAN address uses iOS local-network access, so iOS asks for that permission the
+first time.
+
+Refresh calls `/api/tags` on the selected server (`https://ollama.com` unless you entered one) with Bearer
+authentication when a key is saved, and preserves exact returned
 model IDs. The recent-family section picks the newest API modification time for each advertised
 standard/Pro/Flash variant of DeepSeek, GLM, Qwen and Kimi. All API models remain available, including
 other families. This is API update recency, not an independently verified release chronology.
@@ -191,8 +220,9 @@ No unavailable Flash/Pro name is invented. Refresh preserves your selected model
 choose another. Model refresh does not prove key validity: Test connection verifies a complete streamed
 `/api/chat` response using only a synthetic prompt. Cloud models run remotely; `/api/pull` is not needed.
 
-Selecting Ollama is opt-in. Generating any of the three AI outputs sends the current notes and transcript to
-Ollama; microphone audio continues to be transcribed on-device. Quick Summary has an opt-in **Auto** toggle (off initially; your choice is remembered across launches). While listening, new completed transcript text triggers an evaluation in five-second batches. A valid evaluation either keeps or updates the visible Quick Summary and may recommend a manual Summary/Deep review. No unchanged-input requests are sent; failed reads retry with backoff. Enabling Auto with Ollama selected sends those snapshots to Ollama. Deep Think stays on-demand. Existing output remains visible while the next response streams; failures keep the last completed result.
+Selecting Ollama is opt-in; a fresh install summarizes on-device. Generating any of the three AI outputs
+sends the current notes and transcript to the selected Ollama server (Ollama Cloud, or the server you
+entered); microphone audio continues to be transcribed on-device. Quick Summary has an opt-in **Auto** toggle (off initially; your choice is remembered across launches). While listening, new completed transcript text triggers an evaluation in five-second batches. A valid evaluation either keeps or updates the visible Quick Summary and may recommend a manual Summary/Deep review. No unchanged-input requests are sent; failed reads retry with backoff. Enabling Auto with Ollama selected sends those snapshots to Ollama. Deep Think stays on-demand. Existing output remains visible while the next response streams; failures keep the last completed result.
 The last complete summary is preserved on HTTP errors, incomplete streams and cancellation. Streamed
 text is shown separately until completion. Backgrounding cancels an active summary request.
 
@@ -237,8 +267,11 @@ GitHub Actions builds both apps only. All tests run on the local Mac with `make 
 3. Stop finalizes the last phrase; interrupted/unfinalized text remains visible after save/relaunch.
 4. Background, incoming call, Bluetooth disconnection, and repeated Start/Stop do not leave the mic active.
 5. New preserves the old conversation; History and sharing include notes, transcript and summary.
-6. On an Apple Intelligence eligible device, generate a factual summary and verify unavailable,
-   oversized-input and failure states keep the transcript and previous summary.
+6. On an Apple Intelligence eligible device, confirm a fresh install starts on Apple Intelligence,
+   generate a factual summary, and verify unavailable, oversized-input and failure states keep the
+   transcript and previous summary. On an ineligible device, confirm the fallback to Ollama names the
+   reason. Optionally point **Server URL** at an Ollama server on your own network, accept the
+   local-network prompt, refresh models and summarize without an API key.
 7. Camera permission denial/retry, photo capture, photo library, Files and Apple Notes Send Copy imports. Preview, share originals, extract document text, remove attachments and delete/reopen conversations.
 8. Portrait/landscape iPhone and iPad layouts, large text and VoiceOver controls.
 
@@ -256,7 +289,7 @@ Apple references: [SpeechAnalyzer](https://developer.apple.com/documentation/spe
 
 ## iOS 1.9.0 (17)
 
-Uses the [shared live-summary scheduler](SHARED-LIVE-SUMMARY.md) with macOS 1.4.0. Ollama is the fresh-install default; existing choices remain saved. Auto requires Ollama and opt-in. Apple Intelligence remains available for manual summaries. See [What to Test](../metadata/ios/en-CA/what-to-test-1.9.0.txt).
+Uses the [shared live-summary scheduler](SHARED-LIVE-SUMMARY.md) with macOS 1.4.0. Ollama was the fresh-install default in this build (changed to on-device Apple Intelligence in 1.10.2); existing choices remain saved. Auto requires Ollama and opt-in. Apple Intelligence remains available for manual summaries. See [What to Test](../metadata/ios/en-CA/what-to-test-1.9.0.txt).
 
 ## iOS 1.9.1 (18)
 

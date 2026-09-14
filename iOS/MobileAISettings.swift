@@ -29,6 +29,13 @@ final class MobileAISettings {
             correctionSettingsChanged?()
         }
     }
+    /// User-supplied Ollama endpoint. Empty means Ollama Cloud; never set automatically.
+    private(set) var ollamaBaseURL: String {
+        didSet {
+            UserDefaults.standard.set(ollamaBaseURL, forKey: "mobileOllamaBaseURL")
+            quickSettingsChanged?(); correctionSettingsChanged?()
+        }
+    }
     @ObservationIgnored var quickSettingsChanged: (() -> Void)?
     @ObservationIgnored var correctionSettingsChanged: (() -> Void)?
     var models: [OllamaCloudModel] = [] {
@@ -43,8 +50,16 @@ final class MobileAISettings {
     var testing = false
     var hasKey = false
 
+    /// Fresh installs start on-device; Ollama is only the fallback when Apple Intelligence cannot run here.
+    static var defaultProvider: Provider { AppleIntelligenceProvider.unavailableReason == nil ? .apple : .ollama }
+    /// Why a fresh install fell back to Ollama, or nil when the on-device default applies.
+    static var defaultProviderReason: String? { AppleIntelligenceProvider.unavailableReason }
+
     init() {
-        provider = Provider(rawValue: UserDefaults.standard.string(forKey: "mobileAIProvider") ?? "") ?? .ollama
+        // A previously saved choice always wins; only an absent/unknown value takes the default.
+        let saved = UserDefaults.standard.string(forKey: "mobileAIProvider") ?? ""
+        provider = Provider(rawValue: saved) ?? Self.defaultProvider
+        ollamaBaseURL = UserDefaults.standard.string(forKey: "mobileOllamaBaseURL") ?? ""
         let savedModel = UserDefaults.standard.string(forKey: "mobileOllamaModel") ?? ""
         model = savedModel
         quickModel = UserDefaults.standard.string(forKey: "mobileOllamaQuickModel") ?? savedModel
@@ -69,19 +84,60 @@ final class MobileAISettings {
         } catch { status = error.localizedDescription; return false }
     }
 
+    /// Accepts only an http(s) URL with a host; returns nil for anything else.
+    static func normalizedBaseURL(_ raw: String) -> URL? {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, let url = URL(string: trimmed),
+              let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https",
+              let host = url.host(), !host.isEmpty else { return nil }
+        var components = URLComponents()
+        components.scheme = scheme
+        components.host = host
+        components.port = url.port
+        return components.url
+    }
+
+    var usesCustomEndpoint: Bool { Self.normalizedBaseURL(ollamaBaseURL) != nil }
+    var resolvedBaseURL: URL { Self.normalizedBaseURL(ollamaBaseURL) ?? OllamaCloudCatalog.baseURL }
+    /// Destination shown in settings so the data's recipient is never implicit.
+    var endpointDescription: String { resolvedBaseURL.absoluteString }
+
+    /// Stores an explicit endpoint choice. Empty text restores Ollama Cloud.
+    @discardableResult
+    func saveBaseURL(_ value: String) -> Bool {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+            ollamaBaseURL = ""
+            status = "Server set to Ollama Cloud (https://ollama.com)."
+            return true
+        }
+        guard let url = Self.normalizedBaseURL(trimmed) else {
+            status = "That server address is not a valid http:// or https:// URL. The previous server is kept."
+            return false
+        }
+        ollamaBaseURL = url.absoluteString
+        status = "Server set to \(url.absoluteString). Summaries go to that machine, not to ollama.com."
+        return true
+    }
+
     func refresh() async {
         guard !refreshing else { return }
         refreshing = true
         defer { refreshing = false }
         do {
-            let fetched = try await OllamaCloudCatalog().fetch(apiKey: MobileKeychain.read())
+            let endpoint = resolvedBaseURL
+            let fetched = try await OllamaCloudCatalog().fetch(apiKey: MobileKeychain.read(), baseURL: endpoint)
             guard !fetched.isEmpty else { throw RecordingError.message("Ollama returned an empty model catalog. Try again later.") }
             models = fetched
             resolveRoleModels()
             status = fetched.contains(where: { $0.name == model })
-                ? "Fetched \(fetched.count) models from Ollama. Refresh does not verify your API key; use Test connection."
+                ? "Fetched \(fetched.count) models from \(endpoint.absoluteString). "
+                    + "Refresh does not verify your API key; use Test connection."
                 : "Your selected model is no longer listed. Choose an available model before summarizing."
-        } catch { status = "Could not refresh models: \(error.localizedDescription). Your selection is kept." }
+        } catch {
+            status = "Could not refresh models from \(resolvedBaseURL.absoluteString): "
+                + "\(Self.errorMessage(error)). Your selection is kept."
+        }
     }
 
     func selectedModel(for mode: MobileSummaryMode) -> String {
@@ -135,7 +191,7 @@ final class MobileAISettings {
     func availability(for mode: MobileSummaryMode) -> String? {
         let model = selectedModel(for: mode)
         if mode == .deep && (model.isEmpty || Self.isFlash(model)) { return "Choose a full model for Deep Summary." }
-        if !hasKey { return "Add your Ollama API key in Settings." }
+        if !hasKey && !usesCustomEndpoint { return "Add your Ollama API key in Settings." }
         if model.isEmpty { return "Refresh models and choose a model in Settings." }
         if !models.isEmpty && !models.contains(where: { $0.name == model }) {
             return "The selected model is no longer listed. Choose another model in Settings."
@@ -149,11 +205,13 @@ final class MobileAISettings {
             throw RecordingError.message("Choose a full model for Deep Summary. Flash models cannot be used for this role.")
         }
         let key = try MobileKeychain.read()
-        guard !key.isEmpty else { throw RecordingError.message("Add your Ollama API key in Settings.") }
+        guard !key.isEmpty || usesCustomEndpoint else {
+            throw RecordingError.message("Add your Ollama API key in Settings.")
+        }
         guard !model.isEmpty else { throw RecordingError.message("Choose an Ollama model in Settings.") }
         let configuration = URLSessionConfiguration.ephemeral
         configuration.timeoutIntervalForResource = 480
-        return OllamaProvider(model: model, baseURL: OllamaCloudCatalog.baseURL, apiKey: key,
+        return OllamaProvider(model: model, baseURL: resolvedBaseURL, apiKey: key.isEmpty ? nil : key,
                               urlSession: URLSession(configuration: configuration),
                               options: mode == .quick ? .init(thinking: false, temperature: 0, maximumTokens: 3_072) : .init())
     }
@@ -169,7 +227,8 @@ final class MobileAISettings {
                 response += delta
                 guard response.count < 10_000 else { throw RecordingError.message("Connection test response was too large.") }
             }
-            status = "Connection verified: \(selectedModel(for: mode)) returned a complete response."
+            status = "Connection verified: \(selectedModel(for: mode)) at \(endpointDescription) "
+                + "returned a complete response."
         } catch { status = "Connection test failed: \(Self.errorMessage(error))" }
     }
 
