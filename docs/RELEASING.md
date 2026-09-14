@@ -122,7 +122,9 @@ Notarization is attempted only when the app was signed (`DEVELOPER_ID_APP` set) 
 The `dist/` artifact is gitignored and is **not** committed. Freeze and verify the exact source commit,
 required CI checks, local GUI/audio acceptance, signature, notarization, and checksum first.
 Do not infer required-check enforcement merely from a passing CI run; verify the main ruleset targets
-`refs/heads/main` and actually requires the named checks. A build with outstanding gates is a candidate.
+`refs/heads/main` and actually requires the named checks — as of this writing that means the `app`,
+`ios`, and `core` jobs in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) (the `core` job runs
+the `ListenToMeCore` test suite and the 95% coverage floor). A build with outstanding gates is a candidate.
 Never publish an unsigned artifact as a production release. Publish the verified DMG as a GitHub Release:
 
 ```bash
