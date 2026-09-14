@@ -7,7 +7,7 @@
 **The free, open-source, fully on-device meeting copilot for macOS — bring your own model, stay private, shape it to any conversation.**
 
 [![CI](https://github.com/tomqwu/ListenToMe/actions/workflows/ci.yml/badge.svg)](https://github.com/tomqwu/ListenToMe/actions/workflows/ci.yml)
-![Coverage](https://img.shields.io/badge/coverage-96%25-brightgreen)
+![Coverage](https://img.shields.io/badge/Core_coverage-96%25-brightgreen)
 ![Platform](https://img.shields.io/badge/macOS-26%2B-black?logo=apple)
 ![Swift](https://img.shields.io/badge/Swift-6.0-orange?logo=swift)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -219,10 +219,11 @@ for the implementation plan.
 
 ### CI
 
-GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs checks for PRs to `main` on a
-macOS runner: SwiftLint, the full `ListenToMeCore` test suite (unit + headless integration/e2e), and
-a **coverage floor of 95%** enforced by `scripts/check-coverage.sh`. Both app targets compile on `macos-26` runners using the checked-in dependency lock; the iOS target also runs simulator UI tests.
-GUI/audio and distribution checks require local validation via [`docs/manual-smoke-test.md`](docs/manual-smoke-test.md).
+GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs checks for PRs to `main` on
+`macos-26` runners: both app targets compile with the checked-in dependency lock, and the full
+`ListenToMeCore` test suite (unit + headless integration/e2e) runs with a **coverage floor of 95%**
+enforced by `scripts/check-coverage.sh`. SwiftLint, iOS simulator UI tests, GUI/audio acceptance, and
+distribution checks require local validation via [`docs/manual-smoke-test.md`](docs/manual-smoke-test.md).
 
 `make e2e` runs the checks CI can't (it needs a real Mac + Ollama): it builds the app target,
 verifies `make run`'s app-path resolution, and runs a real LLM contract test against your local

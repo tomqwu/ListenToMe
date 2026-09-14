@@ -85,11 +85,13 @@ ios-testflight:
 	@test -n "$(IOS_ARCHIVE)" -a -n "$(IOS_RELEASE_SOURCE)" || { echo 'Set IOS_ARCHIVE and IOS_RELEASE_SOURCE'; exit 2; }
 	bash scripts/ios-testflight.sh "$(IOS_ARCHIVE)" "$(IOS_RELEASE_SOURCE)" $(IOS_RELEASE_FLAGS)
 
-# Complete automated validation runs locally; GitHub Actions only builds apps.
+# Complete automated validation (GUI/audio/device/e2e) runs locally; GitHub Actions builds both app
+# targets and separately runs the headless ListenToMeCore tests + coverage floor (see ci.yml's
+# `core` job, which calls scripts/check-coverage.sh directly rather than this target).
 .PHONY: validate-local
 validate-local:
 	@test "$$(uname -s)" = Darwin || { echo 'Run validation on a local Mac'; exit 1; }
-	@test "$${GITHUB_ACTIONS:-false}" != true || { echo 'Tests must run locally, not in GitHub Actions'; exit 1; }
+	@test "$${GITHUB_ACTIONS:-false}" != true || { echo 'GUI/audio/device/e2e validation must run locally, not in GitHub Actions'; exit 1; }
 	bash -n scripts/ios-testflight.sh
 	python3 scripts/test-ios-testflight.py
 	$(MAKE) lint

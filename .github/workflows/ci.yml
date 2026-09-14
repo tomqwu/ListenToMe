@@ -33,4 +33,11 @@ jobs:
         run: make ios-build
       - name: Verify locked dependencies
         run: diff -u Config/Package.resolved ListenToMe.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
-  # All tests, lint, coverage, GUI and audio acceptance run on the maintainer's Mac.
+  core:
+    name: ListenToMeCore tests + coverage
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run ListenToMeCore test suite with a 95% coverage floor
+        run: ./scripts/check-coverage.sh 95
+  # GUI, audio, device and Ollama-e2e acceptance run on the maintainer's Mac (see AGENTS.md).
