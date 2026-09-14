@@ -66,6 +66,37 @@ final class SharedQuickLoopTests: XCTestCase {
         }
     }
 
+    func testMacAutomaticReviewsCarryAttributionNotesAndUserDirectives() async throws {
+        let quick = MockLLMProvider(id: "quick", deltas: [publish])
+        let reviews = CapturingReviewProvider()
+        let session = MeetingSession(store: ConversationStore(), context: ContextEngine(),
+            makeCapture: { MockCapture() }, makeTranscriber: { MockTranscriber() },
+            makeProvider: { model -> any LLMProvider in model == "quick" ? quick : reviews },
+            models: [.quick: "quick", .listener: "summary-model", .deep: "deep-model"],
+            autoInterval: .milliseconds(15))
+        session.responseLanguage = "Simplified Chinese"
+        session.personaGuidance = "Act as the hiring manager."
+        session.referenceContext = "SPEC: rollout gates"
+        try await session.start()
+        session.notes = "Ask about budget"
+        session.autoSummaryEnabled = true
+        await session.ingest(.init(source: .others, text: "Can you own the rollout?", isFinal: true,
+                                   start: 0, end: 1, speakerName: "Alice"))
+        await session.ingest(.init(source: .you, text: "Yes, by Friday.", isFinal: true, start: 1, end: 2))
+        for _ in 0..<200 where session.automaticReviews.completedCounts[.summary] == nil {
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        let captured = await reviews.requests()
+        let request = try XCTUnwrap(captured.first)
+        XCTAssertTrue(request.system.contains("Simplified Chinese"), request.system)
+        XCTAssertTrue(request.system.contains("Act as the hiring manager."), request.system)
+        let source = request.messages[0].content
+        XCTAssertTrue(source.contains("Alice: Can you own the rollout?"), source)
+        XCTAssertTrue(source.contains("You: Yes, by Friday."), source)
+        XCTAssertTrue(source.contains("Notes: Ask about budget"), source)
+        session.stop()
+    }
+
     func testMacLiveSpeechTriggersWithoutFinalEventAndSilenceDoesNotPoll() async throws {
         let provider = MockLLMProvider(id: "live", deltas: [publish])
         let session = MeetingSession(store: ConversationStore(), context: ContextEngine(),
@@ -152,5 +183,22 @@ private struct NetworkFailureProvider: LLMProvider {
     let code: URLError.Code
     func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
         AsyncThrowingStream { $0.finish(throwing: URLError(code)) }
+    }
+}
+
+/// Records every full-review request the automatic coordinator dispatches.
+private actor CapturingReviewProvider: LLMProvider {
+    nonisolated let id = "capturing-review"
+    private var captured: [LLMRequest] = []
+    func requests() -> [LLMRequest] { captured }
+    private func record(_ request: LLMRequest) { captured.append(request) }
+    nonisolated func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
+        AsyncThrowingStream { continuation in
+            Task {
+                await self.record(request)
+                continuation.yield("Full review")
+                continuation.finish()
+            }
+        }
     }
 }

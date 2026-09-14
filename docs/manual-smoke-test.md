@@ -44,6 +44,19 @@ If dual-channel transcription shows only one speaker (a console error mentioning
 `kAFAssistantErrorDomain 1100`), see the README "Known limitations" — the fallback is
 single-source for the MVP or the Phase-2 SpeechAnalyzer engine.
 
+## Automatic reviews follow your settings
+
+1. In Settings, set **AI response language** to a language other than the one you will speak, pick a
+   use-case preset, and attach a reference file. Turn **Auto** on and Listen.
+2. Speak a substantive question. When Listener and Deep update automatically, both must be written in
+   the chosen response language and reflect the preset's persona — not flip back to the spoken
+   language on the next cycle. The automatic Deep answer must use the attached reference material.
+3. With two speakers (or mic plus system audio), state a commitment as one speaker and have the other
+   accept it. The automatic Summary must attribute the owner (a diarized name, otherwise You/Others)
+   rather than reporting it as unstated.
+4. Type a line into Notes that was never spoken. The automatic Summary must not present it as
+   something said in the meeting.
+
 ## Automatic speakers (1.3.0)
 
 1. Before Listen, choose WhisperKit and enable Automatic speaker identification. For a room sharing

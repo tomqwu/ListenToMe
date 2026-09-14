@@ -17,6 +17,35 @@ public enum AutomaticReviewMode: String, CaseIterable, Sendable {
     }
 }
 
+/// The user's prompt settings that automatic reviews must honour exactly as the manual panes do:
+/// the response language, the preset persona and any attached reference material. A dispatched or
+/// queued job keeps the directives it was created with, so a later settings change never relabels
+/// output produced from older context.
+public struct AutomaticReviewDirectives: Sendable, Equatable {
+    public var responseLanguage: String?
+    public var personaGuidance: String?
+    public var references: String?
+    public init(responseLanguage: String? = nil, personaGuidance: String? = nil, references: String? = nil) {
+        self.responseLanguage = responseLanguage
+        self.personaGuidance = personaGuidance
+        self.references = references
+    }
+
+    /// The system prompt for a review, built through the same directive path as the manual panes.
+    func system(for mode: AutomaticReviewMode) -> String {
+        PromptBuilder.systemWithDirectives(mode.instructions, PromptContext(
+            messages: [], notes: nil, responseLanguage: responseLanguage, personaGuidance: personaGuidance))
+    }
+
+    /// Deep reviews answer substantive questions, so they receive the attached reference material,
+    /// matching manual Deep. Summary mirrors the manual listener: transcript evidence only.
+    func userMessage(_ source: String, mode: AutomaticReviewMode) -> String {
+        guard mode == .deep, let references = references?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !references.isEmpty else { return source }
+        return source + "\n\nReference material the user attached (files/folders):\n" + references
+    }
+}
+
 /// Event-driven, serial full reviews. Timers exist only for queued work or a failed request.
 @MainActor @Observable
 public final class AutomaticReviewCoordinator {
@@ -24,6 +53,7 @@ public final class AutomaticReviewCoordinator {
         let mode: AutomaticReviewMode
         let input: String
         let source: String
+        let directives: AutomaticReviewDirectives
     }
     public private(set) var activeMode: AutomaticReviewMode?
     public private(set) var completedCounts: [AutomaticReviewMode: Int] = [:]
@@ -36,6 +66,7 @@ public final class AutomaticReviewCoordinator {
     private var enabled = false
     private var manualBusy = false
     private var currentInput = ""
+    private var currentDirectives = AutomaticReviewDirectives()
     private var activeJob: Job?
     private var generation = 0
     private var task: Task<Void, Never>?
@@ -58,10 +89,12 @@ public final class AutomaticReviewCoordinator {
     }
 
     public func synchronize(enabled: Bool, manualBusy: Bool, source: String,
+                            directives: AutomaticReviewDirectives = .init(),
                             provider: @escaping (AutomaticReviewMode) throws -> any LLMProvider,
                             apply: @escaping (AutomaticReviewMode, String, String) -> Void) {
         self.enabled = enabled; self.manualBusy = manualBusy
-        currentInput = Self.normalized(source); makeProvider = provider; self.apply = apply
+        currentInput = Self.normalized(source); currentDirectives = directives
+        makeProvider = provider; self.apply = apply
         if !enabled { cancelActive(); pending = [:]; wake?.cancel(); wake = nil; return }
         pending = pending.filter { currentInput.hasPrefix($0.value.input) }
         if let job = activeJob, manualBusy || !currentInput.hasPrefix(job.input) {
@@ -81,7 +114,7 @@ public final class AutomaticReviewCoordinator {
         for mode in AutomaticReviewMode.allCases where modes.contains(mode) {
             guard completedInputs[mode] != input else { continue }
             if activeJob?.mode == mode, activeJob?.input == input { continue }
-            pending[mode] = Job(mode: mode, input: input, source: source)
+            pending[mode] = Job(mode: mode, input: input, source: source, directives: currentDirectives)
         }
         pump()
     }
@@ -148,7 +181,8 @@ public final class AutomaticReviewCoordinator {
         task = Task { [weak self] in
             guard let self else { return }
             do {
-                let request = LLMRequest(system: job.mode.instructions, messages: [.init(role: "user", content: job.source)])
+                let request = LLMRequest(system: job.directives.system(for: job.mode),
+                    messages: [.init(role: "user", content: job.directives.userMessage(job.source, mode: job.mode))])
                 let output = try await Self.collect(request, provider: provider, timeout: self.timeout)
                 guard token == self.generation, self.enabled, self.currentInput.hasPrefix(job.input) else { return }
                 self.completedInputs[job.mode] = job.input; self.completedCounts[job.mode, default: 0] += 1

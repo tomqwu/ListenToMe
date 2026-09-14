@@ -62,3 +62,31 @@ Stop, Auto off, provider changes and conversation changes cancel automatic work.
 The panels report waiting, queued, updating, up-to-date or failure status. The visible Auto label now describes all summaries, and explanatory text correctly describes speech-triggered evaluation with brief batching.
 
 Live GLM testing exposed planning text despite `think: false`, exhausting the former 1,600-token budget halfway through valid final JSON. Quick now allows 3,072 generated tokens and a 30-second deadline while retaining the 16-KiB response cap and three-bullet/480-character display limit. Planning is never displayed; truncated JSON remains rejected. This budget change prevents the observed truncation without using unsupported Cloud structured-output options.
+
+## Attributed input and user directives for automatic output
+
+Automatic output previously read an anonymous wall of text and ignored the user's prompt settings,
+so it could not say who committed to what, treated typed notes as speech, and overwrote a manual
+answer in a different language.
+
+Both adapters now build the automatic source from the shared pieces, and every piece carries its
+attribution: finalized and provisional speech render as `"<speaker label>: <text>"` (a diarized
+name, otherwise You/Others) exactly as the manual prompts do, and the user's typed notes render as
+one `"Notes: "` piece. Piece IDs are unchanged, so the acknowledged ledger, append-only live speech
+and revision invalidation behave exactly as before; the label is a stable prefix, so appended words
+still extend a piece already read. Renaming a speaker revises the affected pieces. macOS
+`automaticReviewSource` and the iOS `summarySource` render identically.
+
+`AutomaticReviewCoordinator.synchronize` takes an `AutomaticReviewDirectives` value carrying the
+response language, the preset persona guidance and the attached reference material. The automatic
+system prompt is built through `PromptBuilder.systemWithDirectives`, the same path the manual panes
+use, so persona and language wording is identical. Automatic Deep also receives the attached
+reference material in its user message, matching manual Deep; automatic Summary keeps the manual
+listener contract of transcript evidence only. The Quick evaluator prompt gains the same language
+directive through `QuickSummaryContext.instructions(responseLanguage:)`.
+
+A queued or in-flight review keeps the directives it was created with, so a settings change
+mid-request never relabels output produced from older context; the next review uses the new
+settings. With no directives set, the review prompts and the Quick evaluator prompt are byte-for-byte
+unchanged. iOS exposes no response-language, persona or reference settings yet, so it passes none
+and its prompts are unchanged apart from the shared attribution.

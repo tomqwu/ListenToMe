@@ -117,7 +117,12 @@ final class MobileSession {
         }
     }
 
-    var summarySource: String { notes + "\n" + allSegments.map(\.text).joined(separator: "\n") }
+    /// Rendered exactly like macOS `automaticReviewSource`: every line carries its speaker label and
+    /// typed notes are marked, so summaries never have to guess who said what.
+    var summarySource: String {
+        ([MobileQuickContext.attributedNotes(notes)] + allSegments.map(MobileQuickContext.attributed))
+            .filter { !$0.isEmpty }.joined(separator: "\n")
+    }
 
     func summaryBlockReason(for mode: MobileSummaryMode) -> String? {
         Self.summaryBlockReason(state: state, generating: isSummarizing, source: summarySource,

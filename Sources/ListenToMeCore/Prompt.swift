@@ -157,7 +157,8 @@ public enum PromptBuilder {
     }
 
     /// Appends preset persona guidance and a response-language directive to a system prompt.
-    private static func systemWithDirectives(_ base: String, _ context: PromptContext) -> String {
+    /// Shared by the manual panes and the automatic reviews so both honour the same settings.
+    public static func systemWithDirectives(_ base: String, _ context: PromptContext) -> String {
         var system = base
         if let persona = context.personaGuidance,
            !persona.trimmingCharacters(in: .whitespaces).isEmpty {

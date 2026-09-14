@@ -30,13 +30,26 @@ public struct QuickSummaryContext {
     public private(set) var acknowledged: [String: String] = [:]
     public private(set) var memory = ""
 
+    /// Renders one segment the way every manual prompt does, so an automatic review can tell who
+    /// said what (You/Others, or a diarized name) instead of reading an anonymous wall of text.
+    public static func attributed(_ segment: TranscriptSegment) -> String {
+        "\(segment.speakerLabel): \(segment.text)"
+    }
+
+    /// Marks the user's typed notes so they are never summarized as if they had been spoken.
+    /// Returns "" for blank notes, which produce no piece at all.
+    public static func attributedNotes(_ notes: String) -> String {
+        let trimmed = notes.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "" : "Notes: " + trimmed
+    }
+
     public static func pieces(notes: String, segments: [TranscriptSegment], liveSegments: [TranscriptSegment] = []) -> [Piece] {
-        var result = chunks(notes, id: "notes")
+        var result = chunks(attributedNotes(notes), id: "notes")
         let finals = segments.filter(\.isFinal)
         let latest = Dictionary(finals.map { ($0.id, $0) }, uniquingKeysWith: { _, newer in newer })
         var seen = Set<UUID>()
         for segment in finals where seen.insert(segment.id).inserted {
-            if let current = latest[segment.id] { result += chunks(current.text, id: current.id.uuidString) }
+            if let current = latest[segment.id] { result += chunks(attributed(current), id: current.id.uuidString) }
         }
         // ASR hypotheses may remain non-final for an entire recording. Track one mutable
         // source per speaker, independently of the recognizer's changing segment UUID.
@@ -44,7 +57,9 @@ public struct QuickSummaryContext {
                               uniquingKeysWith: { _, newer in newer })
         for source in [SpeakerSource.you, .others] {
             if let segment = live[source], segment.text.trimmingCharacters(in: .whitespacesAndNewlines).count >= 24 {
-                result += chunks(segment.text, id: "live:\(source.rawValue)")
+                // The speaker label is a stable prefix, so appended speech still extends the
+                // piece already read instead of invalidating it.
+                result += chunks(attributed(segment), id: "live:\(source.rawValue)")
             }
         }
         return result
@@ -66,7 +81,8 @@ public struct QuickSummaryContext {
     }
 
     public func batch(_ pieces: [Piece], summary: String, reviewsCompleted: [String] = [],
-               pendingReviews: [QuickSummaryDecision.Review] = []) throws -> Batch? {
+               pendingReviews: [QuickSummaryDecision.Review] = [],
+               responseLanguage: String? = nil) throws -> Batch? {
         let current = Dictionary(uniqueKeysWithValues: pieces.map { ($0.id, $0.text) })
         // Removed/edited text is sent explicitly; it must not survive as an old fact in memory.
         var changes = acknowledged.keys.sorted().filter { current[$0] == nil }.map {
@@ -88,7 +104,7 @@ public struct QuickSummaryContext {
         let input = Input(runningContext: memory, visibleSummary: String(summary.prefix(1_000)),
                           recentSpeech: Array(overlap), changes: selected, reviewsCompleted: reviewsCompleted, pendingReviews: pendingReviews)
         let data = try JSONEncoder().encode(input)
-        return Batch(changes: selected, request: LLMRequest(system: Self.instructions,
+        return Batch(changes: selected, request: LLMRequest(system: Self.instructions(responseLanguage: responseLanguage),
             messages: [.init(role: "user", content: String(decoding: data, as: UTF8.self))], purpose: .quickEvaluation),
                      hasMore: selected.count < changes.count)
     }
@@ -112,12 +128,21 @@ public struct QuickSummaryContext {
         self.memory = memory
     }
 
-    public static func manualRequest(source: String) throws -> LLMRequest {
+    public static func manualRequest(source: String, responseLanguage: String? = nil) throws -> LLMRequest {
         let input = Input(runningContext: "", visibleSummary: "", recentSpeech: [],
                           changes: [.init(id: "manual", text: source, previousText: nil)])
         let data = try JSONEncoder().encode(input)
-        return LLMRequest(system: instructions,
+        return LLMRequest(system: instructions(responseLanguage: responseLanguage),
             messages: [.init(role: "user", content: String(decoding: data, as: UTF8.self))], purpose: .quickEvaluation)
+    }
+
+    /// The evaluator prompt, honouring the user's response-language setting so the automatic recap
+    /// cannot flip the pane's language away from what a manual refresh produces.
+    public static func instructions(responseLanguage: String?) -> String {
+        guard let language = responseLanguage?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !language.isEmpty else { return instructions }
+        return instructions + "\nAlways write context and bullets in \(language), regardless of the "
+            + "language spoken in the transcript."
     }
 
     public static let instructions = """

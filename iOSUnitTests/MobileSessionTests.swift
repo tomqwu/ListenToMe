@@ -4,6 +4,22 @@ import ListenToMeCore
 
 @MainActor
 final class MobileSessionTests: XCTestCase {
+    func testSummarySourceLabelsSpeakersAndMarksTypedNotes() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let session = MobileSession(storageDirectory: root)
+        session.notes = "Ask about budget"
+        session.segments = [
+            TranscriptSegment(source: .others, text: "Can you own the rollout?", isFinal: true,
+                              start: 0, end: 1, speakerName: "Alice"),
+            TranscriptSegment(source: .you, text: "Yes, by Friday.", isFinal: true, start: 1, end: 2)
+        ]
+        XCTAssertEqual(session.summarySource,
+                       "Notes: Ask about budget\nAlice: Can you own the rollout?\nYou: Yes, by Friday.")
+        session.notes = ""
+        XCTAssertEqual(session.summarySource, "Alice: Can you own the rollout?\nYou: Yes, by Friday.")
+    }
+
     func testAutomaticQuickSummaryRunsWithoutViewRetriesFailureAndTracksNewText() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
