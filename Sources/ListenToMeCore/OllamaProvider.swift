@@ -235,7 +235,11 @@ public enum OllamaStreamError: LocalizedError {
                 return normalize(message)
             }
         }
-        return normalize(String(decoding: bounded, as: UTF8.self))
+        // The 8 KiB cut can land mid-codepoint; drop the replacement character it decodes to
+        // rather than showing the user a stray "".
+        var text = String(decoding: bounded, as: UTF8.self)
+        while text.last == "\u{FFFD}" { text.removeLast() }
+        return normalize(text)
     }
 
     private static func normalize(_ value: String) -> String? {

@@ -30,12 +30,17 @@ public struct AppleIntelligenceProvider: LLMProvider {
                         throw QuickSummaryError.message(Self.automaticQuickUnavailableReason)
                     }
                     if let reason = Self.unavailableReason { throw QuickSummaryError.message(reason) }
+                    let prompt = request.messages.map(\.content).joined(separator: "\n")
+                    // Callers bound the assembled prompt with PromptBudget before it gets here.
+                    // If one did not, say so rather than silently answering from a prompt whose
+                    // front — including the transcript header — was cut away (issue #119).
+                    guard request.system.count + prompt.count
+                            <= PromptBudget.appleIntelligenceCharacters - PromptBudget.answerReserve else {
+                        throw QuickSummaryError.message(
+                            "This request is too long for Apple Intelligence's on-device context " +
+                            "window. Shorten your notes or attached reference material, or choose Ollama.")
+                    }
                     let session = LanguageModelSession(instructions: request.system)
-                    // Last line of defence: callers clamp with PromptBudget, but a direct caller
-                    // must not be able to push the on-device model past its window.
-                    let joined = request.messages.map(\.content).joined(separator: "\n")
-                    let room = max(PromptBudget.appleIntelligenceCharacters - request.system.count, 500)
-                    let prompt = joined.count > room ? String(joined.suffix(room)) : joined
                     let response = try await session.respond(to: prompt).content
                     try Task.checkCancellation()
                     continuation.yield(response); continuation.finish()

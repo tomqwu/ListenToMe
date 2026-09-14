@@ -140,10 +140,14 @@ tables behind them are covered by `CaptureRecoveryTests`.
    **Apple Intelligence** in Settings, attach a large reference folder, and record (or import) at
    least 20 minutes of speech. Ask Deep for a **Recap** and for **Action items**. Both must answer
    instead of failing with a FoundationModels context-window error, and the status line under the
-   transcript must read "Trimmed to fit this model's context window — only the most recent speech is
-   included."
-5. Switch back to **Local only** or **Cloud** with the same conversation: the trim notice disappears
-   and the full transcript is used again.
+   transcript must name what was dropped — "Trimmed to fit this model's context window — older
+   speech and some attached reference material were left out." Detach the reference folder and ask
+   again: the notice must change to the speech-only wording.
+5. Switch back to **Local only** or **Cloud** with the same conversation (Settings → save): the trim
+   notice disappears immediately and the full transcript is used again.
+6. **Many short lines.** Still on Apple Intelligence, have a long back-and-forth of short utterances
+   with named speakers (rename both speakers to long names). Ask Deep for **Action items**: the
+   speaker labels count against the window too, so this must answer rather than fail.
 
 ## Enabled Screen Recording switch but capture is refused
 

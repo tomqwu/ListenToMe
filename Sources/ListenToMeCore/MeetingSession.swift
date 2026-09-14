@@ -131,6 +131,9 @@ public final class MeetingSession {
         cancelResponse(role)
         models[role] = model
         providers[role] = makeProvider(model)
+        // The new provider may have a different context window (or none), so the old notice no
+        // longer describes anything: it is re-derived on the next prompt.
+        promptTruncationNotice = nil
         if role == .quick { quickReader.clearError() }
         handleLiveEvent(.providerChanged)
     }
@@ -446,41 +449,63 @@ extension MeetingSession {
         }
     }
 
-    /// Builds the prompt context for `role`, clamped to that provider's context window.
-    /// With no window (Ollama) the budgets are exactly what they always were.
-    private func clampedContext(for action: ResponseAction, role: CopilotRole) -> PromptContext {
+    /// Trims `value` to `allowance`, reporting whether anything was cut. nil out when nothing is left.
+    private static func clamp(_ value: String, to allowance: Int) -> (String?, dropped: Bool) {
+        guard !value.isEmpty else { return (nil, false) }
+        guard value.count > allowance else { return (value, false) }
+        let kept = String(value.prefix(allowance)).trimmingCharacters(in: .whitespacesAndNewlines)
+        return (kept.isEmpty ? nil : kept, true)
+    }
+
+    /// Builds the prompt context for `role`, bounding the *assembled* prompt to that provider's
+    /// context window: the scaffold (system prompt, directives, headers, instruction) is measured,
+    /// and transcript, references, summary and notes divide what is left. Transcript characters are
+    /// charged with their speaker labels. With no window (Ollama) every budget is untouched.
+    private func clampedContext(for action: ResponseAction, role: CopilotRole,
+                                kind: PromptBuilder.Kind) -> PromptContext {
         let limit = providers[role]?.maxPromptCharacters
         let references = referenceContext?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let allocation = PromptBudget.allocate(limit: limit,
-                                               transcript: Self.transcriptBudget(for: action),
-                                               references: references.count)
-        let droppedReferences = references.count > allocation.references
-        let clampedReferences = droppedReferences
-            ? String(references.prefix(allocation.references)) : references
+        let summary = lastCompletedListenerSummary
+        let scaffold = limit == nil ? 0 : PromptBuilder.scaffoldCharacterCost(
+            kind: kind,
+            context: PromptContext(messages: [], notes: notes, summary: summary,
+                                   responseLanguage: responseLanguage,
+                                   references: references.isEmpty ? nil : references,
+                                   personaGuidance: personaGuidance),
+            action: action)
+        let allocation = PromptBudget.allocate(
+            limit: limit, scaffold: scaffold, transcript: Self.transcriptBudget(for: action),
+            references: references.count, summary: summary.count, notes: notes.count)
+
+        let (clampedReferences, droppedReferences) = Self.clamp(references, to: allocation.references)
+        let (clampedSummary, droppedSummary) = Self.clamp(summary, to: allocation.summary)
+        let (clampedNotes, droppedNotes) = Self.clamp(notes, to: allocation.notes)
         let context = self.context.buildContext(
-            from: store, notes: notes, maxChars: allocation.transcript,
-            summary: lastCompletedListenerSummary, responseLanguage: responseLanguage,
-            references: clampedReferences.isEmpty ? nil : clampedReferences,
-            personaGuidance: personaGuidance)
+            from: store, notes: clampedNotes, maxChars: allocation.transcript,
+            summary: clampedSummary, responseLanguage: responseLanguage,
+            references: clampedReferences, personaGuidance: personaGuidance)
         // Only a context-window clamp is worth reporting; the provider-agnostic "recent window"
         // budgets have always been a deliberate relevance choice, not a capacity failure.
         let droppedTranscript = context.messages.count < store.utterances.count
-        promptTruncationNotice = (limit != nil && (droppedTranscript || droppedReferences))
-            ? PromptBudget.truncationNotice : nil
+        promptTruncationNotice = limit == nil ? nil : PromptBudget.truncationNotice(
+            transcriptDropped: droppedTranscript, referencesDropped: droppedReferences,
+            auxiliaryDropped: droppedSummary || droppedNotes)
         return context
     }
 
     /// Streams a Quick response for the given action. Awaits completion.
     public func respondQuick(_ action: ResponseAction) async {
         await startRoleTask(.quick) {
-            PromptBuilder.build(context: self.clampedContext(for: action, role: .quick), action: action)
+            PromptBuilder.build(context: self.clampedContext(for: action, role: .quick, kind: .quick),
+                                action: action)
         }.value
     }
 
     /// Streams a Deep response for the given action. Awaits completion.
     public func respondDeep(_ action: ResponseAction) async {
         await startRoleTask(.deep) {
-            PromptBuilder.buildDeep(context: self.clampedContext(for: action, role: .deep), action: action)
+            PromptBuilder.buildDeep(context: self.clampedContext(for: action, role: .deep, kind: .deep),
+                                    action: action)
         }.value
     }
 
@@ -520,20 +545,39 @@ extension MeetingSession {
         let task = startRoleTask(.listener) {
             let remaining = self.store.utterances.filter { !self.summarizedSegmentIDs.contains($0.id) }
             // Process oldest unseen speech first. A failed/cancelled request never advances the ledger.
-            // The batch is clamped to the listener provider's context window (nil = unlimited).
-            let batchBudget = PromptBudget.allocate(
-                limit: self.providers[.listener]?.maxPromptCharacters,
-                transcript: 16_000, references: 0).transcript
+            // The whole assembled prompt — batch, previous record and notes — is bounded by the
+            // listener provider's context window (nil = unlimited).
+            let limit = self.providers[.listener]?.maxPromptCharacters
+            let record = self.lastCompletedListenerSummary
+            let scaffold = limit == nil ? 0 : PromptBuilder.scaffoldCharacterCost(
+                kind: .listener,
+                context: PromptContext(messages: [], notes: self.notes, summary: record,
+                                       responseLanguage: self.responseLanguage,
+                                       personaGuidance: self.personaGuidance),
+                action: .recap)
+            let allocation = PromptBudget.allocate(
+                limit: limit, scaffold: scaffold, transcript: 16_000, references: 0,
+                summary: record.count, notes: self.notes.count)
+            let (clampedRecord, droppedRecord) = Self.clamp(record, to: allocation.summary)
+            let (clampedNotes, droppedNotes) = Self.clamp(self.notes, to: allocation.notes)
             var characters = 0
             let batch = remaining.prefix { segment in
-                if characters > 0 && characters + segment.text.count > batchBudget { return false }
-                characters += segment.text.count
+                let cost = TranscriptSegment.promptCharacterCost(segment)
+                if characters > 0 && characters + cost > allocation.transcript { return false }
+                characters += cost
                 return true
+            }
+            // A partial batch is not loss: the ledger keeps the rest and a follow-up refresh starts
+            // automatically, so only a clamped record or notes is worth reporting here.
+            if limit != nil {
+                self.promptTruncationNotice = PromptBudget.truncationNotice(
+                    transcriptDropped: false, referencesDropped: false,
+                    auxiliaryDropped: droppedRecord || droppedNotes)
             }
             let generation = self.responseGenerations[.listener] ?? 0
             self.pendingSummaryIDs[generation] = Set(batch.map(\.id))
             return PromptBuilder.buildListener(context: PromptContext(
-                messages: Array(batch), notes: self.notes, summary: self.lastCompletedListenerSummary,
+                messages: Array(batch), notes: clampedNotes, summary: clampedRecord ?? "",
                 responseLanguage: self.responseLanguage, personaGuidance: self.personaGuidance))
         }
         return task
