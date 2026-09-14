@@ -165,6 +165,7 @@ final class CorrectionTestRecorder: MobileRecording {
         receive?(.init(source: .you, text: text, isFinal: final, start: 2, end: 4))
     }
     func stop() async throws { receive = nil }
+    func reconfigure() async throws {}
 }
 
 private actor CorrectionTestProvider: LLMProvider {

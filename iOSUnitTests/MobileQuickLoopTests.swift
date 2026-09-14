@@ -257,6 +257,7 @@ final class QuickTestRecorder: MobileRecording {
         if final { index += 1 }
     }
     func stop() async throws { receive = nil }
+    func reconfigure() async throws {}
 }
 
 private actor QuickTestProvider: LLMProvider {

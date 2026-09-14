@@ -22,7 +22,8 @@ struct MobileNotesView: View {
                 Section("Notes") {
                     TextEditor(text: $session.notes).frame(minHeight: 180)
                         .accessibilityLabel("Conversation notes").disabled(session.isSummarizing)
-                        .onChange(of: session.notes) { _, _ in session.save(announce: false) }
+                        // Debounced: saving on every keystroke re-encoded the record and re-read history.
+                        .onChange(of: session.notes) { _, _ in session.scheduleSave() }
                     PasteButton(payloadType: String.self) { strings in
                         session.notes += "\n" + strings.joined(separator: "\n")
                         session.save(announce: false)
