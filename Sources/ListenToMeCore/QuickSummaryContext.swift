@@ -168,7 +168,11 @@ public struct QuickSummaryContext {
             text = text.split(separator: "\n", omittingEmptySubsequences: false).dropFirst()
                 .prefix { !$0.hasPrefix("```") }.joined(separator: "\n")
         }
-        let lines = text.split(separator: "\n").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        var lines = text.split(separator: "\n").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        // "Here is the recap:" is a preamble, not a takeaway — but a lone line is the answer itself.
+        if lines.count > 1, let first = lines.first, first.hasSuffix(":"), strippedListMarker(first) == nil {
+            lines.removeFirst()
+        }
         let marked = lines.compactMap(strippedListMarker)
         // A model that marks its list also writes a heading above it; keep only the marked lines then.
         let bullets = (marked.isEmpty ? lines : marked)

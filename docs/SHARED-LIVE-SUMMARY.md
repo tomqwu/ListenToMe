@@ -28,8 +28,10 @@ The JSON decision contract above therefore applies to Ollama-backed reads only. 
 Summary on Apple Intelligence uses `QuickSummaryContext.manualProseInstructions` and
 `proseSummary(_:)` instead: the on-device model is asked for the displayed bullets in prose rather
 than for the evaluator envelope it cannot be held to, and both platforms share one Apple transport
-(`AppleIntelligenceProvider`), which refuses `quickEvaluation`, reports an unsupported locale as an
-availability reason and translates `LanguageModelSession.GenerationError` into user-facing text.
+(`AppleIntelligenceProvider`), which refuses `quickEvaluation` and translates
+`LanguageModelSession.GenerationError` into user-facing text on both platforms. Provider availability
+stays locale-independent; iOS checks `supportsLocale` only against the conversation's own language,
+where that language is known, so no device-locale check can disable the provider or change the default.
 
 The native Auto experiment failed the quality gate (3/7 cases, including failures on repetition,
 a bilingual correction and transcript instructions). It is isolated in

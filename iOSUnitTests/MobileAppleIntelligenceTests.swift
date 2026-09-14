@@ -56,6 +56,21 @@ final class MobileAppleIntelligenceTests: XCTestCase {
         XCTAssertEqual(session.quickSummary, "No key takeaway yet.")
     }
 
+    /// #123: an unsupported conversation language used to fail only at generation time. The gate is
+    /// per conversation — the device's UI locale must never decide whether the provider is available.
+    func testUnsupportedConversationLanguageIsReportedWithoutDisablingTheProvider() {
+        let cantonese = Locale(identifier: "yue-HK")
+        let english = Locale(identifier: "en-US")
+        XCTAssertNil(AppleIntelligenceProvider.unsupportedLocaleReason(for: cantonese, isSupported: { _ in true }))
+        let reason = AppleIntelligenceProvider.unsupportedLocaleReason(for: cantonese, isSupported: { $0 == english })
+        XCTAssertNotNil(reason)
+        XCTAssertTrue(reason?.contains("Ollama") == true, reason ?? "")
+        XCTAssertNil(AppleIntelligenceProvider.unsupportedLocaleReason(for: english, isSupported: { $0 == english }))
+        // Availability itself stays locale-free, so a fresh install's default never turns on the
+        // device's UI language and the macOS status line is unchanged.
+        XCTAssertEqual(MobileAISettings.defaultProviderReason, AppleIntelligenceProvider.unavailableReason)
+    }
+
     /// #123: FoundationModels generation failures reached the pane as developer-facing text.
     func testAppleGenerationFailuresBecomeMessagesAUserCanActOn() async {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)

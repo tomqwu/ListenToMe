@@ -189,6 +189,10 @@ final class QuickSummaryContextTests: XCTestCase {
                        "- Budget is unresolved.")
         XCTAssertEqual(QuickSummaryContext.proseSummary("Key takeaways:\n- one\n- two\n- three\n- four"),
                        "- one\n- two\n- three", "At most three bullets are shown")
+        XCTAssertEqual(QuickSummaryContext.proseSummary("Here is the recap:\nSarah owns the rollout."),
+                       "- Sarah owns the rollout.", "An unmarked preamble line is not a takeaway")
+        XCTAssertEqual(QuickSummaryContext.proseSummary("Budget owner: Sarah"), "- Budget owner: Sarah",
+                       "A single line ending in a colon is the answer, not a preamble")
         XCTAssertEqual(QuickSummaryContext.proseSummary("- " + String(repeating: "x", count: 400))?.count, 242)
         XCTAssertNil(QuickSummaryContext.proseSummary("   "))
         XCTAssertNil(QuickSummaryContext.proseSummary("No key takeaway yet."))

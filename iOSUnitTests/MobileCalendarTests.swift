@@ -71,6 +71,32 @@ final class MobileCalendarTests: XCTestCase {
         XCTAssertEqual(named, ["Alice Smith"], "Names only, as macOS does")
     }
 
+    /// #125: a real invite carries the join URL in the body and often in `location`, not only in
+    /// `event.url`, so those fields are filtered by the same rule before they become notes.
+    func testInviteBodyAndLocationAreFilteredBeforeBecomingNotes() {
+        let store = EKEventStore()
+        let event = EKEvent(eventStore: store)
+        event.title = "Design sync"
+        event.startDate = Date(timeIntervalSince1970: 1_800_000_000)
+        event.endDate = event.startDate.addingTimeInterval(1800)
+        event.location = "https://teams.microsoft.com/l/meetup-join/19%3ameeting_abc?context=%7b%22Tid%22%3a%22s%22%7d"
+        event.notes = """
+        Join Zoom Meeting
+        https://example.zoom.us/j/98765432101?pwd=QWxpY2VTZWNyZXQ
+
+        Meeting ID: 987 6543 2101
+        Host: alice@example.com
+        """
+        let context = MobileCalendar.event(event).context
+        XCTAssertTrue(context.contains("https://teams.microsoft.com/l/meetup-join/19%3ameeting_abc"), context)
+        XCTAssertFalse(context.contains("context="), "A Teams location must not keep its query: \(context)")
+        XCTAssertTrue(context.contains("https://example.zoom.us/j/98765432101"), context)
+        XCTAssertFalse(context.contains("pwd="), "The body's join passcode must not reach notes: \(context)")
+        XCTAssertFalse(context.contains("@example.com"), "An address in the body must not reach notes: \(context)")
+        XCTAssertTrue(context.contains("Meeting ID: 987 6543 2101"),
+                      "Only links and addresses are filtered: \(context)")
+    }
+
     func testAllDayContextUsesCalendarDayRange() {
         let store = EKEventStore()
         let event = EKEvent(eventStore: store)

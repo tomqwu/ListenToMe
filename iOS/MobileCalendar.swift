@@ -27,14 +27,9 @@ struct MobileCalendarEvent: Identifiable {
     }
 
     /// Imported details become part of the notes every summary sends to the selected provider, so the
-    /// link is reduced to where the meeting is, never how to join it: a join URL's query and fragment
-    /// carry the passcode (`?pwd=…`) and any user info carries credentials.
-    static func link(_ url: URL) -> String? {
-        guard var parts = URLComponents(url: url, resolvingAgainstBaseURL: false), parts.scheme != nil,
-              parts.host != nil else { return nil }
-        parts.query = nil; parts.fragment = nil; parts.user = nil; parts.password = nil
-        return parts.url?.absoluteString
-    }
+    /// link is reduced to where the meeting is, never how to join it. One rule for the event's own URL
+    /// and for links written inside its location or body (see `MeetingContext.safeLink`).
+    static func link(_ url: URL) -> String? { MeetingContext.safeLink(url) }
 }
 
 @MainActor @Observable
@@ -90,8 +85,13 @@ final class MobileCalendar {
 
     static func event(_ event: EKEvent) -> MobileCalendarEvent {
         let people = attendeeNames((event.attendees ?? []).map(\.name))
+        // A real invite puts the join URL — passcode and all — in the body and often in the location,
+        // so both are filtered with the same rule as the event's own URL before they become notes.
         let meeting = MeetingInfo(title: event.title ?? "Untitled event", start: event.startDate,
-                                  end: event.endDate, location: event.location, attendees: people, notes: event.notes)
+                                  end: event.endDate,
+                                  location: event.location.map(MeetingContext.redactingLinksAndAddresses),
+                                  attendees: people,
+                                  notes: event.notes.map(MeetingContext.redactingLinksAndAddresses))
         // Include occurrence time so recurring events do not share a row identity.
         let id = (event.eventIdentifier ?? UUID().uuidString) + "-" + String(event.startDate.timeIntervalSince1970)
         return MobileCalendarEvent(id: id, meeting: meeting, calendarName: event.calendar?.title ?? "Calendar",

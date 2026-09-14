@@ -112,13 +112,9 @@ final class MobileSession {
         if ai.provider == .ollama { return ai.availability(for: mode) }
         switch SystemLanguageModel.default.availability {
         case .available:
-            // An unsupported language fails only at generation time, so it is reported like any
-            // other blocker instead of surfacing as a raw FoundationModels error after Generate.
-            let locale = Locale(identifier: language)
-            guard SystemLanguageModel.default.supportsLocale(locale) else {
-                return AppleIntelligenceProvider.unsupportedLocaleReason(for: locale)
-            }
-            return nil
+            // The *conversation's* language, not the device's: an unsupported one fails only at
+            // generation time, so it is reported here instead of as a raw FoundationModels error.
+            return AppleIntelligenceProvider.unsupportedLocaleReason(for: Locale(identifier: language))
         case .unavailable(.deviceNotEligible): return "On-device summaries require an Apple Intelligence capable device."
         case .unavailable(.appleIntelligenceNotEnabled): return "Turn on Apple Intelligence in Settings to use on-device summaries."
         case .unavailable(.modelNotReady):

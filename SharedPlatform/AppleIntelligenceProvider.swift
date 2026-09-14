@@ -8,15 +8,12 @@ import FoundationModels
 public struct AppleIntelligenceProvider: LLMProvider {
     public let id = "apple-intelligence"
     public init() {}
-    public static var unavailableReason: String? { unavailableReason(for: .current) }
-
-    /// Availability also depends on the language the on-device model is asked to work in: a locale it
-    /// does not support fails at generation time, so it is reported up front like any other blocker.
-    public static func unavailableReason(for locale: Locale) -> String? {
+    /// Whether the provider can run at all. Deliberately independent of any locale: the device's UI
+    /// language says nothing about the language a meeting is held in, and this value decides the
+    /// fresh-install default and the macOS status line.
+    public static var unavailableReason: String? {
         switch SystemLanguageModel.default.availability {
-        case .available:
-            guard !SystemLanguageModel.default.supportsLocale(locale) else { return nil }
-            return unsupportedLocaleReason(for: locale)
+        case .available: return nil
         case .unavailable(.deviceNotEligible): return "Apple Intelligence is unavailable on this device. Choose Ollama to use another model."
         case .unavailable(.appleIntelligenceNotEnabled): return "Enable Apple Intelligence in Settings, or choose Ollama."
         case .unavailable(.modelNotReady): return "Apple Intelligence is still preparing its model."
@@ -24,7 +21,14 @@ public struct AppleIntelligenceProvider: LLMProvider {
         }
     }
 
-    public static func unsupportedLocaleReason(for locale: Locale) -> String {
+    /// Why the on-device model cannot work in the language of *this conversation*, or nil when it can.
+    /// Only a caller that knows the conversation's language should ask; `isSupported` is injectable so
+    /// the gate is testable on a host without Apple Intelligence.
+    public static func unsupportedLocaleReason(
+        for locale: Locale,
+        isSupported: (Locale) -> Bool = { SystemLanguageModel.default.supportsLocale($0) }
+    ) -> String? {
+        guard !isSupported(locale) else { return nil }
         let language = locale.localizedString(forIdentifier: locale.identifier) ?? locale.identifier
         return "Apple Intelligence does not support \(language) yet. Choose Ollama to summarize in this language."
     }

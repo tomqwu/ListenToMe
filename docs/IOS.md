@@ -125,10 +125,18 @@ existing notes and names an untitled conversation after the event. It does not e
 Imported notes — the title, time, location, attendee names, the event's own notes and its link — become
 part of your notes, and your notes are sent to the selected AI provider by every summary, including
 Auto summary, and are included in **Share**. With Ollama selected that means they leave the device.
-Two things are therefore never imported: **attendee e-mail addresses** (only display names are kept,
-as on macOS — an invitee with no display name is left out) and the **query string or fragment of the
-event link**, which is where a join passcode such as `?pwd=…` lives. The link is imported as scheme,
-host and path only.
+Two kinds of detail are therefore filtered out during import:
+
+- **E-mail addresses.** Attendees are kept as display names only, as on macOS (an invitee with no
+  display name is left out), and any address written in the event's location or body is removed.
+- **The secret-bearing part of every link.** The event's own URL and any link inside its location or
+  body keep scheme, host and path only; the query string, fragment and user info — where a join
+  passcode such as `?pwd=…` or Teams' `?context=…` lives — are dropped.
+
+Nothing else is filtered: the title, times, the event's body text, dial-in numbers and meeting IDs are
+imported as written, so review the notes before summarizing if the invite contains anything you would
+rather not send. Notes imported by an earlier version of the app are stored text like any other and may
+still contain a passcode or an address — edit those notes if you want them gone.
 Only calendars configured on this device are available; no direct server login is needed.
 
 Reading existing events uses Apple's full Calendar access level and
@@ -204,9 +212,11 @@ flattened; verify that any scans or embedded documents you need were included.
 ## Provider default
 
 A fresh install defaults to **Apple Intelligence · on-device** whenever
-`AppleIntelligenceProvider.unavailableReason` is nil. On a device that cannot run it (ineligible
-hardware, Apple Intelligence turned off, model not ready) the default falls back to Ollama and
-Settings states the reason. That explanation is shown only while the device is actually on the
+`AppleIntelligenceProvider.unavailableReason` is nil — a value that depends only on
+`SystemLanguageModel.default.availability`, never on a locale. On a device that cannot run it the
+default falls back to Ollama and Settings states the reason: ineligible hardware, Apple Intelligence
+turned off, the model not ready, or an unlisted reason reported by the system ("Apple Intelligence is
+unavailable. Choose another provider in Settings."). That explanation is shown only while the device is actually on the
 unchosen Ollama fallback; once you pick a provider yourself it disappears, and it is never shown to
 someone who selected Apple Intelligence deliberately. A provider you have chosen before is always
 kept across updates — the default applies only when no choice has been saved. Automatic Quick Summary requires Ollama, so it
@@ -215,13 +225,19 @@ stays unavailable with an explanation until you select Ollama yourself.
 On Apple Intelligence every AI output goes through `AppleIntelligenceProvider`, the same transport
 macOS uses. **Manual Quick Summary asks the on-device model for the bullets in prose** rather than for
 the automatic evaluator's JSON envelope: a small on-device model cannot be held to that schema, so the
-JSON contract stays with the Ollama-backed Auto loop. The prose answer is read back leniently (list
-markers, numbering and stray code fences are tolerated) and "no takeaway yet" leaves your previous
-summary in place. Generation failures are stated in plain language instead of a developer message:
+JSON contract stays with the Ollama-backed Auto loop. The prose answer is read back leniently: list
+markers, numbering, a "Here is the recap:" preamble and stray code fences are tolerated, and an answer
+carrying no takeaway shows "No key takeaway yet." in the pane (a *failed* request is what keeps the
+previous summary). Generation failures are stated in plain language instead of a developer message:
 a conversation longer than the on-device context window, a guardrail refusal, a busy or undownloaded
 model, and an unsupported language each say what happened and that Ollama can be selected instead.
-A conversation language the on-device model does not support is reported before you tap Generate,
-alongside the other Apple Intelligence availability reasons.
+
+The language check is per conversation, not per device: if the on-device model does not support the
+**conversation's** language (the recording language shown in Settings), Generate is blocked with that
+reason before the request is sent. Whether Apple Intelligence is available at all — the fresh-install
+default above and the macOS status line — does not depend on any locale, so a device used in an
+unsupported UI language still defaults to Apple Intelligence. macOS behavior is unchanged by this;
+only the shared provider's failure wording is now the same on both platforms.
 
 ## Ollama (Cloud or your own server)
 
