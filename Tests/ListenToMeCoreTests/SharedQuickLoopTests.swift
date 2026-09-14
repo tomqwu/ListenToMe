@@ -187,6 +187,39 @@ final class SharedQuickLoopTests: XCTestCase {
         session.stop()
     }
 
+    /// A half-streamed manual answer is not an answer the user can swap away from: offering
+    /// "Show recap" mid-stream would splice the recap and the still-appending draft tail.
+    func testTheRecapIsNotOfferedWhileAManualQuickAnswerIsStillStreaming() async throws {
+        let quick = HeldAnswerProvider(evaluations: [publish])
+        let session = MeetingSession(store: ConversationStore(), context: ContextEngine(),
+            makeCapture: { MockCapture() }, makeTranscriber: { MockTranscriber() },
+            makeProvider: { _ in quick }, models: [.quick: "quick"], autoInterval: .milliseconds(15))
+        try await session.start()
+        session.autoSummaryEnabled = true
+        await session.ingest(.init(source: .others, text: "Sarah confirms Monday.", isFinal: true, start: 0, end: 1))
+        for _ in 0..<200 where session.quickReader.completedReads == 0 { try await Task.sleep(for: .milliseconds(5)) }
+        XCTAssertEqual(session.quickRecap, "- Sarah confirms Monday.")
+
+        let answer = Task { await session.respondQuick(.draftReply) }
+        for _ in 0..<200 where !(await quick.isStreamingAnswer()) { try await Task.sleep(for: .milliseconds(5)) }
+        XCTAssertEqual(session.quickSuggestion, "Draft: Hi Sarah,", "The answer is only half streamed")
+        XCTAssertFalse(session.quickAnswerOverridesRecap, "Show recap must not appear mid-stream")
+        XCTAssertNotEqual(session.autoQuickStatus, "Recap updated · Showing your generated answer")
+        session.dismissQuickAnswer()
+        XCTAssertEqual(session.quickSuggestion, "Draft: Hi Sarah,",
+                       "Dismissing mid-stream must not splice the recap into the streaming answer")
+
+        let finished = await quick.finishAnswer()
+        XCTAssertTrue(finished)
+        await answer.value
+        XCTAssertEqual(session.quickSuggestion, "Draft: Hi Sarah, Monday works.")
+        XCTAssertTrue(session.quickAnswerOverridesRecap, "A finished answer can be swapped for the recap")
+        XCTAssertEqual(session.autoQuickStatus, "Recap updated · Showing your generated answer")
+        session.dismissQuickAnswer()
+        XCTAssertEqual(session.quickSuggestion, "- Sarah confirms Monday.")
+        session.stop()
+    }
+
     /// #111 follow-up: a review that survives a notes keystroke must also *count* as that review, or
     /// the recommendation stays outstanding and the identical model call runs again.
     func testAReviewCompletingAcrossANotesEditIsMarkedReviewedAndNotRepeated() async throws {
@@ -323,6 +356,31 @@ private final class TestClock: @unchecked Sendable {
     var seconds: TimeInterval {
         get { lock.withLock { value } }
         set { lock.withLock { value = newValue } }
+    }
+}
+
+/// Evaluates Quick normally, but streams a manual answer in two deltas and holds the second until
+/// the test releases it, so the pane can be inspected mid-stream.
+private actor HeldAnswerProvider: LLMProvider {
+    nonisolated let id = "held-answer"
+    private var evaluations: [String]
+    private var held: AsyncThrowingStream<String, Error>.Continuation?
+    init(evaluations: [String]) { self.evaluations = evaluations }
+    func isStreamingAnswer() -> Bool { held != nil }
+    func finishAnswer() -> Bool {
+        guard let held else { return false }
+        held.yield(" Monday works."); held.finish(); self.held = nil
+        return true
+    }
+    private func respond(_ request: LLMRequest, _ continuation: AsyncThrowingStream<String, Error>.Continuation) {
+        guard request.purpose == .quickEvaluation else {
+            continuation.yield("Draft: Hi Sarah,"); held = continuation; return
+        }
+        continuation.yield(evaluations.count > 1 ? evaluations.removeFirst() : (evaluations.first ?? ""))
+        continuation.finish()
+    }
+    nonisolated func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
+        AsyncThrowingStream { continuation in Task { await self.respond(request, continuation) } }
     }
 }
 

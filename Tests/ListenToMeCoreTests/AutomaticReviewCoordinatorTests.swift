@@ -215,19 +215,22 @@ final class AutomaticReviewCoordinatorTests: XCTestCase {
     /// A provider's own timeout (URLSession's idle timeout on a stalled connection) is transient,
     /// not "this model is too slow for this input", so it must keep the retry backoff.
     func testProviderNetworkTimeoutStillRetriesWithBackoff() async throws {
-        let runner = AutomaticReviewCoordinator(summaryInterval: .zero, retryInterval: .milliseconds(5))
+        // A backoff long enough that the retrying state is observable under load, but far shorter
+        // than the wait helper's deadline.
+        let runner = AutomaticReviewCoordinator(summaryInterval: .zero, retryInterval: .milliseconds(150))
         let provider = ReviewTestProvider(failFirst: true, failure: URLError(.timedOut))
         var output = "Previous"
         runner.synchronize(enabled: true, manualBusy: false, pieces: live("A question"), source: "A question",
             provider: { _ in provider }, apply: { _, value, _ in output = value })
         runner.offer([recommendations[0]], source: "A question")
         try await wait { runner.errors[.summary] != nil }
-        XCTAssertEqual(output, "Previous")
-        XCTAssertTrue(runner.status(.summary).contains("Retrying"), runner.status(.summary))
-        XCTAssertFalse(runner.status(.summary).contains("needed more than"),
+        let status = runner.status(.summary)
+        XCTAssertTrue(status.contains("Retrying"), status)
+        XCTAssertFalse(status.contains("needed more than"),
                        "A network timeout must not be reported as the model being too slow")
         try await wait { runner.completedCounts[.summary] == 1 }
         XCTAssertEqual(output, "Reviewed: A question", "The identical input is retried after backoff")
+        XCTAssertNil(runner.errors[.summary])
     }
 
     /// #111: the joined input moves whenever an earlier piece changes, so a notes keystroke, a

@@ -50,17 +50,21 @@ public final class MeetingSession {
     public private(set) var quickRecap = ""
     private var manualQuickAnswer = ManualQuickAnswer()
 
-    /// True while the Quick pane shows something other than the current automatic recap. Deliberately
-    /// independent of freshness: once the window elapses the pane keeps the answer until the next
-    /// automatic apply, and the user must still be able to reach the newer recap in the meantime.
+    /// True while the Quick pane shows a *finished* answer that is not the current automatic recap.
+    /// Deliberately independent of freshness — once the window elapses the pane keeps the answer
+    /// until the next automatic apply, and the user must still be able to reach the newer recap —
+    /// but never true mid-stream: a partial answer differs from the recap by definition, and
+    /// replacing it while deltas keep appending would splice the recap and the answer's tail.
     public var quickAnswerOverridesRecap: Bool {
-        !quickRecap.isEmpty && quickRecap != quickSuggestion
+        !streamingRoles.contains(.quick) && !quickRecap.isEmpty && quickRecap != quickSuggestion
     }
 
-    /// Drops the manual answer so the Quick pane follows the automatic recap again.
+    /// Drops the manual answer so the Quick pane follows the automatic recap again. A no-op unless
+    /// the pane is actually holding a finished answer over a different recap.
     public func dismissQuickAnswer() {
+        guard quickAnswerOverridesRecap else { return }
         manualQuickAnswer.dismiss()
-        if !quickRecap.isEmpty { quickSuggestion = quickRecap }
+        quickSuggestion = quickRecap
     }
 
     /// The last *completed* listener summary, used as grounding for Quick/Deep prompts. Kept

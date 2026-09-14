@@ -189,9 +189,13 @@ recap's language.
 as `visibleSummary`. A completed manual answer is *fresh* for `ManualQuickAnswer.freshness`
 (120 seconds on the session's injected clock, so expiry is testable); while it is fresh an automatic
 recap updates `quickRecap` but not the pane, and the status reads "Recap updated · Showing your
-generated answer". The **Show recap** button is offered whenever the pane differs from the current
-recap, *including after the window has elapsed* — expiry releases the pane on the next automatic
-apply, and until then the user must still be able to reach the newer recap. Requesting another answer, clearing the conversation, renaming speakers or
+generated answer". Freshness is measured on `MeetingSession`'s injected session clock, not a wall
+clock of its own, so expiry is exercised in tests without waiting. The **Show recap** button is
+offered whenever the pane differs from the current recap, *including after the window has elapsed* —
+expiry releases the pane on the next automatic apply, and until then the user must still be able to
+reach the newer recap. It is never offered while a manual answer is still streaming: a partial answer
+differs from the recap by definition, and swapping it mid-stream would leave the recap spliced onto
+the answer's remaining deltas, so `dismissQuickAnswer()` is a no-op then. Requesting another answer, clearing the conversation, renaming speakers or
 the window elapsing ends the protection. Quick has no automatic review mode, so a manual Quick
 answer is not registered as a completed review; it takes priority through `manualBusy` while it
 streams and through this freshness window afterwards.
