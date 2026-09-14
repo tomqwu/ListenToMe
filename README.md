@@ -4,7 +4,7 @@
 
 # ListenToMe
 
-**The free, open-source, fully on-device meeting copilot for macOS — bring your own model, stay private, shape it to any conversation.**
+**The free, open-source, fully on-device meeting copilot for macOS and iOS — bring your own model, stay private, shape it to any conversation.**
 
 [![CI](https://github.com/tomqwu/ListenToMe/actions/workflows/ci.yml/badge.svg)](https://github.com/tomqwu/ListenToMe/actions/workflows/ci.yml)
 ![Coverage](https://img.shields.io/badge/Core_coverage-96%25-brightgreen)
@@ -44,8 +44,9 @@ make ios-test
   entirely against a local Ollama model — audio and transcript need never leave your Mac.
 - **Bring your own model.** Pick any Ollama model, local or cloud, instead of being locked to a
   single undisclosed backend LLM.
-- **Multi-pane, multi-model.** Four panes, and each AI pane has its own model dropdown — run a fast
-  model for live notes and a stronger one for deep analysis, side by side, in the same conversation.
+- **Multi-pane, multi-model.** Four panes, and each AI pane runs its own model — picked from the
+  left status rail — run a fast model for live notes and a stronger one for deep analysis, side by
+  side, in the same conversation.
 - **Multi-purpose presets.** Use-case presets (Meeting, Interview, and more) plus file/folder
   reference context let one app serve meetings, interviews, study, support, and beyond.
 - **Free & open-source.** No subscription, no seat pricing, no closed pipeline — the code is open
@@ -99,8 +100,8 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
   Deep. A dropped or stalled connection is still retried normally.
 
 **Bring-your-own-model**
-- Each AI pane has its **own model dropdown** with "good for" hints, listing chat-capable models
-  discovered from your Ollama server — local and Ollama-cloud (`:cloud`) models alike.
+- Each AI pane's model is set from a **model picker in the left status rail**, listing chat-capable
+  models discovered from your Ollama server — local and Ollama-cloud (`:cloud`) models alike.
 - **AI response-language** setting, independent of the transcription language.
 
 **Make it yours**
@@ -120,7 +121,8 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 
 **Download (recommended)**
 - Grab the notarized `.dmg` from [Releases](https://github.com/tomqwu/ListenToMe/releases),
-  open it, and drag **ListenToMe** to **Applications**.
+  open it, and drag **ListenToMe** to **Applications**. See [`CHANGELOG.md`](CHANGELOG.md) for
+  what changed in recent macOS and iOS releases.
 
 **Build from source**
 ```bash
@@ -142,11 +144,11 @@ code-signing identity so granted macOS permissions (mic/screen/accessibility) pe
 rebuilds (otherwise each rebuild re-asks). Find it via `security find-identity -v -p codesigning`.
 
 On first run, grant Microphone, Speech Recognition, Screen Recording (for system audio), and
-Accessibility (for the global hotkey) in System Settings → Privacy & Security. The app shows a
-Permissions panel on launch (also reachable from the toolbar 🛡️) to grant these up front.
-Microphone access is also re-checked every time you press **Listen**: without it macOS hands the
-app silence rather than an error, so the app refuses to start and points you at the Microphone
-pane (a managed/restricted Mac gets the explanation without the Settings shortcut).
+Accessibility (for the global hotkey) in System Settings → Privacy & Security. The app shows an
+onboarding sheet on first launch; grant these permissions from **More → Permissions…** at any time
+after that. Microphone access is also re-checked every time you press **Listen**: without it macOS
+hands the app silence rather than an error, so the app refuses to start and points you at the
+Microphone pane (a managed/restricted Mac gets the explanation without the Settings shortcut).
 
 ### Dev builds are a separate app
 
@@ -163,10 +165,11 @@ once. macOS asks each binary for keychain access the first time it reads the ite
 
 ## Models, presets & languages
 
-- **Per-pane models.** Each of Listener, Quick, and Deep has a model dropdown in its header with
-  "good for" hints. Choices persist across launches; **More → Refresh models** re-scans installed
-  models (e.g. after `ollama pull`). On first launch any role whose saved model isn't installed
-  auto-switches to one that works — no manual config needed.
+- **Per-pane models.** Each of Summary, Quick, and Deep has a model picker in the left status
+  rail; the pane header shows the currently selected model as read-only text. Choices persist
+  across launches; **More → Refresh models** re-scans installed models (e.g. after `ollama pull`).
+  On first launch any role whose saved model isn't installed auto-switches to one that works — no
+  manual config needed.
 - **AI processing mode.** In **Settings**, explicitly choose **Local only**, **Apple Intelligence**,
   **Cloud**, or **AI off**.
   Local mode verifies downloaded-model metadata before every request and rejects remote/cloud-backed
@@ -231,6 +234,19 @@ analysis; speaker names are included in saved transcript text when session savin
 - **Explicit cloud choice.** Select Cloud in Settings to send AI prompt context to Ollama Cloud.
   Audio transcription and experimental speaker processing remain on-device; their models may download
   on first use. Select AI off to stop model requests while continuing to capture and save.
+- **One-time model downloads, and which hosts they touch.** In Local-only mode the app otherwise
+  contacts only `localhost:11434` (your Ollama daemon). The WhisperKit transcription engine and the
+  FluidAudio speaker-identification models are fetched from `huggingface.co` the first time you
+  enable them; Apple SpeechAnalyzer/SpeechRecognizer download their on-device language assets from
+  Apple's own asset servers the first time you use them. None of these downloads carry audio,
+  transcript, or key material — they fetch model weights only.
+- **Sandbox and permissions.** The macOS app is **not sandboxed**
+  (`com.apple.security.app-sandbox` is `false` in `App/ListenToMe.entitlements`), so it has
+  unrestricted user-level file and network access rather than the narrower access a sandboxed app
+  would be limited to. This is so file/folder reference context can read arbitrary paths you attach
+  without security-scoped bookmarks. It still asks macOS for the Microphone, Speech Recognition,
+  Screen Recording, and Accessibility permissions listed above, and only uses them for the features
+  described in this README.
 
 ## Architecture
 
@@ -239,10 +255,12 @@ analysis; speaker names are included in saved transcript text when session savin
 - **`iOS/`**: iPhone/iPad SwiftUI app, foreground microphone capture with SpeechAnalyzer, optional Foundation Models summaries.
 - **`App/`**: macOS glue — `DualChannelCapture`, `SpeechRecognizerTranscriber`, SwiftUI UI, hotkey.
 
-See [`docs/superpowers/specs/2026-06-18-listentome-design.md`](docs/superpowers/specs/2026-06-18-listentome-design.md)
-for the full design and
-[`docs/superpowers/plans/2026-06-18-listentome-mvp.md`](docs/superpowers/plans/2026-06-18-listentome-mvp.md)
-for the implementation plan.
+See [`docs/reviews/2026-09-10/design-and-gap-review.md`](docs/reviews/2026-09-10/design-and-gap-review.md)
+for the current architecture and gap review. The original
+[`docs/superpowers/specs/2026-06-18-listentome-design.md`](docs/superpowers/specs/2026-06-18-listentome-design.md)
+and [`docs/superpowers/plans/2026-06-18-listentome-mvp.md`](docs/superpowers/plans/2026-06-18-listentome-mvp.md)
+are historical: the June MVP spec/plan predate Save/New/History, presets, speaker diarization,
+explicit AI processing modes, and the iOS app.
 
 ### CI
 
@@ -270,8 +288,10 @@ Ollama through the actual `OllamaProvider`, auto-selecting an installed chat mod
   connection; Stop, New conversation, closing the window and Cmd-Q all cancel it immediately.
 - A short utterance spoken entirely within the brief recognizer-finalization gap may merge into the
   next finalized segment.
-- **Ollama-only by design.** Ollama Cloud already exposes GPT/DeepSeek/Qwen/etc. through one key, so
-  dedicated Claude/OpenAI providers are intentionally not planned.
+- **Ollama and Apple Intelligence today.** Ollama Cloud already exposes GPT/DeepSeek/Qwen/etc.
+  through one key, and Apple Intelligence covers on-device inference without Ollama. Dedicated
+  OpenAI-compatible endpoint support (LM Studio, OpenRouter, vLLM) is tracked in
+  [#52](https://github.com/tomqwu/ListenToMe/issues/52) and not yet implemented.
 - **WhisperKit engine (opt-in):** an opt-in third transcription engine for true multilingual
   code-switching (e.g. Mandarin↔English mid-sentence) that Apple's on-device Speech can't do. It
   downloads a model on first use (before capture starts, same as above), emits finalized segments
