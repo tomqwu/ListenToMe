@@ -54,20 +54,53 @@ final class CaptureRecoveryTests: XCTestCase {
 
     func testMicrophoneRestartIsAttemptedOnceUntilItSucceeds() {
         var policy = CaptureRecovery.Policy()
-        XCTAssertTrue(policy.shouldAttemptRestart(for: .you))
-        XCTAssertFalse(policy.shouldAttemptRestart(for: .you), "a failed restart must not loop")
-        policy.restartSucceeded(for: .you)
-        XCTAssertTrue(policy.shouldAttemptRestart(for: .you), "a later change gets a fresh attempt")
+        XCTAssertTrue(policy.shouldAttemptRestart(for: .you, now: 0))
+        XCTAssertFalse(policy.shouldAttemptRestart(for: .you, now: 0), "a failed restart must not loop")
+        policy.restartSucceeded(for: .you, now: 0)
+        XCTAssertTrue(policy.shouldAttemptRestart(for: .you, now: 10),
+                      "a later change gets a fresh attempt")
     }
 
     func testRestartBudgetsAreIndependentPerSource() {
         var policy = CaptureRecovery.Policy()
-        XCTAssertTrue(policy.shouldAttemptRestart(for: .you))
-        XCTAssertTrue(policy.shouldAttemptRestart(for: .others))
-        XCTAssertFalse(policy.shouldAttemptRestart(for: .others))
-        policy.restartSucceeded(for: .others)
-        XCTAssertTrue(policy.shouldAttemptRestart(for: .others))
-        XCTAssertFalse(policy.shouldAttemptRestart(for: .you))
+        XCTAssertTrue(policy.shouldAttemptRestart(for: .you, now: 0))
+        XCTAssertTrue(policy.shouldAttemptRestart(for: .others, now: 0))
+        XCTAssertFalse(policy.shouldAttemptRestart(for: .others, now: 0))
+        policy.restartSucceeded(for: .others, now: 0)
+        XCTAssertTrue(policy.shouldAttemptRestart(for: .others, now: 10))
+        XCTAssertFalse(policy.shouldAttemptRestart(for: .you, now: 10))
+    }
+
+    func testFlappingDeviceCannotSustainARestartLoop() {
+        // A device that connects/disconnects repeatedly would otherwise re-arm the budget on every
+        // success and restart the engine forever; changes inside the floor window are ignored.
+        var policy = CaptureRecovery.Policy()
+        XCTAssertTrue(policy.shouldAttemptRestart(for: .you, now: 100))
+        policy.restartSucceeded(for: .you, now: 100)
+        let insideFloor = 100 + CaptureRecovery.Policy.restartFloor / 2
+        XCTAssertFalse(policy.shouldAttemptRestart(for: .you, now: insideFloor))
+        let pastFloor = 100 + CaptureRecovery.Policy.restartFloor + 0.01
+        XCTAssertTrue(policy.shouldAttemptRestart(for: .you, now: pastFloor))
+    }
+
+    func testFloorIsPerChannel() {
+        var policy = CaptureRecovery.Policy()
+        XCTAssertTrue(policy.shouldAttemptRestart(for: .you, now: 0))
+        policy.restartSucceeded(for: .you, now: 0)
+        XCTAssertTrue(policy.shouldAttemptRestart(for: .others, now: 0),
+                      "a fresh mic restart must not block the system-audio channel")
+    }
+
+    func testStoppedCaptureRefusesEveryRestart() {
+        // A configuration-change notification can fire while stop() is tearing the engine down;
+        // once the capture is stopped nothing may bring the microphone back up.
+        var policy = CaptureRecovery.Policy()
+        policy.markStopped()
+        XCTAssertFalse(policy.shouldAttemptRestart(for: .you, now: 0))
+        XCTAssertFalse(policy.shouldAttemptRestart(for: .others, now: 0))
+        policy.restartSucceeded(for: .you, now: 0)
+        XCTAssertFalse(policy.shouldAttemptRestart(for: .you, now: 100),
+                       "a stopped capture stays stopped")
     }
 
     // MARK: - #107 status messages

@@ -75,19 +75,42 @@ public enum CaptureRecovery {
 
     /// One restart attempt per channel, re-armed by a successful restart, so a permanently dead
     /// input can't spin the app in a restart loop while a second real device change still recovers.
+    ///
+    /// Two further guards: a channel that restarted successfully ignores another change within
+    /// `restartFloor` seconds (flapping AirPods would otherwise re-arm the budget on every success
+    /// and self-sustain a restart loop), and a torn-down capture refuses every restart so a
+    /// notification that raced `stop()` can't bring the microphone back up after the user stopped.
     public struct Policy: Sendable {
+        /// Minimum gap between a successful restart and the next attempt on the same channel.
+        public static let restartFloor: TimeInterval = 0.5
+
         private var spent: Set<SpeakerSource> = []
+        private var lastSuccess: [SpeakerSource: TimeInterval] = [:]
+        private var isStopped = false
 
         public init() {}
 
-        /// Consumes this channel's restart budget. Returns false once it is spent.
-        public mutating func shouldAttemptRestart(for source: SpeakerSource) -> Bool {
-            spent.insert(source).inserted
+        /// Marks the capture torn down; every later restart request is refused.
+        public mutating func markStopped() { isStopped = true }
+
+        /// Consumes this channel's restart budget. Returns false once the capture is stopped, the
+        /// budget is spent, or the last successful restart is less than `restartFloor` ago.
+        public mutating func shouldAttemptRestart(
+            for source: SpeakerSource,
+            now: TimeInterval = Date().timeIntervalSinceReferenceDate
+        ) -> Bool {
+            if isStopped { return false }
+            if let last = lastSuccess[source], now - last < Self.restartFloor { return false }
+            return spent.insert(source).inserted
         }
 
-        /// Re-arms the channel after a restart actually worked.
-        public mutating func restartSucceeded(for source: SpeakerSource) {
+        /// Re-arms the channel after a restart actually worked, starting its floor window.
+        public mutating func restartSucceeded(
+            for source: SpeakerSource,
+            now: TimeInterval = Date().timeIntervalSinceReferenceDate
+        ) {
             spent.remove(source)
+            lastSuccess[source] = now
         }
     }
 

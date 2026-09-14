@@ -94,6 +94,15 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
     }
 
     func stop() {
+        // Publish the stop BEFORE tearing anything down. A configuration-change notification runs
+        // on its own thread; if it could observe `stopped == false` while we are already stopping,
+        // its restart would re-install the tap and start the engine again after the user pressed
+        // Stop — a live microphone with no status path. `markStopped()` makes every later restart
+        // request refuse, and the restart path re-checks it after starting (see restartMicrophone).
+        lock.withLock {
+            stopped = true
+            recovery.markStopped()
+        }
         if let configurationObserver { NotificationCenter.default.removeObserver(configurationObserver) }
         if let wakeObserver { NSWorkspace.shared.notificationCenter.removeObserver(wakeObserver) }
         statusContinuation.finish()
@@ -101,7 +110,6 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
         engine.stop()
         systemAudioTask?.cancel()
         let toStop: SCStream? = lock.withLock {
-            stopped = true
             let current = stream
             stream = nil
             return current
@@ -152,7 +160,19 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
         engine.stop()
         do {
             try startMic()   // re-reads inputNode.outputFormat(forBus: 0) for the new device
-            lock.withLock { recovery.restartSucceeded(for: .you) }
+            // stop() may have run while we were restarting (it tears the engine down BEFORE we
+            // re-installed the tap, so its teardown would be undone by ours): tear our own restart
+            // down again rather than leaving the microphone live after Stop.
+            let cancelled: Bool = lock.withLock {
+                if stopped { return true }
+                recovery.restartSucceeded(for: .you)
+                return false
+            }
+            if cancelled {
+                engine.inputNode.removeTap(onBus: 0)
+                engine.stop()
+                return
+            }
             statusContinuation.yield(CaptureRecovery.status(for: .microphoneInputChanged,
                                                             outcome: .resumed))
         } catch {
@@ -319,9 +339,15 @@ private extension CMSampleBuffer {
 
 extension DualChannelCapture: SCStreamDelegate {
     func stream(_ stream: SCStream, didStopWithError error: Error) {
-        // Drop the dead stream before restarting so stop() can't chase a stale handle, then make
-        // one recovery attempt; a failure surfaces as a degraded status (issue #107).
-        lock.withLock { if self.stream === stream { self.stream = nil } }
+        // Only the CURRENT stream's failure is ours to recover. A late callback from a stream we
+        // already replaced (or stopped) must not start a second SCStream feeding `.others`; drop
+        // the handle when it is ours, then make one recovery attempt (issue #107).
+        let isCurrent: Bool = lock.withLock {
+            guard self.stream === stream else { return false }
+            self.stream = nil
+            return true
+        }
+        guard isCurrent else { return }
         restartSystemAudio(reason: error.localizedDescription)
     }
 }
