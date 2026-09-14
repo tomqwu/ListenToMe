@@ -22,13 +22,14 @@ extension MobileAISettings {
 
     func correctionClient() throws -> OllamaProvider {
         if let reason = correctionAvailability { throw RecordingError.message(reason) }
-        let key = try MobileKeychain.read()
+        let endpoint = resolvedBaseURL
+        let key = try apiKey(forEndpoint: endpoint)
         guard !key.isEmpty || usesCustomEndpoint else {
             throw RecordingError.message("Add your Ollama API key in AI settings.")
         }
         let configuration = URLSessionConfiguration.ephemeral
         configuration.timeoutIntervalForResource = 12
-        return OllamaProvider(model: correctionModel, baseURL: resolvedBaseURL, apiKey: key.isEmpty ? nil : key,
+        return OllamaProvider(model: correctionModel, baseURL: endpoint, apiKey: key.isEmpty ? nil : key,
                               urlSession: URLSession(configuration: configuration),
                               options: .init(thinking: false, temperature: 0, maximumTokens: 700))
     }

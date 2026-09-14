@@ -23,7 +23,7 @@ enum MobileReleaseNotes {
     static let releases: [Release] = [
         .init(version: "1.10.2", title: "On-device by default, or your own server", details: [
             "New installs summarize on-device with Apple Intelligence. A provider you already chose is kept.",
-            "Settings accepts an optional Ollama server URL, so summaries can use an Ollama server you run."
+            "Optional Ollama server URL: use a server you run. Your cloud key is never sent there."
         ]),
         .init(version: "1.10.1", title: "Know what changed", details: [
             "See the installed version and release highlights after an update.",

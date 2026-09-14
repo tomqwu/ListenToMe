@@ -21,14 +21,36 @@ final class MobileAITests: XCTestCase {
         XCTAssertEqual(MobileAISettings().provider, expected)
     }
 
-    func testOnDeviceFallbackExplainsWhyOllamaWasChosen() {
-        if AppleIntelligenceProvider.unavailableReason == nil {
-            XCTAssertEqual(MobileAISettings.defaultProvider, .apple)
-            XCTAssertNil(MobileAISettings.defaultProviderReason)
+    /// Both branches of the default are checked directly, not only the one this machine happens to take.
+    func testDefaultProviderIsOnDeviceUnlessAppleIntelligenceIsUnavailable() {
+        XCTAssertEqual(MobileAISettings.defaultProvider(unavailableReason: nil), .apple)
+        XCTAssertEqual(MobileAISettings.defaultProvider(unavailableReason: "Device not eligible."), .ollama)
+        XCTAssertEqual(MobileAISettings.defaultProvider,
+                       MobileAISettings.defaultProvider(unavailableReason: MobileAISettings.defaultProviderReason))
+        XCTAssertEqual(MobileAISettings.defaultProviderReason, AppleIntelligenceProvider.unavailableReason)
+    }
+
+    func testFallbackExplanationAppearsOnlyForTheUnchosenOllamaFallback() {
+        let previous = UserDefaults.standard.object(forKey: "mobileAIProvider")
+        defer { UserDefaults.standard.set(previous, forKey: "mobileAIProvider") }
+        UserDefaults.standard.removeObject(forKey: "mobileAIProvider")
+        let fresh = MobileAISettings()
+        XCTAssertFalse(fresh.hasSavedProviderChoice)
+        if MobileAISettings.defaultProviderReason == nil {
+            XCTAssertEqual(fresh.provider, .apple)
+            XCTAssertNil(fresh.fallbackExplanation, "An on-device default has nothing to explain")
         } else {
-            XCTAssertEqual(MobileAISettings.defaultProvider, .ollama)
-            XCTAssertEqual(MobileAISettings.defaultProviderReason, AppleIntelligenceProvider.unavailableReason)
+            XCTAssertEqual(fresh.provider, .ollama)
+            XCTAssertEqual(fresh.fallbackExplanation, MobileAISettings.defaultProviderReason)
         }
+        // Choosing Apple by hand must never claim the device fell back to Ollama.
+        fresh.provider = .apple
+        XCTAssertTrue(fresh.hasSavedProviderChoice)
+        XCTAssertNil(fresh.fallbackExplanation)
+        // Choosing Ollama by hand is a choice, not a fallback.
+        fresh.provider = .ollama
+        XCTAssertNil(fresh.fallbackExplanation)
+        XCTAssertNil(MobileAISettings().fallbackExplanation, "A saved choice is never a fallback")
     }
 
     func testCustomBaseURLIsValidatedAndNeverAutoSelected() {
@@ -50,8 +72,30 @@ final class MobileAITests: XCTestCase {
         for invalid in ["studio.local:11434", "ftp://studio.local", "http://", "not a url"] {
             XCTAssertFalse(settings.saveBaseURL(invalid), invalid)
             XCTAssertEqual(settings.resolvedBaseURL.absoluteString, "http://studio.local:11434", invalid)
-            XCTAssertTrue(settings.status?.isEmpty == false)
+            XCTAssertEqual(settings.status,
+                           "That server address is not a valid http:// or https:// URL. "
+                           + "The previous server is kept.", invalid)
         }
+        // ATS only exempts plain http for .local/link-local/loopback, so a private IPv4 literal is
+        // refused with the .local form named rather than failing opaquely at request time.
+        for blocked in ["http://192.168.1.10:11434", "http://10.0.0.4:11434", "http://172.20.3.9:11434"] {
+            XCTAssertFalse(settings.saveBaseURL(blocked), blocked)
+            XCTAssertEqual(settings.resolvedBaseURL.absoluteString, "http://studio.local:11434", blocked)
+            XCTAssertTrue(settings.status?.contains("your-mac.local") == true, settings.status ?? "")
+        }
+        // https to the same addresses is not an ATS problem, and loopback stays usable.
+        XCTAssertTrue(settings.saveBaseURL("https://192.168.1.10:11434"))
+        XCTAssertTrue(settings.saveBaseURL("http://127.0.0.1:11434"))
+        XCTAssertTrue(settings.saveBaseURL("http://studio.local:11434"))
+
+        // Typing the cloud host by hand is the cloud, not "your server".
+        XCTAssertTrue(settings.saveBaseURL("https://ollama.com"))
+        XCTAssertFalse(settings.usesCustomEndpoint)
+        XCTAssertEqual(settings.resolvedBaseURL, OllamaCloudCatalog.baseURL)
+        XCTAssertEqual(settings.endpointLabel, "Ollama Cloud")
+        XCTAssertTrue(settings.saveBaseURL("http://studio.local:11434"))
+        XCTAssertTrue(settings.usesCustomEndpoint)
+        XCTAssertEqual(settings.endpointLabel, "http://studio.local:11434")
 
         XCTAssertTrue(settings.saveBaseURL(""))
         XCTAssertFalse(settings.usesCustomEndpoint)
@@ -89,6 +133,24 @@ final class MobileAITests: XCTestCase {
             XCTAssertEqual(try settings.client(for: mode).baseURL.absoluteString, "http://studio.local:11434")
         }
         XCTAssertEqual(try settings.correctionClient().baseURL.absoluteString, "http://studio.local:11434")
+    }
+
+    func testTheCloudAPIKeyIsNeverSentToAServerTheUserEntered() throws {
+        let original = try MobileKeychain.read()
+        let previousURL = UserDefaults.standard.object(forKey: "mobileOllamaBaseURL")
+        defer {
+            UserDefaults.standard.set(previousURL, forKey: "mobileOllamaBaseURL")
+            try? MobileKeychain.save(original)
+        }
+        let settings = MobileAISettings()
+        settings.saveKey("synthetic-cloud-key")
+        XCTAssertTrue(settings.saveBaseURL(""))
+        XCTAssertEqual(try settings.apiKey(forEndpoint: settings.resolvedBaseURL),
+                       "synthetic-cloud-key", "Ollama Cloud is the credential's own service")
+        XCTAssertTrue(settings.saveBaseURL("http://studio.local:11434"))
+        XCTAssertEqual(try settings.apiKey(forEndpoint: settings.resolvedBaseURL), "",
+                       "A private endpoint must not be able to collect the cloud key")
+        XCTAssertEqual(try MobileKeychain.read(), "synthetic-cloud-key", "The key is withheld, not deleted")
     }
 
     func testCatalogIsAvailableAfterSettingsRelaunch() {

@@ -5,7 +5,7 @@ The first iOS version is a standalone app, separate from the macOS release. It r
 
 ## iOS 1.10.2 (24)
 
-A fresh install now defaults to on-device Apple Intelligence, falling back to Ollama with a stated reason only where Apple Intelligence cannot run. A provider chosen in an earlier build is untouched. Settings gains an optional **Server URL** so Ollama requests — summaries, Quick, Deep and speech correction — can go to an Ollama server you run on your own network instead of ollama.com; the API key is optional for your own server, and the destination host is shown in the status text. [What to Test](../metadata/ios/en-CA/what-to-test-1.10.2.txt).
+A fresh install now defaults to on-device Apple Intelligence, falling back to Ollama with a stated reason only where Apple Intelligence cannot run. A provider chosen in an earlier build is untouched. Settings gains an optional **Server URL** so Ollama requests — summaries, Quick, Deep and speech correction — can go to an Ollama server you run on your own network instead of ollama.com. Use the computer's `.local` name; no API key is needed, and a saved Ollama Cloud key is never sent to a server you entered. The destination host is shown in the status text. [What to Test](../metadata/ios/en-CA/what-to-test-1.10.2.txt).
 
 ## iOS 1.10.1 (23)
 
@@ -185,8 +185,10 @@ flattened; verify that any scans or embedded documents you need were included.
 A fresh install defaults to **Apple Intelligence · on-device** whenever
 `AppleIntelligenceProvider.unavailableReason` is nil. On a device that cannot run it (ineligible
 hardware, Apple Intelligence turned off, model not ready) the default falls back to Ollama and
-Settings states the reason. A provider you have chosen before is always kept across updates — the
-default applies only when no choice has been saved. Automatic Quick Summary requires Ollama, so it
+Settings states the reason. That explanation is shown only while the device is actually on the
+unchosen Ollama fallback; once you pick a provider yourself it disappears, and it is never shown to
+someone who selected Apple Intelligence deliberately. A provider you have chosen before is always
+kept across updates — the default applies only when no choice has been saved. Automatic Quick Summary requires Ollama, so it
 stays unavailable with an explanation until you select Ollama yourself.
 
 ## Ollama (Cloud or your own server)
@@ -203,13 +205,26 @@ Enter the key separately on each device. Remove API key deletes it from this dev
 **Server URL** is blank by default, which means `https://ollama.com`. Enter an `http://` or `https://`
 address — for example `http://your-mac.local:11434` for an Ollama server running on your own Mac on the
 same Wi-Fi network — and tap **Save server URL**. Only the scheme, host and port are kept; anything that
-is not a valid http(s) URL with a host is rejected and the previous server stays in place. **Use Ollama
-Cloud instead** clears it. The API key is optional for your own server and still required for Ollama
-Cloud. Nothing is discovered automatically and the app never changes the server for you: the destination
+is not a valid http(s) URL with a host is rejected and the previous server stays in place. Entering
+`https://ollama.com` yourself is recognised as Ollama Cloud, not as your own server. **Use Ollama Cloud
+instead** clears the setting.
+
+**Use the computer's `.local` name, not its IP address.** The app declares
+`NSAllowsLocalNetworking`, which exempts plain `http` only for `.local`, link-local and loopback
+names — not for a numeric private address such as `192.168.1.10`. A plain-`http` URL whose host is a
+private IPv4 literal (`10.x`, `172.16–31.x`, `192.168.x`) is therefore refused at save time with a
+message naming the `http://your-mac.local:11434` form, instead of failing opaquely on the first
+request. `https://` to any address, and `http://127.0.0.1`, remain accepted. Reaching a LAN address
+uses iOS local-network access, so iOS asks for that permission the first time.
+
+**Your Ollama Cloud API key is never sent to a server you enter.** The saved credential belongs to
+ollama.com; requests to any other host go out without an `Authorization` header, so a private endpoint
+cannot collect it. The key stays in the Keychain and is used again as soon as the server is Ollama
+Cloud. No API key is needed for your own server; one is still required for Ollama Cloud.
+
+Nothing is discovered automatically and the app never changes the server for you: the destination
 is shown as **Server: …** in Settings and repeated in the refresh, connection-test and error status text
 so you can always see where a summary would go. A server you enter is your own machine, not ollama.com.
-Reaching an `http://` LAN address uses iOS local-network access, so iOS asks for that permission the
-first time.
 
 Refresh calls `/api/tags` on the selected server (`https://ollama.com` unless you entered one) with Bearer
 authentication when a key is saved, and preserves exact returned
@@ -270,8 +285,9 @@ GitHub Actions builds both apps only. All tests run on the local Mac with `make 
 6. On an Apple Intelligence eligible device, confirm a fresh install starts on Apple Intelligence,
    generate a factual summary, and verify unavailable, oversized-input and failure states keep the
    transcript and previous summary. On an ineligible device, confirm the fallback to Ollama names the
-   reason. Optionally point **Server URL** at an Ollama server on your own network, accept the
-   local-network prompt, refresh models and summarize without an API key.
+   reason. Optionally point **Server URL** at an Ollama server on your own network using its
+   `.local` name, accept the local-network prompt, refresh models and summarize without an API key;
+   confirm a numeric `http://192.168.…` address is refused with the `.local` hint.
 7. Camera permission denial/retry, photo capture, photo library, Files and Apple Notes Send Copy imports. Preview, share originals, extract document text, remove attachments and delete/reopen conversations.
 8. Portrait/landscape iPhone and iPad layouts, large text and VoiceOver controls.
 

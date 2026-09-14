@@ -16,8 +16,8 @@ struct MobileAISettingsView: View {
                 Text(ai.usesCustomEndpoint ? "Ollama · your server" : "Ollama Cloud")
                     .tag(MobileAISettings.Provider.ollama)
             }.accessibilityIdentifier("summaryProvider")
-            if ai.provider == .apple, let reason = MobileAISettings.defaultProviderReason {
-                Text("Apple Intelligence cannot run here, so new installs start on Ollama instead: \(reason)")
+            if let reason = ai.fallbackExplanation {
+                Text("Apple Intelligence cannot run on this device, so summaries default to Ollama: \(reason)")
                     .font(.caption).accessibilityIdentifier("appleIntelligenceUnavailable")
             }
             if ai.provider == .ollama || ai.correctTranscript {
@@ -45,10 +45,11 @@ struct MobileAISettingsView: View {
                     Button("Use Ollama Cloud instead") { ai.saveBaseURL(""); server = "" }
                         .disabled(ai.testing || ai.refreshing)
                 }
-                Text("Point this at an Ollama server you run — for example http://your-mac.local:11434 on the same "
-                     + "Wi-Fi network. The API key stays optional for your own server and is "
-                     + "required for Ollama Cloud. "
-                     + "The app never switches servers on its own.").font(.caption)
+                Text("Point this at an Ollama server you run — use your computer's name, for example "
+                     + "http://your-mac.local:11434 on the same Wi-Fi network. iOS blocks plain http to a "
+                     + "numeric address such as 192.168.1.10, so the .local name is required. "
+                     + "No API key is needed for your own server, and your saved Ollama Cloud key is "
+                     + "never sent there. The app never switches servers on its own.").font(.caption)
                 Button(ai.refreshing ? "Refreshing models…" : "Refresh models from API") {
                     editingKey = false
                     operation = Task { await ai.refresh() }

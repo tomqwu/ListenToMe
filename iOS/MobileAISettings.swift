@@ -6,8 +6,14 @@ import ListenToMeCore
 final class MobileAISettings {
     enum Provider: String, CaseIterable { case apple, ollama }
     var provider: Provider {
-        didSet { UserDefaults.standard.set(provider.rawValue, forKey: "mobileAIProvider"); quickSettingsChanged?() }
+        didSet {
+            UserDefaults.standard.set(provider.rawValue, forKey: "mobileAIProvider")
+            hasSavedProviderChoice = true
+            quickSettingsChanged?()
+        }
     }
+    /// True once the user has picked a provider; until then the device default applies.
+    private(set) var hasSavedProviderChoice = false
     var model: String {
         didSet { UserDefaults.standard.set(model, forKey: "mobileOllamaModel"); quickSettingsChanged?() }
     }
@@ -50,15 +56,27 @@ final class MobileAISettings {
     var testing = false
     var hasKey = false
 
-    /// Fresh installs start on-device; Ollama is only the fallback when Apple Intelligence cannot run here.
-    static var defaultProvider: Provider { AppleIntelligenceProvider.unavailableReason == nil ? .apple : .ollama }
-    /// Why a fresh install fell back to Ollama, or nil when the on-device default applies.
+    /// Fresh installs start on-device; Ollama is only the fallback when Apple Intelligence cannot run.
+    /// Pure function of the availability string so both branches are directly testable.
+    static func defaultProvider(unavailableReason: String?) -> Provider {
+        unavailableReason == nil ? .apple : .ollama
+    }
+    static var defaultProvider: Provider { defaultProvider(unavailableReason: defaultProviderReason) }
+    /// Why a fresh install would fall back to Ollama, or nil when the on-device default applies.
     static var defaultProviderReason: String? { AppleIntelligenceProvider.unavailableReason }
+
+    /// Set only while this device is on the Ollama fallback because Apple Intelligence cannot run and
+    /// the user has not chosen a provider. Never shown once the user picks one.
+    var fallbackExplanation: String? {
+        guard !hasSavedProviderChoice, provider == .ollama else { return nil }
+        return Self.defaultProviderReason
+    }
 
     init() {
         // A previously saved choice always wins; only an absent/unknown value takes the default.
-        let saved = UserDefaults.standard.string(forKey: "mobileAIProvider") ?? ""
-        provider = Provider(rawValue: saved) ?? Self.defaultProvider
+        let saved = Provider(rawValue: UserDefaults.standard.string(forKey: "mobileAIProvider") ?? "")
+        provider = saved ?? Self.defaultProvider
+        hasSavedProviderChoice = saved != nil
         ollamaBaseURL = UserDefaults.standard.string(forKey: "mobileOllamaBaseURL") ?? ""
         let savedModel = UserDefaults.standard.string(forKey: "mobileOllamaModel") ?? ""
         model = savedModel
@@ -97,12 +115,35 @@ final class MobileAISettings {
         return components.url
     }
 
-    var usesCustomEndpoint: Bool { Self.normalizedBaseURL(ollamaBaseURL) != nil }
+    static let cloudHost = OllamaCloudCatalog.baseURL.host()?.lowercased() ?? "ollama.com"
+
+    /// Ollama Cloud is identified by host, so a hand-typed https://ollama.com is still the cloud.
+    static func isCloud(_ url: URL) -> Bool { url.host()?.lowercased() == cloudHost }
+
+    /// App Transport Security only exempts plain http for .local, link-local and loopback names
+    /// (NSAllowsLocalNetworking). A bare private IPv4 literal would pass validation and then fail
+    /// opaquely at request time, so it is rejected with an explanation instead.
+    static func isPlainHTTPPrivateAddress(_ url: URL) -> Bool {
+        guard url.scheme?.lowercased() == "http", let host = url.host()?.lowercased() else { return false }
+        let parts = host.split(separator: ".", omittingEmptySubsequences: false).map(String.init)
+        guard parts.count == 4, parts.allSatisfy({ UInt8($0) != nil }), let first = UInt8(parts[0]),
+              let second = UInt8(parts[1]) else { return false }
+        if first == 127 { return false }
+        if first == 10 { return true }
+        if first == 172, (16...31).contains(second) { return true }
+        if first == 192, second == 168 { return true }
+        if first == 169, second == 254 { return false }
+        return false
+    }
+
+    var usesCustomEndpoint: Bool { !Self.isCloud(resolvedBaseURL) }
     var resolvedBaseURL: URL { Self.normalizedBaseURL(ollamaBaseURL) ?? OllamaCloudCatalog.baseURL }
     /// Destination shown in settings so the data's recipient is never implicit.
     var endpointDescription: String { resolvedBaseURL.absoluteString }
+    /// Prose-friendly destination: the product name for the cloud, the exact URL for your own server.
+    var endpointLabel: String { usesCustomEndpoint ? resolvedBaseURL.absoluteString : "Ollama Cloud" }
 
-    /// Stores an explicit endpoint choice. Empty text restores Ollama Cloud.
+    /// Stores an explicit endpoint choice. Empty text — or the cloud host itself — restores Ollama Cloud.
     @discardableResult
     func saveBaseURL(_ value: String) -> Bool {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -115,9 +156,25 @@ final class MobileAISettings {
             status = "That server address is not a valid http:// or https:// URL. The previous server is kept."
             return false
         }
+        guard !Self.isPlainHTTPPrivateAddress(url) else {
+            status = "iOS blocks plain http to a numeric private address. Use your computer's "
+                + "name instead, for example http://your-mac.local:11434. The previous server is kept."
+            return false
+        }
+        if Self.isCloud(url) {
+            ollamaBaseURL = ""
+            status = "Server set to Ollama Cloud (https://ollama.com)."
+            return true
+        }
         ollamaBaseURL = url.absoluteString
         status = "Server set to \(url.absoluteString). Summaries go to that machine, not to ollama.com."
         return true
+    }
+
+    /// The saved credential is an Ollama Cloud key. It is never sent to a server the user entered,
+    /// so a private endpoint cannot collect it.
+    func apiKey(forEndpoint url: URL) throws -> String {
+        Self.isCloud(url) ? try MobileKeychain.read() : ""
     }
 
     func refresh() async {
@@ -126,7 +183,8 @@ final class MobileAISettings {
         defer { refreshing = false }
         do {
             let endpoint = resolvedBaseURL
-            let fetched = try await OllamaCloudCatalog().fetch(apiKey: MobileKeychain.read(), baseURL: endpoint)
+            let fetched = try await OllamaCloudCatalog()
+                .fetch(apiKey: try apiKey(forEndpoint: endpoint), baseURL: endpoint)
             guard !fetched.isEmpty else { throw RecordingError.message("Ollama returned an empty model catalog. Try again later.") }
             models = fetched
             resolveRoleModels()
@@ -204,14 +262,15 @@ final class MobileAISettings {
         if mode == .deep && (model.isEmpty || Self.isFlash(model)) {
             throw RecordingError.message("Choose a full model for Deep Summary. Flash models cannot be used for this role.")
         }
-        let key = try MobileKeychain.read()
+        let endpoint = resolvedBaseURL
+        let key = try apiKey(forEndpoint: endpoint)
         guard !key.isEmpty || usesCustomEndpoint else {
             throw RecordingError.message("Add your Ollama API key in Settings.")
         }
         guard !model.isEmpty else { throw RecordingError.message("Choose an Ollama model in Settings.") }
         let configuration = URLSessionConfiguration.ephemeral
         configuration.timeoutIntervalForResource = 480
-        return OllamaProvider(model: model, baseURL: resolvedBaseURL, apiKey: key.isEmpty ? nil : key,
+        return OllamaProvider(model: model, baseURL: endpoint, apiKey: key.isEmpty ? nil : key,
                               urlSession: URLSession(configuration: configuration),
                               options: mode == .quick ? .init(thinking: false, temperature: 0, maximumTokens: 3_072) : .init())
     }

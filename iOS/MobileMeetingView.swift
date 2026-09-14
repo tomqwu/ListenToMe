@@ -144,7 +144,7 @@ struct MobileMeetingView: View {
                 }.accessibilityIdentifier("summaryMode").disabled(session.isSummarizing)
                 Text(summaryMode.title).font(.title2.bold())
                 Text(session.ai.provider == .ollama
-                     ? "\(session.ai.endpointDescription) · \(session.ai.selectedModel(for: summaryMode)). "
+                     ? "\(session.ai.endpointLabel) · \(session.ai.selectedModel(for: summaryMode)). "
                        + "Summarize sends your notes and transcript there. Review the result."
                      : "Apple Intelligence summarizes your notes and transcript on this device. Review the result for accuracy.")
                     .foregroundStyle(.secondary)

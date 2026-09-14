@@ -46,7 +46,22 @@ final class OllamaCloudCatalogTests: XCTestCase {
         XCTAssertEqual(result.map(\.name), ["glm-5.3:local"])
     }
 
-    func testFetchDefaultsToTheCloudBaseURLWhenNoneIsGiven() {
+    func testFetchDefaultsToTheCloudBaseURLAndStillSendsTheKeyThere() async throws {
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [StubURLProtocol.self]
+        let session = URLSession(configuration: config)
+        defer { session.invalidateAndCancel(); StubURLProtocol.handler = nil }
+        var seen: URLRequest?
+        StubURLProtocol.handler = { request in
+            seen = request
+            return (HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!,
+                    Data(#"{"models":[{"name":"glm-5.3"}]}"#.utf8))
+        }
+        // No baseURL argument at all: the default must be Ollama Cloud, with Bearer auth.
+        let result = try await OllamaCloudCatalog(session: session).fetch(apiKey: "synthetic-test-key")
+        XCTAssertEqual(result.map(\.name), ["glm-5.3"])
+        XCTAssertEqual(seen?.url?.absoluteString, "https://ollama.com/api/tags")
+        XCTAssertEqual(seen?.value(forHTTPHeaderField: "Authorization"), "Bearer synthetic-test-key")
         XCTAssertEqual(OllamaCloudCatalog.baseURL.absoluteString, "https://ollama.com")
     }
 
