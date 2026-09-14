@@ -151,9 +151,13 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
     /// UI shows as an alert when it fails.
     private func restartMicrophone() {
         if lock.withLock({ stopped }) { return }
-        guard lock.withLock({ recovery.shouldAttemptRestart(for: .you) }) else {
-            statusContinuation.yield(CaptureRecovery.status(for: .microphoneInputChanged,
-                                                            outcome: .notAttempted))
+        let decision = lock.withLock { recovery.shouldAttemptRestart(for: .you) }
+        guard decision == .attempt else {
+            // Only an exhausted budget means the channel is down; a suppressed refusal (a second
+            // change moments after a successful restart, or a stopping session) stays silent.
+            if let status = CaptureRecovery.status(for: .microphoneInputChanged, refusal: decision) {
+                statusContinuation.yield(status)
+            }
             return
         }
         engine.inputNode.removeTap(onBus: 0)
@@ -186,8 +190,11 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
     private func restartSystemAudio(reason: String) {
         if lock.withLock({ stopped }) { return }
         let event = CaptureRecovery.Event.systemAudioStopped(reason: reason)
-        guard lock.withLock({ recovery.shouldAttemptRestart(for: .others) }) else {
-            statusContinuation.yield(CaptureRecovery.status(for: event, outcome: .notAttempted))
+        let decision = lock.withLock { recovery.shouldAttemptRestart(for: .others) }
+        guard decision == .attempt else {
+            if let status = CaptureRecovery.status(for: event, refusal: decision) {
+                statusContinuation.yield(status)
+            }
             return
         }
         Task { [weak self] in

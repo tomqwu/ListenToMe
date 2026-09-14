@@ -80,6 +80,16 @@ public enum CaptureRecovery {
     /// `restartFloor` seconds (flapping AirPods would otherwise re-arm the budget on every success
     /// and self-sustain a restart loop), and a torn-down capture refuses every restart so a
     /// notification that raced `stop()` can't bring the microphone back up after the user stopped.
+    /// What the policy decided about a restart request — and, crucially, whether the user needs to
+    /// hear about the refusal. `.suppressed` means the channel is fine (it just restarted, or the
+    /// session is stopping), so it must stay silent; only `.budgetSpent` means a channel is really
+    /// down after a failed recovery.
+    public enum RestartDecision: Sendable, Equatable {
+        case attempt
+        case suppressed
+        case budgetSpent
+    }
+
     public struct Policy: Sendable {
         /// Minimum gap between a successful restart and the next attempt on the same channel.
         public static let restartFloor: TimeInterval = 0.5
@@ -93,15 +103,17 @@ public enum CaptureRecovery {
         /// Marks the capture torn down; every later restart request is refused.
         public mutating func markStopped() { isStopped = true }
 
-        /// Consumes this channel's restart budget. Returns false once the capture is stopped, the
-        /// budget is spent, or the last successful restart is less than `restartFloor` ago.
+        /// Consumes this channel's restart budget. `.suppressed` when the capture is stopping or
+        /// the last successful restart is less than `restartFloor` ago (the channel is healthy —
+        /// say nothing); `.budgetSpent` when a previous attempt on this channel failed and was
+        /// never re-armed (the channel is down — say so).
         public mutating func shouldAttemptRestart(
             for source: SpeakerSource,
             now: TimeInterval = Date().timeIntervalSinceReferenceDate
-        ) -> Bool {
-            if isStopped { return false }
-            if let last = lastSuccess[source], now - last < Self.restartFloor { return false }
-            return spent.insert(source).inserted
+        ) -> RestartDecision {
+            if isStopped { return .suppressed }
+            if let last = lastSuccess[source], now - last < Self.restartFloor { return .suppressed }
+            return spent.insert(source).inserted ? .attempt : .budgetSpent
         }
 
         /// Re-arms the channel after a restart actually worked, starting its floor window.
@@ -112,6 +124,15 @@ public enum CaptureRecovery {
             spent.remove(source)
             lastSuccess[source] = now
         }
+    }
+
+    /// The status (if any) for a refused restart. Returns nil for `.suppressed` — a change arriving
+    /// right after a successful restart, or while stopping, leaves a healthy channel, and a
+    /// degraded status there would paint a red banner the session latches for the rest of the
+    /// meeting. `.attempt` reports its own outcome via `status(for:outcome:)` instead.
+    public static func status(for event: Event, refusal: RestartDecision) -> CaptureStatus? {
+        guard refusal == .budgetSpent else { return nil }
+        return status(for: event, outcome: .notAttempted)
     }
 
     /// The user-visible status for an event/outcome pair. Degraded statuses are the ones the UI
