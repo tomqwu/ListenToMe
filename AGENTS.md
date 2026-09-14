@@ -4,8 +4,10 @@
 
 Run all tests on the local Mac using `make validate-local`, including core coverage, iOS simulator
 unit/UI tests, release-helper tests and the real Ollama contract. GitHub Actions runs the headless
-`ListenToMeCore` unit/integration test suite and the 95% coverage floor as a CI check (required-status enforcement follows in the ruleset update); GUI,
-audio, device and Ollama-e2e acceptance stay local. Record local results before merging or publishing.
+`ListenToMeCore` unit/integration test suite and the 95% coverage floor as a CI check; GUI,
+audio, device and Ollama-e2e acceptance stay local. The main branch ruleset requires the three checks
+(`ListenToMeCore tests + coverage`, `macOS 26 app build`, `iOS 26 app build`) and a pull request.
+Record local results before merging or publishing.
 Installed-app GUI/audio acceptance remains required separately.
 
 ## Standing iOS release instruction
