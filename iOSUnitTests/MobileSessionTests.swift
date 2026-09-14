@@ -140,11 +140,18 @@ private actor AutoSummaryProvider: LLMProvider {
     nonisolated let id = "auto-test"
     private var requests = 0
     func count() -> Int { requests }
+    /// Pieces now arrive attributed ("Microphone: …", "Notes: …"); a real model answers with the
+    /// content, so the stub drops the leading label before echoing it back as a recap.
+    private func spoken(_ text: String) -> String {
+        guard let separator = text.range(of: ": ") else { return text }
+        return String(text[separator.upperBound...])
+    }
+
     private func response(_ request: LLMRequest) throws -> String {
         requests += 1
         if requests == 1 { throw URLError(.networkConnectionLost) }
         let input = try JSONDecoder().decode(MobileQuickContext.Input.self, from: Data((request.messages.last?.content ?? "").utf8))
-        let text = input.changes.last(where: { !$0.text.isEmpty })?.text ?? ""
+        let text = spoken(input.changes.last(where: { !$0.text.isEmpty })?.text ?? "")
         let data = try JSONSerialization.data(withJSONObject: ["reviews": [], "action": "publish", "context": text, "bullets": [text]])
         return String(decoding: data, as: UTF8.self)
     }
