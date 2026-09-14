@@ -13,19 +13,15 @@ struct ListenToMeIOSApp: App {
                 .task { session.importSharedInbox() }
                 .onOpenURL { session.importFile($0) }
                 .onChange(of: session.busy) { _, busy in if !busy { session.importSharedInbox() } }
-                .onChange(of: scenePhase) { _, phase in
-                    if phase == .background { Task { await session.background() } }
-                    if phase == .active { session.importSharedInbox() }
-                }
+                // The lifecycle rules live in MobileSession so unit tests can drive them.
+                .onChange(of: scenePhase) { _, phase in Task { await session.handleScenePhase(phase) } }
                 .onReceive(NotificationCenter.default.publisher(for: AVAudioSession.interruptionNotification)) { note in
-                    guard let value = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
-                          AVAudioSession.InterruptionType(rawValue: value) == .began else { return }
-                    Task { await session.stop() }
+                    guard let event = MobileSession.interruption(from: note) else { return }
+                    Task { await session.handleInterruption(event.type, options: event.options) }
                 }
                 .onReceive(NotificationCenter.default.publisher(for: AVAudioSession.routeChangeNotification)) { note in
-                    guard let value = note.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt,
-                          AVAudioSession.RouteChangeReason(rawValue: value) == .oldDeviceUnavailable else { return }
-                    Task { await session.stop() }
+                    guard let reason = MobileSession.routeChangeReason(from: note) else { return }
+                    Task { await session.handleRouteChange(reason) }
                 }
         }
     }

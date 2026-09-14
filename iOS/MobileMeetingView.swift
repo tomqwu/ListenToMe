@@ -113,7 +113,7 @@ struct MobileMeetingView: View {
                 .foregroundStyle(MobileStyle.ink)
                 .accessibilityIdentifier("conversationTitle")
                 .disabled(session.isSummarizing)
-                .onChange(of: session.title) { _, _ in session.save(announce: false) }
+                .onChange(of: session.title) { _, _ in session.scheduleSave() }
             Label(statusText, systemImage: session.state == .recording ? "record.circle" : "mic")
                 .font(.caption.weight(.medium))
                 .foregroundStyle(session.state == .recording ? .red : MobileStyle.muted)
@@ -239,7 +239,9 @@ struct MobileMeetingView: View {
                 }
                 Section("Recording") {
                     Text("This version records the microphone while the app is open. " +
-                         "Backgrounding, calls, or disconnecting the microphone stops recording and saves the conversation.")
+                         "Backgrounding or a call stops recording and saves the conversation, and the status line " +
+                         "says which. Recording resumes on its own when the system says the interruption is over. " +
+                         "Connecting or disconnecting a microphone keeps recording on the input that remains.")
                     Text("System audio, call recording, Mac sync and speaker identification are not included.")
                 }
                 Section("Privacy") {

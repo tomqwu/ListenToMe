@@ -1,13 +1,19 @@
+import AVFoundation
 import Foundation
 import FoundationModels
 import ListenToMeCore
 import Observation
+import SwiftUI
 import UIKit
 
 @MainActor @Observable
 final class MobileSession {
     enum State { case idle, preparing, recording, stopping }
+    /// Why capture last ended. `.interruption` is the only reason the system may resume from.
+    enum StopReason: Equatable { case user, interruption, routeLost, background }
     var state = State.idle { didSet { handleSummaryEvent(.recordingChanged) } }
+    private(set) var stopReason: StopReason?
+    private(set) var isForeground = true
     var title = "New conversation"
     var notes = "" { didSet { handleSummaryEvent(.notesChanged) } }
     var summary = ""
@@ -63,13 +69,18 @@ final class MobileSession {
     private var startTask: Task<Void, Never>?
     private let archive: SessionArchive
     private let activeURL: URL
+    /// The bytes last written for this conversation. Identical bytes are not written again.
+    private var lastSavedData: Data?
+    private let saveDebounce: Duration
+    private var pendingSave: Task<Void, Never>?
     let attachmentRoot: URL
 
     init(storageDirectory: URL = .applicationSupportDirectory,
          summaryProvider: (any LLMProvider)? = nil, autoInterval: Duration = .seconds(5),
-         correctionProvider: (any LLMProvider)? = nil,
+         correctionProvider: (any LLMProvider)? = nil, saveDebounce: Duration = .seconds(1),
          makeRecorder: @escaping () -> any MobileRecording = { MobileRecorder() }) {
         self.summaryProvider = summaryProvider
+        self.saveDebounce = saveDebounce
         self.correctionProvider = correctionProvider
         quickScheduler = MobileSummaryScheduler(interval: autoInterval)
         self.makeRecorder = makeRecorder
@@ -162,6 +173,7 @@ final class MobileSession {
     func start() {
         guard state == .idle, !isSummarizing else { return }
         message = nil
+        stopReason = nil
         speechCorrection.cancel()
         acceptsSpeechCorrection = true
         // Keep any unfinished hypothesis from an interrupted earlier run.
@@ -214,6 +226,7 @@ final class MobileSession {
             return
         }
         state = .stopping
+        if stopReason == nil { stopReason = .user }
         do { try await recorder?.stop() } catch { message = "Could not finalize transcript: \(error.localizedDescription)" }
         recorder = nil
         UIApplication.shared.isIdleTimerDisabled = false
@@ -223,6 +236,7 @@ final class MobileSession {
 
     func background() async {
         acceptsSpeechCorrection = false
+        flushPendingSave()
         speechCorrection.cancel()
         summaryTask?.cancel()
         quickReader.cancel()
@@ -230,28 +244,6 @@ final class MobileSession {
         defer { if token != .invalid { UIApplication.shared.endBackgroundTask(token) } }
         await stop()
         save(announce: false)
-    }
-
-    @discardableResult
-    func save(announce: Bool = true) -> Bool {
-        let record = SessionRecord(id: id, title: title, date: date,
-                                   transcript: allSegments.map { "Microphone: \($0.text)" }.joined(separator: "\n"),
-                                   summary: summary, segments: allSegments, notes: notes,
-                                   quickSuggestion: quickSummary, deepAnswer: deepThought,
-                                   isComplete: state == .idle && allSegments.allSatisfy(\.isFinal),
-                                   attachments: attachments, sourceImportID: sourceImportID)
-        do {
-            if hasContent || history.contains(where: { $0.id == id }) { try archive.save(record) }
-            try FileManager.default.createDirectory(at: activeURL.deletingLastPathComponent(),
-                                                    withIntermediateDirectories: true)
-            try JSONEncoder().encode(record).write(to: activeURL, options: .atomic)
-            refreshHistory()
-            if announce { message = "Conversation saved on this device." }
-            return true
-        } catch {
-            message = "Could not save conversation: \(error.localizedDescription). Your text is still here; try Save again."
-            return false
-        }
     }
 
     func newConversation() {
@@ -274,6 +266,8 @@ final class MobileSession {
 
     func deleteConversation(id targetID: String) {
         guard !busy else { return }
+        pendingSave?.cancel(); pendingSave = nil
+        lastSavedData = nil
         let deletingActive = targetID == id
         var committed = false
         do {
@@ -301,6 +295,8 @@ final class MobileSession {
     }
 
     private func restore(_ record: SessionRecord) {
+        pendingSave?.cancel(); pendingSave = nil
+        lastSavedData = nil
         speechCorrection.cancel()
         acceptsSpeechCorrection = false
         manualQuickError = nil; quickReader.reset()
@@ -575,5 +571,157 @@ extension MobileSession {
             message = failure
             if mode == .quick { manualQuickError = failure }
         }
+    }
+}
+
+/// Local persistence. Saving used to re-decode the whole archive and run on every keystroke.
+extension MobileSession {
+    /// Persist after a quiet period instead of on every keystroke. Typing a note used to encode and
+    /// fsync the whole record twice and re-decode the entire archive for each character.
+    func scheduleSave() {
+        pendingSave?.cancel()
+        pendingSave = Task { [weak self] in
+            guard let self else { return }
+            do { try await Task.sleep(for: self.saveDebounce) } catch { return }
+            guard !Task.isCancelled else { return }
+            self.pendingSave = nil
+            self.save(announce: false)
+        }
+    }
+
+    /// Write a debounced edit immediately — before stopping, backgrounding or leaving the record.
+    func flushPendingSave() {
+        guard pendingSave != nil else { return }
+        save(announce: false)
+    }
+
+    @discardableResult
+    func save(announce: Bool = true) -> Bool {
+        pendingSave?.cancel()
+        pendingSave = nil
+        let record = SessionRecord(id: id, title: title, date: date,
+                                   transcript: allSegments.map { "Microphone: \($0.text)" }.joined(separator: "\n"),
+                                   summary: summary, segments: allSegments, notes: notes,
+                                   quickSuggestion: quickSummary, deepAnswer: deepThought,
+                                   isComplete: state == .idle && allSegments.allSatisfy(\.isFinal),
+                                   attachments: attachments, sourceImportID: sourceImportID)
+        do {
+            let data = try JSONEncoder().encode(record)
+            guard data != lastSavedData else {
+                if announce { message = "Conversation saved on this device." }
+                return true
+            }
+            if hasContent || history.contains(where: { $0.id == id }) {
+                try archive.save(record)
+                remember(record)
+            }
+            try FileManager.default.createDirectory(at: activeURL.deletingLastPathComponent(),
+                                                    withIntermediateDirectories: true)
+            try data.write(to: activeURL, options: .atomic)
+            lastSavedData = data
+            if announce { message = "Conversation saved on this device." }
+            return true
+        } catch {
+            message = "Could not save conversation: \(error.localizedDescription). Your text is still here; try Save again."
+            return false
+        }
+    }
+
+    /// History is kept in memory. Re-reading and decoding every conversation file on each save made
+    /// typing and live transcription cost O(total archive size).
+    private func remember(_ record: SessionRecord) {
+        if let index = history.firstIndex(where: { $0.id == record.id }) { history[index] = record }
+        else { history.append(record) }
+        history.sort { $0.date > $1.date }
+    }
+}
+
+/// Audio-session lifecycle. These used to live in `ListenToMeIOSApp.body`, where no test could reach
+/// them; they take plain values so a unit test can drive every path.
+extension MobileSession {
+    static func interruption(from note: Notification) -> (type: AVAudioSession.InterruptionType,
+                                                          options: AVAudioSession.InterruptionOptions)? {
+        guard let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
+              let type = AVAudioSession.InterruptionType(rawValue: raw) else { return nil }
+        let chosen = note.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0
+        return (type, AVAudioSession.InterruptionOptions(rawValue: chosen))
+    }
+
+    static func routeChangeReason(from note: Notification) -> AVAudioSession.RouteChangeReason? {
+        guard let raw = note.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt else { return nil }
+        return AVAudioSession.RouteChangeReason(rawValue: raw)
+    }
+
+    /// A declined call, Siri or an alarm used to end the meeting silently. Say what happened, and
+    /// pick capture back up when the system says the interruption is over.
+    func handleInterruption(_ type: AVAudioSession.InterruptionType,
+                            options: AVAudioSession.InterruptionOptions = []) async {
+        switch type {
+        case .began:
+            guard state == .recording || state == .preparing else { return }
+            await stopCapture(reason: .interruption,
+                              message: "Recording stopped: audio was interrupted by a call or another app. " +
+                                       "Your transcript is saved; recording resumes when the interruption ends.")
+        case .ended:
+            guard stopReason == .interruption, state == .idle, !isSummarizing else { return }
+            guard options.contains(.shouldResume), isForeground else {
+                message = "Recording stopped: audio was interrupted by a call or another app. " +
+                          "Your transcript is saved; tap Listen to continue."
+                return
+            }
+            start()
+            message = "Recording resumed after the interruption."
+        @unknown default: return
+        }
+    }
+
+    /// Connecting AirPods mid-recording changes the input sample rate and stalls the engine, and
+    /// losing a headset does not mean the meeting is over: rebuild capture instead of stopping.
+    func handleRouteChange(_ reason: AVAudioSession.RouteChangeReason) async {
+        guard state == .recording, let recorder else { return }
+        switch reason {
+        case .newDeviceAvailable, .oldDeviceUnavailable, .override:
+            do {
+                try await recorder.reconfigure()
+                message = reason == .newDeviceAvailable
+                    ? "Microphone changed: recording continues on the newly connected microphone."
+                    : "Microphone changed: recording continues on the available microphone."
+            } catch {
+                await stopCapture(reason: .routeLost,
+                                  message: "Recording stopped: the microphone changed and capture could not " +
+                                           "restart (\(error.localizedDescription)). Your transcript is saved; " +
+                                           "tap Listen to continue.")
+            }
+        default: return
+        }
+    }
+
+    func handleScenePhase(_ phase: ScenePhase) async {
+        isForeground = phase != .background
+        switch phase {
+        case .active:
+            importSharedInbox()
+        case .background:
+            let capturing = state == .recording || state == .preparing
+            let before = message
+            await background()
+            if capturing {
+                stopReason = .background
+                if message == before {
+                    message = "Recording stopped: ListenToMe moved to the background. " +
+                              "Your transcript is saved; tap Listen to continue."
+                }
+            }
+        default: return
+        }
+    }
+
+    /// Stop and explain why, without overwriting a more specific failure raised while finalizing.
+    private func stopCapture(reason: StopReason, message text: String) async {
+        let before = message
+        stopReason = reason
+        await stop()
+        stopReason = reason
+        if message == before { message = text }
     }
 }

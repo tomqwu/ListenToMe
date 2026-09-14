@@ -156,13 +156,23 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   download on first use. Unsupported device/language and permission errors are shown in the app.
 - Partial and final transcript text. Everyone picked up by the microphone is labeled **Microphone**;
   this version does not infer who is speaking. Unfinalized text is retained and labeled accordingly.
-- Editable titles and notes; atomic local saves after finalized utterances/notes, explicit Save,
+- Editable titles and notes; atomic local saves after finalized utterances, explicit Save,
   save-before-New, local History, restoration on launch and Markdown through the share sheet.
+  Title and Notes typing is saved about a second after you stop typing, and is flushed when
+  recording stops or the app is backgrounded, so a keystroke never costs a full archive write. A
+  save whose bytes are identical to the last one is skipped, and History is kept in memory: the
+  conversation files are read on launch, after a delete and after a share-sheet import, not on
+  every save.
 - On-device Apple Intelligence summaries by default, or Ollama summaries — Ollama Cloud, or an Ollama
   server you run — with streamed results and secure API-key storage.
   Apple Intelligence accepts up to 8,000 characters (`PromptBudget.appleIntelligenceCharacters`, the
   shared cap macOS also clamps its Apple prompts to); Ollama accepts up to 60,000. Oversized input is rejected explicitly. AI output needs review.
-- Recording stops/saves on backgrounding, audio interruption or microphone disconnection. The screen
+- Recording stops and saves when the app is backgrounded or when audio is interrupted (call, Siri,
+  alarm), and the status line says which of the two happened. When the system reports the
+  interruption is over and asks for the audio back, recording resumes automatically and the status
+  line says so; otherwise tap Listen to continue. Connecting or losing a microphone mid-recording
+  (AirPods, a Bluetooth headset, a wired mic) rebuilds capture on whatever input remains instead of
+  ending the meeting; only a rebuild that fails stops recording, with the reason shown. The screen
   stays awake during active recording. No raw audio is saved.
 - Version/build information in Settings.
 
@@ -329,7 +339,12 @@ GitHub Actions builds both apps and runs the headless `ListenToMeCore` unit/inte
 1. First-use microphone denial, retry after granting, and unsupported language/model errors.
 2. Model installation, then at least two minutes of real speech with live/final transcript text.
 3. Stop finalizes the last phrase; interrupted/unfinalized text remains visible after save/relaunch.
-4. Background, incoming call, Bluetooth disconnection, and repeated Start/Stop do not leave the mic active.
+4. Background, incoming call, Bluetooth disconnection, and repeated Start/Stop do not leave the mic
+   active. Decline a call mid-recording and confirm recording resumes on its own with a message;
+   background the app mid-recording and confirm the message names backgrounding and that a later
+   interruption-ended event does not re-open the microphone; connect AirPods mid-recording and
+   confirm live text keeps arriving on the new input, then disconnect them and confirm capture
+   continues on the built-in microphone.
 5. New preserves the old conversation; History and sharing include notes, transcript and summary.
 6. On an Apple Intelligence eligible device, confirm a fresh install starts on Apple Intelligence,
    generate a factual summary, and verify unavailable, oversized-input and failure states keep the
