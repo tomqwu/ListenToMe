@@ -56,6 +56,35 @@ final class MobileAutomaticSummaryTests: XCTestCase {
         XCTAssertFalse(session.markdown.contains("\"action\""))
     }
 
+    /// #111 parity: the iOS adapter must hand the coordinator the same attributed snapshot, so a
+    /// keystroke in Notes cannot cancel a full review that is already running.
+    func testTypingNotesDoesNotCancelAnInFlightAutomaticReview() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let provider = HeldReviewProvider()
+        let recorder = TestRecorder()
+        let session = MobileSession(storageDirectory: root, summaryProvider: provider,
+                                    autoInterval: .milliseconds(50), makeRecorder: { recorder })
+        let originalAuto = session.autoQuick
+        let originalCorrection = session.ai.correctTranscript
+        defer { session.state = .idle; session.autoQuick = originalAuto; session.ai.correctTranscript = originalCorrection }
+        session.ai.correctTranscript = false
+        session.autoQuick = true
+        session.start()
+        try await waitUntil { session.automaticReviews.activeMode == .summary }
+        session.notes = "Ask about the budget"
+        XCTAssertEqual(session.automaticReviews.activeMode, .summary,
+                       "Typed notes are context, not a transcript revision")
+        let released = await provider.releaseReview()
+        XCTAssertTrue(released)
+        try await waitUntil { (session.automaticReviews.completedCounts[.summary] ?? 0) == 1 }
+        XCTAssertEqual(session.summary, "Full review")
+        // The finished review still satisfies the recommendation, so it is not offered a second time.
+        XCTAssertTrue(session.quickReader.reviewsCompleted.contains("summary"))
+        XCTAssertFalse(session.quickReader.recommendations.contains { $0.mode == "summary" })
+        await session.stop()
+    }
+
     func testSharingOlderAndLegacyRecordsPreservesChosenContentAndActiveSession() throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
@@ -121,6 +150,29 @@ private actor SlowSummaryProvider: LLMProvider {
             continuation.yield("{\"reviews\":[],\"action\":\"publish\",\"context\":\"First and second phrases\",\"bullets\":[\"Second phrase\"]}")
             continuation.finish()
         }
+    }
+    nonisolated func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
+        AsyncThrowingStream { continuation in Task { await respond(request, to: continuation) } }
+    }
+}
+
+/// Publishes a Quick decision that recommends Summary, then holds the review request open so the
+/// test can change the session while it is in flight.
+private actor HeldReviewProvider: LLMProvider {
+    nonisolated let id = "held-review-test"
+    private var review: AsyncThrowingStream<String, Error>.Continuation?
+    func releaseReview() -> Bool {
+        guard let review else { return false }
+        review.yield("Full review"); review.finish(); self.review = nil
+        return true
+    }
+    private func respond(_ request: LLMRequest, to continuation: AsyncThrowingStream<String, Error>.Continuation) {
+        guard request.purpose == .quickEvaluation else { review = continuation; return }
+        continuation.yield("""
+        {"action":"publish","context":"First phrase","bullets":["First phrase"],
+        "reviews":[{"mode":"summary","confidence":"high","reason":"New topic"}]}
+        """)
+        continuation.finish()
     }
     nonisolated func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
         AsyncThrowingStream { continuation in Task { await respond(request, to: continuation) } }

@@ -48,6 +48,11 @@ public struct AutomaticReviewDirectives: Sendable, Equatable {
     }
 }
 
+/// Raised only by the coordinator's own deadline race. A provider's `URLError.timedOut` (for example
+/// URLSession's idle timeout on a stalled connection) is an ordinary transient failure that must keep
+/// the retry backoff; only exceeding *this* deadline is terminal for the input.
+struct AutomaticReviewDeadlineExceeded: Error {}
+
 /// Event-driven, serial full reviews. Timers exist only for queued work or a failed request.
 @MainActor @Observable
 public final class AutomaticReviewCoordinator {
@@ -55,6 +60,9 @@ public final class AutomaticReviewCoordinator {
         let mode: AutomaticReviewMode
         let input: String
         let source: String
+        /// The attributed pieces the input was built from, compared per piece so that an append in
+        /// one channel, a notes keystroke or a finalized hypothesis cannot look like a rewrite.
+        let snapshot: [QuickSummaryContext.Piece]
         let directives: AutomaticReviewDirectives
     }
     public private(set) var activeMode: AutomaticReviewMode?
@@ -65,9 +73,13 @@ public final class AutomaticReviewCoordinator {
     private var nextAllowed: [AutomaticReviewMode: ContinuousClock.Instant] = [:]
     private var failures: [AutomaticReviewMode: Int] = [:]
     private var failedInputs: [AutomaticReviewMode: String] = [:]
+    /// The input that already exceeded this model's deadline. Retrying it unchanged would only
+    /// spend the same time again, so it is terminal until new speech changes the input.
+    private var timedOutInputs: [AutomaticReviewMode: String] = [:]
     private var enabled = false
     private var manualBusy = false
     private var currentInput = ""
+    private var currentPieces: [QuickSummaryContext.Piece] = []
     private var currentDirectives = AutomaticReviewDirectives()
     private var activeJob: Job?
     private var generation = 0
@@ -78,7 +90,9 @@ public final class AutomaticReviewCoordinator {
     private let retryInterval: Duration
     private let timeout: Duration
     @ObservationIgnored private var makeProvider: ((AutomaticReviewMode) throws -> any LLMProvider)?
-    @ObservationIgnored private var apply: ((AutomaticReviewMode, String, String) -> Void)?
+    /// `(mode, output, the snapshot the review read)`. Callers compare that snapshot per piece, so
+    /// bookkeeping after a review is decided by the same rule that kept the review alive.
+    @ObservationIgnored private var apply: ((AutomaticReviewMode, String, [QuickSummaryContext.Piece]) -> Void)?
 
     public init(summaryInterval: Duration = .seconds(30), deepInterval: Duration = .seconds(60),
                 retryInterval: Duration = .seconds(5), timeout: Duration = .seconds(60)) {
@@ -90,20 +104,29 @@ public final class AutomaticReviewCoordinator {
         source.split(whereSeparator: \.isWhitespace).joined(separator: " ")
     }
 
-    public func synchronize(enabled: Bool, manualBusy: Bool, source: String,
+    /// - Parameters:
+    ///   - pieces: the attributed snapshot the source was built from. Job validity is decided per
+    ///     piece (see `QuickSummaryContext.isContinuation`), never on the joined string.
+    ///   - source: the prompt text for a review, as the platform assembles it.
+    public func synchronize(enabled: Bool, manualBusy: Bool, pieces: [QuickSummaryContext.Piece], source: String,
                             directives: AutomaticReviewDirectives = .init(),
                             provider: @escaping (AutomaticReviewMode) throws -> any LLMProvider,
-                            apply: @escaping (AutomaticReviewMode, String, String) -> Void) {
+                            apply: @escaping (AutomaticReviewMode, String, [QuickSummaryContext.Piece]) -> Void) {
         self.enabled = enabled; self.manualBusy = manualBusy
-        currentInput = Self.normalized(source); currentDirectives = directives
+        currentInput = Self.normalized(source); currentPieces = pieces; currentDirectives = directives
         makeProvider = provider; self.apply = apply
         if !enabled { cancelActive(); pending = [:]; wake?.cancel(); wake = nil; return }
-        pending = pending.filter { currentInput.hasPrefix($0.value.input) }
-        if let job = activeJob, manualBusy || !currentInput.hasPrefix(job.input) {
-            if manualBusy, currentInput.hasPrefix(job.input) { pending[job.mode] = pending[job.mode] ?? job }
+        pending = pending.filter { covers($0.value) }
+        if let job = activeJob, manualBusy || !covers(job) {
+            if manualBusy, covers(job) { pending[job.mode] = pending[job.mode] ?? job }
             cancelActive()
         }
         pump()
+    }
+
+    /// True when the current input can still stand in for the job's own snapshot.
+    private func covers(_ job: Job) -> Bool {
+        QuickSummaryContext.isContinuation(of: job.snapshot, in: currentPieces)
     }
 
     public func offer(_ reviews: [QuickSummaryDecision.Review], source: String) {
@@ -114,9 +137,10 @@ public final class AutomaticReviewCoordinator {
             .compactMap { AutomaticReviewMode(rawValue: $0.mode) })
         pending = pending.filter { modes.contains($0.key) }
         for mode in AutomaticReviewMode.allCases where modes.contains(mode) {
-            guard completedInputs[mode] != input else { continue }
+            guard completedInputs[mode] != input, timedOutInputs[mode] != input else { continue }
             if activeJob?.mode == mode, activeJob?.input == input { continue }
-            pending[mode] = Job(mode: mode, input: input, source: source, directives: currentDirectives)
+            pending[mode] = Job(mode: mode, input: input, source: source, snapshot: currentPieces,
+                                directives: currentDirectives)
         }
         pump()
     }
@@ -131,7 +155,8 @@ public final class AutomaticReviewCoordinator {
 
     public func reset() {
         cancelActive(); wake?.cancel(); wake = nil; pending = [:]
-        completedInputs = [:]; completedCounts = [:]; nextAllowed = [:]; failures = [:]; failedInputs = [:]; errors = [:]
+        completedInputs = [:]; completedCounts = [:]; nextAllowed = [:]; failures = [:]; failedInputs = [:]
+        timedOutInputs = [:]; errors = [:]
     }
 
     public func status(_ mode: AutomaticReviewMode) -> String {
@@ -179,30 +204,62 @@ public final class AutomaticReviewCoordinator {
         pending[job.mode] = nil; activeJob = job; activeMode = job.mode; errors[job.mode] = nil
         generation += 1
         let token = generation
-        nextAllowed[job.mode] = now + interval(job.mode)
+        let deadline = Self.deadline(base: timeout, mode: job.mode, characters: job.input.count)
+        // `nextAllowed` is set when this review finishes or fails, never here: a cancelled attempt
+        // must not spend the window a completed review is entitled to.
         task = Task { [weak self] in
             guard let self else { return }
             do {
                 let request = LLMRequest(system: job.directives.system(for: job.mode),
                     messages: [.init(role: "user", content: job.directives.userMessage(job.source, mode: job.mode))])
-                let output = try await Self.collect(request, provider: provider, timeout: self.timeout)
-                guard token == self.generation, self.enabled, self.currentInput.hasPrefix(job.input) else { return }
+                let output = try await Self.collect(request, provider: provider, timeout: deadline)
+                guard token == self.generation, self.enabled, self.covers(job) else { return }
                 self.completedInputs[job.mode] = job.input; self.completedCounts[job.mode, default: 0] += 1
                 self.failures[job.mode] = 0; self.errors[job.mode] = nil
-                self.apply?(job.mode, output, job.input)
+                self.nextAllowed[job.mode] = .now + self.interval(job.mode)
+                self.apply?(job.mode, output, job.snapshot)
             } catch {
                 guard token == self.generation, !Task.isCancelled else { return }
-                self.failedInputs[job.mode] = job.input
-                self.failures[job.mode, default: 0] += 1
-                let willRetry = self.failures[job.mode, default: 0] < 3
-                self.errors[job.mode] = "Auto review failed: \(error.localizedDescription) Previous output kept. "
-                    + (willRetry ? "Retrying." : "Auto paused after repeated failures; generate manually or add new context.")
-                self.nextAllowed[job.mode] = .now + min(.seconds(60), self.retryInterval * (1 << min(self.failures[job.mode, default: 1] - 1, 4)))
-                if willRetry { self.pending[job.mode] = self.pending[job.mode] ?? job }
+                if error is AutomaticReviewDeadlineExceeded {
+                    // Re-running the identical oversized request would only spend the same time
+                    // again. Wait for new context, or let the user pick a faster model.
+                    self.timedOutInputs[job.mode] = job.input
+                    self.failures[job.mode] = 0
+                    self.nextAllowed[job.mode] = .now + self.interval(job.mode)
+                    self.errors[job.mode] = "Auto paused · This review needed more than "
+                        + "\(Self.seconds(deadline)) s on the selected model. Previous output kept; "
+                        + "generate manually, choose a faster model, or wait for new speech."
+                } else {
+                    self.failedInputs[job.mode] = job.input
+                    self.failures[job.mode, default: 0] += 1
+                    let willRetry = self.failures[job.mode, default: 0] < 3
+                    self.errors[job.mode] = "Auto review failed: \(error.localizedDescription) Previous output kept. "
+                        + (willRetry ? "Retrying." : "Auto paused after repeated failures; generate manually or add new context.")
+                    self.nextAllowed[job.mode] = .now + min(.seconds(60), self.retryInterval * (1 << min(self.failures[job.mode, default: 1] - 1, 4)))
+                    if willRetry { self.pending[job.mode] = self.pending[job.mode] ?? job }
+                }
             }
             guard token == self.generation else { return }
             self.task = nil; self.activeJob = nil; self.activeMode = nil; self.pump()
         }
+    }
+
+    /// The request deadline for one review. A flat deadline fails long local reviews that the same
+    /// model completes when generated manually, so it scales with mode and input size:
+    ///
+    ///     deadline = min(base + base x characters / 20,000, 5 min) x (Deep ? 2 : 1)
+    ///
+    /// The cap applies *before* doubling, so Deep is exactly twice Summary at every input size and no
+    /// single review can run longer than ten minutes. With the default 60-second base: 60 s for a
+    /// short Summary, 195 s for a 45,000-character Summary and 390 s for the same input as Deep.
+    static func deadline(base: Duration, mode: AutomaticReviewMode, characters: Int) -> Duration {
+        let scaled = min(.seconds(300), base + base * (Double(max(0, characters)) / 20_000))
+        return mode == .deep ? scaled * 2 : scaled
+    }
+
+    /// Whole seconds of a deadline, for the message a user reads when a review took too long.
+    static func seconds(_ duration: Duration) -> Int {
+        max(1, Int(duration.components.seconds))
     }
 
     private static func collect(_ request: LLMRequest, provider: any LLMProvider, timeout: Duration) async throws -> String {
@@ -219,7 +276,7 @@ public final class AutomaticReviewCoordinator {
                 }
                 return output
             }
-            group.addTask { try await Task.sleep(for: timeout); throw URLError(.timedOut) }
+            group.addTask { try await Task.sleep(for: timeout); throw AutomaticReviewDeadlineExceeded() }
             defer { group.cancelAll() }
             guard let output = try await group.next() else { throw CancellationError() }
             return output

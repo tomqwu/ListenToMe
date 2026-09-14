@@ -263,7 +263,13 @@ extension MeetingView {
             title: "Quick Summary", accent: Theme.accent, role: .quick, session: session,
             outputText: session.quickSuggestion,
             placeholder: "Enable Auto while listening, or request a recap.",
-            headerExtra: { EmptyView() },
+            headerExtra: {
+                // The automatic recap keeps updating behind a generated answer; this returns to it.
+                if session.quickAnswerOverridesRecap {
+                    Button("Show recap") { session.dismissQuickAnswer() }
+                        .controlSize(.small)
+                }
+            },
             actions: {
                 FlowLayout(spacing: 7) {
                     Button("What should I answer?") {

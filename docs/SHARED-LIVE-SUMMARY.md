@@ -80,9 +80,9 @@ Physical-device diagnostics showed three completed reads, no unread input and no
 
 `AutomaticReviewCoordinator` is shared by both platforms. After a completed Quick evaluation catches up with input, medium/high recommendations enqueue Summary for meaningful context and Deep for substantive questions, risks or tradeoffs. Each uses its selected model. Auto remains opt-in and manual Generate remains available.
 
-Full reviews run serially while Quick can continue evaluating new speech. Summary has a 30-second minimum between starts, Deep 60 seconds; the first eligible review starts immediately. Pending work coalesces to the latest context. These are one-shot deadlines for queued work, never periodic model polling. Unchanged input cannot regenerate a completed review.
+Full reviews run serially while Quick can continue evaluating new speech. Summary has a 30-second minimum between a completed review and the next automatic start, Deep 60 seconds; the first eligible review starts immediately, and a cancelled attempt does not spend that window. Pending work coalesces to the latest context. These are one-shot deadlines for queued work, never periodic model polling. Unchanged input cannot regenerate a completed review.
 
-Stop, Auto off, provider changes and conversation changes cancel automatic work. Manual generation takes priority and suppresses older queued work it covers. Appended speech can follow an in-flight snapshot; wording revisions invalidate stale output. Complete valid responses replace previous output atomically. Failures preserve previous output and retry at most three attempts, with 5/10-second backoff. Requests time out after 60 seconds; input is capped at 60,000 normalized characters and output at 100,000 characters. Provider unavailability is shown without silently switching models.
+Stop, Auto off, provider changes and conversation changes cancel automatic work. Manual generation takes priority and suppresses older queued work it covers. Appended speech can follow an in-flight snapshot; wording revisions invalidate stale output. Complete valid responses replace previous output atomically. Failures preserve previous output and retry at most three attempts, with 5/10-second backoff. Input is capped at 60,000 normalized characters and output at 100,000 characters. Provider unavailability is shown without silently switching models. Deadlines, snapshot validity and the Quick pane's two kinds of output are described below.
 
 The panels report waiting, queued, updating, up-to-date or failure status. The visible Auto label now describes all summaries, and explanatory text correctly describes speech-triggered evaluation with brief batching.
 
@@ -144,3 +144,86 @@ A queued or in-flight review keeps the directives it was created with, so a sett
 mid-request never relabels output produced from older context; the next review uses the new
 settings. With no directives set, the review prompts and the Quick evaluator prompt are unchanged.
 iOS exposes no response-language, persona or reference settings yet, so it passes none.
+
+## Snapshot validity, review deadlines and the two kinds of Quick output (next release)
+
+### Validity is decided per piece, not on the joined transcript
+
+An automatic review used to stay valid only while the current joined input still had the dispatched
+input as a **prefix**. The joined order is notes, finals, then `live:you`, `live:others`, so an
+append only lands at the end when nothing before it moves. One keystroke in Notes, a mic partial
+growing while system audio also had a partial, or one channel finalizing while the other was
+mid-sentence all looked like a rewrite: the running review was cancelled, queued work was dropped,
+and the mode's cooldown had already been spent.
+
+Both platforms now hand `AutomaticReviewCoordinator.synchronize` the attributed `[Piece]` snapshot
+alongside the prompt source, and `QuickSummaryContext.isContinuation(of:in:)` compares piece by
+piece:
+
+| Piece | Rule | Why |
+|---|---|---|
+| `notes:*` | never invalidates | Typed notes are the user's own context, not speech. A keystroke is new material for the next read, never a reason to cancel a 60-second review. |
+| `live:*` | current text must still start with the text that was read; a piece that disappeared is accepted | Provisional speech only grows. Its disappearance means recognition finalized it, which republishes the wording as a final piece and enqueues its own work. |
+| final | must still be present with identical text | A corrected or dropped final is a genuine transcript revision and does invalidate. |
+
+`QuickSummaryContext.isCurrent` applies the same notes rule to Quick reads: a note edited during a
+read no longer discards the completed evaluation (and model call); the newer note is simply read in
+the next batch, with the acknowledged text as its `previousText`. It stays stricter than
+`isContinuation` in one place — a `live:` piece that disappeared still invalidates a *read* — because
+a read acknowledges wording into the incremental ledger, where accepting text that recognition has
+since corrected would leave a superseded fact in memory; a full review is regenerated from the whole
+transcript by the next review, so there the job may finish.
+
+The same rule decides the bookkeeping *after* a review finishes on both platforms: when the current
+input still continues the snapshot the review read, the mode is marked reviewed and the
+recommendation is cleared. Comparing joined sources there would leave the recommendation outstanding
+after a notes keystroke and re-run the identical model call. Only the transcript segments the
+snapshot actually covered advance the listener ledger, so speech that arrived after the snapshot is
+still summarized.
+
+A mode's cooldown (Summary 30 s, Deep 60 s) now starts when a review **finishes**, not when it
+starts, so a cancelled attempt never spends the window a completed review is entitled to.
+
+### Deadlines scale with mode and input; a timeout is terminal for that input
+
+A flat 60-second deadline failed long local reviews that the same model completes from the manual
+pane, and the timeout was retried twice more with the identical request. The deadline is now
+
+    deadline = min(base + base x characters / 20,000, 5 min) x (Deep ? 2 : 1)
+
+The cap applies *before* doubling, so Deep is exactly twice Summary at every input size and no single
+review runs longer than ten minutes. With the default 60-second base: 60 s for a short Summary, 195 s
+for a 45,000-character Summary and 390 s for the same input as Deep. Exceeding *this* deadline is
+terminal for that exact input: it is not retried, the pane says the review needed more than N seconds
+on the selected model and suggests generating manually or choosing a faster model, and new speech (a
+different input) tries again. Only the coordinator's own deadline counts — a provider's
+`URLError.timedOut` (URLSession's idle timeout on a stalled connection) is an ordinary transient
+failure, so it keeps the three-attempt 5/10-second backoff like any other.
+
+### The automatic recap and manual Quick answers are separate
+
+macOS Quick shows two different things: the automatic recap, and an answer the user asked for
+("Draft reply", "Key terms", "Counterpoint"…). They used to share one property, so the next
+automatic recap overwrote an answer the user was still reading, and the evaluator was told that
+answer was the current recap (`visibleSummary`), which biased it toward `keep` and could flip the
+recap's language.
+
+`MeetingSession.quickRecap` now holds the automatic recap and is always what the evaluator receives
+as `visibleSummary`. A completed manual answer is *fresh* for `ManualQuickAnswer.freshness`
+(120 seconds on the session's injected clock, so expiry is testable); while it is fresh an automatic
+recap updates `quickRecap` but not the pane, and the status reads "Recap updated · Showing your
+generated answer". Freshness is measured on `MeetingSession`'s injected session clock, not a wall
+clock of its own, so expiry is exercised in tests without waiting. The **Show recap** button is
+offered whenever the pane differs from the current recap, *including after the window has elapsed* —
+expiry releases the pane on the next automatic apply, and until then the user must still be able to
+reach the newer recap. It is never offered while a manual answer is still streaming: a partial answer
+differs from the recap by definition, and swapping it mid-stream would leave the recap spliced onto
+the answer's remaining deltas, so `dismissQuickAnswer()` is a no-op then. Requesting another answer, clearing the conversation, renaming speakers or
+the window elapsing ends the protection. Quick has no automatic review mode, so a manual Quick
+answer is not registered as a completed review; it takes priority through `manualBusy` while it
+streams and through this freshness window afterwards.
+
+iOS needs no second state: its manual Quick refresh produces a recap under the same validated
+decision contract, so `quickSummary` is both the recap and the manual result, and it remains the
+evaluator's `visibleSummary`. Everything else above is shared core behaviour and is identical on
+both platforms.

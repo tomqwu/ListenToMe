@@ -97,6 +97,165 @@ final class SharedQuickLoopTests: XCTestCase {
         session.stop()
     }
 
+    /// #115: the automatic recap and a manual Quick answer are two different things. The recap must
+    /// never replace an answer the user just asked for, and the evaluator must be grounded in the
+    /// recap, never in the answer.
+    func testAutomaticRecapNeitherReplacesNorGroundsOnAFreshManualQuickAnswer() async throws {
+        let second = """
+        {"action":"publish","context":"Monday, Sarah, Tuesday review","bullets":["Review moves to Tuesday."],"reviews":[]}
+        """
+        let quick = QuickPaneTestProvider(evaluations: [publish, second], answer: "Draft: Hi Sarah, Monday works.")
+        let session = MeetingSession(store: ConversationStore(), context: ContextEngine(),
+            makeCapture: { MockCapture() }, makeTranscriber: { MockTranscriber() },
+            makeProvider: { _ in quick }, models: [.quick: "quick"], autoInterval: .milliseconds(15))
+        try await session.start()
+        session.autoSummaryEnabled = true
+        await session.ingest(.init(source: .others, text: "Sarah confirms Monday.", isFinal: true, start: 0, end: 1))
+        for _ in 0..<200 where session.quickReader.completedReads == 0 { try await Task.sleep(for: .milliseconds(5)) }
+        XCTAssertEqual(session.quickRecap, "- Sarah confirms Monday.")
+        XCTAssertEqual(session.quickSuggestion, session.quickRecap)
+
+        await session.respondQuick(.draftReply)
+        XCTAssertEqual(session.quickSuggestion, "Draft: Hi Sarah, Monday works.")
+        XCTAssertEqual(session.quickRecap, "- Sarah confirms Monday.", "A manual answer is not the recap")
+
+        await session.ingest(.init(source: .others, text: "The review moves to Tuesday.", isFinal: true, start: 2, end: 3))
+        for _ in 0..<200 where session.quickReader.completedReads < 2 { try await Task.sleep(for: .milliseconds(5)) }
+        XCTAssertEqual(session.quickSuggestion, "Draft: Hi Sarah, Monday works.",
+                       "A fresh manual answer must survive the next automatic recap")
+        XCTAssertEqual(session.quickRecap, "- Review moves to Tuesday.")
+        XCTAssertTrue(session.quickAnswerOverridesRecap)
+        XCTAssertEqual(session.autoQuickStatus, "Recap updated · Showing your generated answer")
+        let visible = await quick.visibleSummaries()
+        XCTAssertEqual(visible.last, "- Sarah confirms Monday.",
+                       "The evaluator is grounded in the recap, never in the manual answer")
+        XCTAssertFalse(visible.contains { $0.contains("Draft:") })
+
+        session.dismissQuickAnswer()
+        XCTAssertEqual(session.quickSuggestion, "- Review moves to Tuesday.")
+        XCTAssertFalse(session.quickAnswerOverridesRecap)
+        session.stop()
+    }
+
+    func testAManualAnswerStopsProtectingThePaneOnceItIsNoLongerFresh() {
+        var answer = ManualQuickAnswer()
+        XCTAssertFalse(answer.isFresh(at: 1_000), "No answer has been generated yet")
+        answer.completed(at: 1_000)
+        XCTAssertTrue(answer.isFresh(at: 1_000 + ManualQuickAnswer.freshness - 1))
+        XCTAssertFalse(answer.isFresh(at: 1_000 + ManualQuickAnswer.freshness),
+                       "After the freshness window the recap owns the pane again")
+        answer.completed(at: 1_000)
+        answer.dismiss()
+        XCTAssertFalse(answer.isFresh(at: 1_000))
+    }
+
+    /// An expired manual answer must not strand a newer recap: the recap is applied on the next
+    /// automatic evaluation, and "Show recap" stays available the whole time in between.
+    func testAnExpiredManualAnswerReleasesThePaneToTheNextAutomaticRecap() async throws {
+        let second = """
+        {"action":"publish","context":"Monday, Sarah, Tuesday review","bullets":["Review moves to Tuesday."],"reviews":[]}
+        """
+        let third = """
+        {"action":"publish","context":"Monday, Sarah, Tuesday, Friday","bullets":["Sign-off moves to Friday."],"reviews":[]}
+        """
+        let quick = QuickPaneTestProvider(evaluations: [publish, second, third], answer: "Draft: Hi Sarah, Monday works.")
+        let time = TestClock(seconds: 1_000)
+        let session = MeetingSession(store: ConversationStore(), context: ContextEngine(),
+            makeCapture: { MockCapture() }, makeTranscriber: { MockTranscriber() },
+            makeProvider: { _ in quick }, models: [.quick: "quick"], autoInterval: .milliseconds(15),
+            clock: { time.seconds })
+        try await session.start()
+        session.autoSummaryEnabled = true
+        await session.ingest(.init(source: .others, text: "Sarah confirms Monday.", isFinal: true, start: 0, end: 1))
+        for _ in 0..<200 where session.quickReader.completedReads == 0 { try await Task.sleep(for: .milliseconds(5)) }
+        await session.respondQuick(.draftReply)
+        XCTAssertEqual(session.quickSuggestion, "Draft: Hi Sarah, Monday works.")
+
+        await session.ingest(.init(source: .others, text: "The review moves to Tuesday.", isFinal: true, start: 2, end: 3))
+        for _ in 0..<200 where session.quickReader.completedReads < 2 { try await Task.sleep(for: .milliseconds(5)) }
+        XCTAssertEqual(session.quickSuggestion, "Draft: Hi Sarah, Monday works.", "Still fresh")
+        XCTAssertTrue(session.quickAnswerOverridesRecap, "Show recap must be offered while a newer recap waits")
+
+        time.seconds += ManualQuickAnswer.freshness
+        XCTAssertTrue(session.quickAnswerOverridesRecap,
+                      "An expired answer still hides the recap, so the way back must stay visible")
+        await session.ingest(.init(source: .others, text: "Sign-off moves to Friday.", isFinal: true, start: 4, end: 5))
+        for _ in 0..<200 where session.quickReader.completedReads < 3 { try await Task.sleep(for: .milliseconds(5)) }
+        XCTAssertEqual(session.quickSuggestion, "- Sign-off moves to Friday.",
+                       "Once the window elapses the recap owns the pane again")
+        XCTAssertFalse(session.quickAnswerOverridesRecap)
+        session.stop()
+    }
+
+    /// A half-streamed manual answer is not an answer the user can swap away from: offering
+    /// "Show recap" mid-stream would splice the recap and the still-appending draft tail.
+    func testTheRecapIsNotOfferedWhileAManualQuickAnswerIsStillStreaming() async throws {
+        let quick = HeldAnswerProvider(evaluations: [publish])
+        let session = MeetingSession(store: ConversationStore(), context: ContextEngine(),
+            makeCapture: { MockCapture() }, makeTranscriber: { MockTranscriber() },
+            makeProvider: { _ in quick }, models: [.quick: "quick"], autoInterval: .milliseconds(15))
+        try await session.start()
+        session.autoSummaryEnabled = true
+        await session.ingest(.init(source: .others, text: "Sarah confirms Monday.", isFinal: true, start: 0, end: 1))
+        for _ in 0..<200 where session.quickReader.completedReads == 0 { try await Task.sleep(for: .milliseconds(5)) }
+        XCTAssertEqual(session.quickRecap, "- Sarah confirms Monday.")
+
+        let answer = Task { await session.respondQuick(.draftReply) }
+        for _ in 0..<200 where !(await quick.isStreamingAnswer()) { try await Task.sleep(for: .milliseconds(5)) }
+        XCTAssertEqual(session.quickSuggestion, "Draft: Hi Sarah,", "The answer is only half streamed")
+        XCTAssertFalse(session.quickAnswerOverridesRecap, "Show recap must not appear mid-stream")
+        XCTAssertNotEqual(session.autoQuickStatus, "Recap updated · Showing your generated answer")
+        session.dismissQuickAnswer()
+        XCTAssertEqual(session.quickSuggestion, "Draft: Hi Sarah,",
+                       "Dismissing mid-stream must not splice the recap into the streaming answer")
+
+        let finished = await quick.finishAnswer()
+        XCTAssertTrue(finished)
+        await answer.value
+        XCTAssertEqual(session.quickSuggestion, "Draft: Hi Sarah, Monday works.")
+        XCTAssertTrue(session.quickAnswerOverridesRecap, "A finished answer can be swapped for the recap")
+        XCTAssertEqual(session.autoQuickStatus, "Recap updated · Showing your generated answer")
+        session.dismissQuickAnswer()
+        XCTAssertEqual(session.quickSuggestion, "- Sarah confirms Monday.")
+        session.stop()
+    }
+
+    /// #111 follow-up: a review that survives a notes keystroke must also *count* as that review, or
+    /// the recommendation stays outstanding and the identical model call runs again.
+    func testAReviewCompletingAcrossANotesEditIsMarkedReviewedAndNotRepeated() async throws {
+        let decision = """
+        {"action":"publish","context":"Azure latency","bullets":["Azure latency is the topic."],
+        "reviews":[{"mode":"summary","confidence":"high","reason":"New topic"}]}
+        """
+        let quick = MockLLMProvider(id: "quick", deltas: [decision])
+        let reviews = HeldReviewProvider()
+        let session = MeetingSession(store: ConversationStore(), context: ContextEngine(),
+            makeCapture: { MockCapture() }, makeTranscriber: { MockTranscriber() },
+            makeProvider: { model -> any LLMProvider in model == "quick" ? quick : reviews },
+            models: [.quick: "quick", .listener: "summary-model"], autoInterval: .milliseconds(15))
+        try await session.start()
+        session.autoSummaryEnabled = true
+        await session.ingest(.init(source: .others, text: "Why is Azure slow today?", isFinal: true, start: 0, end: 1))
+        for _ in 0..<200 where session.automaticReviews.activeMode != .summary { try await Task.sleep(for: .milliseconds(5)) }
+        XCTAssertEqual(session.automaticReviews.activeMode, .summary)
+        // Type into Notes while the review is in flight: it must neither cancel nor un-count it.
+        session.notes = "Ask about the budget"
+        XCTAssertEqual(session.automaticReviews.activeMode, .summary, "A notes keystroke must not cancel it")
+        let released = await reviews.release()
+        XCTAssertTrue(released)
+        for _ in 0..<200 where session.automaticReviews.completedCounts[.summary] == nil {
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        XCTAssertEqual(session.listenerSummary, "Full review")
+        XCTAssertTrue(session.quickReader.reviewsCompleted.contains("summary"),
+                      "A review that finished across a notes edit still satisfies the recommendation")
+        XCTAssertFalse(session.quickReader.recommendations.contains { $0.mode == "summary" })
+        try await Task.sleep(for: .milliseconds(80))
+        let count = await reviews.requestCount()
+        XCTAssertEqual(count, 1, "The identical review must not run twice because notes changed")
+        session.stop()
+    }
+
     func testMacLiveSpeechTriggersWithoutFinalEventAndSilenceDoesNotPoll() async throws {
         let provider = MockLLMProvider(id: "live", deltas: [publish])
         let session = MeetingSession(store: ConversationStore(), context: ContextEngine(),
@@ -187,6 +346,88 @@ private struct NetworkFailureProvider: LLMProvider {
 }
 
 /// Records every full-review request the automatic coordinator dispatches.
+/// Answers Quick evaluations with prepared decisions and every other request with a manual answer,
+/// recording the `visibleSummary` each evaluation was grounded in.
+/// A mutable wall clock for the session's injected `clock`, readable from its `@Sendable` closure.
+private final class TestClock: @unchecked Sendable {
+    private let lock = NSLock()
+    private var value: TimeInterval
+    init(seconds: TimeInterval) { value = seconds }
+    var seconds: TimeInterval {
+        get { lock.withLock { value } }
+        set { lock.withLock { value = newValue } }
+    }
+}
+
+/// Evaluates Quick normally, but streams a manual answer in two deltas and holds the second until
+/// the test releases it, so the pane can be inspected mid-stream.
+private actor HeldAnswerProvider: LLMProvider {
+    nonisolated let id = "held-answer"
+    private var evaluations: [String]
+    private var held: AsyncThrowingStream<String, Error>.Continuation?
+    init(evaluations: [String]) { self.evaluations = evaluations }
+    func isStreamingAnswer() -> Bool { held != nil }
+    func finishAnswer() -> Bool {
+        guard let held else { return false }
+        held.yield(" Monday works."); held.finish(); self.held = nil
+        return true
+    }
+    private func respond(_ request: LLMRequest, _ continuation: AsyncThrowingStream<String, Error>.Continuation) {
+        guard request.purpose == .quickEvaluation else {
+            continuation.yield("Draft: Hi Sarah,"); held = continuation; return
+        }
+        continuation.yield(evaluations.count > 1 ? evaluations.removeFirst() : (evaluations.first ?? ""))
+        continuation.finish()
+    }
+    nonisolated func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
+        AsyncThrowingStream { continuation in Task { await self.respond(request, continuation) } }
+    }
+}
+
+private actor QuickPaneTestProvider: LLMProvider {
+    nonisolated let id = "quick-pane"
+    private var evaluations: [String]
+    private let answer: String
+    private var grounding: [String] = []
+    init(evaluations: [String], answer: String) { self.evaluations = evaluations; self.answer = answer }
+    func visibleSummaries() -> [String] { grounding }
+    private func next(_ request: LLMRequest) -> String {
+        guard request.purpose == .quickEvaluation else { return answer }
+        if let data = request.messages[0].content.data(using: .utf8),
+           let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            grounding.append(object["visibleSummary"] as? String ?? "")
+        }
+        return evaluations.count > 1 ? evaluations.removeFirst() : (evaluations.first ?? "")
+    }
+    nonisolated func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
+        AsyncThrowingStream { continuation in
+            Task {
+                continuation.yield(await self.next(request))
+                continuation.finish()
+            }
+        }
+    }
+}
+
+/// Holds one review request open so a test can change the session while it is in flight.
+private actor HeldReviewProvider: LLMProvider {
+    nonisolated let id = "held-review"
+    private var held: AsyncThrowingStream<String, Error>.Continuation?
+    private var requests = 0
+    func requestCount() -> Int { requests }
+    func release() -> Bool {
+        guard let held else { return false }
+        held.yield("Full review"); held.finish(); self.held = nil
+        return true
+    }
+    private func hold(_ continuation: AsyncThrowingStream<String, Error>.Continuation) {
+        requests += 1; held = continuation
+    }
+    nonisolated func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
+        AsyncThrowingStream { continuation in Task { await self.hold(continuation) } }
+    }
+}
+
 private actor CapturingReviewProvider: LLMProvider {
     nonisolated let id = "capturing-review"
     private var captured: [LLMRequest] = []

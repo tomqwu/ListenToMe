@@ -28,6 +28,41 @@ final class QuickSummaryContextTests: XCTestCase {
         XCTAssertTrue(context.isCurrent(batch, pieces: pieces(text + " Sarah will review it.")))
     }
 
+    /// #111: a keystroke in Notes used to discard a completed Quick read, because notes are the
+    /// first piece and any edit moved every later piece in the joined comparison.
+    func testTypedNotesDoNotDiscardAReadOfSpeech() throws {
+        var context = QuickSummaryContext()
+        let speech = TranscriptSegment(source: .others, text: "Sarah confirms Monday.", isFinal: true, start: 0, end: 1)
+        let batch = try XCTUnwrap(context.batch(
+            QuickSummaryContext.pieces(notes: "Ask about budget", segments: [speech]), summary: ""))
+        let edited = QuickSummaryContext.pieces(notes: "Ask about budget and headcount", segments: [speech])
+        XCTAssertTrue(context.isCurrent(batch, pieces: edited),
+                      "Typing a note is new context for the next read, not a reason to throw this one away")
+        context.accept(batch, memory: "Monday")
+        XCTAssertTrue(context.hasChanges(edited), "The newer note is still read next time")
+    }
+
+    func testSnapshotContinuationComparesEachPieceInsteadOfTheJoinedTranscript() {
+        func piece(_ id: String, _ text: String) -> QuickSummaryContext.Piece { .init(id: id, text: text) }
+        let snapshot = [piece("notes:0", "Notes: budget"), piece("live:you:0", "You: why is Azure"),
+                        piece("final:0", "Others: the region is far")]
+        XCTAssertTrue(QuickSummaryContext.isContinuation(of: snapshot, in: snapshot))
+        XCTAssertTrue(QuickSummaryContext.isContinuation(of: snapshot, in: [
+            piece("notes:0", "Notes: budget and headcount"), piece("live:you:0", "You: why is Azure slow"),
+            piece("final:0", "Others: the region is far")]), "Notes edits and appended speech are continuations")
+        XCTAssertTrue(QuickSummaryContext.isContinuation(of: snapshot, in: [
+            piece("final:0", "Others: the region is far"), piece("final:1", "You: why is Azure slow")]),
+            "A finalized hypothesis removes its live piece and republishes as a final one")
+        XCTAssertFalse(QuickSummaryContext.isContinuation(of: snapshot, in: [
+            piece("notes:0", "Notes: budget"), piece("live:you:0", "You: why is AWS"),
+            piece("final:0", "Others: the region is far")]), "A rewritten hypothesis invalidates")
+        XCTAssertFalse(QuickSummaryContext.isContinuation(of: snapshot, in: [
+            piece("notes:0", "Notes: budget"), piece("live:you:0", "You: why is Azure"),
+            piece("final:0", "Others: the region is nearby")]), "A corrected final invalidates")
+        XCTAssertFalse(QuickSummaryContext.isContinuation(of: snapshot, in: [piece("notes:0", "Notes: budget")]),
+                       "A dropped final invalidates")
+    }
+
     func testResponseLanguageReplacesTheFollowTheTranscriptRuleInsteadOfContradictingIt() throws {
         let pieces = [QuickSummaryContext.Piece(id: "a", text: "You: Sarah confirms Monday.")]
         let plain = try XCTUnwrap(QuickSummaryContext().batch(pieces, summary: ""))

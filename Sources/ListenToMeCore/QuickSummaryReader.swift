@@ -148,6 +148,28 @@ public final class QuickSummaryReader {
     }
 }
 
+/// Tracks a manual Quick answer the user asked for (Draft reply, Key terms, Counterpoint…) so the
+/// automatic recap cannot replace it while they are still reading it. The automatic recap is kept
+/// separately and stays the evaluator's `visibleSummary`; only the *displayed* value is held back.
+public struct ManualQuickAnswer: Sendable {
+    /// How long a completed manual answer keeps the Quick pane. Requesting another answer, clearing
+    /// the conversation or dismissing the answer ends it sooner. Once it elapses the pane follows the
+    /// recap again on the next automatic apply; the answer stays reachable until then, and "Show
+    /// recap" stays available the whole time, so an expired answer can never strand a newer recap.
+    public static let freshness: TimeInterval = 120
+    /// Seconds on the session's injected clock, so expiry is testable without waiting.
+    private var completedAt: TimeInterval?
+    public init() {}
+    /// A manual answer finished streaming and is now on screen.
+    public mutating func completed(at now: TimeInterval) { completedAt = now }
+    /// The user dismissed the answer, started a new request, or the conversation was reset.
+    public mutating func dismiss() { completedAt = nil }
+    public func isFresh(at now: TimeInterval) -> Bool {
+        guard let completedAt else { return false }
+        return now - completedAt < Self.freshness
+    }
+}
+
 public enum QuickSummaryError: LocalizedError {
     case message(String)
     public var errorDescription: String? { switch self { case .message(let message): return message } }

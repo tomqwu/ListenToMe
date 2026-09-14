@@ -458,14 +458,18 @@ extension MobileSession {
 
     private func synchronizeAutomaticReviews() {
         automaticReviews.synchronize(enabled: autoQuick && state == .recording && automaticQuickAvailability == nil,
-            manualBusy: isSummarizing, source: summarySource, provider: { [weak self] mode in
+            manualBusy: isSummarizing, pieces: quickPieces, source: summarySource,
+            provider: { [weak self] mode in
                 guard let self, let mobileMode = MobileSummaryMode(rawValue: mode.rawValue) else { throw CancellationError() }
                 if let reason = self.summaryAvailability(for: mobileMode) { throw QuickSummaryError.message(reason) }
                 return try self.summaryProvider ?? self.ai.client(for: mobileMode)
-            }, apply: { [weak self] mode, output, source in
+            }, apply: { [weak self] mode, output, reviewed in
                 guard let self else { return }
                 if mode == .summary { self.summary = output } else { self.deepThought = output }
-                if AutomaticReviewCoordinator.normalized(self.summarySource) == source {
+                // Same rule that kept the review alive: a notes keystroke or appended speech does not
+                // make the finished review stale, so it must not leave the recommendation outstanding
+                // and re-run the identical model call.
+                if MobileQuickContext.isContinuation(of: reviewed, in: self.quickPieces) {
                     self.quickReader.markReviewed(mode.rawValue)
                 }
                 self.save(announce: false)
@@ -509,6 +513,7 @@ extension MobileSession {
         if let reason = summaryBlockReason(for: mode) { message = reason; return }
         // Capture a stable input snapshot; recording can continue while this request runs.
         let source = summarySource
+        let reviewed = quickPieces
         guard !source.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             message = "Add notes or record a transcript before summarizing."
             return
@@ -561,7 +566,9 @@ extension MobileSession {
             if let reviewMode = AutomaticReviewMode(rawValue: mode.rawValue) {
                 automaticReviews.markManualCompletion(reviewMode, source: source)
             }
-            if summarySource == source { quickReader.markReviewed(mode.rawValue) }
+            if MobileQuickContext.isContinuation(of: reviewed, in: quickPieces) {
+                quickReader.markReviewed(mode.rawValue)
+            }
             save(announce: false)
         } catch {
             let failure = "\(mode.title) failed: \(MobileAISettings.errorMessage(error)) Your previous summary is kept."
