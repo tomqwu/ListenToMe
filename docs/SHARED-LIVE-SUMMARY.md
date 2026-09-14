@@ -25,6 +25,12 @@ preserved on both platforms. iOS uses the configured Ollama connection — Ollam
 the user entered. Apple Intelligence is available for manual summaries on supported devices.
 Selecting Apple pauses Auto with an explanation; it never silently routes speech to Cloud.
 
+Providers declare their prompt window through `LLMProvider.maxPromptCharacters`. Ollama (local or
+Cloud) declares none and keeps the provider-agnostic transcript and reference budgets unchanged.
+Apple Intelligence declares `PromptBudget.appleIntelligenceCharacters` (8,000 — the same cap the iOS
+manual summary path enforces), so macOS clamps every Listener/Quick/Deep prompt to that window and
+reports the trim in the status line instead of failing with a context-window error.
+
 The native Auto experiment failed the quality gate (3/7 cases, including failures on repetition,
 a bilingual correction and transcript instructions). It is isolated in
 `scripts/ExperimentalAppleQuickProvider.swift`, outside both app targets. The benchmark runner

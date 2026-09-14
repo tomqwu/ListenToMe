@@ -126,6 +126,25 @@ tables behind them are covered by `CaptureRecoveryTests`.
    pressing Listen must show the system microphone prompt first; allowing it starts capture in the
    same press, declining it shows the same red banner instead of recording silence.
 
+## Provider errors and the Apple Intelligence context window (#118, #119)
+
+1. **Rejected cloud key (#118).** In Settings choose **Cloud** and save a deliberately wrong Ollama
+   API key. Ask any pane for an answer. The pane must show `HTTP 401` with "API key rejected — check
+   the Ollama API key in Settings" and the server's own text in parentheses. It must **not** say
+   "Is the server running and the model pulled?". The model dropdown refresh must fail the same way.
+2. **Server down (#118).** Choose **Local only**, quit Ollama, and ask for an answer. Here — and only
+   here — the message keeps the "Is the server running and the model pulled?" hint.
+3. **Bad option (#118).** With a local model that rejects an option, confirm the server's own
+   `{"error": …}` text is visible in the pane rather than a canned status line.
+4. **Apple Intelligence budget (#119).** On an Apple Intelligence eligible Mac, choose
+   **Apple Intelligence** in Settings, attach a large reference folder, and record (or import) at
+   least 20 minutes of speech. Ask Deep for a **Recap** and for **Action items**. Both must answer
+   instead of failing with a FoundationModels context-window error, and the status line under the
+   transcript must read "Trimmed to fit this model's context window — only the most recent speech is
+   included."
+5. Switch back to **Local only** or **Cloud** with the same conversation: the trim notice disappears
+   and the full transcript is used again.
+
 ## Enabled Screen Recording switch but capture is refused
 
 If the installed production app repeatedly returns ScreenCaptureKit `-3801` despite an enabled

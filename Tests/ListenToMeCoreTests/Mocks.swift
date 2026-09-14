@@ -13,16 +13,21 @@ struct MockLLMProvider: LLMProvider {
     }
 }
 
-/// Provider that records the user-message content of the last request it streamed.
+/// Provider that records the last request it streamed (and optionally declares a context window).
 final class RecordingProvider: LLMProvider, @unchecked Sendable {
     let id = "recording"
     let deltas: [String]
+    let maxPromptCharacters: Int?
     private let lock = NSLock()
-    private var _lastUser: String?
-    var lastUser: String? { lock.withLock { _lastUser } }
-    init(deltas: [String]) { self.deltas = deltas }
+    private var _lastRequest: LLMRequest?
+    var lastRequest: LLMRequest? { lock.withLock { _lastRequest } }
+    var lastUser: String? { lock.withLock { _lastRequest?.messages.last?.content } }
+    init(deltas: [String], maxPromptCharacters: Int? = nil) {
+        self.deltas = deltas
+        self.maxPromptCharacters = maxPromptCharacters
+    }
     func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
-        lock.withLock { _lastUser = request.messages.last?.content }
+        lock.withLock { _lastRequest = request }
         return AsyncThrowingStream { continuation in
             for delta in deltas { continuation.yield(delta) }
             continuation.finish()

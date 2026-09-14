@@ -50,6 +50,10 @@ public final class MeetingSession {
     private var summarizedSegmentIDs = Set<UUID>()
     private var pendingSummaryIDs: [Int: Set<UUID>] = [:]
 
+    /// Set when the last prompt had to drop transcript or reference material to fit the role
+    /// provider's context window (Apple Intelligence). nil for providers with no window.
+    public private(set) var promptTruncationNotice: String?
+
     /// True while an imported audio file is being transcribed into the store.
     public private(set) var isTranscribingFile = false
 
@@ -442,31 +446,41 @@ extension MeetingSession {
         }
     }
 
+    /// Builds the prompt context for `role`, clamped to that provider's context window.
+    /// With no window (Ollama) the budgets are exactly what they always were.
+    private func clampedContext(for action: ResponseAction, role: CopilotRole) -> PromptContext {
+        let limit = providers[role]?.maxPromptCharacters
+        let references = referenceContext?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let allocation = PromptBudget.allocate(limit: limit,
+                                               transcript: Self.transcriptBudget(for: action),
+                                               references: references.count)
+        let droppedReferences = references.count > allocation.references
+        let clampedReferences = droppedReferences
+            ? String(references.prefix(allocation.references)) : references
+        let context = self.context.buildContext(
+            from: store, notes: notes, maxChars: allocation.transcript,
+            summary: lastCompletedListenerSummary, responseLanguage: responseLanguage,
+            references: clampedReferences.isEmpty ? nil : clampedReferences,
+            personaGuidance: personaGuidance)
+        // Only a context-window clamp is worth reporting; the provider-agnostic "recent window"
+        // budgets have always been a deliberate relevance choice, not a capacity failure.
+        let droppedTranscript = context.messages.count < store.utterances.count
+        promptTruncationNotice = (limit != nil && (droppedTranscript || droppedReferences))
+            ? PromptBudget.truncationNotice : nil
+        return context
+    }
+
     /// Streams a Quick response for the given action. Awaits completion.
     public func respondQuick(_ action: ResponseAction) async {
         await startRoleTask(.quick) {
-            PromptBuilder.build(
-                context: self.context.buildContext(from: self.store, notes: self.notes,
-                                                   maxChars: Self.transcriptBudget(for: action),
-                                                   summary: self.lastCompletedListenerSummary,
-                                                   responseLanguage: self.responseLanguage,
-                                                   references: self.referenceContext,
-                                                   personaGuidance: self.personaGuidance),
-                action: action)
+            PromptBuilder.build(context: self.clampedContext(for: action, role: .quick), action: action)
         }.value
     }
 
     /// Streams a Deep response for the given action. Awaits completion.
     public func respondDeep(_ action: ResponseAction) async {
         await startRoleTask(.deep) {
-            PromptBuilder.buildDeep(
-                context: self.context.buildContext(from: self.store, notes: self.notes,
-                                                   maxChars: Self.transcriptBudget(for: action),
-                                                   summary: self.lastCompletedListenerSummary,
-                                                   responseLanguage: self.responseLanguage,
-                                                   references: self.referenceContext,
-                                                   personaGuidance: self.personaGuidance),
-                action: action)
+            PromptBuilder.buildDeep(context: self.clampedContext(for: action, role: .deep), action: action)
         }.value
     }
 
@@ -506,9 +520,13 @@ extension MeetingSession {
         let task = startRoleTask(.listener) {
             let remaining = self.store.utterances.filter { !self.summarizedSegmentIDs.contains($0.id) }
             // Process oldest unseen speech first. A failed/cancelled request never advances the ledger.
+            // The batch is clamped to the listener provider's context window (nil = unlimited).
+            let batchBudget = PromptBudget.allocate(
+                limit: self.providers[.listener]?.maxPromptCharacters,
+                transcript: 16_000, references: 0).transcript
             var characters = 0
             let batch = remaining.prefix { segment in
-                if characters > 0 && characters + segment.text.count > 16_000 { return false }
+                if characters > 0 && characters + segment.text.count > batchBudget { return false }
                 characters += segment.text.count
                 return true
             }

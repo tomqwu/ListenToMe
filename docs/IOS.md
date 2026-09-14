@@ -146,7 +146,8 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   save-before-New, local History, restoration on launch and Markdown through the share sheet.
 - On-device Apple Intelligence summaries by default, or Ollama summaries — Ollama Cloud, or an Ollama
   server you run — with streamed results and secure API-key storage.
-  Apple Intelligence accepts up to 8,000 characters; Ollama accepts up to 60,000. Oversized input is rejected explicitly. AI output needs review.
+  Apple Intelligence accepts up to 8,000 characters (`PromptBudget.appleIntelligenceCharacters`, the
+  shared cap macOS also clamps its Apple prompts to); Ollama accepts up to 60,000. Oversized input is rejected explicitly. AI output needs review.
 - Recording stops/saves on backgrounding, audio interruption or microphone disconnection. The screen
   stays awake during active recording. No raw audio is saved.
 - Version/build information in Settings.

@@ -126,6 +126,11 @@ extension MeetingView {
                 Text("Saving keeps finalized text; the current spoken phrase is still being transcribed.")
                     .foregroundStyle(.secondary)
             }
+            // Apple Intelligence has a small on-device context window; say so when a prompt had to
+            // be trimmed instead of silently answering from a partial transcript (issue #119).
+            if let notice = session.promptTruncationNotice {
+                Text(notice).foregroundStyle(.secondary)
+            }
         }
         .font(.system(size: 13))
         .padding(.horizontal, 14).padding(.vertical, 8)

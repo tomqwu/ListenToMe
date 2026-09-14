@@ -162,11 +162,17 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   "good for" hints. Choices persist across launches; **More → Refresh models** re-scans installed
   models (e.g. after `ollama pull`). On first launch any role whose saved model isn't installed
   auto-switches to one that works — no manual config needed.
-- **AI processing mode.** In **Settings**, explicitly choose **Local only**, **Cloud**, or **AI off**.
+- **AI processing mode.** In **Settings**, explicitly choose **Local only**, **Apple Intelligence**,
+  **Cloud**, or **AI off**.
   Local mode verifies downloaded-model metadata before every request and rejects remote/cloud-backed
-  models and redirects. Cloud mode uses `https://ollama.com` and the key stored in macOS Keychain.
+  models and redirects. Apple Intelligence runs entirely on this device; because its on-device model
+  has a small context window, every prompt is capped at 8,000 characters — long meetings are answered
+  from the most recent speech and the status line says when material was trimmed. Cloud mode uses
+  `https://ollama.com` and the key stored in macOS Keychain.
   It sends transcript, notes, summary and attached reference context to Ollama Cloud. Adding a key
   alone does not switch modes. AI off leaves capture, transcription and saving available.
+  When Ollama refuses a request, the pane shows the server's own explanation with its HTTP status —
+  a rejected API key and an exhausted quota read as such, not as a missing local model.
 - **Presets.** Pick a use-case preset to tailor how the copilot responds.
 - **Languages.** Independent **transcription-language** and **AI response-language** pickers.
 - **Reference files.** Add files/folders as context, with a configurable token budget.

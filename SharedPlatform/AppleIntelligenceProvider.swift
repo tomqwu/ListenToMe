@@ -7,6 +7,9 @@ import FoundationModels
 @available(macOS 26, iOS 26, *)
 public struct AppleIntelligenceProvider: LLMProvider {
     public let id = "apple-intelligence"
+    /// The on-device Foundation model has a ~4k-token window shared by input and output, so the
+    /// prompt is capped at the same character budget iOS already enforces (issue #119).
+    public let maxPromptCharacters: Int? = PromptBudget.appleIntelligenceCharacters
     public init() {}
     public static var unavailableReason: String? {
         switch SystemLanguageModel.default.availability {
@@ -28,7 +31,11 @@ public struct AppleIntelligenceProvider: LLMProvider {
                     }
                     if let reason = Self.unavailableReason { throw QuickSummaryError.message(reason) }
                     let session = LanguageModelSession(instructions: request.system)
-                    let prompt = request.messages.map(\.content).joined(separator: "\n")
+                    // Last line of defence: callers clamp with PromptBudget, but a direct caller
+                    // must not be able to push the on-device model past its window.
+                    let joined = request.messages.map(\.content).joined(separator: "\n")
+                    let room = max(PromptBudget.appleIntelligenceCharacters - request.system.count, 500)
+                    let prompt = joined.count > room ? String(joined.suffix(room)) : joined
                     let response = try await session.respond(to: prompt).content
                     try Task.checkCancellation()
                     continuation.yield(response); continuation.finish()
