@@ -84,10 +84,25 @@ final class PromptBudgetTests: XCTestCase {
         XCTAssertTrue(both?.contains("older speech") == true, both ?? "")
     }
 
-    func testClampedSummaryOrNotesCountAsDroppedSpeechContext() {
+    /// Clamped notes / rolling summary are grounding, not speech: they must be named as themselves,
+    /// never reported as "only the most recent speech is included".
+    func testClampedSummaryOrNotesGetTheirOwnWording() {
         let notice = PromptBudget.truncationNotice(transcriptDropped: false, referencesDropped: false,
                                                    auxiliaryDropped: true)
         XCTAssertNotNil(notice)
+        XCTAssertTrue(notice?.contains("notes") == true, notice ?? "")
+        XCTAssertTrue(notice?.contains("running summary") == true, notice ?? "")
+        XCTAssertFalse(notice?.contains("most recent speech") == true, notice ?? "")
+        XCTAssertFalse(notice?.contains("older speech") == true, notice ?? "")
+        XCTAssertFalse(notice?.contains("reference") == true, notice ?? "")
+    }
+
+    func testAllThreeKindsOfLossAreNamedTogether() {
+        let notice = PromptBudget.truncationNotice(transcriptDropped: true, referencesDropped: true,
+                                                   auxiliaryDropped: true)
+        XCTAssertTrue(notice?.contains("older speech") == true, notice ?? "")
+        XCTAssertTrue(notice?.contains("reference") == true, notice ?? "")
+        XCTAssertTrue(notice?.contains("notes") == true, notice ?? "")
     }
 
     // MARK: - Transcript cost

@@ -142,7 +142,10 @@ tables behind them are covered by `CaptureRecoveryTests`.
    instead of failing with a FoundationModels context-window error, and the status line under the
    transcript must name what was dropped — "Trimmed to fit this model's context window — older
    speech and some attached reference material were left out." Detach the reference folder and ask
-   again: the notice must change to the speech-only wording.
+   again: the notice must change to the speech-only wording. With a very long **Context notes**
+   entry, the notice must instead name "your notes and the running summary". In no case may the pane
+   show "This request is too long for Apple Intelligence's on-device context window." — that string
+   is the provider's last-resort guard and means the prompt reached it unbounded; report it as a bug.
 5. Switch back to **Local only** or **Cloud** with the same conversation (Settings → save): the trim
    notice disappears immediately and the full transcript is used again.
 6. **Many short lines.** Still on Apple Intelligence, have a long back-and-forth of short utterances

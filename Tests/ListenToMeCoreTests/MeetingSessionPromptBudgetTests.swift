@@ -127,20 +127,27 @@ final class MeetingSessionPromptBudgetTests: XCTestCase {
         XCTAssertTrue(notice?.lowercased().contains("context window") == true, notice ?? "")
     }
 
-    /// A partial listener batch is not loss — the ledger summarizes the rest on the next pass — but
-    /// notes that had to be cut out of the listener prompt are.
-    func testListenerReportsClampedNotesButNotOrdinaryBatching() async {
+    /// A partial listener batch is not loss — the ledger summarizes the rest on the next pass — so
+    /// an ordinary batched refresh must leave a still-valid Deep notice alone. Notes that had to be
+    /// cut out of the listener prompt *are* loss, and are reported.
+    func testOrdinaryListenerRefreshDoesNotEraseAnExistingNotice() async {
         let (session, store, _) = makeSession(limit: PromptBudget.appleIntelligenceCharacters)
         fill(store, characters: 60_000)
-        await session.refreshListener()
-        XCTAssertNil(session.promptTruncationNotice)
+        await session.respondDeep(.recap)
+        let deepNotice = session.promptTruncationNotice
+        XCTAssertNotNil(deepNotice)
 
-        let (other, otherStore, _) = makeSession(limit: PromptBudget.appleIntelligenceCharacters)
-        otherStore.apply(TranscriptSegment(source: .others, text: "Short.", isFinal: true,
-                                           start: 0, end: 1))
-        other.notes = String(repeating: "note ", count: 4_000)
-        await other.refreshListener()
-        XCTAssertNotNil(other.promptTruncationNotice)
+        await session.refreshListener()
+        XCTAssertEqual(session.promptTruncationNotice, deepNotice)
+    }
+
+    func testListenerReportsNotesItHadToClamp() async {
+        let (session, store, _) = makeSession(limit: PromptBudget.appleIntelligenceCharacters)
+        store.apply(TranscriptSegment(source: .others, text: "Short.", isFinal: true, start: 0, end: 1))
+        session.notes = String(repeating: "note ", count: 4_000)
+        await session.refreshListener()
+        let notice = session.promptTruncationNotice
+        XCTAssertTrue(notice?.contains("notes") == true, notice ?? "")
     }
 
     func testNoticeNamesReferencesWhenOnlyReferencesWereDropped() async {

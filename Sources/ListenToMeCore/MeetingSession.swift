@@ -568,11 +568,14 @@ extension MeetingSession {
                 return true
             }
             // A partial batch is not loss: the ledger keeps the rest and a follow-up refresh starts
-            // automatically, so only a clamped record or notes is worth reporting here.
-            if limit != nil {
-                self.promptTruncationNotice = PromptBudget.truncationNotice(
-                    transcriptDropped: false, referencesDropped: false,
-                    auxiliaryDropped: droppedRecord || droppedNotes)
+            // automatically, so only a clamped record or notes is worth reporting here. Report by
+            // assignment only — an ordinary batched refresh (Refresh, rename, the auto-continue
+            // chain) must never erase a still-valid Quick/Deep notice; clearing belongs to
+            // clampedContext and setModel.
+            if limit != nil, let notice = PromptBudget.truncationNotice(
+                transcriptDropped: false, referencesDropped: false,
+                auxiliaryDropped: droppedRecord || droppedNotes) {
+                self.promptTruncationNotice = notice
             }
             let generation = self.responseGenerations[.listener] ?? 0
             self.pendingSummaryIDs[generation] = Set(batch.map(\.id))

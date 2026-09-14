@@ -30,22 +30,28 @@ public enum PromptBudget {
     /// Summary plus notes together may claim at most this fraction of what is left.
     public static let auxiliaryShareDivisor = 4
 
+    private static let noticePrefix = "Trimmed to fit this model's context window — "
+
     /// A notice naming what was actually dropped, or nil when the whole prompt fit.
+    /// `auxiliaryDropped` covers the user's notes and the running summary, which are grounding
+    /// rather than speech and so are named separately.
     public static func truncationNotice(transcriptDropped: Bool, referencesDropped: Bool,
                                         auxiliaryDropped: Bool = false) -> String? {
-        let speech = transcriptDropped || auxiliaryDropped
-        switch (speech, referencesDropped) {
-        case (true, true):
-            return "Trimmed to fit this model's context window — older speech and some attached " +
-                "reference material were left out."
-        case (true, false):
-            return "Trimmed to fit this model's context window — only the most recent speech is included."
-        case (false, true):
-            return "Trimmed to fit this model's context window — some attached reference material " +
-                "was left out."
-        case (false, false):
-            return nil
+        var parts: [String] = []
+        if transcriptDropped { parts.append("older speech") }
+        if referencesDropped { parts.append("some attached reference material") }
+        if auxiliaryDropped { parts.append("your notes and the running summary") }
+        guard !parts.isEmpty else { return nil }
+        if parts == ["older speech"] {
+            return noticePrefix + "only the most recent speech is included."
         }
+        let listed: String
+        switch parts.count {
+        case 1:  listed = parts[0]
+        case 2:  listed = parts[0] + " and " + parts[1]
+        default: listed = parts.dropLast().joined(separator: ", ") + " and " + parts[parts.count - 1]
+        }
+        return noticePrefix + listed + (parts.count == 1 ? " was left out." : " were left out.")
     }
 
     public struct Allocation: Sendable, Equatable {
