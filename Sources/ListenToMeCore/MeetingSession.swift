@@ -187,9 +187,10 @@ public final class MeetingSession {
         let prepare = Task { await transcriber.prepare() }
         prepareTask = prepare
         await prepare.value
-        if runID == myRun, isRunning { prepareTask = nil }
-        // A stop() during prepare already took ownership of the transcriber via beginStop().
+        // A stop() during prepare already took ownership of the transcriber via beginStop() (and
+        // cleared/cancelled this task), so leave its state alone and abort the start.
         guard isRunning, runID == myRun else { return }
+        prepareTask = nil
 
         do {
             try await capture.start()
@@ -333,13 +334,14 @@ extension MeetingSession {
                 self?.applyTranscribedSegment(segment)
             }
         }
+        // Warm the pipeline before reading the file so the first chunks don't sit behind one-time
+        // model setup, and so a cancelled import (window close) isn't stuck inside `feed`. Inherits
+        // this task's cancellation, so closing the window during a first-run download returns.
+        await transcriber.prepare()
         // Pace by audio duration so a long file can't be read into the transcriber's queue far
         // faster than it's processed: cap how far (in audio seconds) reading runs ahead of an
         // 8x-realtime budget. The clock starts AFTER the first feed so one-time SpeechAnalyzer
         // model setup/download isn't credited as throughput. Stops promptly on cancellation.
-        // Warm the pipeline before reading the file so the first chunks don't sit behind one-time
-        // model setup, and so a cancelled import (window close) isn't stuck inside `feed`.
-        await transcriber.prepare()
         var startWall = clock()
         var audioSecondsFed = 0.0
         var pacing = false
