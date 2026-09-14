@@ -105,6 +105,56 @@ final class TranscriberPrepareTests: XCTestCase {
         XCTAssertEqual(transcriber.finishCount, 1)
     }
 
+    func testChunksBufferedAtStopAreStillFedBeforeFinalize() async throws {
+        let capture = MockCapture()
+        // 20 ms per chunk: 5 chunks take ~100 ms, well inside teardown's drain grace — but a pump
+        // that is cancelled outright stops iterating and feeds almost none of them.
+        let transcriber = MockTranscriber(feedDelayNanos: 20_000_000)
+        let session = makeSession(capture: capture, transcriber: transcriber)
+
+        try await session.start()
+        let chunks = (0..<5).map {
+            AudioChunk(samples: [0.3], sampleRate: 16_000, source: .others, timestamp: Double($0))
+        }
+        for chunk in chunks { capture.emit(chunk) }
+        // No wait: Stop immediately, while the chunks are still buffered in the capture stream.
+        await session.stopAndWait()
+
+        XCTAssertEqual(transcriber.fedChunks, chunks,
+                       "teardown must let the pump feed the audio buffered at Stop")
+        XCTAssertEqual(transcriber.finishCount, 1)
+    }
+
+    func testCancellingAnImportDuringPrepareReturnsPromptly() async throws {
+        // prepare() here ignores cancellation (like a platform download with no cancellation
+        // guarantee); the import must still return when its task is cancelled.
+        let transcriber = MockTranscriber(stubbornPrepare: true)
+        let session = makeSession(capture: MockCapture(), transcriber: MockTranscriber())
+        let producer = ArrayChunkProducer([
+            AudioChunk(samples: [0.1], sampleRate: 16_000, source: .you, timestamp: 0)
+        ])
+
+        let finished = Flag()
+        let importTask = Task {
+            await session.transcribeAudio(nextChunk: { await producer.next() },
+                                          transcriber: { transcriber })
+            finished.set()
+        }
+        await waitUntil { transcriber.prepareEntered }
+        XCTAssertTrue(transcriber.prepareEntered, "prepare never ran")
+
+        importTask.cancel()
+        await waitUntil { finished.value }
+        guard finished.value else {
+            transcriber.release()
+            return XCTFail("a cancelled import stayed blocked inside the model download")
+        }
+        await importTask.value
+        XCTAssertFalse(session.isTranscribingFile)
+        XCTAssertTrue(transcriber.fedChunks.isEmpty, "a cancelled import must not feed audio")
+        transcriber.release()   // let the abandoned prepare unwind
+    }
+
     func testStopCancelsACapturePumpBlockedInsideFeed() async throws {
         let capture = MockCapture()
         let transcriber = MockTranscriber(slowFeed: true)

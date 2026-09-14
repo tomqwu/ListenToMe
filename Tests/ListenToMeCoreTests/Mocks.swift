@@ -112,7 +112,13 @@ final class MockTranscriber: Transcribing, @unchecked Sendable {
     /// When true, `prepare()`/`feed(_:)` block (like a first-run speech-model download) until
     /// `release()` is called or the surrounding Task is cancelled.
     private let slowPrepare: Bool
+    /// Like `slowPrepare`, but IGNORES cancellation — stands in for a platform download call with no
+    /// cancellation guarantee (e.g. `AssetInventory.downloadAndInstall()`).
+    private let stubbornPrepare: Bool
     private let slowFeed: Bool
+    /// Per-chunk `feed` cost, so tests can tell a *drained* capture pump from a pre-emptively
+    /// cancelled one (a cancelled pump stops iterating instead of finishing the remaining chunks).
+    private let feedDelayNanos: UInt64
     private var _released = false
     private var _prepareCount = 0
     private var _prepareEntered = false
@@ -130,10 +136,13 @@ final class MockTranscriber: Transcribing, @unchecked Sendable {
     /// True when a blocked `feed(_:)` returned because its Task was cancelled.
     var feedCancelled: Bool { lock.withLock { _feedCancelled } }
 
-    init(log: OrderLog? = nil, slowPrepare: Bool = false, slowFeed: Bool = false) {
+    init(log: OrderLog? = nil, slowPrepare: Bool = false, stubbornPrepare: Bool = false,
+         slowFeed: Bool = false, feedDelayNanos: UInt64 = 0) {
         self.log = log
         self.slowPrepare = slowPrepare
+        self.stubbornPrepare = stubbornPrepare
         self.slowFeed = slowFeed
+        self.feedDelayNanos = feedDelayNanos
         var cont: AsyncStream<TranscriptSegment>.Continuation!
         segments = AsyncStream { cont = $0 }
         continuation = cont
@@ -156,12 +165,23 @@ final class MockTranscriber: Transcribing, @unchecked Sendable {
     func prepare() async {
         lock.withLock { _prepareCount += 1; _prepareEntered = true }
         log?.record("transcriber.prepare")
+        if stubbornPrepare {
+            // Detached, so it doesn't inherit the caller's cancellation: awaiting it blocks until
+            // `release()` no matter who cancels, exactly like an uncancellable platform download.
+            await Task.detached { [self] in
+                while !lock.withLock({ _released }) {
+                    try? await Task.sleep(nanoseconds: 5_000_000)
+                }
+            }.value
+            return
+        }
         guard slowPrepare else { return }
         let cancelled = await blockUntilReleasedOrCancelled()
         lock.withLock { _prepareCancelled = cancelled }
     }
 
     func feed(_ chunk: AudioChunk) async {
+        if feedDelayNanos > 0 { try? await Task.sleep(nanoseconds: feedDelayNanos) }
         lock.withLock { _fedChunks.append(chunk); _feedEntered = true }
         log?.record("transcriber.feed")
         guard slowFeed else { return }
