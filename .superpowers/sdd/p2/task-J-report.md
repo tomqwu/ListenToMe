@@ -95,3 +95,63 @@ the calendar fix lives entirely in `MobileCalendar.swift`. No audio lifecycle ha
 - Branch `fix/123-125-ios-apple-quick-calendar`, commit `2e32cc5`.
 - PR https://github.com/tomqwu/ListenToMe/pull/154 ("Closes #123", "Closes #125").
 
+
+## Fix report (PR #154 review round 1)
+
+**1. Important — #125 not achieved (invite text).** `MeetingContext` (Core) gained two public helpers:
+`safeLink(_:)` — the single link rule (keep scheme/host/path, drop query, fragment and user info) —
+and `redactingLinksAndAddresses(_:)`, which runs `NSDataDetector` over free text, reduces every link
+with `safeLink` and removes every e-mail address (a detected address is a `mailto:` link, so bare
+addresses are covered), then tidies the whitespace an removal leaves. `MobileCalendar.event` now runs
+both `event.location` and `event.notes` through it, and `MobileCalendarEvent.link` delegates to
+`safeLink`, so the event URL, the location and the body obey one rule. Tests: Core
+`MeetingContextTests.testSafeLinkAndRedactionStripJoinSecretsAndAddressesFromInviteText` (realistic
+Zoom body plus a Teams `?context=` URL) and iOS
+`MobileCalendarTests.testInviteBodyAndLocationAreFilteredBeforeBecomingNotes`. Both assert that a
+meeting ID and other body text survive, so the docs' claim matches the code. `iOS/Info.plist` and
+`docs/IOS.md` now list exactly two filters (addresses; the secret-bearing part of links) and say
+plainly that dial-in numbers, meeting IDs and other text are imported as written.
+
+**2. Important — device locale must not gate availability.** `AppleIntelligenceProvider.unavailableReason`
+is back to a pure `SystemLanguageModel.default.availability` switch, so macOS's status line and
+`stream` guard and the iOS fresh-install default are untouched by any locale. The locale check now
+exists only as `unsupportedLocaleReason(for:isSupported:)`, with the `supportsLocale` call injected as
+a parameter, and only `MobileSession.summaryAvailability(for:)` calls it — with the *conversation's*
+`language`, which is the value the old code disagreed with. Covered by
+`MobileAppleIntelligenceTests.testUnsupportedConversationLanguageIsReportedWithoutDisablingTheProvider`
+(supported, unsupported, and availability still equal to `defaultProviderReason`). A conversation whose
+language is unknown still gets a clear message at generation time from the `unsupportedLanguageOrLocale`
+mapping.
+
+**3. Important — docs.** `docs/IOS.md` states the fallback reasons exactly as the code produces them
+(ineligible hardware, Apple Intelligence off, model not ready, or the unlisted-reason string), says the
+language check is per conversation and that availability is locale-independent, and states explicitly
+that macOS behavior is unchanged apart from the shared provider's failure wording.
+`docs/SHARED-LIVE-SUMMARY.md` says the same about the shared transport.
+
+**Minors.** The "no takeaway yet leaves your previous summary in place" sentence is corrected (an empty
+prose answer shows "No key takeaway yet."; only a *failed* request keeps the previous summary); a line
+was added telling users that notes imported by earlier versions may still contain a passcode or address;
+`proseSummary` drops a leading unmarked line ending in ":" when more lines follow (a lone such line is
+still treated as the answer).
+
+**Verification of the fix round**
+
+| Command | Outcome |
+| --- | --- |
+| `swift test --filter QuickSummaryContextTests` / `--filter MeetingContextTests` | 12 and 7 tests, 0 failures |
+| `swift test` | 296 tests, 3 skipped, 0 failures |
+| `./scripts/check-coverage.sh 95` | PASS — 97.28% |
+| `make lint` | exit 0; no new violations |
+| `make gen && make build` (macOS) | ** BUILD SUCCEEDED ** |
+| `make ios-build` | exit 0 |
+| `xcodebuild … -only-testing:ListenToMeIOSUnitTests test` on an erased iPhone 17 Pro Max simulator | ** TEST SUCCEEDED ** — 62 tests, 4 skipped, 0 failures |
+
+The simulator was shut down and `xcrun simctl erase`d before the run and was not booted by another
+process. One earlier attempt of that run failed four pre-existing Keychain tests (`-34018`) because I
+passed `CODE_SIGNING_ALLOWED=NO`; the repo's `IOS_SIGN_FLAGS` uses ad-hoc signing precisely so Keychain
+tests exercise real storage, and with those flags the bundle passes. The UI bundle was not re-run in
+this round (it passed twice on the previous commit and none of these changes touch UI code); `make
+ios-build` is the compile proof for the app target.
+
+- Fix commit: `a19e2cd`, pushed to `fix/123-125-ios-apple-quick-calendar`.
