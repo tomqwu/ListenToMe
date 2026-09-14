@@ -52,7 +52,7 @@ final class MobileQuickLoopTests: XCTestCase {
         XCTAssertTrue(session.autoQuickStatus.contains("Summary unchanged"))
         let inputs = await provider.inputs()
         XCTAssertEqual(inputs[1].runningContext, "Hello everyone.")
-        XCTAssertEqual(inputs[1].changes.map(\.text), ["Microphone: Monday is agreed. Sarah confirms."],
+        XCTAssertEqual(inputs[1].changes.map(\.text), ["You: Monday is agreed. Sarah confirms."],
                        "Automatic evaluation must see who said it")
         try await Task.sleep(for: .milliseconds(250))
         let count = await provider.count()
@@ -141,7 +141,7 @@ final class MobileQuickLoopTests: XCTestCase {
         await provider.finishHeldQuick()
         try await wait { self.session.quickReader.completedReads == 2 }
         let inputs = await provider.inputs()
-        XCTAssertEqual(inputs[1].changes.map(\.text), ["Microphone: Sarah confirms.", "Microphone: Peter helps."])
+        XCTAssertEqual(inputs[1].changes.map(\.text), ["You: Sarah confirms.", "You: Peter helps."])
         session.requestSummary(for: .deep)
         try await wait { self.session.generatingMode == .deep }
         recorder.send("Monday remains agreed.")
@@ -207,8 +207,8 @@ final class MobileQuickLoopTests: XCTestCase {
         session.restoreSpeech(session.segments[0].id)
         try await wait { self.session.quickReader.completedReads == 2 }
         let inputs = await provider.inputs()
-        XCTAssertEqual(inputs.last?.changes[0].previousText, "Microphone: Peter confirms.")
-        XCTAssertEqual(inputs.last?.changes[0].text, "Microphone: Sarah confirms.")
+        XCTAssertEqual(inputs.last?.changes[0].previousText, "You: Peter confirms.")
+        XCTAssertEqual(inputs.last?.changes[0].text, "You: Sarah confirms.")
     }
 
     func testAppleAutomaticEvaluationPausesWithoutEnablingCloud() {
@@ -280,7 +280,7 @@ private actor QuickTestProvider: LLMProvider {
     func finishHeldQuick() { held?.yield(heldText); held?.finish(); held = nil }
     func finishAll() { finishHeldQuick(); deep?.finish(); deep = nil }
     private func ended() { active -= 1 }
-    /// Pieces now arrive attributed ("Microphone: …", "Notes: …"); a real model answers with the
+    /// Pieces now arrive attributed ("You: …", "Notes: …"); a real model answers with the
     /// content, so the stub drops the leading label before echoing it back as a recap.
     private func spoken(_ text: String) -> String {
         guard let separator = text.range(of: ": ") else { return text }

@@ -28,17 +28,41 @@ final class QuickSummaryContextTests: XCTestCase {
         XCTAssertTrue(context.isCurrent(batch, pieces: pieces(text + " Sarah will review it.")))
     }
 
-    func testResponseLanguageDirectiveReachesTheQuickEvaluator() throws {
+    func testResponseLanguageReplacesTheFollowTheTranscriptRuleInsteadOfContradictingIt() throws {
         let pieces = [QuickSummaryContext.Piece(id: "a", text: "You: Sarah confirms Monday.")]
         let plain = try XCTUnwrap(QuickSummaryContext().batch(pieces, summary: ""))
         XCTAssertEqual(plain.request.system, QuickSummaryContext.instructions)
+        XCTAssertTrue(plain.request.system.contains("keep visibleSummary's language"),
+                      "Without a setting the evaluator still follows the transcript")
         let localized = try XCTUnwrap(QuickSummaryContext().batch(pieces, summary: "",
-                                                                 responseLanguage: "Simplified Chinese"))
-        XCTAssertTrue(localized.request.system.contains("Simplified Chinese"), localized.request.system)
-        XCTAssertTrue(localized.request.system.hasPrefix(QuickSummaryContext.instructions))
-        let manual = try QuickSummaryContext.manualRequest(source: "You: Sarah confirms Monday.",
-                                                           responseLanguage: "Simplified Chinese")
-        XCTAssertTrue(manual.system.contains("Simplified Chinese"))
+                                                                 responseLanguage: " Simplified Chinese "))
+        XCTAssertTrue(localized.request.system.contains(
+            "Language: always write context and bullets in Simplified Chinese"), localized.request.system)
+        XCTAssertFalse(localized.request.system.contains("keep visibleSummary's language"),
+                       "The prompt must state one language rule, not two contradictory ones")
+        XCTAssertEqual(localized.request.system.count,
+                       QuickSummaryContext.instructions.count
+                       - QuickSummaryContext.followTheTranscriptLanguage.count
+                       + "Language: always write context and bullets in Simplified Chinese, regardless of the language spoken in the transcript.".count)
+    }
+
+    func testTypedNotesAreExplainedToEveryReviewer() {
+        XCTAssertTrue(QuickSummaryContext.instructions.contains("\"Notes: \" is the user's typed"))
+        for mode in AutomaticReviewMode.allCases {
+            XCTAssertTrue(mode.instructions.contains("\"Notes: \" is the user's typed"), mode.rawValue)
+        }
+    }
+
+    func testEveryChunkOfALongUtteranceKeepsItsSpeakerLabel() throws {
+        let long = String(repeating: "We keep discussing the rollout schedule. ", count: 60)
+        let segment = TranscriptSegment(source: .others, text: long, isFinal: true,
+                                        start: 0, end: 90, speakerName: "Alice")
+        let pieces = QuickSummaryContext.pieces(notes: "", segments: [segment])
+        XCTAssertGreaterThan(pieces.count, 1, "This utterance must span several chunks")
+        XCTAssertTrue(pieces.allSatisfy { $0.text.hasPrefix("Alice: ") },
+                      "A later chunk must not reach the model unattributed")
+        let recovered = pieces.map { $0.text.dropFirst("Alice: ".count) }.joined()
+        XCTAssertEqual(recovered, long.trimmingCharacters(in: .whitespacesAndNewlines))
     }
 
     func testKeepAdvancesMemoryAndOnlyUnreadSpeechIsSentNext() throws {
@@ -119,7 +143,7 @@ final class QuickSummaryContextTests: XCTestCase {
             context.accept(batch, memory: String(repeating: "忆", count: 2_000))
         }
         XCTAssertGreaterThan(batches, 2)
-        XCTAssertEqual(recovered, "You: " + original)
+        XCTAssertEqual(recovered.replacingOccurrences(of: "You: ", with: ""), original)
     }
 
     func testEvaluationContainsTypedReviewRecommendationsAndRejectsInvalidConfidence() throws {

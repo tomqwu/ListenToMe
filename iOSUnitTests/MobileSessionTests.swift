@@ -20,6 +20,22 @@ final class MobileSessionTests: XCTestCase {
         XCTAssertEqual(session.summarySource, "Alice: Can you own the rollout?\nYou: Yes, by Friday.")
     }
 
+    /// The recorder stamps "Microphone" for display. A device name must never reach a prompt that is
+    /// told to invent no names; prompts use the same "You" label macOS uses.
+    func testRecordedMicrophoneSpeechReachesPromptsAsYouNotADeviceName() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let session = MobileSession(storageDirectory: root)
+        // Exactly what MobileRecorder/MobileSession produce for live microphone speech.
+        let recorded = TranscriptSegment(source: .you, text: "Yes, by Friday.", isFinal: true,
+                                         start: 0, end: 1, speakerName: "Microphone")
+        session.segments = [recorded]
+        XCTAssertEqual(session.summarySource, "You: Yes, by Friday.")
+        XCTAssertFalse(session.summarySource.contains("Microphone"))
+        // The Markdown export keeps the display label the transcript shows.
+        XCTAssertEqual(recorded.speakerLabel, "Microphone")
+    }
+
     func testAutomaticQuickSummaryRunsWithoutViewRetriesFailureAndTracksNewText() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
@@ -140,7 +156,7 @@ private actor AutoSummaryProvider: LLMProvider {
     nonisolated let id = "auto-test"
     private var requests = 0
     func count() -> Int { requests }
-    /// Pieces now arrive attributed ("Microphone: …", "Notes: …"); a real model answers with the
+    /// Pieces now arrive attributed ("You: …", "Notes: …"); a real model answers with the
     /// content, so the stub drops the leading label before echoing it back as a recap.
     private func spoken(_ text: String) -> String {
         guard let separator = text.range(of: ": ") else { return text }

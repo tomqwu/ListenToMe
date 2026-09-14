@@ -117,10 +117,21 @@ final class MobileSession {
         }
     }
 
-    /// Rendered exactly like macOS `automaticReviewSource`: every line carries its speaker label and
-    /// typed notes are marked, so summaries never have to guess who said what.
+    /// The recorder stamps "Microphone" as the display label for the local speaker. That is a device,
+    /// not a participant, and the review prompts are told never to invent names, so prompt text uses
+    /// the same "You" label macOS uses. The Markdown export keeps "Microphone".
+    static func promptSegment(_ segment: TranscriptSegment) -> TranscriptSegment {
+        guard segment.speakerName == "Microphone" else { return segment }
+        var renamed = segment
+        renamed.speakerName = nil
+        return renamed
+    }
+
+    /// Every line carries its speaker label and typed notes are marked, so summaries never have to
+    /// guess who said what. See docs/SHARED-LIVE-SUMMARY.md for the shared rule.
     var summarySource: String {
-        ([MobileQuickContext.attributedNotes(notes)] + allSegments.map(MobileQuickContext.attributed))
+        ([MobileQuickContext.attributedNotes(notes)]
+            + allSegments.map { MobileQuickContext.attributed(Self.promptSegment($0)) })
             .filter { !$0.isEmpty }.joined(separator: "\n")
     }
 
@@ -400,7 +411,8 @@ extension MobileSession {
     }
 
     private var quickPieces: [MobileQuickContext.Piece] {
-        MobileQuickContext.pieces(notes: notes, segments: segments, liveSegments: partial.map { [$0] } ?? [])
+        MobileQuickContext.pieces(notes: notes, segments: segments.map(Self.promptSegment),
+                                  liveSegments: partial.map { [Self.promptSegment($0)] } ?? [])
     }
 
     func updateQuickAutomatically() async {

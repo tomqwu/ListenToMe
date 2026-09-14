@@ -5,10 +5,18 @@ The first iOS version is a standalone app, separate from the macOS release. It r
 
 ## Attributed summary input
 
-Summary, Deep and Quick all read the transcript with speaker labels (`You`, `Others`, or a name)
-and the user's typed notes marked as `Notes:`, matching macOS. Summaries can therefore attribute a
-question or a commitment instead of reporting the owner as unstated, and never present a typed note
-as something that was said. See [the shared policy](SHARED-LIVE-SUMMARY.md#attributed-input-and-user-directives-for-automatic-output).
+Summary, Deep and Quick all read the transcript with speaker labels and the user's typed notes
+marked as `Notes:`. Summaries can therefore attribute a question or a commitment instead of
+reporting the owner as unstated, and never present a typed note as something that was said.
+
+Local speech is labelled `You` in prompts, the same label macOS uses, even though the transcript and
+the Markdown export display it as `Microphone`: a device name is not a participant, and the review
+prompts are told never to invent names. Remote or diarized speakers keep their own label.
+
+The label format and the `Notes:` marker are shared with macOS; the two platforms still assemble the
+full-review source differently (chunking and provisional-speech handling).
+See [the shared policy](SHARED-LIVE-SUMMARY.md#attributed-input-and-user-directives-for-automatic-output)
+for the exact rule and the known differences.
 
 ## iOS 1.10.1 (23)
 
