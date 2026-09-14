@@ -19,8 +19,9 @@ import WhisperKit
 /// queuing still orders utterances within a source. `finish()` flushes remaining audio and drains
 /// all in-flight tasks (and the chain) before closing the stream so the last utterance isn't lost.
 ///
-/// The model downloads on first audio in a background Task that `feed` never awaits (so the
-/// download can't drop audio); per-source transcription Tasks await the model before transcribing.
+/// The model is downloaded/loaded by `prepare()` before capture starts (so the first-run download
+/// can't drop audio), with the first `feed` as a fallback trigger; `feed` never awaits it, and
+/// per-source transcription Tasks await the model — cancellably — before transcribing.
 /// Load failures are logged via NSLog and the transcriber degrades to a no-op rather than crashing
 /// the session. An actor so all shared buffer/state access is serialized.
 actor WhisperKitTranscriber: Transcribing {
@@ -47,10 +48,15 @@ actor WhisperKitTranscriber: Transcribing {
 
     private let language: String?
 
-    /// The model load runs as a background Task kicked off on first audio and is awaited only inside
-    /// per-source transcription Tasks (off the feed path), so the initial download never blocks the
-    /// capture pump. Resolves to nil on a hard load failure (transcriber degrades to a no-op).
+    /// The model load runs as a background Task kicked off by `prepare()` (or, as a fallback, by the
+    /// first audio) and is awaited via `modelBox()` — never on the feed path — so the initial
+    /// download never blocks the capture pump. Resolves to nil on a hard load failure (the
+    /// transcriber degrades to a no-op).
     private var loadTask: Task<KitBox?, Never>?
+    /// Set once the model load Task has resolved (either way). Lets `prepare()` and the per-source
+    /// transcription Tasks wait for the model in a *cancellable* way instead of awaiting the
+    /// uncancellable `WhisperKit` download directly (issue #99).
+    private var modelLoadFinished = false
     private var stopped = false
 
     /// Tail of a single global serial chain through which *all* `transcribe` calls run, so only one
@@ -71,6 +77,15 @@ actor WhisperKitTranscriber: Transcribing {
         segments = AsyncStream { cont = $0 }
         continuation = cont
         (statusUpdates, statusContinuation) = AsyncStream<String>.makeStream()
+    }
+
+    /// Downloads/loads the Whisper model before any audio is fed, so the first utterances aren't
+    /// buffered behind (or dropped during) a multi-minute first-run download. Returns early when
+    /// the session cancels it (Stop / window close / Cmd-Q).
+    func prepare() async {
+        guard !stopped else { return }
+        startModelLoadIfNeeded()
+        _ = await modelBox()
     }
 
     func feed(_ chunk: ListenToMeCore.AudioChunk) async {
@@ -199,7 +214,7 @@ actor WhisperKitTranscriber: Transcribing {
     private func transcribe(
         _ audio: [Float], for source: SpeakerSource, start: TimeInterval, end: TimeInterval
     ) async {
-        guard let box = await loadTask?.value else { return }   // model unavailable — degrade to no-op
+        guard let box = await modelBox() else { return }   // unavailable or stopped — degrade to no-op
         let options = DecodingOptions(
             verbose: false,
             task: .transcribe,
@@ -259,12 +274,25 @@ actor WhisperKitTranscriber: Transcribing {
                     download: true
                 )
                 statusContinuation.yield("Transcription: Whisper ready")
+                self.modelLoadFinished = true
                 return KitBox(kit: kit)
             } catch {
                 statusContinuation.yield("Whisper model failed: \(error.localizedDescription). Stop and restart to retry.")
+                self.modelLoadFinished = true
                 return nil
             }
         }
+    }
+
+    /// Waits for the model load in a cancellable way: returns nil as soon as the transcriber is
+    /// stopped or the awaiting Task is cancelled, so `finish()` (which awaits the in-flight
+    /// transcription Tasks) never hangs behind a first-run download.
+    private func modelBox() async -> KitBox? {
+        while !modelLoadFinished {
+            if stopped || Task.isCancelled { return nil }
+            try? await Task.sleep(nanoseconds: 50_000_000)
+        }
+        return await loadTask?.value
     }
 
     /// `WhisperKit` is a non-Sendable class but is internally thread-safe for `transcribe`. Boxing

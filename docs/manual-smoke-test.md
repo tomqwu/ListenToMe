@@ -19,7 +19,12 @@ Prereq: Ollama running with at least one chat-capable model installed (local or 
 3. In each AI pane's header, confirm a **model dropdown** is populated with your installed Ollama
    models. Set different models per pane if you like (e.g. a fast model for **Quick**, a heavier one
    for **Deep**, `deepseek-v4-flash:cloud` for any). **More → Refresh models** re-scans models.
-4. Click **Start listening**. Speak a sentence → it appears under **Transcript** labeled **You** (blue).
+4. Click **Start listening**. On a Mac that has never used the engine, the button flips to **Stop**
+   and the recording indicator appears immediately, but the header shows **"Transcription: preparing
+   on-device speech model…"** and the mic/system channels stay at "starting…" until the model is
+   ready — the speech model is now downloaded *before* capture starts, so nothing is captured (and
+   nothing is lost) during the download. Once the channels report they are running, speak a sentence
+   → it appears under **Transcript** labeled **You** (blue), including the very first words.
 5. Play speech from another app (a video/meeting) → it appears labeled **Others** (green).
 6. In the **Quick** pane, click **What should I answer?** → a streamed suggestion appears (a
    "💭 Thinking…" state shows first for thinking models).
@@ -39,6 +44,20 @@ Prereq: Ollama running with at least one chat-capable model installed (local or 
     Transcript and that proactive suggestions fire on `Others` questions. If finalized lines never
     commit (only volatile text shows), switch the engine to **SpeechRecognizer** and report —
     SpeechAnalyzer's finalization semantics need on-device confirmation.
+
+### First-run model download is cancellable (issue #99)
+
+Only reproducible on a Mac where the chosen engine's model is not yet installed (SpeechAnalyzer: a
+fresh language in Settings; WhisperKit: a fresh profile).
+
+1. Press **Listen** and wait for **"Transcription: preparing on-device speech model…"**.
+2. While the download is still running, press **Stop**. Teardown must complete within a second or
+   two: the header returns to **Transcription: stopped**, and **Listen/Stop**, **New conversation**
+   and **More → Import audio file…** are all enabled again (no lingering "Finalizing…").
+3. Repeat, and this time close the window with the red button, then try **Cmd-Q**, while the
+   download is in flight — both must work immediately instead of being silently refused.
+4. Press **Listen** again after the model finishes installing: the pipeline is already warm, so
+   capture starts immediately and no "audio dropped during overload/model setup" caption appears.
 
 If dual-channel transcription shows only one speaker (a console error mentioning
 `kAFAssistantErrorDomain 1100`), see the README "Known limitations" — the fallback is

@@ -27,23 +27,22 @@ actor SpeechAnalyzerTranscriber: Transcribing {
         (statusUpdates, statusContinuation) = AsyncStream<String>.makeStream()
     }
 
+    /// Builds both channels' pipelines up front (asset check/download, locale resolution, analyzer
+    /// start) so `feed` is a non-blocking hand-off and the opening seconds of a meeting aren't lost
+    /// while the first-run speech model downloads. Cancellable: the session cancels this when the
+    /// user stops, closes the window or quits during the download.
+    func prepare() async {
+        for source in [SpeakerSource.you, .others] {
+            guard !stopped, !Task.isCancelled else { return }
+            _ = await ensurePipeline(for: source)
+        }
+    }
+
     func feed(_ chunk: AudioChunk) async {
         guard !stopped, !failedSources.contains(chunk.source) else { return }
-        let pipeline: Pipeline
-        if let existing = pipelines[chunk.source] {
-            pipeline = existing
-        } else {
-            guard let created = await makePipeline(for: chunk.source) else { return }
-            guard !stopped else {
-                // stop() ran during async setup — tear down the just-created pipeline.
-                created.inputContinuation.finish()
-                try? await created.analyzer.finalizeAndFinishThroughEndOfInput()
-                created.resultsTask.cancel()
-                return
-            }
-            pipelines[chunk.source] = created
-            pipeline = created
-        }
+        // Normally already warm from prepare(); this also recreates a pipeline whose results
+        // stream ended mid-session.
+        guard let pipeline = await ensurePipeline(for: chunk.source) else { return }
         guard let buffer = pipeline.convert(chunk) else { return }
         pipeline.inputContinuation.yield(AnalyzerInput(buffer: buffer))
     }
@@ -60,6 +59,23 @@ actor SpeechAnalyzerTranscriber: Transcribing {
         pipelines.removeAll()
         continuation.finish()
         statusContinuation.finish()
+    }
+
+    /// Returns the live pipeline for a source, building it on first use. Returns nil when setup
+    /// failed, was cancelled, or the transcriber stopped while setup was in flight.
+    private func ensurePipeline(for source: SpeakerSource) async -> Pipeline? {
+        if let existing = pipelines[source] { return existing }
+        guard !failedSources.contains(source) else { return nil }
+        guard let created = await makePipeline(for: source) else { return nil }
+        guard !stopped else {
+            // stop() ran during async setup — tear down the just-created pipeline.
+            created.inputContinuation.finish()
+            try? await created.analyzer.finalizeAndFinishThroughEndOfInput()
+            created.resultsTask.cancel()
+            return nil
+        }
+        pipelines[source] = created
+        return created
     }
 
     private func makePipeline(for source: SpeakerSource) async -> Pipeline? {
@@ -85,6 +101,9 @@ actor SpeechAnalyzerTranscriber: Transcribing {
             failedSources.insert(source)
             return nil
         }
+        // The user stopped/closed/quit during the (possibly multi-minute) download: abandon setup
+        // without latching a failure, so a later run can warm the now-installed model.
+        guard !Task.isCancelled, !stopped else { return nil }
         guard let format = await SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith: [transcriber]) else {
             statusContinuation.yield("Speech model unavailable. Check language and restart.")
             failedSources.insert(source)
