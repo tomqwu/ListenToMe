@@ -302,6 +302,9 @@ final class MobileAISettings {
             }
         }
         if case OllamaStreamError.incomplete = error { return "Ollama's response ended before completion." }
+        // On-device generation failures reach here only when something bypasses the provider; the
+        // transport already maps them, and this keeps a raw "Exceeded context window size" off screen.
+        if let apple = AppleIntelligenceProvider.message(for: error) { return apple }
         let code = (error as NSError).code
         if (error as NSError).domain == "Ollama", code == 401 || code == 403 {
             return "Ollama rejected authentication (HTTP \(code)). Check the saved API key and account access."

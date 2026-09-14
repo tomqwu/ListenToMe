@@ -172,4 +172,30 @@ final class QuickSummaryContextTests: XCTestCase {
             XCTAssertThrowsError(try QuickSummaryDecision.parse(invalid))
         }
     }
+
+    /// A small on-device model cannot be held to the evaluator's JSON schema, so the manual Quick
+    /// prompt for that path asks for plain bullets and is read back without the JSON parser.
+    func testProseQuickPromptAndReaderAcceptWhatASmallOnDeviceModelActuallyReturns() {
+        XCTAssertFalse(QuickSummaryContext.manualProseInstructions.contains("JSON"),
+                       "The prose prompt must not ask a small on-device model for a JSON envelope")
+        XCTAssertTrue(QuickSummaryContext.manualProseInstructions.contains("Notes: "),
+                      "Typed notes still must not be recapped as speech")
+        XCTAssertEqual(QuickSummaryContext.proseSummary("- Sarah owns the rollout.\n- Budget is unresolved."),
+                       "- Sarah owns the rollout.\n- Budget is unresolved.")
+        XCTAssertEqual(QuickSummaryContext.proseSummary("Sarah owns the rollout."), "- Sarah owns the rollout.")
+        XCTAssertEqual(QuickSummaryContext.proseSummary("1. First point\n2) Second point"),
+                       "- First point\n- Second point")
+        XCTAssertEqual(QuickSummaryContext.proseSummary("```\n* Budget is unresolved.\n```"),
+                       "- Budget is unresolved.")
+        XCTAssertEqual(QuickSummaryContext.proseSummary("Key takeaways:\n- one\n- two\n- three\n- four"),
+                       "- one\n- two\n- three", "At most three bullets are shown")
+        XCTAssertEqual(QuickSummaryContext.proseSummary("Here is the recap:\nSarah owns the rollout."),
+                       "- Sarah owns the rollout.", "An unmarked preamble line is not a takeaway")
+        XCTAssertEqual(QuickSummaryContext.proseSummary("Budget owner: Sarah"), "- Budget owner: Sarah",
+                       "A single line ending in a colon is the answer, not a preamble")
+        XCTAssertEqual(QuickSummaryContext.proseSummary("- " + String(repeating: "x", count: 400))?.count, 242)
+        XCTAssertNil(QuickSummaryContext.proseSummary("   "))
+        XCTAssertNil(QuickSummaryContext.proseSummary("No key takeaway yet."))
+        XCTAssertNil(QuickSummaryContext.proseSummary("{\"action\":\"keep\"}"))
+    }
 }
