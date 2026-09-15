@@ -1,7 +1,11 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.10.3 (25).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.10.4 (26).
+
+## iOS 1.10.4 (26)
+
+Papercuts batch (#138): What's New keyed on the bundled notes rather than the build number, with first installs seeding the acknowledgement; share-inbox drain deletes stale manifest-less folders after 24 hours and sets failed batches aside (also aged out after 24 hours) instead of blocking later imports; transcription language persisted; one long-lived URLSession per role; automatic model-catalog refresh gated on the Ollama provider plus a key or custom server, so an Apple Intelligence install never contacts ollama.com; conversation and attachment files written with device data protection and an optional iCloud-backup exclusion covering the share inbox; History search backed by the shared `SessionSearch`. [What to Test](../metadata/ios/en-CA/what-to-test-1.10.4.txt).
 
 ## iOS 1.10.3 (25)
 
