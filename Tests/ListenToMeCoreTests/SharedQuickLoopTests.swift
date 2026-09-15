@@ -244,6 +244,9 @@ final class SharedQuickLoopTests: XCTestCase {
             models: [.quick: "quick", .listener: "summary-model"], autoInterval: .milliseconds(15))
         try await session.start()
         session.autoSummaryEnabled = true
+        // This test drives the automatic recap loop; a proactive answer would consume the gated
+        // Quick provider's single response, so the automatic path is isolated here.
+        session.proactiveEnabled = false
         await session.ingest(.init(source: .others, text: "Why is Azure slow today?", isFinal: true, start: 0, end: 1))
         for _ in 0..<200 where session.automaticReviews.activeMode != .summary { try await Task.sleep(for: .milliseconds(5)) }
         XCTAssertEqual(session.automaticReviews.activeMode, .summary)

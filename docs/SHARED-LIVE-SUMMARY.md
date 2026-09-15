@@ -13,6 +13,19 @@ confidence. Medium/high recommendations enqueue the corresponding full review wh
 wording. Duplicate final segment IDs use their latest revision. Stop, Auto off and provider
 changes cancel obsolete work. Auto is opt-in on both platforms.
 
+Proactive Quick answers (macOS only) are a separate path from Auto and must not be confused with
+it. Auto is the scheduler above: it batches speech, evaluates it, and publishes a periodic recap.
+Proactive is a *manual-style* answer that happens to be triggered automatically — `MeetingSession.ingest`
+asks `ContextEngine.shouldFireProactive` whether this segment is a finalized question from `.others`
+outside the debounce window, and if so runs the ordinary `respondQuick(.proactive)` path. It
+therefore lands in the same manual-answer state as a button press (so the automatic recap cannot
+overwrite it mid-read, and **Show recap** returns to the recap), obeys `aiEnabled` and the Quick
+provider's availability, and never starts while a manual Quick is still streaming. The two toggles
+are independent: **Proactive** (Quick pane header, default on) and **Auto summaries** (status rail,
+default off). iOS has no proactive path — it captures a single microphone source with no `.others`
+channel to detect a remote question in, and `MobileSession` shares the scheduler above but not
+`MeetingSession`.
+
 `LLMRequest.Purpose.quickEvaluation` gives both apps identical Ollama generation controls:
 thinking disabled, temperature zero and 3072 output tokens. The shared reader validates the
 same final decision shape and applies a 30-second/16-KiB response limit. Local Ollama and

@@ -8,7 +8,6 @@ final class MeetingSessionTests: XCTestCase {
 
     private func makeSession(
         now: @escaping @Sendable () -> TimeInterval = { 0 },
-        listenerDebounce: TimeInterval = 0
     ) -> (MeetingSession, ConversationStore) {
         let store = ConversationStore()
         let session = MeetingSession(
@@ -18,7 +17,6 @@ final class MeetingSessionTests: XCTestCase {
             makeTranscriber: { MockTranscriber() },
             makeProvider: { model in MockLLMProvider(id: model, deltas: ["[\(model)]"]) },
             models: [.listener: "L", .quick: "Q", .deep: "D"],
-            listenerDebounce: listenerDebounce,
             clock: now
         )
         return (session, store)
@@ -183,9 +181,13 @@ final class MeetingSessionTests: XCTestCase {
     }
 
     // MARK: - Proactive (quick role)
+    //
+    // Proactive firing is covered end-to-end in ProactiveQuickTests, which asserts against a
+    // recording provider instead of a synchronous read of `quickSuggestion`.
 
-    func testIngestDoesNotGenerateWithoutAutoOptIn() async throws {
+    func testIngestDoesNotGenerateAnAutomaticRecapWithoutAutoOptIn() async throws {
         let (session, _) = makeSession(now: { 999_999 })
+        session.proactiveEnabled = false     // isolate the automatic-recap path
         try await session.start()
         await session.ingest(TranscriptSegment(source: .others, text: "Are we ready?",
                                                isFinal: true, start: 0, end: 1))
@@ -194,37 +196,10 @@ final class MeetingSessionTests: XCTestCase {
         session.stop()
     }
 
-    func testIngestDoesNotFireProactiveWhenDisabled() async throws {
-        let (session, _) = makeSession(now: { 999_999 })
-        try await session.start()
-        session.proactiveEnabled = false
-        await session.ingest(TranscriptSegment(source: .others, text: "Are we ready?",
-                                               isFinal: true, start: 0, end: 1))
-        XCTAssertEqual(session.quickSuggestion, "")
-        session.stop()
-    }
-
-    func testIngestIgnoresOwnSpeechForProactive() async throws {
-        let (session, _) = makeSession(now: { 999_999 })
-        try await session.start()
-        await session.ingest(TranscriptSegment(source: .you, text: "What should I do?",
-                                               isFinal: true, start: 0, end: 1))
-        XCTAssertEqual(session.quickSuggestion, "")
-        session.stop()
-    }
-
-    func testIngestDoesNotFireProactiveWhenNotRunning() async {
-        let (session, _) = makeSession(now: { 999_999 })
-        // session never started
-        await session.ingest(TranscriptSegment(source: .others, text: "Are we ready?",
-                                               isFinal: true, start: 0, end: 1))
-        XCTAssertEqual(session.quickSuggestion, "")
-    }
-
     // MARK: - Listener debounce via ingest
 
     func testIngestLeavesFullSummaryManual() async throws {
-        let (session, _) = makeSession(now: { 999_999 }, listenerDebounce: 0)
+        let (session, _) = makeSession(now: { 999_999 })
         try await session.start()
         await session.ingest(TranscriptSegment(source: .you, text: "Here is my update.",
                                                isFinal: true, start: 0, end: 1))
@@ -238,7 +213,7 @@ final class MeetingSessionTests: XCTestCase {
     }
 
     func testIngestNonFinalSegmentDoesNotTriggerListenerRefresh() async throws {
-        let (session, _) = makeSession(now: { 999_999 }, listenerDebounce: 0)
+        let (session, _) = makeSession(now: { 999_999 })
         try await session.start()
         await session.ingest(TranscriptSegment(source: .you, text: "Still speaking...",
                                                isFinal: false, start: 0, end: 1))

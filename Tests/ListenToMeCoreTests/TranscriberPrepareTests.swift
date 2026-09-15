@@ -23,7 +23,6 @@ final class TranscriberPrepareTests: XCTestCase {
             makeTranscriber: { transcriber },
             makeProvider: { model in MockLLMProvider(id: model, deltas: ["[\(model)]"]) },
             models: [.listener: "L", .quick: "Q", .deep: "D"],
-            listenerDebounce: 0,
             clock: { 0 }
         )
     }

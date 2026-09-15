@@ -186,8 +186,7 @@ final class CaptureDegradedSessionTests: XCTestCase {
                        makeCapture: { capture },
                        makeTranscriber: { MockTranscriber() },
                        makeProvider: { model in MockLLMProvider(id: model, deltas: ["ok"]) },
-                       models: [.listener: "L", .quick: "Q", .deep: "D"],
-                       listenerDebounce: 0)
+                       models: [.listener: "L", .quick: "Q", .deep: "D"])
     }
 
     func testDegradedStatusRaisesAndClearsTheFlag() async {

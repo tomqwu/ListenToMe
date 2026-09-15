@@ -20,14 +20,18 @@ final class RecordingProvider: LLMProvider, @unchecked Sendable {
     let maxPromptCharacters: Int?
     private let lock = NSLock()
     private var _lastRequest: LLMRequest?
+    private var _requests: [LLMRequest] = []
     var lastRequest: LLMRequest? { lock.withLock { _lastRequest } }
     var lastUser: String? { lock.withLock { _lastRequest?.messages.last?.content } }
+    /// Every request streamed so far, so a test can assert that *nothing* reached the provider.
+    var requests: [LLMRequest] { lock.withLock { _requests } }
+    var requestCount: Int { lock.withLock { _requests.count } }
     init(deltas: [String], maxPromptCharacters: Int? = nil) {
         self.deltas = deltas
         self.maxPromptCharacters = maxPromptCharacters
     }
     func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
-        lock.withLock { _lastRequest = request }
+        lock.withLock { _lastRequest = request; _requests.append(request) }
         return AsyncThrowingStream { continuation in
             for delta in deltas { continuation.yield(delta) }
             continuation.finish()

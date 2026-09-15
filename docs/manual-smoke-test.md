@@ -29,9 +29,13 @@ Prereq: Ollama running with at least one chat-capable model installed (local or 
 5. Play speech from another app (a video/meeting) → it appears labeled **Others** (green).
 6. In the **Quick** pane, click **What should I answer?** → a streamed suggestion appears (a
    "💭 Thinking…" state shows first for thinking models).
-7. With **Proactive** on, have the other audio ask a question → a Quick suggestion appears
-   automatically ~1-2s after the utterance ends. Press **⌘⇧Space** while another app is focused →
-   a Quick suggestion is generated.
+7. With **Proactive** on (the checkbox in the **Quick** pane header, on by default), have the other
+   audio ask a question → a Quick answer appears automatically ~1-2s after the utterance ends,
+   without pressing anything. Ask a *second* question within ~8s → it must **not** fire again
+   (debounce); after that window a further question does. Ask a question yourself (mic) → nothing
+   fires. Turn **Proactive** off → a question from the other audio produces no answer, and the
+   choice survives quitting and relaunching the app. Press **⌘⇧Space** while another app is focused
+   → a Quick suggestion is generated.
 8. **Summary** pane: after some conversation, confirm a rolling summary + open questions/action
    items appear (auto-refreshes; the pane's Refresh button forces it).
 9. **Deep** pane: click **Deep answer** → a longer, detailed response streams (using the Deep
