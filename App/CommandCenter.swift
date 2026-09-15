@@ -128,6 +128,15 @@ struct RoleBox<Header: View, Actions: View>: View {
                 }
                 headerExtra()
             }
+            // The failure is shown beside the pane's text, never instead of it: a transient
+            // provider error must not take away the summary the user was reading (issue #137).
+            if let error = session.roleError(role) {
+                Text("⚠️ \(error)")
+                    .font(.system(size: 11)).foregroundStyle(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .textSelection(.enabled)
+            }
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {

@@ -78,6 +78,14 @@ public final class MeetingSession {
     /// provider's context window (Apple Intelligence). nil for providers with no window.
     public private(set) var promptTruncationNotice: String?
 
+    /// The last failure for each pane, published separately from the pane's text so a transient
+    /// provider error is shown as a banner *beside* the answer the user was reading instead of
+    /// replacing it (issue #137). Cleared when that role starts a new run.
+    public private(set) var roleErrors: [CopilotRole: String] = [:]
+
+    /// The error banner a pane should show, or nil when its last run succeeded.
+    public func roleError(_ role: CopilotRole) -> String? { roleErrors[role] }
+
     /// True while an imported audio file is being transcribed into the store.
     public private(set) var isTranscribingFile = false
 
@@ -549,6 +557,12 @@ extension MeetingSession {
         }.value
     }
 
+    /// True when the store holds speech the Listener has not summarized yet. A refresh with nothing
+    /// new is a no-op, so the UI disables Refresh on `!hasUnsummarizedSpeech` (issue #137).
+    public var hasUnsummarizedSpeech: Bool {
+        store.utterances.contains { !summarizedSegmentIDs.contains($0.id) }
+    }
+
     /// Streams a Listener refresh (rolling summary + open items). Awaits completion.
     public func refreshListener() async {
         startListenerRefresh()
@@ -584,6 +598,11 @@ extension MeetingSession {
     /// Shared by the ingest leading/trailing-edge debounce and the manual refreshListener().
     @discardableResult
     private func startListenerRefresh() -> Task<Void, Never> {
+        // Nothing to summarize is not a request: an empty store has no meeting to describe, and a
+        // fully summarized transcript would only send "New transcript evidence:" with nothing after
+        // it and have the model re-paraphrase — and possibly drop items from — the record it just
+        // produced (issue #137). The Refresh button is disabled on the same condition.
+        guard hasUnsummarizedSpeech else { return Task {} }
         let task = startRoleTask(.listener) {
             let remaining = self.store.utterances.filter { !self.summarizedSegmentIDs.contains($0.id) }
             // Process oldest unseen speech first. A failed/cancelled request never advances the ledger.
@@ -680,8 +699,12 @@ extension MeetingSession {
         // A new manual request replaces the answer on screen; it only protects the pane again once
         // it has actually produced one.
         if role == .quick { manualQuickAnswer.dismiss() }
+        // What the pane is showing right now. A non-cancellation failure restores it rather than
+        // leaving the user with an empty pane and a warning (issue #137).
+        let previousOutput = output(role)
         // Clear the output and mark streaming
         setOutput(role, "")
+        roleErrors[role] = nil
         streamingRoles.insert(role)
         defer {
             if generation == responseGenerations[role] {
@@ -727,7 +750,14 @@ extension MeetingSession {
             if generation == responseGenerations[role],
                !Task.isCancelled,
                !(error is CancellationError) {
-                appendOutput(role, "\n\n⚠️ \(error.localizedDescription)")
+                // Keep what the user was reading: restore the previous answer when this attempt
+                // produced nothing, and keep the partial stream when it did (an interrupted
+                // response is still text the user can use). The failure itself is published
+                // through `roleErrors`, which the pane renders as its own banner, so a transient
+                // provider error never blanks a pane — matching the automatic paths, which have
+                // always kept previous output (issue #137).
+                if output(role).isEmpty { setOutput(role, previousOutput) }
+                roleErrors[role] = error.localizedDescription
             }
         }
     }
@@ -739,6 +769,14 @@ extension MeetingSession {
         quickRecap = output
         guard !manualQuickAnswer.isFresh(at: clock()) else { return }
         quickSuggestion = output
+    }
+
+    private func output(_ role: CopilotRole) -> String {
+        switch role {
+        case .listener: return listenerSummary
+        case .quick:    return quickSuggestion
+        case .deep:     return deepAnswer
+        }
     }
 
     private func setOutput(_ role: CopilotRole, _ value: String) {
