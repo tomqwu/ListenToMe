@@ -8,17 +8,18 @@
 Prereq: Ollama running with at least one chat-capable model installed (local or Ollama-cloud, e.g.
 `deepseek-v4-flash:cloud`). The app auto-picks an installed model per pane on first launch.
 
-1. `make run` — the window opens with **four panes**: **Transcript** (left) and **Listener**,
+1. `make run` — the window opens with **four panes**: **Transcript** (left) and **Summary**,
    **Quick**, **Deep** (right). This launches the Debug build, which is a separate app from any
    installed release: it appears as **ListenToMe (Dev)** (bundle id `com.tomwu.ListenToMe.dev`)
    and holds its own permission grants. Grant permissions to that row, not the release's.
-2. On first launch, the app shows a **Permissions** panel automatically. Grant Microphone,
-   Speech Recognition, Screen Recording (system audio), and Accessibility (global hotkey) directly
-   from the panel. You can also reopen it anytime via **More → Permissions**.
-   Re-click **Listen** after granting if needed.
-3. In each AI pane's header, confirm a **model dropdown** is populated with your installed Ollama
-   models. Set different models per pane if you like (e.g. a fast model for **Quick**, a heavier one
-   for **Deep**, `deepseek-v4-flash:cloud` for any). **More → Refresh models** re-scans models.
+2. On first launch, the app shows an **onboarding** sheet, not a Permissions panel. Grant
+   Microphone, Speech Recognition, Screen Recording (system audio), and Accessibility (global
+   hotkey) in System Settings → Privacy & Security. Reopen the in-app Permissions sheet anytime via
+   **More → Permissions…**. Re-click **Listen** after granting if needed.
+3. In the **left status rail**, under **Models**, confirm a **model picker** per pane is populated
+   with your installed Ollama models (the pane header only shows the current selection as text).
+   Set different models per pane if you like (e.g. a fast model for **Quick**, a heavier one for
+   **Deep**, `deepseek-v4-flash:cloud` for any). **More → Refresh models** re-scans models.
 4. Click **Start listening**. On a Mac that has never used the engine, the button flips to **Stop**
    and the recording indicator appears immediately, but the header shows **"Transcription: preparing
    on-device speech model…"** and the mic/system channels stay at "starting…" until the model is
@@ -31,7 +32,7 @@ Prereq: Ollama running with at least one chat-capable model installed (local or 
 7. With **Proactive** on, have the other audio ask a question → a Quick suggestion appears
    automatically ~1-2s after the utterance ends. Press **⌘⇧Space** while another app is focused →
    a Quick suggestion is generated.
-8. **Listener** pane: after some conversation, confirm a rolling summary + open questions/action
+8. **Summary** pane: after some conversation, confirm a rolling summary + open questions/action
    items appear (auto-refreshes; the pane's Refresh button forces it).
 9. **Deep** pane: click **Deep answer** → a longer, detailed response streams (using the Deep
    pane's model).
@@ -67,7 +68,7 @@ single-source for the MVP or the Phase-2 SpeechAnalyzer engine.
 
 1. In Settings, set **AI response language** to a language other than the one you will speak, pick a
    use-case preset, and attach a reference file. Turn **Auto** on and Listen.
-2. Speak a substantive question. When Listener and Deep update automatically, both must be written in
+2. Speak a substantive question. When Summary and Deep update automatically, both must be written in
    the chosen response language and reflect the preset's persona — not flip back to the spoken
    language on the next cycle. The automatic Deep answer must use the attached reference material.
 3. With two speakers (or mic plus system audio), state a commitment as one speaker and have the other
