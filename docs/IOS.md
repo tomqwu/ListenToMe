@@ -99,7 +99,11 @@ History has a search field over title, summary and transcript, using the same ke
 (`SessionSearch`) as the Mac History sheet: every typed term must appear in the same conversation,
 results are ordered by match count then recency, and an empty query is the full list. A query that
 matches nothing shows the standard "no results" view; the saved conversations themselves are
-untouched. History uses native row actions: swipe right to Share, left to Delete, or touch and hold for both.
+untouched. Matching is case-, diacritic- and width-insensitive and splits the query on any
+whitespace, so "cafe" finds "café" and "ai" finds full-width "ＡＩ"; notes (where share-sheet imports
+land) are searched too, and whole-word matches rank above matches inside longer words. If a saved
+conversation file cannot be decoded it is set aside as `<id>.json.corrupt-<timestamp>` and the rest of
+History still lists, with a one-line note above the list. History uses native row actions: swipe right to Share, left to Delete, or touch and hold for both.
 Sharing opens the system share sheet for the selected conversation without switching the active one.
 Delete always asks for confirmation, including from the context menu; a full swipe cannot delete it.
 VoiceOver exposes Share and Delete as custom actions. See [the interaction design and checks](IOS-NATIVE-INTERACTIONS.md).

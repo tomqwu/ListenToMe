@@ -187,13 +187,19 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   a rejected API key and an exhausted quota read as such, not as a missing local model.
 - **Presets.** Pick a use-case preset to tailor how the copilot responds.
 - **Languages.** Independent **transcription-language** and **AI response-language** pickers.
-- **Reference files.** Add files/folders as context, with a configurable token budget.
+- **Reference files.** Add files/folders as context, with a configurable token budget. `.rtf` is read
+  as its text (never `\rtf1` markup), and non-UTF-8 files (Windows-1252, UTF-16 exports) are decoded
+  instead of dropped. Anything that still cannot be included is listed next to the attachments as
+  "Not included", with the reason — a file the model never saw is never invisible.
 - **Audio import.** Import an audio file to transcribe it.
 - **Save conversation (⌘S).** Saves finalized transcript, speaker names, notes and available AI outputs
   without stopping capture. A visible saved time acknowledges success. Failed saves offer Retry / Save As.
 - **New conversation (⌘N).** Finishes and saves the current conversation, then clears transcript,
   AI context, notes, names and attached references. Model/language/appearance preferences remain.
 - **History (⌘F).** Search saved conversations, open their full contents, and copy/export Markdown.
+  Search is case-, accent- and width-insensitive ("cafe" finds "café", "ai" finds "ＡＩ"), splits the
+  query on any whitespace including tabs, ranks whole-word matches above matches inside longer words,
+  and covers title, summary, notes and the transcript's own words (not the "You:"/"Others:" prefixes).
 - **Export (⌘E).** Export the current conversation as Markdown; PDF and recap are also in Export.
   With autosaving off, Save opens Save As and New/Close offers Save As, Cancel or explicit discard.
 
@@ -202,6 +208,10 @@ partial speech is not acknowledged as saved. An interrupted session is available
 its last successful checkpoint. Release history lives in `~/Library/Application Support/ListenToMe/Conversations`;
 Debug uses `ListenToMe Dev/Conversations`. Legacy `sessions.json` imports once and remains for rollback
 until **Clear history** deletes it in the Release app. Turning autosaving off keeps existing history.
+A single damaged conversation file no longer hides the rest: it is renamed to
+`<id>.json.corrupt-<timestamp>` (never deleted), the remaining conversations still list, and History
+shows a one-line note saying what was set aside. An unreadable legacy `sessions.json` is set aside the
+same way, so saving, autosave checkpoints and **Clear history** keep working instead of failing forever.
 History is local, unencrypted JSON and currently reopens for reading/export, not editing or resuming.
 
 ### Automatic speaker identification (experimental)

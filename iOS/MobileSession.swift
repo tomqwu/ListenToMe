@@ -337,7 +337,12 @@ final class MobileSession {
 
 
     private func refreshHistory() {
-        do { history = try archive.all() } catch { message = "Could not load history: \(error.localizedDescription)" }
+        do {
+            // One undecodable file is set aside by the archive and reported; the rest still list.
+            let result = try archive.read()
+            history = result.records
+            if let warning = result.warning { message = warning }
+        } catch { message = "Could not load history: \(error.localizedDescription)" }
     }
 
     /// Applies the current backup choice to everything a conversation is made of. Re-applied after

@@ -22,12 +22,14 @@ final class SessionStore {
         }
     }
 
+    /// Readable conversations. A damaged file no longer hides the rest of the history: it is set
+    /// aside by the archive and reported in `errorText` as a warning alongside the good records.
     func all() -> [SessionRecord] {
         do {
             guard let archive else { throw CocoaError(.fileReadUnknown) }
-            let records = try archive.all()
-            errorText = nil
-            return records
+            let result = try archive.read()
+            errorText = result.warning
+            return result.records
         } catch { errorText = "Couldn't read history: \(error.localizedDescription)"; return [] }
     }
 
@@ -35,8 +37,8 @@ final class SessionStore {
     func add(_ record: SessionRecord) -> Bool {
         do {
             guard let archive else { throw CocoaError(.fileWriteUnknown) }
-            try archive.save(record)
-            errorText = nil
+            // A failed legacy migration is a warning, not a failed save.
+            errorText = try archive.save(record)
             return true
         } catch { errorText = "Couldn't save: \(error.localizedDescription)"; return false }
     }
@@ -45,8 +47,7 @@ final class SessionStore {
     func clear() -> Bool {
         do {
             guard let archive else { throw CocoaError(.fileWriteUnknown) }
-            try archive.clear()
-            errorText = nil
+            errorText = try archive.clear()
             return true
         } catch { errorText = "Couldn't clear history: \(error.localizedDescription)"; return false }
     }

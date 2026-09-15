@@ -30,6 +30,7 @@ struct MeetingView: View {
     @State var presetID: String
     @State var referencePaths: [URL]
     @State private var referenceLoadToken = 0
+    @State var referenceSkipped: [TextFileReader.Skipped] = []
     @State var restartTask: Task<Void, Never>?
     @State var importTask: Task<Void, Never>?
     @State var transcriptAtBottom = true
@@ -475,6 +476,11 @@ extension MeetingView {
             if !referencePaths.isEmpty {
                 Text(referenceSummary)
                     .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                if !referenceSkipped.isEmpty {
+                    Label(referenceSkippedSummary, systemImage: "exclamationmark.triangle")
+                        .font(.caption).foregroundStyle(.orange).lineLimit(1)
+                        .help(referenceSkippedDetail)
+                }
                 Button("Clear") { clearReferences(session: session) }
                     .controlSize(.small)
             }
@@ -486,6 +492,19 @@ extension MeetingView {
         let names = referencePaths.map { $0.lastPathComponent }
         let shown = names.prefix(2).joined(separator: ", ")
         return referencePaths.count > 2 ? "\(shown) +\(referencePaths.count - 2) more" : shown
+    }
+
+    /// One-line "not included" status so a file the model never saw is never invisible.
+    var referenceSkippedSummary: String {
+        guard let first = referenceSkipped.first else { return "" }
+        return referenceSkipped.count == 1
+            ? "Not included: \(first.name) (\(first.reason))"
+            : "\(referenceSkipped.count) files not included"
+    }
+
+    var referenceSkippedDetail: String {
+        "Not included in reference context:\n"
+            + referenceSkipped.map { "• \($0.name) — \($0.reason)" }.joined(separator: "\n")
     }
 
     func addReferenceFiles(session: MeetingSession) {
@@ -506,6 +525,7 @@ extension MeetingView {
 
     func clearReferences(session: MeetingSession) {
         referencePaths = []
+        referenceSkipped = []
         referenceLoadToken += 1   // supersede any in-flight load so it can't reapply old files
         persistReferencePaths()
         session.referenceContext = nil
@@ -521,10 +541,11 @@ extension MeetingView {
         let token = referenceLoadToken
         let urls = referencePaths
         Task {
-            let documents = await Task.detached { FileContextLoader.load(urls) }.value
+            let loaded = await Task.detached { FileContextLoader.load(urls) }.value
             guard token == referenceLoadToken else { return }   // superseded by a newer add/clear
+            referenceSkipped = loaded.skipped
             session.referenceContext = ReferenceBuilder.build(
-                documents: documents,
+                documents: loaded.documents,
                 maxChars: ProviderSettings.referenceBudget
             )
         }

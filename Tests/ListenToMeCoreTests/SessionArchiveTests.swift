@@ -68,14 +68,49 @@ final class SessionArchiveTests: XCTestCase {
         XCTAssertEqual(decoded.transcript, "hello")
     }
 
-    func testCorruptionIsReportedAndNeverOverwrittenAsEmptyHistory() throws {
+    func testOneUnreadableFileStillListsTheOtherConversationsAndQuarantinesIt() throws {
+        let archive = SessionArchive(directory: root)
+        try archive.save(record("A")); try archive.save(record("B"))
+        let damaged = Data(#"{"id":"C","title":"Trunc"#.utf8)
+        try damaged.write(to: root.appendingPathComponent("C.json"))
+
+        let result = try archive.read()
+
+        XCTAssertEqual(Set(result.records.map(\.id)), ["A", "B"])
+        XCTAssertNotNil(result.warning)
+        XCTAssertTrue(result.warning?.contains("C.json") == true, result.warning ?? "no warning")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: root.appendingPathComponent("C.json").path))
+        let quarantined = try FileManager.default.contentsOfDirectory(atPath: root)
+            .filter { $0.hasPrefix("C.json.corrupt-") }
+        XCTAssertEqual(quarantined.count, 1)
+        // Quarantine never destroys user bytes.
+        XCTAssertEqual(try Data(contentsOf: root.appendingPathComponent(quarantined[0])), damaged)
+        // A second read is clean: the bad file is no longer in the way.
+        let again = try archive.read()
+        XCTAssertNil(again.warning)
+        XCTAssertEqual(Set(again.records.map(\.id)), ["A", "B"])
+    }
+
+    func testCorruptLegacyFileNeverBlocksSaveClearOrHistory() throws {
         let legacy = root.appendingPathComponent("sessions.json")
         let damaged = Data("damaged".utf8)
         try damaged.write(to: legacy)
         let archive = SessionArchive(directory: root.appendingPathComponent("history"), legacyURL: legacy)
-        XCTAssertThrowsError(try archive.all())
-        XCTAssertThrowsError(try archive.save(record()))
-        XCTAssertEqual(try Data(contentsOf: legacy), damaged)
+
+        let warning = try archive.save(record())
+        XCTAssertNotNil(warning)
+        XCTAssertTrue(warning?.contains("sessions.json") == true, warning ?? "no warning")
+        XCTAssertEqual(try archive.all(), [record()])
+        XCTAssertNoThrow(try archive.clear())
+        XCTAssertEqual(try archive.all(), [])
+        // The undecodable legacy file is set aside, never deleted.
+        XCTAssertFalse(FileManager.default.fileExists(atPath: legacy.path))
+        let aside = try FileManager.default.contentsOfDirectory(atPath: root)
+            .filter { $0.hasPrefix("sessions.json.corrupt-") }
+        XCTAssertEqual(aside.count, 1)
+        XCTAssertEqual(try Data(contentsOf: root.appendingPathComponent(aside[0])), damaged)
+        // The migration warning is reported once, not on every later operation.
+        XCTAssertNil(try archive.save(record("later")))
     }
 
     func testFailedWriteLeavesPriorCheckpointReadable() throws {

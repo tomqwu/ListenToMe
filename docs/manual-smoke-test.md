@@ -178,3 +178,22 @@ to select that exact app, authenticate if requested, and relaunch it. This reset
 Screen Recording authorization; it does not reset microphone, speech, history, or the Dev app.
 Verify **System: active** and transcribed playback labeled **OTHERS**. Do not treat microphone
 pickup labeled YOU or an enabled toggle alone as proof of system-audio capture.
+
+## Damaged history file and reference-file reporting (#120, #139)
+
+1. **One bad conversation file.** With several saved conversations, quit the app and corrupt one file
+   in `~/Library/Application Support/ListenToMe/Conversations` (e.g. `printf '{"id":' > <id>.json`).
+   Reopen **History (⌘F)**: every other conversation must still be listed, with a one-line note that
+   one unreadable file was set aside. Confirm the file was renamed to `<id>.json.corrupt-<timestamp>`
+   and its bytes are intact — nothing is deleted. Reopen History again: the note is gone.
+2. **Bad legacy file.** Write garbage into `~/Library/Application Support/ListenToMe/sessions.json`,
+   remove `Conversations/legacy-migrated`, and relaunch. Saving, per-second autosave checkpoints and
+   **Clear history** must all keep working; the note names the legacy file, which is set aside as
+   `sessions.json.corrupt-<timestamp>` rather than deleted.
+3. **RTF and non-UTF-8 references.** Attach a TextEdit-exported `agenda.rtf` and a Windows-1252
+   `minutes.txt`. Ask Deep a question answerable only from them: the answer must use their text, and
+   the prompt must not contain `\rtf1` control words. Attach a binary file renamed to `.txt` (or an
+   oversized file): the attachment row must show "Not included" with the reason.
+4. **Search normalization.** Save a conversation containing "café", "Zürich" and full-width "ＡＩ".
+   In History search, `cafe`, `zurich` and `ai` must each find it, a query pasted with a tab between
+   two words must match, and searching `you` must not return every conversation.
