@@ -8,6 +8,12 @@ import Observation
 @Observable
 public final class MeetingSession {
     public private(set) var isRunning = false
+    /// True between Start and the moment the transcription pipeline is warm — on a first run this
+    /// covers a possibly multi-minute on-device speech-model download. The session is "running"
+    /// (Stop is the way out) but no audio is being captured yet, so the UI shows PREP rather than
+    /// REC and every automatic review is suppressed: without this gate the automation would fire
+    /// against the *pre-existing* transcript while the header still says "preparing…" (issue #147).
+    public private(set) var isPreparing = false
     public var notes = "" { didSet { handleLiveEvent(.notesChanged) } }
     public var proactiveEnabled = true
     public var autoSummaryEnabled = false { didSet { handleLiveEvent(.automationChanged) } }
@@ -134,6 +140,9 @@ public final class MeetingSession {
     private var capture: (any AudioCapturing)?
     private var transcriber: (any Transcribing)?
     private let clock: @Sendable () -> TimeInterval
+    /// See `drain(_:grace:)`. Injectable so a test's own per-chunk feed cost can't race the
+    /// default deadline (issue #147).
+    private let capturePumpDrainGrace: Duration
 
     /// Capture -> transcriber.feed pump. Drained (awaited) BEFORE finishing the transcriber so the
     /// last buffered chunks are fed before finalization — but only for `capturePumpDrainGrace`,
@@ -162,6 +171,7 @@ public final class MeetingSession {
                 models: [CopilotRole: String],
                 listenerDebounce: TimeInterval = 12,
                 autoInterval: Duration = .seconds(5),
+                capturePumpDrainGrace: Duration = .milliseconds(250),
                 providerAvailability: @escaping @Sendable (String) -> String? = { _ in nil },
                 clock: @escaping @Sendable () -> TimeInterval = { Date().timeIntervalSince1970 }) {
         self.store = store
@@ -172,6 +182,7 @@ public final class MeetingSession {
         self.makeProvider = makeProvider
         self.models = models
         self.liveScheduler = LiveSummaryScheduler(interval: autoInterval)
+        self.capturePumpDrainGrace = capturePumpDrainGrace
         self.clock = clock
         // Build initial providers from models
         var built: [CopilotRole: any LLMProvider] = [:]
@@ -230,6 +241,7 @@ public final class MeetingSession {
     public func start() async throws {
         guard !isRunning, !isTranscribingFile else { return }
         isRunning = true
+        isPreparing = true
         handleLiveEvent(.recordingChanged)
         // Wait for any prior transcriber to finish draining BEFORE bumping runID, so the old
         // session's segment pump still ingests its final segments under its own runID (a bump here
@@ -273,13 +285,20 @@ public final class MeetingSession {
         // on-device speech model (minutes), and doing it lazily on the feed path dropped the opening
         // seconds of both channels. Run it as a cancellable child Task so a Stop/close/quit during
         // the download tears down promptly instead of freezing the UI (issue #99).
-        let prepare = Task { await transcriber.prepare() }
+        // Waited for through `prepareRacingCancellation` (as on the import path): `prepare()` is
+        // contracted to observe cancellation but the platform download it wraps may not
+        // (`AssetInventory.downloadAndInstall()` has no documented guarantee), so a plain
+        // `await transcriber.prepare()` could park this start task for the whole download after a
+        // Stop — and the next Listen would then run a second concurrent download (issue #147).
+        let prepare = Task { await Self.prepareRacingCancellation(transcriber) }
         prepareTask = prepare
         await prepare.value
         // A stop() during prepare already took ownership of the transcriber via beginStop() (and
         // cleared/cancelled this task), so leave its state alone and abort the start.
         guard isRunning, runID == myRun else { return }
         prepareTask = nil
+        isPreparing = false
+        handleLiveEvent(.recordingChanged)
 
         do {
             try await capture.start()
@@ -287,6 +306,7 @@ public final class MeetingSession {
             capture.stop()
             if runID == myRun {
                 isRunning = false
+                isPreparing = false
                 captureStatusTask?.cancel(); transcriptionStatusTask?.cancel()
                 captureMessages = [.you: "start failed", .others: "stopped"]
                 degradedSources = []
@@ -321,7 +341,7 @@ public final class MeetingSession {
 
     public func stop() {
         guard let teardown = beginStop() else { return }
-        stopDrain = Task { await Self.drain(teardown) }
+        stopDrain = Task { [grace = capturePumpDrainGrace] in await Self.drain(teardown, grace: grace) }
     }
 
     /// Like `stop()`, but awaits full teardown before returning, so an immediately following
@@ -333,25 +353,13 @@ public final class MeetingSession {
             await stopDrain?.value   // a prior fire-and-forget stop() may still be draining
             return
         }
-        let drain = Task { await Self.drain(teardown) }
+        let drain = Task { [grace = capturePumpDrainGrace] in await Self.drain(teardown, grace: grace) }
         stopDrain = drain
         await drain.value
         transcriptionStatusTask?.cancel()
         if transcriptionStatus.hasPrefix("Transcription:") { transcriptionStatus = "Transcription: stopped" }
     }
 
-    /// Grace period the capture pump gets to feed the chunks still buffered in the capture stream
-    /// before teardown cancels it. `capture.stop()` has already finished the stream, so a healthy
-    /// pump (warm pipeline ⇒ `feed` is a non-blocking hand-off) drains in microseconds and never
-    /// reaches this deadline; only a pump parked inside a model download does (issue #99).
-    private static let capturePumpDrainGrace: UInt64 = 250_000_000   // 250 ms
-
-    /// Awaits full teardown in feed-before-finalize order: drain the capture pump (feed every
-    /// remaining chunk, bounded by `capturePumpDrainGrace`), THEN finish the transcriber (finalize),
-    /// THEN drain the segment pump (ingest every final into the store). This keeps the last buffered
-    /// audio from being dropped by an early `finish()`, while guaranteeing teardown still returns
-    /// promptly when `feed` is stuck in a first-run speech-model download.
-    /// Static so it captures only the teardown payload, not `self`.
     /// One-shot thread-safe completion flag (a `Task`'s completion can only be observed by awaiting
     /// it, which is exactly what `prepareRacingCancellation` must avoid).
     private final class DoneFlag: @unchecked Sendable {
@@ -376,14 +384,27 @@ public final class MeetingSession {
         }
     }
 
+    /// Awaits full teardown in feed-before-finalize order: drain the capture pump (feed every
+    /// remaining chunk, bounded by `grace`), THEN finish the transcriber (finalize), THEN drain the
+    /// segment pump (ingest every final into the store). This keeps the last buffered audio from
+    /// being dropped by an early `finish()`, while guaranteeing teardown still returns promptly when
+    /// `feed` is stuck in a first-run speech-model download.
+    /// Static so it captures only the teardown payload, not `self`.
+    ///
+    /// - Parameter grace: how long the capture pump gets to feed the chunks still buffered in the
+    ///   capture stream before it is cancelled. `capture.stop()` has already finished the stream, so
+    ///   a healthy pump (warm pipeline ⇒ `feed` is a non-blocking hand-off) drains in microseconds
+    ///   and never reaches this deadline; only a pump parked inside a model download does (#99).
+    ///   Injectable through `init(capturePumpDrainGrace:)` so a test's own feed cost can't race it.
     private static func drain(
         _ teardown: (transcriber: (any Transcribing)?,
                      capturePump: Task<Void, Never>?,
-                     segmentPump: Task<Void, Never>?)
+                     segmentPump: Task<Void, Never>?),
+        grace: Duration
     ) async {
         if let pump = teardown.capturePump {
             let deadline = Task {
-                try? await Task.sleep(nanoseconds: capturePumpDrainGrace)
+                try? await Task.sleep(for: grace)
                 pump.cancel()
             }
             await pump.value
@@ -400,6 +421,7 @@ public final class MeetingSession {
                                  segmentPump: Task<Void, Never>?)? {
         guard isRunning else { return nil }
         isRunning = false
+        isPreparing = false
         handleLiveEvent(.recordingChanged)
         captureStatusTask?.cancel()
         captureMessages = [.you: "stopped", .others: "stopped"]

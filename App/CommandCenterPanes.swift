@@ -15,11 +15,16 @@ extension MeetingView {
         @Bindable var session = session
         return ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                RailRecStatus(isRunning: session.isRunning, elapsed: elapsedLabel)
+                RailRecStatus(isRunning: session.isRunning, isPreparing: session.isPreparing,
+                              elapsed: elapsedLabel)
 
                 railSection("Engine") {
-                    Text(CommandCenterLabels.engine(ProviderSettings.transcriptionEngine))
+                    Text(CommandCenterLabels.engine(active: activeEngine,
+                                                    saved: ProviderSettings.transcriptionEngine))
                         .font(.system(size: 12.5)).foregroundStyle(Theme.ink)
+                        .help(activeEngine == nil
+                              ? "The engine the next Start listening will use"
+                              : "The engine this recording is using — an engine change applies at the next Start")
                     Picker("Language", selection: languageBinding(session: session)) {
                         ForEach(Self.languageOptions, id: \.id) { Text($0.label).tag($0.id) }
                     }
@@ -120,12 +125,11 @@ extension MeetingView {
 
     // MARK: Center transcript
 
-    /// "idle" when stopped; otherwise "live · N src" where N is the real number of distinct speaker
-    /// sources actually captured so far (so it never claims system audio that isn't being captured).
+    /// "idle" when stopped, "preparing" while the speech model is still warming, otherwise
+    /// "live · N src". The rule lives in Core (`TranscriptStatusLabel`) so it is unit-tested.
     func transcriptStatusLabel(session: MeetingSession) -> String {
-        guard session.isRunning else { return "idle" }
-        let sources = Set(store.utterances.map(\.source)).count
-        return sources > 0 ? "live · \(sources) src" : "live"
+        TranscriptStatusLabel.text(isRunning: session.isRunning, isPreparing: session.isPreparing,
+                                   sources: Set(store.utterances.map(\.source)).count)
     }
 
     func transcriptColumn(session: MeetingSession, notes: Binding<String>) -> some View {
