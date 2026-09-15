@@ -24,15 +24,32 @@ public struct SpeakerIdentityTracker: Sendable {
         identities[id]?.name = name
     }
 
-    public mutating func reconcile(_ segments: [DiarizedSegment]) -> [String: SpeakerIdentity] {
+    /// Reconciles a diarization pass against the previous one.
+    ///
+    /// `windowStart` supports incremental passes (issue #109): when a periodic pass re-analyzes only
+    /// a trailing window of the buffer, matching considers just the part of the previous timeline
+    /// that lies inside that window, and the history before it is preserved so a later full pass can
+    /// still recognize speakers from earlier in the meeting. `windowStart <= 0` is a full pass and
+    /// behaves exactly as before.
+    public mutating func reconcile(_ segments: [DiarizedSegment],
+                                   since windowStart: TimeInterval = 0) -> [String: SpeakerIdentity] {
         let valid = segments.filter { $0.start.isFinite && $0.duration.isFinite && $0.duration > 0 }
         let groups = Dictionary(grouping: valid, by: \.speakerId)
-        let previousEnd = previous.map { $0.start + $0.duration }.max() ?? 0
+        // Split the retained timeline at the window boundary: `history` is kept verbatim, `inWindow`
+        // is what this pass may match against.
+        let history = windowStart > 0 ? SpeakerStats.clip(previous, endingAt: windowStart) : []
+        let inWindow = windowStart > 0 ? previous.compactMap { segment -> DiarizedSegment? in
+            let start = max(segment.start, windowStart)
+            let duration = segment.start + segment.duration - start
+            guard duration > 0 else { return nil }
+            return DiarizedSegment(speakerId: segment.speakerId, start: start, duration: duration)
+        } : previous
+        let previousEnd = inWindow.map { $0.start + $0.duration }.max() ?? 0
         var overlaps: [String: [String: Double]] = [:]
         var oldTotals: [String: Double] = [:]
-        for old in previous { oldTotals[old.speakerId, default: 0] += old.duration }
+        for old in inWindow { oldTotals[old.speakerId, default: 0] += old.duration }
         for current in valid {
-            for old in previous {
+            for old in inWindow {
                 let duration = min(current.start + current.duration, old.start + old.duration)
                     - max(current.start, old.start)
                 if duration > 0 { overlaps[current.speakerId, default: [:]][old.speakerId, default: 0] += duration }
@@ -65,7 +82,7 @@ public struct SpeakerIdentityTracker: Sendable {
                 nextNumber += 1
             }
         }
-        previous = valid.compactMap { segment in
+        previous = history + valid.compactMap { segment in
             guard let identity = mapping[segment.speakerId] else { return nil }
             return DiarizedSegment(speakerId: identity.id, start: segment.start, duration: segment.duration)
         }

@@ -58,4 +58,16 @@ public enum SpeakerStats {
             .sorted { $0.total != $1.total ? $0.total > $1.total : $0.id < $1.id }
         return SpeakerSummary(speakerCount: speakers.count, totalSpeech: totalSpeech, speakers: speakers)
     }
+
+    /// Keeps only the part of each segment that lies before `limit`, dropping empty ones. Used to
+    /// stitch an incremental (trailing-window) diarization pass onto the history the earlier passes
+    /// already produced, without double-counting the overlap.
+    public static func clip(_ segments: [DiarizedSegment], endingAt limit: TimeInterval) -> [DiarizedSegment] {
+        segments.compactMap { segment in
+            guard segment.duration > 0, segment.start < limit else { return nil }
+            let duration = min(segment.start + segment.duration, limit) - segment.start
+            guard duration > 0 else { return nil }
+            return DiarizedSegment(speakerId: segment.speakerId, start: segment.start, duration: duration)
+        }
+    }
 }
