@@ -16,6 +16,17 @@ struct MobileHistoryView: View {
     var body: some View {
         NavigationStack {
             List {
+                if let warning = session.archiveWarning {
+                    Section {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Label(warning, systemImage: "exclamationmark.triangle")
+                                .font(.footnote).foregroundStyle(.orange)
+                                .accessibilityIdentifier("history-archive-warning")
+                            Button("Dismiss") { session.dismissArchiveWarning() }
+                                .font(.footnote).buttonStyle(.borderless)
+                        }
+                    }
+                }
                 Section {
                     ForEach(results) { record in
                         row(record)
@@ -59,6 +70,7 @@ struct MobileHistoryView: View {
                     ContentUnavailableView.search(text: query)
                 }
             }
+            .onAppear { session.reloadHistory() }
             .searchable(text: $query, prompt: "Search title, summary, or transcript")
             .navigationTitle("History")
             .toolbar { Button("Done") { dismiss() } }

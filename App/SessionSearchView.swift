@@ -28,6 +28,15 @@ struct SessionSearchView: View {
                 Text(error).foregroundStyle(.red)
                 Button("Retry") { records = store.all() }
             }
+            // A damaged file is set aside rather than hiding everything, so this is a warning
+            // shown next to the conversations that did load, not a read failure.
+            if let warning = store.archiveWarning {
+                HStack {
+                    Label(warning, systemImage: "exclamationmark.triangle")
+                        .font(.callout).foregroundStyle(.orange)
+                    Button("Dismiss") { store.dismissArchiveWarning() }.controlSize(.small)
+                }
+            }
             List(SessionSearch.search(records, query: query)) { record in
                 Button { selected = record } label: {
                     VStack(alignment: .leading, spacing: 5) {

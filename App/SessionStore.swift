@@ -7,6 +7,10 @@ import ListenToMeCore
 final class SessionStore {
     private let archive: SessionArchive?
     private(set) var errorText: String?
+    /// A damaged history file or legacy file the archive set aside. Separate from `errorText`,
+    /// which only the failure paths read: the first migration usually happens during an autosave,
+    /// so the warning has to survive until History is opened.
+    private(set) var archiveWarning: String?
 
     init() {
         do {
@@ -22,12 +26,17 @@ final class SessionStore {
         }
     }
 
+    /// Readable conversations. A damaged file no longer hides the rest of the history: it is set
+    /// aside by the archive and reported in `errorText` as a warning alongside the good records.
     func all() -> [SessionRecord] {
         do {
             guard let archive else { throw CocoaError(.fileReadUnknown) }
-            let records = try archive.all()
+            let result = try archive.read()
             errorText = nil
-            return records
+            // Sticky for the app run: the damaged file is renamed by the first scan, so a later
+            // scan is clean and must not erase a note raised by an autosave's migration.
+            if let warning = result.warning { archiveWarning = warning }
+            return result.records
         } catch { errorText = "Couldn't read history: \(error.localizedDescription)"; return [] }
     }
 
@@ -35,17 +44,22 @@ final class SessionStore {
     func add(_ record: SessionRecord) -> Bool {
         do {
             guard let archive else { throw CocoaError(.fileWriteUnknown) }
-            try archive.save(record)
+            // A failed legacy migration is a warning, not a failed save.
+            if let warning = try archive.save(record) { archiveWarning = warning }
             errorText = nil
             return true
         } catch { errorText = "Couldn't save: \(error.localizedDescription)"; return false }
     }
 
+    /// The user has seen the note about a set-aside file and dismissed it.
+    func dismissArchiveWarning() { archiveWarning = nil }
+
     @discardableResult
     func clear() -> Bool {
         do {
             guard let archive else { throw CocoaError(.fileWriteUnknown) }
-            try archive.clear()
+            // Clear deletes the quarantined files too, so any earlier warning is obsolete.
+            archiveWarning = try archive.clear()
             errorText = nil
             return true
         } catch { errorText = "Couldn't clear history: \(error.localizedDescription)"; return false }

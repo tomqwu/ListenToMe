@@ -27,23 +27,69 @@ public struct SessionRecord: Sendable, Equatable, Identifiable, Codable {
 }
 
 public enum SessionSearch {
-    /// Records matching `query` (case-insensitive, all whitespace-split terms must appear across
-    /// title+summary+transcript), ranked by total term frequency then most-recent date. An empty
-    /// query returns all records sorted by date descending.
-    public static func search(_ records: [SessionRecord], query: String) -> [SessionRecord] {
-        let terms = query.lowercased().split(whereSeparator: { $0 == " " || $0 == "\n" }).map(String.init)
-        if terms.isEmpty { return records.sorted { $0.date > $1.date } }
-        func haystack(_ r: SessionRecord) -> String { "\(r.title)\n\(r.summary)\n\(r.transcript)".lowercased() }
-        let scored: [(SessionRecord, Int)] = records.compactMap { record in
-            let text = haystack(record)
-            var score = 0
-            for term in terms {
-                let count = text.components(separatedBy: term).count - 1
-                if count == 0 { return nil }   // every term must appear
-                score += count
+    /// Case-, diacritic- and width-insensitive form used on both sides of every comparison, so
+    /// "cafe" matches "café", "zurich" matches "Zürich" and "ai" matches full-width "ＡＩ".
+    static func fold(_ text: String) -> String {
+        text.folding(options: [.caseInsensitive, .diacriticInsensitive, .widthInsensitive], locale: nil)
+    }
+
+    /// Searchable text of a record. Built from segment text (plus speaker names) when segments are
+    /// available, so the "You:"/"Others:" prefixes of the flattened transcript cannot create false
+    /// matches; notes are included because iOS share-sheet imports land there.
+    static func haystack(_ record: SessionRecord) -> String {
+        var parts = [record.title, record.summary, record.notes ?? ""]
+        if let segments = record.segments, !segments.isEmpty {
+            for segment in segments {
+                parts.append(segment.speakerName ?? "")
+                parts.append(segment.text)
             }
-            return (record, score)
+        } else {
+            parts.append(record.transcript)
         }
-        return scored.sorted { ($0.1, $0.0.date) > ($1.1, $1.0.date) }.map(\.0)
+        return fold(parts.joined(separator: "\n"))
+    }
+
+    /// Occurrences of `term` in `text`, split into whole-word hits (nothing alphanumeric on either
+    /// side) and hits inside a longer word. Scripts without word separators (CJK) naturally produce
+    /// in-word hits, so both kinds count as a match — only the ranking differs.
+    static func occurrences(of term: String, in text: String) -> (whole: Int, total: Int) {
+        guard !term.isEmpty else { return (0, 0) }
+        var whole = 0, total = 0
+        var start = text.startIndex
+        while start < text.endIndex, let range = text.range(of: term, range: start..<text.endIndex) {
+            total += 1
+            let before = range.lowerBound == text.startIndex ? nil : text[text.index(before: range.lowerBound)]
+            let after = range.upperBound == text.endIndex ? nil : text[range.upperBound]
+            func isWordCharacter(_ character: Character?) -> Bool {
+                guard let character else { return false }
+                return character.isLetter || character.isNumber
+            }
+            if !isWordCharacter(before) && !isWordCharacter(after) { whole += 1 }
+            start = range.lowerBound < range.upperBound ? range.upperBound : text.index(after: range.lowerBound)
+        }
+        return (whole, total)
+    }
+
+    /// Records matching `query` (case-, diacritic- and width-insensitive; terms are split on any
+    /// whitespace and every term must appear across title + summary + notes + transcript/segments),
+    /// ranked by whole-word hits, then total hits, then most-recent date. An empty query returns all
+    /// records sorted by date descending.
+    public static func search(_ records: [SessionRecord], query: String) -> [SessionRecord] {
+        let terms = fold(query).split(whereSeparator: \.isWhitespace).map(String.init)
+        if terms.isEmpty { return records.sorted { $0.date > $1.date } }
+        let scored: [(record: SessionRecord, whole: Int, total: Int)] = records.compactMap { record in
+            let text = haystack(record)
+            var whole = 0, total = 0
+            for term in terms {
+                let counts = occurrences(of: term, in: text)
+                if counts.total == 0 { return nil }   // every term must appear
+                whole += counts.whole
+                total += counts.total
+            }
+            return (record, whole, total)
+        }
+        return scored
+            .sorted { ($0.whole, $0.total, $0.record.date) > ($1.whole, $1.total, $1.record.date) }
+            .map(\.record)
     }
 }

@@ -154,4 +154,36 @@ final class MobilePapercutTests: XCTestCase {
         XCTAssertTrue(session.historyMatching("invoice typography").isEmpty,
                       "Every term must appear in the same conversation")
     }
+
+    // MARK: Damaged history file (#120)
+
+    func testOneUnreadableHistoryFileLeavesTheRestListedAndReportsItSeparately() throws {
+        let root = temporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let first = MobileSession(storageDirectory: root)
+        first.title = "Standup"; first.summary = "Chased invoice 4471"
+        XCTAssertTrue(first.save(announce: false))
+
+        let damaged = root.appendingPathComponent("Conversations/broken.json")
+        try Data(#"{"id":"broken","title":"#.utf8).write(to: damaged)
+
+        let session = MobileSession(storageDirectory: root)
+        XCTAssertEqual(session.history.map(\.title), ["Standup"],
+                       "One damaged file must not hide the readable conversations")
+        XCTAssertNotNil(session.archiveWarning, "The set-aside file has to be reported")
+        // It also survives restoring the active conversation, which resets `message` to nil —
+        // that is why the warning lives in its own property.
+        session.open(session.history[0])
+        XCTAssertNotNil(session.archiveWarning)
+        // The first scan already renamed the file, so opening History rescans cleanly. The note has
+        // to stay anyway — otherwise the launch-then-open-History path never shows it at all.
+        session.reloadHistory()
+        XCTAssertNotNil(session.archiveWarning, "The note must survive the clean rescan History does")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: damaged.path))
+        // It goes away only when the user dismisses it.
+        session.dismissArchiveWarning()
+        XCTAssertNil(session.archiveWarning)
+        session.reloadHistory()
+        XCTAssertNil(session.archiveWarning, "A dismissed note does not come back")
+    }
 }
