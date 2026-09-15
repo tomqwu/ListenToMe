@@ -8,6 +8,12 @@ import Observation
 @Observable
 public final class MeetingSession {
     public private(set) var isRunning = false
+    /// True between Start and the moment the transcription pipeline is warm — on a first run this
+    /// covers a possibly multi-minute on-device speech-model download. The session is "running"
+    /// (Stop is the way out) but no audio is being captured yet, so the UI shows PREP rather than
+    /// REC and every automatic review is suppressed: without this gate the automation would fire
+    /// against the *pre-existing* transcript while the header still says "preparing…" (issue #147).
+    public private(set) var isPreparing = false
     public var notes = "" { didSet { handleLiveEvent(.notesChanged) } }
     public var proactiveEnabled = true
     public var autoSummaryEnabled = false { didSet { handleLiveEvent(.automationChanged) } }
@@ -230,6 +236,7 @@ public final class MeetingSession {
     public func start() async throws {
         guard !isRunning, !isTranscribingFile else { return }
         isRunning = true
+        isPreparing = true
         handleLiveEvent(.recordingChanged)
         // Wait for any prior transcriber to finish draining BEFORE bumping runID, so the old
         // session's segment pump still ingests its final segments under its own runID (a bump here
@@ -280,6 +287,8 @@ public final class MeetingSession {
         // cleared/cancelled this task), so leave its state alone and abort the start.
         guard isRunning, runID == myRun else { return }
         prepareTask = nil
+        isPreparing = false
+        handleLiveEvent(.recordingChanged)
 
         do {
             try await capture.start()
@@ -287,6 +296,7 @@ public final class MeetingSession {
             capture.stop()
             if runID == myRun {
                 isRunning = false
+                isPreparing = false
                 captureStatusTask?.cancel(); transcriptionStatusTask?.cancel()
                 captureMessages = [.you: "start failed", .others: "stopped"]
                 degradedSources = []
@@ -400,6 +410,7 @@ public final class MeetingSession {
                                  segmentPump: Task<Void, Never>?)? {
         guard isRunning else { return nil }
         isRunning = false
+        isPreparing = false
         handleLiveEvent(.recordingChanged)
         captureStatusTask?.cancel()
         captureMessages = [.you: "stopped", .others: "stopped"]

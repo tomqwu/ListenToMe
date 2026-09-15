@@ -52,6 +52,7 @@ extension MeetingSession {
 
     public var autoQuickStatus: String {
         guard autoSummaryEnabled else { return "Auto off" }
+        if isPreparing { return "Auto paused · Preparing on-device speech model…" }
         guard aiEnabled else { return "Auto paused · AI is off" }
         if let reason = providerAvailability(models[.quick] ?? "") { return "Auto paused · " + reason }
         if let error = quickReader.error { return error }
@@ -73,6 +74,7 @@ extension MeetingSession {
     public func automaticReviewStatus(_ mode: AutomaticReviewMode) -> String {
         guard autoSummaryEnabled else { return "Auto off · Generate manually." }
         guard isRunning else { return "Auto reviews run while listening. Generate is also available." }
+        if isPreparing { return "Auto paused · Preparing on-device speech model…" }
         guard aiEnabled else { return "Auto paused · AI is off." }
         if let reason = providerAvailability(models[.quick] ?? "") { return "Auto paused · " + reason }
         guard providers[.quick] != nil else { return "Auto paused · Choose a Quick model." }
@@ -84,7 +86,7 @@ extension MeetingSession {
     /// - Parameter live: the snapshot for this event, computed once by the caller so a single
     ///   ingested hypothesis never walks the transcript more than once (issue #116).
     private func synchronizeAutomaticReviews(_ live: LiveSnapshot) {
-        automaticReviews.synchronize(enabled: autoSummaryEnabled && isRunning && aiEnabled
+        automaticReviews.synchronize(enabled: autoSummaryEnabled && isRunning && !isPreparing && aiEnabled
             && providers[.quick] != nil && providerAvailability(models[.quick] ?? "") == nil,
             manualBusy: !streamingRoles.isEmpty, pieces: live.pieces, source: live.source,
             directives: automaticReviewDirectives, provider: { [weak self] mode in
@@ -126,7 +128,7 @@ extension MeetingSession {
         if event == .automationChanged || event == .providerChanged, !pending, !quickReader.isCatchingUp {
             automaticReviews.offer(quickReader.recommendations, source: live.source)
         }
-        let state = LiveSummaryScheduler.Snapshot(recording: isRunning, automatic: autoSummaryEnabled,
+        let state = LiveSummaryScheduler.Snapshot(recording: isRunning && !isPreparing, automatic: autoSummaryEnabled,
             pending: pending, reading: quickReader.isReading,
             manualQuick: streamingRoles.contains(.quick), available: aiEnabled && providers[.quick] != nil && providerAvailability(models[.quick] ?? "") == nil,
             failures: quickReader.failures)
@@ -145,7 +147,7 @@ extension MeetingSession {
     }
 
     private func evaluateLiveQuick() async {
-        guard isRunning, aiEnabled, autoSummaryEnabled, !quickReader.isReading,
+        guard isRunning, !isPreparing, aiEnabled, autoSummaryEnabled, !quickReader.isReading,
               !streamingRoles.contains(.quick), providerAvailability(models[.quick] ?? "") == nil, let provider = providers[.quick] else { return }
         defer { handleLiveEvent(.evaluationFinished) }
         let live = liveSnapshot()
@@ -159,7 +161,8 @@ extension MeetingSession {
             let run = runID
             let previousReads = quickReader.completedReads
             await quickReader.read(batch, provider: provider, isCurrent: { [weak self] in
-                guard let self, self.runID == run, self.isRunning, self.autoSummaryEnabled, self.aiEnabled else { return false }
+                guard let self, self.runID == run, self.isRunning, !self.isPreparing,
+                      self.autoSummaryEnabled, self.aiEnabled else { return false }
                 return self.quickReader.context.isCurrent(batch, pieces: self.livePieces)
             }, apply: { [weak self] in self?.applyQuickRecap($0) })
             if quickReader.completedReads > previousReads, !quickReader.isCatchingUp {

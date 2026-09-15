@@ -60,7 +60,7 @@ final class TranscriberPrepareTests: XCTestCase {
     func testTranscribeAudioPreparesBeforeTheFirstChunk() async {
         let log = OrderLog()
         let transcriber = MockTranscriber(log: log)
-        let session = makeSession(capture: MockCapture(), transcriber: MockTranscriber())
+        let session = makeSession(capture: MockCapture(), transcriber: transcriber)
 
         let producer = ArrayChunkProducer([
             AudioChunk(samples: [0.1], sampleRate: 16_000, source: .you, timestamp: 0)
@@ -75,6 +75,59 @@ final class TranscriberPrepareTests: XCTestCase {
         }
         XCTAssertLessThan(prepareIndex, feedIndex)
     }
+
+    // MARK: - Preparing state (issue #147)
+
+    func testSessionIsPreparingUntilTheSpeechModelIsWarm() async throws {
+        let capture = MockCapture()
+        let transcriber = MockTranscriber(slowPrepare: true)
+        let session = makeSession(capture: capture, transcriber: transcriber)
+        XCTAssertFalse(session.isPreparing)
+
+        let startTask = Task { try await session.start() }
+        await waitUntil { session.isPreparing }
+        XCTAssertTrue(session.isPreparing, "the rail must distinguish preparing from recording")
+        XCTAssertTrue(session.isRunning)
+        XCTAssertEqual(capture.startCount, 0)
+
+        transcriber.release()
+        _ = try? await startTask.value
+        XCTAssertFalse(session.isPreparing, "preparing must end once capture starts")
+        XCTAssertTrue(session.isRunning)
+        await session.stopAndWait()
+        XCTAssertFalse(session.isPreparing)
+    }
+
+    func testAutomaticReviewsDoNotDispatchWhilePreparing() async throws {
+        let transcriber = MockTranscriber(slowPrepare: true)
+        let publish = Self.publishDecision
+        let session = MeetingSession(
+            store: ConversationStore(), context: ContextEngine(debounce: 0),
+            makeCapture: { MockCapture() }, makeTranscriber: { transcriber },
+            makeProvider: { model in MockLLMProvider(id: model, deltas: [publish]) },
+            models: [.listener: "L", .quick: "Q", .deep: "D"],
+            listenerDebounce: 0, autoInterval: .milliseconds(5))
+        session.autoSummaryEnabled = true
+        await session.ingest(TranscriptSegment(source: .others, text: "Sarah confirms Monday.",
+                                               isFinal: true, start: 0, end: 1))
+
+        let startTask = Task { try await session.start() }
+        await waitUntil { session.isPreparing }
+        try await Task.sleep(for: .milliseconds(80))
+        XCTAssertEqual(session.quickReader.completedReads, 0,
+                       "automatic reviews must not run against old transcript while preparing")
+
+        transcriber.release()
+        _ = try? await startTask.value
+        await waitUntil { session.quickReader.completedReads > 0 }
+        XCTAssertGreaterThan(session.quickReader.completedReads, 0,
+                             "automation must resume once the model is warm")
+        await session.stopAndWait()
+    }
+
+    private static let publishDecision = """
+    {"action":"publish","context":"Monday","bullets":["Sarah confirms Monday."],"reviews":[]}
+    """
 
     // MARK: - Teardown while the model is still downloading
 
@@ -129,7 +182,7 @@ final class TranscriberPrepareTests: XCTestCase {
         // prepare() here ignores cancellation (like a platform download with no cancellation
         // guarantee); the import must still return when its task is cancelled.
         let transcriber = MockTranscriber(stubbornPrepare: true)
-        let session = makeSession(capture: MockCapture(), transcriber: MockTranscriber())
+        let session = makeSession(capture: MockCapture(), transcriber: transcriber)
         let producer = ArrayChunkProducer([
             AudioChunk(samples: [0.1], sampleRate: 16_000, source: .you, timestamp: 0)
         ])
