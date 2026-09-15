@@ -99,4 +99,34 @@ final class CoreReviewPapercutTests: XCTestCase {
         XCTAssertNil(session.roleError(.deep))
         XCTAssertEqual(session.deepAnswer, "Detailed answer.")
     }
+
+    // MARK: - 2. Listener refresh is a no-op when there is nothing new to summarize
+
+    func testRefreshOnAnEmptyStoreNeverCallsTheModel() async {
+        let provider = ScriptedProvider(deltas: ["Summary of nothing."])
+        let (session, _) = makeSession(provider: provider)
+        XCTAssertFalse(session.hasUnsummarizedSpeech)
+        await session.refreshListener()
+        XCTAssertTrue(provider.requests.isEmpty)
+        XCTAssertEqual(session.listenerSummary, "")
+    }
+
+    func testASecondRefreshWithNothingNewKeepsTheSummaryAndSkipsTheModel() async {
+        let provider = ScriptedProvider(deltas: ["Decision: ship Friday."])
+        let (session, store) = makeSession(provider: provider)
+        speak(store, "We ship Friday.", at: 0)
+        await session.refreshListener()
+        XCTAssertEqual(provider.requests.count, 1)
+        XCTAssertFalse(session.hasUnsummarizedSpeech)
+
+        await session.refreshListener()
+
+        XCTAssertEqual(provider.requests.count, 1, "nothing new: the model must not be re-asked")
+        XCTAssertEqual(session.listenerSummary, "Decision: ship Friday.")
+
+        speak(store, "Also write the changelog.", at: 2)
+        XCTAssertTrue(session.hasUnsummarizedSpeech)
+        await session.refreshListener()
+        XCTAssertEqual(provider.requests.count, 2)
+    }
 }
