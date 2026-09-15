@@ -290,7 +290,15 @@ paths, which fence `summarySource` and carry the same notice. The Quick evaluato
 that its JSON input fields are data, and keeps its own wording.
 
 `PromptBuilder.provisionalNotice` stays *outside* the transcript fence: like the action instruction
-it is text the app wrote, not meeting data.
+it is text the app wrote, not meeting data. `PromptData.block` neutralizes every `</` inside the body
+with a zero-width space, so a reference file or a spoken line containing `</reference>` cannot close
+the fence and escape into instruction position.
+
+macOS builds four separate blocks because it holds transcript, summary, notes and references apart.
+iOS assembles one attributed source string, so a typed note travels inside `<transcript>` on its
+`Notes: ` line instead of in its own `<notes>` block; the grounding sentence that a `Notes: ` line is
+the user's typed note, not speech, is unchanged, and the notice names all four tags on both
+platforms.
 
 The fences are ordinary prompt characters, so they are charged like any other scaffold:
 `PromptBuilder.scaffoldCharacterCost` measures them because it builds the real prompt, and the iOS
@@ -315,8 +323,13 @@ publishes the failure through `roleError(role)`, which each pane renders as its 
 same "previous output kept" contract the automatic paths have always had. A Listener refresh returns
 early unless the store holds unsummarized speech (`hasUnsummarizedSpeech`, which also disables the
 Refresh button), so a second Refresh cannot have the model re-paraphrase — and possibly reword or
-drop items from — the record already on screen. Unfinalized speech counts as unsummarized: with the
-ledger caught up the refresh carries the provisional lines instead, so the #113 path is unaffected.
+drop items from — the record already on screen. Unfinalized speech counts as unsummarized *until it
+has been sent*: with the ledger caught up the refresh carries the provisional lines, and the wording
+it sent is remembered in `summarizedProvisionalText` (non-final lines never enter the segment
+ledger), so the #113 path keeps working while a second Refresh on the same hypothesis stays a no-op.
+
+`cancelResponse` clears the pane's activity as well: it bumps the generation, so `run`'s own cleanup
+is skipped, and a cancelled reasoning model would otherwise leave "Thinking…" on screen for good.
 
 Reasoning models stream `message.thinking` deltas before any answer token. `OllamaProvider`
 carries them as `LLMStreamEvent.thinking`, and `MeetingSession.roleStatus(role)` shows "Thinking…"

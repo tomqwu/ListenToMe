@@ -153,6 +153,29 @@ final class CoreReviewPapercutTests: XCTestCase {
         XCTAssertEqual(provider.requests.count, 2)
     }
 
+    /// Issue #113 crossing #137: with the ledger caught up a refresh carries the *provisional*
+    /// lines, so unfinalized speech counts as unsummarized — but only until it has been sent.
+    func testRefreshRunsForNewProvisionalSpeechAndThenStopsUntilItChanges() async {
+        let provider = ScriptedProvider(deltas: ["Summary."])
+        let (session, store) = makeSession(provider: provider)
+        speak(store, "We shipped the beta.", at: 0)
+        await session.refreshListener()
+        XCTAssertEqual(provider.requests.count, 1)
+        XCTAssertFalse(session.hasUnsummarizedSpeech)
+
+        store.apply(TranscriptSegment(source: .others,
+                                      text: "And what should we do about the migration deadline?",
+                                      isFinal: false, start: 2, end: 3))
+        XCTAssertTrue(session.hasUnsummarizedSpeech, "a fresh hypothesis is speech nobody summarized")
+        await session.refreshListener()
+        XCTAssertEqual(provider.requests.count, 2)
+        XCTAssertTrue(provider.requests.last?.messages.last?.content.contains("migration deadline") == true)
+
+        XCTAssertFalse(session.hasUnsummarizedSpeech, "the same wording must not re-enable Refresh")
+        await session.refreshListener()
+        XCTAssertEqual(provider.requests.count, 2)
+    }
+
     // MARK: - 4. A reasoning phase is a status, never answer text
 
     func testThinkingIsShownAsAStatusAndKeptOutOfTheAnswer() async throws {
@@ -171,5 +194,22 @@ final class CoreReviewPapercutTests: XCTestCase {
         await run.value
         XCTAssertEqual(session.deepAnswer, "Answer.")
         XCTAssertNil(session.roleStatus(.deep))
+    }
+
+    /// Cancelling bumps the generation, so `run`'s own cleanup is skipped: without clearing it here
+    /// a cancelled reasoning model would leave "Thinking…" on screen for good.
+    func testCancellingARunClearsTheThinkingStatus() async throws {
+        let (session, store) = makeSession(provider: ThinkingProvider(reasoningDelay: .seconds(5)))
+        speak(store, "How is the rollout going?", at: 0)
+        let run = Task { await session.respondDeep(.answerQuestion) }
+        let deadline = ContinuousClock.now + .seconds(2)
+        while session.roleStatus(.deep) == nil, ContinuousClock.now < deadline {
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        XCTAssertEqual(session.roleStatus(.deep), "Thinking…")
+
+        session.cancelResponse(.deep)
+        XCTAssertNil(session.roleStatus(.deep))
+        run.cancel()
     }
 }

@@ -73,6 +73,14 @@ public final class MeetingSession {
     private var lastCompletedListenerSummary = ""
     private var summarizedSegmentIDs = Set<UUID>()
     private var pendingSummaryIDs: [Int: Set<UUID>] = [:]
+    /// The provisional (non-final) lines the last completed refresh actually sent. Unfinalized
+    /// speech has no ledger entry — it is never final — so this is what keeps a second Refresh with
+    /// the same unconfirmed wording a no-op (issues #113, #137).
+    private var summarizedProvisionalText: String?
+    private var pendingProvisionalText: [Int: String] = [:]
+    /// Transcript characters one listener refresh asks for; also the window the Refresh button's
+    /// provisional comparison measures, so the two always describe the same lines.
+    static let listenerTranscriptBudget = 16_000
 
     /// Set when the last prompt had to drop transcript or reference material to fit the role
     /// provider's context window (Apple Intelligence). nil for providers with no window.
@@ -194,6 +202,9 @@ public final class MeetingSession {
         responseTasks[role]?.cancel()
         responseGenerations[role, default: 0] += 1
         streamingRoles.remove(role)
+        // The bumped generation makes run()'s defer skip its own cleanup, so a cancelled reasoning
+        // model would leave "Thinking…" on screen forever (issue #137).
+        roleActivity[role] = nil
     }
 
     public func resetConversation() {
@@ -208,6 +219,8 @@ public final class MeetingSession {
         lastCompletedListenerSummary = ""
         summarizedSegmentIDs = []
         pendingSummaryIDs = [:]
+        summarizedProvisionalText = nil
+        pendingProvisionalText = [:]
         context = ContextEngine(debounce: context.debounce)
         runID += 1
     }
@@ -569,24 +582,38 @@ extension MeetingSession {
         }.value
     }
 
-    /// True when the store holds speech the Listener has not summarized yet — finalized utterances
-    /// outside its ledger, or unfinalized speech long enough to send as provisional context (issue
-    /// #113), which a caught-up refresh carries. A refresh with nothing new is a no-op, so the UI
-    /// disables Refresh on `!hasUnsummarizedSpeech` (issue #137).
+    /// True when the store holds speech the Listener has not summarized yet: finalized utterances
+    /// outside its ledger, or unfinalized speech whose wording differs from what the last refresh
+    /// already sent as provisional context (issue #113) — a caught-up refresh carries that instead.
+    /// A refresh with nothing new is a no-op, so the UI disables Refresh on `!hasUnsummarizedSpeech`
+    /// (issue #137).
     public var hasUnsummarizedSpeech: Bool {
-        store.utterances.contains { !summarizedSegmentIDs.contains($0.id) } || store.hasProvisionalSpeech
+        if store.utterances.contains(where: { !summarizedSegmentIDs.contains($0.id) }) { return true }
+        guard store.hasProvisionalSpeech else { return false }
+        return Self.signature(of: store.provisionalContext(maxChars: Self.listenerTranscriptBudget))
+            != summarizedProvisionalText
+    }
+
+    /// The provisional lines a refresh sends, as one comparable string.
+    static func signature(of segments: [TranscriptSegment]) -> String {
+        segments.map { "\($0.speakerLabel): \($0.text)" }.joined(separator: "\n")
     }
 
     /// Streams a Listener refresh (rolling summary + open items). Awaits completion.
     public func refreshListener() async {
+        guard hasUnsummarizedSpeech else { return }
         startListenerRefresh()
         await waitForResponse(.listener)
     }
 
     /// New attribution should ground the next answer in the labeled transcript, not an older recap.
+    ///
+    /// This still re-summarizes the whole meeting, even with Auto off — tracked as #167 (part of
+    /// #98) and deliberately out of scope for #137, which only stopped the *no-op* refresh.
     public func speakerAttributionsChanged() {
         // Replay raw transcript when labels change so old names cannot survive only in generated prose.
         summarizedSegmentIDs = []
+        summarizedProvisionalText = nil
         lastCompletedListenerSummary = ""
         listenerSummary = ""
         startListenerRefresh()
@@ -637,7 +664,7 @@ extension MeetingSession {
             let notice = remaining.isEmpty && self.store.hasProvisionalSpeech
                 ? PromptBuilder.provisionalNotice.count + 2 : 0
             let allocation = PromptBudget.allocate(
-                limit: limit, scaffold: scaffold + notice, transcript: 16_000, references: 0,
+                limit: limit, scaffold: scaffold + notice, transcript: Self.listenerTranscriptBudget, references: 0,
                 summary: record.count, notes: self.notes.count)
             let (clampedRecord, droppedRecord) = Self.clamp(record, to: allocation.summary)
             let (clampedNotes, droppedNotes) = Self.clamp(self.notes, to: allocation.notes)
@@ -669,6 +696,11 @@ extension MeetingSession {
             }
             let generation = self.responseGenerations[.listener] ?? 0
             self.pendingSummaryIDs[generation] = Set(batch.map(\.id))
+            // Provisional lines never become ledger entries (they are not final), so what this
+            // refresh sent is remembered separately and keeps Refresh disabled until the wording
+            // changes or the recognizer finalizes it (issues #113, #137).
+            self.pendingProvisionalText[generation] = provisional.isEmpty
+                ? nil : Self.signature(of: provisional)
             return PromptBuilder.buildListener(context: PromptContext(
                 messages: Array(batch) + provisional, notes: clampedNotes, summary: clampedRecord ?? "",
                 responseLanguage: self.responseLanguage, personaGuidance: self.personaGuidance))
@@ -768,6 +800,8 @@ extension MeetingSession {
                 lastCompletedListenerSummary = listenerSummary
                 summarizedSegmentIDs.formUnion(pendingSummaryIDs[generation] ?? [])
                 pendingSummaryIDs = [:]
+                summarizedProvisionalText = pendingProvisionalText[generation]
+                pendingProvisionalText = [:]
                 if aiEnabled && store.utterances.contains(where: { !summarizedSegmentIDs.contains($0.id) }) {
                     startListenerRefresh()
                 }
