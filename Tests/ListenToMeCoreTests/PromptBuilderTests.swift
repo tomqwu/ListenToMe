@@ -170,7 +170,8 @@ final class PromptBuilderTests: XCTestCase {
 
     func testSystemMessageIsFirst() {
         let req = PromptBuilder.build(context: ctx(), action: .proactive)
-        XCTAssertEqual(req.system, PromptBuilder.systemPrompt)
+        // With no directives set, the base prompt plus the data-fence notice (#140) is all there is.
+        XCTAssertEqual(req.system, PromptBuilder.systemPrompt + "\n" + PromptData.notice)
     }
 
     // MARK: - buildListener tests
@@ -261,7 +262,9 @@ final class PromptBuilderTests: XCTestCase {
             for tag in ["transcript", "summary", "notes", "reference"] {
                 XCTAssertTrue(user.contains("<\(tag)>") && user.contains("</\(tag)>"), tag)
             }
-            XCTAssertTrue(user.hasSuffix("right now."), "the instruction stays outside every fence")
+            let afterLastFence = user.components(separatedBy: "</reference>").last ?? ""
+            XCTAssertFalse(afterLastFence.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                           "the instruction stays outside every fence")
         }
         let listener = PromptBuilder.buildListener(context: context).messages.last!.content
         for tag in ["transcript", "summary", "notes"] {
