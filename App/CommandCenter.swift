@@ -227,12 +227,12 @@ struct FlowLayout: Layout {
 
 enum CommandCenterLabels {
     /// Friendly label for the stored transcription-engine id.
-    static func engine(_ id: String) -> String {
-        switch id {
-        case "speechRecognizer": return "SpeechRecognizer"
-        case "whisperKit": return "WhisperKit"
-        default: return "SpeechAnalyzer"
-        }
+    static func engine(_ id: String) -> String { TranscriptionEngineLabel.name(id) }
+
+    /// The rail's Engine line: the engine the live run actually built, with the saved setting
+    /// flagged as pending when the user changed it mid-run (issue #136).
+    static func engine(active: String?, saved: String) -> String {
+        TranscriptionEngineLabel.rail(active: active, saved: saved)
     }
 
     /// mm:ss elapsed since `start`, clamped at 0. Empty string when not recording.

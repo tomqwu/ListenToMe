@@ -18,8 +18,12 @@ extension MeetingView {
                 RailRecStatus(isRunning: session.isRunning, elapsed: elapsedLabel)
 
                 railSection("Engine") {
-                    Text(CommandCenterLabels.engine(ProviderSettings.transcriptionEngine))
+                    Text(CommandCenterLabels.engine(active: activeEngine,
+                                                    saved: ProviderSettings.transcriptionEngine))
                         .font(.system(size: 12.5)).foregroundStyle(Theme.ink)
+                        .help(activeEngine == nil
+                              ? "The engine the next Start listening will use"
+                              : "The engine this recording is using — an engine change applies at the next Start")
                     Picker("Language", selection: languageBinding(session: session)) {
                         ForEach(Self.languageOptions, id: \.id) { Text($0.label).tag($0.id) }
                     }

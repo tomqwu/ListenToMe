@@ -153,7 +153,7 @@ extension MeetingView {
         guard !lifecycleBusy else { return false }
         lifecycleBusy = true
         defer { lifecycleBusy = false }
-        wantsCapture = false; recordingStartedAt = nil
+        wantsCapture = false; recordingStartedAt = nil; activeEngine = nil
         restartTask?.cancel(); importTask?.cancel()
         _ = checkpoint()
         await session.stopAndWait()

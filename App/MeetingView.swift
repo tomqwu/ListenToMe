@@ -61,6 +61,10 @@ struct MeetingView: View {
     @State var diarizationSinkAttached = false
     @State var microphoneSinkAttached = false
     @State var diarizationRunUsesTimestamps = false
+    /// The transcription engine the live run was started with, or nil when idle. The transcriber is
+    /// built once per run, so the rail must show this and not the (possibly just-changed) saved
+    /// setting (issue #136).
+    @State var activeEngine: String?
     @State var diarizer = SpeakerDiarizer()
     @State var modelStatus = ""
     @State private var modelLoadToken = 0
@@ -361,6 +365,7 @@ extension MeetingView {
                 // Await teardown so the transcriber flushes its final segments into the store
                 // before we snapshot the transcript for search.
                 await session.stopAndWait()
+                activeEngine = nil
                 _ = checkpoint(complete: true, force: true)
                 Task { await finishSpeakerAnalysis() }
             } else {
@@ -374,6 +379,9 @@ extension MeetingView {
                     // Clear stale labels + bump the token BEFORE start; anchor the run only AFTER
                     // start returns, once the prior Stop's finals have drained into the store.
                     beginDiarizationRunReset()
+                    // Snapshot the engine this run is built from, before start() creates the
+                    // transcriber, so the rail can't claim an engine that isn't running (#136).
+                    activeEngine = ProviderSettings.transcriptionEngine
                     try await session.start()
                     guard wantsCapture, session.isRunning else { return }
                     anchorDiarizationRun()
@@ -381,6 +389,7 @@ extension MeetingView {
                 } catch {
                     startError = error.localizedDescription
                     wantsCapture = false
+                    activeEngine = nil
                 }
             }
         }
@@ -419,11 +428,12 @@ extension MeetingView {
             beginDiarizationRunReset()
             do {
                 startError = nil
+                activeEngine = ProviderSettings.transcriptionEngine
                 try await session.start()
                 guard wantsCapture, session.isRunning, !Task.isCancelled else { return }
                 anchorDiarizationRun()
             } catch {
-                startError = error.localizedDescription; wantsCapture = false
+                startError = error.localizedDescription; wantsCapture = false; activeEngine = nil
             }
         }
     }
