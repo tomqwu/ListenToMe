@@ -41,10 +41,13 @@ public struct AutomaticReviewDirectives: Sendable, Equatable {
 
     /// Deep reviews answer substantive questions, so they receive the attached reference material,
     /// matching manual Deep. Summary mirrors the manual listener: transcript evidence only.
+    /// Both blocks are fenced as data, exactly as the manual panes fence them (issue #140).
     func userMessage(_ source: String, mode: AutomaticReviewMode) -> String {
+        let transcript = PromptData.block("transcript", source)
         guard mode == .deep, let references = references?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !references.isEmpty else { return source }
-        return source + "\n\nReference material the user attached (files/folders):\n" + references
+              !references.isEmpty else { return transcript }
+        return transcript + "\n\nReference material the user attached (files/folders):\n"
+            + PromptData.block("reference", references)
     }
 }
 

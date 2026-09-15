@@ -33,7 +33,16 @@ Prereq: Ollama running with at least one chat-capable model installed (local or 
    automatically ~1-2s after the utterance ends. Press **⌘⇧Space** while another app is focused →
    a Quick suggestion is generated.
 8. **Summary** pane: after some conversation, confirm a rolling summary + open questions/action
-   items appear (auto-refreshes; the pane's Refresh button forces it).
+   items appear (auto-refreshes; the pane's Refresh button forces it). Immediately after a
+   successful refresh the **Refresh** button must be **disabled** ("Everything said so far is
+   already summarized.") and must re-enable as soon as new speech is transcribed.
+8a. **Failure keeps the pane** (issue #137): with a summary on screen, quit the Ollama server (or
+   pick a model that is not pulled) and press **Refresh** after new speech → the summary text must
+   remain visible and the error must appear as an orange banner under the pane header, not replace
+   the text. Restart Ollama and refresh again → the banner disappears.
+8b. **Thinking status**: assign a reasoning model (e.g. `qwen3` or `deepseek-r1`) to **Deep** and
+   click **Deep answer** → the header shows **Thinking…** during the reasoning phase and the
+   reasoning text never appears in the answer body.
 9. **Deep** pane: click **Deep answer** → a longer, detailed response streams (using the Deep
    pane's model).
 10. Type into **Context notes** (e.g., "I am the backend lead"), then trigger a Quick suggestion →

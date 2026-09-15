@@ -271,3 +271,55 @@ On the macOS UI side, `checkpoint()` compares a cheap `SessionCheckpointKey`
 `transcriptCharacterCount` instead of rescanning every utterance per render, and `SessionSearchView`
 loads the archive in `.task` rather than seeding `@State` in `init`, so the once-a-second elapsed
 tick no longer re-reads and re-decodes every saved conversation on the main thread.
+
+## Prompt data fences, queue persistence and pane failure handling (next release)
+
+### Untrusted text is fenced and declared as data (#140)
+
+Everything a prompt carries except the app's own instruction is written by somebody else: remote
+participants' speech, the rolling summary distilled from it, Context notes (often pasted from a
+calendar invite) and attached reference files. `PromptData.block` wraps each of those in a labelled
+fence — `<transcript>`, `<summary>`, `<notes>`, `<reference>` — and `PromptData.notice`, appended by
+`PromptBuilder.systemWithDirectives`, tells the model that fenced text is data to read, quote and
+summarize, never instructions to follow. The action instruction always sits outside every fence.
+
+This is shared, so both platforms are identical: the macOS manual panes (`PromptBuilder.build`,
+`buildDeep`, `buildListener`), the automatic reviews on both platforms
+(`AutomaticReviewDirectives.system`/`userMessage`), and the iOS manual Summary/Deep/on-device Quick
+paths, which fence `summarySource` and carry the same notice. The Quick evaluator already stated
+that its JSON input fields are data, and keeps its own wording.
+
+`PromptBuilder.provisionalNotice` stays *outside* the transcript fence: like the action instruction
+it is text the app wrote, not meeting data.
+
+The fences are ordinary prompt characters, so they are charged like any other scaffold:
+`PromptBuilder.scaffoldCharacterCost` measures them because it builds the real prompt, and the iOS
+Apple-Intelligence cap is charged on the fenced text. The Apple context-window bound is unchanged.
+This hardens the panes against a spoken or file-borne "ignore previous instructions…"; it does not
+fully prevent it, and pane output is still rendered as Markdown with tappable links.
+
+### A queued review is dropped only on an explicit signal (#137)
+
+`offer()` used to keep only the modes the Quick model re-listed in its `reviews` array, so a read
+that failed to echo `pendingReviews` silently discarded a Deep job waiting out its 60-second window.
+A queued job now survives a read that simply omits it (its source is refreshed to the current
+evidence) and is dropped only on an explicit signal: the model listing that mode with **low**
+confidence, a completed manual or automatic review of it, a conversation or provider change
+(`reset()`), or the conversation moving past the job's snapshot.
+
+### Manual panes keep their output on failure; a refresh with nothing new is a no-op (#137)
+
+A failed manual run no longer blanks its pane: `MeetingSession` restores the previous text when the
+attempt produced nothing (a partial stream is kept, since interrupted text is still usable) and
+publishes the failure through `roleError(role)`, which each pane renders as its own banner — the
+same "previous output kept" contract the automatic paths have always had. A Listener refresh returns
+early unless the store holds unsummarized speech (`hasUnsummarizedSpeech`, which also disables the
+Refresh button), so a second Refresh cannot have the model re-paraphrase — and possibly reword or
+drop items from — the record already on screen. Unfinalized speech counts as unsummarized: with the
+ledger caught up the refresh carries the provisional lines instead, so the #113 path is unaffected.
+
+Reasoning models stream `message.thinking` deltas before any answer token. `OllamaProvider`
+carries them as `LLMStreamEvent.thinking`, and `MeetingSession.roleStatus(role)` shows "Thinking…"
+in the pane header, so a long think phase no longer looks like a hung request. Reasoning is never
+written into the answer, and a response that is *only* reasoning fails as
+`OllamaStreamError.thinkingOnly`, which says so.

@@ -38,7 +38,8 @@ final class AutomaticReviewCoordinatorTests: XCTestCase {
         update("Azure question clarified")
         try await wait { runner.completedCounts[.summary] == 2 }
         let requests = await provider.requests()
-        XCTAssertEqual(requests.map { $0.messages[0].content }, ["Azure", "Azure question clarified"])
+        XCTAssertEqual(requests.map { $0.messages[0].content },
+                       ["Azure", "Azure question clarified"].map { PromptData.block("transcript", $0) })
         runner.offer([.init(mode: "deep", confidence: "low", reason: "Unclear")], source: "Azure question clarified")
         try await Task.sleep(for: .milliseconds(30))
         let count = await provider.requests().count
@@ -384,8 +385,10 @@ final class AutomaticReviewCoordinatorTests: XCTestCase {
         runner.offer([recommendations[0]], source: "Azure")
         try await wait { runner.completedCounts[.summary] == 1 }
         let requests = await provider.requests()
-        XCTAssertEqual(requests[0].system, AutomaticReviewMode.summary.instructions)
-        XCTAssertEqual(requests[0].messages[0].content, "Azure")
+        // Only the shared data-fence notice (#140) is added when no directives are set.
+        XCTAssertEqual(requests[0].system,
+                       AutomaticReviewMode.summary.instructions + "\n" + PromptData.notice)
+        XCTAssertEqual(requests[0].messages[0].content, PromptData.block("transcript", "Azure"))
     }
 
     /// One provisional live piece per snapshot: appended speech extends it, a rewrite replaces it.
@@ -416,13 +419,21 @@ private actor ReviewTestProvider: LLMProvider {
     }
     func requests() -> [LLMRequest] { captured }
     func maximum() -> Int { maxActive }
+    /// Strips the `<transcript>` fence the shared builders add (#140).
+    nonisolated static func unfenced(_ content: String) -> String {
+        content.replacingOccurrences(of: "<transcript>\n", with: "")
+            .replacingOccurrences(of: "\n</transcript>", with: "")
+    }
     func respond(_ request: LLMRequest, _ continuation: AsyncThrowingStream<String, Error>.Continuation) async {
         captured.append(request); active += 1; maxActive = max(maxActive, active)
         defer { active -= 1 }
         do {
             try await Task.sleep(for: delay)
             if failFirst { failFirst = false; throw failure }
-            continuation.yield(response ?? ("Reviewed: " + request.messages[0].content)); continuation.finish()
+            // Echo the transcript it was handed, minus the data fence (#140), so the assertions
+            // read the evidence the review actually received.
+            continuation.yield(response ?? ("Reviewed: " + Self.unfenced(request.messages[0].content)))
+            continuation.finish()
         } catch { continuation.finish(throwing: error) }
     }
     nonisolated func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {

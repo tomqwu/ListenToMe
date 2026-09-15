@@ -565,10 +565,12 @@ extension MeetingSession {
         }.value
     }
 
-    /// True when the store holds speech the Listener has not summarized yet. A refresh with nothing
-    /// new is a no-op, so the UI disables Refresh on `!hasUnsummarizedSpeech` (issue #137).
+    /// True when the store holds speech the Listener has not summarized yet — finalized utterances
+    /// outside its ledger, or unfinalized speech long enough to send as provisional context (issue
+    /// #113), which a caught-up refresh carries. A refresh with nothing new is a no-op, so the UI
+    /// disables Refresh on `!hasUnsummarizedSpeech` (issue #137).
     public var hasUnsummarizedSpeech: Bool {
-        store.utterances.contains { !summarizedSegmentIDs.contains($0.id) }
+        store.utterances.contains { !summarizedSegmentIDs.contains($0.id) } || store.hasProvisionalSpeech
     }
 
     /// Streams a Listener refresh (rolling summary + open items). Awaits completion.
@@ -609,7 +611,9 @@ extension MeetingSession {
         // Nothing to summarize is not a request: an empty store has no meeting to describe, and a
         // fully summarized transcript would only send "New transcript evidence:" with nothing after
         // it and have the model re-paraphrase — and possibly drop items from — the record it just
-        // produced (issue #137). The Refresh button is disabled on the same condition.
+        // produced (issue #137). Unfinalized speech still counts: with the ledger caught up, the
+        // refresh carries the provisional lines instead (issue #113). The Refresh button is
+        // disabled on the same condition.
         guard hasUnsummarizedSpeech else { return Task {} }
         let task = startRoleTask(.listener) {
             let remaining = self.store.utterances.filter { !self.summarizedSegmentIDs.contains($0.id) }

@@ -187,7 +187,7 @@ public struct QuickSummaryContext {
     Write in the language of the conversation. Answer with the bullet lines only: no headings, no preamble,
     no closing remark and no code fences. If nothing substantive has been said, answer exactly:
     No key takeaway yet.
-    """
+    """ + "\n" + PromptData.notice
 
     /// Reads a bulleted, prose Quick answer into the pane's display form, tolerating the markers,
     /// numbering, headings and stray code fences small models add. nil means "nothing to publish".
