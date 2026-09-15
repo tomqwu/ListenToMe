@@ -143,8 +143,9 @@ throughout the plan.
 ### 4.5 ModelRouter & LLMProvider
 - **Responsibility:** one streaming interface over all providers; route to the user-selected provider;
   read keys from Keychain.
-- **Default:** `OllamaProvider` (`http://localhost:11434`, no key). Phase 2 adds `ClaudeProvider`,
-  `OpenAIProvider`, `DeepSeekProvider`.
+- **Default:** `OllamaProvider` (`http://localhost:11434`, no key). Superseded: the shipped app is
+  Ollama-only (plus on-device Apple Intelligence); per-vendor SDK providers are not planned, and the
+  unused `DeepSeekProvider` was removed in #137.
 - **Interface:**
   ```swift
   struct LLMRequest { let system: String; let context: PromptContext; let userPrompt: String? }

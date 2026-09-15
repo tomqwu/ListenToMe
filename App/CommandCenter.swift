@@ -117,6 +117,11 @@ struct RoleBox<Header: View, Actions: View>: View {
                 if session.streamingRoles.contains(role) {
                     ProgressView().controlSize(.small)
                 }
+                // A reasoning model streams its thinking before any answer token; showing it as a
+                // status keeps a long think phase from looking like a hung request (issue #137).
+                if let activity = session.roleStatus(role) {
+                    Text(activity).font(.system(size: 10.5)).foregroundStyle(Theme.ink2)
+                }
                 Spacer()
                 Text(session.models[role] ?? "—")
                     .font(.system(size: 10, design: .monospaced))
@@ -127,6 +132,15 @@ struct RoleBox<Header: View, Actions: View>: View {
                         .help("Copy this pane's text")
                 }
                 headerExtra()
+            }
+            // The failure is shown beside the pane's text, never instead of it: a transient
+            // provider error must not take away the summary the user was reading (issue #137).
+            if let error = session.roleError(role) {
+                Text("⚠️ \(error)")
+                    .font(.system(size: 11)).foregroundStyle(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .textSelection(.enabled)
             }
             ScrollViewReader { proxy in
                 ScrollView {

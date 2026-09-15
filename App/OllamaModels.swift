@@ -17,10 +17,18 @@ enum OllamaModels {
         return models.compactMap { $0["name"] as? String }
     }
 
-    /// True if the model advertises chat/completion capability (not embedding-only).
-    static func isChatCapable(_ name: String,
-                              baseURL: URL = URL(string: "http://localhost:11434")!,
-                              apiKey: String? = nil, localOnly: Bool = false) async -> Bool {
+    /// What `/api/show` says about one model: whether it can chat (capabilities include
+    /// "completion") and whether its metadata verifies it as a downloaded local model.
+    /// Locality is reported for every mode, so callers can hand the verified-local set to
+    /// `ModelRanking.roleDefaults` instead of guessing from the name (issue #137).
+    struct Capability {
+        var chatCapable = false
+        var verifiedLocal = false
+    }
+
+    static func capability(_ name: String,
+                           baseURL: URL = URL(string: "http://localhost:11434")!,
+                           apiKey: String? = nil, localOnly: Bool = false) async -> Capability {
         var req = URLRequest(url: baseURL.appendingPathComponent("api/show"))
         req.httpMethod = "POST"
         req.timeoutInterval = 10
@@ -31,31 +39,40 @@ enum OllamaModels {
         guard let (data, resp) = try? await URLSession.shared.data(for: req),
               (resp as? HTTPURLResponse)?.statusCode == 200,
               let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let caps = obj["capabilities"] as? [String] else { return false }
-        return caps.contains("completion") && (!localOnly || ModelPrivacy.isVerifiedLocal(data))
+              let caps = obj["capabilities"] as? [String] else { return Capability() }
+        let local = ModelPrivacy.isVerifiedLocal(data)
+        return Capability(chatCapable: caps.contains("completion") && (!localOnly || local),
+                          verifiedLocal: local)
+    }
+
+    /// The models a route offers, with the subset whose `/api/show` metadata verifies them as local.
+    struct Discovery {
+        var names: [String] = []
+        var verifiedLocal: Set<String> = []
     }
 
     /// Installed models that can chat (capabilities include "completion").
     /// Probes capabilities concurrently for fast cloud responses.
     static func chatModels(baseURL: URL = URL(string: "http://localhost:11434")!,
-                           apiKey: String? = nil, localOnly: Bool = false) async -> [String] {
+                           apiKey: String? = nil, localOnly: Bool = false) async -> Discovery {
         let names = await installed(baseURL: baseURL, apiKey: apiKey)
-        guard !names.isEmpty else { return [] }
+        guard !names.isEmpty else { return Discovery() }
 
         // Probe each model concurrently, preserving input order.
-        let capable: [Bool] = await withTaskGroup(of: (Int, Bool).self) { group in
+        let capabilities: [Capability] = await withTaskGroup(of: (Int, Capability).self) { group in
             for (index, name) in names.enumerated() {
                 group.addTask {
-                    let ok = await isChatCapable(name, baseURL: baseURL, apiKey: apiKey, localOnly: localOnly)
-                    return (index, ok)
+                    (index, await capability(name, baseURL: baseURL, apiKey: apiKey, localOnly: localOnly))
                 }
             }
-            var results = [(Int, Bool)]()
+            var results = [(Int, Capability)]()
             for await pair in group { results.append(pair) }
             results.sort { $0.0 < $1.0 }
             return results.map(\.1)
         }
 
-        return zip(names, capable).compactMap { name, ok in ok ? name : nil }
+        let chat = zip(names, capabilities).filter { $0.1.chatCapable }
+        return Discovery(names: chat.map(\.0),
+                         verifiedLocal: Set(chat.filter { $0.1.verifiedLocal }.map(\.0)))
     }
 }

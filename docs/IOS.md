@@ -195,7 +195,17 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
 - On-device Apple Intelligence summaries by default, or Ollama summaries — Ollama Cloud, or an Ollama
   server you run — with streamed results and secure API-key storage.
   Apple Intelligence accepts up to 8,000 characters (`PromptBudget.appleIntelligenceCharacters`, the
-  shared cap macOS also clamps its Apple prompts to); Ollama accepts up to 60,000. Oversized input is rejected explicitly. AI output needs review.
+  shared cap macOS also clamps its Apple prompts to); Ollama accepts up to 60,000. Both caps are
+  charged on the *fenced* conversation, not the raw text. Oversized input is rejected explicitly. AI output needs review.
+- Prompts separate data from instructions (#140). The conversation a manual Summary, Deep or
+  on-device Quick sends is wrapped in a `<transcript>` block, attached reference material in a
+  `<reference>` block, and every system prompt states that text inside those blocks is data to read
+  and summarize, never instructions to follow. Closing tags inside the content are neutralized so
+  nothing in a transcript or file can end the block early. iOS assembles one attributed source
+  string, so a typed note travels inside `<transcript>` on its `Notes: ` line rather than in a
+  separate `<notes>` block as on macOS; the grounding sentence about `Notes: ` lines is unchanged.
+  This hardens the app against instruction-like text spoken by another participant or embedded in a
+  shared file; it cannot fully prevent it.
 - Recording stops and saves when the app is backgrounded or when audio is interrupted (call, Siri,
   alarm), and the status line says which of the two happened. When the system reports the
   interruption is over and asks for the audio back, recording resumes automatically and the status
@@ -390,6 +400,16 @@ and Foundation Models. iOS does not depend on the Mac WhisperKit or FluidAudio b
 ## Validation and release
 
 Follow [the TestFlight release runbook](IOS-RELEASING.md) for exact archive, export, upload, account-recovery and tester-verification steps. A connected device is not required to upload an authorized beta; physical-device acceptance remains a separate production-readiness gate.
+
+## App Store privacy and support pages
+
+App Store Connect requires a reachable privacy policy URL and a support URL. Both are checked into this
+repository and served from GitHub: [`docs/ios-privacy.md`](ios-privacy.md) and
+[`docs/ios-support.md`](ios-support.md). The app links to the same two URLs from
+**More → Settings → Privacy**, so a reviewer can reach them from inside the build. Keep both pages
+accurate whenever behavior that they describe changes — the provider default, the Ollama server
+setting, calendar redaction, backup exclusion, interruption handling and History search are all
+described there.
 
 Maintain the [iOS listing metadata](../metadata/ios/README.md) alongside release changes. Apply the
 Beta App Description and per-build What to Test in App Store Connect, and verify the uploaded app

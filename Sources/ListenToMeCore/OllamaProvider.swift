@@ -12,6 +12,18 @@ public enum OllamaParser {
         return content
     }
 
+    /// The reasoning delta of a line from a thinking model (`message.thinking`), or nil. Kept apart
+    /// from `delta` so reasoning can drive a status without ever entering the answer (issue #137).
+    public static func thinking(fromLine line: String) -> String? {
+        guard let data = line.data(using: .utf8),
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let message = obj["message"] as? [String: Any],
+              let thinking = message["thinking"] as? String else {
+            return nil
+        }
+        return thinking
+    }
+
     public static func isDone(line: String) -> Bool {
         guard let data = line.data(using: .utf8),
               let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
@@ -60,26 +72,53 @@ public struct OllamaProvider: LLMProvider {
         return (try? JSONSerialization.data(withJSONObject: body)) ?? Data()
     }
 
-    public func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
+    public func streamEvents(_ request: LLMRequest) -> AsyncThrowingStream<LLMStreamEvent, Error> {
         AsyncThrowingStream { continuation in
             let task = Task {
                 do {
                     var completed = false
                     var producedContent = false
+                    var producedThinking = false
                     for try await line in lineSource(request) {
                         try Task.checkCancellation()
                         if let data = line.data(using: .utf8),
                            let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                            let error = object["error"] as? String { throw OllamaStreamError.server(error) }
+                        // Reasoning first: a thinking model streams it before any answer token, so
+                        // the pane can say "Thinking…" instead of looking hung (issue #137).
+                        if let thought = OllamaParser.thinking(fromLine: line), !thought.isEmpty {
+                            producedThinking = producedThinking
+                                || !thought.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                            continuation.yield(.thinking(thought))
+                        }
                         if let delta = OllamaParser.delta(fromLine: line), !delta.isEmpty {
                             producedContent = producedContent || !delta.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                            continuation.yield(delta)
+                            continuation.yield(.content(delta))
                         }
                         if OllamaParser.isDone(line: line) { completed = true; break }
                     }
                     try Task.checkCancellation()
                     guard completed else { throw OllamaStreamError.incomplete }
-                    guard producedContent else { throw OllamaStreamError.empty }
+                    guard producedContent else {
+                        throw producedThinking ? OllamaStreamError.thinkingOnly : OllamaStreamError.empty
+                    }
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+            continuation.onTermination = { _ in task.cancel() }
+        }
+    }
+
+    public func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
+        let events = streamEvents(request)
+        return AsyncThrowingStream { continuation in
+            let task = Task {
+                do {
+                    for try await event in events {
+                        if case .content(let delta) = event { continuation.yield(delta) }
+                    }
                     continuation.finish()
                 } catch {
                     continuation.finish(throwing: error)
@@ -180,6 +219,9 @@ public enum OllamaStreamError: LocalizedError {
     case unreachable(String)
     case incomplete
     case empty
+    /// The model produced only reasoning (`message.thinking`) and never an answer — usually a
+    /// thinking model whose generation budget was spent before it started answering (issue #137).
+    case thinkingOnly
     public var errorDescription: String? {
         switch self {
         case .server(let message): return "Model error: " + message
@@ -187,6 +229,9 @@ public enum OllamaStreamError: LocalizedError {
             return message + " Is the server running and the model pulled?"
         case .incomplete: return "The response ended before completion. Partial text is kept; retry the request."
         case .empty: return "The model completed without an answer. Retry or choose another model."
+        case .thinkingOnly:
+            return "The model spent the whole response on reasoning and never answered. " +
+                "Retry, or choose a model that does not think before answering."
         }
     }
 

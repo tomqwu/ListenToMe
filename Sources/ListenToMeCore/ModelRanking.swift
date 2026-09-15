@@ -63,19 +63,36 @@ public enum ModelRanking {
         return nil
     }
 
+    /// Name-only guess at a cloud-hosted Ollama tag, used when the caller cannot say which models
+    /// are local. Ollama publishes both `model:cloud` and `model-size-cloud` (gpt-oss:120b-cloud,
+    /// deepseek-v3.1:671b-cloud, qwen3-coder:480b-cloud, kimi-k2:1t-cloud).
+    static func looksCloudHosted(_ model: String) -> Bool {
+        let lower = model.lowercased()
+        return lower.contains(":cloud") || lower.hasSuffix("-cloud")
+    }
+
     /// A default model per role from the available list: Quick = a curated fast model (else the
     /// lightest), Deep = a curated strong/reasoning model (else the heaviest), Listener = another
     /// fast model (it auto-refreshes continuously, so speed beats depth) distinct from Quick, else
     /// the lightest remaining. Picks distinct models when enough are available and reuses them when
     /// fewer exist. Returns empty when no models are available.
     ///
-    /// Privacy: auto-defaults are **local-first**. When the list mixes local and `:cloud` models,
-    /// only local models are considered, so an unpinned pane never silently sends transcripts to
-    /// Ollama Cloud. Cloud models are auto-selected only when no local chat model exists (e.g. the
-    /// user set a cloud API key, opting into the cloud route).
-    public static func roleDefaults(from models: [String]) -> [CopilotRole: String] {
-        let local = models.filter { !$0.contains(":cloud") }
-        let rankedPool = ranked(local.isEmpty ? models : local)
+    /// Privacy: auto-defaults are **local-first**. `local` is the set of names the caller verified
+    /// as local from Ollama's own `/api/show` metadata (`ModelPrivacy.isVerifiedLocal`, already
+    /// computed by `OllamaModels.chatModels`); when it is supplied and non-empty, only those models
+    /// are considered, so an unpinned pane never silently sends transcripts to Ollama Cloud. Cloud
+    /// models are auto-selected only when no local chat model exists (e.g. the user set a cloud API
+    /// key, opting into the cloud route).
+    ///
+    /// Passing nil means "locality unknown" and falls back to the *name*, matching both tag forms
+    /// Ollama publishes — `deepseek-v4-pro:cloud` and `gpt-oss:120b-cloud`. That fallback is a
+    /// heuristic, not a guarantee: the enforced guarantee is the metadata check in `OllamaProvider`
+    /// and `OllamaModels` (issue #137).
+    public static func roleDefaults(from models: [String],
+                                    local: Set<String>? = nil) -> [CopilotRole: String] {
+        let localModels = local.map { verified in models.filter { verified.contains($0) } }
+            ?? models.filter { !looksCloudHosted($0) }
+        let rankedPool = ranked(localModels.isEmpty ? models : localModels)
         guard let lightest = rankedPool.first, let heaviest = rankedPool.last else { return [:] }
         let quick = match(in: rankedPool, patterns: fastPatterns, heaviest: false) ?? lightest
         // Pick Deep from the models not already taken by Quick, so a name matching both pattern
@@ -94,8 +111,9 @@ public enum ModelRanking {
     }
 
     /// The default model for a single role from the available list, or nil if none are available.
-    public static func defaultModel(for role: CopilotRole, from models: [String]) -> String? {
-        roleDefaults(from: models)[role]
+    public static func defaultModel(for role: CopilotRole, from models: [String],
+                                    local: Set<String>? = nil) -> String? {
+        roleDefaults(from: models, local: local)[role]
     }
 
     /// Curated one-line "good for" hints for known Ollama model families, matched as the first
