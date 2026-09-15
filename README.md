@@ -173,7 +173,12 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   rail; the pane header shows the currently selected model as read-only text. Choices persist
   across launches; **More → Refresh models** re-scans installed models (e.g. after `ollama pull`).
   On first launch any role whose saved model isn't installed auto-switches to one that works — no
-  manual config needed.
+  manual config needed. Auto-picks are local-first: only models Ollama's own `/api/show` metadata
+  verifies as downloaded are considered while any exist, so an unpinned pane is never silently
+  assigned a cloud-hosted model.
+- **Summary refresh.** The Summary pane's **Refresh** button is enabled only when there is speech it
+  has not summarized yet — refreshing with nothing new would just have the model rewrite the record
+  already on screen.
 - **AI processing mode.** In **Settings**, explicitly choose **Local only**, **Apple Intelligence**,
   **Cloud**, or **AI off**.
   Local mode verifies downloaded-model metadata before every request and rejects remote/cloud-backed
@@ -184,7 +189,16 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   It sends transcript, notes, summary and attached reference context to Ollama Cloud. Adding a key
   alone does not switch modes. AI off leaves capture, transcription and saving available.
   When Ollama refuses a request, the pane shows the server's own explanation with its HTTP status —
-  a rejected API key and an exhausted quota read as such, not as a missing local model.
+  a rejected API key and an exhausted quota read as such, not as a missing local model. A failed
+  request keeps the text the pane was already showing and reports the error as a banner beside it,
+  so a transient failure never blanks a summary or answer you were reading. Reasoning models show
+  "Thinking…" in the pane header while they reason; that reasoning is never added to the answer.
+- **Prompts separate data from instructions.** Transcript, rolling summary, Context notes and
+  attached reference material are wrapped in labelled `<transcript>`/`<summary>`/`<notes>`/
+  `<reference>` blocks, and every system prompt states that text inside them is data to read and
+  summarize, never instructions to follow. This hardens the panes against instruction-like text
+  spoken by another participant or embedded in an attached file; it cannot fully prevent it, so
+  treat pane output — including any links it contains — with the same care as the source material.
 - **Presets.** Pick a use-case preset to tailor how the copilot responds.
 - **Languages.** Independent **transcription-language** and **AI response-language** pickers.
 - **Reference files.** Add files/folders as context, with a configurable token budget. `.rtf` is read

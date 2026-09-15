@@ -548,8 +548,11 @@ extension MobileSession {
             return
         }
         let cloud = summaryProvider != nil || ai.provider == .ollama
+        // The transcript is fenced as data, exactly as the macOS panes fence it (issue #140); the
+        // cap is charged on the fenced text so the Apple window still holds.
+        let fencedSource = PromptData.block("transcript", source)
         // The on-device Apple path shares its character cap with macOS (PromptBudget).
-        guard source.count <= (cloud ? 60_000 : PromptBudget.appleIntelligenceCharacters) else {
+        guard fencedSource.count <= (cloud ? 60_000 : PromptBudget.appleIntelligenceCharacters) else {
             message = "This conversation exceeds the selected provider's summary limit. Export it or shorten your notes."
             return
         }
@@ -567,10 +570,10 @@ extension MobileSession {
             switch mode {
             case .quick where proseQuick:
                 request = LLMRequest(system: MobileQuickContext.manualProseInstructions,
-                                     messages: [ChatMessage(role: "user", content: source)])
+                                     messages: [ChatMessage(role: "user", content: fencedSource)])
             case .quick: request = try MobileQuickContext.manualRequest(source: source)
             default: request = LLMRequest(system: mode.instructions,
-                                          messages: [ChatMessage(role: "user", content: source)])
+                                          messages: [ChatMessage(role: "user", content: fencedSource)])
             }
             var quickResponse = ""
             // One transport per provider: the Apple path streams through AppleIntelligenceProvider,

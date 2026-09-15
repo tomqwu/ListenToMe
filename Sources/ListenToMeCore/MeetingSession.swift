@@ -40,15 +40,15 @@ public final class MeetingSession {
 
     /// Per-role output properties
     public private(set) var listenerSummary = ""
-    public private(set) var quickSuggestion = ""
+    public internal(set) var quickSuggestion = ""
     public private(set) var deepAnswer = ""
 
     /// The automatic recap, kept apart from `quickSuggestion` (which also shows manual answers such
     /// as "Draft reply"). The evaluator always receives this as `visibleSummary`, so a manual answer
     /// can never be fed back as the current recap, and an automatic recap never overwrites a manual
     /// answer the user is still reading.
-    public private(set) var quickRecap = ""
-    private var manualQuickAnswer = ManualQuickAnswer()
+    public internal(set) var quickRecap = ""
+    var manualQuickAnswer = ManualQuickAnswer()
 
     /// True while the Quick pane shows a *finished* answer that is not the current automatic recap.
     /// Deliberately independent of freshness — once the window elapses the pane keeps the answer
@@ -70,13 +70,37 @@ public final class MeetingSession {
     /// The last *completed* listener summary, used as grounding for Quick/Deep prompts. Kept
     /// separate from `listenerSummary` (the live display value, which is cleared to "" while a new
     /// refresh streams) so a proactive Quick can't read an empty/partial in-flight summary.
-    private var lastCompletedListenerSummary = ""
-    private var summarizedSegmentIDs = Set<UUID>()
+    var lastCompletedListenerSummary = ""
+    var summarizedSegmentIDs = Set<UUID>()
     private var pendingSummaryIDs: [Int: Set<UUID>] = [:]
+    /// The provisional (non-final) lines the last completed refresh actually sent. Unfinalized
+    /// speech has no ledger entry — it is never final — so this is what keeps a second Refresh with
+    /// the same unconfirmed wording a no-op (issues #113, #137).
+    private var summarizedProvisionalText: String?
+    private var pendingProvisionalText: [Int: String] = [:]
+    /// Transcript characters one listener refresh asks for; also the window the Refresh button's
+    /// provisional comparison measures, so the two always describe the same lines.
+    static let listenerTranscriptBudget = 16_000
 
     /// Set when the last prompt had to drop transcript or reference material to fit the role
     /// provider's context window (Apple Intelligence). nil for providers with no window.
     public private(set) var promptTruncationNotice: String?
+
+    /// The last failure for each pane, published separately from the pane's text so a transient
+    /// provider error is shown as a banner *beside* the answer the user was reading instead of
+    /// replacing it (issue #137). Cleared when that role starts a new run.
+    public private(set) var roleErrors: [CopilotRole: String] = [:]
+
+    /// The error banner a pane should show, or nil when its last run succeeded.
+    public func roleError(_ role: CopilotRole) -> String? { roleErrors[role] }
+
+    /// Transient per-role activity reported by the model while it works — currently a reasoning
+    /// model's "Thinking…" phase, which streams `message.thinking` deltas before any answer token.
+    /// It is a status only: reasoning is never written into the pane's text (issue #137).
+    public private(set) var roleActivity: [CopilotRole: String] = [:]
+
+    /// The activity line a pane should show beside its title, or nil when there is none.
+    public func roleStatus(_ role: CopilotRole) -> String? { roleActivity[role] }
 
     /// True while an imported audio file is being transcribed into the store.
     public private(set) var isTranscribingFile = false
@@ -89,24 +113,24 @@ public final class MeetingSession {
 
     /// Memoized labeled-piece snapshot for the live path, keyed on `LiveKey`. Without it every
     /// ingested hypothesis walked the whole transcript several times on the main actor (issue #116).
-    @ObservationIgnored private var liveCacheKey: LiveKey?
-    @ObservationIgnored private var liveCache: LiveSnapshot?
+    @ObservationIgnored var liveCacheKey: LiveKey?
+    @ObservationIgnored var liveCache: LiveSnapshot?
     #if DEBUG
     /// Test-only: how many times the snapshot was actually rebuilt (cache misses).
-    @ObservationIgnored private(set) var livePieceComputations = 0
+    @ObservationIgnored var livePieceComputations = 0
     #endif
 
     public let quickReader = QuickSummaryReader()
     public let automaticReviews = AutomaticReviewCoordinator()
-    private var liveScheduler = LiveSummaryScheduler()
-    private var liveWake: Task<Void, Never>?
+    var liveScheduler = LiveSummaryScheduler()
+    var liveWake: Task<Void, Never>?
 
     private var context: ContextEngine
     private let makeCapture: @Sendable () -> any AudioCapturing
     private let makeTranscriber: @Sendable () -> any Transcribing
-    private let providerAvailability: @Sendable (String) -> String?
+    let providerAvailability: @Sendable (String) -> String?
     private let makeProvider: @Sendable (String) -> any LLMProvider
-    private var providers: [CopilotRole: any LLMProvider]
+    var providers: [CopilotRole: any LLMProvider]
     private var capture: (any AudioCapturing)?
     private var transcriber: (any Transcribing)?
     private let clock: @Sendable () -> TimeInterval
@@ -128,7 +152,7 @@ public final class MeetingSession {
     private var stopDrain: Task<Void, Never>?
     private var responseTasks: [CopilotRole: Task<Void, Never>] = [:]
     private var responseGenerations: [CopilotRole: Int] = [:]
-    private var runID = 0
+    var runID = 0
 
     public init(store: ConversationStore,
                 context: ContextEngine,
@@ -167,6 +191,9 @@ public final class MeetingSession {
         // The new provider may have a different context window (or none), so the old notice no
         // longer describes anything: it is re-derived on the next prompt.
         promptTruncationNotice = nil
+        // The failure belonged to the previous model; it says nothing about this one (#137).
+        roleErrors[role] = nil
+        roleActivity[role] = nil
         if role == .quick { quickReader.clearError() }
         handleLiveEvent(.providerChanged)
     }
@@ -175,6 +202,9 @@ public final class MeetingSession {
         responseTasks[role]?.cancel()
         responseGenerations[role, default: 0] += 1
         streamingRoles.remove(role)
+        // The bumped generation makes run()'s defer skip its own cleanup, so a cancelled reasoning
+        // model would leave "Thinking…" on screen forever (issue #137).
+        roleActivity[role] = nil
     }
 
     public func resetConversation() {
@@ -184,10 +214,13 @@ public final class MeetingSession {
         store.reset()
         notes = ""; referenceContext = nil
         listenerSummary = ""; quickSuggestion = ""; quickRecap = ""; deepAnswer = ""
+        roleErrors = [:]; roleActivity = [:]
         manualQuickAnswer.dismiss()
         lastCompletedListenerSummary = ""
         summarizedSegmentIDs = []
         pendingSummaryIDs = [:]
+        summarizedProvisionalText = nil
+        pendingProvisionalText = [:]
         context = ContextEngine(debounce: context.debounce)
         runID += 1
     }
@@ -549,16 +582,38 @@ extension MeetingSession {
         }.value
     }
 
+    /// True when the store holds speech the Listener has not summarized yet: finalized utterances
+    /// outside its ledger, or unfinalized speech whose wording differs from what the last refresh
+    /// already sent as provisional context (issue #113) — a caught-up refresh carries that instead.
+    /// A refresh with nothing new is a no-op, so the UI disables Refresh on `!hasUnsummarizedSpeech`
+    /// (issue #137).
+    public var hasUnsummarizedSpeech: Bool {
+        if store.utterances.contains(where: { !summarizedSegmentIDs.contains($0.id) }) { return true }
+        guard store.hasProvisionalSpeech else { return false }
+        return Self.signature(of: store.provisionalContext(maxChars: Self.listenerTranscriptBudget))
+            != summarizedProvisionalText
+    }
+
+    /// The provisional lines a refresh sends, as one comparable string.
+    static func signature(of segments: [TranscriptSegment]) -> String {
+        segments.map { "\($0.speakerLabel): \($0.text)" }.joined(separator: "\n")
+    }
+
     /// Streams a Listener refresh (rolling summary + open items). Awaits completion.
     public func refreshListener() async {
+        guard hasUnsummarizedSpeech else { return }
         startListenerRefresh()
         await waitForResponse(.listener)
     }
 
     /// New attribution should ground the next answer in the labeled transcript, not an older recap.
+    ///
+    /// This still re-summarizes the whole meeting, even with Auto off — tracked as #167 (part of
+    /// #98) and deliberately out of scope for #137, which only stopped the *no-op* refresh.
     public func speakerAttributionsChanged() {
         // Replay raw transcript when labels change so old names cannot survive only in generated prose.
         summarizedSegmentIDs = []
+        summarizedProvisionalText = nil
         lastCompletedListenerSummary = ""
         listenerSummary = ""
         startListenerRefresh()
@@ -584,6 +639,13 @@ extension MeetingSession {
     /// Shared by the ingest leading/trailing-edge debounce and the manual refreshListener().
     @discardableResult
     private func startListenerRefresh() -> Task<Void, Never> {
+        // Nothing to summarize is not a request: an empty store has no meeting to describe, and a
+        // fully summarized transcript would only send "New transcript evidence:" with nothing after
+        // it and have the model re-paraphrase — and possibly drop items from — the record it just
+        // produced (issue #137). Unfinalized speech still counts: with the ledger caught up, the
+        // refresh carries the provisional lines instead (issue #113). The Refresh button is
+        // disabled on the same condition.
+        guard hasUnsummarizedSpeech else { return Task {} }
         let task = startRoleTask(.listener) {
             let remaining = self.store.utterances.filter { !self.summarizedSegmentIDs.contains($0.id) }
             // Process oldest unseen speech first. A failed/cancelled request never advances the ledger.
@@ -602,7 +664,7 @@ extension MeetingSession {
             let notice = remaining.isEmpty && self.store.hasProvisionalSpeech
                 ? PromptBuilder.provisionalNotice.count + 2 : 0
             let allocation = PromptBudget.allocate(
-                limit: limit, scaffold: scaffold + notice, transcript: 16_000, references: 0,
+                limit: limit, scaffold: scaffold + notice, transcript: Self.listenerTranscriptBudget, references: 0,
                 summary: record.count, notes: self.notes.count)
             let (clampedRecord, droppedRecord) = Self.clamp(record, to: allocation.summary)
             let (clampedNotes, droppedNotes) = Self.clamp(self.notes, to: allocation.notes)
@@ -634,6 +696,11 @@ extension MeetingSession {
             }
             let generation = self.responseGenerations[.listener] ?? 0
             self.pendingSummaryIDs[generation] = Set(batch.map(\.id))
+            // Provisional lines never become ledger entries (they are not final), so what this
+            // refresh sent is remembered separately and keeps Refresh disabled until the wording
+            // changes or the recognizer finalizes it (issues #113, #137).
+            self.pendingProvisionalText[generation] = provisional.isEmpty
+                ? nil : Self.signature(of: provisional)
             return PromptBuilder.buildListener(context: PromptContext(
                 messages: Array(batch) + provisional, notes: clampedNotes, summary: clampedRecord ?? "",
                 responseLanguage: self.responseLanguage, personaGuidance: self.personaGuidance))
@@ -680,21 +747,35 @@ extension MeetingSession {
         // A new manual request replaces the answer on screen; it only protects the pane again once
         // it has actually produced one.
         if role == .quick { manualQuickAnswer.dismiss() }
+        // What the pane is showing right now. A non-cancellation failure restores it rather than
+        // leaving the user with an empty pane and a warning (issue #137).
+        let previousOutput = output(role)
         // Clear the output and mark streaming
         setOutput(role, "")
+        roleErrors[role] = nil
+        roleActivity[role] = nil
         streamingRoles.insert(role)
         defer {
             if generation == responseGenerations[role] {
                 streamingRoles.remove(role)
+                roleActivity[role] = nil
                 if role == .quick { handleLiveEvent(.manualQuickFinished) }
             }
         }
         guard let provider = providers[role] else { return }
         do {
-            for try await delta in provider.stream(request) {
+            for try await event in provider.streamEvents(request) {
                 if Task.isCancelled { return }
                 if generation != responseGenerations[role] { return }
-                appendOutput(role, delta)
+                switch event {
+                case .thinking:
+                    // Reasoning is progress, not an answer: show it as a status so a 30-120 s
+                    // think phase does not look like a hung request (issue #137).
+                    roleActivity[role] = "Thinking…"
+                case .content(let delta):
+                    roleActivity[role] = nil
+                    appendOutput(role, delta)
+                }
             }
             // Quick has no automatic review mode; a completed manual answer instead holds the pane
             // against the automatic recap for a bounded time.
@@ -719,6 +800,8 @@ extension MeetingSession {
                 lastCompletedListenerSummary = listenerSummary
                 summarizedSegmentIDs.formUnion(pendingSummaryIDs[generation] ?? [])
                 pendingSummaryIDs = [:]
+                summarizedProvisionalText = pendingProvisionalText[generation]
+                pendingProvisionalText = [:]
                 if aiEnabled && store.utterances.contains(where: { !summarizedSegmentIDs.contains($0.id) }) {
                     startListenerRefresh()
                 }
@@ -727,7 +810,14 @@ extension MeetingSession {
             if generation == responseGenerations[role],
                !Task.isCancelled,
                !(error is CancellationError) {
-                appendOutput(role, "\n\n⚠️ \(error.localizedDescription)")
+                // Keep what the user was reading: restore the previous answer when this attempt
+                // produced nothing, and keep the partial stream when it did (an interrupted
+                // response is still text the user can use). The failure itself is published
+                // through `roleErrors`, which the pane renders as its own banner, so a transient
+                // provider error never blanks a pane — matching the automatic paths, which have
+                // always kept previous output (issue #137).
+                if output(role).isEmpty { setOutput(role, previousOutput) }
+                roleErrors[role] = error.localizedDescription
             }
         }
     }
@@ -735,13 +825,21 @@ extension MeetingSession {
     /// Stores a new automatic recap. It always becomes the evaluator's grounding; it reaches the
     /// Quick pane only when no manual answer is still fresh, so an answer the user requested is
     /// never replaced mid-read by three automatic bullets.
-    private func applyQuickRecap(_ output: String) {
+    func applyQuickRecap(_ output: String) {
         quickRecap = output
         guard !manualQuickAnswer.isFresh(at: clock()) else { return }
         quickSuggestion = output
     }
 
-    private func setOutput(_ role: CopilotRole, _ value: String) {
+    private func output(_ role: CopilotRole) -> String {
+        switch role {
+        case .listener: return listenerSummary
+        case .quick:    return quickSuggestion
+        case .deep:     return deepAnswer
+        }
+    }
+
+    func setOutput(_ role: CopilotRole, _ value: String) {
         switch role {
         case .listener: listenerSummary = value
         case .quick:    quickSuggestion = value
@@ -755,172 +853,5 @@ extension MeetingSession {
         case .quick:    quickSuggestion += delta
         case .deep:     deepAnswer += delta
         }
-    }
-}
-
-
-extension MeetingSession {
-    /// What the labeled piece snapshot is a function of. `store.revision` covers every change to
-    /// finalized speech (arrival, restore, attribution, renaming); partials bump no revision, so
-    /// their text is compared directly — keyed on the channel, whose identity is stable, not on a
-    /// speaker label that a rename could change — along with the notes that become the `Notes:` piece.
-    struct LiveKey: Equatable {
-        let revision: Int
-        let partials: [String]
-        let notes: String
-    }
-
-    /// The memoized snapshot: the labeled pieces plus the joined review source built from them.
-    /// Rebuilt only when `LiveKey` changes, so one `handleLiveEvent` walks the transcript once
-    /// instead of three times plus a join (issue #116).
-    struct LiveSnapshot {
-        let pieces: [QuickSummaryContext.Piece]
-        let source: String
-    }
-
-    func liveSnapshot() -> LiveSnapshot {
-        let live = [SpeakerSource.you, .others].compactMap { store.partials[$0] }
-        let key = LiveKey(revision: store.revision,
-                          partials: live.map { $0.source.rawValue + ":" + $0.text },
-                          notes: notes)
-        if let cached = liveCache, liveCacheKey == key { return cached }
-        let pieces = QuickSummaryContext.pieces(notes: notes, segments: store.utterances,
-                                                liveSegments: live)
-        // The pieces already carry speaker labels and a Notes marker, so the automatic reviews read
-        // the same attributed evidence every manual prompt does.
-        let snapshot = LiveSnapshot(pieces: pieces, source: pieces.map(\.text).joined(separator: "\n"))
-        liveCacheKey = key
-        liveCache = snapshot
-        #if DEBUG
-        livePieceComputations += 1
-        #endif
-        return snapshot
-    }
-
-    private var livePieces: [QuickSummaryContext.Piece] { liveSnapshot().pieces }
-
-    #if DEBUG
-    /// Test-only: the memoized pieces, without going through the private accessor.
-    var livePiecesForTesting: [QuickSummaryContext.Piece] { livePieces }
-    #endif
-
-    public var autoQuickStatus: String {
-        guard autoSummaryEnabled else { return "Auto off" }
-        guard aiEnabled else { return "Auto paused · AI is off" }
-        if let reason = providerAvailability(models[.quick] ?? "") { return "Auto paused · " + reason }
-        if let error = quickReader.error { return error }
-        if quickReader.isCatchingUp { return "Catching up · Recap covers speech processed so far." }
-        if quickReader.isReading { return "Checking new speech…" }
-        if quickAnswerOverridesRecap { return "Recap updated · Showing your generated answer" }
-        if quickReader.completedReads > 0, quickRecap.isEmpty { return "Speech checked · No takeaway yet" }
-        return isRunning ? "Listening for meaningful changes" : "Auto checks while listening"
-    }
-
-
-    /// The user's language, persona and reference settings, applied to automatic reviews exactly as
-    /// they are applied to the manual panes.
-    private var automaticReviewDirectives: AutomaticReviewDirectives {
-        AutomaticReviewDirectives(responseLanguage: responseLanguage, personaGuidance: personaGuidance,
-                                  references: referenceContext)
-    }
-
-    public func automaticReviewStatus(_ mode: AutomaticReviewMode) -> String {
-        guard autoSummaryEnabled else { return "Auto off · Generate manually." }
-        guard isRunning else { return "Auto reviews run while listening. Generate is also available." }
-        guard aiEnabled else { return "Auto paused · AI is off." }
-        if let reason = providerAvailability(models[.quick] ?? "") { return "Auto paused · " + reason }
-        guard providers[.quick] != nil else { return "Auto paused · Choose a Quick model." }
-        return automaticReviews.status(mode)
-    }
-
-    private func synchronizeAutomaticReviews() { synchronizeAutomaticReviews(liveSnapshot()) }
-
-    /// - Parameter live: the snapshot for this event, computed once by the caller so a single
-    ///   ingested hypothesis never walks the transcript more than once (issue #116).
-    private func synchronizeAutomaticReviews(_ live: LiveSnapshot) {
-        automaticReviews.synchronize(enabled: autoSummaryEnabled && isRunning && aiEnabled
-            && providers[.quick] != nil && providerAvailability(models[.quick] ?? "") == nil,
-            manualBusy: !streamingRoles.isEmpty, pieces: live.pieces, source: live.source,
-            directives: automaticReviewDirectives, provider: { [weak self] mode in
-                guard let self else { throw CancellationError() }
-                let role: CopilotRole = mode == .summary ? .listener : .deep
-                if let reason = self.providerAvailability(self.models[role] ?? "") { throw QuickSummaryError.message(reason) }
-                guard let provider = self.providers[role] else { throw QuickSummaryError.message("Choose a review model.") }
-                return provider
-            }, apply: { [weak self] mode, output, reviewed in
-                guard let self else { return }
-                self.setOutput(mode == .summary ? .listener : .deep, output)
-                if mode == .summary { self.lastCompletedListenerSummary = output }
-                // The review still answers the current input when that input merely continued the
-                // snapshot it read; otherwise the recommendation stays outstanding. Comparing the
-                // joined source instead would re-run the identical review after a notes keystroke.
-                guard QuickSummaryContext.isContinuation(of: reviewed, in: self.livePieces) else { return }
-                self.quickReader.markReviewed(mode.rawValue)
-                // Only the segments this review actually read advance the listener ledger; speech
-                // that arrived after the snapshot still needs summarizing.
-                if mode == .summary {
-                    self.summarizedSegmentIDs.formUnion(Self.segmentIDs(in: reviewed))
-                }
-            })
-    }
-
-    /// The transcript segments a piece snapshot covers. Piece IDs are "<segment UUID>:<chunk>";
-    /// notes and provisional `live:` pieces have no segment and are skipped.
-    static func segmentIDs(in pieces: [QuickSummaryContext.Piece]) -> Set<UUID> {
-        Set(pieces.compactMap { UUID(uuidString: $0.id.components(separatedBy: ":").first ?? "") })
-    }
-
-    private func handleLiveEvent(_ event: LiveSummaryScheduler.Event) {
-        if event == .conversationChanged || event == .providerChanged { automaticReviews.reset() }
-        // One snapshot per event: the pieces, the joined review source and the pending check all
-        // read the same memoized value instead of rebuilding the transcript three times (issue #116).
-        let live = liveSnapshot()
-        synchronizeAutomaticReviews(live)
-        let pending = quickReader.context.hasChanges(live.pieces)
-        if event == .automationChanged || event == .providerChanged, !pending, !quickReader.isCatchingUp {
-            automaticReviews.offer(quickReader.recommendations, source: live.source)
-        }
-        let state = LiveSummaryScheduler.Snapshot(recording: isRunning, automatic: autoSummaryEnabled,
-            pending: pending, reading: quickReader.isReading,
-            manualQuick: streamingRoles.contains(.quick), available: aiEnabled && providers[.quick] != nil && providerAvailability(models[.quick] ?? "") == nil,
-            failures: quickReader.failures)
-        for action in liveScheduler.plan(event, state: state) {
-            switch action {
-            case .cancelWake: liveWake?.cancel(); liveWake = nil
-            case .cancelEvaluation: quickReader.cancel()
-            case .schedule(let delay):
-                liveWake = Task { [weak self] in
-                    do { try await Task.sleep(for: delay) } catch { return }
-                    self?.handleLiveEvent(.timerFired)
-                }
-            case .evaluate: Task { [weak self] in await self?.evaluateLiveQuick() }
-            }
-        }
-    }
-
-    private func evaluateLiveQuick() async {
-        guard isRunning, aiEnabled, autoSummaryEnabled, !quickReader.isReading,
-              !streamingRoles.contains(.quick), providerAvailability(models[.quick] ?? "") == nil, let provider = providers[.quick] else { return }
-        defer { handleLiveEvent(.evaluationFinished) }
-        let live = liveSnapshot()
-        if live.pieces.isEmpty {
-            quickReader.reset(); quickSuggestion = ""; quickRecap = ""; manualQuickAnswer.dismiss(); return
-        }
-        do {
-            guard let batch = try quickReader.context.batch(live.pieces, summary: quickRecap,
-                reviewsCompleted: quickReader.reviewsCompleted, pendingReviews: quickReader.recommendations,
-                responseLanguage: responseLanguage) else { return }
-            let run = runID
-            let previousReads = quickReader.completedReads
-            await quickReader.read(batch, provider: provider, isCurrent: { [weak self] in
-                guard let self, self.runID == run, self.isRunning, self.autoSummaryEnabled, self.aiEnabled else { return false }
-                return self.quickReader.context.isCurrent(batch, pieces: self.livePieces)
-            }, apply: { [weak self] in self?.applyQuickRecap($0) })
-            if quickReader.completedReads > previousReads, !quickReader.isCatchingUp {
-                let current = liveSnapshot()
-                synchronizeAutomaticReviews(current)
-                automaticReviews.offer(quickReader.recommendations, source: current.source)
-            }
-        } catch { /* Encoding consists only of validated string data. A later event retries. */ }
     }
 }

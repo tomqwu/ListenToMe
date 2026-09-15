@@ -41,10 +41,13 @@ public struct AutomaticReviewDirectives: Sendable, Equatable {
 
     /// Deep reviews answer substantive questions, so they receive the attached reference material,
     /// matching manual Deep. Summary mirrors the manual listener: transcript evidence only.
+    /// Both blocks are fenced as data, exactly as the manual panes fence them (issue #140).
     func userMessage(_ source: String, mode: AutomaticReviewMode) -> String {
+        let transcript = PromptData.block("transcript", source)
         guard mode == .deep, let references = references?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !references.isEmpty else { return source }
-        return source + "\n\nReference material the user attached (files/folders):\n" + references
+              !references.isEmpty else { return transcript }
+        return transcript + "\n\nReference material the user attached (files/folders):\n"
+            + PromptData.block("reference", references)
     }
 }
 
@@ -152,10 +155,21 @@ public final class AutomaticReviewCoordinator {
         guard enabled else { return }
         let input = Self.normalized(source)
         guard !input.isEmpty, currentInput.hasPrefix(input) else { return }
-        let modes = Set(reviews.filter { $0.confidence == "high" || $0.confidence == "medium" }
+        let recommended = Set(reviews.filter { $0.confidence == "high" || $0.confidence == "medium" }
             .compactMap { AutomaticReviewMode(rawValue: $0.mode) })
-        pending = pending.filter { modes.contains($0.key) }
-        for mode in AutomaticReviewMode.allCases where modes.contains(mode) {
+        // A queued job is dropped only on an *explicit* signal: this read listed the mode with low
+        // confidence. A read that merely omits it — the Quick model not echoing `pendingReviews`,
+        // which the prompt only asks it to do — must leave the queue alone, or a Deep job waiting
+        // out its window silently disappears (issue #137). The other explicit signals live
+        // elsewhere: `markManualCompletion`, `reset()` on a conversation/provider change, and
+        // `synchronize`'s `covers` check when the conversation moves past the job's snapshot.
+        let downgraded = Set(reviews.compactMap { AutomaticReviewMode(rawValue: $0.mode) })
+            .subtracting(recommended)
+        for mode in downgraded { pending[mode] = nil }
+        // Recommended modes are queued; a mode still queued from an earlier read has its source
+        // refreshed to the current evidence so it reviews what is on screen when it runs.
+        for mode in AutomaticReviewMode.allCases
+        where recommended.contains(mode) || pending[mode] != nil {
             guard completedInputs[mode] != input, timedOutInputs[mode] != input else { continue }
             if activeJob?.mode == mode, activeJob?.input == input { continue }
             pending[mode] = Job(mode: mode, input: input, source: source, snapshot: currentPieces,

@@ -254,8 +254,15 @@ extension MeetingView {
             outputText: session.listenerSummary,
             placeholder: "Generate a full summary and open items when ready.",
             headerExtra: {
+                // Refreshing with nothing new re-summarizes an empty evidence block and can reword
+                // or drop items from the record already on screen, so it is disabled until new
+                // speech arrives (issue #137).
                 Button("Refresh") { Task { await session.refreshListener() } }
                     .controlSize(.small)
+                    .disabled(!session.hasUnsummarizedSpeech)
+                    .help(session.hasUnsummarizedSpeech
+                          ? "Summarize the speech that has not been summarized yet"
+                          : "Everything said so far is already summarized.")
             },
             actions: { reviewSuggestion("summary", session: session) })
     }

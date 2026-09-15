@@ -24,6 +24,12 @@ final class MeetingSessionTests: XCTestCase {
         return (session, store)
     }
 
+    /// Seeds one final utterance so a Listener refresh has unsummarized speech to work on
+    /// (issue #137: a refresh with nothing new is a no-op).
+    private func speak(_ store: ConversationStore, _ text: String = "We discussed the rollout.") {
+        store.apply(TranscriptSegment(source: .others, text: text, isFinal: true, start: 0, end: 1))
+    }
+
     // MARK: - CopilotRole
 
     func testCopilotRoleHasThreeCases() {
@@ -49,7 +55,8 @@ final class MeetingSessionTests: XCTestCase {
     }
 
     func testRenamingClearsOldAnswersAndRebuildsListener() async {
-        let (session, _) = makeSession()
+        let (session, store) = makeSession()
+        speak(store)
         await session.respondQuick(.answerQuestion)
         await session.respondDeep(.answerQuestion)
         XCTAssertFalse(session.quickSuggestion.isEmpty)
@@ -126,19 +133,22 @@ final class MeetingSessionTests: XCTestCase {
     // MARK: - refreshListener
 
     func testRefreshListenerStreamsIntoListenerSummary() async {
-        let (session, _) = makeSession()
+        let (session, store) = makeSession()
+        speak(store)
         await session.refreshListener()
         XCTAssertEqual(session.listenerSummary, "[L]")
     }
 
     func testRefreshListenerClearsStreamingRoleAfterCompletion() async {
-        let (session, _) = makeSession()
+        let (session, store) = makeSession()
+        speak(store)
         await session.refreshListener()
         XCTAssertFalse(session.streamingRoles.contains(.listener))
     }
 
     func testRefreshListenerDoesNotAffectQuickOrDeep() async {
-        let (session, _) = makeSession()
+        let (session, store) = makeSession()
+        speak(store)
         await session.refreshListener()
         XCTAssertEqual(session.quickSuggestion, "")
         XCTAssertEqual(session.deepAnswer, "")
@@ -160,7 +170,8 @@ final class MeetingSessionTests: XCTestCase {
     }
 
     func testSetModelListenerChangesListenerProvider() async {
-        let (session, _) = makeSession()
+        let (session, store) = makeSession()
+        speak(store)
         session.setModel(.listener, "L2")
         await session.refreshListener()
         XCTAssertEqual(session.listenerSummary, "[L2]")
@@ -251,7 +262,8 @@ final class MeetingSessionTests: XCTestCase {
     // MARK: - waitForResponse role-specific
 
     func testWaitForResponseListenerAwaitsListenerTask() async {
-        let (session, _) = makeSession()
+        let (session, store) = makeSession()
+        speak(store)
         await session.refreshListener()
         await session.waitForResponse(.listener)
         XCTAssertEqual(session.listenerSummary, "[L]")
@@ -274,7 +286,8 @@ final class MeetingSessionTests: XCTestCase {
     // MARK: - Roles stream independently
 
     func testRolesStreamIntoSeparateOutputProperties() async {
-        let (session, _) = makeSession()
+        let (session, store) = makeSession()
+        speak(store)
         await session.respondQuick(.answerQuestion)
         await session.respondDeep(.answerQuestion)
         await session.refreshListener()

@@ -63,6 +63,30 @@ final class ModelRankingTests: XCTestCase {
         XCTAssertFalse(defaults.values.contains { $0.contains(":cloud") })
     }
 
+    /// Issue #137: locality is the caller's metadata answer (`/api/show`), not a guess about the
+    /// name. A model whose name looks local is still excluded when the caller did not verify it.
+    func testRoleDefaultsUsesTheCallerSuppliedLocalSetOverTheName() {
+        let models = ["llama3.1:8b", "gpt-oss:120b-cloud", "mistral-small:24b"]
+        let defaults = ModelRanking.roleDefaults(from: models, local: ["mistral-small:24b"])
+        XCTAssertEqual(Set(defaults.values), ["mistral-small:24b"],
+                       "only metadata-verified local models may be auto-assigned")
+    }
+
+    func testRoleDefaultsFallsBackToBothCloudNameFormsWhenLocalityIsUnknown() {
+        // Ollama publishes cloud tags as `model:cloud` *and* `model-size-cloud`.
+        let suffixed = ModelRanking.roleDefaults(from: ["llama3.1:8b", "gpt-oss:120b-cloud",
+                                                       "deepseek-v3.1:671b-cloud"])
+        XCTAssertEqual(Set(suffixed.values), ["llama3.1:8b"])
+        let tagged = ModelRanking.roleDefaults(from: ["llama3.1:8b", "deepseek-v4-pro:cloud"])
+        XCTAssertEqual(Set(tagged.values), ["llama3.1:8b"])
+    }
+
+    func testRoleDefaultsUsesCloudWhenNothingIsVerifiedLocal() {
+        let models = ["gpt-oss:120b-cloud", "kimi-k2:1t-cloud"]
+        XCTAssertFalse(ModelRanking.roleDefaults(from: models, local: []).isEmpty,
+                       "with no local model the user's cloud route is all there is")
+    }
+
     func testRoleDefaultsUsesCloudOnlyWhenNoLocal() {
         let models = ["deepseek-v4-flash:cloud", "deepseek-v4-pro:cloud"]
         let defaults = ModelRanking.roleDefaults(from: models)
