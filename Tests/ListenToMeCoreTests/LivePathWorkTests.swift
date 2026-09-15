@@ -17,7 +17,6 @@ final class LivePathWorkTests: XCTestCase {
             makeTranscriber: { MockTranscriber() },
             makeProvider: { model in MockLLMProvider(id: model, deltas: ["[\(model)]"]) },
             models: [.listener: "L", .quick: "Q", .deep: "D"],
-            listenerDebounce: 0,
             clock: { 0 }
         )
         return (session, store)

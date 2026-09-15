@@ -89,7 +89,10 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 - **Transcript** — live, source-labeled, no model.
 - **Listener** — rolling summary plus open questions / action items.
 - **Quick** — fast suggestions on the global hotkey, buttons, or proactively when someone asks a
-  question.
+  question. **Proactive** (the checkbox in the Quick pane header, on by default) answers a finalized
+  question from **Others** automatically: your own questions never trigger it, repeat questions are
+  debounced, and an answer you asked for is never cut off mid-stream. It is independent of **Auto**,
+  which writes the periodic recap.
 - **Deep** — on-demand, detailed long-reasoning answers.
 - Listener context is shared into Quick and Deep so on-demand answers stay grounded in the meeting.
 - **Auto** writes Quick, Listener and Deep automatically while you listen, from the same

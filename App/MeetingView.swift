@@ -6,6 +6,9 @@ import ListenToMeCore
 struct MeetingView: View {
     /// Anchor id for keeping scroll views pinned to their newest content.
     static let scrollBottomID = "scroll-bottom"
+    /// UserDefaults key for the Quick pane's "Proactive" toggle (answer Others' questions
+    /// automatically). Absent = on, matching the documented default.
+    static let proactiveDefaultsKey = "proactiveQuickAnswers"
 
     @State var session: MeetingSession
     @State var store: ConversationStore
@@ -314,6 +317,8 @@ struct MeetingView: View {
         })
         .onAppear {
             session.autoSummaryEnabled = UserDefaults.standard.bool(forKey: "autoQuickSummary")
+            // Proactive answers default ON (README/smoke test): absent a stored choice, keep them on.
+            session.proactiveEnabled = UserDefaults.standard.object(forKey: Self.proactiveDefaultsKey) as? Bool ?? true
             session.aiEnabled = ProviderSettings.aiMode != .off
             session.responseLanguage = ProviderSettings.responseLanguageDirective()
             let preset = PresetCatalog.preset(id: presetID)

@@ -24,7 +24,6 @@ final class TranscriberPrepareTests: XCTestCase {
             makeTranscriber: { transcriber },
             makeProvider: { model in MockLLMProvider(id: model, deltas: ["[\(model)]"]) },
             models: [.listener: "L", .quick: "Q", .deep: "D"],
-            listenerDebounce: 0,
             capturePumpDrainGrace: drainGrace,
             clock: { 0 }
         )
@@ -108,7 +107,7 @@ final class TranscriberPrepareTests: XCTestCase {
             makeCapture: { MockCapture() }, makeTranscriber: { transcriber },
             makeProvider: { model in MockLLMProvider(id: model, deltas: [publish]) },
             models: [.listener: "L", .quick: "Q", .deep: "D"],
-            listenerDebounce: 0, autoInterval: .milliseconds(5))
+            autoInterval: .milliseconds(5))
         session.autoSummaryEnabled = true
         await session.ingest(TranscriptSegment(source: .others, text: "Sarah confirms Monday.",
                                                isFinal: true, start: 0, end: 1))

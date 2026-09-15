@@ -281,8 +281,18 @@ extension MeetingView {
         RoleBox(
             title: "Quick Summary", accent: Theme.accent, role: .quick, session: session,
             outputText: session.quickSuggestion,
-            placeholder: "Enable Auto while listening, or request a recap.",
+            placeholder: "With Proactive on, a question from Others is answered here automatically. "
+                + "Enable Auto while listening, or request a recap.",
             headerExtra: {
+                // Answers a question from Others automatically, without waiting for a button or the
+                // hotkey. Independent of "Auto summaries" (the periodic recap) — see
+                // docs/SHARED-LIVE-SUMMARY.md.
+                Toggle("Proactive", isOn: Binding(get: { session.proactiveEnabled }, set: {
+                    session.proactiveEnabled = $0
+                    UserDefaults.standard.set($0, forKey: MeetingView.proactiveDefaultsKey)
+                }))
+                .toggleStyle(.checkbox).controlSize(.small)
+                .help("Answer automatically when the other party asks a question")
                 // The automatic recap keeps updating behind a generated answer; this returns to it.
                 if session.quickAnswerOverridesRecap {
                     Button("Show recap") { session.dismissQuickAnswer() }

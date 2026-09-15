@@ -15,6 +15,11 @@ public final class MeetingSession {
     /// against the *pre-existing* transcript while the header still says "preparing…" (issue #147).
     public private(set) var isPreparing = false
     public var notes = "" { didSet { handleLiveEvent(.notesChanged) } }
+    /// When on (the default), a finalized question from the *other* party automatically fires a
+    /// Quick answer — the live-copilot behaviour README and the smoke test promise. It is a
+    /// manual-style answer that happens to be triggered automatically, so it runs through the same
+    /// `respondQuick` path (and the same manual-answer freshness rules) as the buttons; it is
+    /// independent of `autoSummaryEnabled`, which drives the periodic automatic recap instead.
     public var proactiveEnabled = true
     public var autoSummaryEnabled = false { didSet { handleLiveEvent(.automationChanged) } }
     public var aiEnabled = true {
@@ -159,6 +164,8 @@ public final class MeetingSession {
     /// In-flight transcriber teardown from the last stop. `start()` awaits it before creating a new
     /// transcriber so a quick restart can't run two transcribers at once (SFSpeechRecognizer 1100).
     private var stopDrain: Task<Void, Never>?
+    /// In-flight automatic (proactive) Quick fire started from `ingest`.
+    private var proactiveTask: Task<Void, Never>?
     private var responseTasks: [CopilotRole: Task<Void, Never>] = [:]
     private var responseGenerations: [CopilotRole: Int] = [:]
     var runID = 0
@@ -169,7 +176,6 @@ public final class MeetingSession {
                 makeTranscriber: @escaping @Sendable () -> any Transcribing,
                 makeProvider: @escaping @Sendable (String) -> any LLMProvider,
                 models: [CopilotRole: String],
-                listenerDebounce: TimeInterval = 12,
                 autoInterval: Duration = .seconds(5),
                 capturePumpDrainGrace: Duration = .milliseconds(250),
                 providerAvailability: @escaping @Sendable (String) -> String? = { _ in nil },
@@ -221,6 +227,8 @@ public final class MeetingSession {
     public func resetConversation() {
         guard !isRunning, !isTranscribingFile else { return }
         for role in CopilotRole.allCases { cancelResponse(role) }
+        // No proactive task needs cancelling here: `ingest` only fires while running, and `stop()`
+        // (which must precede a reset) already cancelled it.
         quickReader.reset(); handleLiveEvent(.conversationChanged)
         store.reset()
         notes = ""; referenceContext = nil
@@ -428,6 +436,7 @@ public final class MeetingSession {
         degradedSources = []
         transcriptionStatus = "Transcription: finalizing…"
         for role in CopilotRole.allCases { cancelResponse(role) }
+        proactiveTask?.cancel(); proactiveTask = nil
         capture?.stop()
         // Cancel, don't await: a first-run model download inside prepare() takes minutes, and
         // awaiting it kept lifecycleBusy true — freezing Stop, New, window close and Cmd-Q. The
@@ -518,12 +527,51 @@ extension MeetingSession {
 
     // MARK: - Ingest
 
-    /// Applies a segment to the store, fires proactive quick response when warranted,
-    /// and schedules a batched evaluation for eligible live or finalized speech.
+    /// Applies a segment to the store, schedules a batched evaluation for eligible live or
+    /// finalized speech, and fires a proactive Quick answer when the other party asks a question.
     public func ingest(_ segment: TranscriptSegment) async {
         store.apply(segment)
 
         handleLiveEvent(.transcriptChanged)
+        fireProactiveIfWarranted(for: segment)
+    }
+
+    /// Starts an automatic Quick answer for a finalized question from `.others`.
+    ///
+    /// Deliberately *not* awaited by `ingest`: the segment pump must keep draining the transcriber
+    /// while the answer streams. Every guard the manual path applies applies here too — AI off, no
+    /// Quick provider, or an unavailable model means no request — plus four that are specific to
+    /// firing without the user asking: the own-speech exclusion and the debounce live in
+    /// `ContextEngine.shouldFireProactive`, a manual Quick that is still streaming is never
+    /// interrupted by an automatic one, and nothing fires while the speech model is still preparing
+    /// — no audio is flowing yet, so anything ingested then is pre-existing transcript rather than a
+    /// question the other party just asked (the rule automatic reviews follow, issue #147).
+    private func fireProactiveIfWarranted(for segment: TranscriptSegment) {
+        guard proactiveEnabled, isRunning, !isPreparing, aiEnabled,
+              !streamingRoles.contains(.quick),
+              providers[.quick] != nil,
+              providerAvailability(models[.quick] ?? "") == nil,
+              context.shouldFireProactive(for: segment, now: clock()) else { return }
+        proactiveTask?.cancel()
+        proactiveTask = Task { [weak self] in
+            guard let self else { return }
+            // The run can end — or end and restart — between the decision and this body being
+            // scheduled, and a question from a finished session must never answer into the next
+            // one. `stop()`, `resetConversation()` and a newer fire all cancel this task, and that
+            // cancellation is what carries across a restart: comparing `runID` would not, because
+            // `start()` sets `isRunning` back to true and bumps `runID` only *after* awaiting the
+            // previous teardown, so a body scheduled inside that await sees a live session under
+            // the run ID it captured (ProactiveQuickTests covers exactly this).
+            guard !Task.isCancelled, self.isRunning, !self.isPreparing, self.proactiveEnabled else { return }
+            await self.respondQuick(.proactive)
+        }
+    }
+
+    /// Awaits an in-flight proactive fire and the Quick stream it started. Test hook — the app
+    /// never needs to wait for an answer it did not ask for.
+    func awaitProactiveFire() async {
+        await proactiveTask?.value
+        await waitForResponse(.quick)
     }
 
     // MARK: - On-demand responses (awaitable)

@@ -21,7 +21,6 @@ final class MeetingSessionIntegrationTests: XCTestCase {
     /// Builds a session where the factories capture the test-held mock instances.
     private func makeSession(
         debounce: TimeInterval = 0,
-        listenerDebounce: TimeInterval = 0,
         now: @escaping @Sendable () -> TimeInterval = { 999_999 }
     ) -> SessionFixture {
         let capture = MockCapture()
@@ -34,7 +33,6 @@ final class MeetingSessionIntegrationTests: XCTestCase {
             makeTranscriber: { transcriber },
             makeProvider: { model in MockLLMProvider(id: model, deltas: ["[\(model)]"]) },
             models: [.listener: "L", .quick: "Q", .deep: "D"],
-            listenerDebounce: listenerDebounce,
             clock: now
         )
         return SessionFixture(session: session, capture: capture, transcriber: transcriber)
@@ -95,21 +93,38 @@ final class MeetingSessionIntegrationTests: XCTestCase {
 
     // MARK: - Test 3: Proactive quick fires through the pump
 
-    func testPumpPreservesQuestionWithoutAutoOptIn() async throws {
+    func testPumpFiresProactiveQuickForARemoteQuestion() async throws {
         let fixture = makeSession(debounce: 0, now: { 999_999 })
         let session = fixture.session
         let transcriber = fixture.transcriber
-        session.proactiveEnabled = true
+        XCTAssertTrue(session.proactiveEnabled, "proactive answers are on by default")
         try await session.start()
 
-        // Emit a finalized question from remote speaker (triggers proactive via real pump)
+        // Emit a finalized question from the remote speaker (triggers proactive via the real pump)
         let questionSeg = TranscriptSegment(source: .others, text: "Are we ready?",
                                             isFinal: true, start: 0, end: 1)
         transcriber.emit(questionSeg)
 
         // Wait for ingest to pick it up, then for the quick response task to complete
         await waitUntil { !session.store.utterances.isEmpty }
-        await session.waitForResponse(.quick)
+        await session.awaitProactiveFire()
+
+        XCTAssertEqual(session.quickSuggestion, "[Q]")
+
+        session.stop()
+    }
+
+    func testPumpStaysQuietForARemoteQuestionWhenProactiveIsOff() async throws {
+        let fixture = makeSession(debounce: 0, now: { 999_999 })
+        let session = fixture.session
+        let transcriber = fixture.transcriber
+        session.proactiveEnabled = false
+        try await session.start()
+
+        transcriber.emit(TranscriptSegment(source: .others, text: "Are we ready?",
+                                           isFinal: true, start: 0, end: 1))
+        await waitUntil { !session.store.utterances.isEmpty }
+        await session.awaitProactiveFire()
 
         XCTAssertEqual(session.quickSuggestion, "")
 
@@ -144,8 +159,7 @@ final class MeetingSessionIntegrationTests: XCTestCase {
                     ? (quickProvider as any LLMProvider)
                     : MockLLMProvider(id: model, deltas: ["[\(model)]"])
             },
-            models: [.listener: "L", .quick: "Q", .deep: "D"],
-            listenerDebounce: 0
+            models: [.listener: "L", .quick: "Q", .deep: "D"]
         )
         store.apply(TranscriptSegment(source: .others, text: "What's the plan?",
                                       isFinal: true, start: 0, end: 1))
@@ -220,7 +234,6 @@ final class MeetingSessionIntegrationTests: XCTestCase {
             },
             makeProvider: { model in MockLLMProvider(id: model, deltas: ["[\(model)]"]) },
             models: [.listener: "L", .quick: "Q", .deep: "D"],
-            listenerDebounce: 0,
             clock: { 0 }
         )
 
@@ -253,7 +266,7 @@ final class MeetingSessionIntegrationTests: XCTestCase {
     // MARK: - Test 6: finalized segment triggers listener refresh through pump
 
     func testFinalizedSegmentWaitsForManualFullSummary() async throws {
-        let fixture = makeSession(listenerDebounce: 0, now: { 0 })
+        let fixture = makeSession(now: { 0 })
         let session = fixture.session
         let transcriber = fixture.transcriber
         try await session.start()
