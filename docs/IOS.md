@@ -210,8 +210,9 @@ Conversations, attachments and queued share imports are written with the
 until the device has been unlocked once, rather than being readable from the moment the system boots.
 By default this data is included in the device's normal iCloud/Finder backup, like other app data, so
 restoring a new phone brings the conversations along. **Settings → Privacy → Exclude conversations
-from iCloud backup** (off by default) sets `isExcludedFromBackup` on the conversation, attachment and
-active-conversation files; with it on, transcripts never leave the device — not even into an
+from iCloud backup** (off by default) sets `isExcludedFromBackup` on the conversation and attachment
+directories, the active-conversation file and the App Group share inbox — so a queued import that has
+not been turned into a conversation yet is covered by the same promise; with it on, transcripts never leave the device — not even into an
 Apple-held backup — and a restored phone will not have them. The setting is remembered and re-applied
 at every launch, including for directories recreated later.
 
@@ -261,7 +262,12 @@ accepts compatible text, images and files from other apps. It queues imports in 
 `group.com.tomwu.ListenToMe.ios`; repeated delivery of the same batch does not duplicate conversations.
 A batch that cannot be imported — an unreadable manifest, an oversized or unsafe payload — is moved to
 `Inbox/Failed` and the drain continues, so one bad share no longer repeats its error on every
-foreground or block the batches queued behind it; its bytes are kept there rather than deleted. A
+foreground or block the batches queued behind it. That quarantine is a recovery window, not storage:
+its folders are deleted once they are 24 hours old, and the on-screen message says so. A failure that
+describes the device rather than the batch (out of space, a read-only volume, a payload iCloud has
+not finished materializing) is not quarantined at all — the batch stays queued and is retried the
+next time the app opens, with a message saying so, until it is a day old, after which the same
+failure is treated as permanent so a genuinely broken batch cannot fail forever. A
 folder with no manifest is an extension that was killed mid-write and can never become a
 conversation: it is left alone for 24 hours (the extension may still be writing) and then deleted, so
 abandoned photo originals do not occupy the App Group forever.

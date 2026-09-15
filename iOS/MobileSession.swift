@@ -84,6 +84,8 @@ final class MobileSession {
     private var isRebuildingCapture = false
     let attachmentRoot: URL
     private let conversationRoot: URL
+    /// The App Group folder the share extension writes into, when this device has one.
+    let sharedInboxRoot: URL?
     /// Off by default: iOS backs app data up like any other app, and a user who relies on iCloud
     /// Backup to move to a new phone should not silently lose their conversations. On means the
     /// transcripts never leave the device, not even into an Apple-held backup.
@@ -98,7 +100,11 @@ final class MobileSession {
     init(storageDirectory: URL = .applicationSupportDirectory,
          summaryProvider: (any LLMProvider)? = nil, autoInterval: Duration = .seconds(5),
          correctionProvider: (any LLMProvider)? = nil, saveDebounce: Duration = .seconds(1),
+         sharedInbox: URL? = nil,
          makeRecorder: @escaping () -> any MobileRecording = { MobileRecorder() }) {
+        // Resolved once: the backup choice has to reach the App Group inbox too, not only the
+        // conversations this app owns.
+        sharedInboxRoot = sharedInbox ?? (try? SharedInbox.root())
         self.summaryProvider = summaryProvider
         self.saveDebounce = saveDebounce
         self.correctionProvider = correctionProvider
@@ -344,6 +350,13 @@ final class MobileSession {
         }
         try? PrivateStorage.createDirectory(at: activeURL.deletingLastPathComponent())
         try? PrivateStorage.setExcludedFromBackup(excluded, at: activeURL)
+        // Shared imports are conversation content that has not been imported yet; excluding only
+        // what this app already owns would leave the queue in the backup the setting promises to
+        // keep it out of.
+        if let sharedInboxRoot {
+            try? PrivateStorage.createDirectory(at: sharedInboxRoot)
+            try? PrivateStorage.setExcludedFromBackup(excluded, at: sharedInboxRoot)
+        }
     }
 
     /// Extra transcription languages offered beside the device's own.
@@ -642,11 +655,12 @@ extension MobileSession {
 /// The share-extension inbox drain. Kept out of the class body so one unreadable batch's
 /// recovery path does not crowd the conversation state it operates on.
 extension MobileSession {
-    /// Folders set aside because they could not be imported. Kept, never silently destroyed, so the
-    /// payload can still be recovered from the app container.
+    /// Folders set aside because they could not be imported. Recoverable from the app container for
+    /// a day, then deleted: quarantined bytes the user cannot see must not be kept forever.
     static let failedInboxFolder = "Failed"
     /// A share sheet killed mid-write leaves payload files with no manifest; they can never become a
-    /// conversation. Reclaimed once the extension cannot plausibly still be writing them.
+    /// conversation. Reclaimed once the extension cannot plausibly still be writing them. The same
+    /// clock ages out quarantined batches.
     static let orphanInboxLifetime: TimeInterval = 24 * 60 * 60
 
     /// Saving the open conversation failed, so importing would lose the user's current work. Not the
@@ -657,10 +671,16 @@ extension MobileSession {
     /// `Inbox/Failed` and the drain continues, so a folder later in directory order still imports.
     func importSharedInbox(from inbox: URL? = nil, now: Date = Date()) {
         guard !busy else { return }
-        var problems: [String] = []
+        var quarantined: [String] = []
+        var retrying: [String] = []
+        var blocked: String?
+        // Reported on every exit, so a failure to save the open conversation does not swallow the
+        // problems found in the folders drained before it.
+        defer { announceInboxProblems(quarantined: quarantined, retrying: retrying, blocked: blocked) }
         do {
-            let root = try inbox ?? SharedInbox.root()
+            let root = try inbox ?? sharedInboxRoot ?? SharedInbox.root()
             let failed = root.appendingPathComponent(Self.failedInboxFolder, isDirectory: true)
+            discardExpiredQuarantine(failed, now: now)
             // Sorted so the drain order is the same on every launch instead of directory order.
             let folders = try FileManager.default
                 .contentsOfDirectory(at: root, includingPropertiesForKeys: nil)
@@ -671,16 +691,59 @@ extension MobileSession {
                     discardOrphanedInbox(folder, now: now); continue
                 }
                 do { try importSharedBatch(at: folder, manifest: manifest) }
-                catch is ActiveSaveFailure { return }
+                catch is ActiveSaveFailure {
+                    blocked = message   // save() has already said exactly what went wrong
+                    return
+                }
                 catch {
-                    problems.append(error.localizedDescription)
+                    if Self.isTransient(error), !isExpired(folder, now: now) {
+                        retrying.append(error.localizedDescription); continue
+                    }
+                    quarantined.append(error.localizedDescription)
                     setAsideFailedInbox(folder, in: failed)
                 }
             }
-        } catch { problems.append(error.localizedDescription) }
-        if !problems.isEmpty {
-            message = "Could not import shared content: \(problems.joined(separator: " ")) "
-                + "Those items were set aside; anything else shared was imported."
+        } catch { quarantined.append(error.localizedDescription) }
+    }
+
+    /// A full disk, a read-only volume or a payload iCloud has not finished materializing describes
+    /// the device's state, not the batch: quarantining it would throw away a share that imports fine
+    /// once the condition clears. Retried until it is a day old, then treated as permanent so a
+    /// genuinely broken batch cannot fail forever.
+    static func isTransient(_ error: Error) -> Bool {
+        guard let cocoa = error as? CocoaError else { return false }
+        return [CocoaError.Code.fileWriteOutOfSpace, .fileWriteVolumeReadOnly, .fileWriteNoPermission,
+                .fileReadNoPermission, .fileReadNoSuchFile, .fileNoSuchFile].contains(cocoa.code)
+    }
+
+    private func announceInboxProblems(quarantined: [String], retrying: [String], blocked: String?) {
+        var parts: [String] = []
+        if let blocked { parts.append(blocked) }
+        if !quarantined.isEmpty {
+            parts.append("Could not import shared content: \(quarantined.joined(separator: " ")) "
+                + "Those items were set aside and are deleted after 24 hours; "
+                + "anything else shared was imported.")
+        }
+        if !retrying.isEmpty {
+            parts.append("Shared content could not be imported yet: \(retrying.joined(separator: " ")) "
+                + "It stays in the queue and is tried again the next time the app opens.")
+        }
+        guard !parts.isEmpty else { return }
+        message = parts.joined(separator: " ")
+    }
+
+    private func isExpired(_ folder: URL, now: Date) -> Bool {
+        guard let changed = try? folder.resourceValues(forKeys: [.contentModificationDateKey])
+            .contentModificationDate else { return false }
+        return now.timeIntervalSince(changed) > Self.orphanInboxLifetime
+    }
+
+    /// Quarantined batches are a recovery window, not storage. After a day their bytes go back.
+    private func discardExpiredQuarantine(_ failed: URL, now: Date) {
+        guard let folders = try? FileManager.default
+            .contentsOfDirectory(at: failed, includingPropertiesForKeys: nil) else { return }
+        for folder in folders where isExpired(folder, now: now) {
+            try? FileManager.default.removeItem(at: folder)
         }
     }
 
@@ -724,14 +787,14 @@ extension MobileSession {
     }
 
     private func discardOrphanedInbox(_ folder: URL, now: Date) {
-        guard let changed = try? folder.resourceValues(forKeys: [.contentModificationDateKey])
-            .contentModificationDate, now.timeIntervalSince(changed) > Self.orphanInboxLifetime else { return }
+        guard isExpired(folder, now: now) else { return }
         try? FileManager.default.removeItem(at: folder)
     }
 
     private func setAsideFailedInbox(_ folder: URL, in failed: URL) {
         do {
-            try FileManager.default.createDirectory(at: failed, withIntermediateDirectories: true)
+            try FileManager.default.createDirectory(at: failed, withIntermediateDirectories: true,
+                                                    attributes: SharedInbox.directoryAttributes)
             var destination = failed.appendingPathComponent(folder.lastPathComponent, isDirectory: true)
             if FileManager.default.fileExists(atPath: destination.path) {
                 destination = failed.appendingPathComponent(folder.lastPathComponent + "-" + UUID().uuidString,
