@@ -83,8 +83,14 @@ private struct IncrementalFixtureProvider: LLMProvider {
             let task = Task {
                 do {
                     try await Task.sleep(for: slow ? .seconds(8) : .milliseconds(150))
-                    if request.system != MobileQuickContext.instructions {
-                        let automatic = AutomaticReviewMode.allCases.contains { $0.instructions == request.system }
+                    // Match on the request's declared purpose, not on prompt text: the evaluator's
+                    // system prompt carries the response-language rule and the data-not-instructions
+                    // notice, so an equality check on `instructions` silently stops matching (#166).
+                    if request.purpose != .quickEvaluation {
+                        // A full review's system prompt is its mode instructions plus the directives
+                        // (notice, persona, language) appended by PromptBuilder.systemWithDirectives.
+                        let automatic = AutomaticReviewMode.allCases
+                            .contains { request.system.hasPrefix($0.instructions) }
                         continuation.yield("- The delivery discussion has been reviewed " + (automatic ? "automatically." : "manually."))
                         continuation.finish()
                         return
