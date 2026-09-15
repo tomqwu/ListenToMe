@@ -352,7 +352,7 @@ extension MeetingView {
     }
 
     /// Listen/Stop press: start or stop capture, tracking the elapsed-timer anchor and saving on Stop.
-    private func toggleCapture(session: MeetingSession) {
+    func toggleCapture(session: MeetingSession) {
         guard !lifecycleBusy else { return }
         Task {
             if wantsCapture {

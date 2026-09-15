@@ -50,11 +50,21 @@ struct WindowCloseHandler: NSViewRepresentable {
 struct ConversationCommands {
     let canSave: Bool
     let canStartNew: Bool
+    /// True while capture is running, so the menu item can read "Stop listening".
+    let isCapturing: Bool
+    /// False while a lifecycle operation (finalizing, importing) owns the session.
+    let canToggleCapture: Bool
+    /// False when AI is turned off, so the three copilot items are visibly unavailable.
+    let canUseAI: Bool
     let save: () -> Void
     let new: () -> Void
     let history: () -> Void
     let export: () -> Void
     let settings: () -> Void
+    let toggleCapture: () -> Void
+    let deepAnswer: () -> Void
+    let recap: () -> Void
+    let refreshSummary: () -> Void
 }
 
 private struct ConversationCommandsKey: FocusedValueKey {
@@ -69,6 +79,9 @@ extension FocusedValues {
 }
 
 struct ConversationMenu: Commands {
+    /// nil whenever no MeetingView window is key — including after the user closes the window while
+    /// the app stays in the Dock. Every item must be `.disabled` on nil, or its shortcut is a silent
+    /// no-op (issue #136).
     @FocusedValue(\.conversationCommands) private var actions
     var body: some Commands {
         CommandGroup(replacing: .newItem) {
@@ -79,10 +92,32 @@ struct ConversationMenu: Commands {
             Button("Save conversation") { actions?.save() }.keyboardShortcut("s")
                 .disabled(actions?.canSave != true)
             Button("Export conversation…") { actions?.export() }.keyboardShortcut("e")
+                .disabled(actions == nil)
             Button("Conversation history…") { actions?.history() }.keyboardShortcut("f")
+                .disabled(actions == nil)
         }
         CommandGroup(replacing: .appSettings) {
             Button("Settings…") { actions?.settings() }.keyboardShortcut(",")
+                .disabled(actions == nil)
+        }
+        // The app's most frequent actions had no keyboard equivalents at all (issue #136). ⌘⇧Space
+        // (Quick answer) stays with HotkeyMonitor because it must work while another app is front.
+        CommandMenu("Session") {
+            Button(actions?.isCapturing == true ? "Stop listening" : "Start listening") {
+                actions?.toggleCapture()
+            }
+            .keyboardShortcut("l", modifiers: [.command, .shift])
+            .disabled(actions?.canToggleCapture != true)
+            Divider()
+            Button("Deep answer") { actions?.deepAnswer() }
+                .keyboardShortcut("d", modifiers: [.command, .shift])
+                .disabled(actions?.canUseAI != true)
+            Button("Recap so far") { actions?.recap() }
+                .keyboardShortcut("r", modifiers: [.command, .shift])
+                .disabled(actions?.canUseAI != true)
+            Button("Refresh summary") { actions?.refreshSummary() }
+                .keyboardShortcut("u", modifiers: [.command, .shift])
+                .disabled(actions?.canUseAI != true)
         }
     }
 }

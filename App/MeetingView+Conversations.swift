@@ -146,8 +146,15 @@ extension MeetingView {
 
     var conversationCommands: ConversationCommands {
         ConversationCommands(canSave: hasConversation, canStartNew: !lifecycleBusy && !session.isTranscribingFile,
+            isCapturing: wantsCapture,
+            canToggleCapture: !lifecycleBusy && !session.isTranscribingFile,
+            canUseAI: session.aiEnabled,
             save: saveConversation, new: newConversation, history: { showSearch = true },
-            export: exportSession, settings: { openSettings($showSettings) })
+            export: exportSession, settings: { openSettings($showSettings) },
+            toggleCapture: { toggleCapture(session: session) },
+            deepAnswer: { Task { await session.respondDeep(.answerQuestion) } },
+            recap: { Task { await session.respondQuick(.recap) } },
+            refreshSummary: { Task { await session.refreshListener() } })
     }
 
     /// App/window close waits for final text, but never for optional AI or speaker analysis.

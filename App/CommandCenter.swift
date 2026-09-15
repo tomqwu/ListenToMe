@@ -50,18 +50,25 @@ struct KbdHint: View {
     }
 }
 
-/// The bottom footer: keyboard hints (labels only; only ⌘⇧Space is an actually-wired hotkey) and an
-/// honest privacy line — on-device transcription, but cloud models may send data.
+/// The bottom footer: keyboard hints and an honest privacy line — on-device transcription, but
+/// cloud models may send data. Every hint below is a real, wired equivalent: ⌘⇧Space is the global
+/// hotkey (`HotkeyMonitor`) and the rest are menu items in `ConversationMenu` (issue #136). Keep
+/// this list and that menu in step — a hint for an unwired key is worse than no hint.
 struct CommandCenterFooter: View {
     /// Explicit user-selected AI processing policy.
     let mode: AIProcessingMode
     var body: some View {
-        HStack(spacing: 18) {
+        HStack(spacing: 12) {
+            KbdHint(key: "⌘⇧L", label: "listen")
             KbdHint(key: "⌘⇧Space", label: "quick")
+            KbdHint(key: "⌘⇧D", label: "deep")
+            KbdHint(key: "⌘⇧R", label: "recap")
+            KbdHint(key: "⌘⇧U", label: "summary")
             KbdHint(key: "⌘S", label: "save")
             KbdHint(key: "⌘N", label: "new")
+            KbdHint(key: "⌘E", label: "export")
             KbdHint(key: "⌘F", label: "history")
-            Spacer()
+            Spacer(minLength: 8)
             Text(mode.label).font(.system(size: 13)).foregroundStyle(Theme.ink2)
         }
         .padding(.horizontal, 14)
@@ -142,6 +149,8 @@ struct RoleBox<Header: View, Actions: View>: View {
                     Button { Clipboard.copy(outputText) } label: { Image(systemName: "doc.on.doc") }
                         .buttonStyle(.borderless)
                         .help("Copy this pane's text")
+                        // Symbol-only: VoiceOver otherwise announces just "button" (issue #136).
+                        .accessibilityLabel("Copy \(title) text")
                 }
                 headerExtra()
             }
