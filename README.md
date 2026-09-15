@@ -280,6 +280,9 @@ analysis; speaker names are included in saved transcript text when session savin
   are included in the device's normal iCloud/Finder backup by default, so a restored phone keeps
   them; **Settings → Privacy → Exclude conversations from iCloud backup** keeps them off any backup.
   Model catalogs are fetched only from a destination you configured — never anonymously.
+- **iOS privacy policy and support.** The App Store pages are checked in and linked from the app in
+  **More → Settings → Privacy**: [privacy policy](docs/ios-privacy.md) and
+  [support](docs/ios-support.md).
 
 ## Architecture
 

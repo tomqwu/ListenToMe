@@ -2,6 +2,10 @@ import SwiftUI
 import ListenToMeCore
 
 struct MobileMeetingView: View {
+    static let privacyPolicyURL = URL(
+        string: "https://github.com/tomqwu/ListenToMe/blob/main/docs/ios-privacy.md")!
+    static let supportURL = URL(
+        string: "https://github.com/tomqwu/ListenToMe/blob/main/docs/ios-support.md")!
     @Bindable var session: MobileSession
     @State private var showHistory = false
     @State private var saveFeedback: String?
@@ -258,6 +262,8 @@ struct MobileMeetingView: View {
                          : "Conversations are included in this device's normal backup, like other app data. "
                             + "Conversation files stay encrypted until you unlock this device after a restart.")
                         .font(.caption).accessibilityIdentifier("backupExplanation")
+                    Link("Privacy policy", destination: MobileMeetingView.privacyPolicyURL)
+                    Link("Support", destination: MobileMeetingView.supportURL)
                     Link("Open app settings", destination: URL(string: UIApplication.openSettingsURLString)!)
                 }
                 Section("Release") {

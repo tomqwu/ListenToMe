@@ -8,21 +8,25 @@ App Store Connect. Apply and verify the online fields during the iOS release wor
 
 | File in `en-CA/` | App Store Connect destination |
 | --- | --- |
-| `name.txt` | Distribution → App Information → Name |
-| `subtitle.txt` | Distribution → App Information → Subtitle |
-| `description.txt` | Distribution → iOS version 1.3.0 → Description |
+| `name.txt`, `subtitle.txt` | Distribution → App Information |
+| `description.txt`, `keywords.txt` | Distribution → current iOS App Store version |
 | `beta-description.txt` | TestFlight → Test Information → Beta App Description |
-| `what-to-test-1.1.0.txt` | TestFlight → build 1.1.0 (3) → What to Test |
-| `what-to-test-1.2.0.txt` | TestFlight → build 1.2.0 (5) → What to Test |
+| `what-to-test-<version>.txt` | TestFlight → matching build → What to Test |
 
-| `what-to-test-1.3.0.txt` | TestFlight → build 1.3.0 (6) → What to Test |
+The store description tracks the current shipped iOS build. The first public release is configured to
+be free in all available countries, as requested by the maintainer. Submission and availability must be
+verified separately from metadata preparation and TestFlight upload; a successful TestFlight upload does
+not establish App Store submission. Do not mark a candidate uploaded or tested on a physical device
+until that is verified.
 
-| `what-to-test-1.3.1.txt` | TestFlight → build 1.3.1 (7) → What to Test |
+Public support page: <https://github.com/tomqwu/ListenToMe/blob/main/docs/ios-support.md>
+([`docs/ios-support.md`](../../docs/ios-support.md))
 
-The full store description targets 1.3.1. The beta description explicitly identifies the version
-that adds Ollama so it remains accurate while testers still have 1.0.1. Do not mark a candidate
-uploaded or tested on a physical device until that is verified. Contact and privacy fields require
-the maintainer's actual details and are not supplied by these files.
+Privacy policy: <https://github.com/tomqwu/ListenToMe/blob/main/docs/ios-privacy.md>
+([`docs/ios-privacy.md`](../../docs/ios-privacy.md))
+
+Both URLs are also linked from the app in More → Settings → Privacy. App Review contact details remain
+in App Store Connect and are not checked into Git.
 
 ## Icon
 
