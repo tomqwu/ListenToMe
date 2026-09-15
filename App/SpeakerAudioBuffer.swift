@@ -10,9 +10,15 @@ final class SpeakerAudioBuffer: @unchecked Sendable {
     private static let targetSampleRate: Double = 16_000
     /// ~2 hours of 16 kHz mono audio; appends stop once the buffer reaches this size.
     private static let maxSamples = 115_200_000
+    /// Storage block size: 10 s of 16 kHz mono (640 KB). Audio is accumulated as a list of fixed-size
+    /// blocks rather than one giant `[Float]` (issue #109), so an append only ever touches the last
+    /// block and a snapshot copies block REFERENCES under the lock — O(blocks), not O(samples).
+    static let blockSize = 160_000
 
     private let lock = NSLock()
-    private var samples: [Float] = []          // guarded by `lock`
+    /// Every block but the last holds exactly `blockSize` samples. Guarded by `lock`.
+    private var blocks: [[Float]] = []         // guarded by `lock`
+    private var total = 0                      // guarded by `lock`
     private var truncated = false              // guarded by `lock`
     /// Bumped on every `reset()`. Each capture captures the generation for ITS run; an append whose
     /// generation no longer matches is from a superseded capture and is rejected under the lock — even
@@ -64,13 +70,33 @@ final class SpeakerAudioBuffer: @unchecked Sendable {
                 offset = timestamp
                 offsetSet = true
             }
-            let room = Self.maxSamples - samples.count
+            let room = Self.maxSamples - total
             if resampled.count >= room {
-                samples.append(contentsOf: resampled.prefix(room))
+                appendLocked(resampled.prefix(room))
                 truncated = true
             } else {
-                samples.append(contentsOf: resampled)
+                appendLocked(resampled[...])
             }
+        }
+    }
+
+    /// Distributes `input` over the fixed-size blocks, filling the partial last block first.
+    /// PRECONDITION: `lock` is held. Appending into `blocks[last]` mutates it in place (the array of
+    /// blocks is uniquely referenced here); at worst a snapshot that is still holding the last block
+    /// costs one copy of that single 640 KB block — never of the whole session.
+    private func appendLocked(_ input: ArraySlice<Float>) {
+        var remaining = input
+        while !remaining.isEmpty {
+            if blocks.isEmpty || blocks[blocks.count - 1].count >= Self.blockSize {
+                var block = [Float]()
+                block.reserveCapacity(Self.blockSize)
+                blocks.append(block)
+            }
+            let last = blocks.count - 1
+            let take = min(Self.blockSize - blocks[last].count, remaining.count)
+            blocks[last].append(contentsOf: remaining.prefix(take))
+            remaining = remaining.dropFirst(take)
+            total += take
         }
     }
 
@@ -78,7 +104,8 @@ final class SpeakerAudioBuffer: @unchecked Sendable {
     /// store — it can grow to ~460 MB, so we don't keep that capacity alive between sessions.
     func reset() {
         lock.withLock {
-            samples.removeAll(keepingCapacity: false)
+            blocks.removeAll(keepingCapacity: false)
+            total = 0
             truncated = false
             offset = 0
             offsetSet = false
@@ -91,13 +118,35 @@ final class SpeakerAudioBuffer: @unchecked Sendable {
         }
     }
 
-    /// Returns the accumulated 16 kHz samples. Returns a copy-on-write handle under the lock (O(1));
-    /// we deliberately do NOT eagerly clone here — cloning under the lock would block capture-callback
-    /// appends and spike memory. In the common case Identify is pressed after Stop, so no further append
-    /// ever touches this storage; if the user identifies while still recording, at most one subsequent
-    /// append performs a single COW copy off this lock on the capture thread.
-    func snapshot() -> [Float] {
-        lock.withLock { samples }
+    /// One window of accumulated audio, plus where it sits in the buffer.
+    struct Snapshot: Sendable {
+        /// Contiguous 16 kHz mono samples for the requested window.
+        let samples: [Float]
+        /// Index of `samples[0]` within the whole buffer (block-aligned, so `<=` what was requested).
+        let startSample: Int
+        /// Capture-time of the buffer's sample 0 (see `startOffset`).
+        let startOffset: TimeInterval
+        /// Buffer-relative time of `samples[0]`, to shift window-relative diarization times by.
+        var startTime: TimeInterval { TimeInterval(startSample) / SpeakerAudioBuffer.targetSampleRate }
+    }
+
+    /// Total samples accumulated so far.
+    var sampleCount: Int { lock.withLock { total } }
+
+    /// Accumulated 16 kHz samples from `fromSample` (rounded DOWN to a block boundary) to the end.
+    ///
+    /// Only block references are copied under the lock — O(blocks) regardless of session length — and
+    /// the concatenation happens off the lock, so a periodic pass while recording never stalls the
+    /// capture callback and never forces a copy-on-write of the whole session (issue #109).
+    func snapshot(fromSample requested: Int = 0) -> Snapshot {
+        let (window, startSample, offsetCopy): ([[Float]], Int, TimeInterval) = lock.withLock {
+            let index = max(0, min(requested, total)) / Self.blockSize
+            return (Array(blocks.dropFirst(index)), index * Self.blockSize, offset)
+        }
+        var out = [Float]()
+        out.reserveCapacity(window.reduce(0) { $0 + $1.count })
+        for block in window { out.append(contentsOf: block) }
+        return Snapshot(samples: out, startSample: startSample, startOffset: offsetCopy)
     }
 
     /// Converts mono Float at `inputRate` to 16 kHz mono Float via a cached `AVAudioConverter`.

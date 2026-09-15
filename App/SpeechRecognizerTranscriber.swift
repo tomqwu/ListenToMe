@@ -16,6 +16,13 @@ actor SpeechRecognizerTranscriber: Transcribing {
     private nonisolated let continuation: AsyncStream<TranscriptSegment>.Continuation
 
     private var states: [SpeakerSource: SourceState] = [:]
+    /// Task identity for every source's recognition task (issue #108). The Speech framework's
+    /// callbacks carry no identity and it commonly delivers a trailing cancellation/no-speech error
+    /// for a task that has already produced its final result; without this, that dead task's error
+    /// tore down the state of the task that had replaced it. Held in a locked box (not in actor
+    /// state) so the nonisolated callback can consult it SYNCHRONOUSLY — hopping onto the actor to
+    /// check would let partials be yielded out of order.
+    private nonisolated let router = RouterBox()
     private var authorized = false
     private var stopped = false
     private let locale: Locale
@@ -66,14 +73,38 @@ actor SpeechRecognizerTranscriber: Transcribing {
             try? await Task.sleep(nanoseconds: 100_000_000)
         }
         states.removeAll()
+        router.removeAll()
         continuation.finish()
         statusContinuation.finish()
     }
 
     // MARK: - Per-source recognition
 
+    /// Thread-safe wrapper around Core's pure `RecognitionTaskRouter` so both the actor and the
+    /// nonisolated Speech callbacks can use the same source of truth for task identity.
+    private final class RouterBox: @unchecked Sendable {
+        private let lock = NSLock()
+        private var router = RecognitionTaskRouter()
+
+        func install(for source: SpeakerSource) -> UUID {
+            lock.withLock { router.install(for: source) }
+        }
+        func action(for event: RecognitionTaskEvent, token: UUID, source: SpeakerSource) -> RecognitionTaskAction {
+            lock.withLock { router.action(for: event, token: token, source: source) }
+        }
+        func mayRestart(token: UUID, for source: SpeakerSource) -> Bool {
+            lock.withLock { router.mayRestart(token: token, for: source) }
+        }
+        func retire(token: UUID, for source: SpeakerSource) {
+            lock.withLock { router.retire(token: token, for: source) }
+        }
+        func removeAll() { lock.withLock { router.removeAll() } }
+    }
+
     private final class SourceState {
         let recognizer: SFSpeechRecognizer
+        /// Identity of the recognition task this state owns; every callback carries it.
+        var token = UUID()
         let request = SFSpeechAudioBufferRecognitionRequest()
         var task: SFSpeechRecognitionTask?
         var segmenter = VADSegmenter(speechThreshold: 0.02, silenceDuration: 0.8)
@@ -93,22 +124,32 @@ actor SpeechRecognizerTranscriber: Transcribing {
             return nil
         }
         let state = SourceState(recognizer: recognizer)
-        state.task = recognizer.recognitionTask(with: state.request) { [weak self] result, error in
+        let token = router.install(for: source)
+        state.token = token
+        state.task = recognizer.recognitionTask(with: state.request) { [weak self, router] result, error in
             guard let self else { return }
-            if let result {
-                self.continuation.yield(TranscriptSegment(
-                    source: source,
-                    text: result.bestTranscription.formattedString,
-                    isFinal: result.isFinal,
-                    start: 0,
-                    end: 0
-                ))
-            }
+            // Ask the router FIRST: a callback from a superseded task (or a second callback from a
+            // task that already delivered its final result) must not yield a segment, report a
+            // status, or trigger any state transition.
             if let error {
+                guard router.action(for: .failure, token: token, source: source) == .reportFailure else { return }
                 self.statusContinuation.yield("Speech recognition failed: \(error.localizedDescription)")
-                Task { await self.taskFailed(source) }
-            } else if result?.isFinal ?? false {
-                Task { await self.taskEnded(source) }
+                Task { await self.taskFailed(source, token: token) }
+                return
+            }
+            guard let result else { return }
+            let isFinal = result.isFinal
+            let action = router.action(for: isFinal ? .final : .partial, token: token, source: source)
+            guard action != .ignore else { return }
+            self.continuation.yield(TranscriptSegment(
+                source: source,
+                text: result.bestTranscription.formattedString,
+                isFinal: isFinal,
+                start: 0,
+                end: 0
+            ))
+            if action == .deliverFinal {
+                Task { await self.taskEnded(source, token: token) }
             }
         }
         return state
@@ -116,11 +157,17 @@ actor SpeechRecognizerTranscriber: Transcribing {
 
     /// A source's utterance finalized normally: start a fresh task and replay any audio buffered
     /// during the finalization gap (through the new VAD so its speech state stays consistent).
-    private func taskEnded(_ source: SpeakerSource) {
+    private func taskEnded(_ source: SpeakerSource, token: UUID) {
+        // Only the task that actually finalized may restart the source.
+        guard router.mayRestart(token: token, for: source), states[source]?.token == token else { return }
         let pending = states[source]?.pendingChunks ?? []
         states[source]?.done = true
-        guard !stopped else { return }
+        guard !stopped else {
+            router.retire(token: token, for: source)
+            return
+        }
         guard let fresh = startTask(for: source) else {
+            router.retire(token: token, for: source)
             states[source] = nil
             return
         }
@@ -141,7 +188,10 @@ actor SpeechRecognizerTranscriber: Transcribing {
 
     /// A source's task errored. Tear it down WITHOUT an immediate restart so a persistent startup
     /// error can't spin; the next incoming chunk for this source lazily creates a fresh task.
-    private func taskFailed(_ source: SpeakerSource) {
+    private func taskFailed(_ source: SpeakerSource, token: UUID) {
+        // The router already retired this token; only tear down the state it actually owns, so a
+        // task that has since been replaced can never drop the live task's request or pending audio.
+        guard states[source]?.token == token else { return }
         states[source]?.done = true
         states[source] = nil
     }

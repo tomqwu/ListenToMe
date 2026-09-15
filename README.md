@@ -238,6 +238,16 @@ speech can be misattributed. Analysis covers the first approximately two hours o
 Imported audio files do not use this live-capture speaker analysis. Audio is buffered in memory for
 analysis; speaker names are included in saved transcript text when session saving is enabled.
 
+Each periodic pass re-analyzes only the most recent audio (a trailing window of at most ten minutes,
+overlapping the previous pass so identities carry over), so identification cost stays flat instead of
+growing with the meeting. Captured audio is held in fixed 10-second blocks, so a pass never copies the
+whole session. Memory ceiling: up to about 460 MB per enabled channel for a full two hours — roughly
+920 MB with microphone identification also enabled.
+
+If the speaker models cannot be loaded (for example offline on their first use), automatic
+identification stops instead of retrying every 20 seconds, and the Speakers rail shows one line
+saying so. Press **Speakers / edit names** to retry once the network is available.
+
 ## Privacy
 
 - **On-device transcription.** Speech-to-text runs locally via Apple SpeechAnalyzer (or
