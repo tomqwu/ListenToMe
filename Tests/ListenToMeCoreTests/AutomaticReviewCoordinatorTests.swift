@@ -92,18 +92,37 @@ final class AutomaticReviewCoordinatorTests: XCTestCase {
         try await wait { runner.completedCounts[.summary] == 1 }
     }
 
-    func testFailurePreservesOutputAndRetriesWithoutNewSpeech() async throws {
-        let runner = AutomaticReviewCoordinator(retryInterval: .milliseconds(30))
+    /// #161: split from the retry assertion below. The failure notice is *transient* — `pump`
+    /// clears it the moment the retry is dispatched — so waiting for it while a 30 ms backoff is
+    /// running is a race the CI runner loses. A retry interval longer than the test makes the
+    /// failure state terminal, so this waits on a state that stays put instead of on a window.
+    func testFailurePreservesPreviousOutputAndSaysItWillRetry() async throws {
+        let runner = AutomaticReviewCoordinator(retryInterval: .seconds(60))
         let provider = ReviewTestProvider(failFirst: true)
         var output = "Previous"
         runner.synchronize(enabled: true, manualBusy: false, pieces: live("A question"), source: "A question", provider: { _ in provider },
             apply: { _, value, _ in output = value })
         runner.offer([recommendations[0]], source: "A question")
         try await wait { runner.errors[.summary] != nil }
-        XCTAssertEqual(output, "Previous")
+        XCTAssertEqual(output, "Previous", "A failed review never replaces the output already on screen")
+        XCTAssertTrue(runner.status(.summary).contains("Retrying."), runner.status(.summary))
+        XCTAssertNil(runner.completedCounts[.summary])
+    }
+
+    /// The other half: the retry needs no new speech. The end state here is terminal too — the
+    /// review either completes or it does not — so there is no window to miss.
+    func testAFailedReviewRetriesWithoutNewSpeech() async throws {
+        let runner = AutomaticReviewCoordinator(retryInterval: .milliseconds(30))
+        let provider = ReviewTestProvider(failFirst: true)
+        var output = "Previous"
+        runner.synchronize(enabled: true, manualBusy: false, pieces: live("A question"), source: "A question", provider: { _ in provider },
+            apply: { _, value, _ in output = value })
+        runner.offer([recommendations[0]], source: "A question")
         try await wait { runner.completedCounts[.summary] == 1 }
         XCTAssertEqual(output, "Reviewed: A question")
         XCTAssertNil(runner.errors[.summary])
+        let requests = await provider.requests()
+        XCTAssertEqual(requests.count, 2, "The retry reuses the same evidence; no new speech is needed")
     }
 
     func testUnavailableProviderDoesNotFallbackOrPoll() async throws {

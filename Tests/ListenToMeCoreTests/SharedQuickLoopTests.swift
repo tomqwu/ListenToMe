@@ -227,7 +227,16 @@ final class SharedQuickLoopTests: XCTestCase {
         {"action":"publish","context":"Azure latency","bullets":["Azure latency is the topic."],
         "reviews":[{"mode":"summary","confidence":"high","reason":"New topic"}]}
         """
-        let quick = MockLLMProvider(id: "quick", deltas: [decision])
+        // #161: the recap loop must not race the assertions. The notes keystroke below is fresh
+        // material, so `autoInterval` schedules a *second* automatic evaluation while the held
+        // review is still in flight. `QuickSummaryReader.read` hands that evaluation the
+        // `reviewsCompleted` ledger and then lets the fresh decision replace it — so a mock that
+        // answers every request with the same "recommend summary" JSON un-counts the review as soon
+        // as that read lands, and whether it lands before or after the assertions is pure scheduler
+        // timing (it never did locally; it did about half the time on the macOS CI runner).
+        // Gating the provider to one answer holds every later evaluation open, which pins the
+        // assertions to the state the completed review actually produced.
+        let quick = GatedQuickProvider(first: decision)
         let reviews = HeldReviewProvider()
         let session = MeetingSession(store: ConversationStore(), context: ContextEngine(),
             makeCapture: { MockCapture() }, makeTranscriber: { MockTranscriber() },
@@ -254,6 +263,47 @@ final class SharedQuickLoopTests: XCTestCase {
         let count = await reviews.requestCount()
         XCTAssertEqual(count, 1, "The identical review must not run twice because notes changed")
         session.stop()
+    }
+
+    /// #161: the mechanism behind the flake above, pinned directly. `reviewsCompleted` has a
+    /// one-read lifetime by design: a review completed *during* an evaluation survives it (the
+    /// evaluator could not have known), and a review completed *before* one is handed to the
+    /// evaluator in the batch, whose fresh decision is then authoritative. Neither branch re-offers
+    /// a review the evaluator agrees is done, so no identical full review is ever re-run.
+    func testACompletedReviewSurvivesTheReadItRacesAndIsHandedToTheNextEvaluator() async throws {
+        let decision = """
+        {"action":"publish","context":"Azure latency","bullets":["Azure latency is the topic."],
+        "reviews":[{"mode":"summary","confidence":"high","reason":"New topic"}]}
+        """
+        let reader = QuickSummaryReader()
+        let pieces = [QuickSummaryContext.Piece(id: "s1", text: "Others: Why is Azure slow today?")]
+        let batch = try XCTUnwrap(reader.context.batch(pieces, summary: ""))
+        var output = ""
+        let held = ReleasableEvaluationProvider(response: decision)
+        // The automatic review finishes while this evaluation is still streaming.
+        let marker = Task {
+            for _ in 0..<200 where !(await held.isHolding()) { try? await Task.sleep(for: .milliseconds(5)) }
+            reader.markReviewed("summary")
+            return await held.release()
+        }
+        await reader.read(batch, provider: held, isCurrent: { true }, apply: { output = $0 })
+        let released = await marker.value
+        XCTAssertTrue(released)
+        XCTAssertEqual(output, "- Azure latency is the topic.")
+        XCTAssertEqual(reader.reviewsCompleted, ["summary"], "A review completed mid-read still counts")
+        XCTAssertFalse(reader.recommendations.contains { $0.mode == "summary" },
+                       "A recommendation the running review already satisfied is not resurrected")
+
+        // The next evaluation is told what is already done; its decision replaces the ledger.
+        let next = try XCTUnwrap(reader.context.batch(pieces + [.init(id: "notes:0", text: "Notes: Ask about the budget")],
+            summary: output, reviewsCompleted: reader.reviewsCompleted, pendingReviews: reader.recommendations))
+        let input = try XCTUnwrap(JSONSerialization.jsonObject(
+            with: Data(next.request.messages[0].content.utf8)) as? [String: Any])
+        XCTAssertEqual(input["reviewsCompleted"] as? [String], ["summary"])
+        await reader.read(next, provider: MockLLMProvider(id: "quick", deltas: [keep]),
+                          isCurrent: { true }, apply: { output = $0 })
+        XCTAssertTrue(reader.recommendations.isEmpty,
+                      "An evaluator told the summary is done does not re-offer it")
     }
 
     func testMacLiveSpeechTriggersWithoutFinalEventAndSilenceDoesNotPoll() async throws {
@@ -406,6 +456,46 @@ private actor QuickPaneTestProvider: LLMProvider {
                 continuation.finish()
             }
         }
+    }
+}
+
+/// Answers the first automatic evaluation and holds every later one open for the lifetime of the
+/// test. Used where a test asserts on state the *next* recap read would legitimately recompute, so
+/// the assertion cannot depend on whether that read happened to land first (#161).
+private actor GatedQuickProvider: LLMProvider {
+    nonisolated let id = "gated-quick"
+    private let first: String
+    private var answered = false
+    /// Retained so the held streams stay open (and their readers suspended) until the test ends.
+    private var held: [AsyncThrowingStream<String, Error>.Continuation] = []
+    init(first: String) { self.first = first }
+    private func serve(_ continuation: AsyncThrowingStream<String, Error>.Continuation) {
+        guard answered else {
+            answered = true
+            continuation.yield(first); continuation.finish(); return
+        }
+        held.append(continuation)
+    }
+    nonisolated func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
+        AsyncThrowingStream { continuation in Task { await self.serve(continuation) } }
+    }
+}
+
+/// Holds one evaluation request open so a test can change the reader while it is in flight.
+private actor ReleasableEvaluationProvider: LLMProvider {
+    nonisolated let id = "releasable-quick"
+    private let response: String
+    private var held: AsyncThrowingStream<String, Error>.Continuation?
+    init(response: String) { self.response = response }
+    func isHolding() -> Bool { held != nil }
+    func release() -> Bool {
+        guard let held else { return false }
+        held.yield(response); held.finish(); self.held = nil
+        return true
+    }
+    private func hold(_ continuation: AsyncThrowingStream<String, Error>.Continuation) { held = continuation }
+    nonisolated func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
+        AsyncThrowingStream { continuation in Task { await self.hold(continuation) } }
     }
 }
 
