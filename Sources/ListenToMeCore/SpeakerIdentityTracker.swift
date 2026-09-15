@@ -37,8 +37,9 @@ public struct SpeakerIdentityTracker: Sendable {
         let groups = Dictionary(grouping: valid, by: \.speakerId)
         // Split the retained timeline at the window boundary: `history` is kept verbatim, `inWindow`
         // is what this pass may match against.
-        let history = windowStart > 0 ? SpeakerStats.clip(previous, endingAt: windowStart) : []
-        let inWindow = windowStart > 0 ? previous.compactMap { segment -> DiarizedSegment? in
+        let history: [DiarizedSegment] = windowStart > 0
+            ? SpeakerStats.clip(previous, endingAt: windowStart) : []
+        let inWindow: [DiarizedSegment] = windowStart > 0 ? previous.compactMap { segment -> DiarizedSegment? in
             let start = max(segment.start, windowStart)
             let duration = segment.start + segment.duration - start
             guard duration > 0 else { return nil }

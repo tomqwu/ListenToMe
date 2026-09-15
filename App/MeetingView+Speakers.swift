@@ -89,12 +89,13 @@ extension MeetingView {
         for identity in identities.values { known[identity.id] = identity }
         speakerIdentities[source] = known
         // Stitch: history before the window (already in identity-id space) + this window's segments.
-        let merged = SpeakerStats.clip(speakerSegments[source] ?? [], endingAt: windowStart)
-            + windowSegments.compactMap { segment in
-                identities[segment.speakerId].map {
-                    DiarizedSegment(speakerId: $0.id, start: segment.start, duration: segment.duration)
-                }
-            }
+        var merged: [DiarizedSegment] = SpeakerStats.clip(speakerSegments[source] ?? [],
+                                                          endingAt: windowStart)
+        merged += windowSegments.compactMap { segment -> DiarizedSegment? in
+            guard let identity = identities[segment.speakerId] else { return nil }
+            return DiarizedSegment(speakerId: identity.id, start: segment.start,
+                                   duration: segment.duration)
+        }
         speakerSegments[source] = merged
         speakerParticipants.removeAll { $0.source == source }
         speakerParticipants += SpeakerStats.summarize(merged).speakers.compactMap { speaker in
