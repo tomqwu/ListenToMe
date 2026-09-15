@@ -50,18 +50,25 @@ struct KbdHint: View {
     }
 }
 
-/// The bottom footer: keyboard hints (labels only; only ⌘⇧Space is an actually-wired hotkey) and an
-/// honest privacy line — on-device transcription, but cloud models may send data.
+/// The bottom footer: keyboard hints and an honest privacy line — on-device transcription, but
+/// cloud models may send data. Every hint below is a real, wired equivalent: ⌘⇧Space is the global
+/// hotkey (`HotkeyMonitor`) and the rest are menu items in `ConversationMenu` (issue #136). Keep
+/// this list and that menu in step — a hint for an unwired key is worse than no hint.
 struct CommandCenterFooter: View {
     /// Explicit user-selected AI processing policy.
     let mode: AIProcessingMode
     var body: some View {
-        HStack(spacing: 18) {
+        HStack(spacing: 12) {
+            KbdHint(key: "⌘⇧L", label: "listen")
             KbdHint(key: "⌘⇧Space", label: "quick")
+            KbdHint(key: "⌘⇧D", label: "deep")
+            KbdHint(key: "⌘⇧R", label: "recap")
+            KbdHint(key: "⌘⇧U", label: "summary")
             KbdHint(key: "⌘S", label: "save")
             KbdHint(key: "⌘N", label: "new")
+            KbdHint(key: "⌘E", label: "export")
             KbdHint(key: "⌘F", label: "history")
-            Spacer()
+            Spacer(minLength: 8)
             Text(mode.label).font(.system(size: 13)).foregroundStyle(Theme.ink2)
         }
         .padding(.horizontal, 14)
@@ -72,12 +79,24 @@ struct CommandCenterFooter: View {
     }
 }
 
-/// A compact "REC mm:ss" pill with a pulsing dot for the rail. Shows nothing while idle.
+/// A compact "REC mm:ss" pill with a pulsing dot for the rail; "PREP" while the session is warming
+/// the on-device speech model (no audio is being captured yet), and "IDLE" when stopped.
 struct RailRecStatus: View {
     let isRunning: Bool
+    /// True between Start and the moment the speech pipeline is warm — a first-run model download
+    /// can take minutes, and showing REC for it overstates what the app is doing (issue #147).
+    var isPreparing: Bool = false
     let elapsed: String
     var body: some View {
-        if isRunning {
+        if isPreparing {
+            HStack(spacing: 7) {
+                ProgressView().controlSize(.small)
+                Text("PREP")
+                    .font(.system(size: 11.5, weight: .medium, design: .monospaced))
+                    .foregroundStyle(Theme.ink2)
+            }
+            .help("Preparing the on-device speech model — capture starts when it's ready")
+        } else if isRunning {
             HStack(spacing: 7) {
                 RecordingIndicator()
                 Text("REC \(elapsed)")
@@ -130,6 +149,8 @@ struct RoleBox<Header: View, Actions: View>: View {
                     Button { Clipboard.copy(outputText) } label: { Image(systemName: "doc.on.doc") }
                         .buttonStyle(.borderless)
                         .help("Copy this pane's text")
+                        // Symbol-only: VoiceOver otherwise announces just "button" (issue #136).
+                        .accessibilityLabel("Copy \(title) text")
                 }
                 headerExtra()
             }
@@ -227,12 +248,12 @@ struct FlowLayout: Layout {
 
 enum CommandCenterLabels {
     /// Friendly label for the stored transcription-engine id.
-    static func engine(_ id: String) -> String {
-        switch id {
-        case "speechRecognizer": return "SpeechRecognizer"
-        case "whisperKit": return "WhisperKit"
-        default: return "SpeechAnalyzer"
-        }
+    static func engine(_ id: String) -> String { TranscriptionEngineLabel.name(id) }
+
+    /// The rail's Engine line: the engine the live run actually built, with the saved setting
+    /// flagged as pending when the user changed it mid-run (issue #136).
+    static func engine(active: String?, saved: String) -> String {
+        TranscriptionEngineLabel.rail(active: active, saved: saved)
     }
 
     /// mm:ss elapsed since `start`, clamped at 0. Empty string when not recording.

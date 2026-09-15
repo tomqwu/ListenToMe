@@ -88,7 +88,7 @@ extension MeetingView {
             beginDiarizationRunReset()
             session.resetConversation()
             currentSessionID = UUID().uuidString
-            conversationTitle = "Conversation — " + Date().formatted(date: .abbreviated, time: .shortened)
+            conversationTitle = ConversationTitle.generated(Date().formatted(date: .abbreviated, time: .shortened))
             sessionSaveable = ProviderSettings.saveSessionsForSearch
             othersAudioSink.reset(); microphoneAudioSink.reset()
             lastSavedKey = nil
@@ -106,7 +106,9 @@ extension MeetingView {
                     .accessibilityLabel("Conversation title")
                 Spacer()
                 Text(lifecycleBusy ? "Finalizing…" : (wantsCapture
-                    ? (recordingStartedAt == nil ? "Starting…" : "Recording \(elapsedLabel)") : "Ready"))
+                    ? (session.isPreparing ? "Preparing…"
+                       : (recordingStartedAt == nil ? "Starting…" : "Recording \(elapsedLabel)"))
+                    : "Ready"))
                 Text(ProviderSettings.aiMode.label)
             }
             HStack(alignment: .top, spacing: 16) {
@@ -144,8 +146,15 @@ extension MeetingView {
 
     var conversationCommands: ConversationCommands {
         ConversationCommands(canSave: hasConversation, canStartNew: !lifecycleBusy && !session.isTranscribingFile,
+            isCapturing: wantsCapture,
+            canToggleCapture: !lifecycleBusy && !session.isTranscribingFile,
+            canUseAI: session.aiEnabled,
             save: saveConversation, new: newConversation, history: { showSearch = true },
-            export: exportSession, settings: { openSettings($showSettings) })
+            export: exportSession, settings: { openSettings($showSettings) },
+            toggleCapture: { toggleCapture(session: session) },
+            deepAnswer: { Task { await session.respondDeep(.answerQuestion) } },
+            recap: { Task { await session.respondQuick(.recap) } },
+            refreshSummary: { Task { await session.refreshListener() } })
     }
 
     /// App/window close waits for final text, but never for optional AI or speaker analysis.
@@ -153,7 +162,7 @@ extension MeetingView {
         guard !lifecycleBusy else { return false }
         lifecycleBusy = true
         defer { lifecycleBusy = false }
-        wantsCapture = false; recordingStartedAt = nil
+        wantsCapture = false; recordingStartedAt = nil; activeEngine = nil
         restartTask?.cancel(); importTask?.cancel()
         _ = checkpoint()
         await session.stopAndWait()

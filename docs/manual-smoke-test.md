@@ -21,10 +21,10 @@ Prereq: Ollama running with at least one chat-capable model installed (local or 
    Set different models per pane if you like (e.g. a fast model for **Quick**, a heavier one for
    **Deep**, `deepseek-v4-flash:cloud` for any). **More → Refresh models** re-scans models.
 4. Click **Start listening**. On a Mac that has never used the engine, the button flips to **Stop**
-   and the recording indicator appears immediately, but the header shows **"Transcription: preparing
-   on-device speech model…"** and the mic/system channels stay at "starting…" until the model is
-   ready — the speech model is now downloaded *before* capture starts, so nothing is captured (and
-   nothing is lost) during the download. Once the channels report they are running, speak a sentence
+   but the rail shows **PREP** with a spinner (not **REC**), the header says **Preparing…**, and the
+   mic/system channels stay at "starting…" until the model is ready — the speech model is now
+   downloaded *before* capture starts, so nothing is captured (and nothing is lost) during the
+   download. Once the channels report they are running, speak a sentence
    → it appears under **Transcript** labeled **You** (blue), including the very first words.
 5. Play speech from another app (a video/meeting) → it appears labeled **Others** (green).
 6. In the **Quick** pane, click **What should I answer?** → a streamed suggestion appears (a
@@ -75,7 +75,8 @@ Prereq: Ollama running with at least one chat-capable model installed (local or 
 Only reproducible on a Mac where the chosen engine's model is not yet installed (SpeechAnalyzer: a
 fresh language in Settings; WhisperKit: a fresh profile).
 
-1. Press **Listen** and wait for **"Transcription: preparing on-device speech model…"**.
+1. Press **Listen** and wait for the rail to show **PREP** and the header **"Transcription:
+   preparing on-device speech model…"**.
 2. While the download is still running, press **Stop**. Teardown must complete within a second or
    two: the header returns to **Transcription: stopped**, and **Listen/Stop**, **New conversation**
    and **More → Import audio file…** are all enabled again (no lingering "Finalizing…").
@@ -130,6 +131,21 @@ single-source for the MVP or the Phase-2 SpeechAnalyzer engine.
 7. With SpeechAnalyzer selected, check the speaker sheet explains that only voice breakdown is
    available. With identification disabled, capture must not accumulate speaker-analysis audio.
 8. Try overlapping voices and document recognition errors; do not infer accuracy from unit tests.
+9. Run a long session (10+ minutes) with identification on and watch memory in Activity Monitor:
+   it must not step up by hundreds of MB on each pass, and each pass should finish in about the same
+   time as the first rather than getting slower as the meeting grows. Talk-time totals must keep
+   covering the whole run, not just the last window.
+10. Disconnect from the network before the first-ever pass (so the speaker models cannot download).
+    The Speakers rail must show one line saying identification is paused, no further download
+    attempts may happen (check the console for repeated attempts every ~20 s), and pressing
+    Speakers / edit names after reconnecting must retry and resume periodic passes.
+11. Multi-party stability: in a 20+ minute recording with three or more voices, let each person stay
+    quiet for several minutes at a time. The Speakers list must keep roughly one row per real
+    participant — it must not balloon with new Speaker N rows each pass — and a renamed speaker must
+    keep their name. Extra rows after long silences are the known limit tracked in issue #171.
+12. With SpeechRecognizer (legacy) selected, speak in short bursts with ~1 s pauses for a minute.
+    Every utterance must appear; no utterance may be dropped at a pause boundary, and a partial
+    line must never be replaced by stale text from the previous utterance (issue #108).
 
 ## Capture recovery and microphone denial
 
@@ -221,3 +237,41 @@ pickup labeled YOU or an enabled toggle alone as proof of system-audio capture.
 4. **Search normalization.** Save a conversation containing "café", "Zürich" and full-width "ＡＩ".
    In History search, `cafe`, `zurich` and `ai` must each find it, a query pasted with a tab between
    two words must match, and searching `you` must not return every conversation.
+
+## macOS lifecycle and UX papercuts (#136, #147)
+
+1. **Engine label follows the live run.** Start listening with **SpeechAnalyzer**, then open
+   **Settings**, switch the transcription engine to **WhisperKit** and Save. The rail's **Engine**
+   line must still read `SpeechAnalyzer · WhisperKit next start` — never plain "WhisperKit" — and
+   must read plain `WhisperKit` after Stop + Start.
+2. **Preparing gates automation.** With a conversation already transcribed and **Auto summaries**
+   on, press Start on a Mac that still has to download the speech model. While the rail shows
+   **PREP**: the transcript pane's status chip reads **preparing** (never **live**), the
+   Quick/Summary/Deep panes generate nothing, no speaker analysis starts, and the automation status
+   reads "Auto paused · Preparing on-device speech model…". All of it resumes once capture starts.
+3. **Closed-window menu items.** Close the main window (⌘W) while the app stays in the Dock. In the
+   menu bar, **Export conversation…**, **Conversation history…** and **Settings…** must all be
+   greyed out, and ⌘E / ⌘F / ⌘, must do nothing visible rather than appear to work. Reopen the
+   window; they become enabled again.
+4. **Keyboard shortcuts.** With the window key: ⌘⇧L starts listening (menu item reads **Stop
+   listening** while running, and ⌘⇧L stops), ⌘⇧D fills **Deep**, ⌘⇧R produces a Quick recap, ⌘⇧U
+   refreshes **Summary**. Confirm the footer hints match the **Session** menu exactly. Then drag the
+   window down to its minimum width (1100 pt — it will not go narrower): all nine footer hints and
+   the AI-mode label on the right must still be readable, none clipped or overlapping.
+5. **Quit & Reopen never doubles the app.** Turn autosaving off, record a few lines, open **More →
+   Permissions… → Quit & Reopen**, and press **Cancel** in the "Save this conversation before
+   closing?" alert. Nothing must relaunch: check that exactly one ListenToMe is running (Activity
+   Monitor / `pgrep -fl ListenToMe`). Repeat and choose **Close without saving** — now exactly one
+   *new* instance starts and the old one exits.
+6. **Unsupported language is announced.** Set the transcription language to one your Mac has no
+   speech model for (or set the system language to e.g. `pt-BR` and leave "Auto"), then Start. The
+   status line must name the requested language and the one actually used, e.g.
+   "pt-BR isn't supported on this Mac — transcribing in en-US".
+7. **Calendar title and denial.** With a meeting in progress in Calendar, click **Load from
+   Calendar**: notes fill *and* the conversation title becomes the event's title. Rename the title
+   by hand and click it again — your title must survive. Then deny Calendar access for this app in
+   System Settings and click it again: the banner must say access is missing (not "no meeting") and
+   offer **Open Calendar privacy settings**. Press its **✕** — the banner disappears.
+8. **Reduce Motion.** Turn on System Settings → Accessibility → Display → **Reduce Motion** and
+   start listening: the recording dot stays solid red instead of pulsing. With VoiceOver on, the
+   pane **Copy** button announces "Copy <pane> text", not just "button".

@@ -5,27 +5,28 @@ import ListenToMeCore
 
 /// Reads the local macOS Calendar (via EventKit) to surface the user's current or next meeting.
 /// Everything stays on-device; the only thing exposed to the rest of the app is a plain
-/// `MeetingInfo`. Access failures and "no event" both degrade to `nil` — this never throws or crashes.
+/// `CalendarLookup`. This never throws or crashes: every failure mode is a distinct case, so the
+/// caller can tell a denial (fixable in System Settings) from "no meeting right now" (issue #136).
 enum CalendarService {
     private static let log = Logger(subsystem: "com.tomwu.ListenToMe", category: "CalendarService")
 
     /// How far ahead to look for an upcoming meeting when nothing is happening right now.
     private static let lookaheadWindow: TimeInterval = 6 * 60 * 60
 
-    /// Requests calendar access and returns the most relevant meeting, or `nil` if access was
-    /// denied or no suitable event exists.
-    static func currentOrNextMeeting(now: Date = Date()) async -> MeetingInfo? {
+    /// Requests calendar access and returns the most relevant meeting, or the specific reason there
+    /// isn't one (denied / no event / EventKit failure).
+    static func currentOrNextMeeting(now: Date = Date()) async -> CalendarLookup {
         let store = EKEventStore()
         let granted: Bool
         do {
             granted = try await store.requestFullAccessToEvents()
         } catch {
             log.error("Calendar access request failed: \(error.localizedDescription, privacy: .public)")
-            return nil
+            return .failed(error.localizedDescription)
         }
         guard granted else {
             log.info("Calendar access not granted")
-            return nil
+            return .denied
         }
 
         let predicate = store.predicateForEvents(
@@ -36,9 +37,9 @@ enum CalendarService {
         let events = store.events(matching: predicate)
         guard let event = chooseEvent(from: events, now: now) else {
             log.info("No current or upcoming calendar meeting found")
-            return nil
+            return .noMeeting
         }
-        return meetingInfo(from: event)
+        return .meeting(meetingInfo(from: event))
     }
 
     /// Picks an event happening now (start ≤ now ≤ end) if any, otherwise the soonest-starting

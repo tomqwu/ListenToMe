@@ -115,7 +115,8 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 - **Use-case presets** (Meeting, Interview, etc.) tune the copilot's behavior.
 - **File & folder reference context** with a configurable token budget.
 - **Markdown session export** for sharing or review.
-- **First-run onboarding** and a global **⌘⇧Space** hotkey for instant suggestions.
+- **First-run onboarding**, a global **⌘⇧Space** hotkey for instant suggestions, and keyboard
+  equivalents for every frequent action (see [Keyboard shortcuts](#keyboard-shortcuts)).
 
 ## Requirements
 
@@ -153,7 +154,10 @@ rebuilds (otherwise each rebuild re-asks). Find it via `security find-identity -
 On first run, grant Microphone, Speech Recognition, Screen Recording (for system audio), and
 Accessibility (for the global hotkey) in System Settings → Privacy & Security. The app shows an
 onboarding sheet on first launch; grant these permissions from **More → Permissions…** at any time
-after that. Microphone access is also re-checked every time you press **Listen**: without it macOS
+after that. **Quit & Reopen** (offered after granting Screen Recording) finalizes and saves the
+current conversation first — if you cancel that save, nothing is relaunched, so you never end up
+with two copies of the app competing for the microphone. Microphone access is also re-checked every
+time you press **Listen**: without it macOS
 hands the app silence rather than an error, so the app refuses to start and points you at the
 Microphone pane (a managed/restricted Mac gets the explanation without the Settings shortcut).
 
@@ -203,7 +207,10 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   spoken by another participant or embedded in an attached file; it cannot fully prevent it, so
   treat pane output — including any links it contains — with the same care as the source material.
 - **Presets.** Pick a use-case preset to tailor how the copilot responds.
-- **Languages.** Independent **transcription-language** and **AI response-language** pickers.
+- **Languages.** Independent **transcription-language** and **AI response-language** pickers. The
+  transcription list is curated; if the language you pick (or your system language under "Auto")
+  isn't supported by Apple's on-device speech model, the status line says so by name and names the
+  language it is transcribing in instead — it never silently substitutes English.
 - **Reference files.** Add files/folders as context, with a configurable token budget. `.rtf` is read
   as its text (never `\rtf1` markup), and non-UTF-8 files (Windows-1252, UTF-16 exports) are decoded
   instead of dropped. Anything that still cannot be included is listed next to the attachments as
@@ -219,6 +226,30 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   and covers title, summary, notes and the transcript's own words (not the "You:"/"Others:" prefixes).
 - **Export (⌘E).** Export the current conversation as Markdown; PDF and recap are also in Export.
   With autosaving off, Save opens Save As and New/Close offers Save As, Cancel or explicit discard.
+- **Load from Calendar.** Fills Context notes from your current or next meeting *and* titles the
+  conversation after the event (only while the title is still the generated "Conversation — <date>",
+  so a title you typed is kept). If Calendar access is denied the banner says so and offers **Open
+  Calendar privacy settings**; "no meeting right now" is a separate, distinct message. Every banner
+  message can be dismissed with its ✕.
+
+### Keyboard shortcuts
+
+| Shortcut | Action |
+| --- | --- |
+| ⌘⇧L | Start / Stop listening |
+| ⌘⇧Space | Quick answer (global — works while another app is front, needs Accessibility) |
+| ⌘⇧D | Deep answer |
+| ⌘⇧R | Recap so far |
+| ⌘⇧U | Refresh summary |
+| ⌘S | Save conversation |
+| ⌘N | New conversation |
+| ⌘E | Export conversation |
+| ⌘F | Conversation history |
+| ⌘, | Settings |
+
+All of these except ⌘⇧Space are menu items, so they act on the key window. With the main window
+closed (the app still in the Dock) they are shown disabled rather than silently doing nothing —
+reopen the window from the Window menu or the Dock icon first. ⌘⇧Space is a fixed global hotkey.
 
 Autosaving checkpoints finalized text as it changes and available outputs once per second. Current
 partial speech is not acknowledged as saved. An interrupted session is available in History through
@@ -254,6 +285,19 @@ This is delayed, periodic identification, with one speaker assigned per transcri
 speech can be misattributed. Analysis covers the first approximately two hours of each enabled channel.
 Imported audio files do not use this live-capture speaker analysis. Audio is buffered in memory for
 analysis; speaker names are included in saved transcript text when session saving is enabled.
+
+Each periodic pass re-analyzes only the most recent audio (a trailing window of at most ten minutes,
+overlapping the previous pass so identities carry over), so identification cost stays flat instead of
+growing with the meeting. Identities are linked between passes by shared audio time, so someone who
+stays silent through the whole overlap can be given a new label on a later pass; on long multi-party
+meetings this can leave extra rows in the list ([issue #171](https://github.com/tomqwu/ListenToMe/issues/171)
+tracks embedding-based merging). Captured audio is held in fixed 10-second blocks, so a pass never copies the
+whole session. Memory ceiling: up to about 460 MB per enabled channel for a full two hours — roughly
+920 MB with microphone identification also enabled.
+
+If the speaker models cannot be loaded (for example offline on their first use), automatic
+identification stops instead of retrying every 20 seconds, and the Speakers rail shows one line
+saying so. Press **Speakers / edit names** to retry once the network is available.
 
 ## Privacy
 
@@ -322,9 +366,10 @@ Ollama through the actual `OllamaProvider`, auto-selecting an installed chat mod
   source and may hit a process-global active-recognition limit (`kAFAssistantErrorDomain 1100`) on
   some systems. SpeechAnalyzer downloads its language model on first use. Both are on-device.
 - **First run downloads the speech model before listening starts.** Pressing Listen the first time
-  shows "Transcription: preparing on-device speech model…" and capture only starts once the model is
-  ready, so nothing said afterwards is lost. The download can take several minutes on a slow
-  connection; Stop, New conversation, closing the window and Cmd-Q all cancel it immediately.
+  shows **PREP** in the rail (not REC) and "Transcription: preparing on-device speech model…"; no
+  audio is captured and automatic AI reviews are paused until the model is ready, so nothing said
+  afterwards is lost and no recap is generated from the previous conversation. The download can
+  take several minutes on a slow connection; Stop, New conversation, closing the window and Cmd-Q all cancel it immediately.
 - A short utterance spoken entirely within the brief recognizer-finalization gap may merge into the
   next finalized segment.
 - **Ollama and Apple Intelligence today.** Ollama Cloud already exposes GPT/DeepSeek/Qwen/etc.

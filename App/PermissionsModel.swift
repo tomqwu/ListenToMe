@@ -87,6 +87,15 @@ final class PermissionsModel {
         return sawCandidate ? false : nil
     }
 
+    /// Prompt-free, best-effort answer to "can this process capture system audio right now?", used
+    /// to decide whether the transcriber should warm its system-audio pipeline eagerly (issue #147).
+    /// Combines the process-cached CoreGraphics preflight with the live window-name check, so a
+    /// grant made after launch still counts. A false negative only costs the eager warm-up — the
+    /// `.others` pipeline is still built lazily if system audio does arrive — so erring low is safe.
+    nonisolated static func systemAudioLikelyAvailable() -> Bool {
+        CGPreflightScreenCaptureAccess() || liveScreenRecordingNameCheck() == true
+    }
+
     /// Query the same framework used for system audio, only after an explicit request or
     /// positive evidence of an existing grant. Coalesce activation/refresh notifications.
     private func probeScreenRecording() {
@@ -161,12 +170,24 @@ final class PermissionsModel {
 
     /// Relaunches the app — required for macOS to recognize a newly-granted Screen Recording
     /// permission (`CGPreflightScreenCaptureAccess` only updates after a restart).
+    /// Finalize BEFORE launching the replacement instance. `prepareToClose()` returns false while a
+    /// lifecycle operation is busy and when the user picks Cancel in the "Save this conversation
+    /// before closing?" alert — and the old code launched the new instance first, so a Cancel left
+    /// two processes contending for the mic, the SCStream and sessions.json (issue #136). Clearing
+    /// `prepareToClose` after it succeeds makes the subsequent terminate immediate: the session is
+    /// already stopped and saved, so there is nothing left to ask about.
     func relaunch() {
-        let url = Bundle.main.bundleURL
-        let config = NSWorkspace.OpenConfiguration()
-        config.createsNewApplicationInstance = true
-        NSWorkspace.shared.openApplication(at: url, configuration: config) { _, _ in
-            Task { @MainActor in NSApp.terminate(nil) }
+        Task { @MainActor in
+            if let prepare = ApplicationLifecycle.shared.prepareToClose {
+                guard await prepare() else { return }
+                ApplicationLifecycle.shared.prepareToClose = nil
+            }
+            let url = Bundle.main.bundleURL
+            let config = NSWorkspace.OpenConfiguration()
+            config.createsNewApplicationInstance = true
+            NSWorkspace.shared.openApplication(at: url, configuration: config) { _, _ in
+                Task { @MainActor in NSApp.terminate(nil) }
+            }
         }
     }
 

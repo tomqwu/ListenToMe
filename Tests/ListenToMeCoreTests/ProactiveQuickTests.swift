@@ -241,6 +241,34 @@ final class ProactiveQuickTests: XCTestCase {
         session.stop()
     }
 
+    func testProactiveDoesNotFireWhileTheSpeechModelIsStillPreparing() async throws {
+        // Preparing means the session is "running" but no audio is flowing yet (issue #147): a
+        // question ingested now is pre-existing transcript, not something the other party just
+        // asked, so it must not be answered — the same rule the automatic reviews follow.
+        let provider = RecordingProvider(deltas: ["answer"])
+        let transcriber = MockTranscriber(slowPrepare: true)
+        let session = MeetingSession(
+            store: ConversationStore(),
+            context: ContextEngine(debounce: 8),
+            makeCapture: { MockCapture() },
+            makeTranscriber: { transcriber },
+            makeProvider: { model -> any LLMProvider in
+                model == "Q" ? provider : MockLLMProvider(id: model, deltas: ["[\(model)]"])
+            },
+            models: [.listener: "L", .quick: "Q", .deep: "D"],
+            clock: { 1_000 })
+        let startTask = Task { try await session.start() }
+        for _ in 0 ..< 400 where !session.isPreparing { try await Task.sleep(for: .milliseconds(5)) }
+        XCTAssertTrue(session.isPreparing)
+
+        await session.ingest(question())
+        await session.awaitProactiveFire()
+        XCTAssertEqual(provider.requestCount, 0, "a question must not be answered while preparing")
+
+        session.stop()
+        _ = try? await startTask.value
+    }
+
     func testProactiveDoesNotFireWhenTheQuickModelIsUnavailable() async throws {
         let provider = RecordingProvider(deltas: ["answer"])
         let session = makeSession(provider: provider, availability: { _ in "Model not installed" })

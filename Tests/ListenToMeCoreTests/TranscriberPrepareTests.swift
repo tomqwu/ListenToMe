@@ -15,7 +15,8 @@ final class TranscriberPrepareTests: XCTestCase {
         var value: Bool { lock.withLock { _value } }
     }
 
-    private func makeSession(capture: MockCapture, transcriber: MockTranscriber) -> MeetingSession {
+    private func makeSession(capture: MockCapture, transcriber: MockTranscriber,
+                             drainGrace: Duration = .milliseconds(250)) -> MeetingSession {
         MeetingSession(
             store: ConversationStore(),
             context: ContextEngine(debounce: 0),
@@ -23,6 +24,7 @@ final class TranscriberPrepareTests: XCTestCase {
             makeTranscriber: { transcriber },
             makeProvider: { model in MockLLMProvider(id: model, deltas: ["[\(model)]"]) },
             models: [.listener: "L", .quick: "Q", .deep: "D"],
+            capturePumpDrainGrace: drainGrace,
             clock: { 0 }
         )
     }
@@ -59,7 +61,7 @@ final class TranscriberPrepareTests: XCTestCase {
     func testTranscribeAudioPreparesBeforeTheFirstChunk() async {
         let log = OrderLog()
         let transcriber = MockTranscriber(log: log)
-        let session = makeSession(capture: MockCapture(), transcriber: MockTranscriber())
+        let session = makeSession(capture: MockCapture(), transcriber: transcriber)
 
         let producer = ArrayChunkProducer([
             AudioChunk(samples: [0.1], sampleRate: 16_000, source: .you, timestamp: 0)
@@ -74,6 +76,59 @@ final class TranscriberPrepareTests: XCTestCase {
         }
         XCTAssertLessThan(prepareIndex, feedIndex)
     }
+
+    // MARK: - Preparing state (issue #147)
+
+    func testSessionIsPreparingUntilTheSpeechModelIsWarm() async throws {
+        let capture = MockCapture()
+        let transcriber = MockTranscriber(slowPrepare: true)
+        let session = makeSession(capture: capture, transcriber: transcriber)
+        XCTAssertFalse(session.isPreparing)
+
+        let startTask = Task { try await session.start() }
+        await waitUntil { session.isPreparing }
+        XCTAssertTrue(session.isPreparing, "the rail must distinguish preparing from recording")
+        XCTAssertTrue(session.isRunning)
+        XCTAssertEqual(capture.startCount, 0)
+
+        transcriber.release()
+        _ = try? await startTask.value
+        XCTAssertFalse(session.isPreparing, "preparing must end once capture starts")
+        XCTAssertTrue(session.isRunning)
+        await session.stopAndWait()
+        XCTAssertFalse(session.isPreparing)
+    }
+
+    func testAutomaticReviewsDoNotDispatchWhilePreparing() async throws {
+        let transcriber = MockTranscriber(slowPrepare: true)
+        let publish = Self.publishDecision
+        let session = MeetingSession(
+            store: ConversationStore(), context: ContextEngine(debounce: 0),
+            makeCapture: { MockCapture() }, makeTranscriber: { transcriber },
+            makeProvider: { model in MockLLMProvider(id: model, deltas: [publish]) },
+            models: [.listener: "L", .quick: "Q", .deep: "D"],
+            autoInterval: .milliseconds(5))
+        session.autoSummaryEnabled = true
+        await session.ingest(TranscriptSegment(source: .others, text: "Sarah confirms Monday.",
+                                               isFinal: true, start: 0, end: 1))
+
+        let startTask = Task { try await session.start() }
+        await waitUntil { session.isPreparing }
+        try await Task.sleep(for: .milliseconds(80))
+        XCTAssertEqual(session.quickReader.completedReads, 0,
+                       "automatic reviews must not run against old transcript while preparing")
+
+        transcriber.release()
+        _ = try? await startTask.value
+        await waitUntil { session.quickReader.completedReads > 0 }
+        XCTAssertGreaterThan(session.quickReader.completedReads, 0,
+                             "automation must resume once the model is warm")
+        await session.stopAndWait()
+    }
+
+    private static let publishDecision = """
+    {"action":"publish","context":"Monday","bullets":["Sarah confirms Monday."],"reviews":[]}
+    """
 
     // MARK: - Teardown while the model is still downloading
 
@@ -104,12 +159,40 @@ final class TranscriberPrepareTests: XCTestCase {
         XCTAssertEqual(transcriber.finishCount, 1)
     }
 
+    /// The live path must use the same cancellation-racing wait as the import path: a Stop during a
+    /// download whose platform call ignores cancellation must not park the start task (issue #147).
+    func testStopDuringAnUncancellablePrepareDoesNotParkTheStartTask() async throws {
+        let capture = MockCapture()
+        let transcriber = MockTranscriber(stubbornPrepare: true)
+        let session = makeSession(capture: capture, transcriber: transcriber)
+
+        let startFinished = Flag()
+        let startTask = Task { try? await session.start(); startFinished.set() }
+        await waitUntil { transcriber.prepareEntered }
+        XCTAssertTrue(transcriber.prepareEntered, "prepare never ran")
+
+        await session.stopAndWait()
+        await waitUntil { startFinished.value }
+        guard startFinished.value else {
+            startTask.cancel(); transcriber.release()
+            return XCTFail("start() stayed parked inside an uncancellable model download")
+        }
+        await startTask.value
+        XCTAssertFalse(session.isRunning)
+        XCTAssertFalse(session.isPreparing)
+        XCTAssertEqual(capture.startCount, 0, "an aborted start must never start capture")
+        transcriber.release()   // let the abandoned prepare unwind
+    }
+
     func testChunksBufferedAtStopAreStillFedBeforeFinalize() async throws {
         let capture = MockCapture()
-        // 20 ms per chunk: 5 chunks take ~100 ms, well inside teardown's drain grace — but a pump
-        // that is cancelled outright stops iterating and feeds almost none of them.
+        // 20 ms per chunk: 5 chunks take ~100 ms. The grace is injected (10 s) rather than left at
+        // the 250 ms product default, so this asserts the *drain-before-finalize ordering* and not
+        // whether a loaded CI machine happens to fit five feeds inside a quarter second (#147).
+        // A pump that is cancelled outright stops iterating and feeds almost none of them.
         let transcriber = MockTranscriber(feedDelayNanos: 20_000_000)
-        let session = makeSession(capture: capture, transcriber: transcriber)
+        let session = makeSession(capture: capture, transcriber: transcriber,
+                                  drainGrace: .seconds(10))
 
         try await session.start()
         let chunks = (0..<5).map {
@@ -128,7 +211,7 @@ final class TranscriberPrepareTests: XCTestCase {
         // prepare() here ignores cancellation (like a platform download with no cancellation
         // guarantee); the import must still return when its task is cancelled.
         let transcriber = MockTranscriber(stubbornPrepare: true)
-        let session = makeSession(capture: MockCapture(), transcriber: MockTranscriber())
+        let session = makeSession(capture: MockCapture(), transcriber: transcriber)
         let producer = ArrayChunkProducer([
             AudioChunk(samples: [0.1], sampleRate: 16_000, source: .you, timestamp: 0)
         ])

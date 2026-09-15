@@ -57,6 +57,17 @@ struct MeetingView: View {
     @State var speakerLoading = false
     @State var speakerParticipants: [SpeakerParticipant] = []
     @State var speakerTrackers: [SpeakerSource: SpeakerIdentityTracker] = [:]
+    /// Cumulative diarized timeline per source, in stable identity-id space. Periodic passes analyze
+    /// only a trailing window (issue #109) and are stitched onto this, so talk-time totals and
+    /// per-line labels still cover the whole run without re-processing it.
+    @State var speakerSegments: [SpeakerSource: [DiarizedSegment]] = [:]
+    /// Every identity seen so far per source (id → name), including speakers absent from the newest
+    /// window. Kept in step with `speakerTrackers` renames.
+    @State var speakerIdentities: [SpeakerSource: [String: SpeakerIdentity]] = [:]
+    /// How much of each sink a pass has already analyzed, so the next window starts there.
+    @State var speakerAnalyzedSamples: [SpeakerSource: Int] = [:]
+    /// One-line rail status (e.g. speaker models unavailable); nil when there is nothing to say.
+    @State var speakerStatus: String?
     @State var speakerTask: Task<Void, Never>?
     @State var nextSpeakerAnalysis = Date.distantFuture
     @State var diarizationRunStartIndex = 0
@@ -64,12 +75,16 @@ struct MeetingView: View {
     @State var diarizationSinkAttached = false
     @State var microphoneSinkAttached = false
     @State var diarizationRunUsesTimestamps = false
+    /// The transcription engine the live run was started with, or nil when idle. The transcriber is
+    /// built once per run, so the rail must show this and not the (possibly just-changed) saved
+    /// setting (issue #136).
+    @State var activeEngine: String?
     @State var diarizer = SpeakerDiarizer()
     @State var modelStatus = ""
     @State private var modelLoadToken = 0
     @State private var showLicenses = false
     @State var lifecycleBusy = false
-    @State var conversationTitle = "Conversation — " + Date().formatted(date: .abbreviated, time: .shortened)
+    @State var conversationTitle = ConversationTitle.generated(Date().formatted(date: .abbreviated, time: .shortened))
     @State var saveMessage = "Not saved yet"
     @State var saveFailed = false
     @State var lastSavedKey: SessionCheckpointKey?
@@ -149,7 +164,13 @@ struct MeetingView: View {
                         ? nil : ProviderSettings.transcriptionLocale()
                     return WhisperKitTranscriber(locale: whisperLocale) as any Transcribing
                 default:
-                    return SpeechAnalyzerTranscriber(locale: locale) as any Transcribing
+                    // Don't warm the system-audio analyzer when this process can't capture system
+                    // audio: it would leave an idle analyzer + results task for the whole session
+                    // (issue #147). `feed` still builds it lazily if system audio does arrive.
+                    return SpeechAnalyzerTranscriber(
+                        locale: locale,
+                        warmSystemAudio: PermissionsModel.systemAudioLikelyAvailable()
+                    ) as any Transcribing
                 }
             },
             makeProvider: { model in
@@ -182,6 +203,11 @@ struct MeetingView: View {
             : URL(string: "http://localhost:11434")!
     }
 
+    /// True when the banner is showing a Calendar *denial*, the one calendar outcome the user can
+    /// fix themselves. Derived from `startError` (like the microphone case just below it) so it can
+    /// never disagree with the message on screen.
+    private var calendarDenied: Bool { startError == CalendarLookup.denied.message }
+
     var body: some View {
         @Bindable var session = session
         return VStack(spacing: 0) {
@@ -201,6 +227,21 @@ struct MeetingView: View {
                     if startError == CapturePreflight.deniedMessage {
                         Button("Open Settings") { permissions.openSettings("Privacy_Microphone") }
                     }
+                    // Calendar denial is equally fixable, and had no button at all (issue #136).
+                    if calendarDenied {
+                        Button("Open Calendar privacy settings") {
+                            permissions.openSettings("Privacy_Calendars")
+                        }
+                    }
+                    // The banner is shared by start, import, export and calendar failures and used
+                    // to clear only on the next start — so a stale export error sat above a live
+                    // recording with no way to get rid of it (issue #136).
+                    Button { self.startError = nil } label: {
+                        Image(systemName: "xmark")
+                    }
+                    .buttonStyle(.borderless)
+                    .help("Dismiss this message")
+                    .accessibilityLabel("Dismiss message")
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 14)
@@ -224,7 +265,10 @@ struct MeetingView: View {
         .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { date in
             if recordingStartedAt != nil { now = date }
             if !saveFailed { _ = checkpoint(complete: !wantsCapture && !lifecycleBusy && !session.isTranscribingFile) }
-            if wantsCapture && session.isRunning && date >= nextSpeakerAnalysis {
+            // Not while preparing: the session is "running" from Start, but no audio has reached the
+            // diarization sink yet, so an analysis here would run against the previous run's
+            // leftovers (or nothing at all) — the same reason automatic reviews are gated (#147).
+            if wantsCapture && session.isRunning && !session.isPreparing && date >= nextSpeakerAnalysis {
                 identifySpeakers(showSheet: false)
             }
         }
@@ -347,7 +391,7 @@ extension MeetingView {
     }
 
     /// Listen/Stop press: start or stop capture, tracking the elapsed-timer anchor and saving on Stop.
-    private func toggleCapture(session: MeetingSession) {
+    func toggleCapture(session: MeetingSession) {
         guard !lifecycleBusy else { return }
         Task {
             if wantsCapture {
@@ -360,6 +404,7 @@ extension MeetingView {
                 // Await teardown so the transcriber flushes its final segments into the store
                 // before we snapshot the transcript for search.
                 await session.stopAndWait()
+                activeEngine = nil
                 _ = checkpoint(complete: true, force: true)
                 Task { await finishSpeakerAnalysis() }
             } else {
@@ -373,6 +418,9 @@ extension MeetingView {
                     // Clear stale labels + bump the token BEFORE start; anchor the run only AFTER
                     // start returns, once the prior Stop's finals have drained into the store.
                     beginDiarizationRunReset()
+                    // Snapshot the engine this run is built from, before start() creates the
+                    // transcriber, so the rail can't claim an engine that isn't running (#136).
+                    activeEngine = ProviderSettings.transcriptionEngine
                     try await session.start()
                     guard wantsCapture, session.isRunning else { return }
                     anchorDiarizationRun()
@@ -380,6 +428,7 @@ extension MeetingView {
                 } catch {
                     startError = error.localizedDescription
                     wantsCapture = false
+                    activeEngine = nil
                 }
             }
         }
@@ -418,11 +467,12 @@ extension MeetingView {
             beginDiarizationRunReset()
             do {
                 startError = nil
+                activeEngine = ProviderSettings.transcriptionEngine
                 try await session.start()
                 guard wantsCapture, session.isRunning, !Task.isCancelled else { return }
                 anchorDiarizationRun()
             } catch {
-                startError = error.localizedDescription; wantsCapture = false
+                startError = error.localizedDescription; wantsCapture = false; activeEngine = nil
             }
         }
     }
@@ -444,6 +494,12 @@ extension MeetingView {
         speakerTrackers = [.others: SpeakerIdentityTracker(prefix: remotePrefix),
                            .you: SpeakerIdentityTracker(prefix: micPrefix)]
         speakerParticipants = []
+        speakerSegments = [:]
+        speakerIdentities = [:]
+        speakerAnalyzedSamples = [:]
+        speakerStatus = nil
+        // A new recording is also a retry: the model download may well succeed now (#109).
+        Task { await diarizer.retryModelLoad() }
         nextSpeakerAnalysis = .distantFuture
         speakerLoading = false
         speakerError = nil
@@ -471,7 +527,7 @@ extension MeetingView {
         diarizationSinkAttached = ProviderSettings.speakerDiarizationEnabled
         diarizationRunUsesTimestamps = ProviderSettings.transcriptionEngine == "whisperKit"
         microphoneSinkAttached = diarizationSinkAttached && ProviderSettings.microphoneDiarizationEnabled
-        nextSpeakerAnalysis = Date().addingTimeInterval(20)
+        nextSpeakerAnalysis = Date().addingTimeInterval(SpeakerAnalysisPolicy.minimumRest)
     }
 
     /// Attach/clear files & folders whose text is fed into Quick/Deep prompts as grounding.
@@ -600,12 +656,19 @@ extension MeetingView {
     func loadFromCalendar(session: MeetingSession) {
         startError = nil
         Task {
-            if let info = await CalendarService.currentOrNextMeeting() {
-                session.notes = MeetingContext.notes(
-                    for: info,
-                    timeFormat: { $0.formatted(date: .omitted, time: .shortened) })
-            } else {
-                startError = "No current/upcoming calendar meeting found (or calendar access denied)."
+            let lookup = await CalendarService.currentOrNextMeeting()
+            guard case .meeting(let info) = lookup else {
+                startError = lookup.message
+                return
+            }
+            session.notes = MeetingContext.notes(
+                for: info,
+                timeFormat: { $0.formatted(date: .omitted, time: .shortened) })
+            // Title the conversation after the meeting — History, exports and the window all showed
+            // "Conversation — <date>" even though the app knew the real name (issue #136). Only the
+            // generated title is replaced, so a title the user typed is never clobbered.
+            if ConversationTitle.isGenerated(conversationTitle), !info.title.isEmpty {
+                conversationTitle = info.title
             }
         }
     }
