@@ -80,6 +80,13 @@ public final class AutomaticReviewCoordinator {
     private var manualBusy = false
     private var currentInput = ""
     private var currentPieces: [QuickSummaryContext.Piece] = []
+    /// The last source string as the platform assembled it, so an unchanged live snapshot skips
+    /// normalization and the per-job prefix scan — both O(transcript) on the main actor (issue #116).
+    private var lastSource: String?
+    #if DEBUG
+    /// Test-only: how many `synchronize` calls actually re-read the input.
+    @ObservationIgnored private(set) var synchronizedInputs = 0
+    #endif
     private var currentDirectives = AutomaticReviewDirectives()
     private var activeJob: Job?
     private var generation = 0
@@ -112,14 +119,26 @@ public final class AutomaticReviewCoordinator {
                             directives: AutomaticReviewDirectives = .init(),
                             provider: @escaping (AutomaticReviewMode) throws -> any LLMProvider,
                             apply: @escaping (AutomaticReviewMode, String, [QuickSummaryContext.Piece]) -> Void) {
+        // A live snapshot that has not changed cannot change any job's validity, so the whole
+        // input pass is skipped. The caller memoizes pieces and source, so these comparisons hit
+        // Swift's identical-storage fast path instead of walking the transcript.
+        let unchanged = enabled == self.enabled && manualBusy == self.manualBusy
+            && source == lastSource && pieces == currentPieces
         self.enabled = enabled; self.manualBusy = manualBusy
-        currentInput = Self.normalized(source); currentPieces = pieces; currentDirectives = directives
-        makeProvider = provider; self.apply = apply
+        currentDirectives = directives; makeProvider = provider; self.apply = apply
+        if !unchanged {
+            #if DEBUG
+            synchronizedInputs += 1
+            #endif
+            currentInput = Self.normalized(source); currentPieces = pieces; lastSource = source
+        }
         if !enabled { cancelActive(); pending = [:]; wake?.cancel(); wake = nil; return }
-        pending = pending.filter { covers($0.value) }
-        if let job = activeJob, manualBusy || !covers(job) {
-            if manualBusy, covers(job) { pending[job.mode] = pending[job.mode] ?? job }
-            cancelActive()
+        if !unchanged {
+            pending = pending.filter { covers($0.value) }
+            if let job = activeJob, manualBusy || !covers(job) {
+                if manualBusy, covers(job) { pending[job.mode] = pending[job.mode] ?? job }
+                cancelActive()
+            }
         }
         pump()
     }
@@ -155,6 +174,7 @@ public final class AutomaticReviewCoordinator {
 
     public func reset() {
         cancelActive(); wake?.cancel(); wake = nil; pending = [:]
+        lastSource = nil
         completedInputs = [:]; completedCounts = [:]; nextAllowed = [:]; failures = [:]; failedInputs = [:]
         timedOutInputs = [:]; errors = [:]
     }

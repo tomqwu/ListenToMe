@@ -17,8 +17,13 @@ public struct ContextEngine {
         let trimmedLang = responseLanguage?.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedRefs = references?.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedPersona = personaGuidance?.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Non-final speech is appended after the finalized window, tagged "(provisional)", and is
+        // charged to the same budget so a provider's context window still holds (issue #113). It
+        // may claim at most half the transcript allowance, so it can never crowd out the history.
+        let provisional = store.provisionalContext(maxChars: max(0, maxChars / 2))
+        let provisionalCost = provisional.reduce(0) { $0 + TranscriptSegment.promptCharacterCost($1) }
         return PromptContext(
-            messages: store.recentContext(maxChars: maxChars),
+            messages: store.recentContext(maxChars: max(0, maxChars - provisionalCost)) + provisional,
             notes: (trimmed?.isEmpty == false) ? trimmed : nil,
             summary: (trimmedSummary?.isEmpty == false) ? trimmedSummary : nil,
             responseLanguage: (trimmedLang?.isEmpty == false) ? trimmedLang : nil,

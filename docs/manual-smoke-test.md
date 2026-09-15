@@ -44,7 +44,14 @@ Prereq: Ollama running with at least one chat-capable model installed (local or 
     concurrently. Confirm **finalized** lines (not just live/volatile partials) accumulate in the
     Transcript and that proactive suggestions fire on `Others` questions. If finalized lines never
     commit (only volatile text shows), switch the engine to **SpeechRecognizer** and report —
-    SpeechAnalyzer's finalization semantics need on-device confirmation.
+    SpeechAnalyzer's finalization semantics need on-device confirmation. Either way, while a long
+    sentence is still volatile (grey/live, not yet committed), press **⌘⇧Space**: the answer must
+    address what is being said *right now*, not the previous finalized line (issue #113). The same
+    holds for **Clarify**, **Draft reply**, **Deep answer** and the Summary pane's **Refresh**.
+13. **History while recording** (issue #116): with a few saved conversations and recording active,
+    open **History**, leave it open for ~30 seconds and type into **Context notes** — the list stays
+    responsive and typing does not lag; the archive is read once when the sheet opens, not once a
+    second.
 
 ### First-run model download is cancellable (issue #99)
 

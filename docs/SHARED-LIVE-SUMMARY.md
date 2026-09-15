@@ -227,3 +227,34 @@ iOS needs no second state: its manual Quick refresh produces a recap under the s
 decision contract, so `quickSummary` is both the recap and the manual result, and it remains the
 evaluator's `visibleSummary`. Everything else above is shared core behaviour and is identical on
 both platforms.
+
+## Provisional speech in manual prompts, and one snapshot per live event
+
+Live provisional text used to reach only the automatic Quick evaluator. The manual panes — the
+"What should I answer?" hotkey, Clarify, Draft reply, Deep and the Listener refresh — were built
+from finalized utterances alone, so on a recognizer that keeps a hypothesis volatile (Apple's
+SpeechAnalyzer can keep one volatile for a whole recording) they answered the previous question, or
+reported that none was asked (issue #113).
+
+`ConversationStore.provisionalContext(maxChars:)` now exposes the current non-final speech, one line
+per channel, for hypotheses of at least `provisionalMinimumCharacters` (24 trimmed characters — the
+same threshold `QuickSummaryContext.pieces` applies to the live pipeline). Each line is tagged
+`(provisional) ` so the model weighs it as unconfirmed wording rather than a quotation, and the
+segments stay non-final. `ContextEngine.buildContext` and `MeetingSession`'s listener refresh append
+those lines after the finalized window. They are charged to the same `PromptBudget` allocation as
+transcript text (with their speaker labels, through `TranscriptSegment.promptCharacterCost`) and may
+claim at most half the transcript allowance, so Apple Intelligence's window still holds and history
+is never crowded out. Because provisional lines are never final, they do not enter the listener's
+`pendingSummaryIDs` ledger: the same speech is still summarized once the recognizer finalizes it.
+
+The live path also does its O(transcript) work once per event instead of several times (issue #116).
+`MeetingSession.liveSnapshot()` memoizes the labeled pieces and the joined review source on
+`(store.revision, partial texts, notes)`, and `handleLiveEvent` computes it once and passes it to the
+review coordinator, the pending check and the scheduler. `AutomaticReviewCoordinator.synchronize`
+skips normalization and the per-job prefix scan when the incoming pieces and source are unchanged.
+On the macOS UI side, `checkpoint()` compares a cheap `SessionCheckpointKey`
+(`revision` + title + outputs + notes + completion) before building a `SessionRecord`, the rail reads
+`ConversationStore`'s incrementally maintained `youCount` / `othersCount` /
+`transcriptCharacterCount` instead of rescanning every utterance per render, and `SessionSearchView`
+loads the archive in `.task` rather than seeding `@State` in `init`, so the once-a-second elapsed
+tick no longer re-reads and re-decodes every saved conversation on the main thread.

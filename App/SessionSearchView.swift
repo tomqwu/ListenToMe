@@ -7,13 +7,12 @@ struct SessionSearchView: View {
     let store: SessionStore
     let onClear: () -> Void
     @State private var query = ""
-    @State private var records: [SessionRecord]
+    @State private var records: [SessionRecord] = []
     @State private var selected: SessionRecord?
     @State private var confirmClear = false
 
     init(store: SessionStore, onClear: @escaping () -> Void = {}) {
         self.store = store; self.onClear = onClear
-        _records = State(initialValue: store.all())
     }
 
     var body: some View {
@@ -54,6 +53,11 @@ struct SessionSearchView: View {
             }
         }
         .padding(20).frame(width: 680, height: 540)
+        // Loaded here rather than in `init`: this view is constructed inside MeetingView's `.sheet`
+        // closure, which re-runs whenever the elapsed timer ticks or a token streams in, so seeding
+        // @State in the initializer re-read and re-decoded the whole archive on the main thread
+        // once a second and threw the result away (issue #116).
+        .task { records = store.all() }
         .confirmationDialog("Delete all saved conversations?", isPresented: $confirmClear) {
             Button("Delete all saved conversations", role: .destructive) {
                 if store.clear() { records = []; onClear() }
