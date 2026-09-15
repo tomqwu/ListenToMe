@@ -80,7 +80,7 @@ final class SessionArchiveTests: XCTestCase {
         XCTAssertNotNil(result.warning)
         XCTAssertTrue(result.warning?.contains("C.json") == true, result.warning ?? "no warning")
         XCTAssertFalse(FileManager.default.fileExists(atPath: root.appendingPathComponent("C.json").path))
-        let quarantined = try FileManager.default.contentsOfDirectory(atPath: root)
+        let quarantined = try FileManager.default.contentsOfDirectory(atPath: root.path)
             .filter { $0.hasPrefix("C.json.corrupt-") }
         XCTAssertEqual(quarantined.count, 1)
         // Quarantine never destroys user bytes.
@@ -105,7 +105,7 @@ final class SessionArchiveTests: XCTestCase {
         XCTAssertEqual(try archive.all(), [])
         // The undecodable legacy file is set aside, never deleted.
         XCTAssertFalse(FileManager.default.fileExists(atPath: legacy.path))
-        let aside = try FileManager.default.contentsOfDirectory(atPath: root)
+        let aside = try FileManager.default.contentsOfDirectory(atPath: root.path)
             .filter { $0.hasPrefix("sessions.json.corrupt-") }
         XCTAssertEqual(aside.count, 1)
         XCTAssertEqual(try Data(contentsOf: root.appendingPathComponent(aside[0])), damaged)
