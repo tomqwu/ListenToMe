@@ -15,7 +15,8 @@ extension MobileSession {
         let name = URL(fileURLWithPath: item.name).lastPathComponent
         guard !name.isEmpty, name != ".", name != "..", name != "/" else { throw CocoaError(.fileReadInvalidFileName) }
         let destination = directory.appendingPathComponent(name)
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        // The presentation copy is the same attachment bytes, so it carries the same protection.
+        try PrivateStorage.createDirectory(at: directory)
         if !FileManager.default.fileExists(atPath: destination.path) {
             try FileManager.default.copyItem(at: source, to: destination)
         }

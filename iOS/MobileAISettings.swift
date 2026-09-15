@@ -42,6 +42,8 @@ final class MobileAISettings {
             quickSettingsChanged?(); correctionSettingsChanged?()
         }
     }
+    /// Long-lived request transports, shared with the speech-correction client.
+    @ObservationIgnored let transports = MobileTransports()
     @ObservationIgnored var quickSettingsChanged: (() -> Void)?
     @ObservationIgnored var correctionSettingsChanged: (() -> Void)?
     var models: [OllamaCloudModel] = [] {
@@ -177,6 +179,11 @@ final class MobileAISettings {
         Self.isCloud(url) ? try MobileKeychain.read() : ""
     }
 
+    /// Whether opening a model list may contact the catalog without being asked. Nothing leaves the
+    /// device on its own: an install on Apple Intelligence, or on Ollama Cloud with no key saved,
+    /// waits for the explicit "Refresh models from API" button.
+    var canRefreshAutomatically: Bool { provider == .ollama && (hasKey || usesCustomEndpoint) }
+
     func refresh() async {
         guard !refreshing else { return }
         refreshing = true
@@ -268,11 +275,15 @@ final class MobileAISettings {
             throw RecordingError.message("Add your Ollama API key in Settings.")
         }
         guard !model.isEmpty else { throw RecordingError.message("Choose an Ollama model in Settings.") }
-        let configuration = URLSessionConfiguration.ephemeral
-        configuration.timeoutIntervalForResource = 480
         return OllamaProvider(model: model, baseURL: endpoint, apiKey: key.isEmpty ? nil : key,
-                              urlSession: URLSession(configuration: configuration),
+                              urlSession: transports.session(for: MobileTransports.summary,
+                                                             identity: Self.transportIdentity(endpoint, key)),
                               options: mode == .quick ? .init(thinking: false, temperature: 0, maximumTokens: 3_072) : .init())
+    }
+
+    /// A transport may only be reused for the same destination and credential.
+    static func transportIdentity(_ endpoint: URL, _ key: String) -> String {
+        "\(endpoint.absoluteString)\u{1}\(key)"
     }
 
     func testConnection(for mode: MobileSummaryMode = .summary) async {

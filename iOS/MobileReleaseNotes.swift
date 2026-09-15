@@ -1,16 +1,43 @@
 import SwiftUI
 
-/// The installed build is the identity; release notes are bundled and available offline.
+/// Release notes are bundled and available offline. What's New is gated on the newest bundled
+/// release — not on the installed build — so a TestFlight build that changes no notes never
+/// re-presents the same sheet. `identity` stays the build string for the Settings version label.
 enum MobileReleaseNotes {
     static let seenKey = "lastAcknowledgedReleaseBuild"
     static var version: String { Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—" }
     static var build: String { Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—" }
     static var identity: String { "\(version) (\(build))" }
     static var versionLabel: String { "Version \(version) · Build \(build)" }
-    static func shouldPresent(defaults: UserDefaults = .standard, identity: String = identity) -> Bool {
-        defaults.string(forKey: seenKey) != identity
+
+    /// Version plus a stable digest of the notes themselves, so editing a bundled entry re-presents
+    /// it while a pure build bump does not. `Hasher` is seeded per process and cannot be stored.
+    static func identity(for release: Release) -> String {
+        var hash: UInt64 = 5381
+        for byte in ([release.title] + release.details).joined(separator: "\u{1}").utf8 {
+            hash = (hash &* 33) &+ UInt64(byte)
+        }
+        return "\(release.version)-\(String(hash, radix: 36))"
     }
-    static func acknowledge(defaults: UserDefaults = .standard, identity: String = identity) {
+    static var notesIdentity: String { releases.first.map(identity(for:)) ?? version }
+
+    /// The newest bundled entry is the update being announced, even if its version does not match a
+    /// hot-fixed or downgraded build.
+    static func badge(for release: Release) -> String {
+        release.version == releases.first?.version ? "IN THIS UPDATE" : "VERSION \(release.version)"
+    }
+
+    /// True only for an install that has already acknowledged different notes. A first launch after
+    /// install has nothing stored: it seeds the acknowledgement so a new user's first screen is the
+    /// app, not a full-screen "IN THIS UPDATE" for software they have never run.
+    static func shouldPresent(defaults: UserDefaults = .standard, identity: String = notesIdentity) -> Bool {
+        guard let seen = defaults.string(forKey: seenKey) else {
+            acknowledge(defaults: defaults, identity: identity)
+            return false
+        }
+        return seen != identity
+    }
+    static func acknowledge(defaults: UserDefaults = .standard, identity: String = notesIdentity) {
         defaults.set(identity, forKey: seenKey)
     }
 
@@ -56,7 +83,7 @@ struct MobileReleaseNotesView: View {
                     }
                     ForEach(MobileReleaseNotes.releases) { release in
                         VStack(alignment: .leading, spacing: 12) {
-                            Text(release.version == MobileReleaseNotes.version ? "IN THIS UPDATE" : "VERSION \(release.version)")
+                            Text(MobileReleaseNotes.badge(for: release))
                                 .font(.caption.weight(.semibold)).foregroundStyle(MobileStyle.accent)
                             Text(release.title).font(.title3.bold()).foregroundStyle(MobileStyle.ink)
                                 .accessibilityAddTraits(.isHeader)

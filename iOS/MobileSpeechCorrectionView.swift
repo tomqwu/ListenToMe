@@ -55,7 +55,7 @@ struct MobileCorrectionModelView: View {
                 if ai.correctionModels.isEmpty { Text("No Flash models loaded. Refresh the API catalog.") }
             }
         }.navigationTitle("Speech correction").navigationBarTitleDisplayMode(.inline)
-            .task { if ai.models.isEmpty { await ai.refresh() } }
+            .task { if ai.models.isEmpty && ai.canRefreshAutomatically { await ai.refresh() } }
     }
 }
 

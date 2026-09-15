@@ -230,8 +230,7 @@ struct MobileMeetingView: View {
                 Section("Transcription") {
                     Picker("Language", selection: $session.language) {
                         Text("System (\(Locale.current.identifier))").tag(Locale.current.identifier)
-                        ForEach(["en-US", "en-GB", "zh-CN", "zh-TW", "fr-FR", "de-DE", "ja-JP", "es-ES"]
-                            .filter { $0 != Locale.current.identifier }, id: \.self) { locale in
+                        ForEach(MobileSession.selectableLanguages(), id: \.self) { locale in
                             Text(Locale.current.localizedString(forIdentifier: locale) ?? locale).tag(locale)
                         }
                     }.disabled(session.busy)
@@ -251,6 +250,14 @@ struct MobileMeetingView: View {
                          "or enable Auto summaries. " +
                          "AI speech correction sends new phrases and nearby transcript text when enabled. " +
                          "API keys stay in this device's Keychain. Share exports text to the destination you choose.")
+                    Toggle("Exclude conversations from iCloud backup", isOn: $session.excludeFromBackup)
+                        .accessibilityIdentifier("excludeFromBackup")
+                    Text(session.excludeFromBackup
+                         ? "Conversations, attachments and shared imports are left out of iCloud and "
+                            + "Finder backups. A new phone restored from a backup will not have them."
+                         : "Conversations are included in this device's normal backup, like other app data. "
+                            + "Conversation files stay encrypted until you unlock this device after a restart.")
+                        .font(.caption).accessibilityIdentifier("backupExplanation")
                     Link("Open app settings", destination: URL(string: UIApplication.openSettingsURLString)!)
                 }
                 Section("Release") {

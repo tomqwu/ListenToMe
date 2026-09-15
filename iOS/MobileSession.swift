@@ -62,7 +62,12 @@ final class MobileSession {
     let ai = MobileAISettings()
     var summaryDraft = ""
     private var summaryTask: Task<Void, Never>?
-    var language = Locale.current.identifier
+    /// The transcription language survives relaunch: a user who records in Mandarin on an en_US
+    /// phone should not silently fall back to the English model after every app restart.
+    static let languageKey = "mobileTranscriptionLanguage"
+    var language = UserDefaults.standard.string(forKey: MobileSession.languageKey) ?? Locale.current.identifier {
+        didSet { UserDefaults.standard.set(language, forKey: MobileSession.languageKey) }
+    }
     private(set) var id = UUID().uuidString
     private var date = Date()
     private var recorder: (any MobileRecording)?
@@ -78,11 +83,28 @@ final class MobileSession {
     private var lastCaptureRebuild: ContinuousClock.Instant?
     private var isRebuildingCapture = false
     let attachmentRoot: URL
+    private let conversationRoot: URL
+    /// The App Group folder the share extension writes into, when this device has one.
+    let sharedInboxRoot: URL?
+    /// Off by default: iOS backs app data up like any other app, and a user who relies on iCloud
+    /// Backup to move to a new phone should not silently lose their conversations. On means the
+    /// transcripts never leave the device, not even into an Apple-held backup.
+    static let excludeBackupKey = "mobileExcludeConversationsFromBackup"
+    var excludeFromBackup = UserDefaults.standard.bool(forKey: MobileSession.excludeBackupKey) {
+        didSet {
+            UserDefaults.standard.set(excludeFromBackup, forKey: MobileSession.excludeBackupKey)
+            applyBackupExclusion()
+        }
+    }
 
     init(storageDirectory: URL = .applicationSupportDirectory,
          summaryProvider: (any LLMProvider)? = nil, autoInterval: Duration = .seconds(5),
          correctionProvider: (any LLMProvider)? = nil, saveDebounce: Duration = .seconds(1),
+         sharedInbox: URL? = nil,
          makeRecorder: @escaping () -> any MobileRecording = { MobileRecorder() }) {
+        // Resolved once: the backup choice has to reach the App Group inbox too, not only the
+        // conversations this app owns.
+        sharedInboxRoot = sharedInbox ?? (try? SharedInbox.root())
         self.summaryProvider = summaryProvider
         self.saveDebounce = saveDebounce
         self.correctionProvider = correctionProvider
@@ -90,9 +112,10 @@ final class MobileSession {
         self.makeRecorder = makeRecorder
         activeURL = storageDirectory.appendingPathComponent("ActiveConversation.json")
         attachmentRoot = storageDirectory.appendingPathComponent("Attachments", isDirectory: true)
-        let directory = storageDirectory.appendingPathComponent("Conversations", isDirectory: true)
-        archive = SessionArchive(directory: directory)
+        conversationRoot = storageDirectory.appendingPathComponent("Conversations", isDirectory: true)
+        archive = SessionArchive(directory: conversationRoot)
         refreshHistory()
+        applyBackupExclusion()
         if FileManager.default.fileExists(atPath: activeURL.path) {
             do { restore(try JSONDecoder().decode(SessionRecord.self, from: Data(contentsOf: activeURL))) }
             catch { message = "Could not restore the current conversation: \(error.localizedDescription). Check History." }
@@ -279,9 +302,9 @@ final class MobileSession {
             let empty = SessionRecord(id: UUID().uuidString, title: "New conversation", date: Date(),
                                       transcript: "", summary: "", segments: [], notes: "")
             if deletingActive {
-                try FileManager.default.createDirectory(at: activeURL.deletingLastPathComponent(),
-                                                        withIntermediateDirectories: true)
-                try JSONEncoder().encode(empty).write(to: activeURL, options: .atomic)
+                try PrivateStorage.createDirectory(at: activeURL.deletingLastPathComponent())
+                try JSONEncoder().encode(empty).write(to: activeURL, options: PrivateStorage.writingOptions)
+                try? PrivateStorage.setExcludedFromBackup(excludeFromBackup, at: activeURL)
             }
             try archive.delete(id: targetID)
             committed = true
@@ -312,55 +335,43 @@ final class MobileSession {
         segments = record.segments ?? []; partial = nil; message = nil
     }
 
-    func importSharedInbox(from inbox: URL? = nil) {
-        guard !busy else { return }
-        do {
-            let root = try inbox ?? SharedInbox.root()
-            for folder in try FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil) {
-                let manifest = folder.appendingPathComponent("manifest.json")
-                guard FileManager.default.fileExists(atPath: manifest.path) else { continue }
-                guard (try manifest.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? Int.max) < 2 * 1024 * 1024 else {
-                    throw CocoaError(.fileReadTooLarge)
-                }
-                let batch = try JSONDecoder().decode(SharedImport.self, from: Data(contentsOf: manifest))
-                if history.contains(where: { $0.sourceImportID == batch.id }) {
-                    try FileManager.default.removeItem(at: folder); continue
-                }
-                guard save(announce: false) else { return }
-                let newID = UUID().uuidString
-                let store = attachmentStore(for: newID)
-                var imported: [SessionAttachment] = []
-                var committed = false
-                do {
-                    guard batch.files.count <= 20, batch.text.count <= 100_000 else { throw CocoaError(.fileReadTooLarge) }
-                    for file in batch.files {
-                        guard !file.storedName.contains("/"), !file.storedName.contains("\\"),
-                              file.storedName != "..", file.storedName != "." else { throw CocoaError(.fileReadInvalidFileName) }
-                        let url = folder.appendingPathComponent(file.storedName)
-                        guard (try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? Int.max)
-                                <= SessionAttachmentStore.maximumBytes else { throw CocoaError(.fileReadTooLarge) }
-                        let data = try Data(contentsOf: url)
-                        imported.append(try store.add(data: data, name: file.name))
-                    }
-                    let record = SessionRecord(id: newID, title: "Imported notes", date: Date(), transcript: "",
-                                               summary: "", segments: [], notes: batch.text,
-                                               attachments: imported, sourceImportID: batch.id)
-                    try archive.save(record)
-                    committed = true
-                    restore(record)
-                    guard save(announce: false) else { return }
-                    try FileManager.default.removeItem(at: folder)
-                    message = "Shared content imported into a new conversation."
-                } catch {
-                    if !committed { try? FileManager.default.removeItem(at: store.directory) }
-                    throw error
-                }
-            }
-        } catch { message = "Could not import shared content: \(error.localizedDescription)" }
-    }
 
     private func refreshHistory() {
         do { history = try archive.all() } catch { message = "Could not load history: \(error.localizedDescription)" }
+    }
+
+    /// Applies the current backup choice to everything a conversation is made of. Re-applied after
+    /// each toggle and at launch, because a directory recreated later starts without the flag.
+    func applyBackupExclusion() {
+        let excluded = excludeFromBackup
+        for directory in [conversationRoot, attachmentRoot] {
+            try? PrivateStorage.createDirectory(at: directory)
+            try? PrivateStorage.setExcludedFromBackup(excluded, at: directory)
+        }
+        try? PrivateStorage.createDirectory(at: activeURL.deletingLastPathComponent())
+        try? PrivateStorage.setExcludedFromBackup(excluded, at: activeURL)
+        // Shared imports are conversation content that has not been imported yet; excluding only
+        // what this app already owns would leave the queue in the backup the setting promises to
+        // keep it out of.
+        if let sharedInboxRoot {
+            try? PrivateStorage.createDirectory(at: sharedInboxRoot)
+            try? PrivateStorage.setExcludedFromBackup(excluded, at: sharedInboxRoot)
+        }
+    }
+
+    /// Extra transcription languages offered beside the device's own.
+    static let offeredLanguages = ["en-US", "en-GB", "zh-CN", "zh-TW", "fr-FR", "de-DE", "ja-JP", "es-ES"]
+
+    /// `Locale.current.identifier` is underscored ("en_US") while these tags are hyphenated, so a
+    /// raw string comparison never matched and the picker listed the system language twice.
+    static func selectableLanguages(system: Locale = .current) -> [String] {
+        let current = Locale(identifier: system.identifier).identifier(.bcp47)
+        return offeredLanguages.filter { Locale(identifier: $0).identifier(.bcp47) != current }
+    }
+
+    /// Records matching `query`, newest first; an empty query is the full history.
+    func historyMatching(_ query: String) -> [SessionRecord] {
+        SessionSearch.search(history, query: query.trimmingCharacters(in: .whitespacesAndNewlines))
     }
 
     func output(for mode: MobileSummaryMode) -> String {
@@ -619,9 +630,9 @@ extension MobileSession {
                 try archive.save(record)
                 remember(record)
             }
-            try FileManager.default.createDirectory(at: activeURL.deletingLastPathComponent(),
-                                                    withIntermediateDirectories: true)
-            try data.write(to: activeURL, options: .atomic)
+            try PrivateStorage.createDirectory(at: activeURL.deletingLastPathComponent())
+            try data.write(to: activeURL, options: PrivateStorage.writingOptions)
+            try? PrivateStorage.setExcludedFromBackup(excludeFromBackup, at: activeURL)
             lastSavedData = data
             if announce { message = "Conversation saved on this device." }
             return true
@@ -637,6 +648,164 @@ extension MobileSession {
         if let index = history.firstIndex(where: { $0.id == record.id }) { history[index] = record }
         else { history.append(record) }
         history.sort { $0.date > $1.date }
+    }
+}
+
+
+/// The share-extension inbox drain. Kept out of the class body so one unreadable batch's
+/// recovery path does not crowd the conversation state it operates on.
+extension MobileSession {
+    /// Folders set aside because they could not be imported. Recoverable from the app container for
+    /// a day, then deleted: quarantined bytes the user cannot see must not be kept forever.
+    static let failedInboxFolder = "Failed"
+    /// A share sheet killed mid-write leaves payload files with no manifest; they can never become a
+    /// conversation. Reclaimed once the extension cannot plausibly still be writing them. The same
+    /// clock ages out quarantined batches.
+    static let orphanInboxLifetime: TimeInterval = 24 * 60 * 60
+
+    /// Saving the open conversation failed, so importing would lose the user's current work. Not the
+    /// shared folder's fault: it stays where it is and the whole drain stops.
+    private struct ActiveSaveFailure: Error { }
+
+    /// Drains every pending share. One unreadable batch no longer blocks the rest: it is moved to
+    /// `Inbox/Failed` and the drain continues, so a folder later in directory order still imports.
+    func importSharedInbox(from inbox: URL? = nil, now: Date = Date()) {
+        guard !busy else { return }
+        var quarantined: [String] = []
+        var retrying: [String] = []
+        var blocked: String?
+        // Reported on every exit, so a failure to save the open conversation does not swallow the
+        // problems found in the folders drained before it.
+        defer { announceInboxProblems(quarantined: quarantined, retrying: retrying, blocked: blocked) }
+        do {
+            let root = try inbox ?? sharedInboxRoot ?? SharedInbox.root()
+            let failed = root.appendingPathComponent(Self.failedInboxFolder, isDirectory: true)
+            discardExpiredQuarantine(failed, now: now)
+            // Sorted so the drain order is the same on every launch instead of directory order.
+            let folders = try FileManager.default
+                .contentsOfDirectory(at: root, includingPropertiesForKeys: nil)
+                .sorted { $0.lastPathComponent < $1.lastPathComponent }
+            for folder in folders where folder.lastPathComponent != Self.failedInboxFolder {
+                let manifest = folder.appendingPathComponent("manifest.json")
+                guard FileManager.default.fileExists(atPath: manifest.path) else {
+                    discardOrphanedInbox(folder, now: now); continue
+                }
+                do { try importSharedBatch(at: folder, manifest: manifest) }
+                catch is ActiveSaveFailure {
+                    blocked = message   // save() has already said exactly what went wrong
+                    return
+                }
+                catch {
+                    if Self.isTransient(error), !isExpired(folder, now: now) {
+                        retrying.append(error.localizedDescription); continue
+                    }
+                    quarantined.append(error.localizedDescription)
+                    setAsideFailedInbox(folder, in: failed)
+                }
+            }
+        } catch { quarantined.append(error.localizedDescription) }
+    }
+
+    /// A full disk, a read-only volume or a payload iCloud has not finished materializing describes
+    /// the device's state, not the batch: quarantining it would throw away a share that imports fine
+    /// once the condition clears. Retried until it is a day old, then treated as permanent so a
+    /// genuinely broken batch cannot fail forever.
+    static func isTransient(_ error: Error) -> Bool {
+        guard let cocoa = error as? CocoaError else { return false }
+        return [CocoaError.Code.fileWriteOutOfSpace, .fileWriteVolumeReadOnly, .fileWriteNoPermission,
+                .fileReadNoPermission, .fileReadNoSuchFile, .fileNoSuchFile].contains(cocoa.code)
+    }
+
+    private func announceInboxProblems(quarantined: [String], retrying: [String], blocked: String?) {
+        var parts: [String] = []
+        if let blocked { parts.append(blocked) }
+        if !quarantined.isEmpty {
+            parts.append("Could not import shared content: \(quarantined.joined(separator: " ")) "
+                + "Those items were set aside and are deleted after 24 hours; "
+                + "anything else shared was imported.")
+        }
+        if !retrying.isEmpty {
+            parts.append("Shared content could not be imported yet: \(retrying.joined(separator: " ")) "
+                + "It stays in the queue and is tried again the next time the app opens.")
+        }
+        guard !parts.isEmpty else { return }
+        message = parts.joined(separator: " ")
+    }
+
+    private func isExpired(_ folder: URL, now: Date) -> Bool {
+        guard let changed = try? folder.resourceValues(forKeys: [.contentModificationDateKey])
+            .contentModificationDate else { return false }
+        return now.timeIntervalSince(changed) > Self.orphanInboxLifetime
+    }
+
+    /// Quarantined batches are a recovery window, not storage. After a day their bytes go back.
+    private func discardExpiredQuarantine(_ failed: URL, now: Date) {
+        guard let folders = try? FileManager.default
+            .contentsOfDirectory(at: failed, includingPropertiesForKeys: nil) else { return }
+        for folder in folders where isExpired(folder, now: now) {
+            try? FileManager.default.removeItem(at: folder)
+        }
+    }
+
+    private func importSharedBatch(at folder: URL, manifest: URL) throws {
+        guard (try manifest.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? Int.max) < 2 * 1024 * 1024 else {
+            throw CocoaError(.fileReadTooLarge)
+        }
+        let batch = try JSONDecoder().decode(SharedImport.self, from: Data(contentsOf: manifest))
+        if history.contains(where: { $0.sourceImportID == batch.id }) {
+            try FileManager.default.removeItem(at: folder); return
+        }
+        guard save(announce: false) else { throw ActiveSaveFailure() }
+        let newID = UUID().uuidString
+        let store = attachmentStore(for: newID)
+        var imported: [SessionAttachment] = []
+        var committed = false
+        do {
+            guard batch.files.count <= 20, batch.text.count <= 100_000 else { throw CocoaError(.fileReadTooLarge) }
+            for file in batch.files {
+                guard !file.storedName.contains("/"), !file.storedName.contains("\\"),
+                      file.storedName != "..", file.storedName != "." else { throw CocoaError(.fileReadInvalidFileName) }
+                let url = folder.appendingPathComponent(file.storedName)
+                guard (try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? Int.max)
+                        <= SessionAttachmentStore.maximumBytes else { throw CocoaError(.fileReadTooLarge) }
+                let data = try Data(contentsOf: url)
+                imported.append(try store.add(data: data, name: file.name))
+            }
+            let record = SessionRecord(id: newID, title: "Imported notes", date: Date(), transcript: "",
+                                       summary: "", segments: [], notes: batch.text,
+                                       attachments: imported, sourceImportID: batch.id)
+            try archive.save(record)
+            committed = true
+            restore(record)
+            guard save(announce: false) else { throw ActiveSaveFailure() }
+            try FileManager.default.removeItem(at: folder)
+            message = "Shared content imported into a new conversation."
+        } catch {
+            if !committed { try? FileManager.default.removeItem(at: store.directory) }
+            throw error
+        }
+    }
+
+    private func discardOrphanedInbox(_ folder: URL, now: Date) {
+        guard isExpired(folder, now: now) else { return }
+        try? FileManager.default.removeItem(at: folder)
+    }
+
+    private func setAsideFailedInbox(_ folder: URL, in failed: URL) {
+        do {
+            try FileManager.default.createDirectory(at: failed, withIntermediateDirectories: true,
+                                                    attributes: SharedInbox.directoryAttributes)
+            var destination = failed.appendingPathComponent(folder.lastPathComponent, isDirectory: true)
+            if FileManager.default.fileExists(atPath: destination.path) {
+                destination = failed.appendingPathComponent(folder.lastPathComponent + "-" + UUID().uuidString,
+                                                            isDirectory: true)
+            }
+            try FileManager.default.moveItem(at: folder, to: destination)
+        } catch {
+            // Nowhere to move it and it can never import: dropping it is better than a permanent
+            // error on every foreground.
+            try? FileManager.default.removeItem(at: folder)
+        }
     }
 }
 

@@ -48,13 +48,29 @@ public struct OllamaCloudModel: Codable, Equatable, Sendable, Identifiable {
     }
 }
 
+public enum OllamaCatalogError: LocalizedError, Equatable {
+    case missingAPIKey
+    public var errorDescription: String? {
+        switch self {
+        case .missingAPIKey:
+            return "Add your Ollama API key to list Ollama Cloud models, or set your own server URL."
+        }
+    }
+}
+
 public struct OllamaCloudCatalog: Sendable {
     public static let baseURL = URL(string: "https://ollama.com")!
     private let session: URLSession
     public init(session: URLSession = .shared) { self.session = session }
 
     /// `baseURL` defaults to Ollama Cloud; pass a user-supplied server to list models it hosts.
+    /// Listing the cloud catalog without a key would be an anonymous request to ollama.com the user
+    /// never opted into, so it fails locally instead of being sent. A server the user entered has
+    /// no such credential and is still listed.
     public func fetch(apiKey: String, baseURL: URL = OllamaCloudCatalog.baseURL) async throws -> [OllamaCloudModel] {
+        if apiKey.isEmpty, baseURL.host()?.lowercased() == Self.baseURL.host()?.lowercased() {
+            throw OllamaCatalogError.missingAPIKey
+        }
         var request = URLRequest(url: baseURL.appendingPathComponent("api/tags"))
         request.timeoutInterval = 30
         request.cachePolicy = .reloadIgnoringLocalCacheData

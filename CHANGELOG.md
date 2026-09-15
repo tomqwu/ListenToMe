@@ -6,7 +6,8 @@ iOS interleaved by release date.
 
 macOS entries are drawn from the [GitHub releases](https://github.com/tomqwu/ListenToMe/releases).
 iOS entries are drawn from [`iOS/MobileReleaseNotes.swift`](iOS/MobileReleaseNotes.swift), the
-in-app "What's New" copy shown once per installed build; see
+in-app "What's New" copy shown once per set of bundled release notes — a build that changes no notes
+does not show it again, and a fresh install does not see it at all; see
 [`docs/IOS.md`](docs/IOS.md) for the fuller per-build technical notes and
 [`metadata/ios/en-CA/`](metadata/ios/en-CA/) for TestFlight "What to Test" text.
 
