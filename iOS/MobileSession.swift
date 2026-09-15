@@ -329,108 +329,6 @@ final class MobileSession {
         segments = record.segments ?? []; partial = nil; message = nil
     }
 
-    /// Folders set aside because they could not be imported. Kept, never silently destroyed, so the
-    /// payload can still be recovered from the app container.
-    static let failedInboxFolder = "Failed"
-    /// A share sheet killed mid-write leaves payload files with no manifest; they can never become a
-    /// conversation. Reclaimed once the extension cannot plausibly still be writing them.
-    static let orphanInboxLifetime: TimeInterval = 24 * 60 * 60
-
-    /// Saving the open conversation failed, so importing would lose the user's current work. Not the
-    /// shared folder's fault: it stays where it is and the whole drain stops.
-    private struct ActiveSaveFailure: Error { }
-
-    /// Drains every pending share. One unreadable batch no longer blocks the rest: it is moved to
-    /// `Inbox/Failed` and the drain continues, so a folder later in directory order still imports.
-    func importSharedInbox(from inbox: URL? = nil, now: Date = Date()) {
-        guard !busy else { return }
-        var problems: [String] = []
-        do {
-            let root = try inbox ?? SharedInbox.root()
-            let failed = root.appendingPathComponent(Self.failedInboxFolder, isDirectory: true)
-            // Sorted so the drain order is the same on every launch instead of directory order.
-            let folders = try FileManager.default
-                .contentsOfDirectory(at: root, includingPropertiesForKeys: nil)
-                .sorted { $0.lastPathComponent < $1.lastPathComponent }
-            for folder in folders where folder.lastPathComponent != Self.failedInboxFolder {
-                let manifest = folder.appendingPathComponent("manifest.json")
-                guard FileManager.default.fileExists(atPath: manifest.path) else {
-                    discardOrphanedInbox(folder, now: now); continue
-                }
-                do { try importSharedBatch(at: folder, manifest: manifest) }
-                catch is ActiveSaveFailure { return }
-                catch {
-                    problems.append(error.localizedDescription)
-                    setAsideFailedInbox(folder, in: failed)
-                }
-            }
-        } catch { problems.append(error.localizedDescription) }
-        if !problems.isEmpty {
-            message = "Could not import shared content: \(problems.joined(separator: " ")) "
-                + "Those items were set aside; anything else shared was imported."
-        }
-    }
-
-    private func importSharedBatch(at folder: URL, manifest: URL) throws {
-        guard (try manifest.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? Int.max) < 2 * 1024 * 1024 else {
-            throw CocoaError(.fileReadTooLarge)
-        }
-        let batch = try JSONDecoder().decode(SharedImport.self, from: Data(contentsOf: manifest))
-        if history.contains(where: { $0.sourceImportID == batch.id }) {
-            try FileManager.default.removeItem(at: folder); return
-        }
-        guard save(announce: false) else { throw ActiveSaveFailure() }
-        let newID = UUID().uuidString
-        let store = attachmentStore(for: newID)
-        var imported: [SessionAttachment] = []
-        var committed = false
-        do {
-            guard batch.files.count <= 20, batch.text.count <= 100_000 else { throw CocoaError(.fileReadTooLarge) }
-            for file in batch.files {
-                guard !file.storedName.contains("/"), !file.storedName.contains("\\"),
-                      file.storedName != "..", file.storedName != "." else { throw CocoaError(.fileReadInvalidFileName) }
-                let url = folder.appendingPathComponent(file.storedName)
-                guard (try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? Int.max)
-                        <= SessionAttachmentStore.maximumBytes else { throw CocoaError(.fileReadTooLarge) }
-                let data = try Data(contentsOf: url)
-                imported.append(try store.add(data: data, name: file.name))
-            }
-            let record = SessionRecord(id: newID, title: "Imported notes", date: Date(), transcript: "",
-                                       summary: "", segments: [], notes: batch.text,
-                                       attachments: imported, sourceImportID: batch.id)
-            try archive.save(record)
-            committed = true
-            restore(record)
-            guard save(announce: false) else { throw ActiveSaveFailure() }
-            try FileManager.default.removeItem(at: folder)
-            message = "Shared content imported into a new conversation."
-        } catch {
-            if !committed { try? FileManager.default.removeItem(at: store.directory) }
-            throw error
-        }
-    }
-
-    private func discardOrphanedInbox(_ folder: URL, now: Date) {
-        guard let changed = try? folder.resourceValues(forKeys: [.contentModificationDateKey])
-            .contentModificationDate, now.timeIntervalSince(changed) > Self.orphanInboxLifetime else { return }
-        try? FileManager.default.removeItem(at: folder)
-    }
-
-    private func setAsideFailedInbox(_ folder: URL, in failed: URL) {
-        do {
-            try FileManager.default.createDirectory(at: failed, withIntermediateDirectories: true)
-            var destination = failed.appendingPathComponent(folder.lastPathComponent, isDirectory: true)
-            if FileManager.default.fileExists(atPath: destination.path) {
-                destination = failed.appendingPathComponent(folder.lastPathComponent + "-" + UUID().uuidString,
-                                                            isDirectory: true)
-            }
-            try FileManager.default.moveItem(at: folder, to: destination)
-        } catch {
-            // Nowhere to move it and it can never import: dropping it is better than a permanent
-            // error on every foreground.
-            try? FileManager.default.removeItem(at: folder)
-        }
-    }
 
     private func refreshHistory() {
         do { history = try archive.all() } catch { message = "Could not load history: \(error.localizedDescription)" }
@@ -737,6 +635,114 @@ extension MobileSession {
         if let index = history.firstIndex(where: { $0.id == record.id }) { history[index] = record }
         else { history.append(record) }
         history.sort { $0.date > $1.date }
+    }
+}
+
+
+/// The share-extension inbox drain. Kept out of the class body so one unreadable batch's
+/// recovery path does not crowd the conversation state it operates on.
+extension MobileSession {
+    /// Folders set aside because they could not be imported. Kept, never silently destroyed, so the
+    /// payload can still be recovered from the app container.
+    static let failedInboxFolder = "Failed"
+    /// A share sheet killed mid-write leaves payload files with no manifest; they can never become a
+    /// conversation. Reclaimed once the extension cannot plausibly still be writing them.
+    static let orphanInboxLifetime: TimeInterval = 24 * 60 * 60
+
+    /// Saving the open conversation failed, so importing would lose the user's current work. Not the
+    /// shared folder's fault: it stays where it is and the whole drain stops.
+    private struct ActiveSaveFailure: Error { }
+
+    /// Drains every pending share. One unreadable batch no longer blocks the rest: it is moved to
+    /// `Inbox/Failed` and the drain continues, so a folder later in directory order still imports.
+    func importSharedInbox(from inbox: URL? = nil, now: Date = Date()) {
+        guard !busy else { return }
+        var problems: [String] = []
+        do {
+            let root = try inbox ?? SharedInbox.root()
+            let failed = root.appendingPathComponent(Self.failedInboxFolder, isDirectory: true)
+            // Sorted so the drain order is the same on every launch instead of directory order.
+            let folders = try FileManager.default
+                .contentsOfDirectory(at: root, includingPropertiesForKeys: nil)
+                .sorted { $0.lastPathComponent < $1.lastPathComponent }
+            for folder in folders where folder.lastPathComponent != Self.failedInboxFolder {
+                let manifest = folder.appendingPathComponent("manifest.json")
+                guard FileManager.default.fileExists(atPath: manifest.path) else {
+                    discardOrphanedInbox(folder, now: now); continue
+                }
+                do { try importSharedBatch(at: folder, manifest: manifest) }
+                catch is ActiveSaveFailure { return }
+                catch {
+                    problems.append(error.localizedDescription)
+                    setAsideFailedInbox(folder, in: failed)
+                }
+            }
+        } catch { problems.append(error.localizedDescription) }
+        if !problems.isEmpty {
+            message = "Could not import shared content: \(problems.joined(separator: " ")) "
+                + "Those items were set aside; anything else shared was imported."
+        }
+    }
+
+    private func importSharedBatch(at folder: URL, manifest: URL) throws {
+        guard (try manifest.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? Int.max) < 2 * 1024 * 1024 else {
+            throw CocoaError(.fileReadTooLarge)
+        }
+        let batch = try JSONDecoder().decode(SharedImport.self, from: Data(contentsOf: manifest))
+        if history.contains(where: { $0.sourceImportID == batch.id }) {
+            try FileManager.default.removeItem(at: folder); return
+        }
+        guard save(announce: false) else { throw ActiveSaveFailure() }
+        let newID = UUID().uuidString
+        let store = attachmentStore(for: newID)
+        var imported: [SessionAttachment] = []
+        var committed = false
+        do {
+            guard batch.files.count <= 20, batch.text.count <= 100_000 else { throw CocoaError(.fileReadTooLarge) }
+            for file in batch.files {
+                guard !file.storedName.contains("/"), !file.storedName.contains("\\"),
+                      file.storedName != "..", file.storedName != "." else { throw CocoaError(.fileReadInvalidFileName) }
+                let url = folder.appendingPathComponent(file.storedName)
+                guard (try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? Int.max)
+                        <= SessionAttachmentStore.maximumBytes else { throw CocoaError(.fileReadTooLarge) }
+                let data = try Data(contentsOf: url)
+                imported.append(try store.add(data: data, name: file.name))
+            }
+            let record = SessionRecord(id: newID, title: "Imported notes", date: Date(), transcript: "",
+                                       summary: "", segments: [], notes: batch.text,
+                                       attachments: imported, sourceImportID: batch.id)
+            try archive.save(record)
+            committed = true
+            restore(record)
+            guard save(announce: false) else { throw ActiveSaveFailure() }
+            try FileManager.default.removeItem(at: folder)
+            message = "Shared content imported into a new conversation."
+        } catch {
+            if !committed { try? FileManager.default.removeItem(at: store.directory) }
+            throw error
+        }
+    }
+
+    private func discardOrphanedInbox(_ folder: URL, now: Date) {
+        guard let changed = try? folder.resourceValues(forKeys: [.contentModificationDateKey])
+            .contentModificationDate, now.timeIntervalSince(changed) > Self.orphanInboxLifetime else { return }
+        try? FileManager.default.removeItem(at: folder)
+    }
+
+    private func setAsideFailedInbox(_ folder: URL, in failed: URL) {
+        do {
+            try FileManager.default.createDirectory(at: failed, withIntermediateDirectories: true)
+            var destination = failed.appendingPathComponent(folder.lastPathComponent, isDirectory: true)
+            if FileManager.default.fileExists(atPath: destination.path) {
+                destination = failed.appendingPathComponent(folder.lastPathComponent + "-" + UUID().uuidString,
+                                                            isDirectory: true)
+            }
+            try FileManager.default.moveItem(at: folder, to: destination)
+        } catch {
+            // Nowhere to move it and it can never import: dropping it is better than a permanent
+            // error on every foreground.
+            try? FileManager.default.removeItem(at: folder)
+        }
     }
 }
 
