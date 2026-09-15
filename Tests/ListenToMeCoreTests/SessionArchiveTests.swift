@@ -113,6 +113,65 @@ final class SessionArchiveTests: XCTestCase {
         XCTAssertNil(try archive.save(record("later")))
     }
 
+    func testTransientReadFailureIsReportedButNeverRenamesTheFile() throws {
+        let archive = SessionArchive(directory: root)
+        try archive.save(record("A"))
+        let unreadable = root.appendingPathComponent("B.json")
+        try Data(#"{"id":"B"}"#.utf8).write(to: unreadable)
+        try FileManager.default.setAttributes([.posixPermissions: 0], ofItemAtPath: unreadable.path)
+        defer { try? FileManager.default.setAttributes([.posixPermissions: 0o644], ofItemAtPath: unreadable.path) }
+
+        let result = try archive.read()
+
+        XCTAssertEqual(result.records.map(\.id), ["A"], "The readable conversation still lists")
+        XCTAssertNotNil(result.warning)
+        XCTAssertTrue(result.warning?.contains("could not be read") == true, result.warning ?? "no warning")
+        // A permissions/IO failure is not corruption: the file keeps its name so a later read works.
+        XCTAssertTrue(FileManager.default.fileExists(atPath: unreadable.path))
+        XCTAssertTrue(try FileManager.default.contentsOfDirectory(atPath: root.path)
+            .filter { $0.contains(".corrupt-") }.isEmpty)
+    }
+
+    func testDecodableLegacyThatCannotBeCopiedWarnsAndRetriesLater() throws {
+        let legacy = root.appendingPathComponent("sessions.json")
+        try JSONEncoder().encode([record("A")]).write(to: legacy)
+        let directory = root.appendingPathComponent("history")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        try FileManager.default.setAttributes([.posixPermissions: 0o500], ofItemAtPath: directory.path)
+        defer { try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: directory.path) }
+        let archive = SessionArchive(directory: directory, legacyURL: legacy)
+
+        let result = try archive.read()
+
+        XCTAssertTrue(result.warning?.contains("Couldn't copy") == true, result.warning ?? "no warning")
+        XCTAssertTrue(result.records.isEmpty, "Reading reports the problem instead of throwing")
+        // A readable legacy file is never set aside, and the migration is left to retry.
+        XCTAssertEqual(try JSONDecoder().decode([SessionRecord].self, from: Data(contentsOf: legacy)),
+                       [record("A")])
+        XCTAssertFalse(FileManager.default.fileExists(
+            atPath: directory.appendingPathComponent("legacy-migrated").path))
+
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: directory.path)
+        XCTAssertEqual(try archive.read().records.map(\.id), ["A"], "The next call completes the migration")
+    }
+
+    func testClearAlsoRemovesTheQuarantinedLegacyFileItOwns() throws {
+        let legacy = root.appendingPathComponent("sessions.json")
+        try Data("damaged".utf8).write(to: legacy)
+        let archive = SessionArchive(directory: root.appendingPathComponent("history"), legacyURL: legacy,
+                                     ownsLegacyFile: true)
+        XCTAssertNotNil(try archive.save(record()))
+        XCTAssertFalse(try FileManager.default.contentsOfDirectory(atPath: root.path)
+            .filter { $0.hasPrefix("sessions.json.corrupt-") }.isEmpty)
+
+        try archive.clear()
+
+        // The set-aside legacy file still holds readable transcripts, so Clear history takes it too.
+        XCTAssertTrue(try FileManager.default.contentsOfDirectory(atPath: root.path)
+            .filter { $0.hasPrefix("sessions.json") }.isEmpty)
+        XCTAssertEqual(try archive.all(), [])
+    }
+
     func testFailedWriteLeavesPriorCheckpointReadable() throws {
         let archive = SessionArchive(directory: root)
         try archive.save(record())

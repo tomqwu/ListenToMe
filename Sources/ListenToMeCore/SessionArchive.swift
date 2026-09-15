@@ -43,9 +43,11 @@ public final class SessionArchive {
             do {
                 records.append(try JSONDecoder().decode(SessionRecord.self, from: Data(contentsOf: url)))
             } catch {
-                // Only ever rename a regular file; anything else is reported but left untouched.
+                // Only real corruption is set aside. A transient I/O failure, an iCloud placeholder
+                // that is not materialized yet, or a file deleted while we read it must keep its
+                // name so a later read can succeed. Renaming is also limited to regular files.
                 let values = try? url.resourceValues(forKeys: [.isRegularFileKey])
-                if values?.isRegularFile == true, let moved = quarantine(url) {
+                if Self.isCorruption(error), values?.isRegularFile == true, let moved = quarantine(url) {
                     quarantined.append("\(url.lastPathComponent) → \(moved.lastPathComponent)")
                 } else {
                     skipped += 1
@@ -61,7 +63,9 @@ public final class SessionArchive {
             let extra = quarantined.count > 3 ? " +\(quarantined.count - 3) more" : ""
             parts.append("\(quarantined.count) unreadable history file(s) were set aside and skipped: \(shown)\(extra).")
         }
-        if skipped > 0 { parts.append("\(skipped) history item(s) could not be read or set aside.") }
+        if skipped > 0 {
+            parts.append("\(skipped) history file(s) could not be read this time; nothing was changed — try again.")
+        }
         return SessionArchiveResult(records: records, warning: parts.isEmpty ? nil : parts.joined(separator: " "))
     }
 
@@ -79,8 +83,16 @@ public final class SessionArchive {
     @discardableResult
     public func clear() throws -> String? {
         let warning = try prepare()
-        if ownsLegacyFile, let legacyURL, fileManager.fileExists(atPath: legacyURL.path) {
-            try fileManager.removeItem(at: legacyURL)
+        if ownsLegacyFile, let legacyURL {
+            if fileManager.fileExists(atPath: legacyURL.path) { try fileManager.removeItem(at: legacyURL) }
+            // A quarantined legacy file still holds readable transcripts and lives beside the
+            // original, outside the conversations directory — Clear history has to take it too.
+            let folder = legacyURL.deletingLastPathComponent()
+            let prefix = legacyURL.lastPathComponent + ".corrupt-"
+            for url in (try? fileManager.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)) ?? []
+            where url.lastPathComponent.hasPrefix(prefix) {
+                try fileManager.removeItem(at: url)
+            }
         }
         for url in try fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
         where url.pathExtension == "json" || url.lastPathComponent.contains(".json.corrupt-") {
@@ -111,6 +123,10 @@ public final class SessionArchive {
                 legacy = try JSONDecoder().decode([SessionRecord].self, from: Data(contentsOf: legacyURL))
             } catch {
                 legacy = nil
+                guard Self.isCorruption(error) else {
+                    // Transient failure: leave the file where it is and retry migration next time.
+                    return "Couldn't read the older history file yet: \(error.localizedDescription)"
+                }
                 let moved = quarantine(legacyURL)
                 warning = "Couldn't read the older history file \(legacyURL.lastPathComponent); it was set aside"
                     + (moved.map { " as \($0.lastPathComponent)" } ?? "")
@@ -129,8 +145,20 @@ public final class SessionArchive {
                 }
             }
         }
+        // `try?`: if even the marker cannot be written, the directory itself is unusable and the
+        // caller's own write reports it. Migration must never be the thing that fails an operation;
+        // a marker that stays unwritten only means the (already completed) copy is attempted again.
         try? Data().write(to: marker, options: PrivateStorage.writingOptions)
         return warning
+    }
+
+    /// True when the file's *content* is the problem (malformed JSON, or a file the system reports
+    /// as corrupt), as opposed to a transient or environmental read failure.
+    static func isCorruption(_ error: Error) -> Bool {
+        if error is DecodingError { return true }
+        let cocoa = error as NSError
+        guard cocoa.domain == NSCocoaErrorDomain else { return false }
+        return cocoa.code == CocoaError.fileReadCorruptFile.rawValue
     }
 
     /// Renames a damaged file out of the way. Never deletes; returns the new location when moved.

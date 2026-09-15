@@ -154,4 +154,30 @@ final class MobilePapercutTests: XCTestCase {
         XCTAssertTrue(session.historyMatching("invoice typography").isEmpty,
                       "Every term must appear in the same conversation")
     }
+
+    // MARK: Damaged history file (#120)
+
+    func testOneUnreadableHistoryFileLeavesTheRestListedAndReportsItSeparately() throws {
+        let root = temporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let first = MobileSession(storageDirectory: root)
+        first.title = "Standup"; first.summary = "Chased invoice 4471"
+        XCTAssertTrue(first.save(announce: false))
+
+        let damaged = root.appendingPathComponent("Conversations/broken.json")
+        try Data(#"{"id":"broken","title":"#.utf8).write(to: damaged)
+
+        let session = MobileSession(storageDirectory: root)
+        XCTAssertEqual(session.history.map(\.title), ["Standup"],
+                       "One damaged file must not hide the readable conversations")
+        XCTAssertNotNil(session.archiveWarning, "The set-aside file has to be reported")
+        // It also survives restoring the active conversation, which resets `message` to nil —
+        // that is why the warning lives in its own property.
+        session.open(session.history[0])
+        XCTAssertNotNil(session.archiveWarning)
+        // Reopening History re-reads: the file is already set aside, so the note clears itself.
+        session.reloadHistory()
+        XCTAssertNil(session.archiveWarning)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: damaged.path))
+    }
 }

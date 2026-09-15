@@ -7,6 +7,10 @@ import ListenToMeCore
 final class SessionStore {
     private let archive: SessionArchive?
     private(set) var errorText: String?
+    /// A damaged history file or legacy file the archive set aside. Separate from `errorText`,
+    /// which only the failure paths read: the first migration usually happens during an autosave,
+    /// so the warning has to survive until History is opened.
+    private(set) var archiveWarning: String?
 
     init() {
         do {
@@ -28,7 +32,8 @@ final class SessionStore {
         do {
             guard let archive else { throw CocoaError(.fileReadUnknown) }
             let result = try archive.read()
-            errorText = result.warning
+            errorText = nil
+            archiveWarning = result.warning   // a full scan is authoritative: clean means clear it
             return result.records
         } catch { errorText = "Couldn't read history: \(error.localizedDescription)"; return [] }
     }
@@ -38,7 +43,8 @@ final class SessionStore {
         do {
             guard let archive else { throw CocoaError(.fileWriteUnknown) }
             // A failed legacy migration is a warning, not a failed save.
-            errorText = try archive.save(record)
+            if let warning = try archive.save(record) { archiveWarning = warning }
+            errorText = nil
             return true
         } catch { errorText = "Couldn't save: \(error.localizedDescription)"; return false }
     }
@@ -47,7 +53,9 @@ final class SessionStore {
     func clear() -> Bool {
         do {
             guard let archive else { throw CocoaError(.fileWriteUnknown) }
-            errorText = try archive.clear()
+            // Clear deletes the quarantined files too, so any earlier warning is obsolete.
+            archiveWarning = try archive.clear()
+            errorText = nil
             return true
         } catch { errorText = "Couldn't clear history: \(error.localizedDescription)"; return false }
     }

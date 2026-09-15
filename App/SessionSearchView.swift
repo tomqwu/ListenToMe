@@ -25,10 +25,14 @@ struct SessionSearchView: View {
             }
             TextField("Search title, summary, or transcript", text: $query).textFieldStyle(.roundedBorder)
             if let error = store.errorText {
-                // A damaged file is set aside and reported as a warning next to the conversations
-                // that did load; only a total read failure (no records at all) reads as an error.
-                Text(error).foregroundStyle(records.isEmpty ? Color.red : Color.orange)
+                Text(error).foregroundStyle(.red)
                 Button("Retry") { records = store.all() }
+            }
+            // A damaged file is set aside rather than hiding everything, so this is a warning
+            // shown next to the conversations that did load, not a read failure.
+            if let warning = store.archiveWarning {
+                Label(warning, systemImage: "exclamationmark.triangle")
+                    .font(.callout).foregroundStyle(.orange)
             }
             List(SessionSearch.search(records, query: query)) { record in
                 Button { selected = record } label: {
@@ -56,6 +60,7 @@ struct SessionSearchView: View {
             }
         }
         .padding(20).frame(width: 680, height: 540)
+        .onAppear { records = store.all() }   // re-read when History opens, not only at init
         .confirmationDialog("Delete all saved conversations?", isPresented: $confirmClear) {
             Button("Delete all saved conversations", role: .destructive) {
                 if store.clear() { records = []; onClear() }

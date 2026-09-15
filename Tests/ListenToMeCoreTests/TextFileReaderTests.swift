@@ -45,6 +45,29 @@ final class TextFileReaderTests: XCTestCase {
         XCTAssertTrue(text.contains("Budget review"), text)
     }
 
+    func testBinaryFileRenamedAsTextIsRejectedRatherThanIncludedAsMojibake() throws {
+        // PNG header: NUL bytes and control characters, decodable by ISO Latin-1 into nonsense.
+        let binary = Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
+                           0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x01, 0x00])
+        XCTAssertNil(TextFileReader.decode(binary))
+        XCTAssertThrowsError(try TextFileReader.text(at: try write(binary, "screenshot.txt")))
+    }
+
+    func testControlCharacterHeavyBytesAreRejectedButAccentedLatin1IsNot() throws {
+        var controlHeavy = Data()
+        for _ in 0..<100 { controlHeavy.append(contentsOf: [0x41, 0x01, 0x02, 0x03]) }
+        XCTAssertNil(TextFileReader.decode(controlHeavy))
+        // Tabs, newlines and returns are text, and so is a Latin-1 accented line.
+        let mixed = TextFileReader.decode(Data([0x61, 0x09, 0x62, 0x0D, 0x0A, 0xE9]))
+        XCTAssertNotNil(mixed)
+        XCTAssertTrue(mixed?.hasPrefix("a\tb\r\n") == true, mixed ?? "nil")
+    }
+
+    func testMalformedRTFThrowsInsteadOfHandingOnControlWords() throws {
+        let url = try write(Data("{\\rtf1\\ansi this is not".utf8), "broken.rtf")
+        XCTAssertThrowsError(try TextFileReader.text(at: url))
+    }
+
     func testUnreadableFileThrowsInsteadOfReturningEmpty() {
         XCTAssertThrowsError(try TextFileReader.text(at: root.appendingPathComponent("missing.txt")))
     }

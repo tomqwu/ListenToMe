@@ -58,6 +58,9 @@ final class MobileSession {
     var partial: TranscriptSegment?
     var history: [SessionRecord] = []
     var message: String?
+    /// A damaged history file that the archive set aside. Kept apart from `message`, which every
+    /// save, restore and delete overwrites — the user must still see this when History opens.
+    var archiveWarning: String?
     var isSummarizing = false { didSet { synchronizeAutomaticReviews() } }
     let ai = MobileAISettings()
     var summaryDraft = ""
@@ -341,9 +344,13 @@ final class MobileSession {
             // One undecodable file is set aside by the archive and reported; the rest still list.
             let result = try archive.read()
             history = result.records
-            if let warning = result.warning { message = warning }
+            archiveWarning = result.warning
         } catch { message = "Could not load history: \(error.localizedDescription)" }
     }
+
+    /// Re-reads the archive so History shows what is on disk now, including a file that became
+    /// unreadable since launch. Called when the History sheet appears.
+    func reloadHistory() { refreshHistory() }
 
     /// Applies the current backup choice to everything a conversation is made of. Re-applied after
     /// each toggle and at launch, because a directory recreated later starts without the flag.

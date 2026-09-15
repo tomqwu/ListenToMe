@@ -93,3 +93,53 @@ the full list in the tooltip; `clearReferences` resets it.
   only), but it is worth a look during review.
 - `clear()` deleting `*.json.corrupt-*` is a deliberate choice: Clear history is the user explicitly
   asking to delete everything. Quarantine itself never deletes.
+
+---
+
+# Fix report — review round 1 (PR #162)
+
+**Important 1 — the warning was never actually shown.** Both platforms now carry archive warnings in
+a dedicated property that no other flow clears:
+- `iOS/MobileSession.swift`: new `archiveWarning`; `refreshHistory()` sets it (no longer `message`,
+  which `restore()` nils and `deleteConversation` overwrites); new `reloadHistory()`.
+- `iOS/MobileHistoryView.swift`: renders it as an orange `Label` in a section above the list
+  (identifier `history-archive-warning`) and calls `session.reloadHistory()` on appear.
+- `App/SessionStore.swift`: new `archiveWarning`. `all()` is authoritative (a clean scan clears it),
+  `add()` only ever sets it (an autosave cannot wipe it), `clear()` resets it because Clear deletes
+  the quarantined files as well. `errorText` is back to failures only.
+- `App/SessionSearchView.swift`: warning rendered as its own orange line under the red error, and
+  `onAppear` re-reads so opening History refreshes both.
+- Test: `iOSUnitTests/MobilePapercutTests.testOneUnreadableHistoryFileLeavesTheRestListedAndReportsItSeparately`
+  (damaged file → history still lists, warning set, survives `open()`, clears on the next reload).
+
+**Important 2 — quarantine only on real corruption.** `SessionArchive.isCorruption(_:)` gates the
+rename on `DecodingError` or `NSCocoaErrorDomain` `fileReadCorruptFile`; everything else (permissions,
+I/O, an unmaterialized iCloud placeholder, a concurrent delete) is counted in the skipped total and
+the file keeps its name. The same gate now protects the legacy file. Tests:
+`testTransientReadFailureIsReportedButNeverRenamesTheFile` (chmod 000 file).
+
+**Important 3 — binary sanity gate.** `TextFileReader.decode` runs `looksLikeText` (no NUL bytes,
+≤2% C0 controls in the first 8 KB) *before* trying any encoding, with `hasUnicodeBOM` exempting
+UTF-16/32. A renamed screenshot now throws instead of arriving as mojibake, which is what the new
+smoke-test step claims. Tests: binary PNG header, control-heavy bytes, plus regression tests that
+UTF-8, UTF-16-with-BOM and Latin-1 text still read.
+
+**Important 4 — `clear()` takes the quarantined legacy file.** When `ownsLegacyFile`, Clear history
+now also deletes `sessions.json.corrupt-*` siblings of `legacyURL`. Test:
+`testClearAlsoRemovesTheQuarantinedLegacyFileItOwns`.
+
+**Minors.** Malformed RTF throws instead of falling through to `{\rtf1…}` markup (test added);
+`testDecodableLegacyThatCannotBeCopiedWarnsAndRetriesLater` covers the copy-failure branch and the
+retry (read-only destination directory); the skipped counter is covered by the transient-failure
+test; comments added for why RTF parsing off the main thread is safe and why the marker write is
+`try?`.
+
+## Verification of this round
+- `swift build` (CLT toolchain): Core builds clean.
+- `swiftc -typecheck` over **all** of `Tests/ListenToMeCoreTests/*.swift` against the built module
+  plus Xcode's XCTest paths: clean.
+- Two executable harnesses linked against the rebuilt `libListenToMeCore.a`: **56/56 assertions pass**
+  (35 original + 21 new, covering every fix above).
+- Still not runnable locally: `swift test`, `make build`, `make ios-build`, `make ios-test`,
+  `swiftlint` (Xcode license). CI on the PR is the verification path; the iOS unit test added here is
+  not run by CI either, so it was type-reviewed by hand rather than executed.
