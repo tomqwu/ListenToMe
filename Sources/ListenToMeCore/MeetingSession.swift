@@ -86,6 +86,14 @@ public final class MeetingSession {
     /// The error banner a pane should show, or nil when its last run succeeded.
     public func roleError(_ role: CopilotRole) -> String? { roleErrors[role] }
 
+    /// Transient per-role activity reported by the model while it works — currently a reasoning
+    /// model's "Thinking…" phase, which streams `message.thinking` deltas before any answer token.
+    /// It is a status only: reasoning is never written into the pane's text (issue #137).
+    public private(set) var roleActivity: [CopilotRole: String] = [:]
+
+    /// The activity line a pane should show beside its title, or nil when there is none.
+    public func roleStatus(_ role: CopilotRole) -> String? { roleActivity[role] }
+
     /// True while an imported audio file is being transcribed into the store.
     public private(set) var isTranscribingFile = false
 
@@ -705,19 +713,29 @@ extension MeetingSession {
         // Clear the output and mark streaming
         setOutput(role, "")
         roleErrors[role] = nil
+        roleActivity[role] = nil
         streamingRoles.insert(role)
         defer {
             if generation == responseGenerations[role] {
                 streamingRoles.remove(role)
+                roleActivity[role] = nil
                 if role == .quick { handleLiveEvent(.manualQuickFinished) }
             }
         }
         guard let provider = providers[role] else { return }
         do {
-            for try await delta in provider.stream(request) {
+            for try await event in provider.streamEvents(request) {
                 if Task.isCancelled { return }
                 if generation != responseGenerations[role] { return }
-                appendOutput(role, delta)
+                switch event {
+                case .thinking:
+                    // Reasoning is progress, not an answer: show it as a status so a 30-120 s
+                    // think phase does not look like a hung request (issue #137).
+                    roleActivity[role] = "Thinking…"
+                case .content(let delta):
+                    roleActivity[role] = nil
+                    appendOutput(role, delta)
+                }
             }
             // Quick has no automatic review mode; a completed manual answer instead holds the pane
             // against the automatic recap for a bounded time.

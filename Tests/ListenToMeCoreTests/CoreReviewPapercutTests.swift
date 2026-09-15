@@ -31,6 +31,29 @@ final class ScriptedProvider: LLMProvider, @unchecked Sendable {
     }
 }
 
+/// Streams a reasoning phase before the answer, like a thinking model on Ollama.
+struct ThinkingProvider: LLMProvider {
+    let id = "thinking"
+    let reasoningDelay: Duration
+    func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
+        AsyncThrowingStream { continuation in
+            continuation.yield("Answer.")
+            continuation.finish()
+        }
+    }
+    func streamEvents(_ request: LLMRequest) -> AsyncThrowingStream<LLMStreamEvent, Error> {
+        AsyncThrowingStream { continuation in
+            let task = Task {
+                continuation.yield(.thinking("The user asked about the rollout, so "))
+                try? await Task.sleep(for: reasoningDelay)
+                continuation.yield(.content("Answer."))
+                continuation.finish()
+            }
+            continuation.onTermination = { _ in task.cancel() }
+        }
+    }
+}
+
 @MainActor
 final class CoreReviewPapercutTests: XCTestCase {
 
@@ -128,5 +151,25 @@ final class CoreReviewPapercutTests: XCTestCase {
         XCTAssertTrue(session.hasUnsummarizedSpeech)
         await session.refreshListener()
         XCTAssertEqual(provider.requests.count, 2)
+    }
+
+    // MARK: - 4. A reasoning phase is a status, never answer text
+
+    func testThinkingIsShownAsAStatusAndKeptOutOfTheAnswer() async throws {
+        let (session, store) = makeSession(provider: ThinkingProvider(reasoningDelay: .milliseconds(80)))
+        speak(store, "How is the rollout going?", at: 0)
+        let run = Task { await session.respondDeep(.answerQuestion) }
+
+        let deadline = ContinuousClock.now + .seconds(2)
+        while session.roleStatus(.deep) == nil, ContinuousClock.now < deadline {
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        XCTAssertEqual(session.roleStatus(.deep), "Thinking…",
+                       "a reasoning model must not leave the pane looking hung")
+        XCTAssertEqual(session.deepAnswer, "", "reasoning is never written into the pane")
+
+        await run.value
+        XCTAssertEqual(session.deepAnswer, "Answer.")
+        XCTAssertNil(session.roleStatus(.deep))
     }
 }
