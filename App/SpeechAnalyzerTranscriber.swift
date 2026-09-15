@@ -18,21 +18,31 @@ actor SpeechAnalyzerTranscriber: Transcribing {
     private var stopped = false
     private var failedSources = Set<SpeakerSource>()
     private let locale: Locale
+    /// Whether `prepare()` should warm the system-audio (`.others`) pipeline. False when Screen
+    /// Recording isn't available, so we don't leave an idle analyzer plus a results task running
+    /// for a channel that will never receive audio (issue #147). `feed` still builds the pipeline
+    /// lazily if system audio does start flowing, so a false negative only costs the warm-up.
+    private let warmSystemAudio: Bool
 
-    init(locale: Locale = .current) {
+    init(locale: Locale = .current, warmSystemAudio: Bool = true) {
         self.locale = locale
+        self.warmSystemAudio = warmSystemAudio
         var cont: AsyncStream<TranscriptSegment>.Continuation!
         segments = AsyncStream { cont = $0 }
         continuation = cont
         (statusUpdates, statusContinuation) = AsyncStream<String>.makeStream()
     }
 
-    /// Builds both channels' pipelines up front (asset check/download, locale resolution, analyzer
-    /// start) so `feed` is a non-blocking hand-off and the opening seconds of a meeting aren't lost
-    /// while the first-run speech model downloads. Cancellable: the session cancels this when the
-    /// user stops, closes the window or quits during the download.
+    /// Builds the live channels' pipelines up front (asset check/download, locale resolution,
+    /// analyzer start) so `feed` is a non-blocking hand-off and the opening seconds of a meeting
+    /// aren't lost while the first-run speech model downloads. The system-audio channel is warmed
+    /// only when `warmSystemAudio` says it can actually deliver audio, so a Screen-Recording-denied
+    /// session doesn't carry an idle analyzer and results task for the whole run (issue #147).
+    /// Cancellable: the session cancels this when the user stops, closes the window or quits
+    /// during the download.
     func prepare() async {
-        for source in [SpeakerSource.you, .others] {
+        let sources: [SpeakerSource] = warmSystemAudio ? [.you, .others] : [.you]
+        for source in sources {
             guard !stopped, !Task.isCancelled else { return }
             _ = await ensurePipeline(for: source)
         }

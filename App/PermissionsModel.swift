@@ -87,6 +87,15 @@ final class PermissionsModel {
         return sawCandidate ? false : nil
     }
 
+    /// Prompt-free, best-effort answer to "can this process capture system audio right now?", used
+    /// to decide whether the transcriber should warm its system-audio pipeline eagerly (issue #147).
+    /// Combines the process-cached CoreGraphics preflight with the live window-name check, so a
+    /// grant made after launch still counts. A false negative only costs the eager warm-up — the
+    /// `.others` pipeline is still built lazily if system audio does arrive — so erring low is safe.
+    nonisolated static func systemAudioLikelyAvailable() -> Bool {
+        CGPreflightScreenCaptureAccess() || liveScreenRecordingNameCheck() == true
+    }
+
     /// Query the same framework used for system audio, only after an explicit request or
     /// positive evidence of an existing grant. Coalesce activation/refresh notifications.
     private func probeScreenRecording() {

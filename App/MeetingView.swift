@@ -146,7 +146,13 @@ struct MeetingView: View {
                         ? nil : ProviderSettings.transcriptionLocale()
                     return WhisperKitTranscriber(locale: whisperLocale) as any Transcribing
                 default:
-                    return SpeechAnalyzerTranscriber(locale: locale) as any Transcribing
+                    // Don't warm the system-audio analyzer when this process can't capture system
+                    // audio: it would leave an idle analyzer + results task for the whole session
+                    // (issue #147). `feed` still builds it lazily if system audio does arrive.
+                    return SpeechAnalyzerTranscriber(
+                        locale: locale,
+                        warmSystemAudio: PermissionsModel.systemAudioLikelyAvailable()
+                    ) as any Transcribing
                 }
             },
             makeProvider: { model in
