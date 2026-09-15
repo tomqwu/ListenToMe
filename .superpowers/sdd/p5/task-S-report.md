@@ -21,6 +21,7 @@
 | `9f1c0b3` | #136 (4) — en-US locale fallback is surfaced |
 | `5b572aa` | #136 (6) — calendar title; denial vs no-meeting; dismissable banner |
 | `03771a8`, `ea4f4a1` | Docs (README, manual smoke test) |
+| `e5ebd94` | Review follow-up — preparing gates for the transcript chip and speaker analysis, plus the three minors |
 
 ## What changed
 
@@ -86,19 +87,60 @@
    (shown via a *computed* `calendarDenied` derived from `startError`, so it can never disagree with
    the visible message) and a ✕ dismiss.
 
+### Review follow-up (`e5ebd94`)
+
+Both gates the reviewer asked for, plus all three minors:
+
+- **`transcriptStatusLabel`** said "live" throughout PREP. The rule moved to Core as
+  `TranscriptStatusLabel.text(isRunning:isPreparing:sources:)` — so it *is* testable —
+  and now returns `"preparing"`. New `TranscriptStatusLabelTests` (3 tests) covers
+  idle / preparing-never-reads-live (including with a previous run's sources still in the store) /
+  the live source count.
+- **Speaker-analysis timer** (`App/MeetingView.swift`, the per-second `onReceive`) now also requires
+  `!session.isPreparing`. No audio has reached the diarization sink yet at that point, so an
+  analysis would run against the previous run's leftovers — the same rationale as the automatic-review
+  gate.
+- **Reduce Motion**: `RecordingIndicator` now routes both `onAppear` and `onChange` through one
+  `applyPulse(reduceMotion:)`, so turning Reduce Motion back **off** restarts the pulse instead of
+  leaving the dot static until the view reappears.
+- **`ConversationTitle`** moved out of `CalendarLookup.swift` into `ConversationTitle.swift`, and its
+  test moved into `ConversationTitleTests.swift` (2 tests, one new: the generated-title format).
+- **Smoke test**: step 4 now checks that all nine footer hints and the AI-mode label stay readable at
+  the window's 1100 pt minimum width; step 2 was rewritten to cover the preparing chip and the
+  speaker-analysis gate alongside the automation gate.
+
+### Issue hygiene (CLAUDE.md DoD)
+
+The three deferred #136 items are now tracked, so "Closes #136" is honest:
+
+- **#172** — "Populate transcription language pickers from `SpeechTranscriber.supportedLocales`
+  (macOS + iOS)", `enhancement` + `priority: P2`, "Part of #98", with the concrete file/line evidence
+  and a done-when list.
+- **#173** — "Split exportError from startError so one banner can't hide or outlive the other",
+  `enhancement` + `priority: P3`, "Part of #98".
+- **#124** — a checklist item for the user-configurable global hotkey added as a
+  [comment](https://github.com/tomqwu/ListenToMe/issues/124#issuecomment-5682184370), noting it pairs
+  with that issue's existing `RegisterEventHotKey` migration.
+
+All three are linked from the PR body's "Follow-ups" section.
+
 ## Verification
 
 | Command | Result |
 | --- | --- |
-| `swift test` | **434 tests, 0 failures, 3 skipped** |
-| `./scripts/check-coverage.sh 95` | **PASS — 97.77%**; `TranscriptionEngineLabel.swift`, `TranscriptionLocaleStatus.swift`, `CalendarLookup.swift` all 100% |
+Re-run after the review follow-up commit `e5ebd94`:
+
+| Command | Result |
+| --- | --- |
+| `swift test` | **438 tests, 0 failures, 3 skipped** (was 434 before the follow-up) |
+| `./scripts/check-coverage.sh 95` | **PASS — 97.78%**; the five new Core files 100% |
 | `make gen && make build` | **BUILD SUCCEEDED** |
-| `swiftlint lint --quiet` | no new violations; the one pre-existing `error` (`iOS/MobileReleaseNotes.swift:53`, 182-char line) is unchanged from `main` |
-| `gh pr checks 170` | Core tests+coverage / macOS build / iOS build — watched to completion |
+| `make lint` | 332 warnings, identical to `main`; the one `error` (`iOS/MobileReleaseNotes.swift:53`, 182-char line) is pre-existing and unchanged |
+| `gh pr checks 170` | Core tests+coverage / macOS build / iOS build — all **pass** on the first push; re-watched after `e5ebd94` |
 
 New tests: `TranscriptionEngineLabelTests` (5), `TranscriptionLocaleStatusTests` (3),
-`CalendarLookupTests` (4), and in `TranscriberPrepareTests`:
-`testSessionIsPreparingUntilTheSpeechModelIsWarm`,
+`CalendarLookupTests` (3), `ConversationTitleTests` (2), `TranscriptStatusLabelTests` (3), and in
+`TranscriberPrepareTests`: `testSessionIsPreparingUntilTheSpeechModelIsWarm`,
 `testAutomaticReviewsDoNotDispatchWhilePreparing`,
 `testStopDuringAnUncancellablePrepareDoesNotParkTheStartTask`.
 
@@ -115,26 +157,18 @@ license was accepted mid-task (presumably by another session), so the numbers ab
 
 ## Concerns / deliberate deferrals
 
-1. **#136 (4) is partially deferred.** Populating the language pickers from
-   `SpeechTranscriber.supportedLocales` (macOS *and* iOS Settings, grouped Installed/Downloadable
-   via `AssetInventory.status(forModules:)`) is a materially larger change than surfacing the
-   fallback, and touches iOS files outside my assigned set. I implemented the "announce the
-   fallback" half only, and said so in the PR body. If #136 must close fully, this needs a
-   follow-up issue or a second pass.
-2. **#136 (5) global hotkey is still fixed** at ⌘⇧Space — making it user-configurable means new
-   Settings storage (keyCode+modifiers) plus validation against `ConversationMenu`, which is its own
-   change. Flagged in the PR.
-3. **#136 (6) `exportError` is not split from `startError`.** The banner is still shared; the ✕
-   dismiss addresses the "stale message sits above a live recording" symptom but not the structural
-   half. Flagged in the PR.
-4. **`PermissionsModel.systemAudioLikelyAvailable()` can read false negative** right after a grant
+1. **Three parts of #136 are deferred but now tracked** (#172, #173, and a checklist item on #124 —
+   see "Issue hygiene" above), so closing #136 with this PR does not lose them:
+   populating the language pickers from `SpeechTranscriber.supportedLocales`; a user-configurable
+   global hotkey; splitting `exportError` from `startError`.
+2. **`PermissionsModel.systemAudioLikelyAvailable()` can read false negative** right after a grant
    made without relaunching (the CoreGraphics preflight is process-cached and the window-name check
    is inconclusive when no titled windows are on screen). The consequence is bounded: only the eager
    warm-up of the system-audio pipeline is skipped, and `feed` builds it lazily. I chose to err low
    deliberately.
-5. **The `Session` menu is a new top-level menu.** If the reviewers would rather have these items
+3. **The `Session` menu is a new top-level menu.** If the reviewers would rather have these items
    inside an existing menu group, it is a one-line move.
-6. **Concurrent-edit risk.** I rebased onto `origin/main` @ `231979b` mid-task; the only conflict was
+4. **Concurrent-edit risk.** I rebased onto `origin/main` @ `231979b` mid-task; the only conflict was
    the upstream split of `MeetingSession`'s automatic-review extension into
    `MeetingSession+AutomaticReviews.swift`, which I resolved by re-applying the `isPreparing` gating
    into the new file. I did not touch `SpeechRecognizerTranscriber.swift`, `SpeakerAudioBuffer.swift`,
