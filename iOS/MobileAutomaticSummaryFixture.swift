@@ -53,7 +53,9 @@ private actor FixtureSummaryProvider: LLMProvider {
         } else {
             let input = request.messages.last?.content ?? ""
             let bullets = input.contains("Alex") ? ["**Alex** owns onboarding.", "Review on Thursday."] : ["Review on **Thursday**."]
-            if request.system == MobileQuickContext.instructions,
+            // The declared purpose, not the prompt text: the evaluator's system prompt varies with
+            // the response-language setting and the data-not-instructions notice (#166).
+            if request.purpose == .quickEvaluation,
                let data = try? JSONSerialization.data(withJSONObject: ["reviews": [], "action": "publish", "context": bullets.joined(), "bullets": bullets]) {
                 continuation.yield(String(decoding: data, as: UTF8.self))
             } else { continuation.yield(bullets.map { "- " + $0 }.joined(separator: "\n")) }

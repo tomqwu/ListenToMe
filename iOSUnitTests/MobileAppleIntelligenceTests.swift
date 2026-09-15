@@ -46,7 +46,8 @@ final class MobileAppleIntelligenceTests: XCTestCase {
         let request = try XCTUnwrap(provider.request)
         XCTAssertEqual(request.system, MobileQuickContext.manualProseInstructions)
         XCTAssertFalse(request.system.contains("JSON"), "The on-device model is never asked for JSON")
-        XCTAssertEqual(request.messages.first?.content, session.summarySource)
+        // The transcript reaches the on-device model fenced as data, exactly as macOS fences it (#140/#166).
+        XCTAssertEqual(request.messages.first?.content, PromptData.block("transcript", session.summarySource))
         XCTAssertNotEqual(request.purpose, .quickEvaluation,
                           "The automatic evaluator purpose stays refused on the Apple path")
         // Prose that carries no takeaway still leaves a readable pane rather than a parser error.
