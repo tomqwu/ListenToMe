@@ -129,6 +129,7 @@ actor WhisperKitTranscriber: Transcribing {
 
     func finish() async {
         stopped = true
+        releaseModelWaiters()   // nothing may stay parked on a load this transcriber will never use
         // Flush any remaining buffered speech per source, then drain every in-flight transcription
         // so the last utterance's final segment is emitted before the stream closes.
         for source in states.keys {
@@ -274,24 +275,72 @@ actor WhisperKitTranscriber: Transcribing {
                     download: true
                 )
                 statusContinuation.yield("Transcription: Whisper ready")
-                self.modelLoadFinished = true
+                self.finishModelLoad()
                 return KitBox(kit: kit)
             } catch {
                 statusContinuation.yield("Whisper model failed: \(error.localizedDescription). Stop and restart to retry.")
-                self.modelLoadFinished = true
+                self.finishModelLoad()
                 return nil
             }
         }
     }
 
+    /// Waiters parked in `modelBox()`, resumed exactly once by `finishModelLoad()` (load settled)
+    /// or `releaseModelWaiters()` (transcriber stopped). Replaces the old 50 ms poll, which kept
+    /// waking every waiter for the whole download and then again after a load failure (issue #147).
+    private var modelLoadWaiters: [UUID: CheckedContinuation<Void, Never>] = [:]
+    /// Waiters whose task was cancelled before their continuation could be registered. Without this
+    /// the cancellation handler's `removeWaiter` could run *before* `addWaiter`, parking the waiter
+    /// forever.
+    private var cancelledModelLoadWaiters: Set<UUID> = []
+
+    /// Marks the load settled (either way) and wakes everyone waiting on it.
+    private func finishModelLoad() {
+        modelLoadFinished = true
+        releaseModelWaiters()
+    }
+
+    private func releaseModelWaiters() {
+        let waiters = modelLoadWaiters
+        modelLoadWaiters.removeAll()
+        cancelledModelLoadWaiters.removeAll()
+        for continuation in waiters.values { continuation.resume() }
+    }
+
+    private func addModelLoadWaiter(_ id: UUID, _ continuation: CheckedContinuation<Void, Never>) {
+        guard !modelLoadFinished, !stopped, !cancelledModelLoadWaiters.contains(id) else {
+            cancelledModelLoadWaiters.remove(id)
+            return continuation.resume()
+        }
+        modelLoadWaiters[id] = continuation
+    }
+
+    private func removeModelLoadWaiter(_ id: UUID) {
+        if let continuation = modelLoadWaiters.removeValue(forKey: id) {
+            continuation.resume()
+        } else {
+            cancelledModelLoadWaiters.insert(id)   // the continuation hasn't registered yet
+        }
+    }
+
     /// Waits for the model load in a cancellable way: returns nil as soon as the transcriber is
     /// stopped or the awaiting Task is cancelled, so `finish()` (which awaits the in-flight
-    /// transcription Tasks) never hangs behind a first-run download.
+    /// transcription Tasks) never hangs behind a first-run download. Suspends on a continuation
+    /// instead of polling, so a multi-minute download costs zero wake-ups.
     private func modelBox() async -> KitBox? {
-        while !modelLoadFinished {
+        if !modelLoadFinished {
             if stopped || Task.isCancelled { return nil }
-            try? await Task.sleep(nanoseconds: 50_000_000)
+            let id = UUID()
+            await withTaskCancellationHandler {
+                await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                    Task { await self.addModelLoadWaiter(id, continuation) }
+                }
+            } onCancel: {
+                Task { await self.removeModelLoadWaiter(id) }
+            }
+            guard modelLoadFinished, !stopped, !Task.isCancelled else { return nil }
         }
+        if stopped || Task.isCancelled { return nil }
         return await loadTask?.value
     }
 
