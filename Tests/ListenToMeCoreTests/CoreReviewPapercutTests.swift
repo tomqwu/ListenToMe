@@ -66,7 +66,6 @@ final class CoreReviewPapercutTests: XCTestCase {
             makeTranscriber: { MockTranscriber() },
             makeProvider: { _ in provider },
             models: [.listener: "L", .quick: "Q", .deep: "D"],
-            listenerDebounce: 0,
             clock: { 0 })
         return (session, store)
     }
