@@ -27,8 +27,8 @@ public struct SessionAttachmentStore {
         let ext = URL(fileURLWithPath: cleanName).pathExtension
             .filter { $0.isASCII && ($0.isLetter || $0.isNumber) }.prefix(12)
         let storedName = id + (ext.isEmpty ? "" : "." + ext)
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        try data.write(to: directory.appendingPathComponent(storedName), options: .atomic)
+        try PrivateStorage.createDirectory(at: directory)
+        try data.write(to: directory.appendingPathComponent(storedName), options: PrivateStorage.writingOptions)
         return SessionAttachment(id: id, name: cleanName, storedName: storedName, byteCount: data.count)
     }
 

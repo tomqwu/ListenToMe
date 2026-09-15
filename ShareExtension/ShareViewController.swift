@@ -40,7 +40,8 @@ final class ShareViewController: UIViewController {
                 let id = UUID().uuidString
                 let destination = try SharedInbox.root().appendingPathComponent(id, isDirectory: true)
                 folder = destination
-                try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
+                try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true,
+                                                        attributes: SharedInbox.directoryAttributes)
                 let items = extensionContext?.inputItems as? [NSExtensionItem] ?? []
                 var text: [String] = []
                 var files: [SharedImport.File] = []
@@ -70,7 +71,7 @@ final class ShareViewController: UIViewController {
                 let joined = text.joined(separator: "\n\n")
                 guard joined.count <= 100_000 else { throw failure("Share a shorter note (up to 100,000 characters).") }
                 let batch = SharedImport(id: id, text: joined, files: files)
-                try JSONEncoder().encode(batch).write(to: destination.appendingPathComponent("manifest.json"), options: .atomic)
+                try JSONEncoder().encode(batch).write(to: destination.appendingPathComponent("manifest.json"), options: SharedInbox.writingOptions)
                 status.text = "Imported. Open ListenToMe to view your new conversation."
                 importButton.setTitle("Saved", for: .normal)
             } catch {
@@ -97,7 +98,7 @@ final class ShareViewController: UIViewController {
         let stored = UUID().uuidString + "." + ext
         let suggested = provider.suggestedName ?? "Shared file"
         let name = (suggested as NSString).pathExtension.isEmpty ? suggested + "." + ext : suggested
-        try data.write(to: folder.appendingPathComponent(stored), options: .atomic)
+        try data.write(to: folder.appendingPathComponent(stored), options: SharedInbox.writingOptions)
         return SharedImport.File(name: name, storedName: stored)
     }
 
@@ -122,7 +123,7 @@ final class ShareViewController: UIViewController {
             }
         }
         let stored = UUID().uuidString + "." + (payload.1 as NSString).pathExtension
-        try payload.0.write(to: folder.appendingPathComponent(stored), options: .atomic)
+        try payload.0.write(to: folder.appendingPathComponent(stored), options: SharedInbox.writingOptions)
         return SharedImport.File(name: payload.1, storedName: stored)
     }
 

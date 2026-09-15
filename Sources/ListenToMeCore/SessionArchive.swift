@@ -46,7 +46,7 @@ public final class SessionArchive {
     }
 
     private func prepare() throws {
-        try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+        try PrivateStorage.createDirectory(at: directory)
         let marker = directory.appendingPathComponent("legacy-migrated")
         guard !fileManager.fileExists(atPath: marker.path) else { return }
         if let legacyURL, fileManager.fileExists(atPath: legacyURL.path) {
@@ -56,7 +56,7 @@ public final class SessionArchive {
                 if !fileManager.fileExists(atPath: url.path) { try write(record) }
             }
         }
-        try Data().write(to: marker, options: .atomic)
+        try Data().write(to: marker, options: PrivateStorage.writingOptions)
     }
 
     private func location(_ id: String) throws -> URL {
@@ -69,7 +69,7 @@ public final class SessionArchive {
     private func write(_ record: SessionRecord) throws {
         let url = try location(record.id)
         let data = try JSONEncoder().encode(record)
-        try data.write(to: url, options: [.atomic])
+        try data.write(to: url, options: PrivateStorage.writingOptions)
         let handle = try FileHandle(forWritingTo: url)
         defer { try? handle.close() }
         try handle.synchronize()
