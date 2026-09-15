@@ -70,7 +70,7 @@ struct MeetingView: View {
     @State private var modelLoadToken = 0
     @State private var showLicenses = false
     @State var lifecycleBusy = false
-    @State var conversationTitle = "Conversation — " + Date().formatted(date: .abbreviated, time: .shortened)
+    @State var conversationTitle = ConversationTitle.generated(Date().formatted(date: .abbreviated, time: .shortened))
     @State var saveMessage = "Not saved yet"
     @State var saveFailed = false
     @State var lastSavedKey: SessionCheckpointKey?
@@ -189,6 +189,11 @@ struct MeetingView: View {
             : URL(string: "http://localhost:11434")!
     }
 
+    /// True when the banner is showing a Calendar *denial*, the one calendar outcome the user can
+    /// fix themselves. Derived from `startError` (like the microphone case just below it) so it can
+    /// never disagree with the message on screen.
+    private var calendarDenied: Bool { startError == CalendarLookup.denied.message }
+
     var body: some View {
         @Bindable var session = session
         return VStack(spacing: 0) {
@@ -208,6 +213,21 @@ struct MeetingView: View {
                     if startError == CapturePreflight.deniedMessage {
                         Button("Open Settings") { permissions.openSettings("Privacy_Microphone") }
                     }
+                    // Calendar denial is equally fixable, and had no button at all (issue #136).
+                    if calendarDenied {
+                        Button("Open Calendar privacy settings") {
+                            permissions.openSettings("Privacy_Calendars")
+                        }
+                    }
+                    // The banner is shared by start, import, export and calendar failures and used
+                    // to clear only on the next start — so a stale export error sat above a live
+                    // recording with no way to get rid of it (issue #136).
+                    Button { self.startError = nil } label: {
+                        Image(systemName: "xmark")
+                    }
+                    .buttonStyle(.borderless)
+                    .help("Dismiss this message")
+                    .accessibilityLabel("Dismiss message")
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 14)
@@ -611,12 +631,19 @@ extension MeetingView {
     func loadFromCalendar(session: MeetingSession) {
         startError = nil
         Task {
-            if let info = await CalendarService.currentOrNextMeeting() {
-                session.notes = MeetingContext.notes(
-                    for: info,
-                    timeFormat: { $0.formatted(date: .omitted, time: .shortened) })
-            } else {
-                startError = "No current/upcoming calendar meeting found (or calendar access denied)."
+            let lookup = await CalendarService.currentOrNextMeeting()
+            guard case .meeting(let info) = lookup else {
+                startError = lookup.message
+                return
+            }
+            session.notes = MeetingContext.notes(
+                for: info,
+                timeFormat: { $0.formatted(date: .omitted, time: .shortened) })
+            // Title the conversation after the meeting — History, exports and the window all showed
+            // "Conversation — <date>" even though the app knew the real name (issue #136). Only the
+            // generated title is replaced, so a title the user typed is never clobbered.
+            if ConversationTitle.isGenerated(conversationTitle), !info.title.isEmpty {
+                conversationTitle = info.title
             }
         }
     }

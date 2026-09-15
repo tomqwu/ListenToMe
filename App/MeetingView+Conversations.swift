@@ -88,7 +88,7 @@ extension MeetingView {
             beginDiarizationRunReset()
             session.resetConversation()
             currentSessionID = UUID().uuidString
-            conversationTitle = "Conversation — " + Date().formatted(date: .abbreviated, time: .shortened)
+            conversationTitle = ConversationTitle.generated(Date().formatted(date: .abbreviated, time: .shortened))
             sessionSaveable = ProviderSettings.saveSessionsForSearch
             othersAudioSink.reset(); microphoneAudioSink.reset()
             lastSavedKey = nil
