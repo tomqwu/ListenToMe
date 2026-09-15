@@ -25,7 +25,9 @@ struct SessionSearchView: View {
             }
             TextField("Search title, summary, or transcript", text: $query).textFieldStyle(.roundedBorder)
             if let error = store.errorText {
-                Text(error).foregroundStyle(.red)
+                // A damaged file is set aside and reported as a warning next to the conversations
+                // that did load; only a total read failure (no records at all) reads as an error.
+                Text(error).foregroundStyle(records.isEmpty ? Color.red : Color.orange)
                 Button("Retry") { records = store.all() }
             }
             List(SessionSearch.search(records, query: query)) { record in
