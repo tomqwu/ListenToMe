@@ -7,12 +7,17 @@ struct MobileHistoryView: View {
     @State private var pendingDeletion: SessionRecord?
     @State private var showDeletion = false
     @State private var sharing: SessionRecord?
+    @State private var query = ""
+
+    /// Same keyword ranking the Mac History sheet uses, so a phrase said in one standup is
+    /// reachable without scrolling two months of conversations.
+    private var results: [SessionRecord] { session.historyMatching(query) }
 
     var body: some View {
         NavigationStack {
             List {
                 Section {
-                    ForEach(session.history) { record in
+                    ForEach(results) { record in
                         row(record)
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                 Button("Delete", systemImage: "trash") { confirmDeletion(record) }.tint(.red)
@@ -50,8 +55,11 @@ struct MobileHistoryView: View {
                 if session.history.isEmpty {
                     ContentUnavailableView("No saved conversations", systemImage: "clock",
                                            description: Text("Save a conversation to return to its words, notes and summaries."))
+                } else if results.isEmpty {
+                    ContentUnavailableView.search(text: query)
                 }
             }
+            .searchable(text: $query, prompt: "Search title, summary, or transcript")
             .navigationTitle("History")
             .toolbar { Button("Done") { dismiss() } }
         }

@@ -34,7 +34,51 @@ final class MobileAttachmentTests: XCTestCase {
         XCTAssertEqual(session.notes, "Keep my meeting")
         XCTAssertEqual(session.history.count, 1)
         XCTAssertTrue(session.message?.contains("Could not import") == true)
-        XCTAssertTrue(FileManager.default.fileExists(atPath: folder.path))
+        // The batch is set aside rather than retried on every foreground, and its bytes are kept.
+        XCTAssertFalse(FileManager.default.fileExists(atPath: folder.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: inbox
+            .appendingPathComponent(MobileSession.failedInboxFolder)
+            .appendingPathComponent("batch").appendingPathComponent("manifest.json").path))
+    }
+
+    func testOneFailingBatchDoesNotBlockLaterSharesAndIsSetAsideOnce() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let inbox = root.appendingPathComponent("inbox")
+        let broken = inbox.appendingPathComponent("a-broken")
+        let good = inbox.appendingPathComponent("b-good")
+        try FileManager.default.createDirectory(at: broken, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: good, withIntermediateDirectories: true)
+        try Data("not json".utf8).write(to: broken.appendingPathComponent("manifest.json"))
+        try JSONEncoder().encode(SharedImport(id: "good", text: "Shared later", files: []))
+            .write(to: good.appendingPathComponent("manifest.json"))
+        let session = MobileSession(storageDirectory: root)
+        session.importSharedInbox(from: inbox)
+        XCTAssertEqual(session.notes, "Shared later", "A batch queued behind a broken one must still import")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: broken.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: good.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: inbox
+            .appendingPathComponent(MobileSession.failedInboxFolder).appendingPathComponent("a-broken").path))
+        // The set-aside folder is never re-read, so the error does not repeat on the next foreground.
+        session.message = nil
+        session.importSharedInbox(from: inbox)
+        XCTAssertNil(session.message)
+    }
+
+    func testManifestlessFolderIsDeletedOnlyOnceItCanNoLongerBeBeingWritten() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let inbox = root.appendingPathComponent("inbox")
+        let partial = inbox.appendingPathComponent("partial")
+        try FileManager.default.createDirectory(at: partial, withIntermediateDirectories: true)
+        try Data(repeating: 7, count: 512).write(to: partial.appendingPathComponent("photo.heic"))
+        let session = MobileSession(storageDirectory: root)
+        session.importSharedInbox(from: inbox, now: Date())
+        XCTAssertTrue(FileManager.default.fileExists(atPath: partial.path),
+                      "A share still being written must not be deleted out from under the extension")
+        session.importSharedInbox(from: inbox, now: Date().addingTimeInterval(MobileSession.orphanInboxLifetime + 60))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: partial.path))
+        XCTAssertNil(session.message, "Reclaiming abandoned bytes is not an error the user must read")
     }
 
     func testAttachmentImportTextPersistenceRemovalAndConversationDeletion() throws {
