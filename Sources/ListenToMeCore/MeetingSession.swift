@@ -89,8 +89,8 @@ public final class MeetingSession {
 
     /// Memoized labeled-piece snapshot for the live path, keyed on `LiveKey`. Without it every
     /// ingested hypothesis walked the whole transcript several times on the main actor (issue #116).
-    @ObservationIgnored var liveCacheKey: LiveKey?
-    @ObservationIgnored var liveCache: LiveSnapshot?
+    @ObservationIgnored private var liveCacheKey: LiveKey?
+    @ObservationIgnored private var liveCache: LiveSnapshot?
     #if DEBUG
     /// Test-only: how many times the snapshot was actually rebuilt (cache misses).
     @ObservationIgnored private(set) var livePieceComputations = 0
@@ -600,19 +600,20 @@ extension MeetingSession {
             let (clampedNotes, droppedNotes) = Self.clamp(self.notes, to: allocation.notes)
             // Speech the recognizer has not finalized is appended as trailing "(provisional)" lines
             // so a refresh cannot miss a hypothesis that stays volatile for the whole recording
-            // (issue #113). It is charged to the same transcript allowance, and — being non-final —
-            // never enters `pendingSummaryIDs`, so the real segment is still summarized once it
-            // finalizes.
-            let provisional = self.store.provisionalContext(maxChars: max(0, allocation.transcript / 2))
-            let provisionalCost = provisional.reduce(0) { $0 + TranscriptSegment.promptCharacterCost($1) }
-            let batchAllowance = max(0, allocation.transcript - provisionalCost)
+            // (issue #113) — but ONLY when the ledger has caught up. The listener's record is
+            // cumulative and each chained batch would otherwise re-send the same unconfirmed
+            // wording, and the rolling record is what a chained batch builds on. Being non-final,
+            // these lines never enter `pendingSummaryIDs`, so the real segment is still summarized
+            // once it finalizes, and `PromptBuilder` tells the model what the tag means.
             var characters = 0
             let batch = remaining.prefix { segment in
                 let cost = TranscriptSegment.promptCharacterCost(segment)
-                if characters > 0 && characters + cost > batchAllowance { return false }
+                if characters > 0 && characters + cost > allocation.transcript { return false }
                 characters += cost
                 return true
             }
+            let provisional = remaining.isEmpty
+                ? self.store.provisionalContext(maxChars: allocation.transcript) : []
             // A partial batch is not loss: the ledger keeps the rest and a follow-up refresh starts
             // automatically, so only a clamped record or notes is worth reporting here. Report by
             // assignment only — an ordinary batched refresh (Refresh, rename, the auto-continue
@@ -753,7 +754,8 @@ extension MeetingSession {
 extension MeetingSession {
     /// What the labeled piece snapshot is a function of. `store.revision` covers every change to
     /// finalized speech (arrival, restore, attribution, renaming); partials bump no revision, so
-    /// their text is compared directly, along with the notes that become the `Notes:` piece.
+    /// their text is compared directly — keyed on the channel, whose identity is stable, not on a
+    /// speaker label that a rename could change — along with the notes that become the `Notes:` piece.
     struct LiveKey: Equatable {
         let revision: Int
         let partials: [String]
@@ -771,7 +773,7 @@ extension MeetingSession {
     func liveSnapshot() -> LiveSnapshot {
         let live = [SpeakerSource.you, .others].compactMap { store.partials[$0] }
         let key = LiveKey(revision: store.revision,
-                          partials: live.map { $0.speakerLabel + ":" + $0.text },
+                          partials: live.map { $0.source.rawValue + ":" + $0.text },
                           notes: notes)
         if let cached = liveCache, liveCacheKey == key { return cached }
         let pieces = QuickSummaryContext.pieces(notes: notes, segments: store.utterances,

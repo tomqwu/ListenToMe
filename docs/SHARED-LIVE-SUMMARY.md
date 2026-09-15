@@ -241,11 +241,24 @@ per channel, for hypotheses of at least `provisionalMinimumCharacters` (24 trimm
 same threshold `QuickSummaryContext.pieces` applies to the live pipeline). Each line is tagged
 `(provisional) ` so the model weighs it as unconfirmed wording rather than a quotation, and the
 segments stay non-final. `ContextEngine.buildContext` and `MeetingSession`'s listener refresh append
-those lines after the finalized window. They are charged to the same `PromptBudget` allocation as
-transcript text (with their speaker labels, through `TranscriptSegment.promptCharacterCost`) and may
-claim at most half the transcript allowance, so Apple Intelligence's window still holds and history
-is never crowded out. Because provisional lines are never final, they do not enter the listener's
-`pendingSummaryIDs` ledger: the same speech is still summarized once the recognizer finalizes it.
+those lines after the finalized window, and `PromptBuilder.provisionalNotice` — included in the Quick,
+Deep and Listener user message whenever a non-final line is present — tells the model what the tag
+means: unconfirmed, still-changing recognition that will be sent again once finalized, never to be
+recorded as a decision, owner, deadline or action item, and never reported twice when the finalized
+text repeats it.
+
+They are charged to the same `PromptBudget` allocation as transcript text (with their speaker labels,
+through `TranscriptSegment.promptCharacterCost`). Provisional text may *reserve* at most half the
+transcript allowance and is then sized by what the finalized window actually spent, because
+`recentContext` and the listener batch always keep at least one utterance however large: reading the
+reservation alone could push the assembled prompt past Apple Intelligence's window. Because
+provisional lines are never final, they do not enter the listener's `pendingSummaryIDs` ledger: the
+same speech is still summarized once the recognizer finalizes it.
+
+The Listener is the one pane that receives provisional speech **only when its ledger has caught up**
+(`remaining` is empty). Its record is cumulative and is saved into `SessionRecord.summary`, so a
+chained batch that re-sent the same unconfirmed wording each time would duplicate it in a saved
+summary and never retract a hypothesis the recognizer later revised.
 
 The live path also does its O(transcript) work once per event instead of several times (issue #116).
 `MeetingSession.liveSnapshot()` memoizes the labeled pieces and the joined review source on

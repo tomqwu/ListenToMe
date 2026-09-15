@@ -81,19 +81,65 @@ final class ProvisionalPromptTests: XCTestCase {
         XCTAssertTrue((provider.lastUser ?? "").contains(question))
     }
 
-    func testListenerRefreshIncludesPendingPartialWithoutConsumingIt() async {
+    func testListenerSendsProvisionalOnlyOnceTheLedgerHasCaughtUp() async {
         let (session, store, provider) = makeSession()
         let id = UUID()
         store.apply(final("Opening remarks.", .you))
         store.apply(partial(question, .others, id: id))
+        // Unsummarized speech is still queued, so this batch must carry evidence only: the listener
+        // record is cumulative, and re-sending the same unconfirmed wording per chained batch is how
+        // a hypothesis ends up duplicated in a saved summary.
+        await session.refreshListener()
+        XCTAssertTrue((provider.lastUser ?? "").contains("Opening remarks."))
+        XCTAssertFalse((provider.lastUser ?? "").contains("(provisional)"),
+                       "A chained Listener batch must not re-send provisional speech.")
+
+        // Ledger caught up: now the volatile hypothesis is the only new evidence there is.
         await session.refreshListener()
         XCTAssertTrue((provider.lastUser ?? "").contains(question))
+        XCTAssertTrue((provider.lastUser ?? "").contains(PromptBuilder.provisionalNotice),
+                      "The prompt must define what the (provisional) tag means.")
 
         // The hypothesis was not summarized: once it finalizes it must still reach the listener.
         store.apply(final(question, .others, id: id))
         await session.refreshListener()
         XCTAssertTrue((provider.lastUser ?? "").contains(question),
                       "A provisional line must never advance the summarized ledger.")
+    }
+
+    func testProvisionalNoticeAccompaniesTaggedLinesOnly() async {
+        let (session, store, provider) = makeSession()
+        store.apply(final("A finalized line only.", .you))
+        await session.respondQuick(.answerQuestion)
+        XCTAssertFalse((provider.lastUser ?? "").contains(PromptBuilder.provisionalNotice))
+        store.apply(partial(question))
+        await session.respondQuick(.answerQuestion)
+        XCTAssertTrue((provider.lastUser ?? "").contains(PromptBuilder.provisionalNotice))
+    }
+
+    /// `recentContext` and the listener batch always keep at least one segment, however large, so a
+    /// provisional allowance read from the nominal budget alone could push the assembled prompt past
+    /// a provider's cap.
+    func testOneOversizedFinalLeavesNoRoomForProvisionalText() {
+        let store = ConversationStore()
+        store.apply(final(String(repeating: "f", count: 3_000), .you))
+        store.apply(partial(String(repeating: "p", count: 2_000), .others))
+        let engine = ContextEngine(debounce: 5)
+        let context = engine.buildContext(from: store, notes: nil, maxChars: 4_000)
+        let cost = context.messages.reduce(0) { $0 + TranscriptSegment.promptCharacterCost($1) }
+        XCTAssertLessThanOrEqual(cost, 4_000, "The oversized final must not push the prompt past the cap.")
+        // What is left after that one line is small, so the hypothesis is trimmed to fit, not dropped.
+        XCTAssertTrue(context.messages.contains { !$0.isFinal })
+        XCTAssertLessThan(context.messages.filter { !$0.isFinal }[0].text.count, 2_000)
+
+        // And when the finalized line alone fills the whole budget, nothing provisional fits at all.
+        let tight = ConversationStore()
+        tight.apply(final(String(repeating: "f", count: 3_990), .you))
+        tight.apply(partial(String(repeating: "p", count: 2_000), .others))
+        let tightContext = engine.buildContext(from: tight, notes: nil, maxChars: 4_000)
+        XCTAssertLessThanOrEqual(tightContext.messages.reduce(0) { $0 + TranscriptSegment.promptCharacterCost($1) },
+                                 4_000)
+        XCTAssertTrue(tightContext.messages.allSatisfy(\.isFinal))
     }
 
     /// The failure scenario from the issue: a recognizer that never finalizes anything at all.

@@ -105,7 +105,9 @@ public final class ConversationStore {
     public func provisionalContext(maxChars: Int) -> [TranscriptSegment] {
         var remaining = maxChars
         var collected: [TranscriptSegment] = []
-        for source in [SpeakerSource.you, .others] {
+        // The remote channel is budgeted first: the question the user pressed the hotkey about is
+        // far more often someone else's than their own.
+        for source in [SpeakerSource.others, .you] {
             guard let segment = partials[source] else { continue }
             let trimmed = segment.text.trimmingCharacters(in: .whitespacesAndNewlines)
             guard trimmed.count >= Self.provisionalMinimumCharacters else { continue }
