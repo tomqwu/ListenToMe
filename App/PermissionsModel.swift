@@ -170,12 +170,24 @@ final class PermissionsModel {
 
     /// Relaunches the app — required for macOS to recognize a newly-granted Screen Recording
     /// permission (`CGPreflightScreenCaptureAccess` only updates after a restart).
+    /// Finalize BEFORE launching the replacement instance. `prepareToClose()` returns false while a
+    /// lifecycle operation is busy and when the user picks Cancel in the "Save this conversation
+    /// before closing?" alert — and the old code launched the new instance first, so a Cancel left
+    /// two processes contending for the mic, the SCStream and sessions.json (issue #136). Clearing
+    /// `prepareToClose` after it succeeds makes the subsequent terminate immediate: the session is
+    /// already stopped and saved, so there is nothing left to ask about.
     func relaunch() {
-        let url = Bundle.main.bundleURL
-        let config = NSWorkspace.OpenConfiguration()
-        config.createsNewApplicationInstance = true
-        NSWorkspace.shared.openApplication(at: url, configuration: config) { _, _ in
-            Task { @MainActor in NSApp.terminate(nil) }
+        Task { @MainActor in
+            if let prepare = ApplicationLifecycle.shared.prepareToClose {
+                guard await prepare() else { return }
+                ApplicationLifecycle.shared.prepareToClose = nil
+            }
+            let url = Bundle.main.bundleURL
+            let config = NSWorkspace.OpenConfiguration()
+            config.createsNewApplicationInstance = true
+            NSWorkspace.shared.openApplication(at: url, configuration: config) { _, _ in
+                Task { @MainActor in NSApp.terminate(nil) }
+            }
         }
     }
 
