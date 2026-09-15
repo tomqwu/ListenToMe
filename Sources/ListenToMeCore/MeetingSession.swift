@@ -507,8 +507,12 @@ extension MeetingSession {
                                    references: references.isEmpty ? nil : references,
                                    personaGuidance: personaGuidance),
             action: action)
+        // The provisional notice is part of the assembled prompt but invisible to the scaffold probe,
+        // which measures with no messages. Charge it whenever a hypothesis is eligible, so the
+        // definition cannot be what pushes an Apple-sized prompt over its window.
+        let notice = store.hasProvisionalSpeech ? PromptBuilder.provisionalNotice.count + 2 : 0
         let allocation = PromptBudget.allocate(
-            limit: limit, scaffold: scaffold, transcript: Self.transcriptBudget(for: action),
+            limit: limit, scaffold: scaffold + notice, transcript: Self.transcriptBudget(for: action),
             references: references.count, summary: summary.count, notes: notes.count)
 
         let (clampedReferences, droppedReferences) = Self.clamp(references, to: allocation.references)
@@ -593,8 +597,12 @@ extension MeetingSession {
                                        responseLanguage: self.responseLanguage,
                                        personaGuidance: self.personaGuidance),
                 action: .recap)
+            // Charged only when this refresh will actually carry provisional lines — the listener
+            // sends them solely once the ledger has caught up (see below).
+            let notice = remaining.isEmpty && self.store.hasProvisionalSpeech
+                ? PromptBuilder.provisionalNotice.count + 2 : 0
             let allocation = PromptBudget.allocate(
-                limit: limit, scaffold: scaffold, transcript: 16_000, references: 0,
+                limit: limit, scaffold: scaffold + notice, transcript: 16_000, references: 0,
                 summary: record.count, notes: self.notes.count)
             let (clampedRecord, droppedRecord) = Self.clamp(record, to: allocation.summary)
             let (clampedNotes, droppedNotes) = Self.clamp(self.notes, to: allocation.notes)

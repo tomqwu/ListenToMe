@@ -95,6 +95,15 @@ public final class ConversationStore {
     /// wording rather than a quotation. Placed in the text, which every prompt builder renders.
     public static let provisionalTag = "(provisional) "
 
+    /// True when at least one channel holds a hypothesis long enough for `provisionalContext` to
+    /// emit a line. Callers measure a prompt's scaffold before they know its budget, so they need
+    /// this without building the lines.
+    public var hasProvisionalSpeech: Bool {
+        partials.values.contains {
+            $0.text.trimmingCharacters(in: .whitespacesAndNewlines).count >= Self.provisionalMinimumCharacters
+        }
+    }
+
     /// The current non-final speech, per channel, as prompt lines tagged `(provisional)` and kept
     /// within `maxChars` of assembled prompt cost (issue #113).
     ///

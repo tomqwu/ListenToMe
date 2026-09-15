@@ -160,16 +160,42 @@ final class ProvisionalPromptTests: XCTestCase {
         }
         store.apply(partial(String(repeating: "unfinalized speech ", count: 900), .others))
         await session.respondQuick(.answerQuestion)
-        let request = provider.lastRequest
-        let characters = (request?.system.count ?? 0)
-            + (request?.messages.reduce(0) { $0 + $1.content.count } ?? 0)
-        XCTAssertLessThanOrEqual(characters, limit)
+        XCTAssertLessThanOrEqual(promptCharacters(provider.lastRequest), limit)
         XCTAssertTrue((provider.lastUser ?? "").contains("unfinalized speech"))
+        XCTAssertTrue((provider.lastUser ?? "").contains(PromptBuilder.provisionalNotice))
 
         await session.refreshListener()
-        let listener = provider.lastRequest
-        let listenerCharacters = (listener?.system.count ?? 0)
-            + (listener?.messages.reduce(0) { $0 + $1.content.count } ?? 0)
-        XCTAssertLessThanOrEqual(listenerCharacters, limit)
+        XCTAssertLessThanOrEqual(promptCharacters(provider.lastRequest), limit)
+    }
+
+    /// The ~330-character notice is part of the assembled prompt but invisible to the scaffold probe
+    /// (which measures with no messages), so it must be charged explicitly. Uncharged, it is spent
+    /// out of `PromptBudget.answerReserve` — the room held back for the model's own reply — which
+    /// these prompts must leave intact even when the transcript fills the window exactly.
+    func testProvisionalNoticeIsChargedToTheWindow() async {
+        let limit = PromptBudget.appleIntelligenceCharacters
+        let (session, store, provider) = makeSession(limit: limit)
+        for index in 0..<400 {
+            store.apply(final("Finalized line \(index) with a little substance.", .you))
+        }
+        store.apply(partial(String(repeating: "still being said ", count: 400), .others))
+
+        // Recap budgets the whole conversation, so the window — not the action budget — is binding.
+        await session.respondQuick(.recap)
+        XCTAssertTrue((provider.lastUser ?? "").contains(PromptBuilder.provisionalNotice))
+        XCTAssertLessThanOrEqual(promptCharacters(provider.lastRequest), limit - PromptBudget.answerReserve,
+                                 "Quick spent the answer reserve on the provisional notice")
+
+        await session.refreshListener()   // finalized speech still queued: evidence only, no notice
+        XCTAssertFalse((provider.lastUser ?? "").contains(PromptBuilder.provisionalNotice))
+        await session.refreshListener()   // ledger caught up: the hypothesis and its definition
+        XCTAssertTrue((provider.lastUser ?? "").contains(PromptBuilder.provisionalNotice))
+        XCTAssertLessThanOrEqual(promptCharacters(provider.lastRequest), limit - PromptBudget.answerReserve,
+                                 "Listener spent the answer reserve on the provisional notice")
+    }
+
+    private func promptCharacters(_ request: LLMRequest?) -> Int {
+        guard let request else { return 0 }
+        return request.system.count + request.messages.reduce(0) { $0 + $1.content.count }
     }
 }
