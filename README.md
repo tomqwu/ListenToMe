@@ -352,8 +352,8 @@ Ollama through the actual `OllamaProvider`, auto-selecting an installed chat mod
 - **First run downloads the speech model before listening starts.** Pressing Listen the first time
   shows **PREP** in the rail (not REC) and "Transcription: preparing on-device speech model…"; no
   audio is captured and automatic AI reviews are paused until the model is ready, so nothing said
-  afterwards is lost and no recap is generated from the previous conversation. The download can take several minutes on a slow
-  connection; Stop, New conversation, closing the window and Cmd-Q all cancel it immediately.
+  afterwards is lost and no recap is generated from the previous conversation. The download can
+  take several minutes on a slow connection; Stop, New conversation, closing the window and Cmd-Q all cancel it immediately.
 - A short utterance spoken entirely within the brief recognizer-finalization gap may merge into the
   next finalized segment.
 - **Ollama and Apple Intelligence today.** Ollama Cloud already exposes GPT/DeepSeek/Qwen/etc.

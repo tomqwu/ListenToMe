@@ -22,8 +22,9 @@ Prereq: Ollama running with at least one chat-capable model installed (local or 
    **Deep**, `deepseek-v4-flash:cloud` for any). **More → Refresh models** re-scans models.
 4. Click **Start listening**. On a Mac that has never used the engine, the button flips to **Stop**
    but the rail shows **PREP** with a spinner (not **REC**), the header says **Preparing…**, and the
-   mic/system channels stay at "starting…" until the model is ready — the speech model is now downloaded *before* capture starts, so nothing is captured (and
-   nothing is lost) during the download. Once the channels report they are running, speak a sentence
+   mic/system channels stay at "starting…" until the model is ready — the speech model is now
+   downloaded *before* capture starts, so nothing is captured (and nothing is lost) during the
+   download. Once the channels report they are running, speak a sentence
    → it appears under **Transcript** labeled **You** (blue), including the very first words.
 5. Play speech from another app (a video/meeting) → it appears labeled **Others** (green).
 6. In the **Quick** pane, click **What should I answer?** → a streamed suggestion appears (a
