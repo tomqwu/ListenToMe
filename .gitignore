@@ -7,3 +7,4 @@ DerivedData/
 signing.local.mk
 dist/
 *.p8
+.superpowers/

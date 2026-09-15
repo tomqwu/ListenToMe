@@ -48,9 +48,14 @@ enum MobileReleaseNotes {
         var id: String { version }
     }
     static let releases: [Release] = [
+        .init(version: "1.10.5", title: "Ready for the App Store", details: [
+            "Privacy policy and support pages are linked from Settings.",
+            "History warns about an unreadable saved conversation instead of hiding everything, and search now covers your notes."
+        ]),
         .init(version: "1.10.4", title: "Quieter, safer, searchable", details: [
             "What's New shows only when the notes change, shared imports clean up after themselves, and your transcription language is remembered.",
-            "Conversations are stored with device protection, can be kept out of iCloud backup, and History is searchable. The app never contacts ollama.com unless you chose Ollama."
+            "Conversations are stored with device protection, can be kept out of iCloud backup, and History is searchable. " +
+                "The app never contacts ollama.com unless you chose Ollama."
         ]),
         .init(version: "1.10.3", title: "Recording that survives the real world", details: [
             "Calls, AirPods and switching apps no longer end a recording silently; you are told why it stopped and can resume.",
