@@ -186,7 +186,8 @@ public final class MeetingSession {
     public func resetConversation() {
         guard !isRunning, !isTranscribingFile else { return }
         for role in CopilotRole.allCases { cancelResponse(role) }
-        proactiveTask?.cancel(); proactiveTask = nil
+        // No proactive task needs cancelling here: `ingest` only fires while running, and `stop()`
+        // (which must precede a reset) already cancelled it.
         quickReader.reset(); handleLiveEvent(.conversationChanged)
         store.reset()
         notes = ""; referenceContext = nil
@@ -494,13 +495,17 @@ extension MeetingSession {
               providers[.quick] != nil,
               providerAvailability(models[.quick] ?? "") == nil,
               context.shouldFireProactive(for: segment, now: clock()) else { return }
-        let run = runID
         proactiveTask?.cancel()
         proactiveTask = Task { [weak self] in
             guard let self else { return }
-            // The run can end (or restart) between the decision and this task being scheduled; a
-            // question from a finished session must not answer into the next one.
-            guard self.runID == run, self.isRunning, self.proactiveEnabled else { return }
+            // The run can end — or end and restart — between the decision and this body being
+            // scheduled, and a question from a finished session must never answer into the next
+            // one. `stop()`, `resetConversation()` and a newer fire all cancel this task, and that
+            // cancellation is what carries across a restart: comparing `runID` would not, because
+            // `start()` sets `isRunning` back to true and bumps `runID` only *after* awaiting the
+            // previous teardown, so a body scheduled inside that await sees a live session under
+            // the run ID it captured (ProactiveQuickTests covers exactly this).
+            guard !Task.isCancelled, self.isRunning, self.proactiveEnabled else { return }
             await self.respondQuick(.proactive)
         }
     }

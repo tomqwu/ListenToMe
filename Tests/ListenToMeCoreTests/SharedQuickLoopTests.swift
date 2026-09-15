@@ -78,6 +78,9 @@ final class SharedQuickLoopTests: XCTestCase {
         session.personaGuidance = "Act as the hiring manager."
         session.referenceContext = "SPEC: rollout gates"
         try await session.start()
+        // This test asserts on the *automatic* review requests; an "Others" question would also
+        // fire a proactive Quick answer, which is covered in ProactiveQuickTests instead.
+        session.proactiveEnabled = false
         session.notes = "Ask about budget"
         session.autoSummaryEnabled = true
         await session.ingest(.init(source: .others, text: "Can you own the rollout?", isFinal: true,

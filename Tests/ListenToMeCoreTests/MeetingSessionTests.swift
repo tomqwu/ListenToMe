@@ -7,7 +7,7 @@ final class MeetingSessionTests: XCTestCase {
     // MARK: - Helpers
 
     private func makeSession(
-        now: @escaping @Sendable () -> TimeInterval = { 0 },
+        now: @escaping @Sendable () -> TimeInterval = { 0 }
     ) -> (MeetingSession, ConversationStore) {
         let store = ConversationStore()
         let session = MeetingSession(

@@ -264,7 +264,8 @@ extension MeetingView {
         RoleBox(
             title: "Quick Summary", accent: Theme.accent, role: .quick, session: session,
             outputText: session.quickSuggestion,
-            placeholder: "Enable Auto while listening, or request a recap.",
+            placeholder: "With Proactive on, a question from Others is answered here automatically. "
+                + "Enable Auto while listening, or request a recap.",
             headerExtra: {
                 // Answers a question from Others automatically, without waiting for a button or the
                 // hotkey. Independent of "Auto summaries" (the periodic recap) — see

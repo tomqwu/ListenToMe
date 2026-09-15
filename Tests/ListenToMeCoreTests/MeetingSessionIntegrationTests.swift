@@ -159,7 +159,7 @@ final class MeetingSessionIntegrationTests: XCTestCase {
                     ? (quickProvider as any LLMProvider)
                     : MockLLMProvider(id: model, deltas: ["[\(model)]"])
             },
-            models: [.listener: "L", .quick: "Q", .deep: "D"],
+            models: [.listener: "L", .quick: "Q", .deep: "D"]
         )
         store.apply(TranscriptSegment(source: .others, text: "What's the plan?",
                                       isFinal: true, start: 0, end: 1))
