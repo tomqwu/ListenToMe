@@ -95,7 +95,7 @@ actor SpeechAnalyzerTranscriber: Transcribing {
             return nil
         }
         statusContinuation.yield("Transcription: preparing on-device speech model…")
-        let resolvedLocale = await Self.supportedLocale(for: locale)
+        let (resolvedLocale, fellBack) = await Self.supportedLocale(for: locale)
         let transcriber = SpeechTranscriber(
             locale: resolvedLocale,
             transcriptionOptions: [],
@@ -145,7 +145,11 @@ actor SpeechAnalyzerTranscriber: Transcribing {
             inputContinuation.finish()
             return nil
         }
-        statusContinuation.yield("Transcription: on-device · \(resolvedLocale.identifier)")
+        // A silent en-US fallback is the one status worth keeping on screen: it explains an
+        // otherwise inexplicable transcript, and the user can act on it (#136).
+        statusContinuation.yield(fellBack
+            ? Self.fallbackStatus(requested: locale, resolved: resolvedLocale)
+            : TranscriptionLocaleStatus.running(resolvedLocale.identifier))
         return Pipeline(
             id: id,
             transcriber: transcriber,
@@ -159,13 +163,26 @@ actor SpeechAnalyzerTranscriber: Transcribing {
     /// Resolves a requested locale to one `SpeechTranscriber` actually supports (equivalent
     /// language/region where possible), falling back to en-US, so an unsupported choice doesn't
     /// build a dead module that yields an empty transcript.
-    private static func supportedLocale(for requested: Locale) async -> Locale {
+    ///
+    /// - Returns: the resolved locale and whether this was a *fallback* — i.e. the requested
+    ///   language is not supported at all and the transcript will come out in another language.
+    ///   The caller surfaces that, because silently transcribing a pt-BR meeting in en-US produces
+    ///   English-looking nonsense with nothing on screen to explain it (issue #136).
+    private static func supportedLocale(for requested: Locale) async -> (locale: Locale, fellBack: Bool) {
         if let equivalent = await SpeechTranscriber.supportedLocale(equivalentTo: requested) {
-            return equivalent
+            return (equivalent, false)
         }
         let supported = await SpeechTranscriber.supportedLocales
-        return supported.first(where: { $0.identifier(.bcp47) == "en-US" })
+        let resolved = supported.first(where: { $0.identifier(.bcp47) == "en-US" })
             ?? supported.first ?? requested
+        return (resolved, true)
+    }
+
+    /// Human-readable "your language isn't available" line for the status rail. Wording lives in
+    /// Core (`TranscriptionLocaleStatus`) so it is unit-tested.
+    static func fallbackStatus(requested: Locale, resolved: Locale) -> String {
+        TranscriptionLocaleStatus.fallback(requested: requested.identifier(.bcp47),
+                                           resolved: resolved.identifier(.bcp47))
     }
 
     /// A source's results stream ended. If we're still running and this is the current pipeline
