@@ -31,13 +31,17 @@ public enum PrivateStorage {
     /// is re-applied whenever the directory is created.
     public static func setExcludedFromBackup(_ excluded: Bool, at url: URL) throws {
         guard FileManager.default.fileExists(atPath: url.path) else { return }
-        var target = url
+        var target = URL(fileURLWithPath: url.path)
         var values = URLResourceValues()
         values.isExcludedFromBackup = excluded
         try target.setResourceValues(values)
     }
 
+    /// Read from disk, never from the URL's cache: a URL caches resource values it has read, and the
+    /// flag is usually written through a different URL instance than the one asking about it.
     public static func isExcludedFromBackup(_ url: URL) -> Bool {
-        (try? url.resourceValues(forKeys: [.isExcludedFromBackupKey]).isExcludedFromBackup) == true
+        var fresh = URL(fileURLWithPath: url.path)
+        fresh.removeAllCachedResourceValues()
+        return (try? fresh.resourceValues(forKeys: [.isExcludedFromBackupKey]).isExcludedFromBackup) == true
     }
 }
