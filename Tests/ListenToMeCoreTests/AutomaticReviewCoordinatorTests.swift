@@ -45,6 +45,34 @@ final class AutomaticReviewCoordinatorTests: XCTestCase {
         XCTAssertEqual(count, 2)
     }
 
+    /// Issue #137: queue persistence must not depend on the Quick model reliably re-listing
+    /// `pendingReviews`. A read that simply omits a queued mode leaves it queued; only an explicit
+    /// signal — a completed review, a conversation/provider change, or a low-confidence downgrade —
+    /// drops it.
+    func testQueuedReviewSurvivesAnEvaluationThatOmitsItAndIsDroppedByADowngrade() {
+        let runner = AutomaticReviewCoordinator()
+        let provider = ReviewTestProvider(delay: .seconds(5))
+        func sync(_ busy: Bool) {
+            runner.synchronize(enabled: true, manualBusy: busy, pieces: live("Azure question"),
+                               source: "Azure question", provider: { _ in provider }, apply: { _, _, _ in })
+        }
+        // Manual work is in flight, so both recommendations stay queued instead of dispatching.
+        sync(true)
+        runner.offer(recommendations, source: "Azure question")
+        XCTAssertEqual(runner.status(.deep), "Auto · Queued; combining new context.")
+
+        runner.offer([recommendations[0]], source: "Azure question")
+        XCTAssertEqual(runner.status(.deep), "Auto · Queued; combining new context.",
+                       "an omitted mode is not a signal to discard a queued review")
+        XCTAssertEqual(runner.status(.summary), "Auto · Queued; combining new context.")
+
+        runner.offer([.init(mode: "deep", confidence: "low", reason: "No longer substantive")],
+                     source: "Azure question")
+        XCTAssertEqual(runner.status(.deep), "Auto · Waiting for a substantive question or tradeoff.",
+                       "an explicit downgrade does drop the queued review")
+        XCTAssertEqual(runner.status(.summary), "Auto · Queued; combining new context.")
+    }
+
     func testManualPriorityCancelsAutomaticAndAvoidsDuplicateAfterManualCompletes() async throws {
         let runner = AutomaticReviewCoordinator()
         let provider = ReviewTestProvider(delay: .seconds(1))
