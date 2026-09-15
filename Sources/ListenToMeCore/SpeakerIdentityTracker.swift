@@ -24,20 +24,50 @@ public struct SpeakerIdentityTracker: Sendable {
         identities[id]?.name = name
     }
 
-    public mutating func reconcile(_ segments: [DiarizedSegment]) -> [String: SpeakerIdentity] {
-        let valid = segments.filter { $0.start.isFinite && $0.duration.isFinite && $0.duration > 0 }
-        let groups = Dictionary(grouping: valid, by: \.speakerId)
-        let previousEnd = previous.map { $0.start + $0.duration }.max() ?? 0
+    /// The part of `segments` at or after `windowStart` (the whole timeline for a full pass).
+    private static func trimmed(_ segments: [DiarizedSegment],
+                                from windowStart: TimeInterval) -> [DiarizedSegment] {
+        guard windowStart > 0 else { return segments }
+        return segments.compactMap { segment in
+            let start = max(segment.start, windowStart)
+            let duration = segment.start + segment.duration - start
+            guard duration > 0 else { return nil }
+            return DiarizedSegment(speakerId: segment.speakerId, start: start, duration: duration)
+        }
+    }
+
+    /// Shared time between each current speakerId and each previous identity.
+    private static func overlapTable(current: [DiarizedSegment],
+                                     previous: [DiarizedSegment]) -> [String: [String: Double]] {
         var overlaps: [String: [String: Double]] = [:]
-        var oldTotals: [String: Double] = [:]
-        for old in previous { oldTotals[old.speakerId, default: 0] += old.duration }
-        for current in valid {
+        for segment in current {
             for old in previous {
-                let duration = min(current.start + current.duration, old.start + old.duration)
-                    - max(current.start, old.start)
-                if duration > 0 { overlaps[current.speakerId, default: [:]][old.speakerId, default: 0] += duration }
+                let shared = min(segment.start + segment.duration, old.start + old.duration)
+                    - max(segment.start, old.start)
+                if shared > 0 { overlaps[segment.speakerId, default: [:]][old.speakerId, default: 0] += shared }
             }
         }
+        return overlaps
+    }
+
+    /// Reconciles a diarization pass against the previous one.
+    ///
+    /// `windowStart` supports incremental passes (issue #109): when a periodic pass re-analyzes only
+    /// a trailing window of the buffer, matching considers just the part of the previous timeline
+    /// that lies inside that window, and the history before it is preserved so a later full pass can
+    /// still recognize speakers from earlier in the meeting. `windowStart <= 0` is a full pass and
+    /// behaves exactly as before.
+    public mutating func reconcile(_ segments: [DiarizedSegment],
+                                   since windowStart: TimeInterval = 0) -> [String: SpeakerIdentity] {
+        let valid = segments.filter { $0.start.isFinite && $0.duration.isFinite && $0.duration > 0 }
+        let groups = Dictionary(grouping: valid, by: \.speakerId)
+        // Only the part of the retained timeline inside the window may be matched against; what lies
+        // before it is history this pass knows nothing about (it is preserved by the splice below).
+        let inWindow = Self.trimmed(previous, from: windowStart)
+        let previousEnd = inWindow.map { $0.start + $0.duration }.max() ?? 0
+        let overlaps = Self.overlapTable(current: valid, previous: inWindow)
+        var oldTotals: [String: Double] = [:]
+        for old in inWindow { oldTotals[old.speakerId, default: 0] += old.duration }
         var mapping: [String: SpeakerIdentity] = [:]
         var used = Set<String>()
         let ordered = groups.keys.sorted {
@@ -65,10 +95,14 @@ public struct SpeakerIdentityTracker: Sendable {
                 nextNumber += 1
             }
         }
-        previous = valid.compactMap { segment in
+        let mapped: [DiarizedSegment] = valid.compactMap { segment in
             guard let identity = mapping[segment.speakerId] else { return nil }
             return DiarizedSegment(speakerId: identity.id, start: segment.start, duration: segment.duration)
         }
+        // A full pass replaces the timeline; a windowed pass splices, keeping what it did not hear.
+        previous = windowStart > 0
+            ? SpeakerStats.splice(history: previous, window: mapped, windowStart: windowStart)
+            : mapped
         return mapping
     }
 }

@@ -58,4 +58,41 @@ public enum SpeakerStats {
             .sorted { $0.total != $1.total ? $0.total > $1.total : $0.id < $1.id }
         return SpeakerSummary(speakerCount: speakers.count, totalSpeech: totalSpeech, speakers: speakers)
     }
+
+    /// Splices an incremental (trailing-window) pass into the cumulative timeline.
+    ///
+    /// Normally the window is authoritative for everything from `windowStart` on, so the history is
+    /// clipped there and the window appended. But when the pass heard NOTHING in the stretch the
+    /// history already covers, it says nothing about that stretch — a speaker who happened to be
+    /// silent through the overlap must not have their earlier audio erased (that is what makes the
+    /// next pass mint a duplicate "Speaker N"). In that case the history is kept whole and only the
+    /// part of the window beyond it is appended.
+    public static func splice(history: [DiarizedSegment],
+                              window: [DiarizedSegment],
+                              windowStart: TimeInterval) -> [DiarizedSegment] {
+        guard !window.isEmpty else { return history }
+        let historyEnd = history.map { $0.start + $0.duration }.max() ?? 0
+        let coveredOverlap = window.contains {
+            $0.duration > 0 && $0.start < historyEnd && $0.start + $0.duration > windowStart
+        }
+        guard !coveredOverlap else { return clip(history, endingAt: windowStart) + window }
+        return history + window.compactMap { segment in
+            let start = max(segment.start, historyEnd)
+            let duration = segment.start + segment.duration - start
+            guard duration > 0 else { return nil }
+            return DiarizedSegment(speakerId: segment.speakerId, start: start, duration: duration)
+        }
+    }
+
+    /// Keeps only the part of each segment that lies before `limit`, dropping empty ones. Used to
+    /// stitch an incremental (trailing-window) diarization pass onto the history the earlier passes
+    /// already produced, without double-counting the overlap.
+    public static func clip(_ segments: [DiarizedSegment], endingAt limit: TimeInterval) -> [DiarizedSegment] {
+        segments.compactMap { segment in
+            guard segment.duration > 0, segment.start < limit else { return nil }
+            let duration = min(segment.start + segment.duration, limit) - segment.start
+            guard duration > 0 else { return nil }
+            return DiarizedSegment(speakerId: segment.speakerId, start: segment.start, duration: duration)
+        }
+    }
 }

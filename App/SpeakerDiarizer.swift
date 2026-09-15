@@ -35,21 +35,45 @@ actor SpeakerDiarizer {
         let segments: [DiarizedSegment]
     }
 
+    /// Latched model-load failure (issue #109). FluidAudio downloads its CoreML models on first use;
+    /// offline / captive-Wi-Fi / blocked-host failures are persistent, so once one happens we stop
+    /// re-attempting on every periodic pass and report the latched reason instead. Cleared only by
+    /// `retryModelLoad()` (the user pressing "Speakers").
+    private var modelFailure: String?
+
+    /// True once a model load has failed and has not been retried — callers use it to stop scheduling
+    /// periodic identification and to show a single rail line.
+    var isUnavailable: Bool { modelFailure != nil }
+
+    /// Clears the latch so the next `analyze` tries to load the models again.
+    func retryModelLoad() { modelFailure = nil }
+
     enum DiarizationError: LocalizedError {
         case notEnoughAudio
+        /// The diarization models could not be loaded/downloaded; `reason` is the underlying message.
+        case modelsUnavailable(String)
 
         var errorDescription: String? {
             switch self {
             case .notEnoughAudio:
                 return "Need at least about 3 seconds of system audio to identify speakers."
+            case .modelsUnavailable(let reason):
+                return "Speaker models could not be loaded: \(reason)"
             }
+        }
+
+        /// The underlying reason, for the one-line rail status.
+        var modelFailureReason: String? {
+            if case .modelsUnavailable(let reason) = self { return reason }
+            return nil
         }
     }
 
     /// Runs diarization over the captured 16 kHz mono samples, returning both the per-speaker talk-
     /// time summary and the raw (buffer-relative) segments for transcript alignment. Throws
-    /// `DiarizationError.notEnoughAudio` for buffers shorter than ~3 s; propagates any FluidAudio
-    /// model-load/processing error.
+    /// `DiarizationError.notEnoughAudio` for buffers shorter than ~3 s, `.modelsUnavailable` when the
+    /// models cannot be loaded (latched — see `isUnavailable`), and propagates FluidAudio's own
+    /// processing errors unchanged.
     ///
     /// The manager work is enqueued on a serial chain: each call awaits the prior tail before touching
     /// the (non-Sendable) manager, so even under actor reentrancy only one `prepareModels`/`process`
@@ -57,11 +81,18 @@ actor SpeakerDiarizer {
     /// them so a failed run can't break the chain for the next caller.
     func analyze(samples: [Float]) async throws -> DiarizationOutcome {
         guard samples.count >= Self.minSamples else { throw DiarizationError.notEnoughAudio }
+        // A latched model failure fails fast: no download attempt, no CPU, no log spam.
+        if let modelFailure { throw DiarizationError.modelsUnavailable(modelFailure) }
         let previous = chainTail
         let work = Task { () throws -> DiarizationOutcome in
             await previous?.value   // wait for any in-flight manager call to finish first
             if !self.prepared {
-                try await self.box.manager.prepareModels()
+                do {
+                    try await self.box.manager.prepareModels()
+                } catch {
+                    self.modelFailure = error.localizedDescription
+                    throw DiarizationError.modelsUnavailable(error.localizedDescription)
+                }
                 self.prepared = true
             }
             let result = try await self.box.manager.process(audio: samples)

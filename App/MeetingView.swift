@@ -54,6 +54,17 @@ struct MeetingView: View {
     @State var speakerLoading = false
     @State var speakerParticipants: [SpeakerParticipant] = []
     @State var speakerTrackers: [SpeakerSource: SpeakerIdentityTracker] = [:]
+    /// Cumulative diarized timeline per source, in stable identity-id space. Periodic passes analyze
+    /// only a trailing window (issue #109) and are stitched onto this, so talk-time totals and
+    /// per-line labels still cover the whole run without re-processing it.
+    @State var speakerSegments: [SpeakerSource: [DiarizedSegment]] = [:]
+    /// Every identity seen so far per source (id → name), including speakers absent from the newest
+    /// window. Kept in step with `speakerTrackers` renames.
+    @State var speakerIdentities: [SpeakerSource: [String: SpeakerIdentity]] = [:]
+    /// How much of each sink a pass has already analyzed, so the next window starts there.
+    @State var speakerAnalyzedSamples: [SpeakerSource: Int] = [:]
+    /// One-line rail status (e.g. speaker models unavailable); nil when there is nothing to say.
+    @State var speakerStatus: String?
     @State var speakerTask: Task<Void, Never>?
     @State var nextSpeakerAnalysis = Date.distantFuture
     @State var diarizationRunStartIndex = 0
@@ -439,6 +450,12 @@ extension MeetingView {
         speakerTrackers = [.others: SpeakerIdentityTracker(prefix: remotePrefix),
                            .you: SpeakerIdentityTracker(prefix: micPrefix)]
         speakerParticipants = []
+        speakerSegments = [:]
+        speakerIdentities = [:]
+        speakerAnalyzedSamples = [:]
+        speakerStatus = nil
+        // A new recording is also a retry: the model download may well succeed now (#109).
+        Task { await diarizer.retryModelLoad() }
         nextSpeakerAnalysis = .distantFuture
         speakerLoading = false
         speakerError = nil
@@ -466,7 +483,7 @@ extension MeetingView {
         diarizationSinkAttached = ProviderSettings.speakerDiarizationEnabled
         diarizationRunUsesTimestamps = ProviderSettings.transcriptionEngine == "whisperKit"
         microphoneSinkAttached = diarizationSinkAttached && ProviderSettings.microphoneDiarizationEnabled
-        nextSpeakerAnalysis = Date().addingTimeInterval(20)
+        nextSpeakerAnalysis = Date().addingTimeInterval(SpeakerAnalysisPolicy.minimumRest)
     }
 
     /// Attach/clear files & folders whose text is fed into Quick/Deep prompts as grounding.

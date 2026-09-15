@@ -84,6 +84,12 @@ extension MeetingView {
             .help(diarizationSinkAttached
                   ? "View automatic speaker identification and edit names"
                   : "Press Start listening to start capturing speaker audio.")
+            // One-line status when automatic identification has stopped (e.g. the on-device models
+            // could not be downloaded) — otherwise this was only visible inside the sheet (#109).
+            if let speakerStatus {
+                Text(speakerStatus).font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 
