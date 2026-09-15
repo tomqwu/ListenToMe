@@ -15,7 +15,8 @@ final class TranscriberPrepareTests: XCTestCase {
         var value: Bool { lock.withLock { _value } }
     }
 
-    private func makeSession(capture: MockCapture, transcriber: MockTranscriber) -> MeetingSession {
+    private func makeSession(capture: MockCapture, transcriber: MockTranscriber,
+                             drainGrace: Duration = .milliseconds(250)) -> MeetingSession {
         MeetingSession(
             store: ConversationStore(),
             context: ContextEngine(debounce: 0),
@@ -24,6 +25,7 @@ final class TranscriberPrepareTests: XCTestCase {
             makeProvider: { model in MockLLMProvider(id: model, deltas: ["[\(model)]"]) },
             models: [.listener: "L", .quick: "Q", .deep: "D"],
             listenerDebounce: 0,
+            capturePumpDrainGrace: drainGrace,
             clock: { 0 }
         )
     }
@@ -185,10 +187,13 @@ final class TranscriberPrepareTests: XCTestCase {
 
     func testChunksBufferedAtStopAreStillFedBeforeFinalize() async throws {
         let capture = MockCapture()
-        // 20 ms per chunk: 5 chunks take ~100 ms, well inside teardown's drain grace — but a pump
-        // that is cancelled outright stops iterating and feeds almost none of them.
+        // 20 ms per chunk: 5 chunks take ~100 ms. The grace is injected (10 s) rather than left at
+        // the 250 ms product default, so this asserts the *drain-before-finalize ordering* and not
+        // whether a loaded CI machine happens to fit five feeds inside a quarter second (#147).
+        // A pump that is cancelled outright stops iterating and feeds almost none of them.
         let transcriber = MockTranscriber(feedDelayNanos: 20_000_000)
-        let session = makeSession(capture: capture, transcriber: transcriber)
+        let session = makeSession(capture: capture, transcriber: transcriber,
+                                  drainGrace: .seconds(10))
 
         try await session.start()
         let chunks = (0..<5).map {
