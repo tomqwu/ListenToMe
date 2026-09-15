@@ -32,6 +32,14 @@ An in-app What’s New screen shows the installed version/build and recent chang
 
 Release notes live in `iOS/MobileReleaseNotes.swift`. Update its newest release entry when bumping the marketing version; an app-hosted test checks it against the installed bundle. The shown build number always comes from the bundle. This screen belongs to the app; Apple's TestFlight introduction remains managed by TestFlight.
 
+What's New is gated on the newest bundled release — its version plus a digest of its own text — not on
+the build number, so successive TestFlight builds that change no notes do not re-present the same
+sheet; editing a bundled entry does. A first launch after install has nothing acknowledged yet: it
+records the current notes and goes straight to the app instead of opening a full-screen "IN THIS
+UPDATE" for software the user has never run. The newest bundled entry is the one badged
+"IN THIS UPDATE", even on a hot-fix build whose version does not match it. Settings still shows the
+exact installed `version (build)`.
+
 ## iOS 1.10.0 (22)
 
 Auto now connects Quick evaluation to automatic Summary and Deep generation with the selected models. Medium/high recommendations run serially, coalesce pending context and preserve previous output on failure. Manual Generate takes priority and remains available after Stop. The UI describes event-triggered evaluation and shows full-review status. Quick allows enough bounded response room for GLM planning preambles, with a 30-second deadline; displayed recaps remain limited to three short bullets. See [the shared policy](SHARED-LIVE-SUMMARY.md#automatic-full-reviews-ios-1100) and [What to Test](../metadata/ios/en-CA/what-to-test-1.10.0.txt).
@@ -83,7 +91,11 @@ Trailing prose, malformed objects and partial JSON are rejected; reasoning is ne
 
 ## iOS 1.6.0 (14)
 
-History uses native row actions: swipe right to Share, left to Delete, or touch and hold for both.
+History has a search field over title, summary and transcript, using the same keyword ranking
+(`SessionSearch`) as the Mac History sheet: every typed term must appear in the same conversation,
+results are ordered by match count then recency, and an empty query is the full list. A query that
+matches nothing shows the standard "no results" view; the saved conversations themselves are
+untouched. History uses native row actions: swipe right to Share, left to Delete, or touch and hold for both.
 Sharing opens the system share sheet for the selected conversation without switching the active one.
 Delete always asks for confirmation, including from the context menu; a full swipe cannot delete it.
 VoiceOver exposes Share and Delete as custom actions. See [the interaction design and checks](IOS-NATIVE-INTERACTIONS.md).
@@ -158,6 +170,10 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
 
 - Foreground microphone transcription using Apple's on-device SpeechAnalyzer. Language assets
   download on first use. Unsupported device/language and permission errors are shown in the app.
+  **Settings → Transcription → Language** is remembered across launches, so a language chosen for
+  daily meetings is still selected after a relaunch instead of reverting to the device's. The list
+  compares BCP-47 identifiers, so a device on `en_US` is offered "System (en_US)" once rather than
+  also listing "English (US)".
 - Partial and final transcript text. Everyone picked up by the microphone is labeled **Microphone**;
   this version does not infer who is speaking. Unfinalized text is retained and labeled accordingly.
 - Editable titles and notes; atomic local saves after finalized utterances, explicit Save,
@@ -187,7 +203,27 @@ System/call audio, background recording, Mac sync, audio-file import, WhisperKit
 per-person speaker identification are not included. A local/LAN Ollama server is supported only when you
 enter its address yourself; the app performs no discovery and never switches servers on its own. Notes and saved
 transcripts remain usable when the speech model or Apple Intelligence is unavailable.
-App data is local to the sandbox; normal OS backup policy applies. Sharing explicitly exports text.
+App data is local to the sandbox. Sharing explicitly exports text.
+
+Conversations, attachments and queued share imports are written with the
+`completeUntilFirstUserAuthentication` data-protection class: after a restart they stay encrypted
+until the device has been unlocked once, rather than being readable from the moment the system boots.
+By default this data is included in the device's normal iCloud/Finder backup, like other app data, so
+restoring a new phone brings the conversations along. **Settings → Privacy → Exclude conversations
+from iCloud backup** (off by default) sets `isExcludedFromBackup` on the conversation, attachment and
+active-conversation files; with it on, transcripts never leave the device — not even into an
+Apple-held backup — and a restored phone will not have them. The setting is remembered and re-applied
+at every launch, including for directories recreated later.
+
+An automatic model-catalog refresh happens only where the user has already chosen that destination:
+the Ollama provider plus either a saved API key or a server URL they entered. Opening a model list on
+an Apple Intelligence install — or on Ollama Cloud with no key — contacts nothing; the explicit
+**Refresh models from API** button is still there. A cloud catalog fetch with no key now fails locally
+with "Add your Ollama API key…" instead of sending an anonymous request to ollama.com.
+
+Ollama requests reuse one long-lived ephemeral `URLSession` per role (summaries, speech correction),
+rebuilt only when the server URL or key changes, so an hour-long meeting with Auto Quick on does not
+accumulate one session, connection pool and TLS handshake per evaluation.
 
 Summaries can run while recording: each request uses a snapshot of the notes and transcript at
 that moment. Stop listening remains available during generation. A disabled summary action shows
@@ -223,6 +259,12 @@ For Apple Notes, choose **Share → Send Copy → ListenToMe → Import**, then 
 This creates a new local conversation while preserving the current one. The share extension also
 accepts compatible text, images and files from other apps. It queues imports in the signed App Group
 `group.com.tomwu.ListenToMe.ios`; repeated delivery of the same batch does not duplicate conversations.
+A batch that cannot be imported — an unreadable manifest, an oversized or unsafe payload — is moved to
+`Inbox/Failed` and the drain continues, so one bad share no longer repeats its error on every
+foreground or block the batches queued behind it; its bytes are kept there rather than deleted. A
+folder with no manifest is an extension that was killed mid-write and can never become a
+conversation: it is left alone for 24 hours (the extension may still be writing) and then deleted, so
+abandoned photo originals do not occupy the App Group forever.
 It does not browse or synchronize your Apple Notes library. Paste text or add an exported PDF if a
 source app does not offer a compatible share representation. Apple Notes rich formatting may be
 flattened; verify that any scans or embedded documents you need were included.

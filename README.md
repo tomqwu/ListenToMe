@@ -24,7 +24,8 @@ transcript never leave the machine**.
 
 A native standalone iOS 26 app is now available in source as the **ListenToMeIOS** target.
 It includes microphone transcription, a unified live transcript/Quick Summary/Deep Summary dashboard,
-local conversations, photo/file attachments, Apple Notes share imports and Markdown sharing. Choose
+local conversations with keyword search, photo/file attachments, Apple Notes share imports and
+Markdown sharing. Choose
 on-device Apple Intelligence — the default on capable devices — or Ollama: Ollama Cloud with your own
 key, or an Ollama server you run on your own network. It does not capture other apps' audio or sync
 with the Mac. See [iOS setup, validation and distribution](docs/IOS.md).
@@ -250,6 +251,11 @@ analysis; speaker names are included in saved transcript text when session savin
   without security-scoped bookmarks. It still asks macOS for the Microphone, Speech Recognition,
   Screen Recording, and Accessibility permissions listed above, and only uses them for the features
   described in this README.
+- **iOS storage and backup.** Conversations, attachments and queued share imports are written with
+  iOS data protection (readable only after the device has been unlocked once since a restart). They
+  are included in the device's normal iCloud/Finder backup by default, so a restored phone keeps
+  them; **Settings → Privacy → Exclude conversations from iCloud backup** keeps them off any backup.
+  Model catalogs are fetched only from a destination you configured — never anonymously.
 
 ## Architecture
 
