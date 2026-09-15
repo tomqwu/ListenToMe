@@ -74,6 +74,11 @@ the full list in the tooltip; `clearReferences` resets it.
   `libListenToMeCore.a` and run: **35/35 assertions pass ("ALL PASS")**, including the truncated
   JSON quarantine, the corrupt legacy file, café/Zürich/José, full-width ＡＩ, CJK 会議/議事録,
   tab + CRLF queries, whole-word ranking, notes/speaker names, and RTF/Latin-1/UTF-16 reading.
+- **Whole Core test target type-checks** with the CLT `swiftc -typecheck` against the built module
+  plus Xcode's XCTest framework path (this caught the two `contentsOfDirectory(atPath: root)` calls
+  CI flagged, fixed in 485278a — the harness had not compiled the XCTest files).
+- CI on PR #162 compiled both app targets; the Core test-target compile failure it reported is the
+  one fixed above.
 - **Not run** (blocked by the Xcode license): `swift test` (the real XCTest bundle),
   `./scripts/check-coverage.sh 95`, `make build`, `make ios-build`, `make ios-test`, `swiftlint`
   (swiftlint additionally fails on this machine because it cannot find `sourcekitdInProc` in the
