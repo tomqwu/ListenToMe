@@ -158,6 +158,31 @@ final class TranscriberPrepareTests: XCTestCase {
         XCTAssertEqual(transcriber.finishCount, 1)
     }
 
+    /// The live path must use the same cancellation-racing wait as the import path: a Stop during a
+    /// download whose platform call ignores cancellation must not park the start task (issue #147).
+    func testStopDuringAnUncancellablePrepareDoesNotParkTheStartTask() async throws {
+        let capture = MockCapture()
+        let transcriber = MockTranscriber(stubbornPrepare: true)
+        let session = makeSession(capture: capture, transcriber: transcriber)
+
+        let startFinished = Flag()
+        let startTask = Task { try? await session.start(); startFinished.set() }
+        await waitUntil { transcriber.prepareEntered }
+        XCTAssertTrue(transcriber.prepareEntered, "prepare never ran")
+
+        await session.stopAndWait()
+        await waitUntil { startFinished.value }
+        guard startFinished.value else {
+            startTask.cancel(); transcriber.release()
+            return XCTFail("start() stayed parked inside an uncancellable model download")
+        }
+        await startTask.value
+        XCTAssertFalse(session.isRunning)
+        XCTAssertFalse(session.isPreparing)
+        XCTAssertEqual(capture.startCount, 0, "an aborted start must never start capture")
+        transcriber.release()   // let the abandoned prepare unwind
+    }
+
     func testChunksBufferedAtStopAreStillFedBeforeFinalize() async throws {
         let capture = MockCapture()
         // 20 ms per chunk: 5 chunks take ~100 ms, well inside teardown's drain grace — but a pump

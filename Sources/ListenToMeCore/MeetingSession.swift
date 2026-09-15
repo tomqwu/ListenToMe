@@ -280,7 +280,12 @@ public final class MeetingSession {
         // on-device speech model (minutes), and doing it lazily on the feed path dropped the opening
         // seconds of both channels. Run it as a cancellable child Task so a Stop/close/quit during
         // the download tears down promptly instead of freezing the UI (issue #99).
-        let prepare = Task { await transcriber.prepare() }
+        // Waited for through `prepareRacingCancellation` (as on the import path): `prepare()` is
+        // contracted to observe cancellation but the platform download it wraps may not
+        // (`AssetInventory.downloadAndInstall()` has no documented guarantee), so a plain
+        // `await transcriber.prepare()` could park this start task for the whole download after a
+        // Stop — and the next Listen would then run a second concurrent download (issue #147).
+        let prepare = Task { await Self.prepareRacingCancellation(transcriber) }
         prepareTask = prepare
         await prepare.value
         // A stop() during prepare already took ownership of the transcriber via beginStop() (and
