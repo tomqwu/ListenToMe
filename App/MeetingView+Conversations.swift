@@ -10,21 +10,26 @@ extension MeetingView {
     func checkpoint(complete: Bool = false, force: Bool = false) -> Bool {
         guard ProviderSettings.saveSessionsForSearch, sessionSaveable else { return false }
         guard hasConversation else { return true }
+        // Compare a cheap dirty key BEFORE building anything: the timer fires once a second for the
+        // whole meeting, and rebuilding the joined transcript first made every idle tick
+        // O(transcript) on the main actor (issue #116). `store.revision` stands in for the
+        // transcript; Date is intentionally excluded so ticks do not rewrite unchanged content.
+        let key = SessionCheckpointKey(
+            revision: store.revision, title: conversationTitle, summary: session.listenerSummary,
+            notes: session.notes, quickSuggestion: session.quickSuggestion,
+            deepAnswer: session.deepAnswer, complete: complete)
+        guard force || key != lastSavedKey else { return true }
         let record = SessionRecord(
             id: currentSessionID, title: conversationTitle, date: Date(),
             transcript: store.utterances.map { "\($0.speakerLabel): \($0.text)" }.joined(separator: "\n"),
             summary: session.listenerSummary, segments: store.utterances, notes: session.notes,
             quickSuggestion: session.quickSuggestion, deepAnswer: session.deepAnswer, isComplete: complete)
-        // Date is intentionally excluded so repeated timer ticks do not rewrite unchanged content.
-        let signature = String(store.revision) + record.title + record.transcript + record.summary + (record.notes ?? "")
-            + (record.quickSuggestion ?? "") + (record.deepAnswer ?? "") + String(complete)
-        guard force || signature != lastSavedSignature else { return true }
         guard sessionStore.add(record) else {
             saveMessage = sessionStore.errorText ?? "Save failed. Retry or Export to keep this conversation."
             saveFailed = true
             return false
         }
-        lastSavedSignature = signature
+        lastSavedKey = key
         saveMessage = "Saved at " + Date().formatted(date: .omitted, time: .standard)
         saveFailed = false
         return true
@@ -86,7 +91,7 @@ extension MeetingView {
             conversationTitle = "Conversation — " + Date().formatted(date: .abbreviated, time: .shortened)
             sessionSaveable = ProviderSettings.saveSessionsForSearch
             othersAudioSink.reset(); microphoneAudioSink.reset()
-            lastSavedSignature = ""
+            lastSavedKey = nil
             saveMessage = "New conversation"; saveFailed = false
             clearReferences(session: session)
             transcriptAtBottom = true

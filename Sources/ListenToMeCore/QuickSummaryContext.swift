@@ -62,7 +62,8 @@ public struct QuickSummaryContext {
         let live = Dictionary(liveSegments.filter { !$0.isFinal }.map { ($0.source, $0) },
                               uniquingKeysWith: { _, newer in newer })
         for source in [SpeakerSource.you, .others] {
-            if let segment = live[source], segment.text.trimmingCharacters(in: .whitespacesAndNewlines).count >= 24 {
+            if let segment = live[source], segment.text.trimmingCharacters(in: .whitespacesAndNewlines).count
+                >= ConversationStore.provisionalMinimumCharacters {
                 // The speaker label is a stable prefix, so appended speech still extends the
                 // piece already read instead of invalidating it.
                 result += chunks(segment.text, id: "live:\(source.rawValue)", label: label(segment))

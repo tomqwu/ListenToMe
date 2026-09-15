@@ -87,6 +87,15 @@ public final class MeetingSession {
     /// The model ID assigned to each role.
     public private(set) var models: [CopilotRole: String]
 
+    /// Memoized labeled-piece snapshot for the live path, keyed on `LiveKey`. Without it every
+    /// ingested hypothesis walked the whole transcript several times on the main actor (issue #116).
+    @ObservationIgnored private var liveCacheKey: LiveKey?
+    @ObservationIgnored private var liveCache: LiveSnapshot?
+    #if DEBUG
+    /// Test-only: how many times the snapshot was actually rebuilt (cache misses).
+    @ObservationIgnored private(set) var livePieceComputations = 0
+    #endif
+
     public let quickReader = QuickSummaryReader()
     public let automaticReviews = AutomaticReviewCoordinator()
     private var liveScheduler = LiveSummaryScheduler()
@@ -498,8 +507,12 @@ extension MeetingSession {
                                    references: references.isEmpty ? nil : references,
                                    personaGuidance: personaGuidance),
             action: action)
+        // The provisional notice is part of the assembled prompt but invisible to the scaffold probe,
+        // which measures with no messages. Charge it whenever a hypothesis is eligible, so the
+        // definition cannot be what pushes an Apple-sized prompt over its window.
+        let notice = store.hasProvisionalSpeech ? PromptBuilder.provisionalNotice.count + 2 : 0
         let allocation = PromptBudget.allocate(
-            limit: limit, scaffold: scaffold, transcript: Self.transcriptBudget(for: action),
+            limit: limit, scaffold: scaffold + notice, transcript: Self.transcriptBudget(for: action),
             references: references.count, summary: summary.count, notes: notes.count)
 
         let (clampedReferences, droppedReferences) = Self.clamp(references, to: allocation.references)
@@ -511,7 +524,9 @@ extension MeetingSession {
             references: clampedReferences, personaGuidance: personaGuidance)
         // Only a context-window clamp is worth reporting; the provider-agnostic "recent window"
         // budgets have always been a deliberate relevance choice, not a capacity failure.
-        let droppedTranscript = context.messages.count < store.utterances.count
+        // Only finalized lines are compared: the trailing provisional lines are extra context, not
+        // part of the transcript window that could have been trimmed.
+        let droppedTranscript = context.messages.count(where: \.isFinal) < store.utterances.count
         promptTruncationNotice = limit == nil ? nil : PromptBudget.truncationNotice(
             transcriptDropped: droppedTranscript, referencesDropped: droppedReferences,
             auxiliaryDropped: droppedSummary || droppedNotes)
@@ -582,11 +597,22 @@ extension MeetingSession {
                                        responseLanguage: self.responseLanguage,
                                        personaGuidance: self.personaGuidance),
                 action: .recap)
+            // Charged only when this refresh will actually carry provisional lines — the listener
+            // sends them solely once the ledger has caught up (see below).
+            let notice = remaining.isEmpty && self.store.hasProvisionalSpeech
+                ? PromptBuilder.provisionalNotice.count + 2 : 0
             let allocation = PromptBudget.allocate(
-                limit: limit, scaffold: scaffold, transcript: 16_000, references: 0,
+                limit: limit, scaffold: scaffold + notice, transcript: 16_000, references: 0,
                 summary: record.count, notes: self.notes.count)
             let (clampedRecord, droppedRecord) = Self.clamp(record, to: allocation.summary)
             let (clampedNotes, droppedNotes) = Self.clamp(self.notes, to: allocation.notes)
+            // Speech the recognizer has not finalized is appended as trailing "(provisional)" lines
+            // so a refresh cannot miss a hypothesis that stays volatile for the whole recording
+            // (issue #113) — but ONLY when the ledger has caught up. The listener's record is
+            // cumulative and each chained batch would otherwise re-send the same unconfirmed
+            // wording, and the rolling record is what a chained batch builds on. Being non-final,
+            // these lines never enter `pendingSummaryIDs`, so the real segment is still summarized
+            // once it finalizes, and `PromptBuilder` tells the model what the tag means.
             var characters = 0
             let batch = remaining.prefix { segment in
                 let cost = TranscriptSegment.promptCharacterCost(segment)
@@ -594,6 +620,8 @@ extension MeetingSession {
                 characters += cost
                 return true
             }
+            let provisional = remaining.isEmpty
+                ? self.store.provisionalContext(maxChars: allocation.transcript) : []
             // A partial batch is not loss: the ledger keeps the rest and a follow-up refresh starts
             // automatically, so only a clamped record or notes is worth reporting here. Report by
             // assignment only — an ordinary batched refresh (Refresh, rename, the auto-continue
@@ -607,7 +635,7 @@ extension MeetingSession {
             let generation = self.responseGenerations[.listener] ?? 0
             self.pendingSummaryIDs[generation] = Set(batch.map(\.id))
             return PromptBuilder.buildListener(context: PromptContext(
-                messages: Array(batch), notes: clampedNotes, summary: clampedRecord ?? "",
+                messages: Array(batch) + provisional, notes: clampedNotes, summary: clampedRecord ?? "",
                 responseLanguage: self.responseLanguage, personaGuidance: self.personaGuidance))
         }
         return task
@@ -732,10 +760,49 @@ extension MeetingSession {
 
 
 extension MeetingSession {
-    private var livePieces: [QuickSummaryContext.Piece] {
-        QuickSummaryContext.pieces(notes: notes, segments: store.utterances,
-                                   liveSegments: [SpeakerSource.you, .others].compactMap { store.partials[$0] })
+    /// What the labeled piece snapshot is a function of. `store.revision` covers every change to
+    /// finalized speech (arrival, restore, attribution, renaming); partials bump no revision, so
+    /// their text is compared directly — keyed on the channel, whose identity is stable, not on a
+    /// speaker label that a rename could change — along with the notes that become the `Notes:` piece.
+    struct LiveKey: Equatable {
+        let revision: Int
+        let partials: [String]
+        let notes: String
     }
+
+    /// The memoized snapshot: the labeled pieces plus the joined review source built from them.
+    /// Rebuilt only when `LiveKey` changes, so one `handleLiveEvent` walks the transcript once
+    /// instead of three times plus a join (issue #116).
+    struct LiveSnapshot {
+        let pieces: [QuickSummaryContext.Piece]
+        let source: String
+    }
+
+    func liveSnapshot() -> LiveSnapshot {
+        let live = [SpeakerSource.you, .others].compactMap { store.partials[$0] }
+        let key = LiveKey(revision: store.revision,
+                          partials: live.map { $0.source.rawValue + ":" + $0.text },
+                          notes: notes)
+        if let cached = liveCache, liveCacheKey == key { return cached }
+        let pieces = QuickSummaryContext.pieces(notes: notes, segments: store.utterances,
+                                                liveSegments: live)
+        // The pieces already carry speaker labels and a Notes marker, so the automatic reviews read
+        // the same attributed evidence every manual prompt does.
+        let snapshot = LiveSnapshot(pieces: pieces, source: pieces.map(\.text).joined(separator: "\n"))
+        liveCacheKey = key
+        liveCache = snapshot
+        #if DEBUG
+        livePieceComputations += 1
+        #endif
+        return snapshot
+    }
+
+    private var livePieces: [QuickSummaryContext.Piece] { liveSnapshot().pieces }
+
+    #if DEBUG
+    /// Test-only: the memoized pieces, without going through the private accessor.
+    var livePiecesForTesting: [QuickSummaryContext.Piece] { livePieces }
+    #endif
 
     public var autoQuickStatus: String {
         guard autoSummaryEnabled else { return "Auto off" }
@@ -749,9 +816,6 @@ extension MeetingSession {
         return isRunning ? "Listening for meaningful changes" : "Auto checks while listening"
     }
 
-    /// The pieces already carry speaker labels and a Notes marker, so the automatic reviews read the
-    /// same attributed evidence every manual prompt does.
-    private var automaticReviewSource: String { livePieces.map(\.text).joined(separator: "\n") }
 
     /// The user's language, persona and reference settings, applied to automatic reviews exactly as
     /// they are applied to the manual panes.
@@ -769,10 +833,14 @@ extension MeetingSession {
         return automaticReviews.status(mode)
     }
 
-    private func synchronizeAutomaticReviews() {
+    private func synchronizeAutomaticReviews() { synchronizeAutomaticReviews(liveSnapshot()) }
+
+    /// - Parameter live: the snapshot for this event, computed once by the caller so a single
+    ///   ingested hypothesis never walks the transcript more than once (issue #116).
+    private func synchronizeAutomaticReviews(_ live: LiveSnapshot) {
         automaticReviews.synchronize(enabled: autoSummaryEnabled && isRunning && aiEnabled
             && providers[.quick] != nil && providerAvailability(models[.quick] ?? "") == nil,
-            manualBusy: !streamingRoles.isEmpty, pieces: livePieces, source: automaticReviewSource,
+            manualBusy: !streamingRoles.isEmpty, pieces: live.pieces, source: live.source,
             directives: automaticReviewDirectives, provider: { [weak self] mode in
                 guard let self else { throw CancellationError() }
                 let role: CopilotRole = mode == .summary ? .listener : .deep
@@ -804,13 +872,16 @@ extension MeetingSession {
 
     private func handleLiveEvent(_ event: LiveSummaryScheduler.Event) {
         if event == .conversationChanged || event == .providerChanged { automaticReviews.reset() }
-        synchronizeAutomaticReviews()
-        if event == .automationChanged || event == .providerChanged,
-           !quickReader.context.hasChanges(livePieces), !quickReader.isCatchingUp {
-            automaticReviews.offer(quickReader.recommendations, source: automaticReviewSource)
+        // One snapshot per event: the pieces, the joined review source and the pending check all
+        // read the same memoized value instead of rebuilding the transcript three times (issue #116).
+        let live = liveSnapshot()
+        synchronizeAutomaticReviews(live)
+        let pending = quickReader.context.hasChanges(live.pieces)
+        if event == .automationChanged || event == .providerChanged, !pending, !quickReader.isCatchingUp {
+            automaticReviews.offer(quickReader.recommendations, source: live.source)
         }
         let state = LiveSummaryScheduler.Snapshot(recording: isRunning, automatic: autoSummaryEnabled,
-            pending: quickReader.context.hasChanges(livePieces), reading: quickReader.isReading,
+            pending: pending, reading: quickReader.isReading,
             manualQuick: streamingRoles.contains(.quick), available: aiEnabled && providers[.quick] != nil && providerAvailability(models[.quick] ?? "") == nil,
             failures: quickReader.failures)
         for action in liveScheduler.plan(event, state: state) {
@@ -831,11 +902,12 @@ extension MeetingSession {
         guard isRunning, aiEnabled, autoSummaryEnabled, !quickReader.isReading,
               !streamingRoles.contains(.quick), providerAvailability(models[.quick] ?? "") == nil, let provider = providers[.quick] else { return }
         defer { handleLiveEvent(.evaluationFinished) }
-        if livePieces.isEmpty {
+        let live = liveSnapshot()
+        if live.pieces.isEmpty {
             quickReader.reset(); quickSuggestion = ""; quickRecap = ""; manualQuickAnswer.dismiss(); return
         }
         do {
-            guard let batch = try quickReader.context.batch(livePieces, summary: quickRecap,
+            guard let batch = try quickReader.context.batch(live.pieces, summary: quickRecap,
                 reviewsCompleted: quickReader.reviewsCompleted, pendingReviews: quickReader.recommendations,
                 responseLanguage: responseLanguage) else { return }
             let run = runID
@@ -845,8 +917,9 @@ extension MeetingSession {
                 return self.quickReader.context.isCurrent(batch, pieces: self.livePieces)
             }, apply: { [weak self] in self?.applyQuickRecap($0) })
             if quickReader.completedReads > previousReads, !quickReader.isCatchingUp {
-                synchronizeAutomaticReviews()
-                automaticReviews.offer(quickReader.recommendations, source: automaticReviewSource)
+                let current = liveSnapshot()
+                synchronizeAutomaticReviews(current)
+                automaticReviews.offer(quickReader.recommendations, source: current.source)
             }
         } catch { /* Encoding consists only of validated string data. A later event retries. */ }
     }

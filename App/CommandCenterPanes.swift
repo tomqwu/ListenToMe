@@ -105,10 +105,12 @@ extension MeetingView {
     }
 
     // Real-only session stats.
-    private var youCount: Int { store.utterances.filter { $0.source == .you }.count }
-    private var othersCount: Int { store.utterances.filter { $0.source == .others }.count }
+    /// Read from the store's incrementally maintained counters: rescanning every utterance on each
+    /// render cost O(transcript) once a second while the elapsed timer ticked (issue #116).
+    private var youCount: Int { store.youCount }
+    private var othersCount: Int { store.othersCount }
     /// Explicit ~chars/4 estimate (labeled "~tok"), never a fabricated exact count.
-    private var approxTokens: Int { store.utterances.reduce(0) { $0 + $1.text.count } / 4 }
+    private var approxTokens: Int { store.transcriptCharacterCount / 4 }
 
     // MARK: Center transcript
 

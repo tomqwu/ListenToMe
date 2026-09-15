@@ -66,7 +66,7 @@ struct MeetingView: View {
     @State var conversationTitle = "Conversation — " + Date().formatted(date: .abbreviated, time: .shortened)
     @State var saveMessage = "Not saved yet"
     @State var saveFailed = false
-    @State var lastSavedSignature = ""
+    @State var lastSavedKey: SessionCheckpointKey?
     private let hotkey = HotkeyMonitor()
 
     /// mm:ss since the current recording run started (00:00 when idle).
@@ -723,7 +723,7 @@ extension MeetingView {
         // old records on a fresh/empty window must not silently disable future saving.
         if hasConversation { sessionSaveable = false }
         currentSessionID = UUID().uuidString
-        lastSavedSignature = ""
+        lastSavedKey = nil
     }
 
     /// On Stop, persist the finished session for cross-meeting search when this window-session is

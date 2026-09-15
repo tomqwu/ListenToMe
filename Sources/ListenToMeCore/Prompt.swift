@@ -177,12 +177,30 @@ public enum PromptBuilder {
         }
     }
 
+    /// Defines the `(provisional) ` tag for the model. Speech the recognizer has not finalized is
+    /// appended to prompts so an answer is never about the previous question (issue #113), but it is
+    /// unconfirmed and will be sent again once it finalizes — so it must never be written down as a
+    /// decision, and the same wording arriving twice is a correction, not a second event.
+    public static let provisionalNotice = """
+    A line marked "(provisional) " is unconfirmed, still-changing speech recognition: its wording may \
+    be revised and it will be sent again once it is finalized. Use it only to understand what is being \
+    said right now. Never record it as a decision, agreement, owner, deadline or action item, and never \
+    report it twice when the finalized text repeats it.
+    """
+
+    /// True when the assembled transcript carries provisional lines, so the definition is included
+    /// only in the prompts that actually need it.
+    private static func hasProvisional(_ context: PromptContext) -> Bool {
+        context.messages.contains { !$0.isFinal }
+    }
+
     private static func buildUserMessage(context: PromptContext, instruction: String) -> String {
         let transcript = context.messages.map { seg in
             "\(seg.speakerLabel): \(seg.text)"
         }.joined(separator: "\n")
 
         var user = "Transcript so far:\n\(transcript)\n\n"
+        if hasProvisional(context) { user += provisionalNotice + "\n\n" }
         if let summary = context.summary, !summary.trimmingCharacters(in: .whitespaces).isEmpty {
             user += "Meeting summary so far (from the listener):\n\(summary)\n\n"
         }
@@ -228,6 +246,7 @@ public enum PromptBuilder {
         }.joined(separator: "\n")
 
         var user = "New transcript evidence:\n\(transcript)\n\n"
+        if hasProvisional(context) { user += provisionalNotice + "\n\n" }
         if let summary = context.summary, !summary.isEmpty {
             user += "Previous meeting record (retain earlier decisions, owners, deadlines, and open items unless " +
                 "the new evidence explicitly changes them):\n\(summary)\n\n"
