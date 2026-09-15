@@ -391,6 +391,16 @@ and Foundation Models. iOS does not depend on the Mac WhisperKit or FluidAudio b
 
 Follow [the TestFlight release runbook](IOS-RELEASING.md) for exact archive, export, upload, account-recovery and tester-verification steps. A connected device is not required to upload an authorized beta; physical-device acceptance remains a separate production-readiness gate.
 
+## App Store privacy and support pages
+
+App Store Connect requires a reachable privacy policy URL and a support URL. Both are checked into this
+repository and served from GitHub: [`docs/ios-privacy.md`](ios-privacy.md) and
+[`docs/ios-support.md`](ios-support.md). The app links to the same two URLs from
+**More → Settings → Privacy**, so a reviewer can reach them from inside the build. Keep both pages
+accurate whenever behavior that they describe changes — the provider default, the Ollama server
+setting, calendar redaction, backup exclusion, interruption handling and History search are all
+described there.
+
 Maintain the [iOS listing metadata](../metadata/ios/README.md) alongside release changes. Apply the
 Beta App Description and per-build What to Test in App Store Connect, and verify the uploaded app
 icon and the installed Home Screen icon. Repository metadata files alone do not update the listing.
