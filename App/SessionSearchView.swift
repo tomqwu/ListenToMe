@@ -31,8 +31,11 @@ struct SessionSearchView: View {
             // A damaged file is set aside rather than hiding everything, so this is a warning
             // shown next to the conversations that did load, not a read failure.
             if let warning = store.archiveWarning {
-                Label(warning, systemImage: "exclamationmark.triangle")
-                    .font(.callout).foregroundStyle(.orange)
+                HStack {
+                    Label(warning, systemImage: "exclamationmark.triangle")
+                        .font(.callout).foregroundStyle(.orange)
+                    Button("Dismiss") { store.dismissArchiveWarning() }.controlSize(.small)
+                }
             }
             List(SessionSearch.search(records, query: query)) { record in
                 Button { selected = record } label: {
@@ -60,7 +63,6 @@ struct SessionSearchView: View {
             }
         }
         .padding(20).frame(width: 680, height: 540)
-        .onAppear { records = store.all() }   // re-read when History opens, not only at init
         .confirmationDialog("Delete all saved conversations?", isPresented: $confirmClear) {
             Button("Delete all saved conversations", role: .destructive) {
                 if store.clear() { records = []; onClear() }

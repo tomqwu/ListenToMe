@@ -18,9 +18,13 @@ struct MobileHistoryView: View {
             List {
                 if let warning = session.archiveWarning {
                     Section {
-                        Label(warning, systemImage: "exclamationmark.triangle")
-                            .font(.footnote).foregroundStyle(.orange)
-                            .accessibilityIdentifier("history-archive-warning")
+                        VStack(alignment: .leading, spacing: 8) {
+                            Label(warning, systemImage: "exclamationmark.triangle")
+                                .font(.footnote).foregroundStyle(.orange)
+                                .accessibilityIdentifier("history-archive-warning")
+                            Button("Dismiss") { session.dismissArchiveWarning() }
+                                .font(.footnote).buttonStyle(.borderless)
+                        }
                     }
                 }
                 Section {

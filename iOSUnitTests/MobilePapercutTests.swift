@@ -175,9 +175,15 @@ final class MobilePapercutTests: XCTestCase {
         // that is why the warning lives in its own property.
         session.open(session.history[0])
         XCTAssertNotNil(session.archiveWarning)
-        // Reopening History re-reads: the file is already set aside, so the note clears itself.
+        // The first scan already renamed the file, so opening History rescans cleanly. The note has
+        // to stay anyway — otherwise the launch-then-open-History path never shows it at all.
         session.reloadHistory()
-        XCTAssertNil(session.archiveWarning)
+        XCTAssertNotNil(session.archiveWarning, "The note must survive the clean rescan History does")
         XCTAssertFalse(FileManager.default.fileExists(atPath: damaged.path))
+        // It goes away only when the user dismisses it.
+        session.dismissArchiveWarning()
+        XCTAssertNil(session.archiveWarning)
+        session.reloadHistory()
+        XCTAssertNil(session.archiveWarning, "A dismissed note does not come back")
     }
 }

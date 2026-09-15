@@ -33,7 +33,9 @@ final class SessionStore {
             guard let archive else { throw CocoaError(.fileReadUnknown) }
             let result = try archive.read()
             errorText = nil
-            archiveWarning = result.warning   // a full scan is authoritative: clean means clear it
+            // Sticky for the app run: the damaged file is renamed by the first scan, so a later
+            // scan is clean and must not erase a note raised by an autosave's migration.
+            if let warning = result.warning { archiveWarning = warning }
             return result.records
         } catch { errorText = "Couldn't read history: \(error.localizedDescription)"; return [] }
     }
@@ -48,6 +50,9 @@ final class SessionStore {
             return true
         } catch { errorText = "Couldn't save: \(error.localizedDescription)"; return false }
     }
+
+    /// The user has seen the note about a set-aside file and dismissed it.
+    func dismissArchiveWarning() { archiveWarning = nil }
 
     @discardableResult
     func clear() -> Bool {

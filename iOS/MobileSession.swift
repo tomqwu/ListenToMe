@@ -317,6 +317,7 @@ final class MobileSession {
             if FileManager.default.fileExists(atPath: files.path) { try FileManager.default.removeItem(at: files) }
             let presentations = attachmentPresentationDirectory(for: targetID)
             if FileManager.default.fileExists(atPath: presentations.path) { try FileManager.default.removeItem(at: presentations) }
+            archiveWarning = nil   // the user has acted on History; the note has served its purpose
             message = "Conversation and attachments deleted from this device."
         } catch {
             if deletingActive && !committed { save(announce: false) }
@@ -344,13 +345,18 @@ final class MobileSession {
             // One undecodable file is set aside by the archive and reported; the rest still list.
             let result = try archive.read()
             history = result.records
-            archiveWarning = result.warning
+            // Sticky for the app run: the file is renamed by the first scan, so every later scan is
+            // clean. Overwriting with nil here would erase a launch-time note before History opens.
+            if let warning = result.warning { archiveWarning = warning }
         } catch { message = "Could not load history: \(error.localizedDescription)" }
     }
 
     /// Re-reads the archive so History shows what is on disk now, including a file that became
     /// unreadable since launch. Called when the History sheet appears.
     func reloadHistory() { refreshHistory() }
+
+    /// The user has seen the note about a set-aside file and dismissed it.
+    func dismissArchiveWarning() { archiveWarning = nil }
 
     /// Applies the current backup choice to everything a conversation is made of. Re-applied after
     /// each toggle and at launch, because a directory recreated later starts without the flag.

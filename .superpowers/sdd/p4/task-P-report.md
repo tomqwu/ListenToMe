@@ -143,3 +143,31 @@ test; comments added for why RTF parsing off the main thread is safe and why the
 - Still not runnable locally: `swift test`, `make build`, `make ios-build`, `make ios-test`,
   `swiftlint` (Xcode license). CI on the PR is the verification path; the iOS unit test added here is
   not run by CI either, so it was type-reviewed by hand rather than executed.
+
+---
+
+# Fix report — review round 2 (PR #162)
+
+**Important — the note was erased before it could be seen.** The warning is now sticky for the app
+run on both platforms: `MobileSession.refreshHistory()` and `SessionStore.all()` only assign when
+`result.warning != nil`, so the clean rescan that History does on appear can no longer wipe a note
+raised at launch or by an autosave's migration. It is cleared explicitly: a **Dismiss** button in the
+iOS History warning section (`MobileSession.dismissArchiveWarning()`) and beside the macOS History
+line (`SessionStore.dismissArchiveWarning()`), plus iOS `deleteConversation` and macOS Clear history
+(which deletes the quarantined files anyway). `SessionSearchView` no longer reads the archive twice —
+the `onAppear` read was dropped and the `init` read kept (a sheet is re-initialized per presentation).
+The iOS test now asserts the opposite of before: the note survives `reloadHistory()` and goes away
+only after `dismissArchiveWarning()`, and does not come back on the next reload.
+
+**Minors.** `isCorruption` is narrowed to `DecodingError.dataCorrupted` (plus
+`NSCocoaErrorDomain fileReadCorruptFile`): a schema mismatch (`keyNotFound`/`typeMismatch`, i.e. a
+future required field or a foreign writer) is now counted as skipped and keeps its name, covered by
+the new `testSchemaMismatchIsSkippedRatherThanSetAside`. The two chmod-based tests start with
+`XCTSkipIf(getuid() == 0, …)` since root ignores file permissions.
+
+## Verification of this round
+- `swift build` (CLT toolchain): clean.
+- `swiftc -typecheck` over all of `Tests/ListenToMeCoreTests/*.swift`: clean.
+- Both harnesses recompiled against the rebuilt library and re-run: **ALL PASS** (truncated JSON is
+  still quarantined under the narrower rule; transient and schema failures are not).
+- CI on the PR is the authoritative run for `swift test` + coverage and both app builds.

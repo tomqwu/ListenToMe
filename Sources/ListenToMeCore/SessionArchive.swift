@@ -152,10 +152,12 @@ public final class SessionArchive {
         return warning
     }
 
-    /// True when the file's *content* is the problem (malformed JSON, or a file the system reports
-    /// as corrupt), as opposed to a transient or environmental read failure.
+    /// True only when the bytes themselves are not valid JSON (or the system reports the file as
+    /// corrupt). A schema mismatch — `keyNotFound` / `typeMismatch`, which is what a future required
+    /// field or an older writer produces — is deliberately NOT corruption: such a file is readable
+    /// data a later version may understand, so it is counted as skipped and keeps its name.
     static func isCorruption(_ error: Error) -> Bool {
-        if error is DecodingError { return true }
+        if let decoding = error as? DecodingError, case .dataCorrupted = decoding { return true }
         let cocoa = error as NSError
         guard cocoa.domain == NSCocoaErrorDomain else { return false }
         return cocoa.code == CocoaError.fileReadCorruptFile.rawValue

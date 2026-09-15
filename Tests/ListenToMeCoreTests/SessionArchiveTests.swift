@@ -114,6 +114,7 @@ final class SessionArchiveTests: XCTestCase {
     }
 
     func testTransientReadFailureIsReportedButNeverRenamesTheFile() throws {
+        try XCTSkipIf(getuid() == 0, "root ignores file permissions, so the read would succeed")
         let archive = SessionArchive(directory: root)
         try archive.save(record("A"))
         let unreadable = root.appendingPathComponent("B.json")
@@ -132,7 +133,25 @@ final class SessionArchiveTests: XCTestCase {
             .filter { $0.contains(".corrupt-") }.isEmpty)
     }
 
+    func testSchemaMismatchIsSkippedRatherThanSetAside() throws {
+        let archive = SessionArchive(directory: root)
+        try archive.save(record("A"))
+        // Valid JSON, but not a SessionRecord: a future required field or a foreign writer. Data a
+        // later version may still understand must keep its name.
+        let foreign = root.appendingPathComponent("B.json")
+        try Data(#"{"unexpected":"shape"}"#.utf8).write(to: foreign)
+
+        let result = try archive.read()
+
+        XCTAssertEqual(result.records.map(\.id), ["A"])
+        XCTAssertTrue(result.warning?.contains("could not be read") == true, result.warning ?? "no warning")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: foreign.path))
+        XCTAssertTrue(try FileManager.default.contentsOfDirectory(atPath: root.path)
+            .filter { $0.contains(".corrupt-") }.isEmpty)
+    }
+
     func testDecodableLegacyThatCannotBeCopiedWarnsAndRetriesLater() throws {
+        try XCTSkipIf(getuid() == 0, "root ignores file permissions, so the copy would succeed")
         let legacy = root.appendingPathComponent("sessions.json")
         try JSONEncoder().encode([record("A")]).write(to: legacy)
         let directory = root.appendingPathComponent("history")
