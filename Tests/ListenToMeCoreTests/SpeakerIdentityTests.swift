@@ -107,6 +107,42 @@ final class SpeakerIdentityTests: XCTestCase {
         XCTAssertTrue(SpeakerStats.clip(history, endingAt: 0).isEmpty)
     }
 
+    func testSpliceReplacesTheWindowWhenThePassCoveredTheOverlap() {
+        let history = [DiarizedSegment(speakerId: "A", start: 0, duration: 20)]
+        let window = [DiarizedSegment(speakerId: "A", start: 10, duration: 20)]
+        XCTAssertEqual(SpeakerStats.splice(history: history, window: window, windowStart: 10), [
+            DiarizedSegment(speakerId: "A", start: 0, duration: 10),
+            DiarizedSegment(speakerId: "A", start: 10, duration: 20)
+        ])
+    }
+
+    func testSpliceKeepsHistoryWhenTheNewWindowHeardNothingInTheOverlap() {
+        // A participant who is silent through the overlap must not erase what earlier passes found
+        // there — the pass simply says nothing about that stretch.
+        let history = [DiarizedSegment(speakerId: "A", start: 0, duration: 20)]
+        let window = [DiarizedSegment(speakerId: "B", start: 25, duration: 10)]
+        XCTAssertEqual(SpeakerStats.splice(history: history, window: window, windowStart: 10),
+                       history + window)
+    }
+
+    func testSpliceHandlesEmptyInputs() {
+        let history = [DiarizedSegment(speakerId: "A", start: 0, duration: 20)]
+        XCTAssertEqual(SpeakerStats.splice(history: history, window: [], windowStart: 10), history)
+        XCTAssertEqual(SpeakerStats.splice(history: [], window: history, windowStart: 0), history)
+    }
+
+    func testWindowedReconcileKeepsHistoryTheWindowDidNotCover() {
+        var tracker = SpeakerIdentityTracker(namespace: "run")
+        let first = tracker.reconcile([segment("a", 0, 30), segment("b", 30, 30)])
+        tracker.rename(id: first["b"]!.id, name: "Bob")
+        // A window starting at 20 whose speech begins only after the previous timeline ended: it
+        // heard nothing in the overlap, so Bob's audio at 30–60 must NOT be dropped from the
+        // retained timeline — otherwise the next pass mints a duplicate speaker for him.
+        _ = tracker.reconcile([segment("s0", 65, 20)], since: 20)
+        let again = tracker.reconcile([segment("t0", 30, 30)], since: 20)
+        XCTAssertEqual(again["t0"]?.name, "Bob")
+    }
+
     func testMicrophoneAlignmentDoesNotRelabelSystemAudio() {
         let mic = TranscriptSegment(source: .you, text: "Hello", isFinal: true, start: 10, end: 12)
         let system = TranscriptSegment(source: .others, text: "Hi", isFinal: true, start: 10, end: 12)

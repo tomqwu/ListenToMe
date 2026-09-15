@@ -48,6 +48,19 @@ final class RecognitionTaskRouterTests: XCTestCase {
         XCTAssertTrue(router.mayRestart(token: token, for: .you))
     }
 
+    /// Speech can deliver `(result, error)` in ONE callback. The final must still be delivered (it is
+    /// real transcript), exactly once, and the accompanying error must add nothing — it is a callback
+    /// about a task that has just finalized.
+    func testFinalAndFailureInOneCallbackDeliverTheFinalOnceAndReportNothingExtra() {
+        var router = RecognitionTaskRouter()
+        let token = router.install(for: .others)
+        XCTAssertEqual(router.action(for: .final, token: token, source: .others), .deliverFinal)
+        XCTAssertEqual(router.action(for: .failure, token: token, source: .others), .ignore)
+        // The restart the final triggered is still allowed, and it is the only transition.
+        XCTAssertTrue(router.mayRestart(token: token, for: .others))
+        XCTAssertEqual(router.action(for: .final, token: token, source: .others), .ignore)
+    }
+
     func testFailureRetiresTheTaskAndBlocksRestart() {
         var router = RecognitionTaskRouter()
         let token = router.install(for: .you)

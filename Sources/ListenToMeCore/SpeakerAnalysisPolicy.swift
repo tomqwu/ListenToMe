@@ -52,6 +52,14 @@ public enum SpeakerAnalysisPolicy {
         return max(max(0, analyzed - overlap), max(0, total - cap))
     }
 
+    /// Whether a source has audio a pass has not seen yet. A periodic pass over a channel that has
+    /// captured nothing new (nobody spoke, or capture stopped) would re-diarize the same window for
+    /// no reason, so it is skipped. A stale `analyzedSamples` (the buffer was reset under it) counts
+    /// as new audio rather than wedging identification off.
+    public static func hasNewAudio(totalSamples: Int, analyzedSamples: Int) -> Bool {
+        max(0, totalSamples) != max(0, analyzedSamples)
+    }
+
     /// One-line rail status for the pass outcome (`nil` when nothing needs saying).
     public static func statusLine(for outcome: SpeakerAnalysisOutcome, detail: String?) -> String? {
         guard outcome == .modelsUnavailable else { return nil }

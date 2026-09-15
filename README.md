@@ -240,7 +240,10 @@ analysis; speaker names are included in saved transcript text when session savin
 
 Each periodic pass re-analyzes only the most recent audio (a trailing window of at most ten minutes,
 overlapping the previous pass so identities carry over), so identification cost stays flat instead of
-growing with the meeting. Captured audio is held in fixed 10-second blocks, so a pass never copies the
+growing with the meeting. Identities are linked between passes by shared audio time, so someone who
+stays silent through the whole overlap can be given a new label on a later pass; on long multi-party
+meetings this can leave extra rows in the list ([issue #171](https://github.com/tomqwu/ListenToMe/issues/171)
+tracks embedding-based merging). Captured audio is held in fixed 10-second blocks, so a pass never copies the
 whole session. Memory ceiling: up to about 460 MB per enabled channel for a full two hours — roughly
 920 MB with microphone identification also enabled.
 

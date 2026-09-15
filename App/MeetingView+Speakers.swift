@@ -26,38 +26,32 @@ extension MeetingView {
         await speakerTask?.value
     }
 
+    /// One pass over every attached channel. Returns nothing; all results land in `MeetingView`
+    /// state. Cancelled/superseded runs bail through the run-token guards.
     private func analyzeSpeakers() async {
         let token = diarizationRunToken
         let started = Date()
         speakerError = nil
         var outcome = SpeakerAnalysisOutcome.completed
         var failureReason: String?
+        // Every channel's failure is reported: the microphone pass must not overwrite what the
+        // system-audio pass had to say (and vice versa).
+        var failures: [String] = []
         let sources: [SpeakerSource] = microphoneSinkAttached ? [.others, .you] : [.others]
         for source in sources {
-            let sink = source == .others ? othersAudioSink : microphoneAudioSink
-            // Re-analyze only a trailing window since the previous pass (issue #109) instead of the
-            // whole growing session; the overlap lets SpeakerIdentityTracker carry identities over.
-            let from = SpeakerAnalysisPolicy.windowStartSample(totalSamples: sink.sampleCount,
-                                                               analyzedSamples: speakerAnalyzedSamples[source] ?? 0)
-            let snapshot = await Task.detached { sink.snapshot(fromSample: from) }.value
+            guard let failure = await analyzeSource(source, token: token) else { continue }
             guard token == diarizationRunToken, !Task.isCancelled else { return }
-            guard snapshot.samples.count >= SpeakerAnalysisPolicy.minimumSamples else { continue }
-            do {
-                let result = try await diarizer.analyze(samples: snapshot.samples)
-                guard token == diarizationRunToken, !Task.isCancelled else { return }
-                speakerAnalyzedSamples[source] = snapshot.startSample + snapshot.samples.count
-                applySpeakerResult(result, source: source, offset: snapshot.startOffset,
-                                   windowStart: snapshot.startTime)
-            } catch {
-                guard token == diarizationRunToken, !Task.isCancelled else { return }
-                speakerError = "\(source == .you ? "Microphone" : "System audio"): \(error.localizedDescription)"
-                if let reason = (error as? SpeakerDiarizer.DiarizationError)?.modelFailureReason {
+            if case .cancelled = failure { return }
+            if case .failed(let message, let modelReason) = failure {
+                failures.append(message)
+                if let modelReason {
                     outcome = .modelsUnavailable
-                    failureReason = reason
+                    failureReason = modelReason
                 }
             }
         }
         guard token == diarizationRunToken, !Task.isCancelled else { return }
+        speakerError = failures.isEmpty ? nil : failures.joined(separator: "\n")
         speakerLoading = false
         speakerStatus = SpeakerAnalysisPolicy.statusLine(for: outcome, detail: failureReason)
         // Avoid an ever-growing work queue: one pass at a time, with a rest at least as long as the
@@ -68,6 +62,43 @@ extension MeetingView {
             await session.waitForResponse(.listener)
             guard token == diarizationRunToken, !Task.isCancelled else { return }
             saveSessionIfEnabled(session: session, force: true)
+        }
+    }
+
+    /// Outcome of one channel's pass: nil = nothing to do / applied successfully.
+    private enum SourcePassFailure {
+        /// The run was superseded or cancelled while this channel was being analyzed.
+        case cancelled
+        /// `message` is for the sheet; `modelReason` is set only for a latched model-load failure.
+        case failed(message: String, modelReason: String?)
+    }
+
+    /// Analyzes the trailing window of one channel and folds the result in.
+    private func analyzeSource(_ source: SpeakerSource, token: Int) async -> SourcePassFailure? {
+        let sink = source == .others ? othersAudioSink : microphoneAudioSink
+        let analyzed = speakerAnalyzedSamples[source] ?? 0
+        let captured = sink.sampleCount
+        // Nothing new on this channel since the last pass — re-diarizing the same window would burn
+        // CPU for an identical answer.
+        guard SpeakerAnalysisPolicy.hasNewAudio(totalSamples: captured, analyzedSamples: analyzed) else { return nil }
+        // Re-analyze only a trailing window since the previous pass (issue #109) instead of the whole
+        // growing session; the overlap lets SpeakerIdentityTracker carry identities over.
+        let from = SpeakerAnalysisPolicy.windowStartSample(totalSamples: captured, analyzedSamples: analyzed)
+        let snapshot = await Task.detached { sink.snapshot(fromSample: from) }.value
+        guard token == diarizationRunToken, !Task.isCancelled else { return .cancelled }
+        guard snapshot.samples.count >= SpeakerAnalysisPolicy.minimumSamples else { return nil }
+        do {
+            let result = try await diarizer.analyze(samples: snapshot.samples)
+            guard token == diarizationRunToken, !Task.isCancelled else { return .cancelled }
+            speakerAnalyzedSamples[source] = snapshot.startSample + snapshot.samples.count
+            applySpeakerResult(result, source: source, offset: snapshot.startOffset,
+                               windowStart: snapshot.startTime)
+            return nil
+        } catch {
+            guard token == diarizationRunToken, !Task.isCancelled else { return .cancelled }
+            let label = source == .you ? "Microphone" : "System audio"
+            return .failed(message: "\(label): \(error.localizedDescription)",
+                           modelReason: (error as? SpeakerDiarizer.DiarizationError)?.modelFailureReason)
         }
     }
 
@@ -88,14 +119,15 @@ extension MeetingView {
         var known = speakerIdentities[source] ?? [:]
         for identity in identities.values { known[identity.id] = identity }
         speakerIdentities[source] = known
-        // Stitch: history before the window (already in identity-id space) + this window's segments.
-        var merged: [DiarizedSegment] = SpeakerStats.clip(speakerSegments[source] ?? [],
-                                                          endingAt: windowStart)
-        merged += windowSegments.compactMap { segment -> DiarizedSegment? in
+        // Stitch this window onto the cumulative timeline (already in identity-id space). `splice`
+        // keeps the history whole when the window heard nothing in the stretch it overlaps.
+        let identified: [DiarizedSegment] = windowSegments.compactMap { segment -> DiarizedSegment? in
             guard let identity = identities[segment.speakerId] else { return nil }
             return DiarizedSegment(speakerId: identity.id, start: segment.start,
                                    duration: segment.duration)
         }
+        let merged = SpeakerStats.splice(history: speakerSegments[source] ?? [],
+                                         window: identified, windowStart: windowStart)
         speakerSegments[source] = merged
         speakerParticipants.removeAll { $0.source == source }
         speakerParticipants += SpeakerStats.summarize(merged).speakers.compactMap { speaker in

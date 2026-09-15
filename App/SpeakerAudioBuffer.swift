@@ -139,14 +139,23 @@ final class SpeakerAudioBuffer: @unchecked Sendable {
     /// the concatenation happens off the lock, so a periodic pass while recording never stalls the
     /// capture callback and never forces a copy-on-write of the whole session (issue #109).
     func snapshot(fromSample requested: Int = 0) -> Snapshot {
-        let (window, startSample, offsetCopy): ([[Float]], Int, TimeInterval) = lock.withLock {
+        let window: BlockWindow = lock.withLock {
             let index = max(0, min(requested, total)) / Self.blockSize
-            return (Array(blocks.dropFirst(index)), index * Self.blockSize, offset)
+            return BlockWindow(blocks: Array(blocks.dropFirst(index)),
+                               startSample: index * Self.blockSize, startOffset: offset)
         }
         var out = [Float]()
-        out.reserveCapacity(window.reduce(0) { $0 + $1.count })
-        for block in window { out.append(contentsOf: block) }
-        return Snapshot(samples: out, startSample: startSample, startOffset: offsetCopy)
+        out.reserveCapacity(window.blocks.reduce(0) { $0 + $1.count })
+        for block in window.blocks { out.append(contentsOf: block) }
+        return Snapshot(samples: out, startSample: window.startSample, startOffset: window.startOffset)
+    }
+
+    /// What `snapshot` takes under the lock: block references plus where they start. Concatenation
+    /// happens after the lock is released.
+    private struct BlockWindow {
+        let blocks: [[Float]]
+        let startSample: Int
+        let startOffset: TimeInterval
     }
 
     /// Converts mono Float at `inputRate` to 16 kHz mono Float via a cached `AVAudioConverter`.

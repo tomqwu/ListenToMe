@@ -125,7 +125,11 @@ single-source for the MVP or the Phase-2 SpeechAnalyzer engine.
     The Speakers rail must show one line saying identification is paused, no further download
     attempts may happen (check the console for repeated attempts every ~20 s), and pressing
     Speakers / edit names after reconnecting must retry and resume periodic passes.
-11. With SpeechRecognizer (legacy) selected, speak in short bursts with ~1 s pauses for a minute.
+11. Multi-party stability: in a 20+ minute recording with three or more voices, let each person stay
+    quiet for several minutes at a time. The Speakers list must keep roughly one row per real
+    participant — it must not balloon with new Speaker N rows each pass — and a renamed speaker must
+    keep their name. Extra rows after long silences are the known limit tracked in issue #171.
+12. With SpeechRecognizer (legacy) selected, speak in short bursts with ~1 s pauses for a minute.
     Every utterance must appear; no utterance may be dropped at a pause boundary, and a partial
     line must never be replaced by stale text from the previous utterance (issue #108).
 

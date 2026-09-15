@@ -68,6 +68,17 @@ final class SpeakerAnalysisPolicyTests: XCTestCase {
                                                                analyzedSamples: seconds(900)), 0)
     }
 
+    func testPassIsSkippedWhenNoNewAudioWasCaptured() {
+        XCTAssertFalse(SpeakerAnalysisPolicy.hasNewAudio(totalSamples: seconds(300),
+                                                          analyzedSamples: seconds(300)))
+        XCTAssertTrue(SpeakerAnalysisPolicy.hasNewAudio(totalSamples: seconds(301),
+                                                        analyzedSamples: seconds(300)))
+        XCTAssertFalse(SpeakerAnalysisPolicy.hasNewAudio(totalSamples: 0, analyzedSamples: 0))
+        // A stale analyzed count (buffer reset under it) must not wedge identification off.
+        XCTAssertTrue(SpeakerAnalysisPolicy.hasNewAudio(totalSamples: seconds(10),
+                                                        analyzedSamples: seconds(900)))
+    }
+
     func testMinimumSamplesIsThreeSeconds() {
         XCTAssertEqual(SpeakerAnalysisPolicy.minimumSamples, seconds(3))
     }
@@ -81,7 +92,8 @@ final class SpeakerAnalysisPolicyTests: XCTestCase {
     func testUnavailableStatusMentionsTheReasonOnce() {
         let line = SpeakerAnalysisPolicy.statusLine(for: .modelsUnavailable,
                                                     detail: "The Internet connection appears to be offline.")
-        XCTAssertEqual(line, "Speaker identification paused — The Internet connection appears to be offline. Press Speakers to retry.")
+        XCTAssertEqual(line, "Speaker identification paused — The Internet connection appears to be "
+                       + "offline. Press Speakers to retry.")
     }
 
     func testUnavailableStatusFallsBackWhenThereIsNoDetail() {

@@ -451,6 +451,8 @@ extension MeetingView {
         speakerIdentities = [:]
         speakerAnalyzedSamples = [:]
         speakerStatus = nil
+        // A new recording is also a retry: the model download may well succeed now (#109).
+        Task { await diarizer.retryModelLoad() }
         nextSpeakerAnalysis = .distantFuture
         speakerLoading = false
         speakerError = nil

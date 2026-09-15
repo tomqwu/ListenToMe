@@ -131,25 +131,31 @@ actor SpeechRecognizerTranscriber: Transcribing {
             // Ask the router FIRST: a callback from a superseded task (or a second callback from a
             // task that already delivered its final result) must not yield a segment, report a
             // status, or trigger any state transition.
+            //
+            // The result is handled BEFORE the error: Speech can deliver `(result, error)` in the
+            // SAME callback, and that result is still real transcript — returning early on the error
+            // would silently drop it. Delivering the final first also moves this task out of `live`,
+            // so the accompanying error is then correctly ignored as a post-final callback.
+            if let result {
+                let isFinal = result.isFinal
+                let action = router.action(for: isFinal ? .final : .partial, token: token, source: source)
+                if action != .ignore {
+                    self.continuation.yield(TranscriptSegment(
+                        source: source,
+                        text: result.bestTranscription.formattedString,
+                        isFinal: isFinal,
+                        start: 0,
+                        end: 0
+                    ))
+                    if action == .deliverFinal {
+                        Task { await self.taskEnded(source, token: token) }
+                    }
+                }
+            }
             if let error {
                 guard router.action(for: .failure, token: token, source: source) == .reportFailure else { return }
                 self.statusContinuation.yield("Speech recognition failed: \(error.localizedDescription)")
                 Task { await self.taskFailed(source, token: token) }
-                return
-            }
-            guard let result else { return }
-            let isFinal = result.isFinal
-            let action = router.action(for: isFinal ? .final : .partial, token: token, source: source)
-            guard action != .ignore else { return }
-            self.continuation.yield(TranscriptSegment(
-                source: source,
-                text: result.bestTranscription.formattedString,
-                isFinal: isFinal,
-                start: 0,
-                end: 0
-            ))
-            if action == .deliverFinal {
-                Task { await self.taskEnded(source, token: token) }
             }
         }
         return state
@@ -158,10 +164,14 @@ actor SpeechRecognizerTranscriber: Transcribing {
     /// A source's utterance finalized normally: start a fresh task and replay any audio buffered
     /// during the finalization gap (through the new VAD so its speech state stays consistent).
     private func taskEnded(_ source: SpeakerSource, token: UUID) {
-        // Only the task that actually finalized may restart the source.
-        guard router.mayRestart(token: token, for: source), states[source]?.token == token else { return }
-        let pending = states[source]?.pendingChunks ?? []
+        // Mark the finalized task done BEFORE anything can bail, so `finish()`'s drain never waits
+        // on a task that has already delivered its final result. Only this task's own state is
+        // touched — never the state of a task that has since replaced it.
+        guard states[source]?.token == token else { return }
         states[source]?.done = true
+        // Only the task that actually finalized may restart the source.
+        guard router.mayRestart(token: token, for: source) else { return }
+        let pending = states[source]?.pendingChunks ?? []
         guard !stopped else {
             router.retire(token: token, for: source)
             return
