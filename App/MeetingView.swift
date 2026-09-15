@@ -26,6 +26,9 @@ struct MeetingView: View {
     /// opened, so an off→on round-trip is still caught.
     @State var sessionSaveable = true
     @State private var savingEnabledBeforeSettings = true; @State var chatModels: [String] = []
+    /// The discovered models whose `/api/show` metadata verifies them as local; handed to
+    /// `ModelRanking.roleDefaults` so auto-defaults stay local-first (issue #137).
+    @State var verifiedLocalModels: Set<String> = []
     @State var transcriptionLocaleID: String
     @State var presetID: String
     @State var referencePaths: [URL]
@@ -736,9 +739,13 @@ extension MeetingView {
 
     /// Reloads the installed Ollama chat models into the per-pane pickers.
     func reloadModels() async {
-        if ProviderSettings.aiMode == .apple { chatModels = ["Apple Intelligence"]; return }
-        chatModels = await OllamaModels.chatModels(
+        if ProviderSettings.aiMode == .apple {
+            chatModels = ["Apple Intelligence"]; verifiedLocalModels = []; return
+        }
+        let discovered = await OllamaModels.chatModels(
             baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey(), localOnly: ProviderSettings.aiMode != .cloud)
+        chatModels = discovered.names
+        verifiedLocalModels = discovered.verifiedLocal
     }
 
     /// Reloads chat models for the current Ollama route (cloud vs local) and heals each role:
@@ -753,6 +760,7 @@ extension MeetingView {
         let token = modelLoadToken
         if ProviderSettings.aiMode == .apple {
             chatModels = ["Apple Intelligence"]
+            verifiedLocalModels = []
             modelStatus = AppleIntelligenceProvider.unavailableReason ?? ""
             for role in CopilotRole.allCases { session.setModel(role, "Apple Intelligence") }
             return
@@ -760,10 +768,13 @@ extension MeetingView {
         let discovered = await OllamaModels.chatModels(
             baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey(), localOnly: ProviderSettings.aiMode != .cloud)
         guard token == modelLoadToken else { return }
-        chatModels = discovered
+        chatModels = discovered.names
+        verifiedLocalModels = discovered.verifiedLocal
         modelStatus = ProviderSettings.aiMode == .off ? "AI is off" : (chatModels.isEmpty
             ? "No available AI models. Check Ollama and AI mode in Settings, then Refresh models." : "")
-        let defaults = ModelRanking.roleDefaults(from: chatModels)
+        // Locality comes from Ollama's own /api/show metadata, never from the model's name, so an
+        // unpinned pane can never be auto-assigned a cloud model while a local one exists (#137).
+        let defaults = ModelRanking.roleDefaults(from: chatModels, local: verifiedLocalModels)
         for role in CopilotRole.allCases {
             let current = ProviderSettings.model(for: role)
             // Keep the user's explicit pick if it's still valid; otherwise follow the
