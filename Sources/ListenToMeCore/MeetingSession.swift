@@ -183,6 +183,9 @@ public final class MeetingSession {
         // The new provider may have a different context window (or none), so the old notice no
         // longer describes anything: it is re-derived on the next prompt.
         promptTruncationNotice = nil
+        // The failure belonged to the previous model; it says nothing about this one (#137).
+        roleErrors[role] = nil
+        roleActivity[role] = nil
         if role == .quick { quickReader.clearError() }
         handleLiveEvent(.providerChanged)
     }
@@ -200,6 +203,7 @@ public final class MeetingSession {
         store.reset()
         notes = ""; referenceContext = nil
         listenerSummary = ""; quickSuggestion = ""; quickRecap = ""; deepAnswer = ""
+        roleErrors = [:]; roleActivity = [:]
         manualQuickAnswer.dismiss()
         lastCompletedListenerSummary = ""
         summarizedSegmentIDs = []
