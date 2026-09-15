@@ -106,7 +106,9 @@ extension MeetingView {
                     .accessibilityLabel("Conversation title")
                 Spacer()
                 Text(lifecycleBusy ? "Finalizing…" : (wantsCapture
-                    ? (recordingStartedAt == nil ? "Starting…" : "Recording \(elapsedLabel)") : "Ready"))
+                    ? (session.isPreparing ? "Preparing…"
+                       : (recordingStartedAt == nil ? "Starting…" : "Recording \(elapsedLabel)"))
+                    : "Ready"))
                 Text(ProviderSettings.aiMode.label)
             }
             HStack(alignment: .top, spacing: 16) {

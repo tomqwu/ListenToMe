@@ -15,7 +15,8 @@ extension MeetingView {
         @Bindable var session = session
         return ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                RailRecStatus(isRunning: session.isRunning, elapsed: elapsedLabel)
+                RailRecStatus(isRunning: session.isRunning, isPreparing: session.isPreparing,
+                              elapsed: elapsedLabel)
 
                 railSection("Engine") {
                     Text(CommandCenterLabels.engine(active: activeEngine,

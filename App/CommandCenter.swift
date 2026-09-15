@@ -72,12 +72,24 @@ struct CommandCenterFooter: View {
     }
 }
 
-/// A compact "REC mm:ss" pill with a pulsing dot for the rail. Shows nothing while idle.
+/// A compact "REC mm:ss" pill with a pulsing dot for the rail; "PREP" while the session is warming
+/// the on-device speech model (no audio is being captured yet), and "IDLE" when stopped.
 struct RailRecStatus: View {
     let isRunning: Bool
+    /// True between Start and the moment the speech pipeline is warm — a first-run model download
+    /// can take minutes, and showing REC for it overstates what the app is doing (issue #147).
+    var isPreparing: Bool = false
     let elapsed: String
     var body: some View {
-        if isRunning {
+        if isPreparing {
+            HStack(spacing: 7) {
+                ProgressView().controlSize(.small)
+                Text("PREP")
+                    .font(.system(size: 11.5, weight: .medium, design: .monospaced))
+                    .foregroundStyle(Theme.ink2)
+            }
+            .help("Preparing the on-device speech model — capture starts when it's ready")
+        } else if isRunning {
             HStack(spacing: 7) {
                 RecordingIndicator()
                 Text("REC \(elapsed)")
