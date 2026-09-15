@@ -57,6 +57,56 @@ final class SpeakerIdentityTests: XCTestCase {
         XCTAssertEqual(result["b"]?.name, "Speaker 2")
     }
 
+    // MARK: Incremental (trailing-window) passes — issue #109
+
+    func testTrailingWindowKeepsIdentitiesFromTheOverlap() {
+        var tracker = SpeakerIdentityTracker(namespace: "run")
+        let first = tracker.reconcile([segment("a", 0, 30), segment("b", 30, 30)])
+        tracker.rename(id: first["a"]!.id, name: "Alice")
+        // Next pass re-analyzes only [40, 90); model IDs are renumbered, but the 20 s overlap with
+        // "b" must carry that identity over instead of minting a new speaker.
+        let window = tracker.reconcile([segment("s0", 40, 20), segment("s1", 60, 30)], since: 40)
+        XCTAssertEqual(window["s0"], first["b"])
+        XCTAssertNotEqual(window["s1"]?.id, first["b"]?.id)
+        XCTAssertNotEqual(window["s1"]?.id, first["a"]?.id)
+        // History before the window survives, so a later window can still match Alice.
+        let again = tracker.reconcile([segment("t0", 0, 30)], since: 0)
+        XCTAssertEqual(again["t0"]?.name, "Alice")
+    }
+
+    func testWindowedPassDoesNotMatchSpeakersOutsideTheWindow() {
+        var tracker = SpeakerIdentityTracker(namespace: "run")
+        let first = tracker.reconcile([segment("a", 0, 30), segment("b", 30, 30)])
+        // A window covering only [60, 90) overlaps neither previous speaker → a new identity.
+        let window = tracker.reconcile([segment("s0", 60, 30)], since: 60)
+        XCTAssertFalse(first.values.contains { $0.id == window["s0"]?.id })
+    }
+
+    func testWindowedReconcileWithZeroStartBehavesLikeAFullPass() {
+        var full = SpeakerIdentityTracker(namespace: "run")
+        var windowed = SpeakerIdentityTracker(namespace: "run")
+        let a = full.reconcile([segment("a", 0, 10), segment("b", 10, 10)])
+        let b = windowed.reconcile([segment("a", 0, 10), segment("b", 10, 10)], since: 0)
+        XCTAssertEqual(a, b)
+        XCTAssertEqual(full.reconcile([segment("x", 0, 10), segment("y", 10, 10)]),
+                       windowed.reconcile([segment("x", 0, 10), segment("y", 10, 10)], since: 0))
+    }
+
+    func testClipKeepsOnlyHistoryBeforeTheWindow() {
+        let history = [
+            DiarizedSegment(speakerId: "A", start: 0, duration: 10),
+            DiarizedSegment(speakerId: "B", start: 8, duration: 10),   // straddles the boundary
+            DiarizedSegment(speakerId: "C", start: 12, duration: 5),   // entirely inside the window
+            DiarizedSegment(speakerId: "D", start: 2, duration: 0)     // degenerate
+        ]
+        let clipped = SpeakerStats.clip(history, endingAt: 10)
+        XCTAssertEqual(clipped, [
+            DiarizedSegment(speakerId: "A", start: 0, duration: 10),
+            DiarizedSegment(speakerId: "B", start: 8, duration: 2)
+        ])
+        XCTAssertTrue(SpeakerStats.clip(history, endingAt: 0).isEmpty)
+    }
+
     func testMicrophoneAlignmentDoesNotRelabelSystemAudio() {
         let mic = TranscriptSegment(source: .you, text: "Hello", isFinal: true, start: 10, end: 12)
         let system = TranscriptSegment(source: .others, text: "Hi", isFinal: true, start: 10, end: 12)
