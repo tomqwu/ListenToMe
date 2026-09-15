@@ -1,7 +1,11 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.10.4 (26).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.10.5 (27).
+
+## iOS 1.10.5 (27)
+
+App Store readiness: Settings → Privacy links the privacy policy and support pages (#145). History surfaces a dismissable note when a saved conversation file cannot be decoded (the file is quarantined, never deleted) and search now covers notes with diacritic- and width-insensitive matching (#120, #139). Prompts fence transcript, notes and reference text as data (#140). No recording-path changes on iOS in this build. [What to Test](../metadata/ios/en-CA/what-to-test-1.10.5.txt).
 
 ## iOS 1.10.4 (26)
 

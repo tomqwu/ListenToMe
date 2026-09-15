@@ -11,6 +11,22 @@ does not show it again, and a fresh install does not see it at all; see
 [`docs/IOS.md`](docs/IOS.md) for the fuller per-build technical notes and
 [`metadata/ios/en-CA/`](metadata/ios/en-CA/) for TestFlight "What to Test" text.
 
+## iOS 1.10.5 (27) — 2026-09-15
+
+- Settings → Privacy links the privacy policy and support pages required for the App Store. (#145)
+- History warns about an unreadable saved conversation (quarantined, never deleted) instead of hiding the whole list; search covers notes and matches accents and full-width text. (#120, #139)
+- Model prompts fence transcript, notes and reference text as data. (#140)
+
+## macOS (unreleased since 1.4.4)
+
+- Mic recovers from input-device changes and sleep/wake; a denied microphone is detected before Listen. (#107, #110)
+- Ollama's own error text on HTTP failures; Apple Intelligence prompts bounded with a visible notice. (#118, #119)
+- Automatic reviews survive notes typing, never overwrite a fresh manual answer, and use size-scaled deadlines. (#111, #115, #117)
+- Manual prompts include provisional speech; live path no longer rebuilds the transcript per partial. (#113, #116)
+- Panes keep their output on failure, "Thinking…" status for reasoning models, proactive Quick answers re-wired with a toggle. (#137, #112)
+- SpeechRecognizer task identity, bounded speaker-audio memory, latched diarizer failures. (#108, #109)
+- Preparing state, Session menu shortcuts, calendar title, and other lifecycle papercuts. (#136, #147)
+
 ## iOS 1.10.4 (26) — 2026-09-14
 
 - What's New appears only when the bundled notes change; first installs no longer see "In this update". (#138)

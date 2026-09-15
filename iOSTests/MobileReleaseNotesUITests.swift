@@ -4,11 +4,11 @@ import XCTest
 final class MobileReleaseNotesUITests: XCTestCase {
     func testUpdateShowsVersionOnceAndChangelogCanBeReopened() {
         let app = XCUIApplication()
-        app.launchArguments = ["-lastAcknowledgedReleaseBuild", "1.10.3 (25)"]
+        app.launchArguments = ["-lastAcknowledgedReleaseBuild", "1.10.4 (26)"]
         app.launch()
         XCTAssertTrue(app.buttons["releaseNotesContinue"].waitForExistence(timeout: 5))
-        XCTAssertEqual(app.staticTexts["releaseVersion"].label, "Version 1.10.4 · Build 26")
-        XCTAssertTrue(app.staticTexts["Quieter, safer, searchable"].exists)
+        XCTAssertEqual(app.staticTexts["releaseVersion"].label, "Version 1.10.5 · Build 27")
+        XCTAssertTrue(app.staticTexts["Ready for the App Store"].exists)
         capture(app, "What’s New on update")
         app.buttons["releaseNotesContinue"].tap()
         XCTAssertTrue(app.buttons["More"].waitForExistence(timeout: 5))
