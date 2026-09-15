@@ -11,6 +11,14 @@ does not show it again, and a fresh install does not see it at all; see
 [`docs/IOS.md`](docs/IOS.md) for the fuller per-build technical notes and
 [`metadata/ios/en-CA/`](metadata/ios/en-CA/) for TestFlight "What to Test" text.
 
+## iOS 1.10.4 (26) — 2026-09-14
+
+- What's New appears only when the bundled notes change; first installs no longer see "In this update". (#138)
+- Share imports: stale or failed batches are set aside and deleted after 24 hours instead of blocking later imports. (#138)
+- Transcription language is remembered across launches; History is searchable. (#138)
+- Conversations and attachments are written with device data protection, and a Settings toggle keeps them (and shared imports) out of iCloud and Finder backups. (#138)
+- An Apple Intelligence install never contacts ollama.com; the model catalog refreshes only after you choose Ollama with a key or your own server. (#138)
+
 ## macOS 1.4.4 — 2026-09-14
 
 - **First-run speech model download now happens before capture, and you can cancel it.** The first
