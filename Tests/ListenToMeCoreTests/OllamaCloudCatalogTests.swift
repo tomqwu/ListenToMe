@@ -3,15 +3,39 @@ import XCTest
 
 final class OllamaCloudCatalogTests: XCTestCase {
     func testLiveAPICatalog() async throws {
-        guard ProcessInfo.processInfo.environment["LTM_CLOUD_CATALOG"] == "1" else {
-            throw XCTSkip("Opt-in live public catalog check")
+        guard ProcessInfo.processInfo.environment["LTM_CLOUD_CATALOG"] == "1",
+              let key = ProcessInfo.processInfo.environment["LTM_OLLAMA_KEY"], !key.isEmpty else {
+            throw XCTSkip("Opt-in live catalog check; needs LTM_OLLAMA_KEY since anonymous cloud requests are refused")
         }
-        let models = try await OllamaCloudCatalog().fetch(apiKey: "")
+        let models = try await OllamaCloudCatalog().fetch(apiKey: key)
         XCTAssertFalse(models.isEmpty)
         let recent = OllamaCloudModel.recentVariants(in: models)
         XCTAssertEqual(Set(recent.map(\.family)), ["deepseek", "glm", "qwen", "kimi"])
         XCTAssertTrue(recent.allSatisfy { models.contains($0) })
         print("Live API model IDs: " + recent.map(\.name).joined(separator: ", "))
+    }
+
+    /// Listing the cloud catalog with no key would be an anonymous request to ollama.com the user
+    /// never asked for. It has to fail before anything is sent.
+    func testCloudCatalogWithoutAKeySendsNoRequestAndExplainsWhy() async throws {
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [StubURLProtocol.self]
+        let session = URLSession(configuration: config)
+        defer { session.invalidateAndCancel(); StubURLProtocol.handler = nil }
+        StubURLProtocol.handler = { request in
+            XCTFail("No request may reach \(request.url?.absoluteString ?? "the network") without a key")
+            return (HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!, Data())
+        }
+        for url in [OllamaCloudCatalog.baseURL, URL(string: "https://OLLAMA.com")!] {
+            do {
+                _ = try await OllamaCloudCatalog(session: session).fetch(apiKey: "", baseURL: url)
+                XCTFail("An anonymous cloud catalog fetch must throw")
+            } catch let error as OllamaCatalogError {
+                XCTAssertEqual(error, .missingAPIKey)
+                XCTAssertEqual(error.errorDescription,
+                               "Add your Ollama API key to list Ollama Cloud models, or set your own server URL.")
+            }
+        }
     }
 
     func testAPIModelIDsArePreservedAndDuplicatesRemoved() async throws {

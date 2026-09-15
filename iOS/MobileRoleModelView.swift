@@ -32,7 +32,7 @@ struct MobileRoleModelView: View {
             }
         }.accessibilityIdentifier("roleModelList")
             .navigationTitle("\(role.title) model")
-            .task { if ai.models.isEmpty { await ai.refresh() } }
+            .task { if ai.models.isEmpty && ai.canRefreshAutomatically { await ai.refresh() } }
             .onDisappear { operation?.cancel() }
     }
 
