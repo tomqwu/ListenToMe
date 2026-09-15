@@ -251,7 +251,10 @@ struct MeetingView: View {
         .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { date in
             if recordingStartedAt != nil { now = date }
             if !saveFailed { _ = checkpoint(complete: !wantsCapture && !lifecycleBusy && !session.isTranscribingFile) }
-            if wantsCapture && session.isRunning && date >= nextSpeakerAnalysis {
+            // Not while preparing: the session is "running" from Start, but no audio has reached the
+            // diarization sink yet, so an analysis here would run against the previous run's
+            // leftovers (or nothing at all) — the same reason automatic reviews are gated (#147).
+            if wantsCapture && session.isRunning && !session.isPreparing && date >= nextSpeakerAnalysis {
                 identifySpeakers(showSheet: false)
             }
         }

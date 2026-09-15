@@ -119,12 +119,11 @@ extension MeetingView {
 
     // MARK: Center transcript
 
-    /// "idle" when stopped; otherwise "live · N src" where N is the real number of distinct speaker
-    /// sources actually captured so far (so it never claims system audio that isn't being captured).
+    /// "idle" when stopped, "preparing" while the speech model is still warming, otherwise
+    /// "live · N src". The rule lives in Core (`TranscriptStatusLabel`) so it is unit-tested.
     func transcriptStatusLabel(session: MeetingSession) -> String {
-        guard session.isRunning else { return "idle" }
-        let sources = Set(store.utterances.map(\.source)).count
-        return sources > 0 ? "live · \(sources) src" : "live"
+        TranscriptStatusLabel.text(isRunning: session.isRunning, isPreparing: session.isPreparing,
+                                   sources: Set(store.utterances.map(\.source)).count)
     }
 
     func transcriptColumn(session: MeetingSession, notes: Binding<String>) -> some View {

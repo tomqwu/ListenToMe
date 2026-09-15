@@ -14,17 +14,22 @@ struct RecordingIndicator: View {
             .frame(width: 10, height: 10)
             .opacity(pulsing ? 0.35 : 1)
             .scaleEffect(pulsing ? 0.8 : 1)
-            .onAppear {
-                guard !reduceMotion else { return }
-                withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) {
-                    pulsing = true
-                }
-            }
-            .onChange(of: reduceMotion) { _, reduce in
-                guard reduce else { return }
-                withAnimation(.linear(duration: 0)) { pulsing = false }
-            }
+            .onAppear { applyPulse(reduceMotion: reduceMotion) }
+            .onChange(of: reduceMotion) { _, reduce in applyPulse(reduceMotion: reduce) }
             .accessibilityLabel("Recording")
+    }
+
+    /// Starts or stops the pulse to match the current Reduce Motion setting — in both directions, so
+    /// turning Reduce Motion back off restores the animation without needing the view to reappear.
+    /// The stop uses a zero-duration animation to replace the `repeatForever` one already attached.
+    private func applyPulse(reduceMotion: Bool) {
+        if reduceMotion {
+            withAnimation(.linear(duration: 0)) { pulsing = false }
+        } else {
+            withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) {
+                pulsing = true
+            }
+        }
     }
 }
 

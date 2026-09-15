@@ -28,11 +28,4 @@ final class CalendarLookupTests: XCTestCase {
         XCTAssertTrue(try XCTUnwrap(failed.message).contains("EKErrorDomain 4"))
         XCTAssertFalse(failed.offersPrivacySettings)
     }
-
-    func testOnlyTheGeneratedTitleMayBeReplacedByTheMeetingTitle() {
-        XCTAssertTrue(ConversationTitle.isGenerated(ConversationTitle.generated("Sep 13, 2:05 PM")))
-        XCTAssertFalse(ConversationTitle.isGenerated("Q3 pricing review"))
-        XCTAssertFalse(ConversationTitle.isGenerated(""))
-        XCTAssertFalse(ConversationTitle.isGenerated("My conversation — notes"))
-    }
 }

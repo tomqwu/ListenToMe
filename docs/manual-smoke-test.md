@@ -226,16 +226,19 @@ pickup labeled YOU or an enabled toggle alone as proof of system-audio capture.
    line must still read `SpeechAnalyzer · WhisperKit next start` — never plain "WhisperKit" — and
    must read plain `WhisperKit` after Stop + Start.
 2. **Preparing gates automation.** With a conversation already transcribed and **Auto summaries**
-   on, press Start on a Mac that still has to download the speech model: while the rail shows
-   **PREP**, the Quick/Summary/Deep panes must not generate anything and the automation status must
-   read "Auto paused · Preparing on-device speech model…". Automation resumes once capture starts.
+   on, press Start on a Mac that still has to download the speech model. While the rail shows
+   **PREP**: the transcript pane's status chip reads **preparing** (never **live**), the
+   Quick/Summary/Deep panes generate nothing, no speaker analysis starts, and the automation status
+   reads "Auto paused · Preparing on-device speech model…". All of it resumes once capture starts.
 3. **Closed-window menu items.** Close the main window (⌘W) while the app stays in the Dock. In the
    menu bar, **Export conversation…**, **Conversation history…** and **Settings…** must all be
    greyed out, and ⌘E / ⌘F / ⌘, must do nothing visible rather than appear to work. Reopen the
    window; they become enabled again.
 4. **Keyboard shortcuts.** With the window key: ⌘⇧L starts listening (menu item reads **Stop
    listening** while running, and ⌘⇧L stops), ⌘⇧D fills **Deep**, ⌘⇧R produces a Quick recap, ⌘⇧U
-   refreshes **Summary**. Confirm the footer hints match the **Session** menu exactly.
+   refreshes **Summary**. Confirm the footer hints match the **Session** menu exactly. Then drag the
+   window down to its minimum width (1100 pt — it will not go narrower): all nine footer hints and
+   the AI-mode label on the right must still be readable, none clipped or overlapping.
 5. **Quit & Reopen never doubles the app.** Turn autosaving off, record a few lines, open **More →
    Permissions… → Quit & Reopen**, and press **Cancel** in the "Save this conversation before
    closing?" alert. Nothing must relaunch: check that exactly one ListenToMe is running (Activity
