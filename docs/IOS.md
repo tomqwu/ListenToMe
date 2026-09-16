@@ -3,6 +3,102 @@
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
 26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.10.5 (27).
 
+## What this app is for
+
+**ListenToMe for iPhone and iPad is a personal capture and recall companion — not a port of the macOS
+meeting copilot.** It records and transcribes what *this device's* microphone hears: an in-person
+conversation, a lecture, an interview, a phone left on the table. It summarizes on-device by default
+(Apple Intelligence, where the device supports it) and keeps every conversation local, searchable and
+shareable.
+
+**It is deliberately not a copilot for calls or video meetings.** iOS does not let an app capture
+another app's audio, so the dual-channel "You / Others" experience — and everything built on knowing
+which voice is the remote participant, such as proactive answers to a question someone else asked —
+stays macOS-only. This is a platform boundary, not a backlog item: there is no planned iOS feature
+that captures system or call audio. Recording is foreground-only (`iOS/Info.plist` declares no
+`UIBackgroundModes`); backgrounding stops recording and saves the conversation.
+
+## Parity with macOS
+
+Three tiers. Tier 1 must move in lockstep, tier 2 may differ but every difference is written down
+here, and tier 3 is not coming to iOS.
+
+### Tier 1 — shared core: identical on both platforms, changed together
+
+These types live in `Sources/ListenToMeCore` (plus `SharedPlatform/`, which both app targets compile).
+A change to any of them is a change to *both* apps: update both call sites, both platforms' tests and
+this table in the same PR, and never fork a copy into `App/` or `iOS/`.
+
+| Shared code | macOS entry point | iOS entry point |
+| --- | --- | --- |
+| `LiveSummaryScheduler` — the Auto batching/wake/cancel contract | `MeetingSession`, `MeetingSession+AutomaticReviews` | `MobileSummaryScheduler` (a typealias, `iOS/MobileSummaryScheduler.swift`) |
+| `QuickSummaryContext` — pieces, attributed transcript and `Notes: ` lines | `MeetingSession`, `AutomaticReviewCoordinator` | `MobileQuickContext` (a typealias, `iOS/MobileQuickContext.swift`) |
+| `QuickSummaryReader` / `QuickSummaryDecision` — evaluation and its JSON envelope | `MeetingSession` | `MobileQuickReader` (a typealias, `iOS/MobileQuickReader.swift`) |
+| `AutomaticReviewCoordinator` — queued Summary/Deep reviews, deadlines, manual completion | `MeetingSession` | `MobileSession.automaticReviews` |
+| Prompt data fences and caps: `PromptData.notice`, `PromptData.block`, `PromptBudget` | `PromptBuilder` (`Prompt.swift`) | `MobileSummaryMode.instructions`, `MobileSession.summarize` |
+| `SessionArchive` — the on-disk conversation format | `App/SessionStore.swift` | `iOS/MobileSession.swift` |
+| `SessionSearch` — History search and its matching rules | `App/SessionSearchView.swift`, `App/MeetingView.swift` | `MobileHistoryView` via `MobileSession` |
+| `AppleIntelligenceProvider` (`SharedPlatform/`) — on-device transport and its failure wording | `App/MeetingView.swift` | `MobileSession`, `MobileAISettings` |
+| `OllamaProvider`, `LLMRequest` / `ChatMessage`, `OllamaGenerationOptions` | `App/MeetingView.swift` | `MobileAISettings.client(for:)` |
+
+The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembles pane prompts with
+`PromptBuilder`, iOS with `MobileSummaryMode.instructions`, and both append the same
+`PromptData.notice`. Changing that notice, `PromptData.block` or a `PromptBudget` cap changes both.
+
+### Tier 2 — platform-appropriate: may differ, every difference listed here
+
+| Capability | macOS | iOS |
+| --- | --- | --- |
+| Capture | Microphone **and** the other participants' system audio via ScreenCaptureKit (`App/DualChannelCapture.swift`), labeled You / Others | This device's microphone only; every line is labeled **Microphone**; foreground only |
+| Default AI provider | Explicit AI mode — Local only, Apple Intelligence, Cloud, or AI off — defaulting to a local Ollama model | A fresh install uses **Apple Intelligence on-device** when it is available, otherwise falls back to Ollama and names the reason (`MobileAISettings.fallbackExplanation`) |
+| Ollama endpoint | The local daemon (`localhost:11434`) or Ollama Cloud | Ollama Cloud, or a server you run and address yourself (`.local`/loopback for plain `http`); a saved cloud key is never sent to another host |
+| Per-role models | A picker per pane in the status rail, over local and cloud models, auto-picked local-first (`ModelRanking`) | Settings → Model role for Summary / Quick / Deep (`MobileRoleModelView`), Ollama only; Flash models are reserved for Quick and correction and refused for Deep |
+| Local-model enforcement | `ModelPrivacy` / `localOnly` verifies downloaded weights before every request | Not applicable — on-device here means Apple Intelligence; iOS reaches Ollama only over the network |
+| Speaker identification | Optional on-device diarization and naming (WhisperKit + FluidAudio) | None — a single microphone source |
+| Presets and reference context | Use-case presets (`PresetCatalog`) and file/folder reference context (`ReferenceBuilder`, `FileContextLoader`) | Not today. Attachments instead: extracted text is appended to Notes, so it reaches the model inside `<transcript>`, not a `<reference>` block |
+| Calendar import | **Load from Calendar** fills Context notes (`App/CalendarService.swift`); text is imported as written | **Import from Calendar** removes e-mail addresses and link passcodes first (`MeetingContext.redactingLinksAndAddresses`, `MobileCalendar.attendeeNames`) |
+| Share-sheet import | — | Share extension plus an App Group inbox (`ShareExtension/`, `iOSShared/SharedInbox.swift`) |
+| AI speech correction | — | Opt-in, over a Flash model on Ollama (`MobileTranscriptCorrector`) |
+| Proactive Quick answers | Yes — needs a finalized question on the Others channel | No — there is no Others channel to detect one in |
+| "What's New" | GitHub release notes and `CHANGELOG.md` | In-app, shown once per set of bundled notes (`MobileReleaseNotes`) |
+| Storage protection | Plain atomic writes | Data protection (`completeUntilFirstUserAuthentication`) plus an optional backup exclusion (`PrivateStorage`) |
+| Export | Markdown, PDF and recap | Markdown and readable text through the share sheet |
+| Audio-file import | Yes (`App/AudioFileReader.swift`) | No |
+| Languages | Transcription language **and** AI response language | Transcription language only |
+| Input | Global ⌘⇧Space hotkey and a Session menu | Touch UI; no hotkeys or menu bar |
+
+### Tier 3 — out of scope for iOS
+
+| Not in the iOS app | Why |
+| --- | --- |
+| System, call or other-app audio capture | iOS gives no app another app's audio. The dual-channel copilot is macOS-only by platform, not by ordering |
+| Background recording | No `UIBackgroundModes`: backgrounding stops recording and saves |
+| A local Ollama daemon and its downloaded-weight verification (`ModelPrivacy` / `localOnly`) | A phone does not run the Ollama daemon; on-device inference on iOS is Apple Intelligence |
+| The WhisperKit transcription engine and FluidAudio speaker models | Neither is linked into the iOS target (`project.yml`) |
+| Mac↔iOS sync or a Mac companion mode | Out of scope product-wide — see [backlog](backlog.md) → "Intentionally out of scope" |
+
+## Version policy
+
+**The two apps keep independent version lines.** They are separate products in separate distribution
+channels, and an iOS build number already accepted by App Store Connect can never be reused. A higher
+iOS version does *not* mean the iPhone app is ahead of the Mac app; today macOS is 1.4.4 (14) and iOS
+is 1.10.5 (27).
+
+- **`MARKETING_VERSION`** (iOS, in `project.yml`): a **minor** bump for user-visible features, a
+  **patch** bump for fixes.
+- **`CURRENT_PROJECT_VERSION`** (iOS): increments monotonically on every upload and **never resets**
+  when `MARKETING_VERSION` changes. The app and share-extension targets keep identical values.
+- **One release per batch of work, not per fix** — the same batching rule tracked for macOS in
+  [#106](https://github.com/tomqwu/ListenToMe/issues/106).
+- **Tags:** `ios-vX.Y.Z-buildN` for iOS, `vX.Y.Z` for macOS. An iOS build is never published as the
+  latest macOS release.
+- **`CHANGELOG.md` carries both platforms**, newest first, interleaved by date.
+- Do not bump the macOS version for an iOS-only release, or the reverse.
+
+The archive, upload, tagging and verification steps themselves are not repeated here: follow
+[IOS-RELEASING.md](IOS-RELEASING.md) for iOS, [RELEASING.md](RELEASING.md) for macOS, and
+[AGENTS.md](../AGENTS.md) for the release workflow that governs both.
+
 ## iOS 1.10.5 (27)
 
 App Store readiness: Settings → Privacy links the privacy policy and support pages (#145). History surfaces a dismissable note when a saved conversation file cannot be decoded (the file is quarantined, never deleted) and search now covers notes with diacritic- and width-insensitive matching (#120, #139). Prompts fence transcript, notes and reference text as data (#140). No recording-path changes on iOS in this build. [What to Test](../metadata/ios/en-CA/what-to-test-1.10.5.txt).
@@ -202,12 +298,14 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   shared cap macOS also clamps its Apple prompts to); Ollama accepts up to 60,000. Both caps are
   charged on the *fenced* conversation, not the raw text. Oversized input is rejected explicitly. AI output needs review.
 - Prompts separate data from instructions (#140). The conversation a manual Summary, Deep or
-  on-device Quick sends is wrapped in a `<transcript>` block, attached reference material in a
-  `<reference>` block, and every system prompt states that text inside those blocks is data to read
-  and summarize, never instructions to follow. Closing tags inside the content are neutralized so
-  nothing in a transcript or file can end the block early. iOS assembles one attributed source
-  string, so a typed note travels inside `<transcript>` on its `Notes: ` line rather than in a
-  separate `<notes>` block as on macOS; the grounding sentence about `Notes: ` lines is unchanged.
+  on-device Quick sends is wrapped in a `<transcript>` block, and every system prompt states that
+  text inside that block is data to read and summarize, never instructions to follow. Closing tags
+  inside the content are neutralized so nothing in a transcript or file can end the block early. iOS
+  assembles one attributed source string, so a typed note travels inside `<transcript>` on its
+  `Notes: ` line rather than in a separate `<notes>` block as on macOS; the grounding sentence about
+  `Notes: ` lines is unchanged. Attachment text you copy into Notes travels the same way — iOS emits
+  no `<reference>` block, because it has no file/folder reference context (see
+  [Parity with macOS](#parity-with-macos)); the shared notice still names all four tags.
   This hardens the app against instruction-like text spoken by another participant or embedded in a
   shared file; it cannot fully prevent it.
 - Recording stops and saves when the app is backgrounded or when audio is interrupted (call, Siri,
