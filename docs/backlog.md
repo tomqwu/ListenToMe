@@ -25,10 +25,14 @@ See [the September triage](reviews/2026-09-10/backlog-triage.md) for the disposi
 
 ## Intentionally out of scope
 
-- Android/Windows products and Mac companion/sync features.
-
-The standalone iOS app is now in scope at the maintainer's request; see [iOS](IOS.md).
+- Android/Windows products, and Mac↔iOS sync or companion features.
 - Cloud accounts, team workspaces, and public sharing links.
 - Per-vendor AI SDK integrations; the current backend is Ollama.
+
+The standalone iPhone/iPad app is in scope at the maintainer's request. What it is for, and what it
+deliberately leaves to macOS, is stated once in
+[iOS → What this app is for](IOS.md#what-this-app-is-for) and
+[iOS → Parity with macOS](IOS.md#parity-with-macos) — including the tier-3 list (system/call audio
+capture, background recording, a local Ollama daemon, WhisperKit, Mac sync). Do not restate it here.
 
 Exploratory work must preserve explicit consent, local storage and truthful privacy/accuracy claims.

@@ -4,7 +4,7 @@
 
 # ListenToMe
 
-**The free, open-source, fully on-device meeting copilot for macOS and iOS — bring your own model, stay private, shape it to any conversation.**
+**The free, open-source, fully on-device meeting copilot for macOS — with a private capture-and-recall companion for iPhone and iPad. Bring your own model, stay private, shape it to any conversation.**
 
 [![CI](https://github.com/tomqwu/ListenToMe/actions/workflows/ci.yml/badge.svg)](https://github.com/tomqwu/ListenToMe/actions/workflows/ci.yml)
 ![Coverage](https://img.shields.io/badge/Core_coverage-96%25-brightgreen)
@@ -22,13 +22,23 @@ transcript never leave the machine**.
 
 ## iPhone and iPad
 
-A native standalone iOS 26 app is now available in source as the **ListenToMeIOS** target.
-It includes microphone transcription, a unified live transcript/Quick Summary/Deep Summary dashboard,
-local conversations with keyword search, photo/file attachments, Apple Notes share imports and
-Markdown sharing. Choose
-on-device Apple Intelligence — the default on capable devices — or Ollama: Ollama Cloud with your own
-key, or an Ollama server you run on your own network. It does not capture other apps' audio or sync
-with the Mac. See [iOS setup, validation and distribution](docs/IOS.md).
+**The iPhone and iPad app is a personal capture and recall companion, not a port of the Mac copilot.**
+It transcribes what the device's own microphone hears — an in-person conversation, a lecture, an
+interview, a phone on the table — summarizes it on-device by default, and keeps conversations local,
+searchable and shareable. It is deliberately not a copilot for calls or video meetings: iOS does not
+let an app capture another app's audio, so the dual-channel "You / Others" experience stays
+macOS-only, and there is no Mac↔iOS sync. See
+[what this app is for](docs/IOS.md#what-this-app-is-for),
+[parity with macOS](docs/IOS.md#parity-with-macos) and
+[the version policy](docs/IOS.md#version-policy).
+
+The standalone iOS/iPadOS 26 app is the **ListenToMeIOS** target: microphone transcription, a live
+transcript with Quick Summary plus a Deep Think tab, local conversations with search, photo/file
+attachments, Apple Notes and share-sheet imports, calendar import with e-mail and join-link
+redaction, and Markdown sharing. Choose on-device Apple Intelligence — the default on capable
+devices — or Ollama: Ollama Cloud with your own key, or an Ollama server you run on your own network.
+Presets, reference files, speaker identification, audio-file import and WhisperKit are macOS-only.
+See [iOS setup, validation and distribution](docs/IOS.md).
 
 ```sh
 make ios-build
