@@ -1,14 +1,22 @@
 ---
 name: listentome-testflight
-description: Complete ListenToMe iOS fixes and features through validated TestFlight publication, including resumed work and merged PR handoffs. Use for iOS release work in this repository; exclude documentation-only changes and macOS-only releases.
+description: Publish a ListenToMe iOS release train to TestFlight - validated archive, authenticated upload, tester verification - including resumed work and merged PR handoffs. Use when an iOS release train is due in this repository; publication is batched, not once per merged fix. Exclude documentation-only changes and macOS-only releases.
 ---
 
 # ListenToMe TestFlight completion
 
-The maintainer has standing authorization: after an iOS app fix or feature, validate, merge and
-publish the beta without asking whether to publish or handing the upload back to the maintainer.
-This includes resumed tasks and features merged by another session. Respect an explicit draft or
-local-only instruction. This does not authorize a public App Store release or additional testers.
+iOS publication runs on **release trains**, not once per fix. A change is done when it is merged to
+`main` with the required checks green, its tests passing and its docs updated; the upload is a
+separate, batched step. Publish when a batch of merged iOS work is complete, or when a single
+user-visible fix warrants its own build — **at most one TestFlight build per day**, never one per
+merged pull request. If today's build has already gone out, the change rides the next train: report
+it as merged and unreleased rather than uploading again. See [AGENTS.md](../../../AGENTS.md) for the
+full policy and the candidate → verified → published ladder.
+
+When a train is due, the maintainer's standing authorization applies: validate, then publish the beta
+without asking whether to publish or handing the upload back to the maintainer. This includes resumed
+tasks and features merged by another session. Respect an explicit draft or local-only instruction.
+This does not authorize a public App Store release or additional testers.
 
 Read [the release runbook](../../../docs/IOS-RELEASING.md) for artifact validation, authentication,
 API status checks and metadata updates. Use this repository's current procedure over older notes
@@ -33,7 +41,9 @@ that describe the CLI as blocked or require another publication approval.
 
 ## Complete the release
 
-1. Inspect merged source, version/build, CI and existing evidence before rebuilding. Reuse an archive
+1. Confirm a train is actually due: no TestFlight build has already been uploaded today, and the
+   merged work is either a complete batch or a user-visible fix that warrants its own build. Then
+   inspect merged source, version/build, CI and existing evidence before rebuilding. Reuse an archive
    only when its source provenance matches. Check local receipts and App Store Connect for an already
    accepted version/build, including uploads made outside the helper. Never overwrite or re-upload it.
 2. Complete relevant local behavior/UI/API checks, CI, signing and distribution-package verification.

@@ -8,12 +8,35 @@ This document describes how the maintainer builds and publishes an official, sig
 > Signing, notarization, GUI, permissions and real-audio acceptance still require a local Mac.
 > Use the mandatory gates in [the production roadmap](reviews/2026-09-10/production-roadmap.md).
 
-## Completion policy
+## Release cadence: trains, not one release per fix
 
-Fixes and features include production publication by default, as specified in [AGENTS.md](../AGENTS.md).
-A local build, local install, or draft PR is not the end of the workflow. After publishing, download
-the hosted asset and compare its SHA-256 against the verified local DMG. Use `--target` with the exact
-artifact source commit when creating a release so the tag cannot silently point at another commit.
+macOS publication is batched into **release trains**, as specified in [AGENTS.md](../AGENTS.md). A
+change is done when it is merged to `main` with the required checks green, tests passing and docs
+updated; publishing is a separate step that happens when a batch of merged work is complete, or when
+a single user-visible fix warrants going out on its own.
+
+- **At most one macOS release per day.** Never one release per merged pull request.
+- If the day's train has already departed, the change rides the next one. Leave it merged with its
+  `CHANGELOG.md` entry under the unreleased macOS heading and report it as merged, not released.
+- Documentation-only changes never require a binary release.
+- When a train is due, publication is already authorized — do not ask the maintainer to repeat
+  "publish". Touch ID and Apple ID prompts must still be answered by the maintainer.
+
+## The verification ladder
+
+Claim only the rung the evidence supports (the full rules are in [AGENTS.md](../AGENTS.md)):
+
+| Rung | What it takes on macOS |
+|---|---|
+| **candidate** | Built and verified locally: the DMG exists, tests/lint/required CI checks are green, signing succeeded. Any outstanding gate keeps a build at this rung. |
+| **verified** | Installed-app GUI/audio acceptance for the paths the change affects. A candidate pass is never production acceptance. |
+| **published** | The notarized DMG attached to a GitHub release, the hosted asset downloaded again with its SHA-256 compared against the verified local DMG, and the tag created at the exact artifact source commit. |
+
+Use `--target` with the exact artifact source commit when creating a release so the tag cannot
+silently point at another commit. Never claim publication without that downloaded-asset checksum
+match, and never replace an already-published version's binary. If a blocker prevents publication,
+name it precisely, preserve the candidate and its evidence, and report the work as merged but not
+published — never as released.
 
 ## Bundle identifiers: release vs. dev
 
@@ -71,6 +94,51 @@ and the `store-credentials` example below, so you don't need to pass it).
   - …or the raw **Apple ID / app-specific password** via env vars (`NOTARY_TEAM_ID` defaults to
     `T32FW7PZ3S`).
 - Build tooling: `brew install xcodegen` (and optionally `xcbeautify`). `gh` (GitHub CLI) to publish.
+
+## Credentials and recovery runbook
+
+Every macOS signing credential lives on the maintainer's Mac, outside the checkout. **Never commit a
+secret value** — no `.p12`, no exported private key, no app-specific password, no notary password —
+and never paste one into chat or a log. The repo stores only names and paths; `dist/` is gitignored
+and holds the release evidence you report from.
+
+| Credential | Where it lives | Verify it is present |
+|---|---|---|
+| Developer ID Application certificate + private key | The maintainer's **login keychain** (Team `T32FW7PZ3S`) | `security find-identity -v -p codesigning \| grep "Developer ID Application"` — exactly one valid identity should print |
+| `notarytool` keychain profile `ListenToMe-Notary` | The login keychain, created by `xcrun notarytool store-credentials` | `xcrun notarytool history --keychain-profile "ListenToMe-Notary"` — a listing (even an empty one) means the profile authenticates |
+| Apple ID app-specific password | The maintainer's password manager; consumed once by `store-credentials` | It cannot be read back after creation. Treat a notary auth failure as the signal to reissue it |
+| Alternate notary env trio | `NOTARY_APPLE_ID`, `NOTARY_PASSWORD`, `NOTARY_TEAM_ID` in the shell | `printenv NOTARY_APPLE_ID NOTARY_TEAM_ID` (never print the password) |
+
+When one is missing or rejected:
+
+- **No Developer ID identity.** Do not fall back to an unsigned or Debug-configuration DMG, and do
+  not publish one. Create a new *Developer ID Application* certificate at
+  <https://developer.apple.com/account/resources/certificates>, download it, and double-click to
+  install; then re-run `make release` from the same source commit. Only an Account Holder or Admin on
+  the team can issue it. Revoking a certificate does not break already-notarized, stapled releases.
+- **Notary profile missing or rejected** (`error: HTTP status code: 401`, `Unable to authenticate`).
+  Generate a fresh app-specific password at <https://appleid.apple.com> → Sign-In and Security, then
+  re-run the `store-credentials` command above. Do not delete accounts, reset the keychain, or
+  rebuild the app to fix an authentication failure — the artifact is not the problem. Retry the same
+  validated candidate once the credential state actually changes.
+- **Notarization rejected rather than unauthenticated.** Read the log
+  (`xcrun notarytool log <submission-id> --keychain-profile "ListenToMe-Notary"`) and fix the signing
+  or hardened-runtime finding it names. A rejected submission is not a published release.
+- **Any credential unavailable at all.** Stop at candidate. Preserve the DMG, its checksum, the exact
+  failing command and the sanitized error, name the missing credential, and report the work as merged
+  but not published.
+
+Only the maintainer can perform these, so ask rather than attempting them:
+
+- Accepting the Xcode license: `sudo xcodebuild -license accept` (needs `sudo`; the symptom is a
+  build failing with "Agreeing to the Xcode/iOS license requires admin privileges").
+- Approving Touch ID, keychain-unlock and codesign-access prompts.
+- Apple ID authentication and two-factor codes, and creating or revoking certificates,
+  app-specific passwords and App Store Connect keys in the Apple Developer account.
+
+Never reset broad macOS permissions or the login keychain as a troubleshooting step. The iOS
+credential runbook — the App Store Connect API key and its references — is in
+[IOS-RELEASING.md](IOS-RELEASING.md#credentials-and-recovery-runbook).
 
 ## Environment variables read by `scripts/release.sh`
 
