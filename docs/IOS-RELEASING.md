@@ -1,8 +1,19 @@
 # Publish an iOS build to TestFlight
 
-This is the release runbook for ListenToMe on iPhone/iPad. Follow it after an iOS fix or feature;
-merging a PR, building an archive, or exporting an IPA does **not** publish the app.
-The maintainer's instruction to release already authorizes the upload. Do not ask again.
+This is the release runbook for ListenToMe on iPhone/iPad. Follow it when an iOS **release train** is
+due — not after every merged fix. Merging a PR, building an archive, or exporting an IPA does **not**
+publish the app; equally, a merged iOS change does not by itself call for an upload.
+
+**Cadence.** Publish when a batch of merged iOS work is complete, or when a single user-visible fix
+warrants its own build. **At most one TestFlight build per day**, never one per merged pull request.
+If today's build has already gone out, the change rides the next train: leave it merged, keep its
+`CHANGELOG.md`/release-note entry unreleased, and report it as merged rather than released.
+Documentation-only changes never require a new binary, version bump or upload. See
+[AGENTS.md](../AGENTS.md) for the full policy and the candidate → verified → published ladder.
+
+When a train is due the maintainer's instruction to release already authorizes the upload; do not ask
+again whether to publish. Apple ID authentication and two-factor prompts still belong to the
+maintainer.
 
 **A connected iPhone is not required to archive or upload to TestFlight.** Simulator/UI tests and
 honestly documented device limitations are sufficient to distribute an authorized beta for device
@@ -74,6 +85,51 @@ Without a configured key, the helper retains the existing Xcode-session route. I
 the chosen route and validates local configuration only; it does **not** authenticate with Apple.
 Offline helper tests prove argument handling and receipt safeguards, not working credentials.
 Require a real accepted upload before claiming the API-key path has repaired publishing.
+
+## Credentials and recovery runbook
+
+The iOS upload credentials live on the maintainer's Mac, outside the checkout. **Never commit or
+paste a secret value** — not the `.p8` contents, not an Apple ID password, not a JWT. The repo and
+`~/.config/listentome/testflight.json` store only non-secret references (paths and IDs).
+
+| Credential | Where it lives | Verify it is present |
+|---|---|---|
+| The key's non-secret references (`key_path`, `key_id`, `issuer_id`) | `~/.config/listentome/testflight.json`, or the complete `ASC_KEY_PATH`/`ASC_KEY_ID`/`ASC_ISSUER_ID` environment group | `python3 -m json.tool ~/.config/listentome/testflight.json` prints all three (none of them is secret) |
+| App Store Connect API key (`.p8`) | Outside the checkout, at the `key_path` above — e.g. `~/.appstoreconnect/private_keys/AuthKey_<KEYID>.p8`, readable only by the maintainer | `ls -l` that `key_path`; the file must exist and be readable by your user. Never print its contents |
+| The selected route end to end | — | `make ios-testflight IOS_ARCHIVE=<archive> IOS_RELEASE_SOURCE=<commit> IOS_RELEASE_FLAGS=--dry-run` should report route `app_store_connect_api_key` |
+| Xcode-session account (fallback route) | Xcode → Settings → Accounts, team `T32FW7PZ3S` with App Store Connect access | The account is listed with that team; browser login alone does not establish it |
+| iOS distribution signing | Automatic provisioning via `-allowProvisioningUpdates` against team `T32FW7PZ3S` | A clean `ARCHIVE SUCCEEDED`, then `codesign --verify --deep --strict` in step 3 |
+
+A dry run validates local configuration only. It is never authentication proof — only an upload Apple
+accepts is.
+
+When one is missing or rejected:
+
+- **Configuration or key file missing.** Ask only for the specific missing references — **Key ID,
+  Issuer ID and the local `.p8` path** — never the key contents and never another manual upload. If
+  no suitable key exists, the Account Holder creates one in App Store Connect → Users and Access →
+  Integrations → App Store Connect API → Team Keys with **Developer** access, as described above.
+- **Apple rejects the configured key** (401/403, `NOT_AUTHORIZED`). Report the sanitized API or
+  upload error. The key may be revoked, the API role insufficient, or API access not enabled for the
+  team; each needs the maintainer in App Store Connect. Do not rebuild the app to fix an
+  authentication failure, and do not repeatedly retry unchanged credentials.
+- **`Failed to Use Accounts` on the Xcode-session route.** Check the configured API key first; see
+  the troubleshooting section below. Do not delete accounts, reset keychains or rewrite credential
+  registries.
+- **Any credential unavailable at all.** Stop at candidate. Preserve the source commit/tree, the
+  validated archive, the IPA checksum, the selected route, the exact failing command and sanitized
+  error, and resume that same unaccepted artifact after recovery. Report the work as merged but not
+  published — never as released.
+
+Only the maintainer can perform these, so ask rather than attempting them:
+
+- Accepting the Xcode license: `sudo xcodebuild -license accept` (needs `sudo`).
+- Approving Touch ID and keychain-unlock prompts.
+- Apple ID sign-in and two-factor codes; creating, revoking or re-downloading App Store Connect API
+  keys; enabling API access for the team; and changing a user's App Store Connect role.
+
+The macOS signing, notarization and recovery runbook is in
+[RELEASING.md](RELEASING.md#credentials-and-recovery-runbook).
 
 ## 1. Identify the exact release and validate it
 
@@ -259,7 +315,8 @@ upload. Build 8 is accepted and tagged `ios-v1.3.1-build8`; do not retry it. Tes
 must still be checked separately. The original IPA checksum predates Organizer's export and must
 not be described as a verified checksum of Apple's uploaded payload.
 
-The agent owns code through publication. If Xcode-session lookup fails, check the configured API-key
+The agent owns the release train end to end, from validated archive through publication. If
+Xcode-session lookup fails, check the configured API-key
 route first. Native Organizer automation is another fallback when available; do not routinely delegate
 the publish click to the maintainer. Report a blocker only for the actual usable routes and preserve
 the evidence; a failed GUI connection does not negate working API authentication.

@@ -9,19 +9,25 @@ plus real-time AI via Ollama (local + cloud), with per-pane model selection and 
 
 ## Canonical release workflow
 
-Read [AGENTS.md](AGENTS.md) first. It is the shared instruction source for all agents and requires
-production publication and downloaded-asset verification for fixes/features. The checklist below
-adds documentation and issue hygiene; it does not replace that release workflow. Documentation-only
-changes do not require an unrelated model request or binary release.
+Read [AGENTS.md](AGENTS.md) first. It is the shared instruction source for all agents. A change is
+done when it is merged to `main` with the three required checks green, relevant tests passing and
+every affected doc updated — **publication is a separate, batched step**, governed by the release
+trains in AGENTS.md: at most one macOS release and one TestFlight build per day, never one release
+per merged PR. Merged-but-unpublished is the expected state; do not call merged work released. When
+a train is due, AGENTS.md's ladder (candidate → verified → published) and its downloaded-asset
+verification apply in full. The checklist below adds documentation and issue hygiene; it does not
+replace that workflow. Documentation-only changes do not require an unrelated model request or
+binary release.
 
 ## Definition of Done
 
 A change is **not done** until ALL of the following are true. Treat this as a checklist on every task.
 
-1. **Relevant checks pass** — code changes require build/tests; run `make e2e` for affected model/capture paths and the release gates in AGENTS.md. Documentation-only changes require link/content checks and hosted CI.
+1. **Relevant checks pass** — code changes require build/tests; run `make e2e` for affected model/capture paths and the pre-merge gates in AGENTS.md. Documentation-only changes require link/content checks and hosted CI.
 2. **Every relevant doc is updated to match — not just the obvious one.** Sweep the whole doc set and
    update anything the change affects: `README.md`, `docs/backlog.md`, `docs/competition-analysis.md`,
-   `docs/manual-smoke-test.md`, `docs/RELEASING.md`, and any plan/spec under `docs/superpowers/`. Stale
+   `docs/manual-smoke-test.md`, `docs/RELEASING.md`, `docs/IOS-RELEASING.md`, `CHANGELOG.md`, and any
+   plan/spec under `docs/superpowers/`. A change to release policy also means `AGENTS.md`. Stale
    docs are a Definition-of-Done failure, not a follow-up.
 3. **The backlog lives in [GitHub Issues](https://github.com/tomqwu/ListenToMe/issues), not docs.** If the
    change fully implements a known gap, **link and close the matching issue in the same PR**. Keep valid
