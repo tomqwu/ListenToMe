@@ -88,8 +88,9 @@ is 1.10.5 (27).
   **patch** bump for fixes.
 - **`CURRENT_PROJECT_VERSION`** (iOS): increments monotonically on every upload and **never resets**
   when `MARKETING_VERSION` changes. The app and share-extension targets keep identical values.
-- **One release per batch of work, not per fix** — the same batching rule tracked for macOS in
-  [#106](https://github.com/tomqwu/ListenToMe/issues/106).
+- **One release per batch of work, not per fix** — the release trains in
+  [AGENTS.md](../AGENTS.md) govern both platforms: at most one macOS release and one TestFlight
+  build per day, never one release per merged pull request.
 - **Tags:** `ios-vX.Y.Z-buildN` for iOS, `vX.Y.Z` for macOS. An iOS build is never published as the
   latest macOS release.
 - **`CHANGELOG.md` carries both platforms**, newest first, interleaved by date.
@@ -127,7 +128,7 @@ prompts are told never to invent names. Remote or diarized speakers keep their o
 
 The label format and the `Notes:` marker are shared with macOS; the two platforms still assemble the
 full-review source differently (chunking and provisional-speech handling).
-See [the shared policy](SHARED-LIVE-SUMMARY.md#attributed-input-and-user-directives-for-automatic-output)
+See [the shared policy](SHARED-LIVE-SUMMARY.md#attributed-input-and-user-directives-for-automatic-output-144--ios-1102)
 for the exact rule and the known differences.
 
 ## iOS 1.10.1 (23)
