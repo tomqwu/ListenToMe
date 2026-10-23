@@ -12,9 +12,12 @@ plus real-time AI via Ollama (local + cloud), with per-pane model selection and 
 Read [AGENTS.md](AGENTS.md) first. It is the shared instruction source for all agents. A change is
 done when it is merged to `main` with the three required checks green, relevant tests passing and
 every affected doc updated — **publication is a separate, batched step**, governed by the release
-trains in AGENTS.md: at most one macOS release and one TestFlight build per day, never one release
-per merged PR. Merged-but-unpublished is the expected state; do not call merged work released. When
-a train is due, AGENTS.md's ladder (candidate → verified → published) and its downloaded-asset
+trains in AGENTS.md: at most one macOS release and one TestFlight build per day for trains an agent
+starts on its own, never one release per merged PR. A train the maintainer calls ("publish", "release
+what's on `main`", "publish as always") goes out the same day even if one already departed, and work the
+maintainer requested from tester feedback ships on a TestFlight train as soon as it is merged and its
+candidate checks pass, without waiting a day or asking again. Merged-but-unpublished is the expected
+state; do not call merged work released. When a train is due, AGENTS.md's ladder (candidate → verified → published) and its downloaded-asset
 verification apply in full. The checklist below adds documentation and issue hygiene; it does not
 replace that workflow. Documentation-only changes do not require an unrelated model request or
 binary release.

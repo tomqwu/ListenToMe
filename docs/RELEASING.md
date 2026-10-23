@@ -15,8 +15,10 @@ change is done when it is merged to `main` with the required checks green, tests
 updated; publishing is a separate step that happens when a batch of merged work is complete, or when
 a single user-visible fix warrants going out on its own.
 
-- **At most one macOS release per day.** Never one release per merged pull request.
-- If the day's train has already departed, the change rides the next one. Leave it merged with its
+- **At most one macOS release per day for trains an agent starts on its own initiative.** Never one
+  release per merged pull request. A train the maintainer calls ("publish", "release what's on
+  `main`", "publish as always") goes out the same day even if one already departed.
+- Otherwise, if the day's self-started train has already departed, the change rides the next one. Leave it merged with its
   `CHANGELOG.md` entry under the unreleased macOS heading and report it as merged, not released.
 - Documentation-only changes never require a binary release.
 - When a train is due, publication is already authorized — do not ask the maintainer to repeat

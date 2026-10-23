@@ -48,6 +48,10 @@ enum MobileReleaseNotes {
         var id: String { version }
     }
     static let releases: [Release] = [
+        .init(version: "1.12.0", title: "Names and languages, automatically", details: [
+            "Speaker labels are on by default and get ready before you record, so even a short recording is labeled.",
+            "Automatic language: this device hears which language you speak, switches and re-transcribes, with Undo."
+        ]),
         .init(version: "1.11.0", title: "Know who said what", details: [
             "Optional speaker labels: Settings → Speakers marks lines Speaker 1, Speaker 2… on this device.",
             "Rename a speaker in Notes → Speakers and the name follows every line, History search and exports."

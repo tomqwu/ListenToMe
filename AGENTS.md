@@ -36,16 +36,22 @@ Publication is batched into release trains. It is not performed once per fix.
 
 - Publish when a batch of merged work is complete, or when a single user-visible fix warrants going
   out on its own.
-- **At most one macOS release and at most one TestFlight build per day.** Never one release per
-  merged pull request.
-- If the day's train for that platform has already departed, the change rides the next one. Leave it
-  merged with its changelog entry unreleased and say so; merged-but-unpublished is the expected
-  state, not an unfinished task.
+- **At most one macOS release and at most one TestFlight build per day, for trains an agent starts
+  on its own initiative.** Never one release per merged pull request.
+- **A train the maintainer calls goes out the same day**, even if that platform's train already
+  departed today. "Publish", "release what's on `main`" and "publish as always" each call a train.
+- **Work the maintainer requested from tester feedback ships on a TestFlight train as soon as it is
+  merged and its candidate checks pass**, without waiting for the next day or asking again.
+  Physical-device acceptance is not required for that beta upload (see the ladder below).
+- Otherwise, if the day's self-started train for that platform has already departed, the change
+  rides the next one. Leave it merged with its changelog entry unreleased and say so;
+  merged-but-unpublished is the expected state, not an unfinished task.
 - A fix that warrants its own train is one users are actually hitting in a published build: a crash,
   data loss, a broken capture, transcription or model-routing path, or a regression. Refactors,
   tests, and work behind an unfinished feature wait for the next train.
 - Documentation-only changes never require a binary release, a version bump or an upload.
-- The maintainer may call a train at any time; "release what's on `main`" is a complete instruction.
+- The maintainer may call a train at any time, including on a day a train already departed;
+  "release what's on `main`" is a complete instruction.
 
 Publication itself stays authorized: when a train is due, run the workflow below without asking the
 maintainer to repeat "publish", including for work merged by another session. An explicit draft,
