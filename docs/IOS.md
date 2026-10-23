@@ -371,7 +371,12 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   downloads them. While recording, the audio the transcriber
   accepted is copied into a 16 kHz buffer; about every 20 seconds (never sooner than the previous
   pass took) a pass re-analyzes only the audio since the last one plus a one-minute overlap
-  (`SpeakerAnalysisPolicy`). Stop returns at once; a final pass then labels the last words while the
+  (`SpeakerAnalysisPolicy`). Each pass carries speakers over by shared audio time first; the
+  voices left over (at least 2 s of speech) are matched by voice embedding to the speakers left over
+  (FluidAudio's per-cluster embedding against each speaker's running centroid, cosine similarity of
+  at least 0.82, one voice per speaker; `SpeakerVoiceMatching`), so someone quiet for minutes keeps
+  their label and name (#171). A centroid learns only from speech no earlier pass heard. The embeddings
+  live in memory for the recording only and are never saved. Stop returns at once; a final pass then labels the last words while the
   app stays open, queued behind any pass still running, and its result is dropped if a
   new recording or another conversation has started. The final pass is skipped while the models have
   not loaded yet, so Stop never starts or waits for the download; with the models ready, a recording
@@ -389,7 +394,7 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   you tap **Retry** or start a new recording. Limits: overlapping speech and short utterances are
   often left as **Microphone** or attributed to whoever spoke longest; a voice is not recognized
   across recordings, so after Stop/Listen (or an interruption) new voices continue the numbering
-  (Speaker 3, 4…) and can be renamed to merge them (see #171); backgrounding ends identification at once without a final pass;
+  (Speaker 3, 4…) and can be renamed to merge them; backgrounding ends identification at once without a final pass;
   more than two hours of one recording is not analyzed further.
 - Editable titles and notes; atomic local saves after finalized utterances, explicit Save,
   save-before-New, local History, restoration on launch and Markdown through the share sheet.
@@ -696,7 +701,10 @@ GitHub Actions builds both apps and runs the headless `ListenToMeCore` unit/inte
     one-word reply may stay **Microphone**. Rename a speaker in Notes, then confirm the name in the
     transcript, after relaunch, in History search and in a shared export, and that no Summary or
     Quick request starts. Record 20+ minutes and watch memory in Xcode's gauge stay flat, and note
-    battery drain against an identical recording with the setting off.
+    battery drain against an identical recording with the setting off. Voice matching (#171): in a
+    30+ minute recording of three or more people, rename one early, then have them stay quiet for
+    five minutes or more before speaking again; their new lines must carry the name, and Notes →
+    Speakers must list no more speakers than took part. Note any split of two similar voices.
 11. Automatic transcription language (#197): on a device set to English, choose **Settings →
     Transcription → Language → Automatic (default)** and speak Mandarin, then Spanish in a second
     recording, for at least 30 seconds each. On first use confirm the one-time model download (and
