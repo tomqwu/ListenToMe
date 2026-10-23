@@ -117,6 +117,22 @@ final class MobileWatchRemoteTests: XCTestCase {
         XCTAssertEqual(link.published, [session.phoneRecorderStatus])
     }
 
+    /// The watch keeps showing "Open ListenToMe…" or a busy reply until a newer status arrives, so the
+    /// phone republishes when it becomes active and when a summary starts or ends.
+    func testActivePhaseAndSummaryChangesRepublishTheStatus() async {
+        let session = MobileSession(storageDirectory: root, makeRecorder: { LifecycleTestRecorder() })
+        let link = FakeWatchLink()
+        session.watchLink = link
+        await session.handleScenePhase(.active)
+        XCTAssertEqual(link.published, [session.phoneRecorderStatus])
+        session.isSummarizing = true
+        XCTAssertEqual(link.published.count, 2)
+        session.isSummarizing = false
+        XCTAssertEqual(link.published.count, 3)
+        session.isSummarizing = false
+        XCTAssertEqual(link.published.count, 3, "No change, nothing to publish")
+    }
+
     func testLinkWithoutAnAttachedSessionAnswersOpenPhoneApp() async {
         let reply = await PhoneWatchLink.replyMessage(to: WatchLink.message(for: .start), handler: nil)
         XCTAssertEqual(try WatchLink.reply(from: reply), .openPhoneApp)

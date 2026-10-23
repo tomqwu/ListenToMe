@@ -82,7 +82,9 @@ final class MobileSession {
     /// A damaged history file that the archive set aside. Kept apart from `message`, which every
     /// save, restore and delete overwrites — the user must still see this when History opens.
     var archiveWarning: String?
-    var isSummarizing = false { didSet { synchronizeAutomaticReviews() } }
+    var isSummarizing = false {
+        didSet { synchronizeAutomaticReviews(); if isSummarizing != oldValue { publishWatchStatus() } }
+    }
     let ai = MobileAISettings()
     var summaryDraft = ""
     private var summaryTask: Task<Void, Never>?
@@ -958,6 +960,8 @@ extension MobileSession {
         case .active:
             importSharedInbox()
             importWatchInbox()
+            // The watch may still show "Open ListenToMe…" from a Start sent while this was closed.
+            publishWatchStatus()
         case .background:
             let capturing = state == .recording || state == .preparing
             let before = message
