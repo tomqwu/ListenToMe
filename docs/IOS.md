@@ -69,7 +69,7 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 | Storage protection | Plain atomic writes | Data protection (`completeUntilFirstUserAuthentication`) plus an optional backup exclusion (`PrivateStorage`) |
 | Export | Markdown, PDF and recap; **Save to folder** chosen with an open panel, written when a checkpoint is complete (capture stopped) and only while autosaving is on | Markdown and readable text through the share sheet; **Save to folder** chosen in the Files picker (security-scoped bookmark), written at Stop/Save and on later changes while not recording |
 | Audio-file import | Yes (`App/AudioFileReader.swift`) | No |
-| Languages | Transcription language **and** AI response language; the opt-in WhisperKit engine transcribes mixed languages | Transcription language only: **Automatic** (the default) detects the spoken language on the device from the first seconds of speech and switches once per recording, or a fixed language (#197) |
+| Languages | Transcription language **and** AI response language, from every on-device language the OS lists (#172); the opt-in WhisperKit engine transcribes mixed languages | Transcription language only, from the same OS list (#172): **Automatic** (the default) detects the spoken language on the device from the first seconds of speech and switches once per recording, or a fixed language (#197) |
 | Input | Global ⌘⇧Space hotkey and a Session menu | Touch UI; no hotkeys or menu bar |
 
 ### Tier 3 — out of scope for iOS
@@ -296,9 +296,15 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
 - Foreground microphone transcription using Apple's on-device SpeechAnalyzer. Language assets
   download on first use. Unsupported device/language and permission errors are shown in the app.
   **Settings → Transcription → Language** is remembered across launches, so a language chosen for
-  daily meetings is still selected after a relaunch instead of reverting to the device's. The list
-  compares BCP-47 identifiers, so a device on `en_US` is offered "System (en_US)" once rather than
-  also listing "English (US)".
+  daily meetings is still selected after a relaunch instead of reverting to the device's. Below
+  **Automatic** and **System**, the picker lists every language `SpeechTranscriber.supportedLocales`
+  reports for this device, read at launch, as **Installed** (speech model already on the device, per
+  `AssetInventory`) and **Downloadable** (downloads from Apple on first recording), with the common
+  languages first (#172; rules in Core's `TranscriptionLanguageCatalog`). Where that list is
+  unavailable, such as the simulator, it offers the common languages. A fixed language the OS no
+  longer lists stays selectable. Automatic switches among the same supported list, so any language it
+  can switch to can also be chosen. The list compares BCP-47 identifiers, so a device on `en_US` is
+  offered "System (en_US)" once rather than also listing "English (US)".
 - Automatic transcription language (#197), the default: **Settings → Transcription → Language →
   Automatic (default)**. A user who had already picked a language keeps it fixed after the update;
   everyone else starts in Automatic. SpeechAnalyzer needs one locale up front and cannot detect or

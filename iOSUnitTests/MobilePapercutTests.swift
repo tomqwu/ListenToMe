@@ -41,14 +41,20 @@ final class MobilePapercutTests: XCTestCase {
     }
 
     func testLanguagePickerDoesNotOfferTheSystemLanguageTwice() {
-        XCTAssertFalse(MobileSession.selectableLanguages(system: Locale(identifier: "en_US")).contains("en-US"),
-                       "en_US and en-US are the same language written two ways")
-        XCTAssertTrue(MobileSession.selectableLanguages(system: Locale(identifier: "en_US")).contains("en-GB"))
-        XCTAssertFalse(MobileSession.selectableLanguages(system: Locale(identifier: "zh_CN")).contains("zh-CN"))
-        XCTAssertTrue(MobileSession.selectableLanguages(system: Locale(identifier: "zh_CN")).contains("zh-TW"))
+        // A catalog that has not read the OS list offers the common languages (as in the simulator).
+        let catalog = SpeechLanguageCatalog()
+        func offered(_ system: String, selected: String? = nil) -> [String] {
+            MobileLanguageSettings.languageGroups(system: Locale(identifier: system), selected: selected,
+                                                  catalog: catalog).all
+        }
+        XCTAssertFalse(offered("en_US").contains("en-US"), "en_US and en-US are the same language written two ways")
+        XCTAssertTrue(offered("en_US").contains("en-GB"))
+        XCTAssertFalse(offered("zh_CN").contains("zh-CN"))
+        XCTAssertTrue(offered("zh_CN").contains("zh-TW"))
         // A device language the app does not list leaves every offered entry available.
-        XCTAssertEqual(MobileSession.selectableLanguages(system: Locale(identifier: "pt_BR")).count,
-                       MobileSession.offeredLanguages.count)
+        XCTAssertEqual(offered("pt_BR").count, TranscriptionLanguageCatalog.common.count)
+        // Issue #172: a fixed language the list lacks stays selectable rather than leaving the picker blank.
+        XCTAssertTrue(offered("en_US", selected: "pt-BR").contains("pt-BR"))
     }
 
     // MARK: Request transports
