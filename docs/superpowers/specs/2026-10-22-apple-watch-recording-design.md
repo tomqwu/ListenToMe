@@ -1,8 +1,11 @@
 # Apple Watch recording — design
 
 **Issue:** [#181](https://github.com/tomqwu/ListenToMe/issues/181), part of
-[#98](https://github.com/tomqwu/ListenToMe/issues/98). **Status:** design only. No app code exists
-yet, and nothing in [docs/IOS.md](../../IOS.md) changes until a slice ships.
+[#98](https://github.com/tomqwu/ListenToMe/issues/98). **Status:** approved design. The
+maintainer's answers are recorded in [§9 Decisions](#9-decisions). The implementation plan is
+[2026-10-22-apple-watch-recording.md](../plans/2026-10-22-apple-watch-recording.md). No app code
+exists yet, and nothing in [docs/IOS.md](../../IOS.md) changes until slices 1–3 ship together on one
+release train (decision 4).
 
 **Request (TestFlight feedback on iOS 1.10.5 (27)):** "use Apple Watch to record conversations."
 
@@ -23,12 +26,13 @@ nowhere else.
 | First slice | **Slice 1:** add the watch target, the WatchConnectivity link and remote **Start / Stop / status** for the iPhone recorder, which only works while ListenToMe is open on the iPhone. |
 | The slice that answers the request | **Slice 3:** watch-mic capture, transferred in chunks, transcribed on the phone. It depends on Slice 2, the iPhone's file transcription and watch inbox. |
 | On-watch transcription | **No.** `SpeechAnalyzer` and `SpeechTranscriber` are not available on watchOS (§3). The phone transcribes. |
-| Watch background recording | Needed for Slice 3. Without it, lowering the wrist suspends the app and ends the recording. The maintainer must approve it (open question 3). |
+| Watch background recording | Needed for Slice 3. Without it, lowering the wrist suspends the app and ends the recording. **Approved** (decision 2). |
 | iPhone background recording | **Unchanged.** The iPhone never records in the background. It only *receives* files, and transcribes them while it is in the foreground. |
-| Raw audio | Kept only until it is transcribed, then deleted from both devices. This changes the privacy page's "does not save raw microphone audio" (open question 4). |
+| Raw audio | Kept only until it is transcribed, then deleted from both devices. No "keep the audio" option. **Approved** (decision 3). The privacy page's "does not save raw microphone audio" changes in the release that ships watch-mic capture, not before. |
 | Targets | One embedded watchOS app target (`ListenToMeWatch`). No separate WatchKit extension target (§5.1). |
 | Shared code | The wire protocol and the chunk, ledger and retention rules go in `ListenToMeCore`, unit-tested by `swift test` under the 95% coverage floor. The watch target compiles only the files it needs. |
 | Versioning | The watch app uses the iOS app's `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION`, and the TestFlight helper checks all three bundles. |
+| Release | Slices 1–3 merge to `main` unreleased and ship together on one release train once watch-mic capture works (decision 4). |
 | Effort | Slice 1 takes about 3–4 days, Slice 2 about 3–4, Slice 3 about 5–7, plus 1–1.5 days of physical-device acceptance. Optional Slice 4 polish takes 2–3 days. |
 
 ---
@@ -51,8 +55,10 @@ helper, version tracking and the WatchConnectivity session. It does this without
 surface, without background recording and without stored audio. Each of those risks can then be
 shaken out on its own before the audio path depends on it.
 
-Slice 1 alone does **not** satisfy the TestFlight request. Open question 2 asks whether it should
-ride a train by itself or wait for Slice 3.
+Slice 1 alone does **not** satisfy the TestFlight request, so it is not released alone: slices 1–3
+merge to `main` unreleased and ship together on one train when watch-mic capture works
+(decision 4). Slice 1 still de-risks embedding, signing, CI and the version helper, because each of
+those is exercised on `main` and by a local archive long before the train.
 
 Remote control has a hard limit: **a watch command can never make the iPhone record in the
 background.** A watch message can wake the iPhone app in the background (§3, F9). But the app
@@ -86,12 +92,14 @@ reference documentation. **U** means not verified. Every U item is a spike task 
 | F13 | `BGContinuedProcessingTask` (iOS 26) must **start in the foreground**, shows progress in a Live Activity, and can be cancelled by the user or ended by the system under resource pressure. | V | [BGContinuedProcessingTask](https://developer.apple.com/documentation/backgroundtasks/bgcontinuedprocessingtask). It is an option for finishing a transcription the user started. It is not used in v1. |
 | F14 | `SpeechAnalyzer` can take audio from a file (`start(inputAudioFile:finishAfterFile:)`, `AssetInputSequenceProvider`) or from buffers carrying a `bufferStartTime`. The system limits simultaneous analyses and throws `insufficientResources` when the limit is exceeded. | V | [SpeechAnalyzer](https://developer.apple.com/documentation/speech/speechanalyzer). A file transcription must not run while the phone is recording live. |
 | F15 | XcodeGen 2.46 (installed locally) embeds a dependency of `type: application` with `platform: watchOS` into an iOS app's **"Embed Watch Content"** phase (`$(CONTENTS_FOLDER_PATH)/Watch`). | V | `XcodeGenKit/PBXProjGenerator.swift` on master, around lines 787 and 1299. |
-| F16 | The `macos-26` GitHub runner ships watchOS 26.0–26.5 SDKs, watchOS Simulator SDKs, and watchOS 26.2/26.4/26.5 simulator runtimes. The maintainer's Mac has the watchOS 27.0 SDK and **no watchOS simulator runtime**. | V | [runner-images macos-26 readme](https://github.com/actions/runner-images/blob/main/images/macos/macos-26-arm64-Readme.md), and `xcrun --sdk watchos --show-sdk-version` / `xcrun simctl list runtimes` on 2026-10-22. |
+| F16 | The `macos-26` GitHub runner (image 20261013) defaults to **Xcode 26.6**, which ships the watchOS 26.5 SDK and watchOS 26.5 Simulator SDK. The image also has watchOS 26.0–26.4 SDKs with older Xcodes, and watchOS 26.2/26.4/26.5 simulator runtimes. The maintainer's Mac has Xcode 27.0 with the watchOS 27.0 SDK and **no watchOS simulator runtime**. | V | [runner-images macos-26 readme](https://github.com/actions/runner-images/blob/main/images/macos/macos-26-arm64-Readme.md), and `xcodebuild -showsdks` / `xcrun simctl list runtimes` on 2026-10-22. CI compiles watch code against an older SDK than local builds do, so watch code must not use API newer than watchOS 26.5. |
 | F17 | `WKInterfaceDevice.batteryLevel` reports 0.0–1.0 when battery monitoring is enabled. | V | [batteryLevel](https://developer.apple.com/documentation/watchkit/wkinterfacedevice/batterylevel). |
+| F18 | `URLResourceKey.volumeAvailableCapacityForImportantUsageKey` is **unavailable on watchOS**. `volumeAvailableCapacityKey` and `FileManager.attributesOfFileSystem(forPath:)[.systemFreeSize]` compile for watchOS. | V | Compiled against the watchOS 27.0 SDK on 2026-10-22 in a scratch project. The same probe also compiled `AVAudioEngine` input taps, `AVAudioFile(forWriting:settings:)` with AAC settings, `AVAudioApplication.requestRecordPermission()`, `WKInterfaceDevice` battery and haptics, `WCSession.transferFile` / `outstandingFileTransfers` / `sendMessage`, and the SwiftUI `.backgroundTask(.watchConnectivity)` scene modifier. Compiling is not behavior: U3 still needs a device. |
+| F19 | An XcodeGen 2.46 project with an iOS app that embeds a `platform: watchOS` application target (no extension target) **builds** with `-destination 'generic/platform=iOS Simulator'` and, unsigned, with `generic/platform=iOS`, using Xcode 27.0 with **no watchOS simulator runtime installed**. The watch app lands at `<App>.app/Watch/<Watch>.app`. | V | Scratch project on the maintainer's Mac, 2026-10-22. Signed archiving and provisioning are still the Slice 1 spike. |
 | U1 | There is a documented size limit per `transferFile`. | U | None found. The design keeps chunks small (about 1.2 MB, §5.4) so the limit does not matter. |
 | U2 | Real transfer throughput and battery cost of a 1-hour recording plus transfer. | U | Measure in the Slice 3 spike. |
 | U3 | `AVAudioFile` can **write AAC** (`.m4a`) on watchOS from an `AVAudioEngine` input tap. | U | Spike. Fallback: `AVAudioRecorder` with AAC settings, which leaves a short gap at each chunk boundary. |
-| U4 | Free storage available to a watch app, and whether data-protection classes behave as on iOS. | U | Spike. Check `volumeAvailableCapacityForImportantUsage` before recording. |
+| U4 | Free storage available to a watch app, and whether data-protection classes behave as on iOS. | U | Spike. Check free space before recording with `volumeAvailableCapacity` (F18), not `volumeAvailableCapacityForImportantUsage`, which does not exist on watchOS. |
 | U5 | App Store validation requires the embedded watch app's version and build to equal the iOS app's. | U | Long-standing behavior. This design matches them regardless (§5.6). |
 | U6 | `WCSession.isSupported()` is false on iPad, which cannot pair a watch. | U | The UI hides watch features when the session is unsupported or unpaired. |
 | U7 | Which watch models run watchOS 26. | U | It decides who can use the feature. Not a design input. |
@@ -162,7 +170,7 @@ reference documentation. **U** means not verified. Every U item is a spike task 
     sources:
       - Watch
       - path: Sources/ListenToMeCore/WatchLink.swift      # shared wire protocol (§5.2)
-      - path: Sources/ListenToMeCore/WatchCaptureLedger.swift
+      - path: Sources/ListenToMeCore/WatchCapturePolicy.swift  # limits, rotation, outbox rules (Slice 3)
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMe.ios.watchkitapp
@@ -180,6 +188,14 @@ reference documentation. **U** means not verified. Every U item is a spike task 
 `ListenToMeIOS` gains `- target: ListenToMeWatch` (embed: true). XcodeGen puts it in "Embed Watch
 Content" (F15).
 
+**Until the release train for slices 1–3 (decision 4),** that dependency lives in an XcodeGen
+`include` enabled only by `WATCH_EMBED=YES`. Otherwise any unrelated iOS train cut from `main` after
+Slice 1 merges would ship the watch app early. The default build, and so `make ios-archive`, embeds
+nothing, and the TestFlight helper refuses an archive that contains a watch app. Device testing
+uses `WATCH_EMBED=YES make gen`. The release-prep change makes the embed permanent. A scratch
+project confirmed that the include appends to the existing dependencies and toggles "Embed Watch
+Content".
+
 `Watch/Info.plist` carries:
 
 - `WKApplication` = true
@@ -188,29 +204,32 @@ Content" (F15).
   works without the phone app, which does the transcribing.
 - `NSMicrophoneUsageDescription`: "ListenToMe records on your Apple Watch and sends the audio only to
   your paired iPhone, where it is transcribed on-device." Slice 3 only.
-- `UIBackgroundModes` = `[audio]`. Slice 3 only, pending open question 3.
+- `UIBackgroundModes` = `[audio]`. Slice 3 only. Approved for the watch target only (decision 2).
 
 **No WatchKit extension target.** The brief mentions "watch app + extension", which describes the
 pre-Xcode 14 two-target layout. Current Xcode adds a watch app to an existing iOS app with one
 "App" template ([setup guide](https://developer.apple.com/documentation/watchos-apps/setting-up-a-watchos-project)),
-and XcodeGen embeds that single target (F15). The claim that a separate extension target is
-unnecessary on watchOS 26 is U here. The Slice 1 spike confirms it by archiving.
+and XcodeGen embeds that single target (F15). A scratch project confirms it builds for the
+simulator and the device SDK with no extension target (F19). Signed archiving is still U here. The
+Slice 1 spike confirms it by archiving.
 
-`.swiftlint.yml` `included` gains `Watch`. The `ListenToMeIOS` scheme builds the watch app as a
-dependency, so `make ios-build` covers it with no Makefile change (§6).
+`.swiftlint.yml` `included` gains `Watch`. While the embed is gated, `make ios-build` also builds a
+`ListenToMeWatch` scheme for `generic/platform=watchOS Simulator`. Once the embed is permanent, the
+`ListenToMeIOS` scheme builds the watch app as a dependency and that extra step is removed (§6).
 
 ### 5.2 Shared code
 
 | Code | Lives in | Used by | Tested by |
 | --- | --- | --- | --- |
 | `WatchLink`: message and metadata schema (`WatchCommand`, `PhoneRecorderStatus`, `WatchChunkMetadata`, `protocolVersion`), encoding to and from `[String: Any]` property lists, validation | `Sources/ListenToMeCore/WatchLink.swift` | iOS (`import ListenToMeCore`) and watch (file compiled in) | `swift test`, coverage floor |
-| `WatchCaptureLedger`: chunk rotation plan, outbox and inbox state, completeness and gap detection, idempotency keys, retention rules | `Sources/ListenToMeCore/WatchCaptureLedger.swift` | both | `swift test` |
+| `WatchCaptureLedger`: the phone inbox manifest per recording: ordering, duplicates, completeness and gap detection, resume point, which chunks may be deleted | `Sources/ListenToMeCore/WatchCaptureLedger.swift` | iOS | `swift test` |
+| `WatchCapturePolicy`: recording limits, chunk rotation, outbox reconciliation, retry delay | `Sources/ListenToMeCore/WatchCapturePolicy.swift` | watch (file compiled in) | `swift test` |
 | `RemoteRecorderPolicy`: whether a watch command is accepted given phone state (`idle`, `preparing`, `recording`, `stopping`, foreground or not), and the reply text | `Sources/ListenToMeCore` | iOS | `swift test` |
 | `SessionArchive`, `SessionRecord`, `TranscriptSegment` | Core (tier 1, unchanged) | iOS only | existing |
 | WCSession wrapper (`PhoneWatchLink`), watch inbox drain, file transcriber | `iOS/` | iOS | app-hosted unit tests with a fake link (`ListenToMeIOSUnitTests`) |
 | Watch UI, `WatchRecorder` (AVAudioEngine → AAC chunks), `WatchLinkClient` | `Watch/` | watch | thin; physical-device acceptance |
 
-The watch target compiles **only those two Core files**. It does not link the whole package, which
+The watch target compiles **only `WatchLink.swift` and `WatchCapturePolicy.swift`** from Core. It does not link the whole package, which
 declares only macOS and iOS platforms and contains AppKit and UIKit code. Both files must therefore
 import only Foundation. Their logic is plain values, so they stay under the package's coverage
 floor.
@@ -255,7 +274,7 @@ start while recording continues, and they keep every transfer small (U1).
 **Session.** `AVAudioSession` category `.record`, then activation, all while the app is in the
 foreground. The audio background mode keeps it running with the wrist down (F3, F5).
 
-**Limits** (defaults, open question 5):
+**Limits** (decision 5):
 
 - Do not start below 20% battery or below 200 MB free storage.
 - Stop and save at 10% battery.
@@ -301,14 +320,16 @@ never finalized, because the app was killed mid-chunk, is discarded and the reco
    - Title "Apple Watch · <start time>".
    - Segments with `source: .you` and `speakerName: "Apple Watch"`.
 
-   Chunks are fed **in index order into one `SpeechAnalyzer` session** as buffers carrying
+   The language is the phone's **Transcription → Language** at the time the drain runs
+   (decision 7). Chunks are fed **in index order into one `SpeechAnalyzer` session** as buffers carrying
    `bufferStartTime = startOffset` (F14), so words that span a chunk boundary are not cut. The
    segments from each chunk are appended and the archive is saved. Only then is that chunk's audio
    deleted and the chunk marked transcribed in the manifest. A drain that is interrupted by
    backgrounding or by the user starting a live recording resumes at the first chunk not yet
    transcribed. Only that resume point can split a word.
 4. **Complete.** When the last chunk is transcribed, the inbox folder is removed, History shows the
-   conversation with a "From Apple Watch" note, and a status message says so. The conversation then
+   conversation with a "From Apple Watch" note, and a status message says so. The open conversation
+   is not switched, and no notification is posted (decisions 6 and 8). The conversation then
    behaves like any other: search, Summary, Quick, Deep, export, delete. If #180 (iOS speaker
    identification) has shipped and is enabled, it runs on these segments like any other recording.
 5. **Gaps.** If `isLast` has arrived but an index is still missing 24 hours later, the drain
@@ -317,8 +338,8 @@ never finalized, because the app was killed mid-chunk, is discarded and the reco
 
 This is iOS's first audio-*file* transcription path. Today `docs/IOS.md` tier 2 lists "Audio-file
 import: No". Slice 2 builds the transcriber as `MobileFileTranscriber` behind a protocol, so it can
-be tested with fixture `.m4a` files and no watch at all. Whether to also expose it as user-facing
-audio-file import is open question 9.
+be tested with fixture `.m4a` files and no watch at all. It stays internal to watch captures
+(decision 9), so that tier-2 row does not change.
 
 ### 5.6 Failure and retry summary
 
@@ -353,14 +374,19 @@ audio-file import is open question 9.
 
 ## 6. CI and test impact
 
-**Builds.** `make ios-build` (`-scheme ListenToMeIOS -destination 'generic/platform=iOS Simulator'`)
-builds the embedded watch app for the watchOS Simulator as a dependency. The `iOS 26 app build` CI
-check therefore covers the watch target with no workflow change. The runner has the watchOS
-Simulator SDKs (F16). Expect CI time to rise somewhat.
+**Builds.** While the embed is gated (§5.1), `make ios-build` builds the `ListenToMeIOS` scheme and
+then the `ListenToMeWatch` scheme for `generic/platform=watchOS Simulator`. Once the embed is
+permanent, `make ios-build` (`-scheme ListenToMeIOS -destination 'generic/platform=iOS Simulator'`)
+builds the embedded watch app as a dependency. Either way the `iOS 26 app build` CI check covers the
+watch target with no workflow change. The runner's default Xcode 26.6 has the watchOS 26.5 SDK and
+Simulator SDK (F16), and building needs no watchOS simulator runtime (F19). If a future runner image
+lacks the SDK, add `xcodebuild -downloadPlatform watchOS` before `make ios-build` in the `ios` job,
+or select an installed Xcode that has it. Expect CI time to rise somewhat.
 
 The check's name stays the same, which matters because the branch ruleset requires it by name.
-`make ios-archive` (`generic/platform=iOS`) archives the watch app for devices and needs automatic
-provisioning for `com.tomwu.ListenToMe.ios.watchkitapp`. The first archive is a Slice 1 task.
+`make ios-archive` (`generic/platform=iOS`) archives the watch app for devices once the embed is on
+(`WATCH_EMBED=YES` before the release-prep change), and needs automatic provisioning for
+`com.tomwu.ListenToMe.ios.watchkitapp`. The first archive is a Slice 1 task.
 
 **Unit-testable:**
 
@@ -382,7 +408,8 @@ provisioning for `com.tomwu.ListenToMe.ios.watchkitapp`. The first archive is a 
   not gain a watch test step unless one is installed.
 
 **Physical-device acceptance** (paired iPhone and Apple Watch, both release builds from TestFlight
-or Xcode). This list is added to `docs/IOS.md` when each slice ships.
+or Xcode). This list is added to `docs/IOS.md` in the release-prep change for the train that ships
+slices 1–3 together (decision 4).
 
 *Slice 1:*
 
@@ -420,8 +447,12 @@ or Xcode). This list is added to `docs/IOS.md` when each slice ships.
 
 Estimates are engineering days for one implementer, including tests and doc updates, and excluding
 review latency and the release train. Each slice is its own pull request, or a few. Each one merges
-when its checks are green, and rides the next TestFlight train under the AGENTS.md rules. No slice
-is described as released until a train publishes it.
+to `main` when its checks are green and stays **unreleased** (decision 4): slices 1–3 ride one
+TestFlight train together, under the AGENTS.md rules, once watch-mic capture passes physical-device
+acceptance. Until then `CHANGELOG.md` records the work under Unreleased, and user-facing docs
+(`docs/IOS.md`, `docs/ios-privacy.md`, `docs/ios-support.md`, `README.md`, What to Test) change in
+the release-prep change for that train. No slice is described as released until a train publishes
+it.
 
 ### Slice 1 — target, link, remote control (3–4 days, plus 0.5 day on device)
 
@@ -439,8 +470,9 @@ is described as released until a train publishes it.
    states), `WatchLinkClient`, and completion of `WKWatchConnectivityRefreshBackgroundTask` (F11).
 6. Release plumbing: matching versions on three targets, `scripts/ios-testflight.sh` and its test,
    and `docs/IOS-RELEASING.md`.
-7. Docs: an `docs/IOS.md` watch section and acceptance steps 1–4, `README.md`, `CHANGELOG.md`
-   (unreleased), the support page, and What to Test.
+7. Docs: `CHANGELOG.md` (Unreleased) and `docs/IOS-RELEASING.md` (watch bundle row and checks).
+   The `docs/IOS.md` watch section, acceptance steps 1–4, `README.md`, the support page and What to
+   Test wait for the release-prep change (decision 4).
 
 ### Slice 2 — iPhone watch inbox and file transcription (3–4 days)
 
@@ -471,8 +503,10 @@ Slice 2 can be built and tested without watch capture.
    microphone permission flow.
 5. iOS: "Apple Watch is recording" from application context, and the History pending and failed
    rows.
-6. Docs: `docs/ios-privacy.md` (transient audio), the `docs/IOS.md` tier tables and acceptance steps
-   5–11, `README.md`, `CHANGELOG.md`, What to Test, and the App Store privacy answers re-checked.
+6. Docs: `CHANGELOG.md` (Unreleased) in this slice. In the release-prep change for the train:
+   `docs/ios-privacy.md` (transient audio, decision 3), the `docs/IOS.md` tier tables and acceptance
+   steps 1–11, `README.md`, `docs/ios-support.md`, What to Test, and the App Store privacy answers
+   re-checked.
 
 ### Slice 4 — optional polish (2–3 days)
 
@@ -500,34 +534,36 @@ Slice 2 can be built and tested without watch capture.
 
 ---
 
-## 9. Open questions for the maintainer
+## 9. Decisions
 
-1. **Is a Watch companion in scope?** `docs/backlog.md` → "Intentionally out of scope" excludes
-   "Mac↔iOS sync or companion features". This design reads that as Mac↔iOS only. A paired watch,
-   with no server and the same user's devices, is treated as in scope because #181 exists. Confirm.
-2. **Ship Slice 1 alone or hold it?** Remote control needs the iPhone app open in the foreground,
-   so on its own it does not answer "record with the watch". Should Slice 1 ride a TestFlight train
-   by itself, which de-risks embedding, signing and the version helper, or stay merged and
-   unpublished until Slice 3?
-3. **Approve background recording on the watch** (`UIBackgroundModes: audio` on the watch target
-   only)? Without it, lowering the wrist ends the recording, which makes Slice 3 impractical. The
-   iPhone stays foreground-only. Also accepted: the risk that App Review questions recording under
-   the audio mode (F5 U).
-4. **Accept transient raw audio** on the watch and the iPhone until transcription, then automatic
-   deletion? This means rewording the privacy page's "does not save raw microphone audio". Should
-   there ever be a "keep the audio" option? The recommendation is no.
-5. **Default limits for watch recordings:** a 3-hour cap, no start below 20% battery or 200 MB free,
-   and stop at 10%. Acceptable, or different numbers?
-6. **Where a finished watch conversation lands:** recommended in History with a status message,
-   without switching the conversation that is open. Or should it open automatically?
-7. **Transcription language for watch recordings:** recommended as the phone's current
-   **Transcription → Language** at transcription time. Or should it be chosen on the watch when
-   recording starts?
-8. **A phone notification when a watch recording is ready?** It would add the app's first
-   notification-permission prompt. The recommendation is none in v1, with History and the status
-   message instead.
-9. **Expose `MobileFileTranscriber` as iOS audio-file import?** Slice 2 builds it, and exposing it
-   would close the tier-2 "Audio-file import: No" difference. Or keep it internal to watch captures
-   for now?
-10. **Minimum watchOS 26?** The recommendation is 26, matching the iOS floor. Should it be raised to
-    27 for anything learned in the spikes?
+The maintainer answered the ten open questions on 2026-10-22, in a
+[comment on #181](https://github.com/tomqwu/ListenToMe/issues/181). Questions 5–10 took this
+spec's recommended defaults. Each answer below is binding on the plan.
+
+1. **A watch companion is in scope.** The `docs/backlog.md` → "Intentionally out of scope" exclusion
+   of "companion features" means Mac↔iOS sync or companion features only. A paired Apple Watch,
+   with no server and the same user's devices, is in scope.
+2. **Background recording on the watch is approved.** The watch target declares
+   `UIBackgroundModes: [audio]`, so lowering the wrist does not end a recording. The iPhone app stays
+   foreground-only and declares no background modes. The question as posed included the risk that
+   App Review questions recording under the audio mode (F5); the approval is recorded on that basis.
+3. **Transient raw audio is approved, with no "keep the audio" option.** Watch audio is stored on
+   the watch and on the iPhone only until it is transcribed, then deleted automatically.
+   `docs/ios-privacy.md` changes its "does not save raw microphone audio" wording in the release that
+   ships watch-mic capture, not before.
+4. **Slice 1 is not released alone.** Slices 1–3 merge to `main` unreleased and ship together on one
+   release train when watch-mic capture (Slice 3) works. User-facing docs change in that train's
+   release-prep change. `CHANGELOG.md` carries the work under Unreleased until then.
+5. **Default limits:** a hard cap of 3 hours per recording, no start below 20% battery or below
+   200 MB free storage, and stop and save at 10% battery.
+6. **A finished watch conversation lands in History** with a status message. It does not switch the
+   conversation that is open.
+7. **Transcription language:** the phone's current **Transcription → Language** at transcription
+   time. Nothing is chosen on the watch.
+8. **No phone notification in v1.** History and the status message report a ready watch
+   conversation, so the app gains no notification-permission prompt.
+9. **`MobileFileTranscriber` stays internal to watch captures.** This spec made no explicit
+   recommendation here; its slice plan exposes nothing to the user, and that is the default taken.
+   `docs/IOS.md` tier 2 keeps "Audio-file import: No". A user-facing audio-file import would be its
+   own issue.
+10. **Minimum watchOS is 26.0**, matching the iOS floor. The spikes do not raise it.
