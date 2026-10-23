@@ -227,7 +227,9 @@ public enum OpenAICompatibleError: LocalizedError, Equatable {
     static func detail(from body: Data, redacting apiKey: String?) -> String? {
         let bounded = Data(body.prefix(maximumErrorBodyBytes))
         var text: String
-        if let object = try? JSONSerialization.jsonObject(with: bounded) as? [String: Any],
+        // Google's Gemini endpoint wraps its error object in a one-element array.
+        let parsed = try? JSONSerialization.jsonObject(with: bounded)
+        if let object = (parsed as? [String: Any]) ?? (parsed as? [[String: Any]])?.first,
            let message = OpenAICompatibleSSE.errorMessage(in: object) {
             text = message
         } else {
