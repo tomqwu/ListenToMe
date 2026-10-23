@@ -67,6 +67,9 @@ final class MobileSession {
     let speechCorrection = MobileTranscriptCorrector()
     var acceptsSpeechCorrection = false
     private let makeRecorder: () -> any MobileRecording
+    let makeWatchTranscriber: () -> any WatchAudioTranscribing
+    /// The foreground drain of Apple Watch recordings (issue #181); never runs while recording.
+    @ObservationIgnored var watchDrainTask: Task<Void, Never>?
     private var manualQuickError: String?
     var quickSummaryError: String? { manualQuickError ?? quickReader.error }
     private var sourceImportID: String?
@@ -96,7 +99,7 @@ final class MobileSession {
     var speakerLoop: Task<Void, Never>?
     /// Stop's final speaker pass, which runs after the session is already idle.
     var speakerFinalPass: Task<Void, Never>?
-    private let archive: SessionArchive
+    let archive: SessionArchive
     private let activeURL: URL
     /// The bytes last written for this conversation. Identical bytes are not written again.
     private var lastSavedData: Data?
@@ -126,8 +129,9 @@ final class MobileSession {
     init(storageDirectory: URL = .applicationSupportDirectory,
          summaryProvider: (any LLMProvider)? = nil, autoInterval: Duration = .seconds(5),
          correctionProvider: (any LLMProvider)? = nil, saveDebounce: Duration = .seconds(1),
-         sharedInbox: URL? = nil,
+         sharedInbox: URL? = nil, watchInbox: WatchInbox? = nil,
          makeRecorder: @escaping () -> any MobileRecording = { MobileRecorder() },
+         makeWatchTranscriber: @escaping () -> any WatchAudioTranscribing = { MobileFileTranscriber() },
          makeDiarizer: @escaping () -> any MobileSpeakerDiarizing = { SpeakerDiarizer.excludingModelsFromBackup() }) {
         speakers = MobileSpeakers(makeDiarizer: makeDiarizer)
         // Resolved once: the backup choice has to reach the App Group inbox too, not only the
@@ -138,11 +142,12 @@ final class MobileSession {
         self.correctionProvider = correctionProvider
         quickScheduler = MobileSummaryScheduler(interval: autoInterval)
         self.makeRecorder = makeRecorder
+        self.makeWatchTranscriber = makeWatchTranscriber
         activeURL = storageDirectory.appendingPathComponent("ActiveConversation.json")
         attachmentRoot = storageDirectory.appendingPathComponent("Attachments", isDirectory: true)
         conversationRoot = storageDirectory.appendingPathComponent("Conversations", isDirectory: true)
         archive = SessionArchive(directory: conversationRoot)
-        watchInbox = WatchInbox(root: storageDirectory.appendingPathComponent("WatchInbox", isDirectory: true))
+        self.watchInbox = watchInbox ?? WatchInbox(root: storageDirectory.appendingPathComponent("WatchInbox"))
         refreshHistory()
         applyBackupExclusion()
         if FileManager.default.fileExists(atPath: activeURL.path) {
@@ -240,7 +245,11 @@ final class MobileSession {
         self.recorder = recorder
         let offset = segments.map(\.end).max() ?? 0
         recorder.attachSpeakerAudio(speakers.beginRun(offset: offset, existing: segments))
+        // An Apple Watch drain stops before the microphone is prepared, and resumes after.
+        let drain = watchDrainTask
+        drain?.cancel()
         startTask = Task {
+            await drain?.value
             do {
                 try await recorder.start(locale: Locale(identifier: language)) { [weak self] segment in
                     guard let self else { return }
@@ -303,6 +312,8 @@ final class MobileSession {
         quickReader.cancel()
         let token = UIApplication.shared.beginBackgroundTask(withName: "Save conversation")
         defer { if token != .invalid { UIApplication.shared.endBackgroundTask(token) } }
+        watchDrainTask?.cancel()
+        await watchDrainTask?.value
         await stop()
         save(announce: false)
     }
@@ -408,7 +419,10 @@ final class MobileSession {
         }
         watchInbox.applyBackupExclusion(excluded)
     }
+}
 
+/// Languages, search and outputs: plain lookups, kept out of the class body.
+extension MobileSession {
     /// Extra transcription languages offered beside the device's own.
     static let offeredLanguages = ["en-US", "en-GB", "zh-CN", "zh-TW", "fr-FR", "de-DE", "ja-JP", "es-ES"]
 
@@ -431,7 +445,6 @@ final class MobileSession {
         case .deep: return deepThought
         }
     }
-
 }
 
 extension MobileSession {
@@ -668,7 +681,7 @@ extension MobileSession {
         pendingSave?.cancel()
         pendingSave = nil
         let record = SessionRecord(id: id, title: title, date: date,
-                                   transcript: allSegments.map { "\($0.speakerLabel): \($0.text)" }.joined(separator: "\n"),
+                                   transcript: Self.transcriptText(for: allSegments),
                                    summary: summary, segments: allSegments, notes: notes,
                                    quickSuggestion: quickSummary, deepAnswer: deepThought,
                                    isComplete: state == .idle && allSegments.allSatisfy(\.isFinal),
@@ -695,9 +708,13 @@ extension MobileSession {
         }
     }
 
+    static func transcriptText(for segments: [TranscriptSegment]) -> String {
+        segments.map { "\($0.speakerLabel): \($0.text)" }.joined(separator: "\n")
+    }
+
     /// History is kept in memory. Re-reading and decoding every conversation file on each save made
     /// typing and live transcription cost O(total archive size).
-    private func remember(_ record: SessionRecord) {
+    func remember(_ record: SessionRecord) {
         if let index = history.firstIndex(where: { $0.id == record.id }) { history[index] = record }
         else { history.append(record) }
         history.sort { $0.date > $1.date }
@@ -938,6 +955,7 @@ extension MobileSession {
         switch phase {
         case .active:
             importSharedInbox()
+            importWatchInbox()
         case .background:
             let capturing = state == .recording || state == .preparing
             let before = message

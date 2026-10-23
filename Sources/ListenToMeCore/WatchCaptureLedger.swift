@@ -51,7 +51,8 @@ public struct WatchCaptureLedger: Codable, Equatable, Sendable {
     public mutating func receive(_ chunk: WatchChunkMetadata, at time: Date) -> Bool {
         guard chunk.recordingID == recordingID, self.chunk(chunk.index) == nil, !isNotedGap(chunk.index),
               chunk.startOffset + chunk.duration > transcribedThrough + Self.tolerance else { return false }
-        let entry = Chunk(index: chunk.index, startOffset: chunk.startOffset, duration: chunk.duration, state: .received)
+        let entry = Chunk(index: chunk.index, startOffset: chunk.startOffset, duration: chunk.duration,
+                          state: .received)
         chunks.insert(entry, at: chunks.firstIndex { $0.index > chunk.index } ?? chunks.endIndex)
         // A later chunk (Continue after an interruption) reopens a finished recording; only a last
         // chunk moves its end.

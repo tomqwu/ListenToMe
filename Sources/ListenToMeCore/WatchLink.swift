@@ -205,7 +205,9 @@ public struct WatchChunkMetadata: Equatable, Sendable, Codable {
         let startOffset = try WatchWire.number(metadata[WatchWire.startOffset], WatchWire.startOffset)
         let duration = try WatchWire.number(metadata[WatchWire.duration], WatchWire.duration)
         guard startOffset >= 0 else { throw WatchLinkError.malformed("startOffset out of range") }
-        guard duration > 0, duration < Self.maximumDuration else { throw WatchLinkError.malformed("duration out of range") }
+        guard duration > 0, duration < Self.maximumDuration else {
+            throw WatchLinkError.malformed("duration out of range")
+        }
         guard let isLast = metadata[WatchWire.isLast] as? Bool else { throw WatchLinkError.malformed("missing isLast") }
         guard let build = metadata[WatchWire.watchBuild] as? String else {
             throw WatchLinkError.malformed("missing watchBuild")

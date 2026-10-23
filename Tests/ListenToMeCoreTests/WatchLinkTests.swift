@@ -133,7 +133,8 @@ final class WatchLinkTests: XCTestCase {
             XCTAssertEqual(try WatchChunkMetadata(transferMetadata: metadata), value)
             // What WatchConnectivity hands back: the same dictionary after a property-list round trip.
             let data = try PropertyListSerialization.data(fromPropertyList: metadata, format: .binary, options: 0)
-            let decoded = try XCTUnwrap(PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any])
+            let plist = try PropertyListSerialization.propertyList(from: data, format: nil)
+            let decoded = try XCTUnwrap(plist as? [String: Any])
             XCTAssertEqual(try WatchChunkMetadata(transferMetadata: decoded), value)
         }
         XCTAssertEqual(WatchChunkMetadata.maximumIndex, 999)
@@ -148,8 +149,8 @@ final class WatchLinkTests: XCTestCase {
         func rejects(_ key: String, _ value: Any?, line: UInt = #line) {
             var metadata = valid
             metadata[key] = value
-            XCTAssertThrowsError(try WatchChunkMetadata(transferMetadata: metadata), "\(key)=\(String(describing: value))",
-                                 line: line)
+            XCTAssertThrowsError(try WatchChunkMetadata(transferMetadata: metadata),
+                                 "\(key)=\(String(describing: value))", line: line)
         }
         rejects("index", 1_000)
         rejects("index", -1)

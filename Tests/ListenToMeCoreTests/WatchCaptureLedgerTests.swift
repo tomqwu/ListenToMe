@@ -90,7 +90,8 @@ final class WatchCaptureLedgerTests: XCTestCase {
         XCTAssertEqual(ledger.nextBatch(now: start), WatchLedgerBatch(indices: [0, 1], newGaps: [], finishes: true))
         // An end marker can arrive before any chunk; its missing chunks still wait for the timeout.
         var early = WatchCaptureLedger(recordingID: id, startedAt: start, at: start)
-        early.receiveEnd(WatchRecordingEnd(recordingID: id, startedAt: start, lastIndex: 1, unexpected: false), at: start)
+        early.receiveEnd(WatchRecordingEnd(recordingID: id, startedAt: start, lastIndex: 1, unexpected: false),
+                         at: start)
         XCTAssertFalse(early.endedUnexpectedly)
         XCTAssertEqual(early.nextBatch(now: start), WatchLedgerBatch(indices: [], newGaps: [], finishes: false))
         XCTAssertEqual(early.nextBatch(now: start.addingTimeInterval(24 * hour)),
@@ -182,7 +183,8 @@ final class WatchCaptureLedgerTests: XCTestCase {
 
     func testCodableRoundTrip() throws {
         var ledger = ledger([0, 2], lastIndex: 2)
-        ledger.receiveEnd(WatchRecordingEnd(recordingID: id, startedAt: start, lastIndex: 2, unexpected: true), at: start)
+        ledger.receiveEnd(WatchRecordingEnd(recordingID: id, startedAt: start, lastIndex: 2, unexpected: true),
+                          at: start)
         ledger.markTranscribed(through: 300)
         ledger.noteGaps([1...1])
         ledger.markFailed("x")

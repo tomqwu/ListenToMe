@@ -20,10 +20,6 @@ struct WatchInbox: Sendable {
 
     let root: URL
 
-    init(root: URL) {
-        self.root = root
-    }
-
     static var defaultRoot: URL {
         URL.applicationSupportDirectory.appendingPathComponent("WatchInbox", isDirectory: true)
     }
@@ -87,10 +83,15 @@ struct WatchInbox: Sendable {
     /// Every readable recording, oldest first. An unreadable manifest is skipped, not deleted.
     func ledgers() -> [WatchCaptureLedger] {
         Self.locked {
-            let folders = (try? FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)) ?? []
+            let folders = (try? FileManager.default.contentsOfDirectory(at: root,
+                                                                         includingPropertiesForKeys: nil)) ?? []
             return folders.compactMap { UUID(uuidString: $0.lastPathComponent).flatMap(readLedger) }
                 .sorted { $0.startedAt < $1.startedAt }
         }
+    }
+
+    func ledger(_ id: UUID) -> WatchCaptureLedger? {
+        Self.locked { readLedger(id) }
     }
 
     func save(_ ledger: WatchCaptureLedger) throws {
@@ -113,13 +114,27 @@ struct WatchInbox: Sendable {
     }
 
     func deleteChunks(_ indices: [Int], of recordingID: UUID) {
-        for index in indices { try? FileManager.default.removeItem(at: chunkURL(recordingID: recordingID, index: index)) }
+        for index in indices {
+            try? FileManager.default.removeItem(at: chunkURL(recordingID: recordingID, index: index))
+        }
     }
 
     func removeRecording(_ id: UUID) throws {
         try Self.locked {
             let folder = folder(id)
             if FileManager.default.fileExists(atPath: folder.path) { try FileManager.default.removeItem(at: folder) }
+        }
+    }
+
+    /// Removes a recording only if, as it is on disk now, nothing is left to transcribe and it is
+    /// over. A chunk filed since the caller last looked keeps the recording, and its audio.
+    func removeFinishedRecording(_ id: UUID, now: Date) throws -> Bool {
+        try Self.locked {
+            guard let ledger = readLedger(id) else { return false }
+            let batch = ledger.nextBatch(now: now)
+            guard batch.finishes, batch.indices.isEmpty, batch.newGaps.isEmpty else { return false }
+            try FileManager.default.removeItem(at: folder(id))
+            return true
         }
     }
 
