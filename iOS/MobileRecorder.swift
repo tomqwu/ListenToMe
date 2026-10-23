@@ -54,27 +54,13 @@ final class MobileRecorder: MobileRecording {
     func start(locale: Locale, onSegment: @escaping @MainActor (TranscriptSegment) -> Void,
                onFailure: @escaping @MainActor (String) -> Void) async throws {
         #if targetEnvironment(simulator)
-        throw RecordingError.message("Live transcription is unavailable in the iPhone simulator. " +
-            "Run ListenToMe on a physical iPhone or iPad to record. Microphone permission will not fix this; " +
-            "notes, history and export still work here.")
+        throw RecordingError.message(MobileSpeechModel.simulatorUnavailable)
         #else
         guard await AVAudioApplication.requestRecordPermission() else {
             throw RecordingError.message("Microphone access is off. Enable ListenToMe in Settings → Privacy & Security → Microphone.")
         }
         try Task.checkCancellation()
-        guard SpeechTranscriber.isAvailable,
-              let supported = await SpeechTranscriber.supportedLocale(equivalentTo: locale) else {
-            throw RecordingError.message("On-device transcription is unavailable for this device or language. Try another language.")
-        }
-        let transcriber = SpeechTranscriber(locale: supported, transcriptionOptions: [],
-                                            reportingOptions: [.volatileResults], attributeOptions: [.audioTimeRange])
-        if let installation = try await AssetInventory.assetInstallationRequest(supporting: [transcriber]) {
-            try await installation.downloadAndInstall()
-        }
-        try Task.checkCancellation()
-        guard let format = await SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith: [transcriber]) else {
-            throw RecordingError.message("The speech model has no supported audio format.")
-        }
+        let (transcriber, format) = try await MobileSpeechModel.prepare(locale: locale, volatileResults: true)
         let session = AVAudioSession.sharedInstance()
         try session.setCategory(.record, mode: .measurement, options: [.allowBluetoothHFP])
         try session.setActive(true)
