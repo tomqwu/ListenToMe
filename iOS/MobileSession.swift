@@ -48,14 +48,15 @@ final class MobileSession {
     private(set) var quickEvaluationCount = 0
     private(set) var lastSpeechEvent: Date?
     var quickDiagnostics: String {
-        [autoQuickStatus, "Recording: \(state == .recording ? "yes" : "no")",
+        ([autoQuickStatus, "Recording: \(state == .recording ? "yes" : "no")",
          "Speech events: \(speechEventCount) (final: \(finalizedSpeechEventCount))",
          "Last speech: \(lastSpeechEvent?.formatted(date: .omitted, time: .standard) ?? "none")",
          "Scheduled checks fired: \(quickWakeCount)", "Model checks started: \(quickEvaluationCount)",
          "Completed reads: \(quickReader.completedReads)",
          "Unread speech: \(quickReader.context.hasChanges(quickPieces) ? "yes" : "no")",
          "Provider: \(automaticQuickAvailability ?? "available")",
-         quickSummaryError ?? "No summary error", languageDiagnostics].joined(separator: "\n")
+         quickSummaryError ?? "No summary error"] + speakerDiagnostics + [languageDiagnostics])
+            .joined(separator: "\n")
     }
     private var quickScheduler: MobileSummaryScheduler
     private var autoTask: Task<Void, Never>?
@@ -104,7 +105,7 @@ final class MobileSession {
     private var date = Date()
     private(set) var recorder: (any MobileRecording)?
     private var startTask: Task<Void, Never>?
-    /// Opt-in on-device speaker identification (issue #180) and its periodic pass while recording.
+    /// On-device speaker identification (issues #180, #195) and its periodic pass while recording.
     let speakers: MobileSpeakers
     let languageDetection: MobileLanguageDetection   // Automatic transcription language (issue #197)
     var speakerLoop: Task<Void, Never>?
@@ -143,7 +144,7 @@ final class MobileSession {
          sharedInbox: URL? = nil, watchInbox: WatchInbox? = nil,
          makeRecorder: @escaping () -> any MobileRecording = { MobileRecorder() },
          makeWatchTranscriber: @escaping () -> any WatchAudioTranscribing = { MobileFileTranscriber() },
-         makeDiarizer: @escaping () -> any MobileSpeakerDiarizing = { SpeakerDiarizer.excludingModelsFromBackup() },
+         makeDiarizer: @escaping () -> any MobileSpeakerDiarizing = MobileSpeakers.deviceDiarizer,
          makeLanguageModel: (() -> any MobileLanguageIdentifying)? = nil) {
         speakers = MobileSpeakers(makeDiarizer: makeDiarizer)
         languageDetection = MobileLanguageDetection(makeIdentifier: makeLanguageModel)
@@ -967,8 +968,8 @@ extension MobileSession {
         flushPendingSave()
         switch phase {
         case .active:
-            importSharedInbox()
-            importWatchInbox()
+            importSharedInbox(); importWatchInbox()
+            prepareSpeakerModelsIfNeeded()   // speaker models load in the foreground only (#195)
             // The watch may still show "Open ListenToMe…" from a Start sent while this was closed.
             publishWatchStatus()
         case .background:

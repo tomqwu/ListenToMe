@@ -29,7 +29,6 @@ struct MobileNotesView: View {
                         session.save(announce: false)
                     }.disabled(session.isSummarizing)
                 }
-                MobileSpeakerList(session: session)
                 Section("Add to this conversation") {
                     Button("Take photo", systemImage: "camera") { requestCamera() }
                     PhotosPicker(selection: $photo, matching: .images) { Label("Photo library", systemImage: "photo") }
@@ -39,6 +38,8 @@ struct MobileNotesView: View {
                          "Only text you add to Notes is included in AI summaries.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
+                // After the add tools: renaming is occasional, adding is what this sheet is for.
+                MobileSpeakerList(session: session)
                 Section("Apple Notes") {
                     Text("In Apple Notes, choose Share → Send Copy → ListenToMe. " +
                          "Return here to open the imported conversation. You can also paste copied text or add an exported PDF.")

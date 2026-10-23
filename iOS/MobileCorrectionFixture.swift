@@ -12,6 +12,7 @@ struct MobileCorrectionFixture: View {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("CorrectionUI-\(UUID())")
         let session = MobileSession(storageDirectory: root, correctionProvider: CorrectionFixtureProvider(),
                                     makeRecorder: { recorder })
+        session.prepareSpeakerModelsIfNeeded()   // as the app does at a foreground launch (#195)
         let savedCatalog = UserDefaults.standard.object(forKey: "mobileOllamaCatalog")
         let savedModel = UserDefaults.standard.object(forKey: "mobileCorrectionModel")
         session.ai.models = [.init(name: "glm-test-flash"), .init(name: "qwen-test-flash"), .init(name: "glm-test-pro")]

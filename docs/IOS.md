@@ -57,7 +57,7 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 | Ollama endpoint | The local daemon (`localhost:11434`) or Ollama Cloud | Ollama Cloud, or a server you run and address yourself (`.local`/loopback for plain `http`); a saved cloud key is never sent to another host |
 | Per-role models | A picker per pane in the status rail, over local and cloud models, auto-picked local-first (`ModelRanking`) | Settings → Model role for Summary / Quick / Deep (`MobileRoleModelView`), Ollama only; Flash models are reserved for Quick and correction and refused for Deep |
 | Local-model enforcement | `ModelPrivacy` / `localOnly` verifies downloaded weights before every request | Not applicable — on-device here means Apple Intelligence; iOS reaches Ollama only over the network |
-| Speaker identification | Optional on-device diarization of the Others channel (and optionally the microphone) with naming; line labels need WhisperKit timestamps | Optional, off by default (**Settings → Speakers → Identify speakers**): FluidAudio diarizes the one microphone on-device, lines become **Speaker 1, 2…** by SpeechAnalyzer's audio time ranges, and **Notes → Speakers** renames them. Trailing-window passes while recording plus a final pass on Stop, foreground only; a line no speaker covers for at least 30% of its length keeps **Microphone** |
+| Speaker identification | Optional on-device diarization of the Others channel (and optionally the microphone) with naming; line labels need WhisperKit timestamps | On by default, can be turned off (**Settings → Speakers → Identify speakers**): FluidAudio diarizes the one microphone on-device, lines become **Speaker 1, 2…** by SpeechAnalyzer's audio time ranges, and **Notes → Speakers** renames them. Trailing-window passes while recording plus a final pass on Stop, foreground only; a line no speaker covers for at least 30% of its length keeps **Microphone** |
 | Presets and reference context | Use-case presets (`PresetCatalog`) and file/folder reference context (`ReferenceBuilder`, `FileContextLoader`) | Not today. Attachments instead: extracted text is appended to Notes, so it reaches the model inside `<transcript>`, not a `<reference>` block |
 | Calendar import | **Load from Calendar** fills Context notes (`App/CalendarService.swift`); text is imported as written | **Import from Calendar** removes e-mail addresses and link passcodes first (`MeetingContext.redactingLinksAndAddresses`, `MobileCalendar.attendeeNames`) |
 | Share-sheet import | — | Share extension plus an App Group inbox (`ShareExtension/`, `iOSShared/SharedInbox.swift`) |
@@ -105,7 +105,7 @@ The archive, upload, tagging and verification steps themselves are not repeated 
 
 ## iOS 1.11.0 (28)
 
-Optional on-device speaker identification (#180), off by default: **Settings → Speakers → Identify speakers** labels microphone lines **Speaker 1**, **Speaker 2**… with FluidAudio after the first pass about 20 seconds in, and **Notes → Speakers** renames a speaker across the saved conversation, History search and exports. The speaker models download once from `huggingface.co` and are excluded from iCloud and Finder backups; recording audio is held only in memory, bounded to about ten minutes. Stop returns at once and never starts the first model download. See the speaker-identification entry under [Included](#included) for the full behavior, and the privacy policy's new section in [ios-privacy.md](ios-privacy.md). The Apple Watch target is versioned with the app but is not embedded in this build (`WATCH_EMBED` off; #181 ships on a later train). [What to Test](../metadata/ios/en-CA/what-to-test-1.11.0.txt).
+Optional on-device speaker identification (#180), off by default in this build (on by default since #195, unreleased): **Settings → Speakers → Identify speakers** labels microphone lines **Speaker 1**, **Speaker 2**… with FluidAudio after the first pass about 20 seconds in, and **Notes → Speakers** renames a speaker across the saved conversation, History search and exports. The speaker models download once from `huggingface.co` and are excluded from iCloud and Finder backups; recording audio is held only in memory, bounded to about ten minutes. Stop returns at once and never starts the first model download. See the speaker-identification entry under [Included](#included) for the full behavior, and the privacy policy's new section in [ios-privacy.md](ios-privacy.md). The Apple Watch target is versioned with the app but is not embedded in this build (`WATCH_EMBED` off; #181 ships on a later train). [What to Test](../metadata/ios/en-CA/what-to-test-1.11.0.txt).
 
 ## iOS 1.10.5 (27)
 
@@ -333,18 +333,30 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   live recordings only (#200).
 - Partial and final transcript text. Everyone picked up by the microphone is labeled **Microphone**
   unless speaker identification is on. Unfinalized text is retained and labeled accordingly.
-- Optional speaker identification (#180), off by default: **Settings → Speakers → Identify
-  speakers**. It runs on this device with FluidAudio, the same diarizer the Mac uses; the first use
-  downloads its speaker models from `huggingface.co` (model weights only — no audio or text is
-  sent; the model folder is excluded from iCloud and Finder backups because it can be downloaded
-  again), and it uses more battery while listening. While recording, the audio the transcriber
+- Speaker identification (#180), on by default since #195 (a stored choice to turn it off is kept):
+  **Settings → Speakers → Identify speakers**. It runs on this device with FluidAudio, the same
+  diarizer the Mac uses, and uses more battery while listening. Its speaker models download once
+  from `huggingface.co` (model weights only — no audio or text is sent; the model folder is excluded
+  from iCloud and Finder backups because it can be downloaded again) and are loaded before the first
+  recording needs them: when the setting is turned on, when the app comes to the foreground with it
+  on, and at Start — never from Stop and never in the background. Recording never waits for them;
+  a failed download leaves the status line saying so, with **Retry**, and recording continues.
+  **Settings → Speakers** shows the download, the ready state, or the failure with **Retry**. The
+  status under the conversation title reads "Speaker labels on" once the models are ready; while
+  they download, when labels are unavailable or the models are not loaded (both with **Retry**), or
+  after a skipped pass, a speaker line appears below it (`MobileSpeakers.statusLineIsShown`). Ready
+  and periodic-pass states add no line, so the workspace keeps its height. Status details lists the
+  setting, whether the models are ready, the passes run and the last speaker error. UI-test launches
+  substitute models that load at once and hear no voices (`LISTENTOME_SPEAKER_MODELS_FIXTURE`, DEBUG
+  simulator builds only), and the unit-test host substitutes models that never load, so no test
+  downloads them. While recording, the audio the transcriber
   accepted is copied into a 16 kHz buffer; about every 20 seconds (never sooner than the previous
   pass took) a pass re-analyzes only the audio since the last one plus a one-minute overlap
   (`SpeakerAnalysisPolicy`). Stop returns at once; a final pass then labels the last words while the
   app stays open, queued behind any pass still running, and its result is dropped if a
   new recording or another conversation has started. The final pass is skipped while the models have
-  not loaded yet, so Stop never starts the first download (a first recording shorter than about 20
-  seconds stays unlabeled). On every periodic tick, audio no later window can reach is released, so
+  not loaded yet, so Stop never starts or waits for the download; with the models ready, a recording
+  shorter than the first periodic pass is labeled at Stop (#195). On every periodic tick, audio no later window can reach is released, so
   at most ten minutes (about 38 MB) is held even when passes keep failing, and only the last minute
   while the models are unavailable.
   No audio is saved. Lines are matched to speakers by SpeechAnalyzer's audio time ranges and become
@@ -621,10 +633,13 @@ GitHub Actions builds both apps and runs the headless `ListenToMeCore` unit/inte
 8. Portrait/landscape iPhone and iPad layouts, large text and VoiceOver controls.
 9. Import a real meeting invite with attendees and a join link, then read Notes: attendee names appear
    without e-mail addresses, and the event link carries no `?pwd=`/`#` join secret.
-10. Speaker identification (#180): turn on **Settings → Speakers → Identify speakers** and record
-    three people taking turns for at least two minutes. On first use, confirm the models download
-    (and, separately, that an offline first use shows the paused status and **Retry** works once
-    online). Confirm lines change from **Microphone** to **Speaker N** about 20 seconds in, that each
+10. Speaker identification (#180, #195): on a fresh install, confirm **Settings → Speakers →
+    Identify speakers** is on, and that **Settings → Speakers** shows the models downloading, then
+    ready, without recording; the status under the title reads "Microphone · Ready · Speaker labels on". Record about
+    10 seconds of two voices and Stop: the lines are labeled. Separately, an offline first use shows
+    "Speaker labels unavailable" with **Retry** (recording still works), and **Retry** works once
+    online; Status details lists the speaker fields. Then record
+    three people taking turns for at least two minutes. Confirm lines change from **Microphone** to **Speaker N** about 20 seconds in, that each
     speaker's lines land on the right person at turn boundaries (this checks SpeechAnalyzer's time
     ranges against the diarizer's), that Stop labels the last phrase, and that a cough or a
     one-word reply may stay **Microphone**. Rename a speaker in Notes, then confirm the name in the

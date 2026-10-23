@@ -134,7 +134,9 @@ struct MobileMeetingView: View {
 
     private var statusText: String {
         switch session.state {
-        case .idle: return "Microphone · Ready to listen"
+        case .idle:
+            return session.speakers.modelsReady && session.speakers.enabled
+                ? "Microphone · Ready · Speaker labels on" : "Microphone · Ready to listen"
         case .preparing: return "Preparing speech model… First use may download a model."
         case .recording: return session.speakers.isRunning ? "Listening · Microphone · Speaker labels on" : "Listening · Microphone"
         case .stopping: return "Finishing transcript…"

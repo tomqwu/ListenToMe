@@ -87,15 +87,7 @@ actor SpeakerDiarizer {
         let previous = chainTail
         let work = Task { () throws -> DiarizationOutcome in
             await previous?.value   // wait for any in-flight manager call to finish first
-            if !self.prepared {
-                do {
-                    try await self.box.manager.prepareModels()
-                } catch {
-                    self.modelFailure = error.localizedDescription
-                    throw DiarizationError.modelsUnavailable(error.localizedDescription)
-                }
-                self.prepared = true
-            }
+            try await self.loadModelsIfNeeded()
             let result = try await self.box.manager.process(audio: samples)
             let segments = result.segments.map {
                 DiarizedSegment(speakerId: $0.speakerId,
@@ -106,5 +98,33 @@ actor SpeakerDiarizer {
         }
         chainTail = Task { _ = try? await work.value }   // keep the chain alive regardless of outcome
         return try await work.value
+    }
+
+    /// Downloads (first use) and loads the models without analyzing any audio, so they are ready before
+    /// the first pass needs them (iOS, issue #195). Queued on the same serial chain as `analyze`. A
+    /// latched failure fails fast, including one latched by a call queued ahead of this one; a failed
+    /// load latches like `analyze` does.
+    func prepare() async throws {
+        if let modelFailure { throw DiarizationError.modelsUnavailable(modelFailure) }
+        let previous = chainTail
+        let work = Task { () throws in
+            await previous?.value
+            if let failure = self.modelFailure { throw DiarizationError.modelsUnavailable(failure) }
+            try await self.loadModelsIfNeeded()
+        }
+        chainTail = Task { _ = try? await work.value }
+        try await work.value
+    }
+
+    /// Loads the models once per app run. Runs only inside a link of the serial chain.
+    private func loadModelsIfNeeded() async throws {
+        guard !prepared else { return }
+        do {
+            try await box.manager.prepareModels()
+        } catch {
+            modelFailure = error.localizedDescription
+            throw DiarizationError.modelsUnavailable(error.localizedDescription)
+        }
+        prepared = true
     }
 }
