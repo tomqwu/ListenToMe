@@ -33,6 +33,9 @@ public struct SpeakerIdentityTracker: Sendable {
     /// How many identities have a voiceprint, for tests and diagnostics.
     public var voiceprintCount: Int { voiceprints.count }
 
+    /// One identity's running voiceprint, for tests and diagnostics. Memory only; never saved.
+    public func voiceprint(for id: String) -> SpeakerVoiceprint? { voiceprints[id] }
+
     /// The part of `segments` at or after `windowStart` (the whole timeline for a full pass).
     private static func trimmed(_ segments: [DiarizedSegment],
                                 from windowStart: TimeInterval) -> [DiarizedSegment] {
@@ -66,31 +69,40 @@ public struct SpeakerIdentityTracker: Sendable {
     /// that lies inside that window, and the history before it is preserved so a later full pass can
     /// still recognize speakers from earlier in the meeting. `windowStart <= 0` is a full pass.
     ///
-    /// `embeddings` (one voice embedding per diarized `speakerId`, issue #171) are matched first,
-    /// against each identity's running voiceprint (`SpeakerVoiceMatching.match`, one to one), so a
-    /// person who was silent through the shared audio keeps their identity and edited name. Clusters
-    /// no voice matches fall back to the shared-time rule; without embeddings that rule is all there is.
+    /// Shared audio time decides first: a cluster that shares most of its audio with a previous
+    /// identity (both ways) is that identity. `embeddings` (one voice embedding per diarized
+    /// `speakerId`, issue #171) then pair the clusters and identities shared time left open, against
+    /// each identity's running voiceprint (`SpeakerVoiceMatching.match`, one to one), so a person who
+    /// was silent through the shared audio keeps their identity and edited name. Without embeddings,
+    /// shared time is all there is.
     public mutating func reconcile(_ segments: [DiarizedSegment],
                                    since windowStart: TimeInterval = 0,
                                    embeddings: [String: [Float]] = [:]) -> [String: SpeakerIdentity] {
         let valid = segments.filter { $0.start.isFinite && $0.duration.isFinite && $0.duration > 0 }
         let groups = Dictionary(grouping: valid, by: \.speakerId)
         let timed = timedMatches(valid: valid, groups: groups, windowStart: windowStart)
-        let voiced = SpeakerVoiceMatching.match(clusters: embeddings.filter { groups[$0.key] != nil },
-                                                voiceprints: voiceprints, preferred: timed)
-        var mapping: [String: SpeakerIdentity] = [:]
-        var used = Set(voiced.values)
         let ordered = groups.keys.sorted {
             let left = groups[$0]!.map(\.start).min()!
             let right = groups[$1]!.map(\.start).min()!
             return left == right ? $0 < $1 : left < right
         }
+        var mapping: [String: SpeakerIdentity] = [:]
+        var used = Set<String>()
         for raw in ordered {
+            guard let id = timed[raw], !used.contains(id), let identity = identities[id] else { continue }
+            mapping[raw] = identity
+            used.insert(id)
+        }
+        // Voice only for what shared time left open, and only for clusters with enough speech to judge.
+        let open = embeddings.filter { raw, _ in
+            mapping[raw] == nil && (groups[raw]?.reduce(0.0) { $0 + $1.duration } ?? 0)
+                >= SpeakerVoiceMatching.minimumSeconds
+        }
+        let voiced = SpeakerVoiceMatching.match(clusters: open,
+                                                voiceprints: voiceprints.filter { !used.contains($0.key) })
+        for raw in ordered where mapping[raw] == nil {
             if let id = voiced[raw], let identity = identities[id] {
                 mapping[raw] = identity
-            } else if let id = timed[raw], !used.contains(id), let identity = identities[id] {
-                mapping[raw] = identity
-                used.insert(id)
             } else {
                 let identity = SpeakerIdentity(id: "\(namespace)-\(nextNumber)", name: "\(prefix) \(nextNumber)")
                 identities[identity.id] = identity
@@ -137,14 +149,20 @@ public struct SpeakerIdentityTracker: Sendable {
         return result
     }
 
-    /// Folds each mapped cluster's embedding into its identity's voiceprint. A cluster with too little
+    /// Folds each mapped cluster's embedding into its identity's voiceprint, weighted by the cluster's
+    /// NEW speech only: speech after the last speech an earlier pass heard. Windows overlap, so the
+    /// shared stretch is heard again by every pass; counting it again would let a few seconds of
+    /// speech look settled and let one window's audio dominate the voice. A cluster with too little new
     /// speech is skipped, and so is a shared-time match whose voice disagrees with a settled voiceprint,
     /// so one muddled window cannot drag a voice toward someone else's.
     private mutating func learnVoices(mapping: [String: SpeakerIdentity], groups: [String: [DiarizedSegment]],
                                       embeddings: [String: [Float]]) {
+        let heardThrough = previous.map { $0.start + $0.duration }.max() ?? 0
         for (raw, identity) in mapping {
             guard let embedding = embeddings[raw] else { continue }
-            let seconds = groups[raw]?.reduce(0.0) { $0 + $1.duration } ?? 0
+            let seconds = groups[raw]?.reduce(0.0) {
+                $0 + max(0, $1.start + $1.duration - max($1.start, heardThrough))
+            } ?? 0
             guard seconds >= SpeakerVoiceMatching.minimumSeconds else { continue }
             guard var voiceprint = voiceprints[identity.id] else {
                 voiceprints[identity.id] = SpeakerVoiceprint(embedding: embedding, seconds: seconds)

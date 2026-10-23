@@ -364,10 +364,11 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   downloads them. While recording, the audio the transcriber
   accepted is copied into a 16 kHz buffer; about every 20 seconds (never sooner than the previous
   pass took) a pass re-analyzes only the audio since the last one plus a one-minute overlap
-  (`SpeakerAnalysisPolicy`). Each pass matches its voices to the recording's speakers by voice
-  embedding first (FluidAudio's per-cluster embedding against each speaker's running centroid,
-  cosine similarity of at least 0.75, one voice per speaker; `SpeakerVoiceMatching`), then by
-  shared audio time, so someone quiet for minutes keeps their label and name (#171). The embeddings
+  (`SpeakerAnalysisPolicy`). Each pass carries speakers over by shared audio time first; the
+  voices left over (at least 2 s of speech) are matched by voice embedding to the speakers left over
+  (FluidAudio's per-cluster embedding against each speaker's running centroid, cosine similarity of
+  at least 0.82, one voice per speaker; `SpeakerVoiceMatching`), so someone quiet for minutes keeps
+  their label and name (#171). A centroid learns only from speech no earlier pass heard. The embeddings
   live in memory for the recording only and are never saved. Stop returns at once; a final pass then labels the last words while the
   app stays open, queued behind any pass still running, and its result is dropped if a
   new recording or another conversation has started. The final pass is skipped while the models have

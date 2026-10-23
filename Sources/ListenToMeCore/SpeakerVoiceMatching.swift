@@ -50,15 +50,14 @@ public struct SpeakerVoiceprint: Sendable, Equatable {
 /// Pure voice matching between a new window's diarized clusters and the identities a recording already
 /// has (issue #171). No I/O and no ML: the embeddings come from the diarizer.
 public enum SpeakerVoiceMatching {
-    /// Cosine similarity at or above which a cluster may be the same person as an identity. FluidAudio's
-    /// own clustering keeps two clusters apart below about 0.82 (its AHC threshold of 0.6 Euclidean
-    /// on unit embeddings), so 0.75 accepts the same voice heard in another window while staying
-    /// above the similarity typical of two different people.
-    public static let similarityThreshold = 0.75
-    /// Two candidate identities within this similarity of each other are too close to call by voice;
-    /// shared audio time decides between them when it can.
-    public static let ambiguityMargin = 0.05
-    /// A cluster with less speech than this gives too noisy an embedding to update a voiceprint.
+    /// Cosine similarity at or above which a cluster may be the same person as an identity: the line
+    /// FluidAudio's own clustering draws between one speaker and two (its AHC threshold of 0.6 Euclidean
+    /// on unit embeddings is cosine 1 − 0.6² / 2 = 0.82). Voices the diarizer would keep apart within
+    /// one window are never merged across windows; a returning voice below it becomes a new speaker,
+    /// as it did before voice matching.
+    public static let similarityThreshold = 0.82
+    /// A cluster with less speech than this gives too noisy an embedding to claim an identity by voice
+    /// or to update a voiceprint.
     public static let minimumSeconds: TimeInterval = 2
     /// Cap on a voiceprint's weight, in seconds of speech.
     public static let maximumWeight: TimeInterval = 300
@@ -99,27 +98,21 @@ public enum SpeakerVoiceMatching {
         let score: Double
     }
 
-    /// Matches clusters to identities by voice, one to one: the most similar pair at or above
-    /// `threshold` is taken first, then the next pair whose cluster and identity are both still free.
-    /// When a cluster's pick is within `margin` of the identity `preferred` names for it (its shared-time
-    /// match), and that identity is free and also above the threshold, the voices are too close to call
-    /// and the shared-time match wins. Ties break on identity id, then cluster id, so results are
-    /// deterministic. Returns cluster id → identity id; unmatched clusters are left out.
+    /// Matches clusters to identities by voice, one to one, over all pairs at once: the most similar
+    /// pair at or above `threshold` is taken first, then the next pair whose cluster and identity are
+    /// both still free. Ties break on identity id, then cluster id, so results are deterministic.
+    /// Callers pass only the clusters and identities shared audio time has not already paired.
+    /// Returns cluster id → identity id; unmatched clusters are left out.
     public static func match(clusters: [String: [Float]],
                              voiceprints: [String: SpeakerVoiceprint],
-                             preferred: [String: String] = [:],
-                             threshold: Double = similarityThreshold,
-                             margin: Double = ambiguityMargin) -> [String: String] {
-        var similarity: [String: [String: Double]] = [:]
+                             threshold: Double = similarityThreshold) -> [String: String] {
         var pairs: [Candidate] = []
         for (cluster, embedding) in clusters {
             // Centroids are already unit length, so each cluster is normalized once and dotted.
             guard let unit = normalized(embedding) else { continue }
             for (identity, voiceprint) in voiceprints where voiceprint.centroid.count == unit.count {
                 let score = dot(unit, voiceprint.centroid)
-                guard score >= threshold else { continue }
-                similarity[cluster, default: [:]][identity] = score
-                pairs.append(Candidate(cluster: cluster, identity: identity, score: score))
+                if score >= threshold { pairs.append(Candidate(cluster: cluster, identity: identity, score: score)) }
             }
         }
         pairs.sort {
@@ -129,13 +122,8 @@ public enum SpeakerVoiceMatching {
         var result: [String: String] = [:]
         var taken = Set<String>()
         for pair in pairs where result[pair.cluster] == nil && !taken.contains(pair.identity) {
-            var chosen = pair.identity
-            if let timed = preferred[pair.cluster], timed != chosen, !taken.contains(timed),
-               let timedScore = similarity[pair.cluster]?[timed], pair.score - timedScore < margin {
-                chosen = timed
-            }
-            result[pair.cluster] = chosen
-            taken.insert(chosen)
+            result[pair.cluster] = pair.identity
+            taken.insert(pair.identity)
         }
         return result
     }

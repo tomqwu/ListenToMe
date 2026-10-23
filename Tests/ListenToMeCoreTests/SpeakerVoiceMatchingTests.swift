@@ -108,19 +108,12 @@ final class SpeakerVoiceMatchingTests: XCTestCase {
         XCTAssertEqual(result, ["S1": "beth", "S2": "alice"])
     }
 
-    func testTooCloseToCallDefersToSharedTime() {
-        let prints = ["alice": voiceprint(0), "beth": voiceprint(4)]
-        // By voice alone S1 is a hair closer to Alice; shared time says Beth, and voices this close
-        // cannot overrule it.
-        XCTAssertEqual(SpeakerVoiceMatching.match(clusters: ["S1": voice(1.5)], voiceprints: prints,
-                                                  preferred: ["S1": "beth"]), ["S1": "beth"])
-        // A clear voice match is not overruled by shared time.
-        let apart = ["alice": voiceprint(0), "bob": voiceprint(35)]
-        XCTAssertEqual(SpeakerVoiceMatching.match(clusters: ["S1": voice(1)], voiceprints: apart,
-                                                  preferred: ["S1": "bob"]), ["S1": "alice"])
-        // A shared-time pick with no voiceprint above the threshold does not apply.
-        XCTAssertEqual(SpeakerVoiceMatching.match(clusters: ["S1": voice(1.5)], voiceprints: prints,
-                                                  preferred: ["S1": "carol"]), ["S1": "alice"])
+    func testAssignmentIsGlobalNotPerCluster() {
+        // Review of #207: c1 is nearer I (0.883) than J (0.848); c2 only fits J (0.875). Taking the
+        // strongest pairs first gives c1 → I and c2 → J, so nobody is left out.
+        let prints = ["I": voiceprint(0), "J": voiceprint(60)]
+        XCTAssertEqual(SpeakerVoiceMatching.match(clusters: ["c1": voice(28), "c2": voice(89)], voiceprints: prints),
+                       ["c1": "I", "c2": "J"])
     }
 
     // MARK: Tracker
@@ -131,11 +124,12 @@ final class SpeakerVoiceMatchingTests: XCTestCase {
                                       embeddings: ["S1": voice(0), "S2": voice(90)])
         let alice = first["S1"]!
         tracker.rename(id: alice.id, name: "Alice")
-        // Bob talks alone for minutes; Alice is silent through every overlap.
-        _ = tracker.reconcile([segment("S1", 60, 200)], since: 20, embeddings: ["S1": voice(88)])
-        _ = tracker.reconcile([segment("S1", 200, 200)], since: 200, embeddings: ["S1": voice(91)])
+        // Bob talks alone for minutes; Alice is silent through every overlap. (The first window shares
+        // too little of Bob's audio for shared time, so his voice carries him.)
+        _ = tracker.reconcile([segment("S1", 60, 140)], since: 20, embeddings: ["S1": voice(88)])
+        _ = tracker.reconcile([segment("S1", 140, 200)], since: 140, embeddings: ["S1": voice(91)])
         // She speaks again in a window that shares no audio with anything she said.
-        let back = tracker.reconcile([segment("S2", 340, 20), segment("S1", 360, 40)], since: 340,
+        let back = tracker.reconcile([segment("S2", 280, 60), segment("S1", 360, 40)], since: 280,
                                      embeddings: ["S1": voice(3), "S2": voice(89)])
         XCTAssertEqual(back["S1"]?.id, alice.id)
         XCTAssertEqual(back["S1"]?.name, "Alice")
@@ -180,12 +174,51 @@ final class SpeakerVoiceMatchingTests: XCTestCase {
         let first = tracker.reconcile([segment("a", 0, 30), segment("b", 30, 30)],
                                       embeddings: ["a": voice(0), "b": [0, 0, 0, 0]])
         XCTAssertEqual(tracker.voiceprintCount, 1)
-        // "y" has no embedding, "x" is too short to learn from; both match by shared time.
-        let next = tracker.reconcile([segment("x", 25, 1), segment("y", 40, 30)], since: 20,
-                                     embeddings: ["x": voice(0)])
+        // "y" has no embedding and matches by shared time.
+        let next = tracker.reconcile([segment("y", 40, 30)], since: 20, embeddings: [:])
         XCTAssertEqual(next["y"]?.id, first["b"]?.id)
-        XCTAssertEqual(next["x"]?.id, first["a"]?.id)
         XCTAssertEqual(tracker.voiceprintCount, 1)
+    }
+
+    func testABriefClusterCannotClaimAnIdentityByVoice() {
+        // Review of #207: a 0.3 s backchannel gives too noisy an embedding to re-link anyone.
+        var tracker = SpeakerIdentityTracker(namespace: "run")
+        let alice = tracker.reconcile([segment("a", 0, 30)], embeddings: ["a": voice(0)])["a"]!
+        let brief = tracker.reconcile([segment("x", 300, 0.3)], since: 300, embeddings: ["x": voice(0)])
+        XCTAssertNotEqual(brief["x"]?.id, alice.id)
+        let longer = tracker.reconcile([segment("y", 400, 2)], since: 400, embeddings: ["y": voice(0)])
+        XCTAssertEqual(longer["y"]?.id, alice.id, "Two seconds is enough")
+    }
+
+    func testConfidentSharedTimeWinsOverASimilarVoice() {
+        // Review of #207: X's own cluster shares nearly all its audio with X but sounds a little off
+        // (cosine 0.819), while a different person Z sounds more like X (cosine 0.866). Shared time
+        // keeps X; Z must not inherit X's label or name.
+        var tracker = SpeakerIdentityTracker(namespace: "run")
+        let speakerX = tracker.reconcile([segment("a", 0, 60)], embeddings: ["a": voice(0)])["a"]!
+        tracker.rename(id: speakerX.id, name: "Xavier")
+        let next = tracker.reconcile([segment("x", 30, 60), segment("z", 100, 30)], since: 30,
+                                     embeddings: ["x": voice(35), "z": voice(-30)])
+        XCTAssertEqual(next["x"]?.id, speakerX.id)
+        XCTAssertEqual(next["x"]?.name, "Xavier")
+        XCTAssertNotEqual(next["z"]?.id, speakerX.id)
+        XCTAssertNotEqual(next["z"]?.name, "Xavier")
+    }
+
+    func testOverlappingWindowsCountEachSecondOfSpeechOnce() throws {
+        // Review of #207: windows overlap and passes run every ~20 s, so the same 6 s of speech is
+        // heard by several passes. It must weigh 6 s, not 24 s, and so stay unsettled.
+        var tracker = SpeakerIdentityTracker(namespace: "run")
+        let speaker = tracker.reconcile([segment("a", 0, 6)], embeddings: ["a": voice(0)])["a"]!
+        _ = tracker.reconcile([segment("a", 0, 6)], embeddings: ["a": voice(1)])
+        _ = tracker.reconcile([segment("a", 0, 6)], embeddings: ["a": voice(2)])
+        _ = tracker.reconcile([segment("b", 1, 5)], since: 1, embeddings: ["b": voice(3)])
+        let voiceprint = try XCTUnwrap(tracker.voiceprint(for: speaker.id))
+        XCTAssertEqual(voiceprint.weight, 6, accuracy: 1e-9)
+        XCTAssertLessThan(voiceprint.weight, SpeakerVoiceMatching.settledWeight)
+        // New speech after what was heard does count.
+        _ = tracker.reconcile([segment("a", 1, 15)], since: 1, embeddings: ["a": voice(0)])
+        XCTAssertEqual(try XCTUnwrap(tracker.voiceprint(for: speaker.id)).weight, 16, accuracy: 1e-9)
     }
 
     func testSettledVoiceprintIgnoresASharedTimeMatchThatSoundsLikeSomeoneElse() {
