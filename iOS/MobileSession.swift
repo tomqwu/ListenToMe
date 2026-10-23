@@ -11,9 +11,25 @@ final class MobileSession {
     enum State { case idle, preparing, recording, stopping }
     /// Why capture last ended. `.interruption` is the only reason the system may resume from.
     enum StopReason: Equatable { case user, interruption, routeLost, background }
-    var state = State.idle { didSet { handleSummaryEvent(.recordingChanged) } }
-    private(set) var stopReason: StopReason?
+    var state = State.idle {
+        didSet {
+            handleSummaryEvent(.recordingChanged)
+            if state == .recording, oldValue != .recording { recordingStartedAt = Date() }
+            if state == .idle { recordingStartedAt = nil }
+            publishWatchStatus()
+        }
+    }
+    private(set) var stopReason: StopReason? { didSet { if stopReason != oldValue { publishWatchStatus() } } }
     private(set) var isForeground = true
+    /// When the current recording run started, for the Apple Watch remote's elapsed time (issue #181).
+    private(set) var recordingStartedAt: Date?
+    /// Receives the recorder status for the Apple Watch; `nil` until the app attaches its link.
+    @ObservationIgnored var watchLink: (any WatchLinking)?
+    /// Whether the app is active in the foreground. Tests replace it; a watch Start never reaches the
+    /// microphone otherwise.
+    @ObservationIgnored var applicationIsActive: @MainActor () -> Bool = {
+        UIApplication.shared.applicationState == .active
+    }
     var title = "New conversation"
     var notes = "" { didSet { handleSummaryEvent(.notesChanged) } }
     var summary = ""
