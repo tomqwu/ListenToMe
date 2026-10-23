@@ -1,6 +1,17 @@
 import Foundation
 import ListenToMeCore
 
+/// A watch recording still in the inbox: parts waiting to be transcribed, or a failure to retry.
+struct WatchInboxRow: Identifiable, Equatable {
+    let id: UUID
+    let startedAt: Date
+    let waitingParts: Int
+    let failure: String?
+
+    var title: String { "Apple Watch · " + startedAt.formatted(date: .abbreviated, time: .shortened) }
+    var detail: String { failure ?? (waitingParts == 1 ? "1 part waiting" : "\(waitingParts) parts waiting") }
+}
+
 /// Apple Watch recordings become conversations (issue #181). The drain runs only in the foreground
 /// while the phone is idle: it never starts audio, never switches the open conversation, and deletes
 /// a chunk's audio only after the text it became is saved (decision 3).
@@ -19,11 +30,54 @@ extension MobileSession {
     /// Starts transcribing waiting watch recordings when the app is active and idle. Triggered on
     /// `.active`, when the session stops being busy, and when a chunk arrives.
     func importWatchInbox(now: Date = Date()) {
+        refreshWatchInboxRows()
         guard applicationIsActive(), state == .idle, !isSummarizing, watchDrainTask == nil else { return }
         guard watchInbox.ledgers().contains(where: { Self.hasWork($0.nextBatch(now: now)) }) else { return }
         watchDrainTask = Task { [weak self] in
             await self?.drainWatchInbox(now: now)
             self?.watchDrainTask = nil
+            self?.refreshWatchInboxRows()
+        }
+    }
+
+    // MARK: History
+
+    static func isFromAppleWatch(_ record: SessionRecord) -> Bool {
+        record.sourceImportID?.hasPrefix("watch:") == true
+    }
+
+    func refreshWatchInboxRows() {
+        let rows = watchInbox.ledgers().compactMap { ledger -> WatchInboxRow? in
+            let waiting = ledger.chunks.filter { $0.state == .received }.count
+            guard waiting > 0 || ledger.failure != nil else { return nil }
+            return WatchInboxRow(id: ledger.recordingID, startedAt: ledger.startedAt, waitingParts: waiting,
+                                 failure: ledger.failure)
+        }
+        if rows != watchInboxRows { watchInboxRows = rows }
+    }
+
+    /// The user's Retry on a failed recording.
+    func retryWatchRecording(_ recordingID: UUID) {
+        _ = try? watchInbox.update(recordingID) { $0.clearFailure() }
+        importWatchInbox()
+    }
+
+    /// Deletes the recording's audio. Text already transcribed stays in its conversation.
+    func deleteWatchRecording(_ recordingID: UUID) {
+        let drain = watchDrainTask
+        drain?.cancel()
+        do {
+            try watchInbox.removeRecording(recordingID)
+        } catch {
+            message = "Could not delete the Apple Watch audio: \(error.localizedDescription)"
+        }
+        refreshWatchInboxRows()
+        // Any other recording the cancelled drain was going to transcribe resumes.
+        if drain != nil {
+            Task { [weak self] in
+                await drain?.value
+                self?.importWatchInbox()
+            }
         }
     }
 

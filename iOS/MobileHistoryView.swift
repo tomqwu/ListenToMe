@@ -8,6 +8,8 @@ struct MobileHistoryView: View {
     @State private var showDeletion = false
     @State private var sharing: SessionRecord?
     @State private var query = ""
+    @State private var pendingWatchDeletion: WatchInboxRow?
+    @State private var showWatchDeletion = false
 
     /// Same keyword ranking the Mac History sheet uses, so a phrase said in one standup is
     /// reachable without scrolling two months of conversations.
@@ -25,6 +27,11 @@ struct MobileHistoryView: View {
                             Button("Dismiss") { session.dismissArchiveWarning() }
                                 .font(.footnote).buttonStyle(.borderless)
                         }
+                    }
+                }
+                if !session.watchInboxRows.isEmpty {
+                    Section("Waiting from Apple Watch") {
+                        ForEach(session.watchInboxRows) { watchRow($0) }
                     }
                 }
                 Section {
@@ -57,20 +64,33 @@ struct MobileHistoryView: View {
             } message: { _ in
                 Text("This removes the transcript, notes, attachments and all AI outputs from this device. It cannot be undone.")
             }
+            .alert("Delete this Apple Watch audio?", isPresented: $showWatchDeletion,
+                   presenting: pendingWatchDeletion) { row in
+                Button("Delete audio", role: .destructive) {
+                    session.deleteWatchRecording(row.id)
+                    pendingWatchDeletion = nil
+                }
+                Button("Cancel", role: .cancel) { pendingWatchDeletion = nil }
+            } message: { _ in
+                Text("Text already transcribed stays in History.")
+            }
             .sheet(item: $sharing) { record in
                 ConversationShareSheet(text: MobileSession.readableShareText(for: record))
                     .presentationDetents([.medium, .large])
             }
             .scrollContentBackground(.hidden).background(MobileStyle.canvas)
             .overlay {
-                if session.history.isEmpty {
+                if session.history.isEmpty && session.watchInboxRows.isEmpty {
                     ContentUnavailableView("No saved conversations", systemImage: "clock",
                                            description: Text("Save a conversation to return to its words, notes and summaries."))
                 } else if results.isEmpty {
                     ContentUnavailableView.search(text: query)
                 }
             }
-            .onAppear { session.reloadHistory() }
+            .onAppear {
+                session.reloadHistory()
+                session.refreshWatchInboxRows()
+            }
             .searchable(text: $query, prompt: "Search title, summary, or transcript")
             .navigationTitle("History")
             .toolbar { Button("Done") { dismiss() } }
@@ -87,6 +107,10 @@ struct MobileHistoryView: View {
                     Text(record.title).font(.headline).foregroundStyle(.primary)
                     Text(record.date.formatted(date: .abbreviated, time: .shortened))
                         .font(.caption).foregroundStyle(.secondary)
+                    if MobileSession.isFromAppleWatch(record) {
+                        Label("From Apple Watch", systemImage: "applewatch")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
                     Text(record.summary.isEmpty ? AttributedString(record.notes ?? record.transcript)
                          : MarkdownText.inlineAttributed(record.summary))
                         .lineLimit(2).foregroundStyle(.secondary)
@@ -97,6 +121,28 @@ struct MobileHistoryView: View {
             }.frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
         }.buttonStyle(.plain).padding(.vertical, 4)
             .accessibilityIdentifier("history-record-\(record.id)")
+    }
+
+    /// A watch recording still being received or transcribed, or one that failed.
+    private func watchRow(_ row: WatchInboxRow) -> some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 5) {
+                Text(row.title).font(.headline)
+                Text(row.detail).font(.caption)
+                    .foregroundStyle(row.failure == nil ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange))
+            }
+            Spacer(minLength: 0)
+            if row.failure != nil {
+                Button("Retry") { session.retryWatchRecording(row.id) }.buttonStyle(.borderless)
+            }
+            Button("Delete", role: .destructive) {
+                pendingWatchDeletion = row
+                showWatchDeletion = true
+            }.buttonStyle(.borderless)
+        }
+        .padding(.vertical, 4)
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("history-watch-\(row.id.uuidString)")
     }
 
     private func confirmDeletion(_ record: SessionRecord) {

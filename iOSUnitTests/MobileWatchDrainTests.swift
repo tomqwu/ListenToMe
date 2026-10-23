@@ -38,14 +38,16 @@ final class MobileWatchDrainTests: XCTestCase {
     }
 
     /// Delivers chunk `index` (300 s each) as if WatchConnectivity handed it over at `at`.
-    private func deliver(_ session: MobileSession, _ index: Int, isLast: Bool = false, at: Date? = nil) throws {
+    private func deliver(_ session: MobileSession, _ index: Int, isLast: Bool = false, at: Date? = nil,
+                         recording: UUID? = nil, startedAt started: Date? = nil) throws {
         let source = root.appendingPathComponent("delivery-\(UUID().uuidString).m4a")
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         try Data(repeating: 1, count: 32).write(to: source)
-        let metadata = WatchChunkMetadata(recordingID: recordingID, index: index, startOffset: TimeInterval(index) * 300,
-                                          duration: 300, isLast: isLast, startedAt: startedAt, watchBuild: "28")
-        XCTAssertEqual(session.watchInbox.accept(fileAt: source, metadata: metadata.transferMetadata, now: at ?? startedAt),
-                       .stored)
+        let metadata = WatchChunkMetadata(recordingID: recording ?? recordingID, index: index,
+                                          startOffset: TimeInterval(index) * 300, duration: 300, isLast: isLast,
+                                          startedAt: started ?? startedAt, watchBuild: "28")
+        let stored = session.watchInbox.accept(fileAt: source, metadata: metadata.transferMetadata, now: at ?? startedAt)
+        XCTAssertEqual(stored, .stored)
     }
 
     private func drain(_ session: MobileSession, now: Date? = nil) async {
@@ -284,5 +286,82 @@ final class MobileWatchDrainTests: XCTestCase {
         await drain(session)
         XCTAssertEqual(watchRecords(session).first?.segments?.map(\.text), ["Eventually."])
         XCTAssertTrue(session.watchInbox.ledgers().isEmpty)
+    }
+
+    // MARK: History rows (Task 13)
+
+    func testRowsListWaitingAndFailedRecordings() async throws {
+        let fake = FakeWatchTranscriber()
+        fake.failBefore = (0, RecordingError.message("The audio is damaged."))
+        let session = makeSession(fake)
+        let waiting = UUID(), finished = UUID()
+        try deliver(session, 0, isLast: true)
+        await drain(session)
+        try deliver(session, 1, recording: waiting, startedAt: startedAt.addingTimeInterval(hour))
+        try deliver(session, 2, recording: waiting, startedAt: startedAt.addingTimeInterval(hour))
+        try deliver(session, 0, recording: finished, startedAt: startedAt.addingTimeInterval(2 * hour))
+        _ = try session.watchInbox.update(finished) { $0.markTranscribed(through: 300) }
+
+        session.refreshWatchInboxRows()
+
+        XCTAssertEqual(session.watchInboxRows, [
+            WatchInboxRow(id: recordingID, startedAt: startedAt, waitingParts: 1, failure: "The audio is damaged."),
+            WatchInboxRow(id: waiting, startedAt: startedAt.addingTimeInterval(hour), waitingParts: 2, failure: nil),
+        ], "A recording with nothing left to transcribe is not listed")
+        XCTAssertEqual(session.watchInboxRows[0].title,
+                       "Apple Watch · " + startedAt.formatted(date: .abbreviated, time: .shortened))
+        XCTAssertEqual(session.watchInboxRows[0].detail, "The audio is damaged.")
+        XCTAssertEqual(session.watchInboxRows[1].detail, "2 parts waiting")
+        XCTAssertEqual(WatchInboxRow(id: waiting, startedAt: startedAt, waitingParts: 1, failure: nil).detail,
+                       "1 part waiting")
+    }
+
+    func testRetryClearsTheFailureAndDrains() async throws {
+        let fake = FakeWatchTranscriber()
+        fake.script = [0: [line("Second time lucky.", chunk: 0)]]
+        fake.failBefore = (0, RecordingError.message("The speech model was busy."))
+        let session = makeSession(fake)
+        try deliver(session, 0, isLast: true)
+        await drain(session)
+        XCTAssertEqual(session.watchInboxRows.first?.failure, "The speech model was busy.", "Rows refresh after a drain")
+
+        fake.failBefore = nil
+        session.retryWatchRecording(recordingID)
+        await session.watchDrainTask?.value
+
+        XCTAssertEqual(watchRecords(session).first?.segments?.map(\.text), ["Second time lucky."])
+        XCTAssertTrue(session.watchInbox.ledgers().isEmpty)
+        XCTAssertTrue(session.watchInboxRows.isEmpty)
+        XCTAssertEqual(session.message, "Apple Watch recording added to History.")
+    }
+
+    func testDeleteRemovesOnlyTheAudioAndKeepsTheConversation() async throws {
+        let fake = FakeWatchTranscriber()
+        fake.script = [0: [line("Already text.", chunk: 0)]]
+        fake.failAfter = (0, RecordingError.message("The audio is damaged."))
+        let session = makeSession(fake)
+        try deliver(session, 0)
+        try deliver(session, 1, isLast: true)
+        await drain(session)
+        XCTAssertEqual(session.watchInboxRows.count, 1)
+
+        session.deleteWatchRecording(recordingID)
+
+        XCTAssertTrue(session.watchInbox.ledgers().isEmpty)
+        XCTAssertFalse(FileManager.default.fileExists(
+            atPath: session.watchInbox.root.appendingPathComponent(recordingID.uuidString).path))
+        XCTAssertTrue(session.watchInboxRows.isEmpty)
+        XCTAssertEqual(watchRecords(session).first?.segments?.map(\.text), ["Already text."])
+        XCTAssertEqual(try archived().first?.segments?.map(\.text), ["Already text."])
+    }
+
+    func testRecordsFromTheWatchAreFlagged() {
+        func record(_ source: String?) -> SessionRecord {
+            SessionRecord(id: UUID().uuidString, title: "A", date: startedAt, transcript: "", summary: "",
+                          sourceImportID: source)
+        }
+        XCTAssertTrue(MobileSession.isFromAppleWatch(record("watch:\(recordingID.uuidString)")))
+        XCTAssertFalse(MobileSession.isFromAppleWatch(record(UUID().uuidString)), "A share-sheet import")
+        XCTAssertFalse(MobileSession.isFromAppleWatch(record(nil)))
     }
 }

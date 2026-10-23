@@ -70,6 +70,8 @@ final class MobileSession {
     let makeWatchTranscriber: () -> any WatchAudioTranscribing
     /// The foreground drain of Apple Watch recordings (issue #181); never runs while recording.
     @ObservationIgnored var watchDrainTask: Task<Void, Never>?
+    /// Watch recordings still waiting in the inbox, for History.
+    var watchInboxRows: [WatchInboxRow] = []
     private var manualQuickError: String?
     var quickSummaryError: String? { manualQuickError ?? quickReader.error }
     private var sourceImportID: String?
