@@ -25,7 +25,10 @@ See [the September triage](reviews/2026-09-10/backlog-triage.md) for the disposi
 
 ## Intentionally out of scope
 
-- Android/Windows products, and Mac↔iOS sync or companion features.
+- Android/Windows products, and Mac↔iOS sync or companion features. "Companion" here means a Mac↔iOS
+  link only. An Apple Watch companion to the iPhone app is **in scope**
+  ([#181](https://github.com/tomqwu/ListenToMe/issues/181); design and decisions in
+  [the Apple Watch recording spec](superpowers/specs/2026-10-22-apple-watch-recording-design.md)).
 - Cloud accounts, team workspaces, and public sharing links.
 - Per-vendor AI SDK integrations; the current backend is Ollama.
 
