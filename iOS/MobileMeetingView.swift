@@ -124,6 +124,7 @@ struct MobileMeetingView: View {
             MobileSpeakerStatus(session: session)
             MobileLanguageStatus(session: session)
             MobileWatchRecordingLine(status: session.watchCaptureStatus)
+            MobileVaultStatusLine()
             if let message = session.message {
                 Text(message).font(.caption).lineLimit(2).foregroundStyle(.secondary)
                     .accessibilityIdentifier("sessionMessage")
@@ -238,6 +239,7 @@ struct MobileMeetingView: View {
                 MobileAISettingsView(ai: session.ai)
                 MobileLanguageSettings(session: session)
                 MobileSpeakerSettings(session: session)
+                MobileVaultSettings(session: session)
                 Section("Recording") {
                     Text("This version records the microphone while the app is open. " +
                          "Backgrounding or a call stops recording and saves the conversation, and the status line " +
@@ -246,7 +248,8 @@ struct MobileMeetingView: View {
                     Text("System audio, call recording and Mac sync are not included.")
                 }
                 Section("Privacy") {
-                    Text("Conversations stay in this app's storage. Apple Intelligence summaries are optional and run on-device. " +
+                    Text("Conversations stay in this app's storage unless you turn on Save to folder. " +
+                         "Apple Intelligence summaries are optional and run on-device. " +
                          "Ollama sends notes and transcript to the server shown in AI settings " +
                          "(Ollama Cloud unless you entered your own) when you generate a summary " +
                          "or enable Auto summaries. " +

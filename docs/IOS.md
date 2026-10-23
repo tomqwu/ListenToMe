@@ -40,6 +40,7 @@ this table in the same PR, and never fork a copy into `App/` or `iOS/`.
 | Prompt data fences and caps: `PromptData.notice`, `PromptData.block`, `PromptBudget` | `PromptBuilder` (`Prompt.swift`) | `MobileSummaryMode.instructions`, `MobileSession.summarize` |
 | `SessionArchive` — the on-disk conversation format | `App/SessionStore.swift` | `iOS/MobileSession.swift` |
 | Speaker identification: `SpeakerDiarizer` and `SpeakerAudioBuffer` (`SharedPlatform/`, FluidAudio), `SpeakerIdentityTracker`, `SpeakerLabeling`, `SpeakerStats`, `SpeakerAnalysisPolicy` | `App/MeetingView+Speakers.swift` | `MobileSpeakers`, `iOS/MobileSession+Speakers.swift`; iOS language detection (#197) reuses `SpeakerAudioBuffer` with a two-minute `maxSamples` cap |
+| Save to folder (#53): `MarkdownVault` (note format and file names), `MarkdownVaultWriter` (bookmark, atomic coordinated write, failure wording), `MarkdownVaultSync` (`SharedPlatform/`, setting, queue, status, Retry) | `App/MacVaultSettings.swift`, `App/MeetingView+Conversations.swift` (`checkpoint`) | `iOS/MobileVaultSettings.swift`, `iOS/MobileSession+Vault.swift` |
 | `SessionSearch` — History search and its matching rules | `App/SessionSearchView.swift`, `App/MeetingView.swift` | `MobileHistoryView` via `MobileSession` |
 | `AppleIntelligenceProvider` (`SharedPlatform/`) — on-device transport and its failure wording | `App/MeetingView.swift` | `MobileSession`, `MobileAISettings` |
 | `OllamaProvider`, `LLMRequest` / `ChatMessage`, `OllamaGenerationOptions` | `App/MeetingView.swift` | `MobileAISettings.client(for:)` |
@@ -66,7 +67,7 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 | Third-party licenses | **Open-source licenses…** shows `App/ThirdPartyNotices.txt` as one text | **Settings → About → Acknowledgements** lists each package from the same file with its full license (`MobileAcknowledgementsView`, #202) |
 | "What's New" | GitHub release notes and `CHANGELOG.md` | In-app, shown once per set of bundled notes (`MobileReleaseNotes`) |
 | Storage protection | Plain atomic writes | Data protection (`completeUntilFirstUserAuthentication`) plus an optional backup exclusion (`PrivateStorage`) |
-| Export | Markdown, PDF and recap | Markdown and readable text through the share sheet |
+| Export | Markdown, PDF and recap; **Save to folder** chosen with an open panel, written when a checkpoint is complete (capture stopped) and only while autosaving is on | Markdown and readable text through the share sheet; **Save to folder** chosen in the Files picker (security-scoped bookmark), written at Stop/Save and on later changes while not recording |
 | Audio-file import | Yes (`App/AudioFileReader.swift`) | No |
 | Languages | Transcription language **and** AI response language, from every on-device language the OS lists (#172); the opt-in WhisperKit engine transcribes mixed languages | Transcription language only, from the same OS list (#172): **Automatic** (the default) detects the spoken language on the device from the first seconds of speech and switches once per recording, or a fixed language (#197) |
 | Input | Global ⌘⇧Space hotkey and a Session menu | Touch UI; no hotkeys or menu bar |
@@ -478,6 +479,36 @@ The **Live** tab shows the transcript above a full-width **Quick Summary**. **De
 separately, restored with its conversation and included when sharing. These are distinct prompts;
 Deep Think does not promise a provider-specific reasoning mode. Requests use the selected provider
 and preserve previous completed output on failure or cancellation.
+
+## Save to folder (#53)
+
+**Settings → Save to folder** is off by default. Turning it on opens the Files folder picker; the
+chosen folder (On My iPhone, iCloud Drive, an Obsidian vault) is kept as a bookmark. Each time
+`MobileSession.save()` writes a conversation to History while the session is idle — Stop, Save, and
+any later summary, title, notes or speaker-name change — `exportToVault` queues its note. Live
+transcript lines during recording are not written to the folder. `MarkdownVault` builds the note
+(YAML front matter with title, date, duration, BCP-47 language, speakers, the `listentome` tag and the
+conversation ID; then Summary, Quick summary, Deep summary, Notes, a transcript with `[mm:ss]`
+timestamps and speaker names, and attachment names). The file is named
+`<yyyy-MM-dd HHmm> ListenToMe <key>.md`, where the key is the first eight hex digits of the
+conversation ID; an existing note is found by that suffix and its `listentome_id` front matter, so a
+renamed conversation or a reopened app updates it in place. A file with that name but another (or no)
+`listentome_id` is never overwritten: the note takes the whole-ID name instead
+(`… ListenToMe <32 hex>.md`), and a foreign file under that name too is reported as a per-note failure.
+A note the user renamed in Obsidian is not searched for (that would mean reading every note in the
+vault); it is left alone and the next update writes a new note under the usual name.
+`MarkdownVaultWriter` writes through `NSFileCoordinator` with an atomic replace and skips unchanged
+bytes. Failures are kept visible, never dropped. Folder failures — a moved or deleted folder or lost
+access ("choose the folder again"), a full disk — stop the queue; per-note failures — a legacy
+`.icloud` placeholder (a download is requested), a name held by another note, any other error — keep
+that note queued and let the rest be written. Either shows in Settings and as an orange line under
+the conversation title, with Retry; notes waiting for a folder show there too. The IDs of unwritten
+notes persist across launches; the next save or Retry rebuilds them from History. Apple Watch
+conversations are written when the drain saves them. **Save all conversations now** and Retry skip
+the conversation being recorded and write the same language field ordinary saves do. Deleting a
+conversation drops its queued note, so it is never written afterwards; a note already in the folder
+stays, because the folder belongs to the user. On the Mac, the note's date is the conversation's first
+checkpoint, quitting waits up to five seconds for the last note, and waiting notes are retried at launch.
 
 ## Photos, files and Apple Notes
 

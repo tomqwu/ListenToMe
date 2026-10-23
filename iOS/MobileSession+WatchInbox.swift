@@ -295,6 +295,7 @@ extension MobileSession {
                                     sourceImportID: record.sourceImportID)
         try archive.save(updated)
         remember(updated)
+        exportToVault(updated, language: transcriptionLanguage)   // Save to folder (#53)
     }
 
     private static func appendingLine(_ line: String, to text: String) -> String {
