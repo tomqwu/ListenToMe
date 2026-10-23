@@ -886,7 +886,8 @@ extension MeetingSession {
                 // through `roleErrors`, which the pane renders as its own banner, so a transient
                 // provider error never blanks a pane — matching the automatic paths, which have
                 // always kept previous output (issue #137).
-                if output(role).isEmpty { setOutput(role, previousOutput) }
+                // A refusal is the exception: its partial text is discarded, never left standing (#214).
+                if output(role).isEmpty || LLMPartialOutput.mustDiscard(after: error) { setOutput(role, previousOutput) }
                 roleErrors[role] = error.localizedDescription
             }
         }

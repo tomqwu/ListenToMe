@@ -17,7 +17,9 @@ struct MobileRoleModelView: View {
                     operation = Task { await ai.testConnection(for: role) }
                 }.disabled(ai.availability(for: role) != nil || ai.testing)
             }
-            if ai.provider == .openAI {
+            if ai.provider == .cloud {
+                MobileCloudModelSections(ai: ai, role: role)
+            } else if ai.provider == .openAI {
                 Section {
                     Text("Models listed by \(ai.summaryEndpointLabel). The list does not say where a model runs. "
                          + (role == .quick
@@ -46,7 +48,8 @@ struct MobileRoleModelView: View {
         }.accessibilityIdentifier("roleModelList")
             .navigationTitle("\(role.title) model")
             .task {
-                let empty = ai.provider == .openAI ? ai.openAI.models.isEmpty : ai.models.isEmpty
+                let empty = ai.provider == .openAI ? ai.openAI.models.isEmpty
+                    : (ai.provider == .cloud ? ai.cloud.models.isEmpty : ai.models.isEmpty)
                 if empty && ai.canRefreshSummaryModelsAutomatically { await ai.refreshSummaryModels() }
             }
             .onDisappear { operation?.cancel() }

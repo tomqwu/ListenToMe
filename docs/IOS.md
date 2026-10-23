@@ -44,6 +44,7 @@ this table in the same PR, and never fork a copy into `App/` or `iOS/`.
 | `SessionSearch` — History search and its matching rules | `App/SessionSearchView.swift`, `App/MeetingView.swift` | `MobileHistoryView` via `MobileSession` |
 | `AppleIntelligenceProvider` (`SharedPlatform/`) — on-device transport and its failure wording | `App/MeetingView.swift` | `MobileSession`, `MobileAISettings` |
 | `OllamaProvider`, `LLMRequest` / `ChatMessage`, `OllamaGenerationOptions` | `App/MeetingView.swift` | `MobileAISettings.client(for:)` |
+| Cloud AI presets (#214): `CloudAIPreset` (addresses, headers, key binding), `OpenAICompatibleDialect` (vendor request quirks), `AnthropicProvider` (native Messages API), `CloudAICatalog` (model lists), `CloudAISettingsChange` (macOS save plan) | `App/CloudAISettings.swift` | `MobileCloudAISettings`, `MobileAISettings.client(for:)` |
 | OpenAI-compatible servers (#52): `OpenAICompatibleProvider` (stream contract), `OpenAICompatibleEndpoint` (validation, plain-`http` rule, "your server" / "may leave this device" labels, key origin), `OpenAICompatibleCatalog` (`/v1/models`) | `App/OpenAICompatibleSettings.swift` | `MobileOpenAISettings`, `MobileAISettings.client(for:)` |
 
 The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembles pane prompts with
@@ -55,10 +56,11 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 | Capability | macOS | iOS |
 | --- | --- | --- |
 | Capture | Microphone **and** the other participants' system audio via ScreenCaptureKit (`App/DualChannelCapture.swift`), labeled You / Others | This device's microphone only; lines are labeled **Microphone** unless speaker identification names them; foreground only |
-| Default AI provider | Explicit AI mode — Local only, Apple Intelligence, Cloud, OpenAI-compatible, or AI off — defaulting to a local Ollama model | A fresh install uses **Apple Intelligence on-device** when it is available, otherwise falls back to Ollama and names the reason (`MobileAISettings.fallbackExplanation`) |
+| Default AI provider | Explicit AI mode — Local only, Apple Intelligence, Cloud, Cloud AI service, OpenAI-compatible, or AI off — defaulting to a local Ollama model | A fresh install uses **Apple Intelligence on-device** when it is available, otherwise falls back to Ollama and names the reason (`MobileAISettings.fallbackExplanation`) |
 | Ollama endpoint | The local daemon (`localhost:11434`) or Ollama Cloud | Ollama Cloud, or a server you run and address yourself (`.local`/loopback for plain `http`); a saved cloud key is never sent to another host |
+| Cloud AI services (#214) | AI mode **Cloud AI service**; service, key (**Check key** lists its models) and links in Settings; each pane's model picked in the status rail | Summary provider → **Cloud AI** → a service; key, models per role and **Test this model** in Settings (`MobileCloudAISettings`). Speech correction stays on Ollama |
 | OpenAI-compatible server (#52) | AI mode **OpenAI-compatible**; server URL and optional key in Settings; Auto runs and a model that breaks the Quick JSON contract shows the reader's failure in the Quick pane | Summary provider **OpenAI-compatible**; **Test this model** on the Quick role checks the JSON contract and a failed check pauses Auto with the reason (`MobileOpenAISettings.automaticQuickReason`). Speech correction stays on Ollama |
-| Per-role models | A picker per pane in the status rail, over local and cloud models, auto-picked local-first (`ModelRanking`); on the OpenAI-compatible route, the server's `/v1/models` list, none verified local | Settings → Model role for Summary / Quick / Deep (`MobileRoleModelView`), from Ollama or the OpenAI-compatible server's `/v1/models`; on Ollama, Flash models are reserved for Quick and correction and refused for Deep |
+| Per-role models | A picker per pane in the status rail, over local and cloud models, auto-picked local-first (`ModelRanking`); on the OpenAI-compatible and cloud AI routes, the server's or vendor's model list, never auto-picked and none verified local | Settings → Model role for Summary / Quick / Deep (`MobileRoleModelView`), from Ollama, the cloud AI service's model list or the OpenAI-compatible server's `/v1/models`; on Ollama, Flash models are reserved for Quick and correction and refused for Deep |
 | Local-model enforcement | `ModelPrivacy` / `localOnly` verifies downloaded weights before every request | Not applicable — on-device here means Apple Intelligence; iOS reaches Ollama only over the network |
 | Speaker identification | Optional on-device diarization of the Others channel (and optionally the microphone) with naming; line labels need WhisperKit timestamps | On by default, can be turned off (**Settings → Speakers → Identify speakers**): FluidAudio diarizes the one microphone on-device, lines become **Speaker 1, 2…** by SpeechAnalyzer's audio time ranges, and **Notes → Speakers** renames them. Trailing-window passes while recording plus a final pass on Stop, foreground only; a line no speaker covers for at least 30% of its length keeps **Microphone** |
 | Presets and reference context | Use-case presets (`PresetCatalog`) and file/folder reference context (`ReferenceBuilder`, `FileContextLoader`) | Not today. Attachments instead: extracted text is appended to Notes, so it reaches the model inside `<transcript>`, not a `<reference>` block |
@@ -451,7 +453,9 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   conversation files are read on launch, after a delete and after a share-sheet import, not on
   every save.
 - On-device Apple Intelligence summaries by default, or Ollama summaries — Ollama Cloud, or an Ollama
-  server you run — or an OpenAI-compatible server you enter (LM Studio, vLLM, llama.cpp, OpenRouter;
+  server you run — a cloud AI service with your own key (OpenAI, Anthropic Claude, Google Gemini, DeepSeek,
+  OpenRouter, Groq, Mistral, xAI; see [Cloud AI services](#cloud-ai-services-openai-claude-gemini-deepseek-openrouter-groq-mistral-xai)),
+  or an OpenAI-compatible server you enter (LM Studio, vLLM, llama.cpp, OpenRouter;
   see [OpenAI-compatible server](#openai-compatible-server-lm-studio-openrouter-vllm)), with streamed
   results and secure API-key storage.
   Apple Intelligence accepts up to 8,000 characters (`PromptBudget.appleIntelligenceCharacters`, the
@@ -597,8 +601,8 @@ turned off, the model not ready, or an unlisted reason reported by the system ("
 unavailable. Choose another provider in Settings."). That explanation is shown only while the device is actually on the
 unchosen Ollama fallback; once you pick a provider yourself it disappears, and it is never shown to
 someone who selected Apple Intelligence deliberately. A provider you have chosen before is always
-kept across updates — the default applies only when no choice has been saved. Automatic Quick Summary requires Ollama or an
-OpenAI-compatible server, so it stays unavailable with an explanation until you select one yourself.
+kept across updates — the default applies only when no choice has been saved. Automatic Quick Summary requires Ollama, a cloud AI
+service or an OpenAI-compatible server, so it stays unavailable with an explanation until you select one yourself.
 
 On Apple Intelligence every AI output goes through `AppleIntelligenceProvider`, the same transport
 macOS uses. **Manual Quick Summary asks the on-device model for the bullets in prose** rather than for
@@ -669,7 +673,7 @@ text is shown separately until completion. Backgrounding cancels an active summa
 
 ## OpenAI-compatible server (LM Studio, OpenRouter, vLLM)
 
-Open **More → Settings → Summary provider → OpenAI-compatible server**. Enter the server's base URL and
+Open **More → Settings → Summary provider → Custom server (OpenAI-compatible)**. Enter the server's base URL and
 tap **Save server URL**: `http://your-mac.local:1234/v1` for LM Studio on your Mac, `http://your-server.local:8000/v1`
 for vLLM or llama.cpp, `http://your-mac.local:11434/v1` for Ollama's own OpenAI API, or
 `https://openrouter.ai/api/v1`. A bare origin gets `/v1`; a pasted `…/chat/completions` or `…/models` is
@@ -729,6 +733,76 @@ the contract the Quick pane shows "did not return a usable Quick Summary update"
 summary.
 
 Speech correction is unchanged: it always uses the Ollama connection, shown separately in Settings.
+
+## Cloud AI services (OpenAI, Claude, Gemini, DeepSeek, OpenRouter, Groq, Mistral, xAI)
+
+Open **More → Settings → Summary provider** and choose a service under **Cloud AI** (#214). The menu
+lists Apple Intelligence, Ollama, the eight services, then **Custom server (OpenAI-compatible)** (the
+route above). Nothing is chosen by default: Apple Intelligence stays the default where it can run, and
+the app ships with no keys. Choosing a service selects only that service; no key, model or request
+follows until you add them.
+
+**Disclosure.** The service's rows start with "Sends your transcript to <vendor>", name the host that
+receives the notes and transcript, and link the vendor's privacy policy. A key typed for one service is
+cleared when another is chosen, and Save refuses to store it under a different service. The provider
+menu is disabled while a test or refresh runs, and a test reports and records the service and model it
+started with. **Get a key from <vendor>** opens
+the vendor's key page. Claude adds that Anthropic may re-run a declined request on another Claude model.
+
+**Addresses and request shape** (`CloudAIPreset`, shared with macOS; checked against each vendor's
+documentation on 2026-10-23):
+
+| Service | API base | Quirks handled |
+| --- | --- | --- |
+| OpenAI | `https://api.openai.com/v1` | `max_completion_tokens` instead of `max_tokens`; no `temperature` (GPT-5 reasoning models accept only the default); Quick sends `reasoning_effort: "none"` |
+| Anthropic Claude | `https://api.anthropic.com/v1` | Native Messages API (`AnthropicProvider`), below |
+| Google Gemini | `https://generativelanguage.googleapis.com/v1beta/openai` | Gemini's OpenAI-compatible path; model IDs listed as `models/…` are shown without the prefix; key errors arrive as HTTP 400 in an array-wrapped body, which is read; Quick sends `reasoning_effort: "none"` |
+| DeepSeek | `https://api.deepseek.com` | Reasoning streamed as `reasoning_content` stays apart from the answer; Quick sends `thinking: {"type": "disabled"}` |
+| OpenRouter | `https://openrouter.ai/api/v1` | Optional `HTTP-Referer` (the GitHub URL) and `X-Title: ListenToMe` attribution headers; keep-alive comments ignored; Quick sends `reasoning: {"effort": "none"}` |
+| Groq | `https://api.groq.com/openai/v1` | Quick sends `reasoning_effort: "none"` |
+| Mistral | `https://api.mistral.ai/v1` | No reasoning hint |
+| xAI Grok | `https://api.x.ai/v1` | No reasoning hint (Grok 4.x reasoning cannot be disabled) |
+
+A vendor or model that rejects the Quick reasoning hint with 400/422 is asked once more without it, as on
+the custom server. Everything else is the custom server's transport contract: streamed answers must end
+explicitly, redirects are refused, responses are capped at 16 MiB, and keys are masked in every error.
+
+**One key per vendor.** Each service has its own Keychain item (`WhenUnlockedThisDeviceOnly`, account
+`cloud-ai-<vendor>`, apart from the Ollama and custom-server keys) saved with that vendor's
+`scheme://host:port`; a mismatch sends no credential. The address is fixed in code, so a key is only ever
+sent to its own vendor. Switching services keeps every vendor's key and model choices
+(`MobileCloudAISettings`).
+
+**Models are always your pick.** **Refresh models from <vendor>** reads the vendor's model list with your
+key (no transcript). Nothing is assigned, not even when the list holds one model. The role list shows a
+**Suggested** section for the vendor's suggestions it actually lists — for Claude, Claude Opus 5.5 (marked
+"Suggested default"), Sonnet 5.5 and Haiku 5.5 — then every listed model. **Test this model** on the Quick
+role checks the Quick Summary contract and a failure pauses Auto for that vendor and model, as on the
+custom server.
+
+**Claude (native Messages API).** `POST https://api.anthropic.com/v1/messages` over `URLSession` with
+`x-api-key`, `anthropic-version: 2026-10-21` and `content-type: application/json`; the body carries
+`model`, `max_tokens`, `system`, `messages` and `stream: true`. No `temperature`, `top_p` or `top_k`
+(version 2026-10-21 rejects them), no `thinking` (it cannot be turned off on Opus 5.5 or Sonnet 5.5) and
+no assistant prefill. Depth is set with `output_config.effort`: `low` for the Quick evaluator, `medium` for
+Summary and Deep (set explicitly; Opus 5.5 defaults to `medium`, other models to `high`). The Quick
+evaluator asks for structured output (`output_config.format` with the `QuickSummaryDecision` JSON schema),
+so it always receives valid JSON; `QuickSummaryDecision.parse` still enforces the length and count limits
+a schema cannot express. Opus 5.5 and Sonnet 5.5 Summary and Deep requests send `fallbacks: "default"` with
+`anthropic-beta: server-side-fallback-2026-07-01`; the structured-output Quick evaluator never does, so
+the two options are never combined. Any 400 to a request with fallbacks is retried once without them, and
+the model is remembered as not taking them (until the app restarts) only when that retry succeeds. A
+fallback mid-answer continues the partial text on another Claude model; Anthropic documents that nothing
+already streamed is invalidated, so the answer simply carries on. A refusal that ends the response
+discards the partial text: iOS keeps the previous summary and the macOS pane restores its previous
+answer (`LLMPartialOutput`). Only `text_delta` is answer text; `thinking_delta`,
+`signature_delta`, `ping` and unknown events are ignored, and a response completes only at
+`message_stop`. `stop_reason: "refusal"` shows "Claude declined to answer this request"; `max_tokens`
+keeps the partial text and says it was cut off; an `error` event (such as `overloaded_error`) fails the
+request. HTTP 401/403 names a bad key, 429/529 retries once only when `retry-after` (seconds or an HTTP date)
+asks for a wait of 20 seconds or less, and a 400
+`invalid_request_error` shows Anthropic's message with the key masked. Model lists come from
+`GET /v1/models`.
 
 ## Build and run
 

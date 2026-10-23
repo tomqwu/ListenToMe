@@ -11,15 +11,29 @@ struct MobileAISettingsView: View {
 
     var body: some View {
         Section("AI summaries") {
-            Picker("Summary provider", selection: $ai.provider) {
-                Text("Apple Intelligence · on-device").tag(MobileAISettings.Provider.apple)
+            Picker("Summary provider", selection: Binding(get: { ai.summaryRoute }, set: { ai.selectSummaryRoute($0) })) {
+                Text("Apple Intelligence · on-device").tag(MobileAISettings.SummaryRoute.apple)
                 Text(ai.usesCustomEndpoint ? "Ollama · your server" : "Ollama Cloud")
-                    .tag(MobileAISettings.Provider.ollama)
-                Text(ai.openAI.providerLabel).tag(MobileAISettings.Provider.openAI)
+                    .tag(MobileAISettings.SummaryRoute.ollama)
+                Section("Cloud AI · sends your transcript to the service") {
+                    ForEach(CloudAIPreset.all) { preset in
+                        Text(preset.name).tag(MobileAISettings.SummaryRoute.cloud(preset.id))
+                    }
+                }
+                Text(ai.openAI.isConfigured ? ai.openAI.providerLabel : "Custom server (OpenAI-compatible)")
+                    .tag(MobileAISettings.SummaryRoute.openAI)
             }.accessibilityIdentifier("summaryProvider")
+                // A running test or refresh reports on the service it started with.
+                .disabled(ai.testing || ai.refreshing)
             if let reason = ai.fallbackExplanation {
                 Text("Apple Intelligence cannot run on this device, so summaries default to Ollama: \(reason)")
                     .font(.caption).accessibilityIdentifier("appleIntelligenceUnavailable")
+            }
+            if ai.provider == .cloud {
+                MobileCloudAISettingsRows(ai: ai)
+                if ai.correctTranscript {
+                    Text("Speech correction still uses the Ollama connection below.").font(.caption)
+                }
             }
             if ai.provider == .openAI {
                 MobileOpenAISettingsRows(ai: ai)
@@ -61,8 +75,8 @@ struct MobileAISettingsView: View {
                     editingKey = false
                     operation = Task { await ai.refresh() }
                 }.disabled(ai.refreshing || ai.testing)
-                if ai.provider != .openAI { summaryModelRows }
-                if ai.provider != .openAI, let status = ai.status {
+                if ai.provider != .openAI && ai.provider != .cloud { summaryModelRows }
+                if ai.provider != .openAI && ai.provider != .cloud, let status = ai.status {
                     Text(status).font(.callout).accessibilityIdentifier("ollamaStatus")
                 }
             }
@@ -107,8 +121,8 @@ struct MobileAISettingsView: View {
         let endpoint: String = ai.endpointDescription
         let lead: String = ai.provider == .ollama
             ? "Summarize sends your notes and transcript to \(endpoint) using the selected model. "
-            : "Speech correction uses \(endpoint). Your summaries " + (ai.provider == .openAI
-                ? "go to \(ai.openAI.destinationLabel). " : "still use Apple Intelligence on-device. ")
+            : "Speech correction uses \(endpoint). Your summaries " + (ai.provider == .apple
+                ? "still use Apple Intelligence on-device. " : "go to \(ai.summaryEndpointLabel). ")
         let tail: String = ai.usesCustomEndpoint
             ? " That server is your own machine; nothing goes to ollama.com."
             : " Your Ollama account's usage limits apply."

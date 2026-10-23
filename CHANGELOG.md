@@ -13,6 +13,7 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased since 1.13.0 (30))
 
+- Cloud AI services in Settings → Summary provider → Cloud AI: OpenAI, Anthropic Claude, Google Gemini, DeepSeek, OpenRouter, Groq, Mistral and xAI Grok. Pick a service, paste your own API key (with a link to the vendor's key page) and choose a model for each role from the vendor's list; nothing is chosen for you and Apple Intelligence stays the default. Each service is labelled "Sends your transcript to <vendor>" with its privacy policy, keeps its own key in the Keychain and sends it only to that vendor. Claude uses Anthropic's own Messages API, with structured output for Auto Quick. The custom server is now listed as "Custom server (OpenAI-compatible)". (#214)
 - Apple Watch companion, remote Start/Stop for the iPhone recorder (not yet shipped; ships with watch recording on the #181 train). (#181)
 - iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
 - Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
@@ -43,6 +44,7 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## macOS (unreleased since 1.4.4)
 
+- New AI mode **Cloud AI service**: OpenAI, Anthropic Claude, Google Gemini, DeepSeek, OpenRouter, Groq, Mistral or xAI Grok with your own API key (Check key lists the vendor's models; Get a key and privacy-policy links). Each service is labelled "Sends your transcript to <vendor>", keeps its own Keychain key sent only to that vendor, and pane pickers list its models without ever picking one. Claude uses Anthropic's own Messages API. (#214)
 - New AI mode **OpenAI-compatible**: point the panes at LM Studio, vLLM, llama.cpp, Ollama's /v1 API or OpenRouter with an optional Keychain key bound to that server; pane pickers list its /v1/models and never pick one for you; labelled "your server" or "may leave this device", never local; redirects are not followed. Plain http to `.local` names now works. (#52)
 - Speaker identification matches voices across its periodic passes, so a participant who is silent for minutes keeps their Speaker N label and edited name; voice embeddings stay in memory for the run only. (#171)
 - The transcription-language picker lists every language this Mac can transcribe on-device (Portuguese, Italian, Hindi, Arabic and more), grouped as Installed and Downloadable with the common languages first. (#172)

@@ -44,7 +44,9 @@ differs from the device language, switches and transcribes the recording again; 
 a minute while people talk, so a meeting that changes language part-way switches too (its small Whisper
 model downloads once from `huggingface.co`; audio never leaves the device). Choose on-device Apple
 Intelligence — the default on capable devices — or Ollama: Ollama Cloud with your own key, or an
-Ollama server you run on your own network — or any OpenAI-compatible server you enter (LM Studio,
+Ollama server you run on your own network — or a cloud AI service with your own key (OpenAI,
+Anthropic Claude, Google Gemini, DeepSeek, OpenRouter, Groq, Mistral, xAI), each labelled "Sends your
+transcript to <vendor>" — or any OpenAI-compatible server you enter (LM Studio,
 vLLM, llama.cpp, OpenRouter), labelled "your server" on your own network and "may leave this device"
 elsewhere. Presets, reference files, audio-file import and WhisperKit
 transcription are macOS-only.
@@ -63,7 +65,8 @@ make ios-test
 
 - **On-device & private.** Transcription runs locally via Apple SpeechAnalyzer, and AI help can run
   entirely against a local Ollama model — audio and transcript need never leave your Mac.
-- **Bring your own model.** Pick any Ollama model, local or cloud, or point the app at any
+- **Bring your own model.** Pick any Ollama model, local or cloud, a cloud AI service with your own
+  key (OpenAI, Claude, Gemini, DeepSeek, OpenRouter, Groq, Mistral, xAI), or point the app at any
   OpenAI-compatible server (LM Studio, vLLM, llama.cpp, OpenRouter), instead of being locked to a
   single undisclosed backend LLM.
 - **Multi-pane, multi-model.** Four panes, and each AI pane runs its own model — picked from the
@@ -81,7 +84,7 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 
 | Tool | On-device | BYO model | Multi-pane | Presets | Price |
 |---|---|---|---|---|---|
-| **ListenToMe** | Yes — transcription + local AI | Yes — Ollama local + cloud, any OpenAI-compatible server (LM Studio, vLLM, OpenRouter) | Yes — per-pane model | Yes | Free & open-source |
+| **ListenToMe** | Yes — transcription + local AI | Yes — Ollama local + cloud, OpenAI/Claude/Gemini/DeepSeek/OpenRouter/Groq/Mistral/xAI with your key, any OpenAI-compatible server | Yes — per-pane model | Yes | Free & open-source |
 | Granola | No — local capture, cloud ASR + AI | Reported, unconfirmed | No | Templates (29+) | Free; ~$14–35/user/mo |
 | Otter.ai | No — cloud | No | No | Limited | Free; ~$8–30/user/mo |
 | Fireflies.ai | No — cloud | No (export via MCP) | No | Limited | Free; ~$10–39/seat/mo |
@@ -135,6 +138,9 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
   `https://openrouter.ai/api/v1` — plus an optional key. The pane pickers list the server's
   `/v1/models`; panes stay unset until you pick a model, because a hosted catalog can list hundreds
   of vendors' models. See [OpenAI-compatible servers](#openai-compatible-servers).
+- **Cloud AI services.** Choose **Cloud AI service**, pick OpenAI, Anthropic Claude, Google Gemini,
+  DeepSeek, OpenRouter, Groq, Mistral or xAI Grok and paste your own key; each pane's model is your pick
+  from that vendor's list. See [Cloud AI services](#cloud-ai-services).
 - **AI response-language** setting, independent of the transcription language.
 
 **Make it yours**
@@ -152,7 +158,9 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 - **macOS 26+**
 - [Ollama](https://ollama.com) — running locally for local models, and/or an Ollama Cloud API key
   for cloud models. The app auto-picks an installed model on first launch. Alternatively, any
-  OpenAI-compatible `/v1/chat/completions` server (LM Studio, vLLM, llama.cpp, OpenRouter).
+  OpenAI-compatible `/v1/chat/completions` server (LM Studio, vLLM, llama.cpp, OpenRouter), or your
+  own API key for a cloud AI service (OpenAI, Anthropic, Google Gemini, DeepSeek, OpenRouter, Groq,
+  Mistral, xAI).
 - To build from source: Xcode 26+, `brew install xcodegen` (optionally `swiftlint`, `xcbeautify`).
 
 ## Install
@@ -217,7 +225,7 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   has not summarized yet — refreshing with nothing new would just have the model rewrite the record
   already on screen.
 - **AI processing mode.** In **Settings**, explicitly choose **Local only**, **Apple Intelligence**,
-  **Cloud**, **OpenAI-compatible**, or **AI off**.
+  **Cloud**, **Cloud AI service**, **OpenAI-compatible**, or **AI off**.
   Local mode verifies downloaded-model metadata before every request and rejects remote/cloud-backed
   models and redirects. Apple Intelligence runs entirely on this device; because its on-device model
   has a small context window, every prompt is capped at 8,000 characters — long meetings are answered
@@ -427,12 +435,38 @@ Ollama through the actual `OllamaProvider`, auto-selecting an installed chat mod
   next finalized segment.
 - **Ollama, Apple Intelligence and OpenAI-compatible servers.** Ollama Cloud exposes
   GPT/DeepSeek/Qwen/etc. through one key, Apple Intelligence covers on-device inference without
-  Ollama, and the OpenAI-compatible mode reaches any `/v1/chat/completions` server (#52) — see below.
+  Ollama, the Cloud AI service mode reaches eight vendors with your own key (#214), and the
+  OpenAI-compatible mode reaches any `/v1/chat/completions` server (#52) — see below.
 - **WhisperKit engine (opt-in):** an opt-in third transcription engine for true multilingual
   code-switching (e.g. Mandarin↔English mid-sentence) that Apple's on-device Speech can't do. It
   downloads a model on first use (before capture starts, same as above), emits finalized segments
   only (no live partials), and its
   dual-channel finals may occasionally interleave out of chronological order.
+
+### Cloud AI services
+
+Choose **Cloud AI service** in **Settings → AI processing** (on iPhone: **Summary provider → Cloud AI**),
+pick a service — **OpenAI, Anthropic Claude, Google Gemini, DeepSeek, OpenRouter, Groq, Mistral or
+xAI Grok** — and paste your own API key (**Get a key** opens the vendor's key page). No URLs to type
+(#214). Nothing is selected by default: local Ollama stays the macOS default and Apple Intelligence the
+iPhone default, and the app ships with no keys.
+
+- **Labelled.** Each service says **"Sends your transcript to <vendor>"**, names the host and links the
+  vendor's privacy policy. The vendor's terms apply and you pay it for what you use.
+- **One key per vendor.** Each service has its own Keychain item, bound to that vendor's fixed address;
+  switching services keeps every key and never sends one vendor's key to another.
+- **You pick every model.** Models come from the vendor's own list (**Check key** on macOS, **Refresh
+  models** on iPhone) and are never assigned for you; suggestions such as Claude Opus 5.5 are only
+  highlighted.
+- **Same guarantees as a custom server.** Redirects refused, strict stream termination, a 16 MiB cap and
+  keys masked in errors. Vendor quirks are handled: Gemini's OpenAI path, OpenAI's
+  `max_completion_tokens`, DeepSeek's `reasoning_content`, OpenRouter's attribution headers.
+- **Claude speaks Anthropic's own Messages API**, not an OpenAI shim, over plain `URLSession` (no vendor
+  SDK is linked): no sampling parameters, effort `low` for Auto Quick and `medium` for Summary/Deep,
+  structured output so Auto Quick always gets valid JSON, refusals (partial text discarded) and length
+  cut-offs shown clearly, one retry on 429/529 when `retry-after` asks, and server-side refusal
+  fallbacks on Opus 5.5 and Sonnet 5.5 Summary and Deep requests (another Claude model continues a
+  declined answer).
 
 ### OpenAI-compatible servers
 

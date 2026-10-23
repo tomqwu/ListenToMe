@@ -223,6 +223,31 @@ Use LM Studio (or `ollama serve`, whose OpenAI API is `http://localhost:11434/v1
 5. **Auto.** Turn on Auto with a small model and speak: either the recap updates or the Quick pane says
    "did not return a usable Quick Summary update" — never a silent stall.
 
+## Cloud AI services (#214)
+
+Needs a real API key for each service you test; the maintainer supplies keys at test time. Never commit
+or paste a key into an issue or log.
+
+1. **Opt-in, nothing chosen.** On a fresh install the macOS mode is still Local only and the iPhone
+   provider Apple Intelligence. In Settings choose **Cloud AI service** without picking a service and
+   Save: the save is refused with "Choose a cloud AI service…" and nothing is applied.
+2. **Labelled.** Pick **Anthropic Claude**: Settings shows "Sends your transcript to Anthropic", the
+   host `api.anthropic.com`, **Get a key from Anthropic** (opens the key page) and the privacy policy
+   link, plus the note that Anthropic may re-run a declined request on another Claude model.
+3. **Key and models.** Paste the key, **Check key** (macOS) or **Refresh models** (iPhone): the vendor's
+   models are listed, Claude Opus 5.5 is marked as the suggestion, and no pane or role has a model until
+   you pick one. Pick a model for every pane or role.
+4. **A Summary per service.** For each of OpenAI, Anthropic Claude, Google Gemini, DeepSeek, OpenRouter,
+   Groq, Mistral and xAI Grok: generate a Summary from a short recorded conversation and confirm it
+   streams and completes. On iPhone, **Test this model** on the Quick role passes or pauses Auto with a
+   reason (Claude should always pass: its evaluator uses structured output). The same transport check
+   runs headless with `LTM_CLOUD_PRESET=<id> LTM_CLOUD_MODEL=<model> LTM_CLOUD_KEY=<key> swift test
+   --filter CloudAIPresetLiveTests` (it is skipped without those variables).
+5. **Per-vendor keys.** Switch from Claude to OpenAI and back: each service keeps its own key and
+   model choices. A wrong key shows "rejected the API key" and never echoes the key.
+6. **Back to the default.** Choose Local only (macOS) or Apple Intelligence (iPhone): no request goes to
+   the cloud service afterwards.
+
 ## Enabled Screen Recording switch but capture is refused
 
 If the installed production app repeatedly returns ScreenCaptureKit `-3801` despite an enabled

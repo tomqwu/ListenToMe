@@ -69,7 +69,7 @@ struct CommandCenterFooter: View {
             KbdHint(key: "⌘E", label: "export")
             KbdHint(key: "⌘F", label: "history")
             Spacer(minLength: 8)
-            Text(mode == .openAI ? ProviderSettings.aiModeLabel : mode.label).font(.system(size: 13)).foregroundStyle(Theme.ink2)
+            Text(mode == .openAI || mode == .cloudAI ? ProviderSettings.aiModeLabel : mode.label).font(.system(size: 13)).foregroundStyle(Theme.ink2)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 7)

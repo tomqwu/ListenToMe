@@ -27,6 +27,8 @@ public struct OpenAICompatibleProvider: LLMProvider {
     private let options: Options
     private let idleTimeout: TimeInterval
     private let maximumResponseBytes: Int
+    /// The vendor's request shape (issue #214); `.standard` for a server the user typed.
+    public let dialect: OpenAICompatibleDialect
 
     /// Default cap on everything one response streams, framing included. Event-stream framing costs
     /// roughly 150 bytes per token, so this comfortably fits the apps' 100,000-character answers.
@@ -36,7 +38,9 @@ public struct OpenAICompatibleProvider: LLMProvider {
 
     public init(model: String, baseURL: URL, apiKey: String? = nil, urlSession: URLSession = .shared,
                 options: Options = .init(), idleTimeout: TimeInterval = 90,
-                maximumResponseBytes: Int = OpenAICompatibleProvider.defaultMaximumResponseBytes) {
+                maximumResponseBytes: Int = OpenAICompatibleProvider.defaultMaximumResponseBytes,
+                dialect: OpenAICompatibleDialect = .standard) {
+        self.dialect = dialect
         self.model = model
         self.baseURL = baseURL
         self.apiKey = (apiKey?.isEmpty ?? true) ? nil : apiKey
@@ -53,18 +57,16 @@ public struct OpenAICompatibleProvider: LLMProvider {
     /// `chat_template_kwargs.enable_thinking: false` (Qwen-style templates on vLLM and llama.cpp).
     /// Servers that do not know them ignore them; a strict server that rejects them with 400/422
     /// gets the request again without them (`reasoningHints: false`).
+    /// A preset's `dialect` renames the token cap, drops the temperature or picks the vendor's own hint.
     public static func requestBody(model: String, request: LLMRequest, options: Options = .init(),
-                                   reasoningHints: Bool = true) -> Data {
+                                   reasoningHints: Bool = true, dialect: OpenAICompatibleDialect = .standard) -> Data {
         let quick = request.purpose == .quickEvaluation
         var messages: [[String: String]] = [["role": "system", "content": request.system]]
         messages += request.messages.map { ["role": $0.role, "content": $0.content] }
         var body: [String: Any] = ["model": model, "messages": messages, "stream": true]
-        if let temperature = quick ? 0 : options.temperature { body["temperature"] = temperature }
-        if let maximumTokens = quick ? 3_072 : options.maximumTokens { body["max_tokens"] = maximumTokens }
-        if quick && reasoningHints {
-            body["reasoning_effort"] = "none"
-            body["chat_template_kwargs"] = ["enable_thinking": false]
-        }
+        if dialect.sendsTemperature, let temperature = quick ? 0 : options.temperature { body["temperature"] = temperature }
+        if let maximumTokens = quick ? 3_072 : options.maximumTokens { body[dialect.maximumTokensField] = maximumTokens }
+        if quick && reasoningHints { dialect.addQuickReasoningHints(to: &body) }
         return (try? JSONSerialization.data(withJSONObject: body, options: [.sortedKeys])) ?? Data()
     }
 
@@ -107,8 +109,9 @@ public struct OpenAICompatibleProvider: LLMProvider {
         urlRequest.httpMethod = "POST"
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         urlRequest.setValue("text/event-stream", forHTTPHeaderField: "Accept")
+        for (name, value) in dialect.headers { urlRequest.setValue(value, forHTTPHeaderField: name) }
         urlRequest.httpBody = Self.requestBody(model: model, request: request, options: options,
-                                               reasoningHints: reasoningHints)
+                                               reasoningHints: reasoningHints, dialect: dialect)
         return try await OpenAICompatibleTransport.open(urlRequest, session: session, apiKey: apiKey)
     }
 

@@ -31,6 +31,26 @@ final class ScriptedProvider: LLMProvider, @unchecked Sendable {
     }
 }
 
+/// Answers in full, or streams a partial answer and then refuses, like Claude without a fallback.
+final class RefusingProvider: LLMProvider, @unchecked Sendable {
+    let id = "refusing"
+    private let lock = NSLock()
+    private var refuse = false
+    func setRefuse(_ value: Bool) { lock.withLock { refuse = value } }
+    func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
+        let refuse = lock.withLock { self.refuse }
+        return AsyncThrowingStream { continuation in
+            if refuse {
+                continuation.yield("Step one is")
+                continuation.finish(throwing: AnthropicError.refused(category: nil))
+            } else {
+                continuation.yield("Full answer.")
+                continuation.finish()
+            }
+        }
+    }
+}
+
 /// Streams a reasoning phase before the answer, like a thinking model on Ollama.
 struct ThinkingProvider: LLMProvider {
     let id = "thinking"
@@ -106,6 +126,19 @@ final class CoreReviewPapercutTests: XCTestCase {
 
         XCTAssertEqual(session.quickSuggestion, "Say yes.")
         XCTAssertEqual(session.roleError(.quick), "Model error: overloaded")
+    }
+
+    /// #214 review: a refusal's partial text is discarded rather than left standing as the answer.
+    func testARefusalAfterPartialTextRestoresThePreviousAnswer() async {
+        let provider = RefusingProvider()
+        let (session, store) = makeSession(provider: provider)
+        speak(store, "Question?", at: 0)
+        await session.respondDeep(.answerQuestion)
+        XCTAssertEqual(session.deepAnswer, "Full answer.")
+        provider.setRefuse(true)
+        await session.respondDeep(.answerQuestion)
+        XCTAssertEqual(session.deepAnswer, "Full answer.", "the refused partial never replaces the answer")
+        XCTAssertEqual(session.roleError(.deep), AnthropicError.refused(category: nil).localizedDescription)
     }
 
     func testASuccessfulRunClearsThePreviousRoleError() async {

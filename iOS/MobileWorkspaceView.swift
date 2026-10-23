@@ -259,7 +259,7 @@ struct MobileWorkspaceView<Header: View>: View {
             .accessibilityHint(session.ai.provider != .apple
                 ? "New speech triggers Quick evaluation and relevant Summary or Deep reviews using their "
                   + "selected models on \(session.ai.summaryEndpointLabel)."
-                : "Continuous evaluation requires Ollama or an OpenAI-compatible server. "
+                : "Continuous evaluation requires Ollama, a cloud AI service or an OpenAI-compatible server. "
                   + "Apple Intelligence summaries are available with Refresh.")
     }
 

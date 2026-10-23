@@ -39,12 +39,16 @@ extension ProviderSettings {
         case .openAI:
             if openAIEndpoint() == nil { return "Set your OpenAI-compatible server URL in Settings." }
             return quickModel.isEmpty ? "Choose a Quick model in the status rail." : nil
+        case .cloudAI:
+            if let reason = cloudAIUnavailableReason { return reason }
+            return quickModel.isEmpty ? "Choose a Quick model in the status rail." : nil
         default: return nil
         }
     }
 
     /// Footer and status text: names an OpenAI-compatible destination honestly.
     static var aiModeLabel: String {
+        if aiMode == .cloudAI { return cloudAIModeLabel }
         guard aiMode == .openAI else { return aiMode.label }
         guard let endpoint = openAIEndpoint() else { return "OpenAI-compatible — no server set" }
         return "OpenAI-compatible — " + OpenAICompatibleEndpoint.destinationLabel(endpoint)

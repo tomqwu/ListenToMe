@@ -49,7 +49,17 @@ are set; on iOS it also pauses once **Test this model** shows that Quick model b
 malformed JSON, or an empty or reasoning-only answer — recorded per server and model
 (`OpenAICompatibleContractLedger`, `MobileOpenAISettings.automaticQuickReason`). A model that breaks it without being
 tested fails visibly through the reader and keeps the previous output — never silently.
-The JSON decision contract above therefore applies to Ollama-backed and OpenAI-compatible reads only. A manual Quick
+Cloud AI presets (#214) use the same prompt and contract. The OpenAI-compatible vendors send each vendor's
+own reasoning-off hint (`OpenAICompatibleDialect`: `reasoning_effort: "none"` for OpenAI, Gemini and Groq,
+`thinking: {"type": "disabled"}` for DeepSeek, `reasoning: {"effort": "none"}` for OpenRouter, none for
+Mistral and xAI), with the same one retry without it on 400/422; OpenAI gets `max_completion_tokens` and no
+temperature. Claude cannot turn thinking off on Opus 5.5 or Sonnet 5.5, so `AnthropicProvider` sends
+`output_config.effort: "low"` with 8,192 `max_tokens` and asks for structured output against
+`QuickSummaryDecision.jsonSchema`, so the evaluator always receives valid JSON; `QuickSummaryDecision.parse`
+still enforces the limits a schema cannot express, and a thinking-only answer still fails as `thinkingOnly`.
+On iOS the contract result is recorded per vendor and model (`MobileCloudAISettings.automaticQuickReason`);
+on macOS Auto pauses until a service, key and Quick model are set.
+The JSON decision contract above therefore applies to Ollama-backed, OpenAI-compatible and cloud AI reads only. A manual Quick
 Summary on Apple Intelligence uses `QuickSummaryContext.manualProseInstructions` and
 `proseSummary(_:)` instead: the on-device model is asked for the displayed bullets in prose rather
 than for the evaluator envelope it cannot be held to, and both platforms share one Apple transport

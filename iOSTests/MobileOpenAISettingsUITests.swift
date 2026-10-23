@@ -10,7 +10,7 @@ final class MobileOpenAISettingsUITests: XCTestCase {
         app.buttons["More"].tap()
         app.buttons["Settings"].tap()
         app.buttons["summaryProvider"].tap()
-        app.buttons["OpenAI-compatible server"].tap()
+        app.buttons["Custom server (OpenAI-compatible)"].tap()
         let form = app.collectionViews["aiSettingsForm"]
         XCTAssertTrue(app.staticTexts["openAIDestination"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["openAIDestination"].label.contains("Nothing is sent until you set one"))

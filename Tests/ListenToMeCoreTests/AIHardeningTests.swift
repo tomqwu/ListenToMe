@@ -10,8 +10,10 @@ final class AIHardeningTests: XCTestCase {
         }
         XCTAssertTrue(ModelPrivacy.isVerifiedLocal(Data(
             #"{"details":{"format":"gguf"},"model_info":{"architecture":"qwen"}}"#.utf8)))
-        XCTAssertEqual(AIProcessingMode.allCases.map(\.label).count, 5)
+        XCTAssertEqual(AIProcessingMode.allCases.map(\.label).count, 6)
         XCTAssertEqual(AIProcessingMode(rawValue: "openai"), .openAI)
+        XCTAssertEqual(AIProcessingMode(rawValue: "cloudai"), .cloudAI)
+        XCTAssertTrue(AIProcessingMode.cloudAI.label.contains("sends transcript"), "Cloud AI presets say so (#214)")
         XCTAssertFalse(AIProcessingMode.openAI.label.lowercased().contains("local"),
                        "An OpenAI-compatible server is never labelled local (issue #52)")
     }

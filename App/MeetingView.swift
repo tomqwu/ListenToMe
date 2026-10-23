@@ -163,6 +163,7 @@ struct MeetingView: View {
             makeProvider: { model in
                 if ProviderSettings.aiMode == .apple { return AppleIntelligenceProvider() as any LLMProvider }
                 if ProviderSettings.aiMode == .openAI { return ProviderSettings.openAIProvider(model: model) }
+                if ProviderSettings.aiMode == .cloudAI { return ProviderSettings.cloudAIProvider(model: model) }
                 return OllamaProvider(model: model, baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey(),
                                localOnly: ProviderSettings.aiMode != .cloud)
             },
@@ -829,7 +830,8 @@ extension MeetingView {
         // Locality comes from Ollama's own /api/show metadata, never from the model's name, so an
         // unpinned pane can never be auto-assigned a cloud model while a local one exists (#137).
         // An OpenAI-compatible catalog is never auto-assigned from (#52): see PaneModelHealing.
-        let autoAssign = ProviderSettings.aiMode != .openAI
+        // Nor is a cloud AI service's list (#214): the user picks every pane's model.
+        let autoAssign = ProviderSettings.aiMode != .openAI && ProviderSettings.aiMode != .cloudAI
         let defaults = autoAssign ? ModelRanking.roleDefaults(from: chatModels, local: verifiedLocalModels) : [:]
         for role in CopilotRole.allCases {
             let current = ProviderSettings.model(for: role)
@@ -841,7 +843,8 @@ extension MeetingView {
         }
         if !autoAssign, !chatModels.isEmpty, CopilotRole.allCases.contains(where: { session.models[$0]?.isEmpty ?? true }) {
             modelStatus = "Choose a model for each pane in the status rail. ListenToMe never picks one "
-                + "from an OpenAI-compatible server's list for you."
+                + "from \(ProviderSettings.aiMode == .cloudAI ? "a cloud AI service's" : "an OpenAI-compatible server's") "
+                + "list for you."
         }
     }
 }
@@ -851,6 +854,7 @@ extension MeetingView {
     /// server's `/v1/models` (issue #52), whose models are never treated as verified local.
     nonisolated static func discoverChatModels() async -> OllamaModels.Discovery {
         if ProviderSettings.aiMode == .openAI { return await OpenAICompatibleModels.discover() }
+        if ProviderSettings.aiMode == .cloudAI { return await CloudAIModels.discover() }
         return await OllamaModels.chatModels(
             baseURL: ollamaBaseURL(), apiKey: ollamaKey(), localOnly: ProviderSettings.aiMode != .cloud)
     }
