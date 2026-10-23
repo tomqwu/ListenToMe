@@ -9,17 +9,22 @@ class MobileSpeakerTestCase: XCTestCase {
     var root: URL!
     var recorder: SpeakerTestRecorder!
     var diarizer: FakeDiarizer!
-    var savedEnabled = false
+    /// The stored setting, or `nil` when the user never touched it (which now means on).
+    var savedEnabled: Any?
 
     override func setUp() async throws {
         root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         recorder = SpeakerTestRecorder()
         diarizer = FakeDiarizer()
-        savedEnabled = UserDefaults.standard.bool(forKey: MobileSpeakers.enabledKey)
+        savedEnabled = UserDefaults.standard.object(forKey: MobileSpeakers.enabledKey)
     }
 
     override func tearDown() async throws {
-        UserDefaults.standard.set(savedEnabled, forKey: MobileSpeakers.enabledKey)
+        if let savedEnabled {
+            UserDefaults.standard.set(savedEnabled, forKey: MobileSpeakers.enabledKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: MobileSpeakers.enabledKey)
+        }
         try? FileManager.default.removeItem(at: root)
         recorder = nil; diarizer = nil
     }
@@ -59,6 +64,12 @@ class MobileSpeakerTestCase: XCTestCase {
                                 DiarizedSegment(speakerId: "x", start: 10, duration: 3)])
     }
 
+    func waitUntilHoldingPrepare() async throws {
+        for _ in 0..<300 where !(await diarizer.holdingPrepare()) { try await Task.sleep(for: .milliseconds(10)) }
+        let holding = await diarizer.holdingPrepare()
+        XCTAssertTrue(holding)
+    }
+
     func waitUntilHolding() async throws {
         for _ in 0..<300 where !(await diarizer.holding()) { try await Task.sleep(for: .milliseconds(10)) }
         let holding = await diarizer.holding()
@@ -82,14 +93,35 @@ final class MobileSpeakerLifecycleTests: MobileSpeakerTestCase {
     }
 
     func testStopNeverStartsTheFirstModelDownload() async throws {
+        UserDefaults.standard.set(true, forKey: MobileSpeakers.enabledKey)
         let session = makeSession()
-        session.speakers.enabled = true
-        try await recordTwoVoices(session)
+        await diarizer.holdNextPrepare()
+        try await recordTwoVoices(session)   // Start begins preparing; the download is still running
+        try await waitUntilHoldingPrepare()
         await session.stop()
-        await session.speakerFinalPass?.value
-        let calls = await diarizer.calls()
-        XCTAssertEqual(calls, 0, "A recording shorter than the first pass is not labeled at Stop")
+        XCTAssertNil(session.speakerFinalPass, "Models not ready at Stop: no final pass")
         XCTAssertFalse(session.speakers.isRunning)
+        await diarizer.releasePrepare()
+        await session.speakers.preparation?.value
+        let calls = await diarizer.calls(), prepares = await diarizer.prepares()
+        XCTAssertEqual(calls, 0, "Nothing is analyzed after Stop")
+        XCTAssertEqual(prepares, 1, "Only Start prepared the models; Stop did not")
+        XCTAssertEqual(Set(session.segments.compactMap(\.speakerName)), ["Microphone"])
+    }
+
+    func testStopAfterAFailedDownloadDoesNotTryAgain() async throws {
+        UserDefaults.standard.set(true, forKey: MobileSpeakers.enabledKey)
+        let session = makeSession()
+        await diarizer.failModels("offline")
+        try await recordTwoVoices(session)
+        await session.speakers.preparation?.value
+        XCTAssertTrue(session.speakers.isUnavailable)
+        XCTAssertEqual(session.state, .recording, "A failed download never stops the recording")
+        await session.stop()
+        XCTAssertNil(session.speakerFinalPass)
+        let calls = await diarizer.calls(), prepares = await diarizer.prepares()
+        XCTAssertEqual(calls, 0)
+        XCTAssertEqual(prepares, 1)
     }
 
     func testStopReturnsToIdleWhileAPassIsStillRunning() async throws {

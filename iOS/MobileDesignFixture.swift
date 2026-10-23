@@ -8,6 +8,7 @@ struct MobileDesignFixture: View {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("DesignUI-\(UUID())")
         let session = MobileSession(storageDirectory: root)
         session.title = "Product planning"
+        session.prepareSpeakerModelsIfNeeded()   // as the app does at a foreground launch (#195)
         session.segments = [
             TranscriptSegment(source: .you,
                               text: "Let's keep the first release focused on the essentials. " +

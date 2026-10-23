@@ -35,9 +35,9 @@ macOS-only, and there is no Mac↔iOS sync. See
 The standalone iOS/iPadOS 26 app is the **ListenToMeIOS** target: microphone transcription, a live
 transcript with Quick Summary plus a Deep Think tab, local conversations with search, photo/file
 attachments, Apple Notes and share-sheet imports, calendar import with e-mail and join-link
-redaction, and Markdown sharing. Optional on-device speaker identification (off by default) labels
-transcript lines Speaker 1, Speaker 2… for the people one phone hears, and you can rename them; its
-models download once from `huggingface.co`. Choose on-device Apple Intelligence — the default on
+redaction, and Markdown sharing. On-device speaker identification (on by default; turn it off in
+Settings) labels transcript lines Speaker 1, Speaker 2… for the people one phone hears, and you can
+rename them; its models download once from `huggingface.co`. Choose on-device Apple Intelligence — the default on
 capable devices — or Ollama: Ollama Cloud with your own key, or an Ollama server you run on your own
 network. Presets, reference files, audio-file import and WhisperKit are macOS-only.
 See [iOS setup, validation and distribution](docs/IOS.md).

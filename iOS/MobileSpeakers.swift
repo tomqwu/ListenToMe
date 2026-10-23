@@ -10,12 +10,15 @@ protocol MobileSpeakerDiarizing: Sendable {
     func diarize(samples: [Float]) async throws -> [DiarizedSegment]
     /// Clears a latched model-load failure so the next call tries to load the models again.
     func retryModelLoad() async
+    /// Downloads (first use) and loads the speaker models without analyzing audio.
+    func prepareModels() async throws
 }
 
 extension SpeakerDiarizer: MobileSpeakerDiarizing {
     func diarize(samples: [Float]) async throws -> [DiarizedSegment] {
         try await analyze(samples: samples).segments
     }
+    func prepareModels() async throws { try await prepare() }
 
     /// The iOS diarizer. Its downloaded models can always be fetched again, so their folder is kept
     /// out of iCloud and Finder backups (FluidAudio's default location, which the Mac also uses).
@@ -27,7 +30,28 @@ extension SpeakerDiarizer: MobileSpeakerDiarizing {
     }
 }
 
-/// Opt-in, on-device speaker identification for one shared microphone (issue #180).
+/// Stands in for the speaker models while this app hosts the unit tests, so a test that records with
+/// the default diarizer never downloads them. The speaker tests inject their own fake.
+private struct UnitTestHostDiarizer: MobileSpeakerDiarizing {
+    static let reason = "Speaker models are not downloaded while unit tests run"
+    func diarize(samples: [Float]) async throws -> [DiarizedSegment] {
+        throw SpeakerDiarizer.DiarizationError.modelsUnavailable(Self.reason)
+    }
+    func retryModelLoad() async {}
+    func prepareModels() async throws { throw SpeakerDiarizer.DiarizationError.modelsUnavailable(Self.reason) }
+}
+
+/// UI tests' speaker models: they load at once, download nothing and hear no voices, so the screens
+/// show the setting's default-on, models-ready state without a network request.
+private struct UITestFixtureDiarizer: MobileSpeakerDiarizing {
+    func diarize(samples: [Float]) async throws -> [DiarizedSegment] { [] }
+    func retryModelLoad() async {}
+    func prepareModels() async throws {}
+}
+
+/// On-device speaker identification for one shared microphone (issue #180), on unless the user turned
+/// it off. The models are prepared before the first recording needs them (#195): when the setting is
+/// turned on, at a foreground launch, and at Start — never from Stop and never in the background.
 ///
 /// One `Run` per recording: the recorder copies the audio it transcribes into `Run.buffer`, and
 /// each pass diarizes a trailing window of it (`SpeakerAnalysisPolicy`), reconciles the window's
@@ -43,6 +67,8 @@ final class MobileSpeakers {
 
     enum Status: Equatable {
         case idle
+        /// Downloading (first use) and loading the speaker models.
+        case preparing
         case analyzing
         /// The speaker models could not be loaded; `reason` is the underlying message.
         case unavailable(String)
@@ -70,16 +96,24 @@ final class MobileSpeakers {
         var analyzedSamples = 0
     }
 
+    /// Turning the setting on prepares the models at once: the switch is a foreground gesture.
     var enabled: Bool {
-        didSet { UserDefaults.standard.set(enabled, forKey: Self.enabledKey) }
+        didSet {
+            UserDefaults.standard.set(enabled, forKey: Self.enabledKey)
+            if enabled, !oldValue { startPreparing() }
+        }
     }
     private(set) var status = Status.idle
     /// The last non-model failure, for the status line. Cleared by the next successful pass.
     private(set) var lastError: String?
+    /// The most recent failure of any kind in this app run, for Status details. Never cleared.
+    private(set) var lastFailure: String?
+    /// The model preparation queued or running, if any.
+    private(set) var preparation: Task<Void, Never>?
     /// Diarizer calls made, for diagnostics and tests.
     private(set) var passCount = 0
-    /// True once a pass has succeeded in this app run, so the models are downloaded and loaded. Stop's
-    /// final pass runs only then: Stop must never be the moment the first model download starts.
+    /// True once the models are downloaded and loaded in this app run (by a preparation or a pass).
+    /// Stop's final pass runs only then: Stop must never start or wait for the model download.
     private(set) var modelsReady = false
     private var run: Run?
     /// Identifies the current run; bumped by every begin and end, so a late result can be discarded.
@@ -92,11 +126,27 @@ final class MobileSpeakers {
 
     init(makeDiarizer: @escaping () -> any MobileSpeakerDiarizing) {
         self.makeDiarizer = makeDiarizer
-        enabled = UserDefaults.standard.bool(forKey: Self.enabledKey)
+        // On unless the user turned it off (#195); `bool(forKey:)` also reads a "NO" launch argument.
+        let defaults = UserDefaults.standard
+        enabled = defaults.object(forKey: Self.enabledKey) == nil || defaults.bool(forKey: Self.enabledKey)
+    }
+
+    /// The app's diarizer: FluidAudio's, or a stand-in that downloads nothing while the app hosts unit
+    /// tests or runs under UI tests.
+    nonisolated static func deviceDiarizer() -> any MobileSpeakerDiarizing {
+        let environment = ProcessInfo.processInfo.environment
+        if environment["XCTestConfigurationFilePath"] != nil { return UnitTestHostDiarizer() }
+        #if DEBUG && targetEnvironment(simulator)
+        if environment["LISTENTOME_SPEAKER_MODELS_FIXTURE"] == "1" { return UITestFixtureDiarizer() }
+        #endif
+        return SpeakerDiarizer.excludingModelsFromBackup()
     }
 
     var isRunning: Bool { run != nil }
     var isUnavailable: Bool { if case .unavailable = status { true } else { false } }
+    /// Whether the status line offers Retry: the models failed, or are simply not loaded and nothing
+    /// is loading them.
+    var showsRetry: Bool { enabled && (isUnavailable || (status == .idle && !modelsReady && preparation == nil)) }
 
     /// Starts a recording's run and returns the buffer the recorder should copy audio into, or `nil`
     /// when Identify speakers is off. `existing` is the conversation so far: new voices are numbered
@@ -115,7 +165,41 @@ final class MobileSpeakers {
         let first = SpeakerLabeling.nextSpeakerNumber(after: existing)
         run = Run(buffer: buffer, offset: offset, firstLine: existing.count, token: runToken,
                   tracker: SpeakerIdentityTracker(firstNumber: first))
+        // Start is a foreground gesture too: models still missing start loading now, beside the
+        // recording, which never waits for them.
+        startPreparing()
         return buffer
+    }
+
+    /// Queues a download-and-load of the models, unless they are ready, already queued, or failed and
+    /// not yet retried. Callers make sure the app is in the foreground. Recording never waits for it;
+    /// a pass queued behind it waits, so the two never overlap.
+    func startPreparing() {
+        guard enabled, !modelsReady, preparation == nil, !isUnavailable else { return }
+        let previous = passChain
+        let work = Task { @MainActor in
+            await previous?.value
+            await self.prepareNow()
+            self.preparation = nil
+        }
+        preparation = work
+        passChain = work
+    }
+
+    private func prepareNow() async {
+        guard enabled, !modelsReady, !isUnavailable else { return }
+        status = .preparing
+        let diarizer = diarizer ?? makeDiarizer()
+        self.diarizer = diarizer
+        do {
+            try await diarizer.prepareModels()
+            modelsReady = true
+            if status == .preparing { status = .idle }
+        } catch {
+            let reason = (error as? SpeakerDiarizer.DiarizationError)?.modelFailureReason ?? error.localizedDescription
+            status = .unavailable(reason)
+            lastFailure = reason
+        }
     }
 
     /// Ends the run and releases its audio. A pass still in flight is discarded.
@@ -132,11 +216,11 @@ final class MobileSpeakers {
         run?.identities[id]?.name = name
     }
 
-    /// The user's retry gesture after a latched model failure.
+    /// The user's Retry gesture: clears a latched model failure so the next load tries again.
     func retry() async {
+        lastError = nil
         guard isUnavailable else { return }
         status = .idle
-        lastError = nil
         await diarizer?.retryModelLoad()
     }
 
@@ -200,9 +284,11 @@ final class MobileSpeakers {
             if status == .analyzing { status = .idle }
             if let reason = (error as? SpeakerDiarizer.DiarizationError)?.modelFailureReason {
                 status = .unavailable(reason)
+                lastFailure = reason
             } else {
                 status = .idle
                 lastError = error.localizedDescription
+                lastFailure = error.localizedDescription
             }
             return nil
         }
@@ -224,17 +310,55 @@ final class MobileSpeakers {
         run.timeline = SpeakerStats.splice(history: run.timeline, window: identified, windowStart: windowStart)
     }
 
-    /// One line for the meeting status area, or `nil` when there is nothing to say.
+    /// The recording screen's one line about speaker labels while Identify speakers is on; `nil` when
+    /// it is off. Plain words for each state, so a missing label is never a mystery (#195).
     var statusLine: String? {
+        guard enabled else { return nil }
         switch status {
-        case .analyzing: return "Identifying speakers on this device…"
+        case .preparing: return "Speaker labels: preparing models…"
+        case .analyzing: return "Speaker labels: identifying speakers…"
         case .unavailable(let reason):
             var trimmed = reason.trimmingCharacters(in: .whitespacesAndNewlines)
             while trimmed.hasSuffix(".") { trimmed.removeLast() }
-            let detail = trimmed.isEmpty ? "speaker models could not be loaded" : trimmed
-            return "Speaker identification paused: \(detail). Lines keep the Microphone label until you retry."
+            return "Speaker labels unavailable: \(trimmed.isEmpty ? "speaker models could not be loaded" : trimmed)"
         case .idle:
-            return lastError.map { "Speaker identification skipped a pass: \($0)" }
+            if let lastError { return "Speaker labels: a pass was skipped (\(lastError))" }
+            if !modelsReady {
+                return preparation == nil ? "Speaker labels: models not loaded" : "Speaker labels: preparing models…"
+            }
+            return isRunning ? "Speaker labels appear about 20 s in and at Stop" : "Speaker labels ready"
         }
+    }
+
+    /// Whether the recording screen shows `statusLine` as its own line: while the models download, when
+    /// labels are unavailable or the models are not loaded (both with Retry), and after a skipped
+    /// pass. Ready and periodic-pass states are summed up as "Speaker labels on" in the status above,
+    /// so the line does not take workspace height or come and go every 20 seconds.
+    var statusLineIsShown: Bool {
+        guard enabled else { return false }
+        switch status {
+        case .preparing, .unavailable: return true
+        case .analyzing: return !modelsReady
+        case .idle: return lastError != nil || !modelsReady
+        }
+    }
+
+    /// Settings → Speakers: where the models stand.
+    var modelLine: String {
+        switch status {
+        case .preparing: return "Downloading and loading the speaker models…"
+        case .unavailable(let reason): return "The speaker models could not be loaded: \(reason)"
+        case .idle, .analyzing:
+            if modelsReady { return "Speaker models are ready on this device." }
+            return status == .analyzing || preparation != nil
+                ? "Downloading and loading the speaker models…" : "Speaker models are not loaded yet."
+        }
+    }
+
+    /// Status details: whether the models are ready, and if not, why.
+    var modelsReadyDetail: String {
+        if modelsReady { return "yes" }
+        if isUnavailable { return "no (failed)" }
+        return status == .preparing || preparation != nil ? "no (preparing)" : "no"
     }
 }
