@@ -30,11 +30,15 @@ struct MobileVaultSettings: View {
                     .font(.footnote).foregroundStyle(vault.isFailing ? .orange : .secondary)
                     .accessibilityIdentifier("saveToFolderStatus")
                 if vault.isFailing || !vault.unsavedIDs.isEmpty {
-                    Button("Retry") { vault.retry(history: session.history) }
-                        .disabled(!vault.hasFolder).accessibilityIdentifier("retrySaveToFolder")
+                    Button("Retry") {
+                        vault.retry(history: session.history, language: session.conversationLanguage,
+                                    excluding: session.vaultRecordingID)
+                    }.disabled(!vault.hasFolder).accessibilityIdentifier("retrySaveToFolder")
                 }
-                Button("Save all conversations now") { vault.saveAll(session.history) }
-                    .disabled(!vault.hasFolder || session.history.isEmpty)
+                Button("Save all conversations now") {
+                    vault.saveAll(session.history, language: session.conversationLanguage,
+                                  excluding: session.vaultRecordingID)
+                }.disabled(!vault.hasFolder || session.history.isEmpty)
             }
         } header: { Text("Save to folder") } footer: {
             Text("Writes each conversation as one Markdown note — summary, notes and transcript with speaker "
@@ -48,12 +52,13 @@ struct MobileVaultSettings: View {
     }
 }
 
-/// The main screen's line when a note could not be written, so a failure is never only in Settings.
+/// The main screen's line when a note could not be written or is still waiting (no folder chosen,
+/// or left from before a relaunch), so neither is only visible in Settings.
 struct MobileVaultStatusLine: View {
     var vault: MarkdownVaultSync = MobileSession.markdownVault
 
     var body: some View {
-        if vault.enabled, vault.isFailing {
+        if vault.needsAttention {
             Label("Save to folder: " + vault.statusText, systemImage: "exclamationmark.triangle")
                 .font(.caption).lineLimit(3).foregroundStyle(.orange)
                 .accessibilityIdentifier("saveToFolderFailure")

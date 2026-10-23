@@ -26,24 +26,60 @@ public enum MarkdownVault {
     /// The tag every note carries, so a vault can find them all.
     public static let tag = "listentome"
 
-    public static func note(for record: SessionRecord, language: String? = nil,
+    /// `startedAt` replaces `record.date` when the caller's record date moves with each checkpoint
+    /// (macOS), so the note's date and file name stay those of the conversation's start.
+    public static func note(for record: SessionRecord, language: String? = nil, startedAt: Date? = nil,
                             timeZone: TimeZone = .current) -> MarkdownVaultNote {
-        MarkdownVaultNote(id: record.id, fileName: fileName(id: record.id, date: record.date, timeZone: timeZone),
-                          markdown: markdown(for: record, language: language, timeZone: timeZone))
+        let date = startedAt ?? record.date
+        return MarkdownVaultNote(id: record.id, fileName: fileName(id: record.id, date: date, timeZone: timeZone),
+                                 markdown: markdown(for: record, language: language, date: date, timeZone: timeZone))
     }
 
     /// A short, stable, filesystem-safe token for a conversation ID: the first eight hex digits of a
     /// UUID, or a hash for any other ID so two IDs with a shared prefix still differ.
     public static func key(for id: String) -> String {
         if let uuid = UUID(uuidString: id) { return String(uuid.uuidString.lowercased().prefix(8)) }
-        var hash: UInt64 = 0xcbf2_9ce4_8422_2325   // FNV-1a, stable across launches unlike `hashValue`.
-        for byte in id.utf8 { hash = (hash ^ UInt64(byte)) &* 0x0000_0100_0000_01b3 }
-        return String(String(hash, radix: 16).leftPadded(to: 16).prefix(12))
+        return String(String(fnv(id), radix: 16).leftPadded(to: 16).prefix(12))
+    }
+
+    /// FNV-1a: stable across launches, unlike `hashValue`.
+    static func fnv(_ text: String) -> UInt64 {
+        var hash: UInt64 = 0xcbf2_9ce4_8422_2325
+        for byte in text.utf8 { hash = (hash ^ UInt64(byte)) &* 0x0000_0100_0000_01b3 }
+        return hash
     }
 
     /// The end of every note name for this conversation. The date in front of it is fixed when the
     /// note is first written, so the writer looks a note up by this marker alone.
     public static func marker(for id: String) -> String { "ListenToMe \(key(for: id)).md" }
+
+    /// The longer name ending used when another note already holds the short one: the whole UUID
+    /// (or a 64-bit hash of any other ID), so two conversations cannot share it in practice.
+    public static func longMarker(for id: String) -> String {
+        if let uuid = UUID(uuidString: id) {
+            return "ListenToMe \(uuid.uuidString.lowercased().replacingOccurrences(of: "-", with: "")).md"
+        }
+        return "ListenToMe \(String(fnv(id), radix: 16).leftPadded(to: 16)).md"
+    }
+
+    /// The conversation ID in a note's front matter (`listentome_id`), or nil for a note this app
+    /// did not write. Reads only the front matter at the top of `text`.
+    public static func ownerID(in text: String) -> String? {
+        let lines = text.split(omittingEmptySubsequences: false, whereSeparator: \.isNewline)
+        guard lines.first.map({ $0.trimmingCharacters(in: .whitespacesAndNewlines) }) == "---" else { return nil }
+        for line in lines.dropFirst() {
+            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed == "---" { return nil }
+            guard trimmed.hasPrefix("listentome_id:") else { continue }
+            var value = trimmed.dropFirst("listentome_id:".count).trimmingCharacters(in: .whitespaces)
+            if value.count >= 2, value.hasPrefix("\""), value.hasSuffix("\"") {
+                value = String(value.dropFirst().dropLast())
+                    .replacingOccurrences(of: "\\\"", with: "\"").replacingOccurrences(of: "\\\\", with: "\\")
+            }
+            return value.isEmpty ? nil : value
+        }
+        return nil
+    }
 
     public static func fileName(id: String, date: Date, timeZone: TimeZone = .current) -> String {
         var calendar = Calendar(identifier: .gregorian)
@@ -56,7 +92,7 @@ public enum MarkdownVault {
 
     /// YAML front matter (date, duration, language, speakers, tags), then the summary, notes and
     /// the transcript with speaker names and timestamps where the recording has them.
-    public static func markdown(for record: SessionRecord, language: String? = nil,
+    public static func markdown(for record: SessionRecord, language: String? = nil, date: Date? = nil,
                                 timeZone: TimeZone = .current) -> String {
         let segments = record.segments ?? []
         let dateFormatter = ISO8601DateFormatter()
@@ -64,7 +100,7 @@ public enum MarkdownVault {
         dateFormatter.formatOptions = [.withInternetDateTime]
 
         var front = ["---", "title: \(yaml(singleLine(record.title)))",
-                     "date: \(dateFormatter.string(from: record.date))"]
+                     "date: \(dateFormatter.string(from: date ?? record.date))"]
         if let duration = duration(of: segments) { front.append("duration: \(yaml(timestamp(duration)))") }
         if let language = language?.trimmingCharacters(in: .whitespaces), !language.isEmpty {
             front.append("language: \(yaml(Locale(identifier: language).identifier(.bcp47)))")

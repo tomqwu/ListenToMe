@@ -485,14 +485,25 @@ transcript lines during recording are not written to the folder. `MarkdownVault`
 (YAML front matter with title, date, duration, BCP-47 language, speakers, the `listentome` tag and the
 conversation ID; then Summary, Quick summary, Deep summary, Notes, a transcript with `[mm:ss]`
 timestamps and speaker names, and attachment names). The file is named
-`<yyyy-MM-dd HHmm> ListenToMe <key>.md`, where the key comes from the conversation ID; an existing
-note is found by that suffix, so a renamed conversation or a reopened app updates it in place.
+`<yyyy-MM-dd HHmm> ListenToMe <key>.md`, where the key is the first eight hex digits of the
+conversation ID; an existing note is found by that suffix and its `listentome_id` front matter, so a
+renamed conversation or a reopened app updates it in place. A file with that name but another (or no)
+`listentome_id` is never overwritten: the note takes the whole-ID name instead
+(`… ListenToMe <32 hex>.md`), and a foreign file under that name too is reported as a per-note failure.
+A note the user renamed in Obsidian is not searched for (that would mean reading every note in the
+vault); it is left alone and the next update writes a new note under the usual name.
 `MarkdownVaultWriter` writes through `NSFileCoordinator` with an atomic replace and skips unchanged
-bytes. Failures are kept visible, never dropped: a moved or deleted folder or lost access ("choose the
-folder again"), a full disk, a legacy `.icloud` placeholder (a download is requested) or any other
-error shows in Settings and as an orange line under the conversation title, with Retry. The IDs of
-unwritten notes persist across launches; the next save or Retry rebuilds them from History.
-**Save all conversations now** writes existing History. Deleting a conversation never deletes its note.
+bytes. Failures are kept visible, never dropped. Folder failures — a moved or deleted folder or lost
+access ("choose the folder again"), a full disk — stop the queue; per-note failures — a legacy
+`.icloud` placeholder (a download is requested), a name held by another note, any other error — keep
+that note queued and let the rest be written. Either shows in Settings and as an orange line under
+the conversation title, with Retry; notes waiting for a folder show there too. The IDs of unwritten
+notes persist across launches; the next save or Retry rebuilds them from History. Apple Watch
+conversations are written when the drain saves them. **Save all conversations now** and Retry skip
+the conversation being recorded and write the same language field ordinary saves do. Deleting a
+conversation drops its queued note, so it is never written afterwards; a note already in the folder
+stays, because the folder belongs to the user. On the Mac, the note's date is the conversation's first
+checkpoint, quitting waits up to five seconds for the last note, and waiting notes are retried at launch.
 
 ## Photos, files and Apple Notes
 

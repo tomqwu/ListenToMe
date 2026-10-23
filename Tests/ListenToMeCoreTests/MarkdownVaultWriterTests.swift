@@ -55,12 +55,64 @@ final class MarkdownVaultWriterTests: XCTestCase {
         let unrelated = vault.appendingPathComponent("Weekly sync.md")
         try Data("mine".utf8).write(to: unrelated)
         let existing = vault.appendingPathComponent("2026-01-01 0900 ListenToMe 1a2b3c4d.md")
-        try Data("old".utf8).write(to: existing)
+        try Data("---\r\ntitle: \"Old\"\r\nlistentome_id: \"\(id)\"\r\n---\r\nedited in Obsidian".utf8).write(to: existing)
         let writer = MarkdownVaultWriter(bookmark: try MarkdownVaultWriter.makeBookmark(for: vault))
         let outcome = await writer.save(note("A"))
         XCTAssertEqual(outcome, .saved(fileName: "2026-01-01 0900 ListenToMe 1a2b3c4d.md"))
         XCTAssertEqual(try files(), ["2026-01-01 0900 ListenToMe 1a2b3c4d.md", "Weekly sync.md"])
         XCTAssertEqual(try String(contentsOf: unrelated, encoding: .utf8), "mine")
+    }
+
+    func testAFileWithTheShortNameButAnotherOwnerIsNeverOverwritten() async throws {
+        // Another conversation whose ID shares the first eight hex digits, and a user's own note.
+        let colliding = vault.appendingPathComponent("2026-01-01 0900 ListenToMe 1a2b3c4d.md")
+        let otherRecord = SessionRecord(id: "1A2B3C4D-FFFF-4000-8000-000000000009", title: "Other",
+                                        date: Date(), transcript: "", summary: "")
+        let other = MarkdownVault.markdown(for: otherRecord)
+        try Data(other.utf8).write(to: colliding)
+        let foreign = vault.appendingPathComponent("Notes ListenToMe 1a2b3c4d.md")
+        try Data("no front matter".utf8).write(to: foreign)
+        let writer = MarkdownVaultWriter(bookmark: try MarkdownVaultWriter.makeBookmark(for: vault))
+        let long = "2026-10-23 1435 ListenToMe 1a2b3c4d000040008000000000000001.md"
+        let first = await writer.save(note("A"))
+        XCTAssertEqual(first, .saved(fileName: long))
+        XCTAssertEqual(try String(contentsOf: colliding, encoding: .utf8), other)
+        XCTAssertEqual(try String(contentsOf: foreign, encoding: .utf8), "no front matter")
+        // A new writer (a relaunch) finds the long name again by its front matter.
+        let relaunched = MarkdownVaultWriter(bookmark: try MarkdownVaultWriter.makeBookmark(for: vault))
+        let again = await relaunched.save(note("B"))
+        XCTAssertEqual(again, .saved(fileName: long))
+        XCTAssertEqual(try files().count, 3)
+    }
+
+    func testAForeignFileWithTheLongNameIsAPerNoteFailure() async throws {
+        try Data("mine".utf8).write(to: vault.appendingPathComponent("x ListenToMe 1a2b3c4d.md"))
+        let longFile = vault.appendingPathComponent("y ListenToMe 1a2b3c4d000040008000000000000001.md")
+        try Data("also mine".utf8).write(to: longFile)
+        let writer = MarkdownVaultWriter(bookmark: try MarkdownVaultWriter.makeBookmark(for: vault))
+        guard case .failed(let failure) = await writer.save(note("A")) else { return XCTFail("expected a failure") }
+        XCTAssertEqual(failure.kind, .nameTaken)
+        XCTAssertFalse(failure.stopsQueue)
+        XCTAssertEqual(try String(contentsOf: longFile, encoding: .utf8), "also mine")
+    }
+
+    func testAnUnreadableExistingNoteIsNotOverwritten() async throws {
+        // A folder with a note's name cannot be read as a note.
+        let existing = vault.appendingPathComponent("2026-01-01 0900 ListenToMe 1a2b3c4d.md")
+        try FileManager.default.createDirectory(at: existing, withIntermediateDirectories: true)
+        let writer = MarkdownVaultWriter(bookmark: try MarkdownVaultWriter.makeBookmark(for: vault))
+        guard case .failed = await writer.save(note("A")) else { return XCTFail("expected a failure") }
+        XCTAssertEqual(try files(), ["2026-01-01 0900 ListenToMe 1a2b3c4d.md"])
+    }
+
+    func testFolderFailuresStopTheQueueAndNoteFailuresDoNot() {
+        let kinds: [(MarkdownVaultFailure.Kind, Bool)] = [
+            (.folderMissing, true), (.accessDenied, true), (.diskFull, true),
+            (.iCloudPending, false), (.nameTaken, false), (.other, false)
+        ]
+        for (kind, stops) in kinds {
+            XCTAssertEqual(MarkdownVaultFailure(kind: kind, message: "").stopsQueue, stops, "\(kind)")
+        }
     }
 
     func testAnICloudPlaceholderIsReportedNotOverwritten() async throws {

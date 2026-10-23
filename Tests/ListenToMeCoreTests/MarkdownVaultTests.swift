@@ -128,6 +128,29 @@ final class MarkdownVaultTests: XCTestCase {
         XCTAssertTrue(first.fileName.hasSuffix(MarkdownVault.marker(for: id)))
     }
 
+    func testStartedAtFixesTheDateAndFileNameAcrossCheckpoints() {
+        let moved = SessionRecord(id: id, title: "T", date: date.addingTimeInterval(3_600), transcript: "", summary: "")
+        let note = MarkdownVault.note(for: moved, startedAt: date, timeZone: utc)
+        XCTAssertEqual(note.fileName, "2026-10-23 1435 ListenToMe 1a2b3c4d.md")
+        XCTAssertTrue(note.markdown.contains("date: 2026-10-23T14:35:00Z"), note.markdown)
+    }
+
+    func testOwnerIDIsReadOnlyFromTheFrontMatter() {
+        XCTAssertEqual(MarkdownVault.ownerID(in: MarkdownVault.markdown(for: record(), timeZone: utc)), id)
+        XCTAssertEqual(MarkdownVault.ownerID(in: "---\r\nlistentome_id: \"a\\\"b\\\\c\"\r\n---\r\n"), "a\"b\\c")
+        XCTAssertEqual(MarkdownVault.ownerID(in: "---\nlistentome_id: plain-id\n---\n"), "plain-id")
+        XCTAssertNil(MarkdownVault.ownerID(in: "# Notes\nlistentome_id: \"x\""), "not front matter")
+        XCTAssertNil(MarkdownVault.ownerID(in: "---\ntitle: x\n---\nlistentome_id: \"x\""), "after the front matter")
+        XCTAssertNil(MarkdownVault.ownerID(in: "---\nlistentome_id: \n"))
+        XCTAssertNil(MarkdownVault.ownerID(in: "---\ntitle: unterminated\n"))
+    }
+
+    func testLongMarkersUseTheWholeID() {
+        XCTAssertEqual(MarkdownVault.longMarker(for: id), "ListenToMe 1a2b3c4d000040008000000000000001.md")
+        XCTAssertEqual(MarkdownVault.longMarker(for: "session-a").count, "ListenToMe .md".count + 16)
+        XCTAssertNotEqual(MarkdownVault.longMarker(for: "session-a"), MarkdownVault.longMarker(for: "session-b"))
+    }
+
     func testNonUUIDKeysAreHashedSoSharedPrefixesDiffer() {
         let a = MarkdownVault.key(for: "session-2026-a")
         let b = MarkdownVault.key(for: "session-2026-b")

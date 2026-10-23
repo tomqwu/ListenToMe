@@ -7,7 +7,9 @@ import Observation
 ///
 /// The latest version of each conversation waits in `pending` until it is written, so a failure is
 /// retried on the next save or from Retry, and is shown in Settings and on the main screen. The IDs
-/// of unwritten notes survive relaunch; Retry rebuilds them from History.
+/// of unwritten notes survive relaunch; Retry rebuilds them from History. A failure about one note
+/// (an iCloud placeholder, a name another note holds) never holds up the others; a failure about the
+/// folder (gone, no access, disk full) stops the queue until the folder is usable again.
 @MainActor @Observable
 final class MarkdownVaultSync {
     static let shared = MarkdownVaultSync()
@@ -34,6 +36,11 @@ final class MarkdownVaultSync {
     private(set) var pending: [String: MarkdownVaultNote] = [:]
     /// Conversations not yet written, including ones from before a relaunch that only History holds.
     private(set) var unsavedIDs: Set<String>
+    /// The last failure of each note that failed on its own; the note stays queued.
+    private(set) var noteFailures: [String: MarkdownVaultFailure] = [:]
+    /// The conversation being recorded, which Retry and Save all leave alone (macOS sets it from
+    /// its checkpoint; iOS passes `excluding:`).
+    @ObservationIgnored var activeRecordingID: String?
     @ObservationIgnored private var writer: MarkdownVaultWriter?
     @ObservationIgnored private var drainTask: Task<Void, Never>?
     /// Bumped when the folder changes, so a write already under way cannot report on the new folder.
@@ -54,11 +61,17 @@ final class MarkdownVaultSync {
 
     var hasFolder: Bool { writer != nil }
     var isFailing: Bool { if case .failed = status { return true }; return false }
+    /// Whether the main screen should show the status line: a failure, or notes waiting to be
+    /// written (no folder chosen yet, or left over from before a relaunch).
+    var needsAttention: Bool { enabled && (isFailing || (!unsavedIDs.isEmpty && status != .saving)) }
 
     func setEnabled(_ on: Bool) {
         enabled = on
         defaults.set(on, forKey: Self.enabledKey)
-        if !on { generation += 1; drainTask?.cancel(); drainTask = nil; pending = [:] }
+        if !on {
+            generation += 1; drainTask?.cancel(); drainTask = nil
+            pending = [:]; noteFailures = [:]; unsavedIDs = []; persistUnsaved()
+        }
         refreshIdleStatus()
     }
 
@@ -75,6 +88,7 @@ final class MarkdownVaultSync {
             drainTask?.cancel(); drainTask = nil
             writer = makeWriter(bookmark)
             folderName = url.lastPathComponent
+            noteFailures = [:]
             refreshIdleStatus()
             drain()
             return true
@@ -95,19 +109,20 @@ final class MarkdownVaultSync {
 
     /// Queues the conversation's note. Callers skip this while recording: notes are written at
     /// Stop, Save and when a summary or edit changes a stopped conversation.
-    func save(_ record: SessionRecord, language: String? = nil) {
+    func save(_ record: SessionRecord, language: String? = nil, startedAt: Date? = nil) {
         guard enabled else { return }
-        pending[record.id] = MarkdownVault.note(for: record, language: language)
+        pending[record.id] = MarkdownVault.note(for: record, language: language, startedAt: startedAt)
         markUnsaved(record.id, true)
         guard writer != nil else { status = .needsFolder; return }
         drain()
     }
 
     /// Writes every conversation in History, for a folder chosen after conversations already exist.
-    func saveAll(_ records: [SessionRecord]) {
+    /// `language` is the one ordinary saves use, so the front matter does not change between them.
+    func saveAll(_ records: [SessionRecord], language: String? = nil, excluding: String? = nil) {
         guard enabled else { return }
-        for record in records where pending[record.id] == nil {
-            pending[record.id] = MarkdownVault.note(for: record)
+        for record in records where pending[record.id] == nil && !isRecording(record.id, excluding) {
+            pending[record.id] = MarkdownVault.note(for: record, language: language)
             markUnsaved(record.id, true)
         }
         guard writer != nil else { status = .needsFolder; return }
@@ -115,21 +130,53 @@ final class MarkdownVaultSync {
     }
 
     /// Tries the waiting notes again. Notes that were waiting before a relaunch come back from History.
-    func retry(history: [SessionRecord]) {
-        for record in history where unsavedIDs.contains(record.id) && pending[record.id] == nil {
-            pending[record.id] = MarkdownVault.note(for: record)
+    func retry(history: [SessionRecord], language: String? = nil, excluding: String? = nil) {
+        guard enabled else { return }
+        for record in history where unsavedIDs.contains(record.id) && pending[record.id] == nil
+            && !isRecording(record.id, excluding) {
+            pending[record.id] = MarkdownVault.note(for: record, language: language)
         }
         // A conversation deleted from History since cannot be written any more.
-        unsavedIDs.formIntersection(Set(pending.keys))
+        let recording = [excluding, activeRecordingID].compactMap { $0 }
+        unsavedIDs.formIntersection(Set(pending.keys).union(recording))
         persistUnsaved()
+        noteFailures = noteFailures.filter { pending[$0.key] != nil }
+        guard writer != nil else { status = .needsFolder; return }
         if pending.isEmpty { refreshIdleStatus() } else { drain() }
+    }
+
+    /// The conversation was deleted: its note must never be written from the queue afterwards.
+    /// A note already in the folder stays there; the folder belongs to the user.
+    func forget(id: String) {
+        pending[id] = nil
+        noteFailures[id] = nil
+        markUnsaved(id, false)
+        settleStatusAfterRemoval()
+    }
+
+    /// History was cleared.
+    func forgetAll() {
+        pending = [:]; noteFailures = [:]; unsavedIDs = []; persistUnsaved()
+        settleStatusAfterRemoval()
+    }
+
+    /// Waits for the queued writes, at most `timeout`. macOS calls it before it quits.
+    func waitForWrites(timeout: Duration) async {
+        guard let task = drainTask else { return }
+        let gate = OnceGate()
+        await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
+            Task { await task.value; gate.open(done) }
+            Task { try? await Task.sleep(for: timeout); gate.open(done) }
+        }
     }
 
     var statusText: String {
         let folder = folderName.map { "“\($0)”" } ?? "the folder"
         switch status {
         case .off: return "Off. Conversations stay inside ListenToMe."
-        case .needsFolder: return "Choose a folder to start saving notes."
+        case .needsFolder:
+            return unsavedIDs.isEmpty ? "Choose a folder to start saving notes."
+                : "\(unsavedIDs.count) conversation(s) waiting. Choose a folder in Settings to save them."
         case .ready:
             if !unsavedIDs.isEmpty {
                 return "\(unsavedIDs.count) conversation(s) not saved to \(folder) yet. Tap Retry."
@@ -139,12 +186,24 @@ final class MarkdownVaultSync {
         case .saved(let name, let date):
             let saved = "Saved “\(name)” at \(date.formatted(date: .omitted, time: .shortened))."
             return unsavedIDs.isEmpty ? saved : saved + " \(unsavedIDs.count) more not saved yet. Tap Retry."
-        case .failed(let failure): return failure.message
+        case .failed(let failure):
+            let others = noteFailures.count - (noteFailures.values.contains(failure) ? 1 : 0)
+            return others > 0 ? failure.message + " \(others) more conversation(s) also not saved." : failure.message
         }
+    }
+
+    private func isRecording(_ id: String, _ excluding: String?) -> Bool {
+        id == excluding || id == activeRecordingID
     }
 
     private func refreshIdleStatus() {
         status = !enabled ? .off : writer == nil ? .needsFolder : .ready
+    }
+
+    /// After a note left the queue: a failure that was only about removed notes no longer applies.
+    private func settleStatusAfterRemoval() {
+        guard case .failed(let failure) = status, !failure.stopsQueue else { return }
+        if let next = noteFailures.values.first { status = .failed(next) } else { refreshIdleStatus() }
     }
 
     private func markUnsaved(_ id: String, _ unsaved: Bool) {
@@ -154,12 +213,18 @@ final class MarkdownVaultSync {
 
     private func persistUnsaved() { defaults.set(unsavedIDs.sorted(), forKey: Self.unsavedKey) }
 
-    /// Writes waiting notes one at a time. Stops at the first failure and keeps every note queued.
+    /// Writes each waiting note once per pass. A per-note failure is recorded and the pass goes on;
+    /// a folder failure stops it with every note still queued.
     private func drain() {
-        guard drainTask == nil, let writer, enabled else { return }
+        guard drainTask == nil, let writer, enabled, !pending.isEmpty else { return }
         let generation = generation
+        status = .saving   // At once, so a Retry visibly replaces the old failure.
         drainTask = Task { [weak self] in
-            while let self, self.generation == generation, let (id, note) = self.pending.first {
+            var attempted = Set<String>()
+            var lastSaved: Status?
+            while let self, self.generation == generation,
+                  let (id, note) = self.pending.first(where: { !attempted.contains($0.key) }) {
+                attempted.insert(id)
                 self.status = .saving
                 let outcome = await writer.save(note)
                 guard self.generation == generation else { return }
@@ -169,19 +234,39 @@ final class MarkdownVaultSync {
                 }
                 switch outcome {
                 case .saved(let name), .unchanged(let name):
-                    // A newer version queued during the write stays queued.
                     if self.pending[id] == note {
                         self.pending[id] = nil
+                        self.noteFailures[id] = nil
                         self.markUnsaved(id, false)
+                    } else if self.pending[id] != nil {
+                        attempted.remove(id)   // A newer version arrived during the write.
                     }
-                    self.status = .saved(fileName: name, at: Date())
+                    lastSaved = .saved(fileName: name, at: Date())
                 case .failed(let failure):
-                    self.status = .failed(failure)
-                    self.drainTask = nil
-                    return
+                    if failure.stopsQueue {
+                        self.status = .failed(failure)
+                        self.drainTask = nil
+                        return
+                    }
+                    if self.pending[id] != nil { self.noteFailures[id] = failure }
                 }
             }
-            if self?.generation == generation { self?.drainTask = nil }
+            guard let self, self.generation == generation else { return }
+            self.drainTask = nil
+            if let failure = self.noteFailures.values.first { self.status = .failed(failure) }
+            else if let lastSaved { self.status = lastSaved }
+            else { self.refreshIdleStatus() }
         }
+    }
+}
+
+/// Resumes a continuation once, whichever of two tasks gets there first.
+@MainActor
+private final class OnceGate {
+    private var opened = false
+    func open(_ continuation: CheckedContinuation<Void, Never>) {
+        guard !opened else { return }
+        opened = true
+        continuation.resume()
     }
 }

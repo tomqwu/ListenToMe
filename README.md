@@ -290,10 +290,15 @@ History is local, unencrypted JSON and currently reopens for reading/export, not
 note into a folder you choose, for example an Obsidian vault. It follows autosaving: the note is
 written once capture stops and rewritten whenever a later checkpoint changes it (a summary, the title,
 notes). The file name is keyed by the conversation ID — `2026-10-23 1430 ListenToMe 1a2b3c4d.md` —
-so renaming a conversation updates the same note instead of creating a duplicate, and no other file in
-the folder is touched. Writes are atomic; a missing folder, lost permission, a full disk or a file still
-in iCloud shows an orange note beside the saved time with Retry. Deleting a conversation from History
-does not delete its note.
+so renaming a conversation updates the same note instead of creating a duplicate. A file is replaced
+only when its front matter carries this conversation's `listentome_id`; another note with a matching
+name is never overwritten (a short-key collision gets the longer, whole-ID name instead), and a note
+you rename yourself is left alone, so the next update writes a new note under the usual name. The note's
+date is the conversation's first checkpoint. Writes are atomic; a missing folder, lost permission, a
+full disk or a file still in iCloud shows an orange note beside the saved time with Retry, and one bad
+note never holds up the others. Quitting waits up to five seconds for the last note; notes left
+unwritten are retried at the next launch. Deleting a conversation from History does not delete its
+note, and **Clear history** drops any notes still waiting so they are never written.
 
 ### Automatic speaker identification (experimental)
 

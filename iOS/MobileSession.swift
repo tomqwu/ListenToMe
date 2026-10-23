@@ -430,7 +430,7 @@ extension MobileSession {
             try archive.delete(id: targetID)
             committed = true
             // A watch conversation's raw audio goes with it, so the drain cannot bring it back (#181).
-            discardWatchAudio(sourceImportID: watchSource)
+            discardWatchAudio(sourceImportID: watchSource); forgetVaultNote(targetID)
             if deletingActive { restore(empty) }
             refreshHistory()
             let files = attachmentStore(for: targetID).directory

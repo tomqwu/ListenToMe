@@ -17,7 +17,11 @@ struct MacVaultSettings: View {
                 Spacer()
                 Button(vault.hasFolder ? "Change Folder…" : "Choose Folder…") { chooseFolder() }
                 if vault.isFailing || !vault.unsavedIDs.isEmpty {
-                    Button("Retry") { vault.retry(history: SessionStore().all()) }.disabled(!vault.hasFolder)
+                    // The conversation being recorded is skipped (`activeRecordingID`).
+                    Button("Retry") {
+                        vault.retry(history: SessionStore().all(),
+                                    language: ProviderSettings.transcriptionLocale().identifier)
+                    }.disabled(!vault.hasFolder)
                 }
             }
             Text(vault.statusText).font(.caption).foregroundStyle(vault.isFailing ? .orange : .secondary)
@@ -37,5 +41,15 @@ struct MacVaultSettings: View {
         panel.prompt = "Choose"
         panel.message = "Choose the folder or Obsidian vault for ListenToMe notes."
         if panel.runModal() == .OK, let url = panel.url { vault.chooseFolder(url) }
+    }
+}
+
+extension MeetingView {
+    /// Save to folder notes left unwritten when the app last quit are written at launch, like iOS
+    /// does on its next save. Only reads History when something is waiting.
+    func retryVaultNotesAtLaunch() {
+        let vault = MarkdownVaultSync.shared
+        guard vault.enabled, !vault.unsavedIDs.isEmpty else { return }
+        vault.retry(history: sessionStore.all(), language: ProviderSettings.transcriptionLocale().identifier)
     }
 }

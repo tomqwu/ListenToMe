@@ -66,6 +66,7 @@ final class MobileVaultTests: XCTestCase {
         XCTAssertEqual(vault.status, .needsFolder)
         XCTAssertEqual(vault.unsavedIDs, ["a"], "the conversation is remembered until a folder is chosen")
         XCTAssertTrue(vault.statusText.contains("Choose a folder"))
+        XCTAssertTrue(vault.needsAttention, "waiting notes show on the main screen, not only in Settings")
     }
 
     func testSaveWritesOneNoteThatTitleChangesUpdateInPlace() async throws {

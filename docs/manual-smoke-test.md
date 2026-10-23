@@ -332,4 +332,5 @@ iPhone (simulator is enough for 1–5; 6 needs a physical device signed in to iC
 Mac: in **Settings**, turn on "Save each conversation to a folder as Markdown" and choose a folder.
 Listen, then Stop: the note appears once the checkpoint is complete, and updates as Listener/Quick/Deep
 change. Move the folder to the Trash: an orange note with **Retry folder save** appears beside the
-saved time.
+saved time. Stop a recording and quit with ⌘Q at once: the note is in the folder. With the folder
+in the Trash, stop a recording and quit; put the folder back, relaunch: the waiting note is written.

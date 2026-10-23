@@ -11,6 +11,9 @@ public struct MarkdownVaultFailure: Error, Equatable, Sendable {
         /// The note exists only as an iCloud placeholder; a download was requested.
         case iCloudPending
         case diskFull
+        /// A note this conversation would use belongs to another note or conversation; it is
+        /// never overwritten.
+        case nameTaken
         case other
     }
 
@@ -24,6 +27,10 @@ public struct MarkdownVaultFailure: Error, Equatable, Sendable {
 
     /// True when retrying cannot help until the user picks the folder again.
     public var needsNewFolder: Bool { kind == .folderMissing || kind == .accessDenied }
+
+    /// True when the failure is about the folder, so every other note would fail the same way.
+    /// A per-note failure (placeholder, name taken, a one-off error) lets the other notes go on.
+    public var stopsQueue: Bool { needsNewFolder || kind == .diskFull }
 }
 
 public enum MarkdownVaultOutcome: Equatable, Sendable {
@@ -90,15 +97,11 @@ public actor MarkdownVaultWriter {
             return .failed(Self.failure(error, file: nil, folder: folder.lastPathComponent))
         }
 
-        let marker = MarkdownVault.marker(for: note.id)
-        // Legacy iCloud placeholders are hidden files named `.<name>.icloud`.
-        if let placeholder = names.first(where: { $0.hasPrefix(".") && $0.hasSuffix(marker + ".icloud") }) {
-            let name = String(placeholder.dropFirst().dropLast(".icloud".count))
-            try? FileManager.default.startDownloadingUbiquitousItem(at: folder.appendingPathComponent(name))
-            return .failed(MarkdownVaultFailure(kind: .iCloudPending, message:
-                "“\(name)” is still in iCloud and is downloading now. Tap Retry once it has downloaded."))
+        let name: String
+        switch locate(note, in: folder, names: names) {
+        case .success(let found): name = found
+        case .failure(let failure): return .failed(failure)
         }
-        let name = names.filter { !$0.hasPrefix(".") && $0.hasSuffix(marker) }.min() ?? note.fileName
         let target = folder.appendingPathComponent(name)
         let data = Data(note.markdown.utf8)
         if let last = written[note.id], last.name == name, last.data == data,
@@ -112,6 +115,47 @@ public actor MarkdownVaultWriter {
         }
         written[note.id] = (name, data)
         return .saved(fileName: name)
+    }
+
+    /// The note's file name: an existing note of this conversation, else a new name that no other
+    /// file holds. A file whose front matter names another conversation, or none, is never chosen,
+    /// so a short-key collision or a user's own note with a matching name is left alone.
+    private func locate(_ note: MarkdownVaultNote, in folder: URL,
+                        names: [String]) -> Result<String, MarkdownVaultFailure> {
+        let short = MarkdownVault.marker(for: note.id), long = MarkdownVault.longMarker(for: note.id)
+        // Legacy iCloud placeholders are hidden files named `.<name>.icloud`.
+        if let placeholder = names.first(where: {
+            $0.hasPrefix(".") && ($0.hasSuffix(short + ".icloud") || $0.hasSuffix(long + ".icloud"))
+        }) {
+            let name = String(placeholder.dropFirst().dropLast(".icloud".count))
+            try? FileManager.default.startDownloadingUbiquitousItem(at: folder.appendingPathComponent(name))
+            return .failure(MarkdownVaultFailure(kind: .iCloudPending, message:
+                "“\(name)” is still in iCloud and is downloading now. Tap Retry once it has downloaded."))
+        }
+        let candidates = names.filter { !$0.hasPrefix(".") && ($0.hasSuffix(short) || $0.hasSuffix(long)) }.sorted()
+        // A name this writer wrote for the conversation in this run is already known to be its own.
+        if let known = written[note.id]?.name, candidates.contains(known) { return .success(known) }
+        var shortTaken = false
+        for name in candidates {
+            let owner: String?
+            do { owner = try Self.owner(of: folder.appendingPathComponent(name)) } catch {
+                return .failure(Self.failure(error, file: name, folder: folder.lastPathComponent))
+            }
+            if owner == note.id { return .success(name) }
+            if name.hasSuffix(short) { shortTaken = true; continue }
+            return .failure(MarkdownVaultFailure(kind: .nameTaken, message:
+                "“\(name)” in “\(folder.lastPathComponent)” is another note, so it was not replaced. "
+                + "Rename or move that file, then tap Retry."))
+        }
+        return .success(shortTaken ? String(note.fileName.dropLast(short.count)) + long : note.fileName)
+    }
+
+    /// The `listentome_id` in the first few kilobytes of an existing note.
+    static func owner(of url: URL) throws -> String? {
+        let handle = try FileHandle(forReadingFrom: url)
+        defer { try? handle.close() }
+        let head = try handle.read(upToCount: 4096) ?? Data()
+        return MarkdownVault.ownerID(in: String(decoding: head, as: UTF8.self))
     }
 
     /// Atomic replace, coordinated so iCloud Drive and other file providers see one whole new version.
