@@ -48,6 +48,10 @@ enum MobileReleaseNotes {
         var id: String { version }
     }
     static let releases: [Release] = [
+        .init(version: "1.11.0", title: "Know who said what", details: [
+            "Optional speaker labels: Settings → Speakers marks lines Speaker 1, Speaker 2… on this device.",
+            "Rename a speaker in Notes → Speakers and the name follows every line, History search and exports."
+        ]),
         .init(version: "1.10.5", title: "Ready for the App Store", details: [
             "Privacy policy and support pages are linked from Settings.",
             "History warns about an unreadable saved conversation instead of hiding everything, and search now covers your notes."

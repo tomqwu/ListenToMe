@@ -1,12 +1,16 @@
 # Listen To Me — iPhone and iPad privacy policy
 
-Effective September 15, 2026. Developer: Tom Wu. Contact: [tom@cloudnativity.io](mailto:tom@cloudnativity.io).
+Effective October 23, 2026. Developer: Tom Wu. Contact: [tom@cloudnativity.io](mailto:tom@cloudnativity.io).
 
 ## Your conversations
 
 Listen To Me transcribes microphone audio on your device using Apple's speech frameworks. The app does not save raw microphone audio or send it to the developer. Transcripts, notes, summaries and imported attachments are stored in the app's local storage, written with device data protection so the files stay encrypted until you unlock the device after a restart. Your device backup settings may include app data in backups managed by Apple; Settings has a toggle that keeps conversations, attachments and shared imports out of iCloud and Finder backups. The app has no developer-operated conversation server, advertising SDK or tracking SDK.
 
 A new install summarizes on-device with Apple Intelligence by default where the device supports it, and on such an install the app does not contact ollama.com at all. Speech language assets may need to download before transcription works.
+
+## Optional speaker identification
+
+Identify speakers (Settings → Speakers) is off by default. When you turn it on, the app labels transcript lines Speaker 1, Speaker 2… using speaker models that run on your device; voices are not sent to the developer or any service. While you record, the app keeps a temporary in-memory copy of the microphone audio for this analysis, bounded to about the most recent ten minutes. That copy is never written to storage, and it is released when recording stops, once any final labeling pass finishes. The first time identification runs, the app downloads the speaker models once from huggingface.co; that request carries no audio or conversation content. The downloaded models are kept out of iCloud and Finder backups and can be downloaded again. Speaker labels, and any names you give speakers in Notes → Speakers, are saved with the conversation like the rest of its transcript, so they appear in History search, shared text and exports, and are part of the conversation text sent if you choose Ollama. Turning the setting off stops new labeling; labels already saved stay until you delete the conversation.
 
 ## Optional Ollama (Cloud or your own server)
 

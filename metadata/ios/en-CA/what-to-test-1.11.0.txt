@@ -1,0 +1,9 @@
+This build adds optional speaker identification, off by default. When it is on, transcript lines are labeled Speaker 1, Speaker 2… and you can rename each speaker. It runs on this device and the audio is not saved or sent; the speaker models download once from huggingface.co the first time a pass runs, and it uses more battery while listening.
+
+Please test:
+1. Open More → Settings → Speakers and turn on Identify speakers (the switch is available while not recording).
+2. With two or more people talking near one iPhone, record for at least a minute. Lines start as Microphone; after the first pass, about 20 seconds in (longer on first use while the models download), they change to Speaker 1, Speaker 2… Stop, then confirm the last lines are labeled too.
+3. Open Notes → Speakers, rename Speaker 1 (for example to Alex) and press Done. Confirm every line by that speaker shows the new name, that searching History for the name finds the conversation, and that the text from More → Share contains the name.
+4. Stop must return at once, including the very first time. On a fresh install (or right after relaunching the app), record for under 20 seconds with Identify speakers on and press Stop: Stop returns immediately and those lines stay Microphone, because Stop never starts the model download. The next recording longer than 20 seconds gets labels.
+5. If the speaker models cannot load (for example with no network on first use), the status line says identification is paused and offers Retry; tap Retry once you are back online.
+6. Turn Identify speakers off, tap New and record again: no line is labeled with a speaker (lines show Microphone), and Notes → Speakers says to turn the setting on.
