@@ -39,7 +39,7 @@ this table in the same PR, and never fork a copy into `App/` or `iOS/`.
 | `AutomaticReviewCoordinator` — queued Summary/Deep reviews, deadlines, manual completion | `MeetingSession` | `MobileSession.automaticReviews` |
 | Prompt data fences and caps: `PromptData.notice`, `PromptData.block`, `PromptBudget` | `PromptBuilder` (`Prompt.swift`) | `MobileSummaryMode.instructions`, `MobileSession.summarize` |
 | `SessionArchive` — the on-disk conversation format | `App/SessionStore.swift` | `iOS/MobileSession.swift` |
-| Speaker identification: `SpeakerDiarizer` and `SpeakerAudioBuffer` (`SharedPlatform/`, FluidAudio), `SpeakerIdentityTracker`, `SpeakerLabeling`, `SpeakerStats`, `SpeakerAnalysisPolicy` | `App/MeetingView+Speakers.swift` | `MobileSpeakers`, `iOS/MobileSession+Speakers.swift`; iOS language detection (#197) reuses `SpeakerAudioBuffer` with a two-minute `maxSamples` cap |
+| Speaker identification: `SpeakerDiarizer` and `SpeakerAudioBuffer` (`SharedPlatform/`, FluidAudio), `SpeakerIdentityTracker`, `SpeakerLabeling`, `SpeakerStats`, `SpeakerAnalysisPolicy` | `App/MeetingView+Speakers.swift` | `MobileSpeakers`, `iOS/MobileSession+Speakers.swift`; iOS language detection (#197) reuses `SpeakerAudioBuffer`, keeping its trailing two minutes (#199) |
 | Save to folder (#53): `MarkdownVault` (note format and file names), `MarkdownVaultWriter` (bookmark, atomic coordinated write, failure wording), `MarkdownVaultSync` (`SharedPlatform/`, setting, queue, status, Retry) | `App/MacVaultSettings.swift`, `App/MeetingView+Conversations.swift` (`checkpoint`) | `iOS/MobileVaultSettings.swift`, `iOS/MobileSession+Vault.swift` |
 | `SessionSearch` — History search and its matching rules | `App/SessionSearchView.swift`, `App/MeetingView.swift` | `MobileHistoryView` via `MobileSession` |
 | `AppleIntelligenceProvider` (`SharedPlatform/`) — on-device transport and its failure wording | `App/MeetingView.swift` | `MobileSession`, `MobileAISettings` |
@@ -69,7 +69,7 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 | Storage protection | Plain atomic writes | Data protection (`completeUntilFirstUserAuthentication`) plus an optional backup exclusion (`PrivateStorage`) |
 | Export | Markdown, PDF and recap; **Save to folder** chosen with an open panel, written when a checkpoint is complete (capture stopped) and only while autosaving is on | Markdown and readable text through the share sheet; **Save to folder** chosen in the Files picker (security-scoped bookmark), written at Stop/Save and on later changes while not recording |
 | Audio-file import | Yes (`App/AudioFileReader.swift`) | No |
-| Languages | Transcription language **and** AI response language, from every on-device language the OS lists (#172); the opt-in WhisperKit engine transcribes mixed languages | Transcription language only, from the same OS list (#172): **Automatic** (the default) detects the spoken language on the device from the first seconds of speech and switches once per recording, or a fixed language (#197) |
+| Languages | Transcription language **and** AI response language, from every on-device language the OS lists (#172); the opt-in WhisperKit engine transcribes mixed languages | Transcription language only, from the same OS list (#172): **Automatic** (the default) detects the spoken language on the device from the first seconds of speech, re-checks it about once a minute and switches when it changes (#197, #199), or a fixed language. Words of two languages mixed within one sentence are not transcribed (#205) |
 | Input | Global ⌘⇧Space hotkey and a Session menu | Touch UI; no hotkeys or menu bar |
 
 ### Tier 3 — out of scope for iOS
@@ -314,42 +314,82 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   started by the first speech of a recording rather than at Start, into Application Support
   (`LanguageModels/`, excluded from iCloud and Finder backups); later launches load it from the
   device with no network request. No audio or text is sent anywhere. Recording never waits for it.
-  While recording, the audio the transcriber accepts is copied into a 16 kHz buffer capped at two
-  minutes (about 7.7 MB, in memory only). Once 8 seconds of speech have been heard (or 30 seconds
+  While recording, the audio the transcriber accepts is copied into a 16 kHz buffer that keeps the
+  trailing two minutes (about 7.7 MB plus one 10-second block, in memory only; older audio is
+  released in whole blocks as the recording goes on, #199). Once 8 seconds of speech have been heard (or 30 seconds
   have passed since the first speech), up to 30 seconds from just before the first speech are
-  checked once. `LanguageDetectionPolicy` switches only when Whisper is at least 80% sure, the
+  checked. `LanguageDetectionPolicy` switches only when Whisper is at least 80% sure, the
   language differs from the one being transcribed, and SpeechTranscriber supports it; Whisper's
   "zh" (Mandarin) becomes zh-CN, or zh-TW on a device in Taiwan, Hong Kong or Macao, and never the
   Cantonese zh-HK model. To switch, the recorder installs the new locale's speech assets if needed
   while the old transcriber keeps running, then swaps the analyzer without stopping the microphone:
   audio arriving during the swap is parked and sent to the new analyzer, so none is lost. The new
-  analyzer first hears the buffered recording from its start. Its lines for the audio before the
+  analyzer first hears the recording from its start (or from the oldest audio still held). Its lines for the audio before the
   switch are held back while the earlier lines stay on screen and on disk, and replace them in one
   step once it reaches live speech (or, if the recording stops first, replace only what the replay
   covered), so a crash or a failed replay never loses the early transcript. The unfinished line at the
   switch is kept as a line of its own. Offsets, speaker labels and later lines stay on one timeline.
-  Past the two-minute buffer the switch cannot re-transcribe anything: the old analyzer then
-  finalizes what it heard up to the switch, the new one continues the timeline, and the notice says
-  "switched for new speech". Speech that starts after the two minutes is not checked (Status details
-  says so). The status area shows "Detected Chinese · switched" with **Undo**, which pins the
-  language the recording started in. While recording it switches back first, re-transcribing what
+  When none of that audio is held any more the switch cannot re-transcribe anything: the old
+  analyzer then finalizes what it heard up to the switch, the new one continues the timeline, and
+  the notice says "switched for new speech". The status area shows "Detected Chinese · switched"
+  with **Undo**, which pins the language from before the switch. While recording it switches back first, re-transcribing what
   is still buffered, and the notice stays until that has worked (a failure says to try again). While
   stopping, the tap waits for Stop to finish; after Stop it restores the lines the switch replaced,
   touching only that recording's own lines (Apple Watch lines and later recordings stay) and
   keeping the line that spans the switch. A recording that resumes the conversation, after a call or
-  Stop and Listen, starts in the switched language and keeps the notice. A recording switches at most
-  once; mid-recording code-switching is not handled yet (#199). Apple Intelligence's language check
-  uses the switched language. If the model cannot be loaded (offline first use), recording
+  Stop and Listen, starts in the switched language, keeps the notice and goes straight to re-checks.
+  Apple Intelligence's language check uses the switched language. If the model cannot be loaded (offline first use), recording
   continues in the starting language and the status line says language detection paused; the next
-  recording tries again. A check that keeps the language releases the buffered audio at once.
-  **Status details** on the Quick Summary pane lists the mode, the recording's language, the last
-  check's result and the model state. The language line appears in the status area only while there
+  recording tries again.
+  **Status details** on the Quick Summary pane lists the mode, the recording's language, the first
+  check's result, the re-checks (switches so far, and the latest result or why one was skipped) and
+  the model state. The language line appears in the status area only while there
   is news (preparing, checking, switching, paused, a failed switch) or a notice with Undo. UI-test
   launches substitute a language model that loads at once and never switches
   (`LISTENTOME_LANGUAGE_MODEL_FIXTURE`, DEBUG simulator builds only, set with the speaker fixture by
   `useModelFixtures()`), and the unit-test host one that never loads, so no test downloads Whisper.
   Apple Watch recordings are transcribed in the device language under Automatic: detection runs on
   live recordings only (#200).
+- Re-checking the language during a recording (#199), Automatic only. After the first check,
+  `LanguageTracker` (ListenToMeCore, with `LanguageRecheckPolicy`) re-checks the trailing 30 seconds
+  once a minute of recording time, only when that window holds at least 10 seconds of speech, so
+  silence costs nothing. Speech here is what the transcriber reports, and a transcriber in the wrong
+  language may report little of it, so a re-check overdue by a whole interval needs only 4 seconds; a
+  transcriber that reports nothing at all triggers no re-check (audio-level speech activity is #216). Re-checks pause in Low Power Mode, while the app is in the background and
+  while the device is hot (serious or critical thermal state); the first check is not affected.
+  Re-checks run quietly, without a status line. Hysteresis: a confident (≥ 80%) different language
+  only makes a candidate, and a check 20 seconds later must hear the same language again before the
+  transcriber switches; a check that hears the current language, is unsure or hears a third language
+  drops the candidate, and a candidate unconfirmed for a minute expires. A switch stays at least 90
+  seconds, a recording switches at most four times (the first check included) and then stops
+  re-checking, and a locale whose speech model could not be prepared is not tried again in that
+  recording. On a confirmed switch, ten-second chunks since half a window before the current language
+  was last heard (never before the previous switch, at most 12 chunks, each with at least 4 seconds of
+  speech) are checked to find where the language changed: the change is the end of the last chunk
+  that still heard the old language, so speech after it in a chunk too quiet to check is transcribed
+  again too. Transcribing again starts there, moved back to the start of a line that spans it (or past
+  a line whose start is no longer held), and never in the 10-second block the buffer is about to
+  release. That start is chosen at the switch itself, after the new locale's speech assets are ready
+  (a download can take a while), from the audio still held then, so a slow download moves the start
+  later instead of losing the replay. The replay's first buffer is stamped with that recording time,
+  so its lines keep the recording's timeline. The recording's own lines from that point (by id; never
+  Apple Watch lines merged into the conversation meanwhile) are held back and replaced in one step
+  where the first of them was; every other line stays, and earlier lines (including an earlier
+  switch's) are never touched. The notice reads "Detected French from 2:05 · switched" whenever
+  transcribing again did not start at the recording's start, the first switch included. It and
+  **Undo** are for the latest switch; earlier switches are kept. Undo is not offered while a
+  re-check is replacing the transcriber, since the switch back would fail and the new notice would
+  then replace the old one; it returns once the switch settles. Undo while recording hears the same span again in the
+  previous language when its audio is still held, otherwise it restores the lines the switch
+  replaced; after Stop it restores only that span. A recording's own lines are found by time from
+  its start rather than by index, so an Undo in a resumed recording, which first restores the earlier
+  recording's lines, hears all of this one again exactly once. An in-flight check never switches once Undo has
+  started, and an Undo pins the language, which ends re-checks. A switch is noticed one to two
+  minutes after the language changes; the replay span is bounded by the two-minute buffer.
+  Genuinely mixed speech within one sentence is out of scope: SpeechTranscriber transcribes one
+  locale per analyzer, so running two side by side would double the Neural Engine load and still
+  give each language's words as nonsense in the other, with no per-word language to merge on.
+  Multilingual Whisper transcription (macOS's opt-in engine) is the possible route on iPhone (#205).
 - Partial and final transcript text. Everyone picked up by the microphone is labeled **Microphone**
   unless speaker identification is on. Unfinalized text is retained and labeled accordingly.
 - Speaker identification (#180), on by default since #195 (a stored choice to turn it off is kept):
@@ -723,6 +763,16 @@ GitHub Actions builds both apps and runs the headless `ListenToMeCore` unit/inte
     the originals (Speaker labels on: the lines keep their speakers after the switch), which shows
     replayed buffers sent without `bufferStartTime` start at t=0; (c) with Identify speakers on,
     watch Xcode's memory gauge while Whisper, FluidAudio and SpeechAnalyzer are loaded together.
+12. Re-checking the language mid-recording (#199): with Automatic on, speak English for two minutes,
+    then Mandarin for two minutes in one recording. Within about two minutes of the change confirm
+    "Detected Chinese from m:ss · switched", that the time is close to where you changed language,
+    that the English lines before it are untouched and the Mandarin part is in Chinese, and that
+    the replayed lines keep their times (the first replayed buffer carries a `bufferStartTime`).
+    Say one short English phrase inside the Mandarin part and confirm nothing switches back. Tap
+    **Undo** and confirm only the Mandarin span returns to English. Turn on Low Power Mode during a
+    recording and confirm Status details shows "skipped (Low Power Mode)". Record 20+ minutes of
+    one language and confirm memory stays flat and battery drain is close to a recording with a
+    fixed language.
 
 iOS distribution uses an Xcode archive/export and App Store Connect/TestFlight, not a DMG or macOS
 notarization. A Mac Developer ID certificate cannot distribute an iPhone app. TestFlight needs an

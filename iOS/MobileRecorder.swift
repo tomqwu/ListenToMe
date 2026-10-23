@@ -18,19 +18,22 @@ protocol MobileRecording: AnyObject {
     func attachLanguageAudio(_ buffer: SpeakerAudioBuffer?)
     /// Restarts transcription in `locale` while capture keeps running (issue #197). Throws, changing
     /// nothing, when the new locale cannot be prepared. With `replay`, the new transcriber first hears
-    /// that buffer's audio from the recording's start, so every line is transcribed again, and the old
-    /// transcriber delivers nothing more. Without it, the new transcriber continues the timeline and the
+    /// that buffer's audio from the sample `replayFrom` returns (the recording's start, or where a
+    /// re-check found the language changed, issue #199) to the switch, so those lines are transcribed
+    /// again, and the old transcriber delivers nothing more. `replayFrom` is asked at the switch itself,
+    /// after the new locale's assets are ready, so it sees the audio still held then; `nil` replays
+    /// nothing. Without it, the new transcriber continues the timeline and the
     /// old one still finalizes what it heard before the switch, so its last words are not lost.
     /// `willReplace` runs before the new transcriber delivers anything. Its arguments say whether the
     /// recording so far is being transcribed again, and the recording time at which the old one stopped.
-    func switchLocale(to locale: Locale, replay: SpeakerAudioBuffer?,
+    func switchLocale(to locale: Locale, replay: SpeakerAudioBuffer?, replayFrom: @MainActor () -> Int?,
                       willReplace: @escaping @MainActor (Bool, TimeInterval) -> Void) async throws
 }
 
 extension MobileRecording {
     func attachSpeakerAudio(_ buffer: SpeakerAudioBuffer?) {}
     func attachLanguageAudio(_ buffer: SpeakerAudioBuffer?) {}
-    func switchLocale(to locale: Locale, replay: SpeakerAudioBuffer?,
+    func switchLocale(to locale: Locale, replay: SpeakerAudioBuffer?, replayFrom: @MainActor () -> Int?,
                       willReplace: @escaping @MainActor (Bool, TimeInterval) -> Void) async throws {
         throw RecordingError.message("This recorder cannot change language while recording.")
     }
@@ -142,7 +145,7 @@ final class MobileRecorder: MobileRecording {
         }
     }
 
-    func switchLocale(to locale: Locale, replay: SpeakerAudioBuffer?,
+    func switchLocale(to locale: Locale, replay: SpeakerAudioBuffer?, replayFrom: @MainActor () -> Int?,
                       willReplace: @escaping @MainActor (Bool, TimeInterval) -> Void) async throws {
         guard let sink, input != nil, !isSwitching else { throw RecordingError.message("Recording is not running.") }
         isSwitching = true
@@ -159,8 +162,11 @@ final class MobileRecorder: MobileRecording {
         }
         // From here to `resume` nothing awaits, so no result and no audio slips between the two transcribers.
         let cut = sink.hold()
-        let replayed = replay.map {
-            Self.replay($0, through: cut.languageSamples, into: input, format: format)
+        // Asked only now, after any asset download, so the start is within the audio still held.
+        let replayed = replay.flatMap { buffer in
+            replayFrom().map { start in
+                Self.replay(buffer, from: start, through: cut.languageSamples, into: input, format: format)
+            }
         } ?? false
         let previousResults = resultsTask
         resultsGeneration &+= 1
@@ -181,26 +187,6 @@ final class MobileRecorder: MobileRecording {
         willReplace(replayed, cut.deliveredSeconds)
         resultsTask = consumeResults(of: transcriber)
         sink.resume(input: input, destination: format, continueAt: replayed ? nil : cut.deliveredSeconds)
-    }
-
-    /// Feeds 16 kHz audio from the recording's start into a new analyzer, a few seconds per buffer.
-    /// Returns false, feeding nothing, when that audio is gone or cannot be converted.
-    static func replay(_ buffer: SpeakerAudioBuffer, through samples: Int,
-                       into input: AsyncStream<AnalyzerInput>.Continuation, format: AVAudioFormat) -> Bool {
-        let audio = buffer.snapshot(fromSample: 0)
-        guard !buffer.didTruncate, audio.startSample == 0, samples > 0, audio.samples.count >= samples,
-              let pipeline = ConversionPipeline(sourceRate: Double(LanguageDetectionPolicy.sampleRate),
-                                                destination: format) else { return false }
-        let step = LanguageDetectionPolicy.sampleRate * 2
-        var buffers: [AVAudioPCMBuffer] = []
-        for start in stride(from: 0, to: samples, by: step) {
-            guard let converted = pipeline.convert(Array(audio.samples[start..<min(samples, start + step)])) else {
-                return false
-            }
-            buffers.append(converted)
-        }
-        for converted in buffers { input.yield(AnalyzerInput(buffer: converted)) }
-        return true
     }
 
     /// A newly connected headset changes the input sample rate, which stops AVAudioEngine and posts
@@ -324,6 +310,34 @@ final class MobileRecorder: MobileRecording {
         analyzerFormat = nil; report = nil; tapFormat = nil; speakerAudio = nil
         languageAudio = nil; sink = nil; deliver = nil; isStopping = false; finishing = []
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+    }
+}
+
+extension MobileRecorder {
+    /// Feeds 16 kHz audio from sample `start` to `samples` into a new analyzer, a few seconds per buffer.
+    /// A replay that starts part-way stamps its first buffer, so the new transcriber's results keep the
+    /// recording's timeline. Returns false, feeding nothing, when that audio is gone or cannot be converted.
+    static func replay(_ buffer: SpeakerAudioBuffer, from start: Int = 0, through samples: Int,
+                       into input: AsyncStream<AnalyzerInput>.Continuation, format: AVAudioFormat) -> Bool {
+        let audio = buffer.snapshot(fromSample: start)
+        guard !buffer.didTruncate, start >= 0, start < samples, audio.startSample <= start,
+              audio.startSample + audio.samples.count >= samples,
+              let pipeline = ConversionPipeline(sourceRate: Double(LanguageDetectionPolicy.sampleRate),
+                                                destination: format) else { return false }
+        let step = LanguageDetectionPolicy.sampleRate * 2
+        var buffers: [AVAudioPCMBuffer] = []
+        for begin in stride(from: start, to: samples, by: step) {
+            let slice = audio.samples[(begin - audio.startSample)..<(min(samples, begin + step) - audio.startSample)]
+            guard let converted = pipeline.convert(Array(slice)) else { return false }
+            buffers.append(converted)
+        }
+        let stamp = start > 0
+            ? CMTime(seconds: Double(start) / Double(LanguageDetectionPolicy.sampleRate), preferredTimescale: 48_000)
+            : nil
+        for (index, converted) in buffers.enumerated() {
+            input.yield(AnalyzerInput(buffer: converted, bufferStartTime: index == 0 ? stamp : nil))
+        }
+        return true
     }
 }
 

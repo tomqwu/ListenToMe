@@ -3,10 +3,10 @@ import Speech
 import ListenToMeCore
 
 /// Where captured microphone audio goes: converted into the current analyzer's input, and copied into
-/// the speaker (#180) and language (#197) buffers only once the analyzer accepted it, so all three
-/// share one timeline. The analyzer can be replaced while capture runs (a language switch): `hold`
-/// parks new audio, `resume` points the sink at the new analyzer and sends what was parked, so no
-/// microphone audio is lost and the copies stay continuous.
+/// the speaker (#180) and language (#197; its trailing two minutes since #199) buffers only once the
+/// analyzer accepted it, so all three share one timeline. The analyzer can be replaced while capture
+/// runs (a language switch): `hold` parks new audio, `resume` points the sink at the new analyzer and
+/// sends what was parked, so no microphone audio is lost and the copies stay continuous.
 ///
 /// Used by the single feed task and, for `hold`/`resume`, the main actor; everything runs under `lock`.
 final class AnalyzerSink: @unchecked Sendable {
@@ -98,6 +98,7 @@ final class AnalyzerSink: @unchecked Sendable {
                              generation: speakerGeneration)
         languageAudio?.append(samples: chunk.samples, sampleRate: chunk.sampleRate, timestamp: 0,
                               generation: languageGeneration)
+        languageAudio?.keepTrailingLanguageAudio()   // about two minutes, for re-checks and replays (#199)
     }
 
     /// PRECONDITION: `lock` is held. Rebuilt when the microphone's rate or the analyzer's format changes.

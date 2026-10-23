@@ -40,7 +40,8 @@ Markdown note into a folder you pick in Files, such as an Obsidian vault. On-dev
 Settings) labels transcript lines Speaker 1, Speaker 2… for the people one phone hears, and you can
 rename them; its models download once from `huggingface.co`. The transcription language defaults to
 Automatic: the phone detects the spoken language on-device from the first seconds of speech and, if it
-differs from the device language, switches once and transcribes the recording again (its small Whisper
+differs from the device language, switches and transcribes the recording again; it re-checks about once
+a minute while people talk, so a meeting that changes language part-way switches too (its small Whisper
 model downloads once from `huggingface.co`; audio never leaves the device). Choose on-device Apple
 Intelligence — the default on capable devices — or Ollama: Ollama Cloud with your own key, or an
 Ollama server you run on your own network. Presets, reference files, audio-file import and WhisperKit
