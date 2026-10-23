@@ -63,10 +63,17 @@ release:
 IOS_DESTINATION ?= platform=iOS Simulator,name=iPhone 17 Pro
 IOS_SIGN_FLAGS ?= CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=-
 
-.PHONY: ios-build ios-test ios-archive
+.PHONY: ios-build ios-test ios-archive watch-build
+# Also compiles the Apple Watch app (#181). It is embedded in ListenToMeIOS only with WATCH_EMBED=YES.
 ios-build: gen
 	xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMeIOS -configuration Debug \
 		-destination 'generic/platform=iOS Simulator' -derivedDataPath .build/ios \
+		-onlyUsePackageVersionsFromResolvedFile $(IOS_SIGN_FLAGS) build
+	$(MAKE) watch-build
+
+watch-build: gen
+	xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMeWatch -configuration Debug \
+		-destination 'generic/platform=watchOS Simulator' -derivedDataPath .build/ios \
 		-onlyUsePackageVersionsFromResolvedFile $(IOS_SIGN_FLAGS) build
 
 ios-test: gen

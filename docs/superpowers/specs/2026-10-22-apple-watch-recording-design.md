@@ -210,8 +210,12 @@ Content".
 pre-Xcode 14 two-target layout. Current Xcode adds a watch app to an existing iOS app with one
 "App" template ([setup guide](https://developer.apple.com/documentation/watchos-apps/setting-up-a-watchos-project)),
 and XcodeGen embeds that single target (F15). A scratch project confirms it builds for the
-simulator and the device SDK with no extension target (F19). Signed archiving is still U here. The
-Slice 1 spike confirms it by archiving.
+simulator and the device SDK with no extension target (F19). The Slice 1 spike settled signed
+archiving: `WATCH_EMBED=YES make ios-archive` (Xcode 27) succeeded with no extension target, placed
+`ListenToMeIOS.app/Watch/ListenToMeWatch.app` (1.10.5 (27), `WKCompanionAppBundleIdentifier` set),
+and automatic signing signed it as `com.tomwu.ListenToMe.ios.watchkitapp` with the team's existing
+wildcard development profile. App Store export and upload of a watch archive stay unverified until
+the release-prep change; that archive was not uploaded.
 
 `.swiftlint.yml` `included` gains `Watch`. While the embed is gated, `make ios-build` also builds a
 `ListenToMeWatch` scheme for `generic/platform=watchOS Simulator`. Once the embed is permanent, the
