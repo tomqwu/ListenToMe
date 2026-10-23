@@ -102,21 +102,6 @@ struct MeetingView: View {
         }
     }
 
-    /// Curated transcription languages. "" = follow the system language ("Auto"). Apple's
-    /// on-device Speech selects one primary language; it does not auto-detect or code-switch.
-    static let languageOptions: [(id: String, label: String)] = [
-        ("", "Auto (system)"),
-        ("en-US", "English (US)"),
-        ("zh-CN", "中文 · Mandarin (简体)"),
-        ("zh-TW", "中文 · Mandarin (繁體)"),
-        ("yue-CN", "粵語 · Cantonese"),
-        ("ja-JP", "日本語"),
-        ("ko-KR", "한국어"),
-        ("es-ES", "Español"),
-        ("fr-FR", "Français"),
-        ("de-DE", "Deutsch")
-    ]
-
     init() {
         ProviderSettings.migratePinningIfNeeded()
         _transcriptionLocaleID = State(initialValue: ProviderSettings.transcriptionLocaleID)

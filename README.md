@@ -94,8 +94,8 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 **Live capture & transcription**
 - Dual-channel capture: your mic + the other participants' system audio, source-labeled.
 - On-device transcription via **Apple SpeechAnalyzer** (default) or the legacy **SpeechRecognizer**.
-- **Transcription-language** picker (English, Mandarin, and more) and **audio-file import** to
-  transcribe an existing recording.
+- **Transcription-language** picker listing every language your Mac can transcribe on-device, and
+  **audio-file import** to transcribe an existing recording.
 - **Survives device changes:** connecting AirPods, docking/undocking or sleep/wake re-installs the
   microphone tap and restarts capture in place ("Mic: input changed — resumed"); a stopped
   system-audio stream gets the same one-shot restart. If a channel really cannot be recovered, the
@@ -232,9 +232,13 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   treat pane output — including any links it contains — with the same care as the source material.
 - **Presets.** Pick a use-case preset to tailor how the copilot responds.
 - **Languages.** Independent **transcription-language** and **AI response-language** pickers. The
-  transcription list is curated; if the language you pick (or your system language under "Auto")
-  isn't supported by Apple's on-device speech model, the status line says so by name and names the
-  language it is transcribing in instead — it never silently substitutes English.
+  transcription list is not hard-coded: at launch the app asks the OS which languages on-device
+  transcription supports (`SpeechTranscriber.supportedLocales`) and which of their speech models are
+  already installed (`AssetInventory`), and lists them as **Installed** and **Downloadable**, common
+  languages first (`TranscriptionLanguageCatalog` in Core, shared by macOS and iOS). A downloadable
+  language's model downloads from Apple the first time you record in it. If the language you pick (or
+  your system language under "Auto") still isn't supported, the status line says so by name and
+  names the language it is transcribing in instead — it never silently substitutes English.
 - **Reference files.** Add files/folders as context, with a configurable token budget. `.rtf` is read
   as its text (never `\rtf1` markup), and non-UTF-8 files (Windows-1252, UTF-16 exports) are decoded
   instead of dropped. Anything that still cannot be included is listed next to the attachments as
@@ -296,8 +300,8 @@ speaker models. Open **Speakers / edit names** to name voices, for example Speak
 Names appear in transcript lines and flow into subsequent AI prompts, refreshed listener summaries,
 saved-session search, and Markdown/PDF exports. Saving a name clears older Quick/Deep answers;
 request them again to use the new name. Speaker identities are matched across analysis passes by
-shared audio timing. Ambiguous splits or merges may receive new labels instead of inheriting an
-incorrect name. Labels and names are scoped to each recording run; starting another run preserves
+shared audio timing first, then by voice. Ambiguous splits or merges may receive new labels instead
+of inheriting an incorrect name. Labels and names are scoped to each recording run; starting another run preserves
 older transcript labels but does not recognize people from past runs.
 
 Enable **Identify people sharing my microphone** to also separate voices on the microphone channel.
@@ -312,10 +316,14 @@ analysis; speaker names are included in saved transcript text when session savin
 
 Each periodic pass re-analyzes only the most recent audio (a trailing window of at most ten minutes,
 overlapping the previous pass so identities carry over), so identification cost stays flat instead of
-growing with the meeting. Identities are linked between passes by shared audio time, so someone who
-stays silent through the whole overlap can be given a new label on a later pass; on long multi-party
-meetings this can leave extra rows in the list ([issue #171](https://github.com/tomqwu/ListenToMe/issues/171)
-tracks embedding-based merging). Captured audio is held in fixed 10-second blocks, so a pass never copies the
+growing with the meeting. A pass first carries over the speakers it shares audio with; each speaker
+also keeps a running voice embedding for the recording, and the voices left over are matched to it,
+one person per label, so someone who stays quiet for minutes keeps their label and edited name when
+they speak again
+([issue #171](https://github.com/tomqwu/ListenToMe/issues/171)). Two very similar voices, or one
+person heard in very different conditions, can still be split or given a new label. The voice
+embeddings stay in memory for that recording only and are never saved, so people are not recognized
+across runs. Captured audio is held in fixed 10-second blocks, so a pass never copies the
 whole session. Memory ceiling: up to about 460 MB per enabled channel for a full two hours — roughly
 920 MB with microphone identification also enabled.
 
