@@ -463,9 +463,10 @@ iPhone default, and the app ships with no keys.
   `max_completion_tokens`, DeepSeek's `reasoning_content`, OpenRouter's attribution headers.
 - **Claude speaks Anthropic's own Messages API**, not an OpenAI shim, over plain `URLSession` (no vendor
   SDK is linked): no sampling parameters, effort `low` for Auto Quick and `medium` for Summary/Deep,
-  structured output so Auto Quick always gets valid JSON, refusals and length cut-offs shown clearly,
-  one retry on 429/529, and server-side refusal fallbacks on Opus 5.5 and Sonnet 5.5 (Anthropic may re-run
-  a declined request on another Claude model).
+  structured output so Auto Quick always gets valid JSON, refusals (partial text discarded) and length
+  cut-offs shown clearly, one retry on 429/529 when `retry-after` asks, and server-side refusal
+  fallbacks on Opus 5.5 and Sonnet 5.5 Summary and Deep requests (another Claude model continues a
+  declined answer).
 
 ### OpenAI-compatible servers
 

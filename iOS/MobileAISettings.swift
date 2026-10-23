@@ -310,6 +310,9 @@ final class MobileAISettings {
         testing = true
         defer { testing = false }
         if provider == .openAI || provider == .cloud, mode == .quick { await testQuickContract(); return }
+        // Name what was tested, not whatever is selected when the answer arrives (#218 review).
+        let testedModel = selectedModel(for: mode)
+        let testedDestination = summaryEndpointDescription
         do {
             var response = ""
             for try await delta in try client(for: mode).stream(LLMRequest(system: "Reply briefly.",
@@ -317,7 +320,7 @@ final class MobileAISettings {
                 response += delta
                 guard response.count < 10_000 else { throw RecordingError.message("Connection test response was too large.") }
             }
-            status = "Connection verified: \(selectedModel(for: mode)) at \(summaryEndpointDescription) "
+            status = "Connection verified: \(testedModel) at \(testedDestination) "
                 + "returned a complete response."
         } catch { status = "Connection test failed: \(Self.errorMessage(error))" }
     }

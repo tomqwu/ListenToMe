@@ -119,6 +119,33 @@ final class MobileCloudAISettingsTests: XCTestCase {
         XCTAssertNil(settings.automaticQuickReason)
     }
 
+    /// #218 review: a key typed while OpenAI was selected is never stored as, or sent to, OpenRouter.
+    func testAKeyTypedForOneServiceIsNeverSavedForAnother() throws {
+        let settings = MobileAISettings()
+        settings.selectSummaryRoute(.cloud(.openAI))
+        settings.selectSummaryRoute(.cloud(.openRouter))
+        XCTAssertFalse(settings.saveCloudKey("sk-openai-synthetic", typedFor: .openAI))
+        XCTAssertTrue(settings.status?.contains("typed for OpenAI") == true, settings.status ?? "")
+        XCTAssertEqual(try settings.cloud.currentKey(for: .openRouter), "")
+        XCTAssertEqual(try settings.cloud.currentKey(for: .openAI), "")
+        XCTAssertTrue(settings.saveCloudKey("sk-or-synthetic", typedFor: .openRouter))
+        XCTAssertEqual(try settings.cloud.currentKey(for: .openRouter), "sk-or-synthetic")
+    }
+
+    /// #218 review: a test that finishes after the user switched services is recorded for the
+    /// service and model that were tested.
+    func testAContractResultIsRecordedForTheTestedServiceAndModel() {
+        let settings = MobileAISettings()
+        settings.selectSummaryRoute(.cloud(.groq))
+        settings.selectModel("small", for: .quick)
+        settings.selectSummaryRoute(.cloud(.mistral))
+        settings.selectModel("small", for: .quick)
+        settings.cloud.recordContract(model: "small", passed: false, vendor: .groq)
+        XCTAssertNil(settings.automaticQuickReason, "Mistral was not the service tested")
+        settings.selectSummaryRoute(.cloud(.groq))
+        XCTAssertNotNil(settings.automaticQuickReason)
+    }
+
     func testAMissingServiceFallsBackToTheDeviceDefault() {
         UserDefaults.standard.set("cloud", forKey: "mobileAIProvider")
         let settings = MobileAISettings()

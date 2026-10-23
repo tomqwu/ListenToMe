@@ -6,6 +6,8 @@ import ListenToMeCore
 struct MobileCloudAISettingsRows: View {
     @Bindable var ai: MobileAISettings
     @State private var key = ""
+    /// The service selected while the key was typed; Save refuses to store it under another one.
+    @State private var keyVendor: CloudAIPreset.ID?
     @State private var operation: Task<Void, Never>?
     @FocusState private var editing: Bool
 
@@ -22,10 +24,11 @@ struct MobileCloudAISettingsRows: View {
                 SecureField(cloud.hasKey ? "Replace saved API key" : "\(preset.vendor) API key", text: $key)
                     .textInputAutocapitalization(.never).autocorrectionDisabled()
                     .focused($editing).accessibilityIdentifier("cloudAIAPIKey").disabled(busy)
+                    .onChange(of: key) { keyVendor = key.isEmpty ? nil : cloud.vendor }
                 Link("Get a key from \(preset.vendor)", destination: preset.keyPageURL)
                     .accessibilityIdentifier("cloudAIKeyPage")
                 Button("Save API key") {
-                    if ai.saveCloudKey(key) { key = ""; editing = false }
+                    if ai.saveCloudKey(key, typedFor: keyVendor) { key = ""; editing = false }
                 }.disabled(key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || busy)
                     .accessibilityIdentifier("saveCloudAIKey")
                 if cloud.hasKey {
@@ -64,6 +67,8 @@ struct MobileCloudAISettingsRows: View {
                 }
             }
             .onDisappear { operation?.cancel(); key = "" }
+            // A key typed for one service never carries over to the next (#218 review).
+            .onChange(of: cloud.vendor) { key = ""; keyVendor = nil }
         }
     }
 

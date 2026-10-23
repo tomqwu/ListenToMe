@@ -13,10 +13,14 @@ import Foundation
 ///   (set explicitly; Opus 5.5 defaults to `medium`, other models to `high`).
 /// - The evaluator asks for structured output against the Quick Summary decision schema, so it
 ///   always gets valid JSON. Assistant prefill is never used; current models reject it.
-/// - Opus 5.5 and Sonnet 5.5 requests opt into server-side refusal fallbacks
-///   (`fallbacks: "default"`). A model that rejects the option is asked once more without it, and
-///   not offered it again while the app runs.
-/// - HTTP 429 and 529 are retried once when `retry-after` asks for a short wait.
+/// - Opus 5.5 and Sonnet 5.5 chat requests opt into server-side refusal fallbacks
+///   (`fallbacks: "default"`). On a stream, a fallback continues the partial answer on another
+///   Claude model and nothing already received is invalidated, so the text simply carries on.
+///   Structured-output (Quick evaluator) requests never send fallbacks, so the two options can never
+///   combine into a rejected request. Any 400 to a request with fallbacks is retried once without
+///   them; the model is remembered as not taking them only when that retry succeeds.
+/// - HTTP 429 and 529 are retried once, only when `retry-after` (seconds or an HTTP date) asks for a
+///   short wait.
 public struct AnthropicProvider: LLMProvider {
     public struct Options: Sendable, Equatable {
         /// `output_config.effort` for everything except the Quick evaluator.
@@ -154,24 +158,33 @@ public struct AnthropicProvider: LLMProvider {
     /// Opens the stream, retrying at most once without fallbacks (if the model rejects them) and at
     /// most once after a 429/529 whose `retry-after` is short.
     private func open(_ request: LLMRequest) async throws -> (URLSession.AsyncBytes, HTTPURLResponse) {
-        var fallbacks = Self.fallbackModels.contains(model) && !AnthropicFallbackSupport.shared.isRejected(model)
+        var fallbacks = Self.sendsFallbacks(model: model, request: request)
+        var droppedFallbacks = false
         var retriedOverload = false
         while true {
             do {
-                return try await AnthropicTransport.open(urlRequest(request, fallbacks: fallbacks),
-                                                         session: session, apiKey: apiKey)
-            } catch AnthropicError.invalidRequest(let message) where fallbacks && message.lowercased().contains("fallback") {
-                AnthropicFallbackSupport.shared.reject(model)
+                let opened = try await AnthropicTransport.open(urlRequest(request, fallbacks: fallbacks),
+                                                               session: session, apiKey: apiKey)
+                // Only a request that works without fallbacks proves they were what the API refused.
+                if droppedFallbacks { AnthropicFallbackSupport.shared.reject(model) }
+                return opened
+            } catch AnthropicError.invalidRequest where fallbacks {
                 fallbacks = false
+                droppedFallbacks = true
             } catch let AnthropicError.overloaded(status, retryAfter, detail) where !retriedOverload {
-                let delay = retryAfter ?? 1
-                guard delay <= Self.maximumRetryDelay else {
+                guard let delay = retryAfter, delay <= Self.maximumRetryDelay else {
                     throw AnthropicError.overloaded(status: status, retryAfter: retryAfter, detail: detail)
                 }
                 retriedOverload = true
                 try await sleep(delay)
             }
         }
+    }
+
+    /// Fallbacks go only on chat requests to the models that take them, never with structured output.
+    static func sendsFallbacks(model: String, request: LLMRequest) -> Bool {
+        request.purpose != .quickEvaluation && fallbackModels.contains(model)
+            && !AnthropicFallbackSupport.shared.isRejected(model)
     }
 
     private func run(_ request: LLMRequest, yield: (String) -> Void) async throws {
@@ -249,10 +262,17 @@ enum AnthropicTransport {
         return (bytes, http)
     }
 
-    /// Whole seconds from a `retry-after` header (delta-seconds; fractions round up).
-    static func retryAfter(_ value: String?) -> Int? {
-        guard let value, let seconds = Double(value.trimmingCharacters(in: .whitespaces)), seconds >= 0 else { return nil }
-        return Int(seconds.rounded(.up))
+    /// Whole seconds from a `retry-after` header: delta-seconds (fractions round up) or an HTTP
+    /// date, measured from `now`. A date in the past means retry now.
+    static func retryAfter(_ value: String?, now: Date = Date()) -> Int? {
+        guard let value = value?.trimmingCharacters(in: .whitespaces), !value.isEmpty else { return nil }
+        if let seconds = Double(value) { return seconds >= 0 ? Int(seconds.rounded(.up)) : nil }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(identifier: "GMT")
+        formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss zzz"
+        guard let date = formatter.date(from: value) else { return nil }
+        return max(0, Int(date.timeIntervalSince(now).rounded(.up)))
     }
 }
 

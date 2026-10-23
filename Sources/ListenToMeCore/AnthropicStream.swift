@@ -46,6 +46,9 @@ struct AnthropicStreamState {
             switch block?["type"] as? String {
             case "thinking", "redacted_thinking": producedThinking = true
             case "text": return accept(block?["text"] as? String)
+            // A `fallback` block marks a server-side fallback (Opus 5.5, Sonnet 5.5). On a stream the
+            // fallback model *continues* the partial answer it was handed, and Anthropic documents that
+            // nothing already received is invalidated, so the marker adds no text and removes none.
             default: break
             }
         case "content_block_delta":
@@ -124,7 +127,7 @@ public enum AnthropicError: LocalizedError, Equatable {
             return "\(label) (\(type))" + (message.map { ": \($0)" } ?? ".") + " Try again shortly."
         case .refused(let category):
             let reason = category.map { " (\($0))" } ?? ""
-            return "Claude declined to answer this request\(reason). Any partial text is not a complete answer. "
+            return "Claude declined to answer this request\(reason), so its partial text was discarded. "
                 + "Anthropic may have re-run it on another Claude model first. Rephrase, or choose another model."
         case .cutOff:
             return "The answer was cut off because it reached the length limit. The partial text is shown; "
@@ -155,5 +158,16 @@ public enum AnthropicError: LocalizedError, Equatable {
             return .invalidRequest(detail ?? "invalid request (HTTP 400).")
         default: return .http(status: status, detail: detail)
         }
+    }
+}
+
+/// Whether a failure means the text streamed so far must not stand as an answer.
+public enum LLMPartialOutput {
+    /// A refusal that ended the response (no fallback, or the fallback also declined): Anthropic says
+    /// to treat the partial output as incomplete and discard it. Other failures keep the partial text
+    /// visible, as interrupted answers always have (issue #137).
+    public static func mustDiscard(after error: Error) -> Bool {
+        if case AnthropicError.refused = error { return true }
+        return false
     }
 }

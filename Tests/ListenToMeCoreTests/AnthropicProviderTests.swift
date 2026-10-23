@@ -108,6 +108,8 @@ final class AnthropicProviderTests: XCTestCase {
         XCTAssertEqual(schema["additionalProperties"] as? Bool, false)
         XCTAssertEqual((body["messages"] as? [[String: String]])?.last?["role"], "user", "Never an assistant prefill")
         XCTAssertNil(body["temperature"])
+        XCTAssertNil(body["fallbacks"], "Structured output never travels with fallbacks, even on Opus 5.5")
+        XCTAssertNil(OpenAIStubProtocol.received[0].request.value(forHTTPHeaderField: "anthropic-beta"))
     }
 
     func testMessagesAreFoldedIntoAlternatingTurnsThatStartAndEndWithTheUser() {
@@ -278,8 +280,74 @@ final class AnthropicProviderTests: XCTestCase {
     func testRetryAfterParsing() {
         XCTAssertEqual(AnthropicTransport.retryAfter("3"), 3)
         XCTAssertEqual(AnthropicTransport.retryAfter("1.2"), 2)
-        XCTAssertNil(AnthropicTransport.retryAfter("Wed, 21 Oct 2026 07:28:00 GMT"))
+        let now = ISO8601DateFormatter().date(from: "2026-10-21T07:27:50Z")!
+        XCTAssertEqual(AnthropicTransport.retryAfter("Wed, 21 Oct 2026 07:28:00 GMT", now: now), 10)
+        XCTAssertEqual(AnthropicTransport.retryAfter("Wed, 21 Oct 2026 07:00:00 GMT", now: now), 0,
+                       "A past date means now")
+        XCTAssertNil(AnthropicTransport.retryAfter("soon"))
+        XCTAssertNil(AnthropicTransport.retryAfter("-5"))
         XCTAssertNil(AnthropicTransport.retryAfter(nil))
+    }
+
+    func testOverloadWithoutRetryAfterIsNotRetried() async {
+        OpenAIStubProtocol.reply = { _ in .response(status: 529, headers: [:], body: Data(
+            #"{"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}}"#.utf8)) }
+        let error = await failure(provider())
+        XCTAssertEqual(error as? AnthropicError, .overloaded(status: 529, retryAfter: nil, detail: "Overloaded"))
+        XCTAssertEqual(OpenAIStubProtocol.received.count, 1, "Retry only when the server asks for it")
+    }
+
+    /// Review of #218: a server-side fallback mid-answer continues the partial text on another model.
+    /// Anthropic documents that nothing already streamed is invalidated, so the answer reads through
+    /// once: the marker neither repeats nor drops text.
+    func testAMidAnswerFallbackContinuesThePartialTextOnce() async throws {
+        let fallback = #"{"type":"fallback","from":{"model":"claude-opus-5-5"},"to":{"model":"claude-opus-5"}}"#
+        OpenAIStubProtocol.reply = OpenAIStubProtocol.sse([
+            #"data: {"type":"message_start","message":{"model":"claude-opus-5-5"}}"#,
+            #"data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}"#,
+            #"data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"The team will ship "}}"#,
+            #"data: {"type":"content_block_stop","index":0}"#,
+            #"data: {"type":"content_block_start","index":1,"content_block":"# + fallback + "}",
+            #"data: {"type":"content_block_stop","index":1}"#,
+            #"data: {"type":"content_block_start","index":2,"content_block":{"type":"text","text":""}}"#,
+            #"data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"on Friday."}}"#,
+            #"data: {"type":"content_block_stop","index":2}"#,
+            #"data: {"type":"message_delta","delta":{"stop_reason":"end_turn"}}"#,
+            #"data: {"type":"message_stop"}"#, ""
+        ])
+        let answer = try await text(provider())
+        XCTAssertEqual(answer, "The team will ship on Friday.")
+    }
+
+    func testARefusalAfterPartialTextTellsTheAppToDiscardIt() async {
+        OpenAIStubProtocol.reply = OpenAIStubProtocol.sse(claudeStream(["Step one is"], stopReason: "refusal"))
+        let error = await failure(provider("claude-haiku-5-5"))
+        XCTAssertEqual(error as? AnthropicError, .refused(category: nil))
+        XCTAssertTrue(LLMPartialOutput.mustDiscard(after: error!))
+        XCTAssertFalse(LLMPartialOutput.mustDiscard(after: AnthropicError.cutOff), "A cut-off answer keeps its text")
+        XCTAssertFalse(LLMPartialOutput.mustDiscard(after: OpenAICompatibleError.incomplete))
+    }
+
+    func testAnyInvalidRequestWithFallbacksIsRetriedWithoutThemButRememberedOnlyWhenThatWorks() async throws {
+        // A 400 that does not mention fallbacks and that the retry also gets: not the fallbacks' fault.
+        OpenAIStubProtocol.reply = { _ in .response(status: 400, headers: [:], body: Data(
+            #"{"type":"error","error":{"type":"invalid_request_error","message":"messages: too long"}}"#.utf8)) }
+        let first = await failure(provider("claude-opus-5-5"))
+        XCTAssertEqual(first as? AnthropicError, .invalidRequest("messages: too long"))
+        XCTAssertEqual(OpenAIStubProtocol.received.count, 2)
+        XCTAssertFalse(AnthropicFallbackSupport.shared.isRejected("claude-opus-5-5"))
+        // A 400 with fallbacks that goes away without them: remembered for this model.
+        OpenAIStubProtocol.reset()
+        OpenAIStubProtocol.reply = { request in
+            if request.value(forHTTPHeaderField: "anthropic-beta") != nil {
+                return .response(status: 400, headers: [:], body: Data(
+                    #"{"type":"error","error":{"type":"invalid_request_error","message":"output_config: unsupported"}}"#.utf8))
+            }
+            return OpenAIStubProtocol.sse(claudeStream(["OK"]))(request)
+        }
+        let answer = try await text(provider("claude-opus-5-5"))
+        XCTAssertEqual(answer, "OK")
+        XCTAssertTrue(AnthropicFallbackSupport.shared.isRejected("claude-opus-5-5"))
     }
 
     func testEveryErrorHasAMessage() {

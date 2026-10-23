@@ -70,9 +70,15 @@ final class MobileCloudAISettings {
 
     // MARK: Keys
 
-    /// Saves (or, when empty, removes) the key for the selected service only.
-    func saveKey(_ value: String) throws -> String {
+    /// Saves (or, when empty, removes) the key for the selected service only. `typedFor` is the
+    /// service that was selected while the key was typed: a key typed for one vendor is never stored
+    /// under, or sent to, another that was selected before Save was tapped (#218 review).
+    func saveKey(_ value: String, typedFor: CloudAIPreset.ID? = nil) throws -> String {
         guard let preset else { throw RecordingError.message("Choose a cloud AI service first.") }
+        if let typedFor, typedFor != preset.id {
+            throw RecordingError.message("That key was typed for \(CloudAIPreset.preset(typedFor).vendor), so it was "
+                + "not saved for \(preset.vendor). Paste the \(preset.vendor) key instead.")
+        }
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
             try removeKey(for: preset.id)
@@ -150,9 +156,11 @@ final class MobileCloudAISettings {
             + "Choose another Quick model or test it again in Settings."
     }
 
-    func recordContract(model: String, passed: Bool) {
-        guard let preset else { return }
-        contractLedger.record(preset.baseURL, model: model, passed: passed)
+    /// Records a Quick contract result for the vendor and model that were tested, which may no longer
+    /// be the ones selected (#218 review).
+    func recordContract(model: String, passed: Bool, vendor tested: CloudAIPreset.ID? = nil) {
+        guard let id = tested ?? vendor else { return }
+        contractLedger.record(CloudAIPreset.preset(id).baseURL, model: model, passed: passed)
     }
 
     func client(for mode: MobileSummaryMode, transports: MobileTransports) throws -> any LLMProvider {

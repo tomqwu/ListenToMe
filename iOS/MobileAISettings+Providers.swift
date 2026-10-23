@@ -89,10 +89,13 @@ extension MobileAISettings {
     /// Checks that the OpenAI-compatible Quick model holds the Auto JSON contract, and records the
     /// outcome so Auto pauses with an explanation instead of failing every few seconds.
     func testQuickContract() async {
+        // Everything named in the result is captured now: the selection may change while it runs.
         let cloudRoute = provider == .cloud
+        let vendor = cloud.vendor
         let model = selectedModel(for: .quick)
+        let destination = summaryEndpointLabel
         let record: (Bool) -> Void = { [openAI, cloud] passed in
-            if cloudRoute { cloud.recordContract(model: model, passed: passed) } else {
+            if cloudRoute { cloud.recordContract(model: model, passed: passed, vendor: vendor) } else {
                 openAI.recordContract(model: model, passed: passed)
             }
         }
@@ -101,7 +104,7 @@ extension MobileAISettings {
             let request = try QuickSummaryContext.manualRequest(source: Self.quickContractProbe)
             _ = try await QuickSummaryReader.evaluate(request, provider: client)
             record(true)
-            status = "Connection verified: \(model) at \(summaryEndpointLabel) returned a valid Quick Summary "
+            status = "Connection verified: \(model) at \(destination) returned a valid Quick Summary "
                 + "update, so Auto and Quick can use it."
         } catch where OpenAICompatibleContractLedger.isContractFailure(error) {
             // A reasoning-only or empty answer is as unusable to Auto as malformed JSON.

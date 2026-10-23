@@ -31,6 +31,22 @@ final class MobileCloudAISettingsUITests: XCTestCase {
         XCTAssertTrue(quick.label.contains("Choose model"), quick.label)
         revealSettingsControl(app.buttons["summaryProvider"], in: form, towardTop: true)
         XCTAssertTrue(app.buttons["summaryProvider"].label.contains("Anthropic Claude"), app.buttons["summaryProvider"].label)
+
+        // #218 review: a key typed for one service is cleared when another service is chosen.
+        let keyField = app.secureTextFields["cloudAIAPIKey"]
+        revealSettingsControl(keyField, in: form)
+        keyField.tap()
+        keyField.typeText("sk-ant-synthetic-ui")
+        XCTAssertTrue(app.buttons["saveCloudAIKey"].isEnabled)
+        revealSettingsControl(app.buttons["summaryProvider"], in: form, towardTop: true)
+        app.buttons["summaryProvider"].tap()
+        app.buttons["OpenRouter"].tap()
+        XCTAssertTrue(app.staticTexts["cloudAIDisclosure"].waitForExistence(timeout: 3))
+        XCTAssertEqual(app.staticTexts["cloudAIDisclosure"].label, "Sends your transcript to OpenRouter")
+        let save = app.buttons["saveCloudAIKey"]
+        revealSettingsControl(save, in: form)
+        XCTAssertFalse(save.isEnabled, "The Anthropic key was cleared, so nothing can be saved for OpenRouter")
+        revealSettingsControl(app.buttons["summaryProvider"], in: form, towardTop: true)
         app.buttons["summaryProvider"].tap()
         app.buttons["Apple Intelligence · on-device"].tap()
         XCTAssertFalse(app.staticTexts["cloudAIDisclosure"].exists)

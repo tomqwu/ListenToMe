@@ -23,6 +23,8 @@ struct MobileAISettingsView: View {
                 Text(ai.openAI.isConfigured ? ai.openAI.providerLabel : "Custom server (OpenAI-compatible)")
                     .tag(MobileAISettings.SummaryRoute.openAI)
             }.accessibilityIdentifier("summaryProvider")
+                // A running test or refresh reports on the service it started with.
+                .disabled(ai.testing || ai.refreshing)
             if let reason = ai.fallbackExplanation {
                 Text("Apple Intelligence cannot run on this device, so summaries default to Ollama: \(reason)")
                     .font(.caption).accessibilityIdentifier("appleIntelligenceUnavailable")

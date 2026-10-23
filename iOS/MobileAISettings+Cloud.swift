@@ -48,9 +48,9 @@ extension MobileAISettings {
     }
 
     @discardableResult
-    func saveCloudKey(_ value: String) -> Bool {
+    func saveCloudKey(_ value: String, typedFor: CloudAIPreset.ID? = nil) -> Bool {
         do {
-            status = try cloud.saveKey(value)
+            status = try cloud.saveKey(value, typedFor: typedFor)
             return true
         } catch { status = Self.errorMessage(error); return false }
     }

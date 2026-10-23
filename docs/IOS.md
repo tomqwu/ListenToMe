@@ -743,7 +743,10 @@ the app ships with no keys. Choosing a service selects only that service; no key
 follows until you add them.
 
 **Disclosure.** The service's rows start with "Sends your transcript to <vendor>", name the host that
-receives the notes and transcript, and link the vendor's privacy policy. **Get a key from <vendor>** opens
+receives the notes and transcript, and link the vendor's privacy policy. A key typed for one service is
+cleared when another is chosen, and Save refuses to store it under a different service. The provider
+menu is disabled while a test or refresh runs, and a test reports and records the service and model it
+started with. **Get a key from <vendor>** opens
 the vendor's key page. Claude adds that Anthropic may re-run a declined request on another Claude model.
 
 **Addresses and request shape** (`CloudAIPreset`, shared with macOS; checked against each vendor's
@@ -785,13 +788,19 @@ no assistant prefill. Depth is set with `output_config.effort`: `low` for the Qu
 Summary and Deep (set explicitly; Opus 5.5 defaults to `medium`, other models to `high`). The Quick
 evaluator asks for structured output (`output_config.format` with the `QuickSummaryDecision` JSON schema),
 so it always receives valid JSON; `QuickSummaryDecision.parse` still enforces the length and count limits
-a schema cannot express. Opus 5.5 and Sonnet 5.5 requests send `fallbacks: "default"` with
-`anthropic-beta: server-side-fallback-2026-07-01`; a model that rejects it is asked once without it and not
-offered it again while the app runs. Only `text_delta` is answer text; `thinking_delta`,
+a schema cannot express. Opus 5.5 and Sonnet 5.5 Summary and Deep requests send `fallbacks: "default"` with
+`anthropic-beta: server-side-fallback-2026-07-01`; the structured-output Quick evaluator never does, so
+the two options are never combined. Any 400 to a request with fallbacks is retried once without them, and
+the model is remembered as not taking them (until the app restarts) only when that retry succeeds. A
+fallback mid-answer continues the partial text on another Claude model; Anthropic documents that nothing
+already streamed is invalidated, so the answer simply carries on. A refusal that ends the response
+discards the partial text: iOS keeps the previous summary and the macOS pane restores its previous
+answer (`LLMPartialOutput`). Only `text_delta` is answer text; `thinking_delta`,
 `signature_delta`, `ping` and unknown events are ignored, and a response completes only at
 `message_stop`. `stop_reason: "refusal"` shows "Claude declined to answer this request"; `max_tokens`
 keeps the partial text and says it was cut off; an `error` event (such as `overloaded_error`) fails the
-request. HTTP 401/403 names a bad key, 429/529 waits for a short `retry-after` and retries once, and a 400
+request. HTTP 401/403 names a bad key, 429/529 retries once only when `retry-after` (seconds or an HTTP date)
+asks for a wait of 20 seconds or less, and a 400
 `invalid_request_error` shows Anthropic's message with the key masked. Model lists come from
 `GET /v1/models`.
 
