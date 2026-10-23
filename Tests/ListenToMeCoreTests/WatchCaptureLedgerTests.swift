@@ -106,10 +106,71 @@ final class WatchCaptureLedgerTests: XCTestCase {
         XCTAssertTrue(ledger.receive(chunk(2), at: start))
         XCTAssertFalse(ledger.isFinished)
         XCTAssertEqual(ledger.lastIndex, 1, "Only a last chunk extends the end")
-        XCTAssertEqual(ledger.nextBatch(now: start), WatchLedgerBatch(indices: [2], newGaps: [], finishes: true))
+        XCTAssertEqual(ledger.nextBatch(now: start), WatchLedgerBatch(indices: [2], newGaps: [], finishes: false),
+                       "A chunk after the last one is Continue, still going")
+        ledger.markTranscribed(through: 900)
+        XCTAssertFalse(ledger.isFinished)
+        XCTAssertEqual(ledger.nextBatch(now: start.addingTimeInterval(24 * hour)),
+                       WatchLedgerBatch(indices: [], newGaps: [], finishes: true), "Silent for a day: over")
         ledger.receive(chunk(3, isLast: true), at: start)
         XCTAssertEqual(ledger.lastIndex, 3)
-        XCTAssertEqual(ledger.nextBatch(now: start), WatchLedgerBatch(indices: [2, 3], newGaps: [], finishes: true))
+        XCTAssertEqual(ledger.nextBatch(now: start), WatchLedgerBatch(indices: [3], newGaps: [], finishes: true))
+    }
+
+    /// Continue keeps the recording, continues the index and starts at the wall-clock offset; lines
+    /// rarely end on a chunk boundary.
+    func testContinueAfterACompletedRecordingNeedsNoGap() {
+        var ledger = WatchCaptureLedger(recordingID: id, startedAt: start, at: start)
+        ledger.receive(chunk(0), at: start)
+        ledger.receive(WatchChunkMetadata(recordingID: id, index: 1, startOffset: 300, duration: 297.8, isLast: true,
+                                          startedAt: start, watchBuild: "28"), at: start)
+        XCTAssertEqual(ledger.nextBatch(now: start), WatchLedgerBatch(indices: [0, 1], newGaps: [], finishes: true))
+        ledger.markTranscribed(through: 590.4)
+        XCTAssertEqual(ledger.markTranscribed(through: 597.8), [1])
+        ledger.markCompleted()
+        XCTAssertEqual(ledger.nextBatch(now: start.addingTimeInterval(48 * hour)),
+                       WatchLedgerBatch(indices: [], newGaps: [], finishes: false), "A completed recording is quiet")
+
+        let later = start.addingTimeInterval(hour)
+        XCTAssertFalse(ledger.receive(chunk(1), at: later), "The watch sending a chunk again is a duplicate")
+        XCTAssertTrue(ledger.completed)
+        XCTAssertTrue(ledger.receive(WatchChunkMetadata(recordingID: id, index: 2, startOffset: 660, duration: 300,
+                                                        isLast: false, startedAt: start, watchBuild: "28"), at: later))
+        XCTAssertFalse(ledger.completed)
+        XCTAssertEqual(ledger.nextBatch(now: later), WatchLedgerBatch(indices: [2], newGaps: [], finishes: false))
+        ledger.markTranscribed(through: 960)
+        XCTAssertEqual(ledger.nextBatch(now: later.addingTimeInterval(25 * hour)),
+                       WatchLedgerBatch(indices: [], newGaps: [], finishes: true), "No gap note, ever")
+    }
+
+    func testLateEndMarkerForACompletedRecordingChangesNothing() {
+        var ledger = ledger([0, 1], lastIndex: 1)
+        ledger.markTranscribed(through: 600)
+        ledger.markCompleted()
+        let before = ledger
+        ledger.receiveEnd(WatchRecordingEnd(recordingID: id, startedAt: start, lastIndex: 1, unexpected: true),
+                          at: start.addingTimeInterval(hour))
+        XCTAssertEqual(ledger, before)
+        XCTAssertEqual(ledger.nextBatch(now: start.addingTimeInterval(48 * hour)).newGaps, [])
+        // An end naming a later chunk means Continue audio is still on its way.
+        ledger.receiveEnd(WatchRecordingEnd(recordingID: id, startedAt: start, lastIndex: 2, unexpected: true),
+                          at: start.addingTimeInterval(hour))
+        XCTAssertFalse(ledger.completed)
+        XCTAssertEqual(ledger.nextBatch(now: start.addingTimeInterval(hour)),
+                       WatchLedgerBatch(indices: [], newGaps: [], finishes: false))
+    }
+
+    func testSettledIndicesNeedNoAudio() {
+        // A recording reopened after its manifest was gone: chunks 0-2 are already text.
+        var ledger = WatchCaptureLedger(recordingID: id, startedAt: start, at: start)
+        ledger.receive(WatchChunkMetadata(recordingID: id, index: 3, startOffset: 1_000, duration: 300, isLast: true,
+                                          startedAt: start, watchBuild: "28"), at: start)
+        ledger.settle(below: 3)
+        ledger.settle(below: 1)
+        XCTAssertEqual(ledger.settledBelow, 3)
+        XCTAssertEqual(ledger.nextBatch(now: start.addingTimeInterval(48 * hour)),
+                       WatchLedgerBatch(indices: [3], newGaps: [], finishes: true))
+        XCTAssertFalse(ledger.receive(chunk(2), at: start), "Settled audio is not taken again")
     }
 
     func testMarkTranscribedReturnsOnlyWhollyCoveredChunks() {
@@ -153,12 +214,10 @@ final class WatchCaptureLedgerTests: XCTestCase {
         XCTAssertFalse(ledger.receive(chunk(0), at: later))
     }
 
-    func testChunksBeforeWhatWasAlreadyTranscribedAreSettled() {
-        // A recording reopened after it finished: the phone already holds text through 900 s.
+    func testChunksInsideTextAlreadySavedAreNotTakenAgain() {
         var ledger = WatchCaptureLedger(recordingID: id, startedAt: start, at: start)
         ledger.receive(chunk(3, isLast: true), at: start)
         XCTAssertEqual(ledger.markTranscribed(through: 900), [])
-        XCTAssertEqual(ledger.nextBatch(now: start), WatchLedgerBatch(indices: [3], newGaps: [], finishes: true))
         XCTAssertFalse(ledger.receive(chunk(1), at: start), "Audio already transcribed is not taken again")
         // A redelivered chunk wholly inside the transcribed time is marked done, so its audio can go.
         var redelivered = WatchCaptureLedger(recordingID: id, startedAt: start, at: start)

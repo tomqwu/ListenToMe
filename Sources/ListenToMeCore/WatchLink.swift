@@ -180,10 +180,17 @@ public struct PhoneStatusTracker: Equatable, Sendable {
 
     public init() {}
 
+    /// Whether something the phone made at `stamp` is no older than the status shown. Unstamped
+    /// (an older phone build) counts as current.
+    public func isCurrent(_ stamp: TimeInterval?) -> Bool {
+        guard let stamp, let current = self.stamp else { return true }
+        return stamp >= current
+    }
+
     /// Shows `status` unless it is older than the one shown. An unstamped status is always shown.
     @discardableResult
     public mutating func apply(_ status: PhoneRecorderStatus, stamp: TimeInterval?) -> Bool {
-        if let stamp, let current = self.stamp, stamp < current { return false }
+        guard isCurrent(stamp) else { return false }
         self.status = status
         if let stamp { self.stamp = stamp }
         return true

@@ -38,6 +38,13 @@ public struct WatchCaptureLedger: Codable, Equatable, Sendable {
     public private(set) var failure: String?
     /// Runs of chunks written off as missing; the conversation already carries their note.
     public private(set) var notedGaps: [ClosedRange<Int>] = []
+    /// Indices below this are already in the conversation: a recording reopened after its audio
+    /// and manifest were gone, whose earlier chunks this ledger never saw.
+    public private(set) var settledBelow = 0
+    /// The conversation holds everything and says so. The manifest is kept as a tombstone, so a
+    /// chunk that arrives later (Continue after an interruption, or the watch sending one again) is
+    /// recognized instead of starting over; such a chunk reopens the recording.
+    public private(set) var completed = false
 
     public init(recordingID: UUID, startedAt: Date, at time: Date) {
         self.recordingID = recordingID
@@ -46,10 +53,11 @@ public struct WatchCaptureLedger: Codable, Equatable, Sendable {
     }
 
     /// Files a delivered chunk. Returns `false`, changing nothing, for a chunk already known, one
-    /// already written off as missing, or one whose audio lies wholly inside text already saved.
+    /// already written off or settled, or one whose audio lies wholly inside text already saved.
     @discardableResult
     public mutating func receive(_ chunk: WatchChunkMetadata, at time: Date) -> Bool {
         guard chunk.recordingID == recordingID, self.chunk(chunk.index) == nil, !isNotedGap(chunk.index),
+              chunk.index >= settledBelow,
               chunk.startOffset + chunk.duration > transcribedThrough + Self.tolerance else { return false }
         let entry = Chunk(index: chunk.index, startOffset: chunk.startOffset, duration: chunk.duration,
                           state: .received)
@@ -58,21 +66,25 @@ public struct WatchCaptureLedger: Codable, Equatable, Sendable {
         // chunk moves its end.
         if chunk.isLast { lastIndex = max(lastIndex ?? chunk.index, chunk.index) }
         lastActivity = time
+        completed = false
         return true
     }
 
-    /// The watch's note that a recording ended without a last chunk.
+    /// The watch's note that a recording ended without a last chunk. One that names nothing beyond
+    /// what a completed recording already holds changes nothing visible.
     public mutating func receiveEnd(_ end: WatchRecordingEnd, at time: Date) {
         guard end.recordingID == recordingID else { return }
+        if completed, end.lastIndex <= highestIndex { return }
         lastIndex = max(lastIndex ?? end.lastIndex, end.lastIndex)
         endedUnexpectedly = endedUnexpectedly || end.unexpected
         lastActivity = time
+        completed = false
     }
 
     /// The chunks to transcribe now, in order, and the gaps to note before them.
     public func nextBatch(now: Date) -> WatchLedgerBatch {
         let nothing = WatchLedgerBatch(indices: [], newGaps: [], finishes: false)
-        guard failure == nil else { return nothing }
+        guard failure == nil, !completed else { return nothing }
         let timedOut = now.timeIntervalSince(lastActivity) >= Self.gapTimeout
         let highest = highestIndex
         var indices: [Int] = []
@@ -93,9 +105,10 @@ public struct WatchCaptureLedger: Codable, Equatable, Sendable {
                 index = last + 1
             }
         }
-        // Every index is accounted for. The recording is over when the watch named its last chunk,
-        // or when it has been silent for the whole timeout.
-        let finishes = highest >= 0 && (lastIndex != nil || timedOut)
+        // Every index is accounted for. The recording is over when the watch's last chunk is the
+        // highest one received (a chunk after it is Continue, still going), or when the watch has
+        // been silent for the whole timeout.
+        let finishes = highest >= 0 && ((lastIndex ?? -1) >= highestReceived || timedOut)
         return WatchLedgerBatch(indices: indices, newGaps: gaps, finishes: finishes)
     }
 
@@ -118,14 +131,22 @@ public struct WatchCaptureLedger: Codable, Equatable, Sendable {
         return covered
     }
 
+    /// Every index below `index` is already in the conversation (see `settledBelow`).
+    public mutating func settle(below index: Int) {
+        settledBelow = max(settledBelow, index)
+    }
+
+    /// The conversation now holds the whole recording; nothing is due until another chunk arrives.
+    public mutating func markCompleted() { completed = true }
+
     public mutating func markFailed(_ reason: String) { failure = reason }
 
     public mutating func clearFailure() { failure = nil }
 
-    /// The watch named the last chunk and every chunk up to it (and any after it) is transcribed or
-    /// written off.
+    /// The watch's last chunk is the highest one received, and every chunk up to it is transcribed
+    /// or written off.
     public var isFinished: Bool {
-        guard lastIndex != nil else { return false }
+        guard let lastIndex, lastIndex >= highestReceived else { return false }
         return (0...highestIndex).allSatisfy(isSettled)
     }
 
@@ -140,20 +161,19 @@ public struct WatchCaptureLedger: Codable, Equatable, Sendable {
 
     // MARK: Helpers
 
-    private var highestIndex: Int { max(chunks.last?.index ?? -1, lastIndex ?? -1) }
+    private var highestReceived: Int { chunks.last?.index ?? -1 }
+
+    private var highestIndex: Int { max(highestReceived, lastIndex ?? -1) }
 
     private func chunk(_ index: Int) -> Chunk? { chunks.first { $0.index == index } }
 
     private func isNotedGap(_ index: Int) -> Bool { notedGaps.contains { $0.contains(index) } }
 
-    /// Nothing is left to do for `index`: its chunk is transcribed, it was written off, or it is
-    /// missing but the next chunk that did arrive starts within text already saved (a recording
-    /// reopened after it finished, whose earlier audio is long gone).
+    /// Nothing is left to do for `index`: its chunk is transcribed, it was written off, or it was
+    /// already in the conversation when this ledger began.
     private func isSettled(_ index: Int) -> Bool {
         if let chunk = chunk(index) { return chunk.state == .transcribed }
-        if isNotedGap(index) { return true }
-        guard let next = chunks.first(where: { $0.index > index }) else { return false }
-        return next.startOffset <= transcribedThrough + Self.tolerance
+        return index < settledBelow || isNotedGap(index)
     }
 }
 

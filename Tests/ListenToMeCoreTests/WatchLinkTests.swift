@@ -145,6 +145,11 @@ final class WatchLinkTests: XCTestCase {
         XCTAssertTrue(tracker.apply(status(.stopping), stamp: nil), "An unstamped status is always shown")
         XCTAssertEqual(tracker.status, status(.stopping))
         XCTAssertEqual(tracker.stamp, 30)
+        // Replies that carry no status (busy, open the iPhone app) are judged by the same stamp.
+        XCTAssertFalse(tracker.isCurrent(29))
+        XCTAssertTrue(tracker.isCurrent(30))
+        XCTAssertTrue(tracker.isCurrent(nil))
+        XCTAssertTrue(PhoneStatusTracker().isCurrent(1))
     }
 
     // MARK: Chunk metadata and end marker (Slice 2)
