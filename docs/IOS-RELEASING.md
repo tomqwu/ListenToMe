@@ -148,8 +148,9 @@ In `project.yml`, keep the app and share extension's `MARKETING_VERSION` and `CU
 identical. The `ListenToMeWatch` target keeps the same version and build as the app and share
 extension, and every archive runs **without** `WATCH_EMBED` until the
 [#181](https://github.com/tomqwu/ListenToMe/issues/181) train: `scripts/ios-testflight.sh` refuses an
-archive that contains `ListenToMeIOS.app/Watch/`. Choose a build number not already accepted by App Store Connect. Update the matching
-`metadata/ios/en-CA/what-to-test-<version>.txt` and `docs/IOS.md`. Merge source changes after CI passes.
+archive that contains `ListenToMeIOS.app/Watch/`. Choose a build number not already accepted by App
+Store Connect. Update the matching `metadata/ios/en-CA/what-to-test-<version>.txt` and `docs/IOS.md`.
+Merge source changes after CI passes.
 Documentation-only follow-ups do not require a new binary. Do not bump the macOS version for an iOS-only release.
 
 ## 2. Archive the merged source
