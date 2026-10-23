@@ -13,6 +13,7 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased since 1.12.0 (29))
 
+- Summaries can use any OpenAI-compatible server you enter — LM Studio, vLLM, llama.cpp, Ollama's /v1 API or OpenRouter (Settings → Summary provider). Settings says "your server" for this device or your network and "may leave this device" otherwise; the optional key stays in the Keychain, is sent only to that server and is removed when you change servers. Test this model on the Quick role checks the Auto format and pauses Auto with a reason if the model cannot follow it. (#52)
 - Apple Watch companion, remote Start/Stop for the iPhone recorder (not yet shipped; ships with watch recording on the #181 train). (#181)
 - iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
 - Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
@@ -34,6 +35,7 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## macOS (unreleased since 1.4.4)
 
+- New AI mode **OpenAI-compatible**: point the panes at LM Studio, vLLM, llama.cpp, Ollama's /v1 API or OpenRouter with an optional Keychain key bound to that server; pane pickers list its /v1/models; labelled "your server" or "may leave this device", never local; redirects are not followed. Plain http to `.local` names now works. (#52)
 - Mic recovers from input-device changes and sleep/wake; a denied microphone is detected before Listen. (#107, #110)
 - Ollama's own error text on HTTP failures; Apple Intelligence prompts bounded with a visible notice. (#118, #119)
 - Automatic reviews survive notes typing, never overwrite a fresh manual answer, and use size-scaled deadlines. (#111, #115, #117)

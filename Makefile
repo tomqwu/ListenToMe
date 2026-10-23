@@ -50,8 +50,10 @@ e2e: build
 		awk -F' = ' '/ BUILT_PRODUCTS_DIR =/{d=$$2} / FULL_PRODUCT_NAME =/{p=$$2} END{print d"/"p}')"; \
 	test -d "$$APP" && echo "e2e: app bundle present ($$APP)" || { echo "e2e: app bundle missing"; exit 1; }; \
 	echo "e2e: LLM contract model = $$MODEL"; \
-	LTM_E2E=1 LTM_E2E_MODEL="$$MODEL" swift test --filter OllamaContractE2ETests; \
-	echo "e2e checks passed (build + app bundle + real Ollama LLM contract: $$MODEL)"
+	LTM_E2E=1 LTM_E2E_MODEL="$$MODEL" swift test --filter OllamaContractE2ETests && \
+	echo "e2e: OpenAI-compatible contract via Ollama's /v1 API" && \
+	LTM_E2E=1 LTM_E2E_MODEL="$$MODEL" swift test --filter OpenAICompatibleContractE2ETests && \
+	echo "e2e checks passed (build + app bundle + real Ollama and OpenAI-compatible LLM contracts: $$MODEL)"
 
 # Build, optionally sign+notarize, and package a distributable .dmg into dist/.
 # Reads signing/notary credentials from the environment; degrades to an UNSIGNED

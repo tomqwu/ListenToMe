@@ -10,7 +10,10 @@ final class AIHardeningTests: XCTestCase {
         }
         XCTAssertTrue(ModelPrivacy.isVerifiedLocal(Data(
             #"{"details":{"format":"gguf"},"model_info":{"architecture":"qwen"}}"#.utf8)))
-        XCTAssertEqual(AIProcessingMode.allCases.map(\.label).count, 4)
+        XCTAssertEqual(AIProcessingMode.allCases.map(\.label).count, 5)
+        XCTAssertEqual(AIProcessingMode(rawValue: "openai"), .openAI)
+        XCTAssertFalse(AIProcessingMode.openAI.label.lowercased().contains("local"),
+                       "An OpenAI-compatible server is never labelled local (issue #52)")
     }
 
     func testInBandErrorPreservesPartialTextAndThrows() async {

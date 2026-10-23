@@ -37,7 +37,13 @@ Auto starts paused there until Ollama is selected. Existing explicit provider/mo
 preserved on both platforms. iOS uses the configured Ollama connection — Ollama Cloud, or a server
 the user entered. Apple Intelligence is available for manual summaries on supported devices.
 Selecting Apple pauses Auto with an explanation; it never silently routes speech to Cloud.
-The JSON decision contract above therefore applies to Ollama-backed reads only. A manual Quick
+OpenAI-compatible servers (#52) get the same evaluator request and the same strict decision contract
+as Ollama (`OpenAICompatibleProvider.requestBody` maps `quickEvaluation` to temperature 0 and 3,072
+`max_tokens`). Auto is gated per provider: on macOS `ProviderSettings.automaticReviewUnavailableReason`
+pauses it until a server is set; on iOS it also pauses once **Test this model** shows the Quick model
+breaks the contract (`MobileOpenAISettings.automaticQuickReason`). A model that breaks it without being
+tested fails visibly through the reader and keeps the previous output — never silently.
+The JSON decision contract above therefore applies to Ollama-backed and OpenAI-compatible reads only. A manual Quick
 Summary on Apple Intelligence uses `QuickSummaryContext.manualProseInstructions` and
 `proseSummary(_:)` instead: the on-device model is asked for the displayed bullets in prose rather
 than for the evaluator envelope it cannot be held to, and both platforms share one Apple transport

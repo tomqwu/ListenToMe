@@ -3,14 +3,18 @@ import Security
 
 @MainActor
 enum MobileKeychain {
-    private static let query: [CFString: Any] = [
-        kSecClass: kSecClassGenericPassword,
-        kSecAttrService: "com.tomwu.ListenToMe.ios",
-        kSecAttrAccount: "ollama"
-    ]
+    /// The Ollama Cloud key. Each credential has its own account, so no key is ever sent to
+    /// another provider's server.
+    static let ollamaAccount = "ollama"
+    /// The OpenAI-compatible server key (issue #52), bound to one server origin by `MobileOpenAISettings`.
+    static let openAIAccount = "openai-compatible"
 
-    static func read() throws -> String {
-        var request = query
+    private static func query(_ account: String) -> [CFString: Any] {
+        [kSecClass: kSecClassGenericPassword, kSecAttrService: "com.tomwu.ListenToMe.ios", kSecAttrAccount: account]
+    }
+
+    static func read(account: String = ollamaAccount) throws -> String {
+        var request = query(account)
         request[kSecReturnData] = true
         request[kSecMatchLimit] = kSecMatchLimitOne
         var result: CFTypeRef?
@@ -21,18 +25,19 @@ enum MobileKeychain {
         return key
     }
 
-    static func save(_ key: String) throws {
+    static func save(_ key: String, account: String = ollamaAccount) throws {
+        let item = query(account)
         if key.isEmpty {
-            let status = SecItemDelete(query as CFDictionary)
+            let status = SecItemDelete(item as CFDictionary)
             guard status == errSecSuccess || status == errSecItemNotFound else { throw failure(status) }
             return
         }
         let values: [CFString: Any] = [kSecValueData: Data(key.utf8),
                                      kSecAttrAccessible: kSecAttrAccessibleWhenUnlockedThisDeviceOnly]
-        let status = SecItemUpdate(query as CFDictionary, values as CFDictionary)
+        let status = SecItemUpdate(item as CFDictionary, values as CFDictionary)
         if status == errSecSuccess { return }
         guard status == errSecItemNotFound else { throw failure(status) }
-        let added = SecItemAdd(query.merging(values) { _, new in new } as CFDictionary, nil)
+        let added = SecItemAdd(item.merging(values) { _, new in new } as CFDictionary, nil)
         guard added == errSecSuccess else { throw failure(added) }
     }
 

@@ -4,7 +4,8 @@ import ListenToMeCore
 
 @MainActor @Observable
 final class MobileAISettings {
-    enum Provider: String, CaseIterable { case apple, ollama }
+    /// `openAI` is any OpenAI-compatible `/v1/chat/completions` server the user entered (issue #52).
+    enum Provider: String, CaseIterable { case apple, ollama, openAI = "openai" }
     var provider: Provider {
         didSet {
             UserDefaults.standard.set(provider.rawValue, forKey: "mobileAIProvider")
@@ -44,6 +45,8 @@ final class MobileAISettings {
     }
     /// Long-lived request transports, shared with the speech-correction client.
     @ObservationIgnored let transports = MobileTransports()
+    /// The OpenAI-compatible server, its key, catalog and per-role models (issue #52).
+    let openAI = MobileOpenAISettings()
     @ObservationIgnored var quickSettingsChanged: (() -> Void)?
     @ObservationIgnored var correctionSettingsChanged: (() -> Void)?
     var models: [OllamaCloudModel] = [] {
@@ -91,6 +94,7 @@ final class MobileAISettings {
            let cached = try? JSONDecoder().decode([OllamaCloudModel].self, from: data) { models = cached }
         hasKey = (try? MobileKeychain.read().isEmpty) == false
         resolveRoleModels()
+        openAI.changed = { [weak self] in self?.quickSettingsChanged?() }
     }
 
     @discardableResult
@@ -206,6 +210,7 @@ final class MobileAISettings {
     }
 
     func selectedModel(for mode: MobileSummaryMode) -> String {
+        if provider == .openAI { return openAI.selectedModel(for: mode) }
         switch mode {
         case .summary: return model
         case .quick: return quickModel
@@ -216,7 +221,8 @@ final class MobileAISettings {
     static func isFlash(_ name: String) -> Bool { name.lowercased().contains("flash") }
 
     func models(for role: MobileSummaryMode) -> [OllamaCloudModel] {
-        role == .deep ? models.filter { !Self.isFlash($0.name) } : models
+        if provider == .openAI { return openAI.models.map { OllamaCloudModel(name: $0) } }
+        return role == .deep ? models.filter { !Self.isFlash($0.name) } : models
     }
 
     func resolveRoleModels() {
@@ -240,6 +246,7 @@ final class MobileAISettings {
     }
 
     func selectModel(_ value: String, for mode: MobileSummaryMode) {
+        if provider == .openAI { openAI.selectModel(value, for: mode); return }
         guard mode != .deep || !Self.isFlash(value) else {
             status = "Deep Summary needs a full model. Flash models are available for Quick Summary."
             return
@@ -254,6 +261,7 @@ final class MobileAISettings {
     var availability: String? { availability(for: .summary) }
 
     func availability(for mode: MobileSummaryMode) -> String? {
+        if provider == .openAI { return openAI.availability(for: mode) }
         let model = selectedModel(for: mode)
         if mode == .deep && (model.isEmpty || Self.isFlash(model)) { return "Choose a full model for Deep Summary." }
         if !hasKey && !usesCustomEndpoint { return "Add your Ollama API key in Settings." }
@@ -264,7 +272,8 @@ final class MobileAISettings {
         return nil
     }
 
-    func client(for mode: MobileSummaryMode = .summary) throws -> OllamaProvider {
+    func client(for mode: MobileSummaryMode = .summary) throws -> any LLMProvider {
+        if provider == .openAI { return try openAI.client(for: mode, transports: transports) }
         let model = selectedModel(for: mode)
         if mode == .deep && (model.isEmpty || Self.isFlash(model)) {
             throw RecordingError.message("Choose a full model for Deep Summary. Flash models cannot be used for this role.")
@@ -290,6 +299,7 @@ final class MobileAISettings {
         guard !testing else { return }
         testing = true
         defer { testing = false }
+        if provider == .openAI, mode == .quick { await testQuickContract(); return }
         do {
             var response = ""
             for try await delta in try client(for: mode).stream(LLMRequest(system: "Reply briefly.",
@@ -297,7 +307,7 @@ final class MobileAISettings {
                 response += delta
                 guard response.count < 10_000 else { throw RecordingError.message("Connection test response was too large.") }
             }
-            status = "Connection verified: \(selectedModel(for: mode)) at \(endpointDescription) "
+            status = "Connection verified: \(selectedModel(for: mode)) at \(summaryEndpointDescription) "
                 + "returned a complete response."
         } catch { status = "Connection test failed: \(Self.errorMessage(error))" }
     }

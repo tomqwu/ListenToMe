@@ -6,9 +6,11 @@ not a claim that the released app is broken. Do not duplicate the candidate list
 
 ## Product constraints
 
-Transcription stays on-device. AI uses explicit Local only / Cloud / AI off modes; adding a key
-must not silently change routing. The released backend is Ollama. Any proposed compatible-endpoint
-support must preserve these guarantees, including local relays and redirects, before it can ship.
+Transcription stays on-device. AI uses explicit Local only / Apple Intelligence / Cloud /
+OpenAI-compatible / AI off modes; adding a key must not silently change routing. OpenAI-compatible
+servers (#52) are never treated as local — a loopback or LAN address is "your server", anything else
+"may leave this device" — redirects are never followed, and a key is bound to the server it was saved
+for.
 
 ## Shipped through 1.3.2
 
@@ -30,7 +32,8 @@ See [the September triage](reviews/2026-09-10/backlog-triage.md) for the disposi
   ([#181](https://github.com/tomqwu/ListenToMe/issues/181); design and decisions in
   [the Apple Watch recording spec](superpowers/specs/2026-10-22-apple-watch-recording-design.md)).
 - Cloud accounts, team workspaces, and public sharing links.
-- Per-vendor AI SDK integrations; the current backend is Ollama.
+- Per-vendor AI SDK integrations; backends are Ollama, Apple Intelligence and the generic
+  OpenAI-compatible `/v1/chat/completions` protocol.
 
 The standalone iPhone/iPad app is in scope at the maintainer's request. What it is for, and what it
 deliberately leaves to macOS, is stated once in

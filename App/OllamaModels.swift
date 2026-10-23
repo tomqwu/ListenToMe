@@ -49,6 +49,8 @@ enum OllamaModels {
     struct Discovery {
         var names: [String] = []
         var verifiedLocal: Set<String> = []
+        /// Why the list is empty, when the route can say (OpenAI-compatible servers, issue #52).
+        var problem: String?
     }
 
     /// Installed models that can chat (capabilities include "completion").

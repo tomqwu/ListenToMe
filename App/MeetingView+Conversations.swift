@@ -109,7 +109,7 @@ extension MeetingView {
                     ? (session.isPreparing ? "Preparing…"
                        : (recordingStartedAt == nil ? "Starting…" : "Recording \(elapsedLabel)"))
                     : "Ready"))
-                Text(ProviderSettings.aiMode.label)
+                Text(ProviderSettings.aiModeLabel)
             }
             HStack(alignment: .top, spacing: 16) {
                 // A dead channel must be visible: the rail still says REC and the elapsed timer

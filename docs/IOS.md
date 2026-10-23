@@ -43,6 +43,7 @@ this table in the same PR, and never fork a copy into `App/` or `iOS/`.
 | `SessionSearch` — History search and its matching rules | `App/SessionSearchView.swift`, `App/MeetingView.swift` | `MobileHistoryView` via `MobileSession` |
 | `AppleIntelligenceProvider` (`SharedPlatform/`) — on-device transport and its failure wording | `App/MeetingView.swift` | `MobileSession`, `MobileAISettings` |
 | `OllamaProvider`, `LLMRequest` / `ChatMessage`, `OllamaGenerationOptions` | `App/MeetingView.swift` | `MobileAISettings.client(for:)` |
+| OpenAI-compatible servers (#52): `OpenAICompatibleProvider` (stream contract), `OpenAICompatibleEndpoint` (validation, plain-`http` rule, "your server" / "may leave this device" labels, key origin), `OpenAICompatibleCatalog` (`/v1/models`) | `App/OpenAICompatibleSettings.swift` | `MobileOpenAISettings`, `MobileAISettings.client(for:)` |
 
 The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembles pane prompts with
 `PromptBuilder`, iOS with `MobileSummaryMode.instructions`, and both append the same
@@ -53,9 +54,10 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 | Capability | macOS | iOS |
 | --- | --- | --- |
 | Capture | Microphone **and** the other participants' system audio via ScreenCaptureKit (`App/DualChannelCapture.swift`), labeled You / Others | This device's microphone only; lines are labeled **Microphone** unless speaker identification names them; foreground only |
-| Default AI provider | Explicit AI mode — Local only, Apple Intelligence, Cloud, or AI off — defaulting to a local Ollama model | A fresh install uses **Apple Intelligence on-device** when it is available, otherwise falls back to Ollama and names the reason (`MobileAISettings.fallbackExplanation`) |
+| Default AI provider | Explicit AI mode — Local only, Apple Intelligence, Cloud, OpenAI-compatible, or AI off — defaulting to a local Ollama model | A fresh install uses **Apple Intelligence on-device** when it is available, otherwise falls back to Ollama and names the reason (`MobileAISettings.fallbackExplanation`) |
 | Ollama endpoint | The local daemon (`localhost:11434`) or Ollama Cloud | Ollama Cloud, or a server you run and address yourself (`.local`/loopback for plain `http`); a saved cloud key is never sent to another host |
-| Per-role models | A picker per pane in the status rail, over local and cloud models, auto-picked local-first (`ModelRanking`) | Settings → Model role for Summary / Quick / Deep (`MobileRoleModelView`), Ollama only; Flash models are reserved for Quick and correction and refused for Deep |
+| OpenAI-compatible server (#52) | AI mode **OpenAI-compatible**; server URL and optional key in Settings; Auto runs and a model that breaks the Quick JSON contract shows the reader's failure in the Quick pane | Summary provider **OpenAI-compatible**; **Test this model** on the Quick role checks the JSON contract and a failed check pauses Auto with the reason (`MobileOpenAISettings.automaticQuickReason`). Speech correction stays on Ollama |
+| Per-role models | A picker per pane in the status rail, over local and cloud models, auto-picked local-first (`ModelRanking`); on the OpenAI-compatible route, the server's `/v1/models` list, none verified local | Settings → Model role for Summary / Quick / Deep (`MobileRoleModelView`), from Ollama or the OpenAI-compatible server's `/v1/models`; on Ollama, Flash models are reserved for Quick and correction and refused for Deep |
 | Local-model enforcement | `ModelPrivacy` / `localOnly` verifies downloaded weights before every request | Not applicable — on-device here means Apple Intelligence; iOS reaches Ollama only over the network |
 | Speaker identification | Optional on-device diarization of the Others channel (and optionally the microphone) with naming; line labels need WhisperKit timestamps | On by default, can be turned off (**Settings → Speakers → Identify speakers**): FluidAudio diarizes the one microphone on-device, lines become **Speaker 1, 2…** by SpeechAnalyzer's audio time ranges, and **Notes → Speakers** renames them. Trailing-window passes while recording plus a final pass on Stop, foreground only; a line no speaker covers for at least 30% of its length keeps **Microphone** |
 | Presets and reference context | Use-case presets (`PresetCatalog`) and file/folder reference context (`ReferenceBuilder`, `FileContextLoader`) | Not today. Attachments instead: extracted text is appended to Notes, so it reaches the model inside `<transcript>`, not a `<reference>` block |
@@ -392,9 +394,11 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   conversation files are read on launch, after a delete and after a share-sheet import, not on
   every save.
 - On-device Apple Intelligence summaries by default, or Ollama summaries — Ollama Cloud, or an Ollama
-  server you run — with streamed results and secure API-key storage.
+  server you run — or an OpenAI-compatible server you enter (LM Studio, vLLM, llama.cpp, OpenRouter;
+  see [OpenAI-compatible server](#openai-compatible-server-lm-studio-openrouter-vllm)), with streamed
+  results and secure API-key storage.
   Apple Intelligence accepts up to 8,000 characters (`PromptBudget.appleIntelligenceCharacters`, the
-  shared cap macOS also clamps its Apple prompts to); Ollama accepts up to 60,000. Both caps are
+  shared cap macOS also clamps its Apple prompts to); Ollama and OpenAI-compatible servers accept up to 60,000. Both caps are
   charged on the *fenced* conversation, not the raw text. Oversized input is rejected explicitly. AI output needs review.
 - Prompts separate data from instructions (#140). The conversation a manual Summary, Deep or
   on-device Quick sends is wrapped in a `<transcript>` block, and every system prompt states that
@@ -504,8 +508,8 @@ turned off, the model not ready, or an unlisted reason reported by the system ("
 unavailable. Choose another provider in Settings."). That explanation is shown only while the device is actually on the
 unchosen Ollama fallback; once you pick a provider yourself it disappears, and it is never shown to
 someone who selected Apple Intelligence deliberately. A provider you have chosen before is always
-kept across updates — the default applies only when no choice has been saved. Automatic Quick Summary requires Ollama, so it
-stays unavailable with an explanation until you select Ollama yourself.
+kept across updates — the default applies only when no choice has been saved. Automatic Quick Summary requires Ollama or an
+OpenAI-compatible server, so it stays unavailable with an explanation until you select one yourself.
 
 On Apple Intelligence every AI output goes through `AppleIntelligenceProvider`, the same transport
 macOS uses. **Manual Quick Summary asks the on-device model for the bullets in prose** rather than for
@@ -574,6 +578,63 @@ entered); microphone audio continues to be transcribed on-device. Quick Summary 
 The last complete summary is preserved on HTTP errors, incomplete streams and cancellation. Streamed
 text is shown separately until completion. Backgrounding cancels an active summary request.
 
+## OpenAI-compatible server (LM Studio, OpenRouter, vLLM)
+
+Open **More → Settings → Summary provider → OpenAI-compatible server**. Enter the server's base URL and
+tap **Save server URL**: `http://your-mac.local:1234/v1` for LM Studio on your Mac, `http://your-server.local:8000/v1`
+for vLLM or llama.cpp, `http://your-mac.local:11434/v1` for Ollama's own OpenAI API, or
+`https://openrouter.ai/api/v1`. A bare origin gets `/v1`; a pasted `…/chat/completions` or `…/models` is
+trimmed to the base. A user name, password, query or fragment in the URL is refused rather than stored.
+Nothing is set by default, nothing is discovered, and the app never changes the server on its own.
+
+**Plain `http://` only for this device or a `.local` name.** `localhost`, loopback and link-local
+addresses and `.local` names are accepted over `http`, because App Transport Security's
+`NSAllowsLocalNetworking` exempts exactly those; every other host, including numeric private addresses
+such as `192.168.1.20`, Tailscale `100.x` addresses and public names, must use `https://` and is refused at
+save time with that explanation. This is stricter than the Ollama server field (tracked in #149).
+
+**Honest labels.** The address — never the model — decides the wording. Loopback, `.local`, RFC 1918,
+link-local and IPv6 unique-local addresses read **your server**; the picker says
+"OpenAI-compatible · your server" and the explanation adds that ListenToMe cannot verify where that
+server runs the model, since a local server can relay requests to a cloud service (Ollama's own `/v1` API
+serves `:cloud` models from `localhost`, for example). Every other address reads **may leave this
+device** and names the host. Nothing on this route is ever called on-device.
+
+**Key bound to its server.** The optional API key is stored in the Keychain
+(`WhenUnlockedThisDeviceOnly`, account `openai-compatible`, separate from the Ollama key) together with the
+`scheme://host:port` it was saved for. It is sent as a Bearer token only to that origin. Saving a server on
+another origin removes it, and a mismatched origin sends no `Authorization` header at all. The Ollama Cloud
+key is never sent to this server, and this key never to Ollama. Keys never appear in status or error text:
+an error body that echoes the key is masked.
+
+**Transport contract** (`OpenAICompatibleProvider`, shared with macOS): requests stream
+`/chat/completions` as server-sent events. `data:` chunks carry content, and reasoning (`reasoning_content`
+or `reasoning`) is kept apart from the answer as on Ollama. A response is accepted only when it ends with
+`data: [DONE]` or a `finish_reason`; a stream cut off before that is "ended before completion" and keeps
+the previous output. An `error` object inside the stream or a `finish_reason` of `error` fails the request
+with the server's message, as does a reasoning-only or empty answer. A non-2xx status shows the server's
+explanation, bounded to 8 KiB, with hints for 401/403, 404 and 429. Redirects are never followed: a 3xx
+fails with the target host named, so neither the transcript nor the key reaches a host you did not enter.
+A captive portal or other non-event-stream page is reported as such. Responses are capped at 16 MiB of
+stream and 1 MiB per line; cookies are neither stored nor sent; the transport is the same ephemeral
+per-role `URLSession` the Ollama path uses, rebuilt when the server or key changes.
+
+**Models.** **Refresh models from server** reads `/models`, keeps unique IDs in alphabetical order and
+fills empty roles only when the server lists exactly one model. Each role (Summary, Quick, Deep) keeps its
+own choice, separate from the Ollama choices; Flash/Pro rules do not apply. The list says nothing about
+where a model runs.
+
+**Auto and Quick need the JSON contract.** Manual Quick and Auto send the same evaluator request as on
+Ollama (temperature 0, 3,072 tokens) and accept only the strict `QuickSummaryDecision` envelope. Many small
+local models cannot hold it. Open the Quick model and tap **Test this model**: it sends a short synthetic
+exchange in the evaluator's shape. A pass says Auto and Quick can use the model; a failure says so and
+pauses Auto with "… did not follow the Quick Summary format" until you choose another Quick model or the
+test passes. Summary and Deep are plain chat and keep working. An untested model is allowed; if it breaks
+the contract the Quick pane shows "did not return a usable Quick Summary update" and keeps the previous
+summary.
+
+Speech correction is unchanged: it always uses the Ollama connection, shown separately in Settings.
+
 ## Build and run
 
 Use Xcode 26+, XcodeGen and an installed iOS 26 simulator runtime:
@@ -640,6 +701,10 @@ GitHub Actions builds both apps and runs the headless `ListenToMeCore` unit/inte
    Intelligence also tap **Generate** on Quick Summary after a few minutes of speech and confirm it
    publishes bullets rather than "did not return a usable Quick Summary update", and that a very long
    conversation reports the on-device context window in plain language.
+   OpenAI-compatible (#52): point the provider at LM Studio on your Mac as `http://your-mac.local:1234/v1`,
+   accept the local-network prompt, refresh models, run **Test this model** on Quick and summarize; confirm
+   the picker says "your server", that `http://192.168.…` is refused, and (optionally) that an `https://`
+   hosted endpoint reads "may leave this device" and that changing servers removes its key.
 7. Camera permission denial/retry, photo capture, photo library, Files and Apple Notes Send Copy imports. Preview, share originals, extract document text, remove attachments and delete/reopen conversations.
 8. Portrait/landscape iPhone and iPad layouts, large text and VoiceOver controls.
 9. Import a real meeting invite with attendees and a join link, then read Notes: attendee names appear
