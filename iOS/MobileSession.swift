@@ -76,6 +76,8 @@ final class MobileSession {
     var watchInboxProblems: [String] = []
     /// A chunk arrived while a drain ran; drain again when it ends.
     @ObservationIgnored var watchDrainRequested = false
+    /// The Apple Watch's own recording, from its application context (Slice 3); see `receiveWatchContext`.
+    var watchCaptureStatus: WatchCaptureStatus?
     private var manualQuickError: String?
     var quickSummaryError: String? { manualQuickError ?? quickReader.error }
     private var sourceImportID: String?
@@ -357,7 +359,6 @@ final class MobileSession {
         attachments = record.attachments ?? []; sourceImportID = record.sourceImportID
         segments = record.segments ?? []; partial = nil; message = nil
     }
-
 
     private func refreshHistory() {
         do {
@@ -736,7 +737,6 @@ extension MobileSession {
         history.sort { $0.date > $1.date }
     }
 }
-
 
 /// The share-extension inbox drain. Kept out of the class body so one unreadable batch's
 /// recovery path does not crowd the conversation state it operates on.

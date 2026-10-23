@@ -19,6 +19,8 @@ final class PhoneWatchLink: NSObject, WCSessionDelegate, WatchLinking {
     var commandHandler: (@MainActor (WatchCommand) async -> WatchReply)?
     /// Called on the main actor after a chunk or end marker was filed, so a foreground app can drain.
     var onInboxChanged: (@MainActor () -> Void)?
+    /// Called on the main actor with the watch's application context: whether it is recording.
+    var onWatchContext: (@MainActor ([String: Any]) -> Void)?
     private let session: WCSession
     /// Where delivered audio is filed, on the delegate queue, before the delivery call returns.
     nonisolated let inbox: WatchInbox
@@ -39,6 +41,11 @@ final class PhoneWatchLink: NSObject, WCSessionDelegate, WatchLinking {
         link.session.delegate = link
         link.session.activate()
         return link
+    }
+
+    /// The last application context the watch sent, for a scene attached after it arrived.
+    var receivedWatchContext: [String: Any] {
+        session.activationState == .activated ? session.receivedApplicationContext : [:]
     }
 
     func publish(_ status: PhoneRecorderStatus) {
@@ -74,7 +81,17 @@ final class PhoneWatchLink: NSObject, WCSessionDelegate, WatchLinking {
 
     nonisolated func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState,
                              error: (any Error)?) {
-        Task { @MainActor in self.sendLastStatus() }
+        let context = ReceivedContext(values: session.receivedApplicationContext)
+        Task { @MainActor in
+            self.sendLastStatus()
+            self.onWatchContext?(context.values)
+        }
+    }
+
+    /// The watch started or stopped recording. Only shown; never starts audio or transcription.
+    nonisolated func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
+        let context = ReceivedContext(values: applicationContext)
+        Task { @MainActor in self.onWatchContext?(context.values) }
     }
 
     nonisolated func sessionDidBecomeInactive(_ session: WCSession) {}
@@ -114,4 +131,10 @@ final class PhoneWatchLink: NSObject, WCSessionDelegate, WatchLinking {
 private struct MessageExchange: @unchecked Sendable {
     let message: [String: Any]
     let reply: ([String: Any]) -> Void
+}
+
+/// An application context from the watch, handed from the WatchConnectivity queue to the main actor.
+/// It holds property-list values only and is read once there.
+private struct ReceivedContext: @unchecked Sendable {
+    let values: [String: Any]
 }

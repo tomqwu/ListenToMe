@@ -192,3 +192,33 @@ final class MobileWatchRemoteTests: XCTestCase {
         XCTAssertEqual(received, [.stop])
     }
 }
+
+/// Slice 3: the iPhone shows when the Apple Watch itself is recording. It records nothing itself.
+extension MobileWatchRemoteTests {
+    func testWatchContextSetsTheRecordingLine() {
+        var made = 0
+        let session = MobileSession(storageDirectory: root, makeRecorder: { made += 1; return LifecycleTestRecorder() })
+        XCTAssertNil(session.watchCaptureStatus)
+        let recording = WatchCaptureStatus(state: .recording, startedAt: Date(timeIntervalSince1970: 1_000),
+                                           waitingRecordings: 1)
+        session.receiveWatchContext(WatchLink.context(for: recording))
+        XCTAssertEqual(session.watchCaptureStatus, recording)
+        XCTAssertEqual(WatchRemoteText.watchRecordingLine(session.watchCaptureStatus,
+                                                          now: Date(timeIntervalSince1970: 1_065)),
+                       "Apple Watch is recording · 01:05")
+
+        var future = WatchLink.context(for: WatchCaptureStatus(state: .idle, startedAt: nil, waitingRecordings: 0))
+        future["v"] = 2
+        session.receiveWatchContext(future)
+        XCTAssertEqual(session.watchCaptureStatus, recording, "Another protocol version changes nothing")
+        session.receiveWatchContext([:])
+        XCTAssertEqual(session.watchCaptureStatus, recording)
+
+        let idle = WatchCaptureStatus(state: .idle, startedAt: nil, waitingRecordings: 0)
+        session.receiveWatchContext(WatchLink.context(for: idle))
+        XCTAssertEqual(session.watchCaptureStatus, idle)
+        XCTAssertNil(WatchRemoteText.watchRecordingLine(session.watchCaptureStatus, now: Date()))
+        XCTAssertEqual(made, 0, "The phone records nothing while the watch records")
+        XCTAssertEqual(session.state, .idle)
+    }
+}

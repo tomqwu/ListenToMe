@@ -114,6 +114,18 @@ final class WatchCaptureStatusTests: XCTestCase {
         XCTAssertNil(WatchRemoteText.watchRecordingLine(nil, now: now))
     }
 
+    /// No watch recording outlasts the 3-hour cap, so a "recording" status older than that is stale
+    /// (the watch app was killed before it could publish idle) and is not shown.
+    func testWatchRecordingLineIsHiddenOnceItOutlastsTheCap() {
+        let startedAt = Date(timeIntervalSince1970: 0)
+        let status = WatchCaptureStatus(state: .recording, startedAt: startedAt, waitingRecordings: 0)
+        let atCap = startedAt.addingTimeInterval(WatchCapturePolicy.maximumDuration)
+        XCTAssertEqual(WatchRemoteText.watchRecordingLine(status, now: atCap), "Apple Watch is recording · 3:00:00")
+        let lastCheck = atCap.addingTimeInterval(WatchCapturePolicy.limitCheckInterval)
+        XCTAssertNotNil(WatchRemoteText.watchRecordingLine(status, now: lastCheck))
+        XCTAssertNil(WatchRemoteText.watchRecordingLine(status, now: lastCheck.addingTimeInterval(1)))
+    }
+
     func testWaitingText() {
         XCTAssertNil(WatchRemoteText.waitingText(0))
         XCTAssertNil(WatchRemoteText.waitingText(-1))
