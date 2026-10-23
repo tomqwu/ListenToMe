@@ -38,8 +38,7 @@ struct MobileSpeakerList: View {
         Section("Speakers") {
             if session.speakerList.isEmpty {
                 Text(session.speakers.enabled
-                     ? "Once the speaker models are ready, labels appear about 20 seconds into a recording and "
-                       + "are finished when you stop, so a short recording is labeled at Stop."
+                     ? "Labels appear about 20 seconds into a recording, and at Stop once the models are ready."
                      : "Turn on Identify speakers in Settings to label who said what.")
                     .font(.callout).foregroundStyle(.secondary)
             } else {
@@ -84,13 +83,14 @@ private struct MobileSpeakerNameField: View {
     }
 }
 
-/// The recording screen's one line about speaker labels while Identify speakers is on (#195), with
-/// Retry when the models failed or are not loaded.
+/// The recording screen's line about speaker labels (#195), under the title status, with Retry when the
+/// models failed or are not loaded. Shown only while it has news (`statusLineIsShown`); the steady
+/// states read "Speaker labels on" in the status above, so the workspace keeps its height.
 struct MobileSpeakerStatus: View {
     let session: MobileSession
 
     var body: some View {
-        if let line = session.speakers.statusLine {
+        if session.speakers.statusLineIsShown, let line = session.speakers.statusLine {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Label(line, systemImage: session.speakers.isUnavailable ? "person.2.slash" : "person.2.wave.2")
                     .font(.caption).foregroundStyle(MobileStyle.muted).lineLimit(3)

@@ -300,11 +300,15 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   recording needs them: when the setting is turned on, when the app comes to the foreground with it
   on, and at Start — never from Stop and never in the background. Recording never waits for them;
   a failed download leaves the status line saying so, with **Retry**, and recording continues.
-  **Settings → Speakers** shows the download, the ready state, or the failure with **Retry**. While
-  the setting is on, one line under the conversation title says what labels are doing ("preparing
-  models…", "ready", "appear about 20 s in and at Stop", "identifying speakers…", or "unavailable"
-  with **Retry**), and Status details lists the setting, whether the models are ready, the passes run
-  and the last speaker error. While recording, the audio the transcriber
+  **Settings → Speakers** shows the download, the ready state, or the failure with **Retry**. The
+  status under the conversation title reads "Speaker labels on" once the models are ready; while
+  they download, when labels are unavailable or the models are not loaded (both with **Retry**), or
+  after a skipped pass, a speaker line appears below it (`MobileSpeakers.statusLineIsShown`). Ready
+  and periodic-pass states add no line, so the workspace keeps its height. Status details lists the
+  setting, whether the models are ready, the passes run and the last speaker error. UI-test launches
+  substitute models that load at once and hear no voices (`LISTENTOME_SPEAKER_MODELS_FIXTURE`, DEBUG
+  simulator builds only), and the unit-test host substitutes models that never load, so no test
+  downloads them. While recording, the audio the transcriber
   accepted is copied into a 16 kHz buffer; about every 20 seconds (never sooner than the previous
   pass took) a pass re-analyzes only the audio since the last one plus a one-minute overlap
   (`SpeakerAnalysisPolicy`). Stop returns at once; a final pass then labels the last words while the
@@ -589,7 +593,7 @@ GitHub Actions builds both apps and runs the headless `ListenToMeCore` unit/inte
    without e-mail addresses, and the event link carries no `?pwd=`/`#` join secret.
 10. Speaker identification (#180, #195): on a fresh install, confirm **Settings → Speakers →
     Identify speakers** is on, and that **Settings → Speakers** shows the models downloading, then
-    ready, without recording; the line under the title reads "Speaker labels ready". Record about
+    ready, without recording; the status under the title reads "Microphone · Ready · Speaker labels on". Record about
     10 seconds of two voices and Stop: the lines are labeled. Separately, an offline first use shows
     "Speaker labels unavailable" with **Retry** (recording still works), and **Retry** works once
     online; Status details lists the speaker fields. Then record

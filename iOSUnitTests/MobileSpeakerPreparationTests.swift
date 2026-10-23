@@ -122,22 +122,27 @@ final class MobileSpeakerPreparationTests: MobileSpeakerTestCase {
         let session = makeSession()
         let speakers = session.speakers
         XCTAssertNil(speakers.statusLine, "Off: nothing to say")
+        XCTAssertFalse(speakers.statusLineIsShown)
 
         await diarizer.holdNextPrepare()
         speakers.enabled = true
         try await waitUntilHoldingPrepare()
         XCTAssertEqual(speakers.statusLine, "Speaker labels: preparing models…")
+        XCTAssertTrue(speakers.statusLineIsShown, "The download is news: its own line")
         XCTAssertFalse(speakers.showsRetry)
         await diarizer.releasePrepare()
         await speakers.preparation?.value
         XCTAssertEqual(speakers.statusLine, "Speaker labels ready")
+        XCTAssertFalse(speakers.statusLineIsShown, "Steady state: the status above says labels are on")
 
         try await recordTwoVoices(session)
         XCTAssertEqual(speakers.statusLine, "Speaker labels appear about 20 s in and at Stop")
+        XCTAssertFalse(speakers.statusLineIsShown)
         await diarizer.holdNext()
         let pass = Task { await session.runSpeakerPass() }
         try await waitUntilHolding()
         XCTAssertEqual(speakers.statusLine, "Speaker labels: identifying speakers…")
+        XCTAssertFalse(speakers.statusLineIsShown, "A periodic pass does not make the layout jump")
         await diarizer.release()
         _ = await pass.value
 
@@ -145,6 +150,7 @@ final class MobileSpeakerPreparationTests: MobileSpeakerTestCase {
         recorder.feedAudio(seconds: 5)
         await session.runSpeakerPass()
         XCTAssertEqual(speakers.statusLine, "Speaker labels unavailable: The Internet connection appears to be offline")
+        XCTAssertTrue(speakers.statusLineIsShown)
         XCTAssertTrue(speakers.showsRetry)
         await session.stop()
     }
@@ -153,6 +159,7 @@ final class MobileSpeakerPreparationTests: MobileSpeakerTestCase {
         UserDefaults.standard.set(true, forKey: MobileSpeakers.enabledKey)
         let session = makeSession()
         XCTAssertEqual(session.speakers.statusLine, "Speaker labels: models not loaded")
+        XCTAssertTrue(session.speakers.statusLineIsShown)
         XCTAssertTrue(session.speakers.showsRetry)
     }
 
@@ -164,6 +171,7 @@ final class MobileSpeakerPreparationTests: MobileSpeakerTestCase {
         await session.runSpeakerPass()
         let reason = SpeakerDiarizer.DiarizationError.notEnoughAudio.localizedDescription
         XCTAssertEqual(session.speakers.statusLine, "Speaker labels: a pass was skipped (\(reason))")
+        XCTAssertTrue(session.speakers.statusLineIsShown)
         await session.stop()
     }
 

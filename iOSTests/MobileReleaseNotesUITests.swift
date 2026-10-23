@@ -4,6 +4,7 @@ import XCTest
 final class MobileReleaseNotesUITests: XCTestCase {
     func testUpdateShowsVersionOnceAndChangelogCanBeReopened() {
         let app = XCUIApplication()
+        app.useSpeakerModelsFixture()
         app.launchArguments = ["-lastAcknowledgedReleaseBuild", "1.10.5-htusldgbcs4g"]
         app.launch()
         XCTAssertTrue(app.buttons["releaseNotesContinue"].waitForExistence(timeout: 5))
@@ -26,6 +27,7 @@ final class MobileReleaseNotesUITests: XCTestCase {
 
     func testLargeTextKeepsContinueReachableAndHistoryScrollable() {
         let app = XCUIApplication()
+        app.useSpeakerModelsFixture()
         app.launchArguments = ["-lastAcknowledgedReleaseBuild", "older",
                                "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
         app.launch()

@@ -14,6 +14,7 @@ struct MobileAutomaticSummaryFixture: View {
         let session = MobileSession(storageDirectory: root, summaryProvider: FixtureSummaryProvider(failFirst: failFirst),
                                     autoInterval: .seconds(2), makeRecorder: { recorder })
         session.title = "Live summary check"
+        session.prepareSpeakerModelsIfNeeded()   // as the app does at a foreground launch (#195)
         _recorder = State(initialValue: recorder)
         _session = State(initialValue: session)
     }

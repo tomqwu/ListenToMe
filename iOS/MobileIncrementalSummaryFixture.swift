@@ -14,6 +14,7 @@ struct MobileIncrementalSummaryFixture: View {
         let session = MobileSession(storageDirectory: root, summaryProvider: IncrementalFixtureProvider(slow: slow),
                                     makeRecorder: { recorder })
         session.title = "Delivery discussion"
+        session.prepareSpeakerModelsIfNeeded()   // as the app does at a foreground launch (#195)
         session.ai.provider = .ollama
         session.ai.models = [.init(name: "glm-5.3-flash"), .init(name: "glm-5.3")]
         session.ai.quickModel = "glm-5.3-flash"; session.ai.model = "glm-5.3"; session.ai.deepModel = "glm-5.3"

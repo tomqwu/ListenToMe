@@ -41,6 +41,14 @@ private struct UnitTestHostDiarizer: MobileSpeakerDiarizing {
     func prepareModels() async throws { throw SpeakerDiarizer.DiarizationError.modelsUnavailable(Self.reason) }
 }
 
+/// UI tests' speaker models: they load at once, download nothing and hear no voices, so the screens
+/// show the setting's default-on, models-ready state without a network request.
+private struct UITestFixtureDiarizer: MobileSpeakerDiarizing {
+    func diarize(samples: [Float]) async throws -> [DiarizedSegment] { [] }
+    func retryModelLoad() async {}
+    func prepareModels() async throws {}
+}
+
 /// On-device speaker identification for one shared microphone (issue #180), on unless the user turned
 /// it off. The models are prepared before the first recording needs them (#195): when the setting is
 /// turned on, at a foreground launch, and at Start — never from Stop and never in the background.
@@ -123,9 +131,14 @@ final class MobileSpeakers {
         enabled = defaults.object(forKey: Self.enabledKey) == nil || defaults.bool(forKey: Self.enabledKey)
     }
 
-    /// The app's diarizer: FluidAudio's, or an inert one while the app hosts unit tests.
+    /// The app's diarizer: FluidAudio's, or a stand-in that downloads nothing while the app hosts unit
+    /// tests or runs under UI tests.
     nonisolated static func deviceDiarizer() -> any MobileSpeakerDiarizing {
-        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil { return UnitTestHostDiarizer() }
+        let environment = ProcessInfo.processInfo.environment
+        if environment["XCTestConfigurationFilePath"] != nil { return UnitTestHostDiarizer() }
+        #if DEBUG && targetEnvironment(simulator)
+        if environment["LISTENTOME_SPEAKER_MODELS_FIXTURE"] == "1" { return UITestFixtureDiarizer() }
+        #endif
         return SpeakerDiarizer.excludingModelsFromBackup()
     }
 
@@ -314,6 +327,19 @@ final class MobileSpeakers {
                 return preparation == nil ? "Speaker labels: models not loaded" : "Speaker labels: preparing models…"
             }
             return isRunning ? "Speaker labels appear about 20 s in and at Stop" : "Speaker labels ready"
+        }
+    }
+
+    /// Whether the recording screen shows `statusLine` as its own line: while the models download, when
+    /// labels are unavailable or the models are not loaded (both with Retry), and after a skipped
+    /// pass. Ready and periodic-pass states are summed up as "Speaker labels on" in the status above,
+    /// so the line does not take workspace height or come and go every 20 seconds.
+    var statusLineIsShown: Bool {
+        guard enabled else { return false }
+        switch status {
+        case .preparing, .unavailable: return true
+        case .analyzing: return !modelsReady
+        case .idle: return lastError != nil || !modelsReady
         }
     }
 
