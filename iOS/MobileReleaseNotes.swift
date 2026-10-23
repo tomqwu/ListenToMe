@@ -48,6 +48,11 @@ enum MobileReleaseNotes {
         var id: String { version }
     }
     static let releases: [Release] = [
+        .init(version: "1.14.0", title: "Your cloud AI, your key", details: [
+            "Cloud AI: summarize with OpenAI, Claude, Gemini, DeepSeek, OpenRouter, Groq, Mistral or xAI Grok using your own key.",
+            "Each service keeps its own key in the Keychain and says plainly that it sends your transcript to that vendor.",
+            "You choose every model. Apple Intelligence stays the default, and audio never leaves this device."
+        ]),
         .init(version: "1.13.0", title: "Your notes, your languages, your server", details: [
             "Save to folder: each conversation becomes a Markdown note in a folder you pick, such as an Obsidian vault or iCloud Drive.",
             "Automatic language switches again when the language changes, and Undo goes back one switch.",
