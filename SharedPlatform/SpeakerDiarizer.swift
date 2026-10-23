@@ -2,10 +2,11 @@ import Foundation
 import FluidAudio
 import ListenToMeCore
 
-/// On-device speaker diarization of the `.others` (system-audio) channel via FluidAudio's CoreML
-/// Pyannote pipeline. Lazily prepares the models once (auto-downloaded on first use), runs the
-/// offline diarizer over 16 kHz mono samples, maps its segments to Core's pure `DiarizedSegment`,
-/// and returns a `SpeakerSummary`. An `actor` so the (non-Sendable, mutable) manager is isolated.
+/// On-device speaker diarization via FluidAudio's CoreML Pyannote pipeline — of the Mac's `.others`
+/// (system-audio) and optionally microphone channels, and of the iPhone/iPad microphone (#180).
+/// Shared by both app targets from `SharedPlatform/`. Lazily prepares the models once (auto-downloaded
+/// on first use), runs the offline diarizer over 16 kHz mono samples, maps its segments to Core's pure
+/// `DiarizedSegment`, and returns a `SpeakerSummary`. An `actor` so the (non-Sendable, mutable) manager is isolated.
 actor SpeakerDiarizer {
     /// FluidAudio expects 16 kHz mono; the diarizer needs at least a few seconds to be meaningful.
     private static let sampleRate = 16_000

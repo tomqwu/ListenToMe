@@ -34,7 +34,8 @@ final class SingleMicrophoneSpeakerTests: XCTestCase {
                        line(2, 3, name: "Speaker 2", id: "r1-2")]
         XCTAssertEqual(SpeakerLabeling.nextSpeakerNumber(after: labeled), 3)
         // Three renamed identities and no numbered label left still reserve three numbers.
-        let renamed = [line(0, 1, name: "Ann", id: "a"), line(1, 2, name: "Bo", id: "b"), line(2, 3, name: "Cy", id: "c")]
+        let renamed = [line(0, 1, name: "Ann", id: "a"), line(1, 2, name: "Bo", id: "b"),
+                       line(2, 3, name: "Cy", id: "c")]
         XCTAssertEqual(SpeakerLabeling.nextSpeakerNumber(after: renamed), 4)
         XCTAssertEqual(SpeakerLabeling.nextSpeakerNumber(after: [line(0, 1, name: "Speaker 7", id: "z")]), 8)
     }

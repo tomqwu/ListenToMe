@@ -1,9 +1,9 @@
 import Foundation
 import AVFoundation
 
-/// Thread-safe accumulator for the `.others` (system-audio) channel, resampled to 16 kHz mono Float
-/// — the format FluidAudio's Pyannote diarizer expects. `append` is called from the audio callback
-/// thread; `snapshot`/`reset` from the main actor. Accumulation is capped (~2 h @16 kHz) so a long
+/// Thread-safe accumulator for one diarized channel (the Mac's `.others` or microphone channel, or the
+/// iPhone/iPad microphone), resampled to 16 kHz mono Float — the format FluidAudio's Pyannote diarizer
+/// expects. `append` is called from the audio callback thread; `snapshot`/`reset` from the main actor. Accumulation is capped (~2 h @16 kHz) so a long
 /// session can never grow unbounded; once full it stops appending and flags `didTruncate`.
 final class SpeakerAudioBuffer: @unchecked Sendable {
     /// Target rate for the diarizer (16 kHz mono).
@@ -18,6 +18,9 @@ final class SpeakerAudioBuffer: @unchecked Sendable {
     private let lock = NSLock()
     /// Every block but the last holds exactly `blockSize` samples. Guarded by `lock`.
     private var blocks: [[Float]] = []         // guarded by `lock`
+    /// Leading blocks released by `discardAudio(before:)`. Sample indexes stay absolute: `blocks[0]`
+    /// starts at `discardedBlocks * blockSize`. Always 0 on macOS, which never discards. Guarded by `lock`.
+    private var discardedBlocks = 0
     private var total = 0                      // guarded by `lock`
     private var truncated = false              // guarded by `lock`
     /// Bumped on every `reset()`. Each capture captures the generation for ITS run; an append whose
@@ -105,6 +108,7 @@ final class SpeakerAudioBuffer: @unchecked Sendable {
     func reset() {
         lock.withLock {
             blocks.removeAll(keepingCapacity: false)
+            discardedBlocks = 0
             total = 0
             truncated = false
             offset = 0
@@ -133,15 +137,16 @@ final class SpeakerAudioBuffer: @unchecked Sendable {
     /// Total samples accumulated so far.
     var sampleCount: Int { lock.withLock { total } }
 
-    /// Accumulated 16 kHz samples from `fromSample` (rounded DOWN to a block boundary) to the end.
+    /// Accumulated 16 kHz samples from `fromSample` (rounded DOWN to a block boundary, and never before
+    /// what `discardAudio` released) to the end.
     ///
     /// Only block references are copied under the lock — O(blocks) regardless of session length — and
     /// the concatenation happens off the lock, so a periodic pass while recording never stalls the
     /// capture callback and never forces a copy-on-write of the whole session (issue #109).
     func snapshot(fromSample requested: Int = 0) -> Snapshot {
         let window: BlockWindow = lock.withLock {
-            let index = max(0, min(requested, total)) / Self.blockSize
-            return BlockWindow(blocks: Array(blocks.dropFirst(index)),
+            let index = max(discardedBlocks, max(0, min(requested, total)) / Self.blockSize)
+            return BlockWindow(blocks: Array(blocks.dropFirst(index - discardedBlocks)),
                                startSample: index * Self.blockSize, startOffset: offset)
         }
         var out = [Float]()
@@ -149,6 +154,23 @@ final class SpeakerAudioBuffer: @unchecked Sendable {
         for block in window.blocks { out.append(contentsOf: block) }
         return Snapshot(samples: out, startSample: window.startSample, startOffset: window.startOffset)
     }
+
+    /// Releases whole blocks that lie entirely before `sample`, keeping indexes absolute (a later
+    /// `snapshot` simply starts no earlier than what is retained). The block being filled is never
+    /// released. iOS calls this after each trailing-window pass, so a phone holds only the audio the
+    /// next pass can still need instead of the whole meeting (issue #180).
+    func discardAudio(before sample: Int) {
+        lock.withLock {
+            let limit = max(0, min(sample, total)) / Self.blockSize
+            let count = min(limit - discardedBlocks, blocks.count - 1)
+            guard count > 0 else { return }
+            blocks.removeFirst(count)
+            discardedBlocks += count
+        }
+    }
+
+    /// Samples still held in memory (everything not yet discarded).
+    var retainedSampleCount: Int { lock.withLock { total - discardedBlocks * Self.blockSize } }
 
     /// What `snapshot` takes under the lock: block references plus where they start. Concatenation
     /// happens after the lock is released.

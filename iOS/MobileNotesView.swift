@@ -29,6 +29,7 @@ struct MobileNotesView: View {
                         session.save(announce: false)
                     }.disabled(session.isSummarizing)
                 }
+                MobileSpeakerList(session: session)
                 Section("Add to this conversation") {
                     Button("Take photo", systemImage: "camera") { requestCamera() }
                     PhotosPicker(selection: $photo, matching: .images) { Label("Photo library", systemImage: "photo") }
