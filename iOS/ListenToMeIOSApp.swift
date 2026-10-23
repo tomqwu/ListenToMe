@@ -25,6 +25,8 @@ struct ListenToMeIOSApp: App {
                     // Also from the .active phase change; this covers a launch already active by now.
                     if scenePhase == .active { session.prepareSpeakerModelsIfNeeded() }
                 }
+                // The transcription languages this device supports, read once for Settings (issue #172).
+                .task { await SpeechLanguageCatalog.shared.load() }
                 .onOpenURL { session.importFile($0) }
                 .onChange(of: session.busy) { _, busy in
                     guard !busy else { return }
