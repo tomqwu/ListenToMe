@@ -1,13 +1,16 @@
 import Foundation
 
 public enum AIProcessingMode: String, CaseIterable, Sendable {
-    case off, local, apple, cloud
+    /// `openAI` is an OpenAI-compatible server the user entered (issue #52). It is never treated as
+    /// local: there is no metadata that could verify where such a server runs its model.
+    case off, local, apple, cloud, openAI = "openai"
     public var label: String {
         switch self {
         case .off: return "AI off — transcript only"
         case .local: return "Local Ollama models only"
         case .apple: return "Apple Intelligence — on this device"
         case .cloud: return "Ollama Cloud — sends transcript and context"
+        case .openAI: return "OpenAI-compatible server — sends transcript to the URL you set"
         }
     }
 }

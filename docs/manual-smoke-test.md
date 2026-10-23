@@ -204,6 +204,25 @@ tables behind them are covered by `CaptureRecoveryTests`.
    with named speakers (rename both speakers to long names). Ask Deep for **Action items**: the
    speaker labels count against the window too, so this must answer rather than fail.
 
+## OpenAI-compatible server (#52)
+
+Use LM Studio (or `ollama serve`, whose OpenAI API is `http://localhost:11434/v1`).
+
+1. **Explicit and labelled.** In Settings choose **OpenAI-compatible**. With the URL empty, Save and
+   confirm the panes say "Set your OpenAI-compatible server URL in Settings" and nothing is sent.
+   Enter `http://localhost:1234` and Save: the footer reads "OpenAI-compatible — your server at
+   localhost:1234", never "local" or "on-device", and **More → Refresh models** lists the server's models.
+   The panes stay unset ("Choose a model for each pane…") until you pick each one in the status rail;
+   switching back to **Local only** restores your earlier Ollama picks.
+2. **Plain http is refused off the local link.** Enter `http://192.168.1.20:1234/v1` and Save: Settings
+   shows the "Plain http:// is only allowed…" error and nothing is applied.
+3. **Answers and failures.** Ask Quick, Deep and Summary for answers; they stream. Stop the server and
+   ask again: the pane keeps its text and the banner says "Could not reach localhost:1234".
+4. **Key binding.** Save a key, then change the URL to another host: the key is removed (re-open
+   Settings and the key field is empty).
+5. **Auto.** Turn on Auto with a small model and speak: either the recap updates or the Quick pane says
+   "did not return a usable Quick Summary update" — never a silent stall.
+
 ## Enabled Screen Recording switch but capture is refused
 
 If the installed production app repeatedly returns ScreenCaptureKit `-3801` despite an enabled

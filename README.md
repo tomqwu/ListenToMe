@@ -44,7 +44,9 @@ differs from the device language, switches and transcribes the recording again; 
 a minute while people talk, so a meeting that changes language part-way switches too (its small Whisper
 model downloads once from `huggingface.co`; audio never leaves the device). Choose on-device Apple
 Intelligence — the default on capable devices — or Ollama: Ollama Cloud with your own key, or an
-Ollama server you run on your own network. Presets, reference files, audio-file import and WhisperKit
+Ollama server you run on your own network — or any OpenAI-compatible server you enter (LM Studio,
+vLLM, llama.cpp, OpenRouter), labelled "your server" on your own network and "may leave this device"
+elsewhere. Presets, reference files, audio-file import and WhisperKit
 transcription are macOS-only.
 See [iOS setup, validation and distribution](docs/IOS.md).
 
@@ -61,7 +63,8 @@ make ios-test
 
 - **On-device & private.** Transcription runs locally via Apple SpeechAnalyzer, and AI help can run
   entirely against a local Ollama model — audio and transcript need never leave your Mac.
-- **Bring your own model.** Pick any Ollama model, local or cloud, instead of being locked to a
+- **Bring your own model.** Pick any Ollama model, local or cloud, or point the app at any
+  OpenAI-compatible server (LM Studio, vLLM, llama.cpp, OpenRouter), instead of being locked to a
   single undisclosed backend LLM.
 - **Multi-pane, multi-model.** Four panes, and each AI pane runs its own model — picked from the
   left status rail — run a fast model for live notes and a stronger one for deep analysis, side by
@@ -78,7 +81,7 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 
 | Tool | On-device | BYO model | Multi-pane | Presets | Price |
 |---|---|---|---|---|---|
-| **ListenToMe** | Yes — transcription + local AI | Yes — Ollama local + cloud | Yes — per-pane model | Yes | Free & open-source |
+| **ListenToMe** | Yes — transcription + local AI | Yes — Ollama local + cloud, any OpenAI-compatible server (LM Studio, vLLM, OpenRouter) | Yes — per-pane model | Yes | Free & open-source |
 | Granola | No — local capture, cloud ASR + AI | Reported, unconfirmed | No | Templates (29+) | Free; ~$14–35/user/mo |
 | Otter.ai | No — cloud | No | No | Limited | Free; ~$8–30/user/mo |
 | Fireflies.ai | No — cloud | No (export via MCP) | No | Limited | Free; ~$10–39/seat/mo |
@@ -127,6 +130,11 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 **Bring-your-own-model**
 - Each AI pane's model is set from a **model picker in the left status rail**, listing chat-capable
   models discovered from your Ollama server — local and Ollama-cloud (`:cloud`) models alike.
+- **OpenAI-compatible servers.** Choose the **OpenAI-compatible** AI mode and enter a server URL —
+  LM Studio (`http://localhost:1234/v1`), vLLM, llama.cpp, Ollama's own `/v1` API, or
+  `https://openrouter.ai/api/v1` — plus an optional key. The pane pickers list the server's
+  `/v1/models`; panes stay unset until you pick a model, because a hosted catalog can list hundreds
+  of vendors' models. See [OpenAI-compatible servers](#openai-compatible-servers).
 - **AI response-language** setting, independent of the transcription language.
 
 **Make it yours**
@@ -143,7 +151,8 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 
 - **macOS 26+**
 - [Ollama](https://ollama.com) — running locally for local models, and/or an Ollama Cloud API key
-  for cloud models. The app auto-picks an installed model on first launch.
+  for cloud models. The app auto-picks an installed model on first launch. Alternatively, any
+  OpenAI-compatible `/v1/chat/completions` server (LM Studio, vLLM, llama.cpp, OpenRouter).
 - To build from source: Xcode 26+, `brew install xcodegen` (optionally `swiftlint`, `xcbeautify`).
 
 ## Install
@@ -208,7 +217,7 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   has not summarized yet — refreshing with nothing new would just have the model rewrite the record
   already on screen.
 - **AI processing mode.** In **Settings**, explicitly choose **Local only**, **Apple Intelligence**,
-  **Cloud**, or **AI off**.
+  **Cloud**, **OpenAI-compatible**, or **AI off**.
   Local mode verifies downloaded-model metadata before every request and rejects remote/cloud-backed
   models and redirects. Apple Intelligence runs entirely on this device; because its on-device model
   has a small context window, every prompt is capped at 8,000 characters — long meetings are answered
@@ -416,15 +425,44 @@ Ollama through the actual `OllamaProvider`, auto-selecting an installed chat mod
   take several minutes on a slow connection; Stop, New conversation, closing the window and Cmd-Q all cancel it immediately.
 - A short utterance spoken entirely within the brief recognizer-finalization gap may merge into the
   next finalized segment.
-- **Ollama and Apple Intelligence today.** Ollama Cloud already exposes GPT/DeepSeek/Qwen/etc.
-  through one key, and Apple Intelligence covers on-device inference without Ollama. Dedicated
-  OpenAI-compatible endpoint support (LM Studio, OpenRouter, vLLM) is tracked in
-  [#52](https://github.com/tomqwu/ListenToMe/issues/52) and not yet implemented.
+- **Ollama, Apple Intelligence and OpenAI-compatible servers.** Ollama Cloud exposes
+  GPT/DeepSeek/Qwen/etc. through one key, Apple Intelligence covers on-device inference without
+  Ollama, and the OpenAI-compatible mode reaches any `/v1/chat/completions` server (#52) — see below.
 - **WhisperKit engine (opt-in):** an opt-in third transcription engine for true multilingual
   code-switching (e.g. Mandarin↔English mid-sentence) that Apple's on-device Speech can't do. It
   downloads a model on first use (before capture starts, same as above), emits finalized segments
   only (no live partials), and its
   dual-channel finals may occasionally interleave out of chronological order.
+
+### OpenAI-compatible servers
+
+Choose **OpenAI-compatible** in **Settings → AI processing** (or **Summary provider** on iPhone) and enter
+the server's base URL: LM Studio (`http://localhost:1234/v1`), vLLM or llama.cpp, Ollama's own
+`http://localhost:11434/v1`, or a hosted API such as `https://openrouter.ai/api/v1`. A bare origin gets
+`/v1`; a pasted `…/chat/completions` is trimmed. Nothing is chosen for you and nothing is discovered.
+
+- **Honest about where it goes.** The address decides the label: this machine, a `.local` name or a
+  private address reads **your server**; anything else reads **may leave this device**. A custom server
+  is never called local or on-device — ListenToMe cannot verify where it runs the model, and a server
+  on `localhost` can relay to a cloud service (Ollama's `/v1` serves `:cloud` models from `localhost`).
+  Local-only mode's downloaded-weight verification does not apply on this route.
+- **Plain `http://` only for this machine or a `.local` name**; every other host needs `https://`.
+  URLs carrying a user name, password, query or fragment are refused.
+- **Credentials.** The optional key is stored in the Keychain (account `openai-compatible`), sent only
+  to the server it was saved for, removed when you change servers, and masked if a server echoes it in
+  an error. The Ollama key is never sent there.
+- **Strict streams.** Requests stream server-sent events; an answer counts only with `[DONE]` or a
+  `finish_reason`. Truncated streams, `error` objects, empty or reasoning-only answers, non-event-stream
+  pages (captive portals), oversized responses and timeouts fail with a clear message and keep the
+  previous output. Redirects are never followed.
+- **Never picks a model for you.** On this route the pane pickers list the server's models but no
+  pane is assigned one until you choose it, and these choices are stored apart from your Ollama picks.
+- **Auto needs the JSON contract.** Auto and Quick use the same strict JSON evaluator as on Ollama,
+  with best-effort reasoning-off hints (`reasoning_effort: "none"`, `enable_thinking: false`) instead
+  of Ollama's `think: false`; a model that cannot hold it shows "did not return a usable Quick Summary update" and keeps the
+  previous recap. On iPhone, **Test this model** on the Quick role checks this up front and pauses
+  Auto with the reason if it fails.
+- `make e2e` runs the provider contract against a real server: Ollama's own `/v1` API.
 
 ## Contributing
 

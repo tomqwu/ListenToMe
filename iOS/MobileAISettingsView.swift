@@ -15,10 +15,17 @@ struct MobileAISettingsView: View {
                 Text("Apple Intelligence · on-device").tag(MobileAISettings.Provider.apple)
                 Text(ai.usesCustomEndpoint ? "Ollama · your server" : "Ollama Cloud")
                     .tag(MobileAISettings.Provider.ollama)
+                Text(ai.openAI.providerLabel).tag(MobileAISettings.Provider.openAI)
             }.accessibilityIdentifier("summaryProvider")
             if let reason = ai.fallbackExplanation {
                 Text("Apple Intelligence cannot run on this device, so summaries default to Ollama: \(reason)")
                     .font(.caption).accessibilityIdentifier("appleIntelligenceUnavailable")
+            }
+            if ai.provider == .openAI {
+                MobileOpenAISettingsRows(ai: ai)
+                if ai.correctTranscript {
+                    Text("Speech correction still uses the Ollama connection below.").font(.caption)
+                }
             }
             if ai.provider == .ollama || ai.correctTranscript {
                 Text(destinationExplanation)
@@ -54,33 +61,8 @@ struct MobileAISettingsView: View {
                     editingKey = false
                     operation = Task { await ai.refresh() }
                 }.disabled(ai.refreshing || ai.testing)
-                ForEach(MobileSummaryMode.allCases) { role in
-                    NavigationLink {
-                        MobileRoleModelView(ai: ai, role: role)
-                    } label: {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(role.title + " model")
-                            Text(ai.selectedModel(for: role).isEmpty ? "Choose model" : ai.selectedModel(for: role))
-                                .font(.caption).foregroundStyle(.secondary)
-                        }
-                    }.accessibilityIdentifier("choose-model-\(role.rawValue)").disabled(ai.testing)
-                }
-                Text("Models run on the selected server; no model download to your phone is needed. " +
-                     "The list comes from the API, including Flash and Pro variants when available.")
-                    .font(.caption)
-                Button(ai.testing ? "Testing connection…" : (key.isEmpty ? "Test connection" : "Save key and test connection")) {
-                    editingKey = false
-                    if !key.isEmpty {
-                        guard ai.saveKey(key) else { return }
-                        key = ""
-                    }
-                    operation = Task { await ai.testConnection(for: .summary) }
-                }.disabled(ai.selectedModel(for: .summary).isEmpty
-                           || (!ai.hasKey && key.isEmpty && !ai.usesCustomEndpoint)
-                           || ai.testing || ai.refreshing)
-                Text("Test connection sends only a short test prompt, not your conversation.").font(.caption)
-                if ai.testing { Button("Cancel connection test") { operation?.cancel() } }
-                if let status = ai.status {
+                if ai.provider != .openAI { summaryModelRows }
+                if ai.provider != .openAI, let status = ai.status {
                     Text(status).font(.callout).accessibilityIdentifier("ollamaStatus")
                 }
             }
@@ -89,12 +71,44 @@ struct MobileAISettingsView: View {
         if includeSpeechCorrection { MobileSpeechCorrectionSettings(ai: ai) }
     }
 
+    /// Role models and the connection test for Ollama summaries. Hidden when summaries use an
+    /// OpenAI-compatible server, which has its own rows; these then only configure speech correction.
+    @ViewBuilder private var summaryModelRows: some View {
+        ForEach(MobileSummaryMode.allCases) { role in
+            NavigationLink {
+                MobileRoleModelView(ai: ai, role: role)
+            } label: {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(role.title + " model")
+                    Text(ai.selectedModel(for: role).isEmpty ? "Choose model" : ai.selectedModel(for: role))
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            }.accessibilityIdentifier("choose-model-\(role.rawValue)").disabled(ai.testing)
+        }
+        Text("Models run on the selected server; no model download to your phone is needed. " +
+             "The list comes from the API, including Flash and Pro variants when available.")
+            .font(.caption)
+        Button(ai.testing ? "Testing connection…" : (key.isEmpty ? "Test connection" : "Save key and test connection")) {
+            editingKey = false
+            if !key.isEmpty {
+                guard ai.saveKey(key) else { return }
+                key = ""
+            }
+            operation = Task { await ai.testConnection(for: .summary) }
+        }.disabled(ai.selectedModel(for: .summary).isEmpty
+                   || (!ai.hasKey && key.isEmpty && !ai.usesCustomEndpoint)
+                   || ai.testing || ai.refreshing)
+        Text("Test connection sends only a short test prompt, not your conversation.").font(.caption)
+        if ai.testing { Button("Cancel connection test") { operation?.cancel() } }
+    }
+
     /// Names the exact destination so the recipient of a summary is never implicit.
     private var destinationExplanation: String {
         let endpoint: String = ai.endpointDescription
         let lead: String = ai.provider == .ollama
             ? "Summarize sends your notes and transcript to \(endpoint) using the selected model. "
-            : "Speech correction uses \(endpoint). Your summaries still use Apple Intelligence on-device. "
+            : "Speech correction uses \(endpoint). Your summaries " + (ai.provider == .openAI
+                ? "go to \(ai.openAI.destinationLabel). " : "still use Apple Intelligence on-device. ")
         let tail: String = ai.usesCustomEndpoint
             ? " That server is your own machine; nothing goes to ollama.com."
             : " Your Ollama account's usage limits apply."

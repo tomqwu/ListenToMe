@@ -130,7 +130,8 @@ final class MobileAITests: XCTestCase {
         XCTAssertNil(settings.availability(for: .summary))
         XCTAssertNil(settings.correctionAvailability)
         for mode in MobileSummaryMode.allCases {
-            XCTAssertEqual(try settings.client(for: mode).baseURL.absoluteString, "http://studio.local:11434")
+            XCTAssertEqual((try settings.client(for: mode) as? OllamaProvider)?.baseURL.absoluteString,
+                           "http://studio.local:11434")
         }
         XCTAssertEqual(try settings.correctionClient().baseURL.absoluteString, "http://studio.local:11434")
     }

@@ -177,10 +177,10 @@ struct MobileWorkspaceView<Header: View>: View {
                             Label(error, systemImage: "exclamationmark.circle").font(.caption)
                                 .foregroundStyle(.secondary).accessibilityIdentifier("quickSummaryError")
                         }
-                        if session.autoQuick && session.ai.provider == .ollama {
+                        if session.autoQuick && session.ai.provider != .apple {
                             Text("New speech triggers Quick evaluation; related words are batched briefly. "
                                  + "Auto also updates Summary and Deep when relevant. These use the selected "
-                                 + "models on \(session.ai.endpointDescription).")
+                                 + "models on \(session.ai.summaryEndpointLabel).")
                                 .font(.caption).foregroundStyle(.secondary)
                         }
                     }
@@ -256,10 +256,11 @@ struct MobileWorkspaceView<Header: View>: View {
     private var autoToggle: some View {
         Toggle("Auto", isOn: $session.autoQuick).font(.caption)
             .accessibilityLabel("Auto summaries")
-            .accessibilityHint(session.ai.provider == .ollama
+            .accessibilityHint(session.ai.provider != .apple
                 ? "New speech triggers Quick evaluation and relevant Summary or Deep reviews using their "
-                  + "selected models on \(session.ai.endpointDescription)."
-                : "Continuous evaluation requires Ollama. Apple Intelligence summaries are available with Refresh.")
+                  + "selected models on \(session.ai.summaryEndpointLabel)."
+                : "Continuous evaluation requires Ollama or an OpenAI-compatible server. "
+                  + "Apple Intelligence summaries are available with Refresh.")
     }
 
     @ViewBuilder

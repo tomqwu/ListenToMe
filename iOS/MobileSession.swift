@@ -191,11 +191,11 @@ final class MobileSession {
     var automaticQuickAvailability: String? {
         if summaryProvider != nil { return nil }
         if ai.provider == .apple { return AppleIntelligenceProvider.automaticQuickUnavailableReason }
-        return summaryAvailability(for: .quick)
+        return summaryAvailability(for: .quick) ?? ai.automaticQuickReason
     }
     func summaryAvailability(for mode: MobileSummaryMode) -> String? {
         if summaryProvider != nil || onDeviceProviderOverride != nil { return nil }
-        if ai.provider == .ollama { return ai.availability(for: mode) }
+        if ai.provider != .apple { return ai.availability(for: mode) }
         switch SystemLanguageModel.default.availability {
         case .available:
             // The *conversation's* language, not the device's: an unsupported one fails only at
@@ -607,7 +607,7 @@ extension MobileSession {
             message = "Add notes or record a transcript before summarizing."
             return
         }
-        let cloud = summaryProvider != nil || ai.provider == .ollama
+        let cloud = summaryProvider != nil || ai.provider != .apple
         // The transcript is fenced as data, exactly as the macOS panes fence it (issue #140); the
         // cap is charged on the fenced text so the Apple window still holds.
         let fencedSource = PromptData.block("transcript", source)

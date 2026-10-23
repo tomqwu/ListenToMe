@@ -162,6 +162,7 @@ struct MeetingView: View {
             },
             makeProvider: { model in
                 if ProviderSettings.aiMode == .apple { return AppleIntelligenceProvider() as any LLMProvider }
+                if ProviderSettings.aiMode == .openAI { return ProviderSettings.openAIProvider(model: model) }
                 return OllamaProvider(model: model, baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey(),
                                localOnly: ProviderSettings.aiMode != .cloud)
             },
@@ -170,9 +171,7 @@ struct MeetingView: View {
                 .quick: ProviderSettings.model(for: .quick),
                 .deep: ProviderSettings.model(for: .deep)
             ],
-            providerAvailability: { _ in
-                ProviderSettings.aiMode == .apple ? AppleIntelligenceProvider.automaticQuickUnavailableReason : nil
-            }
+            providerAvailability: { ProviderSettings.automaticReviewUnavailableReason(quickModel: $0) }
         ))
     }
 
@@ -799,8 +798,7 @@ extension MeetingView {
         if ProviderSettings.aiMode == .apple {
             chatModels = ["Apple Intelligence"]; verifiedLocalModels = []; return
         }
-        let discovered = await OllamaModels.chatModels(
-            baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey(), localOnly: ProviderSettings.aiMode != .cloud)
+        let discovered = await Self.discoverChatModels()
         chatModels = discovered.names
         verifiedLocalModels = discovered.verifiedLocal
     }
@@ -822,24 +820,38 @@ extension MeetingView {
             for role in CopilotRole.allCases { session.setModel(role, "Apple Intelligence") }
             return
         }
-        let discovered = await OllamaModels.chatModels(
-            baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey(), localOnly: ProviderSettings.aiMode != .cloud)
+        let discovered = await Self.discoverChatModels()
         guard token == modelLoadToken else { return }
         chatModels = discovered.names
         verifiedLocalModels = discovered.verifiedLocal
         modelStatus = ProviderSettings.aiMode == .off ? "AI is off" : (chatModels.isEmpty
-            ? "No available AI models. Check Ollama and AI mode in Settings, then Refresh models." : "")
+            ? (discovered.problem ?? "No available AI models. Check Ollama and AI mode in Settings, then Refresh models.") : "")
         // Locality comes from Ollama's own /api/show metadata, never from the model's name, so an
         // unpinned pane can never be auto-assigned a cloud model while a local one exists (#137).
-        let defaults = ModelRanking.roleDefaults(from: chatModels, local: verifiedLocalModels)
+        // An OpenAI-compatible catalog is never auto-assigned from (#52): see PaneModelHealing.
+        let autoAssign = ProviderSettings.aiMode != .openAI
+        let defaults = autoAssign ? ModelRanking.roleDefaults(from: chatModels, local: verifiedLocalModels) : [:]
         for role in CopilotRole.allCases {
             let current = ProviderSettings.model(for: role)
-            // Keep the user's explicit pick if it's still valid; otherwise follow the
-            // role-appropriate default so the three panes don't all collapse to one model.
-            let keepPinned = ProviderSettings.isPinned(role) && chatModels.contains(current)
-            let target = keepPinned ? current : (defaults[role] ?? current)
-            if target != current { ProviderSettings.setModel(target, for: role) }
-            session.setModel(role, target)   // rebuild the provider so it picks up the new base URL/key
+            let decision = PaneModelHealing.decide(current: current, pinned: ProviderSettings.isPinned(role),
+                                                   available: chatModels, fallback: defaults[role],
+                                                   autoAssign: autoAssign)
+            if decision.persist { ProviderSettings.setModel(decision.model, for: role) }
+            session.setModel(role, decision.model)   // rebuild the provider so it picks up the new base URL/key
         }
+        if !autoAssign, !chatModels.isEmpty, CopilotRole.allCases.contains(where: { session.models[$0]?.isEmpty ?? true }) {
+            modelStatus = "Choose a model for each pane in the status rail. ListenToMe never picks one "
+                + "from an OpenAI-compatible server's list for you."
+        }
+    }
+}
+
+extension MeetingView {
+    /// Chat models on the selected route: Ollama's `/api/tags` + `/api/show`, or an OpenAI-compatible
+    /// server's `/v1/models` (issue #52), whose models are never treated as verified local.
+    nonisolated static func discoverChatModels() async -> OllamaModels.Discovery {
+        if ProviderSettings.aiMode == .openAI { return await OpenAICompatibleModels.discover() }
+        return await OllamaModels.chatModels(
+            baseURL: ollamaBaseURL(), apiKey: ollamaKey(), localOnly: ProviderSettings.aiMode != .cloud)
     }
 }
