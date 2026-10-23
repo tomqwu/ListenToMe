@@ -308,16 +308,27 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   Cantonese zh-HK model. To switch, the recorder installs the new locale's speech assets if needed
   while the old transcriber keeps running, then swaps the analyzer without stopping the microphone:
   audio arriving during the swap is parked and sent to the new analyzer, so none is lost. The new
-  analyzer first hears the buffered recording from its start, so the early wrong-language lines are
-  replaced by a fresh transcription on the same timeline (offsets, speaker labels and later lines
-  stay consistent). The status area then shows "Detected Chinese · switched" with **Undo**, which
-  pins the language the recording started in: while the recording runs it switches back and
-  re-transcribes what is still buffered; after Stop it restores the lines the switch replaced.
-  A recording switches at most once; mid-recording code-switching is not handled yet (#199).
-  If the model cannot be loaded (offline first use), recording continues in the starting language
-  and the status line says language detection paused; the next recording tries again. A check that
-  keeps the language releases the buffered audio at once. **Status details** on the Quick Summary
-  pane lists the mode, the recording's language, the last check's result and the model state.
+  analyzer first hears the buffered recording from its start. Its lines for the audio before the
+  switch are held back while the earlier lines stay on screen and on disk, and replace them in one
+  step once it reaches live speech (or, if the recording stops first, replace only what the replay
+  covered), so a crash or a failed replay never loses the early transcript. The unfinished line at the
+  switch is kept as a line of its own. Offsets, speaker labels and later lines stay on one timeline.
+  Past the two-minute buffer the switch cannot re-transcribe anything: the old analyzer then
+  finalizes what it heard up to the switch, the new one continues the timeline, and the notice says
+  "switched for new speech". Speech that starts after the two minutes is not checked (Status details
+  says so). The status area shows "Detected Chinese · switched" with **Undo**, which pins the
+  language the recording started in. While recording it switches back first, re-transcribing what
+  is still buffered, and the notice stays until that has worked (a failure says to try again). While
+  stopping, the tap waits for Stop to finish; after Stop it restores the lines the switch replaced,
+  touching only that recording's own lines (Apple Watch lines and later recordings stay) and
+  keeping the line that spans the switch. A recording that resumes the conversation, after a call or
+  Stop and Listen, starts in the switched language and keeps the notice. A recording switches at most
+  once; mid-recording code-switching is not handled yet (#199). Apple Intelligence's language check
+  uses the switched language. If the model cannot be loaded (offline first use), recording
+  continues in the starting language and the status line says language detection paused; the next
+  recording tries again. A check that keeps the language releases the buffered audio at once.
+  **Status details** on the Quick Summary pane lists the mode, the recording's language, the last
+  check's result and the model state.
   Apple Watch recordings are transcribed in the device language under Automatic: detection runs on
   live recordings only (#200).
 - Partial and final transcript text. Everyone picked up by the microphone is labeled **Microphone**
@@ -629,7 +640,15 @@ GitHub Actions builds both apps and runs the headless `ListenToMeCore` unit/inte
     switch and confirm no words are lost around it. Tap **Undo** in a third recording and confirm
     the transcript returns to English and the picker shows English fixed. Speak English with
     Automatic on and confirm nothing switches. Turn on Airplane mode before the first-ever
-    download and confirm recording continues with "Language detection paused".
+    download and confirm recording continues with "Language detection paused". Take a phone call
+    after a switch and confirm the resumed recording stays in the switched language with Undo. Then
+    check the risks no simulator test covers: (a) with two minutes of speech before the switch,
+    keep talking and confirm live text catches up within seconds and nothing is dropped, which shows
+    SpeechAnalyzer keeps up with the replay while live audio queues (the new analyzer's input holds
+    1,024 buffers, about 40 seconds of live audio); (b) the replayed lines carry the same times as
+    the originals (Speaker labels on: the lines keep their speakers after the switch), which shows
+    replayed buffers sent without `bufferStartTime` start at t=0; (c) with Identify speakers on,
+    watch Xcode's memory gauge while Whisper, FluidAudio and SpeechAnalyzer are loaded together.
 
 iOS distribution uses an Xcode archive/export and App Store Connect/TestFlight, not a DMG or macOS
 notarization. A Mac Developer ID certificate cannot distribute an iPhone app. TestFlight needs an

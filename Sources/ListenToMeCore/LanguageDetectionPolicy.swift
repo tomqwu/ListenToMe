@@ -19,9 +19,9 @@ public enum LanguageDetectionPolicy {
     public static let minimumSpeech: TimeInterval = 8
     /// Whisper reads at most 30 s of audio per decision.
     public static let maximumWindow: TimeInterval = 30
-    /// Audio kept to re-transcribe a recording from its start after a switch. Past this the check is
-    /// abandoned for the recording and the audio released, so a phone never holds more than about
-    /// 7.7 MB for it.
+    /// Audio kept to re-transcribe a recording from its start after a switch (about 7.7 MB). The
+    /// buffer stops growing here; a switch after it re-transcribes nothing and says so, and speech that
+    /// starts after it is not checked.
     public static let maximumBuffered: TimeInterval = 120
 
     /// Why the current language was kept.
@@ -103,19 +103,28 @@ public enum LanguageDetectionPolicy {
         return start..<min(total, start + Int(maximumWindow) * sampleRate)
     }
 
-    /// Whether more audio is buffered than a switch may replay.
-    public static func shouldRelease(totalSamples: Int) -> Bool {
-        totalSamples > Int(maximumBuffered) * sampleRate
+    /// Undo once the replay audio is gone: the lines a switch replaced (`originals`) take the place of
+    /// the switched recording's own lines (`recording`, by id) that ended by the switch (`cut`,
+    /// transcript time). Every other line is untouched: earlier and later recordings, and Apple Watch
+    /// lines added since. A line spanning the switch stays, since it alone holds the words after it.
+    public static func restoring(_ originals: [TranscriptSegment], into segments: [TranscriptSegment],
+                                 recording: Set<UUID>, before cut: TimeInterval) -> [TranscriptSegment] {
+        let replaced = { (line: TranscriptSegment) in recording.contains(line.id) && line.end <= cut }
+        guard let position = segments.firstIndex(where: replaced) else { return segments }
+        var restored = segments.filter { !replaced($0) }
+        restored.insert(contentsOf: originals, at: position)
+        return restored
     }
 
-    /// Undo after the replayed audio is gone: the lines a switch replaced (`originals`) go back in front
-    /// of this recording's lines heard after the switch (`cut`, transcript time). Lines before
-    /// `firstLine` belong to earlier recordings and are untouched.
-    public static func restoring(_ originals: [TranscriptSegment], into segments: [TranscriptSegment],
-                                 firstLine: Int, before cut: TimeInterval) -> [TranscriptSegment] {
-        guard firstLine <= segments.count else { return segments }
-        let later = segments[firstLine...].filter { $0.start >= cut }
-        return Array(segments[..<firstLine]) + originals + later
+    /// Commits a replay: the new transcriber's lines for the audio before the switch (`replayed`) take
+    /// the place of the recording's earlier lines (`originals`). When the replay finished, they replace
+    /// every original; when it stopped part-way, only originals that start before the last replayed
+    /// line ends, so no stretch of the recording is left without a line.
+    public static func mergingReplay(_ replayed: [TranscriptSegment], over originals: [TranscriptSegment],
+                                     complete: Bool) -> [TranscriptSegment] {
+        guard !complete else { return replayed }
+        guard let covered = replayed.map(\.end).max() else { return originals }
+        return replayed + originals.filter { $0.start >= covered }
     }
 
     // MARK: - Locale parsing

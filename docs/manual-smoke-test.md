@@ -293,6 +293,8 @@ iOS production-ready…"); this is the short pass.
 3. **No false switch.** Speak English for a minute with Automatic on: nothing switches, and **Quick
    Summary → Status details** shows "Language check: en … → kept (same language)".
 4. **Undo.** After a switch, tap **Undo**: transcription returns to the starting language, the
-   transcript is re-transcribed in it, and the picker now shows that language fixed.
+   transcript is re-transcribed in it, and the picker now shows that language fixed. Repeat with
+   Undo tapped right after Stop: once Stop finishes, the earlier lines come back with no line twice.
+   After a switch, take a call: the resumed recording stays in the switched language with Undo.
 5. **Unavailable model.** On a fresh install in Airplane mode, record with Automatic: recording
    continues in the device language and the status line says "Language detection paused".

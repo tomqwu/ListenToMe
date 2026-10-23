@@ -38,6 +38,7 @@ struct MobileLanguageStatus: View {
                 Label(notice, systemImage: "globe").font(.caption.weight(.medium))
                     .foregroundStyle(MobileStyle.accent).accessibilityIdentifier("languageNotice")
                 Button("Undo") { session.undoLanguageSwitch() }
+                    .disabled(!session.canUndoLanguageSwitch)
                     .font(.caption.weight(.semibold)).accessibilityIdentifier("undoLanguageSwitch")
                     .accessibilityHint("Pins the language the recording started in")
             }

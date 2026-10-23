@@ -127,24 +127,52 @@ final class LanguageDetectionPolicyTests: XCTestCase {
                        "A stale speech time never reaches past the audio")
     }
 
-    func testAudioIsKeptForReplayOnlyUpToTheCap() {
-        let cap = Int(LanguageDetectionPolicy.maximumBuffered) * LanguageDetectionPolicy.sampleRate
-        XCTAssertFalse(LanguageDetectionPolicy.shouldRelease(totalSamples: cap))
-        XCTAssertTrue(LanguageDetectionPolicy.shouldRelease(totalSamples: cap + 1))
-    }
-
     // MARK: Undo without replay
 
+    private func line(_ text: String, _ start: TimeInterval, _ end: TimeInterval? = nil) -> TranscriptSegment {
+        TranscriptSegment(source: .you, text: text, isFinal: true, start: start, end: end ?? start + 1)
+    }
+
     func testRestoringPutsTheOriginalLinesBackBeforeTheSwitch() {
-        func line(_ text: String, _ start: TimeInterval) -> TranscriptSegment {
-            TranscriptSegment(source: .you, text: text, isFinal: true, start: start, end: start + 1)
-        }
         let earlier = line("earlier recording", 0)
-        let current = [earlier, line("重新", 10), line("转写", 12), line("after", 20)]
+        let switched = [line("重新", 10), line("转写", 12), line("after", 20)]
+        let current = [earlier] + switched
         let originals = [line("chong xin", 10), line("zhuan xie", 12)]
-        let restored = LanguageDetectionPolicy.restoring(originals, into: current, firstLine: 1, before: 15)
+        let restored = LanguageDetectionPolicy.restoring(originals, into: current, recording: Set(switched.map(\.id)),
+                                                         before: 15)
         XCTAssertEqual(restored.map(\.text), ["earlier recording", "chong xin", "zhuan xie", "after"])
-        XCTAssertEqual(LanguageDetectionPolicy.restoring(originals, into: current, firstLine: 9, before: 15), current,
+        XCTAssertEqual(LanguageDetectionPolicy.restoring(originals, into: current, recording: [], before: 15), current,
                        "A conversation that no longer holds the recording is left alone")
+    }
+
+    /// Review of #201, findings 5 and 6.
+    func testRestoringKeepsTheLineSpanningTheSwitchAndEveryOtherRecordingsLines() {
+        let switched = [line("我们", 2, 6), line("今天开会讨论", 9, 14)]
+        let watch = line("Apple Watch line", 3, 5)
+        let later = line("a later recording", 40)
+        let current = switched + [watch, later]
+        let originals = [line("wo men", 2, 6), line("jin tian (unfinished)", 9, 12)]
+        let restored = LanguageDetectionPolicy.restoring(originals, into: current, recording: Set(switched.map(\.id)),
+                                                         before: 12)
+        XCTAssertEqual(restored.map(\.text),
+                       ["wo men", "jin tian (unfinished)", "今天开会讨论", "Apple Watch line", "a later recording"],
+                       "Only the switched recording's lines that ended by the switch are replaced")
+    }
+
+    // MARK: Replay commit
+
+    func testACompleteReplayReplacesEveryOriginal() {
+        let originals = [line("garbage one", 1, 4), line("garbage two", 5, 9), line("partial", 9.5, 10)]
+        let replayed = [line("第一句", 1, 6)]
+        XCTAssertEqual(LanguageDetectionPolicy.mergingReplay(replayed, over: originals, complete: true).map(\.text),
+                       ["第一句"])
+    }
+
+    func testAReplayStoppedPartWayKeepsTheOriginalsItDidNotReach() {
+        let originals = [line("garbage one", 1, 4), line("garbage two", 5, 9), line("partial", 9.5, 10)]
+        let merged = LanguageDetectionPolicy.mergingReplay([line("第一句", 1, 6)], over: originals, complete: false)
+        XCTAssertEqual(merged.map(\.text), ["第一句", "partial"])
+        XCTAssertEqual(LanguageDetectionPolicy.mergingReplay([], over: originals, complete: false), originals,
+                       "A replay that produced nothing keeps every original")
     }
 }

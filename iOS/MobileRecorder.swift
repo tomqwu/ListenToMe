@@ -18,9 +18,10 @@ protocol MobileRecording: AnyObject {
     func attachLanguageAudio(_ buffer: SpeakerAudioBuffer?)
     /// Restarts transcription in `locale` while capture keeps running (issue #197). Throws, changing
     /// nothing, when the new locale cannot be prepared. With `replay`, the new transcriber first hears
-    /// that buffer's audio from the recording's start, so every line is transcribed again; without
-    /// it, the new transcriber continues the timeline. `willReplace` runs once the old transcriber can
-    /// deliver nothing more and before the new one delivers anything. Its arguments say whether the
+    /// that buffer's audio from the recording's start, so every line is transcribed again, and the old
+    /// transcriber delivers nothing more. Without it, the new transcriber continues the timeline and the
+    /// old one still finalizes what it heard before the switch, so its last words are not lost.
+    /// `willReplace` runs before the new transcriber delivers anything. Its arguments say whether the
     /// recording so far is being transcribed again, and the recording time at which the old one stopped.
     func switchLocale(to locale: Locale, replay: SpeakerAudioBuffer?,
                       willReplace: @escaping @MainActor (Bool, TimeInterval) -> Void) async throws
@@ -47,8 +48,12 @@ final class MobileRecorder: MobileRecording {
     private var audio: AsyncStream<AudioChunk>.Continuation?
     private var feedTask: Task<Void, Never>?
     private var resultsTask: Task<Void, Never>?
-    /// Bumped when the transcriber is replaced, so a late result of the old one is never delivered.
+    /// Bumped when the transcriber is replaced. Results of a generation below `acceptedGeneration` are
+    /// dropped: a replaying switch raises it, so the old transcriber's late results never arrive.
     private var resultsGeneration = 0
+    private var acceptedGeneration = 0
+    /// Old transcribers finalizing after a switch without replay; Stop waits for them.
+    private var finishing: [Task<Void, Never>] = []
     private var sink: AnalyzerSink?
     private var deliver: (@MainActor (TranscriptSegment) -> Void)?
     private var isSwitching = false
@@ -119,7 +124,7 @@ final class MobileRecorder: MobileRecording {
         return Task {
             do {
                 for try await result in transcriber.results {
-                    guard generation == resultsGeneration else { return }
+                    guard generation >= acceptedGeneration else { return }
                     let text = String(result.text.characters)
                     guard !result.isFinal || !text.isEmpty else { continue }
                     deliver?(TranscriptSegment(source: .you, text: text, isFinal: result.isFinal,
@@ -130,7 +135,7 @@ final class MobileRecorder: MobileRecording {
                     report?("Transcription ended. Recording stopped; captured text is kept.")
                 }
             } catch {
-                if !Task.isCancelled, generation == resultsGeneration {
+                if !Task.isCancelled, generation == resultsGeneration, generation >= acceptedGeneration {
                     report?("Transcription stopped: \(error.localizedDescription)")
                 }
             }
@@ -154,19 +159,28 @@ final class MobileRecorder: MobileRecording {
         }
         // From here to `resume` nothing awaits, so no result and no audio slips between the two transcribers.
         let cut = sink.hold()
-        resultsGeneration &+= 1
-        self.input?.finish()
-        resultsTask?.cancel()
-        self.analyzer = analyzer
-        self.analyzerFormat = format
-        self.input = input
         let replayed = replay.map {
             Self.replay($0, through: cut.languageSamples, into: input, format: format)
         } ?? false
+        let previousResults = resultsTask
+        resultsGeneration &+= 1
+        self.input?.finish()   // the old transcriber's input ends exactly at the cut
+        if replayed {
+            acceptedGeneration = resultsGeneration
+            previousResults?.cancel()
+            Task { await previous.cancelAndFinishNow() }
+        } else {
+            finishing.append(Task {
+                try? await previous.finalizeAndFinishThroughEndOfInput()
+                await previousResults?.value
+            })
+        }
+        self.analyzer = analyzer
+        self.analyzerFormat = format
+        self.input = input
         willReplace(replayed, cut.deliveredSeconds)
         resultsTask = consumeResults(of: transcriber)
         sink.resume(input: input, destination: format, continueAt: replayed ? nil : cut.deliveredSeconds)
-        Task { await previous.cancelAndFinishNow() }
     }
 
     /// Feeds 16 kHz audio from the recording's start into a new analyzer, a few seconds per buffer.
@@ -295,6 +309,7 @@ final class MobileRecorder: MobileRecording {
         do {
             try await analyzer?.finalizeAndFinishThroughEndOfInput()
             await resultsTask?.value
+            for task in finishing { await task.value }
         } catch {
             await analyzer?.cancelAndFinishNow()
             resultsTask?.cancel()
@@ -307,7 +322,7 @@ final class MobileRecorder: MobileRecording {
     private func cleanup() {
         analyzer = nil; input = nil; audio = nil; feedTask = nil; resultsTask = nil
         analyzerFormat = nil; report = nil; tapFormat = nil; speakerAudio = nil
-        languageAudio = nil; sink = nil; deliver = nil; isStopping = false
+        languageAudio = nil; sink = nil; deliver = nil; isStopping = false; finishing = []
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 }

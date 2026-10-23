@@ -199,7 +199,7 @@ final class MobileSession {
         case .available:
             // The *conversation's* language, not the device's: an unsupported one fails only at
             // generation time, so it is reported here instead of as a raw FoundationModels error.
-            return AppleIntelligenceProvider.unsupportedLocaleReason(for: Locale(identifier: transcriptionLanguage))
+            return AppleIntelligenceProvider.unsupportedLocaleReason(for: Locale(identifier: conversationLanguage))
         case .unavailable(.deviceNotEligible): return "On-device summaries require an Apple Intelligence capable device."
         case .unavailable(.appleIntelligenceNotEnabled): return "Turn on Apple Intelligence in Settings to use on-device summaries."
         case .unavailable(.modelNotReady):
@@ -258,20 +258,20 @@ final class MobileSession {
         self.recorder = recorder
         let offset = segments.map(\.end).max() ?? 0
         recorder.attachSpeakerAudio(speakers.beginRun(offset: offset, existing: segments))
-        recorder.attachLanguageAudio(languageDetection.beginRun(locale: transcriptionLanguage, offset: offset,
-                                                                firstLine: segments.count))
+        recorder.attachLanguageAudio(languageDetection.beginRun(conversation: id, locale: transcriptionLanguage,
+                                                                offset: offset, firstLine: segments.count))
         // An Apple Watch drain stops before the microphone is prepared, and resumes after.
         let drain = watchDrainTask
         drain?.cancel()
         startTask = Task {
             await drain?.value
             do {
-                try await recorder.start(locale: Locale(identifier: transcriptionLanguage)) { [weak self] segment in
+                try await recorder.start(locale: Locale(identifier: recordingLanguage)) { [weak self] segment in
                     guard let self else { return }
                     self.speechEventCount += 1
                     if segment.isFinal { self.finalizedSpeechEventCount += 1 }
                     self.lastSpeechEvent = Date()
-                    self.noteLanguageSpeech(segment)
+                    if self.stageLanguageSegment(segment, offset: offset) { return }
                     let timed = TranscriptSegment(source: .you, text: segment.text, isFinal: segment.isFinal,
                                                   start: offset + segment.start, end: offset + segment.end,
                                                   speakerName: Self.microphoneLabel)
@@ -295,7 +295,7 @@ final class MobileSession {
                 startSpeakerLoop()
             } catch {
                 try? await recorder.stop()
-                speakers.endRun(); languageDetection.endRun()
+                speakers.endRun(); endLanguageRun()
                 self.recorder = nil
                 state = .idle
                 if !(error is CancellationError) { message = error.localizedDescription }
@@ -318,7 +318,7 @@ final class MobileSession {
         state = .idle
         save(announce: false)
         finishSpeakerIdentification()
-        languageDetection.endRun()
+        endLanguageRun()
     }
 
     func background() async {
