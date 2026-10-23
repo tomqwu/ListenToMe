@@ -14,6 +14,7 @@ does not show it again, and a fresh install does not see it at all; see
 ## iOS (unreleased since 1.10.5 (27))
 
 - Optional speaker identification, off by default (Settings → Speakers → Identify speakers): lines are labeled Speaker 1, Speaker 2… on this device, and Notes → Speakers renames them everywhere — the saved conversation, History search and exports. Speaker models download once from huggingface.co; it uses more battery while listening. (#180)
+- Apple Watch companion, remote Start/Stop for the iPhone recorder (not yet shipped; ships with watch recording on the #181 train). (#181)
 
 ## iOS 1.10.5 (27) — 2026-09-15
 

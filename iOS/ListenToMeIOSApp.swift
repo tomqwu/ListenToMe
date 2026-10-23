@@ -5,12 +5,22 @@ import AVFoundation
 struct ListenToMeIOSApp: App {
     @State private var session = MobileSession()
     @Environment(\.scenePhase) private var scenePhase
+    /// Active before any scene exists, so a watch message that launches the app in the background is
+    /// answered (with "open the iPhone app") instead of reaching the microphone (issue #181).
+    private let watchLink: PhoneWatchLink?
+
+    init() {
+        watchLink = PhoneWatchLink.activateIfSupported()
+    }
 
     var body: some Scene {
         WindowGroup {
             meeting
                 .tint(MobileStyle.accent)
-                .task { session.importSharedInbox() }
+                .task {
+                    session.importSharedInbox()
+                    attachWatchLink()
+                }
                 .onOpenURL { session.importFile($0) }
                 .onChange(of: session.busy) { _, busy in if !busy { session.importSharedInbox() } }
                 // The lifecycle rules live in MobileSession so unit tests can drive them.
@@ -28,6 +38,14 @@ struct ListenToMeIOSApp: App {
                     Task { await session.handleRouteChange(reason) }
                 }
         }
+    }
+
+    private func attachWatchLink() {
+        guard let watchLink else { return }
+        let session = session
+        watchLink.commandHandler = { await session.handleWatchCommand($0) }
+        session.watchLink = watchLink
+        session.publishWatchStatus()
     }
 
     @ViewBuilder private var meeting: some View {

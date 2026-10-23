@@ -83,6 +83,18 @@ class UploadTests(unittest.TestCase):
         self.assertNotEqual(self.run_upload().returncode, 0)
         self.assertFalse(self.evidence.exists())
 
+    def test_embedded_watch_app_is_rejected_until_watch_release(self):
+        watch = self.root / 'fixture.xcarchive/Products/Applications/ListenToMeIOS.app/Watch/ListenToMeWatch.app'
+        watch.mkdir(parents=True)
+        (watch / 'Info.plist').write_bytes(plistlib.dumps({
+            'CFBundleIdentifier': 'com.tomwu.ListenToMe.ios.watchkitapp',
+            'CFBundleShortVersionString': '1.0.0', 'CFBundleVersion': '1',
+            'WKCompanionAppBundleIdentifier': 'com.tomwu.ListenToMe.ios'}))
+        result = self.run_upload(flags=['--dry-run'])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('Watch app', result.stderr + result.stdout)
+        self.assertFalse(self.evidence.exists())
+
     def credentials(self):
         key_dir = tempfile.TemporaryDirectory(prefix='upload key ')
         self.addCleanup(key_dir.cleanup)
