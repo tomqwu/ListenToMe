@@ -328,7 +328,11 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   continues in the starting language and the status line says language detection paused; the next
   recording tries again. A check that keeps the language releases the buffered audio at once.
   **Status details** on the Quick Summary pane lists the mode, the recording's language, the last
-  check's result and the model state.
+  check's result and the model state. The language line appears in the status area only while there
+  is news (preparing, checking, switching, paused, a failed switch) or a notice with Undo. UI-test
+  launches substitute a language model that loads at once and never switches
+  (`LISTENTOME_LANGUAGE_MODEL_FIXTURE`, DEBUG simulator builds only, set with the speaker fixture by
+  `useModelFixtures()`), and the unit-test host one that never loads, so no test downloads Whisper.
   Apple Watch recordings are transcribed in the device language under Automatic: detection runs on
   live recordings only (#200).
 - Partial and final transcript text. Everyone picked up by the microphone is labeled **Microphone**

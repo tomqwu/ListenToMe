@@ -49,6 +49,17 @@ final class MobileLanguageTests: MobileLanguageTestCase {
         XCTAssertEqual(prepares, 0)
     }
 
+    func testTheUnitTestHostNeverDownloadsTheLanguageModel() async {
+        let model = WhisperLanguageIdentifier.deviceModel()
+        XCTAssertFalse(model is WhisperLanguageIdentifier)
+        do {
+            try await model.prepare()
+            XCTFail("The stand-in never loads")
+        } catch {
+            XCTAssertEqual(error.localizedDescription, "The language model is not downloaded while unit tests run")
+        }
+    }
+
     func testABuildWithoutAModelKeepsTodaysBehavior() async throws {
         let session = makeSession(withModel: false)
         try await record(session)

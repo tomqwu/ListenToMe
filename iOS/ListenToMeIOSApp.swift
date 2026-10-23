@@ -3,8 +3,8 @@ import AVFoundation
 
 @main
 struct ListenToMeIOSApp: App {
-    /// The app is the only place the on-device language model is created, so tests never download it.
-    @State private var session = MobileSession(makeLanguageModel: { WhisperLanguageIdentifier.onDevice() })
+    /// The app is the only place the language model is created; tests get a stand-in that downloads nothing.
+    @State private var session = MobileSession(makeLanguageModel: WhisperLanguageIdentifier.deviceModel)
     @Environment(\.scenePhase) private var scenePhase
     /// Active before any scene exists, so a watch message that launches the app in the background is
     /// answered (with "open the iPhone app") instead of reaching the microphone (issue #181).

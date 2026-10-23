@@ -39,6 +39,20 @@ actor WhisperLanguageIdentifier: MobileLanguageIdentifying {
         self.directory = directory
     }
 
+    /// The app's language model: Whisper, or a stand-in that downloads nothing while the app hosts unit
+    /// tests or runs under UI tests (DEBUG simulator builds launched with
+    /// `LISTENTOME_LANGUAGE_MODEL_FIXTURE=1`). Mirrors `MobileSpeakers.deviceDiarizer`.
+    static func deviceModel() -> any MobileLanguageIdentifying {
+        let environment = ProcessInfo.processInfo.environment
+        if environment["XCTestConfigurationFilePath"] != nil {
+            return StandInLanguageModel(failure: "The language model is not downloaded while unit tests run")
+        }
+        #if DEBUG && targetEnvironment(simulator)
+        if environment["LISTENTOME_LANGUAGE_MODEL_FIXTURE"] == "1" { return StandInLanguageModel(failure: nil) }
+        #endif
+        return onDevice()
+    }
+
     /// The app's identifier, with its model folder in Application Support and out of backups.
     static func onDevice() -> WhisperLanguageIdentifier {
         let directory = URL.applicationSupportDirectory.appendingPathComponent("LanguageModels", isDirectory: true)
@@ -94,4 +108,21 @@ actor WhisperLanguageIdentifier: MobileLanguageIdentifying {
         let kit: WhisperKit
         init(kit: WhisperKit) { self.kit = kit }
     }
+}
+
+/// A language model for tests: it loads at once (or fails with `failure`), downloads nothing, and always
+/// hears the device's language, so nothing ever switches.
+private struct StandInLanguageModel: MobileLanguageIdentifying {
+    let failure: String?
+
+    func prepare() async throws {
+        if let failure { throw RecordingError.message(failure) }
+    }
+
+    func detect(samples: [Float]) async throws -> LanguageGuess {
+        try await prepare()
+        return LanguageGuess(language: Locale.current.language.languageCode?.identifier ?? "en", probability: 1)
+    }
+
+    func supportedLocales() async -> [String] { [] }
 }
