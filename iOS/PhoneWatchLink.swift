@@ -17,18 +17,23 @@ protocol WatchLinking: AnyObject {
 final class PhoneWatchLink: NSObject, WCSessionDelegate, WatchLinking {
     /// Set once the scene's session is attached. `nil` means every command answers `openPhoneApp`.
     var commandHandler: (@MainActor (WatchCommand) async -> WatchReply)?
+    /// Called on the main actor after a chunk or end marker was filed, so a foreground app can drain.
+    var onInboxChanged: (@MainActor () -> Void)?
     private let session: WCSession
+    /// Where delivered audio is filed, on the delegate queue, before the delivery call returns.
+    nonisolated let inbox: WatchInbox
     private var lastStatus: PhoneRecorderStatus?
 
-    private init(session: WCSession) {
+    private init(session: WCSession, inbox: WatchInbox) {
         self.session = session
+        self.inbox = inbox
         super.init()
     }
 
     /// `nil` where WatchConnectivity is unavailable, such as on iPad.
-    static func activateIfSupported() -> PhoneWatchLink? {
+    static func activateIfSupported(inbox: WatchInbox) -> PhoneWatchLink? {
         guard WCSession.isSupported() else { return nil }
-        let link = PhoneWatchLink(session: .default)
+        let link = PhoneWatchLink(session: .default, inbox: inbox)
         link.session.delegate = link
         link.session.activate()
         return link
@@ -85,6 +90,18 @@ final class PhoneWatchLink: NSObject, WCSessionDelegate, WatchLinking {
         Task { @MainActor in
             exchange.reply(await Self.replyMessage(to: exchange.message, handler: self.commandHandler))
         }
+    }
+
+    /// Files the chunk synchronously (the system deletes the file when this returns), then lets a
+    /// foreground app know. Never starts audio or transcription: this may run in the background.
+    nonisolated func session(_ session: WCSession, didReceive file: WCSessionFile) {
+        _ = inbox.accept(fileAt: file.fileURL, metadata: file.metadata ?? [:], now: Date())
+        Task { @MainActor in self.onInboxChanged?() }
+    }
+
+    nonisolated func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any]) {
+        inbox.acceptEnd(userInfo: userInfo, now: Date())
+        Task { @MainActor in self.onInboxChanged?() }
     }
 }
 

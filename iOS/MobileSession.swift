@@ -110,10 +110,12 @@ final class MobileSession {
     private let conversationRoot: URL
     /// The App Group folder the share extension writes into, when this device has one.
     let sharedInboxRoot: URL?
+    /// Apple Watch audio waiting to be transcribed (issue #181).
+    let watchInbox: WatchInbox
     /// Off by default: iOS backs app data up like any other app, and a user who relies on iCloud
     /// Backup to move to a new phone should not silently lose their conversations. On means the
     /// transcripts never leave the device, not even into an Apple-held backup.
-    static let excludeBackupKey = "mobileExcludeConversationsFromBackup"
+    nonisolated static let excludeBackupKey = "mobileExcludeConversationsFromBackup"
     var excludeFromBackup = UserDefaults.standard.bool(forKey: MobileSession.excludeBackupKey) {
         didSet {
             UserDefaults.standard.set(excludeFromBackup, forKey: MobileSession.excludeBackupKey)
@@ -140,6 +142,7 @@ final class MobileSession {
         attachmentRoot = storageDirectory.appendingPathComponent("Attachments", isDirectory: true)
         conversationRoot = storageDirectory.appendingPathComponent("Conversations", isDirectory: true)
         archive = SessionArchive(directory: conversationRoot)
+        watchInbox = WatchInbox(root: storageDirectory.appendingPathComponent("WatchInbox", isDirectory: true))
         refreshHistory()
         applyBackupExclusion()
         if FileManager.default.fileExists(atPath: activeURL.path) {
@@ -403,6 +406,7 @@ final class MobileSession {
             try? PrivateStorage.createDirectory(at: sharedInboxRoot)
             try? PrivateStorage.setExcludedFromBackup(excluded, at: sharedInboxRoot)
         }
+        watchInbox.applyBackupExclusion(excluded)
     }
 
     /// Extra transcription languages offered beside the device's own.

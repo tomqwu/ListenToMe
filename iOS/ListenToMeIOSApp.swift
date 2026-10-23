@@ -10,7 +10,7 @@ struct ListenToMeIOSApp: App {
     private let watchLink: PhoneWatchLink?
 
     init() {
-        watchLink = PhoneWatchLink.activateIfSupported()
+        watchLink = PhoneWatchLink.activateIfSupported(inbox: WatchInbox(root: WatchInbox.defaultRoot))
     }
 
     var body: some Scene {
