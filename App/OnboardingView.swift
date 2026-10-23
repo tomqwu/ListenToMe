@@ -142,8 +142,9 @@ struct OnboardingView: View {
                     .textFieldStyle(.roundedBorder)
                 Text(
                     "Local mode verifies that your model runs on this Mac. Cloud mode sends meeting text " +
-                    "and attached context to ollama.com. For an OpenAI-compatible server (LM Studio, " +
-                    "OpenRouter, vLLM), enter its URL in Settings. AI off keeps transcription and saving available."
+                    "and attached context to ollama.com. For a cloud AI service (OpenAI, Claude, Gemini and others) " +
+                    "or an OpenAI-compatible server (LM Studio, vLLM), add your key or URL in Settings. " +
+                    "AI off keeps transcription and saving available."
                 )
                 .font(.footnote)
                 .foregroundStyle(.secondary)

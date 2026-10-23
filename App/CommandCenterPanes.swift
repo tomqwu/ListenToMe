@@ -352,7 +352,7 @@ extension MeetingView {
                 ProviderSettings.setModel($0, for: role)
                 ProviderSettings.pin(role)   // explicit choice: stop auto-defaulting this pane
                 // The "choose a model for each pane" prompt (#52) clears once every pane has one.
-                if ProviderSettings.aiMode == .openAI,
+                if ProviderSettings.aiMode == .openAI || ProviderSettings.aiMode == .cloudAI,
                    CopilotRole.allCases.allSatisfy({ !(session.models[$0] ?? "").isEmpty }) { modelStatus = "" }
             }
         )) {

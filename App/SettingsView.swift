@@ -103,10 +103,12 @@ enum ProviderSettings {
     /// (`openAIModel_<role>`, empty until the user picks), so switching to it never overwrites an
     /// Ollama pick (issue #52).
     static func model(for role: CopilotRole) -> String {
+        if aiMode == .cloudAI { return UserDefaults.standard.string(forKey: cloudModelKey(role)) ?? "" }
         if aiMode == .openAI { return UserDefaults.standard.string(forKey: "openAIModel_\(role.rawValue)") ?? "" }
         return UserDefaults.standard.string(forKey: "model_\(role.rawValue)") ?? ollamaModel
     }
     static func setModel(_ model: String, for role: CopilotRole) {
+        if aiMode == .cloudAI { UserDefaults.standard.set(model, forKey: cloudModelKey(role)); return }
         UserDefaults.standard.set(model, forKey: (aiMode == .openAI ? "openAIModel_" : "model_") + role.rawValue)
     }
 
@@ -117,7 +119,7 @@ enum ProviderSettings {
     }
     static func pin(_ role: CopilotRole) {
         // Pins describe Ollama picks; every OpenAI-compatible choice is explicit already.
-        guard aiMode != .openAI else { return }
+        guard aiMode != .openAI && aiMode != .cloudAI else { return }
         UserDefaults.standard.set(true, forKey: "modelPinned_\(role.rawValue)")
     }
 
@@ -158,6 +160,8 @@ struct SettingsView: View {
     @State private var openAIBaseURL = ProviderSettings.openAIBaseURL
     private let originalOpenAIKey = ProviderSettings.openAIKey() ?? ""
     @State private var openAIKey = ProviderSettings.openAIKey() ?? ""
+    @State private var cloudVendor = ProviderSettings.cloudVendor
+    @State private var cloudKey = ProviderSettings.cloudVendor.flatMap(ProviderSettings.cloudAIKey(for:)) ?? ""
 
     init() {
         _aiMode = State(initialValue: ProviderSettings.aiMode)
@@ -181,11 +185,16 @@ struct SettingsView: View {
                 ForEach(AIProcessingMode.allCases, id: \.self) { Text($0.label).tag($0) }
             }
             Text("Cloud mode sends meeting text and attached context to Ollama Cloud. Local mode verifies " +
-                 "the model before each request. OpenAI-compatible sends it to the server you enter below. " +
+                 "the model before each request. Cloud AI service sends it to the service you choose below with " +
+                 "your own key; OpenAI-compatible sends it to the server you enter below. " +
                  "AI off keeps transcription and saving available.")
                 .font(.caption).foregroundStyle(.secondary)
             if aiMode == .openAI {
                 OpenAICompatibleSettingsSection(baseURL: $openAIBaseURL, key: $openAIKey)
+            }
+            if aiMode == .cloudAI {
+                CloudAISettingsSection(vendor: $cloudVendor, key: $cloudKey)
+                    .onChange(of: cloudVendor) { cloudKey = cloudVendor.flatMap(ProviderSettings.cloudAIKey(for:)) ?? "" }
             }
             Picker("Appearance", selection: $appearance) {
                 Text("System").tag("system")
@@ -292,6 +301,15 @@ struct SettingsView: View {
                 return
             }
         }
+        let cloudChange: CloudAISettingsChange
+        do {
+            let savedCloudKey = cloudVendor.flatMap(ProviderSettings.cloudAIKey(for:)) ?? ""
+            cloudChange = try CloudAISettingsChange.plan(usesCloudAI: aiMode == .cloudAI, vendor: cloudVendor,
+                                                         key: cloudKey, keyEdited: cloudKey != savedCloudKey)
+        } catch {
+            saveError = error.localizedDescription + " Settings have not been applied."
+            return
+        }
         let ollamaKeyChanged = ollamaKey != originalKey
         guard !ollamaKeyChanged || KeychainStore.set(ollamaKey.isEmpty ? nil : ollamaKey, for: "ollama") else {
             saveError = "Could not save the API key in Keychain. Settings have not been applied."
@@ -302,6 +320,15 @@ struct SettingsView: View {
             saveError = "Could not save the OpenAI-compatible API key in Keychain. " + (ollamaKeyChanged
                 ? "The Ollama API key was saved; no other settings were applied."
                 : "Settings have not been applied.")
+            return
+        }
+        guard ProviderSettings.applyCloudAI(cloudChange) else {
+            // Say exactly what was written before the cloud key failed; nothing else changes.
+            let written = [ollamaKeyChanged ? "the Ollama API key" : nil,
+                           openAIChange == nil ? nil : "the OpenAI-compatible server"].compactMap { $0 }
+            saveError = "Could not save the cloud AI API key in Keychain. " + (written.isEmpty
+                ? "Settings have not been applied."
+                : "Saved \(written.joined(separator: " and ")); no other settings were applied.")
             return
         }
         ProviderSettings.aiMode = aiMode

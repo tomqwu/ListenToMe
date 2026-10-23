@@ -172,8 +172,11 @@ final class CloudAIPresetTests: XCTestCase {
     // MARK: Model lists
 
     func testClaudeModelListUsesTheNativeHeadersAndOnePage() async throws {
-        OpenAIStubProtocol.reply = { _ in .response(status: 200, headers: ["Content-Type": "application/json"], body: Data(
-            #"{"data":[{"id":"claude-sonnet-5-5","display_name":"Claude Sonnet 5.5"},{"id":"claude-opus-5-5","display_name":"Claude Opus 5.5"}],"has_more":false}"#.utf8)) }
+        let list = #"{"data":[{"id":"claude-sonnet-5-5","display_name":"Claude Sonnet 5.5"},"#
+            + #"{"id":"claude-opus-5-5","display_name":"Claude Opus 5.5"}],"has_more":false}"#
+        OpenAIStubProtocol.reply = { _ in
+            .response(status: 200, headers: ["Content-Type": "application/json"], body: Data(list.utf8))
+        }
         let models = try await CloudAICatalog(session: OpenAIStubProtocol.session()).fetch(.preset(.anthropic), apiKey: key)
         XCTAssertEqual(models, ["claude-opus-5-5", "claude-sonnet-5-5"])
         let sent = try XCTUnwrap(OpenAIStubProtocol.received.first).request

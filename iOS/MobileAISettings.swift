@@ -4,8 +4,9 @@ import ListenToMeCore
 
 @MainActor @Observable
 final class MobileAISettings {
-    /// `openAI` is any OpenAI-compatible `/v1/chat/completions` server the user entered (issue #52).
-    enum Provider: String, CaseIterable { case apple, ollama, openAI = "openai" }
+    /// `openAI` is any OpenAI-compatible `/v1/chat/completions` server the user entered (issue #52);
+    /// `cloud` is one of the cloud AI presets, such as OpenAI or Anthropic Claude (issue #214).
+    enum Provider: String, CaseIterable { case apple, ollama, openAI = "openai", cloud }
     var provider: Provider {
         didSet {
             UserDefaults.standard.set(provider.rawValue, forKey: "mobileAIProvider")
@@ -47,6 +48,8 @@ final class MobileAISettings {
     @ObservationIgnored let transports = MobileTransports()
     /// The OpenAI-compatible server, its key, catalog and per-role models (issue #52).
     let openAI = MobileOpenAISettings()
+    /// The cloud AI presets: the chosen service, each vendor's key and per-role models (issue #214).
+    let cloud = MobileCloudAISettings()
     @ObservationIgnored var quickSettingsChanged: (() -> Void)?
     @ObservationIgnored var correctionSettingsChanged: (() -> Void)?
     var models: [OllamaCloudModel] = [] {
@@ -95,6 +98,8 @@ final class MobileAISettings {
         hasKey = (try? MobileKeychain.read().isEmpty) == false
         resolveRoleModels()
         openAI.changed = { [weak self] in self?.quickSettingsChanged?() }
+        cloud.changed = { [weak self] in self?.quickSettingsChanged?() }
+        if provider == .cloud && cloud.vendor == nil { provider = Self.defaultProvider }   // no service left to use
     }
 
     @discardableResult
@@ -211,6 +216,7 @@ final class MobileAISettings {
 
     func selectedModel(for mode: MobileSummaryMode) -> String {
         if provider == .openAI { return openAI.selectedModel(for: mode) }
+        if provider == .cloud { return cloud.selectedModel(for: mode) }
         switch mode {
         case .summary: return model
         case .quick: return quickModel
@@ -222,6 +228,7 @@ final class MobileAISettings {
 
     func models(for role: MobileSummaryMode) -> [OllamaCloudModel] {
         if provider == .openAI { return openAI.models.map { OllamaCloudModel(name: $0) } }
+        if provider == .cloud { return cloud.models.map { OllamaCloudModel(name: $0) } }
         return role == .deep ? models.filter { !Self.isFlash($0.name) } : models
     }
 
@@ -247,6 +254,7 @@ final class MobileAISettings {
 
     func selectModel(_ value: String, for mode: MobileSummaryMode) {
         if provider == .openAI { openAI.selectModel(value, for: mode); return }
+        if provider == .cloud { cloud.selectModel(value, for: mode); return }
         guard mode != .deep || !Self.isFlash(value) else {
             status = "Deep Summary needs a full model. Flash models are available for Quick Summary."
             return
@@ -262,6 +270,7 @@ final class MobileAISettings {
 
     func availability(for mode: MobileSummaryMode) -> String? {
         if provider == .openAI { return openAI.availability(for: mode) }
+        if provider == .cloud { return cloud.availability(for: mode) }
         let model = selectedModel(for: mode)
         if mode == .deep && (model.isEmpty || Self.isFlash(model)) { return "Choose a full model for Deep Summary." }
         if !hasKey && !usesCustomEndpoint { return "Add your Ollama API key in Settings." }
@@ -274,6 +283,7 @@ final class MobileAISettings {
 
     func client(for mode: MobileSummaryMode = .summary) throws -> any LLMProvider {
         if provider == .openAI { return try openAI.client(for: mode, transports: transports) }
+        if provider == .cloud { return try cloud.client(for: mode, transports: transports) }
         let model = selectedModel(for: mode)
         if mode == .deep && (model.isEmpty || Self.isFlash(model)) {
             throw RecordingError.message("Choose a full model for Deep Summary. Flash models cannot be used for this role.")
@@ -299,7 +309,7 @@ final class MobileAISettings {
         guard !testing else { return }
         testing = true
         defer { testing = false }
-        if provider == .openAI, mode == .quick { await testQuickContract(); return }
+        if provider == .openAI || provider == .cloud, mode == .quick { await testQuickContract(); return }
         do {
             var response = ""
             for try await delta in try client(for: mode).stream(LLMRequest(system: "Reply briefly.",
