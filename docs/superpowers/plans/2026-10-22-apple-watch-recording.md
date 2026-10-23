@@ -116,7 +116,8 @@ Its §3 platform facts (F1–F19, U1–U8) and §9 decisions are referenced by n
 | `Watch/ListenToMeWatchApp.swift` | `@main`, `WCSession` background task | 2, 7 |
 | `Watch/WatchLinkClient.swift` | Watch side of `WCSession`: commands, phone status, file transfers | 7, 18 |
 | `Watch/RemoteControlView.swift` | Slice 1 screen | 7 |
-| `Watch/WatchRecorder.swift` | Audio session, engine tap, AAC chunk rotation, limits, interruptions | 17 |
+| `Watch/WatchRecorder.swift` | Audio session, limits, interruptions, Continue | 17 |
+| `Watch/WatchChunkCapture.swift` | `WatchChunkCapturing` and the engine-tap AAC writer with rotation (swappable for the `AVAudioRecorder` fallback) | 17 |
 | `Watch/WatchOutbox.swift` | Finalized chunks on disk, queueing, reconcile, delete-on-success | 18 |
 | `Watch/WatchRootView.swift`, `Watch/WatchRecordingView.swift` | Slice 3 UI | 19 |
 | `Sources/ListenToMeCore/WatchLink.swift` | Wire protocol and watch display text (compiled into the watch) | 4, 8, 16 |
@@ -884,10 +885,12 @@ public enum WatchCapturePolicy {
     public static func text(for block: StartBlock) -> String
     public static func text(for trigger: StopTrigger) -> String
 }
+// As built, these two types live in WatchCapturePolicy.swift (WatchLink.swift stays under the lint file length).
 public enum WatchCaptureState: String, Sendable { case idle, recording }
 public struct WatchCaptureStatus: Equatable, Sendable { var state: WatchCaptureState; var startedAt: Date?; var waitingRecordings: Int }
 // WatchLink: context(for: WatchCaptureStatus) (key "watch") and watchStatus(fromContext:) -> WatchCaptureStatus?
 // WatchRemoteText: watchRecordingLine(_ status: WatchCaptureStatus?, now: Date) -> String?  ("Apple Watch is recording · mm:ss" or nil)
+//   As built, nil also once a "recording" status is older than the 3-hour cap plus one limit check (stale).
 // WatchRemoteText: waitingText(_ count: Int) -> String?  (nil for 0, "1 recording waiting for iPhone", "3 recordings waiting for iPhone")
 ```
 
@@ -909,7 +912,8 @@ recorded is being sent to iPhone."
 ### Task 17: `WatchRecorder`
 
 **Files:**
-- Create: `Watch/WatchRecorder.swift`
+- Create: `Watch/WatchRecorder.swift`, `Watch/WatchChunkCapture.swift` (capture behind `WatchChunkCapturing`, so a
+  no-go from Task 15 replaces one type)
 
 **Interfaces:**
 - Consumes: `WatchCapturePolicy`, `WatchChunkMetadata` (Task 8).
