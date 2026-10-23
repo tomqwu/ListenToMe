@@ -927,7 +927,7 @@ recorded is being sent to iPhone."
   `WKInterfaceDevice.current().batteryLevel` (monitoring enabled) and `volumeAvailableCapacity`, asks
   `AVAudioApplication.requestRecordPermission()`, sets the session category `.record` and activates
   it, all in the foreground (F5). The tap converts to 16 kHz mono and writes AAC into
-  `Application Support/Recording/<recordingID>/<index>.m4a` on a serial queue off the main actor; at
+  `Application Support/Recording/<recordingID>/<index>.m4a` off the main actor; at
   `shouldRotate` it closes the file between buffers (no gap), and hands it to `onChunkFinalized`
   with metadata (`watchBuild` = `CFBundleVersion`). Check `stopTrigger` at most every 30 s. A stop,
   a limit, or `AVAudioSession.interruptionNotification` (`.began`) closes the current chunk with
@@ -935,6 +935,16 @@ recorded is being sent to iPhone."
   Continue to keep recording.", canContinue: true)`. `continueRecording()` keeps the recording ID,
   continues the index, and sets `startOffset` to the wall-clock seconds since `startedAt`. A write
   error ends the recording with its reason.
+
+  *As built (after the #193 review):* `WatchEngineCapture` converts and writes on the engine's own
+  tap thread under an `NSLock`, not on a separate serial queue; a rotation closes the file with
+  `AVAudioFile.close()` before handing it over, one `AVAudioConverter` serves the whole run, and the
+  last chunk gets an `.endOfStream` flush. Each opened chunk gets a placeholder `<index>.json` so a
+  chunk finished but never handed over can be recovered at launch. Besides interruptions, a
+  media-services reset, a route change that leaves no input, the engine's configuration change
+  stopping it, or the 30 s check finding it stopped all end the run with Continue; the decision is
+  `WatchCapturePolicy.stopReason(for:)` in Core. Each 30 s check also republishes the watch status
+  with a stamp, and the phone hides "Apple Watch is recording" after 2 minutes without one.
 - [ ] **Step 2: Build.** `make ios-build` and `make lint`. Expected: success. Device behavior is
   accepted in Task 20.
 - [ ] **Step 3: Commit** `feat(watch): record the watch microphone in AAC chunks (#181)`.

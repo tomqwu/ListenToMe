@@ -354,7 +354,8 @@ be tested with fixture `.m4a` files and no watch at all. It stays internal to wa
 | Phone unreachable (Slice 1) | The watch shows "iPhone not reachable". The command is not queued, so a stale Start can never fire later. |
 | Phone app in background (Slice 1) | Reply `openPhoneApp`. The audio session is never activated. |
 | Interruption on watch (Slice 3) | Stop, close the chunk, explain, offer Continue in the foreground (F5). |
-| Watch killed mid-recording | Finalized chunks survive. At most one unfinalized chunk is lost, and the recording is marked "ended unexpectedly". |
+| Audio system stops capture on the watch (media-services reset, route change with no input, engine stopped by a configuration change or found stopped at a 30 s check) | The same as an interruption, with its own reason (`WatchCapturePolicy.stopReason(for:)`). The phone hides "Apple Watch is recording" when the watch's 30 s status refresh has been missing for 2 minutes. |
+| Watch killed mid-recording | Finalized chunks survive, including one closed but not yet handed to the outbox (recovered at launch). Only the highest index can be unfinished: at most that chunk is lost, the end marker names it so the phone notes the gap, and the recording is marked "ended unexpectedly". |
 | Transfer error | Re-queue with backoff, and reconcile at launch against `outstandingFileTransfers`. Delete only after success. |
 | Phone out of range for hours | The system queues transfers (F7). The watch shows how many recordings are waiting. |
 | Phone storage full or read-only | Treated as transient, the same as `MobileSession.isTransient` for the share inbox, and retried on the next foreground. |

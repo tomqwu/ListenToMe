@@ -1,3 +1,4 @@
+import AVFoundation
 import Foundation
 import Observation
 import os
@@ -8,8 +9,10 @@ import WatchConnectivity
 /// Each chunk lives in `Application Support/Outbox/<recordingID>/<index>.m4a` beside its metadata,
 /// `<index>.json`, and goes to the iPhone with `transferFile` only: the watch makes no network
 /// request. A chunk is deleted only once `didFinish` reports success (decision 3); a failed transfer
-/// is sent again after `WatchCapturePolicy.retryDelay`. A recording's end marker, when it has no last
-/// chunk, waits as `end.json` until the session can queue it with `transferUserInfo`.
+/// is sent again after `WatchCapturePolicy.retryDelay`. A chunk's metadata is also kept in memory and
+/// read back from the transfer itself, so a chunk whose metadata file could not be written is never
+/// stuck. A recording's end marker, when it has no last chunk, waits as `end.json` until the session
+/// can queue it with `transferUserInfo`.
 @MainActor @Observable
 final class WatchOutbox {
     /// Recordings with at least one chunk not yet delivered.
@@ -17,7 +20,9 @@ final class WatchOutbox {
     @ObservationIgnored var onChange: (() -> Void)?
     @ObservationIgnored private let session: WCSession
     @ObservationIgnored private let root: URL
-    /// Failed transfers per chunk (`<recordingID>/<index>.m4a`), for the retry delay. Reset at launch.
+    /// Metadata of chunks added or seen in a transfer this launch, by `<recordingID>/<index>.m4a`.
+    @ObservationIgnored private var known: [String: WatchChunkMetadata] = [:]
+    /// Failed transfers per chunk, for the retry delay. Reset at launch.
     @ObservationIgnored private var attempts: [String: Int] = [:]
     @ObservationIgnored private var retries: [String: Task<Void, Never>] = [:]
     private static let endName = "end.json"
@@ -27,18 +32,17 @@ final class WatchOutbox {
         URL.applicationSupportDirectory.appendingPathComponent("Outbox", isDirectory: true)
     }
 
-    /// Runs at launch, before anything can record: a chunk left in `recordingRoot` was being written
-    /// when the app was killed, so it was never finished and cannot be read. It is deleted, and the
-    /// iPhone is told the recording ended unexpectedly after the last finished chunk.
+    /// Runs at launch, before anything can record, and recovers what a killed launch left in
+    /// `recordingRoot` (see `recoverUnfinished`).
     init(session: WCSession = .default, root: URL = WatchOutbox.defaultRoot,
          recordingRoot: URL = WatchRecorder.recordingRoot) {
         self.session = session
         self.root = root
-        discardUnfinished(in: recordingRoot)
+        recoverUnfinished(in: recordingRoot)
         recount()
     }
 
-    /// Takes a finished chunk from the recorder and starts sending it.
+    /// Takes a finished, closed chunk from the recorder and starts sending it.
     func add(_ url: URL, _ metadata: WatchChunkMetadata) throws {
         let folder = try makeFolder(metadata.recordingID)
         let destination = folder.appendingPathComponent("\(metadata.index).m4a")
@@ -46,12 +50,10 @@ final class WatchOutbox {
             try FileManager.default.removeItem(at: destination)
         }
         try FileManager.default.moveItem(at: url, to: destination)
-        do {
-            try JSONEncoder().encode(metadata).write(to: sidecar(for: destination), options: .atomic)
-        } catch {
-            // Still sent now; only a resend after a relaunch needs the file.
-            Self.log.error("Chunk metadata not written: \(error.localizedDescription, privacy: .public)")
-        }
+        // The recorder's placeholder for this chunk is no longer needed.
+        try? FileManager.default.removeItem(at: sidecar(for: url))
+        known[key(destination)] = metadata
+        writeSidecar(metadata, for: destination)
         recount()
         send(destination, metadata)
     }
@@ -72,10 +74,13 @@ final class WatchOutbox {
     /// Once the session is active (at launch): queues every chunk the system is not already sending,
     /// and every end marker still waiting.
     func reconcileAtLaunch(outstanding: [WCSessionFileTransfer]) {
+        for transfer in outstanding {
+            remember(transfer.file.metadata.flatMap { try? WatchChunkMetadata(transferMetadata: $0) },
+                     for: transfer.file.fileURL)
+        }
         let queued = Set(outstanding.map(\.file.fileURL))
-        let finalized = chunkURLs()
-        for url in WatchCapturePolicy.chunksToQueue(finalized: finalized, outstanding: queued) {
-            guard let metadata = readSidecar(for: url) else {
+        for url in WatchCapturePolicy.chunksToQueue(finalized: chunkURLs(), outstanding: queued) {
+            guard let metadata = metadata(for: url) else {
                 Self.log.error("Chunk kept without metadata; Delete on the watch removes it")
                 continue
             }
@@ -86,19 +91,14 @@ final class WatchOutbox {
     }
 
     /// `didFinish` for a chunk: deleted only on success, otherwise sent again after a delay.
-    func transferFinished(_ transfer: WCSessionFileTransfer, error: (any Error)?) {
-        transferFinished(fileURL: transfer.file.fileURL, error: error)
-    }
-
-    func transferFinished(fileURL: URL, error: (any Error)?) {
-        // Found by its last two path parts, so a path the system rewrote still matches.
-        let recording = fileURL.deletingLastPathComponent().lastPathComponent
-        let url = root.appendingPathComponent(recording, isDirectory: true)
-            .appendingPathComponent(fileURL.lastPathComponent)
-        let key = recording + "/" + fileURL.lastPathComponent
+    /// `metadata` is what the transfer carried, the fallback when the chunk's file was never written.
+    func transferFinished(fileURL: URL, metadata: WatchChunkMetadata?, error: (any Error)?) {
+        let url = localURL(fileURL)
+        let key = key(url)
         guard FileManager.default.fileExists(atPath: url.path) else { return }
         guard let error else {
             attempts[key] = nil
+            known[key] = nil
             retries.removeValue(forKey: key)?.cancel()
             try? FileManager.default.removeItem(at: url)
             try? FileManager.default.removeItem(at: sidecar(for: url))
@@ -106,6 +106,7 @@ final class WatchOutbox {
             recount()
             return
         }
+        remember(metadata, for: url)
         let attempt = attempts[key, default: 0]
         attempts[key] = attempt + 1
         Self.log.error("Transfer failed, retrying: \(error.localizedDescription, privacy: .public)")
@@ -123,6 +124,7 @@ final class WatchOutbox {
         for task in retries.values { task.cancel() }
         retries = [:]
         attempts = [:]
+        known = [:]
         for folder in recordingFolders() { try? FileManager.default.removeItem(at: folder) }
         recount()
     }
@@ -139,8 +141,11 @@ final class WatchOutbox {
         retries[key] = nil
         let outstanding = Set(session.outstandingFileTransfers.map(\.file.fileURL))
         guard FileManager.default.fileExists(atPath: url.path),
-              !WatchCapturePolicy.chunksToQueue(finalized: [url], outstanding: outstanding).isEmpty,
-              let metadata = readSidecar(for: url) else { return }
+              !WatchCapturePolicy.chunksToQueue(finalized: [url], outstanding: outstanding).isEmpty else { return }
+        guard let metadata = metadata(for: url) else {
+            Self.log.error("Chunk kept without metadata; Delete on the watch removes it")
+            return
+        }
         send(url, metadata)
     }
 
@@ -158,29 +163,101 @@ final class WatchOutbox {
         }
     }
 
+    // MARK: Metadata
+
+    /// From memory, then the metadata file, then nothing.
+    private func metadata(for url: URL) -> WatchChunkMetadata? {
+        known[key(url)] ?? readSidecar(for: url)
+    }
+
+    /// Keeps metadata learned from a transfer, and writes the file again if it is missing, so the chunk
+    /// can still be resent after a relaunch.
+    private func remember(_ metadata: WatchChunkMetadata?, for fileURL: URL) {
+        let url = localURL(fileURL)
+        guard let metadata, metadata.index == Int(url.deletingPathExtension().lastPathComponent),
+              metadata.recordingID.uuidString == url.deletingLastPathComponent().lastPathComponent else { return }
+        known[key(url)] = metadata
+        if readSidecar(for: url) == nil, FileManager.default.fileExists(atPath: url.path) {
+            writeSidecar(metadata, for: url)
+        }
+    }
+
+    private func writeSidecar(_ metadata: WatchChunkMetadata, for chunk: URL) {
+        do {
+            try JSONEncoder().encode(metadata).write(to: sidecar(for: chunk), options: .atomic)
+        } catch {
+            // Still sendable this launch from memory, or later from the transfer's own metadata.
+            Self.log.error("Chunk metadata not written: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
     // MARK: Launch
 
-    private func discardUnfinished(in recordingRoot: URL) {
+    /// A killed launch can leave chunks in `recordingRoot`. Only the highest index can be unfinished
+    /// (a rotation closes a chunk before opening the next): it is sent if it can be read, otherwise
+    /// deleted. Every lower one is complete, only never handed over, and is sent. The iPhone is then
+    /// told the recording ended unexpectedly, naming the highest index, so a lost chunk shows as a gap.
+    /// An empty folder is a run stopped by an interruption, whose last chunk already said so.
+    private func recoverUnfinished(in recordingRoot: URL) {
         let folders = (try? FileManager.default.contentsOfDirectory(at: recordingRoot, includingPropertiesForKeys: nil))
             ?? []
         for folder in folders {
             defer { try? FileManager.default.removeItem(at: folder) }
             guard let id = UUID(uuidString: folder.lastPathComponent) else { continue }
-            let unfinished = ((try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? [])
-                .compactMap { $0.hasSuffix(".m4a") ? Int($0.dropLast(4)) : nil }
-            // An empty folder is a recording stopped by an interruption: its last chunk said so.
-            guard let index = unfinished.min(), index > 0 else { continue }
-            Self.log.notice("Discarded an unfinished chunk of a recording that ended unexpectedly")
+            let indices = ((try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? [])
+                .compactMap { $0.hasSuffix(".m4a") ? Int($0.dropLast(4)) : nil }.sorted()
+            guard let highest = indices.last else { continue }
+            var previous: WatchChunkMetadata?
+            var keptHighest = false
+            for index in indices {
+                let url = folder.appendingPathComponent("\(index).m4a")
+                guard let chunk = recoveredChunk(url, id: id, index: index, previous: previous,
+                                                 mustBeReadable: index == highest) else {
+                    Self.log.notice("Discarded the unfinished chunk of a recording that ended unexpectedly")
+                    continue
+                }
+                do {
+                    try add(url, chunk)
+                    previous = chunk
+                    keptHighest = keptHighest || index == highest
+                } catch {
+                    Self.log.error("Recovered chunk not queued: \(error.localizedDescription, privacy: .public)")
+                }
+            }
+            // Nothing at all was recorded: there is nothing to tell the iPhone.
+            guard highest > 0 || keptHighest else { continue }
             let created = (try? folder.resourceValues(forKeys: [.creationDateKey]))?.creationDate
-            sendEnd(WatchRecordingEnd(recordingID: id, startedAt: startedAt(id) ?? created ?? Date(),
-                                      lastIndex: index - 1, unexpected: true))
+            let startedAt = previous?.startedAt ?? pendingMetadata(folder, highest)?.startedAt ?? created ?? Date()
+            sendEnd(WatchRecordingEnd(recordingID: id, startedAt: startedAt, lastIndex: highest, unexpected: true))
         }
     }
 
-    /// From a finished chunk still waiting, when there is one.
-    private func startedAt(_ id: UUID) -> Date? {
-        chunkURLs().first { $0.deletingLastPathComponent().lastPathComponent == id.uuidString }
-            .flatMap(readSidecar(for:))?.startedAt
+    /// The chunk's metadata, with its real duration when the file can be read. `nil` when it must be
+    /// readable and is not (killed mid-write: an AAC file without its index); such a file is deleted.
+    private func recoveredChunk(_ url: URL, id: UUID, index: Int, previous: WatchChunkMetadata?,
+                                mustBeReadable: Bool) -> WatchChunkMetadata? {
+        let pending = pendingMetadata(url.deletingLastPathComponent(), index)
+        let seconds = (try? AVAudioFile(forReading: url))
+            .map { Double($0.length) / max(1, $0.processingFormat.sampleRate) }
+        let readable = seconds.map { $0 > 0 && $0 < WatchChunkMetadata.maximumDuration } ?? false
+        guard readable || !mustBeReadable else {
+            try? FileManager.default.removeItem(at: url)
+            return nil
+        }
+        let created = (try? url.deletingLastPathComponent().resourceValues(forKeys: [.creationDateKey]))?.creationDate
+        return WatchChunkMetadata(
+            recordingID: id, index: index,
+            startOffset: pending?.startOffset ?? previous.map { $0.startOffset + $0.duration }
+                ?? Double(index) * WatchCapturePolicy.chunkDuration,
+            duration: readable ? seconds ?? WatchCapturePolicy.chunkDuration : WatchCapturePolicy.chunkDuration,
+            isLast: false, startedAt: pending?.startedAt ?? previous?.startedAt ?? created ?? Date(),
+            watchBuild: pending?.watchBuild ?? "unknown")
+    }
+
+    /// The recorder's placeholder written when it opened the chunk; see `WatchCaptureRun`.
+    private func pendingMetadata(_ folder: URL, _ index: Int) -> WatchChunkMetadata? {
+        guard let data = try? Data(contentsOf: folder.appendingPathComponent("\(index).json")) else { return nil }
+        return try? JSONDecoder().decode(WatchChunkMetadata.self, from: data)
     }
 
     // MARK: Files
@@ -190,6 +267,16 @@ final class WatchOutbox {
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true,
                                                 attributes: WatchRecorder.protection)
         return folder
+    }
+
+    /// Found by its last two path parts, so a path the system rewrote still matches.
+    private func localURL(_ fileURL: URL) -> URL {
+        root.appendingPathComponent(fileURL.deletingLastPathComponent().lastPathComponent, isDirectory: true)
+            .appendingPathComponent(fileURL.lastPathComponent)
+    }
+
+    private func key(_ url: URL) -> String {
+        url.deletingLastPathComponent().lastPathComponent + "/" + url.lastPathComponent
     }
 
     private func recordingFolders() -> [URL] {

@@ -76,6 +76,39 @@ public enum WatchCapturePolicy {
     private static func pathKey(_ url: URL) -> String {
         url.standardizedFileURL.resolvingSymlinksInPath().path
     }
+
+    // MARK: Audio system events
+
+    /// Why the audio system ended capture, or `nil` when the event leaves it running. Every reason
+    /// offers Continue: per F5 capture cannot restart by itself, and the run's last chunk is already
+    /// closed as the last one.
+    public static func stopReason(for event: WatchAudioEvent) -> String? {
+        let tail = " Tap Continue to keep recording."
+        switch event {
+        case .interruptionBegan: return "Recording stopped by a call or Siri." + tail
+        case .mediaServicesReset: return "Recording stopped: Apple Watch restarted its audio." + tail
+        case .engineConfigurationChanged(engineRunning: false), .captureStopped:
+            return "Recording stopped: the Apple Watch microphone stopped." + tail
+        case .routeChanged(inputAvailable: false):
+            return "Recording stopped: the Apple Watch microphone is not available." + tail
+        case .interruptionEnded, .engineConfigurationChanged(engineRunning: true), .routeChanged(inputAvailable: true):
+            return nil
+        }
+    }
+}
+
+/// Something the audio system did while the watch was recording (issue #181).
+public enum WatchAudioEvent: Equatable, Sendable {
+    case interruptionBegan
+    case interruptionEnded
+    /// `AVAudioSession.mediaServicesWereResetNotification`: every audio object is invalid.
+    case mediaServicesReset
+    /// `AVAudioEngineConfigurationChange`; the engine stops itself when it cannot carry on.
+    case engineConfigurationChanged(engineRunning: Bool)
+    /// `AVAudioSession.routeChangeNotification`, with whether any input is still available.
+    case routeChanged(inputAvailable: Bool)
+    /// The periodic limit check found the engine no longer running, with no notification seen.
+    case captureStopped
 }
 
 /// Whether the watch's own microphone is recording (Slice 3).
@@ -89,10 +122,19 @@ public struct WatchCaptureStatus: Equatable, Sendable {
     public var startedAt: Date?
     /// Recordings with parts not yet delivered to the iPhone.
     public var waitingRecordings: Int
+    /// When the watch published this. While recording it publishes again every `refreshInterval`, so
+    /// the phone can tell a live status from one a killed watch app left behind.
+    public var updatedAt: Date?
 
-    public init(state: WatchCaptureState, startedAt: Date?, waitingRecordings: Int) {
+    /// The watch republishes at each limit check.
+    public static let refreshInterval = WatchCapturePolicy.limitCheckInterval
+    /// A recording status not refreshed for this long is stale and not shown.
+    public static let staleAfter: TimeInterval = 120
+
+    public init(state: WatchCaptureState, startedAt: Date?, waitingRecordings: Int, updatedAt: Date? = nil) {
         self.state = state
         self.startedAt = startedAt
         self.waitingRecordings = waitingRecordings
+        self.updatedAt = updatedAt
     }
 }

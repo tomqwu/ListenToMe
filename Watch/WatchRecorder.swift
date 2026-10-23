@@ -33,21 +33,22 @@ final class WatchRecorder {
     enum Phase: Equatable {
         case idle
         case recording(startedAt: Date)
-        /// Ended by a limit, an interruption or a write failure. `canContinue` after an interruption.
+        /// Ended by a limit, an interruption, the audio system or a write failure. `canContinue` after an
+        /// interruption or the audio system stopping capture (`WatchCapturePolicy.stopReason(for:)`).
         case stopped(reason: String?, canContinue: Bool)
     }
 
-    static let interruptionReason = "Recording stopped by a call or Siri. Tap Continue to keep recording."
     static func writeFailureReason(_ detail: String) -> String {
         "Recording stopped: the audio could not be saved on Apple Watch (\(detail)). "
             + "What was recorded is being sent to iPhone."
     }
 
     private(set) var phase = Phase.idle {
-        didSet { if phase != oldValue { onPhaseChange?() } }
+        didSet { if phase != oldValue { onStatusChange?() } }
     }
-    /// Publishes the watch's status to the iPhone; called on every phase change, in any app state.
-    @ObservationIgnored var onPhaseChange: (() -> Void)?
+    /// Publishes the watch's status to the iPhone, in any app state: on every phase change, and at
+    /// every limit check while recording, so the phone can tell a live status from a stale one.
+    @ObservationIgnored var onStatusChange: (() -> Void)?
     /// A finished chunk to send (Task 18's outbox).
     @ObservationIgnored var onChunkFinalized: ((URL, WatchChunkMetadata) -> Void)?
     /// The recording ended without a last chunk to carry `isLast` (its final chunk held no audio, or
@@ -59,7 +60,7 @@ final class WatchRecorder {
     @ObservationIgnored private var startedAt: Date?
     @ObservationIgnored private var nextIndex = 0
     @ObservationIgnored private var limitTask: Task<Void, Never>?
-    @ObservationIgnored private var interruptionObserver: (any NSObjectProtocol)?
+    @ObservationIgnored private var sessionObservers: [any NSObjectProtocol] = []
 
     /// Chunks being written. Anything still here at launch was never finished (see `WatchOutbox`).
     static var recordingRoot: URL {
@@ -74,6 +75,8 @@ final class WatchRecorder {
 
     init(makeCapture: @escaping () -> any WatchChunkCapturing = { WatchEngineCapture() }) {
         self.makeCapture = makeCapture
+        // Once, so every battery read below is current.
+        WKInterfaceDevice.current().isBatteryMonitoringEnabled = true
     }
 
     var isRecording: Bool {
@@ -89,9 +92,11 @@ final class WatchRecorder {
     /// What the iPhone is told; `waitingRecordings` comes from the outbox.
     func status(waitingRecordings: Int) -> WatchCaptureStatus {
         if case .recording(let startedAt) = phase {
-            return WatchCaptureStatus(state: .recording, startedAt: startedAt, waitingRecordings: waitingRecordings)
+            return WatchCaptureStatus(state: .recording, startedAt: startedAt, waitingRecordings: waitingRecordings,
+                                      updatedAt: Date())
         }
-        return WatchCaptureStatus(state: .idle, startedAt: nil, waitingRecordings: waitingRecordings)
+        return WatchCaptureStatus(state: .idle, startedAt: nil, waitingRecordings: waitingRecordings,
+                                  updatedAt: Date())
     }
 
     /// A new recording. Throws, without touching the microphone, when a limit blocks it.
@@ -148,6 +153,8 @@ final class WatchRecorder {
                 self?.onChunkFinalized?(chunk.url, chunk.metadata)
             }, onFailure: { [weak self] detail in
                 self?.endWithReason(Self.writeFailureReason(detail), canContinue: false, unexpected: true)
+            }, onAudioEvent: { [weak self] event in
+                self?.handle(event)
             })
             self.capture = capture
         } catch {
@@ -155,7 +162,7 @@ final class WatchRecorder {
             throw WatchRecorderError.unavailable("Could not start recording: \(error.localizedDescription)")
         }
         phase = .recording(startedAt: startedAt)
-        observeInterruptions()
+        observeAudioSession()
         startLimitChecks()
     }
 
@@ -164,8 +171,7 @@ final class WatchRecorder {
     private func endRun(unexpected: Bool) {
         limitTask?.cancel()
         limitTask = nil
-        if let interruptionObserver { NotificationCenter.default.removeObserver(interruptionObserver) }
-        interruptionObserver = nil
+        removeSessionObservers()
         guard let capture, let recordingID, let startedAt else { return }
         self.capture = nil
         let ending = capture.stop()
@@ -180,11 +186,20 @@ final class WatchRecorder {
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
+    /// A stop the user did not ask for: a limit, a failed write, or the audio system. The reason is on
+    /// screen, and the wrist feels it (played here, so it happens with the wrist down too).
     private func endWithReason(_ reason: String, canContinue: Bool, unexpected: Bool) {
         guard isRecording else { return }
         endRun(unexpected: unexpected)
         phase = .stopped(reason: reason, canContinue: canContinue)
         if !canContinue { removeEmptyFolder() }
+        WKInterfaceDevice.current().play(canContinue ? .stop : .failure)
+    }
+
+    /// An audio-system event while recording; one that stopped capture ends the run with Continue.
+    private func handle(_ event: WatchAudioEvent) {
+        guard let reason = WatchCapturePolicy.stopReason(for: event) else { return }
+        endWithReason(reason, canContinue: true, unexpected: false)
     }
 
     private func removeEmptyFolder() {
@@ -207,17 +222,24 @@ final class WatchRecorder {
         }
     }
 
-    /// Checks the stop limits at most every `limitCheckInterval`, and exactly at the duration cap.
+    /// Checks the stop limits at most every `limitCheckInterval`, and exactly at the duration cap. Each
+    /// check also catches an engine that stopped with no notification, and refreshes the status the
+    /// iPhone shows.
     private func startLimitChecks() {
         limitTask?.cancel()
         limitTask = Task { [weak self] in
             while !Task.isCancelled {
-                guard let self, let startedAt = self.startedAt else { return }
+                guard let self, let startedAt = self.startedAt, self.isRecording else { return }
                 let elapsed = Date().timeIntervalSince(startedAt)
                 if let trigger = WatchCapturePolicy.stopTrigger(battery: Self.batteryLevel(), elapsed: elapsed) {
                     self.endWithReason(WatchCapturePolicy.text(for: trigger), canContinue: false, unexpected: false)
                     return
                 }
+                if self.capture?.isRunning == false {
+                    self.handle(.captureStopped)
+                    return
+                }
+                self.onStatusChange?()
                 let untilCap = WatchCapturePolicy.maximumDuration - elapsed
                 let delay = max(1, min(WatchCapturePolicy.limitCheckInterval, untilCap))
                 do { try await Task.sleep(for: .seconds(delay)) } catch { return }
@@ -227,9 +249,7 @@ final class WatchRecorder {
 
     /// 0...1, or -1 when unknown; an unknown level never blocks or stops a recording.
     private static func batteryLevel() -> Float {
-        let device = WKInterfaceDevice.current()
-        device.isBatteryMonitoringEnabled = true
-        return device.batteryLevel
+        WKInterfaceDevice.current().batteryLevel
     }
 
     /// `nil` when it cannot be read; unreadable free space never blocks a recording.
@@ -251,17 +271,39 @@ final class WatchRecorder {
         }
     }
 
-    /// A call or Siri ends the run; per F5 it cannot resume by itself, so the user taps Continue.
-    private func observeInterruptions() {
-        if let interruptionObserver { NotificationCenter.default.removeObserver(interruptionObserver) }
-        interruptionObserver = NotificationCenter.default.addObserver(
-            forName: AVAudioSession.interruptionNotification, object: AVAudioSession.sharedInstance(), queue: .main
-        ) { [weak self] note in
-            let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt
-            guard raw.flatMap(AVAudioSession.InterruptionType.init) == .began else { return }
-            Task { @MainActor in
-                self?.endWithReason(Self.interruptionReason, canContinue: true, unexpected: false)
+    /// A call or Siri, a media-services reset, or a route change that leaves no input ends the run;
+    /// per F5 capture cannot resume by itself, so the user taps Continue. Which event stops capture is
+    /// decided in Core (`WatchCapturePolicy.stopReason(for:)`); the engine's own configuration change
+    /// comes from the capture.
+    private func observeAudioSession() {
+        removeSessionObservers()
+        let session = AVAudioSession.sharedInstance()
+        let center = NotificationCenter.default
+        func observe(_ name: Notification.Name,
+                     _ event: @escaping @Sendable (Notification) -> WatchAudioEvent?) -> any NSObjectProtocol {
+            center.addObserver(forName: name, object: session, queue: .main) { [weak self] note in
+                guard let event = event(note) else { return }
+                Task { @MainActor in self?.handle(event) }
             }
         }
+        sessionObservers = [
+            observe(AVAudioSession.interruptionNotification) { note in
+                let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt
+                switch raw.flatMap(AVAudioSession.InterruptionType.init) {
+                case .began: return .interruptionBegan
+                case .ended: return .interruptionEnded
+                default: return nil
+                }
+            },
+            observe(AVAudioSession.mediaServicesWereResetNotification) { _ in .mediaServicesReset },
+            observe(AVAudioSession.routeChangeNotification) { _ in
+                .routeChanged(inputAvailable: AVAudioSession.sharedInstance().isInputAvailable)
+            },
+        ]
+    }
+
+    private func removeSessionObservers() {
+        for observer in sessionObservers { NotificationCenter.default.removeObserver(observer) }
+        sessionObservers = []
     }
 }

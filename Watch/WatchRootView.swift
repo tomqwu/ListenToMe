@@ -59,12 +59,6 @@ struct WatchRootView: View {
         .confirmationDialog("Delete recordings that have not reached iPhone?", isPresented: $confirmDelete) {
             Button("Delete", role: .destructive) { outbox.deleteWaiting() }
         }
-        .onChange(of: recorder.phase) { _, phase in
-            // A limit or a failed write ended it: the reason is on screen, and the wrist feels it.
-            if case .stopped(_, let canContinue) = phase {
-                WKInterfaceDevice.current().play(canContinue ? .stop : .failure)
-            }
-        }
     }
 
     /// Shown for as long as there is a recording: the red indicator while it records, and the reason

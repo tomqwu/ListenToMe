@@ -97,7 +97,9 @@ final class WatchLinkClient: NSObject, WCSessionDelegate {
     nonisolated func session(_ session: WCSession, didFinish fileTransfer: WCSessionFileTransfer,
                              error: (any Error)?) {
         let url = fileTransfer.file.fileURL
-        Task { @MainActor in self.outbox?.transferFinished(fileURL: url, error: error) }
+        // The metadata the transfer carried: the fallback when the chunk's metadata file is missing.
+        let metadata = fileTransfer.file.metadata.flatMap { try? WatchChunkMetadata(transferMetadata: $0) }
+        Task { @MainActor in self.outbox?.transferFinished(fileURL: url, metadata: metadata, error: error) }
     }
 
     nonisolated func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {

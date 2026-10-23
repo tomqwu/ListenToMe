@@ -143,6 +143,7 @@ public enum WatchLink {
     public static func context(for status: WatchCaptureStatus) -> [String: Any] {
         var fields: [String: Any] = [Key.state: status.state.rawValue, Key.waiting: status.waitingRecordings]
         if let startedAt = status.startedAt { fields[Key.startedAt] = startedAt.timeIntervalSince1970 }
+        if let updatedAt = status.updatedAt { fields[Key.stamp] = updatedAt.timeIntervalSince1970 }
         return [Key.version: protocolVersion, Key.watch: fields]
     }
 
@@ -152,7 +153,8 @@ public enum WatchLink {
               let raw = fields[Key.state] as? String, let state = WatchCaptureState(rawValue: raw) else { return nil }
         return WatchCaptureStatus(state: state,
                                   startedAt: (fields[Key.startedAt] as? Double).map(Date.init(timeIntervalSince1970:)),
-                                  waitingRecordings: max(0, fields[Key.waiting] as? Int ?? 0))
+                                  waitingRecordings: max(0, fields[Key.waiting] as? Int ?? 0),
+                                  updatedAt: (fields[Key.stamp] as? Double).map(Date.init(timeIntervalSince1970:)))
     }
 
     // MARK: Display
@@ -371,9 +373,13 @@ public enum WatchRemoteText {
     }
 
     /// The line the iPhone shows while the watch records, or `nil` when it is not recording. A status
-    /// older than the 3-hour cap (plus one limit check) is stale, as from a watch app that was killed.
+    /// not refreshed for `WatchCaptureStatus.staleAfter`, or older than the 3-hour cap (plus one limit
+    /// check), is stale, as from a watch app that was killed.
     public static func watchRecordingLine(_ status: WatchCaptureStatus?, now: Date) -> String? {
         guard let status, status.state == .recording else { return nil }
+        if let updatedAt = status.updatedAt, now.timeIntervalSince(updatedAt) > WatchCaptureStatus.staleAfter {
+            return nil
+        }
         let elapsed = status.startedAt.map { now.timeIntervalSince($0) } ?? 0
         guard elapsed <= WatchCapturePolicy.maximumDuration + WatchCapturePolicy.limitCheckInterval else { return nil }
         return "Apple Watch is recording · " + WatchLink.elapsedText(elapsed)

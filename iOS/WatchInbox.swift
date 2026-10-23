@@ -165,14 +165,20 @@ struct WatchInbox: Sendable {
     /// Deletes a recording's audio and manifest: the user deleted it, or its conversation. With
     /// `deletedAt` (the conversation was deleted), a tombstone stays for `tombstoneLifetime`, so a part
     /// the watch sends again is discarded instead of starting a new conversation (#191). Without it
-    /// (only the audio was deleted) a later Continue part reopens the conversation.
+    /// (only the audio was deleted) a later Continue part reopens the conversation. Throws only when the
+    /// audio could not be deleted: a tombstone that cannot be written is logged, since the audio is gone.
     func removeRecording(_ id: UUID, tombstoneAt deletedAt: Date? = nil) throws {
         try Self.locked {
             let folder = folder(id)
             if FileManager.default.fileExists(atPath: folder.path) { try FileManager.default.removeItem(at: folder) }
             guard let deletedAt else { return }
-            try PrivateStorage.createDirectory(at: folder)
-            try writeFile(Data(String(deletedAt.timeIntervalSince1970).utf8), deletedMarkerURL(id))
+            do {
+                try PrivateStorage.createDirectory(at: folder)
+                try writeFile(Data(String(deletedAt.timeIntervalSince1970).utf8), deletedMarkerURL(id))
+            } catch {
+                let reason = error.localizedDescription
+                Self.log.error("Deleted-recording tombstone not written: \(reason, privacy: .public)")
+            }
             excludeFromBackupUnlocked()
         }
     }

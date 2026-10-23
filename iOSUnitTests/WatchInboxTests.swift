@@ -371,4 +371,18 @@ extension WatchInboxTests {
         try inbox.removeRecording(id)
         XCTAssertEqual(inbox.accept(fileAt: try delivered(), metadata: metadata(1), now: startedAt), .stored)
     }
+
+    /// The audio is gone once the folder is removed; a tombstone that cannot be written is only logged,
+    /// so the user is not told the audio could not be deleted.
+    func testATombstoneWriteFailureDoesNotFailTheDelete() throws {
+        XCTAssertEqual(WatchInbox(root: root).accept(fileAt: try delivered(), metadata: metadata(0), now: startedAt),
+                       .stored)
+        let failing = WatchInbox(root: root, writeFile: { data, url in
+            if url.lastPathComponent == "deleted" { throw CocoaError(.fileWriteOutOfSpace) }
+            try data.write(to: url, options: PrivateStorage.writingOptions)
+        })
+        XCTAssertNoThrow(try failing.removeRecording(id, tombstoneAt: startedAt))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: failing.chunkURL(recordingID: id, index: 0).path))
+        XCTAssertTrue(failing.ledgers().isEmpty)
+    }
 }
