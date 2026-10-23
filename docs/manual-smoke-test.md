@@ -267,6 +267,11 @@ pickup labeled YOU or an enabled toggle alone as proof of system-audio capture.
    speech model for (or set the system language to e.g. `pt-BR` and leave "Auto"), then Start. The
    status line must name the requested language and the one actually used, e.g.
    "pt-BR isn't supported on this Mac — transcribing in en-US".
+   **Every supported language is offered (#172).** Open the rail's language picker: below **Auto
+   (system)** it shows **Installed** and **Downloadable** sections, common languages (English,
+   Mandarin, Cantonese, Japanese…) first, and languages the old curated list lacked, such as
+   Portuguese (Brazil) or Italian. Pick a downloadable one and Start: the model downloads, live text
+   arrives in that language, and after relaunch the language appears under **Installed**.
 7. **Calendar title and denial.** With a meeting in progress in Calendar, click **Load from
    Calendar**: notes fill *and* the conversation title becomes the event's title. Rename the title
    by hand and click it again — your title must survive. Then deny Calendar access for this app in
@@ -298,6 +303,11 @@ iOS production-ready…"); this is the short pass.
    After a switch, take a call: the resumed recording stays in the switched language with Undo.
 5. **Unavailable model.** On a fresh install in Airplane mode, record with Automatic: recording
    continues in the device language and the status line says "Language detection paused".
+6. **Every supported language is offered (#172).** **Settings → Transcription → Language** lists
+   **Automatic (default)** first, then **System**, then **Installed** and **Downloadable** sections
+   with the common languages first and languages such as Portuguese (Brazil), Italian or Hindi
+   further down. Pick a downloadable one, record: its model downloads and the transcript is in that
+   language; reopen Settings and it is listed under **Installed**.
 
 ## iPhone language re-check mid-recording (#199)
 

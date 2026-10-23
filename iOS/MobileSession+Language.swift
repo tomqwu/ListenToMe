@@ -8,16 +8,6 @@ import ListenToMeCore
 extension MobileSession {
     /// The picker tag for Automatic.
     static let automaticLanguageTag = "automatic"
-    /// Extra transcription languages offered beside the device's own.
-    static let offeredLanguages = ["en-US", "en-GB", "zh-CN", "zh-TW", "fr-FR", "de-DE", "ja-JP", "es-ES"]
-
-    /// `Locale.current.identifier` is underscored ("en_US") while these tags are hyphenated, so a
-    /// raw string comparison never matched and the picker listed the system language twice.
-    static func selectableLanguages(system: Locale = .current) -> [String] {
-        let current = Locale(identifier: system.identifier).identifier(.bcp47)
-        return offeredLanguages.filter { Locale(identifier: $0).identifier(.bcp47) != current }
-    }
-
     /// The language a new recording, or an Apple Watch recording, is transcribed in first. Automatic
     /// starts in the device's language; a switch applies only to the recording it happened in.
     var transcriptionLanguage: String { languageDetection.automatic ? Locale.current.identifier : language }

@@ -1,18 +1,21 @@
+import ListenToMeCore
 import SwiftUI
 
-/// Settings → Transcription: Automatic (default) or a fixed language (issue #197).
+/// Settings → Transcription: Automatic (default) or a fixed language (issue #197), from every language
+/// this iPhone can transcribe, installed ones first (issue #172).
 struct MobileLanguageSettings: View {
     @Bindable var session: MobileSession
 
     var body: some View {
         Section("Transcription") {
+            let groups = Self.languageGroups(selected: session.languageDetection.automatic ? nil : session.language)
             Picker("Language", selection: $session.languageChoice) {
                 Text("Automatic (default)").tag(MobileSession.automaticLanguageTag)
                 Text("System (\(Locale.current.identifier))").tag(Locale.current.identifier)
-                ForEach(MobileSession.selectableLanguages(), id: \.self) { locale in
-                    Text(Locale.current.localizedString(forIdentifier: locale) ?? locale).tag(locale)
-                }
+                languageSection("Installed", groups.installed)
+                languageSection("Downloadable", groups.downloadable)
             }.disabled(session.busy).accessibilityIdentifier("transcriptionLanguage")
+                .task { await SpeechLanguageCatalog.shared.load() }   // refreshes which models are installed
             if session.languageDetection.automatic {
                 Text("Automatic starts in this device's language and listens to the first few seconds of speech. " +
                      "If you speak another language, it switches and transcribes the recording again. It checks " +
@@ -23,6 +26,25 @@ struct MobileLanguageSettings: View {
             }
             Text("Speech models may download on first use. Audio is transcribed on your device and is not saved.")
         }
+    }
+
+    @ViewBuilder private func languageSection(_ title: String, _ locales: [String]) -> some View {
+        if !locales.isEmpty {
+            Section(title) {
+                ForEach(locales, id: \.self) { locale in Text(Self.label(locale)).tag(locale) }
+            }
+        }
+    }
+
+    static func label(_ locale: String) -> String { Locale.current.localizedString(forIdentifier: locale) ?? locale }
+
+    /// The fixed languages offered below Automatic and System: every language on-device transcription
+    /// supports (or the common ones where the list is unavailable), without the system language, which
+    /// has its own entry. `selected` is the stored fixed language, kept even if no longer listed.
+    @MainActor
+    static func languageGroups(system: Locale = .current, selected: String?,
+                               catalog: SpeechLanguageCatalog = .shared) -> TranscriptionLanguageGroups {
+        catalog.groups(excluding: [system.identifier], selected: selected, label: label)
     }
 }
 

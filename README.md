@@ -92,8 +92,8 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 **Live capture & transcription**
 - Dual-channel capture: your mic + the other participants' system audio, source-labeled.
 - On-device transcription via **Apple SpeechAnalyzer** (default) or the legacy **SpeechRecognizer**.
-- **Transcription-language** picker (English, Mandarin, and more) and **audio-file import** to
-  transcribe an existing recording.
+- **Transcription-language** picker listing every language your Mac can transcribe on-device, and
+  **audio-file import** to transcribe an existing recording.
 - **Survives device changes:** connecting AirPods, docking/undocking or sleep/wake re-installs the
   microphone tap and restarts capture in place ("Mic: input changed — resumed"); a stopped
   system-audio stream gets the same one-shot restart. If a channel really cannot be recovered, the
@@ -225,9 +225,13 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   treat pane output — including any links it contains — with the same care as the source material.
 - **Presets.** Pick a use-case preset to tailor how the copilot responds.
 - **Languages.** Independent **transcription-language** and **AI response-language** pickers. The
-  transcription list is curated; if the language you pick (or your system language under "Auto")
-  isn't supported by Apple's on-device speech model, the status line says so by name and names the
-  language it is transcribing in instead — it never silently substitutes English.
+  transcription list is not hard-coded: at launch the app asks the OS which languages on-device
+  transcription supports (`SpeechTranscriber.supportedLocales`) and which of their speech models are
+  already installed (`AssetInventory`), and lists them as **Installed** and **Downloadable**, common
+  languages first (`TranscriptionLanguageCatalog` in Core, shared by macOS and iOS). A downloadable
+  language's model downloads from Apple the first time you record in it. If the language you pick (or
+  your system language under "Auto") still isn't supported, the status line says so by name and
+  names the language it is transcribing in instead — it never silently substitutes English.
 - **Reference files.** Add files/folders as context, with a configurable token budget. `.rtf` is read
   as its text (never `\rtf1` markup), and non-UTF-8 files (Windows-1252, UTF-16 exports) are decoded
   instead of dropped. Anything that still cannot be included is listed next to the attachments as

@@ -25,11 +25,7 @@ extension MeetingView {
                         .help(activeEngine == nil
                               ? "The engine the next Start listening will use"
                               : "The engine this recording is using — an engine change applies at the next Start")
-                    Picker("Language", selection: languageBinding(session: session)) {
-                        ForEach(Self.languageOptions, id: \.id) { Text($0.label).tag($0.id) }
-                    }
-                    .labelsHidden().controlSize(.small)
-                    .help("Transcription language — applies the next time you press Start listening")
+                    TranscriptionLanguagePicker(selection: languageBinding(session: session))
                 }
 
                 railSection("Automatic AI") {

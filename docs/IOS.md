@@ -63,11 +63,12 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 | Share-sheet import | — | Share extension plus an App Group inbox (`ShareExtension/`, `iOSShared/SharedInbox.swift`) |
 | AI speech correction | — | Opt-in, over a Flash model on Ollama (`MobileTranscriptCorrector`) |
 | Proactive Quick answers | Yes — needs a finalized question on the Others channel | No — there is no Others channel to detect one in |
+| Third-party licenses | **Open-source licenses…** shows `App/ThirdPartyNotices.txt` as one text | **Settings → About → Acknowledgements** lists each package from the same file with its full license (`MobileAcknowledgementsView`, #202) |
 | "What's New" | GitHub release notes and `CHANGELOG.md` | In-app, shown once per set of bundled notes (`MobileReleaseNotes`) |
 | Storage protection | Plain atomic writes | Data protection (`completeUntilFirstUserAuthentication`) plus an optional backup exclusion (`PrivateStorage`) |
 | Export | Markdown, PDF and recap | Markdown and readable text through the share sheet |
 | Audio-file import | Yes (`App/AudioFileReader.swift`) | No |
-| Languages | Transcription language **and** AI response language; the opt-in WhisperKit engine transcribes mixed languages | Transcription language only: **Automatic** (the default) detects the spoken language on the device from the first seconds of speech, re-checks it about once a minute and switches when it changes (#197, #199), or a fixed language. Words of two languages mixed within one sentence are not transcribed (#205) |
+| Languages | Transcription language **and** AI response language, from every on-device language the OS lists (#172); the opt-in WhisperKit engine transcribes mixed languages | Transcription language only, from the same OS list (#172): **Automatic** (the default) detects the spoken language on the device from the first seconds of speech, re-checks it about once a minute and switches when it changes (#197, #199), or a fixed language. Words of two languages mixed within one sentence are not transcribed (#205) |
 | Input | Global ⌘⇧Space hotkey and a Session menu | Touch UI; no hotkeys or menu bar |
 
 ### Tier 3 — out of scope for iOS
@@ -294,9 +295,15 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
 - Foreground microphone transcription using Apple's on-device SpeechAnalyzer. Language assets
   download on first use. Unsupported device/language and permission errors are shown in the app.
   **Settings → Transcription → Language** is remembered across launches, so a language chosen for
-  daily meetings is still selected after a relaunch instead of reverting to the device's. The list
-  compares BCP-47 identifiers, so a device on `en_US` is offered "System (en_US)" once rather than
-  also listing "English (US)".
+  daily meetings is still selected after a relaunch instead of reverting to the device's. Below
+  **Automatic** and **System**, the picker lists every language `SpeechTranscriber.supportedLocales`
+  reports for this device, read at launch, as **Installed** (speech model already on the device, per
+  `AssetInventory`) and **Downloadable** (downloads from Apple on first recording), with the common
+  languages first (#172; rules in Core's `TranscriptionLanguageCatalog`). Where that list is
+  unavailable, such as the simulator, it offers the common languages. A fixed language the OS no
+  longer lists stays selectable. Automatic switches among the same supported list, so any language it
+  can switch to can also be chosen. The list compares BCP-47 identifiers, so a device on `en_US` is
+  offered "System (en_US)" once rather than also listing "English (US)".
 - Automatic transcription language (#197), the default: **Settings → Transcription → Language →
   Automatic (default)**. A user who had already picked a language keeps it fixed after the update;
   everyone else starts in Automatic. SpeechAnalyzer needs one locale up front and cannot detect or
@@ -445,7 +452,9 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   half a second collapse into one and a rebuild is skipped when the input format has not actually
   changed. Only a rebuild that fails stops recording, with the reason shown. The screen
   stays awake during active recording. No raw audio is saved.
-- Version/build information in Settings.
+- **Settings → About**: version and build, and **Acknowledgements** — every open-source package
+  bundled in the app (WhisperKit, FluidAudio and their SwiftPM dependencies) with its full license
+  text, read from the same `App/ThirdPartyNotices.txt` the macOS app ships (#202).
 
 System/call audio, background recording, Mac sync, audio-file import and WhisperKit transcription
 are not included. A local/LAN Ollama server is supported only when you
