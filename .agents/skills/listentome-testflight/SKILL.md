@@ -8,9 +8,13 @@ description: Publish a ListenToMe iOS release train to TestFlight - validated ar
 iOS publication runs on **release trains**, not once per fix. A change is done when it is merged to
 `main` with the required checks green, its tests passing and its docs updated; the upload is a
 separate, batched step. Publish when a batch of merged iOS work is complete, or when a single
-user-visible fix warrants its own build — **at most one TestFlight build per day**, never one per
-merged pull request. If today's build has already gone out, the change rides the next train: report
-it as merged and unreleased rather than uploading again. See [AGENTS.md](../../../AGENTS.md) for the
+user-visible fix warrants its own build — **at most one TestFlight build per day for trains an agent
+starts on its own initiative**, never one per merged pull request. A train the maintainer calls
+("publish", "release what's on `main`", "publish as always") goes out the same day even if a build
+already went out, and work the maintainer requested from tester feedback ships as soon as it is merged
+and its candidate checks pass, without waiting for the next day or asking again. Otherwise, if today's
+self-started build has already gone out, the change rides the next train: report it as merged and
+unreleased rather than uploading again. See [AGENTS.md](../../../AGENTS.md) for the
 full policy and the candidate → verified → published ladder.
 
 When a train is due, the maintainer's standing authorization applies: validate, then publish the beta
@@ -41,8 +45,10 @@ that describe the CLI as blocked or require another publication approval.
 
 ## Complete the release
 
-1. Confirm a train is actually due: no TestFlight build has already been uploaded today, and the
-   merged work is either a complete batch or a user-visible fix that warrants its own build. Then
+1. Confirm a train is actually due: the maintainer called it, or it is requested tester-feedback
+   work that is merged with its candidate checks green, or no TestFlight build has already been
+   uploaded today and the merged work is either a complete batch or a user-visible fix that
+   warrants its own build. Then
    inspect merged source, version/build, CI and existing evidence before rebuilding. Reuse an archive
    only when its source provenance matches. Check local receipts and App Store Connect for an already
    accepted version/build, including uploads made outside the helper. Never overwrite or re-upload it.

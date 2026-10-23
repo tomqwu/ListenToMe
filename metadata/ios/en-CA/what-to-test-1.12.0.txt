@@ -1,0 +1,10 @@
+This build turns speaker labels on by default and adds automatic language detection. Both run on this device: your audio is not saved or sent anywhere. Two models download once from huggingface.co: the speaker models when the app opens, and the language model (about 75 MB) the first time a recording hears speech. Later recordings use them without the network.
+
+Please test:
+1. After updating, open More → Settings → Speakers. Identify speakers is on (unless you had turned it off), and the models download, then show as ready, without recording.
+2. With two people talking, record for about 30 seconds and press Stop. Lines are labeled Speaker 1 and Speaker 2. Open Notes → Speakers, give each speaker a name and press Done, then check the names appear on their lines.
+3. Open More → Settings → Transcription → Language and check it says Automatic (default). If you had picked a language before, it stays picked; choose Automatic to test.
+4. Tap New and speak a language other than your phone's for at least 30 seconds. Within about 30 seconds the status reads "Detected … · switched" and the earlier lines are written again in that language. Keep talking during the switch and check no words are missing.
+5. Tap Undo on that notice. The transcript returns to your phone's language and Settings shows that language picked. Set it back to Automatic afterwards.
+6. Speak your phone's language with Automatic on: nothing switches.
+7. Optional: with Airplane mode on before the language model has ever downloaded, recording still works and the status says language detection is paused.

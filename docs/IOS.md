@@ -1,7 +1,7 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.11.0 (28).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.12.0 (29).
 
 ## What this app is for
 
@@ -85,7 +85,7 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 **The two apps keep independent version lines.** They are separate products in separate distribution
 channels, and an iOS build number already accepted by App Store Connect can never be reused. A higher
 iOS version does *not* mean the iPhone app is ahead of the Mac app; today macOS is 1.4.4 (14) and iOS
-is 1.11.0 (28).
+is 1.12.0 (29).
 
 - **`MARKETING_VERSION`** (iOS, in `project.yml`): a **minor** bump for user-visible features, a
   **patch** bump for fixes.
@@ -93,7 +93,10 @@ is 1.11.0 (28).
   when `MARKETING_VERSION` changes. The app and share-extension targets keep identical values.
 - **One release per batch of work, not per fix** — the release trains in
   [AGENTS.md](../AGENTS.md) govern both platforms: at most one macOS release and one TestFlight
-  build per day, never one release per merged pull request.
+  build per day for trains an agent starts on its own, never one release per merged pull request.
+  A train the maintainer calls goes out the same day even if one already departed, and work the
+  maintainer requested from tester feedback ships on a TestFlight train once merged and its
+  candidate checks pass.
 - **Tags:** `ios-vX.Y.Z-buildN` for iOS, `vX.Y.Z` for macOS. An iOS build is never published as the
   latest macOS release.
 - **`CHANGELOG.md` carries both platforms**, newest first, interleaved by date.
@@ -103,9 +106,13 @@ The archive, upload, tagging and verification steps themselves are not repeated 
 [IOS-RELEASING.md](IOS-RELEASING.md) for iOS, [RELEASING.md](RELEASING.md) for macOS, and
 [AGENTS.md](../AGENTS.md) for the release workflow that governs both.
 
+## iOS 1.12.0 (29)
+
+Speaker labels on by default (#195): **Identify speakers** is on unless the user turned it off, and the speaker models are prepared at launch, when the setting is turned on and at Start — never from Stop — so a short first recording is labeled at Stop once they are ready. A speaker status line under the title appears only when something needs action (preparing, unavailable with **Retry**, a skipped pass), and Status details lists the speaker fields. Automatic transcription language (#197), the new default: **Settings → Transcription → Language → Automatic (default)**; a language the user had already picked stays fixed. WhisperKit's multilingual tiny Whisper model (about 75 MB, one-time download from `huggingface.co`, excluded from iCloud and Finder backups) identifies the language of the first speech on the device, the recorder switches SpeechAnalyzer to it once and re-transcribes the buffered start of the recording, and the "Detected … · switched" notice offers **Undo**. No audio or text leaves the device for either feature; see the privacy policy in [ios-privacy.md](ios-privacy.md) and the full behavior under [Included](#included). The Apple Watch target is versioned with the app but is not embedded in this build (`WATCH_EMBED` off; #181 ships on a later train). [What to Test](../metadata/ios/en-CA/what-to-test-1.12.0.txt).
+
 ## iOS 1.11.0 (28)
 
-Optional on-device speaker identification (#180), off by default in this build (on by default since #195, unreleased): **Settings → Speakers → Identify speakers** labels microphone lines **Speaker 1**, **Speaker 2**… with FluidAudio after the first pass about 20 seconds in, and **Notes → Speakers** renames a speaker across the saved conversation, History search and exports. The speaker models download once from `huggingface.co` and are excluded from iCloud and Finder backups; recording audio is held only in memory, bounded to about ten minutes. Stop returns at once and never starts the first model download. See the speaker-identification entry under [Included](#included) for the full behavior, and the privacy policy's new section in [ios-privacy.md](ios-privacy.md). The Apple Watch target is versioned with the app but is not embedded in this build (`WATCH_EMBED` off; #181 ships on a later train). [What to Test](../metadata/ios/en-CA/what-to-test-1.11.0.txt).
+Optional on-device speaker identification (#180), off by default in this build (on by default since 1.12.0, #195): **Settings → Speakers → Identify speakers** labels microphone lines **Speaker 1**, **Speaker 2**… with FluidAudio after the first pass about 20 seconds in, and **Notes → Speakers** renames a speaker across the saved conversation, History search and exports. The speaker models download once from `huggingface.co` and are excluded from iCloud and Finder backups; recording audio is held only in memory, bounded to about ten minutes. Stop returns at once and never starts the first model download. See the speaker-identification entry under [Included](#included) for the full behavior, and the privacy policy's new section in [ios-privacy.md](ios-privacy.md). The Apple Watch target is versioned with the app but is not embedded in this build (`WATCH_EMBED` off; #181 ships on a later train). [What to Test](../metadata/ios/en-CA/what-to-test-1.11.0.txt).
 
 ## iOS 1.10.5 (27)
 

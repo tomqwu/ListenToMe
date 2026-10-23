@@ -5,8 +5,12 @@ due — not after every merged fix. Merging a PR, building an archive, or export
 publish the app; equally, a merged iOS change does not by itself call for an upload.
 
 **Cadence.** Publish when a batch of merged iOS work is complete, or when a single user-visible fix
-warrants its own build. **At most one TestFlight build per day**, never one per merged pull request.
-If today's build has already gone out, the change rides the next train: leave it merged, keep its
+warrants its own build. **At most one TestFlight build per day for trains an agent starts on its own
+initiative**, never one per merged pull request. A train the maintainer calls ("publish", "release
+what's on `main`", "publish as always") goes out the same day even if a build already went out, and
+work the maintainer requested from tester feedback ships on a TestFlight train as soon as it is merged
+and its candidate checks pass, without waiting for the next day or asking again. Otherwise, if
+today's self-started build has already gone out, the change rides the next train: leave it merged, keep its
 `CHANGELOG.md`/release-note entry unreleased, and report it as merged rather than released.
 Documentation-only changes never require a new binary, version bump or upload. See
 [AGENTS.md](../AGENTS.md) for the full policy and the candidate → verified → published ladder.
