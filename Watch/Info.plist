@@ -11,4 +11,6 @@
 <key>WKApplication</key><true/>
 <key>WKCompanionAppBundleIdentifier</key><string>com.tomwu.ListenToMe.ios</string>
 <key>WKRunsIndependentlyOfCompanionApp</key><false/>
+<key>NSMicrophoneUsageDescription</key><string>ListenToMe records on your Apple Watch and sends the audio only to your paired iPhone, where it is transcribed on-device.</string>
+<key>UIBackgroundModes</key><array><string>audio</string></array>
 </dict></plist>

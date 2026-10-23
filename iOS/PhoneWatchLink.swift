@@ -79,6 +79,35 @@ final class PhoneWatchLink: NSObject, WCSessionDelegate, WatchLinking {
         Task { @MainActor in self.sendLastStatus() }
     }
 
+    /// SPIKE ONLY (#181 Task 15, branch spike/181-watch-audio, never merged). Logs the receipt time
+    /// and size of a watch chunk and keeps a copy in `Documents/WatchSpike/`, with one CSV row per
+    /// file in `Documents/WatchSpike/receipts.csv`. The file must be moved before this returns.
+    nonisolated func session(_ session: WCSession, didReceive file: WCSessionFile) {
+        let receivedAt = Date()
+        let manager = FileManager.default
+        let folder = manager.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("WatchSpike", isDirectory: true)
+        try? manager.createDirectory(at: folder, withIntermediateDirectories: true)
+        let name = file.metadata?["name"] as? String ?? file.fileURL.lastPathComponent
+        let bytes = ((try? manager.attributesOfItem(atPath: file.fileURL.path))?[.size] as? NSNumber)?.int64Value ?? -1
+        let destination = folder.appendingPathComponent(name)
+        try? manager.removeItem(at: destination)
+        try? manager.copyItem(at: file.fileURL, to: destination)
+        let sentAt = (file.metadata?["sentAt"] as? Double).map { Date(timeIntervalSince1970: $0) }
+        let delta = sentAt.map { String(format: "%.1f", receivedAt.timeIntervalSince($0)) } ?? ""
+        let stamp = ISO8601DateFormatter().string(from: receivedAt)
+        let row = "\(stamp),\(name),\(bytes),\(sentAt.map { ISO8601DateFormatter().string(from: $0) } ?? ""),\(delta)\n"
+        NSLog("[spike181] received %@ %lld B at %@; sent-to-received %@ s (two clocks)", name, bytes, stamp, delta)
+        let log = folder.appendingPathComponent("receipts.csv")
+        if let handle = try? FileHandle(forWritingTo: log) {
+            handle.seekToEndOfFile()
+            handle.write(Data(row.utf8))
+            try? handle.close()
+        } else {
+            try? Data(("receivedAt,name,bytes,sentAt,secondsSentToReceived\n" + row).utf8).write(to: log)
+        }
+    }
+
     nonisolated func session(_ session: WCSession, didReceiveMessage message: [String: Any],
                              replyHandler: @escaping ([String: Any]) -> Void) {
         let exchange = MessageExchange(message: message, reply: replyHandler)

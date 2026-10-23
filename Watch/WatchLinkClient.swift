@@ -75,4 +75,14 @@ final class WatchLinkClient: NSObject, WCSessionDelegate {
         let reachable = session.isReachable
         Task { @MainActor in self.isReachable = reachable }
     }
+
+    // SPIKE ONLY (#181 Task 15): reports when a `transferFile` reached the iPhone, to time U2.
+    @ObservationIgnored var onFileTransferFinished: (@MainActor (String, String?) -> Void)?
+
+    nonisolated func session(_ session: WCSession, didFinish fileTransfer: WCSessionFileTransfer,
+                             error: (any Error)?) {
+        let name = fileTransfer.file.fileURL.lastPathComponent
+        let message = error?.localizedDescription
+        Task { @MainActor in self.onFileTransferFinished?(name, message) }
+    }
 }
