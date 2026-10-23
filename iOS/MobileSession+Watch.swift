@@ -15,7 +15,13 @@ extension MobileSession {
         switch RemoteRecorderPolicy.decide(command, state: Self.phoneState(state), isActive: applicationIsActive(),
                                            isSummarizing: isSummarizing) {
         case .start: start()
-        case .stop: await stop()
+        case .stop:
+            // Answered at once: finalizing a long transcript can outlast the watch's reply timeout.
+            // The idle status follows as the application context.
+            Task { await self.stop() }
+            var stopping = phoneRecorderStatus
+            stopping.state = .stopping
+            return .accepted(stopping)
         case .report: break
         case .reply(let reply): return reply
         }

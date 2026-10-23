@@ -67,6 +67,15 @@ final class MobileSession {
     let speechCorrection = MobileTranscriptCorrector()
     var acceptsSpeechCorrection = false
     private let makeRecorder: () -> any MobileRecording
+    let makeWatchTranscriber: () -> any WatchAudioTranscribing
+    /// The foreground drain of Apple Watch recordings (issue #181); never runs while recording.
+    @ObservationIgnored var watchDrainTask: Task<Void, Never>?
+    /// Watch recordings still waiting in the inbox, for History.
+    var watchInboxRows: [WatchInboxRow] = []
+    /// Watch audio that could not be kept, until the user dismisses the note in History.
+    var watchInboxProblems: [String] = []
+    /// A chunk arrived while a drain ran; drain again when it ends.
+    @ObservationIgnored var watchDrainRequested = false
     private var manualQuickError: String?
     var quickSummaryError: String? { manualQuickError ?? quickReader.error }
     private var sourceImportID: String?
@@ -77,7 +86,9 @@ final class MobileSession {
     /// A damaged history file that the archive set aside. Kept apart from `message`, which every
     /// save, restore and delete overwrites — the user must still see this when History opens.
     var archiveWarning: String?
-    var isSummarizing = false { didSet { synchronizeAutomaticReviews() } }
+    var isSummarizing = false {
+        didSet { synchronizeAutomaticReviews(); if isSummarizing != oldValue { publishWatchStatus() } }
+    }
     let ai = MobileAISettings()
     var summaryDraft = ""
     private var summaryTask: Task<Void, Never>?
@@ -96,7 +107,7 @@ final class MobileSession {
     var speakerLoop: Task<Void, Never>?
     /// Stop's final speaker pass, which runs after the session is already idle.
     var speakerFinalPass: Task<Void, Never>?
-    private let archive: SessionArchive
+    let archive: SessionArchive
     private let activeURL: URL
     /// The bytes last written for this conversation. Identical bytes are not written again.
     private var lastSavedData: Data?
@@ -110,10 +121,12 @@ final class MobileSession {
     private let conversationRoot: URL
     /// The App Group folder the share extension writes into, when this device has one.
     let sharedInboxRoot: URL?
+    /// Apple Watch audio waiting to be transcribed (issue #181).
+    let watchInbox: WatchInbox
     /// Off by default: iOS backs app data up like any other app, and a user who relies on iCloud
     /// Backup to move to a new phone should not silently lose their conversations. On means the
     /// transcripts never leave the device, not even into an Apple-held backup.
-    static let excludeBackupKey = "mobileExcludeConversationsFromBackup"
+    nonisolated static let excludeBackupKey = "mobileExcludeConversationsFromBackup"
     var excludeFromBackup = UserDefaults.standard.bool(forKey: MobileSession.excludeBackupKey) {
         didSet {
             UserDefaults.standard.set(excludeFromBackup, forKey: MobileSession.excludeBackupKey)
@@ -124,8 +137,9 @@ final class MobileSession {
     init(storageDirectory: URL = .applicationSupportDirectory,
          summaryProvider: (any LLMProvider)? = nil, autoInterval: Duration = .seconds(5),
          correctionProvider: (any LLMProvider)? = nil, saveDebounce: Duration = .seconds(1),
-         sharedInbox: URL? = nil,
+         sharedInbox: URL? = nil, watchInbox: WatchInbox? = nil,
          makeRecorder: @escaping () -> any MobileRecording = { MobileRecorder() },
+         makeWatchTranscriber: @escaping () -> any WatchAudioTranscribing = { MobileFileTranscriber() },
          makeDiarizer: @escaping () -> any MobileSpeakerDiarizing = { SpeakerDiarizer.excludingModelsFromBackup() }) {
         speakers = MobileSpeakers(makeDiarizer: makeDiarizer)
         // Resolved once: the backup choice has to reach the App Group inbox too, not only the
@@ -136,10 +150,12 @@ final class MobileSession {
         self.correctionProvider = correctionProvider
         quickScheduler = MobileSummaryScheduler(interval: autoInterval)
         self.makeRecorder = makeRecorder
+        self.makeWatchTranscriber = makeWatchTranscriber
         activeURL = storageDirectory.appendingPathComponent("ActiveConversation.json")
         attachmentRoot = storageDirectory.appendingPathComponent("Attachments", isDirectory: true)
         conversationRoot = storageDirectory.appendingPathComponent("Conversations", isDirectory: true)
         archive = SessionArchive(directory: conversationRoot)
+        self.watchInbox = watchInbox ?? WatchInbox(root: storageDirectory.appendingPathComponent("WatchInbox"))
         refreshHistory()
         applyBackupExclusion()
         if FileManager.default.fileExists(atPath: activeURL.path) {
@@ -237,7 +253,11 @@ final class MobileSession {
         self.recorder = recorder
         let offset = segments.map(\.end).max() ?? 0
         recorder.attachSpeakerAudio(speakers.beginRun(offset: offset, existing: segments))
+        // An Apple Watch drain stops before the microphone is prepared, and resumes after.
+        let drain = watchDrainTask
+        drain?.cancel()
         startTask = Task {
+            await drain?.value
             do {
                 try await recorder.start(locale: Locale(identifier: language)) { [weak self] segment in
                     guard let self else { return }
@@ -300,6 +320,8 @@ final class MobileSession {
         quickReader.cancel()
         let token = UIApplication.shared.beginBackgroundTask(withName: "Save conversation")
         defer { if token != .invalid { UIApplication.shared.endBackgroundTask(token) } }
+        watchDrainTask?.cancel()
+        await watchDrainTask?.value
         await stop()
         save(announce: false)
     }
@@ -320,37 +342,6 @@ final class MobileSession {
         guard !busy, save(announce: false) else { return }
         restore(record)
         save(announce: false)
-    }
-
-    func deleteConversation(id targetID: String) {
-        guard !busy else { return }
-        pendingSave?.cancel(); pendingSave = nil
-        lastSavedData = nil
-        let deletingActive = targetID == id
-        var committed = false
-        do {
-            // Persist an empty active snapshot first so a deleted session cannot return on relaunch.
-            let empty = SessionRecord(id: UUID().uuidString, title: "New conversation", date: Date(),
-                                      transcript: "", summary: "", segments: [], notes: "")
-            if deletingActive {
-                try PrivateStorage.createDirectory(at: activeURL.deletingLastPathComponent())
-                try JSONEncoder().encode(empty).write(to: activeURL, options: PrivateStorage.writingOptions)
-                try? PrivateStorage.setExcludedFromBackup(excludeFromBackup, at: activeURL)
-            }
-            try archive.delete(id: targetID)
-            committed = true
-            if deletingActive { restore(empty) }
-            refreshHistory()
-            let files = attachmentStore(for: targetID).directory
-            if FileManager.default.fileExists(atPath: files.path) { try FileManager.default.removeItem(at: files) }
-            let presentations = attachmentPresentationDirectory(for: targetID)
-            if FileManager.default.fileExists(atPath: presentations.path) { try FileManager.default.removeItem(at: presentations) }
-            archiveWarning = nil   // the user has acted on History; the note has served its purpose
-            message = "Conversation and attachments deleted from this device."
-        } catch {
-            if deletingActive && !committed { save(announce: false) }
-            message = "Could not delete conversation: \(error.localizedDescription)"
-        }
     }
 
     private func restore(_ record: SessionRecord) {
@@ -403,8 +394,51 @@ final class MobileSession {
             try? PrivateStorage.createDirectory(at: sharedInboxRoot)
             try? PrivateStorage.setExcludedFromBackup(excluded, at: sharedInboxRoot)
         }
+        // Raw watch audio is always kept out of the backup, whatever this setting says.
+        watchInbox.applyBackupExclusion()
     }
+}
 
+/// Deleting a conversation, kept out of the class body.
+extension MobileSession {
+    func deleteConversation(id targetID: String) {
+        guard !busy else { return }
+        pendingSave?.cancel(); pendingSave = nil
+        lastSavedData = nil
+        let deletingActive = targetID == id
+        let watchSource = history.first { $0.id == targetID }?.sourceImportID
+            ?? (deletingActive ? sourceImportID : nil)
+        var committed = false
+        do {
+            // Persist an empty active snapshot first so a deleted session cannot return on relaunch.
+            let empty = SessionRecord(id: UUID().uuidString, title: "New conversation", date: Date(),
+                                      transcript: "", summary: "", segments: [], notes: "")
+            if deletingActive {
+                try PrivateStorage.createDirectory(at: activeURL.deletingLastPathComponent())
+                try JSONEncoder().encode(empty).write(to: activeURL, options: PrivateStorage.writingOptions)
+                try? PrivateStorage.setExcludedFromBackup(excludeFromBackup, at: activeURL)
+            }
+            try archive.delete(id: targetID)
+            committed = true
+            // A watch conversation's raw audio goes with it, so the drain cannot bring it back (#181).
+            discardWatchAudio(sourceImportID: watchSource)
+            if deletingActive { restore(empty) }
+            refreshHistory()
+            let files = attachmentStore(for: targetID).directory
+            if FileManager.default.fileExists(atPath: files.path) { try FileManager.default.removeItem(at: files) }
+            let presentations = attachmentPresentationDirectory(for: targetID)
+            if FileManager.default.fileExists(atPath: presentations.path) { try FileManager.default.removeItem(at: presentations) }
+            archiveWarning = nil   // the user has acted on History; the note has served its purpose
+            message = "Conversation and attachments deleted from this device."
+        } catch {
+            if deletingActive && !committed { save(announce: false) }
+            message = "Could not delete conversation: \(error.localizedDescription)"
+        }
+    }
+}
+
+/// Languages, search and outputs: plain lookups, kept out of the class body.
+extension MobileSession {
     /// Extra transcription languages offered beside the device's own.
     static let offeredLanguages = ["en-US", "en-GB", "zh-CN", "zh-TW", "fr-FR", "de-DE", "ja-JP", "es-ES"]
 
@@ -427,7 +461,6 @@ final class MobileSession {
         case .deep: return deepThought
         }
     }
-
 }
 
 extension MobileSession {
@@ -664,7 +697,7 @@ extension MobileSession {
         pendingSave?.cancel()
         pendingSave = nil
         let record = SessionRecord(id: id, title: title, date: date,
-                                   transcript: allSegments.map { "\($0.speakerLabel): \($0.text)" }.joined(separator: "\n"),
+                                   transcript: Self.transcriptText(for: allSegments),
                                    summary: summary, segments: allSegments, notes: notes,
                                    quickSuggestion: quickSummary, deepAnswer: deepThought,
                                    isComplete: state == .idle && allSegments.allSatisfy(\.isFinal),
@@ -691,9 +724,13 @@ extension MobileSession {
         }
     }
 
+    static func transcriptText(for segments: [TranscriptSegment]) -> String {
+        segments.map { "\($0.speakerLabel): \($0.text)" }.joined(separator: "\n")
+    }
+
     /// History is kept in memory. Re-reading and decoding every conversation file on each save made
     /// typing and live transcription cost O(total archive size).
-    private func remember(_ record: SessionRecord) {
+    func remember(_ record: SessionRecord) {
         if let index = history.firstIndex(where: { $0.id == record.id }) { history[index] = record }
         else { history.append(record) }
         history.sort { $0.date > $1.date }
@@ -934,6 +971,9 @@ extension MobileSession {
         switch phase {
         case .active:
             importSharedInbox()
+            importWatchInbox()
+            // The watch may still show "Open ListenToMe…" from a Start sent while this was closed.
+            publishWatchStatus()
         case .background:
             let capturing = state == .recording || state == .preparing
             let before = message

@@ -10,7 +10,7 @@ struct ListenToMeIOSApp: App {
     private let watchLink: PhoneWatchLink?
 
     init() {
-        watchLink = PhoneWatchLink.activateIfSupported()
+        watchLink = PhoneWatchLink.activateIfSupported(inbox: WatchInbox(root: WatchInbox.defaultRoot))
     }
 
     var body: some Scene {
@@ -20,9 +20,14 @@ struct ListenToMeIOSApp: App {
                 .task {
                     session.importSharedInbox()
                     attachWatchLink()
+                    session.importWatchInbox()
                 }
                 .onOpenURL { session.importFile($0) }
-                .onChange(of: session.busy) { _, busy in if !busy { session.importSharedInbox() } }
+                .onChange(of: session.busy) { _, busy in
+                    guard !busy else { return }
+                    session.importSharedInbox()
+                    session.importWatchInbox()
+                }
                 // The lifecycle rules live in MobileSession so unit tests can drive them.
                 .onChange(of: scenePhase) { _, phase in
                     // Synchronously, before the hop: the app can be suspended before the Task runs.
@@ -44,6 +49,8 @@ struct ListenToMeIOSApp: App {
         guard let watchLink else { return }
         let session = session
         watchLink.commandHandler = { await session.handleWatchCommand($0) }
+        // Audio is filed on arrival in any app state; it is transcribed only in the foreground.
+        watchLink.onInboxChanged = { session.importWatchInbox() }
         session.watchLink = watchLink
         session.publishWatchStatus()
     }

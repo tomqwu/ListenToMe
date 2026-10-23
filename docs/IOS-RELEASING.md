@@ -148,13 +148,17 @@ In `project.yml`, keep the app and share extension's `MARKETING_VERSION` and `CU
 identical. The `ListenToMeWatch` target keeps the same version and build as the app and share
 extension, and every archive runs **without** `WATCH_EMBED` until the
 [#181](https://github.com/tomqwu/ListenToMe/issues/181) train: `scripts/ios-testflight.sh` refuses an
-archive that contains `ListenToMeIOS.app/Watch/`. Choose a build number not already accepted by App Store Connect. Update the matching
-`metadata/ios/en-CA/what-to-test-<version>.txt` and `docs/IOS.md`. Merge source changes after CI passes.
+archive that contains `ListenToMeIOS.app/Watch/`. Choose a build number not already accepted by App
+Store Connect. Update the matching `metadata/ios/en-CA/what-to-test-<version>.txt` and `docs/IOS.md`.
+Merge source changes after CI passes.
 Documentation-only follow-ups do not require a new binary. Do not bump the macOS version for an iOS-only release.
 
 ## 2. Archive the merged source
 
-Run from the repo root. Set the release values from `project.yml`, not an older chat reply:
+Run from the repo root. Set the release values from `project.yml`, not an older chat reply. Check
+`echo "${WATCH_EMBED:-unset}"` first: `make gen` inherits an exported `WATCH_EMBED`, and a project
+generated with `WATCH_EMBED=YES` embeds the Apple Watch app (`unset WATCH_EMBED` before archiving
+until the [#181](https://github.com/tomqwu/ListenToMe/issues/181) train):
 
 ```sh
 : "${IOS_VERSION:?Set the version from project.yml after checking App Store Connect}"
@@ -195,7 +199,9 @@ Require `EXPORT SUCCEEDED`. Extract the IPA into a fresh temporary directory wit
 `ditto -x -k`. Inspect the app and `PlugIns/ListenToMeShare.appex` Info.plists: bundle identifiers,
 version/build, and the app's `CFBundleIcons` must be correct. Run `codesign --verify --deep --strict`
 on both bundles. Inspect `codesign -d --entitlements :- <bundle>`: both need the App Group above,
-and `get-task-allow` must be false. Ensure no test credential files or test-only payloads were bundled.
+and `get-task-allow` must be false. Until the [#181](https://github.com/tomqwu/ListenToMe/issues/181)
+train, confirm the IPA has no `Payload/ListenToMeIOS.app/Watch/` folder: the Apple Watch app must not
+ship yet. Ensure no test credential files or test-only payloads were bundled.
 Keep the IPA checksum and verification results with the evidence.
 
 ## 4. Upload — this is the publishing step

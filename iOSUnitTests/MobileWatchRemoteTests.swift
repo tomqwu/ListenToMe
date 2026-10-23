@@ -60,13 +60,40 @@ final class MobileWatchRemoteTests: XCTestCase {
         _ = await session.handleWatchCommand(.start)
         try await waitForState(session, .recording)
 
+        let startedAt = session.recordingStartedAt
         let reply = await session.handleWatchCommand(.stop)
-        XCTAssertEqual(session.state, .idle)
+        // Answered as stopping; the idle status follows as the application context.
+        XCTAssertEqual(reply, .accepted(PhoneRecorderStatus(state: .stopping, startedAt: startedAt,
+                                                            title: session.title, lastStopReason: nil)))
+        try await waitForState(session, .idle)
         XCTAssertEqual(recorder.stopCount, 1)
         XCTAssertNil(session.recordingStartedAt)
         let idle = PhoneRecorderStatus(state: .idle, startedAt: nil, title: session.title, lastStopReason: .user)
-        XCTAssertEqual(reply, .accepted(idle))
         XCTAssertEqual(link.published.last, idle)
+    }
+
+    /// Finalizing a long transcript can outlast the watch's reply timeout, so Stop is answered first.
+    func testStopFromWatchAnswersBeforeTheTranscriptIsFinalized() async throws {
+        let recorder = SlowStopRecorder()
+        let session = MobileSession(storageDirectory: root, makeRecorder: { recorder })
+        let link = FakeWatchLink()
+        session.watchLink = link
+        session.applicationIsActive = { true }
+        _ = await session.handleWatchCommand(.start)
+        try await waitForState(session, .recording)
+
+        var reply: WatchReply?
+        let command = Task { reply = await session.handleWatchCommand(.stop) }
+        for _ in 0..<400 where reply == nil || !recorder.isStopping { try await Task.sleep(for: .milliseconds(5)) }
+        let answered = reply
+        recorder.finishStop()
+        await command.value
+
+        guard case .accepted(let status) = answered else { return XCTFail("Stop was not answered while finalizing") }
+        XCTAssertEqual(status.state, .stopping)
+        try await waitForState(session, .idle)
+        XCTAssertEqual(recorder.stopCount, 1)
+        XCTAssertEqual(link.published.last?.state, .idle)
     }
 
     func testStartWhileSummarizingRepliesBusy() async {
@@ -115,6 +142,33 @@ final class MobileWatchRemoteTests: XCTestCase {
         session.watchLink = link
         session.publishWatchStatus()
         XCTAssertEqual(link.published, [session.phoneRecorderStatus])
+    }
+
+    /// The watch keeps showing "Open ListenToMe…" or a busy reply until a newer status arrives, so the
+    /// phone republishes when it becomes active and when a summary starts or ends.
+    func testActivePhaseAndSummaryChangesRepublishTheStatus() async {
+        let session = MobileSession(storageDirectory: root, makeRecorder: { LifecycleTestRecorder() })
+        let link = FakeWatchLink()
+        session.watchLink = link
+        await session.handleScenePhase(.active)
+        XCTAssertEqual(link.published, [session.phoneRecorderStatus])
+        session.isSummarizing = true
+        XCTAssertEqual(link.published.count, 2)
+        session.isSummarizing = false
+        XCTAssertEqual(link.published.count, 3)
+        session.isSummarizing = false
+        XCTAssertEqual(link.published.count, 3, "No change, nothing to publish")
+    }
+
+    /// The watch drops a reply older than the status it already shows, so every reply is stamped.
+    func testRepliesAreStampedWithWhenTheyWereMade() async throws {
+        let before = Date().timeIntervalSince1970
+        let reply = await PhoneWatchLink.replyMessage(to: WatchLink.message(for: .status), handler: { _ in .openPhoneApp })
+        let stamp = try XCTUnwrap(WatchLink.stamp(from: reply))
+        XCTAssertGreaterThanOrEqual(stamp, before)
+        XCTAssertLessThanOrEqual(stamp, Date().timeIntervalSince1970)
+        let unsupported = await PhoneWatchLink.replyMessage(to: ["v": 2], handler: nil)
+        XCTAssertNotNil(WatchLink.stamp(from: unsupported))
     }
 
     func testLinkWithoutAnAttachedSessionAnswersOpenPhoneApp() async {
