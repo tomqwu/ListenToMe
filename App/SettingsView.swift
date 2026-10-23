@@ -251,6 +251,9 @@ struct SettingsView: View {
             )
             .font(.caption).foregroundStyle(.secondary)
 
+            Divider()
+            MacVaultSettings()
+
                 }
             }
             if let saveError { Text(saveError).foregroundStyle(.red) }

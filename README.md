@@ -35,7 +35,8 @@ macOS-only, and there is no Mac↔iOS sync. See
 The standalone iOS/iPadOS 26 app is the **ListenToMeIOS** target: microphone transcription, a live
 transcript with Quick Summary plus a Deep Think tab, local conversations with search, photo/file
 attachments, Apple Notes and share-sheet imports, calendar import with e-mail and join-link
-redaction, and Markdown sharing. On-device speaker identification (on by default; turn it off in
+redaction, Markdown sharing, and an opt-in **Save to folder** that writes each conversation as a
+Markdown note into a folder you pick in Files, such as an Obsidian vault. On-device speaker identification (on by default; turn it off in
 Settings) labels transcript lines Speaker 1, Speaker 2… for the people one phone hears, and you can
 rename them; its models download once from `huggingface.co`. The transcription language defaults to
 Automatic: the phone detects the spoken language on-device from the first seconds of speech and, if it
@@ -132,6 +133,9 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 - **Use-case presets** (Meeting, Interview, etc.) tune the copilot's behavior.
 - **File & folder reference context** with a configurable token budget.
 - **Markdown session export** for sharing or review.
+- **Save to folder** (off by default, Settings): after each conversation stops, writes one
+  Obsidian-friendly Markdown note (YAML front matter, summary, notes, timestamped transcript) into a
+  folder you choose, and updates the same note when summaries or the title change.
 - **First-run onboarding**, a global **⌘⇧Space** hotkey for instant suggestions, and keyboard
   equivalents for every frequent action (see [Keyboard shortcuts](#keyboard-shortcuts)).
 
@@ -282,6 +286,20 @@ A single damaged conversation file no longer hides the rest: it is renamed to
 shows a one-line note saying what was set aside. An unreadable legacy `sessions.json` is set aside the
 same way, so saving, autosave checkpoints and **Clear history** keep working instead of failing forever.
 History is local, unencrypted JSON and currently reopens for reading/export, not editing or resuming.
+
+**Save to folder** (Settings, off by default) additionally writes each conversation as one Markdown
+note into a folder you choose, for example an Obsidian vault. It follows autosaving: the note is
+written once capture stops and rewritten whenever a later checkpoint changes it (a summary, the title,
+notes). The file name is keyed by the conversation ID — `2026-10-23 1430 ListenToMe 1a2b3c4d.md` —
+so renaming a conversation updates the same note instead of creating a duplicate. A file is replaced
+only when its front matter carries this conversation's `listentome_id`; another note with a matching
+name is never overwritten (a short-key collision gets the longer, whole-ID name instead), and a note
+you rename yourself is left alone, so the next update writes a new note under the usual name. The note's
+date is the conversation's first checkpoint. Writes are atomic; a missing folder, lost permission, a
+full disk or a file still in iCloud shows an orange note beside the saved time with Retry, and one bad
+note never holds up the others. Quitting waits up to five seconds for the last note; notes left
+unwritten are retried at the next launch. Deleting a conversation from History does not delete its
+note, and **Clear history** drops any notes still waiting so they are never written.
 
 ### Automatic speaker identification (experimental)
 
