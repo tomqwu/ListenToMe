@@ -1,7 +1,7 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.10.5 (27).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.11.0 (28).
 
 ## What this app is for
 
@@ -85,7 +85,7 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 **The two apps keep independent version lines.** They are separate products in separate distribution
 channels, and an iOS build number already accepted by App Store Connect can never be reused. A higher
 iOS version does *not* mean the iPhone app is ahead of the Mac app; today macOS is 1.4.4 (14) and iOS
-is 1.10.5 (27).
+is 1.11.0 (28).
 
 - **`MARKETING_VERSION`** (iOS, in `project.yml`): a **minor** bump for user-visible features, a
   **patch** bump for fixes.
@@ -102,6 +102,10 @@ is 1.10.5 (27).
 The archive, upload, tagging and verification steps themselves are not repeated here: follow
 [IOS-RELEASING.md](IOS-RELEASING.md) for iOS, [RELEASING.md](RELEASING.md) for macOS, and
 [AGENTS.md](../AGENTS.md) for the release workflow that governs both.
+
+## iOS 1.11.0 (28)
+
+Optional on-device speaker identification (#180), off by default: **Settings → Speakers → Identify speakers** labels microphone lines **Speaker 1**, **Speaker 2**… with FluidAudio after the first pass about 20 seconds in, and **Notes → Speakers** renames a speaker across the saved conversation, History search and exports. The speaker models download once from `huggingface.co` and are excluded from iCloud and Finder backups; recording audio is held only in memory, bounded to about ten minutes. Stop returns at once and never starts the first model download. See the speaker-identification entry under [Included](#included) for the full behavior, and the privacy policy's new section in [ios-privacy.md](ios-privacy.md). The Apple Watch target is versioned with the app but is not embedded in this build (`WATCH_EMBED` off; #181 ships on a later train). [What to Test](../metadata/ios/en-CA/what-to-test-1.11.0.txt).
 
 ## iOS 1.10.5 (27)
 

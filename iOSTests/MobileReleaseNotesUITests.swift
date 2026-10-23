@@ -4,11 +4,11 @@ import XCTest
 final class MobileReleaseNotesUITests: XCTestCase {
     func testUpdateShowsVersionOnceAndChangelogCanBeReopened() {
         let app = XCUIApplication()
-        app.launchArguments = ["-lastAcknowledgedReleaseBuild", "1.10.4 (26)"]
+        app.launchArguments = ["-lastAcknowledgedReleaseBuild", "1.10.5-htusldgbcs4g"]
         app.launch()
         XCTAssertTrue(app.buttons["releaseNotesContinue"].waitForExistence(timeout: 5))
-        XCTAssertEqual(app.staticTexts["releaseVersion"].label, "Version 1.10.5 · Build 27")
-        XCTAssertTrue(app.staticTexts["Ready for the App Store"].exists)
+        XCTAssertEqual(app.staticTexts["releaseVersion"].label, "Version 1.11.0 · Build 28")
+        XCTAssertTrue(app.staticTexts["Know who said what"].exists)
         capture(app, "What’s New on update")
         app.buttons["releaseNotesContinue"].tap()
         XCTAssertTrue(app.buttons["More"].waitForExistence(timeout: 5))
@@ -33,7 +33,7 @@ final class MobileReleaseNotesUITests: XCTestCase {
         XCTAssertTrue(button.waitForExistence(timeout: 5))
         XCTAssertTrue(button.isHittable)
         let scroll = app.scrollViews["releaseNotesScroll"]
-        for _ in 0..<20 where !app.staticTexts["Automatic reviews"].isHittable { scroll.swipeUp() }
+        for _ in 0..<30 where !app.staticTexts["Automatic reviews"].isHittable { scroll.swipeUp() }
         XCTAssertTrue(app.staticTexts["Automatic reviews"].isHittable)
         capture(app, "Large text release history with reachable Continue")
         button.tap()
