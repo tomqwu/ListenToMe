@@ -178,6 +178,11 @@ Notarization is attempted only when the app was signed (`DEVELOPER_ID_APP` set) 
    - submits it for notarization and staples the ticket (if notary credentials are set),
    - prints a summary (dmg path, signed?, notarized+stapled?, and the `gh release create` command).
 
+   If `Config/Package.resolved` changed since the last release, regenerate the bundled third-party
+   notices first (`make ios-build`, then `python3 -I scripts/generate-third-party-notices.py`) and
+   commit `App/ThirdPartyNotices.txt`; `ThirdPartyNoticesTests` fails until every pinned package has
+   a notice at its resolved revision. Both apps ship that file.
+
    Without `DEVELOPER_ID_APP`, the script still produces an UNSIGNED dmg so the pipeline is
    testable, but prints a warning that Gatekeeper will block it. Do not publish an unsigned dmg.
 

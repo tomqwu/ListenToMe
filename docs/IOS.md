@@ -65,6 +65,7 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 | Share-sheet import | — | Share extension plus an App Group inbox (`ShareExtension/`, `iOSShared/SharedInbox.swift`) |
 | AI speech correction | — | Opt-in, over a Flash model on Ollama (`MobileTranscriptCorrector`) |
 | Proactive Quick answers | Yes — needs a finalized question on the Others channel | No — there is no Others channel to detect one in |
+| Third-party licenses | **Open-source licenses…** shows `App/ThirdPartyNotices.txt` as one text | **Settings → About → Acknowledgements** lists each package from the same file with its full license (`MobileAcknowledgementsView`, #202) |
 | "What's New" | GitHub release notes and `CHANGELOG.md` | In-app, shown once per set of bundled notes (`MobileReleaseNotes`) |
 | Storage protection | Plain atomic writes | Data protection (`completeUntilFirstUserAuthentication`) plus an optional backup exclusion (`PrivateStorage`) |
 | Export | Markdown, PDF and recap | Markdown and readable text through the share sheet |
@@ -420,7 +421,9 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   half a second collapse into one and a rebuild is skipped when the input format has not actually
   changed. Only a rebuild that fails stops recording, with the reason shown. The screen
   stays awake during active recording. No raw audio is saved.
-- Version/build information in Settings.
+- **Settings → About**: version and build, and **Acknowledgements** — every open-source package
+  bundled in the app (WhisperKit, FluidAudio and their SwiftPM dependencies) with its full license
+  text, read from the same `App/ThirdPartyNotices.txt` the macOS app ships (#202).
 
 System/call audio, background recording, Mac sync, audio-file import and WhisperKit transcription
 are not included. A local/LAN Ollama server is supported only when you
