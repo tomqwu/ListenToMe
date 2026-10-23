@@ -20,6 +20,8 @@ app = plistlib.loads((root / 'Info.plist').read_bytes())
 ext = plistlib.loads((root / 'PlugIns/ListenToMeShare.appex/Info.plist').read_bytes())
 assert app['CFBundleIdentifier'] == 'com.tomwu.ListenToMe.ios', 'Wrong app bundle'
 assert ext['CFBundleIdentifier'] == 'com.tomwu.ListenToMe.ios.share', 'Wrong extension bundle'
+# The watch app ships only on the #181 release train; until then an archive must not contain it.
+assert not (root / 'Watch').exists(), 'Watch app embedded before the watch release train (#181 decision 4)'
 version, build = app['CFBundleShortVersionString'], app['CFBundleVersion']
 assert re.fullmatch(r'[0-9]+(?:\.[0-9]+){1,2}', version), 'Invalid version'
 assert re.fullmatch(r'[0-9]+', build), 'Invalid build'

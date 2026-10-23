@@ -27,6 +27,7 @@ submitting a production App Store release. Missing hardware must not be reported
 | App Store Connect app | Listen To Me, Apple ID `6811155732` |
 | App bundle | `com.tomwu.ListenToMe.ios` |
 | Share extension | `com.tomwu.ListenToMe.ios.share` |
+| Apple Watch app | `com.tomwu.ListenToMe.ios.watchkitapp` — not shipped until the [#181](https://github.com/tomqwu/ListenToMe/issues/181) train |
 | Team | `T32FW7PZ3S` |
 | App Group | `group.com.tomwu.ListenToMe.ios` |
 | Existing internal testing group | `Dev` |
@@ -144,7 +145,10 @@ Credential-dependent tests must be configured locally when relevant. Never place
 or the app bundle. Do not label simulator tests as physical-device validation.
 
 In `project.yml`, keep the app and share extension's `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION`
-identical. Choose a build number not already accepted by App Store Connect. Update the matching
+identical. The `ListenToMeWatch` target keeps the same version and build as the app and share
+extension, and every archive runs **without** `WATCH_EMBED` until the
+[#181](https://github.com/tomqwu/ListenToMe/issues/181) train: `scripts/ios-testflight.sh` refuses an
+archive that contains `ListenToMeIOS.app/Watch/`. Choose a build number not already accepted by App Store Connect. Update the matching
 `metadata/ios/en-CA/what-to-test-<version>.txt` and `docs/IOS.md`. Merge source changes after CI passes.
 Documentation-only follow-ups do not require a new binary. Do not bump the macOS version for an iOS-only release.
 
