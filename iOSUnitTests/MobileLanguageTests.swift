@@ -93,24 +93,28 @@ final class MobileLanguageTests: MobileLanguageTestCase {
         XCTAssertEqual(session.segments.map(\.text), ["我们今天开会", "讨论"],
                        "Live speech after the switch commits the replay in one step")
         await session.languageDetection.check?.value
-        XCTAssertEqual(recorder.switches.count, 1, "A recording switches once")
+        XCTAssertEqual(recorder.switches.count, 1, "No re-check is due a few seconds after the switch")
+        XCTAssertEqual(recorder.switches.first?.from, 0, "The first switch transcribes from the recording's start")
         await session.stop()
         XCTAssertNotNil(session.languageDetection.notice, "Undo stays offered after Stop")
     }
 
-    /// Review of #201, finding 9.
-    func testSpeechThatStartsAfterTheBufferedTwoMinutesIsReportedAsNotChecked() async throws {
+    /// Review of #201, finding 9, then issue #199: the trailing buffer still holds speech that starts
+    /// after two minutes of silence, so it is checked, and the replay starts at the oldest audio held.
+    func testSpeechAfterTwoMinutesOfSilenceIsCheckedFromTheAudioStillHeld() async throws {
         await model.answer("zh", 0.97)
         let session = makeSession()
         try await record(session)
         recorder.feedAudio(seconds: 130)
+        XCTAssertEqual(recorder.languageAudio?.retainedSampleCount, 120 * 16_000,
+                       "Only the trailing two minutes are held")
         recorder.send("Late speech", 125, 135)
         await session.languageDetection.check?.value
-        XCTAssertTrue(session.quickDiagnostics.contains(
-            "Language check: Not checked (no speech in the first two minutes)"))
         let detections = await model.detections()
-        XCTAssertEqual(detections, 0)
-        XCTAssertTrue(recorder.switches.isEmpty)
+        XCTAssertEqual(detections, 1)
+        XCTAssertEqual(recorder.switches.map(\.locale), ["zh-CN"])
+        XCTAssertEqual(recorder.switches.first?.from, 20 * 16_000,
+                       "From the oldest audio held, less the block about to be released")
         await session.stop()
     }
 
@@ -135,14 +139,14 @@ final class MobileLanguageTests: MobileLanguageTestCase {
         await session.stop()
     }
 
-    func testLowConfidenceKeepsTheLanguageAndReleasesTheAudio() async throws {
+    func testLowConfidenceKeepsTheLanguageAndTheTrailingAudioForReChecks() async throws {
         await model.answer("zh", 0.5)
         let session = makeSession()
         try await record(session)
         await speakChinese(session)
         XCTAssertTrue(recorder.switches.isEmpty)
         XCTAssertEqual(session.segments.count, 2)
-        XCTAssertEqual(recorder.languageAudio?.sampleCount, 0, "Audio no switch can use is released at once")
+        XCTAssertEqual(recorder.languageAudio?.sampleCount, 12 * 16_000, "Kept for the next re-check (#199)")
         XCTAssertTrue(session.quickDiagnostics.contains("zh 50% → kept (not confident)"))
         XCTAssertNil(session.languageDetection.noticeText)
         await session.stop()
@@ -223,7 +227,8 @@ final class MobileLanguageTests: MobileLanguageTestCase {
         XCTAssertNil(session.languageDetection.notice)
         let line = try XCTUnwrap(session.languageDetection.statusLine)
         XCTAssertTrue(line.hasPrefix("Could not switch transcription to"), line)
-        XCTAssertEqual(recorder.languageAudio?.sampleCount, 0)
+        XCTAssertEqual(session.languageDetection.run?.tracker.unavailable, ["zh-CN"],
+                       "Re-checks in this recording do not try that language again")
         await session.stop()
     }
 }

@@ -1,9 +1,10 @@
 import Foundation
 import ListenToMeCore
 
-/// The transcription language, and Automatic mode (issue #197): detect the spoken language on this
-/// device from the first stretch of speech, switch the live transcriber once if it differs, and
-/// transcribe the recording so far again so the early wrong-language lines are replaced.
+/// The transcription language, and Automatic mode (issues #197 and #199): detect the spoken language on
+/// this device from the first stretch of speech, switch the live transcriber if it differs and transcribe
+/// the recording so far again; then re-check a trailing window about once a minute, and when another
+/// language is confirmed, switch again and transcribe only the part since it changed.
 extension MobileSession {
     /// The picker tag for Automatic.
     static let automaticLanguageTag = "automatic"
@@ -46,9 +47,17 @@ extension MobileSession {
         } else {
             model = detection.modelReady ? "ready on this device" : "not loaded in this app run"
         }
+        let rechecks: String
+        if let run = detection.run {
+            let switches = run.tracker.switches
+            rechecks = "\(switches) switch\(switches == 1 ? "" : "es") · " + (detection.lastRecheck ?? "none yet")
+        } else {
+            rechecks = "none (not recording in Automatic)"
+        }
         return ["Transcription language: \(mode)",
                 "Recording language: \(detection.run?.locale ?? "none")",
                 "Language check: \(detection.lastResult ?? "not run")",
+                "Language re-check: \(rechecks)",
                 "Language model: \(model)"].joined(separator: "\n")
     }
 
@@ -64,7 +73,7 @@ extension MobileSession {
     }
 
     /// Called for every result of a recording, in the recorder's own time, before it reaches the
-    /// transcript. Notes the speech for the language check, and returns true when a replay holds the
+    /// transcript. Notes the speech for the language checks, and returns true when a replay holds the
     /// result back (see `MobileLanguageDetection.Replay`), so the caller must not add it.
     func stageLanguageSegment(_ segment: TranscriptSegment, offset: TimeInterval) -> Bool {
         noteLanguageSpeech(segment)
@@ -98,79 +107,128 @@ extension MobileSession {
         }
     }
 
-    /// Called for every speech event of a recording, in the recorder's own time. Starts the check once
-    /// enough speech was heard; the check runs on its own task, so recording never waits for it.
+    /// Called for every speech event of a recording, in the recorder's own time. Starts a check when one
+    /// is due; it runs on its own task, so recording never waits for it.
     func noteLanguageSpeech(_ segment: TranscriptSegment) {
-        guard let token = languageDetection.noteSpeech(start: segment.start, end: segment.end) else { return }
-        languageDetection.check = Task { [weak self] in await self?.checkLanguage(token: token) }
+        guard let request = languageDetection.noteSpeech(start: segment.start, end: segment.end) else { return }
+        languageDetection.check = Task { [weak self] in await self?.checkLanguage(request) }
     }
 
-    /// Runs Whisper over the first window and switches when the policy says so.
-    func checkLanguage(token: Int) async {
+    /// Runs Whisper over the requested window and acts on what the run's tracker makes of it.
+    func checkLanguage(_ request: MobileLanguageDetection.Request) async {
         let detection = languageDetection
-        guard let model = detection.model, detection.isCurrent(token) else { return }
-        guard let samples = await detection.window(token: token) else {
-            detection.kept(nil, reason: "no speech in the first two minutes", token: token)
+        defer { detection.finishedCheck(request.token) }
+        guard let model = detection.model, detection.isCurrent(request.token) else { return }
+        guard let samples = await detection.audio([request.window], token: request.token).first ?? nil else {
+            detection.missed("its audio is no longer held", request: request)
             return
         }
         let guess: LanguageGuess
         let supported: [String]
         do {
             try await model.prepare()   // joins the download or load the first speech started
-            guard detection.isCurrent(token) else { return }
-            detection.beginChecking()
+            guard detection.isCurrent(request.token) else { return }
+            detection.beginChecking(request)
             guess = try await model.detect(samples: samples)
             supported = await model.supportedLocales()
         } catch {
-            detection.kept(nil, reason: error.localizedDescription, token: token)
+            detection.missed(error.localizedDescription, request: request)
             return
         }
-        guard let run = detection.run, run.token == token, state == .recording else { return }
-        let decision = LanguageDetectionPolicy.decide(
-            detected: guess.language, probability: guess.probability, current: run.locale, supported: supported,
-            pinned: !detection.automatic, alreadySwitched: run.switched, region: Locale.current.region?.identifier)
-        switch decision {
-        case .switchTo(let target): await switchLanguage(to: target, guess: guess, token: token)
-        case .keep(let reason): detection.kept(guess, reason: Self.describe(reason), token: token)
+        guard state == .recording, let outcome = detection.record(guess, for: request, supported: supported) else {
+            return
+        }
+        switch outcome {
+        case .keep(let reason):
+            detection.kept(guess, reason: Self.describe(reason), request: request)
+        case .confirming(let locale):
+            detection.confirming(guess, locale: locale, request: request)
+        case .switchTo(let target, let since):
+            await switchLanguage(to: target, guess: guess, since: since, request: request)
+        case .locate(let target, let span):
+            let since = await locateChange(in: span, to: target, model: model, request: request)
+            await switchLanguage(to: target, guess: guess, since: since, request: request)
         }
     }
 
-    /// Restarts the live transcriber in `target`; it first hears the recording so far again, whose
-    /// lines it replaces once it has caught up. On failure the recording keeps its language and a
-    /// status line says why.
-    private func switchLanguage(to target: String, guess: LanguageGuess, token: Int) async {
+    /// Checks ten-second chunks of `span` to find where the language changed (issue #199), so only the
+    /// part since then is transcribed again. Chunks without enough speech are not checked.
+    private func locateChange(in span: Range<TimeInterval>, to target: String, model: any MobileLanguageIdentifying,
+                              request: MobileLanguageDetection.Request) async -> TimeInterval {
         let detection = languageDetection
-        guard let recorder, let run = detection.run, run.token == token else { return }
+        guard let run = detection.run, run.token == request.token else { return span.lowerBound }
+        let chunks = LanguageRecheckPolicy.scanChunks(span) { run.tracker.speech(in: $0) }
+        let audio = await detection.audio(chunks, token: request.token)
+        var scanned: [(chunk: Range<TimeInterval>, verdict: LanguageRecheckPolicy.Verdict)] = []
+        for (chunk, samples) in zip(chunks, audio) {
+            guard !Task.isCancelled, detection.isCurrent(request.token) else { break }
+            guard let samples, let guess = try? await model.detect(samples: samples) else { continue }
+            let verdict = LanguageRecheckPolicy.verdict(detected: guess.language, probability: guess.probability,
+                                                        current: run.locale, target: target)
+            scanned.append((chunk, verdict))
+        }
+        return LanguageRecheckPolicy.changePoint(in: span, scanned: scanned)
+    }
+
+    /// Restarts the live transcriber in `target`; it first hears the recording again from `since`
+    /// (recording time; moved to a line boundary within the audio still held), and those lines replace
+    /// the recording's once it has caught up. On failure the recording keeps its language and a status
+    /// line says why.
+    private func switchLanguage(to target: String, guess: LanguageGuess, since: TimeInterval,
+                                request: MobileLanguageDetection.Request) async {
+        let detection = languageDetection
+        // Finding the change took a moment: an Undo or Stop since then wins.
+        guard let recorder, let run = detection.run, run.token == request.token, state == .recording,
+              detection.automatic, !detection.undoing else { return }
         detection.beginSwitch(to: target)
-        let conversation = id, from = run.locale, offset = run.offset, firstLine = run.firstLine
+        let start = replayStart(since, run: run)
+        let from = Int((start * TimeInterval(LanguageDetectionPolicy.sampleRate)).rounded(.down))
+        let conversation = id, previous = run.locale, offset = run.offset, token = request.token
         var change: MobileLanguageDetection.Switch?
+        var switchedAt: TimeInterval = 0
         do {
-            try await recorder.switchLocale(to: Locale(identifier: target),
-                                            replay: run.buffer) { [weak self] replayed, cut in
+            try await recorder.switchLocale(to: Locale(identifier: target), replay: run.buffer,
+                                            from: from) { [weak self] replayed, cut in
                 guard let self else { return }
-                if replayed { self.beginReplay(token: token, firstLine: firstLine, cut: offset + cut) }
+                switchedAt = cut
+                let firstLine = replayed
+                    ? self.beginReplay(token: token, run: run, since: offset + start, cut: offset + cut) : run.firstLine
                 change = MobileLanguageDetection.Switch(
-                    detected: guess.language, from: from, to: target, conversation: conversation, runToken: token,
-                    firstLine: firstLine, cut: offset + cut, originals: Array(self.segments.dropFirst(firstLine)),
-                    replayed: replayed)
+                    detected: guess.language, from: previous, to: target, conversation: conversation, runToken: token,
+                    firstLine: firstLine, since: offset + start, cut: offset + cut, replayFrom: from,
+                    originals: Array(self.segments.dropFirst(firstLine)), replayed: replayed,
+                    midRecording: !request.first)
             }
         } catch {
-            detection.switchFailed(error.localizedDescription, guess: guess, to: target, token: token)
+            detection.switchFailed(error.localizedDescription, guess: guess, to: target, request: request)
             return
         }
-        if let change { detection.switched(change, guess: guess, token: token) }
+        if let change { detection.switched(change, guess: guess, token: token, cut: switchedAt) }
     }
 
-    /// The new transcriber hears the recording again. Its lines are held until it catches up, while the
-    /// current lines stay on screen and on disk. The unfinished line becomes a line of its own, so an
-    /// Undo can bring it back.
-    private func beginReplay(token: Int, firstLine: Int, cut: TimeInterval) {
+    /// Where transcribing again starts, in recording time: `since`, within the audio still held and at
+    /// the start of a line rather than inside one.
+    private func replayStart(_ since: TimeInterval, run: MobileLanguageDetection.Run) -> TimeInterval {
+        var lines = segments.dropFirst(run.firstLine).filter { !Self.isWatchLine($0) }
+        if let partial { lines.append(partial) }
+        let ranges = lines.map { ($0.start - run.offset)..<(max($0.start, $0.end) - run.offset) }
+        return LanguageRecheckPolicy.replayStart(desired: since, retainedFrom: run.buffer.replayFloor, lines: ranges)
+    }
+
+    /// The new transcriber hears the recording again from `since` (transcript time). Its lines are held
+    /// until it catches up, while the current lines stay on screen and on disk. The unfinished line
+    /// becomes a line of its own, so an Undo can bring it back. Returns the first line it will replace.
+    @discardableResult
+    func beginReplay(token: Int, run: MobileLanguageDetection.Run, since: TimeInterval, cut: TimeInterval) -> Int {
         speechCorrection.cancel()
         if let partial { segments.append(partial); self.partial = nil }
+        let lower = min(run.firstLine, segments.count)
+        let firstLine = segments[lower...].firstIndex { $0.start >= since - 0.001 } ?? segments.count
         languageDetection.replay = .init(token: token, firstLine: firstLine, cut: cut)
+        return firstLine
     }
 
-    /// Puts the held replay lines in place of the recording's earlier lines, in one step.
+    /// Puts the held replay lines in place of the recording's lines from the replay's first line, in one step.
     private func commitReplay(complete: Bool) {
         guard let replay = languageDetection.replay else { return }
         languageDetection.replay = nil
@@ -185,102 +243,10 @@ extension MobileSession {
     private static func describe(_ reason: LanguageDetectionPolicy.Reason) -> String {
         switch reason {
         case .pinned: return "fixed language"
-        case .alreadySwitched: return "already switched"
+        case .switchLimit: return "switch limit for this recording"
         case .lowConfidence: return "not confident"
         case .sameLanguage: return "same language"
         case .unsupported: return "no on-device transcription for it"
         }
-    }
-}
-
-/// Undo of a language switch (issue #197).
-extension MobileSession {
-    /// Undo is offered for the open conversation's switch, except while a recording is starting or an
-    /// Undo is already switching back. While stopping, a tap is kept and applied once Stop finishes.
-    var canUndoLanguageSwitch: Bool {
-        languageDetection.notice?.conversation == id && !languageDetection.undoing && state != .preparing
-    }
-
-    /// Undo pins the language the recording started in, for this and later recordings. While recording,
-    /// transcription switches back first, and the notice stays until that has worked; once stopped, the
-    /// lines the switch replaced come back.
-    func undoLanguageSwitch() {
-        guard let change = languageDetection.notice, !languageDetection.undoing else { return }
-        guard change.conversation == id else { pin(change); return }
-        switch state {
-        case .preparing: return
-        case .stopping: languageDetection.pendingUndo = true
-        case .idle: finishUndo(change)
-        case .recording: undoWhileRecording(change)
-        }
-    }
-
-    private func undoWhileRecording(_ change: MobileLanguageDetection.Switch) {
-        guard let recorder, let run = languageDetection.run else { return finishUndo(change) }
-        languageDetection.undoing = true
-        let token = run.token
-        Task { [weak self] in
-            do {
-                try await recorder.switchLocale(to: Locale(identifier: change.from),
-                                                replay: run.buffer) { [weak self] replayed, cut in
-                    self?.switchedBack(change, replayed: replayed, run: run, cut: run.offset + cut)
-                }
-                guard let self else { return }
-                self.languageDetection.undoing = false
-                self.pin(change)
-                self.languageDetection.undone(to: change.from, token: token)
-            } catch {
-                guard let self else { return }
-                self.languageDetection.undoing = false
-                switch self.state {
-                case .recording:
-                    self.message = "Could not switch transcription back to " +
-                        "\(MobileLanguageDetection.displayName(change.from)): \(error.localizedDescription). " +
-                        "Tap Undo to try again."
-                case .stopping, .preparing: self.languageDetection.pendingUndo = true
-                case .idle: self.finishUndo(change)
-                }
-            }
-        }
-    }
-
-    /// The live transcriber is back in the original language. The switched recording's lines come back
-    /// if it has already ended; this recording's lines are transcribed again when its audio is held.
-    private func switchedBack(_ change: MobileLanguageDetection.Switch, replayed: Bool,
-                              run: MobileLanguageDetection.Run, cut: TimeInterval) {
-        if change.runToken != run.token { restoreLines(change) }
-        if replayed {
-            beginReplay(token: run.token, firstLine: run.firstLine, cut: cut)
-        } else {
-            languageDetection.replay?.discarded = true
-            if change.runToken == run.token { restoreLines(change) }
-        }
-    }
-
-    /// Undo once the recording has ended: the replaced lines come back and the language is pinned.
-    func finishUndo(_ change: MobileLanguageDetection.Switch) {
-        languageDetection.pendingUndo = false
-        if change.conversation == id { restoreLines(change) }
-        pin(change)
-    }
-
-    private func pin(_ change: MobileLanguageDetection.Switch) {
-        languageDetection.clearNotice()
-        language = change.from
-        languageDetection.automatic = false
-    }
-
-    /// Lines a switch replaced come back in place of the switched recording's own lines before the
-    /// switch. A switch that replaced nothing restores nothing.
-    private func restoreLines(_ change: MobileLanguageDetection.Switch) {
-        guard change.replayed else { return }
-        let recording = change.recordingLines
-            ?? Set(segments.dropFirst(change.firstLine).filter { !Self.isWatchLine($0) }.map(\.id))
-        let restored = LanguageDetectionPolicy.restoring(change.originals, into: segments, recording: recording,
-                                                         before: change.cut)
-        guard restored != segments else { return }
-        speechCorrection.cancel()
-        segments = restored
-        save(announce: false)
     }
 }

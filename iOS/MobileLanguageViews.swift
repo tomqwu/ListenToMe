@@ -15,7 +15,8 @@ struct MobileLanguageSettings: View {
             }.disabled(session.busy).accessibilityIdentifier("transcriptionLanguage")
             if session.languageDetection.automatic {
                 Text("Automatic starts in this device's language and listens to the first few seconds of speech. " +
-                     "If you speak another language, it switches once and transcribes the recording again. " +
+                     "If you speak another language, it switches and transcribes the recording again. It checks " +
+                     "again about once a minute while people talk, so a later change of language switches too. " +
                      "Detection runs on this device; its model (\(WhisperLanguageIdentifier.downloadDescription)) " +
                      "downloads once from huggingface.co. Audio is never uploaded.")
                     .font(.caption).accessibilityIdentifier("automaticLanguageExplanation")

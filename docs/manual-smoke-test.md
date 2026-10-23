@@ -298,3 +298,23 @@ iOS production-ready…"); this is the short pass.
    After a switch, take a call: the resumed recording stays in the switched language with Undo.
 5. **Unavailable model.** On a fresh install in Airplane mode, record with Automatic: recording
    continues in the device language and the status line says "Language detection paused".
+
+## iPhone language re-check mid-recording (#199)
+
+Physical iPhone or iPad only. The full check is step 12 of the physical-device list in
+[IOS.md](IOS.md#app-store-privacy-and-support-pages).
+
+1. **Change part-way.** With Automatic selected and the device in English, speak English for two
+   minutes, then Mandarin for two minutes in the same recording. Within about two minutes of the
+   change, the notice reads "Detected Chinese from m:ss · switched" with a time near the change.
+   The English lines before it are unchanged, and the Mandarin part is in Chinese with the same
+   times as before.
+2. **Short phrase.** Inside the Mandarin part, say one short English sentence: nothing switches back.
+3. **Undo the latest switch.** Tap **Undo**: only the Mandarin span returns to English, and the
+   picker shows English fixed. In a recording that switched twice, Undo returns to the language
+   from before the second switch and leaves the first switch's lines alone.
+4. **Energy.** Turn on Low Power Mode while recording: **Quick Summary → Status details** shows
+   "Language re-check: … skipped (Low Power Mode)". Stay silent for a minute: it shows "skipped
+   (too little speech)". Record 20+ minutes in one language: memory stays flat in Xcode's gauge.
+5. **Mixed sentences are a known limit.** A sentence mixing English words into Mandarin stays in the
+   recording's current language (#205).

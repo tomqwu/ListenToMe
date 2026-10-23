@@ -8,9 +8,10 @@ import ListenToMeCore
 final class LanguageTestRecorder: MobileRecording {
     private(set) var languageAudio: SpeakerAudioBuffer?
     private(set) var startLocale: Locale?
-    private(set) var switches: [(locale: String, replayed: Bool)] = []
+    struct Switch { let locale: String; let replayed: Bool; let from: Int }
+    private(set) var switches: [Switch] = []
     var failSwitch: String?
-    /// False makes a switch continue the timeline without replay, as past the two-minute cap.
+    /// False makes a switch continue the timeline without replay, as when its audio is no longer held.
     var replayAvailable = true
     /// Holds Stop (the recorder still finalizing) or a switch until the test releases it.
     var holdStop = false
@@ -42,18 +43,26 @@ final class LanguageTestRecorder: MobileRecording {
     }
     func reconfigure() async throws {}
 
-    func switchLocale(to locale: Locale, replay: SpeakerAudioBuffer?,
+    func switchLocale(to locale: Locale, replay: SpeakerAudioBuffer?, from: Int,
                       willReplace: @escaping @MainActor (Bool, TimeInterval) -> Void) async throws {
         if holdSwitch, let error = await withCheckedContinuation({ heldSwitch = $0 }) { throw error }
         if let failSwitch { throw RecordingError.message(failSwitch) }
-        let replayed = replayAvailable && (replay.map { !$0.didTruncate && $0.sampleCount > 0 } ?? false)
-        switches.append((locale.identifier, replayed))
+        // As `MobileRecorder.replay`: the audio from `from` to now must still be held.
+        let replayed = replayAvailable && (replay.map {
+            !$0.didTruncate && from < $0.sampleCount && from >= $0.sampleCount - $0.retainedSampleCount
+        } ?? false)
+        switches.append(Switch(locale: locale.identifier, replayed: replayed, from: from))
         willReplace(replayed, fed)
     }
 
-    func feedAudio(seconds: Int) {
-        languageAudio?.append(samples: [Float](repeating: 0, count: seconds * 16_000), sampleRate: 16_000,
-                              timestamp: 0, generation: generation)
+    /// Audio the transcriber accepted, copied for detection and trimmed to the trailing two minutes, as
+    /// `AnalyzerSink` does. Fed a second at a time, as the microphone delivers it.
+    func feedAudio(seconds: Int, marker: Float = 0) {
+        for _ in 0..<seconds {
+            languageAudio?.append(samples: [Float](repeating: marker, count: 16_000), sampleRate: 16_000,
+                                  timestamp: 0, generation: generation)
+            languageAudio?.keepTrailingLanguageAudio()
+        }
         fed += TimeInterval(seconds)
     }
 
@@ -66,6 +75,8 @@ final class LanguageTestRecorder: MobileRecording {
 
 actor FakeLanguageModel: MobileLanguageIdentifying {
     private var guess = LanguageGuess(language: "en", probability: 0.99)
+    /// Whether answers come from the audio itself (see `MobileLanguageTestCase.marker`), not `guess`.
+    private var listens = false
     private var supported = ["en-US", "en-GB", "zh-CN", "zh-TW", "es-ES"]
     private var failure: String?
     private var holdPrepare = false
@@ -77,6 +88,9 @@ actor FakeLanguageModel: MobileLanguageIdentifying {
     func answer(_ language: String, _ probability: Double) {
         guess = LanguageGuess(language: language, probability: probability)
     }
+    /// From now on, hear the language each second of fed audio was marked with: the most common one,
+    /// with its share of the samples as the probability, as Whisper hears a window's main language.
+    func listenToAudio() { listens = true }
     func fail(_ reason: String) { failure = reason }
     func hold() { holdPrepare = true }
     func release() { holdPrepare = false; held.forEach { $0.resume() }; held = [] }
@@ -93,7 +107,12 @@ actor FakeLanguageModel: MobileLanguageIdentifying {
     func detect(samples: [Float]) async throws -> LanguageGuess {
         detectCount += 1
         sampleCount = samples.count
-        return guess
+        guard listens, !samples.isEmpty else { return guess }
+        var counts: [Float: Int] = [:]
+        for sample in samples { counts[sample, default: 0] += 1 }
+        let top = counts.max { $0.value < $1.value } ?? (0, 0)
+        return LanguageGuess(language: MobileLanguageTestCase.language(of: top.key),
+                             probability: Double(top.value) / Double(samples.count))
     }
 
     func supportedLocales() async -> [String] { supported }
@@ -125,10 +144,21 @@ class MobileLanguageTestCase: XCTestCase {
         recorder = nil; model = nil
     }
 
+    /// Fed audio is marked with the language it stands for: 0 is the device's language.
+    nonisolated static let markers: [Float: String] = [1: "zh", 2: "es"]
+    nonisolated static func language(of marker: Float) -> String {
+        markers[marker] ?? Locale.current.language.languageCode?.identifier ?? "en"
+    }
+
+    /// Re-checks see these device conditions instead of the simulator's own.
+    var conditions = LanguageRecheckPolicy.Conditions()
+
     func makeSession(withModel: Bool = true) -> MobileSession {
         let recorder = recorder!, model = model!
-        return MobileSession(storageDirectory: root, makeRecorder: { recorder },
-                             makeLanguageModel: withModel ? { model } : nil)
+        let session = MobileSession(storageDirectory: root, makeRecorder: { recorder },
+                                    makeLanguageModel: withModel ? { model } : nil)
+        session.languageDetection.conditions = { [weak self] in self?.conditions ?? .init() }
+        return session
     }
 
     func record(_ session: MobileSession) async throws {

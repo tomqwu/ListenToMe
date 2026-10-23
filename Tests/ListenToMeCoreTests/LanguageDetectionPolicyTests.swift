@@ -1,7 +1,8 @@
 import XCTest
 @testable import ListenToMeCore
 
-/// Issue #197: when the spoken language differs from the transcription language, switch once.
+/// Issue #197: when the spoken language differs from the transcription language, switch. Re-checks and
+/// their limits (issue #199) are in `LanguageRecheckPolicyTests`.
 final class LanguageDetectionPolicyTests: XCTestCase {
     private let apple = ["en-US", "en-GB", "en-AU", "zh-CN", "zh-TW", "zh-HK", "yue-CN", "es-ES", "es-MX",
                          "es-US", "fr-FR", "fr-CA", "de-DE", "ja-JP", "pt-BR", "pt-PT", "ko-KR", "it-IT"]
@@ -10,7 +11,7 @@ final class LanguageDetectionPolicyTests: XCTestCase {
                         supported: [String]? = nil, pinned: Bool = false, switched: Bool = false,
                         region: String? = "US") -> LanguageDetectionPolicy.Decision {
         LanguageDetectionPolicy.decide(detected: language, probability: probability, current: current,
-                                       supported: supported ?? apple, pinned: pinned, alreadySwitched: switched,
+                                       supported: supported ?? apple, pinned: pinned, atSwitchLimit: switched,
                                        region: region)
     }
 
@@ -43,13 +44,13 @@ final class LanguageDetectionPolicyTests: XCTestCase {
         XCTAssertEqual(decide("zh", 0.99, pinned: true), .keep(.pinned))
     }
 
-    func testARecordingSwitchesOnlyOnce() {
-        XCTAssertEqual(decide("fr", 0.99, current: "zh-CN", switched: true), .keep(.alreadySwitched))
+    func testARecordingAtItsSwitchLimitKeepsItsLanguage() {
+        XCTAssertEqual(decide("fr", 0.99, current: "zh-CN", switched: true), .keep(.switchLimit))
     }
 
     func testPinnedOutranksEveryOtherReason() {
         XCTAssertEqual(decide("en", 0.1, pinned: true, switched: true), .keep(.pinned))
-        XCTAssertEqual(decide("en", 0.1, switched: true), .keep(.alreadySwitched))
+        XCTAssertEqual(decide("en", 0.1, switched: true), .keep(.switchLimit))
     }
 
     // MARK: Whisper code → supported locale
@@ -107,7 +108,7 @@ final class LanguageDetectionPolicyTests: XCTestCase {
         XCTAssertEqual(LanguageDetectionPolicy.bestLocale(forWhisper: "jw", supported: ["jv-ID"], region: nil), "jv-ID")
     }
 
-    // MARK: When to listen, and how much to keep
+    // MARK: When to listen
 
     func testDetectionWaitsForEnoughSpeech() {
         XCTAssertFalse(LanguageDetectionPolicy.isReady(speechStart: nil, speechEnd: 0, captured: 60))
@@ -115,16 +116,6 @@ final class LanguageDetectionPolicyTests: XCTestCase {
         XCTAssertTrue(LanguageDetectionPolicy.isReady(speechStart: 2, speechEnd: 10, captured: 10))
         XCTAssertTrue(LanguageDetectionPolicy.isReady(speechStart: 2, speechEnd: 3, captured: 32),
                       "Sparse speech is checked once a whole window has passed since it began")
-    }
-
-    func testTheWindowStartsJustBeforeTheFirstSpeechAndIsCapped() {
-        let rate = LanguageDetectionPolicy.sampleRate
-        XCTAssertEqual(LanguageDetectionPolicy.window(speechStart: 0.2, totalSamples: 10 * rate), 0..<(10 * rate))
-        XCTAssertEqual(LanguageDetectionPolicy.window(speechStart: 5, totalSamples: 60 * rate),
-                       Int(4.5 * Double(rate))..<Int(34.5 * Double(rate)))
-        XCTAssertEqual(LanguageDetectionPolicy.window(speechStart: 50, totalSamples: 10 * rate),
-                       (10 * rate)..<(10 * rate),
-                       "A stale speech time never reaches past the audio")
     }
 
     // MARK: Undo without replay
@@ -157,6 +148,18 @@ final class LanguageDetectionPolicyTests: XCTestCase {
         XCTAssertEqual(restored.map(\.text),
                        ["wo men", "jin tian (unfinished)", "今天开会讨论", "Apple Watch line", "a later recording"],
                        "Only the switched recording's lines that ended by the switch are replaced")
+    }
+
+    /// Issue #199: a re-check switch replaced only the lines from where the language changed, so Undo
+    /// leaves the recording's earlier lines alone.
+    func testRestoringAfterARecheckSwitchLeavesTheLinesBeforeTheChangeAlone() {
+        let english = line("Good morning everyone", 0, 50)
+        let replayed = [line("Bonjour à tous", 62, 70), line("on commence", 71, 80)]
+        let current = [english] + replayed
+        let originals = [line("bone jour a two", 62, 70), line("on come on s", 71, 80)]
+        let restored = LanguageDetectionPolicy.restoring(originals, into: current,
+                                                         recording: Set(current.map(\.id)), since: 62, before: 85)
+        XCTAssertEqual(restored.map(\.text), ["Good morning everyone", "bone jour a two", "on come on s"])
     }
 
     // MARK: Replay commit

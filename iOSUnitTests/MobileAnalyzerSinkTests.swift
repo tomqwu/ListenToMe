@@ -86,6 +86,34 @@ final class MobileAnalyzerSinkTests: XCTestCase {
         let inputs = await drain(stream, input)
         XCTAssertEqual(inputs.map { Int($0.buffer.frameLength) }.reduce(0, +), 16_000 * 5, "All five seconds, once")
         XCTAssertEqual(inputs.count, 3)
+        XCTAssertNil(inputs.first?.bufferStartTime, "A replay from the start needs no stamp, as in #197")
+    }
+
+    /// Issue #199: a re-check switch transcribes only the span since the change, on the recording's timeline.
+    func testAReplayFromPartWayStampsItsStartAndFeedsOnlyThatSpan() async {
+        let buffer = SpeakerAudioBuffer()
+        buffer.append(samples: [Float](repeating: 0.1, count: 16_000 * 30), sampleRate: 16_000, timestamp: 0,
+                      generation: buffer.currentGeneration())
+        let (stream, input) = AsyncStream<AnalyzerInput>.makeStream()
+        XCTAssertTrue(MobileRecorder.replay(buffer, from: 16_000 * 21, through: 16_000 * 26, into: input,
+                                            format: format))
+        let inputs = await drain(stream, input)
+        XCTAssertEqual(inputs.map { Int($0.buffer.frameLength) }.reduce(0, +), 16_000 * 5)
+        XCTAssertEqual(inputs.first?.bufferStartTime?.seconds ?? -1, 21, accuracy: 0.001)
+        XCTAssertEqual(inputs.dropFirst().compactMap(\.bufferStartTime).count, 0, "Later buffers follow on")
+    }
+
+    /// Issue #199: the language copy keeps only the trailing two minutes, released in whole blocks.
+    func testTheLanguageCopyKeepsOnlyTheTrailingTwoMinutes() async {
+        let (stream, input) = AsyncStream<AnalyzerInput>.makeStream()
+        let language = SpeakerAudioBuffer(maxSamples: .max)
+        let sink = AnalyzerSink(input: input, destination: format, speakerAudio: nil, speakerGeneration: 0,
+                                languageAudio: language, languageGeneration: language.currentGeneration())
+        for _ in 0..<135 { XCTAssertEqual(sink.deliver(chunk(seconds: 1, rate: 16_000)), .accepted) }
+        XCTAssertEqual(language.sampleCount, 135 * 16_000, "Sample indexes stay on the recording's timeline")
+        XCTAssertEqual(language.heldFrom, 10, "One ten-second block released, never the last two minutes")
+        XCTAssertGreaterThanOrEqual(language.retainedSampleCount, LanguageRecheckPolicy.retainedSamples)
+        _ = await drain(stream, input)
     }
 
     func testReplayRefusesAudioItNoLongerHolds() {
@@ -98,5 +126,15 @@ final class MobileAnalyzerSinkTests: XCTestCase {
         XCTAssertTrue(capped.didTruncate)
         XCTAssertFalse(MobileRecorder.replay(capped, through: 16_000, into: input, format: format),
                        "A truncated recording cannot be replayed onto the same timeline")
+        let trailing = SpeakerAudioBuffer()
+        trailing.append(samples: [Float](repeating: 0, count: 16_000 * 30), sampleRate: 16_000, timestamp: 0,
+                        generation: trailing.currentGeneration())
+        trailing.discardAudio(before: 16_000 * 20)
+        XCTAssertFalse(MobileRecorder.replay(trailing, from: 16_000 * 5, through: 16_000 * 30, into: input,
+                                             format: format), "Audio already released cannot be heard again")
+        XCTAssertTrue(MobileRecorder.replay(trailing, from: 16_000 * 25, through: 16_000 * 30, into: input,
+                                            format: format))
+        XCTAssertFalse(MobileRecorder.replay(trailing, from: 16_000 * 30, through: 16_000 * 30, into: input,
+                                             format: format), "Nothing to hear again")
     }
 }
