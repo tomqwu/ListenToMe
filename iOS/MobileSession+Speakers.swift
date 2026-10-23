@@ -83,8 +83,8 @@ extension MobileSession {
     /// still running finishes on its own and its result is dropped if the run or conversation moved
     /// on. In the foreground, one final pass labels the last words, queued behind any pass in flight
     /// and limited to this run. It is skipped in the background (iOS gives a backgrounded app no
-    /// Neural Engine) and until the models have loaded once, so Stop never starts the first download;
-    /// those lines keep "Microphone".
+    /// Neural Engine) and while the models are not loaded yet, so Stop never starts or waits for the
+    /// download; those lines keep "Microphone". With the models ready, a short recording is labeled here.
     func finishSpeakerIdentification() {
         speakerLoop?.cancel()
         speakerLoop = nil
@@ -98,14 +98,29 @@ extension MobileSession {
         }
     }
 
-    /// The retry gesture after the speaker models could not be loaded.
+    /// Prepares the speaker models at a foreground launch (or return) with Identify speakers on, so the
+    /// first recording does not wait for a pass to download them (#195). Never in the background.
+    func prepareSpeakerModelsIfNeeded() {
+        guard isForeground else { return }
+        speakers.startPreparing()
+    }
+
+    /// The Retry gesture on the status line or in Settings → Speakers: clears a model failure, then
+    /// runs a pass while recording, or prepares the models when not.
     func retrySpeakerIdentification() {
         let token = speakers.runToken
         Task {
             await speakers.retry()
-            guard state == .recording else { return }
-            await runSpeakerPass(token: token)
+            if state == .recording { await runSpeakerPass(token: token) } else { prepareSpeakerModelsIfNeeded() }
         }
+    }
+
+    /// Speaker lines for Status details, for diagnosing missing labels in the field.
+    var speakerDiagnostics: [String] {
+        ["Identify speakers: \(speakers.enabled ? "on" : "off")",
+         "Speaker models ready: \(speakers.modelsReadyDetail)",
+         "Speaker passes run: \(speakers.passCount)",
+         "Speaker last error: \(speakers.lastFailure ?? "none")"]
     }
 
     /// Labels this recording's lines with the speaker whose speech covers them; lines no speaker

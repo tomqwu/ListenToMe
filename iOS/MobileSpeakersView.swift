@@ -1,7 +1,8 @@
 import SwiftUI
 import ListenToMeCore
 
-/// Settings → Speakers: the opt-in switch and what it costs (issue #180).
+/// Settings → Speakers: the switch (on unless turned off), what it costs, and where the models stand
+/// (issues #180, #195).
 struct MobileSpeakerSettings: View {
     let session: MobileSession
     @Bindable var speakers: MobileSpeakers
@@ -17,10 +18,11 @@ struct MobileSpeakerSettings: View {
                 .disabled(session.state != .idle)
                 .accessibilityIdentifier("identifySpeakersToggle")
             Text("Labels transcript lines Speaker 1, Speaker 2… so you can rename them in Notes. Runs on this "
-                 + "device; audio is not saved or sent. The first time, speaker models download from "
-                 + "huggingface.co. Uses more battery while listening.")
+                 + "device; audio is not saved or sent. While this is on, speaker models download once from "
+                 + "huggingface.co, before your first recording needs them. Uses more battery while listening.")
                 .font(.footnote).foregroundStyle(.secondary)
                 .accessibilityIdentifier("identifySpeakersExplanation")
+            if speakers.enabled { MobileSpeakerModelRow(session: session) }
         } header: { Text("Speakers") } footer: {
             Text("Labels are estimates: overlapping speech and very short phrases are often left as Microphone, "
                  + "and a voice is not recognized again after you stop and start listening.")
@@ -36,7 +38,8 @@ struct MobileSpeakerList: View {
         Section("Speakers") {
             if session.speakerList.isEmpty {
                 Text(session.speakers.enabled
-                     ? "Speaker labels appear about 20 seconds into a recording and are finished when you stop."
+                     ? "Once the speaker models are ready, labels appear about 20 seconds into a recording and "
+                       + "are finished when you stop, so a short recording is labeled at Stop."
                      : "Turn on Identify speakers in Settings to label who said what.")
                     .font(.callout).foregroundStyle(.secondary)
             } else {
@@ -81,21 +84,48 @@ private struct MobileSpeakerNameField: View {
     }
 }
 
-/// The meeting status area's line about speaker identification, with Retry after a model failure.
+/// The recording screen's one line about speaker labels while Identify speakers is on (#195), with
+/// Retry when the models failed or are not loaded.
 struct MobileSpeakerStatus: View {
     let session: MobileSession
 
     var body: some View {
-        if session.speakers.enabled, let line = session.speakers.statusLine {
+        if let line = session.speakers.statusLine {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Label(line, systemImage: session.speakers.isUnavailable ? "person.2.slash" : "person.2.wave.2")
                     .font(.caption).foregroundStyle(MobileStyle.muted).lineLimit(3)
                     .accessibilityIdentifier("speakerStatus")
-                if session.speakers.isUnavailable {
+                if session.speakers.showsRetry {
                     Button("Retry") { session.retrySpeakerIdentification() }
                         .font(.caption.weight(.semibold)).buttonStyle(.borderless)
                         .accessibilityIdentifier("retrySpeakers")
                 }
+            }
+        }
+    }
+}
+
+/// Settings → Speakers: the models' download progress, ready state, or failure with Retry (#195).
+private struct MobileSpeakerModelRow: View {
+    let session: MobileSession
+
+    var body: some View {
+        let speakers = session.speakers
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            if speakers.modelsReady {
+                Image(systemName: "checkmark.circle.fill").foregroundStyle(.green).accessibilityHidden(true)
+            } else if speakers.isUnavailable || speakers.showsRetry {
+                Image(systemName: "exclamationmark.circle").foregroundStyle(.secondary).accessibilityHidden(true)
+            } else {
+                ProgressView().controlSize(.small)
+            }
+            Text(speakers.modelLine).font(.footnote)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityIdentifier("speakerModelState")
+            if speakers.showsRetry {
+                Button("Retry") { session.retrySpeakerIdentification() }
+                    .font(.footnote.weight(.semibold)).buttonStyle(.borderless)
+                    .accessibilityIdentifier("retrySpeakerModels")
             }
         }
     }

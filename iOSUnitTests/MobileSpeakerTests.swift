@@ -7,20 +7,21 @@ import ListenToMeCore
 /// around it are what these tests pin down.
 @MainActor
 final class MobileSpeakerTests: MobileSpeakerTestCase {
-    // MARK: Opt-in
+    // MARK: The setting
 
     func testAudioIsCopiedForIdentificationOnlyWhenTheSettingIsOn() async throws {
-        UserDefaults.standard.removeObject(forKey: MobileSpeakers.enabledKey)
+        UserDefaults.standard.set(false, forKey: MobileSpeakers.enabledKey)
         let session = makeSession()
-        XCTAssertFalse(session.speakers.enabled, "Off by default")
+        XCTAssertFalse(session.speakers.enabled)
         try await record(session)
-        XCTAssertNil(recorder.speakerAudio, "Off by default: no audio is kept for identification")
+        XCTAssertNil(recorder.speakerAudio, "Off: no audio is kept for identification")
         await session.stop()
 
         session.speakers.enabled = true
         try await record(session)
         XCTAssertNotNil(recorder.speakerAudio)
         await session.stop()
+        await session.speakerFinalPass?.value   // turning it on loaded the models, so Stop runs a final pass
         XCTAssertFalse(session.speakers.isRunning)
     }
 
@@ -183,7 +184,8 @@ final class MobileSpeakerTests: MobileSpeakerTestCase {
         XCTAssertNotNil(session.speakers.statusLine)
         await session.runSpeakerPass()
         XCTAssertEqual(session.segments.first?.speakerName, "Speaker 1")
-        XCTAssertNil(session.speakers.statusLine)
+        XCTAssertEqual(session.speakers.statusLine, "Speaker labels appear about 20 s in and at Stop",
+                       "A successful pass clears the skipped-pass note")
         await session.stop()
     }
 

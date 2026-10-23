@@ -68,6 +68,9 @@ actor FakeDiarizer: MobileSpeakerDiarizing {
     private var callCount = 0
     private var retryCount = 0
     private var sampleCount = 0
+    private var prepareCount = 0
+    private var holdNextPrepareCall = false
+    private var heldPrepare: CheckedContinuation<Void, Never>?
 
     func respond(_ segments: [DiarizedSegment]) { self.segments = segments }
     func failModels(_ reason: String) { modelFailure = reason }
@@ -80,6 +83,20 @@ actor FakeDiarizer: MobileSpeakerDiarizing {
     func calls() -> Int { callCount }
     func retries() -> Int { retryCount }
     func lastSampleCount() -> Int { sampleCount }
+    /// Model preparations requested without audio (toggle-on, launch, Start, Retry).
+    func prepares() -> Int { prepareCount }
+    func holdNextPrepare() { holdNextPrepareCall = true }
+    func holdingPrepare() -> Bool { heldPrepare != nil }
+    func releasePrepare() { heldPrepare?.resume(); heldPrepare = nil }
+
+    func prepareModels() async throws {
+        prepareCount += 1
+        if holdNextPrepareCall {
+            holdNextPrepareCall = false
+            await withCheckedContinuation { heldPrepare = $0 }
+        }
+        if let modelFailure { throw SpeakerDiarizer.DiarizationError.modelsUnavailable(modelFailure) }
+    }
 
     func diarize(samples: [Float]) async throws -> [DiarizedSegment] {
         callCount += 1

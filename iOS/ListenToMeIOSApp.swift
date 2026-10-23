@@ -21,6 +21,8 @@ struct ListenToMeIOSApp: App {
                     session.importSharedInbox()
                     attachWatchLink()
                     session.importWatchInbox()
+                    // Also from the .active phase change; this covers a launch already active by now.
+                    if scenePhase == .active { session.prepareSpeakerModelsIfNeeded() }
                 }
                 .onOpenURL { session.importFile($0) }
                 .onChange(of: session.busy) { _, busy in
