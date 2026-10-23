@@ -30,6 +30,15 @@ extension MeetingView {
             return false
         }
         lastSavedKey = key
+        // Save to folder (issue #53): written once capture has stopped, then on each later change.
+        // The record's date moves with every checkpoint; the note keeps the conversation's start.
+        let started = conversationStartedAt ?? record.date
+        conversationStartedAt = started
+        let vault = MarkdownVaultSync.shared
+        vault.activeRecordingID = complete ? nil : currentSessionID
+        if complete {
+            vault.save(record, language: ProviderSettings.transcriptionLocale().identifier, startedAt: started)
+        }
         saveMessage = "Saved at " + Date().formatted(date: .omitted, time: .standard)
         saveFailed = false
         return true
@@ -87,7 +96,7 @@ extension MeetingView {
             }
             beginDiarizationRunReset()
             session.resetConversation()
-            currentSessionID = UUID().uuidString
+            currentSessionID = UUID().uuidString; conversationStartedAt = nil
             conversationTitle = ConversationTitle.generated(Date().formatted(date: .abbreviated, time: .shortened))
             sessionSaveable = ProviderSettings.saveSessionsForSearch
             othersAudioSink.reset(); microphoneAudioSink.reset()
@@ -126,6 +135,16 @@ extension MeetingView {
                             Button("Retry save") { saveConversation() }
                             Button("Save As…") { _ = saveConversationAs() }
                         }
+                    }
+                    let vault = MarkdownVaultSync.shared
+                    if vault.needsAttention {
+                        Text("⚠️ Save to folder: \(vault.statusText)").foregroundStyle(.orange)
+                            .multilineTextAlignment(.trailing)
+                        Button("Retry folder save") {
+                            vault.retry(history: sessionStore.all(),
+                                        language: ProviderSettings.transcriptionLocale().identifier,
+                                        excluding: wantsCapture ? currentSessionID : nil)
+                        }.disabled(!vault.hasFolder)
                     }
                 }.frame(maxWidth: .infinity, alignment: .trailing)
             }
@@ -169,6 +188,8 @@ extension MeetingView {
         await importTask?.value
         if !hasConversation { return true }
         if ProviderSettings.saveSessionsForSearch && sessionSaveable && checkpoint(complete: true, force: true) {
+            // The final Save to folder note is queued by that checkpoint; let it land before quitting.
+            await MarkdownVaultSync.shared.waitForWrites(timeout: .seconds(5))
             return true
         }
         let alert = NSAlert()

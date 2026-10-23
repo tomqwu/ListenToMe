@@ -60,6 +60,7 @@ final class SessionStore {
             guard let archive else { throw CocoaError(.fileWriteUnknown) }
             // Clear deletes the quarantined files too, so any earlier warning is obsolete.
             archiveWarning = try archive.clear()
+            MarkdownVaultSync.shared.forgetAll()   // A cleared conversation's note must not be written later.
             errorText = nil
             return true
         } catch { errorText = "Couldn't clear history: \(error.localizedDescription)"; return false }
