@@ -37,8 +37,10 @@ final class WatchLinkClient: NSObject, WCSessionDelegate {
         switch outcome {
         case .success(let (reply, stamp)):
             isReachable = true
-            // A reply older than the status already shown (a late "starting" after "recording") is dropped.
-            if case .accepted(let status) = reply, !tracker.apply(status, stamp: stamp) { return }
+            // Any reply older than the status already shown (a late "starting" after "recording", or a
+            // late "busy" after the summary ended) is dropped.
+            guard tracker.isCurrent(stamp) else { return }
+            if case .accepted(let status) = reply { tracker.apply(status, stamp: stamp) }
             lastReply = reply
         case .failure:
             isReachable = false
