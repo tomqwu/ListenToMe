@@ -240,7 +240,9 @@ or paste a key into an issue or log.
 4. **A Summary per service.** For each of OpenAI, Anthropic Claude, Google Gemini, DeepSeek, OpenRouter,
    Groq, Mistral and xAI Grok: generate a Summary from a short recorded conversation and confirm it
    streams and completes. On iPhone, **Test this model** on the Quick role passes or pauses Auto with a
-   reason (Claude should always pass: its evaluator uses structured output).
+   reason (Claude should always pass: its evaluator uses structured output). The same transport check
+   runs headless with `LTM_CLOUD_PRESET=<id> LTM_CLOUD_MODEL=<model> LTM_CLOUD_KEY=<key> swift test
+   --filter CloudAIPresetLiveTests` (it is skipped without those variables).
 5. **Per-vendor keys.** Switch from Claude to OpenAI and back: each service keeps its own key and
    model choices. A wrong key shows "rejected the API key" and never echoes the key.
 6. **Back to the default.** Choose Local only (macOS) or Apple Intelligence (iPhone): no request goes to
