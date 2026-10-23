@@ -1,0 +1,8 @@
+This build adds Cloud AI services for summaries: OpenAI, Anthropic Claude, Google Gemini, DeepSeek, OpenRouter, Groq, Mistral and xAI Grok, each with your own API key. Apple Intelligence stays the default, nothing is chosen for you, and microphone audio still stays on this device. A cloud service receives your transcript and notes only after you choose it and add a key.
+
+Please test:
+1. Open More → Settings → Summary provider and choose a service under Cloud AI, for example Claude or OpenAI. Tap "Get a key from …", create an API key on the vendor's site, paste it and tap Save API key.
+2. Tap Refresh models, pick a model for each role (Quick, Summary, Deep), then open the Quick model and tap "Test this model". It passes, or says why the model cannot drive Auto.
+3. Record a conversation, then refresh Summary and Deep. Both answer from the service you chose.
+4. Check that Settings labels the service "Sends your transcript to <vendor>", with a link to its privacy policy.
+5. Switch to another Cloud AI service and add its key, then switch back. Each service keeps its own key: the first one is still saved and works without pasting it again.

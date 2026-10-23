@@ -1,7 +1,7 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.13.0 (30).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.14.0 (31).
 
 ## What this app is for
 
@@ -91,7 +91,7 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 **The two apps keep independent version lines.** They are separate products in separate distribution
 channels, and an iOS build number already accepted by App Store Connect can never be reused. A higher
 iOS version does *not* mean the iPhone app is ahead of the Mac app; today macOS is 1.4.4 (14) and iOS
-is 1.13.0 (30).
+is 1.14.0 (31).
 
 - **`MARKETING_VERSION`** (iOS, in `project.yml`): a **minor** bump for user-visible features, a
   **patch** bump for fixes.
@@ -111,6 +111,10 @@ is 1.13.0 (30).
 The archive, upload, tagging and verification steps themselves are not repeated here: follow
 [IOS-RELEASING.md](IOS-RELEASING.md) for iOS, [RELEASING.md](RELEASING.md) for macOS, and
 [AGENTS.md](../AGENTS.md) for the release workflow that governs both.
+
+## iOS 1.14.0 (31)
+
+Cloud AI services for summaries (#214): **Settings → Summary provider → Cloud AI** offers OpenAI, Anthropic Claude, Google Gemini, DeepSeek, OpenRouter, Groq, Mistral and xAI Grok at fixed vendor addresses, each with the user's own API key stored separately in the Keychain (`WhenUnlockedThisDeviceOnly`), sent only to that vendor and kept when switching services. Nothing is chosen by default: Apple Intelligence stays the default provider and the app never picks a model — the user picks one per role from the vendor's model list. Every service is labelled "Sends your transcript to <vendor>" with a link to its privacy policy and a "Get a key from …" link. Claude uses Anthropic's native Messages API, with structured output for Auto Quick and Anthropic's server-side fallback described in the privacy policy; the others use their OpenAI-compatible endpoints. The custom server is now listed as "Custom server (OpenAI-compatible)". The privacy policy in [ios-privacy.md](ios-privacy.md) lists each vendor, its address and privacy policy, and the Claude fallback. No SwiftPM package changed since 1.13.0 (30). The Apple Watch target is versioned with the app but is not embedded in this build (`WATCH_EMBED` off; #181 ships on a later train). [What to Test](../metadata/ios/en-CA/what-to-test-1.14.0.txt).
 
 ## iOS 1.13.0 (30)
 
