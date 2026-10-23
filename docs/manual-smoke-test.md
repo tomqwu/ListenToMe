@@ -328,3 +328,29 @@ iOS production-ready…"); this is the short pass.
    with the common languages first and languages such as Portuguese (Brazil), Italian or Hindi
    further down. Pick a downloadable one, record: its model downloads and the transcript is in that
    language; reopen Settings and it is listed under **Installed**.
+
+## Save to folder — Markdown vault (#53)
+
+iPhone (simulator is enough for 1–5; 6 needs a physical device signed in to iCloud):
+
+1. **Off by default.** Fresh install: **More → Settings → Save to folder** is off and no note is written.
+2. **Choose a folder.** Turn it on: the Files picker opens. Pick a folder in On My iPhone. Settings shows
+   the folder name and "Saving each conversation to … when you stop or save."
+3. **Written at Stop, not while recording.** Record a few lines: Files shows no new note while
+   recording. Tap Stop: one `… ListenToMe <key>.md` note appears with front matter, Summary/Notes and a
+   `[mm:ss]`-timestamped transcript.
+4. **No duplicates.** Rename the conversation and generate a Summary: the same note updates; no second
+   file appears. Force-quit and reopen, edit notes: still one note. Unrelated files in the folder are
+   unchanged.
+5. **Visible failure and Retry.** Delete the chosen folder in Files, then tap Save: an orange "Save to
+   folder" line appears under the title and in Settings ("can't be found … Choose the folder again").
+   Choose a folder again: the waiting note is written.
+6. **iCloud Drive / Obsidian.** Choose a folder inside the Obsidian vault in iCloud Drive. Stop a
+   recording, then open Obsidian on a Mac or iPhone: the note appears with its properties (date,
+   duration, language, speakers, tags) and renders the transcript list.
+
+Mac: in **Settings**, turn on "Save each conversation to a folder as Markdown" and choose a folder.
+Listen, then Stop: the note appears once the checkpoint is complete, and updates as Listener/Quick/Deep
+change. Move the folder to the Trash: an orange note with **Retry folder save** appears beside the
+saved time. Stop a recording and quit with ⌘Q at once: the note is in the folder. With the folder
+in the Trash, stop a recording and quit; put the folder back, relaunch: the waiting note is written.

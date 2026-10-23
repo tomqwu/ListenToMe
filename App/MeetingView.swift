@@ -22,6 +22,8 @@ struct MeetingView: View {
     /// Identity of this app-window's session. Reused across Listen→Stop cycles so repeated Stops
     /// upsert one growing record instead of writing a fresh superset each time.
     @State var currentSessionID = UUID().uuidString
+    /// When the current conversation's first checkpoint was taken; the Save to folder note's date.
+    @State var conversationStartedAt: Date?
     /// `lastSavedUtteranceCount`: count at the last save, so an unchanged transcript isn't re-saved on
     /// Stop. `sessionSaveable`: whether this window-session may be persisted — tainted to false the
     /// moment saving is ever observed off (or history is cleared), so "turn off to keep nothing" holds
@@ -318,6 +320,7 @@ struct MeetingView: View {
             }
         }
         .task {
+            retryVaultNotesAtLaunch()
             await reloadAndHealModels()
         }
         .background(WindowCloseHandler())
@@ -778,6 +781,7 @@ extension MeetingView {
         // old records on a fresh/empty window must not silently disable future saving.
         if hasConversation { sessionSaveable = false }
         currentSessionID = UUID().uuidString
+        conversationStartedAt = nil
         lastSavedKey = nil
     }
 

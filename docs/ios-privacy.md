@@ -4,7 +4,7 @@ Effective October 23, 2026. Developer: Tom Wu. Contact: [tom@cloudnativity.io](m
 
 ## Your conversations
 
-Listen To Me transcribes microphone audio on your device using Apple's speech frameworks. The app does not save raw microphone audio or send it to the developer. Transcripts, notes, summaries and imported attachments are stored in the app's local storage, written with device data protection so the files stay encrypted until you unlock the device after a restart. Your device backup settings may include app data in backups managed by Apple; Settings has a toggle that keeps conversations, attachments and shared imports out of iCloud and Finder backups. The app has no developer-operated conversation server, advertising SDK or tracking SDK.
+Listen To Me transcribes microphone audio on your device using Apple's speech frameworks. The app does not save raw microphone audio or send it to the developer. Transcripts, notes, summaries and imported attachments are stored in the app's local storage (and, only if you turn on Save to folder, also in a folder you choose; see below), written with device data protection so the files stay encrypted until you unlock the device after a restart. Your device backup settings may include app data in backups managed by Apple; Settings has a toggle that keeps conversations, attachments and shared imports out of iCloud and Finder backups. The app has no developer-operated conversation server, advertising SDK or tracking SDK.
 
 A new install summarizes on-device with Apple Intelligence by default where the device supports it, and on such an install the app does not contact ollama.com at all. Speech language assets may need to download before transcription works.
 
@@ -26,13 +26,17 @@ Summaries go to an OpenAI-compatible server (for example LM Studio, vLLM or llam
 
 Ollama operates independently. Its [privacy policy](https://ollama.com/privacy) describes transient processing of cloud prompts and responses, and retention of account and service metadata. Its account terms, usage limits and privacy practices apply when you use that service. We do not receive your Ollama credentials or cloud conversation content. You can turn off Auto and speech correction, select Apple Intelligence where supported, point the app at your own server, or remove the API key in Settings to stop future Ollama Cloud requests.
 
+## Save to folder (off by default)
+
+Save to folder (Settings → Save to folder) is off unless you turn it on and choose a folder in the Files picker. When it is on, each conversation's title, summaries, notes, attachment names and transcript, with speaker names, are written as a Markdown note into that folder after you stop or save, and the note is rewritten when they change. The folder is your choice: it can be on this device (On My iPhone), in iCloud Drive, in an Obsidian vault or in another app's storage location. A folder in iCloud Drive or another provider's location is synced by that provider under its own terms, and notes written there are outside the app's encrypted storage, its backup setting and its deletion: deleting a conversation in History does not delete a note already written, though a note still waiting to be written is dropped and never written. The app keeps only a bookmark to the folder so it can write there again; turn the setting off or choose another folder to stop writing to it.
+
 ## Imports and sharing
 
 You choose photos, files, shared notes and calendar events to import. Calendar access is requested for the calendar import feature; an imported event has join-link passcodes and e-mail addresses removed from its body and location before the text reaches your notes. Imported copies remain in the conversation until you delete them. A shared import the app cannot read is set aside and deleted after 24 hours. Sharing exports the content you choose to another app or recipient; that destination's privacy practices then apply. Deleting the original conversation does not delete copies you exported.
 
 ## Retention and deletion
 
-Saved conversations remain on your device until you delete them from History (which has a search field for finding an older conversation) or you remove the app's data. To remove a saved Ollama or OpenAI-compatible server key, use Remove API key in Settings; uninstalling an app may leave Keychain entries behind. Manage device backups separately in your Apple settings. We cannot recover or remotely delete conversations stored only on your device. Contact Ollama, or the operator of an OpenAI-compatible service you chose, directly for requests about information retained by that service.
+Saved conversations remain on your device until you delete them from History (which has a search field for finding an older conversation) or you remove the app's data. To remove a saved Ollama or OpenAI-compatible server key, use Remove API key in Settings; uninstalling an app may leave Keychain entries behind. Manage device backups separately in your Apple settings. We cannot recover or remotely delete conversations stored only on your device. Notes written by Save to folder stay in the folder you chose until you delete them there. Contact Ollama, or the operator of an OpenAI-compatible service you chose, directly for requests about information retained by that service.
 
 ## Support
 
