@@ -112,4 +112,97 @@ final class WatchLinkTests: XCTestCase {
         XCTAssertEqual(line(.idle, reply: .accepted(accepted)), "Ready")
         XCTAssertEqual(WatchRemoteText.line(status: nil, reachable: true, lastReply: nil, now: now), "Ready")
     }
+
+    // MARK: Chunk metadata and end marker (Slice 2)
+
+    private let recordingID = UUID(uuidString: "6F9619FF-8B86-D011-B42D-00C04FC964FF")!
+
+    private func chunk(index: Int = 3, startOffset: TimeInterval = 900, duration: TimeInterval = 300,
+                       isLast: Bool = false) -> WatchChunkMetadata {
+        WatchChunkMetadata(recordingID: recordingID, index: index, startOffset: startOffset, duration: duration,
+                           isLast: isLast, startedAt: Date(timeIntervalSince1970: 1_700_000_000.5), watchBuild: "28")
+    }
+
+    func testChunkMetadataRoundTrips() throws {
+        for value in [chunk(), chunk(index: 0, startOffset: 0, duration: 12.5, isLast: true),
+                      chunk(index: WatchChunkMetadata.maximumIndex, duration: 599.9)] {
+            let metadata = value.transferMetadata
+            XCTAssertEqual(metadata["v"] as? Int, 1)
+            XCTAssertEqual(metadata["recordingID"] as? String, recordingID.uuidString)
+            XCTAssertTrue(PropertyListSerialization.propertyList(metadata, isValidFor: .binary))
+            XCTAssertEqual(try WatchChunkMetadata(transferMetadata: metadata), value)
+            // What WatchConnectivity hands back: the same dictionary after a property-list round trip.
+            let data = try PropertyListSerialization.data(fromPropertyList: metadata, format: .binary, options: 0)
+            let decoded = try XCTUnwrap(PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any])
+            XCTAssertEqual(try WatchChunkMetadata(transferMetadata: decoded), value)
+        }
+        XCTAssertEqual(WatchChunkMetadata.maximumIndex, 999)
+        XCTAssertEqual(WatchChunkMetadata.maximumDuration, 600)
+        XCTAssertEqual(WatchChunkMetadata.maximumFileBytes, 10_000_000)
+        let json = try JSONEncoder().encode(chunk())
+        XCTAssertEqual(try JSONDecoder().decode(WatchChunkMetadata.self, from: json), chunk())
+    }
+
+    func testChunkMetadataRejectsOutOfRangeValues() {
+        let valid = chunk().transferMetadata
+        func rejects(_ key: String, _ value: Any?, line: UInt = #line) {
+            var metadata = valid
+            metadata[key] = value
+            XCTAssertThrowsError(try WatchChunkMetadata(transferMetadata: metadata), "\(key)=\(String(describing: value))",
+                                 line: line)
+        }
+        rejects("index", 1_000)
+        rejects("index", -1)
+        rejects("duration", 0.0)
+        rejects("duration", 600.0)
+        rejects("duration", -5.0)
+        rejects("duration", Double.nan)
+        rejects("startOffset", -1.0)
+        rejects("startOffset", Double.infinity)
+        rejects("startOffset", Double.nan)
+        rejects("startedAt", Double.nan)
+        rejects("recordingID", "not-a-uuid")
+        rejects("recordingID", 42)
+        rejects("isLast", "yes")
+        rejects("watchBuild", nil)
+        rejects("index", nil)
+        var future = valid
+        future["v"] = 2
+        XCTAssertThrowsError(try WatchChunkMetadata(transferMetadata: future)) {
+            XCTAssertEqual($0 as? WatchLinkError, .unsupportedVersion(2)) }
+    }
+
+    func testChunkMetadataIgnoresPathLikeKeys() throws {
+        var metadata = chunk().transferMetadata
+        metadata["path"] = "../../x"
+        metadata["fileName"] = "/etc/passwd"
+        XCTAssertEqual(try WatchChunkMetadata(transferMetadata: metadata), chunk())
+        // Nothing the watch sends can name a file: no field of the type holds free-form text except
+        // the build number, which is never used as a path.
+        let labels = Mirror(reflecting: chunk()).children.compactMap(\.label)
+        XCTAssertEqual(Set(labels), ["recordingID", "index", "startOffset", "duration", "isLast", "startedAt",
+                                     "watchBuild"])
+    }
+
+    func testRecordingEndRoundTripsAndRejectsVersion2() throws {
+        let end = WatchRecordingEnd(recordingID: recordingID, startedAt: Date(timeIntervalSince1970: 1_700_000_000),
+                                    lastIndex: 4, unexpected: true)
+        let info = end.userInfo
+        XCTAssertEqual(info["v"] as? Int, 1)
+        XCTAssertEqual(info["end"] as? String, recordingID.uuidString)
+        XCTAssertTrue(PropertyListSerialization.propertyList(info, isValidFor: .binary))
+        XCTAssertEqual(try WatchRecordingEnd(userInfo: info), end)
+        var future = info
+        future["v"] = 2
+        XCTAssertThrowsError(try WatchRecordingEnd(userInfo: future)) {
+            XCTAssertEqual($0 as? WatchLinkError, .unsupportedVersion(2)) }
+        for (key, value) in [("end", "x"), ("lastIndex", "4"), ("lastIndex", 1_000), ("lastIndex", -1),
+                             ("unexpected", "no"), ("startedAt", "now")] as [(String, Any)] {
+            var broken = info
+            broken[key] = value
+            XCTAssertThrowsError(try WatchRecordingEnd(userInfo: broken), key)
+        }
+        // A chunk's metadata is not an end marker.
+        XCTAssertThrowsError(try WatchRecordingEnd(userInfo: chunk().transferMetadata))
+    }
 }
