@@ -39,7 +39,7 @@ this table in the same PR, and never fork a copy into `App/` or `iOS/`.
 | `AutomaticReviewCoordinator` — queued Summary/Deep reviews, deadlines, manual completion | `MeetingSession` | `MobileSession.automaticReviews` |
 | Prompt data fences and caps: `PromptData.notice`, `PromptData.block`, `PromptBudget` | `PromptBuilder` (`Prompt.swift`) | `MobileSummaryMode.instructions`, `MobileSession.summarize` |
 | `SessionArchive` — the on-disk conversation format | `App/SessionStore.swift` | `iOS/MobileSession.swift` |
-| Speaker identification: `SpeakerDiarizer` and `SpeakerAudioBuffer` (`SharedPlatform/`, FluidAudio), `SpeakerIdentityTracker`, `SpeakerLabeling`, `SpeakerStats`, `SpeakerAnalysisPolicy` | `App/MeetingView+Speakers.swift` | `MobileSpeakers`, `iOS/MobileSession+Speakers.swift` |
+| Speaker identification: `SpeakerDiarizer` and `SpeakerAudioBuffer` (`SharedPlatform/`, FluidAudio), `SpeakerIdentityTracker`, `SpeakerLabeling`, `SpeakerStats`, `SpeakerAnalysisPolicy` | `App/MeetingView+Speakers.swift` | `MobileSpeakers`, `iOS/MobileSession+Speakers.swift`; iOS language detection (#197) reuses `SpeakerAudioBuffer` with a two-minute `maxSamples` cap |
 | `SessionSearch` — History search and its matching rules | `App/SessionSearchView.swift`, `App/MeetingView.swift` | `MobileHistoryView` via `MobileSession` |
 | `AppleIntelligenceProvider` (`SharedPlatform/`) — on-device transport and its failure wording | `App/MeetingView.swift` | `MobileSession`, `MobileAISettings` |
 | `OllamaProvider`, `LLMRequest` / `ChatMessage`, `OllamaGenerationOptions` | `App/MeetingView.swift` | `MobileAISettings.client(for:)` |
@@ -67,7 +67,7 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 | Storage protection | Plain atomic writes | Data protection (`completeUntilFirstUserAuthentication`) plus an optional backup exclusion (`PrivateStorage`) |
 | Export | Markdown, PDF and recap | Markdown and readable text through the share sheet |
 | Audio-file import | Yes (`App/AudioFileReader.swift`) | No |
-| Languages | Transcription language **and** AI response language | Transcription language only |
+| Languages | Transcription language **and** AI response language; the opt-in WhisperKit engine transcribes mixed languages | Transcription language only: **Automatic** (the default) detects the spoken language on the device from the first seconds of speech and switches once per recording, or a fixed language (#197) |
 | Input | Global ⌘⇧Space hotkey and a Session menu | Touch UI; no hotkeys or menu bar |
 
 ### Tier 3 — out of scope for iOS
@@ -77,7 +77,7 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 | System, call or other-app audio capture | iOS gives no app another app's audio. The dual-channel copilot is macOS-only by platform, not by ordering |
 | Background recording | No `UIBackgroundModes`: backgrounding stops recording and saves |
 | A local Ollama daemon and its downloaded-weight verification (`ModelPrivacy` / `localOnly`) | A phone does not run the Ollama daemon; on-device inference on iOS is Apple Intelligence |
-| The WhisperKit transcription engine | Not linked into the iOS target (`project.yml`); SpeechAnalyzer is the only iOS engine. FluidAudio is linked, for speaker identification only |
+| The WhisperKit transcription engine | SpeechAnalyzer is the only iOS transcription engine. WhisperKit is linked into the app target (not the share extension or the watch app) for spoken-language detection only (#197), and FluidAudio for speaker identification only |
 | Mac↔iOS sync or a Mac companion mode | Out of scope product-wide — see [backlog](backlog.md) → "Intentionally out of scope" |
 
 ## Version policy
@@ -290,6 +290,36 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   daily meetings is still selected after a relaunch instead of reverting to the device's. The list
   compares BCP-47 identifiers, so a device on `en_US` is offered "System (en_US)" once rather than
   also listing "English (US)".
+- Automatic transcription language (#197), the default: **Settings → Transcription → Language →
+  Automatic (default)**. A user who had already picked a language keeps it fixed after the update;
+  everyone else starts in Automatic. SpeechAnalyzer needs one locale up front and cannot detect or
+  switch languages, so a recording starts in the device's language and the app identifies the
+  spoken language on the device with WhisperKit's multilingual **tiny** Whisper model (about 75 MB:
+  73 MB of Core ML models and a 3 MB tokenizer). The model downloads once from `huggingface.co`,
+  started by the first speech of a recording rather than at Start, into Application Support
+  (`LanguageModels/`, excluded from iCloud and Finder backups); later launches load it from the
+  device with no network request. No audio or text is sent anywhere. Recording never waits for it.
+  While recording, the audio the transcriber accepts is copied into a 16 kHz buffer capped at two
+  minutes (about 7.7 MB, in memory only). Once 8 seconds of speech have been heard (or 30 seconds
+  have passed since the first speech), up to 30 seconds from just before the first speech are
+  checked once. `LanguageDetectionPolicy` switches only when Whisper is at least 80% sure, the
+  language differs from the one being transcribed, and SpeechTranscriber supports it; Whisper's
+  "zh" (Mandarin) becomes zh-CN, or zh-TW on a device in Taiwan, Hong Kong or Macao, and never the
+  Cantonese zh-HK model. To switch, the recorder installs the new locale's speech assets if needed
+  while the old transcriber keeps running, then swaps the analyzer without stopping the microphone:
+  audio arriving during the swap is parked and sent to the new analyzer, so none is lost. The new
+  analyzer first hears the buffered recording from its start, so the early wrong-language lines are
+  replaced by a fresh transcription on the same timeline (offsets, speaker labels and later lines
+  stay consistent). The status area then shows "Detected Chinese · switched" with **Undo**, which
+  pins the language the recording started in: while the recording runs it switches back and
+  re-transcribes what is still buffered; after Stop it restores the lines the switch replaced.
+  A recording switches at most once; mid-recording code-switching is not handled yet (#199).
+  If the model cannot be loaded (offline first use), recording continues in the starting language
+  and the status line says language detection paused; the next recording tries again. A check that
+  keeps the language releases the buffered audio at once. **Status details** on the Quick Summary
+  pane lists the mode, the recording's language, the last check's result and the model state.
+  Apple Watch recordings are transcribed in the device language under Automatic: detection runs on
+  live recordings only (#200).
 - Partial and final transcript text. Everyone picked up by the microphone is labeled **Microphone**
   unless speaker identification is on. Unfinalized text is retained and labeled accordingly.
 - Optional speaker identification (#180), off by default: **Settings → Speakers → Identify
@@ -354,8 +384,8 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   stays awake during active recording. No raw audio is saved.
 - Version/build information in Settings.
 
-System/call audio, background recording, Mac sync, audio-file import and WhisperKit are not
-included. A local/LAN Ollama server is supported only when you
+System/call audio, background recording, Mac sync, audio-file import and WhisperKit transcription
+are not included. A local/LAN Ollama server is supported only when you
 enter its address yourself; the app performs no discovery and never switches servers on its own. Notes and saved
 transcripts remain usable when the speech model or Apple Intelligence is unavailable.
 App data is local to the sandbox. Sharing explicitly exports text.
@@ -532,7 +562,8 @@ Use a physical iPhone/iPad for recording acceptance. Simulator builds and UI tes
 live speech. The legacy recognizer also failed to load its model despite reporting local support.
 
 The shared Swift package supports iOS 18+ for reuse; the actual app requires iOS 26 for SpeechAnalyzer
-and Foundation Models. iOS links FluidAudio for speaker identification but not WhisperKit.
+and Foundation Models. iOS links FluidAudio for speaker identification and WhisperKit for spoken-language
+detection only; WhisperKit never transcribes on iOS.
 
 ## Validation and release
 
@@ -589,6 +620,16 @@ GitHub Actions builds both apps and runs the headless `ListenToMeCore` unit/inte
     transcript, after relaunch, in History search and in a shared export, and that no Summary or
     Quick request starts. Record 20+ minutes and watch memory in Xcode's gauge stay flat, and note
     battery drain against an identical recording with the setting off.
+11. Automatic transcription language (#197): on a device set to English, choose **Settings →
+    Transcription → Language → Automatic (default)** and speak Mandarin, then Spanish in a second
+    recording, for at least 30 seconds each. On first use confirm the one-time model download (and
+    that it is the only network request: no audio leaves the device), then that within about 30
+    seconds the status line reads "Detected Chinese · switched" (or Spanish), and the early English
+    nonsense is replaced by Chinese (Spanish) text on the same timeline. Keep talking during the
+    switch and confirm no words are lost around it. Tap **Undo** in a third recording and confirm
+    the transcript returns to English and the picker shows English fixed. Speak English with
+    Automatic on and confirm nothing switches. Turn on Airplane mode before the first-ever
+    download and confirm recording continues with "Language detection paused".
 
 iOS distribution uses an Xcode archive/export and App Store Connect/TestFlight, not a DMG or macOS
 notarization. A Mac Developer ID certificate cannot distribute an iPhone app. TestFlight needs an

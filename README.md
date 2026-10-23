@@ -37,9 +37,13 @@ transcript with Quick Summary plus a Deep Think tab, local conversations with se
 attachments, Apple Notes and share-sheet imports, calendar import with e-mail and join-link
 redaction, and Markdown sharing. Optional on-device speaker identification (off by default) labels
 transcript lines Speaker 1, Speaker 2… for the people one phone hears, and you can rename them; its
-models download once from `huggingface.co`. Choose on-device Apple Intelligence — the default on
-capable devices — or Ollama: Ollama Cloud with your own key, or an Ollama server you run on your own
-network. Presets, reference files, audio-file import and WhisperKit are macOS-only.
+models download once from `huggingface.co`. The transcription language defaults to Automatic: the
+phone detects the spoken language on-device from the first seconds of speech and, if it differs from
+the device language, switches once and transcribes the recording again (its small Whisper model
+downloads once from `huggingface.co`; audio never leaves the device). Choose on-device Apple
+Intelligence — the default on capable devices — or Ollama: Ollama Cloud with your own key, or an
+Ollama server you run on your own network. Presets, reference files, audio-file import and WhisperKit
+transcription are macOS-only.
 See [iOS setup, validation and distribution](docs/IOS.md).
 
 ```sh
@@ -324,7 +328,8 @@ saying so. Press **Speakers / edit names** to retry once the network is availabl
 - **One-time model downloads, and which hosts they touch.** In Local-only mode the app otherwise
   contacts only `localhost:11434` (your Ollama daemon). The WhisperKit transcription engine and the
   FluidAudio speaker-identification models are fetched from `huggingface.co` the first time you
-  enable them (on macOS, and on iPhone/iPad when Identify speakers is on); Apple SpeechAnalyzer/SpeechRecognizer download their on-device language assets from
+  enable them (on macOS, and on iPhone/iPad when Identify speakers is on), as is the iPhone/iPad's
+  small Whisper language-detection model the first time an Automatic-language recording hears speech; Apple SpeechAnalyzer/SpeechRecognizer download their on-device language assets from
   Apple's own asset servers the first time you use them. None of these downloads carry audio,
   transcript, or key material — they fetch model weights only.
 - **Sandbox and permissions.** The macOS app is **not sandboxed**

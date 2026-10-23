@@ -9,7 +9,9 @@ final class SpeakerAudioBuffer: @unchecked Sendable {
     /// Target rate for the diarizer (16 kHz mono).
     private static let targetSampleRate: Double = 16_000
     /// ~2 hours of 16 kHz mono audio; appends stop once the buffer reaches this size.
-    private static let maxSamples = 115_200_000
+    static let defaultMaxSamples = 115_200_000
+    /// Appends stop once the buffer holds this many samples.
+    private let maxSamples: Int
     /// Storage block size: 10 s of 16 kHz mono (640 KB). Audio is accumulated as a list of fixed-size
     /// blocks rather than one giant `[Float]` (issue #109), so an append only ever touches the last
     /// block and a snapshot copies block REFERENCES under the lock — O(blocks), not O(samples).
@@ -37,6 +39,11 @@ final class SpeakerAudioBuffer: @unchecked Sendable {
     /// `.others` rate is stable for a session (48 kHz). Guarded by `lock`.
     private var converter: AVAudioConverter?
     private var converterInputRate: Double = 0
+
+    /// `maxSamples` caps the buffer; iOS language detection (#197) keeps only its first two minutes.
+    init(maxSamples: Int = SpeakerAudioBuffer.defaultMaxSamples) {
+        self.maxSamples = max(0, maxSamples)
+    }
 
     /// Whether the cap was hit and later audio was dropped — surfaced so the UI can be honest.
     var didTruncate: Bool { lock.withLock { truncated } }
@@ -73,7 +80,7 @@ final class SpeakerAudioBuffer: @unchecked Sendable {
                 offset = timestamp
                 offsetSet = true
             }
-            let room = Self.maxSamples - total
+            let room = maxSamples - total
             if resampled.count >= room {
                 appendLocked(resampled.prefix(room))
                 truncated = true

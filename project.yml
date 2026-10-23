@@ -73,6 +73,9 @@ targets:
         product: ListenToMeCore
       - package: FluidAudio
         product: FluidAudio
+      # On-device spoken-language detection (issue #197). The app only; never the watch or share extension.
+      - package: WhisperKit
+        product: WhisperKit
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMe.ios

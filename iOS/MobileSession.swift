@@ -55,7 +55,7 @@ final class MobileSession {
          "Completed reads: \(quickReader.completedReads)",
          "Unread speech: \(quickReader.context.hasChanges(quickPieces) ? "yes" : "no")",
          "Provider: \(automaticQuickAvailability ?? "available")",
-         quickSummaryError ?? "No summary error"].joined(separator: "\n")
+         quickSummaryError ?? "No summary error", languageDiagnostics].joined(separator: "\n")
     }
     private var quickScheduler: MobileSummaryScheduler
     private var autoTask: Task<Void, Never>?
@@ -102,10 +102,11 @@ final class MobileSession {
     }
     private(set) var id = UUID().uuidString
     private var date = Date()
-    private var recorder: (any MobileRecording)?
+    private(set) var recorder: (any MobileRecording)?
     private var startTask: Task<Void, Never>?
     /// Opt-in on-device speaker identification (issue #180) and its periodic pass while recording.
     let speakers: MobileSpeakers
+    let languageDetection: MobileLanguageDetection   // Automatic transcription language (issue #197)
     var speakerLoop: Task<Void, Never>?
     /// Stop's final speaker pass, which runs after the session is already idle.
     var speakerFinalPass: Task<Void, Never>?
@@ -142,8 +143,10 @@ final class MobileSession {
          sharedInbox: URL? = nil, watchInbox: WatchInbox? = nil,
          makeRecorder: @escaping () -> any MobileRecording = { MobileRecorder() },
          makeWatchTranscriber: @escaping () -> any WatchAudioTranscribing = { MobileFileTranscriber() },
-         makeDiarizer: @escaping () -> any MobileSpeakerDiarizing = { SpeakerDiarizer.excludingModelsFromBackup() }) {
+         makeDiarizer: @escaping () -> any MobileSpeakerDiarizing = { SpeakerDiarizer.excludingModelsFromBackup() },
+         makeLanguageModel: (() -> any MobileLanguageIdentifying)? = nil) {
         speakers = MobileSpeakers(makeDiarizer: makeDiarizer)
+        languageDetection = MobileLanguageDetection(makeIdentifier: makeLanguageModel)
         // Resolved once: the backup choice has to reach the App Group inbox too, not only the
         // conversations this app owns.
         sharedInboxRoot = sharedInbox ?? (try? SharedInbox.root())
@@ -196,7 +199,7 @@ final class MobileSession {
         case .available:
             // The *conversation's* language, not the device's: an unsupported one fails only at
             // generation time, so it is reported here instead of as a raw FoundationModels error.
-            return AppleIntelligenceProvider.unsupportedLocaleReason(for: Locale(identifier: language))
+            return AppleIntelligenceProvider.unsupportedLocaleReason(for: Locale(identifier: transcriptionLanguage))
         case .unavailable(.deviceNotEligible): return "On-device summaries require an Apple Intelligence capable device."
         case .unavailable(.appleIntelligenceNotEnabled): return "Turn on Apple Intelligence in Settings to use on-device summaries."
         case .unavailable(.modelNotReady):
@@ -255,17 +258,20 @@ final class MobileSession {
         self.recorder = recorder
         let offset = segments.map(\.end).max() ?? 0
         recorder.attachSpeakerAudio(speakers.beginRun(offset: offset, existing: segments))
+        recorder.attachLanguageAudio(languageDetection.beginRun(locale: transcriptionLanguage, offset: offset,
+                                                                firstLine: segments.count))
         // An Apple Watch drain stops before the microphone is prepared, and resumes after.
         let drain = watchDrainTask
         drain?.cancel()
         startTask = Task {
             await drain?.value
             do {
-                try await recorder.start(locale: Locale(identifier: language)) { [weak self] segment in
+                try await recorder.start(locale: Locale(identifier: transcriptionLanguage)) { [weak self] segment in
                     guard let self else { return }
                     self.speechEventCount += 1
                     if segment.isFinal { self.finalizedSpeechEventCount += 1 }
                     self.lastSpeechEvent = Date()
+                    self.noteLanguageSpeech(segment)
                     let timed = TranscriptSegment(source: .you, text: segment.text, isFinal: segment.isFinal,
                                                   start: offset + segment.start, end: offset + segment.end,
                                                   speakerName: Self.microphoneLabel)
@@ -289,7 +295,7 @@ final class MobileSession {
                 startSpeakerLoop()
             } catch {
                 try? await recorder.stop()
-                speakers.endRun()
+                speakers.endRun(); languageDetection.endRun()
                 self.recorder = nil
                 state = .idle
                 if !(error is CancellationError) { message = error.localizedDescription }
@@ -312,6 +318,7 @@ final class MobileSession {
         state = .idle
         save(announce: false)
         finishSpeakerIdentification()
+        languageDetection.endRun()
     }
 
     func background() async {
@@ -438,18 +445,8 @@ extension MobileSession {
     }
 }
 
-/// Languages, search and outputs: plain lookups, kept out of the class body.
+/// Search and outputs: plain lookups, kept out of the class body. Languages are in MobileSession+Language.
 extension MobileSession {
-    /// Extra transcription languages offered beside the device's own.
-    static let offeredLanguages = ["en-US", "en-GB", "zh-CN", "zh-TW", "fr-FR", "de-DE", "ja-JP", "es-ES"]
-
-    /// `Locale.current.identifier` is underscored ("en_US") while these tags are hyphenated, so a
-    /// raw string comparison never matched and the picker listed the system language twice.
-    static func selectableLanguages(system: Locale = .current) -> [String] {
-        let current = Locale(identifier: system.identifier).identifier(.bcp47)
-        return offeredLanguages.filter { Locale(identifier: $0).identifier(.bcp47) != current }
-    }
-
     /// Records matching `query`, newest first; an empty query is the full history.
     func historyMatching(_ query: String) -> [SessionRecord] {
         SessionSearch.search(history, query: query.trimmingCharacters(in: .whitespacesAndNewlines))

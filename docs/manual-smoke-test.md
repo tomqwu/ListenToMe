@@ -275,3 +275,24 @@ pickup labeled YOU or an enabled toggle alone as proof of system-audio capture.
 8. **Reduce Motion.** Turn on System Settings → Accessibility → Display → **Reduce Motion** and
    start listening: the recording dot stays solid red instead of pulsing. With VoiceOver on, the
    pane **Copy** button announces "Copy <pane> text", not just "button".
+
+## iPhone automatic transcription language (#197)
+
+Physical iPhone or iPad only: the simulator has no live speech engine. The full check is step 11 of
+the physical-device list in [IOS.md](IOS.md#app-store-privacy-and-support-pages) ("Before marking
+iOS production-ready…"); this is the short pass.
+
+1. **Existing choice is kept.** Update a build where **Settings → Transcription → Language** was set
+   to a fixed language: it must still show that language, not Automatic. A fresh install shows
+   **Automatic (default)**.
+2. **First download, then offline.** With the device language English and Automatic selected, start
+   a recording and speak Mandarin. The status line shows the one-time language-model download
+   (about 75 MB, from huggingface.co), then within about 30 seconds "Detected Chinese · switched",
+   and the early English nonsense is replaced by Chinese text while recording continues. Repeat in
+   Airplane mode: the model loads from the device and the switch still happens.
+3. **No false switch.** Speak English for a minute with Automatic on: nothing switches, and **Quick
+   Summary → Status details** shows "Language check: en … → kept (same language)".
+4. **Undo.** After a switch, tap **Undo**: transcription returns to the starting language, the
+   transcript is re-transcribed in it, and the picker now shows that language fixed.
+5. **Unavailable model.** On a fresh install in Airplane mode, record with Automatic: recording
+   continues in the device language and the status line says "Language detection paused".
