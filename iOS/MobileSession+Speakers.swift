@@ -7,6 +7,18 @@ extension MobileSession {
     /// The label every recorded line starts with, and keeps when no speaker covers it confidently.
     static let microphoneLabel = "Microphone"
 
+    /// A label that names a recording device, not a participant: "Microphone", and "Apple Watch" on
+    /// lines transcribed from a watch recording (issue #181). Prompts read either as "You".
+    static func isDeviceLabel(_ name: String?) -> Bool {
+        name == microphoneLabel || name == MobileFileTranscriber.speakerName
+    }
+
+    /// Apple Watch lines were never heard by this iPhone's microphone. Watch conversations ship
+    /// without speaker labels (#181 Task 14, deferred to #192), so a pass never relabels them.
+    static func isWatchLine(_ segment: TranscriptSegment) -> Bool {
+        segment.speakerName == MobileFileTranscriber.speakerName
+    }
+
     struct SpeakerEntry: Identifiable, Equatable {
         let id: String
         let name: String
@@ -97,14 +109,15 @@ extension MobileSession {
     }
 
     /// Labels this recording's lines with the speaker whose speech covers them; lines no speaker
-    /// covers confidently keep (or return to) "Microphone".
+    /// covers confidently keep (or return to) "Microphone". Apple Watch lines keep their label.
     func applySpeakerLabels(_ pass: MobileSpeakers.Pass) {
         guard pass.firstLine <= segments.count else { return }
-        let assigned = SpeakerLabeling.assign(transcript: Array(segments[pass.firstLine...]), diarized: pass.timeline,
+        let heard = segments[pass.firstLine...].filter { !Self.isWatchLine($0) }
+        let assigned = SpeakerLabeling.assign(transcript: heard, diarized: pass.timeline,
                                               identities: pass.identities, offset: pass.offset, source: .you,
                                               minimumCoverage: MobileSpeakers.minimumCoverage)
         var updated = segments
-        for index in pass.firstLine..<updated.count {
+        for index in pass.firstLine..<updated.count where !Self.isWatchLine(updated[index]) {
             let identity = assigned[updated[index].id]
             updated[index].speakerID = identity?.id
             updated[index].speakerName = identity?.name ?? Self.microphoneLabel
@@ -118,7 +131,7 @@ extension MobileSession {
         let cleaned = name.components(separatedBy: .whitespacesAndNewlines)
             .filter { !$0.isEmpty }.joined(separator: " ")
         let normalized = String(cleaned.prefix(80))
-        guard !normalized.isEmpty, normalized != Self.microphoneLabel else { return }
+        guard !normalized.isEmpty, !Self.isDeviceLabel(normalized) else { return }
         speakers.rename(id: speakerID, name: normalized)
         var updated = segments
         for index in updated.indices where updated[index].speakerID == speakerID {

@@ -334,8 +334,10 @@ never finalized, because the app was killed mid-chunk, is discarded and the reco
 4. **Complete.** When the last chunk is transcribed, the inbox folder is removed, History shows the
    conversation with a "From Apple Watch" note, and a status message says so. The open conversation
    is not switched, and no notification is posted (decisions 6 and 8). The conversation then
-   behaves like any other: search, Summary, Quick, Deep, export, delete. If #180 (iOS speaker
-   identification) has shipped and is enabled, it runs on these segments like any other recording.
+   behaves like any other: search, Summary, Quick, Deep, export, delete. Its lines keep the
+   "Apple Watch" label: #180's speaker identification does not run on them, never relabels them, and
+   prompts read them as "You" (decision 11; speaker labels for watch recordings are
+   [#192](https://github.com/tomqwu/ListenToMe/issues/192)).
 5. **Gaps.** If `isLast` has arrived but an index is still missing 24 hours later, the drain
    transcribes what it has and adds a visible note: "Part of this recording (about N min) did not
    arrive from Apple Watch."
@@ -542,7 +544,8 @@ Slice 2 can be built and tested without watch capture.
 
 The maintainer answered the ten open questions on 2026-10-22, in a
 [comment on #181](https://github.com/tomqwu/ListenToMe/issues/181). Questions 5–10 took this
-spec's recommended defaults. Each answer below is binding on the plan.
+spec's recommended defaults. Each answer below is binding on the plan. Decision 11 was added during
+implementation, on 2026-10-23.
 
 1. **A watch companion is in scope.** The `docs/backlog.md` → "Intentionally out of scope" exclusion
    of "companion features" means Mac↔iOS sync or companion features only. A paired Apple Watch,
@@ -571,3 +574,9 @@ spec's recommended defaults. Each answer below is binding on the plan.
    `docs/IOS.md` tier 2 keeps "Audio-file import: No". A user-facing audio-file import would be its
    own issue.
 10. **Minimum watchOS is 26.0**, matching the iOS floor. The spikes do not raise it.
+11. **Watch conversations ship without speaker labels** (maintainer decision, 2026-10-23; plan Task 14
+    deferred). #180 labels only the open conversation from a live buffer of at most the last 600 s,
+    which does not fit a drained recording of up to 3 hours whose audio is deleted as it goes.
+    Watch lines keep `speakerName: "Apple Watch"`, a speaker pass never relabels them, and prompts
+    read them as "You" like "Microphone". File-based identification for watch recordings is
+    [#192](https://github.com/tomqwu/ListenToMe/issues/192).

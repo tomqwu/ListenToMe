@@ -797,9 +797,17 @@ Rules the tests pin:
 - [ ] **Step 4: Run** the tests and `make ios-build`. Expected: PASS.
 - [ ] **Step 5: Commit** `feat(ios): show Apple Watch recordings waiting in History (#181)`.
 
-### Task 14: Speaker labels on watch conversations (after #180)
+### Task 14: Speaker labels on watch conversations (after #180) — deferred to #192
 
-The spec (§5.5 step 4) says #180's speaker identification runs on watch recordings like any other.
+> **Deferred (maintainer decision, 2026-10-23; spec decision 11).** The first watch release ships
+> watch conversations **without** speaker labels; the follow-up is
+> [#192](https://github.com/tomqwu/ListenToMe/issues/192), which lists why #180 cannot label a
+> drained recording without its own design. The Slice 3 PR does only the guard this needs: a
+> speaker pass never relabels an "Apple Watch" line, a speaker cannot be renamed to "Apple Watch",
+> and prompts read a watch line as "You" (`MobileSession.promptSegment`), with tests in
+> `iOSUnitTests/MobileSpeakerTests.swift`. The steps below are kept for #192 and are not done here.
+
+The spec (§5.5 step 4) said #180's speaker identification runs on watch recordings like any other.
 At the time of writing, #180 labels the **open** conversation from a live `SpeakerAudioBuffer`, and
 the drain deletes chunk audio as it goes, so this needs explicit wiring.
 

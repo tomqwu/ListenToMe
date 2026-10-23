@@ -203,12 +203,12 @@ final class MobileSession {
         }
     }
 
-    /// The recorder stamps "Microphone" as the display label for the local speaker. That is a device,
-    /// not a participant, and the review prompts are told never to invent names, so prompt text uses
-    /// the same "You" label macOS uses. The Markdown export keeps "Microphone". Lines that speaker
-    /// identification labeled ("Speaker 2", or the name the user gave) reach prompts unchanged.
+    /// "Microphone" (and "Apple Watch" on a watch recording's lines) names a device, not a participant,
+    /// and the review prompts are told never to invent names, so prompt text uses the "You" label macOS
+    /// uses; the Markdown export keeps the device label. Lines that speaker identification labeled
+    /// ("Speaker 2", or the name the user gave) reach prompts unchanged.
     static func promptSegment(_ segment: TranscriptSegment) -> TranscriptSegment {
-        guard segment.speakerName == microphoneLabel else { return segment }
+        guard isDeviceLabel(segment.speakerName) else { return segment }
         var renamed = segment
         renamed.speakerName = nil
         return renamed
