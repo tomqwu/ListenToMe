@@ -53,6 +53,38 @@ final class MobileSpeakerTests: MobileSpeakerTestCase {
         await session.stop()
     }
 
+    func testARenamedSpeakerSilentForMinutesIsRecognizedByVoice() async throws {
+        // Issue #171: Alice says nothing through the windows' shared audio, then speaks again.
+        let session = makeSession()
+        session.speakers.enabled = true
+        try await record(session)
+        let alice: [Float] = [1, 0, 0], bob: [Float] = [0, 1, 0]
+        recorder.feedAudio(seconds: 30)
+        recorder.send("I'm Alice.", 0, 10)
+        recorder.send("And I'm Bob.", 10, 20)
+        await diarizer.respond([DiarizedSegment(speakerId: "x", start: 0, duration: 10),
+                                DiarizedSegment(speakerId: "y", start: 10, duration: 10)],
+                               embeddings: ["x": alice, "y": bob])
+        await session.runSpeakerPass()
+        session.renameSpeaker(id: try XCTUnwrap(session.speakerList.first?.id), to: "Alice")
+        // Bob alone for over three minutes; the next window starts after anything Alice said.
+        recorder.feedAudio(seconds: 200)
+        recorder.send("A long update.", 30, 230)
+        await diarizer.respond([DiarizedSegment(speakerId: "p", start: 30, duration: 200)],
+                               embeddings: ["p": bob])
+        await session.runSpeakerPass()
+        recorder.feedAudio(seconds: 100)
+        recorder.send("I'm back.", 300, 320)
+        // This window starts at 170 s; the diarizer's times are relative to it.
+        await diarizer.respond([DiarizedSegment(speakerId: "s", start: 0, duration: 60),
+                                DiarizedSegment(speakerId: "t", start: 130, duration: 20)],
+                               embeddings: ["s": bob, "t": [0.95, 0.1, 0]])
+        await session.runSpeakerPass()
+        XCTAssertEqual(session.segments.map(\.speakerName), ["Alice", "Speaker 2", "Speaker 2", "Alice"])
+        XCTAssertEqual(session.speakerList.count, 2, "No new speaker for a returning voice")
+        await session.stop()
+    }
+
     // MARK: Prompts, rename and persistence
 
     func testPromptsKeepMicrophoneAsYouAndNamedSpeakersUnchanged() async throws {

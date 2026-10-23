@@ -6,8 +6,9 @@ import Observation
 /// The diarizer seam. The real one is FluidAudio's on-device pipeline (`SpeakerDiarizer`); tests
 /// substitute a fake because the simulator cannot run the speaker models meaningfully.
 protocol MobileSpeakerDiarizing: Sendable {
-    /// Speaker segments for 16 kHz mono `samples`, in times relative to `samples[0]`.
-    func diarize(samples: [Float]) async throws -> [DiarizedSegment]
+    /// Speaker segments for 16 kHz mono `samples`, in times relative to `samples[0]`, with one voice
+    /// embedding per diarized speaker when the diarizer has them (issue #171).
+    func diarize(samples: [Float]) async throws -> DiarizedWindow
     /// Clears a latched model-load failure so the next call tries to load the models again.
     func retryModelLoad() async
     /// Downloads (first use) and loads the speaker models without analyzing audio.
@@ -15,8 +16,8 @@ protocol MobileSpeakerDiarizing: Sendable {
 }
 
 extension SpeakerDiarizer: MobileSpeakerDiarizing {
-    func diarize(samples: [Float]) async throws -> [DiarizedSegment] {
-        try await analyze(samples: samples).segments
+    func diarize(samples: [Float]) async throws -> DiarizedWindow {
+        try await analyze(samples: samples).window
     }
     func prepareModels() async throws { try await prepare() }
 
@@ -34,7 +35,7 @@ extension SpeakerDiarizer: MobileSpeakerDiarizing {
 /// the default diarizer never downloads them. The speaker tests inject their own fake.
 private struct UnitTestHostDiarizer: MobileSpeakerDiarizing {
     static let reason = "Speaker models are not downloaded while unit tests run"
-    func diarize(samples: [Float]) async throws -> [DiarizedSegment] {
+    func diarize(samples: [Float]) async throws -> DiarizedWindow {
         throw SpeakerDiarizer.DiarizationError.modelsUnavailable(Self.reason)
     }
     func retryModelLoad() async {}
@@ -44,7 +45,7 @@ private struct UnitTestHostDiarizer: MobileSpeakerDiarizing {
 /// UI tests' speaker models: they load at once, download nothing and hear no voices, so the screens
 /// show the setting's default-on, models-ready state without a network request.
 private struct UITestFixtureDiarizer: MobileSpeakerDiarizing {
-    func diarize(samples: [Float]) async throws -> [DiarizedSegment] { [] }
+    func diarize(samples: [Float]) async throws -> DiarizedWindow { DiarizedWindow(segments: []) }
     func retryModelLoad() async {}
     func prepareModels() async throws {}
 }
@@ -55,7 +56,8 @@ private struct UITestFixtureDiarizer: MobileSpeakerDiarizing {
 ///
 /// One `Run` per recording: the recorder copies the audio it transcribes into `Run.buffer`, and
 /// each pass diarizes a trailing window of it (`SpeakerAnalysisPolicy`), reconciles the window's
-/// speakers with earlier passes by shared audio time (`SpeakerIdentityTracker`) and keeps the
+/// speakers with earlier passes by voice, then by shared audio time (`SpeakerIdentityTracker`; the
+/// voiceprints live in the run's tracker and go with it, never saved) and keeps the
 /// cumulative timeline the session maps onto transcript lines. A model-load failure is latched:
 /// no further passes run until the user retries.
 @MainActor @Observable
@@ -269,12 +271,12 @@ final class MobileSpeakers {
         let diarizer = diarizer ?? makeDiarizer()
         self.diarizer = diarizer
         do {
-            let segments = try await diarizer.diarize(samples: snapshot.samples)
+            let window = try await diarizer.diarize(samples: snapshot.samples)
             guard var updated = run, updated.token == current.token else { return nil }
             status = .idle
             lastError = nil
             modelsReady = true
-            fold(segments, windowStart: snapshot.startTime, into: &updated)
+            fold(window, windowStart: snapshot.startTime, into: &updated)
             updated.analyzedSamples = snapshot.startSample + snapshot.samples.count
             run = updated
             return Pass(timeline: updated.timeline, identities: updated.identities,
@@ -295,12 +297,12 @@ final class MobileSpeakers {
     }
 
     /// Folds one window's speakers into the run: window-relative times are shifted into buffer time,
-    /// reconciled with earlier passes, and spliced onto the cumulative timeline.
-    private func fold(_ segments: [DiarizedSegment], windowStart: TimeInterval, into run: inout Run) {
-        let window = segments.map {
+    /// reconciled with earlier passes (by voice first, issue #171), and spliced onto the cumulative timeline.
+    private func fold(_ diarized: DiarizedWindow, windowStart: TimeInterval, into run: inout Run) {
+        let window = diarized.segments.map {
             DiarizedSegment(speakerId: $0.speakerId, start: $0.start + windowStart, duration: $0.duration)
         }
-        let mapping = run.tracker.reconcile(window, since: windowStart)
+        let mapping = run.tracker.reconcile(window, since: windowStart, embeddings: diarized.embeddings)
         for identity in mapping.values { run.identities[identity.id] = identity }
         let identified = window.compactMap { segment in
             mapping[segment.speakerId].map {
