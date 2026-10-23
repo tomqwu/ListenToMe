@@ -54,7 +54,7 @@ public enum WatchLink {
     private enum Key {
         static let version = "v", command = "cmd", reply = "reply", status = "status", busy = "busy"
         static let phone = "phone", state = "state", startedAt = "startedAt", title = "title"
-        static let stopReason = "stopReason", stamp = "at"
+        static let stopReason = "stopReason", stamp = "at", watch = "watch", waiting = "waiting"
     }
 
     private enum ReplyKind: String {
@@ -136,6 +136,23 @@ public enum WatchLink {
         guard context[Key.version] as? Int == protocolVersion,
               let fields = context[Key.phone] as? [String: Any] else { return nil }
         return status(from: fields)
+    }
+
+    // MARK: Watch status (the watch's application context)
+
+    public static func context(for status: WatchCaptureStatus) -> [String: Any] {
+        var fields: [String: Any] = [Key.state: status.state.rawValue, Key.waiting: status.waitingRecordings]
+        if let startedAt = status.startedAt { fields[Key.startedAt] = startedAt.timeIntervalSince1970 }
+        return [Key.version: protocolVersion, Key.watch: fields]
+    }
+
+    /// `nil` for a context from another protocol version or one that carries no watch status.
+    public static func watchStatus(fromContext context: [String: Any]) -> WatchCaptureStatus? {
+        guard context[Key.version] as? Int == protocolVersion, let fields = context[Key.watch] as? [String: Any],
+              let raw = fields[Key.state] as? String, let state = WatchCaptureState(rawValue: raw) else { return nil }
+        return WatchCaptureStatus(state: state,
+                                  startedAt: (fields[Key.startedAt] as? Double).map(Date.init(timeIntervalSince1970:)),
+                                  waitingRecordings: max(0, fields[Key.waiting] as? Int ?? 0))
     }
 
     // MARK: Display
@@ -351,5 +368,18 @@ public enum WatchRemoteText {
         case .idle:
             return status.lastStopReason == .background ? "Stopped: ListenToMe left the foreground on iPhone" : "Ready"
         }
+    }
+
+    /// The line the iPhone shows while the watch records, or `nil` when it is not recording.
+    public static func watchRecordingLine(_ status: WatchCaptureStatus?, now: Date) -> String? {
+        guard let status, status.state == .recording else { return nil }
+        let elapsed = status.startedAt.map { now.timeIntervalSince($0) } ?? 0
+        return "Apple Watch is recording · " + WatchLink.elapsedText(elapsed)
+    }
+
+    /// How many recordings still have parts on the watch, or `nil` when none do.
+    public static func waitingText(_ count: Int) -> String? {
+        guard count > 0 else { return nil }
+        return count == 1 ? "1 recording waiting for iPhone" : "\(count) recordings waiting for iPhone"
     }
 }
