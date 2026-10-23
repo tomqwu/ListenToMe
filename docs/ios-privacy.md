@@ -1,12 +1,14 @@
 # Listen To Me — iPhone and iPad privacy policy
 
-Effective September 15, 2026. Developer: Tom Wu. Contact: [tom@cloudnativity.io](mailto:tom@cloudnativity.io).
+Effective October 22, 2026. Developer: Tom Wu. Contact: [tom@cloudnativity.io](mailto:tom@cloudnativity.io).
 
 ## Your conversations
 
 Listen To Me transcribes microphone audio on your device using Apple's speech frameworks. The app does not save raw microphone audio or send it to the developer. Transcripts, notes, summaries and imported attachments are stored in the app's local storage, written with device data protection so the files stay encrypted until you unlock the device after a restart. Your device backup settings may include app data in backups managed by Apple; Settings has a toggle that keeps conversations, attachments and shared imports out of iCloud and Finder backups. The app has no developer-operated conversation server, advertising SDK or tracking SDK.
 
 A new install summarizes on-device with Apple Intelligence by default where the device supports it, and on such an install the app does not contact ollama.com at all. Speech language assets may need to download before transcription works.
+
+Speaker identification is off by default. When you turn on Identify speakers, it runs on your device: the app keeps a temporary copy of the recording's audio in memory to tell voices apart, and discards it when the recording stops; it is never saved or sent. The first time, the speaker models are downloaded from `huggingface.co`; that download fetches model files only and carries no audio, transcript or notes. Speaker names you enter are stored with the conversation like the rest of the transcript.
 
 ## Optional Ollama (Cloud or your own server)
 

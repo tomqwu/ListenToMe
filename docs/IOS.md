@@ -39,6 +39,7 @@ this table in the same PR, and never fork a copy into `App/` or `iOS/`.
 | `AutomaticReviewCoordinator` — queued Summary/Deep reviews, deadlines, manual completion | `MeetingSession` | `MobileSession.automaticReviews` |
 | Prompt data fences and caps: `PromptData.notice`, `PromptData.block`, `PromptBudget` | `PromptBuilder` (`Prompt.swift`) | `MobileSummaryMode.instructions`, `MobileSession.summarize` |
 | `SessionArchive` — the on-disk conversation format | `App/SessionStore.swift` | `iOS/MobileSession.swift` |
+| Speaker identification: `SpeakerDiarizer` and `SpeakerAudioBuffer` (`SharedPlatform/`, FluidAudio), `SpeakerIdentityTracker`, `SpeakerLabeling`, `SpeakerStats`, `SpeakerAnalysisPolicy` | `App/MeetingView+Speakers.swift` | `MobileSpeakers`, `iOS/MobileSession+Speakers.swift` |
 | `SessionSearch` — History search and its matching rules | `App/SessionSearchView.swift`, `App/MeetingView.swift` | `MobileHistoryView` via `MobileSession` |
 | `AppleIntelligenceProvider` (`SharedPlatform/`) — on-device transport and its failure wording | `App/MeetingView.swift` | `MobileSession`, `MobileAISettings` |
 | `OllamaProvider`, `LLMRequest` / `ChatMessage`, `OllamaGenerationOptions` | `App/MeetingView.swift` | `MobileAISettings.client(for:)` |
@@ -51,12 +52,12 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 
 | Capability | macOS | iOS |
 | --- | --- | --- |
-| Capture | Microphone **and** the other participants' system audio via ScreenCaptureKit (`App/DualChannelCapture.swift`), labeled You / Others | This device's microphone only; every line is labeled **Microphone**; foreground only |
+| Capture | Microphone **and** the other participants' system audio via ScreenCaptureKit (`App/DualChannelCapture.swift`), labeled You / Others | This device's microphone only; lines are labeled **Microphone** unless speaker identification names them; foreground only |
 | Default AI provider | Explicit AI mode — Local only, Apple Intelligence, Cloud, or AI off — defaulting to a local Ollama model | A fresh install uses **Apple Intelligence on-device** when it is available, otherwise falls back to Ollama and names the reason (`MobileAISettings.fallbackExplanation`) |
 | Ollama endpoint | The local daemon (`localhost:11434`) or Ollama Cloud | Ollama Cloud, or a server you run and address yourself (`.local`/loopback for plain `http`); a saved cloud key is never sent to another host |
 | Per-role models | A picker per pane in the status rail, over local and cloud models, auto-picked local-first (`ModelRanking`) | Settings → Model role for Summary / Quick / Deep (`MobileRoleModelView`), Ollama only; Flash models are reserved for Quick and correction and refused for Deep |
 | Local-model enforcement | `ModelPrivacy` / `localOnly` verifies downloaded weights before every request | Not applicable — on-device here means Apple Intelligence; iOS reaches Ollama only over the network |
-| Speaker identification | Optional on-device diarization and naming (WhisperKit + FluidAudio) | None — a single microphone source |
+| Speaker identification | Optional on-device diarization of the Others channel (and optionally the microphone) with naming; line labels need WhisperKit timestamps | Optional, off by default (**Settings → Speakers → Identify speakers**): FluidAudio diarizes the one microphone on-device, lines become **Speaker 1, 2…** by SpeechAnalyzer's audio time ranges, and **Notes → Speakers** renames them. Trailing-window passes while recording plus a final pass on Stop, foreground only; a line no speaker covers for at least 30% of its length keeps **Microphone** |
 | Presets and reference context | Use-case presets (`PresetCatalog`) and file/folder reference context (`ReferenceBuilder`, `FileContextLoader`) | Not today. Attachments instead: extracted text is appended to Notes, so it reaches the model inside `<transcript>`, not a `<reference>` block |
 | Calendar import | **Load from Calendar** fills Context notes (`App/CalendarService.swift`); text is imported as written | **Import from Calendar** removes e-mail addresses and link passcodes first (`MeetingContext.redactingLinksAndAddresses`, `MobileCalendar.attendeeNames`) |
 | Share-sheet import | — | Share extension plus an App Group inbox (`ShareExtension/`, `iOSShared/SharedInbox.swift`) |
@@ -76,7 +77,7 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 | System, call or other-app audio capture | iOS gives no app another app's audio. The dual-channel copilot is macOS-only by platform, not by ordering |
 | Background recording | No `UIBackgroundModes`: backgrounding stops recording and saves |
 | A local Ollama daemon and its downloaded-weight verification (`ModelPrivacy` / `localOnly`) | A phone does not run the Ollama daemon; on-device inference on iOS is Apple Intelligence |
-| The WhisperKit transcription engine and FluidAudio speaker models | Neither is linked into the iOS target (`project.yml`) |
+| The WhisperKit transcription engine | Not linked into the iOS target (`project.yml`); SpeechAnalyzer is the only iOS engine. FluidAudio is linked, for speaker identification only |
 | Mac↔iOS sync or a Mac companion mode | Out of scope product-wide — see [backlog](backlog.md) → "Intentionally out of scope" |
 
 ## Version policy
@@ -285,8 +286,29 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   daily meetings is still selected after a relaunch instead of reverting to the device's. The list
   compares BCP-47 identifiers, so a device on `en_US` is offered "System (en_US)" once rather than
   also listing "English (US)".
-- Partial and final transcript text. Everyone picked up by the microphone is labeled **Microphone**;
-  this version does not infer who is speaking. Unfinalized text is retained and labeled accordingly.
+- Partial and final transcript text. Everyone picked up by the microphone is labeled **Microphone**
+  unless speaker identification is on. Unfinalized text is retained and labeled accordingly.
+- Optional speaker identification (#180), off by default: **Settings → Speakers → Identify
+  speakers**. It runs on this device with FluidAudio, the same diarizer the Mac uses; the first use
+  downloads its speaker models from `huggingface.co` (model weights only — no audio or text is
+  sent), and it uses more battery while listening. While recording, the audio the transcriber
+  accepted is copied into a 16 kHz buffer; about every 20 seconds (never sooner than the previous
+  pass took) a pass re-analyzes only the audio since the last one plus a one-minute overlap
+  (`SpeakerAnalysisPolicy`), and Stop runs one final pass so the last words are labeled too. Audio a
+  later pass can no longer need is released after each pass, so memory stays flat in a long meeting.
+  No audio is saved. Lines are matched to speakers by SpeechAnalyzer's audio time ranges and become
+  **Speaker 1**, **Speaker 2**…; a line no speaker covers for at least 30% of its length keeps
+  **Microphone**. **Notes → Speakers** renames a speaker everywhere: the saved conversation, the
+  transcript in History, search and exports all use the name. Renaming or relabeling starts no AI
+  work, and Auto summaries do not re-read lines whose only change is the label; summaries pick the
+  names up the next time they are generated. Prompts keep **Microphone** lines as `You` and pass
+  named speakers through unchanged. If the models cannot be loaded (offline first use, a blocked
+  host), identification pauses with the reason in the status area and no further passes run until
+  you tap **Retry** or start a new recording. Limits: overlapping speech and short utterances are
+  often left as **Microphone** or attributed to whoever spoke longest; a voice is not recognized
+  across recordings, so after Stop/Listen (or an interruption) new voices continue the numbering
+  (Speaker 3, 4…) and can be renamed to merge them (see #171); backgrounding skips the final pass;
+  more than two hours of one recording is not analyzed further.
 - Editable titles and notes; atomic local saves after finalized utterances, explicit Save,
   save-before-New, local History, restoration on launch and Markdown through the share sheet.
   Title and Notes typing is saved about a second after you stop typing, and is flushed when
@@ -322,8 +344,8 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   stays awake during active recording. No raw audio is saved.
 - Version/build information in Settings.
 
-System/call audio, background recording, Mac sync, audio-file import, WhisperKit and
-per-person speaker identification are not included. A local/LAN Ollama server is supported only when you
+System/call audio, background recording, Mac sync, audio-file import and WhisperKit are not
+included. A local/LAN Ollama server is supported only when you
 enter its address yourself; the app performs no discovery and never switches servers on its own. Notes and saved
 transcripts remain usable when the speech model or Apple Intelligence is unavailable.
 App data is local to the sandbox. Sharing explicitly exports text.
@@ -500,7 +522,7 @@ Use a physical iPhone/iPad for recording acceptance. Simulator builds and UI tes
 live speech. The legacy recognizer also failed to load its model despite reporting local support.
 
 The shared Swift package supports iOS 18+ for reuse; the actual app requires iOS 26 for SpeechAnalyzer
-and Foundation Models. iOS does not depend on the Mac WhisperKit or FluidAudio binaries.
+and Foundation Models. iOS links FluidAudio for speaker identification but not WhisperKit.
 
 ## Validation and release
 
@@ -547,6 +569,16 @@ GitHub Actions builds both apps and runs the headless `ListenToMeCore` unit/inte
 8. Portrait/landscape iPhone and iPad layouts, large text and VoiceOver controls.
 9. Import a real meeting invite with attendees and a join link, then read Notes: attendee names appear
    without e-mail addresses, and the event link carries no `?pwd=`/`#` join secret.
+10. Speaker identification (#180): turn on **Settings → Speakers → Identify speakers** and record
+    three people taking turns for at least two minutes. On first use, confirm the models download
+    (and, separately, that an offline first use shows the paused status and **Retry** works once
+    online). Confirm lines change from **Microphone** to **Speaker N** about 20 seconds in, that each
+    speaker's lines land on the right person at turn boundaries (this checks SpeechAnalyzer's time
+    ranges against the diarizer's), that Stop labels the last phrase, and that a cough or a
+    one-word reply may stay **Microphone**. Rename a speaker in Notes, then confirm the name in the
+    transcript, after relaunch, in History search and in a shared export, and that no Summary or
+    Quick request starts. Record 20+ minutes and watch memory in Xcode's gauge stay flat, and note
+    battery drain against an identical recording with the setting off.
 
 iOS distribution uses an Xcode archive/export and App Store Connect/TestFlight, not a DMG or macOS
 notarization. A Mac Developer ID certificate cannot distribute an iPhone app. TestFlight needs an
