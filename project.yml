@@ -116,6 +116,8 @@ targets:
     deploymentTarget: "26.0"
     sources:
       - Watch
+      # Compiled straight into the watch app (Foundation only); the watch does not link ListenToMeCore.
+      - path: Sources/ListenToMeCore/WatchLink.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMe.ios.watchkitapp
