@@ -267,10 +267,7 @@ struct MobileMeetingView: View {
                     Link("Support", destination: MobileMeetingView.supportURL)
                     Link("Open app settings", destination: URL(string: UIApplication.openSettingsURLString)!)
                 }
-                Section("Release") {
-                    LabeledContent("Version", value: MobileReleaseNotes.identity)
-                    Text("iPhone & iPad · iOS 26 or later")
-                }
+                MobileAboutSection()
             }
             .accessibilityIdentifier("aiSettingsForm")
             .scrollContentBackground(.hidden).background(MobileStyle.canvas)
