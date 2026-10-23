@@ -75,6 +75,11 @@ public final class QuickSummaryReader {
 
     public func clearError() { error = nil; failures = 0 }
 
+    /// See `QuickSummaryContext.relabel`: speaker labels changed, the speech did not.
+    public func relabel(from old: [TranscriptSegment], to new: [TranscriptSegment]) {
+        context.relabel(from: old, to: new)
+    }
+
     public func read(_ batch: QuickSummaryContext.Batch, provider: any LLMProvider,
               isCurrent: @escaping () -> Bool, apply: @escaping (String) -> Void) async {
         guard task == nil else { return }

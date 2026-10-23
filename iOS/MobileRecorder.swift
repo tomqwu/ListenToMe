@@ -11,6 +11,13 @@ protocol MobileRecording: AnyObject {
     /// Rebuild the tap, converter and engine after the input route or engine configuration changed.
     /// The analyzer and the transcript so far survive; only capture restarts.
     func reconfigure() async throws
+    /// Optional copy of the transcribed audio for on-device speaker identification (issue #180).
+    /// Set before `start`; `nil` (the default) means nothing is copied.
+    func attachSpeakerAudio(_ buffer: SpeakerAudioBuffer?)
+}
+
+extension MobileRecording {
+    func attachSpeakerAudio(_ buffer: SpeakerAudioBuffer?) {}
 }
 
 /// Audio lost before the transcriber sees it. One dropped buffer is a hiccup, not a reason to end a
@@ -34,6 +41,15 @@ final class MobileRecorder: MobileRecording {
     /// restart on a new format can post another: without these, rebuilds chase each other.
     private var tapFormat: AVAudioFormat?
     private var isReconfiguring = false
+    /// Receives exactly the audio the transcriber accepted, so diarized times and transcript times
+    /// share one timeline. `nil` unless Identify speakers is on.
+    private var speakerAudio: SpeakerAudioBuffer?
+    private var speakerGeneration = 0
+
+    func attachSpeakerAudio(_ buffer: SpeakerAudioBuffer?) {
+        speakerAudio = buffer
+        speakerGeneration = buffer?.currentGeneration() ?? 0
+    }
 
     func start(locale: Locale, onSegment: @escaping @MainActor (TranscriptSegment) -> Void,
                onFailure: @escaping @MainActor (String) -> Void) async throws {
@@ -141,6 +157,7 @@ final class MobileRecorder: MobileRecording {
             Task { @MainActor [weak self] in self?.report?(text) }
         }
         let pipeline = ConversionPipeline(source: mono, destination: format, converter: converter)
+        let speakerAudio = speakerAudio, speakerGeneration = speakerGeneration
         let (chunks, audio) = AsyncStream<AudioChunk>.makeStream(bufferingPolicy: .bufferingOldest(128))
         self.audio = audio
         feedTask = Task.detached(priority: .userInitiated) {
@@ -163,6 +180,10 @@ final class MobileRecorder: MobileRecording {
                     }
                     continue
                 }
+                // Copied only after the analyzer accepted the same chunk: a dropped or unconvertible
+                // chunk is missing from both, so the two timelines never drift apart.
+                speakerAudio?.append(samples: chunk.samples, sampleRate: chunk.sampleRate,
+                                     timestamp: 0, generation: speakerGeneration)
                 lost = 0
             }
         }
@@ -219,7 +240,7 @@ final class MobileRecorder: MobileRecording {
 
     private func cleanup() {
         analyzer = nil; input = nil; audio = nil; feedTask = nil; resultsTask = nil
-        analyzerFormat = nil; report = nil; tapFormat = nil
+        analyzerFormat = nil; report = nil; tapFormat = nil; speakerAudio = nil
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 }

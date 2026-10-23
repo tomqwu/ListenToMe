@@ -6,6 +6,8 @@ struct MobileTranscriptReader: View {
     let segments: [TranscriptSegment]
     var scrollIdentifier = "transcriptScroll"
     var restoreOriginal: ((UUID) -> Void)?
+    /// Shows who said each line once speaker identification has labeled any of them (issue #180).
+    var showsSpeakers = false
     @State private var reviewing: TranscriptSegment?
     @State private var following = true
     @State private var readingSnapshot: [TranscriptSegment]?
@@ -24,6 +26,11 @@ struct MobileTranscriptReader: View {
                         VStack(alignment: .leading, spacing: 5) {
                             if !segment.isFinal {
                                 Text("LIVE").font(.caption2.weight(.semibold)).foregroundStyle(MobileStyle.transcript)
+                            }
+                            if showsSpeakers {
+                                Text(segment.speakerLabel).font(.caption.weight(.semibold))
+                                    .foregroundStyle(segment.speakerID == nil ? MobileStyle.muted : MobileStyle.accent)
+                                    .accessibilityIdentifier("transcript-speaker-\(segment.id)")
                             }
                             Text(segment.text).font(.body).lineSpacing(4).textSelection(.enabled)
                                 .foregroundStyle(segment.isFinal ? .primary : .secondary)

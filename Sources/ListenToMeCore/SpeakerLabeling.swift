@@ -48,15 +48,15 @@ public enum SpeakerLabeling {
     /// line. That single numbering fills both `order` (all speakers) and `lineLabels` (matched lines
     /// only), so the breakdown sheet — which lists every speaker — never needs a fallback that could
     /// collide. Only OTHERS lines that overlap a segment get a `lineLabels` entry.
+    ///
+    /// `minimumCoverage` (0...1) is the share of a line the winning speaker's speech must cover for
+    /// the line to be labeled at all. The default 0 labels any overlap; a single shared microphone
+    /// (iOS) asks for more, so a line the diarizer barely heard keeps its device label.
     public static func label(transcript: [TranscriptSegment],
                              diarized: [DiarizedSegment],
-                             offset: TimeInterval, source: SpeakerSource = .others) -> Labeling {
-        // Shift diarized segments into capture-time and drop empty/degenerate ones.
-        let shifted = diarized.compactMap { seg -> Shifted? in
-            guard seg.duration > 0 else { return nil }
-            let start = seg.start + offset
-            return Shifted(speakerId: seg.speakerId, start: start, end: start + seg.duration)
-        }
+                             offset: TimeInterval, source: SpeakerSource = .others,
+                             minimumCoverage: Double = 0) -> Labeling {
+        let shifted = shift(diarized, by: offset)
         guard !shifted.isEmpty else { return Labeling(lineLabels: [:], order: [:]) }
 
         // Number every diarized speaker by the earliest shifted start at which it appears (ties →
@@ -76,7 +76,8 @@ public enum SpeakerLabeling {
 
         // Match transcript lines to speakers, then label them with the same canonical numbering.
         var lineLabels: [UUID: String] = [:]
-        for entry in matches(transcript: transcript, shifted: shifted, source: source) {
+        for entry in matches(transcript: transcript, shifted: shifted, source: source,
+                             minimumCoverage: minimumCoverage) {
             lineLabels[entry.lineID] = labelForSpeaker[entry.speakerId]
         }
         return Labeling(lineLabels: lineLabels, order: labelForSpeaker)
@@ -85,7 +86,8 @@ public enum SpeakerLabeling {
     /// For each OTHERS line with real timestamps, sums overlap per speaker across all that speaker's
     /// shifted segments and picks the speaker with the greatest summed overlap. Ties break to the
     /// speaker whose earliest overlapping segment starts first, then by speakerId for determinism.
-    private static func matches(transcript: [TranscriptSegment], shifted: [Shifted], source: SpeakerSource) -> [Match] {
+    private static func matches(transcript: [TranscriptSegment], shifted: [Shifted], source: SpeakerSource,
+                                minimumCoverage: Double) -> [Match] {
         var chosen: [Match] = []
         for line in transcript where line.source == source && line.end > line.start {
             var totalOverlap: [String: TimeInterval] = [:]
@@ -103,10 +105,48 @@ public enum SpeakerLabeling {
                 if lStart != rStart { return lStart > rStart }   // earlier start wins (is "greater")
                 return lhs.key > rhs.key                          // then speakerId for determinism
             }
-            if let winner {
+            if let winner, winner.value >= minimumCoverage * (line.end - line.start) {
                 chosen.append(Match(lineID: line.id, speakerId: winner.key))
             }
         }
         return chosen
+    }
+    /// Diarized segments shifted into capture-time, with empty/degenerate ones dropped.
+    private static func shift(_ diarized: [DiarizedSegment], by offset: TimeInterval) -> [Shifted] {
+        diarized.compactMap { seg -> Shifted? in
+            guard seg.duration > 0 else { return nil }
+            let start = seg.start + offset
+            return Shifted(speakerId: seg.speakerId, start: start, end: start + seg.duration)
+        }
+    }
+
+    /// Line id → identity, for diarized segments that are already in identity-id space (each
+    /// `speakerId` is a `SpeakerIdentity.id` from `SpeakerIdentityTracker`). Same matching rule as
+    /// `label`; lines with no confident speaker, and speakers with no known identity, are left out.
+    public static func assign(transcript: [TranscriptSegment], diarized: [DiarizedSegment],
+                              identities: [String: SpeakerIdentity], offset: TimeInterval,
+                              source: SpeakerSource, minimumCoverage: Double = 0) -> [UUID: SpeakerIdentity] {
+        var result: [UUID: SpeakerIdentity] = [:]
+        for match in matches(transcript: transcript, shifted: shift(diarized, by: offset), source: source,
+                             minimumCoverage: minimumCoverage) {
+            if let identity = identities[match.speakerId] { result[match.lineID] = identity }
+        }
+        return result
+    }
+
+    /// The first "Speaker N" number a new recording in this conversation may use: past every
+    /// numbered label already on the transcript, and past the count of distinct identities (renamed
+    /// ones included), so a resumed recording never reuses a number an earlier one handed out.
+    public static func nextSpeakerNumber(after segments: [TranscriptSegment], prefix: String = "Speaker") -> Int {
+        let marker = prefix + " "
+        var highest = 0
+        var identities = Set<String>()
+        for segment in segments {
+            if let id = segment.speakerID { identities.insert(id) }
+            guard let name = segment.speakerName, name.hasPrefix(marker),
+                  let number = Int(name.dropFirst(marker.count)) else { continue }
+            highest = max(highest, number)
+        }
+        return max(highest, identities.count) + 1
     }
 }

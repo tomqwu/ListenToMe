@@ -121,6 +121,7 @@ struct MobileMeetingView: View {
             Label(statusText, systemImage: session.state == .recording ? "record.circle" : "mic")
                 .font(.caption.weight(.medium))
                 .foregroundStyle(session.state == .recording ? .red : MobileStyle.muted)
+            MobileSpeakerStatus(session: session)
             if let message = session.message {
                 Text(message).font(.caption).lineLimit(2).foregroundStyle(.secondary)
                     .accessibilityIdentifier("sessionMessage")
@@ -133,7 +134,7 @@ struct MobileMeetingView: View {
         switch session.state {
         case .idle: return "Microphone · Ready to listen"
         case .preparing: return "Preparing speech model… First use may download a model."
-        case .recording: return "Listening · Microphone"
+        case .recording: return session.speakers.isRunning ? "Listening · Microphone · Speaker labels on" : "Listening · Microphone"
         case .stopping: return "Finishing transcript…"
         }
     }
@@ -240,12 +241,13 @@ struct MobileMeetingView: View {
                     }.disabled(session.busy)
                     Text("Speech models may download on first use. Audio is transcribed on your device and is not saved.")
                 }
+                MobileSpeakerSettings(session: session)
                 Section("Recording") {
                     Text("This version records the microphone while the app is open. " +
                          "Backgrounding or a call stops recording and saves the conversation, and the status line " +
                          "says which. Recording resumes on its own when the system says the interruption is over. " +
                          "Connecting or disconnecting a microphone keeps recording on the input that remains.")
-                    Text("System audio, call recording, Mac sync and speaker identification are not included.")
+                    Text("System audio, call recording and Mac sync are not included.")
                 }
                 Section("Privacy") {
                     Text("Conversations stay in this app's storage. Apple Intelligence summaries are optional and run on-device. " +

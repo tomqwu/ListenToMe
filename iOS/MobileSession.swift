@@ -75,6 +75,11 @@ final class MobileSession {
     private var date = Date()
     private var recorder: (any MobileRecording)?
     private var startTask: Task<Void, Never>?
+    /// Opt-in on-device speaker identification (issue #180) and its periodic pass while recording.
+    let speakers: MobileSpeakers
+    var speakerLoop: Task<Void, Never>?
+    /// Stop's final speaker pass, which runs after the session is already idle.
+    var speakerFinalPass: Task<Void, Never>?
     private let archive: SessionArchive
     private let activeURL: URL
     /// The bytes last written for this conversation. Identical bytes are not written again.
@@ -104,7 +109,9 @@ final class MobileSession {
          summaryProvider: (any LLMProvider)? = nil, autoInterval: Duration = .seconds(5),
          correctionProvider: (any LLMProvider)? = nil, saveDebounce: Duration = .seconds(1),
          sharedInbox: URL? = nil,
-         makeRecorder: @escaping () -> any MobileRecording = { MobileRecorder() }) {
+         makeRecorder: @escaping () -> any MobileRecording = { MobileRecorder() },
+         makeDiarizer: @escaping () -> any MobileSpeakerDiarizing = { SpeakerDiarizer.excludingModelsFromBackup() }) {
+        speakers = MobileSpeakers(makeDiarizer: makeDiarizer)
         // Resolved once: the backup choice has to reach the App Group inbox too, not only the
         // conversations this app owns.
         sharedInboxRoot = sharedInbox ?? (try? SharedInbox.root())
@@ -166,9 +173,10 @@ final class MobileSession {
 
     /// The recorder stamps "Microphone" as the display label for the local speaker. That is a device,
     /// not a participant, and the review prompts are told never to invent names, so prompt text uses
-    /// the same "You" label macOS uses. The Markdown export keeps "Microphone".
+    /// the same "You" label macOS uses. The Markdown export keeps "Microphone". Lines that speaker
+    /// identification labeled ("Speaker 2", or the name the user gave) reach prompts unchanged.
     static func promptSegment(_ segment: TranscriptSegment) -> TranscriptSegment {
-        guard segment.speakerName == "Microphone" else { return segment }
+        guard segment.speakerName == microphoneLabel else { return segment }
         var renamed = segment
         renamed.speakerName = nil
         return renamed
@@ -212,6 +220,7 @@ final class MobileSession {
         let recorder = makeRecorder()
         self.recorder = recorder
         let offset = segments.map(\.end).max() ?? 0
+        recorder.attachSpeakerAudio(speakers.beginRun(offset: offset, existing: segments))
         startTask = Task {
             do {
                 try await recorder.start(locale: Locale(identifier: language)) { [weak self] segment in
@@ -221,7 +230,7 @@ final class MobileSession {
                     self.lastSpeechEvent = Date()
                     let timed = TranscriptSegment(source: .you, text: segment.text, isFinal: segment.isFinal,
                                                   start: offset + segment.start, end: offset + segment.end,
-                                                  speakerName: "Microphone")
+                                                  speakerName: Self.microphoneLabel)
                     if timed.isFinal {
                         self.segments.append(timed)
                         self.partial = nil
@@ -239,8 +248,10 @@ final class MobileSession {
                 try Task.checkCancellation()
                 state = .recording
                 UIApplication.shared.isIdleTimerDisabled = true
+                startSpeakerLoop()
             } catch {
                 try? await recorder.stop()
+                speakers.endRun()
                 self.recorder = nil
                 state = .idle
                 if !(error is CancellationError) { message = error.localizedDescription }
@@ -262,6 +273,7 @@ final class MobileSession {
         UIApplication.shared.isIdleTimerDisabled = false
         state = .idle
         save(announce: false)
+        finishSpeakerIdentification()
     }
 
     func background() async {
@@ -636,7 +648,7 @@ extension MobileSession {
         pendingSave?.cancel()
         pendingSave = nil
         let record = SessionRecord(id: id, title: title, date: date,
-                                   transcript: allSegments.map { "Microphone: \($0.text)" }.joined(separator: "\n"),
+                                   transcript: allSegments.map { "\($0.speakerLabel): \($0.text)" }.joined(separator: "\n"),
                                    summary: summary, segments: allSegments, notes: notes,
                                    quickSuggestion: quickSummary, deepAnswer: deepThought,
                                    isComplete: state == .idle && allSegments.allSatisfy(\.isFinal),

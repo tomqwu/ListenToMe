@@ -11,6 +11,10 @@ does not show it again, and a fresh install does not see it at all; see
 [`docs/IOS.md`](docs/IOS.md) for the fuller per-build technical notes and
 [`metadata/ios/en-CA/`](metadata/ios/en-CA/) for TestFlight "What to Test" text.
 
+## iOS (unreleased since 1.10.5 (27))
+
+- Optional speaker identification, off by default (Settings → Speakers → Identify speakers): lines are labeled Speaker 1, Speaker 2… on this device, and Notes → Speakers renames them everywhere — the saved conversation, History search and exports. Speaker models download once from huggingface.co; it uses more battery while listening. (#180)
+
 ## iOS 1.10.5 (27) — 2026-09-15
 
 - Settings → Privacy links the privacy policy and support pages required for the App Store. (#145)

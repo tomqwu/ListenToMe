@@ -18,7 +18,11 @@ extension MobileSession {
             speechCorrection.submit(segment, context: context, model: ai.correctionModel, provider: provider) { [weak self] result in
                 guard let self, self.id == sessionID, self.ai.correctTranscript,
                       let index = self.segments.firstIndex(where: { $0.id == segment.id && $0.text == segment.text }) else { return }
-                self.segments[index] = result
+                // Speaker identification may have labeled or renamed the line while it was corrected.
+                var corrected = result
+                corrected.speakerID = self.segments[index].speakerID
+                corrected.speakerName = self.segments[index].speakerName
+                self.segments[index] = corrected
                 self.save(announce: false)
                 self.scheduleAutoQuick()
             }

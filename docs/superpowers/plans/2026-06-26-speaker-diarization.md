@@ -1,5 +1,8 @@
 # Speaker Diarization (experimental first cut) Implementation Plan
 
+> **Update (#180):** `SpeakerDiarizer` and `SpeakerAudioBuffer` have since moved from `App/` to
+> `SharedPlatform/`, and FluidAudio is linked into the iOS target too; see docs/IOS.md → Parity with macOS.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: superpowers:subagent-driven-development. Steps use checkbox (`- [ ]`) syntax.
 
 **Goal:** Add an opt-in, on-device "Speaker breakdown" — detect how many distinct people spoke in the "Others" channel and their talk-time share — using FluidAudio (native Swift + CoreML Pyannote models).

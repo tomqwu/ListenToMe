@@ -64,6 +64,8 @@ targets:
         embed: true
       - package: ListenToMeCore
         product: ListenToMeCore
+      - package: FluidAudio
+        product: FluidAudio
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMe.ios
