@@ -54,18 +54,23 @@ final class MobileLanguageDetection {
         let replayed: Bool
         /// A re-check found the change part-way through the recording (issue #199).
         let midRecording: Bool
+        /// Transcribing again started at the recording's start. When it started later (a re-check, or
+        /// audio no longer held), the notice says from when (review of #212, finding 4).
+        let fromRecordingStart: Bool
         /// The switched recording's own lines, by id, recorded when it ends.
         var recordingLines: Set<UUID>?
     }
 
-    /// The new transcriber is hearing the recording again. Its lines for the audio before `cut`
-    /// (transcript time) are held here and replace the recording's lines from `firstLine` in one step,
-    /// once it reaches live speech or the recording stops, so the earlier lines are never removed before
-    /// their replacements exist, on screen or on disk.
+    /// The new transcriber is hearing the recording again from `since` to `cut` (transcript time). Its
+    /// lines are held here and replace the recording's own lines that were there at the switch
+    /// (`replaced`, by id) in one step, once it reaches live speech or the recording stops, so the
+    /// earlier lines are never removed before their replacements exist, on screen or on disk. Any other
+    /// line, such as an Apple Watch line merged in meanwhile, stays (review of #212, finding 5).
     struct Replay {
         let token: Int
-        let firstLine: Int
+        let since: TimeInterval
         let cut: TimeInterval
+        let replaced: Set<UUID>
         var lines: [TranscriptSegment] = []
         /// A later switch without replay superseded this one: the rest of its lines are dropped.
         var discarded = false
@@ -187,6 +192,9 @@ final class MobileLanguageDetection {
     }
 
     var isUnavailable: Bool { if case .unavailable = status { true } else { false } }
+
+    /// The live transcriber is being replaced for a switch; Undo waits for it (review of #212, finding 1).
+    var isSwitching: Bool { if case .switching = status { true } else { false } }
 
     /// Notes a speech event in recording time and returns the check to run now, if one is due. The
     /// first speech starts the model download. A check waits while another, a replay or an Undo runs.

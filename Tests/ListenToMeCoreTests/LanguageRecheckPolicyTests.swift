@@ -94,6 +94,22 @@ final class LanguageRecheckPolicyTests: XCTestCase {
         XCTAssertEqual(tracker.gate(now: 130, pinned: false, conditions: normal), .check(100..<130))
     }
 
+    /// Review of #212: a transcriber in the wrong language may report little speech. A re-check overdue
+    /// by a whole interval runs on less, rather than never.
+    func testAnOverdueReCheckNeedsLessReportedSpeech() {
+        var tracker = englishRecording()
+        tracker.noteSpeech(start: 125, end: 130)
+        XCTAssertEqual(tracker.gate(now: 130, pinned: false, conditions: normal), .check(100..<130),
+                       "Five seconds of reported speech is enough once the check is an interval late")
+        tracker.noteSpeech(start: 60, end: 63)
+        XCTAssertEqual(tracker.gate(now: 75, pinned: false, conditions: normal), .skip(.silence),
+                       "On time, it still needs ten seconds")
+        var sparse = englishRecording()
+        sparse.noteSpeech(start: 127, end: 130)
+        XCTAssertEqual(sparse.gate(now: 130, pinned: false, conditions: normal), .skip(.silence),
+                       "Three seconds is still silence")
+    }
+
     func testReChecksSkipSilenceAndRunOnceSpeechReturns() {
         var tracker = englishRecording()
         tracker.noteSpeech(start: 60, end: 66)
@@ -172,6 +188,10 @@ final class LanguageRecheckPolicyTests: XCTestCase {
                        "A check after the candidate expired starts a new candidate rather than switching")
     }
 
+}
+
+/// Dwell, limits, failures and bookkeeping (issue #199).
+extension LanguageRecheckPolicyTests {
     // MARK: Dwell and limits
 
     func testASwitchStaysForTheMinimumDwell() {

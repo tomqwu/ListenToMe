@@ -99,14 +99,13 @@ public enum LanguageRecheckPolicy {
         return Array(chunks.suffix(maximumScanChunks))
     }
 
-    /// Where the language changed within `span`: the start of the first chunk after the last one that
-    /// still heard the current language. With no such chunk, the span's start; when the last chunk heard
-    /// the current language, the span's end, so nothing heard in it is transcribed again.
+    /// Where the language changed within `span`: the end of the last chunk that still heard the current
+    /// language, so speech after it that was not checked (a chunk with too little speech) is transcribed
+    /// again too. With no such chunk, the span's start.
     public static func changePoint(in span: Range<TimeInterval>,
                                    scanned: [(chunk: Range<TimeInterval>, verdict: Verdict)]) -> TimeInterval {
-        let ordered = scanned.sorted { $0.chunk.lowerBound < $1.chunk.lowerBound }
-        guard let last = ordered.lastIndex(where: { $0.verdict == .current }) else { return span.lowerBound }
-        return ordered.index(after: last) < ordered.count ? ordered[last + 1].chunk.lowerBound : span.upperBound
+        let old = scanned.filter { $0.verdict == .current }.map(\.chunk.upperBound)
+        return min(span.upperBound, old.max() ?? span.lowerBound)
     }
 
     /// Where transcribing again starts: at `desired`, never before the audio still held (`retainedFrom`),
@@ -235,6 +234,9 @@ public struct LanguageTracker: Sendable, Equatable {
     /// Whether to check now, `now` being the audio captured so far. A fixed language never checks. The
     /// first check waits for enough speech; re-checks wait for their time, then pause in Low Power Mode,
     /// in the background, while the device is hot and while the trailing window is mostly silence.
+    /// Speech is what the transcriber reports, and a transcriber in the wrong language may report little
+    /// of it; a re-check overdue by a whole interval therefore needs only `minimumChunkSpeech`, as the
+    /// first check falls back to a whole window of time.
     public func gate(now: TimeInterval, pinned: Bool, conditions: LanguageRecheckPolicy.Conditions) -> Gate {
         guard !pinned else { return .wait }
         switch phase {
@@ -251,7 +253,9 @@ public struct LanguageTracker: Sendable, Equatable {
             if conditions.background { return .skip(.background) }
             if conditions.thermal { return .skip(.thermal) }
             let window = max(0, now - LanguageRecheckPolicy.window)..<now
-            guard speech(in: window) >= LanguageRecheckPolicy.minimumSpeech else { return .skip(.silence) }
+            let overdue = now >= due(now: now) + LanguageRecheckPolicy.interval
+            let needed = overdue ? LanguageRecheckPolicy.minimumChunkSpeech : LanguageRecheckPolicy.minimumSpeech
+            guard speech(in: window) >= needed else { return .skip(.silence) }
             return .check(window)
         }
     }

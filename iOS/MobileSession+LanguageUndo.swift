@@ -8,13 +8,17 @@ extension MobileSession {
     /// Undo is already switching back. While stopping, a tap is kept and applied once Stop finishes.
     var canUndoLanguageSwitch: Bool {
         languageDetection.notice?.conversation == id && !languageDetection.undoing && state != .preparing
+            && !languageDetection.isSwitching
     }
 
     /// Undo pins the language the recording was in before the switch, for this and later recordings.
     /// While recording, transcription switches back first, and the notice stays until that has worked;
     /// once stopped, the lines the switch replaced come back.
     func undoLanguageSwitch() {
-        guard let change = languageDetection.notice, !languageDetection.undoing else { return }
+        // While a re-check replaces the transcriber, Undo would fail and the new switch's notice would then
+        // replace this one, so it is not offered until the switch settles (review of #212, finding 1).
+        guard let change = languageDetection.notice, !languageDetection.undoing,
+              !languageDetection.isSwitching else { return }
         guard change.conversation == id else { pin(change); return }
         switch state {
         case .preparing: return
@@ -32,15 +36,16 @@ extension MobileSession {
         // that resumed the switched conversation. Without that audio, the replaced lines come back instead.
         let sameRun = change.runToken == run.token
         let from = sameRun ? change.replayFrom : 0
-        let held = Int(run.buffer.replayFloor * TimeInterval(LanguageDetectionPolicy.sampleRate))
-        let replay = from >= held ? run.buffer : nil
         let since = sameRun ? change.since : run.offset
+        let rate = TimeInterval(LanguageDetectionPolicy.sampleRate)
         Task { [weak self] in
             do {
-                try await recorder.switchLocale(to: Locale(identifier: change.from), replay: replay,
-                                                from: from) { [weak self] replayed, cut in
+                // Asked at the switch: the span is heard again only if its audio is still held then.
+                try await recorder.switchLocale(to: Locale(identifier: change.from), replay: run.buffer, replayFrom: {
+                    from >= Int(run.buffer.replayFloor * rate) ? from : nil
+                }, willReplace: { [weak self] replayed, cut in
                     self?.switchedBack(change, replayed: replayed, run: run, since: since, cut: run.offset + cut)
-                }
+                })
                 guard let self else { return }
                 self.languageDetection.undoing = false
                 self.pin(change)
@@ -67,7 +72,7 @@ extension MobileSession {
                               run: MobileLanguageDetection.Run, since: TimeInterval, cut: TimeInterval) {
         if change.runToken != run.token { restoreLines(change) }
         if replayed {
-            beginReplay(token: run.token, run: run, since: since, cut: cut)
+            beginReplay(token: run.token, since: since, cut: cut)
         } else {
             languageDetection.replay?.discarded = true
             if change.runToken == run.token { restoreLines(change) }

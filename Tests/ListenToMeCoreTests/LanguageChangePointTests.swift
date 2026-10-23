@@ -28,12 +28,20 @@ final class LanguageChangePointTests: XCTestCase {
         func at(_ start: TimeInterval) -> Range<TimeInterval> { start..<(start + 10) }
         XCTAssertEqual(Policy.changePoint(in: span, scanned: [(at(50), .current), (at(60), .current),
                                                               (at(70), .unclear), (at(80), .target)]), 70)
-        XCTAssertEqual(Policy.changePoint(in: span, scanned: [(at(80), .target), (at(60), .current)]), 80,
-                       "Order does not matter")
+        XCTAssertEqual(Policy.changePoint(in: span, scanned: [(at(60), .target), (at(100), .current)]), 110,
+                       "The latest chunk still in the old language: only what follows it is transcribed again")
+        XCTAssertEqual(Policy.changePoint(in: 50..<105, scanned: [(at(100), .current)]), 105,
+                       "Never past the span")
         XCTAssertEqual(Policy.changePoint(in: span, scanned: [(at(60), .target)]), 50, "No old chunk: the span's start")
         XCTAssertEqual(Policy.changePoint(in: span, scanned: []), 50)
-        XCTAssertEqual(Policy.changePoint(in: span, scanned: [(at(60), .target), (at(100), .current)]), 120,
-                       "The latest chunk still in the old language: nothing in the span is transcribed again")
+    }
+
+    /// Review of #212, finding 3: speech in a chunk that was not checked (too little speech) between the
+    /// last old-language chunk and the next checked one is transcribed again, not left in the old language.
+    func testSpeechBetweenTheLastOldChunkAndTheNextCheckedOneIsTranscribedAgain() {
+        func at(_ start: TimeInterval) -> Range<TimeInterval> { start..<(start + 10) }
+        XCTAssertEqual(Policy.changePoint(in: 50..<120, scanned: [(at(80), .target), (at(60), .current)]), 70,
+                       "Order does not matter, and 70–80 (not checked) is heard again")
     }
 
     func testTheReplayStartsAtALineBoundaryWithinTheHeldAudio() {

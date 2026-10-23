@@ -352,7 +352,9 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
 - Re-checking the language during a recording (#199), Automatic only. After the first check,
   `LanguageTracker` (ListenToMeCore, with `LanguageRecheckPolicy`) re-checks the trailing 30 seconds
   once a minute of recording time, only when that window holds at least 10 seconds of speech, so
-  silence costs nothing. Re-checks pause in Low Power Mode, while the app is in the background and
+  silence costs nothing. Speech here is what the transcriber reports, and a transcriber in the wrong
+  language may report little of it, so a re-check overdue by a whole interval needs only 4 seconds; a
+  transcriber that reports nothing at all triggers no re-check (audio-level speech activity is #216). Re-checks pause in Low Power Mode, while the app is in the background and
   while the device is hot (serious or critical thermal state); the first check is not affected.
   Re-checks run quietly, without a status line. Hysteresis: a confident (≥ 80%) different language
   only makes a candidate, and a check 20 seconds later must hear the same language again before the
@@ -362,16 +364,25 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   re-checking, and a locale whose speech model could not be prepared is not tried again in that
   recording. On a confirmed switch, ten-second chunks since half a window before the current language
   was last heard (never before the previous switch, at most 12 chunks, each with at least 4 seconds of
-  speech) are checked to find where the language changed: the change is the start of the first chunk
-  after the last one that still heard the old language. Transcribing again starts there, moved back to
-  the start of a line that spans it (or past a line whose start is no longer held), and never in the
-  10-second block the buffer is about to release. The replay's first buffer is stamped with that
-  recording time, so its lines keep the recording's timeline; only the recording's lines from that
-  point are held back and replaced in one step, and earlier lines (including an earlier switch's) are
-  never touched. The notice reads "Detected French from 2:05 · switched". It and **Undo** are for the
-  latest switch; earlier switches are kept. Undo while recording hears the same span again in the
+  speech) are checked to find where the language changed: the change is the end of the last chunk
+  that still heard the old language, so speech after it in a chunk too quiet to check is transcribed
+  again too. Transcribing again starts there, moved back to the start of a line that spans it (or past
+  a line whose start is no longer held), and never in the 10-second block the buffer is about to
+  release. That start is chosen at the switch itself, after the new locale's speech assets are ready
+  (a download can take a while), from the audio still held then, so a slow download moves the start
+  later instead of losing the replay. The replay's first buffer is stamped with that recording time,
+  so its lines keep the recording's timeline. The recording's own lines from that point (by id; never
+  Apple Watch lines merged into the conversation meanwhile) are held back and replaced in one step
+  where the first of them was; every other line stays, and earlier lines (including an earlier
+  switch's) are never touched. The notice reads "Detected French from 2:05 · switched" whenever
+  transcribing again did not start at the recording's start, the first switch included. It and
+  **Undo** are for the latest switch; earlier switches are kept. Undo is not offered while a
+  re-check is replacing the transcriber, since the switch back would fail and the new notice would
+  then replace the old one; it returns once the switch settles. Undo while recording hears the same span again in the
   previous language when its audio is still held, otherwise it restores the lines the switch
-  replaced; after Stop it restores only that span. An in-flight check never switches once Undo has
+  replaced; after Stop it restores only that span. A recording's own lines are found by time from
+  its start rather than by index, so an Undo in a resumed recording, which first restores the earlier
+  recording's lines, hears all of this one again exactly once. An in-flight check never switches once Undo has
   started, and an Undo pins the language, which ends re-checks. A switch is noticed one to two
   minutes after the language changes; the replay span is bounded by the two-minute buffer.
   Genuinely mixed speech within one sentence is out of scope: SpeechTranscriber transcribes one

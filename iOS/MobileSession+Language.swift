@@ -88,9 +88,7 @@ extension MobileSession {
     /// tapped while stopping is applied.
     func endLanguageRun() {
         if languageDetection.replay?.discarded == false { commitReplay(complete: false) }
-        let lines = languageDetection.run.map { run in
-            Set(segments.dropFirst(run.firstLine).filter { !Self.isWatchLine($0) }.map(\.id))
-        }
+        let lines = languageDetection.run.map { Set(recordingLines(of: $0).map(\.id)) }
         languageDetection.endRun(recordingLines: lines)
         if languageDetection.pendingUndo, state == .idle, let change = languageDetection.notice {
             finishUndo(change)
@@ -171,24 +169,29 @@ extension MobileSession {
         guard let recorder, let run = detection.run, run.token == request.token, state == .recording,
               detection.automatic, !detection.undoing else { return }
         detection.beginSwitch(to: target)
-        let start = replayStart(since, run: run)
-        let from = Int((start * TimeInterval(LanguageDetectionPolicy.sampleRate)).rounded(.down))
         let conversation = id, previous = run.locale, offset = run.offset, token = request.token
+        let rate = TimeInterval(LanguageDetectionPolicy.sampleRate)
+        var start = since
         var change: MobileLanguageDetection.Switch?
         var switchedAt: TimeInterval = 0
         do {
-            try await recorder.switchLocale(to: Locale(identifier: target), replay: run.buffer,
-                                            from: from) { [weak self] replayed, cut in
+            // The start is chosen at the switch, once the new locale's assets are ready (a download can
+            // take a while): from the audio still held then, so the replay is never lost to audio released
+            // meanwhile (review of #212, finding 2).
+            try await recorder.switchLocale(to: Locale(identifier: target), replay: run.buffer, replayFrom: {
+                start = self.replayStart(since, run: run)
+                return Int((start * rate).rounded(.down))
+            }, willReplace: { [weak self] replayed, cut in
                 guard let self else { return }
                 switchedAt = cut
-                let firstLine = replayed
-                    ? self.beginReplay(token: token, run: run, since: offset + start, cut: offset + cut) : run.firstLine
+                let replacing = replayed ? self.beginReplay(token: token, since: offset + start, cut: offset + cut)
+                    : (firstLine: run.firstLine, lines: Array(self.segments.dropFirst(run.firstLine)))
                 change = MobileLanguageDetection.Switch(
                     detected: guess.language, from: previous, to: target, conversation: conversation, runToken: token,
-                    firstLine: firstLine, since: offset + start, cut: offset + cut, replayFrom: from,
-                    originals: Array(self.segments.dropFirst(firstLine)), replayed: replayed,
-                    midRecording: !request.first)
-            }
+                    firstLine: replacing.firstLine, since: offset + start, cut: offset + cut,
+                    replayFrom: Int((start * rate).rounded(.down)), originals: replacing.lines, replayed: replayed,
+                    midRecording: !request.first, fromRecordingStart: start <= 0.001)
+            })
         } catch {
             detection.switchFailed(error.localizedDescription, guess: guess, to: target, request: request)
             return
@@ -199,34 +202,49 @@ extension MobileSession {
     /// Where transcribing again starts, in recording time: `since`, within the audio still held and at
     /// the start of a line rather than inside one.
     private func replayStart(_ since: TimeInterval, run: MobileLanguageDetection.Run) -> TimeInterval {
-        var lines = segments.dropFirst(run.firstLine).filter { !Self.isWatchLine($0) }
+        var lines = recordingLines(of: run)
         if let partial { lines.append(partial) }
         let ranges = lines.map { ($0.start - run.offset)..<(max($0.start, $0.end) - run.offset) }
         return LanguageRecheckPolicy.replayStart(desired: since, retainedFrom: run.buffer.replayFloor, lines: ranges)
     }
 
-    /// The new transcriber hears the recording again from `since` (transcript time). Its lines are held
-    /// until it catches up, while the current lines stay on screen and on disk. The unfinished line
-    /// becomes a line of its own, so an Undo can bring it back. Returns the first line it will replace.
-    @discardableResult
-    func beginReplay(token: Int, run: MobileLanguageDetection.Run, since: TimeInterval, cut: TimeInterval) -> Int {
-        speechCorrection.cancel()
-        if let partial { segments.append(partial); self.partial = nil }
-        let lower = min(run.firstLine, segments.count)
-        let firstLine = segments[lower...].firstIndex { $0.start >= since - 0.001 } ?? segments.count
-        languageDetection.replay = .init(token: token, firstLine: firstLine, cut: cut)
-        return firstLine
+    /// The recording's own lines: from its start (`offset`, which no earlier recording's line reaches
+    /// past), never Apple Watch lines. Found by time rather than by index, which a restore of an earlier
+    /// recording's lines shifts (review of #212, finding 6).
+    func recordingLines(of run: MobileLanguageDetection.Run) -> [TranscriptSegment] {
+        segments.filter { !Self.isWatchLine($0) && $0.start >= run.offset - 0.001 }
     }
 
-    /// Puts the held replay lines in place of the recording's lines from the replay's first line, in one step.
+    /// The new transcriber hears the recording again from `since` (transcript time). Its lines are held
+    /// until it catches up, while the current lines stay on screen and on disk. The unfinished line
+    /// becomes a line of its own, so an Undo can bring it back. Returns the lines it will replace (the
+    /// recording's own lines from `since`; no earlier recording's line starts that late) and where the
+    /// first of them is.
+    @discardableResult
+    func beginReplay(token: Int, since: TimeInterval,
+                     cut: TimeInterval) -> (firstLine: Int, lines: [TranscriptSegment]) {
+        speechCorrection.cancel()
+        if let partial { segments.append(partial); self.partial = nil }
+        let lines = segments.filter { !Self.isWatchLine($0) && $0.start >= since - 0.001 }
+        let ids = Set(lines.map(\.id))
+        languageDetection.replay = .init(token: token, since: since, cut: cut, replaced: ids)
+        return (segments.firstIndex { ids.contains($0.id) } ?? segments.count, lines)
+    }
+
+    /// Puts the held replay lines in place of the lines the replay replaces, in one step, where the
+    /// first of them was. Every other line stays where it is.
     private func commitReplay(complete: Bool) {
         guard let replay = languageDetection.replay else { return }
         languageDetection.replay = nil
-        guard replay.firstLine <= segments.count else { return }
-        let merged = LanguageDetectionPolicy.mergingReplay(replay.lines, over: Array(segments[replay.firstLine...]),
-                                                           complete: complete)
+        let originals = segments.filter { replay.replaced.contains($0.id) }
+        let merged = LanguageDetectionPolicy.mergingReplay(replay.lines, over: originals, complete: complete)
+        let position = segments.firstIndex { replay.replaced.contains($0.id) }
+            ?? segments.firstIndex { !Self.isWatchLine($0) && $0.start >= replay.since - 0.001 } ?? segments.count
+        var updated = segments.filter { !replay.replaced.contains($0.id) }
+        updated.insert(contentsOf: merged, at: min(position, updated.count))
+        guard updated != segments else { return }
         speechCorrection.cancel()
-        segments = Array(segments[..<replay.firstLine]) + merged
+        segments = updated
         save(announce: false)
     }
 

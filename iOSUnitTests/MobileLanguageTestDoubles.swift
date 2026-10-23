@@ -43,12 +43,13 @@ final class LanguageTestRecorder: MobileRecording {
     }
     func reconfigure() async throws {}
 
-    func switchLocale(to locale: Locale, replay: SpeakerAudioBuffer?, from: Int,
+    func switchLocale(to locale: Locale, replay: SpeakerAudioBuffer?, replayFrom: @MainActor () -> Int?,
                       willReplace: @escaping @MainActor (Bool, TimeInterval) -> Void) async throws {
         if holdSwitch, let error = await withCheckedContinuation({ heldSwitch = $0 }) { throw error }
         if let failSwitch { throw RecordingError.message(failSwitch) }
-        // As `MobileRecorder.replay`: the audio from `from` to now must still be held.
-        let replayed = replayAvailable && (replay.map {
+        // Asked at the switch, as `MobileRecorder` does; the audio from there to now must still be held.
+        let from = replay == nil ? 0 : (replayFrom() ?? -1)
+        let replayed = replayAvailable && from >= 0 && (replay.map {
             !$0.didTruncate && from < $0.sampleCount && from >= $0.sampleCount - $0.retainedSampleCount
         } ?? false)
         switches.append(Switch(locale: locale.identifier, replayed: replayed, from: from))
@@ -165,6 +166,64 @@ class MobileLanguageTestCase: XCTestCase {
         session.start()
         for _ in 0..<400 where session.state != .recording { try await Task.sleep(for: .milliseconds(5)) }
         XCTAssertEqual(session.state, .recording)
+    }
+
+    // MARK: Re-check scenarios (issue #199)
+
+    let mandarin: Float = 1
+    let spanish: Float = 2
+
+    /// One line every five seconds from `start` to `end`, in recorder time.
+    func speak(_ text: String, from start: TimeInterval, to end: TimeInterval) {
+        var time = start
+        while time < end {
+            recorder.send("\(text) \(Int(time))", time, min(end, time + 4.5))
+            time += 5
+        }
+    }
+
+    func settle(_ session: MobileSession) async {
+        await session.languageDetection.check?.value
+    }
+
+    /// The first check hears the device's language at 12 s and keeps it.
+    func startInTheDevicesLanguage() async throws -> MobileSession {
+        await model.listenToAudio()
+        let session = makeSession()
+        try await record(session)
+        recorder.feedAudio(seconds: 12)
+        recorder.send("Good morning", 1, 5)
+        recorder.send("let's begin", 5, 9.5)
+        await settle(session)
+        XCTAssertTrue(session.quickDiagnostics.contains("kept (same language)"), session.quickDiagnostics)
+        return session
+    }
+
+    /// English to 60 s, then Mandarin, as the issue's acceptance case: the 72 s re-check hears mostly
+    /// English, the 130 s one hears Mandarin, and the 150 s one confirms it. With `holding`, the recorder
+    /// holds the switch (its assets still downloading) and the session is returned while it waits.
+    func switchToMandarinAtOneMinute(holding: Bool = false) async throws -> MobileSession {
+        let session = try await startInTheDevicesLanguage()
+        speak("English", from: 10, to: 60)
+        speak("ni hao", from: 60, to: 130)
+        recorder.feedAudio(seconds: 48)
+        recorder.feedAudio(seconds: 70, marker: mandarin)
+        recorder.send("ni hao trigger", 130, 132)
+        await settle(session)
+        XCTAssertTrue(recorder.switches.isEmpty, "One check hearing Mandarin is not enough")
+        XCTAssertTrue(session.quickDiagnostics.contains("checking again before switching to zh-CN"),
+                      session.quickDiagnostics)
+        recorder.holdSwitch = holding
+        recorder.feedAudio(seconds: 20, marker: mandarin)
+        speak("ni hao", from: 132, to: 150)
+        if holding {
+            for _ in 0..<400 where !recorder.isHoldingSwitch { try await Task.sleep(for: .milliseconds(5)) }
+            XCTAssertTrue(session.languageDetection.isSwitching)
+            return session
+        }
+        await settle(session)
+        XCTAssertEqual(recorder.switches.map(\.locale), ["zh-CN"])
+        return session
     }
 
     /// Ten seconds of speech in a language the transcriber does not know, then the check.

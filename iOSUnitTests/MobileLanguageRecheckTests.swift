@@ -8,55 +8,6 @@ import ListenToMeCore
 /// language, 1: Mandarin, 2: Spanish), so windows that straddle a change are as uncertain as real ones.
 @MainActor
 final class MobileLanguageRecheckTests: MobileLanguageTestCase {
-    private let mandarin: Float = 1
-    private let spanish: Float = 2
-
-    /// One line every five seconds from `start` to `end`, in recorder time.
-    private func speak(_ text: String, from start: TimeInterval, to end: TimeInterval) {
-        var time = start
-        while time < end {
-            recorder.send("\(text) \(Int(time))", time, min(end, time + 4.5))
-            time += 5
-        }
-    }
-
-    private func settle(_ session: MobileSession) async {
-        await session.languageDetection.check?.value
-    }
-
-    /// The first check hears the device's language at 12 s and keeps it.
-    private func startInTheDevicesLanguage() async throws -> MobileSession {
-        await model.listenToAudio()
-        let session = makeSession()
-        try await record(session)
-        recorder.feedAudio(seconds: 12)
-        recorder.send("Good morning", 1, 5)
-        recorder.send("let's begin", 5, 9.5)
-        await settle(session)
-        XCTAssertTrue(session.quickDiagnostics.contains("kept (same language)"), session.quickDiagnostics)
-        return session
-    }
-
-    /// English to 60 s, then Mandarin, as the issue's acceptance case: the 72 s re-check hears mostly
-    /// English, the 130 s one hears Mandarin, and the 150 s one confirms it.
-    private func switchToMandarinAtOneMinute() async throws -> MobileSession {
-        let session = try await startInTheDevicesLanguage()
-        speak("English", from: 10, to: 60)
-        speak("ni hao", from: 60, to: 130)
-        recorder.feedAudio(seconds: 48)
-        recorder.feedAudio(seconds: 70, marker: mandarin)
-        recorder.send("ni hao trigger", 130, 132)
-        await settle(session)
-        XCTAssertTrue(recorder.switches.isEmpty, "One check hearing Mandarin is not enough")
-        XCTAssertTrue(session.quickDiagnostics.contains("checking again before switching to zh-CN"),
-                      session.quickDiagnostics)
-        recorder.feedAudio(seconds: 20, marker: mandarin)
-        speak("ni hao", from: 132, to: 150)
-        await settle(session)
-        XCTAssertEqual(recorder.switches.map(\.locale), ["zh-CN"])
-        return session
-    }
-
     func testAChangeMidRecordingIsConfirmedAndOnlyThatSpanIsTranscribedAgain() async throws {
         let session = try await switchToMandarinAtOneMinute()
         XCTAssertEqual(recorder.switches.first?.from, 60 * 16_000, "Transcribed again from the change, not the start")

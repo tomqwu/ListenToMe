@@ -67,7 +67,7 @@ extension MobileLanguageDetection {
     var noticeText: String? {
         notice.map {
             guard $0.replayed else { return "Detected \(Self.languageName($0.detected)) · switched for new speech" }
-            let from = $0.midRecording ? " from \(Self.clock($0.since))" : ""
+            let from = $0.fromRecordingStart ? "" : " from \(Self.clock($0.since))"
             return "Detected \(Self.languageName($0.detected))\(from) · switched"
         }
     }
