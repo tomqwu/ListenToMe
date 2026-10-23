@@ -1,24 +1,38 @@
+import AVFoundation
 import Foundation
 import ListenToMeCore
+import os
 
 /// Apple Watch audio waiting on this iPhone (issue #181): one folder per recording holding its
-/// chunks as `<index>.m4a` and its `WatchCaptureLedger` as `manifest.json`.
+/// chunks as `<index>.m4a`, each chunk's metadata as `<index>.json`, and the recording's
+/// `WatchCaptureLedger` as `manifest.json`.
 ///
 /// Not main-actor: `accept` runs on the WatchConnectivity delegate queue, which may have woken the
 /// app in the background. It only files bytes; it never starts audio or transcription. Every read
 /// and write of a manifest holds one process-wide lock, so a chunk filed while the foreground drain
 /// is transcribing is never lost when the drain saves its progress.
+///
+/// Delivered audio is never deleted because something about it could not be written: the watch
+/// deletes its copy once the transfer succeeds. A chunk whose manifest entry is missing is adopted
+/// by `tidy` before the next drain, from its metadata file or, failing that, a best guess.
 struct WatchInbox: Sendable {
     enum Acceptance: Equatable {
         case stored, duplicate, rejected(String)
     }
 
-    private static let lock = NSLock()
+    private static let lock = NSRecursiveLock()
     private static let manifestName = "manifest.json"
+    private static let log = Logger(subsystem: "com.tomwu.ListenToMe.ios", category: "WatchInbox")
+    /// How long a completed recording's tombstone manifest is kept for a late Continue or resend.
+    static let tombstoneLifetime: TimeInterval = 7 * 86_400
     /// Stored audio gets the conversation archive's protection class.
     static var chunkAttributes: [FileAttributeKey: Any] { PrivateStorage.directoryAttributes }
 
     let root: URL
+    /// Writes manifests and metadata files. Tests replace it to simulate a full disk.
+    var writeFile: @Sendable (Data, URL) throws -> Void = { data, url in
+        try data.write(to: url, options: PrivateStorage.writingOptions)
+    }
 
     static var defaultRoot: URL {
         URL.applicationSupportDirectory.appendingPathComponent("WatchInbox", isDirectory: true)
@@ -30,37 +44,49 @@ struct WatchInbox: Sendable {
     func accept(fileAt url: URL, metadata: [String: Any], now: Date) -> Acceptance {
         let chunk: WatchChunkMetadata
         do { chunk = try WatchChunkMetadata(transferMetadata: metadata) } catch {
-            return .rejected("Unreadable Apple Watch chunk: \(error)")
+            return refuse("An Apple Watch recording part could not be read (\(error)).")
         }
         guard let size = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize else {
-            return .rejected("The delivered Apple Watch audio is missing.")
+            return refuse("An Apple Watch recording part arrived without its audio.")
         }
         guard size <= WatchChunkMetadata.maximumFileBytes else {
-            return .rejected("The delivered Apple Watch audio is too large.")
+            return refuse("An Apple Watch recording part was too large to keep.")
         }
         return Self.locked {
-            var ledger = readLedger(chunk.recordingID)
+            var ledger = readLedgerSettingAside(chunk.recordingID)
                 ?? WatchCaptureLedger(recordingID: chunk.recordingID, startedAt: chunk.startedAt, at: now)
             guard ledger.receive(chunk, at: now) else { return .duplicate }
-            let folder = folder(chunk.recordingID)
             let destination = chunkURL(recordingID: chunk.recordingID, index: chunk.index)
             do {
-                try PrivateStorage.createDirectory(at: folder)
-                // A file left by an earlier delivery whose manifest write failed.
+                try PrivateStorage.createDirectory(at: folder(chunk.recordingID))
+                // A copy left by an earlier delivery whose manifest entry was never written.
                 if FileManager.default.fileExists(atPath: destination.path) {
                     try FileManager.default.removeItem(at: destination)
                 }
                 try FileManager.default.moveItem(at: url, to: destination)
-                if !Self.chunkAttributes.isEmpty {
-                    try FileManager.default.setAttributes(Self.chunkAttributes, ofItemAtPath: destination.path)
-                }
-                try write(ledger)
             } catch {
-                try? FileManager.default.removeItem(at: destination)
-                return .rejected("Could not store Apple Watch audio: \(error.localizedDescription)")
+                return refuse("An Apple Watch recording part could not be stored on this iPhone "
+                    + "(\(error.localizedDescription)). Free some space; parts still on the watch are sent again.")
             }
-            // Read here, not from a session: the app may be running in the background with none.
-            applyBackupExclusionUnlocked(UserDefaults.standard.bool(forKey: MobileSession.excludeBackupKey))
+            // From here the audio is ours. Nothing below may delete it: a failure only costs the
+            // index, which `tidy` rebuilds.
+            do {
+                try writeFile(try JSONEncoder().encode(chunk), metadataURL(chunk.recordingID, chunk.index))
+            } catch {
+                Self.log.error("Chunk metadata not written: \(error.localizedDescription, privacy: .public)")
+            }
+            if !Self.chunkAttributes.isEmpty {
+                do {
+                    try FileManager.default.setAttributes(Self.chunkAttributes, ofItemAtPath: destination.path)
+                } catch {
+                    Self.log.error("Chunk protection not set: \(error.localizedDescription, privacy: .public)")
+                }
+            }
+            do { try write(ledger) } catch {
+                let reason = error.localizedDescription
+                Self.log.error("Manifest not written; the chunk is kept for later: \(reason, privacy: .public)")
+            }
+            excludeFromBackupUnlocked()
             return .stored
         }
     }
@@ -69,23 +95,24 @@ struct WatchInbox: Sendable {
     func acceptEnd(userInfo: [String: Any], now: Date) {
         guard let end = try? WatchRecordingEnd(userInfo: userInfo) else { return }
         Self.locked {
-            var ledger = readLedger(end.recordingID)
+            var ledger = readLedgerSettingAside(end.recordingID)
                 ?? WatchCaptureLedger(recordingID: end.recordingID, startedAt: end.startedAt, at: now)
             ledger.receiveEnd(end, at: now)
             do {
                 try PrivateStorage.createDirectory(at: folder(end.recordingID))
                 try write(ledger)
-            } catch { return }
-            applyBackupExclusionUnlocked(UserDefaults.standard.bool(forKey: MobileSession.excludeBackupKey))
+            } catch {
+                Self.log.error("End marker not written: \(error.localizedDescription, privacy: .public)")
+                return
+            }
+            excludeFromBackupUnlocked()
         }
     }
 
     /// Every readable recording, oldest first. An unreadable manifest is skipped, not deleted.
     func ledgers() -> [WatchCaptureLedger] {
         Self.locked {
-            let folders = (try? FileManager.default.contentsOfDirectory(at: root,
-                                                                         includingPropertiesForKeys: nil)) ?? []
-            return folders.compactMap { UUID(uuidString: $0.lastPathComponent).flatMap(readLedger) }
+            recordingFolders().compactMap { UUID(uuidString: $0.lastPathComponent).flatMap(readLedger) }
                 .sorted { $0.startedAt < $1.startedAt }
         }
     }
@@ -113,12 +140,15 @@ struct WatchInbox: Sendable {
         folder(recordingID).appendingPathComponent("\(index).m4a")
     }
 
+    /// Deletes chunks' audio (and their metadata files). Only for chunks whose text is saved.
     func deleteChunks(_ indices: [Int], of recordingID: UUID) {
         for index in indices {
             try? FileManager.default.removeItem(at: chunkURL(recordingID: recordingID, index: index))
+            try? FileManager.default.removeItem(at: metadataURL(recordingID, index))
         }
     }
 
+    /// Deletes a recording's audio and manifest: the user deleted it, or its conversation.
     func removeRecording(_ id: UUID) throws {
         try Self.locked {
             let folder = folder(id)
@@ -126,48 +156,165 @@ struct WatchInbox: Sendable {
         }
     }
 
-    /// Removes a recording only if, as it is on disk now, nothing is left to transcribe and it is
-    /// over. A chunk filed since the caller last looked keeps the recording, and its audio.
-    func removeFinishedRecording(_ id: UUID, now: Date) throws -> Bool {
+    /// Marks a recording complete if, as it is on disk now, nothing is left to transcribe and it is
+    /// over. The manifest stays as a tombstone (see `WatchCaptureLedger.completed`); any audio left
+    /// over is deleted. A chunk filed since the caller last looked keeps the recording open.
+    func completeRecording(_ id: UUID, now: Date) throws -> Bool {
         try Self.locked {
-            guard let ledger = readLedger(id) else { return false }
+            guard var ledger = readLedger(id) else { return false }
             let batch = ledger.nextBatch(now: now)
             guard batch.finishes, batch.indices.isEmpty, batch.newGaps.isEmpty else { return false }
-            try FileManager.default.removeItem(at: folder(id))
+            ledger.markCompleted()
+            try write(ledger)
+            for name in (try? FileManager.default.contentsOfDirectory(atPath: folder(id).path)) ?? []
+            where name.hasSuffix(".m4a") || (name.hasSuffix(".json") && name != Self.manifestName) {
+                try? FileManager.default.removeItem(at: folder(id).appendingPathComponent(name))
+            }
             return true
         }
     }
 
-    /// Applies the conversations' backup choice to audio that has not become a conversation yet.
-    func applyBackupExclusion(_ excluded: Bool) {
-        Self.locked { applyBackupExclusionUnlocked(excluded) }
+    /// Housekeeping before a drain, in the foreground: sets aside unreadable manifests, adopts audio
+    /// the manifest does not list, and drops tombstones older than `tombstoneLifetime`.
+    func tidy(now: Date) {
+        Self.locked {
+            for folder in recordingFolders() {
+                guard let id = UUID(uuidString: folder.lastPathComponent) else { continue }
+                adoptOrphans(id, now: now)
+                if let ledger = readLedger(id), ledger.completed,
+                   now.timeIntervalSince(ledger.lastActivity) > Self.tombstoneLifetime,
+                   audioIndices(id).isEmpty {
+                    try? FileManager.default.removeItem(at: folder)
+                }
+            }
+        }
+    }
+
+    /// Raw watch audio is transient and promised to stay on this iPhone: it is kept out of iCloud
+    /// Backup whatever the conversations' backup setting says.
+    func applyBackupExclusion() {
+        Self.locked { excludeFromBackupUnlocked() }
+    }
+
+    // MARK: Problems shown in History
+
+    /// Audio that could not be kept. Stored outside the inbox (it may be the inbox that failed) and
+    /// shown in History until dismissed.
+    func problems() -> [String] {
+        UserDefaults.standard.stringArray(forKey: problemsKey) ?? []
+    }
+
+    func clearProblems() {
+        UserDefaults.standard.removeObject(forKey: problemsKey)
+    }
+
+    private func refuse(_ text: String) -> Acceptance {
+        Self.log.error("\(text, privacy: .public)")
+        Self.locked {
+            UserDefaults.standard.set(Array((problems() + [text]).suffix(10)), forKey: problemsKey)
+        }
+        return .rejected(text)
+    }
+
+    /// Stable across app updates, which move the app's container: the inbox's last two path parts.
+    private var problemsKey: String {
+        "watchInboxProblems:" + root.deletingLastPathComponent().lastPathComponent + "/" + root.lastPathComponent
     }
 
     // MARK: Helpers
 
-    private func applyBackupExclusionUnlocked(_ excluded: Bool) {
+    private func excludeFromBackupUnlocked() {
         try? PrivateStorage.createDirectory(at: root)
-        try? PrivateStorage.setExcludedFromBackup(excluded, at: root)
-        let folders = (try? FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)) ?? []
-        for folder in folders { try? PrivateStorage.setExcludedFromBackup(excluded, at: folder) }
+        try? PrivateStorage.setExcludedFromBackup(true, at: root)
+        for folder in recordingFolders() { try? PrivateStorage.setExcludedFromBackup(true, at: folder) }
+    }
+
+    private func recordingFolders() -> [URL] {
+        (try? FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)) ?? []
     }
 
     private func folder(_ id: UUID) -> URL {
         root.appendingPathComponent(id.uuidString, isDirectory: true)
     }
 
+    private func manifestURL(_ id: UUID) -> URL {
+        folder(id).appendingPathComponent(Self.manifestName)
+    }
+
+    private func metadataURL(_ id: UUID, _ index: Int) -> URL {
+        folder(id).appendingPathComponent("\(index).json")
+    }
+
     private func readLedger(_ id: UUID) -> WatchCaptureLedger? {
-        let url = folder(id).appendingPathComponent(Self.manifestName)
-        guard let data = try? Data(contentsOf: url),
+        guard let data = try? Data(contentsOf: manifestURL(id)),
               let ledger = try? JSONDecoder().decode(WatchCaptureLedger.self, from: data),
               ledger.recordingID == id else { return nil }
         return ledger
     }
 
+    /// Like `readLedger`, but a manifest that exists and cannot be read is renamed out of the way
+    /// first, so writing a new one never destroys it. Its chunks are adopted again by `tidy`.
+    private func readLedgerSettingAside(_ id: UUID) -> WatchCaptureLedger? {
+        if let ledger = readLedger(id) { return ledger }
+        let url = manifestURL(id)
+        guard FileManager.default.fileExists(atPath: url.path) else { return nil }
+        let suffix = "\(Int(Date().timeIntervalSince1970))-\(UUID().uuidString)"
+        let aside = url.deletingLastPathComponent().appendingPathComponent("\(Self.manifestName).corrupt-\(suffix)")
+        do { try FileManager.default.moveItem(at: url, to: aside) } catch {
+            Self.log.error("Unreadable manifest not set aside: \(error.localizedDescription, privacy: .public)")
+        }
+        return nil
+    }
+
     private func write(_ ledger: WatchCaptureLedger) throws {
-        let data = try JSONEncoder().encode(ledger)
-        try data.write(to: folder(ledger.recordingID).appendingPathComponent(Self.manifestName),
-                       options: PrivateStorage.writingOptions)
+        try writeFile(try JSONEncoder().encode(ledger), manifestURL(ledger.recordingID))
+    }
+
+    private func audioIndices(_ id: UUID) -> [Int] {
+        ((try? FileManager.default.contentsOfDirectory(atPath: folder(id).path)) ?? [])
+            .compactMap { $0.hasSuffix(".m4a") ? Int($0.dropLast(4)) : nil }.sorted()
+    }
+
+    /// Lists audio the manifest does not: from its metadata file, or a best guess placed after the
+    /// chunk before it. Audio the ledger turns down (already text) is deleted.
+    private func adoptOrphans(_ id: UUID, now: Date) {
+        var ledger = readLedgerSettingAside(id)
+        var changed = false
+        for index in audioIndices(id) where !(ledger?.chunks.contains { $0.index == index } ?? false) {
+            guard (0...WatchChunkMetadata.maximumIndex).contains(index) else { continue }
+            let chunk = sidecar(id, index) ?? guessedChunk(id, index, ledger: ledger, now: now)
+            var adopted = ledger ?? WatchCaptureLedger(recordingID: id, startedAt: chunk.startedAt, at: now)
+            if adopted.receive(chunk, at: now) {
+                Self.log.notice("Adopted Apple Watch chunk \(index, privacy: .public) missing from its manifest")
+            } else {
+                deleteChunks([index], of: id)
+            }
+            ledger = adopted
+            changed = true
+        }
+        guard changed, let ledger else { return }
+        do { try write(ledger) } catch {
+            Self.log.error("Adopted chunks not recorded: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    private func sidecar(_ id: UUID, _ index: Int) -> WatchChunkMetadata? {
+        guard let data = try? Data(contentsOf: metadataURL(id, index)),
+              let chunk = try? JSONDecoder().decode(WatchChunkMetadata.self, from: data),
+              chunk.recordingID == id, chunk.index == index else { return nil }
+        return chunk
+    }
+
+    private func guessedChunk(_ id: UUID, _ index: Int, ledger: WatchCaptureLedger?, now: Date) -> WatchChunkMetadata {
+        let folderCreated = (try? folder(id).resourceValues(forKeys: [.creationDateKey]))?.creationDate
+        let startedAt = ledger?.startedAt ?? folderCreated ?? now
+        let previous = ledger?.chunks.last { $0.index < index }
+        let file = try? AVAudioFile(forReading: chunkURL(recordingID: id, index: index))
+        let seconds = file.map { Double($0.length) / max(1, $0.processingFormat.sampleRate) } ?? 300
+        let duration = seconds > 0 && seconds < WatchChunkMetadata.maximumDuration ? seconds : 300
+        return WatchChunkMetadata(recordingID: id, index: index,
+                                  startOffset: previous?.end ?? Double(index) * 300, duration: duration,
+                                  isLast: false, startedAt: startedAt, watchBuild: "unknown")
     }
 
     private static func locked<T>(_ body: () throws -> T) rethrows -> T {

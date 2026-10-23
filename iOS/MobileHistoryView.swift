@@ -29,8 +29,9 @@ struct MobileHistoryView: View {
                         }
                     }
                 }
-                if !session.watchInboxRows.isEmpty {
+                if !session.watchInboxRows.isEmpty || !session.watchInboxProblems.isEmpty {
                     Section("Waiting from Apple Watch") {
+                        if !session.watchInboxProblems.isEmpty { watchProblems }
                         ForEach(session.watchInboxRows) { watchRow($0) }
                     }
                 }
@@ -83,7 +84,7 @@ struct MobileHistoryView: View {
                 if session.history.isEmpty && session.watchInboxRows.isEmpty {
                     ContentUnavailableView("No saved conversations", systemImage: "clock",
                                            description: Text("Save a conversation to return to its words, notes and summaries."))
-                } else if results.isEmpty {
+                } else if results.isEmpty, !session.history.isEmpty, session.watchInboxRows.isEmpty {
                     ContentUnavailableView.search(text: query)
                 }
             }
@@ -121,6 +122,19 @@ struct MobileHistoryView: View {
             }.frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
         }.buttonStyle(.plain).padding(.vertical, 4)
             .accessibilityIdentifier("history-record-\(record.id)")
+    }
+
+    /// Audio the iPhone could not keep: said once, until dismissed.
+    private var watchProblems: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ForEach(Array(session.watchInboxProblems.enumerated()), id: \.offset) { _, problem in
+                Label(problem, systemImage: "exclamationmark.triangle")
+                    .font(.footnote).foregroundStyle(.orange)
+            }
+            Button("Dismiss") { session.dismissWatchInboxProblems() }
+                .font(.footnote).buttonStyle(.borderless)
+        }
+        .accessibilityIdentifier("history-watch-problems")
     }
 
     /// A watch recording still being received or transcribed, or one that failed.

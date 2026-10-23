@@ -27,16 +27,33 @@ extension MobileSession {
         "Part of this recording (about \(minutes) min) did not arrive from Apple Watch."
     }
 
+    /// Lines are saved in batches of at most this many, or this often, and whenever a chunk's end
+    /// is reached; a chunk's audio is deleted only after the save that covers it.
+    static let watchLinesPerSave = 25
+    static let watchSaveInterval: TimeInterval = 10
+
     /// Starts transcribing waiting watch recordings when the app is active and idle. Triggered on
-    /// `.active`, when the session stops being busy, and when a chunk arrives.
+    /// `.active`, when the session stops being busy, and when a chunk arrives. A chunk that arrives
+    /// while a drain runs is picked up as soon as that drain ends.
     func importWatchInbox(now: Date = Date()) {
         refreshWatchInboxRows()
-        guard applicationIsActive(), state == .idle, !isSummarizing, watchDrainTask == nil else { return }
-        guard watchInbox.ledgers().contains(where: { Self.hasWork($0.nextBatch(now: now)) }) else { return }
+        guard applicationIsActive(), state == .idle, !isSummarizing else { return }
+        guard watchDrainTask == nil else { watchDrainRequested = true; return }
+        watchInbox.tidy(now: now)
+        refreshWatchInboxRows()
+        let ledgers = watchInbox.ledgers().map(reconcileWithSavedLines)
+        guard ledgers.contains(where: { Self.hasWork($0.nextBatch(now: now)) }) else { return }
+        watchDrainRequested = false
         watchDrainTask = Task { [weak self] in
             await self?.drainWatchInbox(now: now)
-            self?.watchDrainTask = nil
-            self?.refreshWatchInboxRows()
+            let cancelled = Task.isCancelled
+            guard let self else { return }
+            self.watchDrainTask = nil
+            self.refreshWatchInboxRows()
+            if !cancelled, self.watchDrainRequested {
+                self.watchDrainRequested = false
+                self.importWatchInbox()
+            }
         }
     }
 
@@ -54,6 +71,21 @@ extension MobileSession {
                                  failure: ledger.failure)
         }
         if rows != watchInboxRows { watchInboxRows = rows }
+        let problems = watchInbox.problems()
+        if problems != watchInboxProblems { watchInboxProblems = problems }
+    }
+
+    /// The user has read why some watch audio could not be kept.
+    func dismissWatchInboxProblems() {
+        watchInbox.clearProblems()
+        refreshWatchInboxRows()
+    }
+
+    /// A deleted watch conversation takes its raw audio with it, so the drain cannot bring it back.
+    func discardWatchAudio(sourceImportID: String?) {
+        guard let source = sourceImportID, source.hasPrefix("watch:"),
+              let recordingID = UUID(uuidString: String(source.dropFirst("watch:".count))) else { return }
+        deleteWatchRecording(recordingID)
     }
 
     /// The user's Retry on a failed recording.
@@ -112,15 +144,9 @@ extension MobileSession {
     }
 
     private func drainWatchRecording(_ recordingID: UUID, now: Date) async throws {
-        guard var ledger = watchInbox.ledger(recordingID) else { return }
+        guard let stored = watchInbox.ledger(recordingID) else { return }
+        var ledger = reconcileWithSavedLines(stored)
         let recordID = try watchRecordID(for: ledger)
-        // A recording reopened after it finished (Continue, or a chunk the watch sent again), or one
-        // whose text was saved just before the app stopped: what the conversation already holds is
-        // not transcribed again.
-        if ledger.transcribedThrough == 0, !ledger.chunks.contains(where: { $0.state == .transcribed }),
-           let saved = history.first(where: { $0.id == recordID })?.segments?.map(\.end).max(), saved > 0 {
-            ledger = try markWatchTranscribed(recordingID, through: saved) ?? ledger
-        }
         while true {
             try Task.checkCancellation()
             let batch = ledger.nextBatch(now: now)
@@ -151,34 +177,82 @@ extension MobileSession {
         guard let end = chunks.map({ $0.startOffset + $0.duration }).max() else { return }
         // Lines before this point were saved before an interruption; a resumed pass hears them again.
         let resumeAt = ledger.transcribedThrough - 0.05
-        try await makeWatchTranscriber().transcribe(chunks, locale: Locale(identifier: language)) { [weak self] line in
-            guard let self, line.start >= resumeAt else { return }
-            try self.updateWatchRecord(recordID, segment: TranscriptSegment(
-                source: .you, text: line.text, isFinal: true, start: line.start, end: line.end,
-                speakerName: MobileFileTranscriber.speakerName))
-            try self.markWatchTranscribed(recordingID, through: line.end)
+        let pending = WatchLineBuffer(coveredThrough: ledger.transcribedThrough,
+                                      chunkEnds: chunks.map { $0.startOffset + $0.duration })
+        do {
+            let transcriber = makeWatchTranscriber()
+            try await transcriber.transcribe(chunks, locale: Locale(identifier: language)) { [weak self] line in
+                guard let self, line.start >= resumeAt else { return }
+                pending.lines.append(TranscriptSegment(source: .you, text: line.text, isFinal: true, start: line.start,
+                                                       end: line.end, speakerName: MobileFileTranscriber.speakerName))
+                if pending.shouldSave(after: line) {
+                    try self.saveWatchLines(pending, recordID: recordID, of: recordingID)
+                }
+            }
+        } catch {
+            // Text heard before the stop is kept; its audio goes only where the text covers it whole.
+            try? saveWatchLines(pending, recordID: recordID, of: recordingID)
+            throw error
         }
+        try saveWatchLines(pending, recordID: recordID, of: recordingID)
         try markWatchTranscribed(recordingID, through: end)
+    }
+
+    /// Saves the lines heard so far, then marks them transcribed and deletes audio they cover.
+    private func saveWatchLines(_ pending: WatchLineBuffer, recordID: String, of recordingID: UUID) throws {
+        guard let through = pending.lines.map(\.end).max() else { return }
+        let lines = pending.lines
+        pending.lines = []
+        pending.lastSave = Date()
+        try updateWatchRecord(recordID, segments: lines)
+        pending.coveredThrough = max(pending.coveredThrough, through)
+        try markWatchTranscribed(recordingID, through: through)
     }
 
     private func finishWatchRecording(_ ledger: WatchCaptureLedger, recordID: String, now: Date) throws {
         let notes = history.first { $0.id == recordID }?.notes ?? ""
         let unexpected = ledger.endedUnexpectedly && !notes.contains(Self.watchUnexpectedEndNote)
         try updateWatchRecord(recordID, note: unexpected ? Self.watchUnexpectedEndNote : nil, complete: true)
-        // Not removed if a chunk arrived since: the next drain picks it up.
-        guard try watchInbox.removeFinishedRecording(ledger.recordingID, now: now) else { return }
+        // Kept open if a chunk arrived since: the next drain picks it up.
+        guard try watchInbox.completeRecording(ledger.recordingID, now: now) else { return }
         message = Self.watchAddedMessage
     }
 
     /// Marks text saved through `time` and only then deletes the audio it wholly covers.
     @discardableResult
-    private func markWatchTranscribed(_ recordingID: UUID, through time: TimeInterval) throws -> WatchCaptureLedger? {
+    private func markWatchTranscribed(_ recordingID: UUID, through time: TimeInterval,
+                                      settleBelow: Int? = nil) throws -> WatchCaptureLedger? {
         let result = try watchInbox.update(recordingID) { ledger -> ([Int], WatchCaptureLedger) in
-            (ledger.markTranscribed(through: time), ledger)
+            if let settleBelow { ledger.settle(below: settleBelow) }
+            return (ledger.markTranscribed(through: time), ledger)
         }
         guard let (covered, ledger) = result else { return nil }
         watchInbox.deleteChunks(covered, of: recordingID)
         return ledger
+    }
+
+    /// What the conversation already holds is not transcribed again. A crash between saving lines and
+    /// marking them leaves the manifest behind the text, so it is moved up to the saved lines. A
+    /// manifest that starts over for a conversation that already has watch lines (the audio was
+    /// deleted from History, or the manifest was unreadable) settles every chunk before the first one
+    /// it holds, instead of waiting a day for chunks that are already text.
+    private func reconcileWithSavedLines(_ ledger: WatchCaptureLedger) -> WatchCaptureLedger {
+        let source = Self.watchSourceID(ledger.recordingID)
+        guard let record = history.first(where: { $0.sourceImportID == source }),
+              let saved = savedWatchLinesEnd(record.id) else { return ledger }
+        let startsOver = ledger.settledBelow == 0 && ledger.notedGaps.isEmpty && ledger.transcribedThrough == 0
+            && !ledger.chunks.contains { $0.state == .transcribed }
+        let firstHeld = ledger.chunks.first?.index ?? ((ledger.lastIndex ?? -1) + 1)
+        guard saved > ledger.transcribedThrough || (startsOver && firstHeld > 0) else { return ledger }
+        let updated = try? markWatchTranscribed(ledger.recordingID, through: saved,
+                                                settleBelow: startsOver ? firstHeld : nil)
+        return (updated ?? nil) ?? ledger
+    }
+
+    /// Where the saved Apple Watch lines of this conversation end, if it has any.
+    private func savedWatchLinesEnd(_ recordID: String) -> TimeInterval? {
+        history.first { $0.id == recordID }?.segments?
+            .filter { $0.speakerName == MobileFileTranscriber.speakerName }.map(\.end).max()
     }
 
     // MARK: The conversation
@@ -196,19 +270,19 @@ extension MobileSession {
         return record.id
     }
 
-    /// Adds a line and/or a note to a watch conversation where it lives now: through the live
+    /// Adds lines and/or a note to a watch conversation where it lives now: through the live
     /// session when it is the open conversation (so nothing typed there is lost), otherwise in the
     /// archive. Throws unless the change is saved.
-    private func updateWatchRecord(_ recordID: String, segment: TranscriptSegment? = nil, note: String? = nil,
+    private func updateWatchRecord(_ recordID: String, segments added: [TranscriptSegment] = [], note: String? = nil,
                                    complete: Bool = false) throws {
         if recordID == id {
-            if let segment { segments.append(segment) }
+            segments.append(contentsOf: added)
             if let note { notes = Self.appendingLine(note, to: notes) }
             guard save(announce: false) else { throw WatchConversationUnavailable() }
             return
         }
         guard let record = history.first(where: { $0.id == recordID }) else { throw WatchConversationUnavailable() }
-        let lines = (record.segments ?? []) + (segment.map { [$0] } ?? [])
+        let lines = (record.segments ?? []) + added
         let updated = SessionRecord(id: record.id, title: record.title, date: record.date,
                                     transcript: Self.transcriptText(for: lines), summary: record.summary,
                                     segments: lines, notes: note.map { Self.appendingLine($0, to: record.notes ?? "") }
@@ -228,5 +302,27 @@ extension MobileSession {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let last = trimmed.last else { return "Unknown error." }
         return ".!?".contains(last) ? trimmed : trimmed + "."
+    }
+}
+
+/// Lines heard but not yet saved during one transcription pass.
+@MainActor
+private final class WatchLineBuffer {
+    var lines: [TranscriptSegment] = []
+    var lastSave = Date()
+    /// Recording time through which lines are saved.
+    var coveredThrough: TimeInterval
+    let chunkEnds: [TimeInterval]
+
+    init(coveredThrough: TimeInterval, chunkEnds: [TimeInterval]) {
+        self.coveredThrough = coveredThrough
+        self.chunkEnds = chunkEnds
+    }
+
+    func shouldSave(after line: TranscriptSegment) -> Bool {
+        if lines.count >= MobileSession.watchLinesPerSave
+            || Date().timeIntervalSince(lastSave) >= MobileSession.watchSaveInterval { return true }
+        // The line reaches the end of a chunk not yet covered: saving now lets that audio go.
+        return chunkEnds.contains { $0 > coveredThrough + 0.05 && line.end + 0.05 >= $0 }
     }
 }

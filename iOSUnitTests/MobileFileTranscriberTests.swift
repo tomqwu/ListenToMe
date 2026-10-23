@@ -91,6 +91,32 @@ final class MobileFileTranscriberTests: XCTestCase {
         #endif
     }
 
+    /// A chunk claiming to start inside audio already fed starts where that audio ended instead, so
+    /// the analyzer's time never steps backward. A real gap keeps its start.
+    func testFeedNeverStepsTimeBackward() throws {
+        let format = try XCTUnwrap(AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: 16_000, channels: 1,
+                                                 interleaved: false))
+        let first = try fixture(0)
+        let firstDuration = try duration(first)
+        let feed = ChunkFeed(chunks: [
+            WatchAudioChunk(index: 0, url: first, startOffset: 0, duration: firstDuration),
+            WatchAudioChunk(index: 1, url: try fixture(1), startOffset: 1, duration: 1.6),
+            WatchAudioChunk(index: 2, url: first, startOffset: 100, duration: firstDuration),
+        ], format: format)
+        var stamps: [TimeInterval] = []
+        var buffers = 0
+        while let input = feed.next() {
+            buffers += 1
+            if let start = input.bufferStartTime { stamps.append(start.seconds) }
+        }
+        XCTAssertNil(feed.failure)
+        XCTAssertGreaterThan(buffers, 3)
+        XCTAssertEqual(stamps.count, 3, "One stamp per chunk")
+        XCTAssertEqual(stamps[0], 0, accuracy: 0.001)
+        XCTAssertEqual(stamps[1], firstDuration, accuracy: 0.05, "Not 1 s: that audio was already fed")
+        XCTAssertEqual(stamps[2], 100, accuracy: 0.001)
+    }
+
     func testNoChunksIsANoOp() async throws {
         var calls = 0
         try await MobileFileTranscriber().transcribe([], locale: Locale(identifier: "en_US")) { _ in calls += 1 }

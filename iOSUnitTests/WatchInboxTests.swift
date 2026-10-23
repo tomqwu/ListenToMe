@@ -91,7 +91,7 @@ final class WatchInboxTests: XCTestCase {
         XCTAssertEqual(inbox.accept(fileAt: try delivered(), metadata: hostile, now: startedAt), .stored)
         let folder = root.appendingPathComponent(id.uuidString)
         let names = try FileManager.default.contentsOfDirectory(atPath: folder.path).sorted()
-        XCTAssertEqual(names, ["2.m4a", "manifest.json"])
+        XCTAssertEqual(names, ["2.json", "2.m4a", "manifest.json"], "Named from the parsed index only")
         let everything = try FileManager.default.contentsOfDirectory(atPath: root.deletingLastPathComponent().path)
         XCTAssertEqual(Set(everything), ["WatchInbox", "Delivered"])
     }
@@ -110,22 +110,22 @@ final class WatchInboxTests: XCTestCase {
         XCTAssertEqual(inbox.ledgers().first?.lastIndex, 1)
     }
 
-    func testInboxFollowsTheBackupExclusionSetting() throws {
+    /// Raw watch audio is transient and promised to stay on this iPhone: it is kept out of iCloud
+    /// Backup whatever the conversations' backup setting says.
+    func testInboxIsAlwaysExcludedFromBackup() throws {
         let inbox = WatchInbox(root: root)
-        UserDefaults.standard.set(true, forKey: MobileSession.excludeBackupKey)
+        UserDefaults.standard.set(false, forKey: MobileSession.excludeBackupKey)
         XCTAssertEqual(inbox.accept(fileAt: try delivered(), metadata: metadata(0), now: startedAt), .stored)
         let folder = root.appendingPathComponent(id.uuidString)
         XCTAssertTrue(PrivateStorage.isExcludedFromBackup(folder))
         XCTAssertTrue(PrivateStorage.isExcludedFromBackup(root))
-        inbox.applyBackupExclusion(false)
-        XCTAssertFalse(PrivateStorage.isExcludedFromBackup(folder))
-        XCTAssertFalse(PrivateStorage.isExcludedFromBackup(root))
-        inbox.applyBackupExclusion(true)
-        XCTAssertTrue(PrivateStorage.isExcludedFromBackup(folder))
+        try PrivateStorage.setExcludedFromBackup(false, at: root)
+        inbox.applyBackupExclusion()
+        XCTAssertTrue(PrivateStorage.isExcludedFromBackup(root))
     }
 
     @MainActor
-    func testSessionBackupToggleReachesTheWatchInbox() throws {
+    func testSessionBackupToggleNeverPutsWatchAudioInTheBackup() throws {
         let storage = root.deletingLastPathComponent().appendingPathComponent("Session")
         let inbox = WatchInbox(root: storage.appendingPathComponent("WatchInbox"))
         XCTAssertEqual(inbox.accept(fileAt: try delivered(), metadata: metadata(0), now: startedAt), .stored)
@@ -134,7 +134,8 @@ final class WatchInboxTests: XCTestCase {
         session.excludeFromBackup = true
         XCTAssertTrue(PrivateStorage.isExcludedFromBackup(folder))
         session.excludeFromBackup = false
-        XCTAssertFalse(PrivateStorage.isExcludedFromBackup(folder))
+        XCTAssertTrue(PrivateStorage.isExcludedFromBackup(folder))
+        XCTAssertTrue(PrivateStorage.isExcludedFromBackup(inbox.root))
     }
 
     func testStoredChunkUsesTheArchiveProtectionClass() throws {
@@ -192,5 +193,92 @@ final class WatchInboxTests: XCTestCase {
         XCTAssertEqual(covered, [0])
         XCTAssertEqual(inbox.ledgers().first?.chunks.map(\.index), [0, 1])
         XCTAssertNil(try inbox.update(UUID()) { $0.markTranscribed(through: 1) })
+        XCTAssertFalse(try inbox.completeRecording(UUID(), now: startedAt))
+    }
+
+    // MARK: Storage failures never lose delivered audio
+
+    private struct DiskFull: Error {}
+
+    /// A writer that fails for the files whose names `failing` accepts, like a full disk.
+    private func inbox(failing: @escaping @Sendable (String) -> Bool) -> WatchInbox {
+        WatchInbox(root: root, writeFile: { data, url in
+            if failing(url.lastPathComponent) { throw DiskFull() }
+            try data.write(to: url, options: PrivateStorage.writingOptions)
+        })
+    }
+
+    func testManifestWriteFailureKeepsTheAudioAndTheNextDrainAdoptsIt() throws {
+        let failing = inbox(failing: { $0 == "manifest.json" })
+        let metadata = WatchChunkMetadata(recordingID: id, index: 2, startOffset: 660, duration: 120, isLast: true,
+                                          startedAt: startedAt, watchBuild: "28")
+        XCTAssertEqual(failing.accept(fileAt: try delivered(), metadata: metadata.transferMetadata, now: startedAt),
+                       .stored, "The audio is on disk; only its index is missing")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: failing.chunkURL(recordingID: id, index: 2).path))
+        XCTAssertTrue(failing.ledgers().isEmpty)
+
+        let healthy = WatchInbox(root: root)
+        healthy.tidy(now: startedAt.addingTimeInterval(60))
+        let ledger = try XCTUnwrap(healthy.ledgers().first)
+        XCTAssertEqual(ledger.startedAt, startedAt)
+        XCTAssertEqual(ledger.chunks.map(\.index), [2])
+        XCTAssertEqual(ledger.chunks.first?.startOffset, 660, "Read from the chunk's own metadata file")
+        XCTAssertEqual(ledger.lastIndex, 2)
+    }
+
+    func testAudioWithNoMetadataAtAllIsStillAdopted() throws {
+        let failing = inbox(failing: { _ in true })
+        XCTAssertEqual(failing.accept(fileAt: try delivered(), metadata: metadata(0), now: startedAt), .stored)
+        XCTAssertEqual(failing.accept(fileAt: try delivered(), metadata: metadata(1), now: startedAt), .stored)
+        let healthy = WatchInbox(root: root)
+        healthy.tidy(now: startedAt)
+        let ledger = try XCTUnwrap(healthy.ledgers().first)
+        XCTAssertEqual(ledger.chunks.map(\.index), [0, 1])
+        XCTAssertEqual(ledger.chunks[1].startOffset, ledger.chunks[0].end, "Placed after the chunk before it")
+    }
+
+    func testUnreadableManifestIsSetAsideNotOverwritten() throws {
+        let inbox = WatchInbox(root: root)
+        XCTAssertEqual(inbox.accept(fileAt: try delivered(), metadata: metadata(0), now: startedAt), .stored)
+        let folder = root.appendingPathComponent(id.uuidString)
+        try Data("{".utf8).write(to: folder.appendingPathComponent("manifest.json"))
+
+        XCTAssertEqual(inbox.accept(fileAt: try delivered(), metadata: metadata(1), now: startedAt), .stored)
+        let names = try FileManager.default.contentsOfDirectory(atPath: folder.path)
+        XCTAssertTrue(names.contains { $0.hasPrefix("manifest.json.corrupt-") }, "\(names)")
+        XCTAssertEqual(inbox.ledgers().first?.chunks.map(\.index), [1])
+        inbox.tidy(now: startedAt)
+        XCTAssertEqual(inbox.ledgers().first?.chunks.map(\.index), [0, 1], "Chunk 0's audio is picked up again")
+    }
+
+    func testRefusedAudioIsRecordedForHistory() throws {
+        let inbox = WatchInbox(root: root)
+        inbox.clearProblems()
+        let large = try delivered(bytes: WatchChunkMetadata.maximumFileBytes + 1)
+        guard case .rejected = inbox.accept(fileAt: large, metadata: metadata(0), now: startedAt) else {
+            return XCTFail("An oversized file must be rejected")
+        }
+        XCTAssertEqual(inbox.problems().count, 1)
+        XCTAssertTrue(inbox.problems().first?.contains("too large") == true, "\(inbox.problems())")
+        XCTAssertTrue(WatchInbox(root: root).problems() == inbox.problems(), "Kept across launches")
+        inbox.clearProblems()
+        XCTAssertTrue(inbox.problems().isEmpty)
+    }
+
+    func testCompletedRecordingIsKeptAsATombstoneThenPruned() throws {
+        let inbox = WatchInbox(root: root)
+        XCTAssertEqual(inbox.accept(fileAt: try delivered(), metadata: metadata(0, isLast: true), now: startedAt),
+                       .stored)
+        _ = try inbox.update(id) { $0.markTranscribed(through: 300) }
+        inbox.deleteChunks([0], of: id)
+        XCTAssertTrue(try inbox.completeRecording(id, now: startedAt))
+        XCTAssertEqual(inbox.ledgers().first?.completed, true)
+        XCTAssertFalse(try inbox.completeRecording(id, now: startedAt), "Already complete")
+        XCTAssertEqual(inbox.accept(fileAt: try delivered(), metadata: metadata(0), now: startedAt), .duplicate,
+                       "The watch sending the chunk again is recognized")
+        inbox.tidy(now: startedAt.addingTimeInterval(6 * 86_400))
+        XCTAssertEqual(inbox.ledgers().count, 1)
+        inbox.tidy(now: startedAt.addingTimeInterval(8 * 86_400))
+        XCTAssertTrue(inbox.ledgers().isEmpty, "A week later the tombstone goes")
     }
 }

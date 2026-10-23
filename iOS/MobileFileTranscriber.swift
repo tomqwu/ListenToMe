@@ -96,8 +96,10 @@ private struct ChunkInputs: AsyncSequence, Sendable {
 
 /// Reads the chunks in order, about a second at a time, converted to the analyzer's format. Each
 /// chunk's first buffer carries the chunk's start on the recording's timeline, so results come back
-/// in recording time even across a gap. A read failure ends the input and is kept in `failure`.
-private final class ChunkFeed: @unchecked Sendable {
+/// in recording time even across a gap. The analyzer's time never steps backward: a chunk that
+/// claims to start inside audio already fed (its predecessor ran long) starts where that audio
+/// ended. A read failure ends the input and is kept in `failure`.
+final class ChunkFeed: @unchecked Sendable {
     private let lock = NSLock()
     private let chunks: [WatchAudioChunk]
     private let format: AVAudioFormat
@@ -105,6 +107,8 @@ private final class ChunkFeed: @unchecked Sendable {
     private var file: AVAudioFile?
     private var converter: AVAudioConverter?
     private var startsChunk = false
+    /// Recording time at the end of the audio fed so far.
+    private var fedThrough: TimeInterval = 0
     private var stopped = false
     private var storedFailure: (any Error)?
 
@@ -166,8 +170,13 @@ private final class ChunkFeed: @unchecked Sendable {
         }
         let output = try convert(buffer)
         guard output.frameLength > 0 else { return nil }
-        let start = startsChunk ? CMTime(seconds: chunk.startOffset, preferredTimescale: 48_000) : nil
-        startsChunk = false
+        var start: CMTime?
+        if startsChunk {
+            fedThrough = max(chunk.startOffset, fedThrough)
+            start = CMTime(seconds: fedThrough, preferredTimescale: 48_000)
+            startsChunk = false
+        }
+        fedThrough += Double(output.frameLength) / format.sampleRate
         return AnalyzerInput(buffer: output, bufferStartTime: start)
     }
 

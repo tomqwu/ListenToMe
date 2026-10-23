@@ -72,6 +72,10 @@ final class MobileSession {
     @ObservationIgnored var watchDrainTask: Task<Void, Never>?
     /// Watch recordings still waiting in the inbox, for History.
     var watchInboxRows: [WatchInboxRow] = []
+    /// Watch audio that could not be kept, until the user dismisses the note in History.
+    var watchInboxProblems: [String] = []
+    /// A chunk arrived while a drain ran; drain again when it ends.
+    @ObservationIgnored var watchDrainRequested = false
     private var manualQuickError: String?
     var quickSummaryError: String? { manualQuickError ?? quickReader.error }
     private var sourceImportID: String?
@@ -340,37 +344,6 @@ final class MobileSession {
         save(announce: false)
     }
 
-    func deleteConversation(id targetID: String) {
-        guard !busy else { return }
-        pendingSave?.cancel(); pendingSave = nil
-        lastSavedData = nil
-        let deletingActive = targetID == id
-        var committed = false
-        do {
-            // Persist an empty active snapshot first so a deleted session cannot return on relaunch.
-            let empty = SessionRecord(id: UUID().uuidString, title: "New conversation", date: Date(),
-                                      transcript: "", summary: "", segments: [], notes: "")
-            if deletingActive {
-                try PrivateStorage.createDirectory(at: activeURL.deletingLastPathComponent())
-                try JSONEncoder().encode(empty).write(to: activeURL, options: PrivateStorage.writingOptions)
-                try? PrivateStorage.setExcludedFromBackup(excludeFromBackup, at: activeURL)
-            }
-            try archive.delete(id: targetID)
-            committed = true
-            if deletingActive { restore(empty) }
-            refreshHistory()
-            let files = attachmentStore(for: targetID).directory
-            if FileManager.default.fileExists(atPath: files.path) { try FileManager.default.removeItem(at: files) }
-            let presentations = attachmentPresentationDirectory(for: targetID)
-            if FileManager.default.fileExists(atPath: presentations.path) { try FileManager.default.removeItem(at: presentations) }
-            archiveWarning = nil   // the user has acted on History; the note has served its purpose
-            message = "Conversation and attachments deleted from this device."
-        } catch {
-            if deletingActive && !committed { save(announce: false) }
-            message = "Could not delete conversation: \(error.localizedDescription)"
-        }
-    }
-
     private func restore(_ record: SessionRecord) {
         pendingSave?.cancel(); pendingSave = nil
         lastSavedData = nil
@@ -421,7 +394,46 @@ final class MobileSession {
             try? PrivateStorage.createDirectory(at: sharedInboxRoot)
             try? PrivateStorage.setExcludedFromBackup(excluded, at: sharedInboxRoot)
         }
-        watchInbox.applyBackupExclusion(excluded)
+        // Raw watch audio is always kept out of the backup, whatever this setting says.
+        watchInbox.applyBackupExclusion()
+    }
+}
+
+/// Deleting a conversation, kept out of the class body.
+extension MobileSession {
+    func deleteConversation(id targetID: String) {
+        guard !busy else { return }
+        pendingSave?.cancel(); pendingSave = nil
+        lastSavedData = nil
+        let deletingActive = targetID == id
+        let watchSource = history.first { $0.id == targetID }?.sourceImportID
+            ?? (deletingActive ? sourceImportID : nil)
+        var committed = false
+        do {
+            // Persist an empty active snapshot first so a deleted session cannot return on relaunch.
+            let empty = SessionRecord(id: UUID().uuidString, title: "New conversation", date: Date(),
+                                      transcript: "", summary: "", segments: [], notes: "")
+            if deletingActive {
+                try PrivateStorage.createDirectory(at: activeURL.deletingLastPathComponent())
+                try JSONEncoder().encode(empty).write(to: activeURL, options: PrivateStorage.writingOptions)
+                try? PrivateStorage.setExcludedFromBackup(excludeFromBackup, at: activeURL)
+            }
+            try archive.delete(id: targetID)
+            committed = true
+            // A watch conversation's raw audio goes with it, so the drain cannot bring it back (#181).
+            discardWatchAudio(sourceImportID: watchSource)
+            if deletingActive { restore(empty) }
+            refreshHistory()
+            let files = attachmentStore(for: targetID).directory
+            if FileManager.default.fileExists(atPath: files.path) { try FileManager.default.removeItem(at: files) }
+            let presentations = attachmentPresentationDirectory(for: targetID)
+            if FileManager.default.fileExists(atPath: presentations.path) { try FileManager.default.removeItem(at: presentations) }
+            archiveWarning = nil   // the user has acted on History; the note has served its purpose
+            message = "Conversation and attachments deleted from this device."
+        } catch {
+            if deletingActive && !committed { save(announce: false) }
+            message = "Could not delete conversation: \(error.localizedDescription)"
+        }
     }
 }
 

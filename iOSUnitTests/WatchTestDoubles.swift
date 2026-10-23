@@ -33,6 +33,9 @@ final class FakeWatchTranscriber: WatchAudioTranscribing {
     var failBefore: (index: Int, error: any Error)?
     /// Thrown after this chunk's lines are delivered.
     var failAfter: (index: Int, error: any Error)?
+    /// Called after each line is delivered, with how many have been delivered so far.
+    var onLine: ((Int) -> Void)?
+    private var delivered = 0
     private(set) var locales: [Locale] = []
     /// The chunk indices of every call, in order.
     private(set) var calls: [[Int]] = []
@@ -71,6 +74,8 @@ final class FakeWatchTranscriber: WatchAudioTranscribing {
             for line in script[chunk.index] ?? [] {
                 try onFinal(TranscriptSegment(source: .you, text: line.text, isFinal: true, start: line.start,
                                               end: line.end, speakerName: MobileFileTranscriber.speakerName))
+                delivered += 1
+                onLine?(delivered)
             }
             if let failAfter, failAfter.index == chunk.index { throw failAfter.error }
         }
