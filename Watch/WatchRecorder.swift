@@ -43,7 +43,11 @@ final class WatchRecorder {
             + "What was recorded is being sent to iPhone."
     }
 
-    private(set) var phase = Phase.idle
+    private(set) var phase = Phase.idle {
+        didSet { if phase != oldValue { onPhaseChange?() } }
+    }
+    /// Publishes the watch's status to the iPhone; called on every phase change, in any app state.
+    @ObservationIgnored var onPhaseChange: (() -> Void)?
     /// A finished chunk to send (Task 18's outbox).
     @ObservationIgnored var onChunkFinalized: ((URL, WatchChunkMetadata) -> Void)?
     /// The recording ended without a last chunk to carry `isLast` (its final chunk held no audio, or
@@ -80,6 +84,14 @@ final class WatchRecorder {
     var canContinue: Bool {
         if case .stopped(_, true) = phase { return true }
         return false
+    }
+
+    /// What the iPhone is told; `waitingRecordings` comes from the outbox.
+    func status(waitingRecordings: Int) -> WatchCaptureStatus {
+        if case .recording(let startedAt) = phase {
+            return WatchCaptureStatus(state: .recording, startedAt: startedAt, waitingRecordings: waitingRecordings)
+        }
+        return WatchCaptureStatus(state: .idle, startedAt: nil, waitingRecordings: waitingRecordings)
     }
 
     /// A new recording. Throws, without touching the microphone, when a limit blocks it.

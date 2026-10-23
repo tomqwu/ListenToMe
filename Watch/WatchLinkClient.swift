@@ -16,6 +16,19 @@ final class WatchLinkClient: NSObject, WCSessionDelegate {
     @ObservationIgnored private let session = WCSession.default
     /// Recorded chunks waiting for the iPhone (Slice 3).
     @ObservationIgnored var outbox: WatchOutbox?
+    /// The watch's own recording status, sent again once the session is active.
+    @ObservationIgnored private var captureStatus: WatchCaptureStatus?
+
+    /// Tells the iPhone whether this watch is recording (application context: the latest wins).
+    func publish(_ status: WatchCaptureStatus) {
+        captureStatus = status
+        sendCaptureStatus()
+    }
+
+    private func sendCaptureStatus() {
+        guard let captureStatus, session.activationState == .activated else { return }
+        try? session.updateApplicationContext(WatchLink.context(for: captureStatus))
+    }
 
     /// Called from the app's `init`, so the session is active for background transfers and their
     /// `didFinish` before any screen appears (and when the system wakes the app for them).
@@ -76,6 +89,7 @@ final class WatchLinkClient: NSObject, WCSessionDelegate {
             self.apply(context: status, stamp: stamp, reachable: reachable)
             // Chunks left from an earlier launch, or finished before activation, are sent now.
             if activationState == .activated { self.outbox?.reconcileAtLaunch(outstanding: outstanding.transfers) }
+            self.sendCaptureStatus()
         }
     }
 
