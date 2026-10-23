@@ -24,6 +24,23 @@ Summaries go to Ollama only when you select Ollama as the provider. Requests are
 
 Summaries go to an OpenAI-compatible server (for example LM Studio, vLLM or llama.cpp on your own computer, or a hosted service such as OpenRouter) only when you select **OpenAI-compatible** as the provider and enter that server's address yourself. The app never fills in or changes the address. When you request an AI summary, or while Auto is enabled, the app sends conversation text, notes and relevant context to that address; raw microphone audio is not sent. An address on this device or your own network (`localhost`, a `.local` name or a private address) is labelled "your server", because the app cannot verify where that server runs its model: a server on your network can forward requests to a cloud service. Any other address is labelled "may leave this device", and that service's own terms and privacy practices apply. Plain `http://` is accepted only for this device or a `.local` name; other addresses must use `https://`. Redirects are never followed, so a request is never re-sent to a host you did not enter. An optional API key for that server is stored in the device Keychain, is sent only to the server it was saved for, and is removed when you change servers. Speech correction is not sent there; it keeps using the Ollama connection if you turn it on. We do not receive the address, the key or anything sent to that server.
 
+## Optional cloud AI services
+
+Summaries go to a cloud AI service only when you choose one yourself in Settings → Summary provider → Cloud AI and add your own API key for it. Nothing is chosen by default, the app ships with no keys, and it never picks a model for you. Each service is labelled "Sends your transcript to" that vendor. When you request an AI summary, test a model, or while Auto is enabled, the app sends conversation text, notes and relevant context to the service you chose, at the fixed address listed below; raw microphone audio is not sent. Listing a service's models sends only your API key. Each service's key is stored separately in the device Keychain (`WhenUnlockedThisDeviceOnly`), is sent only to that service's address, and is kept when you switch to another service; Remove API key deletes it. Redirects are never followed. We do not receive your keys or anything sent to these services. Their own terms, retention and privacy practices apply, and you pay them for what you use:
+
+| Service | Receives your transcript at | Privacy policy |
+|---|---|---|
+| OpenAI | `api.openai.com` | [openai.com/policies/privacy-policy](https://openai.com/policies/privacy-policy/) |
+| Anthropic Claude | `api.anthropic.com` | [anthropic.com/legal/privacy](https://www.anthropic.com/legal/privacy) |
+| Google Gemini | `generativelanguage.googleapis.com` | [Gemini API terms](https://ai.google.dev/gemini-api/terms) (Google may use free-tier content to improve its products) |
+| DeepSeek | `api.deepseek.com` | [DeepSeek privacy policy](https://cdn.deepseek.com/policies/en-US/deepseek-privacy-policy.html) |
+| OpenRouter | `openrouter.ai`, which forwards each request to the model provider you chose there | [openrouter.ai/privacy](https://openrouter.ai/privacy) |
+| Groq | `api.groq.com` | [groq.com/privacy-policy](https://groq.com/privacy-policy/) |
+| Mistral | `api.mistral.ai` | [Mistral privacy policy](https://legal.mistral.ai/terms/privacy-policy/) |
+| xAI Grok | `api.x.ai` | [x.ai/legal/privacy-policy](https://x.ai/legal/privacy-policy) |
+
+Requests to OpenRouter also name the app ("ListenToMe" and its GitHub address) in OpenRouter's optional attribution headers. With Claude Opus 5.5 or Sonnet 5.5, if Claude declines a request, Anthropic may re-run the same request on another Claude model (Anthropic's server-side fallback); the request stays with Anthropic.
+
 Ollama operates independently. Its [privacy policy](https://ollama.com/privacy) describes transient processing of cloud prompts and responses, and retention of account and service metadata. Its account terms, usage limits and privacy practices apply when you use that service. We do not receive your Ollama credentials or cloud conversation content. You can turn off Auto and speech correction, select Apple Intelligence where supported, point the app at your own server, or remove the API key in Settings to stop future Ollama Cloud requests.
 
 ## Imports and sharing
@@ -32,7 +49,7 @@ You choose photos, files, shared notes and calendar events to import. Calendar a
 
 ## Retention and deletion
 
-Saved conversations remain on your device until you delete them from History (which has a search field for finding an older conversation) or you remove the app's data. To remove a saved Ollama or OpenAI-compatible server key, use Remove API key in Settings; uninstalling an app may leave Keychain entries behind. Manage device backups separately in your Apple settings. We cannot recover or remotely delete conversations stored only on your device. Contact Ollama, or the operator of an OpenAI-compatible service you chose, directly for requests about information retained by that service.
+Saved conversations remain on your device until you delete them from History (which has a search field for finding an older conversation) or you remove the app's data. To remove a saved Ollama, OpenAI-compatible server or cloud AI service key, use Remove API key in Settings; uninstalling an app may leave Keychain entries behind. Manage device backups separately in your Apple settings. We cannot recover or remotely delete conversations stored only on your device. Contact Ollama, the cloud AI service, or the operator of an OpenAI-compatible service you chose, directly for requests about information retained by that service.
 
 ## Support
 
