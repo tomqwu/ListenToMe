@@ -6,48 +6,7 @@ import ListenToMeCore
 /// simulator cannot run the speaker models meaningfully; the mapping, persistence and scheduling
 /// around it are what these tests pin down.
 @MainActor
-final class MobileSpeakerTests: XCTestCase {
-    private var root: URL!
-    private var recorder: SpeakerTestRecorder!
-    private var diarizer: FakeDiarizer!
-    private var savedEnabled = false
-
-    override func setUp() async throws {
-        root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-        recorder = SpeakerTestRecorder()
-        diarizer = FakeDiarizer()
-        savedEnabled = UserDefaults.standard.bool(forKey: MobileSpeakers.enabledKey)
-    }
-
-    override func tearDown() async throws {
-        UserDefaults.standard.set(savedEnabled, forKey: MobileSpeakers.enabledKey)
-        try? FileManager.default.removeItem(at: root)
-        recorder = nil; diarizer = nil
-    }
-
-    private func makeSession(provider: (any LLMProvider)? = nil) -> MobileSession {
-        let recorder = recorder!, diarizer = diarizer!
-        return MobileSession(storageDirectory: root, summaryProvider: provider, autoInterval: .milliseconds(80),
-                             makeRecorder: { recorder }, makeDiarizer: { diarizer })
-    }
-
-    private func record(_ session: MobileSession) async throws {
-        session.start()
-        for _ in 0..<400 where session.state != .recording { try await Task.sleep(for: .milliseconds(5)) }
-        XCTAssertEqual(session.state, .recording)
-    }
-
-    /// Two voices: 0–4 s and 4–8 s of a 10 s recording.
-    private func recordTwoVoices(_ session: MobileSession) async throws {
-        try await record(session)
-        recorder.feedAudio(seconds: 10)
-        recorder.send("Shall we start?", 0, 4)
-        recorder.send("Yes, the budget first.", 4, 8)
-        recorder.send("Mm.", 9.2, 9.6)
-        await diarizer.respond([DiarizedSegment(speakerId: "x", start: 0, duration: 4),
-                                DiarizedSegment(speakerId: "y", start: 4, duration: 4)])
-    }
-
+final class MobileSpeakerTests: MobileSpeakerTestCase {
     // MARK: Opt-in
 
     func testAudioIsCopiedForIdentificationOnlyWhenTheSettingIsOn() async throws {
@@ -93,47 +52,13 @@ final class MobileSpeakerTests: XCTestCase {
         await session.stop()
     }
 
-    func testStopRunsAFinalPassSoTheLastWordsAreLabeled() async throws {
-        let session = makeSession()
-        session.speakers.enabled = true
-        try await recordTwoVoices(session)
-        await session.stop()
-        XCTAssertEqual(session.segments.map(\.speakerName), ["Speaker 1", "Speaker 2", "Microphone"])
-        let calls = await diarizer.calls()
-        XCTAssertEqual(calls, 1)
-    }
-
-    func testBackgroundingSkipsTheFinalPass() async throws {
-        let session = makeSession()
-        session.speakers.enabled = true
-        try await recordTwoVoices(session)
-        await session.handleScenePhase(.background)
-        let calls = await diarizer.calls()
-        XCTAssertEqual(calls, 0, "Speaker models do not run while the app is in the background")
-        XCTAssertEqual(Set(session.segments.compactMap(\.speakerName)), ["Microphone"])
-    }
-
-    func testAResumedRecordingNumbersNewVoicesAfterTheEarlierOnes() async throws {
-        let session = makeSession()
-        session.speakers.enabled = true
-        try await recordTwoVoices(session)
-        await session.stop()
-        try await record(session)
-        recorder.feedAudio(seconds: 5)
-        recorder.send("Sorry I'm late.", 0, 4)
-        await diarizer.respond([DiarizedSegment(speakerId: "x", start: 0, duration: 4)])
-        await session.stop()
-        XCTAssertEqual(session.segments.last?.speakerName, "Speaker 3")
-        XCTAssertEqual(session.segments.last?.start ?? 0, 9.6, accuracy: 0.001,
-                       "Times continue after the first recording")
-    }
-
     // MARK: Prompts, rename and persistence
 
     func testPromptsKeepMicrophoneAsYouAndNamedSpeakersUnchanged() async throws {
         let session = makeSession()
         session.speakers.enabled = true
         try await recordTwoVoices(session)
+        await session.runSpeakerPass()
         await session.stop()
         session.renameSpeaker(id: try XCTUnwrap(session.speakerList.first?.id), to: "  Alice \n Ng ")
         XCTAssertEqual(MobileSession.promptSegment(session.segments[0]).speakerName, "Alice Ng")
@@ -148,6 +73,7 @@ final class MobileSpeakerTests: XCTestCase {
         let session = makeSession()
         session.speakers.enabled = true
         try await recordTwoVoices(session)
+        await session.runSpeakerPass()
         await session.stop()
         let speaker = try XCTUnwrap(session.speakerList.last)
         session.renameSpeaker(id: speaker.id, to: "Bob")
@@ -272,22 +198,6 @@ final class MobileSpeakerTests: XCTestCase {
         await diarizer.recover()
         try await record(session)
         XCTAssertFalse(session.speakers.isUnavailable)
-        await session.stop()
-    }
-
-    // MARK: Bounded memory
-
-    func testPeriodicTicksReleaseAudioAlreadyAnalyzed() async throws {
-        let session = makeSession()
-        session.speakers.enabled = true
-        try await record(session)
-        let audio = try XCTUnwrap(recorder.speakerAudio)
-        recorder.feedAudio(seconds: 200)
-        recorder.send("A long talk.", 0, 200)
-        await diarizer.respond([DiarizedSegment(speakerId: "x", start: 0, duration: 200)])
-        _ = await session.periodicSpeakerPass()
-        _ = await session.periodicSpeakerPass()
-        XCTAssertLessThanOrEqual(audio.retainedSampleCount, 70 * 16_000, "Only the overlap is kept")
         await session.stop()
     }
 

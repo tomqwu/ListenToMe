@@ -1,3 +1,4 @@
+import FluidAudio
 import Foundation
 import ListenToMeCore
 import Observation
@@ -14,6 +15,15 @@ protocol MobileSpeakerDiarizing: Sendable {
 extension SpeakerDiarizer: MobileSpeakerDiarizing {
     func diarize(samples: [Float]) async throws -> [DiarizedSegment] {
         try await analyze(samples: samples).segments
+    }
+
+    /// The iOS diarizer. Its downloaded models can always be fetched again, so their folder is kept
+    /// out of iCloud and Finder backups (FluidAudio's default location, which the Mac also uses).
+    static func excludingModelsFromBackup() -> SpeakerDiarizer {
+        let directory = OfflineDiarizerModels.defaultModelsDirectory()
+        try? PrivateStorage.createDirectory(at: directory)
+        try? PrivateStorage.setExcludedFromBackup(true, at: directory)
+        return SpeakerDiarizer()
     }
 }
 
@@ -68,8 +78,15 @@ final class MobileSpeakers {
     private(set) var lastError: String?
     /// Diarizer calls made, for diagnostics and tests.
     private(set) var passCount = 0
+    /// True once a pass has succeeded in this app run, so the models are downloaded and loaded. Stop's
+    /// final pass runs only then: Stop must never be the moment the first model download starts.
+    private(set) var modelsReady = false
     private var run: Run?
-    private var runToken = 0
+    /// Identifies the current run; bumped by every begin and end, so a late result can be discarded.
+    private(set) var runToken = 0
+    /// Tail of the serial chain of passes. A periodic pass, a Retry and Stop's final pass never
+    /// overlap: each waits for the previous one, then re-checks what is left to do.
+    private var passChain: Task<Void, Never>?
     private var diarizer: (any MobileSpeakerDiarizing)?
     private let makeDiarizer: () -> any MobileSpeakerDiarizing
 
@@ -123,20 +140,36 @@ final class MobileSpeakers {
         await diarizer?.retryModelLoad()
     }
 
-    /// Releases audio the next pass can no longer need: everything before the overlap the next
-    /// window rewinds into. While the models are unavailable no pass consumes the audio, so only the
-    /// last overlap's worth is kept for a retry. Memory then stays flat for a long meeting.
+    /// Releases audio no later window can reach: everything before where the next window would start
+    /// (`SpeakerAnalysisPolicy.windowStartSample`), so at most `maximumWindow` (600 s, about 38 MB) is
+    /// held even when passes keep failing. While the models are unavailable only the last overlap's
+    /// worth is kept for a retry.
     func releaseAnalyzedAudio() {
         guard let run else { return }
+        let total = run.buffer.sampleCount
         let overlap = Int(SpeakerAnalysisPolicy.windowOverlap) * SpeakerAnalysisPolicy.sampleRate
-        let consumed = isUnavailable ? run.buffer.sampleCount : run.analyzedSamples
-        run.buffer.discardAudio(before: consumed - overlap)
+        let keepFrom = isUnavailable
+            ? total - overlap
+            : SpeakerAnalysisPolicy.windowStartSample(totalSamples: total, analyzedSamples: run.analyzedSamples)
+        run.buffer.discardAudio(before: keepFrom)
     }
 
-    /// One trailing-window pass. `nil` when there is nothing to do (no run, nothing new, too little
-    /// audio, a pass already running, models unavailable) or the pass failed or was superseded.
-    func analyze() async -> Pass? {
-        guard let current = run, status != .analyzing, !isUnavailable else { return nil }
+    /// One trailing-window pass, queued behind any pass already running. `token` limits it to one run:
+    /// a pass queued for a recording that has since ended does nothing. `nil` when there is nothing to
+    /// do (no run, nothing new, too little audio, models unavailable) or the pass failed or was
+    /// superseded.
+    func analyze(token: Int? = nil) async -> Pass? {
+        let previous = passChain
+        let pass = Task { @MainActor () -> Pass? in
+            await previous?.value
+            return await self.analyzeNow(token: token)
+        }
+        passChain = Task { _ = await pass.value }
+        return await pass.value
+    }
+
+    private func analyzeNow(token: Int?) async -> Pass? {
+        guard let current = run, token == nil || token == current.token, !isUnavailable else { return nil }
         let buffer = current.buffer
         let captured = buffer.sampleCount
         guard SpeakerAnalysisPolicy.hasNewAudio(totalSamples: captured, analyzedSamples: current.analyzedSamples) else {
@@ -156,6 +189,7 @@ final class MobileSpeakers {
             guard var updated = run, updated.token == current.token else { return nil }
             status = .idle
             lastError = nil
+            modelsReady = true
             fold(segments, windowStart: snapshot.startTime, into: &updated)
             updated.analyzedSamples = snapshot.startSample + snapshot.samples.count
             run = updated
@@ -163,6 +197,7 @@ final class MobileSpeakers {
                         offset: updated.offset + snapshot.startOffset, firstLine: updated.firstLine)
         } catch {
             guard run?.token == current.token else { return nil }
+            if status == .analyzing { status = .idle }
             if let reason = (error as? SpeakerDiarizer.DiarizationError)?.modelFailureReason {
                 status = .unavailable(reason)
             } else {

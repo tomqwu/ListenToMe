@@ -291,11 +291,17 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
 - Optional speaker identification (#180), off by default: **Settings → Speakers → Identify
   speakers**. It runs on this device with FluidAudio, the same diarizer the Mac uses; the first use
   downloads its speaker models from `huggingface.co` (model weights only — no audio or text is
-  sent), and it uses more battery while listening. While recording, the audio the transcriber
+  sent; the model folder is excluded from iCloud and Finder backups because it can be downloaded
+  again), and it uses more battery while listening. While recording, the audio the transcriber
   accepted is copied into a 16 kHz buffer; about every 20 seconds (never sooner than the previous
   pass took) a pass re-analyzes only the audio since the last one plus a one-minute overlap
-  (`SpeakerAnalysisPolicy`), and Stop runs one final pass so the last words are labeled too. Audio a
-  later pass can no longer need is released after each pass, so memory stays flat in a long meeting.
+  (`SpeakerAnalysisPolicy`). Stop returns at once; a final pass then labels the last words while the
+  app stays open, queued behind any pass still running, and its result is dropped if a
+  new recording or another conversation has started. The final pass is skipped while the models have
+  not loaded yet, so Stop never starts the first download (a first recording shorter than about 20
+  seconds stays unlabeled). On every periodic tick, audio no later window can reach is released, so
+  at most ten minutes (about 38 MB) is held even when passes keep failing, and only the last minute
+  while the models are unavailable.
   No audio is saved. Lines are matched to speakers by SpeechAnalyzer's audio time ranges and become
   **Speaker 1**, **Speaker 2**…; a line no speaker covers for at least 30% of its length keeps
   **Microphone**. **Notes → Speakers** renames a speaker everywhere: the saved conversation, the
@@ -307,7 +313,7 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   you tap **Retry** or start a new recording. Limits: overlapping speech and short utterances are
   often left as **Microphone** or attributed to whoever spoke longest; a voice is not recognized
   across recordings, so after Stop/Listen (or an interruption) new voices continue the numbering
-  (Speaker 3, 4…) and can be renamed to merge them (see #171); backgrounding skips the final pass;
+  (Speaker 3, 4…) and can be renamed to merge them (see #171); backgrounding ends identification at once without a final pass;
   more than two hours of one recording is not analyzed further.
 - Editable titles and notes; atomic local saves after finalized utterances, explicit Save,
   save-before-New, local History, restoration on launch and Markdown through the share sheet.

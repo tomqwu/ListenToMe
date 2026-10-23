@@ -6,7 +6,7 @@ Contact **[tom@cloudnativity.io](mailto:tom@cloudnativity.io)** for help. Includ
 
 Requires iOS or iPadOS 26 or later. Tap Start listening and allow microphone access. Speech language assets may download on first use; your language choice is remembered across launches. Recording works while the app is open; it does not record other apps or phone calls. A call, Siri or an alarm pauses capture, the status line says why, and recording resumes when the interruption ends.
 
-Use Notes to add context, Save to keep a conversation, and History to reopen, search or share it. To label who said what, turn on Settings → Speakers → Identify speakers, then rename Speaker 1, Speaker 2… under Notes → Speakers. Labels are estimates: short or overlapping phrases may stay labeled Microphone. Sharing offers readable text and Markdown. More → What's New shows the release version and recent changes, and appears after an update only when those notes actually changed.
+Use Notes to add context, Save to keep a conversation, and History to reopen, search or share it. Sharing offers readable text and Markdown. More → What's New shows the release version and recent changes, and appears after an update only when those notes actually changed.
 
 ## AI summaries
 
@@ -20,7 +20,6 @@ Auto reacts to new speech. Quick provides short key points; Summary and Deep upd
 - Cloud error: test the connection in Settings, check your key and account limits, and refresh the available model list. For your own server, check the `.local` address and allow local network access.
 - Apple Intelligence unavailable: check device support and enable Apple Intelligence in system settings, or select Ollama.
 - Recording stopped: backgrounding stops recording and saves the conversation; a call, Siri or an alarm pauses it and it resumes on its own.
-- Speaker identification paused: the speaker models could not be downloaded. Connect to the internet and tap Retry in the status area, or start a new recording.
 - Missing from a restore: check whether "Exclude conversations from iCloud backup" is on in Settings.
 
 Read the [privacy policy](ios-privacy.md) for storage, optional cloud processing and deletion information.

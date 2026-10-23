@@ -57,31 +57,42 @@ extension MobileSession {
         return max(1, next.timeIntervalSinceNow)
     }
 
-    /// One pass over the audio not yet analyzed, applied to this conversation's lines.
+    /// One pass over the audio not yet analyzed, applied to this conversation's lines. `token`
+    /// restricts it to one recording's run; the result is dropped if the open conversation changed.
     @discardableResult
-    func runSpeakerPass() async -> SpeakerAnalysisOutcome {
+    func runSpeakerPass(token: Int? = nil) async -> SpeakerAnalysisOutcome {
         let conversation = id
-        if let pass = await speakers.analyze(), id == conversation { applySpeakerLabels(pass) }
+        if let pass = await speakers.analyze(token: token), id == conversation { applySpeakerLabels(pass) }
         return speakers.isUnavailable ? .modelsUnavailable : .completed
     }
 
-    /// Stop: drain a periodic pass, then one final pass so the last words are labeled too. Skipped
-    /// in the background, where iOS does not give the app the Neural Engine; those lines keep
-    /// "Microphone".
-    func finishSpeakerIdentification() async {
+    /// Called by Stop once the session is already idle and saved, so nothing here can hold Stop,
+    /// New, History or backgrounding. The periodic loop is cancelled without waiting for it; a pass
+    /// still running finishes on its own and its result is dropped if the run or conversation moved
+    /// on. In the foreground, one final pass labels the last words, queued behind any pass in flight
+    /// and limited to this run. It is skipped in the background (iOS gives a backgrounded app no
+    /// Neural Engine) and until the models have loaded once, so Stop never starts the first download;
+    /// those lines keep "Microphone".
+    func finishSpeakerIdentification() {
         speakerLoop?.cancel()
-        await speakerLoop?.value
         speakerLoop = nil
-        if speakers.isRunning, isForeground { await runSpeakerPass() }
-        speakers.endRun()
+        guard speakers.isRunning else { return }
+        guard isForeground, speakers.modelsReady else { speakers.endRun(); return }
+        let token = speakers.runToken
+        speakerFinalPass = Task { [weak self] in
+            guard let self else { return }
+            await self.runSpeakerPass(token: token)
+            if self.speakers.runToken == token { self.speakers.endRun() }
+        }
     }
 
     /// The retry gesture after the speaker models could not be loaded.
     func retrySpeakerIdentification() {
+        let token = speakers.runToken
         Task {
             await speakers.retry()
             guard state == .recording else { return }
-            await runSpeakerPass()
+            await runSpeakerPass(token: token)
         }
     }
 

@@ -62,6 +62,9 @@ actor FakeDiarizer: MobileSpeakerDiarizing {
     private var segments: [DiarizedSegment] = []
     private var modelFailure: String?
     private var failNext = false
+    private var failing = false
+    private var holdNextCall = false
+    private var held: CheckedContinuation<Void, Never>?
     private var callCount = 0
     private var retryCount = 0
     private var sampleCount = 0
@@ -69,6 +72,10 @@ actor FakeDiarizer: MobileSpeakerDiarizing {
     func respond(_ segments: [DiarizedSegment]) { self.segments = segments }
     func failModels(_ reason: String) { modelFailure = reason }
     func failOnce() { failNext = true }
+    func failAlways() { failing = true }
+    func holdNext() { holdNextCall = true }
+    func holding() -> Bool { held != nil }
+    func release() { held?.resume(); held = nil }
     func recover() { modelFailure = nil }
     func calls() -> Int { callCount }
     func retries() -> Int { retryCount }
@@ -77,6 +84,11 @@ actor FakeDiarizer: MobileSpeakerDiarizing {
     func diarize(samples: [Float]) async throws -> [DiarizedSegment] {
         callCount += 1
         sampleCount = samples.count
+        if holdNextCall {
+            holdNextCall = false
+            await withCheckedContinuation { held = $0 }
+        }
+        if failing { throw SpeakerDiarizer.DiarizationError.notEnoughAudio }
         if let modelFailure { throw SpeakerDiarizer.DiarizationError.modelsUnavailable(modelFailure) }
         if failNext { failNext = false; throw SpeakerDiarizer.DiarizationError.notEnoughAudio }
         return segments

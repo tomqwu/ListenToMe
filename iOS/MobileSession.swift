@@ -78,6 +78,8 @@ final class MobileSession {
     /// Opt-in on-device speaker identification (issue #180) and its periodic pass while recording.
     let speakers: MobileSpeakers
     var speakerLoop: Task<Void, Never>?
+    /// Stop's final speaker pass, which runs after the session is already idle.
+    var speakerFinalPass: Task<Void, Never>?
     private let archive: SessionArchive
     private let activeURL: URL
     /// The bytes last written for this conversation. Identical bytes are not written again.
@@ -108,7 +110,7 @@ final class MobileSession {
          correctionProvider: (any LLMProvider)? = nil, saveDebounce: Duration = .seconds(1),
          sharedInbox: URL? = nil,
          makeRecorder: @escaping () -> any MobileRecording = { MobileRecorder() },
-         makeDiarizer: @escaping () -> any MobileSpeakerDiarizing = { SpeakerDiarizer() }) {
+         makeDiarizer: @escaping () -> any MobileSpeakerDiarizing = { SpeakerDiarizer.excludingModelsFromBackup() }) {
         speakers = MobileSpeakers(makeDiarizer: makeDiarizer)
         // Resolved once: the backup choice has to reach the App Group inbox too, not only the
         // conversations this app owns.
@@ -268,10 +270,10 @@ final class MobileSession {
         if stopReason == nil { stopReason = .user }
         do { try await recorder?.stop() } catch { message = "Could not finalize transcript: \(error.localizedDescription)" }
         recorder = nil
-        await finishSpeakerIdentification()
         UIApplication.shared.isIdleTimerDisabled = false
         state = .idle
         save(announce: false)
+        finishSpeakerIdentification()
     }
 
     func background() async {
