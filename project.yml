@@ -66,6 +66,9 @@ targets:
       - SharedPlatform
       - App/MarkdownText.swift
       - iOSShared
+      # Licenses of every resolved SwiftPM package, shown in Settings → About → Acknowledgements (#202).
+      - path: App/ThirdPartyNotices.txt
+        buildPhase: resources
     dependencies:
       - target: ListenToMeShare
         embed: true

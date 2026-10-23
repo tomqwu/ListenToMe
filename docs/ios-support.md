@@ -1,6 +1,6 @@
 # Listen To Me — iPhone and iPad support
 
-Contact **[tom@cloudnativity.io](mailto:tom@cloudnativity.io)** for help. Include your iOS version, device model, and the app version shown in Settings → Release. Do not include API keys or private transcripts.
+Contact **[tom@cloudnativity.io](mailto:tom@cloudnativity.io)** for help. Include your iOS version, device model, and the app version shown in Settings → About. Do not include API keys or private transcripts.
 
 ## Getting started
 

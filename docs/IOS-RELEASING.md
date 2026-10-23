@@ -155,6 +155,18 @@ extension, and every archive runs **without** `WATCH_EMBED` until the
 archive that contains `ListenToMeIOS.app/Watch/`. Choose a build number not already accepted by App
 Store Connect. Update the matching `metadata/ios/en-CA/what-to-test-<version>.txt` and `docs/IOS.md`.
 Merge source changes after CI passes.
+
+**Third-party notices.** Every SwiftPM package pinned in `Config/Package.resolved` must ship its
+license with the binary (#202). The iOS app bundles `App/ThirdPartyNotices.txt` (shared with macOS)
+and shows it under **Settings → About → Acknowledgements**; the Apple Watch app and the share
+extension link no third-party package. When a release adds, removes or bumps a package — any change
+to `Config/Package.resolved` or to a target's `dependencies` in `project.yml` since the last accepted
+build — run `make ios-build`, then `python3 -I scripts/generate-third-party-notices.py`, and commit
+the regenerated file. `ThirdPartyNoticesTests` (part of `swift test` and the hosted CI check) fails
+while a pinned package lacks a notice at its resolved revision, and `MobileAcknowledgementsTests`
+fails if the app bundle lacks the file. Before archiving, open **Settings → About →
+Acknowledgements** in the simulator build and confirm each new package is listed and opens its license.
+
 Documentation-only follow-ups do not require a new binary. Do not bump the macOS version for an iOS-only release.
 
 ## 2. Archive the merged source
