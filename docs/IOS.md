@@ -1,7 +1,7 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.12.0 (29).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.13.0 (30).
 
 ## What this app is for
 
@@ -89,7 +89,7 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 **The two apps keep independent version lines.** They are separate products in separate distribution
 channels, and an iOS build number already accepted by App Store Connect can never be reused. A higher
 iOS version does *not* mean the iPhone app is ahead of the Mac app; today macOS is 1.4.4 (14) and iOS
-is 1.12.0 (29).
+is 1.13.0 (30).
 
 - **`MARKETING_VERSION`** (iOS, in `project.yml`): a **minor** bump for user-visible features, a
   **patch** bump for fixes.
@@ -109,6 +109,10 @@ is 1.12.0 (29).
 The archive, upload, tagging and verification steps themselves are not repeated here: follow
 [IOS-RELEASING.md](IOS-RELEASING.md) for iOS, [RELEASING.md](RELEASING.md) for macOS, and
 [AGENTS.md](../AGENTS.md) for the release workflow that governs both.
+
+## iOS 1.13.0 (30)
+
+Save to folder (#53), off by default: **Settings → Save to folder** writes one Obsidian-friendly Markdown note per conversation into a folder the user picks in Files (On My iPhone, iCloud Drive, an Obsidian vault) after Stop or Save, and updates that note in place; see [Save to folder](#save-to-folder-53). Automatic language re-checks mid-recording (#199): about once a minute while people talk, with hysteresis (a new language must be heard twice in a row, a switch holds at least 90 seconds, at most four switches), it re-transcribes only the audio since the change from a rolling two-minute in-memory buffer, and **Undo** reverts the latest switch. The language picker lists every language `SpeechTranscriber` supports on the device, grouped **Installed** and **Downloadable** (#172). Speaker labels match voices by embedding across analysis passes, so someone quiet for minutes keeps their label and name (#171); the embeddings live in memory for one recording and are never saved. Summaries can use an **OpenAI-compatible** server (LM Studio, vLLM, llama.cpp, Ollama's `/v1`, OpenRouter; #52) with an optional Keychain key bound to that server, labelled "your server" or "may leave this device". **Settings → About → Acknowledgements** lists every bundled open-source package with its license (#202); no SwiftPM package changed since 1.12.0 (29). The privacy policy in [ios-privacy.md](ios-privacy.md) already covers Save to folder, OpenAI-compatible servers and the re-check buffer. The Apple Watch target is versioned with the app but is not embedded in this build (`WATCH_EMBED` off; #181 ships on a later train). [What to Test](../metadata/ios/en-CA/what-to-test-1.13.0.txt).
 
 ## iOS 1.12.0 (29)
 
