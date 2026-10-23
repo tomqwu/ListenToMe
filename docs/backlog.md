@@ -36,6 +36,6 @@ The standalone iPhone/iPad app is in scope at the maintainer's request. What it 
 deliberately leaves to macOS, is stated once in
 [iOS → What this app is for](IOS.md#what-this-app-is-for) and
 [iOS → Parity with macOS](IOS.md#parity-with-macos) — including the tier-3 list (system/call audio
-capture, background recording, a local Ollama daemon, WhisperKit, Mac sync). Do not restate it here.
+capture, background recording, a local Ollama daemon, WhisperKit transcription, Mac sync). Do not restate it here.
 
 Exploratory work must preserve explicit consent, local storage and truthful privacy/accuracy claims.

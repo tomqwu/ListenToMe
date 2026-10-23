@@ -4,7 +4,7 @@ Contact **[tom@cloudnativity.io](mailto:tom@cloudnativity.io)** for help. Includ
 
 ## Getting started
 
-Requires iOS or iPadOS 26 or later. Tap Start listening and allow microphone access. Speech language assets may download on first use; your language choice is remembered across launches. Recording works while the app is open; it does not record other apps or phone calls. A call, Siri or an alarm pauses capture, the status line says why, and recording resumes when the interruption ends.
+Requires iOS or iPadOS 26 or later. Tap Start listening and allow microphone access. Speech language assets may download on first use; your language choice is remembered across launches. With the language set to Automatic (the default), the app detects the language you speak on your device during the first seconds of each recording and, if it differs, switches once and transcribes the recording again; the first time, a language model of about 75 MB downloads from huggingface.co. Tap Undo next to "Detected … · switched" to keep the language the recording started in, or choose a fixed language in More → Settings → Transcription. A recording that continues the conversation, for example after a call, stays in the detected language. "Switched for new speech" means the switch came after the first two minutes, so the earlier lines were not transcribed again. Recording works while the app is open; it does not record other apps or phone calls. A call, Siri or an alarm pauses capture, the status line says why, and recording resumes when the interruption ends.
 
 Use Notes to add context, Save to keep a conversation, and History to reopen, search or share it. Sharing offers readable text and Markdown. More → What's New shows the release version and recent changes, and appears after an update only when those notes actually changed.
 
@@ -21,6 +21,8 @@ Auto reacts to new speech. Quick provides short key points; Summary and Deep upd
 ## Common fixes
 
 - No transcript: check microphone permission, selected language and downloaded speech assets.
+- Transcript in the wrong language: Automatic checks only the first stretch of speech and switches once per recording, so a recording that changes language later keeps the first one. Detection needs about 8 seconds of speech and is skipped when it is not confident, and it cannot switch to a language your device has no speech model for. Choose the language in More → Settings → Transcription to fix it for every recording.
+- "Language detection paused": the language model could not be downloaded or loaded, for example without internet on first use. Recording continues in the starting language; the next recording tries again.
 - Cloud error: test the connection in Settings, check your key and account limits, and refresh the available model list. For your own server, check the `.local` address and allow local network access.
 - Apple Intelligence unavailable: check device support and enable Apple Intelligence in system settings, or select Ollama.
 - Recording stopped: backgrounding stops recording and saves the conversation; a call, Siri or an alarm pauses it and it resumes on its own.

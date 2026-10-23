@@ -122,6 +122,7 @@ struct MobileMeetingView: View {
                 .font(.caption.weight(.medium))
                 .foregroundStyle(session.state == .recording ? .red : MobileStyle.muted)
             MobileSpeakerStatus(session: session)
+            MobileLanguageStatus(session: session)
             MobileWatchRecordingLine(status: session.watchCaptureStatus)
             if let message = session.message {
                 Text(message).font(.caption).lineLimit(2).foregroundStyle(.secondary)
@@ -235,15 +236,7 @@ struct MobileMeetingView: View {
                     }.padding(.vertical, 10)
                 }
                 MobileAISettingsView(ai: session.ai)
-                Section("Transcription") {
-                    Picker("Language", selection: $session.language) {
-                        Text("System (\(Locale.current.identifier))").tag(Locale.current.identifier)
-                        ForEach(MobileSession.selectableLanguages(), id: \.self) { locale in
-                            Text(Locale.current.localizedString(forIdentifier: locale) ?? locale).tag(locale)
-                        }
-                    }.disabled(session.busy)
-                    Text("Speech models may download on first use. Audio is transcribed on your device and is not saved.")
-                }
+                MobileLanguageSettings(session: session)
                 MobileSpeakerSettings(session: session)
                 Section("Recording") {
                     Text("This version records the microphone while the app is open. " +

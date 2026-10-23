@@ -14,10 +14,26 @@ protocol MobileRecording: AnyObject {
     /// Optional copy of the transcribed audio for on-device speaker identification (issue #180).
     /// Set before `start`; `nil` (the default) means nothing is copied.
     func attachSpeakerAudio(_ buffer: SpeakerAudioBuffer?)
+    /// Optional copy of the transcribed audio for spoken-language detection (issue #197). Set before `start`.
+    func attachLanguageAudio(_ buffer: SpeakerAudioBuffer?)
+    /// Restarts transcription in `locale` while capture keeps running (issue #197). Throws, changing
+    /// nothing, when the new locale cannot be prepared. With `replay`, the new transcriber first hears
+    /// that buffer's audio from the recording's start, so every line is transcribed again, and the old
+    /// transcriber delivers nothing more. Without it, the new transcriber continues the timeline and the
+    /// old one still finalizes what it heard before the switch, so its last words are not lost.
+    /// `willReplace` runs before the new transcriber delivers anything. Its arguments say whether the
+    /// recording so far is being transcribed again, and the recording time at which the old one stopped.
+    func switchLocale(to locale: Locale, replay: SpeakerAudioBuffer?,
+                      willReplace: @escaping @MainActor (Bool, TimeInterval) -> Void) async throws
 }
 
 extension MobileRecording {
     func attachSpeakerAudio(_ buffer: SpeakerAudioBuffer?) {}
+    func attachLanguageAudio(_ buffer: SpeakerAudioBuffer?) {}
+    func switchLocale(to locale: Locale, replay: SpeakerAudioBuffer?,
+                      willReplace: @escaping @MainActor (Bool, TimeInterval) -> Void) async throws {
+        throw RecordingError.message("This recorder cannot change language while recording.")
+    }
 }
 
 /// Audio lost before the transcriber sees it. One dropped buffer is a hiccup, not a reason to end a
@@ -32,6 +48,16 @@ final class MobileRecorder: MobileRecording {
     private var audio: AsyncStream<AudioChunk>.Continuation?
     private var feedTask: Task<Void, Never>?
     private var resultsTask: Task<Void, Never>?
+    /// Bumped when the transcriber is replaced. Results of a generation below `acceptedGeneration` are
+    /// dropped: a replaying switch raises it, so the old transcriber's late results never arrive.
+    private var resultsGeneration = 0
+    private var acceptedGeneration = 0
+    /// Old transcribers finalizing after a switch without replay; Stop waits for them.
+    private var finishing: [Task<Void, Never>] = []
+    private var sink: AnalyzerSink?
+    private var deliver: (@MainActor (TranscriptSegment) -> Void)?
+    private var isSwitching = false
+    private var isStopping = false
     private var hasTap = false
     private var analyzerFormat: AVAudioFormat?
     private var report: (@MainActor (String) -> Void)?
@@ -45,10 +71,18 @@ final class MobileRecorder: MobileRecording {
     /// share one timeline. `nil` unless Identify speakers is on.
     private var speakerAudio: SpeakerAudioBuffer?
     private var speakerGeneration = 0
+    /// The same audio for spoken-language detection; `nil` unless the language is Automatic.
+    private var languageAudio: SpeakerAudioBuffer?
+    private var languageGeneration = 0
 
     func attachSpeakerAudio(_ buffer: SpeakerAudioBuffer?) {
         speakerAudio = buffer
         speakerGeneration = buffer?.currentGeneration() ?? 0
+    }
+
+    func attachLanguageAudio(_ buffer: SpeakerAudioBuffer?) {
+        languageAudio = buffer
+        languageGeneration = buffer?.currentGeneration() ?? 0
     }
 
     func start(locale: Locale, onSegment: @escaping @MainActor (TranscriptSegment) -> Void,
@@ -74,23 +108,99 @@ final class MobileRecorder: MobileRecording {
         self.input = input
         try await analyzer.start(inputSequence: inputs)
         try Task.checkCancellation()
-        resultsTask = Task {
-            do {
-                for try await result in transcriber.results {
-                    let text = String(result.text.characters)
-                    guard !result.isFinal || !text.isEmpty else { continue }
-                    onSegment(TranscriptSegment(source: .you, text: text, isFinal: result.isFinal,
-                                                start: result.range.start.seconds, end: result.range.end.seconds,
-                                                speakerName: "Microphone"))
-                }
-                if engine.isRunning { onFailure("Transcription ended. Recording stopped; captured text is kept.") }
-            } catch {
-                if !Task.isCancelled { onFailure("Transcription stopped: \(error.localizedDescription)") }
-            }
-        }
+        deliver = onSegment
+        sink = AnalyzerSink(input: input, destination: format, speakerAudio: speakerAudio,
+                            speakerGeneration: speakerGeneration, languageAudio: languageAudio,
+                            languageGeneration: languageGeneration)
+        resultsTask = consumeResults(of: transcriber)
         try startCapture()
         observeConfigurationChanges()
         #endif
+    }
+
+    /// Delivers one transcriber's results until it is replaced or stopped.
+    private func consumeResults(of transcriber: SpeechTranscriber) -> Task<Void, Never> {
+        let generation = resultsGeneration
+        return Task {
+            do {
+                for try await result in transcriber.results {
+                    guard generation >= acceptedGeneration else { return }
+                    let text = String(result.text.characters)
+                    guard !result.isFinal || !text.isEmpty else { continue }
+                    deliver?(TranscriptSegment(source: .you, text: text, isFinal: result.isFinal,
+                                               start: result.range.start.seconds, end: result.range.end.seconds,
+                                               speakerName: "Microphone"))
+                }
+                if generation == resultsGeneration, engine.isRunning {
+                    report?("Transcription ended. Recording stopped; captured text is kept.")
+                }
+            } catch {
+                if !Task.isCancelled, generation == resultsGeneration, generation >= acceptedGeneration {
+                    report?("Transcription stopped: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+
+    func switchLocale(to locale: Locale, replay: SpeakerAudioBuffer?,
+                      willReplace: @escaping @MainActor (Bool, TimeInterval) -> Void) async throws {
+        guard let sink, input != nil, !isSwitching else { throw RecordingError.message("Recording is not running.") }
+        isSwitching = true
+        defer { isSwitching = false }
+        let (transcriber, format) = try await MobileSpeechModel.prepare(locale: locale, volatileResults: true)
+        let analyzer = SpeechAnalyzer(modules: [transcriber])
+        try await analyzer.prepareToAnalyze(in: format)
+        // Replayed audio reaches the new analyzer much faster than real time; live audio queues behind it.
+        let (inputs, input) = AsyncStream<AnalyzerInput>.makeStream(bufferingPolicy: .bufferingOldest(1_024))
+        try await analyzer.start(inputSequence: inputs)
+        guard self.sink === sink, !isStopping, let previous = self.analyzer else {
+            await analyzer.cancelAndFinishNow()
+            throw CancellationError()
+        }
+        // From here to `resume` nothing awaits, so no result and no audio slips between the two transcribers.
+        let cut = sink.hold()
+        let replayed = replay.map {
+            Self.replay($0, through: cut.languageSamples, into: input, format: format)
+        } ?? false
+        let previousResults = resultsTask
+        resultsGeneration &+= 1
+        self.input?.finish()   // the old transcriber's input ends exactly at the cut
+        if replayed {
+            acceptedGeneration = resultsGeneration
+            previousResults?.cancel()
+            Task { await previous.cancelAndFinishNow() }
+        } else {
+            finishing.append(Task {
+                try? await previous.finalizeAndFinishThroughEndOfInput()
+                await previousResults?.value
+            })
+        }
+        self.analyzer = analyzer
+        self.analyzerFormat = format
+        self.input = input
+        willReplace(replayed, cut.deliveredSeconds)
+        resultsTask = consumeResults(of: transcriber)
+        sink.resume(input: input, destination: format, continueAt: replayed ? nil : cut.deliveredSeconds)
+    }
+
+    /// Feeds 16 kHz audio from the recording's start into a new analyzer, a few seconds per buffer.
+    /// Returns false, feeding nothing, when that audio is gone or cannot be converted.
+    static func replay(_ buffer: SpeakerAudioBuffer, through samples: Int,
+                       into input: AsyncStream<AnalyzerInput>.Continuation, format: AVAudioFormat) -> Bool {
+        let audio = buffer.snapshot(fromSample: 0)
+        guard !buffer.didTruncate, audio.startSample == 0, samples > 0, audio.samples.count >= samples,
+              let pipeline = ConversionPipeline(sourceRate: Double(LanguageDetectionPolicy.sampleRate),
+                                                destination: format) else { return false }
+        let step = LanguageDetectionPolicy.sampleRate * 2
+        var buffers: [AVAudioPCMBuffer] = []
+        for start in stride(from: 0, to: samples, by: step) {
+            guard let converted = pipeline.convert(Array(audio.samples[start..<min(samples, start + step)])) else {
+                return false
+            }
+            buffers.append(converted)
+        }
+        for converted in buffers { input.yield(AnalyzerInput(buffer: converted)) }
+        return true
     }
 
     /// A newly connected headset changes the input sample rate, which stops AVAudioEngine and posts
@@ -128,49 +238,32 @@ final class MobileRecorder: MobileRecording {
     /// Install the tap and the conversion pipeline for whatever input the engine currently has.
     /// Conversion runs on a detached task: a main-thread stall must never cost audio.
     private func startCapture() throws {
-        guard let format = analyzerFormat, let input else {
+        guard analyzerFormat != nil, input != nil, let sink else {
             throw RecordingError.message("Recording is not prepared.")
         }
         let microphone = engine.inputNode
         let native = microphone.outputFormat(forBus: 0)
-        guard native.sampleRate > 0, native.channelCount > 0,
-              let mono = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: native.sampleRate,
-                                       channels: 1, interleaved: false),
-              let converter = AVAudioConverter(from: mono, to: format) else {
+        guard native.sampleRate > 0, native.channelCount > 0, sink.canConvert(sampleRate: native.sampleRate) else {
             throw RecordingError.message("No usable microphone is connected.")
         }
         let notify: @Sendable (String) -> Void = { [weak self] text in
             Task { @MainActor [weak self] in self?.report?(text) }
         }
-        let pipeline = ConversionPipeline(source: mono, destination: format, converter: converter)
-        let speakerAudio = speakerAudio, speakerGeneration = speakerGeneration
         let (chunks, audio) = AsyncStream<AudioChunk>.makeStream(bufferingPolicy: .bufferingOldest(128))
         self.audio = audio
         feedTask = Task.detached(priority: .userInitiated) {
             var lost = 0.0
             for await chunk in chunks {
-                let seconds = chunk.sampleRate > 0 ? Double(chunk.samples.count) / chunk.sampleRate : 0
-                guard let buffer = pipeline.convert(chunk) else {
-                    lost += seconds
-                    if lost > tolerableLostSeconds {
-                        notify("Audio conversion failed. Recording stopped to avoid an incomplete transcript.")
-                        break
-                    }
-                    continue
-                }
-                if case .dropped = input.yield(AnalyzerInput(buffer: buffer)) {
-                    lost += seconds
-                    if lost > tolerableLostSeconds {
-                        notify("Transcription could not keep up. Recording stopped; captured text is kept.")
-                        break
-                    }
-                    continue
-                }
-                // Copied only after the analyzer accepted the same chunk: a dropped or unconvertible
-                // chunk is missing from both, so the two timelines never drift apart.
-                speakerAudio?.append(samples: chunk.samples, sampleRate: chunk.sampleRate,
-                                     timestamp: 0, generation: speakerGeneration)
-                lost = 0
+                // The sink copies a chunk for speakers and language only after the analyzer accepted it:
+                // a dropped or unconvertible chunk is missing from all of them, so timelines never drift.
+                let delivery = sink.deliver(chunk)
+                if delivery == .accepted { lost = 0; continue }
+                lost += chunk.sampleRate > 0 ? Double(chunk.samples.count) / chunk.sampleRate : 0
+                guard lost > tolerableLostSeconds else { continue }
+                notify(delivery == .dropped
+                       ? "Transcription could not keep up. Recording stopped; captured text is kept."
+                       : "Audio conversion failed. Recording stopped to avoid an incomplete transcript.")
+                return
             }
         }
         let dropped = DroppedAudio()
@@ -206,6 +299,7 @@ final class MobileRecorder: MobileRecording {
     }
 
     func stop() async throws {
+        isStopping = true
         if let configurationObserver {
             NotificationCenter.default.removeObserver(configurationObserver)
             self.configurationObserver = nil
@@ -215,6 +309,7 @@ final class MobileRecorder: MobileRecording {
         do {
             try await analyzer?.finalizeAndFinishThroughEndOfInput()
             await resultsTask?.value
+            for task in finishing { await task.value }
         } catch {
             await analyzer?.cancelAndFinishNow()
             resultsTask?.cancel()
@@ -227,39 +322,8 @@ final class MobileRecorder: MobileRecording {
     private func cleanup() {
         analyzer = nil; input = nil; audio = nil; feedTask = nil; resultsTask = nil
         analyzerFormat = nil; report = nil; tapFormat = nil; speakerAudio = nil
+        languageAudio = nil; sink = nil; deliver = nil; isStopping = false; finishing = []
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-    }
-}
-
-/// Owned by the single feed task that converts chunks; nothing else touches it.
-private final class ConversionPipeline: @unchecked Sendable {
-    private let source: AVAudioFormat
-    private let destination: AVAudioFormat
-    private let converter: AVAudioConverter
-
-    init(source: AVAudioFormat, destination: AVAudioFormat, converter: AVAudioConverter) {
-        self.source = source
-        self.destination = destination
-        self.converter = converter
-    }
-
-    func convert(_ chunk: AudioChunk) -> AVAudioPCMBuffer? {
-        guard let buffer = AVAudioPCMBuffer(pcmFormat: source, frameCapacity: AVAudioFrameCount(chunk.samples.count)),
-              let data = buffer.floatChannelData else { return nil }
-        buffer.frameLength = buffer.frameCapacity
-        chunk.samples.withUnsafeBufferPointer { samples in
-            if let base = samples.baseAddress { data[0].update(from: base, count: samples.count) }
-        }
-        let capacity = AVAudioFrameCount(Double(chunk.samples.count) * destination.sampleRate / source.sampleRate) + 1_024
-        guard let output = AVAudioPCMBuffer(pcmFormat: destination, frameCapacity: capacity) else { return nil }
-        var consumed = false
-        var error: NSError?
-        converter.convert(to: output, error: &error) { _, status in
-            if consumed { status.pointee = .noDataNow; return nil }
-            consumed = true; status.pointee = .haveData
-            return buffer
-        }
-        return error == nil ? output : nil
     }
 }
 

@@ -8,6 +8,7 @@ import XCTest
 final class MobileWatchDrainTests: XCTestCase {
     private var root: URL!
     private var savedLanguage: Any?
+    private var savedAutomatic: Any?
     private let recordingID = UUID()
     private let startedAt = Date(timeIntervalSince1970: 1_700_000_000)
     private let hour: TimeInterval = 3_600
@@ -15,11 +16,13 @@ final class MobileWatchDrainTests: XCTestCase {
     override func setUp() async throws {
         root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         savedLanguage = UserDefaults.standard.object(forKey: MobileSession.languageKey)
+        savedAutomatic = UserDefaults.standard.object(forKey: MobileLanguageDetection.automaticKey)
     }
 
     override func tearDown() async throws {
         try? FileManager.default.removeItem(at: root)
         UserDefaults.standard.set(savedLanguage, forKey: MobileSession.languageKey)
+        UserDefaults.standard.set(savedAutomatic, forKey: MobileLanguageDetection.automaticKey)
     }
 
     // MARK: Helpers
@@ -251,10 +254,21 @@ final class MobileWatchDrainTests: XCTestCase {
     func testUsesTheCurrentTranscriptionLanguage() async throws {
         let fake = FakeWatchTranscriber()
         let session = makeSession(fake)
-        session.language = "fr_FR"
+        session.languageChoice = "fr_FR"
         try deliver(session, 0, isLast: true)
         await drain(session)
         XCTAssertEqual(fake.locales, [Locale(identifier: "fr_FR")])
+    }
+
+    /// Issue #197: Automatic transcribes a watch recording in the device's language; detection is live-only.
+    func testAutomaticTranscribesInTheDeviceLanguage() async throws {
+        let fake = FakeWatchTranscriber()
+        let session = makeSession(fake)
+        session.language = "fr_FR"
+        session.languageChoice = MobileSession.automaticLanguageTag
+        try deliver(session, 0, isLast: true)
+        await drain(session)
+        XCTAssertEqual(fake.locales, [Locale(identifier: Locale.current.identifier)])
     }
 
     func testTransientFileErrorLeavesTheRecordingForLater() async throws {
