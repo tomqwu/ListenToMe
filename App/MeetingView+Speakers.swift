@@ -82,7 +82,7 @@ extension MeetingView {
         // CPU for an identical answer.
         guard SpeakerAnalysisPolicy.hasNewAudio(totalSamples: captured, analyzedSamples: analyzed) else { return nil }
         // Re-analyze only a trailing window since the previous pass (issue #109) instead of the whole
-        // growing session; the overlap lets SpeakerIdentityTracker carry identities over.
+        // growing session; voices and the overlap let SpeakerIdentityTracker carry identities over.
         let from = SpeakerAnalysisPolicy.windowStartSample(totalSamples: captured, analyzedSamples: analyzed)
         let snapshot = await Task.detached { sink.snapshot(fromSample: from) }.value
         guard token == diarizationRunToken, !Task.isCancelled else { return .cancelled }
@@ -112,7 +112,8 @@ extension MeetingView {
             DiarizedSegment(speakerId: $0.speakerId, start: $0.start + windowStart, duration: $0.duration)
         }
         var tracker = speakerTrackers[source] ?? SpeakerIdentityTracker()
-        let identities = tracker.reconcile(windowSegments, since: windowStart)
+        // Voices first (issue #171), so someone silent through the window's overlap keeps their name.
+        let identities = tracker.reconcile(windowSegments, since: windowStart, embeddings: result.embeddings)
         speakerTrackers[source] = tracker
         // Remember every identity ever seen: older passes' speakers stay in the cumulative timeline
         // even when this window did not hear them.

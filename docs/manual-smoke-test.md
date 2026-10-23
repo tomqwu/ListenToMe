@@ -142,7 +142,8 @@ single-source for the MVP or the Phase-2 SpeechAnalyzer engine.
 11. Multi-party stability: in a 20+ minute recording with three or more voices, let each person stay
     quiet for several minutes at a time. The Speakers list must keep roughly one row per real
     participant — it must not balloon with new Speaker N rows each pass — and a renamed speaker must
-    keep their name. Extra rows after long silences are the known limit tracked in issue #171.
+    keep their name, including on lines after a long silence (voice matching, issue #171). Note any
+    extra rows and whether the voices involved sound alike.
 12. With SpeechRecognizer (legacy) selected, speak in short bursts with ~1 s pauses for a minute.
     Every utterance must appear; no utterance may be dropped at a pause boundary, and a partial
     line must never be replaced by stale text from the previous utterance (issue #108).

@@ -60,6 +60,7 @@ final class SpeakerTestRecorder: MobileRecording {
 
 actor FakeDiarizer: MobileSpeakerDiarizing {
     private var segments: [DiarizedSegment] = []
+    private var embeddings: [String: [Float]] = [:]
     private var modelFailure: String?
     private var failNext = false
     private var failing = false
@@ -72,7 +73,10 @@ actor FakeDiarizer: MobileSpeakerDiarizing {
     private var holdNextPrepareCall = false
     private var heldPrepare: CheckedContinuation<Void, Never>?
 
-    func respond(_ segments: [DiarizedSegment]) { self.segments = segments }
+    func respond(_ segments: [DiarizedSegment], embeddings: [String: [Float]] = [:]) {
+        self.segments = segments
+        self.embeddings = embeddings
+    }
     func failModels(_ reason: String) { modelFailure = reason }
     func failOnce() { failNext = true }
     func failAlways() { failing = true }
@@ -98,7 +102,7 @@ actor FakeDiarizer: MobileSpeakerDiarizing {
         if let modelFailure { throw SpeakerDiarizer.DiarizationError.modelsUnavailable(modelFailure) }
     }
 
-    func diarize(samples: [Float]) async throws -> [DiarizedSegment] {
+    func diarize(samples: [Float]) async throws -> DiarizedWindow {
         callCount += 1
         sampleCount = samples.count
         if holdNextCall {
@@ -108,7 +112,7 @@ actor FakeDiarizer: MobileSpeakerDiarizing {
         if failing { throw SpeakerDiarizer.DiarizationError.notEnoughAudio }
         if let modelFailure { throw SpeakerDiarizer.DiarizationError.modelsUnavailable(modelFailure) }
         if failNext { failNext = false; throw SpeakerDiarizer.DiarizationError.notEnoughAudio }
-        return segments
+        return DiarizedWindow(segments: segments, embeddings: embeddings)
     }
 
     func retryModelLoad() async { retryCount += 1 }

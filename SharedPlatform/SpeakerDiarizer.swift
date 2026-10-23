@@ -6,7 +6,7 @@ import ListenToMeCore
 /// (system-audio) and optionally microphone channels, and of the iPhone/iPad microphone (#180).
 /// Shared by both app targets from `SharedPlatform/`. Lazily prepares the models once (auto-downloaded
 /// on first use), runs the offline diarizer over 16 kHz mono samples, maps its segments to Core's pure
-/// `DiarizedSegment`, and returns a `SpeakerSummary`. An `actor` so the (non-Sendable, mutable) manager is isolated.
+/// `DiarizedSegment` with one voice embedding per cluster, and returns a `SpeakerSummary`. An `actor` so the (non-Sendable, mutable) manager is isolated.
 actor SpeakerDiarizer {
     /// FluidAudio expects 16 kHz mono; the diarizer needs at least a few seconds to be meaningful.
     private static let sampleRate = 16_000
@@ -34,6 +34,13 @@ actor SpeakerDiarizer {
     struct DiarizationOutcome: Sendable {
         let summary: SpeakerSummary
         let segments: [DiarizedSegment]
+        /// One voice embedding per diarized cluster, keyed like `segments`' `speakerId` (issue #171):
+        /// FluidAudio's `speakerDatabase`, the mean of each cluster's 256-dimension embeddings. Used only
+        /// to match the same voice across this recording's windows; held in memory, never saved.
+        let embeddings: [String: [Float]]
+
+        /// The window as Core's pure value, for `SpeakerIdentityTracker`.
+        var window: DiarizedWindow { DiarizedWindow(segments: segments, embeddings: embeddings) }
     }
 
     /// Latched model-load failure (issue #109). FluidAudio downloads its CoreML models on first use;
@@ -94,7 +101,8 @@ actor SpeakerDiarizer {
                                 start: TimeInterval($0.startTimeSeconds),
                                 duration: TimeInterval($0.durationSeconds))
             }
-            return DiarizationOutcome(summary: SpeakerStats.summarize(segments), segments: segments)
+            return DiarizationOutcome(summary: SpeakerStats.summarize(segments), segments: segments,
+                                      embeddings: result.speakerDatabase ?? [:])
         }
         chainTail = Task { _ = try? await work.value }   // keep the chain alive regardless of outcome
         return try await work.value
