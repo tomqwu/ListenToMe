@@ -468,6 +468,13 @@ extension MobileWatchDrainTests {
         await drain(session, now: startedAt.addingTimeInterval(30 * hour))
         XCTAssertTrue(watchRecords(session).isEmpty, "The deleted conversation does not come back")
         XCTAssertTrue(try archived().isEmpty)
+
+        // The watch sends an old part again (#191): it is discarded, not a new conversation.
+        let later = startedAt.addingTimeInterval(31 * hour)
+        try deliver(session, 0, at: later, expect: .discarded)
+        await drain(session, now: later.addingTimeInterval(60))
+        XCTAssertTrue(watchRecords(session).isEmpty)
+        XCTAssertEqual(audioFiles(session), [])
     }
 
     func testAChunkArrivingDuringADrainIsTranscribedAfterIt() async throws {

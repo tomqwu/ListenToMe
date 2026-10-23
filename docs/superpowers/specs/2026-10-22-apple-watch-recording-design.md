@@ -360,6 +360,8 @@ be tested with fixture `.m4a` files and no watch at all. It stays internal to wa
 | Phone storage full or read-only | Treated as transient, the same as `MobileSession.isTransient` for the share inbox, and retried on the next foreground. |
 | Corrupt chunk or failed transcription | Keep the audio, mark it failed in the manifest, and show a History row with Retry and Delete. It is never deleted silently. |
 | Protocol version mismatch | The phone rejects unknown `v` with `unsupportedVersion`. The watch says to update both apps. They ship in one bundle, so this only happens mid-update. |
+| Part refused on arrival (unreadable metadata, too large, phone could not store it) | The watch already deleted its copy, so the part is lost. History says so in plain words ("…so it is missing from the recording."), never with Swift error text (#191). |
+| Watch conversation deleted, then the watch sends one of its parts again | A tombstone kept for 7 days discards the part, so the deleted conversation does not come back (#191). Deleting only the waiting audio from History leaves no tombstone, so a later Continue part reopens the conversation. |
 
 ### 5.7 Versioning
 
