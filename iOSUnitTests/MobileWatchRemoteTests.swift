@@ -60,13 +60,40 @@ final class MobileWatchRemoteTests: XCTestCase {
         _ = await session.handleWatchCommand(.start)
         try await waitForState(session, .recording)
 
+        let startedAt = session.recordingStartedAt
         let reply = await session.handleWatchCommand(.stop)
-        XCTAssertEqual(session.state, .idle)
+        // Answered as stopping; the idle status follows as the application context.
+        XCTAssertEqual(reply, .accepted(PhoneRecorderStatus(state: .stopping, startedAt: startedAt,
+                                                            title: session.title, lastStopReason: nil)))
+        try await waitForState(session, .idle)
         XCTAssertEqual(recorder.stopCount, 1)
         XCTAssertNil(session.recordingStartedAt)
         let idle = PhoneRecorderStatus(state: .idle, startedAt: nil, title: session.title, lastStopReason: .user)
-        XCTAssertEqual(reply, .accepted(idle))
         XCTAssertEqual(link.published.last, idle)
+    }
+
+    /// Finalizing a long transcript can outlast the watch's reply timeout, so Stop is answered first.
+    func testStopFromWatchAnswersBeforeTheTranscriptIsFinalized() async throws {
+        let recorder = SlowStopRecorder()
+        let session = MobileSession(storageDirectory: root, makeRecorder: { recorder })
+        let link = FakeWatchLink()
+        session.watchLink = link
+        session.applicationIsActive = { true }
+        _ = await session.handleWatchCommand(.start)
+        try await waitForState(session, .recording)
+
+        var reply: WatchReply?
+        let command = Task { reply = await session.handleWatchCommand(.stop) }
+        for _ in 0..<400 where reply == nil || !recorder.isStopping { try await Task.sleep(for: .milliseconds(5)) }
+        let answered = reply
+        recorder.finishStop()
+        await command.value
+
+        guard case .accepted(let status) = answered else { return XCTFail("Stop was not answered while finalizing") }
+        XCTAssertEqual(status.state, .stopping)
+        try await waitForState(session, .idle)
+        XCTAssertEqual(recorder.stopCount, 1)
+        XCTAssertEqual(link.published.last?.state, .idle)
     }
 
     func testStartWhileSummarizingRepliesBusy() async {

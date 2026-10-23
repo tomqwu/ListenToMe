@@ -91,3 +91,25 @@ final class EventLoggingRecorder: MobileRecording {
     func stop() async throws { events.events.append("recorderStop") }
     func reconfigure() async throws {}
 }
+
+/// A recorder whose Stop does not return until the test lets it, like a long transcript finalizing.
+@MainActor
+final class SlowStopRecorder: MobileRecording {
+    private(set) var stopCount = 0
+    private var held: CheckedContinuation<Void, Never>?
+
+    var isStopping: Bool { held != nil }
+
+    func start(locale: Locale, onSegment: @escaping @MainActor (TranscriptSegment) -> Void,
+               onFailure: @escaping @MainActor (String) -> Void) async throws {}
+    func stop() async throws {
+        stopCount += 1
+        await withCheckedContinuation { held = $0 }
+    }
+    func reconfigure() async throws {}
+
+    func finishStop() {
+        held?.resume()
+        held = nil
+    }
+}
