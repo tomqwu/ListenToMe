@@ -54,7 +54,7 @@ public enum WatchLink {
     private enum Key {
         static let version = "v", command = "cmd", reply = "reply", status = "status", busy = "busy"
         static let phone = "phone", state = "state", startedAt = "startedAt", title = "title"
-        static let stopReason = "stopReason"
+        static let stopReason = "stopReason", stamp = "at"
     }
 
     private enum ReplyKind: String {
@@ -76,8 +76,10 @@ public enum WatchLink {
 
     // MARK: Replies
 
-    public static func message(for reply: WatchReply) -> [String: Any] {
+    /// `stamp` is when the phone built the reply (seconds since 1970); see `PhoneStatusTracker`.
+    public static func message(for reply: WatchReply, stamp: TimeInterval? = nil) -> [String: Any] {
         var message: [String: Any] = [Key.version: protocolVersion]
+        if let stamp { message[Key.stamp] = stamp }
         switch reply {
         case .accepted(let status):
             message[Key.reply] = ReplyKind.accepted.rawValue
@@ -116,8 +118,17 @@ public enum WatchLink {
 
     // MARK: Phone status (application context)
 
-    public static func context(for status: PhoneRecorderStatus) -> [String: Any] {
-        [Key.version: protocolVersion, Key.phone: dictionary(for: status)]
+    /// `stamp` is when the phone published the status (seconds since 1970); see `PhoneStatusTracker`.
+    public static func context(for status: PhoneRecorderStatus, stamp: TimeInterval? = nil) -> [String: Any] {
+        var context: [String: Any] = [Key.version: protocolVersion, Key.phone: dictionary(for: status)]
+        if let stamp { context[Key.stamp] = stamp }
+        return context
+    }
+
+    /// When the phone made a context or reply, or `nil` when it carries no usable stamp.
+    public static func stamp(from payload: [String: Any]) -> TimeInterval? {
+        guard let stamp = payload[Key.stamp] as? Double, stamp.isFinite else { return nil }
+        return stamp
     }
 
     /// `nil` for a context from another protocol version or one that carries no phone status.
@@ -157,6 +168,25 @@ public enum WatchLink {
                                    startedAt: (fields[Key.startedAt] as? Double).map(Date.init(timeIntervalSince1970:)),
                                    title: fields[Key.title] as? String ?? "",
                                    lastStopReason: (fields[Key.stopReason] as? String).flatMap(PhoneStopReason.init))
+    }
+}
+
+/// The phone status the watch shows. Statuses reach the watch two ways, as the application context
+/// and in command replies, and either can arrive late: the phone stamps each with when it was made,
+/// and an older one never replaces a newer one (a late "starting" reply cannot hide "recording").
+public struct PhoneStatusTracker: Equatable, Sendable {
+    public private(set) var status: PhoneRecorderStatus?
+    public private(set) var stamp: TimeInterval?
+
+    public init() {}
+
+    /// Shows `status` unless it is older than the one shown. An unstamped status is always shown.
+    @discardableResult
+    public mutating func apply(_ status: PhoneRecorderStatus, stamp: TimeInterval?) -> Bool {
+        if let stamp, let current = self.stamp, stamp < current { return false }
+        self.status = status
+        if let stamp { self.stamp = stamp }
+        return true
     }
 }
 

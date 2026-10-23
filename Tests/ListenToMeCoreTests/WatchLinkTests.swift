@@ -113,6 +113,40 @@ final class WatchLinkTests: XCTestCase {
         XCTAssertEqual(WatchRemoteText.line(status: nil, reachable: true, lastReply: nil, now: now), "Ready")
     }
 
+    // MARK: Status ordering
+
+    func testStatusStampsTravelWithContextsAndReplies() throws {
+        let status = PhoneRecorderStatus(state: .recording, startedAt: nil, title: "A", lastStopReason: nil)
+        let context = WatchLink.context(for: status, stamp: 1_234.5)
+        XCTAssertEqual(WatchLink.phoneStatus(fromContext: context), status)
+        XCTAssertEqual(WatchLink.stamp(from: context), 1_234.5)
+        let reply = WatchLink.message(for: .accepted(status), stamp: 99)
+        XCTAssertEqual(try WatchLink.reply(from: reply), .accepted(status))
+        XCTAssertEqual(WatchLink.stamp(from: reply), 99)
+        XCTAssertTrue(PropertyListSerialization.propertyList(context, isValidFor: .binary))
+        XCTAssertNil(WatchLink.stamp(from: WatchLink.context(for: status)), "An older phone build sends none")
+        XCTAssertNil(WatchLink.stamp(from: ["at": "yesterday"]))
+        XCTAssertNil(WatchLink.stamp(from: ["at": Double.nan]))
+    }
+
+    func testTrackerNeverLetsAnOlderStatusOverwriteANewerOne() {
+        func status(_ state: PhoneRecorderState) -> PhoneRecorderStatus {
+            PhoneRecorderStatus(state: state, startedAt: nil, title: "A", lastStopReason: nil)
+        }
+        var tracker = PhoneStatusTracker()
+        XCTAssertNil(tracker.status)
+        XCTAssertTrue(tracker.apply(status(.recording), stamp: 20))
+        // The reply to Start, made before the recorder was running, arrives after the context.
+        XCTAssertFalse(tracker.apply(status(.preparing), stamp: 10))
+        XCTAssertEqual(tracker.status, status(.recording))
+        XCTAssertTrue(tracker.apply(status(.recording), stamp: 20), "The same status again is not older")
+        XCTAssertTrue(tracker.apply(status(.idle), stamp: 30))
+        XCTAssertEqual(tracker.stamp, 30)
+        XCTAssertTrue(tracker.apply(status(.stopping), stamp: nil), "An unstamped status is always shown")
+        XCTAssertEqual(tracker.status, status(.stopping))
+        XCTAssertEqual(tracker.stamp, 30)
+    }
+
     // MARK: Chunk metadata and end marker (Slice 2)
 
     private let recordingID = UUID(uuidString: "6F9619FF-8B86-D011-B42D-00C04FC964FF")!

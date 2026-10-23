@@ -23,6 +23,8 @@ final class PhoneWatchLink: NSObject, WCSessionDelegate, WatchLinking {
     /// Where delivered audio is filed, on the delegate queue, before the delivery call returns.
     nonisolated let inbox: WatchInbox
     private var lastStatus: PhoneRecorderStatus?
+    /// When `lastStatus` was published; the watch never lets an older status replace a newer one.
+    private var lastStamp: TimeInterval = 0
 
     private init(session: WCSession, inbox: WatchInbox) {
         self.session = session
@@ -41,6 +43,7 @@ final class PhoneWatchLink: NSObject, WCSessionDelegate, WatchLinking {
 
     func publish(_ status: PhoneRecorderStatus) {
         lastStatus = status
+        lastStamp = Date().timeIntervalSince1970
         sendLastStatus()
     }
 
@@ -49,7 +52,7 @@ final class PhoneWatchLink: NSObject, WCSessionDelegate, WatchLinking {
     private func sendLastStatus() {
         guard let lastStatus, session.activationState == .activated, session.isPaired,
               session.isWatchAppInstalled else { return }
-        try? session.updateApplicationContext(WatchLink.context(for: lastStatus))
+        try? session.updateApplicationContext(WatchLink.context(for: lastStatus, stamp: lastStamp))
     }
 
     /// The testable core of the message handler.
@@ -63,7 +66,8 @@ final class PhoneWatchLink: NSObject, WCSessionDelegate, WatchLinking {
             // A version error, or an unknown command at this version: the two builds disagree.
             reply = .unsupportedVersion
         }
-        return WatchLink.message(for: reply)
+        // Stamped once the handler has acted, so a status published after it is newer.
+        return WatchLink.message(for: reply, stamp: Date().timeIntervalSince1970)
     }
 
     // MARK: WCSessionDelegate

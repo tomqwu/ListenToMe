@@ -133,6 +133,17 @@ final class MobileWatchRemoteTests: XCTestCase {
         XCTAssertEqual(link.published.count, 3, "No change, nothing to publish")
     }
 
+    /// The watch drops a reply older than the status it already shows, so every reply is stamped.
+    func testRepliesAreStampedWithWhenTheyWereMade() async throws {
+        let before = Date().timeIntervalSince1970
+        let reply = await PhoneWatchLink.replyMessage(to: WatchLink.message(for: .status), handler: { _ in .openPhoneApp })
+        let stamp = try XCTUnwrap(WatchLink.stamp(from: reply))
+        XCTAssertGreaterThanOrEqual(stamp, before)
+        XCTAssertLessThanOrEqual(stamp, Date().timeIntervalSince1970)
+        let unsupported = await PhoneWatchLink.replyMessage(to: ["v": 2], handler: nil)
+        XCTAssertNotNil(WatchLink.stamp(from: unsupported))
+    }
+
     func testLinkWithoutAnAttachedSessionAnswersOpenPhoneApp() async {
         let reply = await PhoneWatchLink.replyMessage(to: WatchLink.message(for: .start), handler: nil)
         XCTAssertEqual(try WatchLink.reply(from: reply), .openPhoneApp)
