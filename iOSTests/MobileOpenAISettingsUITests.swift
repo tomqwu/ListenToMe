@@ -23,7 +23,9 @@ final class MobileOpenAISettingsUITests: XCTestCase {
         revealSettingsControl(status, in: form)
         XCTAssertTrue(status.label.contains("Plain http:// is only allowed"), status.label)
         revealSettingsControl(field, in: form, towardTop: true)
+        // A refused address stays in the field so it can be corrected; clear it first.
         field.tap()
+        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 40))
         field.typeText("http://studio.local:1234")
         app.buttons["saveOpenAIBaseURL"].tap()
         revealSettingsControl(app.staticTexts["openAIServer"], in: form, towardTop: true)
