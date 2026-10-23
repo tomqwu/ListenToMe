@@ -18,6 +18,8 @@ stays macOS-only. This is a platform boundary, not a backlog item: there is no p
 that captures system or call audio. Recording is foreground-only (`iOS/Info.plist` declares no
 `UIBackgroundModes`); backgrounding stops recording and saves the conversation.
 
+Apple Watch recording ([#181](https://github.com/tomqwu/ListenToMe/issues/181)) is under design, see [the spec](superpowers/specs/2026-10-22-apple-watch-recording-design.md); the tiers below are unchanged until it ships.
+
 ## Parity with macOS
 
 Three tiers. Tier 1 must move in lockstep, tier 2 may differ but every difference is written down
