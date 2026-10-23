@@ -30,6 +30,10 @@ extension MeetingView {
             return false
         }
         lastSavedKey = key
+        // Save to folder (issue #53): written once capture has stopped, then on each later change.
+        if complete {
+            MarkdownVaultSync.shared.save(record, language: ProviderSettings.transcriptionLocale().identifier)
+        }
         saveMessage = "Saved at " + Date().formatted(date: .omitted, time: .standard)
         saveFailed = false
         return true
@@ -126,6 +130,12 @@ extension MeetingView {
                             Button("Retry save") { saveConversation() }
                             Button("Save As…") { _ = saveConversationAs() }
                         }
+                    }
+                    let vault = MarkdownVaultSync.shared
+                    if vault.enabled && vault.isFailing {
+                        Text("⚠️ Save to folder: \(vault.statusText)").foregroundStyle(.orange)
+                            .multilineTextAlignment(.trailing)
+                        Button("Retry folder save") { vault.retry(history: sessionStore.all()) }
                     }
                 }.frame(maxWidth: .infinity, alignment: .trailing)
             }
