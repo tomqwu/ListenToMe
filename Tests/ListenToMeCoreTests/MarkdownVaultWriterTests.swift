@@ -55,7 +55,8 @@ final class MarkdownVaultWriterTests: XCTestCase {
         let unrelated = vault.appendingPathComponent("Weekly sync.md")
         try Data("mine".utf8).write(to: unrelated)
         let existing = vault.appendingPathComponent("2026-01-01 0900 ListenToMe 1a2b3c4d.md")
-        try Data("---\r\ntitle: \"Old\"\r\nlistentome_id: \"\(id)\"\r\n---\r\nedited in Obsidian".utf8).write(to: existing)
+        let edited = "---\r\ntitle: \"Old\"\r\nlistentome_id: \"\(id)\"\r\n---\r\nedited in Obsidian"
+        try Data(edited.utf8).write(to: existing)
         let writer = MarkdownVaultWriter(bookmark: try MarkdownVaultWriter.makeBookmark(for: vault))
         let outcome = await writer.save(note("A"))
         XCTAssertEqual(outcome, .saved(fileName: "2026-01-01 0900 ListenToMe 1a2b3c4d.md"))
@@ -83,6 +84,15 @@ final class MarkdownVaultWriterTests: XCTestCase {
         let again = await relaunched.save(note("B"))
         XCTAssertEqual(again, .saved(fileName: long))
         XCTAssertEqual(try files().count, 3)
+    }
+
+    func testAVeryLongTitleStillUpdatesTheSameNoteAfterARelaunch() async throws {
+        let title = String(repeating: "é long title ", count: 600)   // well past the 4 KB that is read
+        _ = await MarkdownVaultWriter(bookmark: try MarkdownVaultWriter.makeBookmark(for: vault)).save(note(title))
+        let relaunched = MarkdownVaultWriter(bookmark: try MarkdownVaultWriter.makeBookmark(for: vault))
+        let again = await relaunched.save(note(title + "!"))
+        XCTAssertEqual(again, .saved(fileName: "2026-10-23 1435 ListenToMe 1a2b3c4d.md"))
+        XCTAssertEqual(try files().count, 1)
     }
 
     func testAForeignFileWithTheLongNameIsAPerNoteFailure() async throws {

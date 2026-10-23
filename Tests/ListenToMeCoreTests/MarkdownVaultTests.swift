@@ -25,6 +25,7 @@ final class MarkdownVaultTests: XCTestCase {
     func testSnapshotOfAFullNote() {
         let expected = """
         ---
+        listentome_id: "1A2B3C4D-0000-4000-8000-000000000001"
         title: "Weekly sync"
         date: 2026-10-23T14:35:00Z
         duration: "01:09"
@@ -34,7 +35,6 @@ final class MarkdownVaultTests: XCTestCase {
           - "You"
         tags:
           - listentome
-        listentome_id: "1A2B3C4D-0000-4000-8000-000000000001"
         ---
 
         # Weekly sync
@@ -66,12 +66,12 @@ final class MarkdownVaultTests: XCTestCase {
                                    transcript: "You: hello\nOthers: hi", summary: "")
         let expected = """
         ---
+        listentome_id: "1A2B3C4D-0000-4000-8000-000000000001"
         title: "Old: \\"notes\\" #1"
         date: 2026-10-23T14:35:00Z
         speakers: []
         tags:
           - listentome
-        listentome_id: "1A2B3C4D-0000-4000-8000-000000000001"
         ---
 
         # Old: "notes" #1

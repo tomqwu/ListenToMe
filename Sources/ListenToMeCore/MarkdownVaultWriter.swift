@@ -154,8 +154,12 @@ public actor MarkdownVaultWriter {
     static func owner(of url: URL) throws -> String? {
         let handle = try FileHandle(forReadingFrom: url)
         defer { try? handle.close() }
-        let head = try handle.read(upToCount: 4096) ?? Data()
-        return MarkdownVault.ownerID(in: String(decoding: head, as: UTF8.self))
+        var head = try handle.read(upToCount: 4096) ?? Data()
+        // Whole lines only, so a character cut at the 4 KB boundary cannot make the text invalid.
+        if head.count == 4096, let lastNewline = head.lastIndex(of: UInt8(ascii: "\n")) {
+            head = head.prefix(upTo: lastNewline)
+        }
+        return String(bytes: head, encoding: .utf8).flatMap(MarkdownVault.ownerID(in:))
     }
 
     /// Atomic replace, coordinated so iCloud Drive and other file providers see one whole new version.

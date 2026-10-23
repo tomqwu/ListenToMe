@@ -99,7 +99,8 @@ public enum MarkdownVault {
         dateFormatter.timeZone = timeZone
         dateFormatter.formatOptions = [.withInternetDateTime]
 
-        var front = ["---", "title: \(yaml(singleLine(record.title)))",
+        // The ID comes first, so the writer finds it in the first lines however long the title is.
+        var front = ["---", "listentome_id: \(yaml(record.id))", "title: \(yaml(singleLine(record.title)))",
                      "date: \(dateFormatter.string(from: date ?? record.date))"]
         if let duration = duration(of: segments) { front.append("duration: \(yaml(timestamp(duration)))") }
         if let language = language?.trimmingCharacters(in: .whitespaces), !language.isEmpty {
@@ -109,7 +110,6 @@ public enum MarkdownVault {
         let speakerLines = names.map { "  - \(yaml($0))" }
         front.append(names.isEmpty ? "speakers: []" : (["speakers:"] + speakerLines).joined(separator: "\n"))
         front.append("tags:\n  - \(tag)")
-        front.append("listentome_id: \(yaml(record.id))")
         front.append("---")
 
         var out = front.joined(separator: "\n") + "\n\n# \(singleLine(record.title))\n"
