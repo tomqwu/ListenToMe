@@ -1,13 +1,14 @@
 import Foundation
 
-/// Pure rules for on-device spoken-language detection on iOS (issue #197).
+/// Pure rules for on-device spoken-language detection on iOS (issue #197; re-checks during a recording
+/// are `LanguageRecheckPolicy` and `LanguageTracker`, issue #199).
 ///
 /// Apple's `SpeechTranscriber` needs one locale up front and does not detect or switch languages, so
 /// speech in another language comes out as nonsense no text corrector can repair. In Automatic mode
 /// the app runs a small multilingual Whisper model over the first stretch of speech of a recording.
 /// These rules decide whether that result is good enough to restart transcription in another locale,
-/// which supported locale a Whisper language code becomes, when to listen, and how much audio to keep
-/// for re-transcribing what was already heard. They live here so they can be tested without CoreML,
+/// which supported locale a Whisper language code becomes, and when the first check can listen. They
+/// live here so they can be tested without CoreML,
 /// a microphone or the Speech framework.
 public enum LanguageDetectionPolicy {
     /// Detection and replay audio is 16 kHz mono, the format `SpeakerAudioBuffer` accumulates.
@@ -19,17 +20,13 @@ public enum LanguageDetectionPolicy {
     public static let minimumSpeech: TimeInterval = 8
     /// Whisper reads at most 30 s of audio per decision.
     public static let maximumWindow: TimeInterval = 30
-    /// Audio kept to re-transcribe a recording from its start after a switch (about 7.7 MB). The
-    /// buffer stops growing here; a switch after it re-transcribes nothing and says so, and speech that
-    /// starts after it is not checked.
-    public static let maximumBuffered: TimeInterval = 120
 
     /// Why the current language was kept.
     public enum Reason: Sendable, Equatable {
         /// The user chose a fixed language, which detection never overrides.
         case pinned
-        /// This recording already switched once; mid-recording code-switching is out of scope.
-        case alreadySwitched
+        /// This recording already switched `LanguageRecheckPolicy.maximumSwitches` times.
+        case switchLimit
         /// Whisper was not sure enough.
         case lowConfidence
         /// The detected language is the one being transcribed (perhaps in another region).
@@ -50,9 +47,9 @@ public enum LanguageDetectionPolicy {
     /// `supported` lists the locale identifiers on-device transcription accepts; `region` is the
     /// device's region, used to pick among them.
     public static func decide(detected: String, probability: Double, current: String, supported: [String],
-                              pinned: Bool, alreadySwitched: Bool, region: String?) -> Decision {
+                              pinned: Bool, atSwitchLimit: Bool, region: String?) -> Decision {
         if pinned { return .keep(.pinned) }
-        if alreadySwitched { return .keep(.alreadySwitched) }
+        if atSwitchLimit { return .keep(.switchLimit) }
         guard probability.isFinite, probability >= minimumConfidence else { return .keep(.lowConfidence) }
         let spoken = languageCode(forWhisper: detected)
         if !spoken.isEmpty, spoken == spokenLanguage(of: current) { return .keep(.sameLanguage) }
@@ -96,20 +93,17 @@ public enum LanguageDetectionPolicy {
         return speechEnd - speechStart >= minimumSpeech || captured - speechStart >= maximumWindow
     }
 
-    /// The samples to detect on: from just before the first speech, at most `maximumWindow` long.
-    public static func window(speechStart: TimeInterval, totalSamples: Int) -> Range<Int> {
-        let total = max(0, totalSamples)
-        let start = min(total, max(0, Int((speechStart - 0.5) * Double(sampleRate))))
-        return start..<min(total, start + Int(maximumWindow) * sampleRate)
-    }
-
     /// Undo once the replay audio is gone: the lines a switch replaced (`originals`) take the place of
-    /// the switched recording's own lines (`recording`, by id) that ended by the switch (`cut`,
-    /// transcript time). Every other line is untouched: earlier and later recordings, and Apple Watch
+    /// the switched recording's own lines (`recording`, by id) that start at or after `since` (where
+    /// transcribing again began) and ended by the switch (`cut`), both transcript time. Every other line
+    /// is untouched: earlier and later recordings, the recording's lines before `since`, and Apple Watch
     /// lines added since. A line spanning the switch stays, since it alone holds the words after it.
     public static func restoring(_ originals: [TranscriptSegment], into segments: [TranscriptSegment],
-                                 recording: Set<UUID>, before cut: TimeInterval) -> [TranscriptSegment] {
-        let replaced = { (line: TranscriptSegment) in recording.contains(line.id) && line.end <= cut }
+                                 recording: Set<UUID>, since: TimeInterval = -.infinity,
+                                 before cut: TimeInterval) -> [TranscriptSegment] {
+        let replaced = { (line: TranscriptSegment) in
+            recording.contains(line.id) && line.start >= since - 0.001 && line.end <= cut
+        }
         guard let position = segments.firstIndex(where: replaced) else { return segments }
         var restored = segments.filter { !replaced($0) }
         restored.insert(contentsOf: originals, at: position)

@@ -354,6 +354,26 @@ iOS production-ready…"); this is the short pass.
    further down. Pick a downloadable one, record: its model downloads and the transcript is in that
    language; reopen Settings and it is listed under **Installed**.
 
+## iPhone language re-check mid-recording (#199)
+
+Physical iPhone or iPad only. The full check is step 12 of the physical-device list in
+[IOS.md](IOS.md#app-store-privacy-and-support-pages).
+
+1. **Change part-way.** With Automatic selected and the device in English, speak English for two
+   minutes, then Mandarin for two minutes in the same recording. Within about two minutes of the
+   change, the notice reads "Detected Chinese from m:ss · switched" with a time near the change.
+   The English lines before it are unchanged, and the Mandarin part is in Chinese with the same
+   times as before.
+2. **Short phrase.** Inside the Mandarin part, say one short English sentence: nothing switches back.
+3. **Undo the latest switch.** Tap **Undo**: only the Mandarin span returns to English, and the
+   picker shows English fixed. In a recording that switched twice, Undo returns to the language
+   from before the second switch and leaves the first switch's lines alone.
+4. **Energy.** Turn on Low Power Mode while recording: **Quick Summary → Status details** shows
+   "Language re-check: … skipped (Low Power Mode)". Stay silent for a minute: it shows "skipped
+   (too little speech)". Record 20+ minutes in one language: memory stays flat in Xcode's gauge.
+5. **Mixed sentences are a known limit.** A sentence mixing English words into Mandarin stays in the
+   recording's current language (#205).
+
 ## Save to folder — Markdown vault (#53)
 
 iPhone (simulator is enough for 1–5; 6 needs a physical device signed in to iCloud):
