@@ -131,7 +131,8 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 - **OpenAI-compatible servers.** Choose the **OpenAI-compatible** AI mode and enter a server URL —
   LM Studio (`http://localhost:1234/v1`), vLLM, llama.cpp, Ollama's own `/v1` API, or
   `https://openrouter.ai/api/v1` — plus an optional key. The pane pickers list the server's
-  `/v1/models`. See [OpenAI-compatible servers](#openai-compatible-servers).
+  `/v1/models`; panes stay unset until you pick a model, because a hosted catalog can list hundreds
+  of vendors' models. See [OpenAI-compatible servers](#openai-compatible-servers).
 - **AI response-language** setting, independent of the transcription language.
 
 **Make it yours**
@@ -435,8 +436,11 @@ the server's base URL: LM Studio (`http://localhost:1234/v1`), vLLM or llama.cpp
   `finish_reason`. Truncated streams, `error` objects, empty or reasoning-only answers, non-event-stream
   pages (captive portals), oversized responses and timeouts fail with a clear message and keep the
   previous output. Redirects are never followed.
-- **Auto needs the JSON contract.** Auto and Quick use the same strict JSON evaluator as on Ollama;
-  a model that cannot hold it shows "did not return a usable Quick Summary update" and keeps the
+- **Never picks a model for you.** On this route the pane pickers list the server's models but no
+  pane is assigned one until you choose it, and these choices are stored apart from your Ollama picks.
+- **Auto needs the JSON contract.** Auto and Quick use the same strict JSON evaluator as on Ollama,
+  with best-effort reasoning-off hints (`reasoning_effort: "none"`, `enable_thinking: false`) instead
+  of Ollama's `think: false`; a model that cannot hold it shows "did not return a usable Quick Summary update" and keeps the
   previous recap. On iPhone, **Test this model** on the Quick role checks this up front and pauses
   Auto with the reason if it fails.
 - `make e2e` runs the provider contract against a real server: Ollama's own `/v1` API.

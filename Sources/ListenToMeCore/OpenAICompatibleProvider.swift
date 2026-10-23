@@ -47,14 +47,24 @@ public struct OpenAICompatibleProvider: LLMProvider {
     }
 
     /// The `/chat/completions` body. Auto Quick's evaluator gets the same controls as on Ollama:
-    /// temperature zero and 3,072 output tokens (`LLMRequest.Purpose.quickEvaluation`).
-    public static func requestBody(model: String, request: LLMRequest, options: Options = .init()) -> Data {
+    /// temperature zero and 3,072 output tokens (`LLMRequest.Purpose.quickEvaluation`), plus
+    /// best-effort requests to skip reasoning, the counterpart of Ollama's `think: false`:
+    /// `reasoning_effort: "none"` (Ollama's `/v1`, OpenAI, vLLM) and
+    /// `chat_template_kwargs.enable_thinking: false` (Qwen-style templates on vLLM and llama.cpp).
+    /// Servers that do not know them ignore them; a strict server that rejects them with 400/422
+    /// gets the request again without them (`reasoningHints: false`).
+    public static func requestBody(model: String, request: LLMRequest, options: Options = .init(),
+                                   reasoningHints: Bool = true) -> Data {
         let quick = request.purpose == .quickEvaluation
         var messages: [[String: String]] = [["role": "system", "content": request.system]]
         messages += request.messages.map { ["role": $0.role, "content": $0.content] }
         var body: [String: Any] = ["model": model, "messages": messages, "stream": true]
         if let temperature = quick ? 0 : options.temperature { body["temperature"] = temperature }
         if let maximumTokens = quick ? 3_072 : options.maximumTokens { body["max_tokens"] = maximumTokens }
+        if quick && reasoningHints {
+            body["reasoning_effort"] = "none"
+            body["chat_template_kwargs"] = ["enable_thinking": false]
+        }
         return (try? JSONSerialization.data(withJSONObject: body, options: [.sortedKeys])) ?? Data()
     }
 
@@ -90,14 +100,27 @@ public struct OpenAICompatibleProvider: LLMProvider {
         }
     }
 
-    private func run(_ request: LLMRequest, yield: (LLMStreamEvent) -> Void) async throws {
+    private func open(_ request: LLMRequest,
+                      reasoningHints: Bool) async throws -> (URLSession.AsyncBytes, HTTPURLResponse) {
         var urlRequest = OpenAICompatibleTransport.request(
             OpenAICompatibleEndpoint.chatURL(baseURL), apiKey: apiKey, timeout: idleTimeout)
         urlRequest.httpMethod = "POST"
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         urlRequest.setValue("text/event-stream", forHTTPHeaderField: "Accept")
-        urlRequest.httpBody = Self.requestBody(model: model, request: request, options: options)
-        let (bytes, http) = try await OpenAICompatibleTransport.open(urlRequest, session: session, apiKey: apiKey)
+        urlRequest.httpBody = Self.requestBody(model: model, request: request, options: options,
+                                               reasoningHints: reasoningHints)
+        return try await OpenAICompatibleTransport.open(urlRequest, session: session, apiKey: apiKey)
+    }
+
+    private func run(_ request: LLMRequest, yield: (LLMStreamEvent) -> Void) async throws {
+        let bytes: URLSession.AsyncBytes, http: HTTPURLResponse
+        do {
+            (bytes, http) = try await open(request, reasoningHints: true)
+        } catch let OpenAICompatibleError.http(status, _)
+                    where request.purpose == .quickEvaluation && (status == 400 || status == 422) {
+            // A strict server refused the reasoning hints; nothing was generated, so ask once without.
+            (bytes, http) = try await open(request, reasoningHints: false)
+        }
         let contentType = http.value(forHTTPHeaderField: "Content-Type")
         var state = OpenAICompatibleStreamState(maximumBytes: maximumResponseBytes)
         if contentType?.lowercased().contains("json") == true {
@@ -110,6 +133,7 @@ public struct OpenAICompatibleProvider: LLMProvider {
         }
         var line: [UInt8] = []
         line.reserveCapacity(1_024)
+        var afterCarriageReturn = false
         func handle() throws {
             try Task.checkCancellation()
             for event in try state.consume(String(decoding: line, as: UTF8.self), contentType: contentType) {
@@ -117,9 +141,13 @@ public struct OpenAICompatibleProvider: LLMProvider {
             }
             line.removeAll(keepingCapacity: true)
         }
+        // Lines end in LF, CRLF or a bare CR, as the event-stream format allows.
         for try await byte in bytes {
             try state.receive(1)
-            if byte == UInt8(ascii: "\n") {
+            let wasCarriageReturn = afterCarriageReturn
+            afterCarriageReturn = byte == UInt8(ascii: "\r")
+            if byte == UInt8(ascii: "\n") && wasCarriageReturn { continue }
+            if byte == UInt8(ascii: "\n") || byte == UInt8(ascii: "\r") {
                 try handle()
                 if state.finished { break }
             } else {

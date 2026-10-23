@@ -212,6 +212,8 @@ Use LM Studio (or `ollama serve`, whose OpenAI API is `http://localhost:11434/v1
    confirm the panes say "Set your OpenAI-compatible server URL in Settings" and nothing is sent.
    Enter `http://localhost:1234` and Save: the footer reads "OpenAI-compatible — your server at
    localhost:1234", never "local" or "on-device", and **More → Refresh models** lists the server's models.
+   The panes stay unset ("Choose a model for each pane…") until you pick each one in the status rail;
+   switching back to **Local only** restores your earlier Ollama picks.
 2. **Plain http is refused off the local link.** Enter `http://192.168.1.20:1234/v1` and Save: Settings
    shows the "Plain http:// is only allowed…" error and nothing is applied.
 3. **Answers and failures.** Ask Quick, Deep and Summary for answers; they stream. Stop the server and

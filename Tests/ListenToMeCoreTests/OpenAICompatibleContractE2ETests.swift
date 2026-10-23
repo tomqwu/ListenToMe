@@ -28,5 +28,14 @@ final class OpenAICompatibleContractE2ETests: XCTestCase {
         for try await delta in provider.stream(request) { content += delta }
         XCTAssertFalse(content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
                        "expected non-empty streamed content from \(model) at \(base)")
+
+        // The Quick evaluator's reasoning hints must be accepted (or retried without) and yield an
+        // answer rather than reasoning only. Whether a small model holds the JSON contract is the
+        // model's business; the transport's job is a complete answer.
+        let quick = try QuickSummaryContext.manualRequest(source: "You: Let's move the launch to Friday.")
+        var evaluation = ""
+        for try await delta in provider.stream(quick) { evaluation += delta }
+        XCTAssertFalse(evaluation.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                       "expected an evaluator answer, not reasoning only, from \(model) at \(base)")
     }
 }

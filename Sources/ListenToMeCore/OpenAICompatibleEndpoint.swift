@@ -27,9 +27,11 @@ public enum OpenAICompatibleEndpoint {
         case credentialsInURL
         case queryInURL
         case plainHTTP(host: String)
+        case keyWithoutServer
 
         public var errorDescription: String? {
             switch self {
+            case .keyWithoutServer: return "Set the OpenAI-compatible server URL before saving its API key."
             case .empty: return "Enter the server's base URL, for example http://your-mac.local:1234/v1."
             case .invalid:
                 return "That is not a valid http:// or https:// server URL, for example https://openrouter.ai/api/v1."
@@ -102,30 +104,33 @@ public enum OpenAICompatibleEndpoint {
     /// `.local` (Bonjour) names. Any other IP literal or host name needs `https`, so a typo can never
     /// send a transcript unencrypted across the internet (see issue #149 for the Ollama equivalent).
     public static func allowsPlainHTTP(host: String) -> Bool {
-        let host = host.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "[]"))
+        let host = normalizedHost(host)
         if host == "localhost" || host.hasSuffix(".local") { return true }
-        if let octets = ipv4(host) { return octets[0] == 127 || (octets[0] == 169 && octets[1] == 254) }
-        if host.contains(":") { return host == "::1" || host.hasPrefix("fe80:") }
-        return false
+        switch address(host) {
+        case .v4(let octets): return octets[0] == 127 || (octets[0] == 169 && octets[1] == 254)
+        case .v6(let bytes): return isIPv6Loopback(bytes) || isIPv6LinkLocal(bytes)
+        case nil: return false
+        }
     }
 
     public static func reach(of url: URL) -> Reach {
-        let host = bareHost(url)
-        if host == "localhost" || host == "::1" { return .loopback }
-        if let octets = ipv4(host) {
+        let host = normalizedHost(url.host(percentEncoded: false) ?? "")
+        if host == "localhost" { return .loopback }
+        switch address(host) {
+        case .v4(let octets):
             switch (octets[0], octets[1]) {
             case (127, _): return .loopback
             case (10, _), (192, 168), (169, 254): return .privateNetwork
             case (172, 16...31): return .privateNetwork
             default: return .internet
             }
+        case .v6(let bytes):
+            if isIPv6Loopback(bytes) { return .loopback }
+            // fe80::/10 link-local and fc00::/7 unique-local, judged on the parsed bytes, never on text.
+            return isIPv6LinkLocal(bytes) || bytes[0] & 0xFE == 0xFC ? .privateNetwork : .internet
+        case nil:
+            return host.hasSuffix(".local") ? .privateNetwork : .internet
         }
-        if host.contains(":") {
-            let lower = host.lowercased()
-            if lower.hasPrefix("fe80:") || lower.hasPrefix("fc") || lower.hasPrefix("fd") { return .privateNetwork }
-            return .internet
-        }
-        return host.hasSuffix(".local") ? .privateNetwork : .internet
     }
 
     /// One-line, prose-safe description of where requests go, shared by both apps.
@@ -145,8 +150,35 @@ public enum OpenAICompatibleEndpoint {
                 + "That service's own privacy terms apply."
     }
 
-    private static func bareHost(_ url: URL) -> String {
-        (url.host(percentEncoded: false) ?? "").lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "[]"))
+    private static func bareHost(_ url: URL) -> String { normalizedHost(url.host(percentEncoded: false) ?? "") }
+
+    private static func normalizedHost(_ host: String) -> String {
+        host.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "[]"))
+    }
+
+    private enum Address { case v4([UInt8]), v6([UInt8]) }
+
+    /// The literal's bytes, or nil for a name. IPv4-mapped IPv6 (`::ffff:a.b.c.d`) is read as IPv4,
+    /// and a zone (`fe80::1%en0`) is ignored.
+    private static func address(_ host: String) -> Address? {
+        if let octets = ipv4(host) { return .v4(octets) }
+        guard host.contains(":") else { return nil }
+        let literal = host.split(separator: "%", maxSplits: 1).first.map(String.init) ?? host
+        var storage = in6_addr()
+        guard inet_pton(AF_INET6, literal, &storage) == 1 else { return nil }
+        let bytes = withUnsafeBytes(of: storage) { Array($0) }
+        if bytes[0..<10].allSatisfy({ $0 == 0 }), bytes[10] == 0xFF, bytes[11] == 0xFF {
+            return .v4(Array(bytes[12..<16]))
+        }
+        return .v6(bytes)
+    }
+
+    private static func isIPv6Loopback(_ bytes: [UInt8]) -> Bool {
+        bytes[0..<15].allSatisfy { $0 == 0 } && bytes[15] == 1
+    }
+
+    private static func isIPv6LinkLocal(_ bytes: [UInt8]) -> Bool {
+        bytes[0] == 0xFE && bytes[1] & 0xC0 == 0x80
     }
 
     private static func ipv4(_ host: String) -> [UInt8]? {

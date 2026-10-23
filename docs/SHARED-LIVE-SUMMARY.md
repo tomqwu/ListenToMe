@@ -37,11 +37,17 @@ Auto starts paused there until Ollama is selected. Existing explicit provider/mo
 preserved on both platforms. iOS uses the configured Ollama connection — Ollama Cloud, or a server
 the user entered. Apple Intelligence is available for manual summaries on supported devices.
 Selecting Apple pauses Auto with an explanation; it never silently routes speech to Cloud.
-OpenAI-compatible servers (#52) get the same evaluator request and the same strict decision contract
-as Ollama (`OpenAICompatibleProvider.requestBody` maps `quickEvaluation` to temperature 0 and 3,072
-`max_tokens`). Auto is gated per provider: on macOS `ProviderSettings.automaticReviewUnavailableReason`
-pauses it until a server is set; on iOS it also pauses once **Test this model** shows the Quick model
-breaks the contract (`MobileOpenAISettings.automaticQuickReason`). A model that breaks it without being
+OpenAI-compatible servers (#52) get the same prompt and the same strict decision contract as Ollama,
+but not a byte-identical request: there is no portable `think: false`. `OpenAICompatibleProvider.requestBody`
+maps `quickEvaluation` to temperature 0 and 3,072 `max_tokens` and adds best-effort reasoning-off hints
+(`reasoning_effort: "none"`, honoured by Ollama's `/v1`, and `chat_template_kwargs.enable_thinking: false`
+for Qwen-style templates on vLLM and llama.cpp). Servers that do not know them ignore them; one that
+rejects them with 400/422 gets the request once more without them. A model that still answers only with
+reasoning fails as `thinkingOnly`. Auto is gated per provider: on macOS
+`ProviderSettings.automaticReviewUnavailableReason(quickModel:)` pauses it until a server and a Quick model
+are set; on iOS it also pauses once **Test this model** shows that Quick model breaks the contract —
+malformed JSON, or an empty or reasoning-only answer — recorded per server and model
+(`OpenAICompatibleContractLedger`, `MobileOpenAISettings.automaticQuickReason`). A model that breaks it without being
 tested fails visibly through the reader and keeps the previous output — never silently.
 The JSON decision contract above therefore applies to Ollama-backed and OpenAI-compatible reads only. A manual Quick
 Summary on Apple Intelligence uses `QuickSummaryContext.manualProseInstructions` and

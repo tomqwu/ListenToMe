@@ -608,7 +608,8 @@ such as `192.168.1.20`, Tailscale `100.x` addresses and public names, must use `
 save time with that explanation. This is stricter than the Ollama server field (tracked in #149).
 
 **Honest labels.** The address — never the model — decides the wording. Loopback, `.local`, RFC 1918,
-link-local and IPv6 unique-local addresses read **your server**; the picker says
+link-local and IPv6 unique-local addresses (IPv6 judged on the parsed address bytes, IPv4-mapped
+addresses as IPv4) read **your server**; the picker says
 "OpenAI-compatible · your server" and the explanation adds that ListenToMe cannot verify where that
 server runs the model, since a local server can relay requests to a cloud service (Ollama's own `/v1` API
 serves `:cloud` models from `localhost`, for example). Every other address reads **may leave this
@@ -622,7 +623,8 @@ key is never sent to this server, and this key never to Ollama. Keys never appea
 an error body that echoes the key is masked.
 
 **Transport contract** (`OpenAICompatibleProvider`, shared with macOS): requests stream
-`/chat/completions` as server-sent events. `data:` chunks carry content, and reasoning (`reasoning_content`
+`/chat/completions` as server-sent events. `data:` chunks carry content (a JSON payload split over several `data:` lines is joined, and LF, CRLF
+or bare CR line endings are accepted), and reasoning (`reasoning_content`
 or `reasoning`) is kept apart from the answer as on Ollama. A response is accepted only when it ends with
 `data: [DONE]` or a `finish_reason`; a stream cut off before that is "ended before completion" and keeps
 the previous output. An `error` object inside the stream or a `finish_reason` of `error` fails the request
@@ -638,12 +640,16 @@ fills empty roles only when the server lists exactly one model. Each role (Summa
 own choice, separate from the Ollama choices; Flash/Pro rules do not apply. The list says nothing about
 where a model runs.
 
-**Auto and Quick need the JSON contract.** Manual Quick and Auto send the same evaluator request as on
-Ollama (temperature 0, 3,072 tokens) and accept only the strict `QuickSummaryDecision` envelope. Many small
-local models cannot hold it. Open the Quick model and tap **Test this model**: it sends a short synthetic
-exchange in the evaluator's shape. A pass says Auto and Quick can use the model; a failure says so and
-pauses Auto with "… did not follow the Quick Summary format" until you choose another Quick model or the
-test passes. Summary and Deep are plain chat and keep working. An untested model is allowed; if it breaks
+**Auto and Quick need the JSON contract.** Manual Quick and Auto send the evaluator prompt with
+temperature 0 and 3,072 tokens, plus best-effort reasoning-off hints in place of Ollama's `think: false`
+(`reasoning_effort: "none"`, `chat_template_kwargs.enable_thinking: false`; a server that rejects them with
+400/422 is asked once more without them), and accept only the strict `QuickSummaryDecision` envelope. Many
+small local models cannot hold it. Open the Quick model and tap **Test this model**: it sends a short
+synthetic exchange in the evaluator's shape. A pass says Auto and Quick can use the model; malformed JSON,
+or an empty or reasoning-only answer, says so and pauses Auto with "… did not follow the Quick Summary
+format" until you choose another Quick model or the test passes. Results are kept per server and model
+(the 32 most recent failures), recorded for the model that was tested, and model rows are disabled while
+a test runs. Summary and Deep are plain chat and keep working. An untested model is allowed; if it breaks
 the contract the Quick pane shows "did not return a usable Quick Summary update" and keeps the previous
 summary.
 

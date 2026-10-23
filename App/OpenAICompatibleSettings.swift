@@ -33,10 +33,12 @@ extension ProviderSettings {
     }
 
     /// Why automatic reviews cannot run on the selected route, or nil when they can.
-    static var automaticReviewUnavailableReason: String? {
+    static func automaticReviewUnavailableReason(quickModel: String) -> String? {
         switch aiMode {
         case .apple: return AppleIntelligenceProvider.automaticQuickUnavailableReason
-        case .openAI: return openAIEndpoint() == nil ? "Set your OpenAI-compatible server URL in Settings." : nil
+        case .openAI:
+            if openAIEndpoint() == nil { return "Set your OpenAI-compatible server URL in Settings." }
+            return quickModel.isEmpty ? "Choose a Quick model in the status rail." : nil
         default: return nil
         }
     }
@@ -48,27 +50,21 @@ extension ProviderSettings {
         return "OpenAI-compatible — " + OpenAICompatibleEndpoint.destinationLabel(endpoint)
     }
 
-    /// Applies the Settings sheet's server and key together; throws without changing anything when
-    /// the URL is invalid or the Keychain write fails. Moving to a different server origin removes
-    /// the old key unless a new one was entered in the same save.
-    static func saveOpenAI(baseURL raw: String, key: String, keyEdited: Bool) throws {
-        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        let url = trimmed.isEmpty ? nil : try OpenAICompatibleEndpoint.normalize(trimmed)
-        let newOrigin = url.map(OpenAICompatibleEndpoint.origin)
-        let trimmedKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
-        if keyEdited {
-            guard trimmedKey.isEmpty || newOrigin != nil else {
-                throw QuickSummaryError.message("Set the OpenAI-compatible server URL before saving its API key.")
-            }
-            guard KeychainStore.set(trimmedKey.isEmpty ? nil : trimmedKey, for: openAIKeyAccount) else {
-                throw QuickSummaryError.message("Could not save the API key in Keychain.")
-            }
-            openAIKeyOrigin = trimmedKey.isEmpty ? "" : (newOrigin ?? "")
-        } else if newOrigin != openAIEndpoint().map(OpenAICompatibleEndpoint.origin) {
+    /// Writes a change validated by `OpenAICompatibleSettingsChange.plan`. The Keychain goes first:
+    /// if storing the key fails, nothing at all is written and this returns false. A removal that
+    /// fails still clears the recorded origin, so the old key can never be sent again.
+    static func applyOpenAI(_ change: OpenAICompatibleSettingsChange) -> Bool {
+        switch change.keyAction {
+        case .keep: break
+        case let .store(key, origin):
+            guard KeychainStore.set(key, for: openAIKeyAccount) else { return false }
+            openAIKeyOrigin = origin
+        case .remove:
             KeychainStore.delete(openAIKeyAccount)
             openAIKeyOrigin = ""
         }
-        openAIBaseURL = url?.absoluteString ?? ""
+        openAIBaseURL = change.baseURL
+        return true
     }
 
     /// Ephemeral, so nothing an OpenAI-compatible server returns lands in a shared cache or cookie jar.
@@ -84,6 +80,10 @@ extension ProviderSettings {
     static func openAIProvider(model: String) -> any LLMProvider {
         guard let endpoint = openAIEndpoint() else {
             return UnavailableProvider(reason: "Set your OpenAI-compatible server URL in Settings.")
+        }
+        guard !model.isEmpty else {
+            return UnavailableProvider(reason: "Choose a model for this pane in the status rail. ListenToMe never "
+                + "picks one from an OpenAI-compatible server's list for you.")
         }
         return OpenAICompatibleProvider(model: model, baseURL: endpoint, apiKey: openAIKey(), urlSession: openAISession)
     }

@@ -21,7 +21,7 @@ final class MobileOpenAISettings {
         static let summary = "mobileOpenAIModel"
         static let quick = "mobileOpenAIQuickModel"
         static let deep = "mobileOpenAIDeepModel"
-        static let contractFailure = "mobileOpenAIQuickContractFailure"
+        static let contractFailures = "mobileOpenAIQuickContractFailures"
     }
 
     /// The validated API base, or empty when no server is set.
@@ -37,9 +37,9 @@ final class MobileOpenAISettings {
         didSet { UserDefaults.standard.set(deepModel, forKey: Keys.deep); changed?() }
     }
     private(set) var hasKey = false
-    /// `origin|model` of a Quick model that failed the Auto JSON check, so Auto can pause with a reason.
-    private(set) var contractFailure: String {
-        didSet { UserDefaults.standard.set(contractFailure, forKey: Keys.contractFailure); changed?() }
+    /// Server and model pairs that failed the Auto JSON check, so Auto can pause with a reason.
+    private(set) var contractLedger: OpenAICompatibleContractLedger {
+        didSet { UserDefaults.standard.set(contractLedger.failures, forKey: Keys.contractFailures); changed?() }
     }
     /// Called after any change that affects which server or model a request uses.
     @ObservationIgnored var changed: (() -> Void)?
@@ -53,7 +53,7 @@ final class MobileOpenAISettings {
         model = defaults.string(forKey: Keys.summary) ?? ""
         quickModel = defaults.string(forKey: Keys.quick) ?? ""
         deepModel = defaults.string(forKey: Keys.deep) ?? ""
-        contractFailure = defaults.string(forKey: Keys.contractFailure) ?? ""
+        contractLedger = OpenAICompatibleContractLedger(failures: defaults.stringArray(forKey: Keys.contractFailures) ?? [])
         hasKey = (try? currentKey()).map { !$0.isEmpty } ?? false
     }
 
@@ -176,7 +176,7 @@ final class MobileOpenAISettings {
     private func forgetModels() {
         models = []
         model = ""; quickModel = ""; deepModel = ""
-        contractFailure = ""
+        contractLedger = OpenAICompatibleContractLedger()
     }
 
     // MARK: Availability and transport
@@ -194,19 +194,15 @@ final class MobileOpenAISettings {
     /// Why Auto is paused even though the server and model are set: the Quick model already failed
     /// the evaluator's JSON contract. Auto never retries a known-bad model silently.
     var automaticQuickReason: String? {
-        guard let endpoint, !contractFailure.isEmpty,
-              contractFailure == Self.contractKey(endpoint, quickModel) else { return nil }
+        guard let endpoint, contractLedger.hasFailed(endpoint, model: quickModel) else { return nil }
         return "\(quickModel) did not follow the Quick Summary format. "
             + "Choose another Quick model or test it again in Settings."
     }
 
-    func recordContract(passed: Bool) {
+    /// Records the result for the model that was actually tested, not whichever is selected now.
+    func recordContract(model: String, passed: Bool) {
         guard let endpoint else { return }
-        contractFailure = passed ? "" : Self.contractKey(endpoint, quickModel)
-    }
-
-    private static func contractKey(_ endpoint: URL, _ model: String) -> String {
-        OpenAICompatibleEndpoint.origin(of: endpoint) + "|" + model
+        contractLedger.record(endpoint, model: model, passed: passed)
     }
 
     func client(for mode: MobileSummaryMode, transports: MobileTransports) throws -> OpenAICompatibleProvider {

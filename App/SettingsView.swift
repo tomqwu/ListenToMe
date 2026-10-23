@@ -99,11 +99,15 @@ enum ProviderSettings {
         let id = transcriptionLocaleID
         return id.isEmpty ? Locale.current : Locale(identifier: id)
     }
+    /// The pane's model on the current route. An OpenAI-compatible server keeps its own choices
+    /// (`openAIModel_<role>`, empty until the user picks), so switching to it never overwrites an
+    /// Ollama pick (issue #52).
     static func model(for role: CopilotRole) -> String {
-        UserDefaults.standard.string(forKey: "model_\(role.rawValue)") ?? ollamaModel
+        if aiMode == .openAI { return UserDefaults.standard.string(forKey: "openAIModel_\(role.rawValue)") ?? "" }
+        return UserDefaults.standard.string(forKey: "model_\(role.rawValue)") ?? ollamaModel
     }
     static func setModel(_ model: String, for role: CopilotRole) {
-        UserDefaults.standard.set(model, forKey: "model_\(role.rawValue)")
+        UserDefaults.standard.set(model, forKey: (aiMode == .openAI ? "openAIModel_" : "model_") + role.rawValue)
     }
 
     /// True once the user has explicitly chosen a model for this role in its pane dropdown.
@@ -112,6 +116,8 @@ enum ProviderSettings {
         UserDefaults.standard.bool(forKey: "modelPinned_\(role.rawValue)")
     }
     static func pin(_ role: CopilotRole) {
+        // Pins describe Ollama picks; every OpenAI-compatible choice is explicit already.
+        guard aiMode != .openAI else { return }
         UserDefaults.standard.set(true, forKey: "modelPinned_\(role.rawValue)")
     }
 
@@ -273,17 +279,29 @@ struct SettingsView: View {
     }
 
     private func save() {
-        // Only touched when edited, so a stale stored value can never block unrelated settings.
-        do {
-            if openAIBaseURL != ProviderSettings.openAIBaseURL || openAIKey != originalOpenAIKey {
-                try ProviderSettings.saveOpenAI(baseURL: openAIBaseURL, key: openAIKey, keyEdited: openAIKey != originalOpenAIKey)
+        // Validate everything before writing anything. The OpenAI-compatible fields are only
+        // touched when edited, so a stale stored value can never block unrelated settings.
+        var openAIChange: OpenAICompatibleSettingsChange?
+        if openAIBaseURL != ProviderSettings.openAIBaseURL || openAIKey != originalOpenAIKey {
+            do {
+                openAIChange = try OpenAICompatibleSettingsChange.plan(
+                    rawURL: openAIBaseURL, key: openAIKey, keyEdited: openAIKey != originalOpenAIKey,
+                    currentBaseURL: ProviderSettings.openAIBaseURL)
+            } catch {
+                saveError = error.localizedDescription + " Settings have not been applied."
+                return
             }
-        } catch {
-            saveError = error.localizedDescription + " Settings have not been applied."
+        }
+        let ollamaKeyChanged = ollamaKey != originalKey
+        guard !ollamaKeyChanged || KeychainStore.set(ollamaKey.isEmpty ? nil : ollamaKey, for: "ollama") else {
+            saveError = "Could not save the API key in Keychain. Settings have not been applied."
             return
         }
-        guard ollamaKey == originalKey || KeychainStore.set(ollamaKey.isEmpty ? nil : ollamaKey, for: "ollama") else {
-            saveError = "Could not save the API key in Keychain. Settings have not been applied."
+        if let openAIChange, !ProviderSettings.applyOpenAI(openAIChange) {
+            // Say exactly what was written: at most the Ollama key, never half of the OpenAI change.
+            saveError = "Could not save the OpenAI-compatible API key in Keychain. " + (ollamaKeyChanged
+                ? "The Ollama API key was saved; no other settings were applied."
+                : "Settings have not been applied.")
             return
         }
         ProviderSettings.aiMode = aiMode

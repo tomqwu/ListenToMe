@@ -62,5 +62,7 @@ struct MobileRoleModelView: View {
                 if ai.selectedModel(for: role) == model.name { Image(systemName: "checkmark").accessibilityLabel("Selected") }
             }
         }.accessibilityIdentifier("model-\(model.name)")
+            // A test result is recorded for the model that was tested; switching mid-test would muddle it.
+            .disabled(ai.testing)
     }
 }

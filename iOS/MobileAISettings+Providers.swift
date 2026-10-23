@@ -79,11 +79,12 @@ extension MobileAISettings {
             let client = try openAI.client(for: .quick, transports: transports)
             let request = try QuickSummaryContext.manualRequest(source: Self.quickContractProbe)
             _ = try await QuickSummaryReader.evaluate(request, provider: client)
-            openAI.recordContract(passed: true)
+            openAI.recordContract(model: model, passed: true)
             status = "Connection verified: \(model) at \(openAI.destinationLabel) returned a valid Quick Summary "
                 + "update, so Auto and Quick can use it."
-        } catch let error as QuickSummaryError {
-            openAI.recordContract(passed: false)
+        } catch where OpenAICompatibleContractLedger.isContractFailure(error) {
+            // A reasoning-only or empty answer is as unusable to Auto as malformed JSON.
+            openAI.recordContract(model: model, passed: false)
             status = "\(model) answered, but not in the Quick Summary format that Auto and Quick need "
                 + "(\(error.localizedDescription)) Auto is paused for this model; Summary and Deep can still use it."
         } catch {

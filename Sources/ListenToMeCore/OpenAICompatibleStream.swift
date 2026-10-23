@@ -68,6 +68,9 @@ struct OpenAICompatibleStreamState {
     private var sawFinishReason = false
     private var producedContent = false
     private var producedThinking = false
+    /// The `data:` payload of an event whose JSON spans several `data:` lines, joined with "\n" as
+    /// the event-stream format specifies. Dispatched once it parses or at the event's blank line.
+    private var pendingData: String?
 
     init(maximumBytes: Int) { self.maximumBytes = maximumBytes }
 
@@ -79,7 +82,31 @@ struct OpenAICompatibleStreamState {
 
     /// The events one line produces. Throws on a server error or a line that is not an event stream.
     mutating func consume(_ line: String, contentType: String?) throws -> [LLMStreamEvent] {
-        switch OpenAICompatibleSSE.parse(line) {
+        let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+        let payload = trimmed.hasPrefix("data:") ? trimmed.dropFirst(5).trimmingCharacters(in: .whitespaces) : nil
+        if let pending = pendingData {
+            if let payload {
+                let joined = pending + "\n" + payload
+                guard OpenAICompatibleSSE.jsonObject(joined) != nil else { pendingData = joined; return [] }
+                pendingData = nil
+                return try consumeParsed(OpenAICompatibleSSE.parse("data: " + joined), contentType: contentType)
+            }
+            guard trimmed.isEmpty else { throw OpenAICompatibleError.notEventStream(contentType: contentType) }
+            // The event ended and its data never formed JSON.
+            pendingData = nil
+            return try consumeParsed(OpenAICompatibleSSE.parse("data: " + pending), contentType: contentType)
+        }
+        let parsed = OpenAICompatibleSSE.parse(line)
+        if parsed == .unexpected, let payload, payload.hasPrefix("{") || payload.hasPrefix("[") {
+            pendingData = payload   // the first line of a multi-line data event
+            return []
+        }
+        return try consumeParsed(parsed, contentType: contentType)
+    }
+
+    private mutating func consumeParsed(_ parsed: OpenAICompatibleSSE.Line,
+                                        contentType: String?) throws -> [LLMStreamEvent] {
+        switch parsed {
         case .ignore: return []
         case .done:
             finished = true
@@ -119,7 +146,7 @@ struct OpenAICompatibleStreamState {
     /// Called once the byte stream ends. A stream that stopped without `[DONE]` or a finish reason
     /// was cut off: its partial text is never accepted as a complete answer.
     func complete() throws {
-        guard finished || sawFinishReason else { throw OpenAICompatibleError.incomplete }
+        guard pendingData == nil, finished || sawFinishReason else { throw OpenAICompatibleError.incomplete }
         guard producedContent else {
             throw producedThinking ? OpenAICompatibleError.thinkingOnly : OpenAICompatibleError.empty
         }

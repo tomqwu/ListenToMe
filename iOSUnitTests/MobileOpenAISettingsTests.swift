@@ -8,7 +8,7 @@ import ListenToMeCore
 final class MobileOpenAISettingsTests: XCTestCase {
     private let keys = ["mobileAIProvider", "mobileOpenAIBaseURL", "mobileOpenAIKeyOrigin", "mobileOpenAICatalog",
                         "mobileOpenAIModel", "mobileOpenAIQuickModel", "mobileOpenAIDeepModel",
-                        "mobileOpenAIQuickContractFailure"]
+                        "mobileOpenAIQuickContractFailures"]
     private var saved: [String: Any] = [:]
     private var savedKey = ""
 
@@ -145,18 +145,36 @@ final class MobileOpenAISettingsTests: XCTestCase {
         XCTAssertTrue(settings.saveOpenAIBaseURL("http://localhost:1234/v1"))
         settings.selectModel("tiny-model", for: .quick)
         XCTAssertNil(settings.automaticQuickReason, "An untested model is allowed and fails visibly if it must")
-        settings.openAI.recordContract(passed: false)
-        XCTAssertEqual(settings.automaticQuickReason,
-                       "tiny-model did not follow the Quick Summary format. Choose another Quick model or test it again in Settings.")
+        settings.openAI.recordContract(model: "tiny-model", passed: false)
+        XCTAssertEqual(settings.automaticQuickReason, "tiny-model did not follow the Quick Summary format. "
+                       + "Choose another Quick model or test it again in Settings.")
         XCTAssertNotNil(MobileAISettings().automaticQuickReason, "The result survives relaunch")
         settings.selectModel("bigger-model", for: .quick)
         XCTAssertNil(settings.automaticQuickReason, "A different model starts fresh")
         settings.selectModel("tiny-model", for: .quick)
-        settings.openAI.recordContract(passed: true)
+        settings.openAI.recordContract(model: "tiny-model", passed: true)
         XCTAssertNil(settings.automaticQuickReason)
         settings.provider = .ollama
-        settings.openAI.recordContract(passed: false)
+        settings.openAI.recordContract(model: "tiny-model", passed: false)
         XCTAssertNil(settings.automaticQuickReason, "Only the OpenAI-compatible route is gated this way")
+    }
+
+    /// Review finding: the result belongs to the model that was tested, and one model's result never
+    /// clears or condemns another's.
+    func testContractResultsAreKeptPerTestedModel() {
+        let settings = MobileAISettings()
+        settings.provider = .openAI
+        XCTAssertTrue(settings.saveOpenAIBaseURL("http://localhost:1234/v1"))
+        settings.selectModel("model-b", for: .quick)
+        settings.openAI.recordContract(model: "model-b", passed: false)
+        // A test of model A that finishes after the user picked B must not mark B, nor clear B.
+        settings.openAI.recordContract(model: "model-a", passed: true)
+        XCTAssertNotNil(settings.automaticQuickReason, "Model B stays known-bad")
+        settings.openAI.recordContract(model: "model-a", passed: false)
+        settings.selectModel("model-a", for: .quick)
+        XCTAssertNotNil(settings.automaticQuickReason)
+        settings.selectModel("model-b", for: .quick)
+        XCTAssertNotNil(settings.automaticQuickReason, "Both failures are remembered")
     }
 
     func testProviderChangesCancelObsoleteSummaryWork() {
