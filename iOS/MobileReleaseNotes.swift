@@ -48,6 +48,12 @@ enum MobileReleaseNotes {
         var id: String { version }
     }
     static let releases: [Release] = [
+        .init(version: "1.13.0", title: "Your notes, your languages, your server", details: [
+            "Save to folder: each conversation becomes a Markdown note in a folder you pick, such as an Obsidian vault or iCloud Drive.",
+            "Automatic language switches again when the language changes, and Undo goes back one switch.",
+            "Pick any language this device can transcribe. Speakers keep their names after a long silence.",
+            "Summaries can use your own OpenAI-compatible server. Settings → About lists open-source licenses."
+        ]),
         .init(version: "1.12.0", title: "Names and languages, automatically", details: [
             "Speaker labels are on by default and get ready before you record, so even a short recording is labeled.",
             "Automatic language: this device hears which language you speak, switches and re-transcribes, with Undo."
