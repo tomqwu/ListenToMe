@@ -159,6 +159,24 @@ public struct QuickSummaryContext {
         }
     }
 
+    /// Carries the ledger across a speaker relabel (issue #180). For each final segment whose words
+    /// are unchanged but whose speaker label changed (from "You" to "Speaker 1", or a rename), every
+    /// chunk that was acknowledged under the old label is acknowledged under the new one, so a label
+    /// change is never sent to the model again as new speech. Unread chunks, and segments whose
+    /// words changed too, stay pending.
+    public mutating func relabel(from old: [TranscriptSegment], to new: [TranscriptSegment]) {
+        let previous = Dictionary(old.filter(\.isFinal).map { ($0.id, $0) }, uniquingKeysWith: { _, newer in newer })
+        for segment in new where segment.isFinal {
+            guard let before = previous[segment.id], before.text == segment.text,
+                  before.speakerLabel != segment.speakerLabel else { continue }
+            let oldPieces = Self.pieces(notes: "", segments: [before])
+            let newPieces = Self.pieces(notes: "", segments: [segment])
+            for (oldPiece, newPiece) in zip(oldPieces, newPieces) where acknowledged[oldPiece.id] == oldPiece.text {
+                acknowledged[newPiece.id] = newPiece.text
+            }
+        }
+    }
+
     public mutating func accept(_ batch: Batch, memory: String) {
         for change in batch.changes {
             acknowledged[change.id] = change.text.isEmpty ? nil : change.text

@@ -15,9 +15,12 @@ public struct SpeakerIdentityTracker: Sendable {
     private let namespace: String
     private let prefix: String
 
-    public init(namespace: String = UUID().uuidString, prefix: String = "Speaker") {
+    /// `firstNumber` lets a later recording in the same conversation continue the numbering, so its
+    /// new voices never reuse a "Speaker N" an earlier recording already put on the transcript.
+    public init(namespace: String = UUID().uuidString, prefix: String = "Speaker", firstNumber: Int = 1) {
         self.namespace = namespace
         self.prefix = prefix
+        self.nextNumber = max(1, firstNumber)
     }
 
     public mutating func rename(id: String, name: String) {
