@@ -4,9 +4,14 @@ import SwiftUI
 /// with `WATCH_EMBED=YES`, until the release train that ships watch recording.
 @main
 struct ListenToMeWatchApp: App {
+    @State private var link = WatchLinkClient()
+
     var body: some Scene {
         WindowGroup {
-            Text("ListenToMe")
+            RemoteControlView(link: link)
+                .task { link.activate() }
         }
+        // Completes every WKWatchConnectivityRefreshBackgroundTask when the closure returns.
+        .backgroundTask(.watchConnectivity) { }
     }
 }
