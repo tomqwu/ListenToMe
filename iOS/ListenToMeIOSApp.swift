@@ -51,6 +51,9 @@ struct ListenToMeIOSApp: App {
         watchLink.commandHandler = { await session.handleWatchCommand($0) }
         // Audio is filed on arrival in any app state; it is transcribed only in the foreground.
         watchLink.onInboxChanged = { session.importWatchInbox() }
+        // Shown only: "Apple Watch is recording · …". The phone records nothing in this mode.
+        watchLink.onWatchContext = { session.receiveWatchContext($0) }
+        session.receiveWatchContext(watchLink.receivedWatchContext)
         session.watchLink = watchLink
         session.publishWatchStatus()
     }

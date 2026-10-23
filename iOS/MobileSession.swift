@@ -76,6 +76,8 @@ final class MobileSession {
     var watchInboxProblems: [String] = []
     /// A chunk arrived while a drain ran; drain again when it ends.
     @ObservationIgnored var watchDrainRequested = false
+    /// The Apple Watch's own recording, from its application context (Slice 3); see `receiveWatchContext`.
+    var watchCaptureStatus: WatchCaptureStatus?
     private var manualQuickError: String?
     var quickSummaryError: String? { manualQuickError ?? quickReader.error }
     private var sourceImportID: String?
@@ -203,12 +205,12 @@ final class MobileSession {
         }
     }
 
-    /// The recorder stamps "Microphone" as the display label for the local speaker. That is a device,
-    /// not a participant, and the review prompts are told never to invent names, so prompt text uses
-    /// the same "You" label macOS uses. The Markdown export keeps "Microphone". Lines that speaker
-    /// identification labeled ("Speaker 2", or the name the user gave) reach prompts unchanged.
+    /// "Microphone" (and "Apple Watch" on a watch recording's lines) names a device, not a participant,
+    /// and the review prompts are told never to invent names, so prompt text uses the "You" label macOS
+    /// uses; the Markdown export keeps the device label. Lines that speaker identification labeled
+    /// ("Speaker 2", or the name the user gave) reach prompts unchanged.
     static func promptSegment(_ segment: TranscriptSegment) -> TranscriptSegment {
-        guard segment.speakerName == microphoneLabel else { return segment }
+        guard isDeviceLabel(segment.speakerName) else { return segment }
         var renamed = segment
         renamed.speakerName = nil
         return renamed
@@ -357,7 +359,6 @@ final class MobileSession {
         attachments = record.attachments ?? []; sourceImportID = record.sourceImportID
         segments = record.segments ?? []; partial = nil; message = nil
     }
-
 
     private func refreshHistory() {
         do {
@@ -736,7 +737,6 @@ extension MobileSession {
         history.sort { $0.date > $1.date }
     }
 }
-
 
 /// The share-extension inbox drain. Kept out of the class body so one unreadable batch's
 /// recovery path does not crowd the conversation state it operates on.

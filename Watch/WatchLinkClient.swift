@@ -14,7 +14,24 @@ final class WatchLinkClient: NSObject, WCSessionDelegate {
     private(set) var lastReply: WatchReply?
     private(set) var isSending = false
     @ObservationIgnored private let session = WCSession.default
+    /// Recorded chunks waiting for the iPhone (Slice 3).
+    @ObservationIgnored var outbox: WatchOutbox?
+    /// The watch's own recording status, sent again once the session is active.
+    @ObservationIgnored private var captureStatus: WatchCaptureStatus?
 
+    /// Tells the iPhone whether this watch is recording (application context: the latest wins).
+    func publish(_ status: WatchCaptureStatus) {
+        captureStatus = status
+        sendCaptureStatus()
+    }
+
+    private func sendCaptureStatus() {
+        guard let captureStatus, session.activationState == .activated else { return }
+        try? session.updateApplicationContext(WatchLink.context(for: captureStatus))
+    }
+
+    /// Called from the app's `init`, so the session is active for background transfers and their
+    /// `didFinish` before any screen appears (and when the system wakes the app for them).
     func activate() {
         guard WCSession.isSupported(), session.activationState != .activated else { return }
         session.delegate = self
@@ -67,7 +84,22 @@ final class WatchLinkClient: NSObject, WCSessionDelegate {
         let context = session.receivedApplicationContext
         let status = WatchLink.phoneStatus(fromContext: context), stamp = WatchLink.stamp(from: context)
         let reachable = session.isReachable
-        Task { @MainActor in self.apply(context: status, stamp: stamp, reachable: reachable) }
+        let outstanding = OutstandingTransfers(transfers: session.outstandingFileTransfers)
+        Task { @MainActor in
+            self.apply(context: status, stamp: stamp, reachable: reachable)
+            // Chunks left from an earlier launch, or finished before activation, are sent now.
+            if activationState == .activated { self.outbox?.reconcileAtLaunch(outstanding: outstanding.transfers) }
+            self.sendCaptureStatus()
+        }
+    }
+
+    /// A chunk transfer ended. Its audio is deleted only on success; see `WatchOutbox`.
+    nonisolated func session(_ session: WCSession, didFinish fileTransfer: WCSessionFileTransfer,
+                             error: (any Error)?) {
+        let url = fileTransfer.file.fileURL
+        // The metadata the transfer carried: the fallback when the chunk's metadata file is missing.
+        let metadata = fileTransfer.file.metadata.flatMap { try? WatchChunkMetadata(transferMetadata: $0) }
+        Task { @MainActor in self.outbox?.transferFinished(fileURL: url, metadata: metadata, error: error) }
     }
 
     nonisolated func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
@@ -81,4 +113,10 @@ final class WatchLinkClient: NSObject, WCSessionDelegate {
         let reachable = session.isReachable
         Task { @MainActor in self.isReachable = reachable }
     }
+}
+
+/// The outstanding transfers handed from the WatchConnectivity queue to the main actor. They are
+/// only read there, after activation, to tell which chunks the system is already sending.
+private struct OutstandingTransfers: @unchecked Sendable {
+    let transfers: [WCSessionFileTransfer]
 }

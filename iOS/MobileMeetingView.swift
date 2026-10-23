@@ -122,6 +122,7 @@ struct MobileMeetingView: View {
                 .font(.caption.weight(.medium))
                 .foregroundStyle(session.state == .recording ? .red : MobileStyle.muted)
             MobileSpeakerStatus(session: session)
+            MobileWatchRecordingLine(status: session.watchCaptureStatus)
             if let message = session.message {
                 Text(message).font(.caption).lineLimit(2).foregroundStyle(.secondary)
                     .accessibilityIdentifier("sessionMessage")
@@ -277,6 +278,25 @@ struct MobileMeetingView: View {
             .scrollContentBackground(.hidden).background(MobileStyle.canvas)
             .navigationTitle("Settings")
             .toolbar { Button("Done") { showSettings = false } }
+        }
+    }
+}
+
+/// "Apple Watch is recording · mm:ss" while the watch records with its own microphone (issue #181),
+/// refreshed each second. The iPhone records nothing in this mode; the audio arrives after each chunk.
+struct MobileWatchRecordingLine: View {
+    let status: WatchCaptureStatus?
+
+    var body: some View {
+        if status?.state == .recording {
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                if let line = WatchRemoteText.watchRecordingLine(status, now: context.date) {
+                    Label(line, systemImage: "applewatch")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.red)
+                        .accessibilityIdentifier("watchRecordingLine")
+                }
+            }
         }
     }
 }

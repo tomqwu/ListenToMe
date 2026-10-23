@@ -207,3 +207,47 @@ final class MobileSpeakerTests: MobileSpeakerTestCase {
         XCTAssertTrue(predicate())
     }
 }
+
+/// Watch conversations ship without speaker labels (#181 Task 14, deferred to #192). Speaker
+/// identification heard only this iPhone's microphone, so it never relabels an Apple Watch line, and
+/// prompts read a watch line as "You", like "Microphone".
+extension MobileSpeakerTests {
+    private func watchLine(_ text: String, _ start: TimeInterval, _ end: TimeInterval) -> TranscriptSegment {
+        TranscriptSegment(source: .you, text: text, isFinal: true, start: start, end: end,
+                          speakerName: MobileFileTranscriber.speakerName)
+    }
+
+    func testAPassNeverRelabelsAppleWatchLines() async throws {
+        let session = makeSession()
+        session.speakers.enabled = true
+        try await recordTwoVoices(session)
+        // A watch drain appends to the open conversation when it is the watch recording.
+        session.segments.append(watchLine("From the wrist.", 0.5, 3.5))
+        await session.runSpeakerPass()
+        XCTAssertEqual(session.segments.map(\.speakerName),
+                       ["Speaker 1", "Speaker 2", "Microphone", "Apple Watch"])
+        XCTAssertNil(session.segments[3].speakerID)
+        XCTAssertEqual(session.speakerList.map(\.lines), [1, 1])
+        await session.stop()
+    }
+
+    func testPromptsReadAnAppleWatchLineAsYou() async throws {
+        let session = makeSession()
+        session.segments = [watchLine("Ship it Friday.", 0, 2)]
+        XCTAssertNil(MobileSession.promptSegment(session.segments[0]).speakerName)
+        XCTAssertTrue(session.summarySource.contains("You: Ship it Friday."), session.summarySource)
+        XCTAssertFalse(session.summarySource.contains("Apple Watch"))
+        XCTAssertEqual(session.segments[0].speakerName, "Apple Watch", "The saved line keeps its label")
+    }
+
+    func testASpeakerCannotBeRenamedToTheWatchLabel() async throws {
+        let session = makeSession()
+        session.speakers.enabled = true
+        try await recordTwoVoices(session)
+        await session.runSpeakerPass()
+        await session.stop()
+        let speaker = try XCTUnwrap(session.speakerList.first)
+        session.renameSpeaker(id: speaker.id, to: "Apple Watch")
+        XCTAssertEqual(session.speakerList.first?.name, "Speaker 1", "A device name is not a participant")
+    }
+}

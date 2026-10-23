@@ -282,3 +282,107 @@ final class WatchInboxTests: XCTestCase {
         XCTAssertTrue(inbox.ledgers().isEmpty, "A week later the tombstone goes")
     }
 }
+
+/// Review follow-ups from #190 (#191): the completion sweep, refusal wording and a deleted
+/// recording's tombstone.
+extension WatchInboxTests {
+    /// A chunk filed while its manifest could not be written is adopted, never swept away, when the
+    /// recording completes.
+    func testCompletingARecordingAdoptsAChunkMissingFromTheManifest() throws {
+        let inbox = WatchInbox(root: root)
+        XCTAssertEqual(inbox.accept(fileAt: try delivered(), metadata: metadata(0, isLast: true), now: startedAt),
+                       .stored)
+        let failing = WatchInbox(root: root, writeFile: { data, url in
+            if url.lastPathComponent == "manifest.json" { throw CocoaError(.fileWriteOutOfSpace) }
+            try data.write(to: url, options: PrivateStorage.writingOptions)
+        })
+        // Continue after an interruption: chunk 1 arrives, but its manifest entry is never written.
+        XCTAssertEqual(failing.accept(fileAt: try delivered(), metadata: metadata(1), now: startedAt), .stored)
+        _ = try inbox.update(id) { $0.markTranscribed(through: 300) }
+        inbox.deleteChunks([0], of: id)
+
+        XCTAssertFalse(try inbox.completeRecording(id, now: startedAt), "Chunk 1 still needs its text")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: inbox.chunkURL(recordingID: id, index: 1).path))
+        XCTAssertEqual(inbox.ledgers().first?.chunks.map(\.index), [0, 1])
+    }
+
+    /// The watch deletes a part once it is delivered, so a refusal never promises it is sent again,
+    /// and never shows Swift error text.
+    func testRefusalsSayThePartIsMissingInPlainWords() throws {
+        let inbox = WatchInbox(root: root)
+        inbox.clearProblems()
+        defer { inbox.clearProblems() }
+        var bad = metadata(0)
+        bad["index"] = 1_000
+        _ = inbox.accept(fileAt: try delivered(), metadata: bad, now: startedAt)
+        var future = metadata(0)
+        future["v"] = 2
+        _ = inbox.accept(fileAt: try delivered(), metadata: future, now: startedAt)
+        // A file where the inbox folder should be: nothing can be stored.
+        try Data().write(to: root)
+        guard case .rejected = inbox.accept(fileAt: try delivered(), metadata: metadata(0), now: startedAt) else {
+            return XCTFail("Storage failure must refuse")
+        }
+        let problems = inbox.problems()
+        XCTAssertEqual(problems.count, 3)
+        XCTAssertEqual(problems[0], "An Apple Watch recording part could not be read, so it is missing from "
+            + "the recording.")
+        XCTAssertEqual(problems[1], "An Apple Watch recording part came from another version of ListenToMe, so "
+            + "it is missing from the recording. Update ListenToMe on your iPhone and Apple Watch.")
+        XCTAssertTrue(problems[2].hasPrefix("An Apple Watch recording part could not be stored on this iPhone"))
+        XCTAssertTrue(problems[2].contains("so it is missing from the recording"))
+        for problem in problems {
+            XCTAssertFalse(problem.contains("sent again"), problem)
+            XCTAssertFalse(problem.contains("malformed"), problem)
+            XCTAssertFalse(problem.contains("unsupportedVersion"), problem)
+        }
+    }
+
+    /// A deleted watch conversation leaves a tombstone, so the watch sending an old part again does
+    /// not bring it back as a new conversation. The tombstone goes after `tombstoneLifetime`.
+    func testADeletedRecordingDiscardsLateDeliveriesUntilItsTombstoneExpires() throws {
+        let inbox = WatchInbox(root: root)
+        XCTAssertEqual(inbox.accept(fileAt: try delivered(), metadata: metadata(0), now: startedAt), .stored)
+        try inbox.removeRecording(id, tombstoneAt: startedAt)
+        XCTAssertTrue(inbox.ledgers().isEmpty)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: inbox.chunkURL(recordingID: id, index: 0).path))
+
+        let later = startedAt.addingTimeInterval(86_400)
+        XCTAssertEqual(inbox.accept(fileAt: try delivered(), metadata: metadata(0), now: later), .discarded)
+        XCTAssertEqual(inbox.accept(fileAt: try delivered(), metadata: metadata(1, isLast: true), now: later),
+                       .discarded)
+        let end = WatchRecordingEnd(recordingID: id, startedAt: startedAt, lastIndex: 1, unexpected: true)
+        inbox.acceptEnd(userInfo: end.userInfo, now: later)
+        inbox.tidy(now: later)
+        XCTAssertTrue(inbox.ledgers().isEmpty, "Nothing is filed for a deleted recording")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: inbox.chunkURL(recordingID: id, index: 1).path))
+
+        inbox.tidy(now: startedAt.addingTimeInterval(8 * 86_400))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: root.appendingPathComponent(id.uuidString).path))
+        XCTAssertEqual(inbox.accept(fileAt: try delivered(), metadata: metadata(0),
+                                    now: startedAt.addingTimeInterval(8 * 86_400)), .stored)
+    }
+
+    /// Deleting only the audio (History's Delete on a waiting row) leaves no tombstone: the
+    /// conversation stays, and a later Continue part reopens it.
+    func testRemovingOnlyTheAudioLeavesNoTombstone() throws {
+        let inbox = WatchInbox(root: root)
+        XCTAssertEqual(inbox.accept(fileAt: try delivered(), metadata: metadata(0), now: startedAt), .stored)
+        try inbox.removeRecording(id)
+        XCTAssertEqual(inbox.accept(fileAt: try delivered(), metadata: metadata(1), now: startedAt), .stored)
+    }
+
+    /// The audio is gone once the folder is removed; a tombstone that cannot be written is only logged,
+    /// so the user is not told the audio could not be deleted.
+    func testATombstoneWriteFailureDoesNotFailTheDelete() throws {
+        XCTAssertEqual(WatchInbox(root: root).accept(fileAt: try delivered(), metadata: metadata(0), now: startedAt),
+                       .stored)
+        let failing = WatchInbox(root: root, writeFile: { data, url in
+            if url.lastPathComponent == "deleted" { throw CocoaError(.fileWriteOutOfSpace) }
+            try data.write(to: url, options: PrivateStorage.writingOptions)
+        })
+        XCTAssertNoThrow(try failing.removeRecording(id, tombstoneAt: startedAt))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: failing.chunkURL(recordingID: id, index: 0).path))
+        XCTAssertTrue(failing.ledgers().isEmpty)
+    }
+}

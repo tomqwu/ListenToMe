@@ -32,6 +32,14 @@ extension MobileSession {
         watchLink?.publish(phoneRecorderStatus)
     }
 
+    /// The watch's status as its application context. Only shown ("Apple Watch is recording · …"):
+    /// it never starts audio or transcription here. A context from another protocol version, or one
+    /// without a watch status, changes nothing.
+    func receiveWatchContext(_ context: [String: Any]) {
+        guard let status = WatchLink.watchStatus(fromContext: context), status != watchCaptureStatus else { return }
+        watchCaptureStatus = status
+    }
+
     private static func phoneState(_ state: State) -> PhoneRecorderState {
         switch state {
         case .idle: .idle

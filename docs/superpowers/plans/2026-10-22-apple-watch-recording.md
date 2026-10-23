@@ -116,7 +116,8 @@ Its §3 platform facts (F1–F19, U1–U8) and §9 decisions are referenced by n
 | `Watch/ListenToMeWatchApp.swift` | `@main`, `WCSession` background task | 2, 7 |
 | `Watch/WatchLinkClient.swift` | Watch side of `WCSession`: commands, phone status, file transfers | 7, 18 |
 | `Watch/RemoteControlView.swift` | Slice 1 screen | 7 |
-| `Watch/WatchRecorder.swift` | Audio session, engine tap, AAC chunk rotation, limits, interruptions | 17 |
+| `Watch/WatchRecorder.swift` | Audio session, limits, interruptions, Continue | 17 |
+| `Watch/WatchChunkCapture.swift` | `WatchChunkCapturing` and the engine-tap AAC writer with rotation (swappable for the `AVAudioRecorder` fallback) | 17 |
 | `Watch/WatchOutbox.swift` | Finalized chunks on disk, queueing, reconcile, delete-on-success | 18 |
 | `Watch/WatchRootView.swift`, `Watch/WatchRecordingView.swift` | Slice 3 UI | 19 |
 | `Sources/ListenToMeCore/WatchLink.swift` | Wire protocol and watch display text (compiled into the watch) | 4, 8, 16 |
@@ -797,9 +798,17 @@ Rules the tests pin:
 - [ ] **Step 4: Run** the tests and `make ios-build`. Expected: PASS.
 - [ ] **Step 5: Commit** `feat(ios): show Apple Watch recordings waiting in History (#181)`.
 
-### Task 14: Speaker labels on watch conversations (after #180)
+### Task 14: Speaker labels on watch conversations (after #180) — deferred to #192
 
-The spec (§5.5 step 4) says #180's speaker identification runs on watch recordings like any other.
+> **Deferred (maintainer decision, 2026-10-23; spec decision 11).** The first watch release ships
+> watch conversations **without** speaker labels; the follow-up is
+> [#192](https://github.com/tomqwu/ListenToMe/issues/192), which lists why #180 cannot label a
+> drained recording without its own design. The Slice 3 PR does only the guard this needs: a
+> speaker pass never relabels an "Apple Watch" line, a speaker cannot be renamed to "Apple Watch",
+> and prompts read a watch line as "You" (`MobileSession.promptSegment`), with tests in
+> `iOSUnitTests/MobileSpeakerTests.swift`. The steps below are kept for #192 and are not done here.
+
+The spec (§5.5 step 4) said #180's speaker identification runs on watch recordings like any other.
 At the time of writing, #180 labels the **open** conversation from a live `SpeakerAudioBuffer`, and
 the drain deletes chunk audio as it goes, so this needs explicit wiring.
 
@@ -876,10 +885,12 @@ public enum WatchCapturePolicy {
     public static func text(for block: StartBlock) -> String
     public static func text(for trigger: StopTrigger) -> String
 }
+// As built, these two types live in WatchCapturePolicy.swift (WatchLink.swift stays under the lint file length).
 public enum WatchCaptureState: String, Sendable { case idle, recording }
 public struct WatchCaptureStatus: Equatable, Sendable { var state: WatchCaptureState; var startedAt: Date?; var waitingRecordings: Int }
 // WatchLink: context(for: WatchCaptureStatus) (key "watch") and watchStatus(fromContext:) -> WatchCaptureStatus?
 // WatchRemoteText: watchRecordingLine(_ status: WatchCaptureStatus?, now: Date) -> String?  ("Apple Watch is recording · mm:ss" or nil)
+//   As built, nil also once a "recording" status is older than the 3-hour cap plus one limit check (stale).
 // WatchRemoteText: waitingText(_ count: Int) -> String?  (nil for 0, "1 recording waiting for iPhone", "3 recordings waiting for iPhone")
 ```
 
@@ -901,7 +912,8 @@ recorded is being sent to iPhone."
 ### Task 17: `WatchRecorder`
 
 **Files:**
-- Create: `Watch/WatchRecorder.swift`
+- Create: `Watch/WatchRecorder.swift`, `Watch/WatchChunkCapture.swift` (capture behind `WatchChunkCapturing`, so a
+  no-go from Task 15 replaces one type)
 
 **Interfaces:**
 - Consumes: `WatchCapturePolicy`, `WatchChunkMetadata` (Task 8).
@@ -915,7 +927,7 @@ recorded is being sent to iPhone."
   `WKInterfaceDevice.current().batteryLevel` (monitoring enabled) and `volumeAvailableCapacity`, asks
   `AVAudioApplication.requestRecordPermission()`, sets the session category `.record` and activates
   it, all in the foreground (F5). The tap converts to 16 kHz mono and writes AAC into
-  `Application Support/Recording/<recordingID>/<index>.m4a` on a serial queue off the main actor; at
+  `Application Support/Recording/<recordingID>/<index>.m4a` off the main actor; at
   `shouldRotate` it closes the file between buffers (no gap), and hands it to `onChunkFinalized`
   with metadata (`watchBuild` = `CFBundleVersion`). Check `stopTrigger` at most every 30 s. A stop,
   a limit, or `AVAudioSession.interruptionNotification` (`.began`) closes the current chunk with
@@ -923,6 +935,16 @@ recorded is being sent to iPhone."
   Continue to keep recording.", canContinue: true)`. `continueRecording()` keeps the recording ID,
   continues the index, and sets `startOffset` to the wall-clock seconds since `startedAt`. A write
   error ends the recording with its reason.
+
+  *As built (after the #193 review):* `WatchEngineCapture` converts and writes on the engine's own
+  tap thread under an `NSLock`, not on a separate serial queue; a rotation closes the file with
+  `AVAudioFile.close()` before handing it over, one `AVAudioConverter` serves the whole run, and the
+  last chunk gets an `.endOfStream` flush. Each opened chunk gets a placeholder `<index>.json` so a
+  chunk finished but never handed over can be recovered at launch. Besides interruptions, a
+  media-services reset, a route change that leaves no input, the engine's configuration change
+  stopping it, or the 30 s check finding it stopped all end the run with Continue; the decision is
+  `WatchCapturePolicy.stopReason(for:)` in Core. Each 30 s check also republishes the watch status
+  with a stamp, and the phone hides "Apple Watch is recording" after 2 minutes without one.
 - [ ] **Step 2: Build.** `make ios-build` and `make lint`. Expected: success. Device behavior is
   accepted in Task 20.
 - [ ] **Step 3: Commit** `feat(watch): record the watch microphone in AAC chunks (#181)`.

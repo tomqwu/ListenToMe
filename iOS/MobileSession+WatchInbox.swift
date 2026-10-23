@@ -81,11 +81,12 @@ extension MobileSession {
         refreshWatchInboxRows()
     }
 
-    /// A deleted watch conversation takes its raw audio with it, so the drain cannot bring it back.
+    /// A deleted watch conversation takes its raw audio with it, so the drain cannot bring it back, and
+    /// leaves a tombstone so a part the watch sends again is discarded (#191).
     func discardWatchAudio(sourceImportID: String?) {
         guard let source = sourceImportID, source.hasPrefix("watch:"),
               let recordingID = UUID(uuidString: String(source.dropFirst("watch:".count))) else { return }
-        deleteWatchRecording(recordingID)
+        deleteWatchRecording(recordingID, conversationDeleted: true)
     }
 
     /// The user's Retry on a failed recording.
@@ -95,11 +96,12 @@ extension MobileSession {
     }
 
     /// Deletes the recording's audio. Text already transcribed stays in its conversation.
-    func deleteWatchRecording(_ recordingID: UUID) {
+    /// `conversationDeleted` leaves a tombstone; see `WatchInbox.removeRecording(_:tombstoneAt:)`.
+    func deleteWatchRecording(_ recordingID: UUID, conversationDeleted: Bool = false) {
         let drain = watchDrainTask
         drain?.cancel()
         do {
-            try watchInbox.removeRecording(recordingID)
+            try watchInbox.removeRecording(recordingID, tombstoneAt: conversationDeleted ? Date() : nil)
         } catch {
             message = "Could not delete the Apple Watch audio: \(error.localizedDescription)"
         }

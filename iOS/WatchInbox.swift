@@ -18,10 +18,14 @@ import os
 struct WatchInbox: Sendable {
     enum Acceptance: Equatable {
         case stored, duplicate, rejected(String)
+        /// The recording's conversation was deleted; see `removeRecording(_:tombstoneAt:)`.
+        case discarded
     }
 
     private static let lock = NSRecursiveLock()
     private static let manifestName = "manifest.json"
+    /// Left in a recording's folder when its conversation is deleted; see `removeRecording`.
+    private static let deletedMarkerName = "deleted"
     private static let log = Logger(subsystem: "com.tomwu.ListenToMe.ios", category: "WatchInbox")
     /// How long a completed recording's tombstone manifest is kept for a late Continue or resend.
     static let tombstoneLifetime: TimeInterval = 7 * 86_400
@@ -42,9 +46,16 @@ struct WatchInbox: Sendable {
     /// deletes it as soon as the delegate call ends. The stored name comes only from the parsed
     /// recording id and index, never from the metadata's text.
     func accept(fileAt url: URL, metadata: [String: Any], now: Date) -> Acceptance {
+        // The watch deletes a part once it is delivered, so a refused part is gone: the copy says so
+        // in plain words, and the technical reason goes only to the log.
         let chunk: WatchChunkMetadata
         do { chunk = try WatchChunkMetadata(transferMetadata: metadata) } catch {
-            return refuse("An Apple Watch recording part could not be read (\(error)).")
+            Self.log.error("Chunk metadata unreadable: \(String(describing: error), privacy: .public)")
+            if case WatchLinkError.unsupportedVersion = error {
+                return refuse("An Apple Watch recording part came from another version of ListenToMe, so it is "
+                    + "missing from the recording. Update ListenToMe on your iPhone and Apple Watch.")
+            }
+            return refuse("An Apple Watch recording part could not be read, so it is missing from the recording.")
         }
         guard let size = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize else {
             return refuse("An Apple Watch recording part arrived without its audio.")
@@ -53,6 +64,7 @@ struct WatchInbox: Sendable {
             return refuse("An Apple Watch recording part was too large to keep.")
         }
         return Self.locked {
+            if isDeleted(chunk.recordingID, now: now) { return .discarded }
             var ledger = readLedgerSettingAside(chunk.recordingID)
                 ?? WatchCaptureLedger(recordingID: chunk.recordingID, startedAt: chunk.startedAt, at: now)
             guard ledger.receive(chunk, at: now) else { return .duplicate }
@@ -65,8 +77,9 @@ struct WatchInbox: Sendable {
                 }
                 try FileManager.default.moveItem(at: url, to: destination)
             } catch {
-                return refuse("An Apple Watch recording part could not be stored on this iPhone "
-                    + "(\(error.localizedDescription)). Free some space; parts still on the watch are sent again.")
+                Self.log.error("Chunk not stored: \(error.localizedDescription, privacy: .public)")
+                return refuse("An Apple Watch recording part could not be stored on this iPhone, so it is missing "
+                    + "from the recording. Free some space on this iPhone.")
             }
             // From here the audio is ours. Nothing below may delete it: a failure only costs the
             // index, which `tidy` rebuilds.
@@ -95,6 +108,7 @@ struct WatchInbox: Sendable {
     func acceptEnd(userInfo: [String: Any], now: Date) {
         guard let end = try? WatchRecordingEnd(userInfo: userInfo) else { return }
         Self.locked {
+            guard !isDeleted(end.recordingID, now: now) else { return }
             var ledger = readLedgerSettingAside(end.recordingID)
                 ?? WatchCaptureLedger(recordingID: end.recordingID, startedAt: end.startedAt, at: now)
             ledger.receiveEnd(end, at: now)
@@ -148,19 +162,35 @@ struct WatchInbox: Sendable {
         }
     }
 
-    /// Deletes a recording's audio and manifest: the user deleted it, or its conversation.
-    func removeRecording(_ id: UUID) throws {
+    /// Deletes a recording's audio and manifest: the user deleted it, or its conversation. With
+    /// `deletedAt` (the conversation was deleted), a tombstone stays for `tombstoneLifetime`, so a part
+    /// the watch sends again is discarded instead of starting a new conversation (#191). Without it
+    /// (only the audio was deleted) a later Continue part reopens the conversation. Throws only when the
+    /// audio could not be deleted: a tombstone that cannot be written is logged, since the audio is gone.
+    func removeRecording(_ id: UUID, tombstoneAt deletedAt: Date? = nil) throws {
         try Self.locked {
             let folder = folder(id)
             if FileManager.default.fileExists(atPath: folder.path) { try FileManager.default.removeItem(at: folder) }
+            guard let deletedAt else { return }
+            do {
+                try PrivateStorage.createDirectory(at: folder)
+                try writeFile(Data(String(deletedAt.timeIntervalSince1970).utf8), deletedMarkerURL(id))
+            } catch {
+                let reason = error.localizedDescription
+                Self.log.error("Deleted-recording tombstone not written: \(reason, privacy: .public)")
+            }
+            excludeFromBackupUnlocked()
         }
     }
 
     /// Marks a recording complete if, as it is on disk now, nothing is left to transcribe and it is
     /// over. The manifest stays as a tombstone (see `WatchCaptureLedger.completed`); any audio left
-    /// over is deleted. A chunk filed since the caller last looked keeps the recording open.
+    /// over is deleted. A chunk filed since the caller last looked keeps the recording open, and so
+    /// does audio the manifest never listed (a manifest write failed): it is adopted first, never
+    /// swept away (#191).
     func completeRecording(_ id: UUID, now: Date) throws -> Bool {
         try Self.locked {
+            adoptOrphans(id, now: now)
             guard var ledger = readLedger(id) else { return false }
             let batch = ledger.nextBatch(now: now)
             guard batch.finishes, batch.indices.isEmpty, batch.newGaps.isEmpty else { return false }
@@ -180,6 +210,10 @@ struct WatchInbox: Sendable {
         Self.locked {
             for folder in recordingFolders() {
                 guard let id = UUID(uuidString: folder.lastPathComponent) else { continue }
+                if FileManager.default.fileExists(atPath: deletedMarkerURL(id).path) {
+                    if !isDeleted(id, now: now) { try? FileManager.default.removeItem(at: folder) }
+                    continue
+                }
                 adoptOrphans(id, now: now)
                 if let ledger = readLedger(id), ledger.completed,
                    now.timeIntervalSince(ledger.lastActivity) > Self.tombstoneLifetime,
@@ -243,6 +277,24 @@ struct WatchInbox: Sendable {
 
     private func metadataURL(_ id: UUID, _ index: Int) -> URL {
         folder(id).appendingPathComponent("\(index).json")
+    }
+
+    private func deletedMarkerURL(_ id: UUID) -> URL {
+        folder(id).appendingPathComponent(Self.deletedMarkerName)
+    }
+
+    /// The recording's conversation was deleted less than `tombstoneLifetime` before `now`. An expired
+    /// tombstone is removed here, so the next delivery files normally.
+    private func isDeleted(_ id: UUID, now: Date) -> Bool {
+        let url = deletedMarkerURL(id)
+        guard let data = try? Data(contentsOf: url) else { return false }
+        if let text = String(bytes: data, encoding: .utf8), let seconds = Double(text),
+           now.timeIntervalSince(Date(timeIntervalSince1970: seconds)) > Self.tombstoneLifetime {
+            try? FileManager.default.removeItem(at: folder(id))
+            return false
+        }
+        // An unreadable marker still means the user deleted the conversation.
+        return true
     }
 
     private func readLedger(_ id: UUID) -> WatchCaptureLedger? {
