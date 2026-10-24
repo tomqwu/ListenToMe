@@ -133,7 +133,7 @@ is the tracking issue.
 
 [#181](https://github.com/tomqwu/ListenToMe/issues/181) (record from the watch),
 [#192](https://github.com/tomqwu/ListenToMe/issues/192) (speaker labels on watch recordings),
-[#200](https://github.com/tomqwu/ListenToMe/issues/200) (language detection for watch recordings),
+[#200](https://github.com/tomqwu/ListenToMe/issues/200) (implemented; paired-device language acceptance pending),
 [#225](https://github.com/tomqwu/ListenToMe/issues/225) (keep watch audio when Save audio recordings is on).
 
 **macOS — P1/P2** (lands on `main`; ships when the maintainer resumes Mac releases)
