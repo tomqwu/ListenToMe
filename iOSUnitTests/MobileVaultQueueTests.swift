@@ -75,6 +75,30 @@ final class MobileVaultQueueTests: XCTestCase {
         XCTAssertFalse(vault.needsAttention)
     }
 
+    /// Delete all conversations (#220) drops every queued note and leaves the folder's files alone.
+    func testDeletingAllConversationsDropsQueuedNotesAndKeepsWrittenOnes() async throws {
+        let vault = makeVault()
+        let session = MobileSession(storageDirectory: root.appendingPathComponent("app"),
+                                    sharedInbox: root.appendingPathComponent("inbox"))
+        session.notes = "Already in the folder"
+        XCTAssertTrue(session.save())
+        try await settle(vault)
+        XCTAssertEqual(try notes().count, 1)
+        session.newConversation()
+        session.notes = "Queued"
+        XCTAssertTrue(session.save())
+        let queued = session.id
+        XCTAssertNotNil(vault.pending[queued])
+        XCTAssertTrue(session.deleteAllMessage.contains("Notes already saved to “Vault” stay there"))
+
+        session.deleteAllConversations()
+        XCTAssertTrue(vault.pending.isEmpty)
+        XCTAssertTrue(vault.unsavedIDs.isEmpty)
+        vault.retry(history: session.history)
+        try await settle(vault)
+        XCTAssertEqual(try notes().count, 1, "the user's folder keeps its file; the queued note is never written")
+    }
+
     func testAFullDiskStopsTheQueueWithEveryNoteKept() async throws {
         let vault = makeVault { _, _ in throw CocoaError(.fileWriteOutOfSpace) }
         vault.saveAll([record("A"), record("B")])
