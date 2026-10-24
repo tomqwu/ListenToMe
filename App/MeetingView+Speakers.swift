@@ -91,7 +91,8 @@ extension MeetingView {
             let result = try await diarizer.analyze(samples: snapshot.samples)
             guard token == diarizationRunToken, !Task.isCancelled else { return .cancelled }
             speakerAnalyzedSamples[source] = snapshot.startSample + snapshot.samples.count
-            applySpeakerResult(result, source: source, offset: snapshot.startOffset,
+            // Transcript lines sit on the conversation's timeline, this run's audio from its own zero.
+            applySpeakerResult(result, source: source, offset: snapshot.startOffset + session.recordingOffset,
                                windowStart: snapshot.startTime)
             return nil
         } catch {

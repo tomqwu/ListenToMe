@@ -35,7 +35,8 @@ macOS-only, and there is no Mac↔iOS sync. See
 The standalone iOS/iPadOS 26 app is the **ListenToMeIOS** target: microphone transcription, a live
 transcript with Quick Summary plus a Deep Think tab, context-aware suggested questions you can ask in one tap, local conversations with search, photo/file
 attachments, Apple Notes and share-sheet imports, calendar import with e-mail and join-link
-redaction, Markdown sharing, and an opt-in **Save to folder** that writes each conversation as a
+redaction, Markdown sharing, **Export as** Markdown, plain-text, SRT/WebVTT subtitle or JSON files with
+timestamps, and an opt-in **Save to folder** that writes each conversation as a
 Markdown note into a folder you pick in Files, such as an Obsidian vault. On-device speaker identification (on by default; turn it off in
 Settings) labels transcript lines Speaker 1, Speaker 2… for the people one phone hears, and you can
 rename them; its models download once from `huggingface.co`. The transcription language defaults to
@@ -166,7 +167,10 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 **Make it yours**
 - **Use-case presets** (Meeting, Interview, etc.) tune the copilot's behavior.
 - **File & folder reference context** with a configurable token budget.
-- **Markdown session export** for sharing or review.
+- **Export** as Markdown, plain text, SRT or WebVTT subtitles, or versioned JSON, plus recap and PDF,
+  in files named after the conversation (`Weekly sync 2026-10-23 1435.srt`). Lines carry `[mm:ss]`
+  timestamps where the engine reports them (WhisperKit, iPhone and Apple Watch recordings); see
+  [Export formats](docs/export-formats.md).
 - **Save to folder** (off by default, Settings): after each conversation stops, writes one
   Obsidian-friendly Markdown note (YAML front matter, summary, notes, timestamped transcript) into a
   folder you choose, and updates the same note when summaries or the title change.
@@ -283,11 +287,17 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   without stopping capture. A visible saved time acknowledges success. Failed saves offer Retry / Save As.
 - **New conversation (⌘N).** Finishes and saves the current conversation, then clears transcript,
   AI context, notes, names and attached references. Model/language/appearance preferences remain.
-- **History (⌘F).** Search saved conversations, open their full contents, and copy/export Markdown.
+- **History (⌘F).** Search saved conversations, open their full contents, copy them, and export them
+  in any format below, including recap and PDF.
   Search is case-, accent- and width-insensitive ("cafe" finds "café", "ai" finds "ＡＩ"), splits the
   query on any whitespace including tabs, ranks whole-word matches above matches inside longer words,
   and covers title, summary, notes and the transcript's own words (not the "You:"/"Others:" prefixes).
-- **Export (⌘E).** Export the current conversation as Markdown; PDF and recap are also in Export.
+- **Export (⌘E).** Export the current conversation as Markdown; the Export menu also offers plain
+  text, SRT and WebVTT subtitles, JSON, recap and PDF. Files are named after the conversation's title
+  and date. Timestamps and subtitles need an engine that reports times: WhisperKit does; the default
+  SpeechAnalyzer does not yet ([#68](https://github.com/tomqwu/ListenToMe/issues/68)), so its exports
+  have no `[mm:ss]` and the subtitle formats are unavailable. Formats, cue rules and the JSON schema:
+  [docs/export-formats.md](docs/export-formats.md).
   With autosaving off, Save opens Save As and New/Close offers Save As, Cancel or explicit discard.
 - **Load from Calendar.** Fills Context notes from your current or next meeting *and* titles the
   conversation after the event (only while the title is still the generated "Conversation — <date>",
@@ -350,7 +360,10 @@ date is the conversation's first checkpoint. Writes are atomic; a missing folder
 full disk or a file still in iCloud shows an orange note beside the saved time with Retry, and one bad
 note never holds up the others. Quitting waits up to five seconds for the last note; notes left
 unwritten are retried at the next launch. Deleting a conversation from History does not delete its
-note, and **Clear history** drops any notes still waiting so they are never written.
+note, and **Clear history** drops any notes still waiting so they are never written. The note's
+`language` is the one the conversation was transcribed in, kept with the conversation, so changing the
+language setting later never rewrites it; conversations saved before this was kept, and WhisperKit in
+Automatic mode, have no `language` field.
 
 ### Automatic speaker identification (experimental)
 

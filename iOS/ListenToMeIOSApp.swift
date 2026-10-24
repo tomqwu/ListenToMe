@@ -11,6 +11,7 @@ struct ListenToMeIOSApp: App {
     private let watchLink: PhoneWatchLink?
 
     init() {
+        try? ConversationExportFile.removeAll()   // an export file is never kept past this app run
         watchLink = PhoneWatchLink.activateIfSupported(inbox: WatchInbox(root: WatchInbox.defaultRoot))
     }
 

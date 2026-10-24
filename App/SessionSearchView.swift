@@ -81,14 +81,7 @@ private struct SessionDetailView: View {
     let record: SessionRecord
     @State private var error: String?
 
-    private var markdown: String {
-        if let segments = record.segments {
-            return SessionExporter.markdown(title: record.title, transcript: segments, notes: record.notes ?? "",
-                                            listenerSummary: record.summary,
-                                            quickSuggestion: record.quickSuggestion ?? "", deepAnswer: record.deepAnswer ?? "")
-        }
-        return "# \(record.title)\n\n## Transcript\n\n\(record.transcript)\n\n## Summary\n\n\(record.summary)"
-    }
+    private var markdown: String { SessionExporter.markdown(for: record) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -102,20 +95,15 @@ private struct SessionDetailView: View {
             if let error { Text(error).foregroundStyle(.red) }
             HStack {
                 Button("Copy conversation") { Clipboard.copy(markdown) }
-                Button("Export Markdown…") { export() }
+                Menu("Export") {
+                    ConversationExportMenu(record: { record },
+                                           hasTimestamps: TranscriptTimestamp.hasTimes(record.segments ?? []),
+                                           onError: { error = $0 })
+                }.fixedSize()
                 Spacer()
                 Button("Done") { dismiss() }.keyboardShortcut(.defaultAction)
             }
         }
         .padding(20).frame(width: 720, height: 580)
-    }
-
-    private func export() {
-        let panel = NSSavePanel()
-        panel.allowedContentTypes = [UTType(filenameExtension: "md") ?? .plainText]
-        panel.nameFieldStringValue = "Conversation.md"
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        do { try markdown.write(to: url, atomically: true, encoding: .utf8) }
-        catch { self.error = error.localizedDescription }
     }
 }
