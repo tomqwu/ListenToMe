@@ -8,7 +8,7 @@ Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags)
 
 | Surface | Latest published | State of `main` |
 | --- | --- | --- |
-| iPhone/iPad (TestFlight) | **1.15.0 (32)**, published 2026-10-24, tag `ios-v1.15.0-build32` at `f6e4c72` | Pending changes since `f6e4c72`: see the merged feature follow-up and Apple Watch work below. |
+| iPhone/iPad (TestFlight) | **1.16.0 (33)**, published 2026-10-24, tag `ios-v1.16.0-build33` at `980c471` | This feature batch is published to Dev; Watch remains excluded. Physical-device acceptance is pending. |
 | macOS | **1.4.4 (14)**, 2026-09-14, tag `v1.4.4` | **Releases paused on the maintainer's decision.** About 50 commits of Mac work are merged but unreleased; see [CHANGELOG → macOS (unreleased since 1.4.4)](../CHANGELOG.md#macos-unreleased-since-144). Do not start a macOS train yourself; the maintainer calls it. |
 | Apple Watch | Not shipped | Built on `main` behind the `WATCH_EMBED` build flag (off; `scripts/ios-testflight.sh` refuses an archive that embeds it). Waits on the maintainer running `SPIKE.md` on a real watch (branch `spike/181-watch-audio`, [#181](https://github.com/tomqwu/ListenToMe/issues/181)), then the Task 20 physical-device acceptance from #193. Status table in the [watch plan](superpowers/plans/2026-10-22-apple-watch-recording.md). |
 
@@ -27,8 +27,16 @@ Recent iOS trains (full text in [CHANGELOG.md](../CHANGELOG.md)):
 
 ## 1.16.0 (33) release train
 
-- Candidate 1.16.0 (33) includes the following merged work; upload receipt and tester verification
-  must be recorded before calling it published. Major iOS releases include TestFlight.
+- Published to TestFlight from `980c47172f502109e8329e776aafc535d630235a`. Apple processing is `VALID`, internal state
+  `IN_BETA_TESTING`, Dev includes build 33 and the intended tester is accepted. en-CA What to Test
+  and beta description were read back successfully. Evidence: `dist/ios-1.16.0-build33-evidence/`.
+  Major iOS releases include TestFlight. No physical installation is claimed.
+- Sixteen fresh native screenshots cover iPhone 17 Pro/Pro Max and iPad mini/13-inch Pro. Originals,
+  orientation-normalized copies, hashes and source manifest are in the release evidence. Listing
+  upload remains pending: App Store 1.15.0 is waiting for review and this train did not alter it.
+- Validation: 1,028 core tests (98.162% coverage), 364 iOS unit tests, release helpers, lint, app builds
+  and real Ollama contracts completed. Two initial full UI failures were resolved by focused reruns;
+  the original aggregate command was not a clean pass. Four final capture tests passed.
 
 - #257: Context/Notes prompt editor with Ask once, saved summary instructions, and optional domain presets.
 
@@ -68,9 +76,9 @@ full-resolution assets and manifest, and verify uploaded listing sets before App
   these exist for every iOS tag. From the next build on, each page must be complete: version/build,
   source commit, full notes, What to Test, privacy changes, and App Store "What's New" text since
   the last App Store production release (iOS 1.10.5).
-- **Release archives** for the last three builds are in the gitignored `dist/`:
+- **Release archives** for recent builds are in the gitignored `dist/`:
   `ListenToMe-ios-1.13.0-build30.xcarchive`, `…-1.14.0-build31.xcarchive`,
-  `…-1.15.0-build32.xcarchive`. They were moved there from temporary worktrees after upload, so the
+  `…-1.15.0-build32.xcarchive`, and `ListenToMe-ios-1.16.0-build33.xcarchive`. Earlier archives were moved there from temporary worktrees after upload, so the
   `upload-accepted.json` receipts in the evidence folders still name the old scratch paths. That is
   expected; do not edit the receipts.
 
