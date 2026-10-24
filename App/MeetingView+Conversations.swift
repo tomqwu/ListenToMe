@@ -19,26 +19,22 @@ extension MeetingView {
             notes: session.notes, quickSuggestion: session.quickSuggestion,
             deepAnswer: session.deepAnswer, complete: complete)
         guard force || key != lastSavedKey else { return true }
-        let record = SessionRecord(
-            id: currentSessionID, title: conversationTitle, date: Date(),
-            transcript: store.utterances.map { "\($0.speakerLabel): \($0.text)" }.joined(separator: "\n"),
-            summary: session.listenerSummary, segments: store.utterances, notes: session.notes,
-            quickSuggestion: session.quickSuggestion, deepAnswer: session.deepAnswer, isComplete: complete,
-            titleState: conversationTitleState)
+        // The record keeps the conversation's start (its first checkpoint), so History, its exports
+        // and the Save to folder note all carry the same date and file name as the live export.
+        let started = conversationStartedAt ?? Date()
+        let record = currentRecord(date: started, complete: complete)
         guard sessionStore.add(record) else {
             saveMessage = sessionStore.errorText ?? "Save failed. Retry or Export to keep this conversation."
             saveFailed = true
             return false
         }
         lastSavedKey = key
-        // Save to folder (issue #53): written once capture has stopped, then on each later change.
-        // The record's date moves with every checkpoint; the note keeps the conversation's start.
-        let started = conversationStartedAt ?? record.date
         conversationStartedAt = started
+        // Save to folder (issue #53): written once capture has stopped, then on each later change.
         let vault = MarkdownVaultSync.shared
         vault.activeRecordingID = complete ? nil : currentSessionID
         if complete {
-            vault.save(record, language: ProviderSettings.transcriptionLocale().identifier, startedAt: started)
+            vault.save(record, startedAt: started)
         }
         saveMessage = "Saved at " + Date().formatted(date: .omitted, time: .standard)
         saveFailed = false
@@ -57,7 +53,8 @@ extension MeetingView {
     func saveConversationAs() -> Bool {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [UTType(filenameExtension: "md") ?? .plainText]
-        panel.nameFieldStringValue = "ListenToMe-Conversation.md"
+        panel.nameFieldStringValue = SessionExporter.fileName(title: conversationTitle,
+                                                              date: conversationStartedAt ?? Date(), fileExtension: "md")
         guard panel.runModal() == .OK, let url = panel.url else { return false }
         do {
             try sessionMarkdown().write(to: url, atomically: true, encoding: .utf8)
@@ -100,6 +97,7 @@ extension MeetingView {
             beginDiarizationRunReset()
             session.resetConversation()
             currentSessionID = UUID().uuidString; conversationStartedAt = nil
+            conversationLanguages = ConversationLanguages()
             conversationTitle = ConversationTitle.generated(Date().formatted(date: .abbreviated, time: .shortened))
             conversationTitleState = .placeholder
             sessionSaveable = ProviderSettings.saveSessionsForSearch
@@ -150,9 +148,7 @@ extension MeetingView {
                         Text("⚠️ Save to folder: \(vault.statusText)").foregroundStyle(.orange)
                             .multilineTextAlignment(.trailing)
                         Button("Retry folder save") {
-                            vault.retry(history: sessionStore.all(),
-                                        language: ProviderSettings.transcriptionLocale().identifier,
-                                        excluding: wantsCapture ? currentSessionID : nil)
+                            vault.retry(history: sessionStore.all(), excluding: wantsCapture ? currentSessionID : nil)
                         }.disabled(!vault.hasFolder)
                     }
                 }.frame(maxWidth: .infinity, alignment: .trailing)

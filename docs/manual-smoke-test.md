@@ -153,7 +153,7 @@ iPhone (phone width and an accessibility text size):
 1. With **Auto** on (Ollama, a cloud AI service or an OpenAI-compatible server), record: chips appear
    under Quick Summary, stacked and fully readable without sideways scrolling. Tap one: the app stays
    on **Live** and an Ask card under Quick Summary shows the question in bold and the answer below it;
-   Quick Summary and Deep are unchanged (also after reopening the conversation), that chip is gone,
+   Quick Summary and Summary are unchanged (also after reopening the conversation), that chip is gone,
    and **Close** dismisses the card. On a very long conversation with Apple Intelligence, a tap still
    answers (from what fits) and the card says which part was read.
 2. With **Apple Intelligence** and Auto off, tap **Generate** on Quick Summary: the bullets must not
@@ -254,17 +254,17 @@ tables behind them are covered by `CaptureRecoveryTests`.
 5. Switch back to **Local only** or **Cloud** with the same conversation (Settings → save): the trim
    notice disappears immediately, and the next answer reads up to 16,000 (Quick) or 32,000 (Deep)
    characters of transcript, or all of it for Recap and Action items.
-7. **iPhone Quick and Deep on a long conversation (#114, #215).** On iPhone with Apple Intelligence,
-   open a conversation longer than about ten minutes with no Summary. **Generate Quick Summary** and
-   **Generate Deep Summary** must both answer (they used to say "exceeds the selected provider's
+7. **iPhone Quick on a long conversation (#114, #215).** On iPhone with Apple Intelligence,
+   open a conversation longer than about ten minutes with no Summary. **Generate Quick Summary**
+   must answer (it used to say "exceeds the selected provider's
    summary limit") and show "Using the opening ~N min and the last ~M min of the conversation (~K min
    in between left out)." above the text. **Summary** itself still says the conversation exceeds the
    limit. Record a few minutes, generate **Summary**, keep recording well past the window, then
-   generate Deep → "Using your Summary of the first ~N min, the ~H min after it and the last ~M min of
+   generate Quick → "Using your Summary of the first ~N min, the ~H min after it and the last ~M min of
    the conversation (~K min in between left out)." A conversation reopened from History has a Summary
-   of unknown coverage: Deep keeps the opening and adds "An earlier summary is included too." With
+   of unknown coverage: Quick keeps the opening and adds "An earlier summary is included too." With
    Auto on, a recap that rewrites the Quick Summary removes the previous answer's line. With a cloud
-   model whose output limit is tiny, Deep keeps its partial text and
+   model whose output limit is tiny, Summary keeps its partial text and
    shows "The answer was cut off at the model's output limit."
 6. **Many short lines.** Still on Apple Intelligence, have a long back-and-forth of short utterances
    with named speakers (rename both speakers to long names). Ask Deep for **Action items**: the
@@ -466,6 +466,37 @@ change. Move the folder to the Trash: an orange note with **Retry folder save** 
 saved time. Stop a recording and quit with ⌘Q at once: the note is in the folder. With the folder
 in the Trash, stop a recording and quit; put the folder back, relaunch: the waiting note is written.
 
+**Own language (#206).** iPhone: with Automatic, record in a language other than the device's until it
+switches, Stop, then set Settings → Language to another fixed language and edit the conversation's
+notes: the note's `language:` is still the switched-to language. A conversation that switched part-way
+also lists `languages:` with both. Mac: record in French, Stop, change the language to English, rename
+the conversation: the note keeps `language: "fr-FR"`.
+
+## Export formats and file names (#130)
+
+Mac:
+
+1. With **WhisperKit** selected, Listen for a minute with two people talking, then Stop. **Export**
+   lists Markdown, Plain text, Subtitles (SRT), Subtitles (WebVTT), JSON, Recap, PDF and Copy. The
+   save panel proposes `<title> <yyyy-MM-dd HHmm>.srt`, not a clock-time name. The `.srt` opens in
+   QuickTime/IINA beside a recording of the call with readable two-line cues; the `.vtt` validates
+   (for example in a browser `<track>`); Markdown and text lines start with `[mm:ss]`.
+2. With **SpeechAnalyzer** (the default), record and open **Export**: the subtitle items are disabled
+   with a note saying why, and Markdown/text have no `[mm:ss]` (nothing invented).
+3. **History** → open a conversation → **Export**: the same formats plus Recap and PDF, named after
+   that conversation, not "Conversation.md".
+4. Open the `.json` in a JSON viewer: `schema` `listentome.conversation`, `version` 1, `language`,
+   `speakers` and `segments` as in [export-formats.md](export-formats.md).
+
+iPhone (simulator is enough):
+
+1. Record a few lines, Stop, then **More → Export as**: five formats. Pick **Subtitles (SRT)** →
+   **Save to Files**: the file is named after the title and date and its cues match the transcript
+   times, including after a resumed recording (times keep counting up).
+2. **History** → touch and hold a conversation → **Export as** → **JSON** → Save to Files: valid
+   JSON with the conversation's language. An imported-notes conversation offers no subtitles.
+3. An Apple Watch conversation's subtitles start near 00:00:00 and follow the watch recording.
+
 ## Automatic conversation titles (#221)
 
 iPhone (device for Apple Intelligence, simulator for the keyword path):
@@ -496,6 +527,22 @@ model with Apple Intelligence or local Ollama, keywords otherwise). Stop while a
 still streaming: the title never ends mid-sentence. Click into the title field before the title
 arrives: the default title stays until a later Save. Type a title first, or Load from Calendar: it stays.
 Start a New conversation right after Stop: the saved one is renamed in History.
+## iPhone: Quick and Summary only (#235)
+
+Simulator is enough for 1–3; 4 needs a cloud or OpenAI-compatible model with Auto.
+
+1. **Two tabs.** The iPhone workspace shows **Live** and **Summary** only. On iPad (or a wide window)
+   the Summary sits beside Live with no Review picker. **More → Full summary** offers Summary and
+   Quick Summary only.
+2. **Settings.** Apple Intelligence, Ollama, OpenAI-compatible and every Cloud AI service list a
+   **Summary model** and a **Quick Summary model**; no Deep model row. A device that had a Deep model
+   chosen in an earlier build opens Settings normally.
+3. **Earlier deep analysis.** Open a conversation from History that an earlier build saved with a
+   Deep answer: under the Summary, a collapsed **Earlier deep analysis** expands to the old text,
+   read-only. Share the conversation and check Save to folder: the Deep section is still there.
+   Record more and save: it is kept, unchanged.
+4. **Auto ignores Deep.** With Auto on, discuss an unresolved tradeoff. Quick and Summary update; no
+   Deep request is sent and nothing new appears under Earlier deep analysis.
 
 ## iPhone Delete all conversations (#220)
 

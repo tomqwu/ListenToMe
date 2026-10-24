@@ -24,6 +24,8 @@ struct MeetingView: View {
     @State var currentSessionID = UUID().uuidString
     /// When the current conversation's first checkpoint was taken; the Save to folder note's date.
     @State var conversationStartedAt: Date?
+    /// The languages this conversation was transcribed in, kept on its record (issue #206).
+    @State var conversationLanguages = ConversationLanguages()
     /// `lastSavedUtteranceCount`: count at the last save, so an unchanged transcript isn't re-saved on
     /// Stop. `sessionSaveable`: whether this window-session may be persisted — tainted to false the
     /// moment saving is ever observed off (or history is cleared), so "turn off to keep nothing" holds
@@ -363,10 +365,9 @@ extension MeetingView {
             Button { showSearch = true } label: { Label("History", systemImage: "clock") }
                 .help("Open saved conversations (Command-F)")
             Menu {
-                Button("Full transcript (Markdown)…") { exportSession() }
-                Button("Recap (Markdown)…") { exportRecap() }
-                Button("PDF…") { exportPDF() }
-                Button("Copy conversation") { copySessionMarkdown() }
+                ConversationExportMenu(record: { currentRecord(date: conversationStartedAt ?? Date()) },
+                                       hasTimestamps: TranscriptTimestamp.hasTimes(store.utterances),
+                                       onError: { startError = $0 })
             } label: { Label("Export", systemImage: "square.and.arrow.up") }
                 .help("Export or copy this conversation")
             Button { openSettings($showSettings) } label: { Label("Settings", systemImage: "gearshape") }
@@ -421,6 +422,7 @@ extension MeetingView {
                     activeEngine = ProviderSettings.transcriptionEngine
                     try await session.start()
                     guard wantsCapture, session.isRunning else { return }
+                    noteCaptureLanguage()
                     anchorDiarizationRun()
                     now = Date(); recordingStartedAt = Date()
                 } catch {
@@ -468,6 +470,7 @@ extension MeetingView {
                 activeEngine = ProviderSettings.transcriptionEngine
                 try await session.start()
                 guard wantsCapture, session.isRunning, !Task.isCancelled else { return }
+                noteCaptureLanguage()
                 anchorDiarizationRun()
             } catch {
                 startError = error.localizedDescription; wantsCapture = false; activeEngine = nil
@@ -621,12 +624,6 @@ extension MeetingView {
 // MARK: - Actions (import / export / model refresh)
 
 extension MeetingView {
-    private static let fileStampFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd-HHmm"
-        return formatter
-    }()
-
     /// Imports an audio file and transcribes it into the Transcript pane (labeled "Others"),
     /// using the currently-selected language. Independent of live recording.
     func importAudioFile(session: MeetingSession) {
@@ -644,6 +641,7 @@ extension MeetingView {
         // Imports always use SpeechAnalyzer (it finalizes all fed audio, so fast-feeding a file is
         // lossless), regardless of the live-capture engine setting; the chosen language still applies.
         let locale = ProviderSettings.transcriptionLocale()
+        noteCaptureLanguage(engine: "speechAnalyzer")
         importTask?.cancel()
         importTask = Task {
             await session.transcribeAudio(
@@ -675,77 +673,6 @@ extension MeetingView {
                 conversationTitleState = .calendar   // never renamed automatically (#221)
             }
         }
-    }
-
-    /// Builds the full Markdown document (transcript + AI-pane outputs) for the given timestamp.
-    /// Shared by `exportSession()`, `exportPDF()`, and `copySessionMarkdown()`.
-    func sessionMarkdown(now: Date = Date()) -> String {
-        SessionExporter.markdown(
-            title: conversationTitle,
-            transcript: store.utterances,
-            notes: session.notes,
-            listenerSummary: session.listenerSummary,
-            quickSuggestion: session.quickSuggestion,
-            deepAnswer: session.deepAnswer
-        )
-    }
-
-    /// Exports the current transcript + AI-pane outputs to a Markdown file via a save panel.
-    func exportSession() {
-        let now = Date()
-        let markdown = sessionMarkdown(now: now)
-        let panel = NSSavePanel()
-        panel.allowedContentTypes = [UTType(filenameExtension: "md") ?? .plainText]
-        panel.nameFieldStringValue = "ListenToMe-\(Self.fileStampFormatter.string(from: now)).md"
-        panel.canCreateDirectories = true
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        do { try markdown.write(to: url, atomically: true, encoding: .utf8) } catch {
-            startError = "Export failed: \(error.localizedDescription)"
-        }
-    }
-
-    /// Exports a concise recap (summary + Quick/Deep notes, no transcript) to a Markdown file.
-    func exportRecap() {
-        let now = Date()
-        let markdown = SessionExporter.recap(
-            title: conversationTitle,
-            listenerSummary: session.listenerSummary,
-            quickSuggestion: session.quickSuggestion,
-            deepAnswer: session.deepAnswer
-        )
-        let panel = NSSavePanel()
-        panel.allowedContentTypes = [UTType(filenameExtension: "md") ?? .plainText]
-        panel.nameFieldStringValue = "ListenToMe-recap-\(Self.fileStampFormatter.string(from: now)).md"
-        panel.canCreateDirectories = true
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        do { try markdown.write(to: url, atomically: true, encoding: .utf8) } catch {
-            startError = "Export failed: \(error.localizedDescription)"
-        }
-    }
-
-    /// Renders the full Markdown document to a PDF and saves it via a save panel.
-    func exportPDF() {
-        let now = Date()
-        let title = "ListenToMe Session — \(now.formatted(date: .abbreviated, time: .shortened))"
-        let markdown = sessionMarkdown(now: now)
-        guard let data = PDFExport.data(fromMarkdown: markdown, title: title) else {
-            startError = "Couldn't render the PDF."
-            return
-        }
-        let panel = NSSavePanel()
-        panel.allowedContentTypes = [.pdf]
-        panel.nameFieldStringValue = "ListenToMe-\(Self.fileStampFormatter.string(from: now)).pdf"
-        panel.canCreateDirectories = true
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        do { try data.write(to: url) } catch {
-            startError = "Export failed: \(error.localizedDescription)"
-        }
-    }
-
-    /// Copies the current transcript + AI-pane outputs to the clipboard as Markdown,
-    /// mirroring `exportSession()`'s document but without a file save.
-    func copySessionMarkdown() {
-        Clipboard.copy(sessionMarkdown())
     }
 
     /// Window close/teardown: stop the hotkey and any pending restart/import. If recording, mirror

@@ -17,6 +17,8 @@ extension MobileSession {
             },
             ConversationDataOwner("shared imports") { [unowned self] in try removeImportedShares($0) },
             ConversationDataOwner("Save to folder queue") { [unowned self] in forgetVaultNotes($0) },
+            // The last Export as file (#130) may belong to any conversation, so it always goes.
+            ConversationDataOwner("exported files") { _ in try ConversationExportFile.removeAll() },
             ConversationDataOwner("saved audio") { [unowned self] in try savedAudio.remove($0) },   // #55
         ]
     }

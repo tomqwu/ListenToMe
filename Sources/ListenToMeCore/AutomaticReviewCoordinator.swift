@@ -68,6 +68,9 @@ public final class AutomaticReviewCoordinator {
         let snapshot: [QuickSummaryContext.Piece]
         let directives: AutomaticReviewDirectives
     }
+    /// The reviews this coordinator runs. iOS has no Deep pane (issue #235), so its coordinator
+    /// runs Summary only and ignores the evaluator's Deep recommendations; macOS runs both.
+    public let modes: Set<AutomaticReviewMode>
     public private(set) var activeMode: AutomaticReviewMode?
     public private(set) var completedCounts: [AutomaticReviewMode: Int] = [:]
     public private(set) var errors: [AutomaticReviewMode: String] = [:]
@@ -107,8 +110,10 @@ public final class AutomaticReviewCoordinator {
     /// bookkeeping after a review is decided by the same rule that kept the review alive.
     @ObservationIgnored private var apply: ((AutomaticReviewMode, String, [QuickSummaryContext.Piece]) -> Void)?
 
-    public init(summaryInterval: Duration = .seconds(30), deepInterval: Duration = .seconds(60),
+    public init(modes: Set<AutomaticReviewMode> = Set(AutomaticReviewMode.allCases),
+                summaryInterval: Duration = .seconds(30), deepInterval: Duration = .seconds(60),
                 retryInterval: Duration = .seconds(5), timeout: Duration = .seconds(60)) {
+        self.modes = modes
         self.summaryInterval = summaryInterval; self.deepInterval = deepInterval
         self.retryInterval = retryInterval; self.timeout = timeout
     }
@@ -159,7 +164,7 @@ public final class AutomaticReviewCoordinator {
         let input = Self.normalized(source)
         guard !input.isEmpty, currentInput.hasPrefix(input) else { return }
         let recommended = Set(reviews.filter { $0.confidence == "high" || $0.confidence == "medium" }
-            .compactMap { AutomaticReviewMode(rawValue: $0.mode) })
+            .compactMap { AutomaticReviewMode(rawValue: $0.mode) }).intersection(modes)
         // A queued job is dropped only on an *explicit* signal: this read listed the mode with low
         // confidence. A read that merely omits it — the Quick model not echoing `pendingReviews`,
         // which the prompt only asks it to do — must leave the queue alone, or a Deep job waiting

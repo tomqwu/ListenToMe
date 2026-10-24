@@ -35,8 +35,20 @@ public struct TranscriptSegment: Identifiable, Sendable, Equatable, Codable {
     /// Present only after an opt-in speech correction; the recognizer's wording remains recoverable.
     public let originalText: String?
     public let correctionModel: String?
+    /// The transcription language this line was recognized in (BCP-47 or a locale identifier), when
+    /// the app knows it (issue #206). Absent for lines saved before it was kept.
+    public var language: String?
 
     public var speakerLabel: String { speakerName ?? (source == .you ? "You" : "Others") }
+
+    /// The same line moved `offset` seconds later on the conversation's timeline. A line its engine
+    /// did not time (`0…0`) stays untimed.
+    public func shifted(by offset: TimeInterval) -> TranscriptSegment {
+        guard offset != 0, start > 0 || end > 0 else { return self }
+        return TranscriptSegment(id: id, source: source, text: text, isFinal: isFinal, start: start + offset,
+                                 end: end + offset, speakerID: speakerID, speakerName: speakerName,
+                                 originalText: originalText, correctionModel: correctionModel, language: language)
+    }
 
     /// What one segment costs in an assembled prompt: `"<label>: <text>"` plus the newline that
     /// joins it to the next line. Prompt budgets must charge this, not `text.count` alone.
@@ -47,7 +59,7 @@ public struct TranscriptSegment: Identifiable, Sendable, Equatable, Codable {
     public init(id: UUID = UUID(), source: SpeakerSource, text: String,
                 isFinal: Bool, start: TimeInterval, end: TimeInterval,
                 speakerID: String? = nil, speakerName: String? = nil,
-                originalText: String? = nil, correctionModel: String? = nil) {
+                originalText: String? = nil, correctionModel: String? = nil, language: String? = nil) {
         self.id = id
         self.source = source
         self.text = text
@@ -58,5 +70,6 @@ public struct TranscriptSegment: Identifiable, Sendable, Equatable, Codable {
         self.end = end
         self.originalText = originalText
         self.correctionModel = correctionModel
+        self.language = language
     }
 }

@@ -334,7 +334,7 @@ never finalized, because the app was killed mid-chunk, is discarded and the reco
 4. **Complete.** When the last chunk is transcribed, the inbox folder is removed, History shows the
    conversation with a "From Apple Watch" note, and a status message says so. The open conversation
    is not switched, and no notification is posted (decisions 6 and 8). The conversation then
-   behaves like any other: search, Summary, Quick, Deep, export, delete. Its lines keep the
+   behaves like any other: search, Summary, Quick, export, delete (Deep is macOS-only since #235). Its lines keep the
    "Apple Watch" label: #180's speaker identification does not run on them, never relabels them, and
    prompts read them as "You" (decision 11; speaker labels for watch recordings are
    [#192](https://github.com/tomqwu/ListenToMe/issues/192)).

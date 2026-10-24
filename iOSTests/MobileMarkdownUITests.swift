@@ -8,8 +8,8 @@ final class MobileMarkdownUITests: XCTestCase {
         guard app.textFields["conversationTitle"].value as? String == "Markdown rendering fixture" else {
             throw XCTSkip("Requires the locally staged Markdown conversation fixture.")
         }
-        for mode in ["quick", "deep"] {
-            app.segmentedControls["workspaceTabs"].buttons[mode == "quick" ? "Live" : "Deep"].tap()
+        for mode in ["quick", "summary"] {
+            app.segmentedControls["workspaceTabs"].buttons[mode == "quick" ? "Live" : "Summary"].tap()
             let output = app.staticTexts["output-\(mode)"]
             XCTAssertTrue(output.waitForExistence(timeout: 5))
             XCTAssertTrue(output.label.contains("Decisions"))
@@ -17,7 +17,7 @@ final class MobileMarkdownUITests: XCTestCase {
             XCTAssertFalse(output.label.contains("###"))
             XCTAssertFalse(output.label.contains("**"))
         }
-        capture(app, name: "Formatted Quick and Deep summaries")
+        capture(app, name: "Formatted Quick and Summary")
         app.buttons["More"].tap()
         app.buttons["Full summary"].tap()
         let output = app.staticTexts["savedSummary"]

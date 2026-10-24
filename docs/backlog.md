@@ -18,7 +18,7 @@ picked for the user.
 ## Shipped through 1.3.2
 
 Presets, reference files and budgets, audio import, optional WhisperKit, calendar context,
-keyword History search, Markdown/recap/PDF export, resizable panes, and experimental on-device
+keyword History search, Markdown/text/SRT/WebVTT/JSON/recap/PDF export, resizable panes, and experimental on-device
 speaker identification/naming are available. Production hardening added atomic conversation saves,
 full History details, Save/New controls, explicit AI routing, and surfaced runtime failures.
 1.3.2 fixed repeated/inconclusive permission UI and documented verified production capture recovery.

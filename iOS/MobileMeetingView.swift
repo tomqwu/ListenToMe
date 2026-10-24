@@ -65,6 +65,10 @@ struct MobileMeetingView: View {
                                 .disabled(!session.hasContent)
                             ShareLink(item: session.markdown) { Label("Share Markdown", systemImage: "doc.text") }
                                 .disabled(!session.hasContent)
+                            Menu("Export as", systemImage: "doc.badge.arrow.up") {
+                                ConversationExportLinks(record: session.currentRecord)
+                            }
+                            .disabled(!session.hasContent).accessibilityIdentifier("exportAs")
                             if session.canPlaySavedAudio {
                                 ShareLink(items: session.savedAudioFiles) { Label("Share audio", systemImage: "waveform") }
                             }

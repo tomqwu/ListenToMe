@@ -127,7 +127,7 @@ final class MobileQuickLoopTests: XCTestCase {
         XCTAssertNil(session.partial)
     }
 
-    func testSlowReadCoalescesQueuedSpeechAndDeepDoesNotBlockQuick() async throws {
+    func testSlowReadCoalescesQueuedSpeechAndSummaryDoesNotBlockQuick() async throws {
         await provider.holdNextQuick()
         session.start()
         try await wait { self.session.state == .recording }
@@ -142,11 +142,11 @@ final class MobileQuickLoopTests: XCTestCase {
         try await wait { self.session.quickReader.completedReads == 2 }
         let inputs = await provider.inputs()
         XCTAssertEqual(inputs[1].changes.map(\.text), ["You: Sarah confirms.", "You: Peter helps."])
-        session.requestSummary(for: .deep)
-        try await wait { self.session.generatingMode == .deep }
+        session.requestSummary(for: .summary)
+        try await wait { self.session.generatingMode == .summary }
         recorder.send("Monday remains agreed.")
         try await wait { self.session.quickReader.completedReads == 3 }
-        XCTAssertEqual(session.generatingMode, .deep, "Quick completes while Deep is still in flight")
+        XCTAssertEqual(session.generatingMode, .summary, "Quick completes while Summary is still in flight")
         let maxQuick = await provider.maxQuick()
         XCTAssertEqual(maxQuick, 1)
     }
@@ -265,7 +265,7 @@ private actor QuickTestProvider: LLMProvider {
     private var captured: [MobileQuickContext.Input] = []
     private var held: AsyncThrowingStream<String, Error>.Continuation?
     private var heldText = ""
-    private var deep: AsyncThrowingStream<String, Error>.Continuation?
+    private var fullReview: AsyncThrowingStream<String, Error>.Continuation?
     private var hold = false
     private var fail = false
     private var active = 0
@@ -279,7 +279,7 @@ private actor QuickTestProvider: LLMProvider {
     func hasHeldQuick() -> Bool { held != nil }
     func failNextQuick() { fail = true }
     func finishHeldQuick() { held?.yield(heldText); held?.finish(); held = nil }
-    func finishAll() { finishHeldQuick(); deep?.finish(); deep = nil }
+    func finishAll() { finishHeldQuick(); fullReview?.finish(); fullReview = nil }
     private func ended() { active -= 1 }
     /// Pieces now arrive attributed ("You: …", "Notes: …"); a real model answers with the
     /// content, so the stub drops the leading label before echoing it back as a recap.
@@ -289,7 +289,7 @@ private actor QuickTestProvider: LLMProvider {
     }
 
     private func respond(_ request: LLMRequest, _ continuation: AsyncThrowingStream<String, Error>.Continuation) {
-        guard request.system == MobileQuickContext.instructions else { deep = continuation; return }
+        guard request.system == MobileQuickContext.instructions else { fullReview = continuation; return }
         active += 1; maximum = max(maximum, active)
         continuation.onTermination = { _ in Task { await self.ended() } }
         let input = try? JSONDecoder().decode(MobileQuickContext.Input.self, from: Data((request.messages.first?.content ?? "").utf8))

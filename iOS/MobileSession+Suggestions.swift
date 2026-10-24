@@ -18,9 +18,9 @@ extension MobileSession {
     }
 
     /// Sends a tapped chip's literal text to the Quick model as a separate ask. Its answer appears in
-    /// the Ask card under Quick Summary; Quick Summary, Deep, the saved conversation and Auto's review
+    /// the Ask card under Quick Summary; Quick Summary, Summary, the saved conversation and Auto's review
     /// state are untouched. A long conversation is answered from what fits, exactly like an on-demand
-    /// Quick or Deep answer (`OnDemandGrounding`). A blocked tap sends nothing, says why and keeps the
+    /// Quick answer (`OnDemandGrounding`). A blocked tap sends nothing, says why and keeps the
     /// chip; the chip is used up only once its answer has arrived, so a failed or cancelled ask can be
     /// tapped again.
     /// - Returns: true when the request was sent.

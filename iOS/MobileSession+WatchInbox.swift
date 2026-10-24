@@ -197,11 +197,12 @@ extension MobileSession {
                                       chunkEnds: chunks.map { $0.startOffset + $0.duration })
         do {
             let transcriber = makeWatchTranscriber()
-            let locale = Locale(identifier: transcriptionLanguage)
-            try await transcriber.transcribe(chunks, locale: locale) { [weak self] line in
+            let language = transcriptionLanguage
+            try await transcriber.transcribe(chunks, locale: Locale(identifier: language)) { [weak self] line in
                 guard let self, line.start >= resumeAt else { return }
                 pending.lines.append(TranscriptSegment(source: .you, text: line.text, isFinal: true, start: line.start,
-                                                       end: line.end, speakerName: MobileFileTranscriber.speakerName))
+                                                       end: line.end, speakerName: MobileFileTranscriber.speakerName,
+                                                       language: language))
                 if pending.shouldSave(after: line) {
                     try self.saveWatchLines(pending, recordID: recordID, of: recordingID)
                 }
@@ -293,7 +294,9 @@ extension MobileSession {
     /// archive. Throws unless the change is saved.
     private func updateWatchRecord(_ recordID: String, segments added: [TranscriptSegment] = [], note: String? = nil,
                                    complete: Bool = false) throws {
+        // Apple Watch files are transcribed in the transcription language (issue #206).
         if recordID == id {
+            if !added.isEmpty { noteConversationLanguage(transcriptionLanguage) }
             segments.append(contentsOf: added)
             if let note { notes = Self.appendingLine(note, to: notes) }
             guard save(announce: false) else { throw WatchConversationUnavailable() }
@@ -307,10 +310,12 @@ extension MobileSession {
                                         ?? record.notes,
                                     quickSuggestion: record.quickSuggestion, deepAnswer: record.deepAnswer,
                                     isComplete: complete, attachments: record.attachments,
-                                    sourceImportID: record.sourceImportID, titleState: record.titleState)
-        try archive.save(updated)
-        remember(updated)
-        exportToVault(updated, language: transcriptionLanguage)   // Save to folder (#53)
+                                    sourceImportID: record.sourceImportID, titleState: record.titleState,
+                                    language: record.language, languages: record.languages)
+        let languaged = added.isEmpty ? updated : updated.recording(language: transcriptionLanguage)
+        try archive.save(languaged)
+        remember(languaged)
+        exportToVault(languaged)   // Save to folder (#53)
     }
 
     private static func appendingLine(_ line: String, to text: String) -> String {

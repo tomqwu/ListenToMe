@@ -9,6 +9,7 @@ let package = Package(
     ],
     targets: [
         .target(name: "ListenToMeCore"),
-        .testTarget(name: "ListenToMeCoreTests", dependencies: ["ListenToMeCore"])
+        // Golden export files are read from the source tree (SessionExportGoldenTests), not bundled.
+        .testTarget(name: "ListenToMeCoreTests", dependencies: ["ListenToMeCore"], exclude: ["Golden"])
     ]
 )

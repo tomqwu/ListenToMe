@@ -113,7 +113,7 @@ extension MobileSession {
         do {
             try archive.save(updated)
             remember(updated)
-            if named != nil { Self.markdownVault.save(updated, language: transcriptionLanguage) }
+            if named != nil { Self.markdownVault.save(updated) }   // the record's own language (#206)
         } catch {
             // The default name stays; the next save tries again.
         }

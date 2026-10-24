@@ -47,6 +47,9 @@ struct MobileHistoryView: View {
                             }
                             .contextMenu {
                                 Button("Share", systemImage: "square.and.arrow.up") { sharing = record }
+                                Menu("Export as", systemImage: "doc.badge.arrow.up") {
+                                    ConversationExportLinks(record: record)
+                                }
                                 let audio = session.savedAudio.fileURLs(for: record.id)
                                 if !audio.isEmpty {
                                     ShareLink(items: audio) { Label("Share audio", systemImage: "waveform") }

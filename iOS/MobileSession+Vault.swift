@@ -8,15 +8,15 @@ extension MobileSession {
 
     /// Writes the note when nothing is recording: at Stop, Save, and whenever a summary, title,
     /// notes or speaker names change afterwards. Live transcript lines are not written one by one.
-    /// `language` defaults to the open conversation's; the Apple Watch drain passes its own.
-    func exportToVault(_ record: SessionRecord, language: String? = nil) {
+    /// The note's language is the one kept on the record (issue #206).
+    func exportToVault(_ record: SessionRecord) {
         guard state == .idle else { return }
         let vault = Self.markdownVault
         guard vault.enabled else { return }
-        vault.save(record, language: language ?? conversationLanguage)
+        vault.save(record)
         // Notes left unwritten before a relaunch are picked up again from History.
         if vault.unsavedIDs.count > vault.pending.count {
-            vault.retry(history: history, language: conversationLanguage)
+            vault.retry(history: history)
         }
     }
 
