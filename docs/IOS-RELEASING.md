@@ -258,6 +258,11 @@ gh release create ios-v<version>-build<build> --verify-tag --prerelease --latest
   --title "ListenToMe iOS <version> (<build>) — TestFlight" --notes-file <notes.md>
 ```
 
+The release page must be complete on its own (maintainer requirement, 2026-10-24): version and build,
+the source commit and upload date, the full user-facing notes for that build, the What to Test steps,
+any privacy or data-handling change, and an App Store "What's New" text (≤ 4,000 characters)
+covering everything since the last App Store production release, ready to paste.
+
 Start the notes with one line saying it is a TestFlight beta that installs through TestFlight, so no
 download is attached. Verify with `gh release view ios-v<version>-build<build>` that it is a
 pre-release and that `gh release list` still shows the latest macOS release as Latest. Releases exist
