@@ -136,7 +136,6 @@ extension MeetingView {
         }
         autoTitleTask?.cancel(); autoTitleTask = nil
         beginDiarizationRunReset()
-        session.resetConversation()
         clearReferences(session: session)
         othersAudioSink.reset(); microphoneAudioSink.reset()
         restoredRecord = record
