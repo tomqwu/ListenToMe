@@ -11,6 +11,11 @@ final class SessionStore {
     /// which only the failure paths read: the first migration usually happens during an autosave,
     /// so the warning has to survive until History is opened.
     private(set) var archiveWarning: String?
+    /// The on-device semantic index beside this archive (#57). Dev and Release builds keep separate
+    /// archives ("ListenToMe Dev" vs "ListenToMe"), so they keep separate indexes too.
+    let historySearch: HistorySearchModel?
+    /// The conversations as last read or saved; what History search and Ask read (#57).
+    @ObservationIgnored private var known: [SessionRecord] = []
 
     init() {
         do {
@@ -18,12 +23,16 @@ final class SessionStore {
                                                   appropriateFor: nil, create: true)
             let legacy = base.appendingPathComponent("ListenToMe/sessions.json")
             let folder = Bundle.main.bundleIdentifier?.hasSuffix(".dev") == true ? "ListenToMe Dev" : "ListenToMe"
-            archive = SessionArchive(directory: base.appendingPathComponent(folder + "/Conversations"), legacyURL: legacy,
+            let conversations = base.appendingPathComponent(folder + "/Conversations")
+            archive = SessionArchive(directory: conversations, legacyURL: legacy,
                                      ownsLegacyFile: folder == "ListenToMe")
+            historySearch = HistorySearchModel.shared(besideArchive: conversations)
         } catch {
             archive = nil
+            historySearch = nil
             errorText = error.localizedDescription
         }
+        historySearch?.records = { [weak self] in self?.known ?? [] }
     }
 
     /// Readable conversations. A damaged file no longer hides the rest of the history: it is set
@@ -36,6 +45,8 @@ final class SessionStore {
             // Sticky for the app run: the damaged file is renamed by the first scan, so a later
             // scan is clean and must not erase a note raised by an autosave's migration.
             if let warning = result.warning { archiveWarning = warning }
+            known = result.records
+            historySearch?.sync(result.records)   // vectors of anything no longer here are dropped
             return result.records
         } catch { errorText = "Couldn't read history: \(error.localizedDescription)"; return [] }
     }
@@ -46,6 +57,10 @@ final class SessionStore {
             guard let archive else { throw CocoaError(.fileWriteUnknown) }
             // A failed legacy migration is a warning, not a failed save.
             if let warning = try archive.save(record) { archiveWarning = warning }
+            if let index = known.firstIndex(where: { $0.id == record.id }) { known[index] = record } else {
+                known.insert(record, at: 0)
+            }
+            historySearch?.update(record)
             errorText = nil
             return true
         } catch { errorText = "Couldn't save: \(error.localizedDescription)"; return false }
@@ -54,14 +69,34 @@ final class SessionStore {
     /// The user has seen the note about a set-aside file and dismissed it.
     func dismissArchiveWarning() { archiveWarning = nil }
 
+    /// Everything a conversation owns besides its archive file, as on iOS (#220). **New
+    /// per-conversation storage registers here**, so deleting conversations removes it too.
+    var conversationDataOwners: [ConversationDataOwner] {
+        [
+            // A deleted conversation's note must not be written later.
+            ConversationDataOwner("Save to folder queue") { deletion in
+                if deletion.everything { MarkdownVaultSync.shared.forgetAll() } else {
+                    deletion.ids.forEach(MarkdownVaultSync.shared.forget(id:))
+                }
+            },
+            ConversationDataOwner("search index") { [historySearch] deletion in   // #57
+                if deletion.everything { historySearch?.forgetAll() } else {
+                    deletion.ids.forEach { historySearch?.forget(id: $0) }
+                }
+            },
+        ]
+    }
+
     @discardableResult
     func clear() -> Bool {
         do {
             guard let archive else { throw CocoaError(.fileWriteUnknown) }
             // Clear deletes the quarantined files too, so any earlier warning is obsolete.
             archiveWarning = try archive.clear()
-            MarkdownVaultSync.shared.forgetAll()   // A cleared conversation's note must not be written later.
-            errorText = nil
+            known = []
+            let everything = ConversationDeletion(ids: [], everything: true)
+            errorText = ConversationDataErasure.failureNote(ConversationDataErasure.run(conversationDataOwners,
+                                                                                        for: everything))
             return true
         } catch { errorText = "Couldn't clear history: \(error.localizedDescription)"; return false }
     }

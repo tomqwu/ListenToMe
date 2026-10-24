@@ -356,9 +356,9 @@ final class MobileSession {
         save(announce: false)
     }
 
-    func open(_ record: SessionRecord) {
-        guard !busy, save(announce: false) else { return }
-        restore(record)
+    func open(_ record: SessionRecord) {   // History's current copy, never a deleted or stale one
+        guard !busy, history.contains(where: { $0.id == record.id }), save(announce: false) else { return }
+        restore(history.first { $0.id == record.id } ?? record)
         save(announce: false)
     }
 
@@ -380,7 +380,7 @@ final class MobileSession {
         do {
             // One undecodable file is set aside by the archive and reported; the rest still list.
             let result = try archive.read()
-            history = result.records
+            history = result.records; indexHistory()
             // Sticky for the app run: the file is renamed by the first scan, so every later scan is
             // clean. Overwriting with nil here would erase a launch-time note before History opens.
             if let warning = result.warning { archiveWarning = warning }
@@ -416,13 +416,8 @@ final class MobileSession {
     }
 }
 
-/// Search and outputs: plain lookups, kept out of the class body. Languages are in MobileSession+Language.
+/// Outputs: plain lookups, kept out of the class body. Search is in MobileSession+HistorySearch.
 extension MobileSession {
-    /// Records matching `query`, newest first; an empty query is the full history.
-    func historyMatching(_ query: String) -> [SessionRecord] {
-        SessionSearch.search(history, query: query.trimmingCharacters(in: .whitespacesAndNewlines))
-    }
-
     func output(for mode: MobileSummaryMode) -> String {
         switch mode {
         case .summary: return summary
@@ -625,6 +620,7 @@ extension MobileSession {
         if let index = history.firstIndex(where: { $0.id == record.id }) { history[index] = record }
         else { history.append(record) }
         history.sort { $0.date > $1.date }
+        indexSaved(record)
     }
 }
 
