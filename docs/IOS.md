@@ -1335,3 +1335,7 @@ Automatic Quick Summary now evaluates substantial live recognition text at the s
 ## iOS 1.9.4 (21)
 
 Quick publishes its first short recap for a clear topic, problem, tentative proposal or substantive question without waiting for a decision. Questions are summarized, not answered, and ambiguous acronyms are preserved. Repetition still avoids unnecessary changes. Empty results say “Speech checked · No takeaway yet,” including after recording stops. [What to Test](../metadata/ios/en-CA/what-to-test-1.9.4.txt).
+
+## Pending iOS updates
+
+- Settings → Privacy names every optional off-device provider (Ollama, Cloud AI services and OpenAI-compatible servers), and explains that requests send text and included context only through the provider you choose (#247). This copy is not yet published.

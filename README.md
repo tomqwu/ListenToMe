@@ -70,9 +70,22 @@ make ios-build
 make ios-test
 ```
 
-## Screenshot
+## Screenshots
+
+**macOS**
 
 ![ListenToMe — four-pane meeting copilot](docs/images/screenshot.png)
+
+**iPhone** (1.15.0)
+
+<p>
+<img src="docs/images/ios/iphone-01-live.png" width="200" alt="Live transcript and Quick Summary">
+<img src="docs/images/ios/iphone-02-summary.png" width="200" alt="Summary with decisions and next steps">
+<img src="docs/images/ios/iphone-03-ai-choice.png" width="200" alt="Choose Apple Intelligence or a cloud AI service">
+<img src="docs/images/ios/iphone-04-vocabularies.png" width="200" alt="Domain vocabularies">
+</p>
+
+Live transcript with Quick Summary · Summary · your choice of AI · domain vocabularies.
 
 ## Why ListenToMe
 
