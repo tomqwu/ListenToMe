@@ -74,6 +74,28 @@ Consequences worth knowing:
   It must print `com.tomwu.ListenToMe`. A `.dev` suffix means a Debug app got packaged
   (only possible via `ALLOW_DEBUG_PACKAGE=1`) — do not publish it.
 
+## Local Dev test lifecycle
+
+Before building in a new worktree, reuse the primary checkout's ignored `signing.local.mk` so the
+Dev app keeps the configured Apple Development signing identity. Inspect `codesign -dvv` output
+before diagnosing checked-but-failing permissions; do not compensate for accidental ad-hoc builds
+by repeatedly resetting permissions during a test session.
+
+At the end of each macOS Dev testing session:
+
+1. Preserve screenshots, logs, source revision and signing evidence outside disposable build folders.
+2. Close the test app. Check for other running Dev sessions and unsaved work; leave those intact and
+   record the exception rather than interrupting another session.
+3. Move the inactive temporary Dev `.app` bundles to Trash, verifying `CFBundleIdentifier` is exactly
+   `com.tomwu.ListenToMe.dev`. Keep a manifest of original and Trash paths when cleaning multiple copies.
+4. Reset only that Dev bundle's permissions with `tccutil reset All com.tomwu.ListenToMe.dev` and
+   record the command result. Defer this shared-bundle reset while another Dev session is active.
+
+This cleanup is maintainer-authorized. Never omit the bundle ID, reset production permissions, or
+remove conversation data, settings, API keys or the login keychain. The production app remains
+installed. A later Dev session may need fresh OS consent because its previous grants were explicitly
+cleaned up; keep that separate from signing failures and do not claim capture works until tested.
+
 ## Prerequisites
 
 This project's Apple Developer **Team ID is `T32FW7PZ3S`** (already the default in `scripts/release.sh`
