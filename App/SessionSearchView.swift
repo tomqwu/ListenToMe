@@ -6,14 +6,26 @@ struct SessionSearchView: View {
     @Environment(\.dismiss) private var dismiss
     let store: SessionStore
     let onClear: () -> Void
+    /// Read when the user asks, so a Settings change since the sheet opened is honoured (#57).
+    let askRoute: () -> HistoryAskRoute
     @State private var query = ""
     @State private var records: [SessionRecord] = []
     @State private var selected: SessionRecord?
     @State private var confirmClear = false
 
-    init(store: SessionStore, onClear: @escaping () -> Void = {}) {
-        self.store = store; self.onClear = onClear
+    init(store: SessionStore, onClear: @escaping () -> Void = {},
+         askRoute: @escaping () -> HistoryAskRoute = { .unavailable("Asking is not available here.") }) {
+        self.store = store; self.onClear = onClear; self.askRoute = askRoute
     }
+
+    private var trimmedQuery: String { query.trimmingCharacters(in: .whitespacesAndNewlines) }
+    /// Keyword plus on-device semantic results with snippets, once the index has answered;
+    /// until then (and with no index) the keyword results the sheet always had.
+    private var hybrid: [HistorySearchResult]? { store.historySearch?.results(for: query) }
+    private var shown: [SessionRecord] { hybrid?.map(\.record) ?? SessionSearch.search(records, query: query) }
+
+    /// Only a conversation the archive still holds, in its current form (never a cleared one).
+    private func open(_ id: String) { selected = records.first { $0.id == id } }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -22,7 +34,12 @@ struct SessionSearchView: View {
                 Spacer()
                 Button("Done") { dismiss() }.keyboardShortcut(.defaultAction)
             }
-            TextField("Search title, summary, or transcript", text: $query).textFieldStyle(.roundedBorder)
+            TextField("Search or ask your conversations", text: $query).textFieldStyle(.roundedBorder)
+                .onChange(of: query) { store.historySearch?.search(query) }
+            if let search = store.historySearch, !trimmedQuery.isEmpty, !records.isEmpty {
+                HistoryAskPanel(search: search, question: trimmedQuery, route: askRoute(),
+                                ask: { search.ask(trimmedQuery, route: askRoute()) }, open: open)
+            }
             if let error = store.errorText {
                 Text(error).foregroundStyle(.red)
                 Button("Retry") { records = store.all() }
@@ -36,8 +53,8 @@ struct SessionSearchView: View {
                     Button("Dismiss") { store.dismissArchiveWarning() }.controlSize(.small)
                 }
             }
-            List(SessionSearch.search(records, query: query)) { record in
-                Button { selected = record } label: {
+            List(shown) { record in
+                Button { open(record.id) } label: {
                     VStack(alignment: .leading, spacing: 5) {
                         HStack {
                             Text(record.title).font(.headline)
@@ -45,8 +62,12 @@ struct SessionSearchView: View {
                             if record.isComplete == false { Text("Recovered checkpoint").font(.caption) }
                         }
                         Text(record.date.formatted()).font(.caption).foregroundStyle(.secondary)
-                        Text(record.summary.isEmpty ? record.transcript : record.summary)
-                            .lineLimit(2).foregroundStyle(.secondary)
+                        if let result = hybrid?.first(where: { $0.id == record.id }), result.snippet != nil {
+                            HistorySnippetText(result: result)
+                        } else {
+                            Text(record.summary.isEmpty ? record.transcript : record.summary)
+                                .lineLimit(2).foregroundStyle(.secondary)
+                        }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())

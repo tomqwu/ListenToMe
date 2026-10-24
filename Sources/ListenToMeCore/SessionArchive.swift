@@ -32,6 +32,9 @@ public final class SessionArchive {
         self.ownsLegacyFile = ownsLegacyFile
     }
 
+    /// The folder holding one file per conversation. The semantic index lives beside it (#57).
+    public var directoryURL: URL { directory }
+
     /// Every readable conversation, newest first, plus a warning about anything set aside.
     public func read() throws -> SessionArchiveResult {
         let migrationWarning = try prepare()
