@@ -294,6 +294,9 @@ struct SettingsView: View {
             Divider()
             MacVocabularySettings()
 
+            Divider()
+            MacSavedAudioSettings()
+
                 }
             }
             if let saveError { Text(saveError).foregroundStyle(.red) }

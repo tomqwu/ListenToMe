@@ -57,10 +57,9 @@ struct MobileWorkspaceView<Header: View>: View {
         }
         .sheet(isPresented: $showTranscript) {
             NavigationStack {
-                MobileSelectableTranscript(session: session, selection: $transcriptSelection,
-                                           selecting: $selectingTranscript, request: $expandedRequest,
-                                           scrollIdentifier: "expandedTranscriptScroll")
-                    .id(session.id)
+                // The saved audio's player, when there is one (#55), over the selectable transcript (#234).
+                MobileSavedAudioTranscript(session: session, selection: $transcriptSelection,
+                                           selecting: $selectingTranscript, request: $expandedRequest)
                     .navigationTitle("Transcript").navigationBarTitleDisplayMode(.inline)
                     .toolbar {
                         if !selectingTranscript && session.segments.contains(where: \.isFinal) {
@@ -112,6 +111,11 @@ struct MobileWorkspaceView<Header: View>: View {
                     Button("Select lines", systemImage: "checklist") { selectingTranscript = true; showTranscript = true }
                         .labelStyle(.iconOnly).buttonStyle(.plain).foregroundStyle(MobileStyle.muted)
                         .frame(minWidth: 44, minHeight: 44).accessibilityIdentifier("selectTranscriptLines")
+                }
+                if session.canPlaySavedAudio {
+                    Button("Play recording", systemImage: "play.circle") { showTranscript = true }
+                        .labelStyle(.iconOnly).buttonStyle(.plain).foregroundStyle(MobileStyle.accent)
+                        .frame(minWidth: 44, minHeight: 44).accessibilityIdentifier("playSavedAudio")
                 }
                 Button("Expand transcript", systemImage: "arrow.up.left.and.arrow.down.right") { showTranscript = true }
                     .labelStyle(.iconOnly).buttonStyle(.plain)

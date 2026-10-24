@@ -11,10 +11,13 @@ struct MobileTranscriptReader: View {
     /// Select mode (issue #234): tapping a final line toggles it; dragging its circle extends a range.
     var selection: Binding<TranscriptSelection>?
     var selecting = false
-    /// Touch-and-hold actions on a final line; nil leaves the line's text selectable instead.
+    /// Touch-and-hold actions on a final line (Summarize from here, Select from here); nil hides them.
     var lineActions: MobileTranscriptLineActions?
     @State private var rowFrames: [UUID: CGRect] = [:]
     private static let space = "transcriptRows"
+    /// Where a line plays from in the saved audio (issue #55); `nil` hides the play controls.
+    var audioTarget: ((TranscriptSegment) -> SavedAudioSeek.Target?)?
+    var playAudio: ((SavedAudioSeek.Target) -> Void)?
     /// "Add to My terms" from a line's context menu (issue #222); returns why a term was not added.
     var addTerm: ((String) -> String?)?
     @State private var reviewing: TranscriptSegment?
@@ -135,6 +138,7 @@ struct MobileTranscriptReader: View {
             .accessibilityIdentifier("select-line-\(segment.id)")
         } else {
             lineContent(segment, selectable: !selecting)
+                .modifier(MobilePlayOnTap(target: audioTarget?(segment), play: playAudio))
                 .contextMenu { if segment.isFinal, !selecting { lineMenu(segment) } }
         }
     }
@@ -162,6 +166,13 @@ struct MobileTranscriptReader: View {
         VStack(alignment: .leading, spacing: 5) {
             if !segment.isFinal {
                 Text("LIVE").font(.caption2.weight(.semibold)).foregroundStyle(MobileStyle.transcript)
+            }
+            if !selecting, let target = audioTarget?(segment) {
+                Button(SavedAudioPolicy.timeLabel(segment.start), systemImage: "play.circle") {
+                    playAudio?(target)
+                }.font(.caption.monospacedDigit()).buttonStyle(.borderless)
+                    .accessibilityLabel("Play from \(SavedAudioPolicy.timeLabel(segment.start))")
+                    .accessibilityIdentifier("transcript-play-\(segment.id)")
             }
             if showsSpeakers {
                 Text(segment.speakerLabel).font(.caption.weight(.semibold))
@@ -193,5 +204,20 @@ struct MobileTranscriptReader: View {
                 }
             }
         if selectable { text.textSelection(.enabled) } else { text }
+    }
+}
+
+/// Tapping a line with saved audio plays from its time (issue #55). Lines without audio are unchanged.
+private struct MobilePlayOnTap: ViewModifier {
+    let target: SavedAudioSeek.Target?
+    let play: ((SavedAudioSeek.Target) -> Void)?
+
+    func body(content: Content) -> some View {
+        if let target, let play {
+            content.contentShape(Rectangle()).onTapGesture { play(target) }
+                .accessibilityAction(named: "Play from here") { play(target) }
+        } else {
+            content
+        }
     }
 }

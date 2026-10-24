@@ -70,6 +70,9 @@ struct MobileMeetingView: View {
                                 ConversationExportLinks(record: session.currentRecord)
                             }
                             .disabled(!session.hasContent).accessibilityIdentifier("exportAs")
+                            if session.canPlaySavedAudio {
+                                ShareLink(items: session.savedAudioFiles) { Label("Share audio", systemImage: "waveform") }
+                            }
                             Button("Import from Calendar", systemImage: "calendar") { showCalendar = true }
                             Button("Full summary") { showFullSummary = true }
                             Button("Settings", systemImage: "gearshape") { showSettings = true }
@@ -130,6 +133,7 @@ struct MobileMeetingView: View {
             MobileLanguageStatus(session: session)
             MobileWatchRecordingLine(status: session.watchCaptureStatus)
             MobileVaultStatusLine()
+            MobileSavedAudioStatusLine(session: session)
             if let message = session.message {
                 Text(message).font(.caption).lineLimit(2).foregroundStyle(.secondary)
                     .accessibilityIdentifier("sessionMessage")
@@ -248,6 +252,7 @@ struct MobileMeetingView: View {
                 MobileSpeakerSettings(session: session)
                 MobileVocabularySettingsLink(session: session)
                 MobileVaultSettings(session: session)
+                MobileSavedAudioSettings(savedAudio: session.savedAudio)
                 MobileAutoTitleSettings()
                 Section("Recording") {
                     Text("This version records the microphone while the app is open. " +
@@ -258,6 +263,7 @@ struct MobileMeetingView: View {
                 }
                 Section("Privacy") {
                     Text("Conversations stay in this app's storage unless you turn on Save to folder. " +
+                         "Audio is not kept unless you turn on Save audio recordings. " +
                          "Apple Intelligence summaries are optional and run on-device. " +
                          "Ollama sends notes and transcript to the server shown in AI settings " +
                          "(Ollama Cloud unless you entered your own) when you generate a summary " +

@@ -123,7 +123,8 @@ struct MeetingView: View {
         _othersAudioSink = State(initialValue: othersSink)
         let microphoneSink = SpeakerAudioBuffer()
         _microphoneAudioSink = State(initialValue: microphoneSink)
-        _session = State(initialValue: MeetingSession(
+        let savedAudioRuns = MacSavedAudio.shared.runs
+        let session = MeetingSession(
             store: store,
             context: ContextEngine(debounce: 8),
             makeCapture: {
@@ -142,9 +143,16 @@ struct MeetingView: View {
                 // and the value is unused.
                 let gen = diarize ? othersSink.currentGeneration() : 0
                 let identifyMic = diarize && ProviderSettings.microphoneDiarizationEnabled
+                // Save audio recordings (#55): the conversation was chosen in `beginDiarizationRunReset`.
+                // `MeetingSession.start` makes the capture on the main actor, after placing the recording.
+                let saved = MainActor.assumeIsolated {
+                    savedAudioRuns.writersForNewCapture(
+                        timesMatchAudio: ProviderSettings.transcriptionEngine == "whisperKit")
+                }
                 return DualChannelCapture(othersSink: diarize ? othersSink : nil, sinkGeneration: gen,
                                           microphoneSink: identifyMic ? microphoneSink : nil,
-                                          microphoneGeneration: microphoneSink.currentGeneration())
+                                          microphoneGeneration: microphoneSink.currentGeneration(),
+                                          savedAudio: saved)
             },
             makeTranscriber: {
                 let locale = ProviderSettings.transcriptionLocale()
@@ -174,7 +182,10 @@ struct MeetingView: View {
                 .deep: ProviderSettings.model(for: .deep)
             ],
             providerAvailability: { ProviderSettings.automaticReviewUnavailableReason(quickModel: $0) }
-        ))
+        )
+        _session = State(initialValue: session)
+        // Saved audio starts where the starting recording's lines start (#55; #233's recordingOffset).
+        savedAudioRuns.timelineOffset = { [weak session] in session?.recordingOffset ?? 0 }
     }
 
     // MARK: - Ollama cloud routing
@@ -335,6 +346,8 @@ struct MeetingView: View {
         }
         .task {
             retryVaultNotesAtLaunch()
+            // Saved audio (#55): runs the app was killed in are repaired, audio with no conversation goes.
+            MacSavedAudio.shared.tidy(keeping: sessionStore.completeIDs())
             await reloadAndHealModels()
         }
         .background(WindowCloseHandler())
@@ -404,6 +417,7 @@ extension MeetingView {
                 // Await teardown so the transcriber flushes its final segments into the store
                 // before we snapshot the transcript for search.
                 await session.stopAndWait()
+                await MacSavedAudio.shared.waitForWrites()   // the audio files are closed before Stop finishes
                 activeEngine = nil
                 _ = checkpoint(complete: true, force: true)
                 nameConversationIfNeeded()   // in the background (#221)
@@ -507,6 +521,10 @@ extension MeetingView {
         speakerLoading = false
         speakerError = nil
         diarizationRunToken &+= 1
+        // Every capture start passes here first: the next capture saves its audio into this conversation.
+        // Audio only for a conversation History will keep (#55 review): none while autosaving is off.
+        MacSavedAudio.shared.prepareRun(conversationID: ProviderSettings.saveSessionsForSearch && sessionSaveable
+                                        ? currentSessionID : nil)
         // Disable Identify for the whole transition window: `session.start()` first awaits the prior
         // Stop's drain, then `makeCapture` calls `othersSink.reset()`. Until that reset+attach happens
         // the buffer still holds the PREVIOUS run's audio under the new token, so an Identify here
@@ -523,6 +541,7 @@ extension MeetingView {
     /// this run's lines begin and the live settings match the capture/transcriber just built.
     private func anchorDiarizationRun() {
         diarizationRunStartIndex = store.utterances.count
+        MacSavedAudio.shared.anchorRun(firstSegment: store.utterances.count)
         // Snapshot the settings the new run's capture/transcriber were built from. `makeCapture` read
         // `speakerDiarizationEnabled` to decide sink attachment and `makeTranscriber` read the engine,
         // both during the `start()` that just returned — so reading them now matches this run, and

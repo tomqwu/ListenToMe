@@ -104,6 +104,12 @@ public final class SessionArchive {
         return warning
     }
 
+    /// Whether a conversation with this ID is saved (its file exists; readable or not).
+    public func contains(id: String) -> Bool {
+        guard let url = try? location(id) else { return false }
+        return fileManager.fileExists(atPath: url.path)
+    }
+
     @discardableResult
     public func delete(id: String) throws -> String? {
         let warning = try prepare()

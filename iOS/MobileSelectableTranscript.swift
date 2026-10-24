@@ -28,6 +28,9 @@ struct MobileSelectableTranscript: View {
     /// Select mode and its bar are shown here; otherwise `startSelecting` opens the view that has them.
     var selectable = true
     var startSelecting: () -> Void = {}
+    /// The saved audio's per-line play controls (issue #55), passed through to the reader.
+    var audioTarget: ((TranscriptSegment) -> SavedAudioSeek.Target?)?
+    var playAudio: ((SavedAudioSeek.Target) -> Void)?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -41,7 +44,7 @@ struct MobileSelectableTranscript: View {
                                        selecting = true
                                        startSelecting()
                                    }, summarizeBlockReason: session.selectionSummaryProviderBlockReason),
-                                   addTerm: session.addToMyTerms)
+                                   audioTarget: audioTarget, playAudio: playAudio, addTerm: session.addToMyTerms)
             if selectable && selecting {
                 MobileSelectionBar(session: session, selected: selection.selected(in: session.allSegments),
                                    summarize: {

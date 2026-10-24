@@ -115,6 +115,7 @@ final class MobileSession {
     /// On-device speaker identification (issues #180, #195) and its periodic pass while recording.
     let speakers: MobileSpeakers
     let languageDetection: MobileLanguageDetection   // Automatic transcription language (issue #197)
+    let savedAudio: MobileSavedAudio   // Save audio recordings, off by default (issue #55)
     var speakerLoop: Task<Void, Never>?
     /// Stop's final speaker pass, which runs after the session is already idle.
     var speakerFinalPass: Task<Void, Never>?
@@ -152,8 +153,9 @@ final class MobileSession {
          makeRecorder: @escaping () -> any MobileRecording = { MobileRecorder() },
          makeWatchTranscriber: @escaping () -> any WatchAudioTranscribing = { MobileFileTranscriber() },
          makeDiarizer: @escaping () -> any MobileSpeakerDiarizing = MobileSpeakers.deviceDiarizer,
-         makeLanguageModel: (() -> any MobileLanguageIdentifying)? = nil) {
+         makeLanguageModel: (() -> any MobileLanguageIdentifying)? = nil, savedAudio: MobileSavedAudio? = nil) {
         speakers = MobileSpeakers(makeDiarizer: makeDiarizer)
+        self.savedAudio = savedAudio ?? MobileSavedAudio(root: storageDirectory.appendingPathComponent("SavedAudio"))
         languageDetection = MobileLanguageDetection(makeIdentifier: makeLanguageModel)
         // Resolved once: the backup choice has to reach the App Group inbox too, not only the
         // conversations this app owns.
@@ -267,9 +269,7 @@ final class MobileSession {
         state = .preparing
         let recorder = makeRecorder(); self.recorder = recorder
         let offset = segments.map(\.end).max() ?? 0
-        recorder.attachSpeakerAudio(speakers.beginRun(offset: offset, existing: segments))
-        recorder.attachLanguageAudio(languageDetection.beginRun(conversation: id, locale: transcriptionLanguage,
-                                                                offset: offset, firstLine: segments.count))
+        attachRunAudio(to: recorder, offset: offset)   // speakers, language and saved audio share one timeline
         // An Apple Watch drain stops before the microphone is prepared, and resumes after.
         let drain = watchDrainTask
         drain?.cancel()
@@ -305,7 +305,7 @@ final class MobileSession {
                 startSpeakerLoop()
             } catch {
                 try? await recorder.stop()
-                speakers.endRun(); endLanguageRun()
+                speakers.endRun(); endLanguageRun(); endSavedAudioRun()
                 self.recorder = nil
                 state = .idle
                 if !(error is CancellationError) { message = error.localizedDescription }
@@ -328,7 +328,7 @@ final class MobileSession {
         state = .idle
         save(announce: false); nameConversationIfNeeded()   // in the background (#221)
         finishSpeakerIdentification()
-        endLanguageRun()
+        endLanguageRun(); endSavedAudioRun()
     }
 
     func background() async {

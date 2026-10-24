@@ -644,3 +644,49 @@ Simulator or device.
 5. **Apple Watch.** With a watch conversation in History and another watch recording still in
    "Waiting from Apple Watch", delete all: the watch conversation and its audio are gone, and the
    waiting recording stays and becomes a conversation later.
+
+## Save audio recordings (#55)
+
+iPhone (a physical device: the simulator cannot record; steps 1 and 7 also run in the simulator):
+
+1. **Off by default.** Fresh install: **More → Settings → Audio recordings → Save audio recordings** is
+   off, the footer says audio is never uploaded and is left out of backups, and recording a few lines
+   shows no "Saving audio" line and no play button.
+2. **Saved per run.** Turn it on. Start, speak about 20 seconds, Stop; Start again, speak, Stop. While
+   recording, the status says "Saving audio on this device". Settings shows the space used.
+3. **Playback and seeking.** The live transcript's header shows a play button: tap it. The expanded
+   transcript shows the player; tap the time on a line from the second Start: the second part plays
+   from that line's words. Pause works; the position advances.
+4. **Language switch and headset.** With Automatic language, speak another language until it switches,
+   and connect AirPods mid-recording. After Stop, a line after the switch still plays its own words.
+   Speaker labels and the language status behave as without the setting.
+5. **Export.** **Share audio** in the player (and History's touch-and-hold menu) offers the `.m4a`
+   files; AirDrop one to a Mac and play it in QuickTime.
+6. **Deletion.** Delete the conversation in History: its audio is gone (Settings' space used drops).
+   Record another, then **Delete all saved audio**: transcripts stay, the play button disappears.
+   Record again, then **Delete all conversations** (#220): Settings shows no saved audio.
+   While recording, Delete all saved audio is unavailable ("Available after you stop recording").
+   Start, wait, and turn the setting off in Settings mid-recording: "Saving audio" disappears, an orange
+   line says the audio until now is kept, transcription goes on; after Stop the part plays up to the switch.
+   Start and Stop without speaking or typing notes: no audio is kept for that empty conversation.
+7. **Low storage.** (Simulator is enough with `MobileSavedAudioTests`; on a device, fill storage to under
+   100 MB.) Start: an orange "Audio is not being saved … Transcription continues" line appears and
+   transcription runs.
+8. **Backups.** In Finder, back up the iPhone unencrypted: the `SavedAudio` folder is not in the backup.
+9. **Killed mid-recording.** Record about 30 seconds, then force-quit from the app switcher (Stop never
+   runs). Relaunch: the conversation's part plays all but its last few seconds.
+
+Mac (`make run`; macOS releases are paused, so this is for the build only):
+
+1. In **Settings**, turn on "Save audio recordings (microphone and system audio)". Listen with system
+   audio playing, Stop. **History** → the conversation shows **Saved audio** with Microphone and System
+   audio parts that play.
+2. With the WhisperKit engine, **Play from a line** lists the lines and plays each from its time; with
+   SpeechAnalyzer, the note says those lines cannot jump into the audio.
+3. **Clear history** deletes the audio too; **Delete all saved audio** in Settings keeps history.
+4. Record two runs in one conversation with WhisperKit (Stop, Listen again): a line from the second run
+   plays its own words, not the first run's.
+5. With autosaving off, record: no audio is saved. With it on, record and choose **New** → **Discard**
+   (after a failed save) or close with **Close without saving**: the audio is deleted.
+6. Turn the setting off while recording: the files stop at once and keep what they have.
+

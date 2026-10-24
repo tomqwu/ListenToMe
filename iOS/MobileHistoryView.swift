@@ -56,6 +56,10 @@ struct MobileHistoryView: View {
                                 Menu("Export as", systemImage: "doc.badge.arrow.up") {
                                     ConversationExportLinks(record: record)
                                 }
+                                let audio = session.savedAudio.fileURLs(for: record.id)
+                                if !audio.isEmpty {
+                                    ShareLink(items: audio) { Label("Share audio", systemImage: "waveform") }
+                                }
                                 Button("Delete", systemImage: "trash", role: .destructive) { confirmDeletion(record) }
                             }
                             .accessibilityAction(named: "Share") { sharing = record }
@@ -76,7 +80,8 @@ struct MobileHistoryView: View {
                 }
                 Button("Cancel", role: .cancel) { pendingDeletion = nil }
             } message: { _ in
-                Text("This removes the transcript, notes, attachments and all AI outputs from this device. It cannot be undone.")
+                Text("This removes the transcript, notes, attachments, saved audio and all AI outputs from this device. "
+                     + "It cannot be undone.")
             }
             .alert("Delete this Apple Watch audio?", isPresented: $showWatchDeletion,
                    presenting: pendingWatchDeletion) { row in
@@ -128,6 +133,11 @@ struct MobileHistoryView: View {
                     Text(record.title).font(.headline).foregroundStyle(.primary)
                     Text(record.date.formatted(date: .abbreviated, time: .shortened))
                         .font(.caption).foregroundStyle(.secondary)
+                    if !session.savedAudio.runs(for: record.id).isEmpty {
+                        Label("Audio saved", systemImage: "waveform")
+                            .font(.caption).foregroundStyle(.secondary)
+                            .accessibilityIdentifier("history-audio-\(record.id)")
+                    }
                     if MobileSession.isFromAppleWatch(record) {
                         Label("From Apple Watch", systemImage: "applewatch")
                             .font(.caption).foregroundStyle(.secondary)

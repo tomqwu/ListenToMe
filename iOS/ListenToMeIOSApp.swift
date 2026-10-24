@@ -21,6 +21,7 @@ struct ListenToMeIOSApp: App {
                 .tint(MobileStyle.accent)
                 .task {
                     session.importSharedInbox()
+                    session.tidySavedAudio()   // killed runs repaired, orphaned audio deleted (#55)
                     attachWatchLink()
                     session.importWatchInbox()
                     // Also from the .active phase change; this covers a launch already active by now.
@@ -38,6 +39,7 @@ struct ListenToMeIOSApp: App {
                 .onChange(of: scenePhase) { _, phase in
                     // Synchronously, before the hop: the app can be suspended before the Task runs.
                     session.flushPendingSave()
+                    if phase == .active { session.savedAudio.applyRetention() }   // Keep audio: Delete after N days
                     Task { await session.handleScenePhase(phase) }
                 }
                 .onReceive(NotificationCenter.default.publisher(for: AVAudioSession.interruptionNotification)) { note in
@@ -74,6 +76,8 @@ struct ListenToMeIOSApp: App {
             MobileAutomaticSummaryFixture()
         } else if ProcessInfo.processInfo.arguments.contains("--transcript-scroll-fixture") {
             MobileTranscriptFixture()
+        } else if ProcessInfo.processInfo.arguments.contains("--saved-audio-fixture") {
+            MobileSavedAudioFixture()
         } else if ProcessInfo.processInfo.arguments.contains("--design-review-fixture") {
             MobileDesignFixture()
         } else if ProcessInfo.processInfo.arguments.contains("--selection-summary-fixture") {
