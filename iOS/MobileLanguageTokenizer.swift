@@ -24,7 +24,9 @@ struct MobileLanguageTokenizer: WhisperTokenizer {
             specialTokenBegin: token("<|endoftext|>"), startOfPreviousToken: token("<|startofprev|>"),
             startOfTranscriptToken: token("<|startoftranscript|>"), timeTokenBegin: token("<|0.00|>"),
             transcribeToken: token("<|transcribe|>"), translateToken: token("<|translate|>"), whitespaceToken: token("Ġ"))
-        allLanguageTokens = Set(Constants.languages.values.compactMap { tokenizer.convertTokenToId("<|\($0)|>") })
+        let begin = specialTokens.specialTokenBegin
+        allLanguageTokens = Set(Constants.languages.values.compactMap { tokenizer.convertTokenToId("<|\($0)|>") }
+            .filter { $0 > begin })
     }
 
     func encode(text: String) -> [Int] { tokenizer.encode(text: text) }

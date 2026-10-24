@@ -23,6 +23,7 @@ final class MobileLanguageTokenizerTests: XCTestCase {
         XCTAssertEqual(adapter.specialTokens.noSpeechToken, 50362)
         XCTAssertEqual(adapter.specialTokens.startOfTranscriptToken, 50258)
         XCTAssertTrue(adapter.allLanguageTokens.contains(50260))
+        XCTAssertFalse(adapter.allLanguageTokens.contains(50257))
         XCTAssertEqual(adapter.convertIdToToken(50260), "<|zh|>")
     }
 }
