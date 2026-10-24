@@ -3,10 +3,14 @@ import ListenToMeCore
 import PDFKit
 
 extension MobileSession {
+    /// Temporary copies made to preview or share attachments, one folder per conversation.
+    static var attachmentPresentationRoot: URL {
+        FileManager.default.temporaryDirectory.appendingPathComponent("ConversationAttachments", isDirectory: true)
+    }
+
     func attachmentPresentationDirectory(for sessionID: String? = nil) -> URL {
         let safeID = (sessionID ?? id).filter { $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "-" || $0 == "_") }
-        return FileManager.default.temporaryDirectory.appendingPathComponent("ConversationAttachments")
-            .appendingPathComponent(safeID, isDirectory: true)
+        return Self.attachmentPresentationRoot.appendingPathComponent(safeID, isDirectory: true)
     }
 
     func attachmentPresentationURL(for item: SessionAttachment) throws -> URL {

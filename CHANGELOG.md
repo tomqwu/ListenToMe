@@ -13,9 +13,9 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased since 1.14.0 (31))
 
+- Delete all conversations, at the bottom of History and in Settings → Privacy. It asks first, naming how many conversations go and that it cannot be undone, and is unavailable while recording. It removes every conversation's transcript, notes, attachments, AI outputs and Apple Watch audio from this device, and the open conversation starts over. Recordings still waiting from Apple Watch are kept. Notes that Save to folder already wrote stay in your folder. (#220)
 - History search understands meaning as well as words: a search for "money" can also find the conversation where you discussed the budget, marked "Related", and every result shows the matching excerpt (summary, notes or transcript). The search index is built on this iPhone with Apple's on-device language models, is never backed up and never leaves the device; deleting a conversation deletes its index entry. Languages without an on-device model keep the keyword search. (#57)
 - Ask your history: type a question in the History search field and tap Ask to get an answer from the best matching excerpts of your saved conversations, with tappable sources. With Apple Intelligence it stays on this iPhone; with Ollama, an OpenAI-compatible server or a cloud AI service, History says before you ask that the excerpts (not whole conversations) and the question are sent to that service. (#57)
-
 - Apple Watch companion, remote Start/Stop for the iPhone recorder (not yet shipped; ships with watch recording on the #181 train). (#181)
 - iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
 - Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)

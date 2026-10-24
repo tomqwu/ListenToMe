@@ -103,6 +103,31 @@ final class MobileNativeInteractionTests: XCTestCase {
         app.buttons["Done"].tap()
     }
 
+    /// Delete all conversations (#220): confirmed with the count, then History is empty and the open
+    /// conversation starts over.
+    func testHistoryDeleteAllConversationsConfirmation() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--design-review-fixture", "-autoQuickSummary", "NO", "-mobileAIProvider", "apple"]
+        app.launchPastReleaseNotes()
+        app.buttons["History"].tap()
+        let deleteAll = app.buttons["deleteAllConversations"]
+        XCTAssertTrue(deleteAll.waitForExistence(timeout: 5), app.debugDescription)
+        deleteAll.tap()
+        XCTAssertTrue(app.alerts["Delete 1 conversation?"].waitForExistence(timeout: 5), app.debugDescription)
+        capture(app, "History delete all confirmation")
+        app.alerts.buttons["Cancel"].tap()
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "history-record-"))
+            .firstMatch.exists)
+        deleteAll.tap()
+        app.alerts.buttons["Delete all"].firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["No saved conversations"].waitForExistence(timeout: 5))
+        XCTAssertFalse(deleteAll.exists)
+        app.buttons["Done"].tap()
+        let title = app.textFields["conversationTitle"]
+        XCTAssertTrue(title.waitForExistence(timeout: 5))
+        XCTAssertEqual(title.value as? String, "New conversation")
+    }
+
     func testHistorySwipeShareAndDeleteConfirmation() {
         let app = XCUIApplication()
         app.launchArguments = ["--design-review-fixture", "-autoQuickSummary", "NO", "-mobileAIProvider", "apple"]
