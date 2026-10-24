@@ -125,6 +125,11 @@ public final class MeetingSession {
     /// True while an imported audio file is being transcribed into the store.
     public private(set) var isTranscribingFile = false
 
+    /// Where the current recording starts on the conversation's timeline (review of #233): each
+    /// capture's engine times restart at zero, so its timed lines are moved past the end of the
+    /// lines already there, as iOS does. Untimed lines (SpeechAnalyzer until #68) stay untimed.
+    public private(set) var recordingOffset: TimeInterval = 0
+
     /// The set of roles currently streaming a response.
     public private(set) var streamingRoles: Set<CopilotRole> = [] { didSet { synchronizeAutomaticReviews() } }
 
@@ -239,7 +244,7 @@ public final class MeetingSession {
         // No proactive task needs cancelling here: `ingest` only fires while running, and `stop()`
         // (which must precede a reset) already cancelled it.
         quickReader.reset(); handleLiveEvent(.conversationChanged)
-        store.reset()
+        store.reset(); recordingOffset = 0
         notes = ""; referenceContext = nil
         listenerSummary = ""; quickSuggestion = ""; quickRecap = ""; deepAnswer = ""
         roleErrors = [:]; roleActivity = [:]; roleNoticeRecords = [:]; pendingGrounding = [:]
@@ -267,6 +272,7 @@ public final class MeetingSession {
         await stopDrain?.value
         stopDrain = nil
         guard isRunning else { return }   // a stop() during that await cancels this start
+        startRecordingTimeline()
         runID += 1
         let myRun = runID
         let capture = makeCapture()
@@ -492,6 +498,7 @@ extension MeetingSession {
         defer { isTranscribingFile = false }
         await stopDrain?.value
         stopDrain = nil
+        startRecordingTimeline()
         let transcriber = (makeTranscriber ?? self.makeTranscriber)()
         transcriptionStatusTask?.cancel()
         transcriptionStatusTask = Task {
@@ -531,7 +538,12 @@ extension MeetingSession {
     }
 
     private func applyTranscribedSegment(_ segment: TranscriptSegment) {
-        store.apply(segment)
+        store.apply(segment.shifted(by: recordingOffset))
+    }
+
+    /// A new recording continues after the conversation's last timed line.
+    private func startRecordingTimeline() {
+        recordingOffset = store.utterances.filter(TranscriptTimestamp.isTimed).map(\.end).max() ?? 0
     }
 
     // MARK: - Ingest
@@ -539,7 +551,7 @@ extension MeetingSession {
     /// Applies a segment to the store, schedules a batched evaluation for eligible live or
     /// finalized speech, and fires a proactive Quick answer when the other party asks a question.
     public func ingest(_ segment: TranscriptSegment) async {
-        store.apply(segment)
+        store.apply(segment.shifted(by: recordingOffset))
 
         handleLiveEvent(.transcriptChanged)
         fireProactiveIfWarranted(for: segment)

@@ -1,0 +1,28 @@
+1
+00:00:03,000 --> 00:00:06,900
+Alice: Can we ship Friday?
+Or is that too soon?
+
+2
+00:01:05,250 --> 00:01:10,500
+You: Yes, with the hotfix
+＆ the ‹beta› flag.
+
+3
+01:02:05,500 --> 01:02:10,747
+Alice: Then let's plan the rollout
+carefully: first the internal dogfood
+
+4
+01:02:10,747 --> 01:02:15,914
+Alice: group on Monday, then ten
+percent of customers on Wednesday, and
+
+5
+01:02:15,914 --> 01:02:21,000
+Alice: everyone else by Friday
+afternoon if the crash rate stays flat.
+
+6
+01:02:22,000 --> 01:02:23,000
+Bob: Agreed.
