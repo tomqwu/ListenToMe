@@ -27,6 +27,7 @@ final class MobileDesignUITests: XCTestCase {
         earlier.tap()
         let earlierText = app.staticTexts["earlierDeepAnalysisText"]
         XCTAssertTrue(earlierText.waitForExistence(timeout: 5))
+        for _ in 0..<5 where !earlierText.isHittable { app.swipeUp() }
         XCTAssertTrue(earlierText.label.contains("Which feedback would change"))
         XCTAssertFalse(app.buttons["Generate Deep Summary"].exists, "Nothing new is generated as Deep")
         capture(app, "Earlier deep analysis, read-only")
