@@ -1194,6 +1194,11 @@ make ios-build
 make ios-test IOS_DESTINATION='platform=iOS Simulator,name=iPhone 17 Pro'
 ```
 
+For provider-default test isolation (#241), run `MobileAITests` on a freshly erased dedicated
+simulator before any UI tests (`-only-testing:ListenToMeIOSUnitTests/MobileAITests`). The test sets
+and restores both the provider and cloud vendor, and checks the no-vendor fallback explicitly;
+it must not depend on a service selected by an earlier Settings UI test.
+
 Open `ListenToMe.xcodeproj`, choose **ListenToMeIOS**, then a simulator or connected iPhone/iPad.
 For a physical device, trust the Mac, enable Developer Mode and select your development team under
 Signing & Capabilities if building with a different account. For device tests, override
