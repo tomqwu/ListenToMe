@@ -72,7 +72,7 @@ final class MobileWorkspaceUITests: XCTestCase {
         XCTAssertEqual(quick.frame.minY, transcript.frame.minY, accuracy: 2)
         XCTAssertGreaterThan(app.scrollViews["transcriptScroll"].frame.height, 70, "leave readable space below the header")
         XCTAssertTrue(app.buttons["Start listening"].isHittable)
-        let status = app.descendants(matching: .any).matching(identifier: "captureStatus").firstMatch
+        let status = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Microphone ·")).firstMatch
         XCTAssertGreaterThan(status.frame.width, 100, "preserve the capture status, not just its microphone icon")
         XCTAssertTrue(app.buttons["Expand transcript"].isHittable)
         XCTAssertTrue(app.buttons["panel-model-quick"].isHittable)
