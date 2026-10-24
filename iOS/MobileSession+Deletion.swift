@@ -20,6 +20,8 @@ extension MobileSession {
             ConversationDataOwner("search index") { [unowned self] in
                 forgetSearchIndex(ids: $0.ids, everything: $0.everything)
             },
+            // The last Export as file (#130) may belong to any conversation, so it always goes.
+            ConversationDataOwner("exported files") { _ in try ConversationExportFile.removeAll() },
         ]
     }
 

@@ -75,11 +75,11 @@ extension TranscriptSegment {
     func withCorrection(_ text: String, model: String) -> TranscriptSegment {
         TranscriptSegment(id: id, source: source, text: text, isFinal: isFinal, start: start, end: end,
                           speakerID: speakerID, speakerName: speakerName, originalText: originalText ?? self.text,
-                          correctionModel: model)
+                          correctionModel: model, language: language)
     }
 
     var restoringOriginal: TranscriptSegment {
         TranscriptSegment(id: id, source: source, text: originalText ?? text, isFinal: isFinal, start: start, end: end,
-                          speakerID: speakerID, speakerName: speakerName)
+                          speakerID: speakerID, speakerName: speakerName, language: language)
     }
 }

@@ -8,7 +8,8 @@ final class MarkdownVaultTests: XCTestCase {
 
     private func record(title: String = "Weekly sync", segments: [TranscriptSegment]? = nil,
                         transcript: String = "", summary: String = "Ship on Friday.",
-                        notes: String? = "Bring the release checklist.") -> SessionRecord {
+                        notes: String? = "Bring the release checklist.", language: String? = nil,
+                        languages: [String]? = nil) -> SessionRecord {
         SessionRecord(id: id, title: title, date: date, transcript: transcript, summary: summary,
                       segments: segments ?? [
                         TranscriptSegment(source: .others, text: "Can we ship Friday?", isFinal: true,
@@ -19,7 +20,8 @@ final class MarkdownVaultTests: XCTestCase {
                                           start: 71, end: 72, speakerName: "Alice")
                       ],
                       notes: notes, quickSuggestion: "", deepAnswer: nil,
-                      attachments: [SessionAttachment(id: "a", name: "plan.pdf", storedName: "x", byteCount: 1)])
+                      attachments: [SessionAttachment(id: "a", name: "plan.pdf", storedName: "x", byteCount: 1)],
+                      language: language, languages: languages)
     }
 
     func testSnapshotOfAFullNote() {
@@ -58,7 +60,19 @@ final class MarkdownVaultTests: XCTestCase {
         - plan.pdf
 
         """
-        XCTAssertEqual(MarkdownVault.markdown(for: record(), language: "en_US", timeZone: utc), expected)
+        XCTAssertEqual(MarkdownVault.markdown(for: record(language: "en_US", languages: ["en_US"]), timeZone: utc),
+                       expected)
+    }
+
+    /// Issue #206: the note describes the conversation's own languages, and lists them all after an
+    /// Automatic switch; a record saved before #206 has no language rather than today's setting.
+    func testFrontMatterUsesTheRecordsOwnLanguages() {
+        let switched = MarkdownVault.markdown(for: record(language: "fr-FR", languages: ["en-US", "fr-FR"]),
+                                              timeZone: utc)
+        XCTAssertTrue(switched.contains("language: \"fr-FR\"\nlanguages:\n  - \"en-US\"\n  - \"fr-FR\"\nspeakers:"),
+                      switched)
+        let legacy = MarkdownVault.markdown(for: record(), timeZone: utc)
+        XCTAssertFalse(legacy.contains("language"), legacy)
     }
 
     func testSnapshotOfALegacyRecordWithoutSegmentsOrLanguage() {
@@ -115,8 +129,8 @@ final class MarkdownVaultTests: XCTestCase {
     }
 
     func testTimestampsPastAnHour() {
-        XCTAssertEqual(MarkdownVault.timestamp(3_725.9), "1:02:05")
-        XCTAssertEqual(MarkdownVault.timestamp(-4), "00:00")
+        XCTAssertEqual(TranscriptTimestamp.clock(3_725.9), "1:02:05")
+        XCTAssertEqual(TranscriptTimestamp.clock(-4), "00:00")
     }
 
     func testFileNameIsKeyedByIDAndStableAcrossTitleChanges() {

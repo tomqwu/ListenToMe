@@ -117,8 +117,9 @@ final class MobileSpeakerTests: MobileSpeakerTestCase {
         let reopened = makeSession()
         XCTAssertEqual(reopened.segments.map(\.speakerName), ["Speaker 1", "Bob", "Microphone"])
         XCTAssertEqual(reopened.speakerList.map(\.name), ["Speaker 1", "Bob"])
-        XCTAssertTrue(reopened.markdown.contains("- **Bob:** Yes, the budget first."))
-        XCTAssertTrue(reopened.markdown.contains("- **Microphone:** Mm."))
+        // Lines carry their recording time since #130: `- [00:04] **Bob:** …`.
+        XCTAssertTrue(reopened.markdown.contains("**Bob:** Yes, the budget first."), reopened.markdown)
+        XCTAssertTrue(reopened.markdown.contains("] **Microphone:** Mm."), reopened.markdown)
         let record = try XCTUnwrap(reopened.history.first)
         XCTAssertTrue(record.transcript.contains("Bob: Yes, the budget first."))
         XCTAssertTrue(record.transcript.contains("Speaker 1: Shall we start?"))

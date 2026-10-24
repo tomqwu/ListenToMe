@@ -53,6 +53,9 @@ struct MobileHistoryView: View {
                             }
                             .contextMenu {
                                 Button("Share", systemImage: "square.and.arrow.up") { sharing = record }
+                                Menu("Export as", systemImage: "doc.badge.arrow.up") {
+                                    ConversationExportLinks(record: record)
+                                }
                                 Button("Delete", systemImage: "trash", role: .destructive) { confirmDeletion(record) }
                             }
                             .accessibilityAction(named: "Share") { sharing = record }

@@ -78,7 +78,7 @@ extension MobileSession {
         if segment.isFinal {
             languageDetection.replay?.lines.append(TranscriptSegment(
                 source: .you, text: segment.text, isFinal: true, start: offset + segment.start,
-                end: offset + segment.end, speakerName: Self.microphoneLabel))
+                end: offset + segment.end, speakerName: Self.microphoneLabel, language: recordingLanguage))
         }
         return true
     }
