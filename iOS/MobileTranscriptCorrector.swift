@@ -50,7 +50,8 @@ final class MobileTranscriptCorrector {
                 let job = queue.removeFirst()
                 status = "Checking speech…"
                 do {
-                    let glossary = await Task.detached(priority: .utility) { job.glossary() }.value
+                    let makeGlossary = job.glossary
+                    let glossary = await Task.detached(priority: .utility) { makeGlossary() }.value
                     let text = try await Self.correct(job.segment.text, context: job.context, glossary: glossary,
                                                       provider: job.provider)
                     try Task.checkCancellation()
