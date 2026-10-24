@@ -273,6 +273,16 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   so a title you typed is kept). If Calendar access is denied the banner says so and offers **Open
   Calendar privacy settings**; "no meeting right now" is a separate, distinct message. Every banner
   message can be dismissed with its ✕.
+- **Automatic titles (#221).** After Stop, Save or New conversation, a saved conversation still titled
+  "Conversation — <date>" with about 30 words of transcript is named in the background, in a few words.
+  - The title comes from the Summary pane's text when there is one (no extra request). Otherwise the
+    Summary pane's model writes it with a tiny prompt, when AI is on and that model is available.
+  - Without AI, on-device NaturalLanguage keywords name it.
+  - A title you type or Load from Calendar sets is never replaced; the record remembers where its
+    title came from.
+  - An automatic title may be refined once after the conversation grows several times over.
+  - Turn it off with Settings → **Name conversations automatically**. The iPhone does the same for
+    "New conversation" and Apple Watch recordings.
 
 ### Keyboard shortcuts
 

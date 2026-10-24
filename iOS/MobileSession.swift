@@ -30,7 +30,9 @@ final class MobileSession {
     @ObservationIgnored var applicationIsActive: @MainActor () -> Bool = {
         UIApplication.shared.applicationState == .active
     }
-    var title = "New conversation"
+    var title = ConversationTitle.mobileDefault
+    var titleState = ConversationTitleState.placeholder   // where the title came from (#221)
+    @ObservationIgnored var autoTitleTasks: [String: Task<Void, Never>] = [:]
     var notes = "" { didSet { handleSummaryEvent(.notesChanged) } }
     var summary = ""
     var quickSummary = ""
@@ -60,7 +62,7 @@ final class MobileSession {
     }
     private var quickScheduler: MobileSummaryScheduler
     private var autoTask: Task<Void, Never>?
-    private let summaryProvider: (any LLMProvider)?
+    let summaryProvider: (any LLMProvider)?
     /// The on-device transport used when the provider is Apple Intelligence. Only tests replace it,
     /// so the simulator can exercise the on-device path without an Apple Intelligence capable host.
     var onDeviceProviderOverride: (any LLMProvider)?
@@ -317,7 +319,7 @@ final class MobileSession {
         recorder = nil
         UIApplication.shared.isIdleTimerDisabled = false
         state = .idle
-        save(announce: false)
+        save(announce: false); nameConversationIfNeeded()   // in the background (#221)
         finishSpeakerIdentification()
         endLanguageRun()
     }
@@ -343,7 +345,8 @@ final class MobileSession {
         manualQuickError = nil; quickReader.reset()
         handleSummaryEvent(.conversationChanged)
         id = UUID().uuidString; date = Date()
-        title = "New conversation"; notes = ""; summary = ""; quickSummary = ""; deepThought = ""
+        title = ConversationTitle.mobileDefault; titleState = .placeholder; notes = ""; summary = ""
+        quickSummary = ""; deepThought = ""
         segments = []; partial = nil; message = nil; attachments = []; sourceImportID = nil
         save(announce: false)
     }
@@ -361,7 +364,7 @@ final class MobileSession {
         acceptsSpeechCorrection = false
         manualQuickError = nil; quickReader.reset()
         handleSummaryEvent(.conversationChanged)
-        id = record.id; date = record.date; title = record.title
+        id = record.id; date = record.date; title = record.title; titleState = record.resolvedTitleState
         notes = record.notes ?? ""; summary = record.summary
         quickSummary = record.quickSuggestion ?? ""; deepThought = record.deepAnswer ?? ""
         attachments = record.attachments ?? []; sourceImportID = record.sourceImportID
@@ -686,21 +689,17 @@ extension MobileSession {
     }
 
     /// Write a debounced edit immediately — before stopping, backgrounding or leaving the record.
-    func flushPendingSave() {
-        guard pendingSave != nil else { return }
-        save(announce: false)
-    }
+    func flushPendingSave() { if pendingSave != nil { save(announce: false) } }
 
     @discardableResult
     func save(announce: Bool = true) -> Bool {
-        pendingSave?.cancel()
-        pendingSave = nil
+        pendingSave?.cancel(); pendingSave = nil
         let record = SessionRecord(id: id, title: title, date: date,
                                    transcript: Self.transcriptText(for: allSegments),
                                    summary: summary, segments: allSegments, notes: notes,
                                    quickSuggestion: quickSummary, deepAnswer: deepThought,
                                    isComplete: state == .idle && allSegments.allSatisfy(\.isFinal),
-                                   attachments: attachments, sourceImportID: sourceImportID)
+                                   attachments: attachments, sourceImportID: sourceImportID, titleState: titleState)
         do {
             let data = try JSONEncoder().encode(record)
             guard data != lastSavedData else {
@@ -968,7 +967,7 @@ extension MobileSession {
         flushPendingSave()
         switch phase {
         case .active:
-            importSharedInbox(); importWatchInbox()
+            importSharedInbox(); importWatchInbox(); nameConversationIfNeeded()
             prepareSpeakerModelsIfNeeded()   // speaker models load in the foreground only (#195)
             // The watch may still show "Open ListenToMe…" from a Start sent while this was closed.
             publishWatchStatus()

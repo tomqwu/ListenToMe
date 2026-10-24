@@ -491,6 +491,28 @@ extension MobileWatchDrainTests {
         XCTAssertEqual(audioFiles(session), [])
     }
 
+    /// A finished watch recording that still says "Apple Watch · <date>" is named once it has
+    /// enough words (#221), from on-device keywords here: unit tests never reach a model.
+    func testAFinishedWatchRecordingIsNamedAutomatically() async throws {
+        let saved = UserDefaults.standard.object(forKey: MobileSession.autoTitleKey)
+        defer { UserDefaults.standard.set(saved, forKey: MobileSession.autoTitleKey) }
+        UserDefaults.standard.removeObject(forKey: MobileSession.autoTitleKey)
+        let fake = FakeWatchTranscriber()
+        let speech = MobileAutoTitleTests.meeting.joined(separator: " ")
+        fake.script = [0: [line(speech, chunk: 0)]]
+        let session = makeSession(fake)
+        try deliver(session, 0, isLast: true)
+        await drain(session)
+        let record = try XCTUnwrap(watchRecords(session).first)
+        await session.autoTitleTasks[record.id]?.value
+        let named = try XCTUnwrap(watchRecords(session).first)
+        XCTAssertFalse(named.title.hasPrefix("Apple Watch · "), named.title)
+        XCTAssertTrue(named.title.lowercased().contains("budget"), named.title)
+        XCTAssertEqual(named.titleState?.source, .automatic)
+        XCTAssertEqual(named.segments?.map(\.text), [speech], "the transcript is untouched")
+        XCTAssertEqual(try archived().first?.title, named.title)
+    }
+
     func testAChunkArrivingDuringADrainIsTranscribedAfterIt() async throws {
         let fake = FakeWatchTranscriber()
         fake.script = [0: [line("First recording.", chunk: 0)]]

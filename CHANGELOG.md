@@ -13,6 +13,7 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased since 1.14.0 (31))
 
+- Conversations name themselves. A conversation still called "New conversation" (or "Apple Watch · <date>") gets a short title after you stop or save, once it has about 30 words of transcript. The title comes from its summary when there is one; otherwise your summary provider writes it (Apple Intelligence on this device by default, or the Ollama, Cloud AI or OpenAI-compatible service you already chose); without AI, keywords found on this device name it. A title you type, or one from Import from Calendar, is never replaced, and naming never delays Stop. Watch recordings are named too, and a Save to folder note updates in place. Turn it off in Settings → Conversations → Name conversations automatically. (#221)
 - Apple Watch companion, remote Start/Stop for the iPhone recorder (not yet shipped; ships with watch recording on the #181 train). (#181)
 - iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
 - Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
@@ -47,6 +48,7 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## macOS (unreleased since 1.4.4)
 
+- Conversations name themselves. A saved conversation still titled "Conversation — <date>" gets a short title after Stop, Save or New conversation, once it has about 30 words of transcript. The title comes from the Summary pane's text, from the Summary pane's model when AI is on, or from keywords found on this Mac. A typed or Load from Calendar title is never replaced. A Save to folder note updates in place. Settings → Name conversations automatically (on by default). (#221)
 - New AI mode **Cloud AI service**: OpenAI, Anthropic Claude, Google Gemini, DeepSeek, OpenRouter, Groq, Mistral or xAI Grok with your own API key (Check key lists the vendor's models; Get a key and privacy-policy links). Each service is labelled "Sends your transcript to <vendor>", keeps its own Keychain key sent only to that vendor, and pane pickers list its models without ever picking one. Claude uses Anthropic's own Messages API. (#214)
 - New AI mode **OpenAI-compatible**: point the panes at LM Studio, vLLM, llama.cpp, Ollama's /v1 API or OpenRouter with an optional Keychain key bound to that server; pane pickers list its /v1/models and never pick one for you; labelled "your server" or "may leave this device", never local; redirects are not followed. Plain http to `.local` names now works. (#52)
 - Speaker identification matches voices across its periodic passes, so a participant who is silent for minutes keeps their Speaker N label and edited name; voice embeddings stay in memory for the run only. (#171)

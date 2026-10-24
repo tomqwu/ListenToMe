@@ -448,6 +448,24 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   across recordings, so after Stop/Listen (or an interruption) new voices continue the numbering
   (Speaker 3, 4…) and can be renamed to merge them; backgrounding ends identification at once without a final pass;
   more than two hours of one recording is not analyzed further.
+- Automatic titles (#221): after Stop, Save, a finished Apple Watch recording or a return to the
+  foreground, a conversation still named "New conversation" or "Apple Watch · <date>" with about
+  30 final words is named in the background. `MobileSession+AutoTitle.swift` takes the title from:
+  1. its Full summary, with no model call;
+  2. the summary provider the user chose (Apple Intelligence by default, or the Ollama, Cloud AI or
+     OpenAI-compatible service already selected), asked with a tiny fenced prompt of the
+     transcript's first 2,000 characters and answered in the conversation's language;
+  3. on-device NaturalLanguage keywords.
+  `ConversationAutoTitle` in Core holds the prompt, the cleaning (at most six words, no quotes,
+  emoji, Markdown or trailing punctuation, nothing clearly in another language) and the replace
+  rule. `SessionRecord.titleState` records where a title came from (`placeholder`, `automatic`,
+  `user`, `calendar`); records saved before it decode from their title. The title field marks
+  edits as the user's and cancels a naming under way. A naming that finishes after the user
+  renamed the conversation, or switched to another one, is applied only if that record still
+  has its default name. An automatic title is refined at most once, after the transcript has
+  tripled. The Save to folder note is rewritten in place (its file name is keyed by the
+  conversation). Unit tests never reach a real model: they inject `onDeviceProviderOverride`.
+  Settings → Conversations → **Name conversations automatically** (on by default).
 - Editable titles and notes; atomic local saves after finalized utterances, explicit Save,
   save-before-New, local History, restoration on launch and Markdown through the share sheet.
   Title and Notes typing is saved about a second after you stop typing, and is flushed when

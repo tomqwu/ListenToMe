@@ -91,6 +91,12 @@ enum ProviderSettings {
         set { UserDefaults.standard.set(newValue, forKey: "saveSessionsForSearch") }
     }
 
+    /// Name a saved conversation that still has its "Conversation — <date>" title (#221). On by default.
+    static var autoNameConversations: Bool {
+        get { UserDefaults.standard.object(forKey: "autoNameConversations") as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: "autoNameConversations") }
+    }
+
     /// Resolved transcription locale. An empty id follows the system language; Apple's on-device
     /// Speech does not auto-detect spoken language, so this selects the engine's primary language.
     /// Each transcriber further resolves this against *its* engine's supported locales (and falls
@@ -154,6 +160,7 @@ struct SettingsView: View {
     @State private var responseLanguageID: String
     @State private var referenceBudget: Int
     @State private var saveSessions: Bool
+    @State private var autoName = ProviderSettings.autoNameConversations
     @State private var appearance: String
     @State private var speakerDiarization: Bool
     @State private var microphoneDiarization: Bool
@@ -272,6 +279,13 @@ struct SettingsView: View {
                 "Existing history is kept; use Clear history to delete it."
             )
             .font(.caption).foregroundStyle(.secondary)
+            Toggle("Name conversations automatically", isOn: $autoName)
+            Text(
+                "After you stop or save, a conversation still titled “Conversation — <date>” gets a short title " +
+                "from its summary, from the Summary pane's model, or from keywords found on this Mac. " +
+                "A title you type or load from Calendar is never replaced."
+            )
+            .font(.caption).foregroundStyle(.secondary)
 
             Divider()
             MacVaultSettings()
@@ -339,6 +353,7 @@ struct SettingsView: View {
         ProviderSettings.responseLanguageID = responseLanguageID
         ProviderSettings.referenceBudget = referenceBudget
         ProviderSettings.saveSessionsForSearch = saveSessions
+        ProviderSettings.autoNameConversations = autoName
         ProviderSettings.appearance = appearance
         ProviderSettings.speakerDiarizationEnabled = speakerDiarization
         ProviderSettings.microphoneDiarizationEnabled = microphoneDiarization

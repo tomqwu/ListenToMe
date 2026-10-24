@@ -23,7 +23,8 @@ extension MeetingView {
             id: currentSessionID, title: conversationTitle, date: Date(),
             transcript: store.utterances.map { "\($0.speakerLabel): \($0.text)" }.joined(separator: "\n"),
             summary: session.listenerSummary, segments: store.utterances, notes: session.notes,
-            quickSuggestion: session.quickSuggestion, deepAnswer: session.deepAnswer, isComplete: complete)
+            quickSuggestion: session.quickSuggestion, deepAnswer: session.deepAnswer, isComplete: complete,
+            titleState: conversationTitleState)
         guard sessionStore.add(record) else {
             saveMessage = sessionStore.errorText ?? "Save failed. Retry or Export to keep this conversation."
             saveFailed = true
@@ -46,7 +47,7 @@ extension MeetingView {
 
     func saveConversation() {
         if ProviderSettings.saveSessionsForSearch && sessionSaveable {
-            _ = checkpoint(complete: !session.isRunning && !lifecycleBusy, force: true)
+            if checkpoint(complete: !session.isRunning && !lifecycleBusy, force: true) { nameConversationIfNeeded() }
         } else {
             _ = saveConversationAs()
         }
@@ -94,10 +95,13 @@ extension MeetingView {
                 default: return
                 }
             }
+            if persisted { nameConversationIfNeeded() }   // the saved one, in the background (#221)
+            autoTitleTask = nil   // it renames the saved record; typing the new title must not cancel it
             beginDiarizationRunReset()
             session.resetConversation()
             currentSessionID = UUID().uuidString; conversationStartedAt = nil
             conversationTitle = ConversationTitle.generated(Date().formatted(date: .abbreviated, time: .shortened))
+            conversationTitleState = .placeholder
             sessionSaveable = ProviderSettings.saveSessionsForSearch
             othersAudioSink.reset(); microphoneAudioSink.reset()
             lastSavedKey = nil
@@ -110,7 +114,7 @@ extension MeetingView {
     var conversationStatus: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                TextField("Conversation title", text: $conversationTitle)
+                TextField("Conversation title", text: conversationTitleBinding)
                     .textFieldStyle(.plain).fontWeight(.semibold)
                     .accessibilityLabel("Conversation title")
                 Spacer()

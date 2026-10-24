@@ -106,8 +106,9 @@ extension MobileSession {
             message = "Wait for the current summary to finish before importing calendar details."
             return false
         }
-        if title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || title == "New conversation" {
+        if title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || title == ConversationTitle.mobileDefault {
             title = event.meeting.title
+            titleState = .calendar   // never renamed automatically (#221)
         }
         notes += (notes.isEmpty ? "" : "\n\n") + event.context
         guard save(announce: false) else { return false }
