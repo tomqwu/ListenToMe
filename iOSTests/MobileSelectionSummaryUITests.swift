@@ -58,16 +58,18 @@ final class MobileSelectionSummaryUITests: XCTestCase {
 
     func testLongPressSummarizesFromThatLine() {
         let app = launch()
+        // The Live panel follows the latest speech, so its last line is the one sure to be on screen.
         let text = app.staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label CONTAINS %@",
-                                                        "transcript-text-", "QA signs off")).firstMatch
+                                                        "transcript-text-", "Marketing waits")).firstMatch
         XCTAssertTrue(text.waitForExistence(timeout: 5))
+        for _ in 0..<3 where !text.isHittable { app.scrollViews["transcriptScroll"].swipeUp() }
         text.press(forDuration: 1.2)
         XCTAssertTrue(app.buttons["Select from here"].waitForExistence(timeout: 5))
         app.buttons["Summarize from here"].tap()
         let summary = app.staticTexts["selectionSummaryText"]
         XCTAssertTrue(summary.waitForExistence(timeout: 10))
-        wait(summary, contains: "Summary of 2 selected lines")
-        XCTAssertTrue(summary.label.contains("Sam: QA signs off"), summary.label)
+        wait(summary, contains: "Summary of 1 selected line.")
+        XCTAssertTrue(summary.label.contains("Alex: Marketing waits"), summary.label)
         app.buttons["closeSelectionSummary"].tap()
     }
 
