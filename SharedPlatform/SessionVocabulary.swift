@@ -17,7 +17,7 @@ final class SessionVocabulary {
 
     let catalog: VocabularyCatalog
     @ObservationIgnored private let store: VocabularySettingsStore
-    @ObservationIgnored private let classifier: VocabularyClassifier
+    @ObservationIgnored private let classifier: VocabularyClassifier?
     var settings: VocabularySettings {
         didSet { if settings != oldValue { store.save(settings) } }
     }
@@ -38,25 +38,26 @@ final class SessionVocabulary {
         self.catalog = catalog
         store = VocabularySettingsStore(defaults: defaults)
         settings = store.load()
-        self.classifier = classifier ?? VocabularyClassifier(catalog: catalog)
+        self.classifier = classifier
     }
 
     /// Re-reads the stored settings after another view (macOS Settings) changed them.
     func reloadSettings() { settings = store.load() }
 
-    func active(for conversationID: String) -> ActiveVocabulary {
-        ActiveVocabulary(settings: settings, conversationDomainIDs: domainIDs(for: conversationID), catalog: catalog)
+    func active(for conversationID: String, localeIdentifier: String = "en") -> ActiveVocabulary {
+        ActiveVocabulary(settings: settings, conversationDomainIDs: domainIDs(for: conversationID),
+                         catalog: catalog.localized(for: localeIdentifier))
     }
 
     /// `heard` is the conversation's recent speech: My terms already said there are kept first.
-    func recognitionTerms(for conversationID: String, heard: String? = nil) -> [String] {
-        active(for: conversationID).recognitionTerms(heard: heard)
+    func recognitionTerms(for conversationID: String, heard: String? = nil, localeIdentifier: String = "en") -> [String] {
+        active(for: conversationID, localeIdentifier: localeIdentifier).recognitionTerms(heard: heard)
     }
 
     /// The prepared correction lookup for this conversation's vocabulary (a `Sendable` value, so the
     /// glossary for each phrase can be built off the main actor).
-    func correctionLookup(for conversationID: String) -> VocabularyPrompt.CorrectionIndex {
-        let active = active(for: conversationID)
+    func correctionLookup(for conversationID: String, localeIdentifier: String = "en") -> VocabularyPrompt.CorrectionIndex {
+        let active = active(for: conversationID, localeIdentifier: localeIdentifier)
         if let correctionIndex, correctionIndexSource == active { return correctionIndex }
         let index = VocabularyPrompt.CorrectionIndex(active)
         correctionIndex = index
@@ -82,12 +83,13 @@ final class SessionVocabulary {
 
     /// Counts a finalized line and, once enough speech has been heard, classifies the recent speech off
     /// the main actor. `recent` is only read when a check is due.
-    func heard(_ line: String, conversationID: String, recent: @autoclosure () -> String) {
+    func heard(_ line: String, conversationID: String, localeIdentifier: String = "en",
+               recent: @autoclosure () -> String) {
         tracker.begin(conversationID: conversationID)
         if let shown = suggestion, shown.conversationID != conversationID { suggestion = nil }
         tracker.heard(line)
         guard check == nil, let excluded = tracker.dueCheck(settings: settings) else { return }
-        let classifier = classifier
+        let classifier = classifier ?? VocabularyClassifier(catalog: catalog.localized(for: localeIdentifier))
         let text = recent()
         check = Task {
             // The first check loads Apple's sentence embedding; it must never stall the transcript.
@@ -102,7 +104,7 @@ final class SessionVocabulary {
     /// The whole finalized transcript, for a platform that observes it rather than each line (macOS).
     /// Only lines that arrive while `live` (recording) count toward a suggestion: a restored or imported
     /// conversation, or a store that was replaced, only moves the baseline and is never classified.
-    func heard(transcript lines: [String], conversationID: String, live: Bool) {
+    func heard(transcript lines: [String], conversationID: String, live: Bool, localeIdentifier: String = "en") {
         if tracker.conversationID != conversationID {
             tracker.begin(conversationID: conversationID)
             if let shown = suggestion, shown.conversationID != conversationID { suggestion = nil }
@@ -110,7 +112,8 @@ final class SessionVocabulary {
         }
         guard live, lines.count > countedLines else { countedLines = lines.count; return }
         for line in lines[countedLines...] {
-            heard(line, conversationID: conversationID, recent: lines.suffix(200).joined(separator: " "))
+            heard(line, conversationID: conversationID, localeIdentifier: localeIdentifier,
+                  recent: lines.suffix(200).joined(separator: " "))
         }
         countedLines = lines.count
     }

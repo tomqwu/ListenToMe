@@ -376,6 +376,7 @@ extension MeetingView {
             set: { newValue in
                 transcriptionLocaleID = newValue
                 ProviderSettings.transcriptionLocaleID = newValue
+                applyVocabulary()   // recognition and prompt terms follow the language, even while idle (#238)
                 // The locale is read only when a transcriber is created (at start). Restart an
                 // active session so the new language applies immediately instead of next Listen.
                 guard wantsCapture else { return }

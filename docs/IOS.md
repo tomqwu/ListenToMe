@@ -699,8 +699,8 @@ the selected lines), charged to the budget.
 ## Domain vocabularies and My terms (#222)
 
 **More → Settings → Vocabularies** lists seven presets — Medical, Legal, Software & Cloud,
-Engineering, Finance, Sales and Education & Research — each a curated, English-first list of a few
-hundred terms the project wrote itself (`Sources/ListenToMeCore/Resources/Vocabularies/*.json`; no
+Engineering, Finance, Sales and Education & Research — each with a curated English list of a few
+hundred terms and a focused Simplified Chinese list of 50–60 terms the project wrote itself (`Sources/ListenToMeCore/Resources/Vocabularies/*.json`; no
 licensed dictionaries), plus **My terms**: people, products and company jargon in any language. Each
 preset has a **Use by default** switch, a description, and (Medical) the note that the app is not a
 medical device. My terms can be added, edited (tap), deleted (swipe), imported from a text file (one
@@ -744,6 +744,18 @@ that conversation, and My terms. It is used in three places:
   the domain and glossary without them. On the Mac the headings reach only the Listener and automatic
   Summary reviews (`MeetingSession.summaryGuidance`), never Quick or Deep.
 
+
+**Simplified Chinese (#238, unreleased).** The transcription language selects the preset terms and
+classifier description: `zh`, `zh-CN`, `zh-SG` and explicit `zh-Hans` use Simplified Chinese; Traditional
+Chinese (`zh-Hant`, Taiwan, Hong Kong) and other languages keep the English lists. My terms stays in
+whatever language you entered. Recording uses its current language, including an Automatic switch and
+Undo; a reopened conversation's prompts use its saved current language. The on-device classifier
+matches Chinese terms inside continuous sentences and separates adjacent Latin jargon, bounds its
+recent window with NaturalLanguage word tokens, and uses the Simplified Chinese sentence embedding
+when installed (the stricter six-term rule applies without it). UI names, safety notices and summary
+headings keep their existing English wording. These curated lists are a starting vocabulary, not
+proof of improved recognition accuracy; physical-device comparison remains required under #236.
+
 **Suggestion banner.** After about a minute of final speech (150 words), and again every 50 words,
 `VocabularyClassifier` checks the recent speech on the device, off the main thread, with no model call:
 a preset needs at least 4 different terms at 2 weighted hits per 100 words (terms shared by several
@@ -760,7 +772,7 @@ most once per conversation; a preset added for one conversation stays on while t
 open and is not saved with it (opening another conversation starts over). **Suggest
 vocabularies** turns it off.
 
-Limits: presets are English-first (code-switched speech still matches English terms; #238); how
+Limits: languages other than Simplified Chinese keep the English lists; how
 strongly `SpeechTranscriber` honors contextual strings is still to be measured on a device (#236);
 per-conversation additions are not saved and Auto Quick gets no vocabulary guidance (#237); the
 glossary reaches only the provider you chose.

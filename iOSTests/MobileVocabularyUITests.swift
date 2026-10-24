@@ -76,6 +76,31 @@ final class MobileVocabularyUITests: XCTestCase {
         capture(app, "Vocabularies settings")
     }
 
+    func testChineseSpeechOffersPresetAndAppliesChineseRecognitionTerms() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--vocabulary-fixture", "--chinese-vocabulary-fixture",
+                               "-autoQuickSummary", "NO", "-mobileCorrectTranscript", "NO"]
+        app.launchPastReleaseNotes()
+        app.buttons["Start listening"].tap()
+        XCTAssertTrue(app.buttons["Stop listening"].waitForExistence(timeout: 10))
+        app.buttons["vocabularySpeak"].tap()
+        XCTAssertTrue(app.buttons["vocabularyAdd"].waitForExistence(timeout: 15))
+        XCTAssertFalse(recognizer(app).contains("简体中文"), "suggestions never enable a preset")
+        app.buttons["vocabularyAdd"].tap()
+        XCTAssertTrue(waitFor(app) { $0.contains("简体中文") && $0.contains("first: 心房颤动") }, recognizer(app))
+        XCTAssertTrue(app.buttons["Stop listening"].exists)
+        capture(app, "Chinese vocabulary reaches the live recognizer")
+        app.buttons["Stop listening"].tap()
+        app.buttons["More"].tap()
+        app.buttons["Settings"].tap()
+        let link = app.buttons["vocabularySettings"]
+        revealSettingsControl(link, in: app.collectionViews["aiSettingsForm"])
+        link.tap()
+        XCTAssertTrue(app.staticTexts["preset-detail-medical"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["preset-detail-medical"].label.hasPrefix("60 terms"))
+        capture(app, "Chinese preset description and term count")
+    }
+
     func testDontSuggestAgainMutesThePreset() {
         let app = launch()
         app.buttons["Start listening"].tap()

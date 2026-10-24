@@ -19,7 +19,8 @@ extension MobileSession {
         do {
             let provider = try correctionProvider ?? ai.correctionClient()
             // The glossary is built by the corrector off the main actor, from a prepared index.
-            let lookup = vocabulary.correctionLookup(for: id), phrase = segment.text
+            let lookup = vocabulary.correctionLookup(for: id, localeIdentifier: segment.language ?? vocabularyLanguage)
+            let phrase = segment.text
             speechCorrection.submit(segment, context: context, glossary: { lookup.glossary(for: phrase) },
                                     model: ai.correctionModel, provider: provider) { [weak self] result in
                 guard let self, self.id == sessionID, self.ai.correctTranscript,

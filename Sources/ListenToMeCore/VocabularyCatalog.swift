@@ -16,9 +16,11 @@ public struct VocabularyDomain: Codable, Sendable, Equatable, Identifiable {
     /// Section headings a summary of this kind of conversation is organized under.
     public let summaryLayout: [String]
     public let terms: [String]
+    /// Project-authored Simplified Chinese recognition terms and classifier profile (#238).
+    public let simplifiedChinese: VocabularyTranslation?
 
     public init(id: String, name: String, topic: String? = nil, description: String, notice: String? = nil,
-                summaryLayout: [String], terms: [String]) {
+                summaryLayout: [String], terms: [String], simplifiedChinese: VocabularyTranslation? = nil) {
         self.id = id
         self.name = name
         self.topic = topic
@@ -26,6 +28,7 @@ public struct VocabularyDomain: Codable, Sendable, Equatable, Identifiable {
         self.notice = notice
         self.summaryLayout = summaryLayout
         self.terms = terms
+        self.simplifiedChinese = simplifiedChinese
     }
 
     /// The banner's question: "Sounds like a medical conversation — add the Medical vocabulary?"
@@ -33,6 +36,17 @@ public struct VocabularyDomain: Codable, Sendable, Equatable, Identifiable {
         let subject = topic ?? name.lowercased()
         let article = subject.first.map { "aeiou".contains($0.lowercased()) } == true ? "an" : "a"
         return "Sounds like \(article) \(subject) conversation — add the \(name) vocabulary?"
+    }
+}
+
+/// A localized term list keeps the preset's stable ID, UI name, safety notice and summary layout.
+public struct VocabularyTranslation: Codable, Sendable, Equatable {
+    public let description: String
+    public let terms: [String]
+
+    public init(description: String, terms: [String]) {
+        self.description = description
+        self.terms = terms
     }
 }
 
@@ -62,8 +76,26 @@ public struct VocabularyCatalog: Sendable, Equatable {
     public static let maximumLayoutSections = 6
 
     public let domains: [VocabularyDomain]
+    public let languageIdentifier: String
 
-    public init(domains: [VocabularyDomain]) { self.domains = domains }
+    public init(domains: [VocabularyDomain], languageIdentifier: String = "en") {
+        self.domains = domains
+        self.languageIdentifier = languageIdentifier
+    }
+
+    /// Chinese uses the Simplified list for zh / zh-CN / zh-SG / zh-Hans. Traditional Chinese and
+    /// languages without a curated list retain the original English terms; My terms stays untouched.
+    public func localized(for identifier: String) -> VocabularyCatalog {
+        let language = Locale(identifier: identifier).language
+        guard language.languageCode?.identifier == "zh", language.script?.identifier != "Hant" else { return self }
+        return VocabularyCatalog(domains: domains.map { domain in
+            guard let translated = domain.simplifiedChinese else { return domain }
+            return VocabularyDomain(id: domain.id, name: domain.name, topic: domain.topic,
+                                    description: translated.description, notice: domain.notice,
+                                    summaryLayout: domain.summaryLayout, terms: translated.terms,
+                                    simplifiedChinese: translated)
+        }, languageIdentifier: "zh-Hans")
+    }
 
     public func domain(id: String) -> VocabularyDomain? { domains.first { $0.id == id } }
 
@@ -117,6 +149,30 @@ public struct VocabularyCatalog: Sendable, Equatable {
             }
             if !seen.insert(term.lowercased()).inserted { problems.append("duplicate term: \(term)") }
         }
+        if let translation = domain.simplifiedChinese { problems += Self.problems(in: translation) }
+        return problems
+    }
+
+    private static func problems(in translation: VocabularyTranslation) -> [String] {
+        var problems: [String] = []
+        if translation.description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            problems.append("Simplified Chinese description is required")
+        }
+        // These focused lists start with 50+ terms per domain, rather than padding them with
+        // translations that add no recognition value. The original English lists remain intact.
+        if !(50...maximumTerms).contains(translation.terms.count) {
+            problems.append("Simplified Chinese needs 50–\(maximumTerms) terms")
+        }
+        var translated = Set<String>()
+        for term in translation.terms {
+            if term.isEmpty || term != term.trimmingCharacters(in: .whitespacesAndNewlines)
+                || term.count > maximumTermCharacters || VocabularyText.words(in: term) > maximumTermWords {
+                problems.append("invalid Simplified Chinese term: \(term)")
+            }
+            if !translated.insert(term.lowercased()).inserted {
+                problems.append("duplicate Simplified Chinese term: \(term)")
+            }
+        }
         return problems
     }
 }
@@ -140,6 +196,10 @@ public enum VocabularyText {
         var current = ""
         for character in text {
             if character.isLetter || character.isNumber || character == "+" || character == "#" || character == "&" {
+                if let previous = current.last, containsHan(String(previous)) != containsHan(String(character)) {
+                    tokens.append(current)
+                    current = ""
+                }
                 current.append(character)
             } else if !current.isEmpty {
                 tokens.append(current)
@@ -148,6 +208,10 @@ public enum VocabularyText {
         }
         if !current.isEmpty { tokens.append(current) }
         return tokens
+    }
+
+    static func containsHan(_ text: String) -> Bool {
+        text.unicodeScalars.contains { (0x3400...0x9FFF).contains($0.value) }
     }
 
     /// Words and names in a transcript line worth offering for My terms: capitalized runs ("Liu Yang",

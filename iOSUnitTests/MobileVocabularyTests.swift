@@ -20,7 +20,8 @@ final class MobileVocabularyTests: XCTestCase {
         "okay, i'll talk to her daughter this afternoon and update the family on everything we discussed today"
     ]
 
-    private let keys = [VocabularySettingsStore.key, "autoQuickSummary"]
+    private let keys = [VocabularySettingsStore.key, "autoQuickSummary", MobileSession.languageKey,
+                        MobileLanguageDetection.automaticKey]
     private var saved: [Any?] = []
     private var root: URL!
 
@@ -59,6 +60,40 @@ final class MobileVocabularyTests: XCTestCase {
         XCTAssertTrue(first.contains("res judicata"))
         XCTAssertEqual(first.count, ActiveVocabulary.recognitionLimit)
         await session.stop()
+    }
+
+    func testFixedChineseLanguageUsesChineseTermsBeforeCaptureAndInManualPrompts() async throws {
+        let recorder = VocabularyTestRecorder()
+        let provider = PromptRecordingProvider()
+        let session = makeSession(recorder, provider: provider)
+        session.languageChoice = "zh-CN"
+        session.vocabulary.settings = VocabularySettings(defaultDomainIDs: ["medical"], myTerms: ["张伟"])
+        session.start()
+        try await wait { session.state == .recording }
+        XCTAssertTrue(recorder.contexts.first?.contains("心房颤动") == true)
+        XCTAssertEqual(recorder.contexts.first?.first, "张伟")
+        XCTAssertFalse(recorder.contexts.first?.contains("metoprolol") == true)
+        recorder.send("患者存在心房颤动和呼吸困难，检查肌钙蛋白和肌酐。")
+        await session.stop()
+        await session.summarize(mode: .summary)
+        XCTAssertTrue(provider.requests.last?.system.contains("心房颤动") == true)
+        let record = try XCTUnwrap(session.history.first)
+        session.newConversation()
+        session.languageChoice = "en-US"
+        session.open(record)
+        XCTAssertEqual(session.vocabularyLanguage, "zh-CN", "History uses the conversation's own language")
+        XCTAssertTrue(session.activeVocabulary.recognitionTerms().contains("心房颤动"))
+    }
+
+    func testChineseSuggestionsAndEnglishFallbackKeepTheirOwnTerms() async {
+        let vocabulary = SessionVocabulary(defaults: UserDefaults(suiteName: "zh-vocab-\(UUID())")!)
+        let speech = String(repeating: "患者存在心房颤动和心力衰竭，服用美托洛尔和阿哌沙班。检查肌钙蛋白、肌酐和超声心动图。", count: 12)
+        vocabulary.heard(speech, conversationID: "zh", localeIdentifier: "zh-CN", recent: speech)
+        await vocabulary.check?.value
+        XCTAssertEqual(vocabulary.banner(for: "zh")?.domain.id, "medical")
+        vocabulary.addSuggested()
+        XCTAssertTrue(vocabulary.recognitionTerms(for: "zh", localeIdentifier: "zh-CN").contains("心房颤动"))
+        XCTAssertTrue(vocabulary.recognitionTerms(for: "zh", localeIdentifier: "fr-FR").contains("metoprolol"))
     }
 
     func testTheBannerOffersMedicalAndAddTakesEffectWithoutRestartingTheMicrophone() async throws {

@@ -10,10 +10,12 @@ struct MobileVocabularyFixture: View {
 
     init() {
         UserDefaults.standard.removeObject(forKey: VocabularySettingsStore.key)
-        let recorder = VocabularyFixtureRecorder()
+        let chinese = ProcessInfo.processInfo.arguments.contains("--chinese-vocabulary-fixture")
+        let recorder = VocabularyFixtureRecorder(chinese: chinese)
         _recorder = State(initialValue: recorder)
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("VocabularyUI-\(UUID())")
         let session = MobileSession(storageDirectory: root, makeRecorder: { recorder })
+        session.languageChoice = chinese ? "zh-CN" : "en-US"
         session.prepareSpeakerModelsIfNeeded()
         session.title = "Clinic follow-up"
         _session = State(initialValue: session)
@@ -34,6 +36,8 @@ struct MobileVocabularyFixture: View {
 private final class VocabularyFixtureRecorder: MobileRecording {
     private var receive: (@MainActor (TranscriptSegment) -> Void)?
     private var terms: [String] = []
+    private let chinese: Bool
+    init(chinese: Bool = false) { self.chinese = chinese }
     private var time = 0.0
     var summary = "recognizer: 0"
 
@@ -41,13 +45,15 @@ private final class VocabularyFixtureRecorder: MobileRecording {
         terms = strings
         summary = "recognizer: \(strings.count)" + (strings.first.map { " · first: \($0)" } ?? "")
             + (strings.contains("metoprolol") ? " · medical" : "")
+            + (strings.contains("心房颤动") ? " · 简体中文" : "")
     }
 
     func start(locale: Locale, onSegment: @escaping @MainActor (TranscriptSegment) -> Void,
                onFailure: @escaping @MainActor (String) -> Void) async throws { receive = onSegment }
 
     func speak() {
-        for line in Self.consultation {
+        let chineseLine = "患者存在心房颤动和心力衰竭，服用美托洛尔和阿哌沙班。检查肌钙蛋白、肌酐和超声心动图。"
+        for line in chinese ? Array(repeating: chineseLine, count: 12) : Self.consultation {
             receive?(.init(source: .you, text: line, isFinal: true, start: time, end: time + 4))
             time += 4
         }

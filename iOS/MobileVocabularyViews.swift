@@ -112,11 +112,12 @@ struct MobileVocabularySettingsView: View {
                 }
             } header: { Text("Suggestions") }
             Section {
-                ForEach(vocabulary.catalog.domains) { domain in presetRow(domain) }
+                ForEach(vocabulary.catalog.localized(for: session.vocabularyLanguage).domains) { domain in presetRow(domain) }
                 Toggle("Organize summaries by domain", isOn: binding(\.domainSummaryLayout))
                     .accessibilityIdentifier("vocabularyLayoutToggle")
             } header: { Text("Presets") } footer: {
-                Text("Presets are English-first lists of a few hundred common terms. Speech recognition receives at " +
+                Text("Presets use Simplified Chinese terms for Chinese (Simplified) transcription, and English terms " +
+                     "for other languages. My terms accepts any language. Speech recognition receives at " +
                      "most \(ActiveVocabulary.recognitionLimit) terms: My terms first (up to " +
                      "\(ActiveVocabulary.myTermsRecognitionShare) when a preset is on), then the presets'.")
             }
@@ -146,6 +147,7 @@ struct MobileVocabularySettingsView: View {
                                               set: { vocabulary.settings.setDefault(domain.id, $0) }))
                 .accessibilityIdentifier("preset-\(domain.id)")
             Text("\(domain.terms.count) terms · \(domain.description)").font(.caption).foregroundStyle(.secondary)
+                .accessibilityIdentifier("preset-detail-\(domain.id)")
             if let notice = domain.notice { Text(notice).font(.caption).foregroundStyle(.orange) }
             if !vocabulary.settings.isDefault(domain.id), vocabulary.domainIDs(for: session.id).contains(domain.id) {
                 HStack {
