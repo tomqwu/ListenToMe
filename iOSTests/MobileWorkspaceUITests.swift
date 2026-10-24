@@ -123,7 +123,7 @@ final class MobileWorkspaceUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Select lines"].isHittable)
         app.buttons["Select lines"].tap()
         XCTAssertTrue(app.navigationBars["Transcript"].waitForExistence(timeout: 5))
-        app.buttons["Done"].tap()
+        app.navigationBars["Transcript"].buttons["Done"].tap()
         XCUIDevice.shared.orientation = .portrait
         XCUIDevice.shared.orientation = .landscapeLeft
         XCTAssertTrue(app.buttons["duoPaneWidths"].waitForExistence(timeout: 5))
