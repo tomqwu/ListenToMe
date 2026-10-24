@@ -70,7 +70,7 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 | Calendar import | **Load from Calendar** fills Context notes (`App/CalendarService.swift`); text is imported as written | **Import from Calendar** removes e-mail addresses and link passcodes first (`MeetingContext.redactingLinksAndAddresses`, `MobileCalendar.attendeeNames`) |
 | Share-sheet import | — | Share extension plus an App Group inbox (`ShareExtension/`, `iOSShared/SharedInbox.swift`) |
 | AI speech correction | — | Opt-in, over a Flash model on Ollama (`MobileTranscriptCorrector`); with vocabularies on, the request carries a glossary of My terms and near-miss preset terms (#222) |
-| Vocabulary guidance in prompts (#222) | Rides in the persona line every pane's prompt carries (`VocabularyPrompt.combined`), so `PromptBuilder.scaffoldCharacterCost` measures it | Appended to the Summary/Quick/Deep system prompt (`LLMRequest.addingGuidance`) and to the automatic reviews' directives; on Apple Intelligence it is capped at 400 characters and counted against the 8,000-character transcript cap |
+| Vocabulary guidance in prompts (#222) | Rides in the persona line every pane's prompt carries (`VocabularyPrompt.combined`), so `PromptBuilder.scaffoldCharacterCost` measures it | Appended to the Summary/Quick/Deep system prompt (`LLMRequest.addingGuidance`) and to the automatic reviews' directives; on Apple Intelligence it is capped at 400 characters, and on every provider it is charged to the same prompt budget as the transcript |
 | Add to My terms (#222) | Right-click a transcript line | Long-press a transcript line |
 | Proactive Quick answers | Yes — needs a finalized question on the Others channel | No — there is no Others channel to detect one in |
 | Third-party licenses | **Open-source licenses…** shows `App/ThirdPartyNotices.txt` as one text | **Settings → About → Acknowledgements** lists each package from the same file with its full license (`MobileAcknowledgementsView`, #202) |
@@ -608,8 +608,8 @@ that conversation, and My terms. It is used in three places:
   negation, except digits that belong to a glossary term the edit uses ("e c2" → "EC2").
 - **Summary, Quick and Deep.** The domain's description and a glossary (My terms, then terms heard
   recently, then the rest) are appended as "Context for this session" — at most 1,500 characters, or
-  400 on Apple Intelligence, where the guidance is charged against the 8,000-character transcript
-  cap. With **Organize summaries by domain** on, Summary follows the domain's headings (Medical:
+  400 on Apple Intelligence. Its characters are charged to the same budget as the transcript: the
+  Summary cap, and the on-demand Quick/Deep excerpt budget (`OnDemandGrounding.oneShotBudget`). With **Organize summaries by domain** on, Summary follows the domain's headings (Medical:
   History / Findings / Plan; Engineering: Decisions / Actions / Risks; Sales: Customer needs /
   Objections / Next steps…). Automatic Summary and Deep reviews carry the same guidance.
 
