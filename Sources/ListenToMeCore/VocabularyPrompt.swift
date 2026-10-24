@@ -135,7 +135,8 @@ public enum VocabularyPrompt {
                 terms.compactMap { term in
                     let tokens = VocabularyText.tokens(term.lowercased())
                     let target = Array(tokens.joined())
-                    guard target.count >= 3, seen.insert(term.lowercased()).inserted else { return nil }
+                    guard target.count >= (VocabularyText.containsHan(term) ? 2 : 3),
+                          seen.insert(term.lowercased()).inserted else { return nil }
                     return Entry(term: term, target: target, span: tokens.count, pairs: CorrectionIndex.pairs(target))
                 }
             }
@@ -145,7 +146,12 @@ public enum VocabularyPrompt {
 
         public func glossary(for text: String, limit: Int = VocabularyPrompt.correctionGlossaryLimit) -> [String] {
             guard limit > 0, !(mine.isEmpty && presets.isEmpty) else { return [] }
-            let windows = Window.all(in: VocabularyText.tokens(text.lowercased()))
+            let entries = mine + presets
+            let hanLengths = Set(entries.filter { VocabularyText.containsHan($0.term) }.flatMap {
+                [max(2, $0.target.count - 1), $0.target.count, $0.target.count + 1]
+            })
+            let words = VocabularyText.tokens(text.lowercased())
+            let windows = Window.all(in: words) + Window.han(in: words, lengths: hanLengths)
             func ranked(_ entries: [Entry], threshold: Double) -> [String] {
                 entries.compactMap { entry -> (String, Double)? in
                     let score = Self.resemblance(entry, windows)
@@ -161,6 +167,20 @@ public enum VocabularyPrompt {
             let text: [Character]
             let words: Int
             let pairs: Set<String>
+
+            /// Sliding character windows let a Chinese term or near miss match inside a sentence.
+            /// Lengths come from active terms only, keeping the work bounded by this small glossary.
+            static func han(in words: [String], lengths: Set<Int>) -> [Window] {
+                words.filter { VocabularyText.containsHan($0) }.flatMap { word -> [Window] in
+                    let characters = Array(word)
+                    return lengths.filter { $0 <= characters.count }.flatMap { length in
+                        (0...(characters.count - length)).map { start in
+                            let text = Array(characters[start..<(start + length)])
+                            return Window(text: text, words: 1, pairs: CorrectionIndex.pairs(text))
+                        }
+                    }
+                }
+            }
 
             static func all(in words: [String]) -> [Window] {
                 var result: [Window] = []

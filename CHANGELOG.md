@@ -13,11 +13,15 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased since 1.15.0 (32))
 
+- Simplified Chinese vocabularies for all seven presets: the transcription language selects the terms for recognition, correction and prompts; suggestions understand continuous Mandarin text, use a Chinese on-device embedding when available and fall back to term matching. My terms remains in any language; other transcription languages keep the English presets. (#238)
+
 - Apple Watch companion, remote Start/Stop for the iPhone recorder (not yet shipped; ships with watch recording on the #181 train). (#181)
 - iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
 - Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
 
 ## macOS (unreleased since 1.4.4)
+
+- All seven vocabulary presets add focused Simplified Chinese terms selected by the transcription language, with on-device Chinese suggestions and the original English lists as fallback. My terms keeps its spelling and language. (#238)
 
 - Export adds plain text, SRT and WebVTT subtitles and versioned JSON beside Markdown, recap and PDF, in the top bar and in a History conversation's detail sheet (which gains recap and PDF too). Files are named after the conversation's title and date instead of the clock time. With WhisperKit, exports carry `[mm:ss]` timestamps and subtitle cues, and each Listen in the same conversation now continues its timeline instead of restarting at 0:00; the default SpeechAnalyzer reports no times yet (#68), so its exports omit them and subtitles are unavailable. (#130)
 - Save to folder notes record the language the conversation was transcribed in, kept with the conversation, instead of the current setting; Retry and Save all use each conversation's own. (#206)

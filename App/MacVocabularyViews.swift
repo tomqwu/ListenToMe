@@ -156,7 +156,8 @@ struct MacVocabularySettings: View {
         }
         Text("Terms help on-device recognition (at most \(ActiveVocabulary.recognitionLimit): My terms first, " +
              "up to \(ActiveVocabulary.myTermsRecognitionShare) when a preset is on), AI summaries and answers. " +
-             "Presets are English-first; My terms accept any language. The suggestion is checked on this Mac; " +
+             "Presets use Simplified Chinese terms for Chinese (Simplified) transcription, and English terms otherwise. " +
+             "My terms accepts any language. The suggestion is checked on this Mac; " +
              "nothing is sent anywhere, and a vocabulary is never turned on without you. Right-click a transcript " +
              "line to add a word.")
             .font(.caption).foregroundStyle(.secondary)
@@ -200,7 +201,7 @@ extension MeetingView {
     /// restart) and the domain guidance into the persona line every pane's prompt carries, so its cost
     /// is measured with the rest of the prompt scaffold.
     func applyVocabulary() {
-        let active = vocabulary.active(for: currentSessionID)
+        let active = vocabulary.active(for: currentSessionID, localeIdentifier: ProviderSettings.transcriptionLocale().identifier)
         session.contextualStrings = active.recognitionTerms(
             heard: store.utterances.suffix(200).map(\.text).joined(separator: " "))
         let window = ProviderSettings.aiMode == .apple ? PromptBudget.appleIntelligenceCharacters : nil
@@ -217,6 +218,7 @@ extension MeetingView {
     /// or imported conversation is never classified.
     func considerVocabularySuggestion() {
         vocabulary.heard(transcript: store.utterances.map(\.text), conversationID: currentSessionID,
-                         live: session.isRunning && !session.isPreparing)
+                         live: session.isRunning && !session.isPreparing,
+                         localeIdentifier: ProviderSettings.transcriptionLocale().identifier)
     }
 }

@@ -710,3 +710,24 @@ Mac (`make run`; macOS releases are paused, so this is for the build only):
    (after a failed save) or close with **Close without saving**: the audio is deleted.
 6. Turn the setting off while recording: the files stop at once and keep what they have.
 
+
+
+## Simplified Chinese vocabularies (#238)
+
+1. On iPhone choose a fixed Chinese (Simplified) transcription language and enable Medical in
+   Settings → Vocabularies. Record a continuous Mandarin sentence using 心房颤动、心力衰竭、美托洛尔、
+   阿哌沙班、肌钙蛋白、肌酐、超声心动图. Compare transcription with the preset off; measure rather
+   than assume a recognition improvement (#236). Check that My terms still reaches the recorder.
+2. With no preset on, speak enough Mandarin clinical material (at least 150 tokenizer words). The
+   Medical banner should offer Add and keep its safety note. Add must affect the running recognizer
+   without restarting capture. Ordinary family/weekend speech should offer no preset.
+3. With Automatic language, switch from English to Mandarin; check the new recognizer receives the
+   Chinese terms. Undo must restore the English terms. Stop and reopen the Mandarin conversation
+   after changing Settings to English: manual Summary/Quick should still get the saved Chinese glossary.
+4. Traditional Chinese and French transcription retain English preset terms. Simplified Chinese
+   Software & Cloud should match both Chinese terms and adjacent Latin jargon such as Kubernetes.
+5. Repeat the fixed-language preset check in the installed macOS app (Mac publication remains paused).
+   Summary headings and Medical's safety notice keep their English wording. All detection stays local.
+
+Simulator tests cover term routing, continuous-text matching and the rendered banner using a fake
+recorder. They do not prove physical-device recognition accuracy.

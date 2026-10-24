@@ -116,7 +116,8 @@ struct MobileVocabularySettingsView: View {
                 Toggle("Organize summaries by domain", isOn: binding(\.domainSummaryLayout))
                     .accessibilityIdentifier("vocabularyLayoutToggle")
             } header: { Text("Presets") } footer: {
-                Text("Presets are English-first lists of a few hundred common terms. Speech recognition receives at " +
+                Text("Presets use Simplified Chinese terms for Chinese (Simplified) transcription, and English terms " +
+                     "for other languages. My terms accepts any language. Speech recognition receives at " +
                      "most \(ActiveVocabulary.recognitionLimit) terms: My terms first (up to " +
                      "\(ActiveVocabulary.myTermsRecognitionShare) when a preset is on), then the presets'.")
             }

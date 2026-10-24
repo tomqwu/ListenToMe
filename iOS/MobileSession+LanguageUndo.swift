@@ -38,9 +38,11 @@ extension MobileSession {
         let from = sameRun ? change.replayFrom : 0
         let since = sameRun ? change.since : run.offset
         let rate = TimeInterval(LanguageDetectionPolicy.sampleRate)
+        let terms = vocabulary.recognitionTerms(for: id, localeIdentifier: change.from)
         Task { [weak self] in
             do {
                 // Asked at the switch: the span is heard again only if its audio is still held then.
+                await recorder.setContextualStrings(terms)
                 try await recorder.switchLocale(to: Locale(identifier: change.from), replay: run.buffer, replayFrom: {
                     from >= Int(run.buffer.replayFloor * rate) ? from : nil
                 }, willReplace: { [weak self] replayed, cut in
@@ -53,6 +55,7 @@ extension MobileSession {
             } catch {
                 guard let self else { return }
                 self.languageDetection.undoing = false
+                self.applyVocabularyToRecording()
                 switch self.state {
                 case .recording:
                     self.message = "Could not switch transcription back to " +

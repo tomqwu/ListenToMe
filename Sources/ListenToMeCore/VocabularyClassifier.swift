@@ -6,18 +6,21 @@ public protocol TextSimilarityScoring: Sendable {
     func similarity(_ text: String, _ other: String) -> Double?
 }
 
-/// Apple's on-device English sentence embedding (NaturalLanguage). Nothing is downloaded or sent;
+/// Apple's on-device sentence embedding in the preset list's language (NaturalLanguage). Nothing is downloaded or sent;
 /// when the embedding is not on this device, `similarity` is nil and the classifier relies on terms.
 public struct SentenceEmbeddingSimilarity: TextSimilarityScoring {
-    public init() {}
+    private let language: NLLanguage
+    public init(language: NLLanguage = .english) { self.language = language }
 
     public func similarity(_ text: String, _ other: String) -> Double? {
-        guard let embedding = Self.embedding,
+        guard let embedding = language == .simplifiedChinese ? Self.chineseEmbedding : Self.embedding,
               let left = embedding.vector(for: text), let right = embedding.vector(for: other) else { return nil }
         return Self.cosine(left, right)
     }
 
     nonisolated(unsafe) private static let embedding = NLEmbedding.sentenceEmbedding(for: .english)
+
+    nonisolated(unsafe) private static let chineseEmbedding = NLEmbedding.sentenceEmbedding(for: .simplifiedChinese)
 
     static func cosine(_ left: [Double], _ right: [Double]) -> Double? {
         guard left.count == right.count, !left.isEmpty else { return nil }
@@ -66,14 +69,22 @@ public struct VocabularyClassifier: Sendable {
         var phrases: [String: Double] = [:]
         /// Capitalized abbreviations, matched case-sensitively ("CBC", "EC2").
         var acronyms: [String: Double] = [:]
+        /// Han terms match inside continuous speech, without requiring spaces around them.
+        var han: [String: Double] = [:]
     }
 
     private let indexes: [Index]
     private let similarity: (any TextSimilarityScoring)?
+    private let languageIdentifier: String
 
-    public init(catalog: VocabularyCatalog = .bundled,
-                similarity: (any TextSimilarityScoring)? = SentenceEmbeddingSimilarity()) {
+    public init(catalog: VocabularyCatalog = .bundled) {
+        self.init(catalog: catalog, similarity: SentenceEmbeddingSimilarity(
+            language: catalog.languageIdentifier == "zh-Hans" ? .simplifiedChinese : .english))
+    }
+
+    public init(catalog: VocabularyCatalog = .bundled, similarity: (any TextSimilarityScoring)?) {
         self.similarity = similarity
+        languageIdentifier = catalog.languageIdentifier
         var owners: [String: Set<String>] = [:]
         let keyed = catalog.domains.map { domain in (domain, domain.terms.compactMap(Self.key)) }
         for (domain, keys) in keyed { for key in keys { owners[key.text, default: []].insert(domain.id) } }
@@ -82,7 +93,13 @@ public struct VocabularyClassifier: Sendable {
             for key in keys {
                 // A term several presets share is weaker evidence for any one of them.
                 let weight = 1 / Double(owners[key.text]?.count ?? 1)
-                if key.acronym { index.acronyms[key.text] = weight } else { index.phrases[key.text] = weight }
+                if VocabularyText.containsHan(key.text) {
+                    index.han[key.text] = weight
+                } else if key.acronym {
+                    index.acronyms[key.text] = weight
+                } else {
+                    index.phrases[key.text] = weight
+                }
             }
             return index
         }
@@ -94,7 +111,7 @@ public struct VocabularyClassifier: Sendable {
         if tokens.count == 1, VocabularyText.isAcronym(term) { return (tokens[0], true) }
         let text = tokens.joined(separator: " ").lowercased()
         // Short single words ("po", "ast", "som") collide with everyday speech.
-        if tokens.count == 1, text.count < 4 { return nil }
+        if tokens.count == 1, text.count < 4, !VocabularyText.containsHan(text) { return nil }
         return (text, false)
     }
 
@@ -107,9 +124,20 @@ public struct VocabularyClassifier: Sendable {
         return count
     }
 
+    /// Bound continuous Chinese by actual word tokens, not by whitespace/punctuation runs. Keep the
+    /// original spelling and punctuation so English phrase matching behaves exactly as before.
+    private static func recentSpeech(_ text: String) -> String {
+        let tokenizer = NLTokenizer(unit: .word)
+        tokenizer.string = text
+        let ranges = tokenizer.tokens(for: text.startIndex..<text.endIndex)
+        guard ranges.count > windowWords else { return text }
+        return String(text[ranges[ranges.count - windowWords].lowerBound...])
+    }
+
     public func scores(for text: String) -> [VocabularyDomainScore] {
-        let tokens = Array(VocabularyText.tokens(text).suffix(Self.windowWords))
-        let words = max(tokens.count, 1)
+        let recent = Self.recentSpeech(text)
+        let tokens = Array(VocabularyText.tokens(recent).suffix(Self.windowWords))
+        let words = max(Self.wordCount(recent), 1)
         let lower = tokens.map { $0.lowercased() }
         var grams: [String: Int] = [:]
         for length in 1...(VocabularyCatalog.maximumTermWords + 1) where length <= lower.count {
@@ -124,6 +152,10 @@ public struct VocabularyClassifier: Sendable {
             var weighted = 0.0
             for (phrase, weight) in index.phrases {
                 if let count = grams[phrase] { distinct += 1; weighted += weight * Double(count) }
+            }
+            for (term, weight) in index.han {
+                let count = recent.components(separatedBy: term).count - 1
+                if count > 0 { distinct += 1; weighted += weight * Double(count) }
             }
             for (acronym, weight) in index.acronyms {
                 if let count = capitals[acronym] { distinct += 1; weighted += weight * Double(count) }
@@ -143,10 +175,12 @@ public struct VocabularyClassifier: Sendable {
     /// embedding is on this device. The first call loads the embedding; run it off the main actor.
     public func embeddingRanking(for text: String) -> [String]? {
         guard let similarity else { return nil }
-        let recent = VocabularyText.tokens(text).suffix(Self.windowWords).joined(separator: " ")
+        let recent = Self.recentSpeech(text)
+        let neutral = languageIdentifier == "zh-Hans"
+            ? "我们聊了周末做什么、谁去接孩子、晚饭吃什么和天气怎么样。" : Self.neutralReference
         var values: [(id: String, value: Double)] = []
         for index in indexes {
-            guard let baseline = similarity.similarity(Self.neutralReference, index.profile),
+            guard let baseline = similarity.similarity(neutral, index.profile),
                   let value = similarity.similarity(recent, index.profile) else { return nil }
             values.append((index.id, value - baseline))
         }

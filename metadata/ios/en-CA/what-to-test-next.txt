@@ -1,0 +1,11 @@
+Unreleased — Simplified Chinese vocabularies (#238)
+
+Choose Chinese (Simplified) as the transcription language, enable a vocabulary preset, and record.
+All seven presets now include focused Simplified Chinese terms. My terms keeps your own spellings.
+With no preset on, a long domain-specific Mandarin conversation may offer a preset; it never turns
+one on by itself. Add should update recognition without restarting the microphone.
+
+Check Automatic language switches and Undo; reopen a Chinese conversation with Settings set to
+English and confirm its Summary still uses the Chinese glossary. Other languages retain English
+preset terms. Safety notices and summary headings stay in English. This needs physical-device
+accuracy comparison; simulator checks cover routing and the interface only.

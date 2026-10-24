@@ -3,13 +3,23 @@ import ListenToMeCore
 
 /// Where the active vocabularies reach recognition, correction and summaries (issue #222).
 extension MobileSession {
+    /// While recording use the recognizer's language; a reopened conversation uses its saved current
+    /// language, rather than the Settings choice for a future recording.
+    var vocabularyLanguage: String {
+        if state != .idle { return recordingLanguage }
+        return languageDetection.languageChanges[id]?.last
+            ?? history.first(where: { $0.id == id })?.conversationLanguages.current
+            ?? conversationLanguage
+    }
+
     /// The vocabularies in effect for the open conversation.
-    var activeVocabulary: ActiveVocabulary { vocabulary.active(for: id) }
+    var activeVocabulary: ActiveVocabulary { vocabulary.active(for: id, localeIdentifier: vocabularyLanguage) }
 
     /// Contextual strings for the recognizer, capped by `ActiveVocabulary.recognitionTerms`; My terms
     /// already said in this conversation, then the newest, are kept first.
     var vocabularyRecognitionTerms: [String] {
-        vocabulary.recognitionTerms(for: id, heard: segments.suffix(200).map(\.text).joined(separator: " "))
+        vocabulary.recognitionTerms(for: id, heard: segments.suffix(200).map(\.text).joined(separator: " "),
+                                    localeIdentifier: state == .idle ? vocabularyLanguage : recordingLanguage)
     }
 
     /// Session context for a manual Summary or Quick request: the domain, a glossary favoring
@@ -40,7 +50,7 @@ extension MobileSession {
 
     /// Counts a finalized line toward the on-device suggestion check.
     func considerVocabularySuggestion(_ segment: TranscriptSegment) {
-        vocabulary.heard(segment.text, conversationID: id,
+        vocabulary.heard(segment.text, conversationID: id, localeIdentifier: segment.language ?? recordingLanguage,
                          recent: self.segments.suffix(200).map(\.text).joined(separator: " "))
     }
 
@@ -65,6 +75,6 @@ extension MobileSession {
 
     /// The glossary the correction prompt receives for one phrase.
     func correctionGlossary(for text: String) -> [String] {
-        vocabulary.correctionLookup(for: id).glossary(for: text)
+        vocabulary.correctionLookup(for: id, localeIdentifier: vocabularyLanguage).glossary(for: text)
     }
 }

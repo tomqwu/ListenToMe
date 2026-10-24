@@ -309,9 +309,10 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   names the language it is transcribing in instead — it never silently substitutes English.
 - <a id="vocabularies"></a>**Vocabularies** (#222). **Settings → Vocabularies** turns each preset on
   for every conversation ("Use by default") and edits **My terms** (add, remove, import and export one
-  term per line; any language). The presets are curated, English-first lists of a few hundred terms the
-  project wrote itself — drug names, cloud services, legal Latin and everyday jargon — not licensed
-  dictionaries. Medical carries a note that ListenToMe is not a medical device and must not be used for
+  term per line; any language). The presets use project-authored Simplified Chinese terms for
+  Simplified Chinese transcription (#238), with the original English lists for other languages.
+  Each Chinese list starts with 50–60 focused terms; the English lists keep a few hundred. No licensed
+  dictionaries are bundled. Medical carries a note that ListenToMe is not a medical device and must not be used for
   clinical decisions. The active terms reach three places: **recognition** (at most 100 short phrases,
   Apple's limit — My terms first, up to 60 when a preset is on, those already said in the conversation
   and the newest ahead of older ones — handed to SpeechAnalyzer's `AnalysisContext` and updated live

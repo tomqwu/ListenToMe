@@ -178,6 +178,7 @@ extension MobileSession {
             // The start is chosen at the switch, once the new locale's assets are ready (a download can
             // take a while): from the audio still held then, so the replay is never lost to audio released
             // meanwhile (review of #212, finding 2).
+            await recorder.setContextualStrings(vocabulary.recognitionTerms(for: id, localeIdentifier: target))
             try await recorder.switchLocale(to: Locale(identifier: target), replay: run.buffer, replayFrom: {
                 start = self.replayStart(since, run: run)
                 return Int((start * rate).rounded(.down))
@@ -193,6 +194,7 @@ extension MobileSession {
                     midRecording: !request.first, fromRecordingStart: start <= 0.001)
             })
         } catch {
+            await recorder.setContextualStrings(vocabulary.recognitionTerms(for: id, localeIdentifier: previous))
             detection.switchFailed(error.localizedDescription, guess: guess, to: target, request: request)
             return
         }

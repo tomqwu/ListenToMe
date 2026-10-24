@@ -25,6 +25,12 @@ Recent iOS trains (full text in [CHANGELOG.md](../CHANGELOG.md)):
   analysis"); domain vocabularies and My terms; semantic search and Ask your history; opt-in saved
   audio; Summarize selection.
 
+## Merged feature follow-up (unreleased)
+
+- #238: all seven presets now select Simplified Chinese terms for `zh`/`zh-Hans` transcription;
+  other languages keep English lists. Chinese suggestions work without spaces and use the local
+  Chinese embedding when present. Device accuracy acceptance is still pending (#236).
+
 ## How work was done
 
 - **One issue per PR**, branched from `main`. Never commit to `main`.
@@ -68,7 +74,6 @@ is the tracking issue.
 **iPhone — next candidates**
 
 - [#224](https://github.com/tomqwu/ListenToMe/issues/224) Re-transcribe a conversation from its saved audio (P2)
-- [#238](https://github.com/tomqwu/ListenToMe/issues/238) Non-English preset vocabularies, Simplified Chinese first (P3)
 - [#205](https://github.com/tomqwu/ListenToMe/issues/205) Opt-in multilingual Whisper transcription for mixed-language sentences (P3)
 - [#236](https://github.com/tomqwu/ListenToMe/issues/236) Measure and strengthen vocabulary biasing for SpeechTranscriber (P2)
 - [#237](https://github.com/tomqwu/ListenToMe/issues/237) Save per-conversation vocabulary choices; vocabulary guidance for Auto Quick (P3)
