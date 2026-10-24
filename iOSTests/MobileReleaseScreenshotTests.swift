@@ -26,13 +26,13 @@ final class MobileReleaseScreenshotTests: XCTestCase {
         app.buttons["Notes"].tap()
         let form = app.collectionViews.firstMatch
         let mode = app.segmentedControls["conversationPromptMode"]
-        for _ in 0..<5 where !mode.isHittable { form.swipeUp() }
+        reveal(mode, in: form)
         XCTAssertTrue(mode.isHittable)
         mode.buttons["Summary instructions"].tap()
         app.buttons["conversationPromptPresets"].tap()
         app.buttons["Software & Cloud"].tap()
         let save = app.buttons["saveConversationInstructions"]
-        for _ in 0..<5 where !save.isHittable { form.swipeUp() }
+        reveal(save, in: form)
         XCTAssertTrue(save.isHittable)
         save.tap()
         capture("03 Conversation prompt")
@@ -42,6 +42,14 @@ final class MobileReleaseScreenshotTests: XCTestCase {
         }
         XCTAssertTrue(app.buttons["panel-model-summary"].waitForExistence(timeout: 5))
         capture("04 Summary portrait")
+    }
+
+    private func reveal(_ element: XCUIElement, in form: XCUIElement) {
+        // Scroll the form's edge, avoiding the nested Notes and Prompt text editors on iPad.
+        for _ in 0..<6 where !element.isHittable {
+            form.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.85))
+                .press(forDuration: 0.05, thenDragTo: form.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.3)))
+        }
     }
 
     private func capture(_ name: String) {
