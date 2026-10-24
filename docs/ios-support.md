@@ -26,6 +26,8 @@ To use a cloud AI service — OpenAI, Anthropic Claude, Google Gemini, DeepSeek,
 
 Auto reacts to new speech. Quick provides short key points; Summary and Deep update when the conversation merits a fuller review. They can also be generated manually. When Auto appears inactive, open Status details and check the provider and model status. A brief pause to combine incoming speech is normal; unchanged input does not require a new summary.
 
+Under Quick Summary, **Suggested · from context** may offer two or three short questions about the conversation, such as "Who owns the Thursday review?". They appear after an Auto check or after you refresh Quick Summary, and making them costs no extra request. Tap one to ask it: a small card under Quick Summary shows your question in bold with the answer below it, and your summaries stay as they were. The answer is not saved with the conversation, so copy it if you want to keep it, and Close removes it. Nothing is sent unless you tap. If a question cannot be sent right now — for example while another answer is being written — the app says why and the suggestion stays. Suggestions change at most every 20 seconds, a question that was answered is not suggested again, and they clear when you start a new conversation or change the AI provider or model. With Auto off and no refresh, there are none.
+
 ## Common fixes
 
 - No transcript: check microphone permission, selected language and downloaded speech assets.

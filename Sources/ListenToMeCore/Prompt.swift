@@ -21,6 +21,7 @@ public enum ResponseAction: Sendable, Equatable {
     case counterpoint     // "Counterpoint" — respectful devil's-advocate challenge
     case keyTerms         // "Key terms" — define jargon/acronyms just used
     case draftReply       // "Draft reply" — a concise reply the user can say/send now
+    case ask(String)      // a tapped "Suggested" chip (#61) — the literal request, sent only on a tap
 }
 
 /// The conversational context handed to the model.
@@ -175,6 +176,8 @@ public enum PromptBuilder {
             return "Briefly define the jargon, acronyms, or technical terms just used."
         case .draftReply:
             return "Draft a concise reply the user could say or send right now."
+        case .ask(let request):
+            return askInstruction(request) + " Answer briefly."
         }
     }
 
@@ -201,7 +204,18 @@ public enum PromptBuilder {
         case .draftReply:
             return "Draft a concise, ready-to-use reply the user could say or send right now, grounded in the " +
                 "transcript and notes. Match a natural, professional tone and keep it to the point."
+        case .ask(let request):
+            return askInstruction(request) + " Give a detailed, well-reasoned answer."
         }
+    }
+
+    /// A tapped suggestion chip (#61). The user chose to send it, so it is their request — but its
+    /// wording came from a model reading the meeting, so it is quoted on one line and never allowed to
+    /// carry more than a chip can hold.
+    public static func askInstruction(_ request: String) -> String {
+        let line = request.split(whereSeparator: \.isNewline).joined(separator: " ")
+        return "The user asks: \"" + String(line.prefix(SuggestedPrompts.maximumLength))
+            + "\". Respond to that request, grounded in the transcript and notes."
     }
 
     /// Defines the `(provisional) ` tag for the model. Speech the recognizer has not finalized is

@@ -132,6 +132,37 @@ single-source for the MVP or the Phase-2 SpeechAnalyzer engine.
    it needed more than N seconds on the selected model and must not repeat the identical request;
    manual Generate must still work, and new speech must start a fresh attempt.
 
+## Suggested prompt chips (#61)
+
+macOS:
+
+1. With **Auto** on, Listen and discuss something with an open question, such as payment terms. After
+   the first recap, a **Suggested · from context** row of two or three short prompts must appear above
+   the fixed Quick actions, each one line of at most 60 characters, in the conversation's (or the
+   chosen response) language, with no JSON, links or placeholders.
+2. Keep talking: the chips must not change more often than every 20 seconds. Wait without clicking:
+   nothing must be sent (no new Quick answer appears on its own).
+3. Click a chip: Quick must answer that literal request, and the chip must leave the row and not come
+   back. Right-click another chip → **Ask in Deep**: Deep must answer it.
+4. Stop: the chips stay. Change the Quick model, turn **Auto** off, or set AI mode to off: the chips
+   disappear. **New** conversation: no chips. With **Auto** off for a whole recording, no chips appear
+   and no Quick check runs.
+
+iPhone (phone width and an accessibility text size):
+
+1. With **Auto** on (Ollama, a cloud AI service or an OpenAI-compatible server), record: chips appear
+   under Quick Summary, stacked and fully readable without sideways scrolling. Tap one: the app stays
+   on **Live** and an Ask card under Quick Summary shows the question in bold and the answer below it;
+   Quick Summary and Deep are unchanged (also after reopening the conversation), that chip is gone,
+   and **Close** dismisses the card. On a very long conversation with Apple Intelligence, a tap still
+   answers (from what fits) and the card says which part was read.
+2. With **Apple Intelligence** and Auto off, tap **Generate** on Quick Summary: the bullets must not
+   contain a "Suggested:" heading or `>` lines; chips appear only when the on-device model wrote the
+   block last. A model that ignores it, or writes it first, gives no chips, every bullet and no error.
+   Repeat in a non-English conversation: the heading stays "Suggested:".
+3. **New** conversation or a provider/model change clears the chips (change the model while a Quick
+   refresh is running: no chips from the old model appear); Stop keeps them.
+
 ## Automatic speakers (1.3.0)
 
 1. Before Listen, choose WhisperKit and enable Automatic speaker identification. For a room sharing
