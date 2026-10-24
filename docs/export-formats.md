@@ -5,7 +5,7 @@ ListenToMe exports a conversation in five formats, all built on the device by
 
 | Format | Extension | What it holds |
 | --- | --- | --- |
-| Markdown | `.md` | Title, recording date and language, context notes, the transcript with `[mm:ss]` timestamps, speech corrections, summaries and attachment names |
+| Markdown | `.md` | Title, recording date and language, context notes, the transcript with `[mm:ss]` timestamps, speech corrections, summaries, saved selection summaries (iPhone, #234) and attachment names |
 | Plain text | `.txt` | The same content without Markdown: one `[mm:ss] Speaker: text` line per transcript line |
 | Subtitles (SRT) | `.srt` | Numbered cues with `HH:MM:SS,mmm` times |
 | Subtitles (WebVTT) | `.vtt` | `WEBVTT` cues with `HH:MM:SS.mmm` times and `<v Speaker>` voice tags |
@@ -111,6 +111,7 @@ only for a change that is not purely additive, so a reader should accept unknown
 | `segments` | array | `{ "speaker", "source", "text", "start"?, "end"?, "speakerID"?, "originalText"?, "language"? }`; times in seconds (millisecond precision) on the conversation's timeline, present only for timed lines; `originalText` is the recognizer's wording before an opt-in speech correction; `language` is the BCP-47 tag the line was recognized in, when the app kept it (iPhone) |
 | `transcript` | string | Only for a conversation saved before segments were kept |
 | `attachments` | array | `{ "name" }` — names only, never the files |
+| `selectionSummaries` | array | Saved summaries of selected lines (iPhone, #234), newest first: `{ "date", "start", "end", "lineCount", "shortened", "text" }`; `date` ISO 8601 in UTC, `start`/`end` in seconds on the conversation's timeline; `[]` when none |
 
 Example (abridged):
 

@@ -38,6 +38,8 @@ final class MobileSession {
     var quickSummary = ""
     /// Deep analysis an older version saved here; kept read-only, never generated on iOS (#235).
     var earlierDeepAnalysis = ""
+    var selectionSummaries: [SelectionSummary] = []   // the last few summaries of selected lines (#234)
+    let selectionRun = MobileSelectionRun()
     var attachments: [SessionAttachment] = []
     var generatingMode: MobileSummaryMode?
     var autoQuick = UserDefaults.standard.bool(forKey: "autoQuickSummary") {
@@ -195,7 +197,7 @@ final class MobileSession {
             transcript: Self.transcriptText(for: allSegments), summary: summary, segments: allSegments, notes: notes,
             quickSuggestion: quickSummary, deepAnswer: earlierDeepAnalysis, isComplete: state == .idle
                 && allSegments.allSatisfy(\.isFinal), attachments: attachments, sourceImportID: sourceImportID,
-            titleState: titleState))
+            titleState: titleState, selectionSummaries: selectionSummaries.isEmpty ? nil : selectionSummaries))
     }
     var summaryAvailability: String? { summaryAvailability(for: .summary) }
     var automaticQuickAvailability: String? {
@@ -333,7 +335,7 @@ final class MobileSession {
         acceptsSpeechCorrection = false
         flushPendingSave()
         speechCorrection.cancel()
-        summaryTask?.cancel()
+        cancelSummary()   // the manual request and any selection summary (#234)
         quickReader.cancel()
         let token = UIApplication.shared.beginBackgroundTask(withName: "Save conversation")
         defer { if token != .invalid { UIApplication.shared.endBackgroundTask(token) } }
@@ -351,7 +353,7 @@ final class MobileSession {
         handleSummaryEvent(.conversationChanged)
         id = UUID().uuidString; date = Date()
         title = ConversationTitle.mobileDefault; titleState = .placeholder; notes = ""; summary = ""
-        quickSummary = ""; earlierDeepAnalysis = ""
+        quickSummary = ""; earlierDeepAnalysis = ""; selectionSummaries = []
         segments = []; partial = nil; message = nil; attachments = []; sourceImportID = nil
         save(announce: false)
     }
@@ -372,6 +374,7 @@ final class MobileSession {
         id = record.id; date = record.date; title = record.title; titleState = record.resolvedTitleState
         notes = record.notes ?? ""; summary = record.summary
         quickSummary = record.quickSuggestion ?? ""; earlierDeepAnalysis = record.deepAnswer ?? ""
+        selectionSummaries = record.selectionSummaries ?? []
         attachments = record.attachments ?? []; sourceImportID = record.sourceImportID
         segments = record.segments ?? []; partial = nil; message = nil
     }
@@ -540,7 +543,7 @@ extension MobileSession {
         return automaticReviews.status(reviewMode)
     }
 
-    func cancelSummary() { summaryTask?.cancel() }
+    func cancelSummary() { summaryTask?.cancel(); cancelSelectionSummary() }
 
     var autoQuickStatus: String {
         guard autoQuick else { return "Auto off · Turn on Auto for live updates, or tap Refresh." }

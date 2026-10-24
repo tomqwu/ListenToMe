@@ -81,14 +81,14 @@ public enum SessionExporter {
                  legacyTranscript: record.segments == nil ? record.transcript : nil, notes: record.notes ?? "",
                  listenerSummary: record.summary, quickSuggestion: record.quickSuggestion ?? "",
                  deepAnswer: record.deepAnswer ?? "", attachments: (record.attachments ?? []).map(\.name),
-                 timestamps: timestamps)
+                 timestamps: timestamps, selectionSummaries: record.selectionSummaries ?? [])
     }
 
     // swiftlint:disable:next function_parameter_count
     private static func markdown(title: String, header: String?, transcript: [TranscriptSegment],
                                  legacyTranscript: String?, notes: String, listenerSummary: String,
                                  quickSuggestion: String, deepAnswer: String, attachments: [String],
-                                 timestamps: Bool) -> String {
+                                 timestamps: Bool, selectionSummaries: [SelectionSummary] = []) -> String {
         var out = "# \(title)\n"
         if let header { out += "\n_\(header)_\n" }
 
@@ -116,6 +116,7 @@ public enum SessionExporter {
         section("Listener summary", listenerSummary)
         section("Quick suggestion", quickSuggestion)
         section("Deep answer", deepAnswer)
+        section("Selection summaries", SelectionSummary.markdown(selectionSummaries) ?? "")
         section("Attachments", attachments.map { "- \($0)" }.joined(separator: "\n"))
         return out
     }
@@ -133,6 +134,7 @@ public enum SessionExporter {
         section("Summary", record.summary)
         section("Quick summary", record.quickSuggestion)
         section("Deep summary", record.deepAnswer)
+        section("Selection summaries", SelectionSummary.plainText(record.selectionSummaries ?? []))
         section("Notes", record.notes)
         let transcript: String
         if let segments = record.segments {

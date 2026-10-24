@@ -129,6 +129,7 @@ public enum MarkdownVault {
         section("Summary", record.summary)
         section("Quick summary", record.quickSuggestion)
         section("Deep summary", record.deepAnswer)
+        section("Selection summaries", SelectionSummary.markdown(record.selectionSummaries ?? []))
         section("Notes", record.notes)
         section("Transcript", transcript(record))
         let attachments = (record.attachments ?? []).map { "- \(singleLine($0.name))" }

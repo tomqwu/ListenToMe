@@ -40,7 +40,12 @@ extension SessionExporter {
             summary: record.summary, quickSummary: record.quickSuggestion ?? "", deepSummary: record.deepAnswer ?? "",
             notes: record.notes ?? "", segments: lines,
             transcript: record.segments == nil ? record.transcript : nil,
-            attachments: (record.attachments ?? []).map { SessionExportJSON.Attachment(name: $0.name) })
+            attachments: (record.attachments ?? []).map { SessionExportJSON.Attachment(name: $0.name) },
+            selectionSummaries: (record.selectionSummaries ?? []).map {
+                SessionExportJSON.SelectionSummary(date: dateFormatter.string(from: $0.date), start: millis($0.start),
+                                                   end: millis($0.end), lineCount: $0.lineCount,
+                                                   shortened: $0.shortened, text: $0.text)
+            })
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
         // Every field is a string, number, bool or array of them: encoding cannot fail.
@@ -69,6 +74,15 @@ struct SessionExportJSON: Encodable {
         let language: String?
     }
     struct Attachment: Encodable { let name: String }
+    /// A saved summary of selected lines (#234); times in seconds on the conversation's timeline.
+    struct SelectionSummary: Encodable {
+        let date: String
+        let start: Double
+        let end: Double
+        let lineCount: Int
+        let shortened: Bool
+        let text: String
+    }
 
     let schema: String
     let version: Int
@@ -88,10 +102,11 @@ struct SessionExportJSON: Encodable {
     /// Only for conversations saved before lines were kept one by one.
     let transcript: String?
     let attachments: [Attachment]
+    let selectionSummaries: [SelectionSummary]
 
     enum CodingKeys: String, CodingKey {
         case schema, version, id, title, date, language, languages, hasTimestamps, duration, speakers
-        case summary, quickSummary, deepSummary, notes, segments, transcript, attachments
+        case summary, quickSummary, deepSummary, notes, segments, transcript, attachments, selectionSummaries
     }
 
     func encode(to encoder: Encoder) throws {
@@ -113,5 +128,6 @@ struct SessionExportJSON: Encodable {
         try container.encode(segments, forKey: .segments)
         try container.encodeIfPresent(transcript, forKey: .transcript)
         try container.encode(attachments, forKey: .attachments)
+        try container.encode(selectionSummaries, forKey: .selectionSummaries)
     }
 }

@@ -70,6 +70,7 @@ public extension SessionRecord {
         SessionRecord(id: id, title: newTitle, date: date, transcript: transcript, summary: summary,
                       segments: segments, notes: notes, quickSuggestion: quickSuggestion, deepAnswer: deepAnswer,
                       isComplete: isComplete, attachments: attachments, sourceImportID: sourceImportID,
-                      titleState: state, language: language, languages: languages)
+                      titleState: state, language: language, languages: languages,
+                      selectionSummaries: selectionSummaries)
     }
 }

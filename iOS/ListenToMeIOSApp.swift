@@ -80,6 +80,8 @@ struct ListenToMeIOSApp: App {
             MobileSavedAudioFixture()
         } else if ProcessInfo.processInfo.arguments.contains("--design-review-fixture") {
             MobileDesignFixture()
+        } else if ProcessInfo.processInfo.arguments.contains("--selection-summary-fixture") {
+            MobileSelectionSummaryFixture()
         } else if ProcessInfo.processInfo.arguments.contains("--vocabulary-fixture") {
             MobileVocabularyFixture()
         } else {

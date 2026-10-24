@@ -21,11 +21,15 @@ public struct SessionRecord: Sendable, Equatable, Identifiable, Codable {
     public let language: String?
     /// Every language the conversation's lines are in, in order of first use.
     public let languages: [String]?
+    /// The last few summaries of selected lines (issue #234), newest first; nil in records saved
+    /// before them or with none.
+    public let selectionSummaries: [SelectionSummary]?
     public init(id: String, title: String, date: Date, transcript: String, summary: String,
                 segments: [TranscriptSegment]? = nil, notes: String? = nil,
                 quickSuggestion: String? = nil, deepAnswer: String? = nil, isComplete: Bool? = nil,
                 attachments: [SessionAttachment]? = nil, sourceImportID: String? = nil,
-                titleState: ConversationTitleState? = nil, language: String? = nil, languages: [String]? = nil) {
+                titleState: ConversationTitleState? = nil, language: String? = nil, languages: [String]? = nil,
+                selectionSummaries: [SelectionSummary]? = nil) {
         self.id = id; self.title = title; self.date = date
         self.transcript = transcript; self.summary = summary
         self.segments = segments; self.notes = notes
@@ -33,6 +37,7 @@ public struct SessionRecord: Sendable, Equatable, Identifiable, Codable {
         self.attachments = attachments; self.sourceImportID = sourceImportID
         self.titleState = titleState
         self.language = language; self.languages = languages
+        self.selectionSummaries = selectionSummaries
     }
 }
 

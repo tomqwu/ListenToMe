@@ -600,6 +600,32 @@ Simulator is enough for 1–3; 4 needs a cloud or OpenAI-compatible model with A
 4. **Auto ignores Deep.** With Auto on, discuss an unresolved tradeoff. Quick and Summary update; no
    Deep request is sent and nothing new appears under Earlier deep analysis.
 
+## iPhone Summarize selection (#234)
+
+Simulator is enough for 1–4 (the UI test fixture fakes the model); 5 needs Apple Intelligence on a
+physical device.
+
+1. **Select.** Open a conversation with several finished lines. Tap the checklist button on the Live
+   transcript: the full transcript opens with circles. Tap two lines → "2 lines selected"; drag down the
+   circles from one line to another → the range is selected. A LIVE line has no circle.
+2. **Summarize.** Tap Summarize selection: the sheet shows the time span, where the lines go, and bullets
+   about only those lines. Copy, Share and Add to notes work; Notes gains "Selection summary (… · N lines)".
+   Close it: the Summary tab lists the selection summary; relaunch and reopen from History: still there.
+   Export as Markdown and JSON, and check Save to folder: each carries it under Selection summaries.
+3. **Touch and hold.** Touch and hold a line → Summarize from here summarizes it through the latest line;
+   Select from here opens Select mode with those lines picked. Copy copies the line.
+4. **Provider and reasons.** With a cloud AI service or OpenAI-compatible server chosen, the bar and the sheet
+   say "Sends the selected lines to <destination>", and the sheet sends nothing until you tap Summarize
+   (check the server's log). Remove the key or server: Summarize selection and the touch-and-hold
+   Summarize from here are disabled with the reason. While a Summary is generating, both say to wait;
+   while a selection summary is being written, Generate Summary says to wait.
+4a. **Cancel, rotate, reopen.** Start a selection summary and tap Cancel: "Cancelled.", no failure, and
+   Summarize again works. Start one from the Live panel and rotate the phone: the sheet stays open and the
+   answer arrives. Open a second selection sheet: it never shows the first one's text. Long-press text in
+   a line outside Select mode: it can still be selected and copied.
+5. **Apple Intelligence, long selection.** On a device with Apple Intelligence, select a long stretch (more
+   than about ten minutes): the summary answers and the sheet says the selection was shortened.
+
 ## iPhone Delete all conversations (#220)
 
 Simulator or device.

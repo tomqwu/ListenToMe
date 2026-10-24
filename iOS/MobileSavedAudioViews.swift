@@ -67,6 +67,10 @@ struct MobileSavedAudioStatusLine: View {
 /// The open conversation's saved audio above its full transcript; tapping a line's time plays from it.
 struct MobileSavedAudioTranscript: View {
     let session: MobileSession
+    /// Select mode and selection summaries in the expanded transcript (issue #234).
+    @Binding var selection: TranscriptSelection
+    @Binding var selecting: Bool
+    @Binding var request: MobileSelectionRequest?
 
     var body: some View {
         let playback = session.savedAudio.playback
@@ -75,13 +79,13 @@ struct MobileSavedAudioTranscript: View {
                 SavedAudioPlayerView(playback: playback).padding(16)
                 Divider()
             }
-            MobileTranscriptReader(segments: session.allSegments, scrollIdentifier: "expandedTranscriptScroll",
-                                   restoreOriginal: session.restoreSpeech, showsSpeakers: session.hasSpeakerLabels,
-                                   audioTarget: session.canPlaySavedAudio ? { segment in
-                                       let index = session.allSegments.firstIndex { $0.id == segment.id } ?? 0
-                                       return playback.target(for: segment, index: index)
-                                   } : nil,
-                                   playAudio: { playback.play($0) }, addTerm: session.addToMyTerms)
+            MobileSelectableTranscript(session: session, selection: $selection, selecting: $selecting,
+                                       request: $request, scrollIdentifier: "expandedTranscriptScroll",
+                                       audioTarget: session.canPlaySavedAudio ? { segment in
+                                           let index = session.allSegments.firstIndex { $0.id == segment.id } ?? 0
+                                           return playback.target(for: segment, index: index)
+                                       } : nil,
+                                       playAudio: { playback.play($0) })
                 .id(session.id)
         }
         .task(id: "\(session.id)-\(session.savedAudio.revision)-\(session.state == .idle)") {
