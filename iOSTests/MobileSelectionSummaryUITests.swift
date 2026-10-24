@@ -73,10 +73,14 @@ final class MobileSelectionSummaryUITests: XCTestCase {
 
     func testSelectFromHereAndTheServerDisclosure() {
         let app = launch(["--selection-server"])
-        let text = app.staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label CONTAINS %@",
+        // The full-height transcript shows every line; the Live panel may have scrolled the first ones away.
+        XCTAssertTrue(app.buttons["Expand transcript"].waitForExistence(timeout: 5))
+        app.buttons["Expand transcript"].tap()
+        let text = app.scrollViews["expandedTranscriptScroll"].staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label CONTAINS %@",
                                                         "transcript-text-", "We ship the beta")).firstMatch
         XCTAssertTrue(text.waitForExistence(timeout: 5))
         text.press(forDuration: 1.2)
+        XCTAssertTrue(app.buttons["Select from here"].waitForExistence(timeout: 5))
         app.buttons["Select from here"].tap()
         XCTAssertTrue(app.staticTexts["selectionCount"].waitForExistence(timeout: 5))
         XCTAssertEqual(app.staticTexts["selectionCount"].label, "3 lines selected")
