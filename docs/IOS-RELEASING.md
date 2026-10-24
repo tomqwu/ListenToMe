@@ -24,6 +24,44 @@ honestly documented device limitations are sufficient to distribute an authorize
 testing. Physical-device acceptance is still required before calling the app production-ready or
 submitting a production App Store release. Missing hardware must not be reported as an upload blocker.
 
+## Screenshot capture and App Store handoff (#255)
+
+Capture screenshots during UI acceptance and refresh the complete release set on every iOS train,
+from the exact candidate source. Reuse a test capture only when its source and appearance match that
+candidate. Keep the source commit, version/build, locale, simulator/device model, OS, orientation,
+native pixel dimensions, capture command/test, and SHA-256 of each file in a manifest under
+`dist/ios-<version>-build<build>-evidence/screenshots/`. Preserve this directory before archiving a
+worktree. Screenshots do not replace physical-device acceptance.
+
+1. Check the candidate's supported device families and the current screenshot slots in App Store
+   Connect. Capture **iPhone and iPad**, using native-resolution simulators/devices for every required
+   display-size slot. Also inspect compact/large iPhones and compact/large iPads during layout tests;
+   this coverage is broader than the store's minimum upload slots. Do not assume a single iPhone
+   screenshot covers tablets or every required size. When Watch is embedded in a distributed build,
+   add every applicable Watch screenshot category. Do not advertise the unshipped Watch feature.
+2. Capture a coherent set: Live transcript/Quick, Summary, Notes/context and prompts when present,
+   History, and relevant settings. Include the iPhone landscape two-pane layout and iPad wide layout
+   in acceptance evidence; use orientations accepted by each store slot for listing assets. Exercise
+   large text separately. Use realistic synthetic examples with no personal transcripts, keys, or
+   tester information. Fixture data must depict actual candidate behavior, with no debug/test controls.
+3. Export UI-test attachments with `xcrun xcresulttool export attachments --path <result.xcresult>
+   --output-path <screenshots-directory>`, or capture a rendered simulator with
+   `xcrun simctl io <device-id> screenshot <file.png>`. Inspect every final image at native resolution
+   for clipping, stale copy, keyboard/alert overlays and unintended status text. Do not stretch a
+   smaller image to satisfy a larger display-size requirement. Refresh README/product images when
+   they depict changed screens, while keeping the full release-resolution originals in evidence.
+4. Before an **authorized App Store submission**, upload the selected current images to the matching
+   app-version localization and device-size screenshot sets. Verify the current Apple requirements
+   and the slots shown in App Store Connect at release time rather than relying on a fixed size list.
+   Read back every set's order, image dimensions, asset processing state and download URL; download
+   and visually compare the processed assets with the intended set. Record screenshot/set IDs and
+   sanitized verification responses in the manifest. A local capture or successful binary upload does
+   not update listing screenshots. Resolve stale/missing sets before submission.
+5. For TestFlight-only trains, prepare and preserve the full fresh set for the next App Store version;
+   report listing upload as pending unless it was actually completed. TestFlight upload does not
+   itself authorize public App Store submission. If the editable App Store version or upload access
+   is unavailable, preserve the set and name that specific blocker, without claiming Apple has it.
+
 ## App identity and prerequisites
 
 | Setting | Value |

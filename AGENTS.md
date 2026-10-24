@@ -136,6 +136,16 @@ iPhone is required for an authorized TestFlight beta upload. Do not call simulat
 physical-device pass or publish an unvalidated build as production. A successful archive/export is
 not a successful upload.
 
+## Release screenshots
+
+During UI testing and every release train, capture fresh screenshots from the candidate source for
+all supported device categories. Follow the screenshot checklist in `docs/IOS-RELEASING.md` for iOS.
+Preserve native-resolution files and source/version/device provenance with release evidence. Before
+an authorized App Store submission, upload the current set to every applicable device-size and locale
+slot and read back processing/status; screenshots saved locally are not proof Apple has them. Cover
+Watch only when embedded for distribution, and Mac when a Mac release is called. Never publish a
+store listing with stale screenshots or claim screenshot publication without upload verification.
+
 ## macOS permissions
 
 Never reset broad macOS permissions. For the known ScreenCaptureKit -3801 issue, use the targeted

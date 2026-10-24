@@ -34,6 +34,12 @@ Recent iOS trains (full text in [CHANGELOG.md](../CHANGELOG.md)):
   other languages keep English lists. Chinese suggestions work without spaces and use the local
   Chinese embedding when present. Device accuracy acceptance is still pending (#236).
 
+## Screenshot release requirement
+
+Every train captures fresh source-matched screenshots for all supported device categories. Follow
+[the screenshot checklist](IOS-RELEASING.md#screenshot-capture-and-app-store-handoff-255), preserve the
+full-resolution assets and manifest, and verify uploaded listing sets before App Store submission.
+
 ## How work was done
 
 - **One issue per PR**, branched from `main`. Never commit to `main`.
