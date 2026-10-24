@@ -67,7 +67,7 @@ final class SessionVocabulary {
     /// the main actor. `recent` is only read when a check is due.
     func heard(_ line: String, conversationID: String, recent: @autoclosure () -> String) {
         tracker.begin(conversationID: conversationID)
-        if suggestion?.conversationID != conversationID { suggestion = nil }
+        if let shown = suggestion, shown.conversationID != conversationID { suggestion = nil }
         tracker.heard(line)
         guard check == nil, let excluded = tracker.dueCheck(settings: settings) else { return }
         let classifier = classifier
