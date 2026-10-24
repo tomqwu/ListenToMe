@@ -277,7 +277,8 @@ struct MobileWorkspaceView<Header: View>: View {
     private func summaryHeader(_ mode: MobileSummaryMode, compact: Bool) -> some View {
         if compact {
             HStack(spacing: 8) {
-                Text(mode.title).font(.subheadline.bold()).foregroundStyle(MobileStyle.ink)
+                Text(mode == .quick ? "Quick" : mode.title).font(.subheadline.bold()).foregroundStyle(MobileStyle.ink)
+                    .accessibilityLabel(mode.title)
                 Spacer(minLength: 0)
                 modelButton(mode).frame(maxWidth: 110)
                 generateButton(mode)

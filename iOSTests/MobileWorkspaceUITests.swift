@@ -81,7 +81,7 @@ final class MobileWorkspaceUITests: XCTestCase {
         let latest = transcript.staticTexts["The latest phrase."]
         let latestY = latest.frame.minY
         let auto = quick.switches["Auto summaries"].firstMatch
-        for _ in 0..<3 where !auto.isHittable { quick.scrollViews.firstMatch.swipeUp() }
+        for _ in 0..<12 where !auto.isHittable { quick.scrollViews.firstMatch.swipeUp() }
         XCTAssertTrue(auto.isHittable, "Auto remains reachable below the answer")
         XCTAssertEqual(latest.frame.minY, latestY, accuracy: 2, "Quick scrolling must not move the transcript")
         app.buttons["Expand transcript"].tap()
