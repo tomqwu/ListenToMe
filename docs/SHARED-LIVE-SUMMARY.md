@@ -412,3 +412,79 @@ carries them as `LLMStreamEvent.thinking`, and `MeetingSession.roleStatus(role)`
 in the pane header, so a long think phase no longer looks like a hung request. Reasoning is never
 written into the answer, and a response that is *only* reasoning fails as
 `OllamaStreamError.thinkingOnly`, which says so.
+
+## Suggested prompt chips (#61)
+
+The evaluator envelope gains one **optional** key, `suggestions`: with `publish`, two or three short
+requests the user could tap to ask next ("Counter the net-30 ask"), each at most 60 characters on one
+line; `[]` with `keep`. `QuickSummaryDecision.parse` accepts the four-key envelope unchanged and the
+five-key one with `suggestions`; any other extra key is still rejected. A malformed `suggestions`
+value (a string, numbers, `null`) costs only the chips — it never fails the recap, because the recap
+is the contract and the chips are an extra. `QuickSummaryDecision.jsonSchema`, which Claude's
+structured output uses, lists the key as required so Claude always emits it.
+
+Every candidate passes `SuggestedPrompts.sanitize`: list markers, quotes and emphasis are stripped;
+entries that are empty, longer than 60 characters (rejected, never truncated), multi-line, links,
+JSON or markup, placeholders ("none", "request") or carry fewer than three letters are dropped;
+duplicates are folded case-, accent- and punctuation-insensitively; at most three remain.
+
+No model call exists only to make chips. They ride on passes that already run:
+
+| Pass | When | Platforms |
+| --- | --- | --- |
+| Auto Quick evaluation (`QuickSummaryReader.read`) | Auto on, recording, a read that caught up with the input (a catch-up read with `hasMore` offers none) | macOS and iOS |
+| Manual Quick Summary refresh (JSON) | the user tapped Generate on Ollama, an OpenAI-compatible server or a cloud AI service | iOS |
+| Manual Quick Summary refresh (prose) | the user tapped Generate on Apple Intelligence | iOS |
+
+So with Auto off and no manual refresh, no chips are produced, and no cloud provider is ever called
+for them beyond the pass the user already chose. macOS manual Quick answers ("Draft reply"…) are prose
+and carry no chips. Apple Intelligence's prose prompt (`QuickSummaryContext.manualProseInstructions`)
+appends `SuggestedPrompts.proseInstructions`: a final `Suggested:` heading, kept in English in every
+conversation language, followed only by `> ` lines. `SuggestedPrompts.splitProse` reads it strictly so
+a suggestion block can never take a real takeaway:
+
+- the block must be the answer's final section — exactly one heading (`Suggested:`, `Suggestions:`,
+  `Suggested prompts:` or `Suggested questions:`, bold or heading markers allowed) followed only by
+  `>` lines to the end; trailing blank lines and a closing code fence are ignored;
+- `>` is the only suggestion marker; `-`, `*`, `•` and numbered lines are bullets, never chips;
+- a heading anywhere else, a second heading, or a blank or other line inside the block means no
+  chips, and the whole answer stays the recap;
+- a block with no recap above it, or after "No key takeaway yet.", gives no chips.
+
+`proseSummary` strips a valid block before reading bullets. Anything else means no chips.
+
+Cadence: the first valid set shows at once. Automatic passes replace chips already on screen at most
+every `SuggestedPrompts.minimumRefreshInterval` (20 s) on the reader's injected clock; a newer set that
+arrives sooner is held and shown on the first pass after the window, even a pass that brings nothing.
+An empty or junk-only pass keeps the chips. A manual refresh replaces them at once. A cancelled,
+failed or stale read (`isCurrent` false) offers nothing. `QuickSummaryReader.providerGeneration` is
+bumped whenever chips are cleared or the reader is reset; an Auto read or a manual refresh
+(`startManualQuick`) that began under an older generation has its chips dropped, so a model change
+during a still-running refresh can never bring the old model's chips back.
+
+A tap sends the literal text — never automatically:
+
+- **macOS** sends `ResponseAction.ask(prompt)` through Quick, or Deep from the context menu, so it gets
+  the same grounding, budget, AI-off guard and manual-answer freshness as the fixed actions. **Ask in
+  Deep** deliberately behaves like the **Deep answer** button: it replaces the Deep pane and counts as
+  a manual Deep answer, because the macOS Deep pane is an answer pane that every fixed Deep action
+  already writes into.
+- **iOS** has no free-form Quick answer, so a tap is a separate ask (`MobileSuggestedAsk`) to the
+  Quick model, answered in a small Ask card under Quick Summary (not in Deep, whose tab is being
+  removed, #235): `MobileSession.askSystem` (the copilot prompt plus `PromptData.notice`) over an
+  `OnDemandGrounding.excerpt` sized by `oneShotBudget` for the provider's window, then
+  `PromptBuilder.askInstruction`, so a long conversation is answered from what fits, like any
+  on-demand answer (#114). It is not a summary: `quickSummary`, `deepThought`, the saved record,
+  `markManualCompletion`, `markReviewed` and Auto's queue are untouched, and the answer is kept in
+  memory only. A blocked tap keeps its chip, and a chip is used up only once its answer arrived.
+
+The request is quoted on one line after the transcript fence, in instruction position, because the
+user chose to send it. A used chip is not suggested again in that conversation.
+
+Clearing: a new or reopened conversation resets the reader, chips and used-chip memory included (and
+on iOS closes the ask); a provider, model or route change and turning AI off clear the chips
+(`QuickSummaryReader.providerChanged` on iOS, which also stops an ask in progress;
+`handleLiveEvent(.providerChanged)` on macOS). On macOS only Auto makes chips, so turning Auto off
+clears them too and they are hidden while AI or Auto is off; on iOS a manual refresh still makes them
+with Auto off, so Auto off does not clear them there. Stop keeps them: the conversation can still be
+asked about, and they simply stop refreshing.
