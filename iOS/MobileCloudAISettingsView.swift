@@ -73,7 +73,7 @@ struct MobileCloudAISettingsRows: View {
     }
 
     private func explanation(_ preset: CloudAIPreset) -> String {
-        var text = "Summaries, Quick and Deep send your notes and transcript to \(preset.vendor) at "
+        var text = "Summary and Quick Summary send your notes and transcript to \(preset.vendor) at "
             + "\(OpenAICompatibleEndpoint.hostLabel(preset.baseURL)) using your API key and the model you choose. "
             + "Microphone audio stays on your device. \(preset.vendor)'s privacy policy and terms apply."
         if preset.transport == .anthropic {

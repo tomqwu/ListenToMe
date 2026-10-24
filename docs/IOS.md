@@ -36,9 +36,9 @@ this table in the same PR, and never fork a copy into `App/` or `iOS/`.
 | `LiveSummaryScheduler` — the Auto batching/wake/cancel contract | `MeetingSession`, `MeetingSession+AutomaticReviews` | `MobileSummaryScheduler` (a typealias, `iOS/MobileSummaryScheduler.swift`) |
 | `QuickSummaryContext` — pieces, attributed transcript and `Notes: ` lines | `MeetingSession`, `AutomaticReviewCoordinator` | `MobileQuickContext` (a typealias, `iOS/MobileQuickContext.swift`) |
 | `QuickSummaryReader` / `QuickSummaryDecision` — evaluation and its JSON envelope | `MeetingSession` | `MobileQuickReader` (a typealias, `iOS/MobileQuickReader.swift`) |
-| `AutomaticReviewCoordinator` — queued Summary/Deep reviews, deadlines, manual completion | `MeetingSession` | `MobileSession.automaticReviews` |
+| `AutomaticReviewCoordinator` — queued Summary/Deep reviews, deadlines, manual completion; `modes` limits which reviews it runs | `MeetingSession` (Summary and Deep) | `MobileSession.automaticReviews` (`modes: [.summary]`: iOS ignores the evaluator's Deep recommendation, #235) |
 | Prompt data fences and caps: `PromptData.notice`, `PromptData.block`, `PromptBudget` | `PromptBuilder` (`Prompt.swift`) | `MobileSummaryMode.instructions`, `MobileSession.summarize` |
-| On-demand grounding (#114): `OnDemandGrounding` — Quick/Deep transcript budgets, the summary-plus-recent or opening-plus-recent excerpt, its model note and the pane's "Using the last ~N min…" line | `MeetingSession.clampedContext`, `roleNotices` | `MobileSession.summarize` (`iOS/MobileSession+Summarize.swift`), `answerNotices` |
+| On-demand grounding (#114): `OnDemandGrounding` — Quick/Deep transcript budgets, the summary-plus-recent or opening-plus-recent excerpt, its model note and the pane's "Using the last ~N min…" line | `MeetingSession.clampedContext`, `roleNotices` | `MobileSession.summarize` (`iOS/MobileSession+Summarize.swift`), `answerNotices` (Quick; iOS has no Deep, #235) |
 | Output-limit signal (#215): `LLMStreamEvent.outputLimitReached`, `LLMOutputLimit` (notice, plain-text cut-off error) | `MeetingSession.run`, `RoleBox` | `MobileSession.summarize`, `MobileAnswerNoticeLines` |
 | `SessionArchive` — the on-disk conversation format | `App/SessionStore.swift` | `iOS/MobileSession.swift` |
 | Speaker identification: `SpeakerDiarizer` and `SpeakerAudioBuffer` (`SharedPlatform/`, FluidAudio), `SpeakerIdentityTracker`, `SpeakerLabeling`, `SpeakerStats`, `SpeakerAnalysisPolicy` | `App/MeetingView+Speakers.swift` | `MobileSpeakers`, `iOS/MobileSession+Speakers.swift`; iOS language detection (#197) reuses `SpeakerAudioBuffer`, keeping its trailing two minutes (#199) |
@@ -62,7 +62,8 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 | Ollama endpoint | The local daemon (`localhost:11434`) or Ollama Cloud | Ollama Cloud, or a server you run and address yourself (`.local`/loopback for plain `http`); a saved cloud key is never sent to another host |
 | Cloud AI services (#214) | AI mode **Cloud AI service**; service, key (**Check key** lists its models) and links in Settings; each pane's model picked in the status rail | Summary provider → **Cloud AI** → a service; key, models per role and **Test this model** in Settings (`MobileCloudAISettings`). Speech correction stays on Ollama |
 | OpenAI-compatible server (#52) | AI mode **OpenAI-compatible**; server URL and optional key in Settings; Auto runs and a model that breaks the Quick JSON contract shows the reader's failure in the Quick pane | Summary provider **OpenAI-compatible**; **Test this model** on the Quick role checks the JSON contract and a failed check pauses Auto with the reason (`MobileOpenAISettings.automaticQuickReason`). Speech correction stays on Ollama |
-| Per-role models | A picker per pane in the status rail, over local and cloud models, auto-picked local-first (`ModelRanking`); on the OpenAI-compatible and cloud AI routes, the server's or vendor's model list, never auto-picked and none verified local | Settings → Model role for Summary / Quick / Deep (`MobileRoleModelView`), from Ollama, the cloud AI service's model list or the OpenAI-compatible server's `/v1/models`; on Ollama, Flash models are reserved for Quick and correction and refused for Deep |
+| Answer panes | Summary (Listener), Quick and Deep, each with its own model | Summary and Quick only (#235). Deep is macOS-only: Auto ignores the evaluator's Deep recommendation, and a Deep analysis an earlier version saved stays read-only under the Summary as **Earlier deep analysis**, in share/export text and in Save to folder notes; nothing new is written to it |
+| Per-role models | A picker per pane in the status rail, over local and cloud models, auto-picked local-first (`ModelRanking`); on the OpenAI-compatible and cloud AI routes, the server's or vendor's model list, never auto-picked and none verified local | Settings → Model role for Summary / Quick (`MobileRoleModelView`), from Ollama, the cloud AI service's model list or the OpenAI-compatible server's `/v1/models`. A Deep model an earlier version saved (`mobileOllamaDeepModel`, `mobileOpenAIDeepModel`, `mobileCloudAI.<vendor>.deepModel`) is left in place and never read |
 | Local-model enforcement | `ModelPrivacy` / `localOnly` verifies downloaded weights before every request | Not applicable — on-device here means Apple Intelligence; iOS reaches Ollama only over the network |
 | Speaker identification | Optional on-device diarization of the Others channel (and optionally the microphone) with naming; line labels need WhisperKit timestamps | On by default, can be turned off (**Settings → Speakers → Identify speakers**): FluidAudio diarizes the one microphone on-device, lines become **Speaker 1, 2…** by SpeechAnalyzer's audio time ranges, and **Notes → Speakers** renames them. Trailing-window passes while recording plus a final pass on Stop, foreground only; a line no speaker covers for at least 30% of its length keeps **Microphone** |
 | Presets and reference context | Use-case presets (`PresetCatalog`) and file/folder reference context (`ReferenceBuilder`, `FileContextLoader`) | Not today. Attachments instead: extracted text is appended to Notes, so it reaches the model inside `<transcript>`, not a `<reference>` block |
@@ -467,7 +468,7 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   Apple Intelligence accepts up to 8,000 characters (`PromptBudget.appleIntelligenceCharacters`, the
   shared cap macOS also clamps its Apple prompts to); Ollama and OpenAI-compatible servers accept up to 60,000. Both caps are
   charged on the *fenced* conversation, not the raw text. A Summary that does not fit is rejected
-  explicitly. Quick and Deep answer a conversation that does not fit from what does (#114,
+  explicitly. Quick answers a conversation that does not fit from what does (#114,
   `OnDemandGrounding.excerpt`). A Summary generated in this session stands in for exactly the lines it
   read (`MobileAnswerNotices.summaryCoverage`, by segment ID, so re-transcribed lines are not covered);
   of the remaining speech — with no Summary, all of it — the start and the latest part are sent, and
@@ -482,7 +483,7 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   "The answer was cut off at the model's output limit." (#215). Each line belongs to the exact text it
   describes, so it disappears when Auto or anything else replaces that text; both are for this session
   only and are not saved. AI output needs review.
-- Prompts separate data from instructions (#140). The conversation a manual Summary, Deep or
+- Prompts separate data from instructions (#140). The conversation a manual Summary or
   on-device Quick sends is wrapped in a `<transcript>` block, and every system prompt states that
   text inside that block is data to read and summarize, never instructions to follow. Closing tags
   inside the content are neutralized so nothing in a transcript or file can end the block early. iOS
@@ -567,11 +568,17 @@ Recordings still waiting from Apple Watch are kept, as are shares not yet import
 folder already wrote are never touched. The directories keep their backup-exclusion flags; only
 their contents go.
 
-The **Live** tab shows the transcript above a full-width **Quick Summary**. **Deep Think** has its own tab with room for longer analysis. Landscape and accessibility text use a scrollable page. Start/Stop remains available in either tab. **More → Full summary** also offers **Summary**, **Quick Summary** (up to five concise bullets) and **Deep Think**
-(a deeper analysis of decisions, tradeoffs, risks and unresolved questions). Each result is stored
-separately, restored with its conversation and included when sharing. These are distinct prompts;
-Deep Think does not promise a provider-specific reasoning mode. Requests use the selected provider
-and preserve previous completed output on failure or cancellation.
+The **Live** tab shows the transcript above a full-width **Quick Summary**; the **Summary** tab holds the
+full Summary (on iPad and in a wide window it sits beside Live). Landscape and accessibility text use a
+scrollable page. Start/Stop remains available in either tab. **More → Full summary** also offers
+**Summary** and **Quick Summary**. Each result is stored separately, restored with its conversation and
+included when sharing. Requests use the selected provider and preserve previous completed output on
+failure or cancellation.
+
+iOS has no Deep pane (#235); Deep stays on macOS. A conversation an earlier version saved with a Deep
+analysis keeps it: opening it from History shows it read-only under the Summary as a collapsed
+**Earlier deep analysis**, and it stays in shared/exported text and Save to folder notes. Nothing new is
+ever written to it.
 
 ## Save to folder (#53)
 
@@ -706,9 +713,9 @@ No unavailable Flash/Pro name is invented. Refresh preserves your selected model
 choose another. Model refresh does not prove key validity: Test connection verifies a complete streamed
 `/api/chat` response using only a synthetic prompt. Cloud models run remotely; `/api/pull` is not needed.
 
-Selecting Ollama is opt-in; a fresh install summarizes on-device. Generating any of the three AI outputs
+Selecting Ollama is opt-in; a fresh install summarizes on-device. Generating either AI output
 sends the current notes and transcript to the selected Ollama server (Ollama Cloud, or the server you
-entered); microphone audio continues to be transcribed on-device. Quick Summary has an opt-in **Auto** toggle (off initially; your choice is remembered across launches). While listening, new completed transcript text triggers an evaluation in five-second batches. A valid evaluation either keeps or updates the visible Quick Summary and may recommend a manual Summary/Deep review. No unchanged-input requests are sent; failed reads retry with backoff. Enabling Auto with Ollama selected sends those snapshots to Ollama. Deep Think stays on-demand. Existing output remains visible while the next response streams; failures keep the last completed result.
+entered); microphone audio continues to be transcribed on-device. Quick Summary has an opt-in **Auto** toggle (off initially; your choice is remembered across launches). While listening, new completed transcript text triggers an evaluation in five-second batches. A valid evaluation either keeps or updates the visible Quick Summary and may recommend a Summary review (a Deep recommendation from the shared evaluator is ignored on iOS, #235). No unchanged-input requests are sent; failed reads retry with backoff. Enabling Auto with Ollama selected sends those snapshots to Ollama. Existing output remains visible while the next response streams; failures keep the last completed result.
 The last complete summary is preserved on HTTP errors, incomplete streams and cancellation. Streamed
 text is shown separately until completion. Backgrounding cancels an active summary request.
 
@@ -761,7 +768,7 @@ stream and 1 MiB per line; cookies are neither stored nor sent; the transport is
 per-role `URLSession` the Ollama path uses, rebuilt when the server or key changes.
 
 **Models.** **Refresh models from server** reads `/models`, keeps unique IDs in alphabetical order and
-fills empty roles only when the server lists exactly one model. Each role (Summary, Quick, Deep) keeps its
+fills empty roles only when the server lists exactly one model. Each role (Summary, Quick) keeps its
 own choice, separate from the Ollama choices; Flash/Pro rules do not apply. The list says nothing about
 where a model runs.
 
@@ -774,7 +781,7 @@ synthetic exchange in the evaluator's shape. A pass says Auto and Quick can use 
 or an empty or reasoning-only answer, says so and pauses Auto with "… did not follow the Quick Summary
 format" until you choose another Quick model or the test passes. Results are kept per server and model
 (the 32 most recent failures), recorded for the model that was tested, and model rows are disabled while
-a test runs. Summary and Deep are plain chat and keep working. An untested model is allowed; if it breaks
+a test runs. Summary is plain chat and keeps working. An untested model is allowed; if it breaks
 the contract the Quick pane shows "did not return a usable Quick Summary update" and keeps the previous
 summary.
 
@@ -831,10 +838,10 @@ custom server.
 `model`, `max_tokens`, `system`, `messages` and `stream: true`. No `temperature`, `top_p` or `top_k`
 (version 2026-10-21 rejects them), no `thinking` (it cannot be turned off on Opus 5.5 or Sonnet 5.5) and
 no assistant prefill. Depth is set with `output_config.effort`: `low` for the Quick evaluator, `medium` for
-Summary and Deep (set explicitly; Opus 5.5 defaults to `medium`, other models to `high`). The Quick
+Summary (and Deep on macOS; set explicitly; Opus 5.5 defaults to `medium`, other models to `high`). The Quick
 evaluator asks for structured output (`output_config.format` with the `QuickSummaryDecision` JSON schema),
 so it always receives valid JSON; `QuickSummaryDecision.parse` still enforces the length and count limits
-a schema cannot express. Opus 5.5 and Sonnet 5.5 Summary and Deep requests send `fallbacks: "default"` with
+a schema cannot express. Opus 5.5 and Sonnet 5.5 Summary (and macOS Deep) requests send `fallbacks: "default"` with
 `anthropic-beta: server-side-fallback-2026-07-01`; the structured-output Quick evaluator never does, so
 the two options are never combined. Any 400 to a request with fallbacks is retried once without them, and
 the model is remembered as not taking them (until the app restarts) only when that retry succeeds. A

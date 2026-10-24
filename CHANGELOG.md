@@ -13,6 +13,7 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased since 1.14.0 (31))
 
+- The iPhone and iPad app now has two answers, Quick Summary and Summary; the Deep tab is gone (Deep stays on the Mac). Auto no longer runs Deep reviews, and Settings no longer asks for a Deep model for Apple Intelligence, Ollama, an OpenAI-compatible server or a Cloud AI service. A conversation saved with a Deep analysis keeps it: open it from History and expand **Earlier deep analysis** under the Summary (read-only). It stays in shared text, exports and Save to folder notes. (#235)
 - Delete all conversations, at the bottom of History and in Settings → Privacy. It asks first, naming how many conversations go and that it cannot be undone, and is unavailable while recording. It removes every conversation's transcript, notes, attachments, AI outputs and Apple Watch audio from this device, and the open conversation starts over. Recordings still waiting from Apple Watch are kept. Notes that Save to folder already wrote stay in your folder. (#220)
 - Apple Watch companion, remote Start/Stop for the iPhone recorder (not yet shipped; ships with watch recording on the #181 train). (#181)
 - iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)

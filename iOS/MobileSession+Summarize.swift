@@ -2,8 +2,8 @@ import Foundation
 import ListenToMeCore
 import SwiftUI
 
-/// What the iOS Summary, Quick and Deep panels say about their current text, beside it: which part
-/// of the conversation a Quick/Deep answer read when it could not read all of it (issue #114), and
+/// What the iOS Summary and Quick panels say about their current text, beside it: which part of the
+/// conversation a Quick answer read when it could not read all of it (issue #114), and
 /// whether the answer stopped at the model's output limit (issue #215). Session-only, never saved.
 ///
 /// Every record names the exact text it describes and is shown only while the panel still shows that
@@ -56,7 +56,7 @@ struct MobileAnswerNoticeLines: View {
     }
 }
 
-/// The manual Summary, Quick and Deep request. Kept out of MobileSession.swift, which sits at its
+/// The manual Summary and Quick request. Kept out of MobileSession.swift, which sits at its
 /// length limit.
 extension MobileSession {
     /// A built request, and the panel line describing which part of the conversation it reads.
@@ -106,7 +106,6 @@ extension MobileSession {
             switch mode {
             case .summary: summary = summaryDraft
             case .quick: quickSummary = try Self.quickOutput(quickResponse, prose: proseQuick, cutOff: cutOff)
-            case .deep: deepThought = summaryDraft
             }
             answerNotices.record(mode, text: output(for: mode), grounding: built.grounding, cutOff: cutOff,
                                  coveredIDs: mode == .summary ? sourceIDs : [])
@@ -126,8 +125,8 @@ extension MobileSession {
 
     /// The request for `mode`, or nil when a Summary does not fit the provider.
     ///
-    /// Summary covers the whole conversation, so one that does not fit is refused. Quick and Deep
-    /// answer from what fits instead: the Summary already written plus the latest speech, or the
+    /// Summary covers the whole conversation, so one that does not fit is refused. Quick answers
+    /// from what fits instead: the Summary already written plus the latest speech, or the
     /// opening plus the latest speech, and the panel says which (issue #114).
     private func answerRequest(_ mode: MobileSummaryMode, source: String, cloud: Bool,
                                proseQuick: Bool) throws -> AnswerRequest? {
@@ -141,15 +140,14 @@ extension MobileSession {
                                                      messages: [ChatMessage(role: "user", content: fencedSource)]),
                                  grounding: nil)
         }
-        let system = proseQuick ? MobileQuickContext.manualProseInstructions
-            : (mode == .quick ? MobileQuickContext.instructions : mode.instructions)
+        let system = proseQuick ? MobileQuickContext.manualProseInstructions : MobileQuickContext.instructions
         let excerpt = OnDemandGrounding.excerpt(
             notes: notes, segments: allSegments.map(Self.promptSegment), summary: summary,
             summaryCoveredIDs: answerNotices.summaryCoverage(showing: summary),
             budget: OnDemandGrounding.oneShotBudget(window: cloud ? nil : PromptBudget.appleIntelligenceCharacters,
                                                     system: system))
         let grounding = excerpt.notice(summaryName: "your Summary")
-        if mode == .quick && !proseQuick {
+        if !proseQuick {
             // The evaluator envelope has no room for an app note of its own, so the excerpt's note
             // leads the running context the summary is carried in.
             let context = [excerpt.selection.promptNote, excerpt.summary].compactMap { $0 }.joined(separator: "\n")
@@ -161,7 +159,7 @@ extension MobileSession {
                              grounding: grounding)
     }
 
-    /// Streams the answer: Summary and Deep into `summaryDraft`, Quick into the returned text. The
+    /// Streams the answer: Summary into `summaryDraft`, Quick into the returned text. The
     /// flag is true when the model stopped at its output limit; the text so far is kept (#215).
     private func streamAnswer(_ request: LLMRequest, mode: MobileSummaryMode,
                               client: any LLMProvider) async throws -> (String, Bool) {

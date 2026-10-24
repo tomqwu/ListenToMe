@@ -47,12 +47,12 @@ final class MobileIncrementalSummaryUITests: XCTestCase {
         let corrected = output.label
         speech("speechTradeoff", app: app)
         wait(app.staticTexts["quickReadCount"], contains: "Checks: 6")
-        reviewTab("Deep", app: app)
-        wait(app.staticTexts["output-deep"], contains: "automatically")
-        capture(app, "Evaluation automatically updates Deep for an unresolved tradeoff")
-        app.buttons["Generate Deep Summary"].tap()
-        wait(app.staticTexts["output-deep"], contains: "manually")
+        // The fixture's evaluator recommends Deep for the tradeoff; iOS has no Deep and ignores it (#235).
+        reviewTab("Summary", app: app)
+        XCTAssertFalse(app.staticTexts["output-deep"].exists)
         XCTAssertFalse(app.staticTexts["review-suggestion-deep"].exists)
+        XCTAssertFalse(app.buttons["Generate Deep Summary"].exists)
+        capture(app, "A Deep recommendation is ignored on iOS")
         liveTab(app)
         capture(app, "Quick incorporates a Chinese decision revision")
         app.buttons["Stop listening"].tap()
@@ -78,10 +78,10 @@ final class MobileIncrementalSummaryUITests: XCTestCase {
         wait(app.staticTexts["output-quick"], contains: "APM")
         XCTAssertLessThanOrEqual(app.staticTexts["output-quick"].label.count, 480)
         capture(app, "First topic and unanswered question are visible without any decision")
-        reviewTab("Deep", app: app)
-        wait(app.staticTexts["output-deep"], contains: "automatically")
-        app.buttons["Generate Deep Summary"].tap()
-        wait(app.staticTexts["output-deep"], contains: "manually")
+        reviewTab("Summary", app: app)
+        app.buttons["Generate Summary"].tap()
+        wait(app.staticTexts["output-summary"], contains: "manually")
+        XCTAssertFalse(app.staticTexts["output-deep"].exists, "No Deep pane on iOS (#235)")
         liveTab(app)
         app.buttons["Stop listening"].tap()
         XCTAssertTrue(app.staticTexts["output-quick"].label.contains("APM"))
@@ -151,11 +151,10 @@ final class MobileIncrementalSummaryUITests: XCTestCase {
         return app
     }
 
+    /// The phone shows Summary on its own page; a wide layout shows it beside Live.
     private func reviewTab(_ name: String, app: XCUIApplication) {
         if app.segmentedControls["workspaceTabs"].exists {
             app.segmentedControls["workspaceTabs"].buttons[name].tap()
-        } else {
-            app.segmentedControls["reviewTabs"].buttons[name == "Deep" ? "Deep Summary" : name].tap()
         }
     }
 

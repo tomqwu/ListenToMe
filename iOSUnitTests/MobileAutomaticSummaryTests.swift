@@ -93,7 +93,7 @@ final class MobileAutomaticSummaryTests: XCTestCase {
         session.notes = "Older notes"
         session.summary = "Older summary"
         session.quickSummary = "Older quick"
-        session.deepThought = "Older deep"
+        session.earlierDeepAnalysis = "Older deep"   // saved by an older version (#235)
         session.segments = [.init(source: .you, text: "Older speech", isFinal: true, start: 0, end: 1)]
         session.save()
         let record = try XCTUnwrap(session.history.first)

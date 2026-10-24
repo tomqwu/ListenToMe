@@ -34,14 +34,15 @@ final class MobileSession {
     var notes = "" { didSet { handleSummaryEvent(.notesChanged) } }
     var summary = ""
     var quickSummary = ""
-    var deepThought = ""
+    /// Deep analysis an older version saved here; kept read-only, never generated on iOS (#235).
+    var earlierDeepAnalysis = ""
     var attachments: [SessionAttachment] = []
     var generatingMode: MobileSummaryMode?
     var autoQuick = UserDefaults.standard.bool(forKey: "autoQuickSummary") {
         didSet { UserDefaults.standard.set(autoQuick, forKey: "autoQuickSummary"); handleSummaryEvent(.automationChanged) }
     }
     let quickReader = MobileQuickReader()
-    let automaticReviews = AutomaticReviewCoordinator()
+    let automaticReviews = AutomaticReviewCoordinator(modes: [.summary])   // no Deep on iOS (#235)
     private(set) var speechEventCount = 0
     private(set) var finalizedSpeechEventCount = 0
     private(set) var quickWakeCount = 0
@@ -180,12 +181,12 @@ final class MobileSession {
     var busy: Bool { state != .idle || isSummarizing }
     var hasContent: Bool {
         !segments.isEmpty || partial != nil || !notes.isEmpty || !summary.isEmpty
-            || !quickSummary.isEmpty || !deepThought.isEmpty || !attachments.isEmpty
+            || !quickSummary.isEmpty || !earlierDeepAnalysis.isEmpty || !attachments.isEmpty
     }
     var allSegments: [TranscriptSegment] { segments + (partial.map { [$0] } ?? []) }
     var markdown: String {
         let text = SessionExporter.markdown(title: title, transcript: allSegments, notes: notes, listenerSummary: summary,
-                                            quickSuggestion: quickSummary, deepAnswer: deepThought)
+                                            quickSuggestion: quickSummary, deepAnswer: earlierDeepAnalysis)
         return text + (attachments.isEmpty ? "" : "\n## Attachments\n" + attachments.map { "- \($0.name)" }.joined(separator: "\n"))
     }
     var summaryAvailability: String? { summaryAvailability(for: .summary) }
@@ -344,7 +345,7 @@ final class MobileSession {
         manualQuickError = nil; quickReader.reset(); answerNotices = MobileAnswerNotices()
         handleSummaryEvent(.conversationChanged)
         id = UUID().uuidString; date = Date()
-        title = "New conversation"; notes = ""; summary = ""; quickSummary = ""; deepThought = ""
+        title = "New conversation"; notes = ""; summary = ""; quickSummary = ""; earlierDeepAnalysis = ""
         segments = []; partial = nil; message = nil; attachments = []; sourceImportID = nil
         save(announce: false)
     }
@@ -364,7 +365,7 @@ final class MobileSession {
         handleSummaryEvent(.conversationChanged)
         id = record.id; date = record.date; title = record.title
         notes = record.notes ?? ""; summary = record.summary
-        quickSummary = record.quickSuggestion ?? ""; deepThought = record.deepAnswer ?? ""
+        quickSummary = record.quickSuggestion ?? ""; earlierDeepAnalysis = record.deepAnswer ?? ""
         attachments = record.attachments ?? []; sourceImportID = record.sourceImportID
         segments = record.segments ?? []; partial = nil; message = nil
     }
@@ -420,7 +421,6 @@ extension MobileSession {
         switch mode {
         case .summary: return summary
         case .quick: return quickSummary
-        case .deep: return deepThought
         }
     }
 }
@@ -511,18 +511,16 @@ extension MobileSession {
     private func synchronizeAutomaticReviews() {
         automaticReviews.synchronize(enabled: autoQuick && state == .recording && automaticQuickAvailability == nil,
             manualBusy: isSummarizing, pieces: quickPieces, source: summarySource,
-            provider: { [weak self] mode in
-                guard let self, let mobileMode = MobileSummaryMode(rawValue: mode.rawValue) else { throw CancellationError() }
-                if let reason = self.summaryAvailability(for: mobileMode) { throw QuickSummaryError.message(reason) }
-                return try self.summaryProvider ?? self.ai.client(for: mobileMode)
+            provider: { [weak self] mode in   // Summary only: the coordinator runs no Deep on iOS (#235)
+                guard let self, mode == .summary else { throw CancellationError() }
+                if let reason = self.summaryAvailability(for: .summary) { throw QuickSummaryError.message(reason) }
+                return try self.summaryProvider ?? self.ai.client(for: .summary)
             }, apply: { [weak self] mode, output, reviewed in
-                guard let self else { return }
-                if mode == .summary { self.summary = output } else { self.deepThought = output }
-                if let shown = MobileSummaryMode(rawValue: mode.rawValue) {
-                    self.answerNotices.record(shown, text: output, grounding: nil,
-                                              cutOff: self.automaticReviews.cutOffModes.contains(mode),
-                                              coveredIDs: QuickSummaryContext.segmentIDs(in: reviewed))
-                }
+                guard let self, mode == .summary else { return }
+                self.summary = output
+                self.answerNotices.record(.summary, text: output, grounding: nil,
+                                          cutOff: self.automaticReviews.cutOffModes.contains(mode),
+                                          coveredIDs: QuickSummaryContext.segmentIDs(in: reviewed))
                 // Same rule that kept the review alive: a notes keystroke or appended speech does not
                 // make the finished review stale, so it must not leave the recommendation outstanding
                 // and re-run the identical model call.
@@ -595,7 +593,7 @@ extension MobileSession {
         let record = SessionRecord(id: id, title: title, date: date,
                                    transcript: Self.transcriptText(for: allSegments),
                                    summary: summary, segments: allSegments, notes: notes,
-                                   quickSuggestion: quickSummary, deepAnswer: deepThought,
+                                   quickSuggestion: quickSummary, deepAnswer: earlierDeepAnalysis,
                                    isComplete: state == .idle && allSegments.allSatisfy(\.isFinal),
                                    attachments: attachments, sourceImportID: sourceImportID)
         do {

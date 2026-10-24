@@ -17,7 +17,7 @@ struct MobileIncrementalSummaryFixture: View {
         session.prepareSpeakerModelsIfNeeded()   // as the app does at a foreground launch (#195)
         session.ai.provider = .ollama
         session.ai.models = [.init(name: "glm-5.3-flash"), .init(name: "glm-5.3")]
-        session.ai.quickModel = "glm-5.3-flash"; session.ai.model = "glm-5.3"; session.ai.deepModel = "glm-5.3"
+        session.ai.quickModel = "glm-5.3-flash"; session.ai.model = "glm-5.3"
         if ProcessInfo.processInfo.arguments.contains("--incremental-backlog-fixture") {
             session.notes = "We agree delivery on Monday. Sarah will confirm. " + String(repeating: "Background discussion. ", count: 400)
         }
