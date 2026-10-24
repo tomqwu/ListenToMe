@@ -3,9 +3,9 @@ import Speech
 import ListenToMeCore
 
 /// Where captured microphone audio goes: converted into the current analyzer's input, and copied into
-/// the speaker (#180) and language (#197; its trailing two minutes since #199) buffers only once the
-/// analyzer accepted it, so all three share one timeline. The analyzer can be replaced while capture
-/// runs (a language switch): `hold` parks new audio, `resume` points the sink at the new analyzer and
+/// the speaker (#180) and language (#197; its trailing two minutes since #199) buffers, and to the saved
+/// audio file when that is on (#55), only once the analyzer accepted it, so all of them share one
+/// timeline. The analyzer can be replaced while capture runs (a language switch): `hold` parks new audio, `resume` points the sink at the new analyzer and
 /// sends what was parked, so no microphone audio is lost and the copies stay continuous.
 ///
 /// Used by the single feed task and, for `hold`/`resume`, the main actor; everything runs under `lock`.
@@ -30,10 +30,13 @@ final class AnalyzerSink: @unchecked Sendable {
     private let speakerGeneration: Int
     private let languageAudio: SpeakerAudioBuffer?
     private let languageGeneration: Int
+    /// Save audio recordings (#55): the same accepted audio, so the file shares the transcript's timeline.
+    private let savedAudio: (any SavedAudioWriting)?
 
     init(input: AsyncStream<AnalyzerInput>.Continuation, destination: AVAudioFormat,
          speakerAudio: SpeakerAudioBuffer?, speakerGeneration: Int,
-         languageAudio: SpeakerAudioBuffer?, languageGeneration: Int) {
+         languageAudio: SpeakerAudioBuffer?, languageGeneration: Int, savedAudio: (any SavedAudioWriting)? = nil) {
+        self.savedAudio = savedAudio
         self.input = input
         self.destination = destination
         self.speakerAudio = speakerAudio
@@ -99,6 +102,7 @@ final class AnalyzerSink: @unchecked Sendable {
         languageAudio?.append(samples: chunk.samples, sampleRate: chunk.sampleRate, timestamp: 0,
                               generation: languageGeneration)
         languageAudio?.keepTrailingLanguageAudio()   // about two minutes, for re-checks and replays (#199)
+        savedAudio?.append(samples: chunk.samples, sampleRate: chunk.sampleRate, timestamp: nil)   // queued, #55
     }
 
     /// PRECONDITION: `lock` is held. Rebuilt when the microphone's rate or the analyzer's format changes.

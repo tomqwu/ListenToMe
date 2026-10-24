@@ -8,6 +8,9 @@ struct MobileTranscriptReader: View {
     var restoreOriginal: ((UUID) -> Void)?
     /// Shows who said each line once speaker identification has labeled any of them (issue #180).
     var showsSpeakers = false
+    /// Where a line plays from in the saved audio (issue #55); `nil` hides the play controls.
+    var audioTarget: ((TranscriptSegment) -> SavedAudioSeek.Target?)?
+    var playAudio: ((SavedAudioSeek.Target) -> Void)?
     @State private var reviewing: TranscriptSegment?
     @State private var following = true
     @State private var readingSnapshot: [TranscriptSegment]?
@@ -27,6 +30,13 @@ struct MobileTranscriptReader: View {
                             if !segment.isFinal {
                                 Text("LIVE").font(.caption2.weight(.semibold)).foregroundStyle(MobileStyle.transcript)
                             }
+                            if let target = audioTarget?(segment) {
+                                Button(SavedAudioPolicy.timeLabel(segment.start), systemImage: "play.circle") {
+                                    playAudio?(target)
+                                }.font(.caption.monospacedDigit()).buttonStyle(.borderless)
+                                    .accessibilityLabel("Play from \(SavedAudioPolicy.timeLabel(segment.start))")
+                                    .accessibilityIdentifier("transcript-play-\(segment.id)")
+                            }
                             if showsSpeakers {
                                 Text(segment.speakerLabel).font(.caption.weight(.semibold))
                                     .foregroundStyle(segment.speakerID == nil ? MobileStyle.muted : MobileStyle.accent)
@@ -41,6 +51,7 @@ struct MobileTranscriptReader: View {
                                     .accessibilityIdentifier("review-correction-\(segment.id)")
                             }
                         }.frame(maxWidth: .infinity, alignment: .leading)
+                            .modifier(MobilePlayOnTap(target: audioTarget?(segment), play: playAudio))
                     }
                     Color.clear.frame(height: 1).id(endID)
                 }.padding(16)
@@ -109,5 +120,20 @@ struct MobileTranscriptReader: View {
 
     private func nearEnd(_ geometry: ScrollGeometry) -> Bool {
         geometry.contentSize.height - geometry.visibleRect.maxY <= 32
+    }
+}
+
+/// Tapping a line with saved audio plays from its time (issue #55). Lines without audio are unchanged.
+private struct MobilePlayOnTap: ViewModifier {
+    let target: SavedAudioSeek.Target?
+    let play: ((SavedAudioSeek.Target) -> Void)?
+
+    func body(content: Content) -> some View {
+        if let target, let play {
+            content.contentShape(Rectangle()).onTapGesture { play(target) }
+                .accessibilityAction(named: "Play from here") { play(target) }
+        } else {
+            content
+        }
     }
 }

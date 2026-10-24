@@ -37,9 +37,13 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
     /// to every `othersSink.append` so the buffer rejects this capture's appends once a later run has
     /// reset it. Unused (and irrelevant) when `othersSink` is nil.
     private let sinkGeneration: Int
+    /// Save audio recordings (issue #55): one file per source, finished by `stop()`. Empty when off.
+    private let savedAudio: [SpeakerSource: any SavedAudioWriting]
 
     init(othersSink: SpeakerAudioBuffer? = nil, sinkGeneration: Int = 0,
-         microphoneSink: SpeakerAudioBuffer? = nil, microphoneGeneration: Int = 0) {
+         microphoneSink: SpeakerAudioBuffer? = nil, microphoneGeneration: Int = 0,
+         savedAudio: [SpeakerSource: any SavedAudioWriting] = [:]) {
+        self.savedAudio = savedAudio
         self.microphoneSink = microphoneSink
         self.microphoneGeneration = microphoneGeneration
         self.othersSink = othersSink
@@ -116,6 +120,8 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
         }
         toStop?.stopCapture { _ in }
         continuation.finish()
+        // `stopped` is set, so no later callback appends; each file closes after what it already queued.
+        savedAudio.values.forEach { $0.finish() }
     }
 
     // MARK: - Microphone (.you)
@@ -275,6 +281,8 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
             let generation = source == .others ? sinkGeneration : microphoneGeneration
             sink?.append(samples: samples, sampleRate: mono.format.sampleRate,
                          timestamp: timestamp, generation: generation)
+            // The capture-time stamp keeps the file on WhisperKit's timeline across gaps (issue #55).
+            savedAudio[source]?.append(samples: samples, sampleRate: mono.format.sampleRate, timestamp: timestamp)
         }
         let chunk = AudioChunk(samples: samples,
                                sampleRate: mono.format.sampleRate,

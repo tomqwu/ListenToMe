@@ -16,6 +16,7 @@ does not show it again, and a fresh install does not see it at all; see
 - Apple Watch companion, remote Start/Stop for the iPhone recorder (not yet shipped; ships with watch recording on the #181 train). (#181)
 - iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
 - Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
+- Save audio recordings, off by default (Settings → Audio recordings): each recording also keeps its microphone audio with the conversation on this device, about 12 MB per hour, always left out of iCloud and Finder backups and never uploaded. Play it from the transcript — tap a line's time to hear it — and share the `.m4a` from the share sheet. Low or full storage stops the audio, never the transcript, with an orange note. Deleting a conversation deletes its audio; Settings has Delete all saved audio and Keep audio for 7, 30 or 90 days. Apple Watch recordings keep no audio. (#55)
 
 ## iOS 1.14.0 (31) — 2026-10-23
 
@@ -46,6 +47,8 @@ does not show it again, and a fresh install does not see it at all; see
 - Model prompts fence transcript, notes and reference text as data. (#140)
 
 ## macOS (unreleased since 1.4.4)
+
+- Save audio recordings, off by default (Settings): each recording keeps the microphone and system audio as two labelled `.m4a` files beside the conversation; History plays them and, with WhisperKit, jumps to a line's time; share them from the player. Clear history deletes them, Settings has Delete all saved audio and automatic deletion after 7, 30 or 90 days, and a full disk stops the audio, never the transcript. (#55)
 
 - New AI mode **Cloud AI service**: OpenAI, Anthropic Claude, Google Gemini, DeepSeek, OpenRouter, Groq, Mistral or xAI Grok with your own API key (Check key lists the vendor's models; Get a key and privacy-policy links). Each service is labelled "Sends your transcript to <vendor>", keeps its own Keychain key sent only to that vendor, and pane pickers list its models without ever picking one. Claude uses Anthropic's own Messages API. (#214)
 - New AI mode **OpenAI-compatible**: point the panes at LM Studio, vLLM, llama.cpp, Ollama's /v1 API or OpenRouter with an optional Keychain key bound to that server; pane pickers list its /v1/models and never pick one for you; labelled "your server" or "may leave this device", never local; redirects are not followed. Plain http to `.local` names now works. (#52)

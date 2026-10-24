@@ -70,6 +70,7 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 | Proactive Quick answers | Yes — needs a finalized question on the Others channel | No — there is no Others channel to detect one in |
 | Third-party licenses | **Open-source licenses…** shows `App/ThirdPartyNotices.txt` as one text | **Settings → About → Acknowledgements** lists each package from the same file with its full license (`MobileAcknowledgementsView`, #202) |
 | "What's New" | GitHub release notes and `CHANGELOG.md` | In-app, shown once per set of bundled notes (`MobileReleaseNotes`) |
+| Saved audio (#55) | Off by default (Settings); one `.m4a` per source per run — microphone and system audio as separate labelled files — under Application Support, following Time Machine; History → a conversation plays it, and only WhisperKit lines (real times) can jump into it | Off by default (**Settings → Audio recordings**); the microphone audio the transcriber accepted, one `.m4a` per run, always excluded from backups; the expanded transcript plays it and every line can jump to its time |
 | Storage protection | Plain atomic writes | Data protection (`completeUntilFirstUserAuthentication`) plus an optional backup exclusion (`PrivateStorage`) |
 | Export | Markdown, PDF and recap; **Save to folder** chosen with an open panel, written when a checkpoint is complete (capture stopped) and only while autosaving is on | Markdown and readable text through the share sheet; **Save to folder** chosen in the Files picker (security-scoped bookmark), written at Stop/Save and on later changes while not recording |
 | Audio-file import | Yes (`App/AudioFileReader.swift`) | No |
@@ -435,7 +436,7 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   shorter than the first periodic pass is labeled at Stop (#195). On every periodic tick, audio no later window can reach is released, so
   at most ten minutes (about 38 MB) is held even when passes keep failing, and only the last minute
   while the models are unavailable.
-  No audio is saved. Lines are matched to speakers by SpeechAnalyzer's audio time ranges and become
+  Speaker identification saves no audio. Lines are matched to speakers by SpeechAnalyzer's audio time ranges and become
   **Speaker 1**, **Speaker 2**…; a line no speaker covers for at least 30% of its length keeps
   **Microphone**. **Notes → Speakers** renames a speaker everywhere: the saved conversation, the
   transcript in History, search and exports all use the name. Renaming or relabeling starts no AI
@@ -484,7 +485,8 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   ending the meeting; one physical device change posts several notifications, so rebuilds within
   half a second collapse into one and a rebuild is skipped when the input format has not actually
   changed. Only a rebuild that fails stops recording, with the reason shown. The screen
-  stays awake during active recording. No raw audio is saved.
+  stays awake during active recording. No raw audio is saved unless **Save audio recordings** is on
+  (off by default; see [Save audio recordings](#save-audio-recordings-55)).
 - **Settings → About**: version and build, and **Acknowledgements** — every open-source package
   bundled in the app (WhisperKit, FluidAudio and their SwiftPM dependencies) with its full license
   text, read from the same `App/ThirdPartyNotices.txt` the macOS app ships (#202).
@@ -526,7 +528,7 @@ Summaries render headings, bullets, bold, italics and inline code, including str
 ## Conversation actions
 
 History supports swipe right to share, swipe left to delete, and a touch-and-hold menu. Deletion asks for
-confirmation and removes that conversation's transcript, notes, original attachments and all three AI outputs. Deleting
+confirmation and removes that conversation's transcript, notes, original attachments, saved audio and all three AI outputs. Deleting
 an active conversation creates an empty active snapshot so the deleted content does not reappear
 on restart. Other conversations are preserved.
 
@@ -565,6 +567,49 @@ the conversation being recorded and write the same language field ordinary saves
 conversation drops its queued note, so it is never written afterwards; a note already in the folder
 stays, because the folder belongs to the user. On the Mac, the note's date is the conversation's first
 checkpoint, quitting waits up to five seconds for the last note, and waiting notes are retried at launch.
+
+## Save audio recordings (#55)
+
+**Settings → Audio recordings → Save audio recordings** is off by default (`SavedAudioPolicy.enabledKey`,
+`saveRawAudio`). While it is off nothing is written; the speaker and language copies stay in memory as
+before. When it is on, `MobileSession.attachRunAudio` gives each recording run a writer next to the
+speaker (#180) and language (#197, #199) buffers. `AnalyzerSink.copy` hands it exactly the chunks the
+analyzer accepted, after conversion, so a dropped or unconvertible chunk is missing from the file as it
+is from the transcript and the three copies keep one timeline; audio parked during a language switch is
+written once, and a replay is never written again. The writer (`SharedPlatform/SavedAudioWriter.swift`)
+resamples to **16 kHz mono** and encodes AAC at 24 kbit/s into an `.m4a` with `AVAudioFile` on its own
+serial queue, so memory is bounded (at most 512 waiting chunks) and the capture path never touches the
+disk. 16 kHz is the rate the transcriber, speaker and language buffers use, it does not change when a
+headset changes the microphone's native rate mid-recording, and it costs about 12 MB per hour.
+
+Files live in `Application Support/SavedAudio/<conversation id>/`: `audio.json` lists the runs and each
+Start writes `part-NNN-microphone.m4a`, placed by `timelineOffset` (the time the run's lines start
+from), so a conversation recorded in several Starts has several files whose times match the lines.
+`SavedAudioLibrary` (in `ListenToMeCore`, tested) owns the paths, the manifest, deletion and retention.
+The folder is created with data protection and is always excluded from iCloud and Finder backups,
+whatever **Exclude conversations from iCloud backup** says: raw audio is the most sensitive thing the
+app can hold, and its backup would grow by 12 MB an hour. Below 100 MB of free storage a recording
+does not start saving audio; a write error, a full disk or a writer that falls behind stops the file
+and shows an orange line under the title ("Saving audio stopped … Transcription continues"), and the
+recording goes on. Stop finishes the file after the feed has drained.
+
+Deleting a conversation calls `deleteSavedAudio`, which stops any writer for it and deletes its folder.
+**Delete all saved audio** in Settings deletes every file and keeps transcripts; **Keep audio** can
+delete runs automatically after 7, 30 or 90 days, checked at launch, when the app becomes active and
+when Settings opens. Turning the setting off keeps audio already saved.
+
+Playback (`SharedPlatform/SavedAudioPlayer.swift`, `AVAudioPlayer`, local files only): when the open
+conversation has audio and nothing is recording, the live transcript's header shows a play button that
+opens the expanded transcript with the player (part picker, play/pause, position, **Share audio** for the
+share sheet). Each line shows its time; tapping the line or its time plays the part that recorded it
+from that moment (`SavedAudioSeek`). History marks conversations with saved audio and offers **Share
+audio** in the touch-and-hold menu. Starting a recording stops playback.
+
+Apple Watch recordings keep no audio, even with this setting on: the watch inbox deletes each chunk
+once its text is saved (#181 decision 3), and keeping it would need a second, crash-safe retention path
+for audio the iPhone never heard. A recording force-quit or crashed mid-run leaves a file that may not
+play (the `.m4a` is completed at Stop); the player says so. UI tests use `--saved-audio-fixture`, a
+synthetic tone written by the real writer; no test records the microphone.
 
 ## Photos, files and Apple Notes
 

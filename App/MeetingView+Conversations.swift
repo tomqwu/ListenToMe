@@ -136,6 +136,10 @@ extension MeetingView {
                             Button("Save As…") { _ = saveConversationAs() }
                         }
                     }
+                    if let problem = MacSavedAudio.shared.problem {
+                        Text("⚠️ \(problem)").foregroundStyle(.orange).multilineTextAlignment(.trailing)
+                        Button("Dismiss") { MacSavedAudio.shared.dismissProblem() }
+                    }
                     let vault = MarkdownVaultSync.shared
                     if vault.needsAttention {
                         Text("⚠️ Save to folder: \(vault.statusText)").foregroundStyle(.orange)

@@ -58,9 +58,7 @@ struct MobileWorkspaceView<Header: View>: View {
         }
         .sheet(isPresented: $showTranscript) {
             NavigationStack {
-                MobileTranscriptReader(segments: session.allSegments, scrollIdentifier: "expandedTranscriptScroll",
-                                       restoreOriginal: session.restoreSpeech, showsSpeakers: session.hasSpeakerLabels)
-                    .id(session.id)
+                MobileSavedAudioTranscript(session: session)   // the saved audio's player, when there is one (#55)
                     .navigationTitle("Transcript").navigationBarTitleDisplayMode(.inline)
                     .toolbar { Button("Done") { showTranscript = false } }
             }
@@ -92,6 +90,11 @@ struct MobileWorkspaceView<Header: View>: View {
                 Spacer()
                 if session.state == .recording {
                     Circle().fill(.red).frame(width: 6, height: 6).accessibilityLabel("Recording")
+                }
+                if session.canPlaySavedAudio {
+                    Button("Play recording", systemImage: "play.circle") { showTranscript = true }
+                        .labelStyle(.iconOnly).buttonStyle(.plain).foregroundStyle(MobileStyle.accent)
+                        .frame(minWidth: 44, minHeight: 44).accessibilityIdentifier("playSavedAudio")
                 }
                 Button("Expand transcript", systemImage: "arrow.up.left.and.arrow.down.right") { showTranscript = true }
                     .labelStyle(.iconOnly).buttonStyle(.plain)

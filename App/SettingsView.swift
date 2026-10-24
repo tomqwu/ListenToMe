@@ -276,6 +276,9 @@ struct SettingsView: View {
             Divider()
             MacVaultSettings()
 
+            Divider()
+            MacSavedAudioSettings()
+
                 }
             }
             if let saveError { Text(saveError).foregroundStyle(.red) }

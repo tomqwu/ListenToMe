@@ -16,6 +16,8 @@ protocol MobileRecording: AnyObject {
     func attachSpeakerAudio(_ buffer: SpeakerAudioBuffer?)
     /// Optional copy of the transcribed audio for spoken-language detection (issue #197). Set before `start`.
     func attachLanguageAudio(_ buffer: SpeakerAudioBuffer?)
+    /// Optional file writer for Save audio recordings (issue #55). Set before `start`; finished by `stop`.
+    func attachSavedAudio(_ writer: (any SavedAudioWriting)?)
     /// Restarts transcription in `locale` while capture keeps running (issue #197). Throws, changing
     /// nothing, when the new locale cannot be prepared. With `replay`, the new transcriber first hears
     /// that buffer's audio from the sample `replayFrom` returns (the recording's start, or where a
@@ -33,6 +35,7 @@ protocol MobileRecording: AnyObject {
 extension MobileRecording {
     func attachSpeakerAudio(_ buffer: SpeakerAudioBuffer?) {}
     func attachLanguageAudio(_ buffer: SpeakerAudioBuffer?) {}
+    func attachSavedAudio(_ writer: (any SavedAudioWriting)?) { writer?.finish() }
     func switchLocale(to locale: Locale, replay: SpeakerAudioBuffer?, replayFrom: @MainActor () -> Int?,
                       willReplace: @escaping @MainActor (Bool, TimeInterval) -> Void) async throws {
         throw RecordingError.message("This recorder cannot change language while recording.")
@@ -77,6 +80,8 @@ final class MobileRecorder: MobileRecording {
     /// The same audio for spoken-language detection; `nil` unless the language is Automatic.
     private var languageAudio: SpeakerAudioBuffer?
     private var languageGeneration = 0
+    /// Receives the same accepted audio for the saved recording (#55); `nil` unless that setting is on.
+    private var savedAudio: (any SavedAudioWriting)?
 
     func attachSpeakerAudio(_ buffer: SpeakerAudioBuffer?) {
         speakerAudio = buffer
@@ -87,6 +92,8 @@ final class MobileRecorder: MobileRecording {
         languageAudio = buffer
         languageGeneration = buffer?.currentGeneration() ?? 0
     }
+
+    func attachSavedAudio(_ writer: (any SavedAudioWriting)?) { savedAudio = writer }
 
     func start(locale: Locale, onSegment: @escaping @MainActor (TranscriptSegment) -> Void,
                onFailure: @escaping @MainActor (String) -> Void) async throws {
@@ -114,7 +121,7 @@ final class MobileRecorder: MobileRecording {
         deliver = onSegment
         sink = AnalyzerSink(input: input, destination: format, speakerAudio: speakerAudio,
                             speakerGeneration: speakerGeneration, languageAudio: languageAudio,
-                            languageGeneration: languageGeneration)
+                            languageGeneration: languageGeneration, savedAudio: savedAudio)
         resultsTask = consumeResults(of: transcriber)
         try startCapture()
         observeConfigurationChanges()
@@ -291,6 +298,7 @@ final class MobileRecorder: MobileRecording {
             self.configurationObserver = nil
         }
         await stopCapture()
+        savedAudio?.finish()   // every chunk the feed accepted has been queued to it
         input?.finish()
         do {
             try await analyzer?.finalizeAndFinishThroughEndOfInput()
@@ -308,7 +316,7 @@ final class MobileRecorder: MobileRecording {
     private func cleanup() {
         analyzer = nil; input = nil; audio = nil; feedTask = nil; resultsTask = nil
         analyzerFormat = nil; report = nil; tapFormat = nil; speakerAudio = nil
-        languageAudio = nil; sink = nil; deliver = nil; isStopping = false; finishing = []
+        languageAudio = nil; savedAudio = nil; sink = nil; deliver = nil; isStopping = false; finishing = []
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 }

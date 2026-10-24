@@ -71,7 +71,10 @@ struct SessionSearchView: View {
             Button("Delete all saved conversations", role: .destructive) {
                 if store.clear() { records = []; onClear() }
             }
-        } message: { Text("Export any conversations you want to keep first. This cannot be undone in the app.") }
+        } message: {
+            Text("Export any conversations you want to keep first. Saved audio is deleted too. "
+                 + "This cannot be undone in the app.")
+        }
         .sheet(item: $selected) { SessionDetailView(record: $0) }
     }
 }
@@ -98,6 +101,7 @@ private struct SessionDetailView: View {
                 Text("Recovered through this checkpoint. Speech after the last save may be missing.")
                     .foregroundStyle(.secondary)
             }
+            MacSavedAudioSection(record: record)   // Saved audio, when the conversation has any (#55)
             ScrollView { MarkdownText(text: markdown).frame(maxWidth: .infinity, alignment: .leading) }
             if let error { Text(error).foregroundStyle(.red) }
             HStack {
