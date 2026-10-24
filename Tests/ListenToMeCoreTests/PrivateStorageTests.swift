@@ -27,9 +27,21 @@ final class PrivateStorageTests: XCTestCase {
         try PrivateStorage.createDirectory(at: directory)
         XCTAssertFalse(PrivateStorage.isExcludedFromBackup(directory))
         try PrivateStorage.setExcludedFromBackup(true, at: directory)
-        XCTAssertTrue(PrivateStorage.isExcludedFromBackup(directory))
+        XCTAssertTrue(settles(to: true, directory))
         try PrivateStorage.setExcludedFromBackup(false, at: directory)
-        XCTAssertFalse(PrivateStorage.isExcludedFromBackup(directory))
+        XCTAssertTrue(settles(to: false, directory))
+    }
+
+    /// macOS can apply a backup-exclusion change a few milliseconds after `setResourceValues`
+    /// returns (seen once NaturalLanguage is loaded in the same process, #57), so the read waits
+    /// briefly for the flag to settle instead of racing it.
+    private func settles(to expected: Bool, _ url: URL, within seconds: TimeInterval = 2) -> Bool {
+        let deadline = Date().addingTimeInterval(seconds)
+        while PrivateStorage.isExcludedFromBackup(url) != expected {
+            guard Date() < deadline else { return false }
+            Thread.sleep(forTimeInterval: 0.01)
+        }
+        return true
     }
 
     func testArchivedConversationsAndAttachmentsAreWrittenThroughPrivateStorage() throws {

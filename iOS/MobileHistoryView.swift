@@ -13,7 +13,10 @@ struct MobileHistoryView: View {
 
     /// Same keyword ranking the Mac History sheet uses, so a phrase said in one standup is
     /// reachable without scrolling two months of conversations.
-    private var results: [SessionRecord] { session.historyMatching(query) }
+    private var results: [SessionRecord] { hybrid?.map(\.record) ?? session.historyMatching(query) }
+    private var trimmedQuery: String { query.trimmingCharacters(in: .whitespacesAndNewlines) }
+    /// Keyword plus on-device semantic results with snippets (#57), once the index has answered.
+    private var hybrid: [HistorySearchResult]? { session.historySearch.results(for: query) }
 
     var body: some View {
         NavigationStack {
@@ -35,9 +38,12 @@ struct MobileHistoryView: View {
                         ForEach(session.watchInboxRows) { watchRow($0) }
                     }
                 }
+                if !trimmedQuery.isEmpty && !session.history.isEmpty {
+                    MobileHistoryAskSection(session: session, question: trimmedQuery, open: openConversation)
+                }
                 Section {
                     ForEach(results) { record in
-                        row(record)
+                        row(record, result: hybrid?.first { $0.id == record.id })
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                 Button("Delete", systemImage: "trash") { confirmDeletion(record) }.tint(.red)
                             }
@@ -99,13 +105,20 @@ struct MobileHistoryView: View {
                 session.reloadHistory()
                 session.refreshWatchInboxRows()
             }
-            .searchable(text: $query, prompt: "Search title, summary, or transcript")
+            .searchable(text: $query, prompt: "Search or ask your conversations")
+            .onChange(of: query) { session.historySearch.search(query) }
             .navigationTitle("History")
             .toolbar { Button("Done") { dismiss() } }
         }
     }
 
-    private func row(_ record: SessionRecord) -> some View {
+    private func openConversation(_ id: String) {
+        guard let record = session.history.first(where: { $0.id == id }) else { return }
+        session.open(record)
+        dismiss()
+    }
+
+    private func row(_ record: SessionRecord, result: HistorySearchResult?) -> some View {
         Button {
             session.open(record)
             dismiss()
@@ -119,9 +132,13 @@ struct MobileHistoryView: View {
                         Label("From Apple Watch", systemImage: "applewatch")
                             .font(.caption).foregroundStyle(.secondary)
                     }
-                    Text(record.summary.isEmpty ? AttributedString(record.notes ?? record.transcript)
-                         : MarkdownText.inlineAttributed(record.summary))
-                        .lineLimit(2).foregroundStyle(.secondary)
+                    if let result, result.snippet != nil {
+                        MobileHistorySnippet(result: result)
+                    } else {
+                        Text(record.summary.isEmpty ? AttributedString(record.notes ?? record.transcript)
+                             : MarkdownText.inlineAttributed(record.summary))
+                            .lineLimit(2).foregroundStyle(.secondary)
+                    }
                 }
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right").font(.caption.weight(.semibold))

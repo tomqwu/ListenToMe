@@ -40,6 +40,9 @@ final class MobileNoDeepTests: XCTestCase {
         let record = SessionRecord(id: "older", title: "Older meeting", date: Date(), transcript: "", summary: "Recap",
                                    segments: [], notes: "Notes", quickSuggestion: "- Quick",
                                    deepAnswer: "## Tradeoffs\nShip later.")
+        // A saved conversation from an earlier version: open only accepts what History lists (#57).
+        try session.archive.save(record)
+        session.reloadHistory()
         session.open(record)
         XCTAssertEqual(session.earlierDeepAnalysis, "## Tradeoffs\nShip later.")
         XCTAssertEqual(MobileSummaryMode.allCases, [.summary, .quick], "No Deep pane to write it")
