@@ -18,7 +18,6 @@ struct ListenToMeIOSApp: App {
     var body: some Scene {
         WindowGroup {
             meeting
-                .modifier(MobileUITestTextSize())
                 .tint(MobileStyle.accent)
                 .task {
                     session.importSharedInbox()
