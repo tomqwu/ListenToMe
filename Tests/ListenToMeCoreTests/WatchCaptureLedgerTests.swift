@@ -3,6 +3,20 @@ import XCTest
 
 /// The phone's manifest for one Apple Watch recording waiting to be transcribed (issue #181).
 final class WatchCaptureLedgerTests: XCTestCase {
+    func testLocaleIsPinnedAndRoundTrips() throws {
+        var entry = WatchCaptureLedger(recordingID: UUID(), startedAt: Date(), at: Date())
+        entry.pinTranscriptionLocale("zh-CN")
+        entry.pinTranscriptionLocale("en-US")
+        let decoded = try JSONDecoder().decode(WatchCaptureLedger.self, from: JSONEncoder().encode(entry))
+        XCTAssertEqual(decoded.transcriptionLocale, "zh-CN")
+    }
+
+    func testLegacyLedgerWithoutLocaleDecodes() throws {
+        let entry = WatchCaptureLedger(recordingID: UUID(), startedAt: Date(), at: Date())
+        let data = try JSONEncoder().encode(entry)
+        XCTAssertNil(try JSONDecoder().decode(WatchCaptureLedger.self, from: data).transcriptionLocale)
+    }
+
     private let id = UUID()
     private let start = Date(timeIntervalSince1970: 1_700_000_000)
     private let hour: TimeInterval = 3_600

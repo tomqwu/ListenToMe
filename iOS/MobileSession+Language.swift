@@ -8,8 +8,8 @@ import ListenToMeCore
 extension MobileSession {
     /// The picker tag for Automatic.
     static let automaticLanguageTag = "automatic"
-    /// The language a new recording, or an Apple Watch recording, is transcribed in first. Automatic
-    /// starts in the device's language; a switch applies only to the recording it happened in.
+    /// The starting locale for live recordings and fallback for Watch imports. Watch imports pin
+    /// their own detected or fixed locale before transcription; live switches stay recording-local.
     var transcriptionLanguage: String { languageDetection.automatic ? Locale.current.identifier : language }
 
     /// The Settings picker's selection: Automatic, or a fixed language.

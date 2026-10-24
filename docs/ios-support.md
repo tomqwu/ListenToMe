@@ -61,3 +61,11 @@ To summarize just some lines, tap the checklist button on the Live transcript (o
 - Missing from a restore: check whether "Exclude conversations from iCloud backup" is on in Settings.
 
 Read the [privacy policy](ios-privacy.md) for storage, optional cloud processing and deletion information.
+
+## Apple Watch language detection (not yet distributed)
+
+When the Watch companion becomes available, Automatic will check the first stretch of speech using
+an already-downloaded language model on your iPhone. It never downloads that model while importing.
+If the model is unavailable, speech is too short or detection is uncertain, it uses the device language.
+The recording keeps that choice through retries and later transfers. Choose a fixed transcription
+language before importing if you need to override Automatic. Audio stays on the iPhone for detection.
