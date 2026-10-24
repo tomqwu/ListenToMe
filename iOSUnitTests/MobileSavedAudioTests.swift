@@ -227,6 +227,30 @@ final class MobileSavedAudioTests: XCTestCase {
         XCTAssertEqual(session.segments.count, 2)
     }
 
+    func testDeleteAllConversationsRemovesEverySavedRecording() async throws {
+        let factory = FakeWriterFactory()
+        let audio = savedAudio(factory)
+        audio.enabled = true
+        let recorder = SavedAudioTestRecorder()
+        let session = session(recorder, audio: audio)
+        try await record(session)
+        recorder.speak("first conversation", from: 0, to: 2)
+        await session.stop()
+        let first = session.id
+        session.newConversation()
+        try await record(session)
+        recorder.speak("second conversation", from: 0, to: 2)
+        await session.stop()
+        XCTAssertTrue(audio.library.hasAudio(first))
+        XCTAssertTrue(audio.library.hasAudio(session.id))
+        XCTAssertTrue(session.deleteAllMessage.contains("saved audio"))
+
+        session.deleteAllConversations()
+        XCTAssertEqual(audio.library.totalBytes(), 0, "Delete all conversations takes every saved recording")
+        XCTAssertEqual(audio.bytesUsed, 0)
+        XCTAssertTrue(session.conversationDataOwners.contains { $0.name == "saved audio" })
+    }
+
     func testDeletingWhileAWriterRunsCancelsIt() throws {
         let factory = FakeWriterFactory()
         let audio = savedAudio(factory)

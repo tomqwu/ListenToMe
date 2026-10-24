@@ -13,11 +13,6 @@ extension MobileSession {
         recorder.attachSavedAudio(savedAudio.beginRun(conversation: id, offset: offset))
     }
 
-    /// The one place a deleted conversation's audio goes; every conversation deletion calls it.
-    func deleteSavedAudio(_ conversationID: String) {
-        savedAudio.delete(conversation: conversationID)
-    }
-
     /// The open conversation's saved files, for the share sheet.
     var savedAudioFiles: [URL] { savedAudio.fileURLs(for: id) }
 

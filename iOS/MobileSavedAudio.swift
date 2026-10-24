@@ -68,12 +68,24 @@ final class MobileSavedAudio {
         return library.fileURLs(for: id)
     }
 
-    /// Deletes one conversation's audio; called by every path that deletes a conversation.
+    /// Deletes one conversation's audio, reporting a failure on the main screen.
     func delete(conversation id: String) {
-        do { try recorder.delete(conversationID: id) } catch {
+        do { try remove(ConversationDeletion(ids: [id])) } catch {
             problem = "Could not delete the saved audio: \(error.localizedDescription)"
         }
-        refresh()
+    }
+
+    /// The saved-audio owner of a conversation deletion (`MobileSession.conversationDataOwners`):
+    /// Delete removes those conversations' audio, Delete all removes every file. Each is tried.
+    func remove(_ deletion: ConversationDeletion) throws {
+        if deletion.ids.contains(playback.conversationID ?? "") || deletion.everything { playback.stop() }
+        defer { refresh() }
+        if deletion.everything { try recorder.deleteAll(); return }
+        var failure: Error?
+        for id in deletion.ids {
+            do { try recorder.delete(conversationID: id) } catch { failure = failure ?? error }
+        }
+        if let failure { throw failure }
     }
 
     /// Settings → Delete all saved audio. Transcripts are kept.

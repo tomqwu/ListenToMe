@@ -75,7 +75,19 @@ final class MacSavedAudio {
     /// The run's first transcript line, known once the capture has started.
     func anchorRun(firstSegment: Int) { runs.recorder.anchorLatestRun(firstSegment: firstSegment) }
 
-    /// Clear history and Settings → Delete all saved audio.
+    /// The saved-audio owner of Clear history (`SessionStore.conversationDataOwners`).
+    func remove(_ deletion: ConversationDeletion) throws {
+        playback.stop()
+        defer { refresh() }
+        if deletion.everything { try runs.recorder.deleteAll(); return }
+        var failure: Error?
+        for id in deletion.ids {
+            do { try runs.recorder.delete(conversationID: id) } catch { failure = failure ?? error }
+        }
+        if let failure { throw failure }
+    }
+
+    /// Settings → Delete all saved audio; history is kept.
     func deleteAll() {
         playback.stop()
         do { try runs.recorder.deleteAll() } catch {

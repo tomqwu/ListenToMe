@@ -291,10 +291,7 @@ struct MeetingView: View {
             }.padding().frame(width: 700, height: 560)
         }
         .sheet(isPresented: $showSearch) {
-            SessionSearchView(store: sessionStore, onClear: {
-                MacSavedAudio.shared.deleteAll()   // Clear history takes the saved audio too (#55)
-                dropCurrentSessionFromSaving()
-            })
+            SessionSearchView(store: sessionStore, onClear: { dropCurrentSessionFromSaving() })
         }
         .sheet(isPresented: $showSpeakerBreakdown) {
             SpeakerBreakdownView(

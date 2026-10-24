@@ -532,6 +532,26 @@ confirmation and removes that conversation's transcript, notes, original attachm
 an active conversation creates an empty active snapshot so the deleted content does not reappear
 on restart. Other conversations are preserved.
 
+**Delete all conversations…** (#220) sits at the bottom of History (hidden while a search is typed)
+and in Settings → Privacy. The alert names the count ("Delete all 3 conversations?") and says it
+cannot be undone. The button is disabled while recording, preparing, stopping or generating. The
+open conversation starts over as "New conversation". Delete and Delete all run the same code path,
+`MobileSession.eraseConversations` in `iOS/MobileSession+Deletion.swift`. The archive is the commit
+point: Delete all calls `SessionArchive.clear()`, which also removes history files set aside as
+unreadable. After that it runs every entry of `conversationDataOwners`, a list of Core
+`ConversationDataOwner`s:
+- attachments and their temporary preview copies;
+- Apple Watch audio, tombstoned so a part the watch sends again is discarded;
+- shared-inbox folders already imported, which would otherwise import again (Delete all also drops
+  quarantined shares);
+- the Save to folder queue.
+
+Every owner runs even if one fails, and the message names what is left. New per-conversation
+storage (saved audio #55, the search index #57) adds an owner there, so both deletes remove it.
+Recordings still waiting from Apple Watch are kept, as are shares not yet imported. Notes Save to
+folder already wrote are never touched. The directories keep their backup-exclusion flags; only
+their contents go.
+
 The **Live** tab shows the transcript above a full-width **Quick Summary**. **Deep Think** has its own tab with room for longer analysis. Landscape and accessibility text use a scrollable page. Start/Stop remains available in either tab. **More → Full summary** also offers **Summary**, **Quick Summary** (up to five concise bullets) and **Deep Think**
 (a deeper analysis of decisions, tradeoffs, risks and unresolved questions). Each result is stored
 separately, restored with its conversation and included when sharing. These are distinct prompts;
@@ -593,7 +613,9 @@ does not start saving audio; a write error, a full disk or a writer that falls b
 and shows an orange line under the title ("Saving audio stopped … Transcription continues"), and the
 recording goes on. Stop finishes the file after the feed has drained.
 
-Deleting a conversation calls `deleteSavedAudio`, which stops any writer for it and deletes its folder.
+Saved audio is one of `MobileSession.conversationDataOwners` (#220), so Delete and Delete all
+conversations stop any writer for those conversations and delete their folders (Delete all deletes
+the whole `SavedAudio` folder); on the Mac it is an owner of Clear history (`SessionStore`).
 **Delete all saved audio** in Settings deletes every file and keeps transcripts; **Keep audio** can
 delete runs automatically after 7, 30 or 90 days, checked at launch, when the app becomes active and
 when Settings opens. Turning the setting off keeps audio already saved.
@@ -923,7 +945,7 @@ GitHub Actions builds both apps and runs the headless `ListenToMeCore` unit/inte
    accept the local-network prompt, refresh models, run **Test this model** on Quick and summarize; confirm
    the picker says "your server", that `http://192.168.…` is refused, and (optionally) that an `https://`
    hosted endpoint reads "may leave this device" and that changing servers removes its key.
-7. Camera permission denial/retry, photo capture, photo library, Files and Apple Notes Send Copy imports. Preview, share originals, extract document text, remove attachments and delete/reopen conversations.
+7. Camera permission denial/retry, photo capture, photo library, Files and Apple Notes Send Copy imports. Preview, share originals, extract document text, remove attachments, delete/reopen conversations and Delete all conversations (#220).
 8. Portrait/landscape iPhone and iPad layouts, large text and VoiceOver controls.
 9. Import a real meeting invite with attendees and a join link, then read Notes: attendee names appear
    without e-mail addresses, and the event link carries no `?pwd=`/`#` join secret.

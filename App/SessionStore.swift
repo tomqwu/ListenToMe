@@ -54,13 +54,32 @@ final class SessionStore {
     /// The user has seen the note about a set-aside file and dismissed it.
     func dismissArchiveWarning() { archiveWarning = nil }
 
+    /// Everything a conversation owns on this Mac besides its archive record, removed after the records
+    /// by the same Core list iOS uses (#220). New per-conversation storage registers here.
+    var conversationDataOwners: [ConversationDataOwner] {
+        [
+            // A cleared conversation's note must not be written later.
+            ConversationDataOwner("Save to folder queue") { deletion in
+                if deletion.everything {
+                    MarkdownVaultSync.shared.forgetAll()
+                } else {
+                    deletion.ids.forEach(MarkdownVaultSync.shared.forget(id:))
+                }
+            },
+            ConversationDataOwner("saved audio") { try MacSavedAudio.shared.remove($0) },   // #55
+        ]
+    }
+
     @discardableResult
     func clear() -> Bool {
         do {
             guard let archive else { throw CocoaError(.fileWriteUnknown) }
+            let ids = ((try? archive.read().records) ?? []).map(\.id)
             // Clear deletes the quarantined files too, so any earlier warning is obsolete.
             archiveWarning = try archive.clear()
-            MarkdownVaultSync.shared.forgetAll()   // A cleared conversation's note must not be written later.
+            let failed = ConversationDataErasure.run(conversationDataOwners,
+                                                     for: ConversationDeletion(ids: ids, everything: true))
+            if let note = ConversationDataErasure.failureNote(failed) { archiveWarning = note }
             errorText = nil
             return true
         } catch { errorText = "Couldn't clear history: \(error.localizedDescription)"; return false }

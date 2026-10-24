@@ -491,6 +491,32 @@ extension MobileWatchDrainTests {
         XCTAssertEqual(audioFiles(session), [])
     }
 
+    /// Delete all conversations (#220) takes the audio of every watch conversation, and keeps a
+    /// recording that has not become a conversation yet.
+    func testDeletingAllConversationsDiscardsWatchAudioButKeepsWaitingRecordings() async throws {
+        let fake = FakeWatchTranscriber()
+        fake.script = [0: [line("Private words.", chunk: 0)]]
+        let session = makeSession(fake)
+        try deliver(session, 0)
+        try deliver(session, 2, isLast: true)
+        await drain(session)
+        XCTAssertEqual(watchRecords(session).count, 1)
+        XCTAssertFalse(audioFiles(session).isEmpty, "Chunk 2 waits for the missing chunk 1")
+        let waiting = UUID()
+        try deliver(session, 0, recording: waiting)
+        session.refreshWatchInboxRows()
+        XCTAssertTrue(session.deleteAllMessage.contains("Recordings still waiting from Apple Watch are kept."))
+
+        session.deleteAllConversations()
+
+        XCTAssertTrue(session.history.isEmpty)
+        XCTAssertEqual(audioFiles(session), [], "No raw audio of a deleted conversation remains")
+        XCTAssertFalse(audioFiles(session, waiting).isEmpty, "A recording not yet transcribed is kept")
+        XCTAssertEqual(session.watchInbox.ledgers().filter { !$0.completed }.map(\.recordingID), [waiting])
+        let later = startedAt.addingTimeInterval(hour)
+        try deliver(session, 1, at: later, expect: .discarded)
+    }
+
     func testAChunkArrivingDuringADrainIsTranscribedAfterIt() async throws {
         let fake = FakeWatchTranscriber()
         fake.script = [0: [line("First recording.", chunk: 0)]]
