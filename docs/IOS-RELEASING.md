@@ -178,12 +178,17 @@ The macOS signing, notarization and recovery runbook is in
 
 Run `-only-testing:ListenToMeIOSUITests/MobileReleaseScreenshotTests` from the candidate source
 on dedicated iPhone 17 Pro, iPhone 17 Pro Max, iPad mini (A17 Pro) and iPad Pro 13-inch simulators
-(or current supported equivalents). The test captures portrait/landscape Live, Prompt and Summary
+(or current supported equivalents). Erase these dedicated simulators before capture so stale
+preferences and queued exports cannot add warning banners. The test captures portrait/landscape Live, Prompt and Summary
 using synthetic content in the real views. It never sends a model request. Export original PNG
 attachments with `xcrun xcresulttool export attachments --path <result.xcresult> --output-path <folder>`.
 Inspect every image and record the source, app version/build, simulator/runtime, orientation, native
 pixel dimensions and SHA-256 in the release manifest. These are Debug simulator views from candidate
 source, not physical-device or Release-binary acceptance. Keep the full originals with release evidence.
+XCUIScreen landscape PNGs can store orientation in EXIF while their encoded dimensions remain portrait.
+Preserve those originals and make orientation-normalized RGB copies at the same native pixel count;
+record both hashes and the transform. Verify the actual upload dimensions and absence of alpha.
+Never resize one device capture to impersonate another.
 
 ## 1. Identify the exact release and validate it
 
@@ -365,7 +370,7 @@ with the release evidence. Never add unrelated testers or enable external/public
 
 **Reusable verification script.** Recent releases keep a parameterized script that performs the table
 above in their evidence directory: `dist/ios-<version>-build<n>-evidence/asc-verify-script.py` (most
-recently `dist/ios-1.15.0-build32-evidence/`). `dist/` is gitignored, so this is local evidence, not
+recently `dist/ios-1.16.0-build33-evidence/`). `dist/` is gitignored, so this is local evidence, not
 repository source: copy the previous release's script into the new evidence directory and read it
 before running it, for example
 
@@ -405,11 +410,12 @@ This completed the automated path without native Organizer control or another ma
 - Workflow implementation: [PR #85](https://github.com/tomqwu/ListenToMe/pull/85), merged with all CI
   green; 12 helper tests passed and a real API-key upload proved the route.
 
-The same route has carried every build since. The most recent accepted upload is **1.15.0 (32)**,
-accepted 2026-10-24 at 07:30:25 UTC from `f6e4c72` and tagged `ios-v1.15.0-build32`, then verified
-`VALID`, `IN_BETA_TESTING` and in Dev with matching en-CA metadata; its evidence (upload receipt,
-`PUBLISH-STATUS.md`, `asc-verify.json`, local checks) is in `dist/ios-1.15.0-build32-evidence/`.
-Physical-device acceptance was not recorded for it.
+The same route has carried every build since. The most recent accepted upload is **1.16.0 (33)**,
+accepted on 2026-10-24 from `980c471` and tagged `ios-v1.16.0-build33`, then verified
+`VALID`, `IN_BETA_TESTING` and in Dev with matching en-CA metadata. Its upload receipt,
+`PUBLISH-STATUS.md`, `asc-verify.json`, artifact checks and native screenshot manifest are in
+`dist/ios-1.16.0-build33-evidence/`. Physical-device acceptance and App Store listing image upload
+remain pending; the existing 1.15.0 review submission was preserved.
 
 Use this evidence to distinguish the working path from historical Xcode-session failures. Recheck
 live state for a new release; do not treat this historical build number as the next build to upload.
