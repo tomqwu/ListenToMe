@@ -638,3 +638,6 @@ publish step.
 ## License
 
 [MIT](LICENSE) © 2026 Tom Wu
+
+The unreleased iPhone workspace also supports side-by-side Transcript and Quick Summary when the
+window is wide enough (#253). Portrait and accessibility text retain the stacked reading layout.

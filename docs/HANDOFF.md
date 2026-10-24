@@ -27,6 +27,9 @@ Recent iOS trains (full text in [CHANGELOG.md](../CHANGELOG.md)):
 
 ## Merged feature follow-up (unreleased)
 
+- #253: adaptive two-pane Live workspace on wide iPhone windows, with independent Transcript and
+  Quick scrolling; narrow windows and accessibility text retain a stacked fallback.
+
 - #238: all seven presets now select Simplified Chinese terms for `zh`/`zh-Hans` transcription;
   other languages keep English lists. Chinese suggestions work without spaces and use the local
   Chinese embedding when present. Device accuracy acceptance is still pending (#236).
