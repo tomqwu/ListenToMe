@@ -121,8 +121,8 @@ struct MobileMeetingView: View {
         VStack(alignment: .leading, spacing: 6) {
             if verticalSizeClass == .compact && !dynamicTypeSize.isAccessibilitySize {
                 HStack(alignment: .firstTextBaseline, spacing: 12) {
-                    titleEditor.layoutPriority(1)
-                    captureStatusLabel.lineLimit(1)
+                    titleEditor.frame(maxWidth: .infinity, alignment: .leading)
+                    captureStatusLabel.lineLimit(1).fixedSize(horizontal: true, vertical: false)
                 }
             } else {
                 titleEditor
@@ -155,6 +155,7 @@ struct MobileMeetingView: View {
         Label(statusText, systemImage: session.state == .recording ? "record.circle" : "mic")
             .font(.caption.weight(.medium))
             .foregroundStyle(session.state == .recording ? .red : MobileStyle.muted)
+            .accessibilityIdentifier("captureStatus")
     }
 
     private var statusText: String {
