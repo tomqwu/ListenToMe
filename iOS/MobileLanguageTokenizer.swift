@@ -12,7 +12,7 @@ struct MobileLanguageTokenizer: WhisperTokenizer {
 
     init(_ tokenizer: any Tokenizer) throws {
         func token(_ text: String) throws -> Int {
-            guard let id = tokenizer.convertTokenToId(text) else {
+            guard let id = tokenizer.convertTokenToId(text), tokenizer.convertIdToToken(id) == text else {
                 throw RecordingError.message("The downloaded language tokenizer is incomplete.")
             }
             return id
@@ -23,7 +23,7 @@ struct MobileLanguageTokenizer: WhisperTokenizer {
             noSpeechToken: token("<|nospeech|>"), noTimestampsToken: token("<|notimestamps|>"),
             specialTokenBegin: token("<|endoftext|>"), startOfPreviousToken: token("<|startofprev|>"),
             startOfTranscriptToken: token("<|startoftranscript|>"), timeTokenBegin: token("<|0.00|>"),
-            transcribeToken: token("<|transcribe|>"), translateToken: token("<|translate|>"), whitespaceToken: tokenizer.convertTokenToId("Ġ") ?? 220)
+            transcribeToken: token("<|transcribe|>"), translateToken: token("<|translate|>"), whitespaceToken: token("Ġ"))
         allLanguageTokens = Set(Constants.languages.values.compactMap { tokenizer.convertTokenToId("<|\($0)|>") })
     }
 
