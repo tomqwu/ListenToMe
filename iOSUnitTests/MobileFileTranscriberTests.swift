@@ -83,7 +83,7 @@ final class MobileFileTranscriberTests: XCTestCase {
             try await MobileFileTranscriber().transcribe(try chunks(), locale: Locale(identifier: "en_US")) { _ in }
             XCTFail("The simulator cannot transcribe")
         } catch {
-            XCTAssertTrue(error.localizedDescription.contains("unavailable in the iPhone simulator"),
+            XCTAssertTrue(error.localizedDescription.contains("requires a physical iPhone or iPad"),
                           error.localizedDescription)
         }
         #else

@@ -19,6 +19,7 @@ struct MeetingView: View {
     @State private var showOnboarding = false
     @State var restoredRecord: SessionRecord?
     @State var showSearch = false
+    @State var showRetranscription = false
     @State var sessionStore = SessionStore()
     /// Identity of this app-window's session. Reused across Listen→Stop cycles so repeated Stops
     /// upsert one growing record instead of writing a fresh superset each time.
@@ -282,6 +283,7 @@ struct MeetingView: View {
                 identifySpeakers(showSheet: false)
             }
         }
+        .sheet(isPresented: $showRetranscription) { retranscriptionSheet }
         .onChange(of: store.revision) { _, _ in _ = checkpoint(); considerVocabularySuggestion() }
         .onChange(of: currentSessionID) { _, _ in applyVocabulary() }
         .sheet(isPresented: $showSettings, onDismiss: {
@@ -389,6 +391,8 @@ extension MeetingView {
             Button { openSettings($showSettings) } label: { Label("Settings", systemImage: "gearshape") }
                 .help("Configure transcription, AI, and saving (Command-comma)")
             Menu {
+                Button("Re-transcribe saved audio…") { showRetranscription = true }
+                    .disabled(!canRetranscribe)
                 Button("Refresh models") { Task { await reloadAndHealModels() } }
                 Button("Import audio file…") { importAudioFile(session: session) }
                     .disabled(wantsCapture || lifecycleBusy || session.isTranscribingFile)

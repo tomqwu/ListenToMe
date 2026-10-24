@@ -47,6 +47,12 @@ Recent iOS trains (full text in [CHANGELOG.md](../CHANGELOG.md)):
   other languages keep English lists. Chinese suggestions work without spaces and use the local
   Chinese embedding when present. Device accuracy acceptance is still pending (#236).
 
+## Next train: saved-audio re-transcription
+
+- #224 adds a language/engine picker, on-device recognition preview and explicit replacement.
+  Cancellation and failures preserve the original; notes, attachments, instructions and summaries
+  survive replacement. Apple runs on both platforms; Mac also offers WhisperKit.
+
 ## Merged for the next train
 
 - #237: per-conversation vocabulary additions survive History reopen and relaunch, are deleted
@@ -105,7 +111,6 @@ is the tracking issue.
 
 **iPhone — next candidates**
 
-- [#224](https://github.com/tomqwu/ListenToMe/issues/224) Re-transcribe a conversation from its saved audio (P2)
 - [#205](https://github.com/tomqwu/ListenToMe/issues/205) Opt-in multilingual Whisper transcription for mixed-language sentences (P3)
 - [#236](https://github.com/tomqwu/ListenToMe/issues/236) Measure and strengthen vocabulary biasing for SpeechTranscriber (P2)
 - [#54](https://github.com/tomqwu/ListenToMe/issues/54) Meeting auto-detection / auto-start (P2)

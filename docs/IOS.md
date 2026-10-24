@@ -89,7 +89,7 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 | Saved audio (#55) | Off by default (Settings); one `.m4a` per source per run — microphone and system audio as separate labelled files — under Application Support, following Time Machine; saved only while Save sessions locally keeps the conversation, deleted by Discard and Close without saving; placed at #233's `recordingOffset`; History → a conversation plays it, and only WhisperKit lines (real times) can jump into it | Off by default (**Settings → Audio recordings**); the microphone audio the transcriber accepted, one `.m4a` per run, always excluded from backups; the expanded transcript plays it and every line can jump to its time |
 | Storage protection | Plain atomic writes | Data protection (`completeUntilFirstUserAuthentication`) plus an optional backup exclusion (`PrivateStorage`) |
 | Export | Markdown, plain text, SRT, WebVTT and JSON files (subtitles only with WhisperKit timestamps; SpeechAnalyzer reports none until #68), PDF and recap, from the Export menu and the History detail sheet, named after the conversation (#130); **Save to folder** chosen with an open panel, written when a checkpoint is complete (capture stopped) and only while autosaving is on | Readable text and Markdown through the share sheet, and **Export as** Markdown, plain text, SRT, WebVTT or JSON files from More and a History row, named after the conversation, with timestamps (#130); **Save to folder** chosen in the Files picker (security-scoped bookmark), written at Stop/Save and on later changes while not recording |
-| Audio-file import | Yes (`App/AudioFileReader.swift`) | No |
+| Audio-file import | Yes (`SharedPlatform/AudioFileReader.swift`) | No |
 | Languages | Transcription language **and** AI response language, from every on-device language the OS lists (#172); the opt-in WhisperKit engine transcribes mixed languages | Transcription language only, from the same OS list (#172): **Automatic** (the default) detects the spoken language on the device from the first seconds of speech, re-checks it about once a minute and switches when it changes (#197, #199), or a fixed language. Words of two languages mixed within one sentence are not transcribed (#205) |
 | Input | Global ⌘⇧Space hotkey and a Session menu | Touch UI; no hotkeys or menu bar |
 
@@ -1390,3 +1390,17 @@ questions can also fill the Ask draft. Requests and saved instructions are limit
 Mac History can reopen modern saved conversations after capture/import stops; the current conversation
 must first be saved. Older records without structured transcript lines remain readable/exportable.
 Settings Transcription and Speakers descriptions explicitly explain opt-in saved audio; audio is never sent for transcription or speaker identification (#251).
+
+## Re-transcribe saved audio (#224)
+
+After stopping, open a conversation with saved audio and choose **More → Re-transcribe saved audio**.
+Choose its language and tap **Re-transcribe**. Apple speech recognition processes each saved track
+on-device; a language model may need a first-use download. Preview the result, then choose
+**Replace transcript** or **Keep original**. Cancel, an unreadable file, or a failed recognition pass
+leaves the original transcript untouched. A transcript changed during recognition cannot be replaced
+by the stale preview.
+
+Replacement removes every original transcript line, including lines without saved audio. It resets
+speaker identities and corrections, updates transcript/audio timing, and preserves the title, notes,
+attachments, instructions and summaries. Review those summaries against the new text. Saved audio
+files are not rewritten. Mac offers the same flow with Apple or WhisperKit recognition.

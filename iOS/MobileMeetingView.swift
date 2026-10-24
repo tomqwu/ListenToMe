@@ -18,6 +18,7 @@ struct MobileMeetingView: View {
     @State private var showNotes = false
     @State private var showCalendar = false
     @State private var showFullSummary = false
+    @State private var showRetranscription = false
     @State private var summaryMode = MobileSummaryMode.summary
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.verticalSizeClass) private var verticalSizeClass
@@ -73,6 +74,9 @@ struct MobileMeetingView: View {
                             if session.canPlaySavedAudio {
                                 ShareLink(items: session.savedAudioFiles) { Label("Share audio", systemImage: "waveform") }
                             }
+                            Button("Re-transcribe saved audio…", systemImage: "waveform.badge.magnifyingglass") {
+                                showRetranscription = true
+                            }.disabled(!session.canRetranscribe).accessibilityIdentifier("retranscribeSavedAudio")
                             Button("Import from Calendar", systemImage: "calendar") { showCalendar = true }
                             Button("Full summary") { showFullSummary = true }
                             Button("Settings", systemImage: "gearshape") { showSettings = true }
@@ -109,6 +113,12 @@ struct MobileMeetingView: View {
                 }
             }
             .sheet(isPresented: $showCalendar) { MobileCalendarView(session: session) }
+            .sheet(isPresented: $showRetranscription) {
+                RetranscriptionView(original: session.currentRecord, library: session.savedAudio.library,
+                    recognizers: ["Apple on-device": session.savedAudioRecognizer],
+                    terms: { session.vocabulary.recognitionTerms(for: session.id, localeIdentifier: $0) },
+                    apply: session.applyRetranscription)
+            }
             .sheet(isPresented: $showNotes) { MobileNotesView(session: session) }
             .sheet(isPresented: $showFullSummary) {
                 NavigationStack { summary.navigationTitle("Full summary").toolbar { Button("Done") { showFullSummary = false } } }
