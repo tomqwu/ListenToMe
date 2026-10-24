@@ -27,6 +27,20 @@ final class MeetingSessionTimelineTests: XCTestCase {
         return (session, made)
     }
 
+    func testRestoreConversationKeepsInstructionsAndClearsThemOnReset() {
+        let (session, _) = makeSession()
+        let record = SessionRecord(id: "saved", title: "Planning", date: Date(), transcript: "Planning",
+            summary: "A plan", segments: [TranscriptSegment(source: .you, text: "Planning", isFinal: true, start: 0, end: 1)],
+            summaryInstructions: "Prioritize risks.")
+        XCTAssertTrue(session.restoreConversation(record))
+        XCTAssertEqual(session.summaryInstructions, "Prioritize risks.")
+        XCTAssertEqual(session.listenerSummary, "A plan")
+        XCTAssertTrue(session.listenerPersona?.contains("Prioritize risks.") ?? false)
+        session.resetConversation()
+        XCTAssertEqual(session.summaryInstructions, "")
+        XCTAssertEqual(session.listenerSummary, "")
+    }
+
     private func waitUntil(_ cond: () -> Bool) async {
         for _ in 0..<200 where !cond() { try? await Task.sleep(nanoseconds: 10_000_000) }
     }

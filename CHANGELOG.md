@@ -13,6 +13,8 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased since 1.15.0 (32))
 
+- Prompt below Notes supports one-time Ask, saved summary instructions, and editable domain presets. Instructions stay with each conversation and apply to manual and automatic summaries. (#257)
+
 - Release workflow now requires fresh screenshots across supported device categories, with source provenance and App Store Connect screenshot verification before submission. (#255)
 
 - A two-pane Live workspace on wide iPhone layouts: Transcript and Quick Summary sit side by side with independent scrolling and compact controls. Rotation preserves the selected page and conversation; portrait and accessibility text keep a readable stacked layout. (#253)
@@ -26,6 +28,9 @@ does not show it again, and a fresh install does not see it at all; see
 - Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
 
 ## macOS (unreleased since 1.4.4)
+
+- Context now offers Ask Quick/Deep and saved summary instructions with optional domain presets. Modern History records can be reopened with their instructions. (#257)
+
 
 - All seven vocabulary presets add focused Simplified Chinese terms selected by the transcription language, with on-device Chinese suggestions and the original English lists as fallback. My terms keeps its spelling and language. (#238)
 

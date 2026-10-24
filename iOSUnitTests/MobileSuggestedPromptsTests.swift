@@ -168,3 +168,33 @@ final class MobileSuggestedPromptsTests: XCTestCase {
         XCTAssertTrue(session.suggestedPrompts.isEmpty)
     }
 }
+
+extension MobileSuggestedPromptsTests {
+    func testSavedInstructionsRestoreAndDoNotLeakIntoNewConversation() async {
+        let session = MobileSession(storageDirectory: root)
+        session.notes = "Launch review"
+        session.summaryInstructions = "List risks before decisions."
+        session.save(announce: false)
+        let record = session.currentRecord
+        let restored = MobileSession(storageDirectory: root)
+        XCTAssertEqual(restored.summaryInstructions, "List risks before decisions.")
+        restored.newConversation()
+        XCTAssertEqual(restored.summaryInstructions, "")
+        restored.restore(record)
+        XCTAssertEqual(restored.summaryInstructions, "List risks before decisions.")
+        XCTAssertTrue(restored.vocabularyDirectives.personaGuidance?.contains("List risks") ?? false)
+    }
+
+    func testSavedInstructionsReachManualSummaryAndQuickWithoutExtraRequests() async {
+        let stub = SuggestionStub(response: "The launch review is next Tuesday.")
+        let session = MobileSession(storageDirectory: root, summaryProvider: stub)
+        session.notes = "The launch review is next Tuesday."
+        session.summaryInstructions = "Emphasize open risks."
+        await session.summarize()
+        XCTAssertTrue(stub.requests.last?.system.contains("Emphasize open risks.") ?? false)
+        stub.response = #"{"action":"publish","context":"Launch","bullets":["Review next Tuesday."],"reviews":[],"suggestions":[]}"#
+        await session.summarize(mode: .quick)
+        XCTAssertTrue(stub.requests.last?.system.contains("Emphasize open risks.") ?? false)
+        XCTAssertEqual(stub.requests.count, 2)
+    }
+}

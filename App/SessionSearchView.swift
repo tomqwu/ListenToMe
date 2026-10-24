@@ -6,6 +6,7 @@ struct SessionSearchView: View {
     @Environment(\.dismiss) private var dismiss
     let store: SessionStore
     let onClear: () -> Void
+    let onOpen: ((SessionRecord) -> Void)?
     /// Read when the user asks, so a Settings change since the sheet opened is honoured (#57).
     let askRoute: () -> HistoryAskRoute
     @State private var query = ""
@@ -13,9 +14,9 @@ struct SessionSearchView: View {
     @State private var selected: SessionRecord?
     @State private var confirmClear = false
 
-    init(store: SessionStore, onClear: @escaping () -> Void = {},
+    init(store: SessionStore, onClear: @escaping () -> Void = {}, onOpen: ((SessionRecord) -> Void)? = nil,
          askRoute: @escaping () -> HistoryAskRoute = { .unavailable("Asking is not available here.") }) {
-        self.store = store; self.onClear = onClear; self.askRoute = askRoute
+        self.store = store; self.onClear = onClear; self.onOpen = onOpen; self.askRoute = askRoute
     }
 
     private var trimmedQuery: String { query.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -96,13 +97,18 @@ struct SessionSearchView: View {
             Text("Export any conversations you want to keep first. Saved audio is deleted too. "
                  + "This cannot be undone in the app.")
         }
-        .sheet(item: $selected) { SessionDetailView(record: $0) }
+        .sheet(item: $selected) { record in
+            SessionDetailView(record: record, onOpen: onOpen.map { action in
+                { selected = nil; dismiss(); action(record) }
+            })
+        }
     }
 }
 
 private struct SessionDetailView: View {
     @Environment(\.dismiss) private var dismiss
     let record: SessionRecord
+    var onOpen: (() -> Void)?
     @State private var error: String?
 
     private var markdown: String { SessionExporter.markdown(for: record) }
@@ -119,6 +125,7 @@ private struct SessionDetailView: View {
             ScrollView { MarkdownText(text: markdown).frame(maxWidth: .infinity, alignment: .leading) }
             if let error { Text(error).foregroundStyle(.red) }
             HStack {
+                if let onOpen { Button("Open conversation", action: onOpen) }
                 Button("Copy conversation") { Clipboard.copy(markdown) }
                 Menu("Export") {
                     ConversationExportMenu(record: { record },

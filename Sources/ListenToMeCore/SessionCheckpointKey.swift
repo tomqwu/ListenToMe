@@ -12,16 +12,18 @@ public struct SessionCheckpointKey: Hashable, Sendable {
     public let title: String
     public let summary: String
     public let notes: String
+    public let summaryInstructions: String
     public let quickSuggestion: String
     public let deepAnswer: String
     public let complete: Bool
 
     public init(revision: Int, title: String, summary: String, notes: String,
-                quickSuggestion: String, deepAnswer: String, complete: Bool) {
+                quickSuggestion: String, deepAnswer: String, complete: Bool, summaryInstructions: String = "") {
         self.revision = revision
         self.title = title
         self.summary = summary
         self.notes = notes
+        self.summaryInstructions = summaryInstructions
         self.quickSuggestion = quickSuggestion
         self.deepAnswer = deepAnswer
         self.complete = complete

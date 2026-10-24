@@ -38,7 +38,7 @@ extension SessionExporter {
             hasTimestamps: TranscriptTimestamp.hasTimes(segments),
             duration: TranscriptTimestamp.duration(of: segments).map(millis), speakers: speakers,
             summary: record.summary, quickSummary: record.quickSuggestion ?? "", deepSummary: record.deepAnswer ?? "",
-            notes: record.notes ?? "", segments: lines,
+            notes: record.notes ?? "", summaryInstructions: record.summaryInstructions, segments: lines,
             transcript: record.segments == nil ? record.transcript : nil,
             attachments: (record.attachments ?? []).map { SessionExportJSON.Attachment(name: $0.name) },
             selectionSummaries: (record.selectionSummaries ?? []).map {
@@ -98,6 +98,7 @@ struct SessionExportJSON: Encodable {
     let quickSummary: String
     let deepSummary: String
     let notes: String
+    let summaryInstructions: String?
     let segments: [Segment]
     /// Only for conversations saved before lines were kept one by one.
     let transcript: String?

@@ -98,7 +98,7 @@ public struct QuickSummaryContext {
 
     public func batch(_ pieces: [Piece], summary: String, reviewsCompleted: [String] = [],
                pendingReviews: [QuickSummaryDecision.Review] = [],
-               responseLanguage: String? = nil) throws -> Batch? {
+               responseLanguage: String? = nil, summaryInstructions: String = "") throws -> Batch? {
         let current = Dictionary(uniqueKeysWithValues: pieces.map { ($0.id, $0.text) })
         // Removed/edited text is sent explicitly; it must not survive as an old fact in memory.
         var changes = acknowledged.keys.sorted().filter { current[$0] == nil }.map {
@@ -120,7 +120,8 @@ public struct QuickSummaryContext {
         let input = Input(runningContext: memory, visibleSummary: String(summary.prefix(1_000)),
                           recentSpeech: Array(overlap), changes: selected, reviewsCompleted: reviewsCompleted, pendingReviews: pendingReviews)
         let data = try JSONEncoder().encode(input)
-        return Batch(changes: selected, request: LLMRequest(system: Self.instructions(responseLanguage: responseLanguage),
+        return Batch(changes: selected, request: LLMRequest(system: Self.instructions(responseLanguage: responseLanguage)
+            + (ConversationPrompt.guidance(summaryInstructions).map { "\n\n" + $0 } ?? ""),
             messages: [.init(role: "user", content: String(decoding: data, as: UTF8.self))], purpose: .quickEvaluation),
                      hasMore: selected.count < changes.count)
     }

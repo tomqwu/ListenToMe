@@ -14,3 +14,7 @@ Two-pane iPhone layout (#253): rotate a conversation to landscape. Scroll Transc
 independently; check Start/Stop, Notes, model selection and Expand transcript. Rotate while viewing
 Summary or the expanded transcript and verify the page and conversation are preserved. At
 accessibility text sizes the layout should stay stacked and scrollable.
+
+Prompt in Notes: try Ask once and a domain preset, edit before sending, then save summary instructions.
+Generate Quick/Summary, reopen the conversation and verify instructions persist. New clears them.
+Check portrait, landscape, iPad and large text.

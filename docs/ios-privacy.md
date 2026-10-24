@@ -80,3 +80,8 @@ If you email support, we receive your email address and the information you choo
 ## Your choices and policy changes
 
 You can revoke microphone and calendar permissions in iOS Settings. Only record or share content you are authorized to use. The app is a general productivity tool and is not directed to children. Depending on your location, you may have rights to access, correct or delete information you provide to us, or to complain to your local privacy authority. Contact us to exercise those rights. Material changes to this policy will be reflected here with a revised effective date.
+
+Saved summary instructions are stored with the conversation and included in its text/JSON exports.
+They are sent with summary requests only to the AI provider you choose, alongside the included context.
+One-time Ask answers remain session-only. Domain presets are optional, editable drafts; selecting one
+does not send a request. Deleting a conversation also deletes its saved instructions.

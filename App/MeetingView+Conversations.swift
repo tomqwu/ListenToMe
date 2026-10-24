@@ -4,7 +4,10 @@ import UniformTypeIdentifiers
 import ListenToMeCore
 
 extension MeetingView {
-    var hasConversation: Bool { !store.utterances.isEmpty || !session.notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    var hasConversation: Bool {
+        !session.summaryInstructions.isEmpty || !store.utterances.isEmpty
+            || !session.notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
 
     @discardableResult
     func checkpoint(complete: Bool = false, force: Bool = false) -> Bool {
@@ -17,7 +20,7 @@ extension MeetingView {
         let key = SessionCheckpointKey(
             revision: store.revision, title: conversationTitle, summary: session.listenerSummary,
             notes: session.notes, quickSuggestion: session.quickSuggestion,
-            deepAnswer: session.deepAnswer, complete: complete)
+            deepAnswer: session.deepAnswer, complete: complete, summaryInstructions: session.summaryInstructions)
         guard force || key != lastSavedKey else { return true }
         // The record keeps the conversation's start (its first checkpoint), so History, its exports
         // and the Save to folder note all carry the same date and file name as the live export.
@@ -96,6 +99,7 @@ extension MeetingView {
             if persisted { nameConversationIfNeeded() }   // the saved one, in the background (#221)
             autoTitleTask = nil   // it renames the saved record; typing the new title must not cancel it
             beginDiarizationRunReset()
+            restoredRecord = nil
             session.resetConversation()
             currentSessionID = UUID().uuidString; conversationStartedAt = nil
             conversationLanguages = ConversationLanguages()
@@ -108,6 +112,40 @@ extension MeetingView {
             clearReferences(session: session)
             transcriptAtBottom = true
         }
+    }
+
+    func openConversation(_ record: SessionRecord) {
+        guard record.id != currentSessionID else { return }
+        guard !lifecycleBusy, !session.isRunning, !session.isTranscribingFile else {
+            saveMessage = "Stop recording or importing before opening another conversation."
+            saveFailed = true
+            return
+        }
+        guard record.segments != nil || record.transcript.isEmpty else {
+            saveMessage = "This older conversation can be read and exported in History. It cannot be reopened yet."
+            saveFailed = true
+            return
+        }
+        if hasConversation {
+            guard ProviderSettings.saveSessionsForSearch, sessionSaveable,
+                  checkpoint(complete: true, force: true) else {
+                saveMessage = "Save or start a new conversation before opening History."
+                saveFailed = true
+                return
+            }
+        }
+        autoTitleTask?.cancel(); autoTitleTask = nil
+        beginDiarizationRunReset()
+        session.resetConversation()
+        clearReferences(session: session)
+        othersAudioSink.reset(); microphoneAudioSink.reset()
+        restoredRecord = record
+        guard session.restoreConversation(record) else { return }
+        currentSessionID = record.id; conversationStartedAt = record.date
+        conversationTitle = record.title; conversationTitleState = record.resolvedTitleState
+        conversationLanguages = record.conversationLanguages
+        lastSavedKey = nil; sessionSaveable = ProviderSettings.saveSessionsForSearch
+        saveMessage = "Opened conversation"; saveFailed = false
     }
 
     var conversationStatus: some View {

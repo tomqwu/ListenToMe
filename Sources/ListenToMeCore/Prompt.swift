@@ -214,7 +214,7 @@ public enum PromptBuilder {
     /// carry more than a chip can hold.
     public static func askInstruction(_ request: String) -> String {
         let line = request.split(whereSeparator: \.isNewline).joined(separator: " ")
-        return "The user asks: \"" + String(line.prefix(SuggestedPrompts.maximumLength))
+        return "The user asks: \"" + String(line.prefix(ConversationPrompt.maximumLength))
             + "\". Respond to that request, grounded in the transcript and notes."
     }
 
