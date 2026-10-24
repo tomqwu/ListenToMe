@@ -7,7 +7,9 @@ final class MobileTranscriptCorrector {
     private struct Job {
         let segment: TranscriptSegment
         let context: String
-        let glossary: [String]
+        /// Built when the job runs, off the main actor (issue #222 review): it compares the phrase with
+        /// every active term.
+        let glossary: @Sendable () -> [String]
         let model: String
         let provider: any LLMProvider
         let apply: (TranscriptSegment) -> Void
@@ -26,7 +28,8 @@ final class MobileTranscriptCorrector {
 
     func reportFailure(_ error: Error) { status = "Original kept · \(MobileAISettings.errorMessage(error))" }
 
-    func submit(_ segment: TranscriptSegment, context: String, glossary: [String] = [], model: String,
+    func submit(_ segment: TranscriptSegment, context: String,
+                glossary: @escaping @Sendable () -> [String] = { [] }, model: String,
                 provider: any LLMProvider, apply: @escaping (TranscriptSegment) -> Void) {
         guard segment.isFinal, !segment.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         guard segment.text.count <= 1_200 else {
@@ -47,7 +50,8 @@ final class MobileTranscriptCorrector {
                 let job = queue.removeFirst()
                 status = "Checking speech…"
                 do {
-                    let text = try await Self.correct(job.segment.text, context: job.context, glossary: job.glossary,
+                    let glossary = await Task.detached(priority: .utility) { job.glossary() }.value
+                    let text = try await Self.correct(job.segment.text, context: job.context, glossary: glossary,
                                                       provider: job.provider)
                     try Task.checkCancellation()
                     guard generation == token else { return }

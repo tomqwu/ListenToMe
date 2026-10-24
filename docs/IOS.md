@@ -618,25 +618,36 @@ that conversation, and My terms. It is used in three places:
 
 - **Recognition.** `ActiveVocabulary.recognitionTerms()` takes at most 100 phrases of up to three
   words (Apple's guidance for `AnalysisContext.contextualStrings`): My terms first — up to 60 when a
-  preset is on — then the presets' leading terms, which are the ones speech engines mis-hear most.
-  `MobileRecorder` sets them on the `SpeechAnalyzer` before it starts, again with
+  preset is on; past that, the ones already said in this conversation and then the newest, so a term
+  added mid-meeting always makes it — then the presets' leading terms, which are the ones speech engines
+  mis-hear most. `MobileRecorder` sets them on the `SpeechAnalyzer` before and again after it starts
+  (the documentation does not promise that a context set before `start` survives it), again with
   `SpeechAnalyzer.setContext(_:)` when they change while recording (no restart of the microphone), and
-  on the new analyzer a language switch creates (#197/#199). Apple Watch recordings are transcribed
+  on the new analyzer a language switch creates (#197/#199); a change made while that analyzer was being
+  prepared is set again once it is installed. Apple Watch recordings are transcribed
   with the default presets and My terms. Verified API: `SpeechAnalyzer.setContext(_:)`,
   `AnalysisContext.contextualStrings: [ContextualStringsTag: [String]]` in the iOS 27.0 / macOS SDK's
   `Speech.framework/Modules/Speech.swiftmodule/arm64e-apple-ios.swiftinterface`; Apple's documentation
   describes the bias for `DictationTranscriber`, so how much it helps `SpeechTranscriber` is checked on
   a device (see the manual smoke test), not assumed.
-- **AI speech correction.** The correction request gains a `glossary` field (My terms, then preset
-  terms that resemble the phrase, at most 40) and one instruction: use the glossary spelling for a
-  near-miss and never insert a term nobody said. The validator still refuses changed numbers and
-  negation, except digits that belong to a glossary term the edit uses ("e c2" → "EC2").
+- **AI speech correction.** The correction request gains a `glossary` field — My terms (at most half)
+  and then preset terms, each ranked by how closely something in the phrase spells it, at most 40 —
+  and one instruction: use the glossary spelling for a near-miss and never insert a term nobody said.
+  The glossary is built off the main thread from an index prepared once per vocabulary
+  (`VocabularyPrompt.CorrectionIndex`). The validator (`CorrectionGuard`) still refuses any change to
+  numbers and negation; a term's own digits or negation are exempt only inside its span, and only when
+  the original said the same tokens in a span spelled like it ("e c2" → "EC2" passes; "show rate" →
+  "no-show rate", "with prejudice" → "without prejudice" and dropping the "2" of "for 2 vendors" do not).
 - **Summary, Quick and Deep.** The domain's description and a glossary (My terms, then terms heard
   recently, then the rest) are appended as "Context for this session" — at most 1,500 characters, or
-  400 on Apple Intelligence. Its characters are charged to the same budget as the transcript: the
-  Summary cap, and the on-demand Quick/Deep excerpt budget (`OnDemandGrounding.oneShotBudget`). With **Organize summaries by domain** on, Summary follows the domain's headings (Medical:
-  History / Findings / Plan; Engineering: Decisions / Actions / Risks; Sales: Customer needs /
-  Objections / Next steps…). Automatic Summary and Deep reviews carry the same guidance.
+  400 on Apple Intelligence, where the compact form names the domain in a word and keeps at least half
+  the space for the glossary, so My terms are never squeezed out. Its characters are charged to the
+  same budget as the transcript: the Summary cap, and the on-demand Quick/Deep excerpt budget
+  (`OnDemandGrounding.oneShotBudget`). With **Organize summaries by domain** on, only Summary (and the
+  automatic Summary review) follows the domain's headings (Medical: History / Findings / Plan;
+  Engineering: Decisions / Actions / Risks; Sales: Customer needs / Objections / Next steps…); Quick,
+  Deep and the automatic Deep review get the domain and glossary without them. On the Mac the headings
+  reach only the Listener and automatic Summary reviews (`MeetingSession.summaryGuidance`).
 
 **Suggestion banner.** After about a minute of final speech (150 words), and again every 50 words,
 `VocabularyClassifier` checks the recent speech on the device, off the main thread, with no model call:

@@ -85,6 +85,7 @@ actor SpeechAnalyzerTranscriber: Transcribing {
     private func ensurePipeline(for source: SpeakerSource) async -> Pipeline? {
         if let existing = pipelines[source] { return existing }
         guard !failedSources.contains(source) else { return nil }
+        let applied = contextualStrings
         guard let created = await makePipeline(for: source) else { return nil }
         guard !stopped else {
             // stop() ran during async setup — tear down the just-created pipeline.
@@ -94,6 +95,12 @@ actor SpeechAnalyzerTranscriber: Transcribing {
             return nil
         }
         pipelines[source] = created
+        // The analyzer has started: set the latest strings again. A change made while it was being
+        // built went only to the pipelines already installed, and a context set before `start` is not
+        // documented to survive it.
+        if contextualStrings != applied || !contextualStrings.isEmpty {
+            await SpeechVocabularyContext.apply(contextualStrings, to: created.analyzer)
+        }
         return created
     }
 

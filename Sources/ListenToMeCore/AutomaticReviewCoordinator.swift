@@ -27,16 +27,22 @@ public struct AutomaticReviewDirectives: Sendable, Equatable {
     public var responseLanguage: String?
     public var personaGuidance: String?
     public var references: String?
-    public init(responseLanguage: String? = nil, personaGuidance: String? = nil, references: String? = nil) {
+    /// Added to Summary reviews only: the active vocabulary's summary headings (issue #222).
+    public var summaryGuidance: String?
+    public init(responseLanguage: String? = nil, personaGuidance: String? = nil, references: String? = nil,
+                summaryGuidance: String? = nil) {
         self.responseLanguage = responseLanguage
         self.personaGuidance = personaGuidance
         self.references = references
+        self.summaryGuidance = summaryGuidance
     }
 
     /// The system prompt for a review, built through the same directive path as the manual panes.
     func system(for mode: AutomaticReviewMode) -> String {
-        PromptBuilder.systemWithDirectives(mode.instructions, PromptContext(
-            messages: [], notes: nil, responseLanguage: responseLanguage, personaGuidance: personaGuidance))
+        let persona = mode == .summary
+            ? VocabularyPrompt.combined(persona: personaGuidance, guidance: summaryGuidance) : personaGuidance
+        return PromptBuilder.systemWithDirectives(mode.instructions, PromptContext(
+            messages: [], notes: nil, responseLanguage: responseLanguage, personaGuidance: persona))
     }
 
     /// Deep reviews answer substantive questions, so they receive the attached reference material,

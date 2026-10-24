@@ -67,9 +67,12 @@ final class MobileFileTranscriber: WatchAudioTranscribing {
                 }
             }
         }
+        let strings = contextualStrings
         do {
             try await withTaskCancellationHandler {
                 try await analyzer.start(inputSequence: ChunkInputs(feed: feed))
+                // Again after start: a context set before it is not documented to survive it.
+                if !strings.isEmpty { await SpeechVocabularyContext.apply(strings, to: analyzer) }
                 // The feed ends after the last chunk, or as soon as it is stopped.
                 try await analyzer.finalizeAndFinishThroughEndOfInput()
                 try await results.value

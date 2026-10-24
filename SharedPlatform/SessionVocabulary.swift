@@ -27,8 +27,11 @@ final class SessionVocabulary {
     @ObservationIgnored private(set) var check: Task<Void, Never>?
     /// The transcript line "Add to My terms" was chosen from, while its sheet is open (macOS).
     var termSourceLine: String?
-    /// Final lines of the open conversation already counted by `heard(transcript:conversationID:)`.
+    /// Final lines of the open conversation already seen by `heard(transcript:conversationID:live:)`.
     @ObservationIgnored private var countedLines = 0
+    /// The correction lookup for the last active vocabulary, rebuilt only when that vocabulary changes.
+    @ObservationIgnored private var correctionIndex: VocabularyPrompt.CorrectionIndex?
+    @ObservationIgnored private var correctionIndexSource: ActiveVocabulary?
 
     init(defaults: UserDefaults = .standard, catalog: VocabularyCatalog = .bundled,
          classifier: VocabularyClassifier? = nil) {
@@ -45,7 +48,21 @@ final class SessionVocabulary {
         ActiveVocabulary(settings: settings, conversationDomainIDs: domainIDs(for: conversationID), catalog: catalog)
     }
 
-    func recognitionTerms(for conversationID: String) -> [String] { active(for: conversationID).recognitionTerms() }
+    /// `heard` is the conversation's recent speech: My terms already said there are kept first.
+    func recognitionTerms(for conversationID: String, heard: String? = nil) -> [String] {
+        active(for: conversationID).recognitionTerms(heard: heard)
+    }
+
+    /// The prepared correction lookup for this conversation's vocabulary (a `Sendable` value, so the
+    /// glossary for each phrase can be built off the main actor).
+    func correctionLookup(for conversationID: String) -> VocabularyPrompt.CorrectionIndex {
+        let active = active(for: conversationID)
+        if let correctionIndex, correctionIndexSource == active { return correctionIndex }
+        let index = VocabularyPrompt.CorrectionIndex(active)
+        correctionIndex = index
+        correctionIndexSource = active
+        return index
+    }
 
     /// Presets on for this conversation only (added from the banner).
     func domainIDs(for conversationID: String) -> Set<String> {
@@ -82,11 +99,16 @@ final class SessionVocabulary {
         }
     }
 
-    /// The whole finalized transcript, for a platform that observes it rather than each line (macOS):
-    /// only lines not yet counted are counted.
-    func heard(transcript lines: [String], conversationID: String) {
-        if tracker.conversationID != conversationID || lines.count < countedLines { countedLines = 0 }
-        guard lines.count > countedLines else { return }
+    /// The whole finalized transcript, for a platform that observes it rather than each line (macOS).
+    /// Only lines that arrive while `live` (recording) count toward a suggestion: a restored or imported
+    /// conversation, or a store that was replaced, only moves the baseline and is never classified.
+    func heard(transcript lines: [String], conversationID: String, live: Bool) {
+        if tracker.conversationID != conversationID {
+            tracker.begin(conversationID: conversationID)
+            if let shown = suggestion, shown.conversationID != conversationID { suggestion = nil }
+            countedLines = lines.count
+        }
+        guard live, lines.count > countedLines else { countedLines = lines.count; return }
         for line in lines[countedLines...] {
             heard(line, conversationID: conversationID, recent: lines.suffix(200).joined(separator: " "))
         }

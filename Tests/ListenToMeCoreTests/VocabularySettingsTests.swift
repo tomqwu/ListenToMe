@@ -110,14 +110,26 @@ final class VocabularySettingsTests: XCTestCase {
         let withPreset = ActiveVocabulary(domains: [preset("legal", (0..<300).map { "law\($0)" })], myTerms: mine)
         let terms = withPreset.recognitionTerms()
         XCTAssertEqual(terms.count, 100)
-        XCTAssertEqual(Array(terms.prefix(60)), Array(mine.prefix(60)))
+        XCTAssertEqual(Array(terms.prefix(60)), Array(mine.reversed().prefix(60)), "the newest My terms first")
         XCTAssertEqual(terms[60], "law0")
-        XCTAssertEqual(ActiveVocabulary(domains: [], myTerms: mine).recognitionTerms(), mine)
+        XCTAssertEqual(ActiveVocabulary(domains: [], myTerms: mine).recognitionTerms().sorted(), mine.sorted())
         // A small preset leaves its unused slots to the rest of My terms.
         let small = ActiveVocabulary(domains: [preset("legal", ["tort"])], myTerms: mine).recognitionTerms()
         XCTAssertEqual(small.count, 91)
         XCTAssertEqual(small[60], "tort")
-        XCTAssertEqual(small.last, "mine89")
+        XCTAssertEqual(small.last, "mine0")
+    }
+
+    /// Past the share, My terms said in this conversation and the newest ones win (#222 review): a term
+    /// added mid-meeting always reaches the recognizer.
+    func testATermAddedMidMeetingAndTermsAlreadySaidReachTheRecognizer() {
+        var mine = (0..<90).map { "mine\($0)" }
+        let legal = preset("legal", (0..<300).map { "law\($0)" })
+        mine.append("Kubeflow")
+        let terms = ActiveVocabulary(domains: [legal], myTerms: mine).recognitionTerms(heard: "we asked mine3 about it")
+        XCTAssertEqual(Array(terms.prefix(2)), ["mine3", "Kubeflow"])
+        XCTAssertFalse(terms.contains("mine0"), "the oldest unsaid terms give way")
+        XCTAssertEqual(terms.count, 100)
     }
 
     func testRecognitionInterleavesPresetsAndSkipsLongOrRepeatedPhrases() {
@@ -125,6 +137,7 @@ final class VocabularySettingsTests: XCTestCase {
                                                preset("legal", ["tort", "cbc", "voir dire"])],
                                       myTerms: ["Acme"])
         XCTAssertEqual(active.recognitionTerms(), ["Acme", "CBC", "tort", "dyspnea", "voir dire"])
+        XCTAssertEqual(active.recognitionTerms(heard: ""), active.recognitionTerms())
         XCTAssertEqual(active.recognitionTerms(limit: 2), ["Acme", "CBC"])
     }
 }

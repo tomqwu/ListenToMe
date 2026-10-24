@@ -148,6 +148,7 @@ extension MeetingView {
             transcriptInputZone(session: session, notes: notes)
         }
         .frame(minWidth: 380, idealWidth: 520, maxWidth: .infinity)
+        .modifier(MacAddTermPresenter(vocabulary: vocabulary, apply: applyVocabulary))
         .background(Theme.cardBackground)
         .overlay(Rectangle().fill(Theme.line).frame(width: 1), alignment: .trailing)
     }

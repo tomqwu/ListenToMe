@@ -278,13 +278,16 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   project wrote itself — drug names, cloud services, legal Latin and everyday jargon — not licensed
   dictionaries. Medical carries a note that ListenToMe is not a medical device and must not be used for
   clinical decisions. The active terms reach three places: **recognition** (at most 100 short phrases,
-  Apple's limit — My terms first, up to 60 when a preset is on — handed to SpeechAnalyzer's
-  `AnalysisContext` and updated live while you listen; the legacy SpeechRecognizer engine applies them
-  from the next utterance; WhisperKit ignores them), **prompts** (the domain's description and a
-  glossary, at most 1,500 characters — 400 on Apple Intelligence — ride in the same "Context for this
-  session" line as the use-case preset, so the prompt budget measures them), and **summaries** (with
-  **Organize summaries by domain** on, the Listener summary follows the domain's headings, such as
-  History / Findings / Plan for Medical or Decisions / Actions / Risks for Engineering). After about a
+  Apple's limit — My terms first, up to 60 when a preset is on, those already said in the conversation
+  and the newest ahead of older ones — handed to SpeechAnalyzer's `AnalysisContext` and updated live
+  while you listen; the legacy SpeechRecognizer engine applies them from the next utterance; WhisperKit
+  ignores them), **prompts** (the domain's description and a glossary, at most 1,500 characters — 400
+  on Apple Intelligence, where the glossary keeps at least half and the domain is named in a word —
+  ride in the same "Context for this session" line as the use-case preset, so the prompt budget
+  measures them), and **summaries** (with **Organize summaries by domain** on, only the Listener
+  summary and automatic Summary reviews follow the domain's headings, such as History / Findings / Plan
+  for Medical or Decisions / Actions / Risks for Engineering; Quick and Deep do not). Only speech heard
+  while recording counts toward a suggestion, never a restored or imported conversation. After about a
   minute of final speech the app checks, on this Mac, whether the conversation sounds like one preset
   (term hits and Apple's on-device sentence embedding; no model call). When it is confident a banner
   asks "Sounds like a medical conversation — add the Medical vocabulary?" with **Add** (this

@@ -13,7 +13,7 @@ final class VocabularyPromptTests: XCTestCase {
 
     func testGuidanceCarriesDomainLayoutAndGlossaryWithinTheLimit() throws {
         let active = ActiveVocabulary(domains: [medical], myTerms: ["Dr. Okafor"])
-        let guidance = try XCTUnwrap(VocabularyPrompt.guidance(for: active, characterLimit: 1_500))
+        let guidance = try XCTUnwrap(VocabularyPrompt.guidance(for: active, characterLimit: 1_500, includeLayout: true))
         XCTAssertTrue(guidance.hasPrefix("Domain: Medical — A clinical or health-care conversation"))
         XCTAssertTrue(guidance.contains("organize it under these headings: History, Findings, Plan."))
         XCTAssertTrue(guidance.contains("never add a term nobody said"))
@@ -21,10 +21,40 @@ final class VocabularyPromptTests: XCTestCase {
         XCTAssertLessThanOrEqual(guidance.count, 1_500)
         let compact = try XCTUnwrap(VocabularyPrompt.guidance(for: active, characterLimit: 400))
         XCTAssertLessThanOrEqual(compact.count, 400)
-        let noLayout = try XCTUnwrap(VocabularyPrompt.guidance(for: active, includeLayout: false))
-        XCTAssertFalse(noLayout.contains("headings"))
-        let tiny = try XCTUnwrap(VocabularyPrompt.guidance(for: active, characterLimit: 30))
-        XCTAssertEqual(tiny.count, 30, "a pathological limit truncates instead of overrunning")
+        let noLayout = try XCTUnwrap(VocabularyPrompt.guidance(for: active))
+        XCTAssertFalse(noLayout.contains("headings"), "headings are for summaries only, and opt-in")
+        XCTAssertNil(VocabularyPrompt.guidance(for: active, characterLimit: 30), "nothing useful fits, nothing is sent")
+    }
+
+    /// Apple Intelligence's 400 characters: the glossary — My terms first — always keeps at least half,
+    /// so the domain line and headings can never squeeze My terms out (#222 review).
+    func testEveryPresetKeepsMyTermsAndAGlossaryAtTheAppleCap() throws {
+        for domain in VocabularyCatalog.bundled.domains {
+            let active = ActiveVocabulary(domains: [domain], myTerms: ["Dr. Okafor", "Acme Cloud", "张伟"])
+            let guidance = try XCTUnwrap(VocabularyPrompt.guidance(for: active, characterLimit: 400, includeLayout: true))
+            XCTAssertLessThanOrEqual(guidance.count, 400, domain.id)
+            XCTAssertTrue(guidance.contains("Domain: \(domain.name)."), domain.id)
+            XCTAssertTrue(guidance.contains("Summary headings: "), domain.id)
+            let glossary = try XCTUnwrap(guidance.components(separatedBy: "never add unsaid ones): ").last)
+            let terms = glossary.dropLast().components(separatedBy: ", ")
+            XCTAssertEqual(Array(terms.prefix(3)), ["Dr. Okafor", "Acme Cloud", "张伟"], domain.id)
+            XCTAssertGreaterThanOrEqual(terms.count, 10, "\(domain.id): \(terms.count) terms")
+        }
+        // Two presets with headings still leave the glossary its half.
+        let both = ActiveVocabulary(domains: Array(VocabularyCatalog.bundled.domains.prefix(2)), myTerms: ["Acme"])
+        let guidance = try XCTUnwrap(VocabularyPrompt.guidance(for: both, characterLimit: 400, includeLayout: true))
+        XCTAssertGreaterThanOrEqual(guidance.components(separatedBy: "unsaid ones): ").last?.count ?? 0, 190)
+    }
+
+    func testTheLayoutSentenceComesOnlyFromLayoutInstruction() {
+        let medical = ActiveVocabulary(domains: [medical], myTerms: [])
+        XCTAssertEqual(VocabularyPrompt.layoutInstruction(for: medical),
+                       "When writing a summary or meeting record, organize it under these headings: History, Findings, Plan.")
+        XCTAssertEqual(VocabularyPrompt.layoutInstruction(for: medical, compact: true),
+                       "Summary headings: History, Findings, Plan.")
+        XCTAssertNil(VocabularyPrompt.layoutInstruction(for: ActiveVocabulary(domains: [], myTerms: ["Acme"])))
+        XCTAssertNil(VocabularyPrompt.layoutInstruction(for: ActiveVocabulary(domains: [self.medical], myTerms: [],
+                                                                              usesSummaryLayout: false)))
     }
 
     func testMyTermsAloneStillProduceAGlossary() throws {
@@ -36,7 +66,7 @@ final class VocabularyPromptTests: XCTestCase {
     func testTermsHeardInTheTranscriptAreListedBeforeTheRest() throws {
         let active = ActiveVocabulary(domains: [cloud], myTerms: [])
         let guidance = try XCTUnwrap(VocabularyPrompt.guidance(for: active, transcript: "we moved the queue to Kafka",
-                                                                characterLimit: 400, includeLayout: false))
+                                                                characterLimit: 1_000))
         let glossary = try XCTUnwrap(guidance.components(separatedBy: "nobody said): ").last)
         XCTAssertTrue(glossary.hasPrefix("Kafka, Kubernetes"), glossary)
     }
@@ -70,7 +100,7 @@ final class VocabularyPromptTests: XCTestCase {
         let limit = PromptBudget.appleIntelligenceCharacters
         let guidance = try XCTUnwrap(VocabularyPrompt.guidance(
             for: ActiveVocabulary(domains: [medical], myTerms: ["Acme"]),
-            characterLimit: VocabularyPrompt.characterLimit(forPromptWindow: limit)))
+            characterLimit: VocabularyPrompt.characterLimit(forPromptWindow: limit), includeLayout: true))
         let persona = VocabularyPrompt.combined(persona: "This is a medical consultation.", guidance: guidance)
         let plain = PromptContext(messages: [], notes: nil, personaGuidance: "This is a medical consultation.")
         let guided = PromptContext(messages: [], notes: nil, personaGuidance: persona)
@@ -98,9 +128,10 @@ final class VocabularyPromptTests: XCTestCase {
     // MARK: - Transcript correction glossary
 
     func testCorrectionGlossaryOffersMyTermsAndNearMisses() {
-        let active = ActiveVocabulary(domains: [cloud], myTerms: ["Acme Cloud"])
-        let glossary = VocabularyPrompt.correctionGlossary(for: active, text: "we deploy it on kubernetis with terra form")
-        XCTAssertEqual(glossary.first, "Acme Cloud")
+        let active = ActiveVocabulary(domains: [cloud], myTerms: ["Acme Cloud", "Okafor"])
+        let glossary = VocabularyPrompt.correctionGlossary(
+            for: active, text: "ask okafer: we deploy acme clowd on kubernetis with terra form")
+        XCTAssertEqual(Array(glossary.prefix(2)).sorted(), ["Acme Cloud", "Okafor"], "My terms that resemble the phrase lead")
         XCTAssertTrue(glossary.contains("Kubernetes"), "\(glossary)")
         XCTAssertTrue(glossary.contains("Terraform"), "\(glossary)")
         XCTAssertLessThanOrEqual(glossary.count, VocabularyPrompt.correctionGlossaryLimit)
@@ -109,20 +140,29 @@ final class VocabularyPromptTests: XCTestCase {
         XCTAssertEqual(VocabularyPrompt.correctionGlossary(for: active, text: "x", limit: 0), [])
     }
 
-    func testCorrectionGlossaryIsCapped() {
-        let mine = (0..<50).map { "Name\($0)" }
+    /// A long My terms list: the terms resembling the phrase reach correction wherever they sit in the
+    /// list, not only the first twenty (#222 review).
+    func testMyTermsAreRankedByResemblanceNotListPosition() {
+        let mine = (0..<50).map { "Name\($0)" } + ["Zhang Wei", "Kubeflow"]
         let glossary = VocabularyPrompt.correctionGlossary(for: ActiveVocabulary(domains: [cloud], myTerms: mine),
-                                                           text: "kubernetes", limit: 10)
+                                                           text: "kubernetes and cube flow with jang way", limit: 10)
         XCTAssertLessThanOrEqual(glossary.count, 10)
-        XCTAssertEqual(Array(glossary.prefix(5)), Array(mine.prefix(5)), "My terms take at most half")
-        XCTAssertEqual(glossary[5], "Kubernetes", "the closest preset term comes first")
+        XCTAssertEqual(glossary.first, "Kubeflow")
+        XCTAssertFalse(glossary.contains("Name0"), "unrelated My terms are not listed")
+        XCTAssertTrue(glossary.contains("Kubernetes"), "\(glossary)")
+        let capped = VocabularyPrompt.correctionGlossary(
+            for: ActiveVocabulary(domains: [], myTerms: (0..<30).map { "Kube\($0)" }), text: "kube", limit: 10)
+        XCTAssertEqual(capped.count, 5, "My terms take at most half")
     }
 
-    func testResemblanceAndTermRemoval() {
-        XCTAssertEqual(VocabularyPrompt.resemblance(of: "Kubernetes", in: ["kubernetes"]), 1)
-        XCTAssertGreaterThan(VocabularyPrompt.resemblance(of: "Terraform", in: ["terra", "form"]), 0.9)
-        XCTAssertEqual(VocabularyPrompt.resemblance(of: "S3", in: ["s3"]), 0, "too short to compare safely")
-        XCTAssertEqual(VocabularyPrompt.resemblance(of: "Kubernetes", in: []), 0)
-        XCTAssertEqual(VocabularyPrompt.removingTerms(["EC2", "ISO 9001"], from: "move ec2 to iso 9001 now"), "move   to   now")
+    func testTheCorrectionIndexIsPreparedOnceAndMatchesTheOneShotGlossary() {
+        let active = ActiveVocabulary(domains: VocabularyCatalog.bundled.domains, myTerms: ["Acme Cloud", "S3"])
+        let index = VocabularyPrompt.CorrectionIndex(active)
+        XCTAssertEqual(index, VocabularyPrompt.CorrectionIndex(active))
+        let phrase = "we moved the cooper netties cluster to terra form and paged pager duty"
+        XCTAssertEqual(index.glossary(for: phrase), VocabularyPrompt.correctionGlossary(for: active, text: phrase))
+        XCTAssertTrue(index.glossary(for: phrase).contains("Terraform"))
+        XCTAssertEqual(index.glossary(for: ""), [])
+        XCTAssertEqual(VocabularyPrompt.CorrectionIndex.pairs(["a"]), ["a"])
     }
 }

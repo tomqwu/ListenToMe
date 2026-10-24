@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 import ListenToMeCore
 
 /// The on-device vocabulary suggestion above the transcript (issue #222). It never turns anything on by
-/// itself. It also hosts the "Add to My terms" sheet opened from a transcript line's context menu.
+/// itself.
 struct MacVocabularyBanner: View {
     @Bindable var vocabulary: SessionVocabulary
     let conversationID: String
@@ -12,39 +12,47 @@ struct MacVocabularyBanner: View {
     let apply: () -> Void
 
     var body: some View {
-        Group {
-            if let suggestion = vocabulary.banner(for: conversationID) {
-                HStack(alignment: .firstTextBaseline, spacing: 10) {
-                    Image(systemName: suggestion.stage == .added ? "checkmark.circle" : "text.book.closed")
-                        .foregroundStyle(Theme.accent)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(suggestion.stage == .added
-                             ? "\(suggestion.domain.name) vocabulary is on for this conversation."
-                             : suggestion.domain.suggestionText)
-                            .foregroundStyle(Theme.ink)
-                        if suggestion.stage == .offered, let notice = suggestion.domain.notice {
-                            Text(notice).font(.caption).foregroundStyle(.secondary)
-                        }
-                    }
-                    Spacer()
-                    if suggestion.stage == .offered {
-                        Button("Add") { vocabulary.addSuggested(); apply() }.keyboardShortcut(.defaultAction)
-                        Button("Not now") { vocabulary.dismissSuggestion() }
-                        Button("Don’t suggest \(suggestion.domain.name) again") { vocabulary.muteSuggested() }
-                    } else {
-                        Button("Use by default") { vocabulary.useSuggestedByDefault(); apply() }
-                        Button("Done") { vocabulary.dismissSuggestion() }
+        if let suggestion = vocabulary.banner(for: conversationID) {
+            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                Image(systemName: suggestion.stage == .added ? "checkmark.circle" : "text.book.closed")
+                    .foregroundStyle(Theme.accent)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(suggestion.stage == .added
+                         ? "\(suggestion.domain.name) vocabulary is on for this conversation."
+                         : suggestion.domain.suggestionText)
+                        .foregroundStyle(Theme.ink)
+                    if suggestion.stage == .offered, let notice = suggestion.domain.notice {
+                        Text(notice).font(.caption).foregroundStyle(.secondary)
                     }
                 }
-                .font(.callout)
-                .padding(.horizontal, 14).padding(.vertical, 6)
-                .background(Theme.accent.opacity(0.08))
-                .accessibilityElement(children: .contain)
-                .accessibilityIdentifier("vocabularySuggestion")
+                Spacer()
+                if suggestion.stage == .offered {
+                    Button("Add") { vocabulary.addSuggested(); apply() }.keyboardShortcut(.defaultAction)
+                    Button("Not now") { vocabulary.dismissSuggestion() }
+                    Button("Don’t suggest \(suggestion.domain.name) again") { vocabulary.muteSuggested() }
+                } else {
+                    Button("Use by default") { vocabulary.useSuggestedByDefault(); apply() }
+                    Button("Done") { vocabulary.dismissSuggestion() }
+                }
             }
+            .font(.callout)
+            .padding(.horizontal, 14).padding(.vertical, 6)
+            .background(Theme.accent.opacity(0.08))
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("vocabularySuggestion")
         }
-        .sheet(isPresented: Binding(get: { vocabulary.termSourceLine != nil },
-                                    set: { if !$0 { vocabulary.termSourceLine = nil } })) {
+    }
+}
+
+/// Presents "Add to My terms" for the line chosen in the transcript's context menu. Attached to the
+/// transcript column, which is always on screen, so the sheet opens whether or not a banner is shown.
+struct MacAddTermPresenter: ViewModifier {
+    @Bindable var vocabulary: SessionVocabulary
+    let apply: () -> Void
+
+    func body(content: Content) -> some View {
+        content.sheet(isPresented: Binding(get: { vocabulary.termSourceLine != nil },
+                                           set: { if !$0 { vocabulary.termSourceLine = nil } })) {
             MacAddTermSheet(line: vocabulary.termSourceLine ?? "") { term in
                 let problem = vocabulary.addTerm(term)
                 if problem == nil { apply() }
@@ -193,16 +201,22 @@ extension MeetingView {
     /// is measured with the rest of the prompt scaffold.
     func applyVocabulary() {
         let active = vocabulary.active(for: currentSessionID)
-        session.contextualStrings = active.recognitionTerms()
+        session.contextualStrings = active.recognitionTerms(
+            heard: store.utterances.suffix(200).map(\.text).joined(separator: " "))
         let window = ProviderSettings.aiMode == .apple ? PromptBudget.appleIntelligenceCharacters : nil
         let limit = VocabularyPrompt.characterLimit(forPromptWindow: window)
         session.personaGuidance = VocabularyPrompt.combined(
             persona: PresetCatalog.preset(id: presetID).personaGuidance,
             guidance: VocabularyPrompt.guidance(for: active, characterLimit: limit))
+        // The domain's headings shape the Listener summary and automatic Summary reviews only.
+        session.summaryGuidance = VocabularyPrompt.layoutInstruction(
+            for: active, compact: limit < VocabularyPrompt.compactCharacterLimit)
     }
 
-    /// Counts newly finalized lines toward the on-device suggestion check.
+    /// Counts finalized lines heard while recording toward the on-device suggestion check; a restored
+    /// or imported conversation is never classified.
     func considerVocabularySuggestion() {
-        vocabulary.heard(transcript: store.utterances.map(\.text), conversationID: currentSessionID)
+        vocabulary.heard(transcript: store.utterances.map(\.text), conversationID: currentSessionID,
+                         live: session.isRunning && !session.isPreparing)
     }
 }

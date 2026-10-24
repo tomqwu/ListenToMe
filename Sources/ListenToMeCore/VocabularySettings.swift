@@ -166,13 +166,19 @@ public struct ActiveVocabulary: Sendable, Equatable {
     /// The contextual strings for the speech recognizer, capped at `limit`: My terms first (up to
     /// `myTermsRecognitionShare` when a preset is on), then each preset's terms in turn, in the
     /// preset's order. Case-insensitive duplicates and phrases longer than three words are skipped.
-    public func recognitionTerms(limit: Int = recognitionLimit) -> [String] {
+    ///
+    /// When My terms outgrow their share, the ones already said in this conversation (`heard`) go first,
+    /// then the most recently added, so a term added mid-meeting always reaches the recognizer.
+    public func recognitionTerms(limit: Int = recognitionLimit, heard: String? = nil) -> [String] {
         var seen = Set<String>()
         func fits(_ term: String) -> Bool {
             VocabularyText.words(in: term) <= Self.recognitionPhraseWords
                 && term.count <= VocabularyCatalog.maximumTermCharacters && seen.insert(term.lowercased()).inserted
         }
-        let mine = myTerms.filter(fits)
+        let spoken = heard?.lowercased() ?? ""
+        let newestFirst = Array(myTerms.reversed())
+        let saidHere = spoken.isEmpty ? [] : newestFirst.filter { spoken.contains($0.lowercased()) }
+        let mine = (saidHere + newestFirst).filter(fits)
         let share = domains.isEmpty ? limit : min(limit, Self.myTermsRecognitionShare)
         var result = Array(mine.prefix(share))
         let presetLists = domains.map { $0.terms.filter(fits) }

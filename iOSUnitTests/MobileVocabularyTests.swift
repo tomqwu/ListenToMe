@@ -55,7 +55,7 @@ final class MobileVocabularyTests: XCTestCase {
         try await wait { session.state == .recording }
         let first = try XCTUnwrap(recorder.contexts.first)
         XCTAssertEqual(recorder.contextsBeforeStart, 1)
-        XCTAssertEqual(Array(first.prefix(2)), ["Acme Cloud", "张伟"])
+        XCTAssertEqual(Array(first.prefix(2)), ["张伟", "Acme Cloud"], "My terms first, newest first")
         XCTAssertTrue(first.contains("res judicata"))
         XCTAssertEqual(first.count, ActiveVocabulary.recognitionLimit)
         await session.stop()
@@ -178,10 +178,48 @@ final class MobileVocabularyTests: XCTestCase {
 
     func testTheCorrectionGlossaryFavorsNearMisses() {
         let session = makeSession(VocabularyTestRecorder())
-        session.vocabulary.settings = VocabularySettings(defaultDomainIDs: ["software-cloud"], myTerms: ["Acme"])
-        let glossary = session.correctionGlossary(for: "we run it on cooper netties")
+        session.vocabulary.settings = VocabularySettings(defaultDomainIDs: ["software-cloud"], myTerms: ["Acme", "Okafor"])
+        let glossary = session.correctionGlossary(for: "we run akme on kubernetis")
         XCTAssertEqual(glossary.first, "Acme")
+        XCTAssertFalse(glossary.contains("Okafor"), "My terms are ranked by resemblance, like presets")
+        XCTAssertTrue(glossary.contains("Kubernetes"))
         XCTAssertLessThanOrEqual(glossary.count, VocabularyPrompt.correctionGlossaryLimit)
+    }
+
+    /// #222 review, finding 1: a glossary term never lets a correction add or remove a negation or number.
+    func testAGlossaryTermCannotChangeANegationOrANumber() {
+        func reply(_ text: String) -> String { #"{"text":"\#(text)"}"# }
+        let cases: [(String, String, [String])] = [
+            ("our show rate dropped", "our no-show rate dropped", ["no-show rate"]),
+            ("the case was dismissed with prejudice", "the case was dismissed without prejudice",
+             ["without prejudice", "dismissal with prejudice"]),
+            ("SOC 2 audit for 2 vendors", "SOC 2 audit for vendors", ["SOC 2"])
+        ]
+        for (original, corrected, glossary) in cases {
+            XCTAssertThrowsError(try MobileTranscriptCorrection.validatedText(reply(corrected), original: original,
+                                                                              glossary: glossary), corrected)
+        }
+    }
+
+    /// #222 review, finding 7: a restored or imported transcript is never classified; only lines that
+    /// arrive while recording count, and a replaced transcript only moves the baseline.
+    func testOnlyLiveSpeechCountsTowardASuggestion() async {
+        let vocabulary = SessionVocabulary(defaults: UserDefaults(suiteName: "vocab-\(UUID())")!)
+        let restored = Self.medicalSpeech + Self.medicalSpeech
+        vocabulary.heard(transcript: restored, conversationID: "a", live: false)
+        XCTAssertNil(vocabulary.check)
+        XCTAssertEqual(vocabulary.tracker.heardWords, 0)
+        vocabulary.heard(transcript: restored, conversationID: "a", live: true)
+        XCTAssertEqual(vocabulary.tracker.heardWords, 0, "lines already on screen are the baseline")
+        vocabulary.heard(transcript: Array(restored.prefix(3)), conversationID: "a", live: true)
+        XCTAssertEqual(vocabulary.tracker.heardWords, 0, "a shorter, replaced transcript is not recounted")
+        vocabulary.heard(transcript: Array(restored.prefix(3)) + Self.medicalSpeech, conversationID: "a", live: true)
+        XCTAssertGreaterThan(vocabulary.tracker.heardWords, 150)
+        await vocabulary.check?.value
+        XCTAssertEqual(vocabulary.banner(for: "a")?.domain.id, "medical")
+        vocabulary.heard(transcript: restored, conversationID: "b", live: true)
+        XCTAssertNil(vocabulary.banner(for: "b"))
+        XCTAssertEqual(vocabulary.tracker.heardWords, 0, "another conversation starts from its baseline")
     }
 }
 

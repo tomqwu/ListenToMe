@@ -49,6 +49,9 @@ public final class MeetingSession {
     public var personaGuidance: String?
     /// The active vocabularies' recognition terms (issue #222). Handed to each new transcriber before it
     /// prepares, and to the running one as soon as they change, so an Add during recording needs no restart.
+    /// Summary-only guidance (issue #222): the active vocabulary's summary headings, added to the
+    /// Listener's prompt and to automatic Summary reviews but never to Quick or Deep.
+    public var summaryGuidance: String?
     public var contextualStrings: [String] = [] {
         didSet {
             guard contextualStrings != oldValue, let transcriber else { return }
@@ -752,7 +755,7 @@ extension MeetingSession {
                 kind: .listener,
                 context: PromptContext(messages: [], notes: self.notes, summary: record,
                                        responseLanguage: self.responseLanguage,
-                                       personaGuidance: self.personaGuidance),
+                                       personaGuidance: self.listenerPersona),
                 action: .recap)
             // Charged only when this refresh will actually carry provisional lines — the listener
             // sends them solely once the ledger has caught up (see below).
@@ -798,7 +801,7 @@ extension MeetingSession {
                 ? nil : Self.signature(of: provisional)
             return PromptBuilder.buildListener(context: PromptContext(
                 messages: Array(batch) + provisional, notes: clampedNotes, summary: clampedRecord ?? "",
-                responseLanguage: self.responseLanguage, personaGuidance: self.personaGuidance))
+                responseLanguage: self.responseLanguage, personaGuidance: self.listenerPersona))
         }
         return task
     }

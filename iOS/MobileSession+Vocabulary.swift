@@ -6,8 +6,11 @@ extension MobileSession {
     /// The vocabularies in effect for the open conversation.
     var activeVocabulary: ActiveVocabulary { vocabulary.active(for: id) }
 
-    /// Contextual strings for the recognizer, capped by `ActiveVocabulary.recognitionTerms`.
-    var vocabularyRecognitionTerms: [String] { vocabulary.recognitionTerms(for: id) }
+    /// Contextual strings for the recognizer, capped by `ActiveVocabulary.recognitionTerms`; My terms
+    /// already said in this conversation, then the newest, are kept first.
+    var vocabularyRecognitionTerms: [String] {
+        vocabulary.recognitionTerms(for: id, heard: segments.suffix(200).map(\.text).joined(separator: " "))
+    }
 
     /// Session context for a manual Summary, Quick or Deep request: the domain, a glossary favoring
     /// terms heard recently, and (Summary only) the domain's headings. The on-device Apple model gets a
@@ -19,9 +22,11 @@ extension MobileSession {
             characterLimit: VocabularyPrompt.characterLimit(forPromptWindow: window), includeLayout: mode == .summary)
     }
 
-    /// Automatic Summary and Deep reviews carry the same context through their directives.
+    /// Automatic Summary and Deep reviews carry the same context through their directives; only the
+    /// Summary review gets the domain's headings.
     var vocabularyDirectives: AutomaticReviewDirectives {
-        AutomaticReviewDirectives(personaGuidance: VocabularyPrompt.guidance(for: activeVocabulary))
+        AutomaticReviewDirectives(personaGuidance: VocabularyPrompt.guidance(for: activeVocabulary),
+                                  summaryGuidance: VocabularyPrompt.layoutInstruction(for: activeVocabulary))
     }
 
     /// Hands the current terms to the running recorder, which applies them without restarting capture.
@@ -58,6 +63,6 @@ extension MobileSession {
 
     /// The glossary the correction prompt receives for one phrase.
     func correctionGlossary(for text: String) -> [String] {
-        VocabularyPrompt.correctionGlossary(for: activeVocabulary, text: text)
+        vocabulary.correctionLookup(for: id).glossary(for: text)
     }
 }

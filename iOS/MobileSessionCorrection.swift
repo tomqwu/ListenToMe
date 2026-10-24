@@ -18,7 +18,9 @@ extension MobileSession {
         let context = segments.dropLast().suffix(4).map { $0.originalText ?? $0.text }.joined(separator: "\n")
         do {
             let provider = try correctionProvider ?? ai.correctionClient()
-            speechCorrection.submit(segment, context: context, glossary: correctionGlossary(for: segment.text),
+            // The glossary is built by the corrector off the main actor, from a prepared index.
+            let lookup = vocabulary.correctionLookup(for: id), phrase = segment.text
+            speechCorrection.submit(segment, context: context, glossary: { lookup.glossary(for: phrase) },
                                     model: ai.correctionModel, provider: provider) { [weak self] result in
                 guard let self, self.id == sessionID, self.ai.correctTranscript,
                       let index = self.segments.firstIndex(where: { $0.id == segment.id && $0.text == segment.text }) else { return }
