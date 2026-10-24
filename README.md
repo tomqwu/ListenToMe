@@ -33,7 +33,7 @@ macOS-only, and there is no Mac↔iOS sync. See
 [the version policy](docs/IOS.md#version-policy).
 
 The standalone iOS/iPadOS 26 app is the **ListenToMeIOS** target: microphone transcription, a live
-transcript with Quick Summary plus a Deep Think tab, local conversations with search, photo/file
+transcript with Quick Summary plus a Deep Think tab, context-aware suggested questions you can ask in one tap, local conversations with search, photo/file
 attachments, Apple Notes and share-sheet imports, calendar import with e-mail and join-link
 redaction, Markdown sharing, and an opt-in **Save to folder** that writes each conversation as a
 Markdown note into a folder you pick in Files, such as an Obsidian vault. On-device speaker identification (on by default; turn it off in
@@ -135,6 +135,15 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
   response-language and the selected use-case preset. Attached reference files reach automatic
   Deep only, matching manual Deep; automatic Quick and Listener get none. Auto output cannot flip
   the pane's language or drop your persona.
+- **Suggested · from context** chips: with Auto on, two or three one-tap prompts drawn from the
+  conversation ("Counter the net-30 ask", "Summarize pricing options") appear above the fixed Quick
+  actions. They come from the Auto Quick check that already runs — no extra model call — so there are
+  none with Auto or AI off. A tap sends the literal text through Quick (right-click for **Ask in
+  Deep**); nothing is sent by itself. Chips refresh at most every 20 seconds, a tapped chip is not
+  suggested again, and a new conversation, a model change, Auto off or AI off clears them; Stop keeps them.
+  On iPhone and iPad the chips sit under Quick Summary after an Auto check or a manual refresh
+  (including Apple Intelligence's); a tap shows the answer in a small Ask card under Quick Summary —
+  the question in bold, the answer below, Close to dismiss — and never replaces a summary.
 - An answer you asked for in Quick ("Draft reply", "Key terms"…) stays on screen: the automatic
   recap keeps updating behind it and **Show recap** switches back. Typing in Notes never cancels a
   running automatic review, and a review that exceeds its deadline says so instead of repeating the
