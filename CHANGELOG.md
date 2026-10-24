@@ -13,6 +13,7 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased since 1.14.0 (31))
 
+- Delete all conversations, at the bottom of History and in Settings → Privacy. It asks first, naming how many conversations go and that it cannot be undone, and is unavailable while recording. It removes every conversation's transcript, notes, attachments, AI outputs and Apple Watch audio from this device, and the open conversation starts over. Recordings still waiting from Apple Watch are kept. Notes that Save to folder already wrote stay in your folder. (#220)
 - Apple Watch companion, remote Start/Stop for the iPhone recorder (not yet shipped; ships with watch recording on the #181 train). (#181)
 - iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
 - Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
