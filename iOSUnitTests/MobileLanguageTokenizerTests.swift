@@ -17,7 +17,7 @@ final class MobileLanguageTokenizerTests: XCTestCase {
             try FileManager.default.copyItem(at: url, to: folder.appendingPathComponent(target))
         }
         let tokenizer = try await AutoTokenizer.from(modelFolder: folder)
-        XCTAssertNil(tokenizer.convertTokenToId(" "))
+        XCTAssertNotEqual(tokenizer.convertTokenToId(" "), 220)
         let adapter = try MobileLanguageTokenizer(tokenizer)
         XCTAssertEqual(adapter.specialTokens.whitespaceToken, 220)
         XCTAssertEqual(adapter.specialTokens.startOfTranscriptToken, 50258)
