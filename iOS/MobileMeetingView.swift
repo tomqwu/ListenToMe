@@ -119,16 +119,15 @@ struct MobileMeetingView: View {
 
     private var status: some View {
         VStack(alignment: .leading, spacing: 6) {
-            TextField("Conversation title", text: Binding(get: { session.title }, set: { session.renameByUser($0) }))
-                .focused($focusedField, equals: .title)
-                .font(verticalSizeClass == .compact ? .headline : .title2.weight(.semibold))
-                .foregroundStyle(MobileStyle.ink)
-                .accessibilityIdentifier("conversationTitle")
-                .disabled(session.isSummarizing)
-                .onChange(of: session.title) { _, _ in session.scheduleSave() }
-            Label(statusText, systemImage: session.state == .recording ? "record.circle" : "mic")
-                .font(.caption.weight(.medium))
-                .foregroundStyle(session.state == .recording ? .red : MobileStyle.muted)
+            if verticalSizeClass == .compact && !dynamicTypeSize.isAccessibilitySize {
+                HStack(alignment: .firstTextBaseline, spacing: 12) {
+                    titleEditor.layoutPriority(1)
+                    captureStatusLabel.lineLimit(1)
+                }
+            } else {
+                titleEditor
+                captureStatusLabel
+            }
             MobileSpeakerStatus(session: session)
             MobileLanguageStatus(session: session)
             MobileWatchRecordingLine(status: session.watchCaptureStatus)
@@ -140,6 +139,22 @@ struct MobileMeetingView: View {
             }
         }.frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 20).padding(.vertical, verticalSizeClass == .compact ? 6 : 14)
+    }
+
+    private var titleEditor: some View {
+        TextField("Conversation title", text: Binding(get: { session.title }, set: { session.renameByUser($0) }))
+            .focused($focusedField, equals: .title)
+            .font(verticalSizeClass == .compact ? .headline : .title2.weight(.semibold))
+            .foregroundStyle(MobileStyle.ink)
+            .accessibilityIdentifier("conversationTitle")
+            .disabled(session.isSummarizing)
+            .onChange(of: session.title) { _, _ in session.scheduleSave() }
+    }
+
+    private var captureStatusLabel: some View {
+        Label(statusText, systemImage: session.state == .recording ? "record.circle" : "mic")
+            .font(.caption.weight(.medium))
+            .foregroundStyle(session.state == .recording ? .red : MobileStyle.muted)
     }
 
     private var statusText: String {
@@ -234,7 +249,8 @@ struct MobileMeetingView: View {
                 }.accessibilityLabel("Notes")
             }
         }.frame(maxWidth: 600).frame(maxWidth: .infinity)
-            .padding(.horizontal, 20).padding(.vertical, 12)
+            .padding(.horizontal, 20)
+            .padding(.vertical, verticalSizeClass == .compact && !dynamicTypeSize.isAccessibilitySize ? 8 : 12)
             .background(MobileStyle.canvas.opacity(0.96))
     }
 

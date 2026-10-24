@@ -1341,7 +1341,8 @@ Quick publishes its first short recap for a clear topic, problem, tentative prop
 The Live page places Transcript and Quick Summary side by side when its available workspace is at
 least 640 points wide and 180 points tall. Each pane scrolls independently; compact headers keep
 model selection, Generate, speech correction settings and Expand transcript reachable, and Auto stays in the Quick pane's
-scrolling content. Layout uses the current workspace geometry, so rotation and window resizing
+scrolling content, below an existing answer. A compact title/status row and recording dock leave more
+reading room in landscape. Layout uses the current workspace geometry, so rotation and window resizing
 recompute it. The selected Live/Summary page, conversation, expanded transcript and selection-sheet
 state belong to their existing parent views and survive layout changes.
 
