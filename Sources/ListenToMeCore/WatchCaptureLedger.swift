@@ -26,6 +26,12 @@ public struct WatchCaptureLedger: Codable, Equatable, Sendable {
 
     public let recordingID: UUID
     public let startedAt: Date
+    /// Chosen before transcription; retained across retries, new chunks and app launches.
+    public private(set) var transcriptionLocale: String?
+
+    public mutating func pinTranscriptionLocale(_ locale: String) {
+        if transcriptionLocale == nil { transcriptionLocale = locale }
+    }
     /// Sorted by index.
     public private(set) var chunks: [Chunk] = []
     /// The index of the recording's last chunk, once the watch has said which one it is.

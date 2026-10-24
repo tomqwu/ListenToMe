@@ -1,0 +1,6 @@
+{
+  "tokenizer_class": "WhisperTokenizer",
+  "unk_token": "<|endoftext|>",
+  "bos_token": "<|endoftext|>",
+  "eos_token": "<|endoftext|>"
+}

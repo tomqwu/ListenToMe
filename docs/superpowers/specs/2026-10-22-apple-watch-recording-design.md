@@ -330,8 +330,7 @@ never finalized, because the app was killed mid-chunk, is discarded and the reco
    - Title "Apple Watch · <start time>".
    - Segments with `source: .you` and `speakerName: "Apple Watch"`.
 
-   The language is the phone's **Transcription → Language** at the time the drain runs
-   (decision 7). Chunks are fed **in index order into one `SpeechAnalyzer` session** as buffers carrying
+   The locale is pinned in the ledger before the first transcription (decision 7, updated by #200). Chunks are fed **in index order into one `SpeechAnalyzer` session** as buffers carrying
    `bufferStartTime = startOffset` (F14), so words that span a chunk boundary are not cut. The
    segments from each chunk are appended and the archive is saved. Only then is that chunk's audio
    deleted and the chunk marked transcribed in the manifest. A drain that is interrupted by
@@ -576,8 +575,7 @@ implementation, on 2026-10-23.
    200 MB free storage, and stop and save at 10% battery.
 6. **A finished watch conversation lands in History** with a status message. It does not switch the
    conversation that is open.
-7. **Transcription language:** the phone's current **Transcription → Language** at transcription
-   time. Nothing is chosen on the watch.
+7. **Transcription language (#200):** a fixed phone language is respected; Automatic uses an already-downloaded language model and falls back to the device locale when unavailable or uncertain. The chosen locale is pinned before transcription and survives later drains and Settings changes. Nothing is chosen on the watch; import does not download the detection model.
 8. **No phone notification in v1.** History and the status message report a ready watch
    conversation, so the app gains no notification-permission prompt.
 9. **`MobileFileTranscriber` stays internal to watch captures.** This spec made no explicit

@@ -3,6 +3,7 @@ import ListenToMeCore
 import Observation
 import Speech
 import WhisperKit
+import Tokenizers
 
 /// Whisper's most likely language for some audio, and how sure it is.
 struct LanguageGuess: Sendable, Equatable {
@@ -17,10 +18,16 @@ struct LanguageGuess: Sendable, Equatable {
 protocol MobileLanguageIdentifying: Sendable {
     /// Downloads the model on first use and loads it. Throws when it cannot.
     func prepare() async throws
+    /// Loads only a model already downloaded by an interactive session.
+    func prepareIfDownloaded() async throws -> Bool
     /// The most likely language of 16 kHz mono `samples`.
     func detect(samples: [Float]) async throws -> LanguageGuess
     /// Locale identifiers on-device transcription supports.
     func supportedLocales() async -> [String]
+}
+
+extension MobileLanguageIdentifying {
+    func prepareIfDownloaded() async throws -> Bool { false }
 }
 
 /// Spoken-language identification with WhisperKit's multilingual "tiny" model (about 75 MB, downloaded
@@ -65,6 +72,13 @@ actor WhisperLanguageIdentifier: MobileLanguageIdentifying {
         _ = try await loadedKit()
     }
 
+    func prepareIfDownloaded() async throws -> Bool {
+        if kit != nil { return true }
+        guard Self.isDownloaded(in: directory) else { return false }
+        _ = try await loadedKit(allowDownload: false)
+        return true
+    }
+
     func detect(samples: [Float]) async throws -> LanguageGuess {
         let box = try await loadedKit()
         let result = try await box.kit.detectLangauge(audioArray: samples)
@@ -77,11 +91,11 @@ actor WhisperLanguageIdentifier: MobileLanguageIdentifying {
     }
 
     /// One load at a time; a failure is not kept, so the next recording tries again.
-    private func loadedKit() async throws -> KitBox {
+    private func loadedKit(allowDownload: Bool = true) async throws -> KitBox {
         if let kit { return kit }
         if let loading { return try await loading.value }
         let directory = directory
-        let task = Task { try await Self.load(from: directory) }
+        let task = Task { try await Self.load(from: directory, allowDownload: allowDownload) }
         loading = task
         defer { loading = nil }
         let box = try await task.value
@@ -90,17 +104,35 @@ actor WhisperLanguageIdentifier: MobileLanguageIdentifying {
     }
 
     /// Loads the model already on this device without touching the network, or downloads it first.
-    private static func load(from directory: URL) async throws -> KitBox {
+    private static func isDownloaded(in directory: URL) -> Bool {
         let local = directory.appendingPathComponent("models/argmaxinc/whisperkit-coreml/openai_whisper-\(modelName)")
         let parts = ["AudioEncoder.mlmodelc", "MelSpectrogram.mlmodelc", "TextDecoder.mlmodelc"]
         let tokenizer = directory.appendingPathComponent("models/openai/whisper-\(modelName)/tokenizer.json")
-        let downloaded = FileManager.default.fileExists(atPath: tokenizer.path)
+        return FileManager.default.fileExists(atPath: tokenizer.path)
             && parts.allSatisfy { FileManager.default.fileExists(atPath: local.appendingPathComponent($0).path) }
+    }
+
+    private static func load(from directory: URL, allowDownload: Bool) async throws -> KitBox {
+        let downloaded = isDownloaded(in: directory)
+        guard downloaded || allowDownload else {
+            throw RecordingError.message("The language model is not downloaded.")
+        }
+        let local = directory.appendingPathComponent("models/argmaxinc/whisperkit-coreml/openai_whisper-\(modelName)")
         let folder = downloaded ? local : try await WhisperKit.download(variant: modelName, downloadBase: directory)
         // The tokenizer is fetched beside the model (downloadBase), never into Documents.
         let config = WhisperKitConfig(downloadBase: directory, modelFolder: folder.path, tokenizerFolder: directory,
-                                      verbose: false, logLevel: .error, prewarm: false, load: true, download: false)
-        return KitBox(kit: try await WhisperKit(config))
+                                      verbose: false, logLevel: .error, prewarm: false, load: allowDownload, download: false)
+        let kit = try await WhisperKit(config)
+        if !allowDownload {
+            // WhisperKit's default tokenizer loader falls back to the Hub on corrupt cache files.
+            // Supply a strictly local tokenizer before loading models so that fallback cannot run.
+            let folder = directory.appendingPathComponent("models/openai/whisper-\(modelName)")
+            let tokenizer = try await AutoTokenizer.from(modelFolder: folder)
+            kit.tokenizer = try MobileLanguageTokenizer(tokenizer)
+            kit.textDecoder.isModelMultilingual = true
+            try await kit.loadModels()
+        }
+        return KitBox(kit: kit)
     }
 
     /// `WhisperKit` is a non-Sendable class; this actor is its only user. Mirrors the macOS box.

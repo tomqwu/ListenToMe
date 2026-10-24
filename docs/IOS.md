@@ -422,8 +422,13 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   launches substitute a language model that loads at once and never switches
   (`LISTENTOME_LANGUAGE_MODEL_FIXTURE`, DEBUG simulator builds only, set with the speaker fixture by
   `useModelFixtures()`), and the unit-test host one that never loads, so no test downloads Whisper.
-  Apple Watch recordings are transcribed in the device language under Automatic: detection runs on
-  live recordings only (#200).
+  Apple Watch imports in Automatic use the already-downloaded language model (#200), sampling up to
+  30 seconds of voiced audio within the first five minutes available. At least eight seconds and
+  80% confidence are required; otherwise the device language is used. Import never downloads the
+  language model. The chosen locale is saved before transcription and reused across retries, new
+  chunks and app launches, even if Settings changes. Fixed language choices skip detection.
+  Older partially transcribed recordings inherit their saved transcript language. Watch remains
+  excluded from distribution pending the physical-device acceptance in #181.
 - Re-checking the language during a recording (#199), Automatic only. After the first check,
   `LanguageTracker` (ListenToMeCore, with `LanguageRecheckPolicy`) re-checks the trailing 30 seconds
   once a minute of recording time, only when that window holds at least 10 seconds of speech, so

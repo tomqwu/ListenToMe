@@ -54,6 +54,12 @@ Recent iOS trains (full text in [CHANGELOG.md](../CHANGELOG.md)):
 
 ## Merged for the next train
 
+- #200: Watch imports in Automatic use only an already-downloaded language model, scan past leading
+  silence, and pin the chosen locale in the ledger before transcription. Retries and later chunks
+  keep it even after Settings changes. Missing or uncertain detection falls back without downloading.
+  Watch remains excluded from distribution; Mandarin on an English iPhone still needs paired-device
+  acceptance. This does not change the #181 embedding gate.
+
 - #237: per-conversation vocabulary additions survive History reopen and relaunch, are deleted
   with the conversation, and reach Auto Quick as bounded domain/glossary guidance. Device defaults
   and My terms remain independent. JSON exports include vocabulary IDs and saved prompt instructions.
@@ -123,7 +129,7 @@ is the tracking issue.
 
 [#181](https://github.com/tomqwu/ListenToMe/issues/181) (record from the watch),
 [#192](https://github.com/tomqwu/ListenToMe/issues/192) (speaker labels on watch recordings),
-[#200](https://github.com/tomqwu/ListenToMe/issues/200) (language detection for watch recordings),
+[#200](https://github.com/tomqwu/ListenToMe/issues/200) (implemented; paired-device language acceptance pending),
 [#225](https://github.com/tomqwu/ListenToMe/issues/225) (keep watch audio when Save audio recordings is on).
 
 **macOS — P1/P2** (lands on `main`; ships when the maintainer resumes Mac releases)

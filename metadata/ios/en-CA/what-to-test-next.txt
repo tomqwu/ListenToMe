@@ -5,3 +5,5 @@ Pending next train: conversation vocabularies (#237).
 Add a suggested vocabulary without Use by default. Stop, create a new conversation, and reopen the first from History. Its vocabulary should return, including after relaunch. Enable Auto Quick and verify domain-aware updates. Delete the conversation; defaults and My terms should remain.
 
 Apple Watch remains gated by #181 physical-device acceptance.
+
+Watch language detection (#200; only when the Watch companion is enabled for testing): On an English iPhone with the language model already downloaded, import a Mandarin recording, including one with 40 seconds of leading silence. Verify Mandarin transcription and saved language. Interrupt and retry or relaunch, change Settings language, then transfer the next chunk: it should retain Mandarin. Without a downloaded language model, confirm import uses the device language without a download. Physical Watch acceptance remains required before embedding Watch for distribution.

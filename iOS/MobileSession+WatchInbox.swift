@@ -196,9 +196,9 @@ extension MobileSession {
         let pending = WatchLineBuffer(coveredThrough: ledger.transcribedThrough,
                                       chunkEnds: chunks.map { $0.startOffset + $0.duration })
         do {
+            let language = try await watchTranscriptionLocale(ledger, chunks: chunks, recordID: recordID)
             let transcriber = makeWatchTranscriber()
-            transcriber.setContextualStrings(vocabulary.recognitionTerms(for: recordID, localeIdentifier: transcriptionLanguage))   // issue #222
-            let language = transcriptionLanguage
+            transcriber.setContextualStrings(vocabulary.recognitionTerms(for: recordID, localeIdentifier: language))
             try await transcriber.transcribe(chunks, locale: Locale(identifier: language)) { [weak self] line in
                 guard let self, line.start >= resumeAt else { return }
                 pending.lines.append(TranscriptSegment(source: .you, text: line.text, isFinal: true, start: line.start,
@@ -235,7 +235,7 @@ extension MobileSession {
         // Kept open if a chunk arrived since: the next drain picks it up.
         guard try watchInbox.completeRecording(ledger.recordingID, now: now) else { return }
         message = Self.watchAddedMessage
-        nameConversationIfNeeded(recordID, language: transcriptionLanguage)   // #221
+        nameConversationIfNeeded(recordID, language: ledger.transcriptionLocale ?? transcriptionLanguage)   // #221
     }
 
     /// Marks text saved through `time` and only then deletes the audio it wholly covers.
@@ -297,7 +297,7 @@ extension MobileSession {
                                    complete: Bool = false) throws {
         // Apple Watch files are transcribed in the transcription language (issue #206).
         if recordID == id {
-            if !added.isEmpty { noteConversationLanguage(transcriptionLanguage) }
+            for language in Set(added.compactMap(\.language)) { noteConversationLanguage(language) }
             segments.append(contentsOf: added)
             if let note { notes = Self.appendingLine(note, to: notes) }
             guard save(announce: false) else { throw WatchConversationUnavailable() }
@@ -315,7 +315,7 @@ extension MobileSession {
                                     language: record.language, languages: record.languages,
                                     selectionSummaries: record.selectionSummaries, summaryInstructions: record.summaryInstructions,
                       vocabularyDomainIDs: record.vocabularyDomainIDs)
-        let languaged = added.isEmpty ? updated : updated.recording(language: transcriptionLanguage)
+        let languaged = added.compactMap(\.language).reduce(updated) { $0.recording(language: $1) }
         try archive.save(languaged)
         remember(languaged)
         exportToVault(languaged)   // Save to folder (#53)
