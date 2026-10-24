@@ -47,6 +47,15 @@ public final class MeetingSession {
     public var referenceContext: String?
     /// Use-case persona guidance from the selected preset, injected into all pane prompts.
     public var personaGuidance: String?
+    /// The active vocabularies' recognition terms (issue #222). Handed to each new transcriber before it
+    /// prepares, and to the running one as soon as they change, so an Add during recording needs no restart.
+    public var contextualStrings: [String] = [] {
+        didSet {
+            guard contextualStrings != oldValue, let transcriber else { return }
+            let strings = contextualStrings
+            Task { await transcriber.setContextualStrings(strings) }
+        }
+    }
     public let store: ConversationStore
 
     /// Per-role output properties
@@ -298,6 +307,8 @@ public final class MeetingSession {
         // (`AssetInventory.downloadAndInstall()` has no documented guarantee), so a plain
         // `await transcriber.prepare()` could park this start task for the whole download after a
         // Stop — and the next Listen would then run a second concurrent download (issue #147).
+        await transcriber.setContextualStrings(contextualStrings)
+        guard isRunning, runID == myRun else { return }   // stopped while the vocabulary was handed over
         let prepare = Task { await Self.prepareRacingCancellation(transcriber) }
         prepareTask = prepare
         await prepare.value
@@ -484,6 +495,7 @@ extension MeetingSession {
         await stopDrain?.value
         stopDrain = nil
         let transcriber = (makeTranscriber ?? self.makeTranscriber)()
+        await transcriber.setContextualStrings(contextualStrings)
         transcriptionStatusTask?.cancel()
         transcriptionStatusTask = Task {
             for await status in transcriber.statusUpdates { self.transcriptionStatus = status }
