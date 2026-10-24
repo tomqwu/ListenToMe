@@ -46,6 +46,22 @@ final class VocabularyPromptTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(guidance.components(separatedBy: "unsaid ones): ").last?.count ?? 0, 190)
     }
 
+    /// The guidance is one line appended to the system prompt, so it can never look like the prose
+    /// answer's trailing "Suggested:" block or its `> ` lines, nor touch the evaluator's JSON (#229).
+    func testGuidanceIsOneLineWithoutASuggestedBlock() throws {
+        for limit in [400, 1_500] {
+            for domain in VocabularyCatalog.bundled.domains {
+                let guidance = try XCTUnwrap(VocabularyPrompt.guidance(
+                    for: ActiveVocabulary(domains: [domain], myTerms: ["Acme"]), characterLimit: limit, includeLayout: true))
+                XCTAssertFalse(guidance.contains("\n"), domain.id)
+                XCTAssertFalse(guidance.contains("Suggested"), domain.id)
+                XCTAssertFalse(guidance.hasPrefix(">"), domain.id)
+            }
+        }
+        let request = LLMRequest(system: "Return JSON with summary and suggestions.", messages: [])
+        XCTAssertTrue(request.addingGuidance("Domain: Medical.").system.hasPrefix(request.system + "\n"))
+    }
+
     func testTheLayoutSentenceComesOnlyFromLayoutInstruction() {
         let medical = ActiveVocabulary(domains: [medical], myTerms: [])
         XCTAssertEqual(VocabularyPrompt.layoutInstruction(for: medical),

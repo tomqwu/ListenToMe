@@ -94,7 +94,7 @@ extension MobileSession {
         }
         generatingMode = mode
         isSummarizing = true
-        if mode == .quick { manualQuickError = nil; quickReader.clearError() }
+        if mode == .quick { manualQuickError = nil; quickReader.startManualQuick() }
         message = nil
         summaryDraft = ""
         defer { isSummarizing = false; summaryDraft = ""; generatingMode = nil }
@@ -106,7 +106,7 @@ extension MobileSession {
             let (quickResponse, cutOff) = try await streamAnswer(built.request, mode: mode, client: client)
             switch mode {
             case .summary: summary = summaryDraft
-            case .quick: quickSummary = try Self.quickOutput(quickResponse, prose: proseQuick, cutOff: cutOff)
+            case .quick: quickSummary = try quickOutputOfferingChips(quickResponse, prose: proseQuick, cutOff: cutOff)
             case .deep: deepThought = summaryDraft
             }
             answerNotices.record(mode, text: output(for: mode), grounding: built.grounding, cutOff: cutOff,

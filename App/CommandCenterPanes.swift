@@ -300,6 +300,7 @@ extension MeetingView {
                 }
             },
             actions: {
+                SuggestedPromptChips(session: session)
                 FlowLayout(spacing: 7) {
                     Button("What should I answer?") {
                         Task { await session.respondQuick(.answerQuestion) }

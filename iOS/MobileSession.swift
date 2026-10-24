@@ -42,7 +42,7 @@ final class MobileSession {
     var autoQuick = UserDefaults.standard.bool(forKey: "autoQuickSummary") {
         didSet { UserDefaults.standard.set(autoQuick, forKey: "autoQuickSummary"); handleSummaryEvent(.automationChanged) }
     }
-    let quickReader = MobileQuickReader()
+    let quickReader = MobileQuickReader(); let suggestedAsk = MobileSuggestedAsk()   // chip asks: #61
     let automaticReviews = AutomaticReviewCoordinator()
     private(set) var speechEventCount = 0
     private(set) var finalizedSpeechEventCount = 0
@@ -175,7 +175,7 @@ final class MobileSession {
         ai.correctionSettingsChanged = { [weak self] in self?.speechCorrection.cancel() }
         ai.quickSettingsChanged = { [weak self] in
             guard let self else { return }
-            self.quickReader.clearError()
+            self.suggestionsProviderChanged()
             self.handleSummaryEvent(.providerChanged)
         }
     }
@@ -343,7 +343,7 @@ final class MobileSession {
         guard !busy, save(announce: false) else { return }
         speechCorrection.cancel()
         acceptsSpeechCorrection = false
-        manualQuickError = nil; quickReader.reset(); answerNotices = MobileAnswerNotices()
+        manualQuickError = nil; resetSuggestions(); answerNotices = MobileAnswerNotices()
         handleSummaryEvent(.conversationChanged)
         id = UUID().uuidString; date = Date()
         title = ConversationTitle.mobileDefault; titleState = .placeholder; notes = ""; summary = ""
@@ -363,7 +363,7 @@ final class MobileSession {
         lastSavedData = nil
         speechCorrection.cancel()
         acceptsSpeechCorrection = false
-        manualQuickError = nil; quickReader.reset(); answerNotices = MobileAnswerNotices()
+        manualQuickError = nil; resetSuggestions(); answerNotices = MobileAnswerNotices()
         handleSummaryEvent(.conversationChanged)
         id = record.id; date = record.date; title = record.title; titleState = record.resolvedTitleState
         notes = record.notes ?? ""; summary = record.summary
