@@ -588,7 +588,8 @@ never trigger it in the fixtures (`Tests/ListenToMeCoreTests/VocabularyFixtures.
 "Sounds like a medical conversation — add the Medical vocabulary?" with **Add**, **Not now** and
 **Don't suggest Medical again** — never blocks the screen and never turns anything on by itself; Add
 applies to this conversation at once and then offers **Use by default**. Each preset is offered at
-most once per conversation; per-conversation choices last while the app is open. **Suggest
+most once per conversation; a preset added for one conversation stays on while that conversation is
+open and is not saved with it (opening another conversation starts over). **Suggest
 vocabularies** turns it off.
 
 Limits: presets are English-first (code-switched speech still matches English terms); WhisperKit is
