@@ -206,6 +206,7 @@ struct MobileWorkspaceView<Header: View>: View {
                             .accessibilityElement(children: .combine)
                             .accessibilityIdentifier("output-\(mode.rawValue)")
                     }
+                    MobileSuggestedPrompts(session: session, mode: mode)
                     if mode == .summary, !session.earlierDeepAnalysis.isEmpty {
                         MobileEarlierDeepAnalysis(text: session.earlierDeepAnalysis)
                     }

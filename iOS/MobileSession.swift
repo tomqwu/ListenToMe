@@ -30,7 +30,9 @@ final class MobileSession {
     @ObservationIgnored var applicationIsActive: @MainActor () -> Bool = {
         UIApplication.shared.applicationState == .active
     }
-    var title = "New conversation"
+    var title = ConversationTitle.mobileDefault
+    var titleState = ConversationTitleState.placeholder   // where the title came from (#221)
+    @ObservationIgnored var autoTitleTasks: [String: Task<Void, Never>] = [:]
     var notes = "" { didSet { handleSummaryEvent(.notesChanged) } }
     var summary = ""
     var quickSummary = ""
@@ -41,7 +43,7 @@ final class MobileSession {
     var autoQuick = UserDefaults.standard.bool(forKey: "autoQuickSummary") {
         didSet { UserDefaults.standard.set(autoQuick, forKey: "autoQuickSummary"); handleSummaryEvent(.automationChanged) }
     }
-    let quickReader = MobileQuickReader()
+    let quickReader = MobileQuickReader(); let suggestedAsk = MobileSuggestedAsk()   // chip asks: #61
     let automaticReviews = AutomaticReviewCoordinator(modes: [.summary])   // no Deep on iOS (#235)
     private(set) var speechEventCount = 0
     private(set) var finalizedSpeechEventCount = 0
@@ -173,7 +175,7 @@ final class MobileSession {
         ai.correctionSettingsChanged = { [weak self] in self?.speechCorrection.cancel() }
         ai.quickSettingsChanged = { [weak self] in
             guard let self else { return }
-            self.quickReader.clearError()
+            self.suggestionsProviderChanged()
             self.handleSummaryEvent(.providerChanged)
         }
     }
@@ -319,7 +321,7 @@ final class MobileSession {
         recorder = nil
         UIApplication.shared.isIdleTimerDisabled = false
         state = .idle
-        save(announce: false)
+        save(announce: false); nameConversationIfNeeded()   // in the background (#221)
         finishSpeakerIdentification()
         endLanguageRun()
     }
@@ -342,10 +344,11 @@ final class MobileSession {
         guard !busy, save(announce: false) else { return }
         speechCorrection.cancel()
         acceptsSpeechCorrection = false
-        manualQuickError = nil; quickReader.reset(); answerNotices = MobileAnswerNotices()
+        manualQuickError = nil; resetSuggestions(); answerNotices = MobileAnswerNotices()
         handleSummaryEvent(.conversationChanged)
         id = UUID().uuidString; date = Date()
-        title = "New conversation"; notes = ""; summary = ""; quickSummary = ""; earlierDeepAnalysis = ""
+        title = ConversationTitle.mobileDefault; titleState = .placeholder; notes = ""; summary = ""
+        quickSummary = ""; earlierDeepAnalysis = ""
         segments = []; partial = nil; message = nil; attachments = []; sourceImportID = nil
         save(announce: false)
     }
@@ -361,9 +364,9 @@ final class MobileSession {
         lastSavedData = nil
         speechCorrection.cancel()
         acceptsSpeechCorrection = false
-        manualQuickError = nil; quickReader.reset(); answerNotices = MobileAnswerNotices()
+        manualQuickError = nil; resetSuggestions(); answerNotices = MobileAnswerNotices()
         handleSummaryEvent(.conversationChanged)
-        id = record.id; date = record.date; title = record.title
+        id = record.id; date = record.date; title = record.title; titleState = record.resolvedTitleState
         notes = record.notes ?? ""; summary = record.summary
         quickSummary = record.quickSuggestion ?? ""; earlierDeepAnalysis = record.deepAnswer ?? ""
         attachments = record.attachments ?? []; sourceImportID = record.sourceImportID
@@ -581,21 +584,17 @@ extension MobileSession {
     }
 
     /// Write a debounced edit immediately — before stopping, backgrounding or leaving the record.
-    func flushPendingSave() {
-        guard pendingSave != nil else { return }
-        save(announce: false)
-    }
+    func flushPendingSave() { if pendingSave != nil { save(announce: false) } }
 
     @discardableResult
     func save(announce: Bool = true) -> Bool {
-        pendingSave?.cancel()
-        pendingSave = nil
+        pendingSave?.cancel(); pendingSave = nil
         let record = SessionRecord(id: id, title: title, date: date,
                                    transcript: Self.transcriptText(for: allSegments),
                                    summary: summary, segments: allSegments, notes: notes,
                                    quickSuggestion: quickSummary, deepAnswer: earlierDeepAnalysis,
                                    isComplete: state == .idle && allSegments.allSatisfy(\.isFinal),
-                                   attachments: attachments, sourceImportID: sourceImportID)
+                                   attachments: attachments, sourceImportID: sourceImportID, titleState: titleState)
         do {
             // Sorted keys: JSONEncoder's key order can differ between encodes, which made every save of
             // an unchanged record look new and rewrite the archive (MobileSaveCostTests).
@@ -866,7 +865,7 @@ extension MobileSession {
         flushPendingSave()
         switch phase {
         case .active:
-            importSharedInbox(); importWatchInbox()
+            importSharedInbox(); importWatchInbox(); nameConversationIfNeeded()
             prepareSpeakerModelsIfNeeded()   // speaker models load in the foreground only (#195)
             // The watch may still show "Open ListenToMe…" from a Start sent while this was closed.
             publishWatchStatus()

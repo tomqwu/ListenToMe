@@ -33,7 +33,7 @@ macOS-only, and there is no Mac↔iOS sync. See
 [the version policy](docs/IOS.md#version-policy).
 
 The standalone iOS/iPadOS 26 app is the **ListenToMeIOS** target: microphone transcription, a live
-transcript with Quick Summary plus a Summary tab (Deep is macOS-only), local conversations with search, photo/file
+transcript with Quick Summary plus a Summary tab (Deep is macOS-only), context-aware suggested questions you can ask in one tap, local conversations with search, photo/file
 attachments, Apple Notes and share-sheet imports, calendar import with e-mail and join-link
 redaction, Markdown sharing, and an opt-in **Save to folder** that writes each conversation as a
 Markdown note into a folder you pick in Files, such as an Obsidian vault. On-device speaker identification (on by default; turn it off in
@@ -135,6 +135,15 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
   response-language and the selected use-case preset. Attached reference files reach automatic
   Deep only, matching manual Deep; automatic Quick and Listener get none. Auto output cannot flip
   the pane's language or drop your persona.
+- **Suggested · from context** chips: with Auto on, two or three one-tap prompts drawn from the
+  conversation ("Counter the net-30 ask", "Summarize pricing options") appear above the fixed Quick
+  actions. They come from the Auto Quick check that already runs — no extra model call — so there are
+  none with Auto or AI off. A tap sends the literal text through Quick (right-click for **Ask in
+  Deep**); nothing is sent by itself. Chips refresh at most every 20 seconds, a tapped chip is not
+  suggested again, and a new conversation, a model change, Auto off or AI off clears them; Stop keeps them.
+  On iPhone and iPad the chips sit under Quick Summary after an Auto check or a manual refresh
+  (including Apple Intelligence's); a tap shows the answer in a small Ask card under Quick Summary —
+  the question in bold, the answer below, Close to dismiss — and never replaces a summary.
 - An answer you asked for in Quick ("Draft reply", "Key terms"…) stays on screen: the automatic
   recap keeps updating behind it and **Show recap** switches back. Typing in Notes never cancels a
   running automatic review, and a review that exceeds its deadline says so instead of repeating the
@@ -285,6 +294,19 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   so a title you typed is kept). If Calendar access is denied the banner says so and offers **Open
   Calendar privacy settings**; "no meeting right now" is a separate, distinct message. Every banner
   message can be dismissed with its ✕.
+- **Automatic titles (#221).** After Stop, Save or New conversation, a saved conversation still titled
+  "Conversation — <date>" with about 30 words of transcript is named in the background, in a few words.
+  - The title comes from the finished Summary when there is one (no extra request, never a
+    refresh still streaming). Otherwise the Summary model writes it with a tiny prompt, but only
+    with Apple Intelligence or local Ollama, and only when that model is available.
+  - Otherwise, including with Ollama Cloud, a cloud AI service or an OpenAI-compatible server,
+    on-device NaturalLanguage keywords name it, so Stop sends nothing for a title.
+  - A title you type is never replaced. Load from Calendar replaces a default or automatic name.
+    The record remembers where its title came from.
+  - A naming that finds nothing is not retried until the transcript doubles or grows by 100 words.
+  - An automatic title may be refined once after the conversation grows several times over.
+  - Turn it off with Settings → **Name conversations automatically**. The iPhone does the same for
+    "New conversation" and Apple Watch recordings.
 
 ### Keyboard shortcuts
 
