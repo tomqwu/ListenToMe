@@ -294,6 +294,19 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   so a title you typed is kept). If Calendar access is denied the banner says so and offers **Open
   Calendar privacy settings**; "no meeting right now" is a separate, distinct message. Every banner
   message can be dismissed with its ✕.
+- **Automatic titles (#221).** After Stop, Save or New conversation, a saved conversation still titled
+  "Conversation — <date>" with about 30 words of transcript is named in the background, in a few words.
+  - The title comes from the finished Summary when there is one (no extra request, never a
+    refresh still streaming). Otherwise the Summary model writes it with a tiny prompt, but only
+    with Apple Intelligence or local Ollama, and only when that model is available.
+  - Otherwise, including with Ollama Cloud, a cloud AI service or an OpenAI-compatible server,
+    on-device NaturalLanguage keywords name it, so Stop sends nothing for a title.
+  - A title you type is never replaced. Load from Calendar replaces a default or automatic name.
+    The record remembers where its title came from.
+  - A naming that finds nothing is not retried until the transcript doubles or grows by 100 words.
+  - An automatic title may be refined once after the conversation grows several times over.
+  - Turn it off with Settings → **Name conversations automatically**. The iPhone does the same for
+    "New conversation" and Apple Watch recordings.
 
 ### Keyboard shortcuts
 

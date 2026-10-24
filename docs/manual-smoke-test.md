@@ -466,6 +466,37 @@ change. Move the folder to the Trash: an orange note with **Retry folder save** 
 saved time. Stop a recording and quit with ⌘Q at once: the note is in the folder. With the folder
 in the Trash, stop a recording and quit; put the folder back, relaunch: the waiting note is written.
 
+## Automatic conversation titles (#221)
+
+iPhone (device for Apple Intelligence, simulator for the keyword path):
+
+1. **Named after Stop.** With **Settings → Conversations → Name conversations automatically** on,
+   record about a minute on one topic and tap Stop. Within a few seconds "New conversation" becomes
+   a short title of six words or fewer, in the language you spoke, with no quotes or emoji. Stop
+   returns at once and does not wait for the title.
+2. **Summary first.** Generate a Full summary, start a new conversation, record and Stop: the title
+   follows the summary's first point. No extra Apple Intelligence request appears in Status details.
+3. **Never replaces yours.** Type a title while a recording is being named, or before Stop: your
+   title stays. Import a meeting from Calendar into a new conversation, record and Stop: the meeting
+   title stays. Import from Calendar into a conversation that was named automatically: the meeting's
+   name replaces it.
+   - **Not while recording.** Start recording, pull down Control Center and dismiss it: the title
+     does not change until you Stop.
+   - **Cloud sends nothing.** With Cloud AI (or an OpenAI-compatible server) selected and no
+     summary, Stop: the title comes from keywords and the vendor's dashboard shows no request.
+4. **Offline / AI off.** In Airplane mode with Ollama selected but unreachable, or without Apple
+   Intelligence: the title still appears, from keywords.
+5. **Apple Watch and Save to folder.** A watch recording drained into History gets a title instead of
+   "Apple Watch · <date>". With Save to folder on, the note's `title:` updates and no second note
+   appears.
+6. **Off.** Turn the setting off, record and Stop: the name stays "New conversation".
+
+Mac: record past 30 words and Stop; "Conversation — <date>" becomes a short title (from the Summary
+model with Apple Intelligence or local Ollama, keywords otherwise). Stop while a Summary refresh is
+still streaming: the title never ends mid-sentence. Click into the title field before the title
+arrives: the default title stays until a later Save. Type a title first, or Load from Calendar: it stays.
+Start a New conversation right after Stop: the saved one is renamed in History.
+
 ## iPhone Delete all conversations (#220)
 
 Simulator or device.
