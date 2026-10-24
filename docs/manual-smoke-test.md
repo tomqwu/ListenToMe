@@ -769,6 +769,15 @@ keyboard reachability. Follow the release screenshot checklist.
 5. Capture native-resolution preview screenshots on standard/large iPhone, small/large iPad and Mac,
    retaining source, device, runtime and version provenance with the test evidence.
 
+## Local Ollama context capacity (#230)
+
+1. Select a downloaded local model with a 4K default but larger supported context. Ask about an
+   opening fact in a long conversation. Confirm the answer includes it and `ollama ps` reports the
+   larger context. `make e2e` creates/removes a temporary 4K-default alias and checks this contract.
+2. Send a request beyond the selected model's safe capacity: the pane must explain that nothing
+   was sent for an answer and suggest a shorter selection/larger model. Retain any previous answer.
+3. Check Quick and correction still use their output limits. Cloud requests must not set `num_ctx`.
+
 ## Saved conversation vocabularies (#237)
 
 Add Medical from the suggestion banner without Use by default. Stop, start a new conversation,

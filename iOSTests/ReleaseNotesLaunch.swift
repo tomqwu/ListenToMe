@@ -11,6 +11,11 @@ extension XCUIApplication {
 
     @MainActor func launchPastReleaseNotes() {
         useModelFixtures()
+        // UIKit can retain the previous launch's accessibility-size override in a long UI run.
+        // Give ordinary journeys an explicit baseline while preserving large-text test overrides.
+        if !launchArguments.contains("-UIPreferredContentSizeCategoryName") {
+            launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryL"]
+        }
         launch()
         let button = buttons["releaseNotesContinue"]
         if button.waitForExistence(timeout: 2) { button.tap() }

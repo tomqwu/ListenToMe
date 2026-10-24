@@ -47,11 +47,19 @@ Recent iOS trains (full text in [CHANGELOG.md](../CHANGELOG.md)):
   other languages keep English lists. Chinese suggestions work without spaces and use the local
   Chinese embedding when present. Device accuracy acceptance is still pending (#236).
 
-## Next train: saved-audio re-transcription
+## Pending acceptance: saved-audio re-transcription
 
 - #224 adds a language/engine picker, on-device recognition preview and explicit replacement.
   Cancellation and failures preserve the original; notes, attachments, instructions and summaries
   survive replacement. Apple runs on both platforms; Mac also offers WhisperKit.
+  PR #264 remains unmerged pending actual live system-audio acceptance. Reusing the primary
+  checkout's signing.local.mk restored Screen Recording access without TCC changes; the signed
+  Dev app currently reports Microphone as Not set. Saved-file recognition and simulator tests pass.
+
+## Next train: local Ollama context capacity
+
+- #230 sizes local model context to the assembled prompt with a conservative UTF-8 budget and
+  reserved output space. Oversized requests fail clearly before chat; cloud context stays unchanged.
 
 ## Merged for the next train
 
@@ -135,7 +143,6 @@ is the tracking issue.
 
 **Technical follow-ups**
 
-[#230](https://github.com/tomqwu/ListenToMe/issues/230) (P2, size Ollama `num_ctx` to the prompt),
 [#210](https://github.com/tomqwu/ListenToMe/issues/210),
 [#176](https://github.com/tomqwu/ListenToMe/issues/176),
 [#134](https://github.com/tomqwu/ListenToMe/issues/134) (P2, coverage scope),

@@ -278,7 +278,8 @@ final class MobileAISettings {
         return OllamaProvider(model: model, baseURL: endpoint, apiKey: key.isEmpty ? nil : key,
                               urlSession: transports.session(for: MobileTransports.summary,
                                                              identity: Self.transportIdentity(endpoint, key)),
-                              options: mode == .quick ? .init(thinking: false, temperature: 0, maximumTokens: 3_072) : .init())
+                              options: mode == .quick ? .init(thinking: false, temperature: 0, maximumTokens: 3_072) : .init(),
+                              manageContext: usesCustomEndpoint)
     }
 
     /// A transport may only be reused for the same destination and credential.

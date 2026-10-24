@@ -1404,3 +1404,11 @@ Replacement removes every original transcript line, including lines without save
 speaker identities and corrections, updates transcript/audio timing, and preserves the title, notes,
 attachments, instructions and summaries. Review those summaries against the new text. Saved audio
 files are not rewritten. Mac offers the same flow with Apple or WhisperKit recognition.
+
+## Custom Ollama context windows (#230)
+
+For a custom Ollama endpoint, the app reads model metadata before a request. Locally hosted models
+receive a context sized to the complete assembled prompt, with answer space reserved and a 64K
+ceiling. If its conservative UTF-8 budget cannot fit the reported model capacity, the pane shows
+an error asking for a shorter selection or a larger-context model. No answer request is sent in
+that case. Cloud models retain server-managed windows. This applies to summaries and correction.
