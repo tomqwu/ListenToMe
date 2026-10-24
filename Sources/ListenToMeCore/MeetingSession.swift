@@ -96,6 +96,15 @@ public final class MeetingSession {
     /// Set when the last prompt had to drop transcript or reference material to fit the role
     /// provider's context window (Apple Intelligence). nil for providers with no window.
     public private(set) var promptTruncationNotice: String?
+    /// What each pane's notices say and the exact text they describe (issues #114, #215). A notice is
+    /// shown only while the pane still shows that text, so every path that replaces or clears it — an
+    /// automatic recap, a failed request restoring the previous answer, a rename — drops it too.
+    var roleNoticeRecords: [CopilotRole: RoleNoticeRecord] = [:]
+    /// The grounding line of the request a pane is streaming now, shown while it streams.
+    var pendingGrounding: [CopilotRole: String] = [:]
+    /// True when the last completed Listener summary stopped at the output limit, so it is never
+    /// treated as covering the speech it read (issue #114).
+    var listenerSummaryCutOff = false
 
     /// The last failure for each pane, published separately from the pane's text so a transient
     /// provider error is shown as a banner *beside* the answer the user was reading instead of
@@ -233,9 +242,9 @@ public final class MeetingSession {
         store.reset()
         notes = ""; referenceContext = nil
         listenerSummary = ""; quickSuggestion = ""; quickRecap = ""; deepAnswer = ""
-        roleErrors = [:]; roleActivity = [:]
+        roleErrors = [:]; roleActivity = [:]; roleNoticeRecords = [:]; pendingGrounding = [:]
         manualQuickAnswer.dismiss()
-        lastCompletedListenerSummary = ""
+        lastCompletedListenerSummary = ""; listenerSummaryCutOff = false
         summarizedSegmentIDs = []
         pendingSummaryIDs = [:]
         summarizedProvisionalText = nil
@@ -576,16 +585,6 @@ extension MeetingSession {
 
     // MARK: - On-demand responses (awaitable)
 
-    /// Transcript char budget for an action's prompt. Actions that summarize the whole conversation
-    /// (a recap, or extracting every action item "so far") must cover the entire transcript, not just
-    /// the recent window, so they get a far larger budget than on-the-spot answers.
-    static func transcriptBudget(for action: ResponseAction) -> Int {
-        switch action {
-        case .recap, .actionItems: return 100_000
-        default: return 4_000
-        }
-    }
-
     /// Trims `value` to `allowance`, reporting whether anything was cut. nil out when nothing is left.
     private static func clamp(_ value: String, to allowance: Int) -> (String?, dropped: Bool) {
         guard !value.isEmpty else { return (nil, false) }
@@ -597,7 +596,11 @@ extension MeetingSession {
     /// Builds the prompt context for `role`, bounding the *assembled* prompt to that provider's
     /// context window: the scaffold (system prompt, directives, headers, instruction) is measured,
     /// and transcript, references, summary and notes divide what is left. Transcript characters are
-    /// charged with their speaker labels. With no window (Ollama) every budget is untouched.
+    /// charged with their speaker labels. With no window (Ollama, cloud) every block is kept whole.
+    ///
+    /// Which lines are sent is `OnDemandGrounding`'s choice (issue #114): the whole conversation when
+    /// it fits; otherwise the Listener summary plus the most recent speech, or — with Auto off and no
+    /// summary yet — the meeting's opening plus the most recent speech. The pane says which.
     private func clampedContext(for action: ResponseAction, role: CopilotRole,
                                 kind: PromptBuilder.Kind) -> PromptContext {
         let limit = providers[role]?.maxPromptCharacters
@@ -610,30 +613,40 @@ extension MeetingSession {
                                    references: references.isEmpty ? nil : references,
                                    personaGuidance: personaGuidance),
             action: action)
-        // The provisional notice is part of the assembled prompt but invisible to the scaffold probe,
-        // which measures with no messages. Charge it whenever a hypothesis is eligible, so the
-        // definition cannot be what pushes an Apple-sized prompt over its window.
+        // The provisional notice and an excerpt's note are part of the assembled prompt but invisible
+        // to the scaffold probe, which measures with no messages. Both are charged up front, so
+        // neither can be what pushes an Apple-sized prompt over its window.
         let notice = store.hasProvisionalSpeech ? PromptBuilder.provisionalNotice.count + 2 : 0
+        let note = limit == nil ? 0 : OnDemandGrounding.promptNoteReserve
         let allocation = PromptBudget.allocate(
-            limit: limit, scaffold: scaffold + notice, transcript: Self.transcriptBudget(for: action),
+            limit: limit, scaffold: scaffold + notice + note,
+            transcript: OnDemandGrounding.transcriptBudget(for: action, kind: kind, limit: limit),
             references: references.count, summary: summary.count, notes: notes.count)
 
         let (clampedReferences, droppedReferences) = Self.clamp(references, to: allocation.references)
         let (clampedSummary, droppedSummary) = Self.clamp(summary, to: allocation.summary)
         let (clampedNotes, droppedNotes) = Self.clamp(notes, to: allocation.notes)
-        let context = self.context.buildContext(
-            from: store, notes: clampedNotes, maxChars: allocation.transcript,
-            summary: clampedSummary, responseLanguage: responseLanguage,
-            references: clampedReferences, personaGuidance: personaGuidance)
-        // Only a context-window clamp is worth reporting; the provider-agnostic "recent window"
-        // budgets have always been a deliberate relevance choice, not a capacity failure.
-        // Only finalized lines are compared: the trailing provisional lines are extra context, not
-        // part of the transcript window that could have been trimmed.
-        let droppedTranscript = context.messages.count(where: \.isFinal) < store.utterances.count
+        // Unfinalized speech may take at most half of the transcript allowance (issue #113); the
+        // finalized lines get everything it does not actually use.
+        let provisional = store.provisionalContext(maxChars: allocation.transcript / 2)
+        let provisionalCost = provisional.reduce(0) { $0 + TranscriptSegment.promptCharacterCost($1) }
+        // The Listener summary stands in only for the leading lines its ledger says it read, and
+        // only when it is whole: one cut off at the output limit or clamped to fit covers nothing
+        // for sure, so it is sent but never claimed to cover anything.
+        let covered = listenerSummaryCutOff || droppedSummary
+            ? 0 : OnDemandGrounding.coveredPrefix(of: store.utterances, ids: summarizedSegmentIDs)
+        let selection = OnDemandGrounding.select(store.utterances, budget: allocation.transcript - provisionalCost,
+                                                 hasSummary: clampedSummary != nil, coveredCount: covered)
+        pendingGrounding[role] = selection.notice(summaryName: "the Listener summary")
+        // A context-window clamp is reported in the footer as well; the pane's grounding line says
+        // which speech was kept, whatever the reason.
         promptTruncationNotice = limit == nil ? nil : PromptBudget.truncationNotice(
-            transcriptDropped: droppedTranscript, referencesDropped: droppedReferences,
+            transcriptDropped: selection.shape != .whole, referencesDropped: droppedReferences,
             auxiliaryDropped: droppedSummary || droppedNotes)
-        return context
+        return ContextEngine.context(
+            messages: selection.segments + provisional, notes: clampedNotes, summary: clampedSummary,
+            responseLanguage: responseLanguage, references: clampedReferences,
+            personaGuidance: personaGuidance, transcriptNote: selection.promptNote)
     }
 
     /// Streams a Quick response for the given action. Awaits completion.
@@ -684,7 +697,7 @@ extension MeetingSession {
         // Replay raw transcript when labels change so old names cannot survive only in generated prose.
         summarizedSegmentIDs = []
         summarizedProvisionalText = nil
-        lastCompletedListenerSummary = ""
+        lastCompletedListenerSummary = ""; listenerSummaryCutOff = false
         listenerSummary = ""
         startListenerRefresh()
     }
@@ -699,7 +712,7 @@ extension MeetingSession {
         quickSuggestion = ""
         quickRecap = ""
         manualQuickAnswer.dismiss()
-        deepAnswer = ""
+        deepAnswer = ""; clearRoleNotices()
         speakerAttributionsChanged()
     }
 
@@ -802,16 +815,18 @@ extension MeetingSession {
         responseTasks[role]?.cancel()
         let generation = (responseGenerations[role] ?? 0) + 1
         responseGenerations[role] = generation
+        pendingGrounding[role] = nil
         let request = makeRequest()
+        let grounding = pendingGrounding[role]
         let task = Task { [weak self] in
             guard let self else { return }
-            await self.run(role, request, generation: generation)
+            await self.run(role, request, generation: generation, grounding: grounding)
         }
         responseTasks[role] = task
         return task
     }
 
-    private func run(_ role: CopilotRole, _ request: LLMRequest, generation: Int) async {
+    private func run(_ role: CopilotRole, _ request: LLMRequest, generation: Int, grounding: String?) async {
         guard generation == responseGenerations[role], !Task.isCancelled else { return }
         let reviewedPieces = livePieces
         // A new manual request replaces the answer on screen; it only protects the pane again once
@@ -825,10 +840,12 @@ extension MeetingSession {
         roleErrors[role] = nil
         roleActivity[role] = nil
         streamingRoles.insert(role)
+        var cutOff = false
         defer {
             if generation == responseGenerations[role] {
                 streamingRoles.remove(role)
                 roleActivity[role] = nil
+                pendingGrounding[role] = nil
                 if role == .quick { handleLiveEvent(.manualQuickFinished) }
             }
         }
@@ -845,7 +862,15 @@ extension MeetingSession {
                 case .content(let delta):
                     roleActivity[role] = nil
                     appendOutput(role, delta)
+                case .outputLimitReached:
+                    // The text so far stays: it is a partial answer, and the pane says so (#215).
+                    cutOff = true
                 }
+            }
+            // Only a completed answer gets this request's notices; a failure keeps the previous
+            // answer's record, which then describes the text restored below (or nothing).
+            if generation == responseGenerations[role], !Task.isCancelled {
+                roleNoticeRecords[role] = RoleNoticeRecord(text: output(role), grounding: grounding, cutOff: cutOff)
             }
             // Quick has no automatic review mode; a completed manual answer instead holds the pane
             // against the automatic recap for a bounded time.
@@ -868,6 +893,7 @@ extension MeetingSession {
             // later refresh clearing the live value can't strip context from a proactive prompt.
             if role == .listener, generation == responseGenerations[role], !Task.isCancelled {
                 lastCompletedListenerSummary = listenerSummary
+                listenerSummaryCutOff = cutOff
                 summarizedSegmentIDs.formUnion(pendingSummaryIDs[generation] ?? [])
                 pendingSummaryIDs = [:]
                 summarizedProvisionalText = pendingProvisionalText[generation]
@@ -902,7 +928,7 @@ extension MeetingSession {
         quickSuggestion = output
     }
 
-    private func output(_ role: CopilotRole) -> String {
+    func output(_ role: CopilotRole) -> String {
         switch role {
         case .listener: return listenerSummary
         case .quick:    return quickSuggestion
