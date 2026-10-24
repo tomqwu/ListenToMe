@@ -381,3 +381,29 @@ final class SavedAudioTests: XCTestCase {
         XCTAssertFalse(archive.contains(id: "../escape"))
     }
 }
+
+extension SavedAudioTests {
+    func testRetranscriptionAlignmentRollsBackWhenArchiveCommitFails() throws {
+        let library = library()
+        _ = try record(library, sources: [.you, .others], offset: 0, duration: 10, trusted: false)
+        _ = try record(library, offset: 0, duration: 5, trusted: false)
+        let original = library.runs(for: conversation)
+        let aligned = ConversationRetranscription.timeline(for: original)
+        XCTAssertEqual(aligned.map(\.timelineOffset), [0, 0, 10])
+        XCTAssertTrue(aligned.allSatisfy(\.timesMatchAudio))
+        XCTAssertThrowsError(try library.commitRetranscription(conversationID: conversation, runs: aligned) {
+            throw CocoaError(.fileWriteNoPermission)
+        })
+        XCTAssertEqual(library.runs(for: conversation), original)
+        var committed = false
+        try library.commitRetranscription(conversationID: conversation, runs: aligned) { committed = true }
+        XCTAssertTrue(committed)
+        XCTAssertEqual(library.runs(for: conversation), aligned)
+        XCTAssertEqual(library.fileURLs(for: conversation).count, 3)
+        try FileManager.default.removeItem(at: XCTUnwrap(library.url(for: aligned[0], conversationID: conversation)))
+        XCTAssertThrowsError(try library.commitRetranscription(conversationID: conversation, runs: aligned) {
+            XCTFail("Missing audio must never replace the transcript")
+        })
+    }
+
+}

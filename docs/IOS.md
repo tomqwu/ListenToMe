@@ -1390,3 +1390,17 @@ questions can also fill the Ask draft. Requests and saved instructions are limit
 Mac History can reopen modern saved conversations after capture/import stops; the current conversation
 must first be saved. Older records without structured transcript lines remain readable/exportable.
 Settings Transcription and Speakers descriptions explicitly explain opt-in saved audio; audio is never sent for transcription or speaker identification (#251).
+
+## Re-transcribe saved audio (#224)
+
+After stopping, open a conversation with saved audio and choose **More → Re-transcribe saved audio**.
+Choose its language and tap **Re-transcribe**. Apple speech recognition processes each saved track
+on-device; a language model may need a first-use download. Preview the result, then choose
+**Replace transcript** or **Keep original**. Cancel, an unreadable file, or a failed recognition pass
+leaves the original transcript untouched. A transcript changed during recognition cannot be replaced
+by the stale preview.
+
+Replacement removes every original transcript line, including lines without saved audio. It resets
+speaker identities and corrections, updates transcript/audio timing, and preserves the title, notes,
+attachments, instructions and summaries. Review those summaries against the new text. Saved audio
+files are not rewritten. Mac offers the same flow with Apple or WhisperKit recognition.

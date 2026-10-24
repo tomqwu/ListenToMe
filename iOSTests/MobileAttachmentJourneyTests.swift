@@ -7,7 +7,7 @@ final class MobileAttachmentJourneyTests: XCTestCase {
         app.launchPastReleaseNotes()
         app.buttons["New"].tap()
         app.buttons["Notes"].tap()
-        app.buttons["Photo library"].tap()
+        app.descendants(matching: .any)["Photo library"].firstMatch.tap()
         let photo = app.images["PXGGridLayout-Info"].firstMatch
         XCTAssertTrue(photo.waitForExistence(timeout: 30), "Requires the simulator's sample photos")
         photo.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()

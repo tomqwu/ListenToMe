@@ -752,3 +752,19 @@ clear them. Clear and save to remove them. Export Markdown/plain text/JSON and v
 Check Mac reopening does not overwrite the currently open record or drop attachments/languages.
 Capture native-resolution phone portrait/landscape, iPad and Mac images; inspect large text and
 keyboard reachability. Follow the release screenshot checklist.
+
+## Saved-audio re-transcription (#224)
+
+1. Save a recording, stop, reopen it from History, and choose **More → Re-transcribe saved audio**.
+   Confirm it is unavailable without saved audio or while recording.
+2. Choose the recorded language, re-transcribe and inspect the preview. On Mac test both Apple
+   and WhisperKit with real saved system audio: final text must carry **OTHERS** and include the tail.
+   On iPhone/iPad use a physical device for real Apple recognition; simulator fixtures check UI only.
+3. Choose **Keep original** and confirm transcript, notes and summaries are unchanged. Repeat, then
+   **Replace transcript**; verify the new text, language, playback timing and History after relaunch.
+   Notes, attachments and instructions remain; old summaries remain for review.
+4. Try a multi-run conversation and both Mac tracks. Confirm subsequent runs follow earlier audio
+   and both tracks retain their source. Cancel during recognition and test a missing/unreadable file:
+   neither may replace the original. Changing the transcript invalidates a pending preview.
+5. Capture native-resolution preview screenshots on standard/large iPhone, small/large iPad and Mac,
+   retaining source, device, runtime and version provenance with the test evidence.

@@ -11,6 +11,7 @@ final class AudioFileChunkProducer: @unchecked Sendable {
     private let format: AVAudioFormat
     private let sampleRate: Double
     private let source: SpeakerSource
+    private var readError: Error?
     private var framePosition: AVAudioFramePosition = 0
     private let queue = DispatchQueue(label: "com.tomwu.ListenToMe.audio-file-reader")
     private static let blockSize: AVAudioFrameCount = 8192
@@ -34,19 +35,27 @@ final class AudioFileChunkProducer: @unchecked Sendable {
         }
     }
 
+    func failure() async -> Error? {
+        await withCheckedContinuation { continuation in
+            queue.async { continuation.resume(returning: self.readError) }
+        }
+    }
+
     /// Reads forward until it yields a convertible chunk or hits EOF (nil). Serial-queue only.
     private func readBlock() -> AudioChunk? {
         while true {
+            guard file.framePosition < file.length else { return nil }
             guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: Self.blockSize)
-            else { return nil }
-            do { try file.read(into: buffer, frameCount: Self.blockSize) } catch { return nil }
+            else { readError = CocoaError(.fileReadUnknown); return nil }
+            do { try file.read(into: buffer, frameCount: Self.blockSize) } catch { readError = error; return nil }
             if buffer.frameLength == 0 { return nil }   // end of file
             let timestamp = Double(framePosition) / sampleRate
             framePosition += AVAudioFramePosition(buffer.frameLength)
             if let chunk = Self.chunk(from: buffer, source: source, timestamp: timestamp) {
                 return chunk
             }
-            // conversion produced nothing for this block; advance to the next
+            readError = CocoaError(.fileReadCorruptFile)
+            return nil   // never silently omit an unreadable block from a replacement transcript
         }
     }
 

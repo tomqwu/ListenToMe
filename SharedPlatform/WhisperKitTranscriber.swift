@@ -58,6 +58,9 @@ actor WhisperKitTranscriber: Transcribing {
     /// uncancellable `WhisperKit` download directly (issue #99).
     private var modelLoadFinished = false
     private var stopped = false
+    private var cancelled = false
+    private let decodeFixture: (@Sendable ([Float]) async throws -> String)?
+    private(set) var failure: String?
 
     /// Tail of a single global serial chain through which *all* `transcribe` calls run, so only one
     /// WhisperKit batch is ever in flight across both sources — the shared non-Sendable `WhisperKit`
@@ -71,7 +74,8 @@ actor WhisperKitTranscriber: Transcribing {
     ///   picker setting) to leave `language` nil and enable Whisper's own language detection — the
     ///   right setting for multilingual / code-switching speech. A non-nil locale forces its
     ///   language code, and a locale whose language can't be determined also falls back to auto.
-    init(locale: Locale? = nil) {
+    init(locale: Locale? = nil, decodeFixture: (@Sendable ([Float]) async throws -> String)? = nil) {
+        self.decodeFixture = decodeFixture
         self.language = locale.flatMap(Self.whisperLanguageCode(for:))
         var cont: AsyncStream<TranscriptSegment>.Continuation!
         segments = AsyncStream { cont = $0 }
@@ -125,6 +129,17 @@ actor WhisperKitTranscriber: Transcribing {
             // WhisperKit batch (DualChannelCapture buffers only the newest chunks).
             startTranscription(for: chunk.source)
         }
+    }
+
+    /// File re-transcription can be abandoned without finalizing a replacement.
+    func cancel() {
+        stopped = true; cancelled = true
+        loadTask?.cancel()
+        releaseModelWaiters()
+        for state in states.values { state.task?.cancel() }
+        transcriptionChain?.cancel()
+        states.removeAll()
+        continuation.finish(); statusContinuation.finish()
     }
 
     func finish() async {
@@ -223,8 +238,7 @@ actor WhisperKitTranscriber: Transcribing {
             detectLanguage: language == nil
         )
         do {
-            let results = try await box.kit.transcribe(audioArray: audio, decodeOptions: options)
-            let text = results.map(\.text).joined(separator: " ")
+            let text = try await box.transcribe(audio, options: options)
                 .trimmingCharacters(in: .whitespacesAndNewlines)
             guard !text.isEmpty else { return }
             // Real capture timestamps are recorded so any future ordering logic has correct data.
@@ -238,6 +252,7 @@ actor WhisperKitTranscriber: Transcribing {
                 end: end
             ))
         } catch {
+            failure = error.localizedDescription
             statusContinuation.yield("Whisper transcription failed: \(error.localizedDescription). Stop and restart.")
         }
     }
@@ -265,6 +280,11 @@ actor WhisperKitTranscriber: Transcribing {
     /// Resolves to nil and logs on a hard failure (only attempted once per transcriber lifetime).
     private func startModelLoadIfNeeded() {
         guard loadTask == nil else { return }
+        if let decodeFixture {
+            modelLoadFinished = true
+            loadTask = Task { KitBox(fixture: decodeFixture) }
+            return
+        }
         statusContinuation.yield("Transcription: downloading/loading Whisper model…")
         loadTask = Task {
             do {
@@ -278,6 +298,7 @@ actor WhisperKitTranscriber: Transcribing {
                 self.finishModelLoad()
                 return KitBox(kit: kit)
             } catch {
+                self.failure = error.localizedDescription
                 statusContinuation.yield("Whisper model failed: \(error.localizedDescription). Stop and restart to retry.")
                 self.finishModelLoad()
                 return nil
@@ -340,7 +361,10 @@ actor WhisperKitTranscriber: Transcribing {
             }
             guard modelLoadFinished, !stopped, !Task.isCancelled else { return nil }
         }
-        if stopped || Task.isCancelled { return nil }
+        // Graceful finish stops new input but must still decode buffered/queued audio using the
+        // already-loaded model. Explicit cancellation abandons it. A pending download still exits
+        // promptly above when stopped, so Stop never waits for a first-run model installation.
+        if cancelled || Task.isCancelled { return nil }
         return await loadTask?.value
     }
 
@@ -350,8 +374,15 @@ actor WhisperKitTranscriber: Transcribing {
     /// in SpeechAnalyzerTranscriber). All our `transcribe` calls run on one global serial chain
     /// (`transcriptionChain`), so the instance is never touched by two transcriptions at once.
     private final class KitBox: @unchecked Sendable {
-        let kit: WhisperKit
-        init(kit: WhisperKit) { self.kit = kit }
+        let kit: WhisperKit?
+        let fixture: (@Sendable ([Float]) async throws -> String)?
+        init(kit: WhisperKit) { self.kit = kit; fixture = nil }
+        init(fixture: @escaping @Sendable ([Float]) async throws -> String) { kit = nil; self.fixture = fixture }
+        func transcribe(_ audio: [Float], options: DecodingOptions) async throws -> String {
+            if let fixture { return try await fixture(audio) }
+            guard let kit else { return "" }
+            return try await kit.transcribe(audioArray: audio, decodeOptions: options).map(\.text).joined(separator: " ")
+        }
     }
 
     // MARK: - Locale → Whisper language

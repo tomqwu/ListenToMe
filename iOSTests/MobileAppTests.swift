@@ -136,7 +136,7 @@ final class MobileAppTests: XCTestCase {
         let app = XCUIApplication()
         app.launchPastReleaseNotes()
         app.buttons["Notes"].tap()
-        app.buttons["Photo library"].tap()
+        app.descendants(matching: .any)["Photo library"].firstMatch.tap()
         _ = app.staticTexts["Loading..."].firstMatch.waitForNonExistence(timeout: 30)
         XCTAssertTrue(app.buttons["Cancel"].waitForExistence(timeout: 10), app.debugDescription)
         app.buttons["Cancel"].tap()

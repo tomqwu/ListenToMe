@@ -291,6 +291,28 @@ public final class SavedAudioLibrary: @unchecked Sendable {
         return folder.appendingPathComponent(run.fileName)
     }
 
+    /// Update playback alignment together with the archive commit. If the archive rejects the
+    /// replacement, restore the original manifest; never delete or rewrite the audio itself.
+    public func commitRetranscription(conversationID: String, runs: [SavedAudioRun],
+                                      commit: () throws -> Void) throws {
+        let folder = try directory(for: conversationID)
+        try lock.withLock {
+            guard let original = readLocked(folder), !runs.isEmpty,
+                  Set(original.runs.map(\.fileName)) == Set(runs.map(\.fileName)),
+                  runs.allSatisfy({ fileManager.fileExists(atPath: folder.appendingPathComponent($0.fileName).path) }) else {
+                throw CocoaError(.fileNoSuchFile)
+            }
+            try writeLocked(Manifest(runs: runs), to: folder)
+            cache[conversationID] = nil
+            do { try commit() }
+            catch {
+                try writeLocked(original, to: folder)
+                cache[conversationID] = nil
+                throw error
+            }
+        }
+    }
+
     /// Every playable file of a conversation, for the share sheet.
     public func fileURLs(for conversationID: String) -> [URL] {
         runs(for: conversationID).compactMap { url(for: $0, conversationID: conversationID) }
