@@ -22,14 +22,17 @@ struct MobileSavedAudioSettings: View {
                 .font(.footnote).foregroundStyle(.secondary)
                 .accessibilityIdentifier("savedAudioUsage")
             Button("Delete all saved audio…", role: .destructive) { confirmDeleteAll = true }
-                .disabled(savedAudio.bytesUsed == 0)
+                .disabled(savedAudio.bytesUsed == 0 || savedAudio.isSavingRun)
                 .accessibilityIdentifier("deleteAllSavedAudio")
+            if savedAudio.isSavingRun {
+                Text("Available after you stop recording.").font(.footnote).foregroundStyle(.secondary)
+            }
         } header: { Text("Audio recordings") } footer: {
             Text("Off by default. When on, the microphone audio of each recording is saved with its conversation "
                  + "on this device, so you can play it back and share it. It is never uploaded, and it is always "
                  + "left out of iCloud and Finder backups. \(SavedAudioPolicy.estimateText()). Deleting a "
-                 + "conversation deletes its audio. Apple Watch recordings keep no audio. Turning this off keeps "
-                 + "audio already saved; delete it here.")
+                 + "conversation deletes its audio. Apple Watch recordings keep no audio. Turning this off stops "
+                 + "saving at once, even mid-recording, and keeps audio already saved; delete it here.")
                 .accessibilityIdentifier("savedAudioExplanation")
         }
         .confirmationDialog("Delete all saved audio?", isPresented: $confirmDeleteAll, titleVisibility: .visible) {

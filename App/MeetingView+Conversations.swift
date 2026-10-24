@@ -88,10 +88,11 @@ extension MeetingView {
                 alert.addButton(withTitle: "Discard and start new")
                 switch alert.runModal() {
                 case .alertFirstButtonReturn: guard saveConversationAs() else { return }
-                case .alertThirdButtonReturn: break
+                case .alertThirdButtonReturn: MacSavedAudio.shared.discard(conversationID: currentSessionID)
                 default: return
                 }
             }
+            discardAudioIfNotInHistory()
             if persisted { nameConversationIfNeeded() }   // the saved one, in the background (#221)
             autoTitleTask = nil   // it renames the saved record; typing the new title must not cancel it
             beginDiarizationRunReset()
@@ -190,8 +191,9 @@ extension MeetingView {
         restartTask?.cancel(); importTask?.cancel()
         _ = checkpoint()
         await session.stopAndWait()
+        await MacSavedAudio.shared.waitForWrites()
         await importTask?.value
-        if !hasConversation { return true }
+        if !hasConversation { discardAudioIfNotInHistory(); return true }
         if ProviderSettings.saveSessionsForSearch && sessionSaveable && checkpoint(complete: true, force: true) {
             // The final Save to folder note is queued by that checkpoint; let it land before quitting.
             await MarkdownVaultSync.shared.waitForWrites(timeout: .seconds(5))
@@ -204,9 +206,20 @@ extension MeetingView {
         alert.addButton(withTitle: "Cancel")
         alert.addButton(withTitle: "Close without saving")
         switch alert.runModal() {
-        case .alertFirstButtonReturn: return saveConversationAs()
-        case .alertThirdButtonReturn: return true
+        case .alertFirstButtonReturn:
+            guard saveConversationAs() else { return false }
+            discardAudioIfNotInHistory()
+            return true
+        case .alertThirdButtonReturn:
+            MacSavedAudio.shared.discard(conversationID: currentSessionID)
+            return true
         default: return false
         }
+    }
+
+    /// Saved audio belongs to a conversation in History (#55): a conversation that is not there — empty,
+    /// autosave off, or exported with Save As only — keeps no audio.
+    func discardAudioIfNotInHistory() {
+        if !sessionStore.contains(currentSessionID) { MacSavedAudio.shared.discard(conversationID: currentSessionID) }
     }
 }

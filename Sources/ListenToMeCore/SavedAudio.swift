@@ -157,6 +157,8 @@ public enum SavedAudioSeek {
     /// The file and time for the line at `index`, or `nil` when its times cannot be trusted or no saved
     /// file covers it. Runs placed by line index (the Mac) win over runs placed by time (iPhone).
     public static func target(for segment: TranscriptSegment, index: Int, in runs: [SavedAudioRun]) -> Target? {
+        // A line the engine gave no time (Apple's Mac engines) can never point into the audio.
+        guard TranscriptTimestamp.isTimed(segment) else { return nil }
         let candidates = runs.filter { $0.source == segment.source }.sorted { $0.index < $1.index }
         if candidates.contains(where: { $0.firstSegment != nil }) {
             guard let run = candidates.last(where: { ($0.firstSegment ?? Int.max) <= index }),
@@ -176,13 +178,17 @@ public enum SavedAudioSeek {
 }
 
 /// The saved audio of every conversation: `<root>/<conversation id>/audio.json` lists the runs, beside
-/// one `.m4a` per run and source. Safe to call from any thread; manifest updates are serialized.
+/// one `.m4a` per run and source. Safe to call from any thread; manifest updates are serialized, and the
+/// runs of each conversation are cached in memory so History does not read the disk for every row.
 public final class SavedAudioLibrary: @unchecked Sendable {
     public let root: URL
     private let excludeFromBackup: Bool
     private let lock = NSLock()
     private let fileManager = FileManager.default
     static let manifestName = "audio.json"
+    /// The playable runs of each conversation, as `runs(for:)` returns them. Guarded by `lock`;
+    /// every write through this library invalidates the entries it touches.
+    private var cache: [String: [SavedAudioRun]] = [:]
 
     private struct Manifest: Codable {
         var runs: [SavedAudioRun]
@@ -213,7 +219,7 @@ public final class SavedAudioLibrary: @unchecked Sendable {
             try PrivateStorage.createDirectory(at: root)
             try PrivateStorage.createDirectory(at: folder)
             if excludeFromBackup { try? PrivateStorage.setExcludedFromBackup(true, at: root) }
-            var manifest = readLocked(folder)
+            var manifest = readLocked(folder) ?? Manifest(runs: [])
             let index = (manifest.runs.map(\.index).max() ?? 0) + 1
             let runs = sources.map { source in
                 SavedAudioRun(index: index, source: source,
@@ -223,6 +229,7 @@ public final class SavedAudioLibrary: @unchecked Sendable {
             }
             manifest.runs += runs
             try writeLocked(manifest, to: folder)
+            cache[conversationID] = nil
             return runs
         }
     }
@@ -232,9 +239,8 @@ public final class SavedAudioLibrary: @unchecked Sendable {
     public func finishRun(conversationID: String, fileName: String, result: SavedAudioRunResult) {
         guard let folder = try? directory(for: conversationID) else { return }
         lock.withLock {
-            guard fileManager.fileExists(atPath: folder.appendingPathComponent(Self.manifestName).path) else { return }
-            var manifest = readLocked(folder)
-            guard let position = manifest.runs.firstIndex(where: { $0.fileName == fileName }) else { return }
+            guard var manifest = readLocked(folder),
+                  let position = manifest.runs.firstIndex(where: { $0.fileName == fileName }) else { return }
             let file = folder.appendingPathComponent(fileName)
             if result.duration <= 0 || !fileManager.fileExists(atPath: file.path) {
                 try? fileManager.removeItem(at: file)
@@ -245,29 +251,38 @@ public final class SavedAudioLibrary: @unchecked Sendable {
                 if let first = result.firstTimestamp { manifest.runs[position].timelineOffset += first }
             }
             try? removeOrWriteLocked(manifest, folder: folder)
+            cache[conversationID] = nil
         }
     }
 
-    /// Places the run's files by line index (the Mac): the line count when the run's capture started.
+    /// Records the index of a run's first line once its capture has started (the Mac).
     public func anchor(conversationID: String, index: Int, firstSegment: Int) {
         guard let folder = try? directory(for: conversationID) else { return }
         lock.withLock {
-            guard fileManager.fileExists(atPath: folder.appendingPathComponent(Self.manifestName).path) else { return }
-            var manifest = readLocked(folder)
+            guard var manifest = readLocked(folder) else { return }
             for position in manifest.runs.indices where manifest.runs[position].index == index {
                 manifest.runs[position].firstSegment = firstSegment
             }
             try? writeLocked(manifest, to: folder)
+            cache[conversationID] = nil
         }
     }
 
-    /// The runs whose files exist, in recording order (microphone before system audio).
+    /// The runs that can be played: their file exists and was finished (or repaired after the app was
+    /// killed, see `repairUnfinished`), in recording order, microphone before system audio. A run still
+    /// being recorded is not listed, so it can neither be played nor shared half-written.
     public func runs(for conversationID: String) -> [SavedAudioRun] {
         guard let folder = try? directory(for: conversationID) else { return [] }
         return lock.withLock {
-            readLocked(folder).runs
-                .filter { fileManager.fileExists(atPath: folder.appendingPathComponent($0.fileName).path) }
+            if let cached = cache[conversationID] { return cached }
+            let runs = (readLocked(folder)?.runs ?? [])
+                .filter { run in
+                    let file = folder.appendingPathComponent(run.fileName)
+                    return (run.duration ?? 0) > 0 && fileManager.fileExists(atPath: file.path)
+                }
                 .sorted { ($0.index, $0.source == .you ? 0 : 1) < ($1.index, $1.source == .you ? 0 : 1) }
+            cache[conversationID] = runs
+            return runs
         }
     }
 
@@ -276,17 +291,23 @@ public final class SavedAudioLibrary: @unchecked Sendable {
         return folder.appendingPathComponent(run.fileName)
     }
 
-    /// Every saved file of a conversation, for the share sheet.
+    /// Every playable file of a conversation, for the share sheet.
     public func fileURLs(for conversationID: String) -> [URL] {
         runs(for: conversationID).compactMap { url(for: $0, conversationID: conversationID) }
     }
 
     public func hasAudio(_ conversationID: String) -> Bool { !runs(for: conversationID).isEmpty }
 
+    /// Every conversation that has an audio folder.
+    public func conversationIDs() -> [String] {
+        lock.withLock { folderIDsLocked() }
+    }
+
     /// Deletes a conversation's audio. Missing audio is not an error.
     public func delete(conversationID: String) throws {
         let folder = try directory(for: conversationID)
         try lock.withLock {
+            cache[conversationID] = nil
             if fileManager.fileExists(atPath: folder.path) { try fileManager.removeItem(at: folder) }
         }
     }
@@ -294,9 +315,55 @@ public final class SavedAudioLibrary: @unchecked Sendable {
     /// Deletes every saved recording.
     public func deleteAll() throws {
         try lock.withLock {
+            cache = [:]
             for item in (try? fileManager.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)) ?? [] {
                 try fileManager.removeItem(at: item)
             }
+        }
+    }
+
+    /// Deletes the audio of conversations that are not in `keeping` (the readable history plus the one
+    /// being recorded): a recording that never became a saved conversation, or one deleted while the
+    /// app could not delete its audio. Returns how many conversations' audio went.
+    @discardableResult
+    public func deleteOrphans(keeping: Set<String>) -> Int {
+        lock.withLock {
+            var removed = 0
+            for id in folderIDsLocked() where !keeping.contains(id) {
+                cache[id] = nil
+                if (try? fileManager.removeItem(at: root.appendingPathComponent(id, isDirectory: true))) != nil {
+                    removed += 1
+                }
+            }
+            return removed
+        }
+    }
+
+    /// Runs the app never finished — it was killed while recording — get their real length from
+    /// `duration` (the file is written in fragments, so what was written before the kill plays); a file
+    /// it cannot read is deleted. `skipping` is the conversation being recorded. Returns the files changed.
+    @discardableResult
+    public func repairUnfinished(skipping: String? = nil, duration probe: (URL) -> TimeInterval?) -> Int {
+        lock.withLock {
+            var changed = 0
+            for id in folderIDsLocked() where id != skipping {
+                let folder = root.appendingPathComponent(id, isDirectory: true)
+                guard var manifest = readLocked(folder),
+                      manifest.runs.contains(where: { $0.duration == nil }) else { continue }
+                for position in manifest.runs.indices.reversed() where manifest.runs[position].duration == nil {
+                    let file = folder.appendingPathComponent(manifest.runs[position].fileName)
+                    if fileManager.fileExists(atPath: file.path), let seconds = probe(file), seconds > 0 {
+                        manifest.runs[position].duration = seconds
+                    } else {
+                        try? fileManager.removeItem(at: file)
+                        manifest.runs.remove(at: position)
+                    }
+                    changed += 1
+                }
+                try? removeOrWriteLocked(manifest, folder: folder)
+                cache[id] = nil
+            }
+            return changed
         }
     }
 
@@ -307,23 +374,29 @@ public final class SavedAudioLibrary: @unchecked Sendable {
 
     public func totalBytes() -> Int64 { lock.withLock { size(of: root) } }
 
-    /// Deletes the runs recorded more than `retentionDays` days before `now`; 0 keeps everything.
-    /// Returns how many files were deleted.
+    /// Deletes the runs recorded more than `retentionDays` days before `now`; 0 keeps everything. A
+    /// folder whose `audio.json` is missing or unreadable is aged by its files' modification dates, so
+    /// a damaged index never keeps audio past the retention. Returns how many files were deleted.
     @discardableResult
     public func deleteExpired(retentionDays: Int, now: Date = Date()) -> Int {
         guard retentionDays > 0 else { return 0 }
         let cutoff = now.addingTimeInterval(-TimeInterval(retentionDays) * 24 * 60 * 60)
         return lock.withLock {
             var removed = 0
-            let folders = (try? fileManager.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)) ?? []
-            for folder in folders where Self.isValidID(folder.lastPathComponent) {
-                var manifest = readLocked(folder)
+            for id in folderIDsLocked() {
+                let folder = root.appendingPathComponent(id, isDirectory: true)
+                guard var manifest = readLocked(folder) else {
+                    removed += deleteFilesLocked(in: folder, modifiedBefore: cutoff)
+                    cache[id] = nil
+                    continue
+                }
                 let expired = manifest.runs.filter { $0.startedAt < cutoff }
                 guard !expired.isEmpty else { continue }
                 for run in expired { try? fileManager.removeItem(at: folder.appendingPathComponent(run.fileName)) }
                 removed += expired.count
                 manifest.runs.removeAll { $0.startedAt < cutoff }
                 try? removeOrWriteLocked(manifest, folder: folder)
+                cache[id] = nil
             }
             return removed
         }
@@ -331,11 +404,16 @@ public final class SavedAudioLibrary: @unchecked Sendable {
 
     // MARK: Locked helpers
 
-    private func readLocked(_ folder: URL) -> Manifest {
+    private func folderIDsLocked() -> [String] {
+        ((try? fileManager.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)) ?? [])
+            .map(\.lastPathComponent).filter(Self.isValidID)
+    }
+
+    /// `nil` when the index is missing or cannot be decoded.
+    private func readLocked(_ folder: URL) -> Manifest? {
         let url = folder.appendingPathComponent(Self.manifestName)
-        guard let data = try? Data(contentsOf: url),
-              let manifest = try? JSONDecoder().decode(Manifest.self, from: data) else { return Manifest(runs: []) }
-        return manifest
+        guard let data = try? Data(contentsOf: url) else { return nil }
+        return try? JSONDecoder().decode(Manifest.self, from: data)
     }
 
     private func writeLocked(_ manifest: Manifest, to folder: URL) throws {
@@ -352,6 +430,22 @@ public final class SavedAudioLibrary: @unchecked Sendable {
         } else {
             try writeLocked(manifest, to: folder)
         }
+    }
+
+    /// Deletes the audio files older than `cutoff`, and the folder once no audio is left in it.
+    private func deleteFilesLocked(in folder: URL, modifiedBefore cutoff: Date) -> Int {
+        let keys: [URLResourceKey] = [.contentModificationDateKey]
+        let files = (try? fileManager.contentsOfDirectory(at: folder, includingPropertiesForKeys: keys)) ?? []
+        var removed = 0
+        for file in files where file.pathExtension == SavedAudioPolicy.fileExtension {
+            let modified = (try? file.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate
+            if let modified, modified < cutoff, (try? fileManager.removeItem(at: file)) != nil { removed += 1 }
+        }
+        let left = (try? fileManager.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)) ?? []
+        if !left.contains(where: { $0.pathExtension == SavedAudioPolicy.fileExtension }) {
+            try? fileManager.removeItem(at: folder)
+        }
+        return removed
     }
 
     private func size(of folder: URL) -> Int64 {

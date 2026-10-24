@@ -40,7 +40,7 @@ extension MobileRecording {
     func setContextualStrings(_ strings: [String]) async {}
     func attachSpeakerAudio(_ buffer: SpeakerAudioBuffer?) {}
     func attachLanguageAudio(_ buffer: SpeakerAudioBuffer?) {}
-    func attachSavedAudio(_ writer: (any SavedAudioWriting)?) { writer?.finish() }
+    func attachSavedAudio(_ writer: (any SavedAudioWriting)?) { if let writer { Task { await writer.finish() } } }
     func switchLocale(to locale: Locale, replay: SpeakerAudioBuffer?, replayFrom: @MainActor () -> Int?,
                       willReplace: @escaping @MainActor (Bool, TimeInterval) -> Void) async throws {
         throw RecordingError.message("This recorder cannot change language while recording.")
@@ -328,7 +328,7 @@ final class MobileRecorder: MobileRecording {
             self.configurationObserver = nil
         }
         await stopCapture()
-        savedAudio?.finish()   // every chunk the feed accepted has been queued to it
+        await savedAudio?.finish()   // every accepted chunk is queued to it; Stop returns once the file is closed
         input?.finish()
         do {
             try await analyzer?.finalizeAndFinishThroughEndOfInput()

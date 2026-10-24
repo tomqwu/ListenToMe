@@ -184,7 +184,8 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
   folder you choose, and updates the same note when summaries or the title change.
 - **Save audio recordings** (off by default, Settings): keeps each recording's microphone and system
   audio as two `.m4a` files beside the conversation on this Mac, for playback and sharing from History.
-  Clear history and **Delete all saved audio** remove them; optional automatic deletion after 7, 30 or
+  Saved only for conversations History keeps; Clear history, Discard, Close without saving and
+  **Delete all saved audio** remove them; optional automatic deletion after 7, 30 or
   90 days.
 - **First-run onboarding**, a global **⌘⇧Space** hotkey for instant suggestions, and keyboard
   equivalents for every frequent action (see [Keyboard shortcuts](#keyboard-shortcuts)).

@@ -303,7 +303,7 @@ final class MobileSession {
                 startSpeakerLoop()
             } catch {
                 try? await recorder.stop()
-                speakers.endRun(); endLanguageRun(); savedAudio.endRun()
+                speakers.endRun(); endLanguageRun(); endSavedAudioRun()
                 self.recorder = nil
                 state = .idle
                 if !(error is CancellationError) { message = error.localizedDescription }
@@ -326,7 +326,7 @@ final class MobileSession {
         state = .idle
         save(announce: false); nameConversationIfNeeded()   // in the background (#221)
         finishSpeakerIdentification()
-        endLanguageRun(); savedAudio.endRun()
+        endLanguageRun(); endSavedAudioRun()
     }
 
     func background() async {

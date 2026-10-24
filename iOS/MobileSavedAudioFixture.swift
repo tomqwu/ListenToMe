@@ -20,7 +20,7 @@ struct MobileSavedAudioFixture: View {
         if let writer = audio.beginRun(conversation: session.id, offset: 0) {
             let tone = (0..<160_000).map { Float(sin(Double($0) * 0.06) * 0.2) }   // 10 s at 16 kHz
             writer.append(samples: tone, sampleRate: 16_000, timestamp: nil)
-            writer.finish()
+            Task { await writer.finish() }   // the part appears once it is closed
         }
         audio.endRun()
         return session

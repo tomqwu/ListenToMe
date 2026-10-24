@@ -9,7 +9,10 @@ import Observation
 @MainActor @Observable
 final class MobileSavedAudio {
     var enabled: Bool {
-        didSet { defaults.set(enabled, forKey: SavedAudioPolicy.enabledKey) }
+        didSet {
+            defaults.set(enabled, forKey: SavedAudioPolicy.enabledKey)
+            if oldValue, !enabled { stopSavingNow() }
+        }
     }
     var retentionDays: Int {
         didSet {
@@ -58,6 +61,31 @@ final class MobileSavedAudio {
     /// The run ended; its writer was finished by the recorder.
     func endRun() { isSavingRun = false }
 
+    /// Turned off mid-recording: the running file stops at once and keeps what it already has, like
+    /// audio saved before. The recording itself goes on, without audio.
+    private func stopSavingNow() {
+        guard isSavingRun else { return }
+        isSavingRun = false
+        problem = "Saving audio is off. The audio recorded until now is kept; delete it in Settings."
+        let recorder = recorder
+        Task { await recorder.finishAll() }
+    }
+
+    /// At launch: a run the app was killed in is repaired (it is written in fragments, so all but its
+    /// last seconds play) or deleted if unreadable, and audio whose conversation is gone is deleted.
+    /// `keeping` is every readable conversation plus the one recording; `nil` when History could not be
+    /// read completely, so nothing is treated as an orphan.
+    func tidy(keeping: Set<String>?) {
+        let recording = recorder.recordingConversation
+        library.repairUnfinished(skipping: recording, duration: SavedAudioFileWriter.playableDuration)
+        if var keeping {
+            if let recording { keeping.insert(recording) }
+            library.deleteOrphans(keeping: keeping)
+        }
+        applyRetention()
+        refresh()
+    }
+
     func runs(for id: String) -> [SavedAudioRun] {
         _ = revision
         return library.runs(for: id)
@@ -79,6 +107,10 @@ final class MobileSavedAudio {
     /// Delete removes those conversations' audio, Delete all removes every file. Each is tried.
     func remove(_ deletion: ConversationDeletion) throws {
         if deletion.ids.contains(playback.conversationID ?? "") || deletion.everything { playback.stop() }
+        if isSavingRun, deletion.everything || deletion.ids.contains(recorder.recordingConversation ?? "") {
+            isSavingRun = false
+            problem = "Saved audio deleted. This recording's audio is no longer being saved."
+        }
         defer { refresh() }
         if deletion.everything { try recorder.deleteAll(); return }
         var failure: Error?
@@ -90,6 +122,7 @@ final class MobileSavedAudio {
 
     /// Settings → Delete all saved audio. Transcripts are kept.
     func deleteAll() {
+        guard !isSavingRun else { return }   // Settings disables it while a recording saves audio
         playback.stop()
         do { try recorder.deleteAll() } catch {
             problem = "Could not delete the saved audio: \(error.localizedDescription)"

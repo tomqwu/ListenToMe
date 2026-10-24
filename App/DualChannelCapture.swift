@@ -28,6 +28,9 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
     private var systemAudioWasActive = false           // guarded by `lock`
     private var systemAudioTask: Task<Void, Never>?
     private let startTime = Date()
+    /// The host clock at `startTime`: capture times from the audio's own timestamps (the tap's host time,
+    /// the stream's presentation time) are measured from here, so late delivery is not a gap (#55).
+    private let startHostSeconds = CMClockGetTime(CMClockGetHostTimeClock()).seconds
     /// Optional sink that accumulates the `.others` channel (resampled to 16 kHz) for speaker
     /// diarization. `nil` (the default) leaves existing callers/tests untouched.
     private let othersSink: SpeakerAudioBuffer?
@@ -121,7 +124,9 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
         toStop?.stopCapture { _ in }
         continuation.finish()
         // `stopped` is set, so no later callback appends; each file closes after what it already queued.
-        savedAudio.values.forEach { $0.finish() }
+        // Each file closes after what it already queued; Stop and quit wait for it (`MacSavedAudio.waitForWrites`).
+        let writers = Array(savedAudio.values)
+        Task { for writer in writers { await writer.finish() } }
     }
 
     // MARK: - Microphone (.you)
@@ -145,8 +150,9 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
             throw NSError(domain: "ListenToMe.Capture", code: 1,
                           userInfo: [NSLocalizedDescriptionKey: "No usable microphone. Connect an input and retry."])
         }
-        input.installTap(onBus: 0, bufferSize: 4096, format: format) { [weak self] buffer, _ in
-            self?.emit(buffer: buffer, source: .you)
+        input.installTap(onBus: 0, bufferSize: 4096, format: format) { [weak self] buffer, when in
+            let captured = when.isHostTimeValid ? AVAudioTime.seconds(forHostTime: when.hostTime) : nil
+            self?.emit(buffer: buffer, source: .you, capturedAt: captured)
         }
         engine.prepare()
         try engine.start()
@@ -257,7 +263,8 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
 
     // MARK: - Emit helpers
 
-    private func emit(buffer: AVAudioPCMBuffer, source: SpeakerSource) {
+    /// `capturedAt` is the host-clock time the audio was captured, when the source says.
+    private func emit(buffer: AVAudioPCMBuffer, source: SpeakerSource, capturedAt: TimeInterval? = nil) {
         guard let mono = Self.convertToMonoFloat(buffer),
               let channel = mono.floatChannelData?[0] else { return }
         let count = Int(mono.frameLength)
@@ -282,7 +289,11 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
             sink?.append(samples: samples, sampleRate: mono.format.sampleRate,
                          timestamp: timestamp, generation: generation)
             // The capture-time stamp keeps the file on WhisperKit's timeline across gaps (issue #55).
-            savedAudio[source]?.append(samples: samples, sampleRate: mono.format.sampleRate, timestamp: timestamp)
+            // Placed by capture time, not delivery time: a late callback is not a gap to fill with silence.
+            // A clock that does not match the host clock (more than 2 s from delivery) is not trusted.
+            let captureTime = capturedAt.map { $0 - startHostSeconds }.flatMap { abs($0 - timestamp) < 2 ? $0 : nil }
+                ?? timestamp
+            savedAudio[source]?.append(samples: samples, sampleRate: mono.format.sampleRate, timestamp: captureTime)
         }
         let chunk = AudioChunk(samples: samples,
                                sampleRate: mono.format.sampleRate,
@@ -329,7 +340,8 @@ extension DualChannelCapture: SCStreamOutput {
                 of type: SCStreamOutputType) {
         guard type == .audio,
               let pcm = sampleBuffer.toMonoFloatBuffer() else { return }
-        emit(buffer: pcm, source: .others)
+        let presented = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+        emit(buffer: pcm, source: .others, capturedAt: presented.isValid ? presented.seconds : nil)
     }
 }
 

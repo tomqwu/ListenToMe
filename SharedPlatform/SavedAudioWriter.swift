@@ -10,19 +10,24 @@ protocol SavedAudioWriting: AnyObject, Sendable {
     /// stamps its audio (the Mac); a gap in those times is filled with silence so the file stays on the
     /// capture's timeline. `nil` means the chunks are contiguous (iPhone: exactly what the transcriber heard).
     func append(samples: [Float], sampleRate: Double, timestamp: TimeInterval?)
-    /// Closes the file after everything appended so far is written, then reports the result.
-    func finish()
+    /// Writes everything appended so far, closes the file and reports it; returns once that is done.
+    func finish() async
     /// Stops writing without reporting: the audio is being deleted.
     func cancel()
 }
 
 /// Streams audio to an AAC `.m4a` at 16 kHz mono with bounded memory: chunks are converted and written on
-/// one serial queue, and at most `maximumPending` chunks wait for it. A write error, a full disk or a
-/// writer that falls behind stops the file and reports once; the capture and its transcript go on.
+/// one serial queue, and at most `maximumPending` chunks wait for it. The file is a fragmented MPEG-4
+/// (`AVAssetWriter.movieFragmentInterval`), so if the app is killed mid-recording everything up to the
+/// last fragment, a few seconds back, still plays. A write error, a full disk or a writer that falls
+/// behind stops the file and reports once; the capture and its transcript go on.
 final class SavedAudioFileWriter: SavedAudioWriting, @unchecked Sendable {
     /// About 20 seconds of 48 kHz microphone buffers.
     static let maximumPending = 512
-    private static let silenceCap: TimeInterval = 600
+    /// At most this much silence is inserted into one file for gaps in the capture times, in total.
+    static let silenceCap: TimeInterval = 600
+    /// A kill loses at most about this much audio.
+    static let fragmentInterval = CMTime(seconds: 4, preferredTimescale: 600)
 
     private let url: URL
     private let onFailure: @Sendable (String) -> Void
@@ -35,10 +40,13 @@ final class SavedAudioFileWriter: SavedAudioWriting, @unchecked Sendable {
     private var failure: String?      // guarded by `lock`
 
     // Used only on `queue`.
-    private var file: AVAudioFile?
+    private var writer: AVAssetWriter?
+    private var input: AVAssetWriterInput?
+    private var formatDescription: CMAudioFormatDescription?
     private var converter: AVAudioConverter?
     private var converterRate: Double = 0
-    private var frames: AVAudioFramePosition = 0
+    private var frames: Int64 = 0
+    private var silence: TimeInterval = 0
     private var firstTimestamp: TimeInterval?
     private let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: SavedAudioPolicy.sampleRate,
                                        channels: 1, interleaved: false)!
@@ -65,6 +73,12 @@ final class SavedAudioFileWriter: SavedAudioWriting, @unchecked Sendable {
         return values?.volumeAvailableCapacityForImportantUsage
     }
 
+    /// How long a saved file plays, or `nil` when it cannot be read (`SavedAudioLibrary.repairUnfinished`).
+    static func playableDuration(of url: URL) -> TimeInterval? {
+        guard let file = try? AVAudioFile(forReading: url), file.fileFormat.sampleRate > 0 else { return nil }
+        return Double(file.length) / file.fileFormat.sampleRate
+    }
+
     func append(samples: [Float], sampleRate: Double, timestamp: TimeInterval?) {
         guard !samples.isEmpty, sampleRate > 0 else { return }
         let accepted: Bool = lock.withLock {
@@ -86,26 +100,27 @@ final class SavedAudioFileWriter: SavedAudioWriting, @unchecked Sendable {
         }
     }
 
-    func finish() {
-        guard lock.withLock({ () -> Bool in
+    func finish() async {
+        let first: Bool = lock.withLock {
             defer { closed = true }
             return !closed
-        }) else { return }
-        queue.async { [self] in
-            file?.close()
-            file = nil
-            let reported = lock.withLock { failure }
-            onFinish(SavedAudioRunResult(duration: Double(frames) / SavedAudioPolicy.sampleRate,
-                                         firstTimestamp: firstTimestamp, failure: reported))
+        }
+        guard first else { return }
+        await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
+            queue.async { [self] in
+                close { [self] in
+                    let reported = lock.withLock { failure }
+                    onFinish(SavedAudioRunResult(duration: Double(frames) / SavedAudioPolicy.sampleRate,
+                                                 firstTimestamp: firstTimestamp, failure: reported))
+                    done.resume()
+                }
+            }
         }
     }
 
     func cancel() {
         lock.withLock { closed = true; stopped = true }
-        queue.async { [self] in
-            file?.close()
-            file = nil
-        }
+        queue.async { [self] in close {} }
     }
 
     /// Stops writing once and says why. The file keeps what was written before.
@@ -117,57 +132,113 @@ final class SavedAudioFileWriter: SavedAudioWriting, @unchecked Sendable {
             return true
         }
         guard first else { return }
-        queue.async { [self] in
-            file?.close()
-            file = nil
-        }
+        queue.async { [self] in close {} }
         onFailure(message)
     }
 
     // MARK: Queue only
 
-    private func write(_ samples: [Float], rate: Double, timestamp: TimeInterval?) throws {
-        if file == nil {
-            file = try AVAudioFile(forWriting: url, settings: Self.fileSettings, commonFormat: .pcmFormatFloat32,
-                                   interleaved: false)
+    /// Finishes the file (what was written stays playable) and runs `then` once it is closed.
+    private func close(then: @escaping @Sendable () -> Void) {
+        guard let writer, let input, writer.status == .writing else {
+            self.writer = nil; self.input = nil
+            then()
+            return
         }
-        guard let file else { return }
+        self.writer = nil; self.input = nil
+        input.markAsFinished()
+        writer.finishWriting { then() }
+    }
+
+    private func open() throws -> AVAssetWriterInput {
+        if let input { return input }
+        let writer = try AVAssetWriter(outputURL: url, fileType: .m4a)
+        writer.movieFragmentInterval = Self.fragmentInterval
+        let input = AVAssetWriterInput(mediaType: .audio, outputSettings: Self.fileSettings)
+        input.expectsMediaDataInRealTime = true
+        guard writer.canAdd(input) else { throw CocoaError(.fileWriteUnknown) }
+        writer.add(input)
+        guard writer.startWriting() else { throw writer.error ?? CocoaError(.fileWriteUnknown) }
+        writer.startSession(atSourceTime: .zero)
+        var formatDescription: CMAudioFormatDescription?
+        CMAudioFormatDescriptionCreate(allocator: nil, asbd: format.streamDescription, layoutSize: 0, layout: nil,
+                                       magicCookieSize: 0, magicCookie: nil, extensions: nil,
+                                       formatDescriptionOut: &formatDescription)
+        self.writer = writer
+        self.input = input
+        self.formatDescription = formatDescription
+        return input
+    }
+
+    private func write(_ samples: [Float], rate: Double, timestamp: TimeInterval?) throws {
+        let input = try open()
         if let timestamp {
             if let firstTimestamp {
                 let gap = timestamp - firstTimestamp - Double(frames) / SavedAudioPolicy.sampleRate
-                if gap > 0.25 { try writeSilence(seconds: min(gap, Self.silenceCap), to: file) }
+                let allowed = min(gap, Self.silenceCap - silence)
+                if gap > 0.25, allowed > 0 {
+                    try writeSilence(seconds: allowed, to: input)
+                    silence += allowed
+                }
             } else {
                 firstTimestamp = timestamp
             }
         }
-        guard let buffer = try convert(samples, rate: rate), buffer.frameLength > 0 else { return }
-        try file.write(from: buffer)
-        frames += AVAudioFramePosition(buffer.frameLength)
+        guard let converted = try convert(samples, rate: rate), !converted.isEmpty else { return }
+        try appendSamples(converted, to: input)
     }
 
-    private func writeSilence(seconds: TimeInterval, to file: AVAudioFile) throws {
-        var remaining = AVAudioFrameCount(seconds * SavedAudioPolicy.sampleRate)
+    private func writeSilence(seconds: TimeInterval, to input: AVAssetWriterInput) throws {
+        var remaining = Int(seconds * SavedAudioPolicy.sampleRate)
         while remaining > 0 {
-            let count = min(remaining, AVAudioFrameCount(SavedAudioPolicy.sampleRate))
-            guard let silence = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: count) else { return }
-            silence.frameLength = count   // zero-filled
-            try file.write(from: silence)
-            frames += AVAudioFramePosition(count)
+            let count = min(remaining, Int(SavedAudioPolicy.sampleRate))
+            try appendSamples([Float](repeating: 0, count: count), to: input)
             remaining -= count
         }
     }
 
+    /// Appends 16 kHz mono samples at the next position of the file's timeline.
+    private func appendSamples(_ samples: [Float], to input: AVAssetWriterInput) throws {
+        guard let writer, let formatDescription else { return }
+        var waited = 0
+        while !input.isReadyForMoreMediaData {
+            if writer.status == .failed { throw writer.error ?? CocoaError(.fileWriteUnknown) }
+            guard waited < 2_000 else { throw SavedAudioWriterError.fellBehind }
+            Thread.sleep(forTimeInterval: 0.001)
+            waited += 1
+        }
+        let bytes = samples.count * MemoryLayout<Float>.size
+        var block: CMBlockBuffer?
+        guard CMBlockBufferCreateWithMemoryBlock(allocator: nil, memoryBlock: nil, blockLength: bytes,
+                                                 blockAllocator: nil, customBlockSource: nil, offsetToData: 0,
+                                                 dataLength: bytes, flags: 0, blockBufferOut: &block) == noErr,
+              let block else { throw CocoaError(.fileWriteUnknown) }
+        let copied = samples.withUnsafeBytes { raw in
+            CMBlockBufferReplaceDataBytes(with: raw.baseAddress!, blockBuffer: block, offsetIntoDestination: 0,
+                                          dataLength: bytes)
+        }
+        var sample: CMSampleBuffer?
+        guard copied == noErr,
+              CMAudioSampleBufferCreateReadyWithPacketDescriptions(
+                allocator: nil, dataBuffer: block, formatDescription: formatDescription, sampleCount: samples.count,
+                presentationTimeStamp: CMTime(value: frames, timescale: CMTimeScale(SavedAudioPolicy.sampleRate)),
+                packetDescriptions: nil, sampleBufferOut: &sample) == noErr,
+              let sample else { throw CocoaError(.fileWriteUnknown) }
+        guard input.append(sample) else { throw writer.error ?? CocoaError(.fileWriteUnknown) }
+        frames += Int64(samples.count)
+    }
+
     /// Mono Float at `rate` to 16 kHz. One converter per input rate keeps its filter state between chunks.
-    private func convert(_ samples: [Float], rate: Double) throws -> AVAudioPCMBuffer? {
+    private func convert(_ samples: [Float], rate: Double) throws -> [Float]? {
+        if rate == SavedAudioPolicy.sampleRate { return samples }
         guard let source = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: rate, channels: 1,
                                          interleaved: false),
-              let input = AVAudioPCMBuffer(pcmFormat: source, frameCapacity: AVAudioFrameCount(samples.count)),
-              let channel = input.floatChannelData?[0] else { return nil }
-        input.frameLength = AVAudioFrameCount(samples.count)
+              let buffer = AVAudioPCMBuffer(pcmFormat: source, frameCapacity: AVAudioFrameCount(samples.count)),
+              let channel = buffer.floatChannelData?[0] else { return nil }
+        buffer.frameLength = AVAudioFrameCount(samples.count)
         samples.withUnsafeBufferPointer { values in
             if let base = values.baseAddress { channel.update(from: base, count: values.count) }
         }
-        if rate == SavedAudioPolicy.sampleRate { return input }
         if converter == nil || converterRate != rate {
             converter = AVAudioConverter(from: source, to: format)
             converterRate = rate
@@ -181,11 +252,17 @@ final class SavedAudioFileWriter: SavedAudioWriting, @unchecked Sendable {
             if consumed { status.pointee = .noDataNow; return nil }
             consumed = true
             status.pointee = .haveData
-            return input
+            return buffer
         }
         if let error { throw error }
-        return output
+        guard let data = output.floatChannelData?[0] else { return nil }
+        return Array(UnsafeBufferPointer(start: data, count: Int(output.frameLength)))
     }
+}
+
+enum SavedAudioWriterError: LocalizedError {
+    case fellBehind
+    var errorDescription: String? { "The device could not write audio fast enough." }
 }
 
 /// Starts the writers of one recording run and keeps the library's list of runs in step with them. Used
@@ -200,6 +277,8 @@ final class SavedAudioRecorder: @unchecked Sendable {
     private let lock = NSLock()
     /// Writers still running, by conversation, so deleting that conversation stops them first.
     private var active: [ObjectIdentifier: (conversation: String, writer: any SavedAudioWriting)] = [:]
+    /// Callers of `waitForWrites`, resumed once no writer is running.
+    private var waiters: [UUID: CheckedContinuation<Void, Never>] = [:]
     /// The latest run started, for `anchor` (the Mac knows the first line only after start returns).
     private var latest: (conversation: String, index: Int)?
     /// Problems to show; called on any thread.
@@ -216,6 +295,9 @@ final class SavedAudioRecorder: @unchecked Sendable {
         let root = library.root
         self.availableBytes = availableBytes ?? { SavedAudioFileWriter.availableBytes(near: root) }
     }
+
+    /// The conversation being written, if a writer is running.
+    var recordingConversation: String? { lock.withLock { active.values.first?.conversation } }
 
     /// One writer per source, or none when storage is low or the folder cannot be prepared; the reason
     /// is reported and the recording goes on without saving audio.
@@ -241,7 +323,7 @@ final class SavedAudioRecorder: @unchecked Sendable {
             let writer = makeWriter(url, { [weak self] in self?.onProblem($0) }, { [weak self] result in
                 guard let self else { return }
                 self.library.finishRun(conversationID: conversationID, fileName: run.fileName, result: result)
-                if let id = box.id { self.lock.withLock { _ = self.active.removeValue(forKey: id) } }
+                if let id = box.id { self.release(id) }
                 self.onChange()
             })
             box.id = ObjectIdentifier(writer)
@@ -261,6 +343,48 @@ final class SavedAudioRecorder: @unchecked Sendable {
         library.anchor(conversationID: latest.conversation, index: latest.index, firstSegment: firstSegment)
     }
 
+    /// The setting was turned off mid-recording: every running file stops now and keeps what it has.
+    func finishAll() async {
+        let running = lock.withLock { active.values.map(\.writer) }
+        for writer in running { await writer.finish() }
+    }
+
+    /// Waits until every running file is closed, or `timeout` passes.
+    func waitForWrites(timeout: Duration) async {
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { await self.idle() }
+            group.addTask { try? await Task.sleep(for: timeout) }
+            await group.next()
+            group.cancelAll()
+        }
+    }
+
+    private func idle() async {
+        let key = UUID()
+        await withTaskCancellationHandler {
+            await withCheckedContinuation { (waiter: CheckedContinuation<Void, Never>) in
+                let resumeNow: Bool = lock.withLock {
+                    if active.isEmpty || Task.isCancelled { return true }
+                    waiters[key] = waiter
+                    return false
+                }
+                if resumeNow { waiter.resume() }
+            }
+        } onCancel: {
+            lock.withLock { waiters.removeValue(forKey: key) }?.resume()
+        }
+    }
+
+    private func release(_ id: ObjectIdentifier) {
+        let resumed: [CheckedContinuation<Void, Never>] = lock.withLock {
+            active.removeValue(forKey: id)
+            guard active.isEmpty else { return [] }
+            defer { waiters = [:] }
+            return Array(waiters.values)
+        }
+        resumed.forEach { $0.resume() }
+    }
+
     /// Stops any writer of the conversation, then deletes its audio.
     func delete(conversationID: String) throws {
         cancelWriters { $0 == conversationID }
@@ -275,12 +399,13 @@ final class SavedAudioRecorder: @unchecked Sendable {
     }
 
     private func cancelWriters(where matches: (String) -> Bool) {
-        let cancelled: [any SavedAudioWriting] = lock.withLock {
-            let matching = active.filter { matches($0.value.conversation) }
-            for key in matching.keys { active.removeValue(forKey: key) }
-            return matching.values.map(\.writer)
+        let cancelled: [(ObjectIdentifier, any SavedAudioWriting)] = lock.withLock {
+            active.filter { matches($0.value.conversation) }.map { ($0.key, $0.value.writer) }
         }
-        cancelled.forEach { $0.cancel() }
+        for (id, writer) in cancelled {
+            writer.cancel()
+            release(id)
+        }
     }
 
     /// The writer's identity, known only after the writer that captures it was made.

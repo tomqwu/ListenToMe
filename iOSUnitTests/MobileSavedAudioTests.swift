@@ -27,11 +27,15 @@ final class FakeSavedAudioWriter: SavedAudioWriting, @unchecked Sendable {
     var cancelled: Bool { lock.withLock { cancelledFlag } }
 
     func append(samples: [Float], sampleRate: Double, timestamp: TimeInterval?) {
-        lock.withLock { chunks.append((samples.count, sampleRate)) }
+        lock.withLock {
+            guard !finishedFlag, !cancelledFlag else { return }   // like the real writer: nothing after close
+            chunks.append((samples.count, sampleRate))
+        }
     }
 
     /// Writes a placeholder file and reports the seconds it was given, as the real writer would.
-    func finish() {
+    func finish() async {
+        guard !finished, !cancelled else { return }
         lock.withLock { finishedFlag = true }
         let duration = seconds
         if duration > 0 { try? Data([0]).write(to: url) }
@@ -72,7 +76,7 @@ final class SavedAudioTestRecorder: MobileRecording {
                onFailure: @escaping @MainActor (String) -> Void) async throws { receive = onSegment }
 
     func stop() async throws {
-        writer?.finish()
+        await writer?.finish()
         writer = nil
         receive = nil
     }
@@ -302,7 +306,7 @@ final class MobileSavedAudioTests: XCTestCase {
         let tone = (0..<48_000).map { Float(sin(Double($0) * 0.05) * 0.3) }
         writer.append(samples: tone, sampleRate: 48_000, timestamp: 0.5)
         writer.append(samples: tone, sampleRate: 48_000, timestamp: 3.5)   // a 2 s gap is filled with silence
-        writer.finish()
+        await writer.finish()
         writer.append(samples: tone, sampleRate: 48_000, timestamp: 4.5)   // after finish: ignored
         await waitForResult(done)
         let finished = try XCTUnwrap(result.value)
@@ -331,7 +335,7 @@ final class MobileSavedAudioTests: XCTestCase {
         writer.append(samples: [Float](repeating: 0, count: 1_600), sampleRate: 16_000, timestamp: nil)
         writer.append(samples: [Float](repeating: 0, count: 1_600), sampleRate: 16_000, timestamp: nil)
         await fulfillment(of: [failed], timeout: 10)
-        writer.finish()
+        await writer.finish()
         await waitForResult(done)
         XCTAssertEqual(messages.messages.count, 1)
         XCTAssertTrue(messages.messages[0].contains("Transcription continues"))
@@ -344,9 +348,125 @@ final class MobileSavedAudioTests: XCTestCase {
                                           onFinish: { _ in XCTFail("A cancelled writer does not finish") })
         writer.append(samples: [Float](repeating: 0, count: 1_600), sampleRate: 16_000, timestamp: nil)
         writer.cancel()
-        writer.finish()
+        await writer.finish()
         writer.append(samples: [Float](repeating: 0, count: 1_600), sampleRate: 16_000, timestamp: nil)
         try await Task.sleep(for: .milliseconds(200))
+    }
+
+    // MARK: Review of #243
+
+    func testTurningTheSettingOffMidRecordingStopsTheFileAtOnce() async throws {
+        let factory = FakeWriterFactory()
+        let audio = savedAudio(factory)
+        audio.enabled = true
+        let recorder = SavedAudioTestRecorder()
+        let session = session(recorder, audio: audio)
+        try await record(session)
+        recorder.speak("before", from: 0, to: 2)
+        let writer = try XCTUnwrap(factory.writers.first)
+        audio.enabled = false
+        XCTAssertFalse(audio.isSavingRun, "The status line stops saying audio is being saved")
+        XCTAssertTrue(try XCTUnwrap(audio.problem).contains("kept"))
+        try await settle(writer.finished)
+        XCTAssertTrue(writer.finished, "The file closes now, not at Stop")
+        XCTAssertEqual(session.state, .recording, "The recording goes on without audio")
+        recorder.speak("after", from: 2, to: 4)
+        XCTAssertEqual(writer.seconds, 2, accuracy: 0.001, "Nothing after the switch is written")
+        await session.stop()
+        XCTAssertEqual(audio.runs(for: session.id).first?.duration ?? 0, 2, accuracy: 0.001,
+                       "What was recorded before is kept")
+    }
+
+    func testARecordingWithNoSavedConversationKeepsNoAudio() async throws {
+        let factory = FakeWriterFactory()
+        let audio = savedAudio(factory)
+        audio.enabled = true
+        let recorder = SavedAudioTestRecorder()
+        let session = session(recorder, audio: audio)
+        try await record(session)
+        recorder.writer?.append(samples: [Float](repeating: 0, count: 16_000), sampleRate: 16_000, timestamp: nil)
+        await session.stop()   // no line and no notes: nothing is saved to History
+        XCTAssertFalse(session.history.contains { $0.id == session.id })
+        XCTAssertFalse(audio.library.hasAudio(session.id))
+        XCTAssertEqual(audio.library.conversationIDs(), [], "No folder is left behind")
+    }
+
+    func testLaunchTidyRepairsKilledRunsAndDeletesOrphansButNotTheOpenHistory() async throws {
+        let factory = FakeWriterFactory()
+        let audio = savedAudio(factory)
+        audio.enabled = true
+        let recorder = SavedAudioTestRecorder()
+        let session = session(recorder, audio: audio)
+        try await record(session)
+        recorder.speak("kept", from: 0, to: 2)
+        await session.stop()
+        // A conversation whose record is gone, and a run the app was killed in (never finished).
+        let orphan = try audio.library.beginRun(conversationID: "ORPHAN-1", sources: [.you], startedAt: Date(),
+                                                timelineOffset: 0, timesMatchAudio: true)
+        try Data([1]).write(to: try XCTUnwrap(audio.library.url(for: orphan[0], conversationID: "ORPHAN-1")))
+        let killed = try audio.library.beginRun(conversationID: session.id, sources: [.you], startedAt: Date(),
+                                                timelineOffset: 2, timesMatchAudio: true)
+        try Data("not audio".utf8).write(to: try XCTUnwrap(audio.library.url(for: killed[0], conversationID: session.id)))
+
+        session.tidySavedAudio()
+        XCTAssertEqual(audio.library.conversationIDs(), [session.id])
+        XCTAssertEqual(audio.runs(for: session.id).map(\.index), [1], "An unreadable killed run is deleted")
+    }
+
+    func testDeletingTheRecordingsAudioClearsTheSavingStateAndSaysSo() async throws {
+        let factory = FakeWriterFactory()
+        let audio = savedAudio(factory)
+        audio.enabled = true
+        let recorder = SavedAudioTestRecorder()
+        let session = session(recorder, audio: audio)
+        try await record(session)
+        XCTAssertTrue(audio.isSavingRun)
+        audio.deleteAll()
+        XCTAssertTrue(audio.isSavingRun, "Delete all saved audio waits until the recording stops")
+        try audio.remove(ConversationDeletion(ids: [session.id]))
+        XCTAssertFalse(audio.isSavingRun)
+        XCTAssertTrue(try XCTUnwrap(audio.problem).contains("no longer being saved"))
+        XCTAssertTrue(try XCTUnwrap(factory.writers.first).cancelled)
+        await session.stop()
+    }
+
+    func testWaitForWritesReturnsOnceFilesCloseOrAfterTheTimeout() async throws {
+        let factory = FakeWriterFactory()
+        let audio = savedAudio(factory)
+        audio.enabled = true
+        let writer = try XCTUnwrap(audio.beginRun(conversation: "WAIT-1", offset: 0))
+        let started = ContinuousClock.now
+        await audio.recorder.waitForWrites(timeout: .milliseconds(100))
+        XCTAssertGreaterThanOrEqual(ContinuousClock.now - started, .milliseconds(90), "Bounded while a file is open")
+        writer.append(samples: [0, 0], sampleRate: 16_000, timestamp: nil)
+        await writer.finish()
+        let after = ContinuousClock.now
+        await audio.recorder.waitForWrites(timeout: .seconds(5))
+        XCTAssertLessThan(ContinuousClock.now - after, .seconds(1), "Returns at once when nothing is open")
+    }
+
+    func testTheFileWriterCapsTotalSilenceAndStaysPlayableBeforeItIsClosed() async throws {
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let url = root.appendingPathComponent("part-001-system.m4a")
+        let result = ResultBox()
+        let writer = SavedAudioFileWriter(url: url, onFailure: { XCTFail($0) }, onFinish: { result.value = $0 })
+        let second = [Float](repeating: 0.1, count: 16_000)
+        writer.append(samples: second, sampleRate: 16_000, timestamp: 0)
+        writer.append(samples: second, sampleRate: 16_000, timestamp: 400)   // a 399 s gap
+        writer.append(samples: second, sampleRate: 16_000, timestamp: 1_000)  // 599 s more, but the cap is 600 s
+        for index in 0..<8 { writer.append(samples: second, sampleRate: 16_000, timestamp: 1_001 + Double(index)) }
+        // The file is written in fragments: before it is closed (as if the app were killed) it already plays.
+        var playable: TimeInterval = 0
+        for _ in 0..<100 where playable < 100 {
+            try await Task.sleep(for: .milliseconds(50))
+            playable = SavedAudioFileWriter.playableDuration(of: url) ?? 0
+        }
+        XCTAssertGreaterThan(playable, 100, "Fragments already written play without the file being closed")
+        await writer.finish()
+        let finished = try XCTUnwrap(result.value)
+        XCTAssertEqual(finished.duration, 3 + 600 + 8, accuracy: 0.1, "Silence never exceeds 600 s in total")
+        XCTAssertEqual(SavedAudioFileWriter.playableDuration(of: url) ?? 0, finished.duration, accuracy: 0.2)
+        XCTAssertNil(SavedAudioFileWriter.playableDuration(of: root.appendingPathComponent("missing.m4a")))
     }
 }
 

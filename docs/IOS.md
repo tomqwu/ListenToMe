@@ -79,7 +79,7 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 | Suggested prompts (#61) | **Suggested · from context** above the fixed Quick actions, from the Auto Quick check only (macOS manual Quick answers are prose with no chips); a click asks Quick, the context menu also offers **Ask in Deep**, which behaves like the **Deep answer** button; Auto off or AI off clears them | Under Quick Summary, from the Auto Quick check or a manual Quick refresh — on Apple Intelligence through the strict prose "Suggested:" block; a tap is a separate ask to the Quick model, answered in a small Ask card under Quick Summary and never replacing a summary (iOS has no free-form Quick answer and no Deep tab, #235) |
 | Third-party licenses | **Open-source licenses…** shows `App/ThirdPartyNotices.txt` as one text | **Settings → About → Acknowledgements** lists each package from the same file with its full license (`MobileAcknowledgementsView`, #202) |
 | "What's New" | GitHub release notes and `CHANGELOG.md` | In-app, shown once per set of bundled notes (`MobileReleaseNotes`) |
-| Saved audio (#55) | Off by default (Settings); one `.m4a` per source per run — microphone and system audio as separate labelled files — under Application Support, following Time Machine; History → a conversation plays it, and only WhisperKit lines (real times) can jump into it | Off by default (**Settings → Audio recordings**); the microphone audio the transcriber accepted, one `.m4a` per run, always excluded from backups; the expanded transcript plays it and every line can jump to its time |
+| Saved audio (#55) | Off by default (Settings); one `.m4a` per source per run — microphone and system audio as separate labelled files — under Application Support, following Time Machine; saved only while Save sessions locally keeps the conversation, deleted by Discard and Close without saving; placed at #233's `recordingOffset`; History → a conversation plays it, and only WhisperKit lines (real times) can jump into it | Off by default (**Settings → Audio recordings**); the microphone audio the transcriber accepted, one `.m4a` per run, always excluded from backups; the expanded transcript plays it and every line can jump to its time |
 | Storage protection | Plain atomic writes | Data protection (`completeUntilFirstUserAuthentication`) plus an optional backup exclusion (`PrivateStorage`) |
 | Export | Markdown, plain text, SRT, WebVTT and JSON files (subtitles only with WhisperKit timestamps; SpeechAnalyzer reports none until #68), PDF and recap, from the Export menu and the History detail sheet, named after the conversation (#130); **Save to folder** chosen with an open panel, written when a checkpoint is complete (capture stopped) and only while autosaving is on | Readable text and Markdown through the share sheet, and **Export as** Markdown, plain text, SRT, WebVTT or JSON files from More and a History row, named after the conversation, with timestamps (#130); **Save to folder** chosen in the Files picker (security-scoped bookmark), written at Stop/Save and on later changes while not recording |
 | Audio-file import | Yes (`App/AudioFileReader.swift`) | No |
@@ -792,9 +792,10 @@ speaker (#180) and language (#197, #199) buffers. `AnalyzerSink.copy` hands it e
 analyzer accepted, after conversion, so a dropped or unconvertible chunk is missing from the file as it
 is from the transcript and the three copies keep one timeline; audio parked during a language switch is
 written once, and a replay is never written again. The writer (`SharedPlatform/SavedAudioWriter.swift`)
-resamples to **16 kHz mono** and encodes AAC at 24 kbit/s into an `.m4a` with `AVAudioFile` on its own
-serial queue, so memory is bounded (at most 512 waiting chunks) and the capture path never touches the
-disk. 16 kHz is the rate the transcriber, speaker and language buffers use, it does not change when a
+resamples to **16 kHz mono** and encodes AAC at 24 kbit/s into a **fragmented** `.m4a` with
+`AVAssetWriter` (`movieFragmentInterval` 4 s) on its own serial queue, so memory is bounded (at most 512
+waiting chunks), the capture path never touches the disk, and a file the app is killed in the middle of
+still plays up to its last fragment. 16 kHz is the rate the transcriber, speaker and language buffers use, it does not change when a
 headset changes the microphone's native rate mid-recording, and it costs about 12 MB per hour.
 
 Files live in `Application Support/SavedAudio/<conversation id>/`: `audio.json` lists the runs and each
@@ -806,14 +807,24 @@ whatever **Exclude conversations from iCloud backup** says: raw audio is the mos
 app can hold, and its backup would grow by 12 MB an hour. Below 100 MB of free storage a recording
 does not start saving audio; a write error, a full disk or a writer that falls behind stops the file
 and shows an orange line under the title ("Saving audio stopped … Transcription continues"), and the
-recording goes on. Stop finishes the file after the feed has drained.
+recording goes on. Stop (and moving to the background, inside its background task) waits for the file
+to close before it returns. Only finished runs are listed, played or shared, so a run still being
+written can never be shared half-written.
 
 Saved audio is one of `MobileSession.conversationDataOwners` (#220), so Delete and Delete all
 conversations stop any writer for those conversations and delete their folders (Delete all deletes
 the whole `SavedAudio` folder); on the Mac it is an owner of Clear history (`SessionStore`).
 **Delete all saved audio** in Settings deletes every file and keeps transcripts; **Keep audio** can
 delete runs automatically after 7, 30 or 90 days, checked at launch, when the app becomes active and
-when Settings opens. Turning the setting off keeps audio already saved.
+when Settings opens. **Delete all saved audio** is unavailable while a recording saves audio; deleting
+that conversation's audio another way stops its saving and says so. Turning the setting off mid-recording
+stops the file at once — what was written until then is kept, like audio saved before — and the status
+line stops saying "Saving audio". A recording that ends without becoming a saved conversation (no line
+and no notes) keeps no audio. At launch (`tidySavedAudio`) a run the app was killed in gets its length
+from the file, or is deleted if unreadable, and audio whose conversation is not in History is deleted,
+but only when History read completely, so a set-aside file's audio is never taken for an orphan.
+Retention ages a folder whose `audio.json` is missing or damaged by its files' modification dates.
+`SavedAudioLibrary` caches each conversation's runs in memory, so History does not read the disk per row.
 
 Playback (`SharedPlatform/SavedAudioPlayer.swift`, `AVAudioPlayer`, local files only): when the open
 conversation has audio and nothing is recording, the live transcript's header shows a play button that
@@ -823,9 +834,8 @@ from that moment (`SavedAudioSeek`). History marks conversations with saved audi
 audio** in the touch-and-hold menu. Starting a recording stops playback.
 
 Apple Watch recordings keep no audio, even with this setting on: the watch inbox deletes each chunk
-once its text is saved (#181 decision 3), and keeping it would need a second, crash-safe retention path
-for audio the iPhone never heard. A recording force-quit or crashed mid-run leaves a file that may not
-play (the `.m4a` is completed at Stop); the player says so. UI tests use `--saved-audio-fixture`, a
+once its text is saved (#181 decision 3), and keeping it would need a second retention path for audio
+the iPhone never heard (#225). UI tests use `--saved-audio-fixture`, a
 synthetic tone written by the real writer; no test records the microphone.
 
 ## Photos, files and Apple Notes

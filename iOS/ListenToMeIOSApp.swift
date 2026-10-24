@@ -21,6 +21,7 @@ struct ListenToMeIOSApp: App {
                 .tint(MobileStyle.accent)
                 .task {
                     session.importSharedInbox()
+                    session.tidySavedAudio()   // killed runs repaired, orphaned audio deleted (#55)
                     attachWatchLink()
                     session.importWatchInbox()
                     // Also from the .active phase change; this covers a launch already active by now.

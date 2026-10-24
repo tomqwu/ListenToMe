@@ -629,10 +629,16 @@ iPhone (a physical device: the simulator cannot record; steps 1 and 7 also run i
 6. **Deletion.** Delete the conversation in History: its audio is gone (Settings' space used drops).
    Record another, then **Delete all saved audio**: transcripts stay, the play button disappears.
    Record again, then **Delete all conversations** (#220): Settings shows no saved audio.
+   While recording, Delete all saved audio is unavailable ("Available after you stop recording").
+   Start, wait, and turn the setting off in Settings mid-recording: "Saving audio" disappears, an orange
+   line says the audio until now is kept, transcription goes on; after Stop the part plays up to the switch.
+   Start and Stop without speaking or typing notes: no audio is kept for that empty conversation.
 7. **Low storage.** (Simulator is enough with `MobileSavedAudioTests`; on a device, fill storage to under
    100 MB.) Start: an orange "Audio is not being saved … Transcription continues" line appears and
    transcription runs.
 8. **Backups.** In Finder, back up the iPhone unencrypted: the `SavedAudio` folder is not in the backup.
+9. **Killed mid-recording.** Record about 30 seconds, then force-quit from the app switcher (Stop never
+   runs). Relaunch: the conversation's part plays all but its last few seconds.
 
 Mac (`make run`; macOS releases are paused, so this is for the build only):
 
@@ -642,4 +648,9 @@ Mac (`make run`; macOS releases are paused, so this is for the build only):
 2. With the WhisperKit engine, **Play from a line** lists the lines and plays each from its time; with
    SpeechAnalyzer, the note says those lines cannot jump into the audio.
 3. **Clear history** deletes the audio too; **Delete all saved audio** in Settings keeps history.
+4. Record two runs in one conversation with WhisperKit (Stop, Listen again): a line from the second run
+   plays its own words, not the first run's.
+5. With autosaving off, record: no audio is saved. With it on, record and choose **New** → **Discard**
+   (after a failed save) or close with **Close without saving**: the audio is deleted.
+6. Turn the setting off while recording: the files stop at once and keep what they have.
 

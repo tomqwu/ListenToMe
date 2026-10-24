@@ -19,3 +19,21 @@ extension MobileSession {
     /// Whether the open conversation has audio that can be played now (never while recording).
     var canPlaySavedAudio: Bool { state == .idle && !savedAudio.runs(for: id).isEmpty }
 }
+
+extension MobileSession {
+    /// A run ended. A recording that never became a saved conversation (no line, no notes) keeps no audio.
+    func endSavedAudioRun() {
+        savedAudio.endRun()
+        if !history.contains(where: { $0.id == id }) { savedAudio.delete(conversation: id) }
+    }
+
+    /// At launch: repairs runs the app was killed in and deletes audio whose conversation is gone. Orphans
+    /// are judged only against a History that read completely; a set-aside file's audio is never deleted.
+    func tidySavedAudio() {
+        guard let result = try? archive.read(), result.warning == nil else {
+            savedAudio.tidy(keeping: nil)
+            return
+        }
+        savedAudio.tidy(keeping: Set(result.records.map(\.id) + (state == .idle ? [] : [id])))
+    }
+}

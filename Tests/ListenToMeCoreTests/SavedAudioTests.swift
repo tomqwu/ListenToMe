@@ -237,4 +237,147 @@ final class SavedAudioTests: XCTestCase {
                      "Apple's speech engines report no times, so the line cannot seek")
         XCTAssertEqual(SavedAudioSeek.target(for: line(0.5, .others), index: 0, in: runs)?.time, 0, "Clamped at 0")
     }
+
+    func testAnUntimedLineNeverSeeks() {
+        let run = SavedAudioRun(index: 1, source: .others, fileName: "a", startedAt: Date(), timelineOffset: 0,
+                                timesMatchAudio: true, duration: 60)
+        XCTAssertNil(SavedAudioSeek.target(for: TranscriptSegment(source: .others, text: "x", isFinal: true,
+                                                                  start: 0, end: 0), index: 0, in: [run]))
+    }
+
+    // MARK: Review of #243
+
+    func testUnfinishedRunsAreHiddenUntilFinishedAndTheCacheFollowsWrites() throws {
+        let library = library()
+        let runs = try library.beginRun(conversationID: conversation, sources: [.you], startedAt: Date(),
+                                        timelineOffset: 0, timesMatchAudio: true)
+        let url = try XCTUnwrap(library.url(for: runs[0], conversationID: conversation))
+        try Data([1]).write(to: url)
+        XCTAssertEqual(library.runs(for: conversation), [], "A run still being written is not playable or shareable")
+        XCTAssertEqual(library.fileURLs(for: conversation), [])
+        library.finishRun(conversationID: conversation, fileName: runs[0].fileName,
+                          result: SavedAudioRunResult(duration: 5))
+        XCTAssertEqual(library.runs(for: conversation).count, 1, "finishing invalidates the cached list")
+        XCTAssertEqual(library.conversationIDs(), [conversation])
+        try library.delete(conversationID: conversation)
+        XCTAssertEqual(library.runs(for: conversation), [])
+    }
+
+    func testOrphanedAudioIsDeletedButKeptConversationsStay() throws {
+        let library = library()
+        _ = try record(library)
+        _ = try record(library, id: "ORPHAN-1")
+        _ = try record(library, id: "RECORDING-1")
+        try FileManager.default.createDirectory(at: root.appendingPathComponent("not an id"),
+                                                withIntermediateDirectories: true)
+        XCTAssertEqual(library.deleteOrphans(keeping: [conversation, "RECORDING-1"]), 1)
+        XCTAssertEqual(Set(library.conversationIDs()), [conversation, "RECORDING-1"])
+        XCTAssertTrue(library.hasAudio(conversation))
+        XCTAssertFalse(library.hasAudio("ORPHAN-1"))
+    }
+
+    func testARunKilledMidRecordingIsRepairedOrPruned() throws {
+        let library = library()
+        let killed = try library.beginRun(conversationID: conversation, sources: [.you, .others], startedAt: Date(),
+                                          timelineOffset: 0, timesMatchAudio: true)
+        for run in killed { try Data([1]).write(to: try XCTUnwrap(library.url(for: run, conversationID: conversation))) }
+        let recording = try library.beginRun(conversationID: "RECORDING-1", sources: [.you], startedAt: Date(),
+                                             timelineOffset: 0, timesMatchAudio: true)
+        try Data([1]).write(to: try XCTUnwrap(library.url(for: recording[0], conversationID: "RECORDING-1")))
+        let changed = library.repairUnfinished(skipping: "RECORDING-1") { url in
+            url.lastPathComponent.contains("microphone") ? 42 : nil
+        }
+        XCTAssertEqual(changed, 2)
+        let runs = library.runs(for: conversation)
+        XCTAssertEqual(runs.map(\.source), [.you], "The readable part plays; the unreadable one is deleted")
+        XCTAssertEqual(runs.first?.duration, 42)
+        XCTAssertEqual(library.repairUnfinished { _ in 1 }, 1, "Only the recording that was skipped is left")
+        XCTAssertEqual(library.repairUnfinished { _ in 1 }, 0)
+    }
+
+    func testRetentionAgesAFolderWithAMissingOrDamagedIndexByItsFiles() throws {
+        let library = library()
+        let now = Date()
+        _ = try record(library, id: "MISSING-1")
+        _ = try record(library, id: "DAMAGED-1")
+        _ = try record(library, id: "RECENT-1")
+        let missing = try library.directory(for: "MISSING-1")
+        try FileManager.default.removeItem(at: missing.appendingPathComponent(SavedAudioLibrary.manifestName))
+        let damaged = try library.directory(for: "DAMAGED-1")
+        try Data("{".utf8).write(to: damaged.appendingPathComponent(SavedAudioLibrary.manifestName))
+        let old = now.addingTimeInterval(-40 * 86_400)
+        for folder in [missing, damaged] {
+            for file in try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil) {
+                try FileManager.default.setAttributes([.modificationDate: old], ofItemAtPath: file.path)
+            }
+        }
+        let recent = try library.directory(for: "RECENT-1")
+        try FileManager.default.removeItem(at: recent.appendingPathComponent(SavedAudioLibrary.manifestName))
+        XCTAssertEqual(library.deleteExpired(retentionDays: 30, now: now), 2)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: missing.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: damaged.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: recent.path), "Recent files stay, index or not")
+    }
+
+    /// The Mac's run offset comes from the session that is starting: every recording after the first
+    /// continues the conversation's timeline (#233), so its file must start there too.
+    @MainActor
+    func testMacRunsArePlacedWhereEachRecordingsLinesStart() async throws {
+        final class Holder: @unchecked Sendable {
+            weak var session: MeetingSession?
+            var offsets: [TimeInterval] = []
+            var transcribers: [MockTranscriber] = []
+        }
+        let holder = Holder()
+        let session = MeetingSession(
+            store: ConversationStore(), context: ContextEngine(debounce: 0),
+            makeCapture: {
+                MainActor.assumeIsolated { holder.offsets.append(holder.session?.recordingOffset ?? -1) }
+                return MockCapture()
+            },
+            makeTranscriber: { let made = MockTranscriber(); holder.transcribers.append(made); return made },
+            makeProvider: { MockLLMProvider(id: $0, deltas: ["x"]) },
+            models: [.listener: "L", .quick: "Q", .deep: "D"], clock: { 999_999 })
+        session.proactiveEnabled = false
+        holder.session = session
+        func waitFor(_ count: Int) async {
+            for _ in 0..<200 where session.store.utterances.count < count { try? await Task.sleep(nanoseconds: 10_000_000) }
+        }
+        try await session.start()
+        holder.transcribers.last?.emit(TranscriptSegment(source: .others, text: "one", isFinal: true, start: 1, end: 20))
+        await waitFor(1)
+        await session.stopAndWait()
+        try await session.start()
+        holder.transcribers.last?.emit(TranscriptSegment(source: .others, text: "two", isFinal: true, start: 2, end: 4))
+        await waitFor(2)
+        await session.stopAndWait()
+        XCTAssertEqual(holder.offsets, [0, 20])
+
+        let library = library()
+        var runs: [SavedAudioRun] = []
+        for (number, offset) in holder.offsets.enumerated() {
+            let run = try library.beginRun(conversationID: conversation, sources: [.others], startedAt: Date(),
+                                           timelineOffset: offset, timesMatchAudio: true)[0]
+            try Data([1]).write(to: try XCTUnwrap(library.url(for: run, conversationID: conversation)))
+            library.finishRun(conversationID: conversation, fileName: run.fileName,
+                              result: SavedAudioRunResult(duration: 60, firstTimestamp: 0.5))
+            library.anchor(conversationID: conversation, index: run.index, firstSegment: number)
+        }
+        runs = library.runs(for: conversation)
+        let lines = session.store.utterances
+        XCTAssertEqual(lines.map(\.start), [1, 22])
+        let second = try XCTUnwrap(SavedAudioSeek.target(for: lines[1], index: 1, in: runs))
+        XCTAssertEqual(second.run.index, 2)
+        XCTAssertEqual(second.time, 1.5, accuracy: 0.001, "2 s into the second recording, less its first chunk's 0.5 s")
+        XCTAssertEqual(SavedAudioSeek.target(for: lines[0], index: 0, in: runs)?.time ?? -1, 0.5, accuracy: 0.001)
+    }
+
+    /// The Mac keeps audio only for a conversation in History; it asks the archive.
+    func testTheArchiveSaysWhetherAConversationIsSaved() throws {
+        let archive = SessionArchive(directory: root.appendingPathComponent("Conversations"))
+        XCTAssertFalse(archive.contains(id: conversation))
+        try archive.save(SessionRecord(id: conversation, title: "T", date: Date(), transcript: "", summary: ""))
+        XCTAssertTrue(archive.contains(id: conversation))
+        XCTAssertFalse(archive.contains(id: "../escape"))
+    }
 }

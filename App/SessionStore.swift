@@ -51,6 +51,16 @@ final class SessionStore {
         } catch { errorText = "Couldn't save: \(error.localizedDescription)"; return false }
     }
 
+    /// Whether History holds this conversation.
+    func contains(_ id: String) -> Bool { archive?.contains(id: id) ?? false }
+
+    /// Every conversation in History, or `nil` when a file could not be read, so a caller deleting what
+    /// has no conversation (saved audio, #55) never mistakes an unreadable one for a missing one.
+    func completeIDs() -> Set<String>? {
+        guard let result = try? archive?.read(), result.warning == nil else { return nil }
+        return Set(result.records.map(\.id))
+    }
+
     /// The user has seen the note about a set-aside file and dismissed it.
     func dismissArchiveWarning() { archiveWarning = nil }
 
