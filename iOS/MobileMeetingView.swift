@@ -265,11 +265,12 @@ struct MobileMeetingView: View {
                     Text("Conversations stay in this app's storage unless you turn on Save to folder. " +
                          "Audio is not kept unless you turn on Save audio recordings. " +
                          "Apple Intelligence summaries are optional and run on-device. " +
-                         "Ollama sends notes and transcript to the server shown in AI settings " +
-                         "(Ollama Cloud unless you entered your own) when you generate a summary " +
-                         "or enable Auto summaries. " +
+                         "If you choose Ollama, a Cloud AI service or an OpenAI-compatible server, " +
+                         "requests send transcript text, notes and included context to the provider shown in AI settings " +
+                         "when you ask for an answer or enable Auto summaries. " +
                          "AI speech correction sends new phrases and nearby transcript text when enabled. " +
                          "API keys stay in this device's Keychain. Share exports text to the destination you choose.")
+                        .accessibilityIdentifier("privacyExplanation")
                     Toggle("Exclude conversations from iCloud backup", isOn: $session.excludeFromBackup)
                         .accessibilityIdentifier("excludeFromBackup")
                     Text(session.excludeFromBackup

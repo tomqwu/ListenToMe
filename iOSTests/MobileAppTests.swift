@@ -200,6 +200,22 @@ final class MobileAppTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["sessionMessage"].label.contains("Add notes"))
     }
 
+    func testPrivacyExplainsEveryOptionalOffDeviceProvider() {
+        let app = XCUIApplication()
+        app.launchPastReleaseNotes()
+        app.buttons["More"].tap()
+        app.buttons["Settings"].tap()
+        let explanation = app.staticTexts["privacyExplanation"]
+        revealSettingsControl(explanation, in: app.collectionViews["aiSettingsForm"])
+        XCTAssertTrue(explanation.isHittable)
+        for phrase in ["run on-device", "If you choose Ollama", "Cloud AI service", "OpenAI-compatible server",
+                       "provider shown in AI settings", "AI speech correction", "Keychain"] {
+            XCTAssertTrue(explanation.label.contains(phrase), phrase)
+        }
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Privacy provider explanation"; screenshot.lifetime = .keepAlways; add(screenshot)
+    }
+
     func testOllamaSettingsKeyPersistenceAndRemoval() {
         let app = XCUIApplication()
         app.launchPastReleaseNotes()
