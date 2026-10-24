@@ -54,6 +54,12 @@ Recent iOS trains (full text in [CHANGELOG.md](../CHANGELOG.md)):
 
 ## Merged for the next train
 
+- #200: Watch imports in Automatic use only an already-downloaded language model, scan past leading
+  silence, and pin the chosen locale in the ledger before transcription. Retries and later chunks
+  keep it even after Settings changes. Missing or uncertain detection falls back without downloading.
+  Watch remains excluded from distribution; Mandarin on an English iPhone still needs paired-device
+  acceptance. This does not change the #181 embedding gate.
+
 - #237: per-conversation vocabulary additions survive History reopen and relaunch, are deleted
   with the conversation, and reach Auto Quick as bounded domain/glossary guidance. Device defaults
   and My terms remain independent. JSON exports include vocabulary IDs and saved prompt instructions.
