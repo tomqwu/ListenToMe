@@ -81,7 +81,8 @@ extension MobileSession {
         let proseQuick = mode == .quick && !cloud
         let built: AnswerRequest
         do {
-            guard let request = try answerRequest(mode, source: source, cloud: cloud, proseQuick: proseQuick) else {
+            guard let request = try answerRequest(mode, source: source, cloud: cloud, proseQuick: proseQuick,
+                                                  guidance: vocabularyGuidance(for: mode, cloud: cloud)) else {
                 message = "This conversation exceeds the selected provider's summary limit. "
                     + "Export it or shorten your notes."
                 return
@@ -127,17 +128,21 @@ extension MobileSession {
     ///
     /// Summary covers the whole conversation, so one that does not fit is refused. Quick answers
     /// from what fits instead: the Summary already written plus the latest speech, or the
-    /// opening plus the latest speech, and the panel says which (issue #114).
+    /// opening plus the latest speech, and the panel says which (issue #114). The vocabulary
+    /// `guidance` (issue #222) is appended to the system prompt and charged to the same budget.
     private func answerRequest(_ mode: MobileSummaryMode, source: String, cloud: Bool,
-                               proseQuick: Bool) throws -> AnswerRequest? {
+                               proseQuick: Bool, guidance: String?) throws -> AnswerRequest? {
+        // Exactly what `addingGuidance` appends to a system prompt.
+        let guidanceCost = LLMRequest(system: "", messages: []).addingGuidance(guidance).system.count
         if mode == .summary {
             // The transcript is fenced as data, exactly as the macOS panes fence it (issue #140); the
             // cap is charged on the fenced text so the Apple window still holds (PromptBudget).
             let fencedSource = PromptData.block("transcript", source)
             let limit = cloud ? OnDemandGrounding.oneShotCharacters : PromptBudget.appleIntelligenceCharacters
-            guard fencedSource.count <= limit else { return nil }
+            guard fencedSource.count + guidanceCost <= limit else { return nil }
             return AnswerRequest(request: LLMRequest(system: mode.instructions,
-                                                     messages: [ChatMessage(role: "user", content: fencedSource)]),
+                                                     messages: [ChatMessage(role: "user", content: fencedSource)])
+                                    .addingGuidance(guidance),
                                  grounding: nil)
         }
         let system = proseQuick ? MobileQuickContext.manualProseInstructions : MobileQuickContext.instructions
@@ -145,17 +150,19 @@ extension MobileSession {
             notes: notes, segments: allSegments.map(Self.promptSegment), summary: summary,
             summaryCoveredIDs: answerNotices.summaryCoverage(showing: summary),
             budget: OnDemandGrounding.oneShotBudget(window: cloud ? nil : PromptBudget.appleIntelligenceCharacters,
-                                                    system: system))
+                                                    system: LLMRequest(system: system, messages: [])
+                                                        .addingGuidance(guidance).system))
         let grounding = excerpt.notice(summaryName: "your Summary")
         if !proseQuick {
             // The evaluator envelope has no room for an app note of its own, so the excerpt's note
             // leads the running context the summary is carried in.
             let context = [excerpt.selection.promptNote, excerpt.summary].compactMap { $0 }.joined(separator: "\n")
             return AnswerRequest(request: try MobileQuickContext.manualRequest(
-                source: excerpt.transcript, runningContext: context), grounding: grounding)
+                source: excerpt.transcript, runningContext: context).addingGuidance(guidance), grounding: grounding)
         }
         return AnswerRequest(request: LLMRequest(system: system,
-                                                 messages: [ChatMessage(role: "user", content: excerpt.userMessage)]),
+                                                 messages: [ChatMessage(role: "user", content: excerpt.userMessage)])
+                                .addingGuidance(guidance),
                              grounding: grounding)
     }
 

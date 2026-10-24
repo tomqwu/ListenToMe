@@ -40,7 +40,7 @@ struct MobileSelectableTranscript: View {
                                        selection.selectFrom(id, in: session.allSegments)
                                        selecting = true
                                        startSelecting()
-                                   }))
+                                   }), addTerm: session.addToMyTerms)
             if selectable && selecting {
                 MobileSelectionBar(session: session, selected: selection.selected(in: session.allSegments),
                                    summarize: {

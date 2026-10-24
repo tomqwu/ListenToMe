@@ -47,6 +47,18 @@ public final class MeetingSession {
     public var referenceContext: String?
     /// Use-case persona guidance from the selected preset, injected into all pane prompts.
     public var personaGuidance: String?
+    /// The active vocabularies' recognition terms (issue #222). Handed to each new transcriber before it
+    /// prepares, and to the running one as soon as they change, so an Add during recording needs no restart.
+    /// Summary-only guidance (issue #222): the active vocabulary's summary headings, added to the
+    /// Listener's prompt and to automatic Summary reviews but never to Quick or Deep.
+    public var summaryGuidance: String?
+    public var contextualStrings: [String] = [] {
+        didSet {
+            guard contextualStrings != oldValue, let transcriber else { return }
+            let strings = contextualStrings
+            Task { await transcriber.setContextualStrings(strings) }
+        }
+    }
     public let store: ConversationStore
 
     /// Per-role output properties
@@ -313,6 +325,8 @@ public final class MeetingSession {
         // (`AssetInventory.downloadAndInstall()` has no documented guarantee), so a plain
         // `await transcriber.prepare()` could park this start task for the whole download after a
         // Stop — and the next Listen would then run a second concurrent download (issue #147).
+        await transcriber.setContextualStrings(contextualStrings)
+        guard isRunning, runID == myRun else { return }   // stopped while the vocabulary was handed over
         let prepare = Task { await Self.prepareRacingCancellation(transcriber) }
         prepareTask = prepare
         await prepare.value
@@ -500,6 +514,7 @@ extension MeetingSession {
         stopDrain = nil
         startRecordingTimeline()
         let transcriber = (makeTranscriber ?? self.makeTranscriber)()
+        await transcriber.setContextualStrings(contextualStrings)
         transcriptionStatusTask?.cancel()
         transcriptionStatusTask = Task {
             for await status in transcriber.statusUpdates { self.transcriptionStatus = status }
@@ -752,7 +767,7 @@ extension MeetingSession {
                 kind: .listener,
                 context: PromptContext(messages: [], notes: self.notes, summary: record,
                                        responseLanguage: self.responseLanguage,
-                                       personaGuidance: self.personaGuidance),
+                                       personaGuidance: self.listenerPersona),
                 action: .recap)
             // Charged only when this refresh will actually carry provisional lines — the listener
             // sends them solely once the ledger has caught up (see below).
@@ -798,7 +813,7 @@ extension MeetingSession {
                 ? nil : Self.signature(of: provisional)
             return PromptBuilder.buildListener(context: PromptContext(
                 messages: Array(batch) + provisional, notes: clampedNotes, summary: clampedRecord ?? "",
-                responseLanguage: self.responseLanguage, personaGuidance: self.personaGuidance))
+                responseLanguage: self.responseLanguage, personaGuidance: self.listenerPersona))
         }
         return task
     }

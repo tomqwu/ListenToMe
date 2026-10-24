@@ -68,8 +68,11 @@ extension MeetingSession {
     /// they are applied to the manual panes.
     private var automaticReviewDirectives: AutomaticReviewDirectives {
         AutomaticReviewDirectives(responseLanguage: responseLanguage, personaGuidance: personaGuidance,
-                                  references: referenceContext)
+                                  references: referenceContext, summaryGuidance: summaryGuidance)
     }
+
+    /// The Listener's persona line: the preset persona plus the summary-only guidance.
+    var listenerPersona: String? { VocabularyPrompt.combined(persona: personaGuidance, guidance: summaryGuidance) }
 
     public func automaticReviewStatus(_ mode: AutomaticReviewMode) -> String {
         guard autoSummaryEnabled else { return "Auto off · Generate manually." }

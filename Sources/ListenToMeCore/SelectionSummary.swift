@@ -65,25 +65,24 @@ public enum SelectionSummaryPrompt {
 
     /// - Parameters:
     ///   - selected: the selected lines, in transcript order.
-    ///   - vocabulary: terms the user's domain vocabulary (#222) supplies, fenced as data; nil for none.
+    ///   - guidance: the session's vocabulary guidance (#222, `VocabularyPrompt.guidance`), appended to
+    ///     the system prompt as every other on-demand answer gets it and charged to the same budget.
     ///   - window: the provider's prompt window in characters (Apple Intelligence), nil for none.
     /// - Returns: nil when nothing with text is selected.
-    public static func build(_ selected: [TranscriptSegment], vocabulary: String? = nil, window: Int?) -> Built? {
+    public static func build(_ selected: [TranscriptSegment], guidance: String? = nil, window: Int?) -> Built? {
         let lines = selected.filter { !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
         guard !lines.isEmpty else { return nil }
-        let vocabularyBlock = vocabulary.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .flatMap { $0.isEmpty ? nil : "\n\nDomain vocabulary (spellings to prefer):\n" + PromptData.block("reference", $0) }
-            ?? ""
-        let budget = OnDemandGrounding.oneShotBudget(window: window, system: system) - vocabularyBlock.count
+        let fullSystem = LLMRequest(system: system, messages: []).addingGuidance(guidance).system
+        let budget = OnDemandGrounding.oneShotBudget(window: window, system: fullSystem)
         // Timestamps and the fence are not part of a line's prompt cost; any overrun is taken back from
         // the lines and measured again, as `OnDemandGrounding.excerpt` does.
         var slack = lines.count * 10
         var selection = OnDemandGrounding.select(lines, budget: budget - slack, hasSummary: false)
-        var message = userMessage(selection, vocabularyBlock: vocabularyBlock)
+        var message = userMessage(selection)
         while message.count > budget, slack < budget {
             slack += message.count - budget
             selection = OnDemandGrounding.select(lines, budget: budget - slack, hasSummary: false)
-            message = userMessage(selection, vocabularyBlock: vocabularyBlock)
+            message = userMessage(selection)
         }
         let shortened = selection.shape != .whole
         let left = lines.count - selection.segments.count
@@ -92,7 +91,7 @@ public enum SelectionSummaryPrompt {
                 + (left > 0 ? " (\(left) \(left == 1 ? "line" : "lines") in between left out)." : ".")
                 + (selection.latestShortened ? " The latest line was shortened." : "")
             : nil
-        return Built(request: LLMRequest(system: system, messages: [ChatMessage(role: "user", content: message)]),
+        return Built(request: LLMRequest(system: fullSystem, messages: [ChatMessage(role: "user", content: message)]),
                      sent: selection.segments, shortened: shortened, notice: notice)
     }
 
@@ -108,13 +107,13 @@ public enum SelectionSummaryPrompt {
         return hours > 0 ? String(format: "%d:%02d:%02d", hours, minutes, rest) : String(format: "%d:%02d", minutes, rest)
     }
 
-    private static func userMessage(_ selection: OnDemandGrounding.Selection, vocabularyBlock: String) -> String {
+    private static func userMessage(_ selection: OnDemandGrounding.Selection) -> String {
         var message = "The user selected these lines of the conversation:\n"
             + PromptData.block("transcript", selection.segments.map(line).joined(separator: "\n"))
         if selection.shape != .whole {
             message += "\n\nThe selection was too long to send whole: these are its first and last lines; "
                 + "lines in between were left out, so do not assume nothing was said there."
         }
-        return message + vocabularyBlock
+        return message
     }
 }

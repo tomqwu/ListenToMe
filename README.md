@@ -51,8 +51,10 @@ Ollama server you run on your own network — or a cloud AI service with your ow
 Anthropic Claude, Google Gemini, DeepSeek, OpenRouter, Groq, Mistral, xAI), each labelled "Sends your
 transcript to <vendor>" — or any OpenAI-compatible server you enter (LM Studio,
 vLLM, llama.cpp, OpenRouter), labelled "your server" on your own network and "may leave this device"
-elsewhere. Presets, reference files, audio-file import and WhisperKit
-transcription are macOS-only.
+elsewhere. Domain vocabularies (Medical, Legal, Software & Cloud, Engineering, Finance, Sales,
+Education & Research) and your own **My terms** list help recognition, AI speech correction and
+summaries on both platforms; after about a minute of speech the phone may suggest one, decided on the
+device. Presets, reference files, audio-file import and WhisperKit transcription are macOS-only.
 See [iOS setup, validation and distribution](docs/IOS.md).
 
 ```sh
@@ -168,6 +170,11 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 
 **Make it yours**
 - **Use-case presets** (Meeting, Interview, etc.) tune the copilot's behavior.
+- **Domain vocabularies and My terms** (Settings): Medical, Legal, Software & Cloud, Engineering,
+  Finance, Sales and Education & Research presets plus your own list of names, products and jargon.
+  They bias on-device recognition, steer summaries and answers, and lay summaries out by domain; a
+  banner offers one when a conversation sounds like it, and right-clicking a transcript line adds a
+  word to My terms. See [Vocabularies](#vocabularies).
 - **File & folder reference context** with a configurable token budget.
 - **Export** as Markdown, plain text, SRT or WebVTT subtitles, or versioned JSON, plus recap and PDF,
   in files named after the conversation (`Weekly sync 2026-10-23 1435.srt`). Lines carry `[mm:ss]`
@@ -280,6 +287,29 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   language's model downloads from Apple the first time you record in it. If the language you pick (or
   your system language under "Auto") still isn't supported, the status line says so by name and
   names the language it is transcribing in instead — it never silently substitutes English.
+- <a id="vocabularies"></a>**Vocabularies** (#222). **Settings → Vocabularies** turns each preset on
+  for every conversation ("Use by default") and edits **My terms** (add, remove, import and export one
+  term per line; any language). The presets are curated, English-first lists of a few hundred terms the
+  project wrote itself — drug names, cloud services, legal Latin and everyday jargon — not licensed
+  dictionaries. Medical carries a note that ListenToMe is not a medical device and must not be used for
+  clinical decisions. The active terms reach three places: **recognition** (at most 100 short phrases,
+  Apple's limit — My terms first, up to 60 when a preset is on, those already said in the conversation
+  and the newest ahead of older ones — handed to SpeechAnalyzer's `AnalysisContext` and updated live
+  while you listen; the legacy SpeechRecognizer engine applies them from the next utterance; WhisperKit
+  ignores them), **prompts** (the domain's description and a glossary, at most 1,500 characters — 400
+  on Apple Intelligence, where the glossary keeps at least half and the domain is named in a word —
+  ride in the same "Context for this session" line as the use-case preset, so the prompt budget
+  measures them), and **summaries** (with **Organize summaries by domain** on, only the Listener
+  summary and automatic Summary reviews follow the domain's headings, such as History / Findings / Plan
+  for Medical or Decisions / Actions / Risks for Engineering; Quick and Deep do not). Only speech heard
+  while recording counts toward a suggestion, never a restored or imported conversation. After about a
+  minute of final speech the app checks, on this Mac, whether the conversation sounds like one preset
+  (term hits and Apple's on-device sentence embedding; no model call). When it is confident a banner
+  asks "Sounds like a medical conversation — add the Medical vocabulary?" with **Add** (this
+  conversation), **Not now** and **Don't suggest Medical again**; after Add, **Use by default** turns it
+  on for every conversation. Each preset is offered at most once per conversation and nothing turns on
+  by itself; **Suggest vocabularies** turns the banner off. Right-click a transcript line → **Add to My
+  terms…** to add a word or name from it.
 - **Reference files.** Add files/folders as context, with a configurable token budget. `.rtf` is read
   as its text (never `\rtf1` markup), and non-UTF-8 files (Windows-1252, UTF-16 exports) are decoded
   instead of dropped. Anything that still cannot be included is listed next to the attachments as
@@ -432,6 +462,12 @@ saying so. Press **Speakers / edit names** to retry once the network is availabl
   without security-scoped bookmarks. It still asks macOS for the Microphone, Speech Recognition,
   Screen Recording, and Accessibility permissions listed above, and only uses them for the features
   described in this README.
+- **Vocabularies stay on the device.** Presets, My terms and the suggestion check (term counts plus
+  Apple's on-device NaturalLanguage sentence embedding) never leave the device and make no network
+  request. The glossary and domain description reach only the AI provider you already chose, inside the
+  prompt it already receives; with AI off or Local only nothing new leaves the device. My terms and
+  vocabulary choices are stored with the app's settings, so a device backup includes them like any
+  other setting.
 - **iOS storage and backup.** Conversations, attachments and queued share imports are written with
   iOS data protection (readable only after the device has been unlocked once since a restart). They
   are included in the device's normal iCloud/Finder backup by default, so a restored phone keeps

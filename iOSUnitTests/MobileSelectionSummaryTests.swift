@@ -84,6 +84,21 @@ final class MobileSelectionSummaryTests: XCTestCase {
         XCTAssertTrue(provider.requests.first?.messages.first?.content.contains("[0:00] You: Opening chatter.") == true)
     }
 
+    /// Issue #222: My terms reach the selection prompt as the same session guidance Quick gets.
+    func testMyTermsReachTheSelectionPrompt() async throws {
+        let saved = UserDefaults.standard.object(forKey: VocabularySettingsStore.key)
+        defer { UserDefaults.standard.set(saved, forKey: VocabularySettingsStore.key) }
+        UserDefaults.standard.removeObject(forKey: VocabularySettingsStore.key)
+        let provider = SelectionProvider([.content("- Rollout.")])
+        let session = onDeviceSession(provider)
+        session.segments = lines()
+        XCTAssertNil(session.addToMyTerms("Kubeflow"))
+        await session.summarizeSelection([session.segments[1]])
+        let system = try XCTUnwrap(provider.requests.first?.system)
+        XCTAssertTrue(system.contains("Context for this session:") && system.contains("Kubeflow"), system)
+        XCTAssertFalse(provider.requests.first?.messages.first?.content.contains("Kubeflow") == true)
+    }
+
     func testAddToNotesAppendsUnderTheSpan() async throws {
         let provider = SelectionProvider([.content("- Ship Friday.")])
         let session = onDeviceSession(provider)

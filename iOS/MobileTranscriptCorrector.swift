@@ -7,6 +7,9 @@ final class MobileTranscriptCorrector {
     private struct Job {
         let segment: TranscriptSegment
         let context: String
+        /// Built when the job runs, off the main actor (issue #222 review): it compares the phrase with
+        /// every active term.
+        let glossary: @Sendable () -> [String]
         let model: String
         let provider: any LLMProvider
         let apply: (TranscriptSegment) -> Void
@@ -25,15 +28,17 @@ final class MobileTranscriptCorrector {
 
     func reportFailure(_ error: Error) { status = "Original kept · \(MobileAISettings.errorMessage(error))" }
 
-    func submit(_ segment: TranscriptSegment, context: String, model: String, provider: any LLMProvider,
-                apply: @escaping (TranscriptSegment) -> Void) {
+    func submit(_ segment: TranscriptSegment, context: String,
+                glossary: @escaping @Sendable () -> [String] = { [] }, model: String,
+                provider: any LLMProvider, apply: @escaping (TranscriptSegment) -> Void) {
         guard segment.isFinal, !segment.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         guard segment.text.count <= 1_200 else {
             status = "Long phrase kept as heard. Shorter phrases will still be checked."
             return
         }
         if queue.count >= 6 { queue.removeFirst() }
-        queue.append(Job(segment: segment, context: context, model: model, provider: provider, apply: apply))
+        queue.append(Job(segment: segment, context: context, glossary: glossary, model: model, provider: provider,
+                         apply: apply))
         guard task == nil else { return }
         let token = generation
         working = true
@@ -45,7 +50,10 @@ final class MobileTranscriptCorrector {
                 let job = queue.removeFirst()
                 status = "Checking speech…"
                 do {
-                    let text = try await Self.correct(job.segment.text, context: job.context, provider: job.provider)
+                    let makeGlossary = job.glossary
+                    let glossary = await Task.detached(priority: .utility) { makeGlossary() }.value
+                    let text = try await Self.correct(job.segment.text, context: job.context, glossary: glossary,
+                                                      provider: job.provider)
                     try Task.checkCancellation()
                     guard generation == token else { return }
                     if text != job.segment.text.trimmingCharacters(in: .whitespacesAndNewlines) {
@@ -62,9 +70,9 @@ final class MobileTranscriptCorrector {
     }
 
     /// Bound the entire request, including providers that never produce a first token.
-    static func correct(_ text: String, context: String, provider: any LLMProvider,
+    static func correct(_ text: String, context: String, glossary: [String] = [], provider: any LLMProvider,
                         timeout: Duration = .seconds(12)) async throws -> String {
-        let request = try MobileTranscriptCorrection.request(text: text, context: context)
+        let request = try MobileTranscriptCorrection.request(text: text, context: context, glossary: glossary)
         return try await withThrowingTaskGroup(of: String.self) { group in
             group.addTask {
                 var response = ""
@@ -74,7 +82,7 @@ final class MobileTranscriptCorrector {
                     guard response.utf8.count <= 8_192 else { throw RecordingError.message("Correction response was too large.") }
                 }
                 try Task.checkCancellation()
-                return try MobileTranscriptCorrection.validatedText(response, original: text)
+                return try MobileTranscriptCorrection.validatedText(response, original: text, glossary: glossary)
             }
             group.addTask { try await Task.sleep(for: timeout); throw URLError(.timedOut) }
             defer { group.cancelAll() }

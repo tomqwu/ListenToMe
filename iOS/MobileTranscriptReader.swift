@@ -15,7 +15,10 @@ struct MobileTranscriptReader: View {
     var lineActions: MobileTranscriptLineActions?
     @State private var rowFrames: [UUID: CGRect] = [:]
     private static let space = "transcriptRows"
+    /// "Add to My terms" from a line's context menu (issue #222); returns why a term was not added.
+    var addTerm: ((String) -> String?)?
     @State private var reviewing: TranscriptSegment?
+    @State private var addingFrom: TranscriptSegment?
     @State private var following = true
     @State private var readingSnapshot: [TranscriptSegment]?
     private var displayedSegments: [TranscriptSegment] { readingSnapshot ?? segments }
@@ -86,6 +89,9 @@ struct MobileTranscriptReader: View {
                 }
             }
         }
+        .sheet(item: $addingFrom) { segment in
+            MobileAddTermSheet(line: segment.text) { addTerm?($0) }
+        }
         .sheet(item: $reviewing) { segment in
             MobileSpeechCorrectionReview(segment: segment) { id in
                 restoreOriginal?(id)
@@ -130,10 +136,16 @@ struct MobileTranscriptReader: View {
         } else {
             lineContent(segment, selectable: lineActions == nil)
                 .contextMenu {
-                    if let lineActions, segment.isFinal, !selecting {
-                        Button("Summarize from here", systemImage: "text.badge.star") { lineActions.summarizeFrom(segment.id) }
-                        Button("Select from here", systemImage: "checklist") { lineActions.selectFrom(segment.id) }
-                        Button("Copy", systemImage: "doc.on.doc") { UIPasteboard.general.string = segment.text }
+                    if segment.isFinal, !selecting {
+                        if let lineActions {
+                            Button("Summarize from here", systemImage: "text.badge.star") { lineActions.summarizeFrom(segment.id) }
+                            Button("Select from here", systemImage: "checklist") { lineActions.selectFrom(segment.id) }
+                            Button("Copy", systemImage: "doc.on.doc") { UIPasteboard.general.string = segment.text }
+                        }
+                        if addTerm != nil {
+                            Button("Add to My terms…", systemImage: "text.badge.plus") { addingFrom = segment }
+                                .accessibilityIdentifier("addToMyTerms")
+                        }
                     }
                 }
         }

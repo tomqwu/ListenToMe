@@ -33,14 +33,21 @@ final class SelectionSummaryTests: XCTestCase {
         XCTAssertEqual(user.components(separatedBy: "</transcript>").count, 2, "Only the real closing tag")
     }
 
-    func testVocabularyIsFencedAsDataWhenGiven() throws {
+    /// Issue #222: the session's vocabulary guidance rides on the system prompt, as for Quick.
+    func testVocabularyGuidanceJoinsTheSystemPromptAndCountsAgainstTheWindow() throws {
+        let guidance = "Glossary (the user's expected terms): Kubernetes, Helm."
         let built = try XCTUnwrap(SelectionSummaryPrompt.build([line("Kubernetes rollout.", at: 0)],
-                                                                vocabulary: " Kubernetes, Helm ", window: nil))
-        let user = try XCTUnwrap(built.request.messages.first?.content)
-        XCTAssertTrue(user.contains(PromptData.block("reference", "Kubernetes, Helm")), user)
-        XCTAssertTrue(user.contains("Domain vocabulary"))
-        let blank = try XCTUnwrap(SelectionSummaryPrompt.build([line("x", at: 0)], vocabulary: "  ", window: nil))
-        XCTAssertFalse(blank.request.messages.first?.content.contains("vocabulary") == true, "Blank vocabulary sends nothing")
+                                                                guidance: guidance, window: nil))
+        XCTAssertTrue(built.request.system.hasSuffix("Context for this session: " + guidance), built.request.system)
+        XCTAssertFalse(built.request.messages.first?.content.contains("Glossary") == true, "Not inside the transcript")
+        let plain = try XCTUnwrap(SelectionSummaryPrompt.build([line("x", at: 0)], guidance: "", window: nil))
+        XCTAssertEqual(plain.request.system, SelectionSummaryPrompt.system, "Empty guidance adds nothing")
+        let long = (0..<120).map { line("Point \($0): " + String(repeating: "detail ", count: 20), at: Double($0 * 30)) }
+        let window = PromptBudget.appleIntelligenceCharacters
+        let guided = try XCTUnwrap(SelectionSummaryPrompt.build(long, guidance: String(repeating: "term, ", count: 100),
+                                                                 window: window))
+        XCTAssertLessThanOrEqual(guided.request.system.count + (guided.request.messages.first?.content.count ?? 0),
+                                 window - PromptBudget.answerReserve, "Guidance is charged to the same window")
     }
 
     /// A long selection on Apple Intelligence keeps its opening and latest lines within the window

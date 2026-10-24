@@ -56,9 +56,10 @@ extension MobileSession {
 
     func summarizeSelection(_ selected: [TranscriptSegment]) async {
         let lines = selected.map(Self.promptSegment)
-        // TODO(#222): pass the active domain vocabulary once it lands.
+        // The active domain vocabulary and My terms (#222), as Quick gets them: no summary headings.
         guard let built = SelectionSummaryPrompt.build(
-            lines, window: summaryUsesThisDevice ? PromptBudget.appleIntelligenceCharacters : nil) else {
+            lines, guidance: vocabularyGuidance(for: .quick, cloud: !summaryUsesThisDevice),
+            window: summaryUsesThisDevice ? PromptBudget.appleIntelligenceCharacters : nil) else {
             selectionRun.finish(nil, notice: nil, error: "Select one or more lines with words to summarize.")
             return
         }

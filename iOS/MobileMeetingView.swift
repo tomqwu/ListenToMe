@@ -28,6 +28,7 @@ struct MobileMeetingView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 if !dynamicTypeSize.isAccessibilitySize { status }
+                MobileVocabularyBanner(session: session)
                 MobileWorkspaceView(session: session, selection: $workspace, chooseModel: { role in
                     if session.ai.provider == .apple { showSettings = true } else { modelRole = role }
                 }, accessibilityHeader: { status })
@@ -245,6 +246,7 @@ struct MobileMeetingView: View {
                 MobileAISettingsView(ai: session.ai)
                 MobileLanguageSettings(session: session)
                 MobileSpeakerSettings(session: session)
+                MobileVocabularySettingsLink(session: session)
                 MobileVaultSettings(session: session)
                 MobileAutoTitleSettings()
                 Section("Recording") {

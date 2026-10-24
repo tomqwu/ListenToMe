@@ -148,6 +148,7 @@ extension MeetingView {
             transcriptInputZone(session: session, notes: notes)
         }
         .frame(minWidth: 380, idealWidth: 520, maxWidth: .infinity)
+        .modifier(MacAddTermPresenter(vocabulary: vocabulary, apply: applyVocabulary))
         .background(Theme.cardBackground)
         .overlay(Rectangle().fill(Theme.line).frame(width: 1), alignment: .trailing)
     }
@@ -202,6 +203,9 @@ extension MeetingView {
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.vertical, 3)
+        .contextMenu {
+            if seg.isFinal { Button("Add to My terms…") { vocabulary.termSourceLine = seg.text } }
+        }
     }
 
     /// Channel/speaker label for a transcript row: "YOU" for the mic; for the Others channel the
@@ -388,7 +392,7 @@ extension MeetingView {
                 let preset = PresetCatalog.preset(id: newID)
                 let previousTemplate = PresetCatalog.preset(id: oldID).notesTemplate
                 ProviderSettings.presetID = newID
-                session.personaGuidance = preset.personaGuidance
+                applyVocabulary()   // the preset persona plus the active vocabularies (issue #222)
                 // Swap the notes scaffold only when the user hasn't edited it (notes still match the
                 // previous preset's template, or are empty).
                 if session.notes.isEmpty || session.notes == previousTemplate {
