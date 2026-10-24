@@ -34,7 +34,8 @@ struct MobileDesignFixture: View {
         - The team will review the prototype on Thursday.
         - Collect feedback before expanding the scope.
         """
-        session.deepThought = """
+        // Deep analysis an older version saved with this conversation; read-only on iOS (#235).
+        session.earlierDeepAnalysis = """
         ## The direction
         A smaller first release gives the team room to learn from real use before making a bigger investment.
 

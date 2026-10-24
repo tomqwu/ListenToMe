@@ -21,7 +21,7 @@ private final class EventProvider: LLMProvider, @unchecked Sendable {
     }
 }
 
-/// Issues #114 and #215 on iOS: Quick and Deep answer a long conversation from what fits instead of
+/// Issues #114 and #215 on iOS: Quick answers a long conversation from what fits instead of
 /// refusing it, the panel says which part was read, and an answer cut off at the model's output limit
 /// keeps its text with a one-line notice.
 @MainActor
@@ -52,14 +52,14 @@ final class MobileAnswerNoticeTests: XCTestCase {
     }
 
     /// A 45-minute conversation used to be refused on Apple Intelligence ("exceeds the selected
-    /// provider's summary limit"). Deep now answers from the opening and the latest speech.
-    func testAppleDeepAnswersALongConversationFromAnExcerptAndSaysSo() async throws {
-        let provider = EventProvider([.content("Deep answer.")])
+    /// provider's summary limit"). Quick now answers from the opening and the latest speech.
+    func testAppleQuickAnswersALongConversationFromAnExcerptAndSaysSo() async throws {
+        let provider = EventProvider([.content("- Quick answer.")])
         let session = appleSession(provider)
         session.segments = longConversation(minutes: 45)
-        await session.summarize(mode: .deep)
+        await session.summarize(mode: .quick)
         XCTAssertNil(session.message, session.message ?? "")
-        XCTAssertEqual(session.deepThought, "Deep answer.")
+        XCTAssertEqual(session.quickSummary, "- Quick answer.")
         let request = try XCTUnwrap(provider.request)
         XCTAssertLessThanOrEqual(request.system.count + (request.messages.first?.content.count ?? 0),
                                  PromptBudget.appleIntelligenceCharacters - PromptBudget.answerReserve,
@@ -68,7 +68,7 @@ final class MobileAnswerNoticeTests: XCTestCase {
         XCTAssertTrue(user.contains("Pricing: we agreed"), "The opening is kept without a Summary")
         XCTAssertTrue(user.contains("Minute 44:"), "The latest speech is kept")
         XCTAssertTrue(user.contains("are the opening of the meeting"))
-        let lines = session.notices(.deep)
+        let lines = session.notices(.quick)
         XCTAssertEqual(lines.count, 1)
         XCTAssertTrue(lines.first?.hasPrefix("Using the opening ~") == true, lines.description)
         // The Summary mode still refuses rather than summarizing part of the conversation.
@@ -93,7 +93,7 @@ final class MobileAnswerNoticeTests: XCTestCase {
                       session.notices(.quick).description)
     }
 
-    /// A Summary generated here covers exactly the lines it read: Deep later leans on it for those and
+    /// A Summary generated here covers exactly the lines it read: Quick later leans on it for those and
     /// sends the speech after it, with a notice that names the summary's span (review item 2).
     func testAGeneratedSummaryCoversOnlyTheLinesItRead() async throws {
         let provider = EventProvider([.content("Summary: pricing agreed at $40 per seat.")])
@@ -102,17 +102,17 @@ final class MobileAnswerNoticeTests: XCTestCase {
         await session.summarize(mode: .summary)
         XCTAssertEqual(session.summary, "Summary: pricing agreed at $40 per seat.")
         session.segments += longConversation(minutes: 45).dropFirst(5)
-        provider.events = [.content("Deep answer.")]
-        await session.summarize(mode: .deep)
+        provider.events = [.content("- Quick answer.")]
+        await session.summarize(mode: .quick)
         let user = try XCTUnwrap(provider.request?.messages.first?.content)
         XCTAssertTrue(user.contains("covers the first 5 lines"), user)
         XCTAssertFalse(user.contains("Pricing: we agreed"), "Covered speech is not repeated")
         XCTAssertTrue(user.contains("Minute 5: "), "The speech right after the Summary is kept")
-        XCTAssertTrue(session.notices(.deep).first?.hasPrefix("Using your Summary of the first ~5 min") == true,
-                      session.notices(.deep).description)
+        XCTAssertTrue(session.notices(.quick).first?.hasPrefix("Using your Summary of the first ~5 min") == true,
+                      session.notices(.quick).description)
         // An edited Summary is no longer the one generated from those lines.
         session.summary += " Edited."
-        await session.summarize(mode: .deep)
+        await session.summarize(mode: .quick)
         XCTAssertFalse(provider.request?.messages.first?.content.contains("covers the first") == true)
     }
 
@@ -131,30 +131,30 @@ final class MobileAnswerNoticeTests: XCTestCase {
     }
 
     func testAShortConversationHasNoNotice() async {
-        let provider = EventProvider([.content("Deep answer.")])
+        let provider = EventProvider([.content("- Quick answer.")])
         let session = appleSession(provider)
         session.segments = longConversation(minutes: 2)
-        await session.summarize(mode: .deep)
+        await session.summarize(mode: .quick)
         XCTAssertEqual(provider.request?.messages.first?.content, PromptData.block("transcript", session.summarySource))
-        XCTAssertTrue(session.notices(.deep).isEmpty)
+        XCTAssertTrue(session.notices(.quick).isEmpty)
     }
 
-    /// A cloud Deep answer that stopped at the limit keeps its text and says so; the next complete one
+    /// A cloud Summary that stopped at the limit keeps its text and says so; the next complete one
     /// clears the line.
     func testACutOffAnswerKeepsItsTextAndShowsTheNotice() async {
         let provider = EventProvider([.content("The first half of"), .outputLimitReached])
         let session = MobileSession(storageDirectory: root, summaryProvider: provider)
         session.notes = "Should we ship on Friday?"
-        await session.summarize(mode: .deep)
+        await session.summarize(mode: .summary)
         XCTAssertNil(session.message, session.message ?? "")
-        XCTAssertEqual(session.deepThought, "The first half of")
-        XCTAssertEqual(session.notices(.deep), [LLMOutputLimit.notice])
-        XCTAssertTrue(session.notices(.summary).isEmpty)
+        XCTAssertEqual(session.summary, "The first half of")
+        XCTAssertEqual(session.notices(.summary), [LLMOutputLimit.notice])
+        XCTAssertTrue(session.notices(.quick).isEmpty)
 
         provider.events = [.content("Whole answer.")]
-        await session.summarize(mode: .deep)
-        XCTAssertEqual(session.deepThought, "Whole answer.")
-        XCTAssertTrue(session.notices(.deep).isEmpty)
+        await session.summarize(mode: .summary)
+        XCTAssertEqual(session.summary, "Whole answer.")
+        XCTAssertTrue(session.notices(.summary).isEmpty)
         // A new conversation starts without notes from the previous one.
         provider.events = [.content("Half"), .outputLimitReached]
         await session.summarize(mode: .summary)

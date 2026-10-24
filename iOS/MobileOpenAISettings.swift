@@ -20,7 +20,6 @@ final class MobileOpenAISettings {
         static let catalog = "mobileOpenAICatalog"
         static let summary = "mobileOpenAIModel"
         static let quick = "mobileOpenAIQuickModel"
-        static let deep = "mobileOpenAIDeepModel"
         static let contractFailures = "mobileOpenAIQuickContractFailures"
     }
 
@@ -32,9 +31,6 @@ final class MobileOpenAISettings {
     private(set) var model: String { didSet { UserDefaults.standard.set(model, forKey: Keys.summary); changed?() } }
     private(set) var quickModel: String {
         didSet { UserDefaults.standard.set(quickModel, forKey: Keys.quick); changed?() }
-    }
-    private(set) var deepModel: String {
-        didSet { UserDefaults.standard.set(deepModel, forKey: Keys.deep); changed?() }
     }
     private(set) var hasKey = false
     /// Server and model pairs that failed the Auto JSON check, so Auto can pause with a reason.
@@ -52,7 +48,6 @@ final class MobileOpenAISettings {
         models = defaults.stringArray(forKey: Keys.catalog) ?? []
         model = defaults.string(forKey: Keys.summary) ?? ""
         quickModel = defaults.string(forKey: Keys.quick) ?? ""
-        deepModel = defaults.string(forKey: Keys.deep) ?? ""
         contractLedger = OpenAICompatibleContractLedger(failures: defaults.stringArray(forKey: Keys.contractFailures) ?? [])
         hasKey = (try? currentKey()).map { !$0.isEmpty } ?? false
     }
@@ -141,7 +136,6 @@ final class MobileOpenAISettings {
         switch mode {
         case .summary: return model
         case .quick: return quickModel
-        case .deep: return deepModel
         }
     }
 
@@ -149,7 +143,6 @@ final class MobileOpenAISettings {
         switch mode {
         case .summary: model = value
         case .quick: quickModel = value
-        case .deep: deepModel = value
         }
     }
 
@@ -175,7 +168,7 @@ final class MobileOpenAISettings {
 
     private func forgetModels() {
         models = []
-        model = ""; quickModel = ""; deepModel = ""
+        model = ""; quickModel = ""
         contractLedger = OpenAICompatibleContractLedger()
     }
 

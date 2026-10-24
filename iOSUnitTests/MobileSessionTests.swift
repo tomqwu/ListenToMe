@@ -66,7 +66,7 @@ final class MobileSessionTests: XCTestCase {
         }
         XCTAssertEqual(session.quickSummary, "- Review Monday.")
         XCTAssertEqual(session.summary, "")
-        XCTAssertEqual(session.deepThought, "")
+        XCTAssertEqual(session.earlierDeepAnalysis, "", "iOS never generates Deep (#235)")
         session.autoQuick = false
         session.notes = "Do not send this."
         try await Task.sleep(for: .milliseconds(120))
@@ -104,13 +104,13 @@ final class MobileSessionTests: XCTestCase {
         session.notes = "First meeting"
         session.summary = "Full summary"
         session.quickSummary = "Quick points"
-        session.deepThought = "Risks and alternatives"
+        session.earlierDeepAnalysis = "Risks and alternatives"   // from an older version (#235)
         XCTAssertTrue(session.save())
         let first = try XCTUnwrap(session.history.first)
         let reloaded = MobileSession(storageDirectory: root)
         XCTAssertEqual(reloaded.output(for: .summary), "Full summary")
         XCTAssertEqual(reloaded.output(for: .quick), "Quick points")
-        XCTAssertEqual(reloaded.output(for: .deep), "Risks and alternatives")
+        XCTAssertEqual(reloaded.earlierDeepAnalysis, "Risks and alternatives", "Kept read-only, never dropped")
         XCTAssertTrue(reloaded.markdown.contains("Quick points"))
         XCTAssertTrue(reloaded.markdown.contains("Risks and alternatives"))
         session.newConversation()
@@ -139,16 +139,13 @@ final class MobileSessionTests: XCTestCase {
         }
         settings.selectModel("summary-model", for: .summary)
         settings.selectModel("quick-model", for: .quick)
-        settings.selectModel("deep-model", for: .deep)
         let restored = MobileAISettings()
         XCTAssertEqual(restored.selectedModel(for: .summary), "summary-model")
         XCTAssertEqual(restored.selectedModel(for: .quick), "quick-model")
-        XCTAssertEqual(restored.selectedModel(for: .deep), "deep-model")
         restored.hasKey = true
-        restored.models = [.init(name: "summary-model"), .init(name: "quick-model")]
+        restored.models = [.init(name: "quick-model")]
         XCTAssertNil(restored.availability(for: .quick))
-        XCTAssertNotNil(restored.availability(for: .deep))
-        XCTAssertTrue(MobileSummaryMode.deep.instructions.contains("tradeoffs"))
+        XCTAssertNotNil(restored.availability(for: .summary))
     }
 }
 

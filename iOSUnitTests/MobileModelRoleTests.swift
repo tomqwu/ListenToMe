@@ -23,43 +23,43 @@ final class MobileModelRoleTests: XCTestCase {
         let data = try JSONEncoder().encode(names.map { OllamaCloudModel(name: $0) })
         UserDefaults.standard.set(data.base64EncodedString(), forKey: "mobileOllamaCatalog")
     }
-    func testLegacyFlashInheritanceMigratesToFullModelAndPersists() throws {
+    func testLegacyFlashInheritanceKeepsQuickOnFlash() throws {
         try withCleanPreferences {
             try cache(["glm-5.3-flash", "glm-5.3", "deepseek-v4-pro:0813"])
             UserDefaults.standard.set("glm-5.3-flash", forKey: "mobileOllamaModel")
             let settings = MobileAISettings()
             XCTAssertEqual(settings.quickModel, "glm-5.3-flash")
-            XCTAssertEqual(settings.deepModel, "glm-5.3")
-            XCTAssertEqual(MobileAISettings().deepModel, "glm-5.3")
-            settings.selectModel("deepseek-v4-pro:0813", for: .deep)
-            settings.resolveRoleModels()
-            XCTAssertEqual(MobileAISettings().deepModel, "deepseek-v4-pro:0813")
+            XCTAssertEqual(settings.model, "glm-5.3-flash")
         }
     }
-    func testNewSetupAssignsFlashQuickFullSummaryAndProDeep() throws {
+    func testNewSetupAssignsFlashQuickAndFullSummary() throws {
         try withCleanPreferences {
             try cache(["glm-5.3-flash", "glm-5.3", "deepseek-v4-pro:0813"])
             let settings = MobileAISettings()
             XCTAssertEqual(settings.quickModel, "glm-5.3-flash")
             XCTAssertEqual(settings.model, "glm-5.3")
-            XCTAssertEqual(settings.deepModel, "deepseek-v4-pro:0813")
         }
     }
-    func testFlashCannotBeSelectedOrSentForDeepAndNoFlashFallbackExists() throws {
+    /// Issue #235: iOS has Summary and Quick only. A Deep model an older build saved for Ollama, an
+    /// OpenAI-compatible server or a cloud service is never read, never sent and never crashes.
+    func testOldDeepModelDefaultsAreHarmless() throws {
+        let legacy = ["mobileOpenAIDeepModel", "mobileCloudAI.anthropic.deepModel"]
+        let saved = legacy.map { UserDefaults.standard.object(forKey: $0) }
+        defer { for (key, value) in zip(legacy, saved) { UserDefaults.standard.set(value, forKey: key) } }
         try withCleanPreferences {
-            try cache(["glm-5.3-flash"])
+            try cache(["glm-5.3-flash", "glm-5.3"])
             UserDefaults.standard.set("glm-5.3-flash", forKey: "mobileOllamaDeepModel")
+            for key in legacy { UserDefaults.standard.set("legacy-deep", forKey: key) }
+            XCTAssertEqual(MobileSummaryMode.allCases, [.summary, .quick])
             let settings = MobileAISettings()
             settings.hasKey = true
-            XCTAssertEqual(settings.deepModel, "")
-            XCTAssertTrue(settings.models(for: .deep).isEmpty)
-            settings.selectModel("glm-5.3-flash", for: .deep)
-            XCTAssertEqual(settings.deepModel, "")
-            settings.deepModel = "GLM-5.3-FLASH"
-            XCTAssertNotNil(settings.availability(for: .deep))
-            XCTAssertThrowsError(try settings.client(for: .deep)) { error in
-                XCTAssertTrue(error.localizedDescription.contains("Flash models cannot be used"))
+            XCTAssertEqual(settings.models(for: .summary).map(\.name), ["glm-5.3-flash", "glm-5.3"])
+            for mode in MobileSummaryMode.allCases {
+                XCTAssertNotEqual(settings.selectedModel(for: mode), "legacy-deep")
+                XCTAssertNil(settings.availability(for: mode))
             }
+            XCTAssertEqual(UserDefaults.standard.string(forKey: "mobileOllamaDeepModel"), "glm-5.3-flash",
+                           "The old value is left alone, not rewritten")
         }
     }
 }

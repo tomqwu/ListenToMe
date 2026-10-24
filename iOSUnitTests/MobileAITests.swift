@@ -107,10 +107,10 @@ final class MobileAITests: XCTestCase {
         let previousURL = UserDefaults.standard.object(forKey: "mobileOllamaBaseURL")
         let settings = MobileAISettings()
         let provider = settings.provider, model = settings.model
-        let quick = settings.quickModel, deep = settings.deepModel, correction = settings.correctionModel
+        let quick = settings.quickModel, correction = settings.correctionModel
         defer {
             settings.provider = provider; settings.model = model
-            settings.quickModel = quick; settings.deepModel = deep; settings.correctionModel = correction
+            settings.quickModel = quick; settings.correctionModel = correction
             UserDefaults.standard.set(previousURL, forKey: "mobileOllamaBaseURL")
             try? MobileKeychain.save(original)
         }
@@ -118,7 +118,7 @@ final class MobileAITests: XCTestCase {
         settings.saveBaseURL("")
         settings.provider = .ollama
         settings.models = [OllamaCloudModel(name: "glm-5.3:local"), OllamaCloudModel(name: "glm-5.3-flash:local")]
-        settings.model = "glm-5.3:local"; settings.deepModel = "glm-5.3:local"
+        settings.model = "glm-5.3:local"
         settings.quickModel = "glm-5.3-flash:local"
         settings.correctionModel = "glm-5.3-flash:local"
         // Cloud still demands a key.
@@ -158,7 +158,7 @@ final class MobileAITests: XCTestCase {
         let previous = UserDefaults.standard.string(forKey: "mobileOllamaCatalog")
         defer { UserDefaults.standard.set(previous, forKey: "mobileOllamaCatalog") }
         let settings = MobileAISettings()
-        settings.models = [.init(name: "quick-test"), .init(name: "deep-test")]
+        settings.models = [.init(name: "quick-test"), .init(name: "summary-test")]
         XCTAssertEqual(MobileAISettings().models, settings.models)
     }
 
@@ -222,12 +222,12 @@ final class MobileAITests: XCTestCase {
         let originalAuto = session.autoQuick
         session.autoQuick = false
         let originalProvider = session.ai.provider, originalModel = session.ai.model
-        let originalQuick = session.ai.quickModel, originalDeep = session.ai.deepModel
+        let originalQuick = session.ai.quickModel
         defer {
             session.state = .idle; session.autoQuick = originalAuto
             try? MobileKeychain.save(original)
             session.ai.provider = originalProvider; session.ai.model = originalModel
-            session.ai.quickModel = originalQuick; session.ai.deepModel = originalDeep
+            session.ai.quickModel = originalQuick
         }
         session.ai.saveKey(key)
         session.ai.provider = .ollama
@@ -246,7 +246,7 @@ final class MobileAITests: XCTestCase {
         XCTAssertFalse(session.isSummarizing)
         XCTAssertEqual(MobileSession(storageDirectory: root).summary, session.summary)
         let fullSummary = session.summary
-        for mode in [MobileSummaryMode.quick, .deep] {
+        for mode in [MobileSummaryMode.quick] {
             session.ai.selectModel(session.ai.model, for: mode)
             await session.summarize(mode: mode)
             XCTAssertNil(session.message)
@@ -255,7 +255,7 @@ final class MobileAITests: XCTestCase {
             XCTAssertEqual(MobileSession(storageDirectory: root).output(for: mode), session.output(for: mode))
         }
         // Exercise the automatic tick with a synthetic recording state; this does not validate microphone capture.
-        let completedDeep = session.deepThought
+        let completedSummary = session.summary
         session.notes += " New decision: move the review to Monday. Jordan owns the final sign-off."
         session.state = .recording
         await session.updateQuickAutomatically()
@@ -269,7 +269,7 @@ final class MobileAITests: XCTestCase {
         }
         XCTAssertNil(session.message)
         XCTAssertNotEqual(session.quickSummary, "Old quick summary")
-        XCTAssertEqual(session.deepThought, completedDeep)
+        XCTAssertEqual(session.summary, completedSummary)
         await session.updateQuickAutomatically()
         await Task.yield()
         XCTAssertFalse(session.isSummarizing, "An unchanged transcript must not send another request")
@@ -281,10 +281,10 @@ final class MobileAITests: XCTestCase {
         XCTAssertEqual(session.summary, goodSummary, "Failed cloud requests must keep the completed summary")
     }
 
-    func testManualSummaryAndDeepGroundingExplainsTypedNotes() {
+    func testManualSummaryGroundingExplainsTypedNotes() {
         let notesExplanation = "a line prefixed \"Notes: \" is the user's typed " +
             "note, not speech, and must never be reported as something that was said in the meeting."
-        for mode in [MobileSummaryMode.summary, .deep] {
+        for mode in [MobileSummaryMode.summary] {
             XCTAssertTrue(mode.instructions.contains(notesExplanation),
                           "\(mode) instructions must ground the model on typed notes")
         }

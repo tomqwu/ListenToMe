@@ -43,7 +43,7 @@ final class MobileMarkdownTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: root) }
         let session = MobileSession(storageDirectory: root)
         let markdown = "### Decisions\n- **Alex** will review on Friday."
-        session.summary = markdown; session.quickSummary = markdown; session.deepThought = markdown
+        session.summary = markdown; session.quickSummary = markdown; session.earlierDeepAnalysis = markdown
         _ = MarkdownText.inlineAttributed(markdown)
         XCTAssertTrue(session.save())
         let restored = MobileSession(storageDirectory: root)

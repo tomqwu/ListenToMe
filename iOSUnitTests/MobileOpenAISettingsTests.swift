@@ -100,7 +100,7 @@ final class MobileOpenAISettingsTests: XCTestCase {
         XCTAssertEqual(settings.availability(for: .summary), "Refresh models and choose a Summary model in Settings.")
         for mode in MobileSummaryMode.allCases { settings.selectModel("qwen3-8b", for: mode) }
         XCTAssertEqual(settings.model, ollamaModel, "Ollama selections are untouched")
-        XCTAssertEqual(settings.selectedModel(for: .deep), "qwen3-8b", "Any listed model may serve Deep")
+        XCTAssertEqual(settings.selectedModel(for: .quick), "qwen3-8b", "Any listed model may serve Quick")
         for mode in MobileSummaryMode.allCases {
             XCTAssertNil(settings.availability(for: mode))
             let client = try XCTUnwrap(try settings.client(for: mode) as? OpenAICompatibleProvider)
@@ -123,10 +123,10 @@ final class MobileOpenAISettingsTests: XCTestCase {
         for mode in MobileSummaryMode.allCases { XCTAssertEqual(settings.selectedModel(for: mode), "qwen3-8b") }
 
         OpenAIModelsStub.reply = #"{"data":[{"id":"b-model"},{"id":"a-model"}]}"#
-        settings.selectModel("", for: .deep)
+        settings.selectModel("", for: .quick)
         _ = try await settings.openAI.refresh(session: OpenAIModelsStub.session())
-        XCTAssertEqual(settings.models(for: .deep).map(\.name), ["a-model", "b-model"])
-        XCTAssertEqual(settings.selectedModel(for: .deep), "", "With several models the user chooses")
+        XCTAssertEqual(settings.models(for: .quick).map(\.name), ["a-model", "b-model"])
+        XCTAssertEqual(settings.selectedModel(for: .quick), "", "With several models the user chooses")
         XCTAssertEqual(settings.availability(for: .summary),
                        "The selected model is no longer listed by the server. Choose another model in Settings.")
 

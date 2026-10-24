@@ -12,7 +12,7 @@ final class MobileQuickLiveTests: XCTestCase {
         try FileManager.default.removeItem(at: keyFile)
         let originalKey = try MobileKeychain.read()
         let keys = ["mobileAIProvider", "mobileCorrectTranscript", "mobileOllamaCatalog", "mobileCorrectionModel",
-                    "mobileOllamaModel", "mobileOllamaQuickModel", "mobileOllamaDeepModel", "autoQuickSummary"]
+                    "mobileOllamaModel", "mobileOllamaQuickModel", "autoQuickSummary"]
         let saved = keys.map { UserDefaults.standard.object(forKey: $0) }
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let recorder = QuickTestRecorder()
@@ -29,7 +29,7 @@ final class MobileQuickLiveTests: XCTestCase {
         session.ai.quickModel = ""
         await session.ai.refresh()
         session.ai.quickModel = "glm-5.3-flash"
-        session.ai.model = "glm-5.3"; session.ai.deepModel = "glm-5.3"
+        session.ai.model = "glm-5.3"
         XCTAssertNil(session.ai.availability(for: .quick))
         XCTAssertTrue(MobileAISettings.isFlash(session.ai.quickModel))
         session.autoQuick = true
@@ -48,10 +48,7 @@ final class MobileQuickLiveTests: XCTestCase {
         XCTAssertTrue(session.quickSummary.contains("APM"), "A question is useful summary material without a decision")
         XCTAssertFalse(session.quickSummary.lowercased().contains("application performance"), "Do not expand an ambiguous acronym")
         try await wait { (session.automaticReviews.completedCounts[.summary] ?? 0) > 0 }
-        try await wait { (session.automaticReviews.completedCounts[.deep] ?? 0) > 0 }
         XCTAssertFalse(session.summary.isEmpty)
-        XCTAssertFalse(session.deepThought.isEmpty)
-        XCTAssertTrue(session.deepThought.localizedCaseInsensitiveContains("APM"))
         recorder.send("We agree delivery on Monday. Sarah will confirm. The budget is 150 dollars.", final: false)
         try await waitForRead(4, session: session)
         XCTAssertTrue(session.quickSummary.contains("Monday"))
@@ -74,7 +71,8 @@ final class MobileQuickLiveTests: XCTestCase {
         print("Live evaluator completed reads: \(session.quickReader.completedReads); error: \(session.quickReader.error ?? "none")")
         recorder.send("Shipping sooner risks data loss; delaying could lose a customer. This tradeoff remains unresolved.")
         try await waitForRead(8, session: session)
-        XCTAssertFalse(session.deepThought.isEmpty, "The earlier APM question should have triggered Deep automatically")
+        XCTAssertNil(session.automaticReviews.completedCounts[.deep], "iOS never runs Deep, even when recommended (#235)")
+        XCTAssertTrue(session.earlierDeepAnalysis.isEmpty)
         XCTAssertFalse(session.quickSummary.contains("\"action\""))
         await session.stop()
         await session.summarize(mode: .quick)

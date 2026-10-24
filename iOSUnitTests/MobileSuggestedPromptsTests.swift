@@ -73,7 +73,7 @@ final class MobileSuggestedPromptsTests: XCTestCase {
         let session = MobileSession(storageDirectory: root, summaryProvider: stub)
         session.notes = "Who owns the Thursday review?"
         session.quickSummary = "- Review on Thursday."
-        session.deepThought = "Existing Deep analysis."
+        session.earlierDeepAnalysis = "Existing Deep analysis."
         session.save(announce: false)
         session.quickReader.offerSuggestions(["Who owns the Thursday review?", "Draft a reminder"])
 
@@ -93,10 +93,10 @@ final class MobileSuggestedPromptsTests: XCTestCase {
         XCTAssertEqual(session.suggestedAsk.answer, "Nobody owns it yet.")
         XCTAssertEqual(session.suggestedPrompts, ["Draft a reminder"])
         XCTAssertEqual(session.quickSummary, "- Review on Thursday.")
-        XCTAssertEqual(session.deepThought, "Existing Deep analysis.")
+        XCTAssertEqual(session.earlierDeepAnalysis, "Existing Deep analysis.")
         XCTAssertTrue(session.quickReader.reviewsCompleted.isEmpty, "Not counted as any review")
         let saved = MobileSession(storageDirectory: root)
-        XCTAssertEqual(saved.deepThought, "Existing Deep analysis.", "The saved conversation is untouched")
+        XCTAssertEqual(saved.earlierDeepAnalysis, "Existing Deep analysis.", "The saved conversation is untouched")
         XCTAssertEqual(saved.quickSummary, "- Review on Thursday.")
 
         session.newConversation()

@@ -4,11 +4,11 @@ import XCTest
 final class MobileAppTests: XCTestCase {
     func testEachSummaryRoleCanChooseAndPersistItsOwnModel() {
         let app = XCUIApplication()
-        let catalog = "[{\"name\":\"quick-fixture\"},{\"name\":\"summary-fixture\"},{\"name\":\"deep-fixture\"}]"
+        let catalog = "[{\"name\":\"quick-fixture\"},{\"name\":\"summary-fixture\"}]"
         app.launchArguments = ["-mobileAIProvider", "ollama", "-mobileOllamaCatalog",
                                Data(catalog.utf8).base64EncodedString()]
         app.launchPastReleaseNotes()
-        for role in ["quick", "summary", "deep"] {
+        for role in ["quick", "summary"] {
             app.buttons["More"].tap()
             app.buttons["Settings"].tap()
             let link = app.buttons["choose-model-\(role)"]
@@ -19,32 +19,37 @@ final class MobileAppTests: XCTestCase {
             revealSettingsControl(model, in: app.collectionViews["roleModelList"])
             XCTAssertTrue(model.isHittable)
             model.tap()
-            let title = role == "quick" ? "Quick Summary" : (role == "summary" ? "Summary" : "Deep Summary")
+            let title = role == "quick" ? "Quick Summary" : "Summary"
             app.navigationBars["\(title) model"].buttons.firstMatch.tap()
             XCTAssertTrue(link.label.contains("\(role)-fixture"))
             app.buttons["Done"].tap()
         }
         app.terminate(); app.launchPastReleaseNotes()
         app.buttons["More"].tap(); app.buttons["Settings"].tap()
-        for role in ["quick", "summary", "deep"] {
+        for role in ["quick", "summary"] {
             let link = app.buttons["choose-model-\(role)"]
             revealSettingsControl(link, in: app.collectionViews["aiSettingsForm"])
             XCTAssertTrue(link.label.contains("\(role)-fixture"))
         }
+        XCTAssertFalse(app.buttons["choose-model-deep"].exists, "iOS has no Deep model (#235)")
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "Independent model settings"; screenshot.lifetime = .keepAlways; add(screenshot)
         app.buttons["Done"].tap()
     }
 
-    func testLiveLayoutAndDeepThinkTab() {
+    /// Issue #235: two pages, Live and Summary; no Deep tab.
+    func testLiveLayoutAndSummaryTab() {
         let app = XCUIApplication()
         app.launchPastReleaseNotes()
         XCTAssertTrue(app.staticTexts["Live transcript"].isHittable)
         XCTAssertTrue(app.staticTexts["Quick Summary"].isHittable)
         XCTAssertGreaterThan(app.staticTexts["Quick Summary"].frame.minY, app.staticTexts["Live transcript"].frame.maxY)
+        let tabs = app.segmentedControls["workspaceTabs"]
+        XCTAssertEqual(tabs.buttons.count, 2)
+        XCTAssertFalse(tabs.buttons["Deep"].exists)
         XCTAssertFalse(app.buttons["Generate Deep Summary"].exists)
-        app.segmentedControls["workspaceTabs"].buttons["Deep"].tap()
-        XCTAssertTrue(app.buttons["Generate Deep Summary"].isHittable)
+        tabs.buttons["Summary"].tap()
+        XCTAssertTrue(app.buttons["Generate Summary"].isHittable)
         XCTAssertFalse(app.staticTexts["Live transcript"].exists)
         XCTAssertTrue(app.buttons["Start listening"].isHittable)
         app.segmentedControls["workspaceTabs"].buttons["Live"].tap()
@@ -58,13 +63,13 @@ final class MobileAppTests: XCTestCase {
         XCUIDevice.shared.orientation = .landscapeLeft
         defer { XCUIDevice.shared.orientation = .portrait }
         XCTAssertTrue(app.scrollViews["dashboardScroll"].exists)
-        app.segmentedControls["workspaceTabs"].buttons["Deep"].tap()
-        XCTAssertTrue(app.buttons["Generate Deep Summary"].exists)
+        app.segmentedControls["workspaceTabs"].buttons["Summary"].tap()
+        XCTAssertTrue(app.buttons["Generate Summary"].exists)
         XCTAssertTrue(app.buttons["Start listening"].isHittable)
         let window = app.windows.firstMatch
         XCTAssertGreaterThan(window.frame.width, window.frame.height)
         let scroll = app.scrollViews["dashboardScroll"]
-        let model = app.buttons["panel-model-deep"]
+        let model = app.buttons["panel-model-summary"]
         // Large text can put the model above or below the viewport. Avoid swiping past it to the end.
         for _ in 0..<20 {
             let viewport = scroll.frame.intersection(window.frame)
@@ -251,8 +256,9 @@ final class MobileAppTests: XCTestCase {
         app.buttons["Quick Summary"].tap()
         XCTAssertTrue(app.buttons["Generate Quick Summary"].exists)
         app.buttons["summaryMode"].tap()
-        app.buttons["summary-option-deep"].tap()
-        XCTAssertTrue(app.buttons["Generate Deep Summary"].exists)
+        XCTAssertFalse(app.buttons["summary-option-deep"].exists, "No Deep output on iOS (#235)")
+        app.buttons["summary-option-summary"].tap()
+        XCTAssertTrue(app.buttons["Generate Summary"].exists)
         app.buttons["Done"].tap()
         app.buttons["History"].tap()
         let row = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch
