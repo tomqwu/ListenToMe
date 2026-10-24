@@ -59,7 +59,8 @@ vLLM, llama.cpp, OpenRouter), labelled "your server" on your own network and "ma
 elsewhere. Domain vocabularies (Medical, Legal, Software & Cloud, Engineering, Finance, Sales,
 Education & Research) and your own **My terms** list help recognition, AI speech correction and
 summaries on both platforms; after about a minute of speech the phone may suggest one, decided on the
-device. Presets, reference files, audio-file import and WhisperKit transcription are macOS-only.
+device. Meeting use-case presets, reference files, audio-file import and WhisperKit transcription are macOS-only.
+Editable domain prompt presets are available on both platforms.
 The iPhone and iPad app is distributed through TestFlight; the latest build is **1.15.0 (32)**
 (2026-10-24). An Apple Watch companion is built behind a build flag but not shipped yet
 ([#181](https://github.com/tomqwu/ListenToMe/issues/181)).

@@ -48,6 +48,13 @@ enum MobileReleaseNotes {
         var id: String { version }
     }
     static let releases: [Release] = [
+        .init(version: "1.16.0", title: "Your questions, your instructions", details: [
+            "Prompt below Notes: ask a one-time question or save instructions for future summaries in this conversation.",
+            "Choose a domain preset, edit it, then Ask or Save. Suggested presets never turn on by themselves.",
+            "Rotate iPhone to see Transcript and Quick side by side. Portrait and larger text keep the stacked layout.",
+            "All seven vocabulary presets now include Simplified Chinese terms for Chinese transcription.",
+            "Privacy and Settings clarify which providers receive text and that audio is kept only when Save audio recordings is on."
+        ]),
         .init(version: "1.15.0", title: "Find it, ask it, keep it", details: [
             "Two answers: Quick and Summary. The Deep tab is gone; a saved Deep analysis stays under Summary in History.",
             "Search History by meaning and Ask your history, with sources. Conversations name themselves after Stop.",

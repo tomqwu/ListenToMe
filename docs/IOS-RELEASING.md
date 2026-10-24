@@ -174,6 +174,17 @@ Only the maintainer can perform these, so ask rather than attempting them:
 The macOS signing, notarization and recovery runbook is in
 [RELEASING.md](RELEASING.md#credentials-and-recovery-runbook).
 
+### Repeatable release screenshot capture
+
+Run `-only-testing:ListenToMeIOSUITests/MobileReleaseScreenshotTests` from the candidate source
+on dedicated iPhone 17 Pro, iPhone 17 Pro Max, iPad mini (A17 Pro) and iPad Pro 13-inch simulators
+(or current supported equivalents). The test captures portrait/landscape Live, Prompt and Summary
+using synthetic content in the real views. It never sends a model request. Export original PNG
+attachments with `xcrun xcresulttool export attachments --path <result.xcresult> --output-path <folder>`.
+Inspect every image and record the source, app version/build, simulator/runtime, orientation, native
+pixel dimensions and SHA-256 in the release manifest. These are Debug simulator views from candidate
+source, not physical-device or Release-binary acceptance. Keep the full originals with release evidence.
+
 ## 1. Identify the exact release and validate it
 
 Read `AGENTS.md`, inspect `git status`, and fetch the merged branch. Preserve unrelated work; use a

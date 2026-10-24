@@ -11,7 +11,13 @@ does not show it again, and a fresh install does not see it at all; see
 [`docs/IOS.md`](docs/IOS.md) for the fuller per-build technical notes and
 [`metadata/ios/en-CA/`](metadata/ios/en-CA/) for TestFlight "What to Test" text.
 
-## iOS (unreleased since 1.15.0 (32))
+## iOS (unreleased since 1.16.0 (33))
+
+- Apple Watch companion, remote Start/Stop for the iPhone recorder (not yet shipped; ships with watch recording on the #181 train). (#181)
+- iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
+- Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
+
+## iOS 1.16.0 (33) — 2026-10-24
 
 - Prompt below Notes supports one-time Ask, saved summary instructions, and editable domain presets. Instructions stay with each conversation and apply to manual and automatic summaries. (#257)
 - Transcription and speaker Settings correctly explain that audio is kept only when Save audio recordings is enabled, and is never sent. (#251)
@@ -23,10 +29,6 @@ does not show it again, and a fresh install does not see it at all; see
 - Simplified Chinese vocabularies for all seven presets: the transcription language selects the terms for recognition, correction and prompts; suggestions understand continuous Mandarin text, use a Chinese on-device embedding when available and fall back to term matching. My terms remains in any language; other transcription languages keep the English presets. (#238)
 
 - Settings → Privacy now explains that optional Ollama, Cloud AI and OpenAI-compatible requests send text and included context to the provider you choose; Apple Intelligence stays on-device. (#247)
-
-- Apple Watch companion, remote Start/Stop for the iPhone recorder (not yet shipped; ships with watch recording on the #181 train). (#181)
-- iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
-- Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
 
 ## macOS (unreleased since 1.4.4)
 
