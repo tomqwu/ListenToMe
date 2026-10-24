@@ -5,8 +5,10 @@ import ListenToMeCore
 struct MobileTranscriptLineActions {
     let summarizeFrom: (UUID) -> Void
     let selectFrom: (UUID) -> Void
-    /// Why Summarize from here cannot run for that line, shown under the disabled menu item.
-    let summarizeBlockReason: (UUID) -> String?
+    /// Why Summarize from here cannot run, shown under the disabled menu item. One value for every
+    /// line (it depends on the provider and on other answers, not on the line), so a long transcript
+    /// does not recompute it per row.
+    let summarizeBlockReason: String?
 }
 
 /// The transcript reader with Select mode (issue #234): tap lines to toggle them, drag down the
@@ -38,9 +40,8 @@ struct MobileSelectableTranscript: View {
                                        selection.selectFrom(id, in: session.allSegments)
                                        selecting = true
                                        startSelecting()
-                                   }, summarizeBlockReason: { id in
-                                       session.selectionSummaryBlockReason(Self.fromHere(id, in: session.allSegments))
-                                   }), addTerm: session.addToMyTerms)
+                                   }, summarizeBlockReason: session.selectionSummaryProviderBlockReason),
+                                   addTerm: session.addToMyTerms)
             if selectable && selecting {
                 MobileSelectionBar(session: session, selected: selection.selected(in: session.allSegments),
                                    summarize: {

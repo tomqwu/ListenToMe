@@ -105,6 +105,12 @@ extension MobileSession {
         if !selected.contains(where: { !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
             return "Select one or more finished lines to summarize."
         }
+        return selectionSummaryProviderBlockReason
+    }
+
+    /// Why no selection summary can run right now, whatever is selected: another answer is being
+    /// written, or no provider is usable. Computed once per transcript render for every line's menu.
+    var selectionSummaryProviderBlockReason: String? {
         if isSummarizing { return "Generating an AI response. Wait for it to finish or tap Cancel summary." }
         return summaryAvailability(for: .summary)
     }

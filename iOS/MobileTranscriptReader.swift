@@ -136,14 +136,6 @@ struct MobileTranscriptReader: View {
         } else {
             lineContent(segment, selectable: !selecting)
                 .contextMenu { if segment.isFinal, !selecting { lineMenu(segment) } }
-                .accessibilityActions {
-                    // The touch-and-hold menu's actions, for VoiceOver's actions rotor.
-                    if let lineActions, segment.isFinal, !selecting {
-                        Button("Summarize from here") { lineActions.summarizeFrom(segment.id) }
-                            .disabled(lineActions.summarizeBlockReason(segment.id) != nil)
-                        Button("Select from here") { lineActions.selectFrom(segment.id) }
-                    }
-                }
         }
     }
 
@@ -152,7 +144,7 @@ struct MobileTranscriptReader: View {
     @ViewBuilder
     private func lineMenu(_ segment: TranscriptSegment) -> some View {
         if let lineActions {
-            let reason = lineActions.summarizeBlockReason(segment.id)
+            let reason = lineActions.summarizeBlockReason
             Button { lineActions.summarizeFrom(segment.id) } label: {
                 Label("Summarize from here", systemImage: "text.badge.star")
                 if let reason { Text(reason) }
@@ -192,6 +184,14 @@ struct MobileTranscriptReader: View {
         let text = Text(segment.text).font(.body).lineSpacing(4)
             .foregroundStyle(segment.isFinal ? .primary : .secondary)
             .accessibilityIdentifier("transcript-text-\(segment.id)")
+            .accessibilityActions {
+                // The touch-and-hold menu's actions, for VoiceOver's actions rotor, on the line's text.
+                if let lineActions, segment.isFinal, !selecting {
+                    Button("Summarize from here") { lineActions.summarizeFrom(segment.id) }
+                        .disabled(lineActions.summarizeBlockReason != nil)
+                    Button("Select from here") { lineActions.selectFrom(segment.id) }
+                }
+            }
         if selectable { text.textSelection(.enabled) } else { text }
     }
 }
