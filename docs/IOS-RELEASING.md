@@ -251,6 +251,23 @@ After upload, create and push an immutable annotated tag `ios-v<version>-build<b
 recorded release source. Verify the remote tag. Keep iOS tags separate from macOS releases and do
 not replace the latest macOS DMG release. Do not tag a failed upload as a released build.
 
+Then publish a GitHub pre-release for the tag, with this version's `CHANGELOG.md` section as notes:
+
+```bash
+gh release create ios-v<version>-build<build> --verify-tag --prerelease --latest=false \
+  --title "ListenToMe iOS <version> (<build>) — TestFlight" --notes-file <notes.md>
+```
+
+The release page must be complete on its own (maintainer requirement, 2026-10-24): version and build,
+the source commit and upload date, the full user-facing notes for that build, the What to Test steps,
+any privacy or data-handling change, and an App Store "What's New" text (≤ 4,000 characters)
+covering everything since the last App Store production release, ready to paste.
+
+Start the notes with one line saying it is a TestFlight beta that installs through TestFlight, so no
+download is attached. Verify with `gh release view ios-v<version>-build<build>` that it is a
+pre-release and that `gh release list` still shows the latest macOS release as Latest. Releases exist
+from iOS 1.11.0 (28); earlier iOS builds have tags only.
+
 ## 5. Confirm availability to testers
 
 Open [this app's TestFlight page](https://appstoreconnect.apple.com/apps/6811155732/testflight/ios).

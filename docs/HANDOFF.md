@@ -43,7 +43,11 @@ Recent iOS trains (full text in [CHANGELOG.md](../CHANGELOG.md)):
   `make ios-testflight IOS_ARCHIVE=<validated.xcarchive> IOS_RELEASE_SOURCE=<commit>`, using the App
   Store Connect API key configured in `~/.config/listentome/testflight.json`. Evidence for each build
   lives in the gitignored `dist/ios-<ver>-build<n>-evidence/`, including `asc-verify-script.py` (the
-  App Store Connect check — copy it forward to the next evidence folder).
+  App Store Connect check — copy it forward to the next evidence folder). Each TestFlight build also
+  gets a GitHub **pre-release** on its `ios-v…` tag (not Latest; notes from CHANGELOG, no binary);
+  these exist for every iOS tag. From the next build on, each page must be complete: version/build,
+  source commit, full notes, What to Test, privacy changes, and App Store "What's New" text since
+  the last App Store production release (iOS 1.10.5).
 - **Release archives** for the last three builds are in the gitignored `dist/`:
   `ListenToMe-ios-1.13.0-build30.xcarchive`, `…-1.14.0-build31.xcarchive`,
   `…-1.15.0-build32.xcarchive`. They were moved there from temporary worktrees after upload, so the
