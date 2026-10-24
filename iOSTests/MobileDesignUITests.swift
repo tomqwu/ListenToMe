@@ -34,7 +34,9 @@ final class MobileDesignUITests: XCTestCase {
         for _ in 0..<5 where !app.buttons["Notes"].isHittable { app.swipeDown() }
         app.buttons["Notes"].tap()
         XCTAssertTrue(app.navigationBars["Notes"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["Import from Calendar"].exists)
+        let calendar = app.buttons["Import from Calendar"]
+        for _ in 0..<5 where !calendar.isHittable { app.collectionViews.firstMatch.swipeUp() }
+        XCTAssertTrue(calendar.isHittable, "Imports remain reachable below Notes and Prompt")
         capture(app, "Notes and imports")
         app.buttons["Done"].tap()
         app.buttons["History"].tap()

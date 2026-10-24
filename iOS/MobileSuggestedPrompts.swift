@@ -47,7 +47,7 @@ struct MobileSuggestedPrompts: View {
 
 /// The answer to a tapped chip (#61): the question in bold, the streamed answer below it, and Close
 /// (Cancel while it streams). It is not saved with the conversation.
-private struct MobileAskCard: View {
+struct MobileAskCard: View {
     let ask: MobileSuggestedAsk
 
     var body: some View {

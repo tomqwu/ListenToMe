@@ -15,4 +15,7 @@ independently; check Start/Stop, Notes, model selection and Expand transcript. R
 Summary or the expanded transcript and verify the page and conversation are preserved. At
 accessibility text sizes the layout should stay stacked and scrollable.
 
+Prompt in Notes: try Ask once and a domain preset, edit before sending, then save summary instructions.
+Generate Quick/Summary, reopen the conversation and verify instructions persist. New clears them.
+Check portrait, landscape, iPad and large text.
 Check Transcription and Speakers Settings: audio is on-device, never sent, and retained only when Save audio recordings is on.

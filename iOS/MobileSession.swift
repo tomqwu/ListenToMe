@@ -33,6 +33,7 @@ final class MobileSession {
     var title = ConversationTitle.mobileDefault
     var titleState = ConversationTitleState.placeholder   // where the title came from (#221)
     @ObservationIgnored var autoTitleTasks: [String: Task<Void, Never>] = [:]
+    var summaryInstructions = "" { didSet { handleSummaryEvent(.notesChanged) } }
     var notes = "" { didSet { handleSummaryEvent(.notesChanged) } }
     var summary = ""
     var quickSummary = ""
@@ -187,7 +188,7 @@ final class MobileSession {
 
     var busy: Bool { state != .idle || isSummarizing }
     var hasContent: Bool {
-        !segments.isEmpty || partial != nil || !notes.isEmpty || !summary.isEmpty
+        !segments.isEmpty || partial != nil || !notes.isEmpty || !summaryInstructions.isEmpty || !summary.isEmpty
             || !quickSummary.isEmpty || !earlierDeepAnalysis.isEmpty || !attachments.isEmpty
     }
     var allSegments: [TranscriptSegment] { segments + (partial.map { [$0] } ?? []) }
@@ -197,7 +198,8 @@ final class MobileSession {
             transcript: Self.transcriptText(for: allSegments), summary: summary, segments: allSegments, notes: notes,
             quickSuggestion: quickSummary, deepAnswer: earlierDeepAnalysis, isComplete: state == .idle
                 && allSegments.allSatisfy(\.isFinal), attachments: attachments, sourceImportID: sourceImportID,
-            titleState: titleState, selectionSummaries: selectionSummaries.isEmpty ? nil : selectionSummaries))
+            titleState: titleState, selectionSummaries: selectionSummaries.isEmpty ? nil : selectionSummaries,
+            summaryInstructions: summaryInstructions.isEmpty ? nil : summaryInstructions))
     }
     var summaryAvailability: String? { summaryAvailability(for: .summary) }
     var automaticQuickAvailability: String? {
@@ -352,7 +354,7 @@ final class MobileSession {
         manualQuickError = nil; resetSuggestions(); answerNotices = MobileAnswerNotices()
         handleSummaryEvent(.conversationChanged)
         id = UUID().uuidString; date = Date()
-        title = ConversationTitle.mobileDefault; titleState = .placeholder; notes = ""; summary = ""
+        title = ConversationTitle.mobileDefault; titleState = .placeholder; notes = ""; summaryInstructions = ""; summary = ""
         quickSummary = ""; earlierDeepAnalysis = ""; selectionSummaries = []
         segments = []; partial = nil; message = nil; attachments = []; sourceImportID = nil
         save(announce: false)
@@ -372,7 +374,7 @@ final class MobileSession {
         manualQuickError = nil; resetSuggestions(); answerNotices = MobileAnswerNotices()
         handleSummaryEvent(.conversationChanged)
         id = record.id; date = record.date; title = record.title; titleState = record.resolvedTitleState
-        notes = record.notes ?? ""; summary = record.summary
+        notes = record.notes ?? ""; summaryInstructions = record.summaryInstructions ?? ""; summary = record.summary
         quickSummary = record.quickSuggestion ?? ""; earlierDeepAnalysis = record.deepAnswer ?? ""
         selectionSummaries = record.selectionSummaries ?? []
         attachments = record.attachments ?? []; sourceImportID = record.sourceImportID
@@ -488,16 +490,19 @@ extension MobileSession {
         }
         do {
             guard let batch = try quickReader.context.batch(quickPieces, summary: quickSummary,
-                reviewsCompleted: quickReader.reviewsCompleted, pendingReviews: quickReader.recommendations) else { return }
+                reviewsCompleted: quickReader.reviewsCompleted, pendingReviews: quickReader.recommendations,
+                summaryInstructions: summaryInstructions) else { return }
             let provider: any LLMProvider
             if let summaryProvider { provider = summaryProvider }
             else { provider = try ai.client(for: .quick) }
             manualQuickError = nil
+            let instructionsAtStart = summaryInstructions
             let sessionID = id
             quickEvaluationCount += 1
             let previousReads = quickReader.completedReads
             await quickReader.read(batch, provider: provider, isCurrent: { [weak self] in
-                guard let self, self.id == sessionID, self.autoQuick, self.state == .recording else { return false }
+                guard let self, self.id == sessionID, self.summaryInstructions == instructionsAtStart,
+                      self.autoQuick, self.state == .recording else { return false }
                 return self.quickReader.context.isCurrent(batch, pieces: self.quickPieces)
             }, apply: { [weak self] output in
                 guard let self else { return }

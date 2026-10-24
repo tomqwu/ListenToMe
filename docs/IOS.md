@@ -1364,4 +1364,20 @@ UI testing and release trains capture fresh iPhone/iPad screenshots with source 
 Before App Store submission, verify every applicable localized screenshot set in App Store Connect;
 see the [release screenshot checklist](IOS-RELEASING.md#screenshot-capture-and-app-store-handoff-255).
 
+## Conversation prompts (#257)
+
+Below Context notes on Mac and in Notes on iPhone/iPad, **Prompt** offers **Ask once** and
+**Summary instructions**. Ask Quick sends the edited question through the selected Quick provider;
+Mac also offers Ask Deep. The answer uses the current transcript and notes. On iOS it appears in an
+Ask card in Notes and below Quick Summary, with Cancel/Close, and is not saved with the conversation.
+Saved summary instructions apply to future manual and automatic summaries and travel with the saved
+conversation and text/JSON exports. Clear the editor and Save instructions to remove them. Starting a
+new conversation clears them. Existing summaries are not regenerated just by editing instructions.
+
+Domain presets fill an editable draft; they never send a request or overwrite context notes. A domain
+suggestion appears when the existing on-device vocabulary classifier offers a domain for this
+conversation. All seven presets remain available in the menu. Existing conversation-based suggested
+questions can also fill the Ask draft. Requests and saved instructions are limited to 1,000 characters.
+Mac History can reopen modern saved conversations after capture/import stops; the current conversation
+must first be saved. Older records without structured transcript lines remain readable/exportable.
 Settings Transcription and Speakers descriptions explicitly explain opt-in saved audio; audio is never sent for transcription or speaker identification (#251).

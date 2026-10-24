@@ -313,7 +313,7 @@ extension MobileSession {
                                     isComplete: complete, attachments: record.attachments,
                                     sourceImportID: record.sourceImportID, titleState: record.titleState,
                                     language: record.language, languages: record.languages,
-                                    selectionSummaries: record.selectionSummaries)
+                                    selectionSummaries: record.selectionSummaries, summaryInstructions: record.summaryInstructions)
         let languaged = added.isEmpty ? updated : updated.recording(language: transcriptionLanguage)
         try archive.save(languaged)
         remember(languaged)

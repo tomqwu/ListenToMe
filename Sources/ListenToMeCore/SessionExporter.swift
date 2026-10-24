@@ -81,14 +81,15 @@ public enum SessionExporter {
                  legacyTranscript: record.segments == nil ? record.transcript : nil, notes: record.notes ?? "",
                  listenerSummary: record.summary, quickSuggestion: record.quickSuggestion ?? "",
                  deepAnswer: record.deepAnswer ?? "", attachments: (record.attachments ?? []).map(\.name),
-                 timestamps: timestamps, selectionSummaries: record.selectionSummaries ?? [])
+                 timestamps: timestamps, selectionSummaries: record.selectionSummaries ?? [],
+                 summaryInstructions: record.summaryInstructions ?? "")
     }
 
     // swiftlint:disable:next function_parameter_count
     private static func markdown(title: String, header: String?, transcript: [TranscriptSegment],
                                  legacyTranscript: String?, notes: String, listenerSummary: String,
                                  quickSuggestion: String, deepAnswer: String, attachments: [String],
-                                 timestamps: Bool, selectionSummaries: [SelectionSummary] = []) -> String {
+                                 timestamps: Bool, selectionSummaries: [SelectionSummary] = [], summaryInstructions: String = "") -> String {
         var out = "# \(title)\n"
         if let header { out += "\n_\(header)_\n" }
 
@@ -99,6 +100,7 @@ public enum SessionExporter {
         }
 
         section("Context notes", notes)
+        section("Summary instructions", summaryInstructions)
 
         let lines = transcript.map { seg in
             "- \(stamp(seg, timestamps))**\(seg.speakerLabel):** \(seg.text)"
@@ -136,6 +138,7 @@ public enum SessionExporter {
         section("Deep summary", record.deepAnswer)
         section("Selection summaries", SelectionSummary.plainText(record.selectionSummaries ?? []))
         section("Notes", record.notes)
+        section("Summary instructions", record.summaryInstructions)
         let transcript: String
         if let segments = record.segments {
             transcript = segments.compactMap { segment -> String? in

@@ -29,6 +29,16 @@ struct MobileNotesView: View {
                         session.save(announce: false)
                     }.disabled(session.isSummarizing)
                 }
+                Section {
+                    ConversationPromptEditor(instructions: $session.summaryInstructions,
+                        suggestions: session.suggestedPrompts,
+                        domain: session.vocabulary.banner(for: session.id)?.domain,
+                        blockReason: session.suggestionBlockReason,
+                        ask: { prompt, _ in session.askSuggested(prompt) },
+                        save: { session.save(announce: false) })
+                        .id(session.id)
+                    MobileAskCard(ask: session.suggestedAsk)
+                }
                 Section("Add to this conversation") {
                     Button("Take photo", systemImage: "camera") { requestCamera() }
                     PhotosPicker(selection: $photo, matching: .images) { Label("Photo library", systemImage: "photo") }

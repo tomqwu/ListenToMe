@@ -46,6 +46,7 @@ public final class MeetingSession {
     /// nil/empty = none. Set from the UI when the user attaches files.
     public var referenceContext: String?
     /// Use-case persona guidance from the selected preset, injected into all pane prompts.
+    public var summaryInstructions = "" { didSet { handleLiveEvent(.notesChanged) } }
     public var personaGuidance: String?
     /// The active vocabularies' recognition terms (issue #222). Handed to each new transcriber before it
     /// prepares, and to the running one as soon as they change, so an Add during recording needs no restart.
@@ -250,6 +251,21 @@ public final class MeetingSession {
         roleActivity[role] = nil
     }
 
+    /// Reopens a saved modern record without treating restored summaries as newly reviewed speech.
+    @discardableResult
+    public func restoreConversation(_ record: SessionRecord) -> Bool {
+        guard !isRunning, !isTranscribingFile, record.segments != nil || record.transcript.isEmpty else { return false }
+        resetConversation()
+        store.restore(record.segments ?? [])
+        notes = record.notes ?? ""
+        summaryInstructions = record.summaryInstructions ?? ""
+        listenerSummary = record.summary
+        lastCompletedListenerSummary = record.summary
+        quickSuggestion = record.quickSuggestion ?? ""
+        deepAnswer = record.deepAnswer ?? ""
+        return true
+    }
+
     public func resetConversation() {
         guard !isRunning, !isTranscribingFile else { return }
         for role in CopilotRole.allCases { cancelResponse(role) }
@@ -257,7 +273,7 @@ public final class MeetingSession {
         // (which must precede a reset) already cancelled it.
         quickReader.reset(); handleLiveEvent(.conversationChanged)
         store.reset(); recordingOffset = 0
-        notes = ""; referenceContext = nil
+        notes = ""; summaryInstructions = ""; referenceContext = nil
         listenerSummary = ""; quickSuggestion = ""; quickRecap = ""; deepAnswer = ""
         roleErrors = [:]; roleActivity = [:]; roleNoticeRecords = [:]; pendingGrounding = [:]
         manualQuickAnswer.dismiss()
@@ -638,7 +654,7 @@ extension MeetingSession {
             context: PromptContext(messages: [], notes: notes, summary: summary,
                                    responseLanguage: responseLanguage,
                                    references: references.isEmpty ? nil : references,
-                                   personaGuidance: personaGuidance),
+                                   personaGuidance: conversationPersona),
             action: action)
         // The provisional notice and an excerpt's note are part of the assembled prompt but invisible
         // to the scaffold probe, which measures with no messages. Both are charged up front, so
@@ -673,7 +689,7 @@ extension MeetingSession {
         return ContextEngine.context(
             messages: selection.segments + provisional, notes: clampedNotes, summary: clampedSummary,
             responseLanguage: responseLanguage, references: clampedReferences,
-            personaGuidance: personaGuidance, transcriptNote: selection.promptNote)
+            personaGuidance: conversationPersona, transcriptNote: selection.promptNote)
     }
 
     /// Streams a Quick response for the given action. Awaits completion.

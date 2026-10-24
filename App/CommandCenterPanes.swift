@@ -224,6 +224,13 @@ extension MeetingView {
             TextField("Context notes (injected into prompts)", text: notes, axis: .vertical)
                 .lineLimit(2...6)
                 .textFieldStyle(.roundedBorder)
+            ConversationPromptEditor(instructions: Binding(get: { session.summaryInstructions },
+                set: { session.summaryInstructions = $0 }), suggestions: session.suggestedPrompts,
+                domain: vocabulary.banner(for: currentSessionID)?.domain,
+                blockReason: session.aiEnabled ? nil : "Turn AI on to ask.", allowsDeep: true,
+                ask: { prompt, deep in Task { await session.askSuggested(prompt, deep: deep) } },
+                save: { _ = checkpoint(force: true) })
+                .id(currentSessionID)
             referenceFilesRow(session: session)
         }
         .padding(12)

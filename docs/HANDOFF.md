@@ -27,6 +27,8 @@ Recent iOS trains (full text in [CHANGELOG.md](../CHANGELOG.md)):
 
 ## Merged feature follow-up (unreleased)
 
+- #257: Context/Notes prompt editor with Ask once, saved summary instructions, and optional domain presets.
+
 - #253: adaptive two-pane Live workspace on wide iPhone windows, with independent Transcript and
   Quick scrolling; narrow windows and accessibility text retain a stacked fallback.
 

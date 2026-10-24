@@ -67,12 +67,22 @@ extension MeetingSession {
     /// The user's language, persona and reference settings, applied to automatic reviews exactly as
     /// they are applied to the manual panes.
     private var automaticReviewDirectives: AutomaticReviewDirectives {
-        AutomaticReviewDirectives(responseLanguage: responseLanguage, personaGuidance: personaGuidance,
+        AutomaticReviewDirectives(responseLanguage: responseLanguage,
+            personaGuidance: VocabularyPrompt.combined(persona: personaGuidance,
+                                                      guidance: ConversationPrompt.guidance(summaryInstructions)),
                                   references: referenceContext, summaryGuidance: summaryGuidance)
     }
 
     /// The Listener's persona line: the preset persona plus the summary-only guidance.
-    var listenerPersona: String? { VocabularyPrompt.combined(persona: personaGuidance, guidance: summaryGuidance) }
+    var conversationPersona: String? {
+        VocabularyPrompt.combined(persona: personaGuidance, guidance: ConversationPrompt.guidance(summaryInstructions))
+    }
+
+    var listenerPersona: String? {
+        VocabularyPrompt.combined(persona: personaGuidance,
+            guidance: VocabularyPrompt.combined(persona: summaryGuidance,
+                                                guidance: ConversationPrompt.guidance(summaryInstructions)))
+    }
 
     public func automaticReviewStatus(_ mode: AutomaticReviewMode) -> String {
         guard autoSummaryEnabled else { return "Auto off · Generate manually." }
@@ -171,11 +181,12 @@ extension MeetingSession {
         do {
             guard let batch = try quickReader.context.batch(live.pieces, summary: quickRecap,
                 reviewsCompleted: quickReader.reviewsCompleted, pendingReviews: quickReader.recommendations,
-                responseLanguage: responseLanguage) else { return }
+                responseLanguage: responseLanguage, summaryInstructions: summaryInstructions) else { return }
+            let instructionsAtStart = summaryInstructions
             let run = runID
             let previousReads = quickReader.completedReads
             await quickReader.read(batch, provider: provider, isCurrent: { [weak self] in
-                guard let self, self.runID == run, self.isRunning, !self.isPreparing,
+                guard let self, self.runID == run, self.summaryInstructions == instructionsAtStart, self.isRunning, !self.isPreparing,
                       self.autoSummaryEnabled, self.aiEnabled else { return false }
                 return self.quickReader.context.isCurrent(batch, pieces: self.livePieces)
             }, apply: { [weak self] in self?.applyQuickRecap($0) })

@@ -9,6 +9,7 @@ public struct SessionRecord: Sendable, Equatable, Identifiable, Codable {
     public let summary: String
     public let segments: [TranscriptSegment]?
     public let notes: String?
+    public let summaryInstructions: String?
     public let quickSuggestion: String?
     public let deepAnswer: String?
     public let isComplete: Bool?
@@ -29,7 +30,7 @@ public struct SessionRecord: Sendable, Equatable, Identifiable, Codable {
                 quickSuggestion: String? = nil, deepAnswer: String? = nil, isComplete: Bool? = nil,
                 attachments: [SessionAttachment]? = nil, sourceImportID: String? = nil,
                 titleState: ConversationTitleState? = nil, language: String? = nil, languages: [String]? = nil,
-                selectionSummaries: [SelectionSummary]? = nil) {
+                selectionSummaries: [SelectionSummary]? = nil, summaryInstructions: String? = nil) {
         self.id = id; self.title = title; self.date = date
         self.transcript = transcript; self.summary = summary
         self.segments = segments; self.notes = notes
@@ -38,6 +39,7 @@ public struct SessionRecord: Sendable, Equatable, Identifiable, Codable {
         self.titleState = titleState
         self.language = language; self.languages = languages
         self.selectionSummaries = selectionSummaries
+        self.summaryInstructions = summaryInstructions
     }
 }
 

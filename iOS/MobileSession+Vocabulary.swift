@@ -29,15 +29,16 @@ extension MobileSession {
     /// selection summary sends (#234).
     func vocabularyGuidance(for mode: MobileSummaryMode, cloud: Bool, heard: String? = nil) -> String? {
         let window = cloud ? nil : PromptBudget.appleIntelligenceCharacters
-        return VocabularyPrompt.guidance(
+        return VocabularyPrompt.combined(persona: ConversationPrompt.guidance(summaryInstructions), guidance: VocabularyPrompt.guidance(
             for: activeVocabulary, transcript: String((heard ?? summarySource).suffix(4_000)),
-            characterLimit: VocabularyPrompt.characterLimit(forPromptWindow: window), includeLayout: mode == .summary)
+            characterLimit: VocabularyPrompt.characterLimit(forPromptWindow: window), includeLayout: mode == .summary))
     }
 
     /// Automatic Summary reviews carry the same context, with the domain's headings, through their
     /// directives (iOS runs no Deep, #235).
     var vocabularyDirectives: AutomaticReviewDirectives {
-        AutomaticReviewDirectives(personaGuidance: VocabularyPrompt.guidance(for: activeVocabulary),
+        AutomaticReviewDirectives(personaGuidance: VocabularyPrompt.combined(persona: ConversationPrompt.guidance(summaryInstructions),
+            guidance: VocabularyPrompt.guidance(for: activeVocabulary)),
                                   summaryGuidance: VocabularyPrompt.layoutInstruction(for: activeVocabulary))
     }
 

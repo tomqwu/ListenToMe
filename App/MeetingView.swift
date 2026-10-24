@@ -17,6 +17,7 @@ struct MeetingView: View {
     @State private var permissions = PermissionsModel()
     @State private var showPermissions = false
     @State private var showOnboarding = false
+    @State var restoredRecord: SessionRecord?
     @State var showSearch = false
     @State var sessionStore = SessionStore()
     /// Identity of this app-window's session. Reused across Listen→Stop cycles so repeated Stops
@@ -311,7 +312,7 @@ struct MeetingView: View {
         }
         .sheet(isPresented: $showSearch) {
             SessionSearchView(store: sessionStore, onClear: { dropCurrentSessionFromSaving() },
-                              askRoute: { Self.historyAskRoute() })
+                              onOpen: { openConversation($0) }, askRoute: { Self.historyAskRoute() })
         }
         .sheet(isPresented: $showSpeakerBreakdown) {
             SpeakerBreakdownView(

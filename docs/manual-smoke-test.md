@@ -741,3 +741,14 @@ recorder. They do not prove physical-device recognition accuracy.
    rotate both ways and confirm the selection, conversation title and saved output remain.
 3. At accessibility text sizes, rotate both ways: use one outer scroll, without narrow side-by-side
    text columns. Recording controls stay available. On iPad, check wide and narrow window sizes.
+
+## Conversation prompts (#257)
+
+On Mac and iPhone/iPad, open Context/Notes. Choose a domain preset in Ask once; confirm it only fills
+the editor, then edit and Ask with the chosen provider. Check answer location, cancellation and the
+provider disclosure. Switch to Summary instructions, Save, generate manual and automatic summaries,
+and confirm the requested format. Reopen the conversation and verify instructions remain; New must
+clear them. Clear and save to remove them. Export Markdown/plain text/JSON and verify instructions.
+Check Mac reopening does not overwrite the currently open record or drop attachments/languages.
+Capture native-resolution phone portrait/landscape, iPad and Mac images; inspect large text and
+keyboard reachability. Follow the release screenshot checklist.
