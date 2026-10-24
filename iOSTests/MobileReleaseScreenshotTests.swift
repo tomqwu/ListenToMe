@@ -46,9 +46,9 @@ final class MobileReleaseScreenshotTests: XCTestCase {
 
     private func reveal(_ element: XCUIElement, in form: XCUIElement) {
         // Scroll the form's edge, avoiding the nested Notes and Prompt text editors on iPad.
-        for _ in 0..<6 where !element.isHittable {
+        for _ in 0..<12 where !element.isHittable {
             form.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.85))
-                .press(forDuration: 0.05, thenDragTo: form.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.3)))
+                .press(forDuration: 0.05, thenDragTo: form.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.65)))
         }
     }
 
