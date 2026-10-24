@@ -1,14 +1,15 @@
 import Foundation
 import ListenToMeCore
 
+/// The iOS answer panes: Summary and Quick Summary. iOS has no Deep pane (issue #235); Deep stays on
+/// macOS, and a saved conversation's earlier Deep analysis is kept read-only (`earlierDeepAnalysis`).
 enum MobileSummaryMode: String, CaseIterable, Identifiable {
-    case summary, quick, deep
+    case summary, quick
     var id: String { rawValue }
     var title: String {
         switch self {
         case .summary: return "Summary"
         case .quick: return "Quick Summary"
-        case .deep: return "Deep Summary"
         }
     }
     /// The system prompt for a manual iOS summary. It carries the same data-not-instructions notice
@@ -27,9 +28,6 @@ enum MobileSummaryMode: String, CaseIterable, Identifiable {
             return grounding + "Return only 1–3 short bullets: the main takeaway, latest decision, and next action if stated. " +
                 "Use at most 60 words and 480 characters total. " +
                 "No heading, introduction, reasoning, background detail, or repeated points."
-        case .deep:
-            return grounding + notesGrounding + "Analyze the conversation in depth. Separate stated facts and decisions from your suggestions. " +
-                "Discuss tradeoffs, risks, unresolved questions and useful next steps. Explain conclusions without inventing evidence."
         }
     }
 }

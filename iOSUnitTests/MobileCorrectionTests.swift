@@ -37,19 +37,18 @@ final class MobileCorrectionTests: XCTestCase {
 
     func testCorrectionRoleIsIndependentFlashOnlyAndPersists() {
         let keys = ["mobileCorrectTranscript", "mobileCorrectionModel", "mobileOllamaCatalog",
-                    "mobileOllamaModel", "mobileOllamaQuickModel", "mobileOllamaDeepModel"]
+                    "mobileOllamaModel", "mobileOllamaQuickModel"]
         let saved = keys.map { UserDefaults.standard.object(forKey: $0) }
         defer { for (key, value) in zip(keys, saved) { UserDefaults.standard.set(value, forKey: key) } }
         UserDefaults.standard.removeObject(forKey: "mobileCorrectTranscript")
         let ai = MobileAISettings()
         XCTAssertFalse(ai.correctTranscript)
         ai.models = [.init(name: "glm-test-flash"), .init(name: "glm-test-pro"), .init(name: "qwen-test-flash")]
-        ai.model = "glm-test-pro"; ai.quickModel = "glm-test-flash"; ai.deepModel = "glm-test-pro"
+        ai.model = "glm-test-pro"; ai.quickModel = "glm-test-flash"
         ai.selectCorrectionModel("qwen-test-flash")
         ai.selectCorrectionModel("glm-test-pro")
         XCTAssertEqual(ai.correctionModel, "qwen-test-flash")
         XCTAssertEqual(ai.quickModel, "glm-test-flash")
-        XCTAssertEqual(ai.deepModel, "glm-test-pro")
         ai.correctTranscript = true
         XCTAssertTrue(MobileAISettings().correctTranscript)
         XCTAssertEqual(MobileAISettings().correctionModel, "qwen-test-flash")
@@ -76,7 +75,7 @@ final class MobileCorrectionTests: XCTestCase {
         XCTAssertEqual(initialCount, 0)
         session.ai.correctTranscript = true
         session.isSummarizing = true
-        session.deepThought = "Existing deep summary"
+        session.summary = "Existing summary"
         recorder.send(raw, final: false)
         XCTAssertEqual(session.partial?.text, raw)
         XCTAssertFalse(session.speechCorrection.working)
@@ -88,7 +87,7 @@ final class MobileCorrectionTests: XCTestCase {
         XCTAssertEqual(repaired.start, segment.start)
         XCTAssertEqual(repaired.text, fixed)
         XCTAssertTrue(session.isSummarizing, "Speech correction must not wait for or replace a summary request")
-        XCTAssertEqual(session.deepThought, "Existing deep summary")
+        XCTAssertEqual(session.summary, "Existing summary")
         session.isSummarizing = false
         XCTAssertTrue(session.summarySource.contains(fixed))
         let prompt = await provider.lastInput()

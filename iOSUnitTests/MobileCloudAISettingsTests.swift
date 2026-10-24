@@ -97,8 +97,8 @@ final class MobileCloudAISettingsTests: XCTestCase {
         settings.selectModel("claude-opus-5-5", for: .summary)
         XCTAssertNil(settings.availability(for: .summary))
         XCTAssertTrue(try settings.client(for: .summary) is AnthropicProvider)
-        settings.selectModel("claude-retired", for: .deep)
-        XCTAssertEqual(settings.availability(for: .deep),
+        settings.selectModel("claude-retired", for: .quick)
+        XCTAssertEqual(settings.availability(for: .quick),
                        "Anthropic no longer lists the selected model. Choose another model in Settings.")
     }
 

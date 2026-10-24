@@ -70,19 +70,19 @@ final class MobileHistorySearchTests: XCTestCase {
     func testAnOffDeviceProviderIsNamedBeforeAnythingIsSent() {
         let (session, root) = makeSession()
         defer { try? FileManager.default.removeItem(at: root) }
-        let keys = ["mobileAIProvider", "mobileOllamaBaseURL", "mobileOllamaDeepModel"]
+        let keys = ["mobileAIProvider", "mobileOllamaBaseURL", "mobileOllamaModel"]
         let saved = keys.map { UserDefaults.standard.object(forKey: $0) }
-        let deep = session.ai.deepModel
+        let summaryModel = session.ai.model
         let catalog = session.ai.models   // a catalog left by another test would not list the model below
         session.ai.models = []
         defer {
             session.ai.models = catalog
-            session.ai.deepModel = deep
+            session.ai.model = summaryModel
             for (key, value) in zip(keys, saved) { UserDefaults.standard.set(value, forKey: key) }
         }
         session.ai.provider = .ollama
         XCTAssertTrue(session.ai.saveBaseURL("http://my-mac.local:11434"))
-        session.ai.deepModel = "llama3.1"
+        session.ai.model = "llama3.1"
         let route = session.historyAskRoute
         XCTAssertNil(route.unavailable)
         XCTAssertEqual(route.destination, "http://my-mac.local:11434")

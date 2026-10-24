@@ -35,9 +35,6 @@ struct MobileRoleModelView: View {
                     Text("Newest API update per DeepSeek, GLM, Qwen and Kimi variant. " +
                          "Models absent from the API are not offered. Your selection stays fixed until you change it.")
                 }
-                if role == .deep {
-                    Section { Text("Full models only. Flash models are reserved for faster, shorter summaries.") }
-                }
                 Section("Recent family variants") {
                     ForEach(OllamaCloudModel.recentVariants(in: ai.models(for: role))) { model in modelRow(model, for: role) }
                 }

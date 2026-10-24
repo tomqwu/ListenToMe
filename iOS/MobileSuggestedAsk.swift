@@ -3,7 +3,7 @@ import ListenToMeCore
 import Observation
 
 /// A tapped suggestion's question and its answer (#61), shown in the Ask card under Quick Summary.
-/// It is deliberately not a summary: it never replaces Quick Summary or Deep on screen or in the saved
+/// It is deliberately not a summary: it never replaces Quick Summary or Summary on screen or in the saved
 /// conversation, never counts as a completed review, and never touches Auto's queued reviews or
 /// recommendations. The answer lives only in memory, under its question, until it is closed, a new
 /// conversation starts or the provider changes.

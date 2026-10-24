@@ -12,7 +12,7 @@ final class MobileCorrectionLiveTests: XCTestCase {
         try FileManager.default.removeItem(at: keyFile)
         let originalKey = try MobileKeychain.read()
         let keys = ["mobileCorrectTranscript", "mobileCorrectionModel", "mobileOllamaCatalog",
-                    "mobileOllamaModel", "mobileOllamaQuickModel", "mobileOllamaDeepModel", "autoQuickSummary"]
+                    "mobileOllamaModel", "mobileOllamaQuickModel", "autoQuickSummary"]
         let saved = keys.map { UserDefaults.standard.object(forKey: $0) }
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let recorder = CorrectionTestRecorder()

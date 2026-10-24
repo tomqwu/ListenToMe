@@ -5,7 +5,6 @@ enum MobileStyle {
     static let accent = adaptive(0x6241BC, 0xB7A4FA)
     static let transcript = adaptive(0x26756D, 0x79D1C2)
     static let quick = adaptive(0x936010, 0xEDC06B)
-    static let deep = adaptive(0x8050AD, 0xCFACF1)
     static let canvas = adaptive(0xF5F3FA, 0x11121B)
     static let surface = adaptive(0xFFFFFF, 0x1C1D2A)
     static let line = adaptive(0xE4DFEE, 0x353547)
@@ -22,7 +21,6 @@ enum MobileStyle {
         switch mode {
         case .quick: quick
         case .summary: accent
-        case .deep: deep
         }
     }
 
@@ -30,7 +28,6 @@ enum MobileStyle {
         switch mode {
         case .quick: "bolt.fill"
         case .summary: "text.alignleft"
-        case .deep: "sparkle.magnifyingglass"
         }
     }
 

@@ -30,7 +30,7 @@ extension MobileSession {
         for id in ids { historySearch.forget(id: id) }
     }
 
-    /// Where a question goes: the selected summary provider, as the Deep role is configured. Apple
+    /// Where a question goes: the selected summary provider, as the Summary role is configured. Apple
     /// Intelligence answers on this device; every other provider is named in the disclosure.
     var historyAskRoute: HistoryAskRoute {
         if ai.provider == .apple {
@@ -41,10 +41,10 @@ extension MobileSession {
             return HistoryAskRoute(unavailable: nil, destination: nil, responseLanguage: nil,
                                    makeProvider: { override ?? AppleIntelligenceProvider() })
         }
-        if let reason = ai.availability(for: .deep) { return .unavailable(reason) }
+        if let reason = ai.availability(for: .summary) { return .unavailable(reason) }
         let ai = ai
         return HistoryAskRoute(unavailable: nil, destination: ai.summaryEndpointLabel, responseLanguage: nil,
-                               makeProvider: { try ai.client(for: .deep) })
+                               makeProvider: { try ai.client(for: .summary) })
     }
 
     func askHistory(_ question: String) {
