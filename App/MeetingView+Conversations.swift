@@ -43,7 +43,7 @@ extension MeetingView {
 
     func saveConversation() {
         if ProviderSettings.saveSessionsForSearch && sessionSaveable {
-            _ = checkpoint(complete: !session.isRunning && !lifecycleBusy, force: true)
+            if checkpoint(complete: !session.isRunning && !lifecycleBusy, force: true) { nameConversationIfNeeded() }
         } else {
             _ = saveConversationAs()
         }
@@ -92,11 +92,14 @@ extension MeetingView {
                 default: return
                 }
             }
+            if persisted { nameConversationIfNeeded() }   // the saved one, in the background (#221)
+            autoTitleTask = nil   // it renames the saved record; typing the new title must not cancel it
             beginDiarizationRunReset()
             session.resetConversation()
             currentSessionID = UUID().uuidString; conversationStartedAt = nil
             conversationLanguages = ConversationLanguages()
             conversationTitle = ConversationTitle.generated(Date().formatted(date: .abbreviated, time: .shortened))
+            conversationTitleState = .placeholder
             sessionSaveable = ProviderSettings.saveSessionsForSearch
             othersAudioSink.reset(); microphoneAudioSink.reset()
             lastSavedKey = nil
@@ -109,7 +112,8 @@ extension MeetingView {
     var conversationStatus: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                TextField("Conversation title", text: $conversationTitle)
+                TextField("Conversation title", text: conversationTitleBinding)
+                    .focused($titleFieldFocused)
                     .textFieldStyle(.plain).fontWeight(.semibold)
                     .accessibilityLabel("Conversation title")
                 Spacer()

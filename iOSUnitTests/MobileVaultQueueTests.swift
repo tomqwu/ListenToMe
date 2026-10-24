@@ -109,6 +109,31 @@ final class MobileVaultQueueTests: XCTestCase {
         XCTAssertEqual(vault.unsavedIDs.count, 2)
     }
 
+    /// Naming a conversation automatically (#221) rewrites its note's title in place: one file.
+    func testAnAutomaticNameUpdatesTheSameNote() async throws {
+        let vault = makeVault()
+        let saved = UserDefaults.standard.object(forKey: MobileSession.autoTitleKey)
+        defer { UserDefaults.standard.set(saved, forKey: MobileSession.autoTitleKey) }
+        UserDefaults.standard.removeObject(forKey: MobileSession.autoTitleKey)
+        let session = MobileSession(storageDirectory: root.appendingPathComponent("app"),
+                                    sharedInbox: root.appendingPathComponent("inbox"))
+        session.ai.provider = .apple
+        session.onDeviceProviderOverride = MobileAutoTitleTests.TitleProvider("Spring marketing budget")
+        session.segments = MobileAutoTitleTests.meeting.enumerated().map {
+            TranscriptSegment(source: .you, text: $1, isFinal: true, start: Double($0), end: Double($0) + 1)
+        }
+        XCTAssertTrue(session.save())
+        try await settle(vault)
+        XCTAssertEqual(try notes().count, 1)
+        session.nameConversationIfNeeded()
+        await session.autoTitleTasks[session.id]?.value
+        try await settle(vault)
+        let files = try notes()
+        XCTAssertEqual(files.count, 1, "renamed in place, not duplicated")
+        let text = try String(contentsOf: folder.appendingPathComponent(files[0]), encoding: .utf8)
+        XCTAssertTrue(text.contains("title: \"Spring marketing budget\""), text)
+    }
+
     func testDeletingAConversationDropsItsQueuedNote() async throws {
         let vault = makeVault()
         try FileManager.default.removeItem(at: folder)

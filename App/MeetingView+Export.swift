@@ -12,7 +12,8 @@ extension MeetingView {
             id: currentSessionID, title: conversationTitle, date: date,
             transcript: store.utterances.map { "\($0.speakerLabel): \($0.text)" }.joined(separator: "\n"),
             summary: session.listenerSummary, segments: store.utterances, notes: session.notes,
-            quickSuggestion: session.quickSuggestion, deepAnswer: session.deepAnswer, isComplete: complete
+            quickSuggestion: session.quickSuggestion, deepAnswer: session.deepAnswer, isComplete: complete,
+            titleState: conversationTitleState
         ).with(languages: conversationLanguages)
     }
 

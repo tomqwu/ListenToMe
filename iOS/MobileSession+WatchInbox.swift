@@ -234,6 +234,7 @@ extension MobileSession {
         // Kept open if a chunk arrived since: the next drain picks it up.
         guard try watchInbox.completeRecording(ledger.recordingID, now: now) else { return }
         message = Self.watchAddedMessage
+        nameConversationIfNeeded(recordID, language: transcriptionLanguage)   // #221
     }
 
     /// Marks text saved through `time` and only then deletes the audio it wholly covers.
@@ -309,8 +310,8 @@ extension MobileSession {
                                         ?? record.notes,
                                     quickSuggestion: record.quickSuggestion, deepAnswer: record.deepAnswer,
                                     isComplete: complete, attachments: record.attachments,
-                                    sourceImportID: record.sourceImportID, language: record.language,
-                                    languages: record.languages)
+                                    sourceImportID: record.sourceImportID, titleState: record.titleState,
+                                    language: record.language, languages: record.languages)
         let languaged = added.isEmpty ? updated : updated.recording(language: transcriptionLanguage)
         try archive.save(languaged)
         remember(languaged)

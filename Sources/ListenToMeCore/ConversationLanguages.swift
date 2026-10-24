@@ -69,7 +69,7 @@ public extension SessionRecord {
         SessionRecord(id: id, title: title, date: date, transcript: transcript, summary: summary,
                       segments: segments, notes: notes, quickSuggestion: quickSuggestion,
                       deepAnswer: deepAnswer, isComplete: isComplete, attachments: attachments,
-                      sourceImportID: sourceImportID, language: value.current,
+                      sourceImportID: sourceImportID, titleState: titleState, language: value.current,
                       languages: value.isEmpty ? nil : value.all)
     }
 
