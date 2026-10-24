@@ -97,7 +97,9 @@ extension MeetingSession {
                 return provider
             }, apply: { [weak self] mode, output, reviewed in
                 guard let self else { return }
-                self.setOutput(mode == .summary ? .listener : .deep, output)
+                let role: CopilotRole = mode == .summary ? .listener : .deep
+                self.setOutput(role, output)
+                self.recordAutomaticReview(role, cutOff: self.automaticReviews.cutOffModes.contains(mode))
                 if mode == .summary { self.lastCompletedListenerSummary = output }
                 // The review still answers the current input when that input merely continued the
                 // snapshot it read; otherwise the recommendation stays outstanding. Comparing the

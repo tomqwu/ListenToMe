@@ -118,7 +118,16 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
   debounced, and an answer you asked for is never cut off mid-stream. It is independent of **Auto**,
   which writes the periodic recap.
 - **Deep** — on-demand, detailed long-reasoning answers.
-- Listener context is shared into Quick and Deep so on-demand answers stay grounded in the meeting.
+- On-demand Quick and Deep answers stay grounded in the meeting even with Auto off (the default).
+  They read the whole conversation when it fits — up to about 16,000 characters (~18 minutes of
+  speech) for Quick and 32,000 for Deep on Ollama and cloud models, and whatever fits Apple
+  Intelligence's small window. A longer meeting is answered from the latest Listener summary plus the
+  most recent speech when there is a summary, and otherwise from the meeting's opening plus the most
+  recent speech, at no extra model call. The pane says which, for example "Using the last ~5 min of
+  the conversation." Listener context is shared into Quick and Deep whenever a summary exists
+  (after **Refresh**, or automatically with **Auto**).
+- An answer or summary that stops at the model's output limit keeps its text, and the pane says "The
+  answer was cut off at the model's output limit."
 - **Auto** writes Quick, Listener and Deep automatically while you listen, from the same
   speaker-labeled transcript and under the same settings as a manual Generate: your AI
   response-language and the selected use-case preset. Attached reference files reach automatic
@@ -229,7 +238,8 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   Local mode verifies downloaded-model metadata before every request and rejects remote/cloud-backed
   models and redirects. Apple Intelligence runs entirely on this device; because its on-device model
   has a small context window, every prompt is capped at 8,000 characters — long meetings are answered
-  from the most recent speech and the status line says when material was trimmed. Cloud mode uses
+  from the summary or the opening plus the most recent speech, each pane says which part it read, and
+  the status line says when material was trimmed. Cloud mode uses
   `https://ollama.com` and the key stored in macOS Keychain.
   It sends transcript, notes, summary and attached reference context to Ollama Cloud. Adding a key
   alone does not switch modes. AI off leaves capture, transcription and saving available.
@@ -488,7 +498,8 @@ the server's base URL: LM Studio (`http://localhost:1234/v1`), vLLM or llama.cpp
 - **Strict streams.** Requests stream server-sent events; an answer counts only with `[DONE]` or a
   `finish_reason`. Truncated streams, `error` objects, empty or reasoning-only answers, non-event-stream
   pages (captive portals), oversized responses and timeouts fail with a clear message and keep the
-  previous output. Redirects are never followed.
+  previous output. A `finish_reason` of `length` keeps the partial answer and marks it as cut off at
+  the model's output limit. Redirects are never followed.
 - **Never picks a model for you.** On this route the pane pickers list the server's models but no
   pane is assigned one until you choose it, and these choices are stored apart from your Ollama picks.
 - **Auto needs the JSON contract.** Auto and Quick use the same strict JSON evaluator as on Ollama,

@@ -38,18 +38,16 @@ final class MeetingSessionTests: XCTestCase {
     }
 
     func testRecapGetsLargerTranscriptBudgetThanOtherActions() {
-        XCTAssertGreaterThan(MeetingSession.transcriptBudget(for: .recap),
-                             MeetingSession.transcriptBudget(for: .answerQuestion))
-        XCTAssertEqual(MeetingSession.transcriptBudget(for: .answerQuestion),
-                       MeetingSession.transcriptBudget(for: .followUp))
-        XCTAssertEqual(MeetingSession.transcriptBudget(for: .proactive),
-                       MeetingSession.transcriptBudget(for: .answerQuestion))
+        func budget(_ action: ResponseAction) -> Int {
+            OnDemandGrounding.transcriptBudget(for: action, kind: .quick, limit: nil)
+        }
+        XCTAssertGreaterThan(budget(.recap), budget(.answerQuestion))
+        XCTAssertEqual(budget(.answerQuestion), budget(.followUp))
+        XCTAssertEqual(budget(.proactive), budget(.answerQuestion))
         // Action items must cover the whole conversation, so they share the recap-sized budget,
         // not the recent-only window used by on-the-spot answers.
-        XCTAssertEqual(MeetingSession.transcriptBudget(for: .actionItems),
-                       MeetingSession.transcriptBudget(for: .recap))
-        XCTAssertGreaterThan(MeetingSession.transcriptBudget(for: .actionItems),
-                             MeetingSession.transcriptBudget(for: .clarify))
+        XCTAssertEqual(budget(.actionItems), budget(.recap))
+        XCTAssertGreaterThan(budget(.actionItems), budget(.clarify))
     }
 
     func testRenamingClearsOldAnswersAndRebuildsListener() async {

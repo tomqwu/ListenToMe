@@ -184,8 +184,10 @@ public struct QuickSummaryContext {
         self.memory = memory
     }
 
-    public static func manualRequest(source: String) throws -> LLMRequest {
-        let input = Input(runningContext: "", visibleSummary: "", recentSpeech: [],
+    /// A one-shot Quick evaluation of `source`. `runningContext` carries the summary that covers what
+    /// an excerpted `source` left out (`OnDemandGrounding.excerpt`, issue #114); "" when it is whole.
+    public static func manualRequest(source: String, runningContext: String = "") throws -> LLMRequest {
+        let input = Input(runningContext: runningContext, visibleSummary: "", recentSpeech: [],
                           changes: [.init(id: "manual", text: source, previousText: nil)])
         let data = try JSONEncoder().encode(input)
         return LLMRequest(system: instructions,

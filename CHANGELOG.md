@@ -16,6 +16,8 @@ does not show it again, and a fresh install does not see it at all; see
 - Apple Watch companion, remote Start/Stop for the iPhone recorder (not yet shipped; ships with watch recording on the #181 train). (#181)
 - iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
 - Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
+- Quick and Deep no longer refuse a long conversation ("exceeds the selected provider's summary limit"), which on Apple Intelligence happened after about seven minutes. They answer from your Summary plus the latest speech, or — with no Summary yet — from the opening plus the latest speech, and the panel says which ("Using the opening ~2 min and the last ~5 min of the conversation (~38 min in between left out)."). Summary still covers the whole conversation or says it does not fit. (#114)
+- An answer or summary that stops at the model's output limit keeps its text, and the panel says "The answer was cut off at the model's output limit." Claude's partial text is now kept too; before, it was discarded while the message said it was shown. (#215)
 
 ## iOS 1.14.0 (31) — 2026-10-23
 
@@ -46,6 +48,9 @@ does not show it again, and a fresh install does not see it at all; see
 - Model prompts fence transcript, notes and reference text as data. (#140)
 
 ## macOS (unreleased since 1.4.4)
+
+- On-demand Quick and Deep answers stay grounded with Auto off (the default). They used to read the last 4,000 characters (about four minutes; in practice half of that) and no summary, without saying so. Quick now reads up to about 16,000 characters and Deep 32,000 on Ollama and cloud models, and everything Apple Intelligence's window holds; a longer meeting is answered from the Listener summary plus the latest speech, or from the opening plus the latest speech, and the pane says which ("Using the last ~5 min of the conversation."). (#114)
+- An answer or summary that stops at the model's output limit (`finish_reason`/`done_reason` `length`, Claude `max_tokens`) keeps its text, and the pane says "The answer was cut off at the model's output limit." instead of showing it as complete. (#215)
 
 - New AI mode **Cloud AI service**: OpenAI, Anthropic Claude, Google Gemini, DeepSeek, OpenRouter, Groq, Mistral or xAI Grok with your own API key (Check key lists the vendor's models; Get a key and privacy-policy links). Each service is labelled "Sends your transcript to <vendor>", keeps its own Keychain key sent only to that vendor, and pane pickers list its models without ever picking one. Claude uses Anthropic's own Messages API. (#214)
 - New AI mode **OpenAI-compatible**: point the panes at LM Studio, vLLM, llama.cpp, Ollama's /v1 API or OpenRouter with an optional Keychain key bound to that server; pane pickers list its /v1/models and never pick one for you; labelled "your server" or "may leave this device", never local; redirects are not followed. Plain http to `.local` names now works. (#52)

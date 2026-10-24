@@ -65,6 +65,18 @@ Prereq: Ollama running with at least one chat-capable model installed (local or 
     (its record is cumulative and is saved), so a Refresh taken while finalized speech is still
     queued covers that speech only — the hypothesis arrives on a later refresh, and its finalized
     text is summarized afterwards either way.
+12b. **Grounding with Auto off** (issue #114): leave **Auto** off and do not press **Refresh**. Open a
+    long saved conversation (40+ minutes) or record one, with a decision stated in the first two
+    minutes. Press **⌘⇧Space** → the Quick pane shows "Using the opening ~N min and the last ~M min of
+    the conversation (~K min in between left out)." under its header, and the answer can use the
+    early decision. Press **Refresh**, wait for the Listener, ask again → the line reads "Using the
+    Listener summary and the last ~M min of the conversation." A short conversation shows no line.
+    Switch the Quick model → the line disappears.
+12c. **Output limit** (issue #215): give **Deep** a cloud or OpenAI-compatible model with a small
+    output limit (an LM Studio server with max tokens 64, or Ollama with `num_predict` 64 in a
+    Modelfile) and ask **Deep answer** → the partial answer stays and the pane shows "The answer was
+    cut off at the model's output limit." with no error banner. Ask again with a normal limit → the
+    line disappears.
 13. **History while recording** (issue #116): with a few saved conversations and recording active,
     open **History**, leave it open for ~30 seconds and type into **Context notes** — the list stays
     responsive and typing does not lag; the archive is read once when the sheet opens, not once a
@@ -194,12 +206,23 @@ tables behind them are covered by `CaptureRecoveryTests`.
    instead of failing with a FoundationModels context-window error, and the status line under the
    transcript must name what was dropped — "Trimmed to fit this model's context window — older
    speech and some attached reference material were left out." Detach the reference folder and ask
-   again: the notice must change to the speech-only wording. With a very long **Context notes**
+   again: the notice must change to the speech-only wording ("some older speech was left out; each
+   pane says which part it read."), and the Deep pane must show its own "Using the …" line (#114).
+   With a very long **Context notes**
    entry, the notice must instead name "your notes and the running summary". In no case may the pane
    show "This request is too long for Apple Intelligence's on-device context window." — that string
    is the provider's last-resort guard and means the prompt reached it unbounded; report it as a bug.
 5. Switch back to **Local only** or **Cloud** with the same conversation (Settings → save): the trim
-   notice disappears immediately and the full transcript is used again.
+   notice disappears immediately, and the next answer reads up to 16,000 (Quick) or 32,000 (Deep)
+   characters of transcript, or all of it for Recap and Action items.
+7. **iPhone Quick and Deep on a long conversation (#114, #215).** On iPhone with Apple Intelligence,
+   open a conversation longer than about ten minutes with no Summary. **Generate Quick Summary** and
+   **Generate Deep Summary** must both answer (they used to say "exceeds the selected provider's
+   summary limit") and show "Using the opening ~N min and the last ~M min of the conversation (~K min
+   in between left out)." above the text. **Summary** itself still says the conversation exceeds the
+   limit. In a conversation that already has a Summary (one generated when it was shorter, or on a
+   cloud model), Deep instead shows "Using your Summary and the last ~M min of the conversation." With a cloud model whose output limit is tiny, Deep keeps its partial text and
+   shows "The answer was cut off at the model's output limit."
 6. **Many short lines.** Still on Apple Intelligence, have a long back-and-forth of short utterances
    with named speakers (rename both speakers to long names). Ask Deep for **Action items**: the
    speaker labels count against the window too, so this must answer rather than fail.

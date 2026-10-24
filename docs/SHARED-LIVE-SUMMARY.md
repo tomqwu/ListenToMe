@@ -74,6 +74,29 @@ Apple Intelligence declares `PromptBudget.appleIntelligenceCharacters` (8,000 �
 manual summary path enforces), so macOS bounds every Listener/Quick/Deep prompt to that window and
 reports the trim in the status line instead of failing with a context-window error.
 
+**On-demand grounding (#114).** Which transcript lines an on-demand Quick or Deep answer reads is
+`OnDemandGrounding`'s choice, shared by both apps. Its budget scales with the provider: everything the
+window holds for a provider that declares one (Apple Intelligence), and 16,000 characters for Quick or
+32,000 for Deep for one that does not (Ollama, cloud, OpenAI-compatible); recap and action items keep
+their 100,000. When the conversation does not fit, the latest summary (macOS: the last completed
+Listener summary; iOS: the Summary panel) plus the most recent speech is sent; with no summary yet —
+Auto is off by default — the opening (at most a quarter of the budget) plus the most recent speech is
+sent instead. No extra model call is made. An app-written note outside the transcript fence tells the
+model which part it is reading, its room held back up front (`promptNoteReserve`) so the window still
+holds, and the pane shows one line such as "Using the last ~5 min of the conversation." Minutes come
+from the lines' timestamps, or from their length when they have none. On iOS a Summary that does not
+fit is still refused; only Quick and Deep excerpt.
+
+**Output limit (#215).** A response that stopped at the output-token cap — OpenAI-compatible
+`finish_reason: "length"`, Ollama `done_reason: "length"`, Claude `stop_reason: "max_tokens"` or
+`"model_context_window_exceeded"` — ends its `streamEvents` with `LLMStreamEvent.outputLimitReached`
+and finishes normally. Manual panes, automatic reviews (`AutomaticReviewCoordinator.cutOffModes`) and
+the iOS panels keep the partial text and show "The answer was cut off at the model's output limit."
+The plain-text `stream(_:)` ends with `LLMOutputLimitError` (Claude: `AnthropicError.cutOff`) instead,
+so the Quick evaluator, speech correction and connection tests never accept a cut-off answer as whole.
+Apple Intelligence shares one window between input and output, and running out of it already fails
+with its own context-window message.
+
 The bound is on the *assembled* prompt, not on raw transcript text. `PromptBuilder.scaffoldCharacterCost`
 measures the system prompt, persona/language directives, block headers and action instruction by
 building the real prompt with placeholders, and `PromptBudget.allocate` divides what is left between
@@ -286,7 +309,10 @@ They are charged to the same `PromptBudget` allocation as transcript text (with 
 through `TranscriptSegment.promptCharacterCost`). Provisional text may *reserve* at most half the
 transcript allowance and is then sized by what the finalized window actually spent, because
 `recentContext` and the listener batch always keep at least one utterance however large: reading the
-reservation alone could push the assembled prompt past Apple Intelligence's window. Because
+reservation alone could push the assembled prompt past Apple Intelligence's window. On-demand
+Quick and Deep size it the other way round since #114: the provisional lines take what they actually
+cost, up to half the allowance, and the finalized lines (`OnDemandGrounding.select`) get the rest, so
+an idle reservation no longer halves the finalized window. Because
 provisional lines are never final, they do not enter the listener's `pendingSummaryIDs` ledger: the
 same speech is still summarized once the recognizer finalizes it.
 

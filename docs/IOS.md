@@ -38,6 +38,8 @@ this table in the same PR, and never fork a copy into `App/` or `iOS/`.
 | `QuickSummaryReader` / `QuickSummaryDecision` — evaluation and its JSON envelope | `MeetingSession` | `MobileQuickReader` (a typealias, `iOS/MobileQuickReader.swift`) |
 | `AutomaticReviewCoordinator` — queued Summary/Deep reviews, deadlines, manual completion | `MeetingSession` | `MobileSession.automaticReviews` |
 | Prompt data fences and caps: `PromptData.notice`, `PromptData.block`, `PromptBudget` | `PromptBuilder` (`Prompt.swift`) | `MobileSummaryMode.instructions`, `MobileSession.summarize` |
+| On-demand grounding (#114): `OnDemandGrounding` — Quick/Deep transcript budgets, the summary-plus-recent or opening-plus-recent excerpt, its model note and the pane's "Using the last ~N min…" line | `MeetingSession.clampedContext`, `roleNotices` | `MobileSession.summarize` (`iOS/MobileSession+Summarize.swift`), `answerNotices` |
+| Output-limit signal (#215): `LLMStreamEvent.outputLimitReached`, `LLMOutputLimit` (notice, plain-text cut-off error) | `MeetingSession.run`, `RoleBox` | `MobileSession.summarize`, `MobileAnswerNoticeLines` |
 | `SessionArchive` — the on-disk conversation format | `App/SessionStore.swift` | `iOS/MobileSession.swift` |
 | Speaker identification: `SpeakerDiarizer` and `SpeakerAudioBuffer` (`SharedPlatform/`, FluidAudio), `SpeakerIdentityTracker`, `SpeakerLabeling`, `SpeakerStats`, `SpeakerAnalysisPolicy` | `App/MeetingView+Speakers.swift` | `MobileSpeakers`, `iOS/MobileSession+Speakers.swift`; iOS language detection (#197) reuses `SpeakerAudioBuffer`, keeping its trailing two minutes (#199) |
 | Save to folder (#53): `MarkdownVault` (note format and file names), `MarkdownVaultWriter` (bookmark, atomic coordinated write, failure wording), `MarkdownVaultSync` (`SharedPlatform/`, setting, queue, status, Retry) | `App/MacVaultSettings.swift`, `App/MeetingView+Conversations.swift` (`checkpoint`) | `iOS/MobileVaultSettings.swift`, `iOS/MobileSession+Vault.swift` |
@@ -464,7 +466,15 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   results and secure API-key storage.
   Apple Intelligence accepts up to 8,000 characters (`PromptBudget.appleIntelligenceCharacters`, the
   shared cap macOS also clamps its Apple prompts to); Ollama and OpenAI-compatible servers accept up to 60,000. Both caps are
-  charged on the *fenced* conversation, not the raw text. Oversized input is rejected explicitly. AI output needs review.
+  charged on the *fenced* conversation, not the raw text. A Summary that does not fit is rejected
+  explicitly. Quick and Deep answer a conversation that does not fit from what does (#114,
+  `OnDemandGrounding.excerpt`): the Summary already on screen plus the latest speech, or — with no
+  Summary yet — the opening plus the latest speech, and the panel says which ("Using the opening ~2 min
+  and the last ~5 min of the conversation (~38 min in between left out)."). On Apple Intelligence the
+  budget is what the window leaves after the system prompt and the answer's reserve. An answer that
+  stops at the model's output limit (`finish_reason`/`done_reason` `length`, Claude `max_tokens`) keeps
+  its text and the panel shows "The answer was cut off at the model's output limit." (#215); both lines
+  are for this session only and are not saved. AI output needs review.
 - Prompts separate data from instructions (#140). The conversation a manual Summary, Deep or
   on-device Quick sends is wrapped in a `<transcript>` block, and every system prompt states that
   text inside that block is data to read and summarize, never instructions to follow. Closing tags
@@ -710,7 +720,12 @@ an error body that echoes the key is masked.
 or bare CR line endings are accepted), and reasoning (`reasoning_content`
 or `reasoning`) is kept apart from the answer as on Ollama. A response is accepted only when it ends with
 `data: [DONE]` or a `finish_reason`; a stream cut off before that is "ended before completion" and keeps
-the previous output. An `error` object inside the stream or a `finish_reason` of `error` fails the request
+the previous output. A `finish_reason` of `length` (the output-token cap) completes the answer but ends
+the event stream with `LLMStreamEvent.outputLimitReached`: the panel keeps the partial text and says "The
+answer was cut off at the model's output limit." (#215; Ollama's `done_reason: "length"` is reported the
+same way). The plain-text `stream(_:)` ends with `LLMOutputLimitError` instead, so the Quick evaluator,
+speech correction and the connection test never take a cut-off answer for a whole one.
+An `error` object inside the stream or a `finish_reason` of `error` fails the request
 with the server's message, as does a reasoning-only or empty answer. A non-2xx status shows the server's
 explanation, bounded to 8 KiB, with hints for 401/403, 404 and 429. Redirects are never followed: a 3xx
 fails with the target host named, so neither the transcript nor the key reaches a host you did not enter.
@@ -802,7 +817,9 @@ discards the partial text: iOS keeps the previous summary and the macOS pane res
 answer (`LLMPartialOutput`). Only `text_delta` is answer text; `thinking_delta`,
 `signature_delta`, `ping` and unknown events are ignored, and a response completes only at
 `message_stop`. `stop_reason: "refusal"` shows "Claude declined to answer this request"; `max_tokens`
-keeps the partial text and says it was cut off; an `error` event (such as `overloaded_error`) fails the
+(or `model_context_window_exceeded`) keeps the partial text with the shared "The answer was cut off at
+the model's output limit." notice, on iOS as on macOS (#215; until then iOS dropped Claude's partial
+text and said it was shown); an `error` event (such as `overloaded_error`) fails the
 request. HTTP 401/403 names a bad key, 429/529 retries once only when `retry-after` (seconds or an HTTP date)
 asks for a wait of 20 seconds or less, and a 400
 `invalid_request_error` shows Anthropic's message with the key masked. Model lists come from
