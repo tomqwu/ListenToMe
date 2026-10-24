@@ -58,7 +58,7 @@ final class AIHardeningTests: XCTestCase {
                 paths.append(request.url!.path)
                 let data: String
                 if request.url!.path == "/api/show" {
-                    data = isLocal ? #"{"details":{"format":"gguf"},"model_info":{"arch":"qwen"}}"#
+                    data = isLocal ? #"{"details":{"format":"gguf"},"model_info":{"general.architecture":"qwen","qwen.context_length":32768}}"#
                         : #"{"remote_host":"https://ollama.com"}"#
                 } else { data = #"{"message":{"content":"OK"},"done":true}"# }
                 return (HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!,

@@ -1390,3 +1390,11 @@ questions can also fill the Ask draft. Requests and saved instructions are limit
 Mac History can reopen modern saved conversations after capture/import stops; the current conversation
 must first be saved. Older records without structured transcript lines remain readable/exportable.
 Settings Transcription and Speakers descriptions explicitly explain opt-in saved audio; audio is never sent for transcription or speaker identification (#251).
+
+### Custom Ollama context windows (#230)
+
+For a custom Ollama endpoint, the app reads model metadata before a request. Locally hosted models
+receive a context sized to the complete assembled prompt, with answer space reserved and a 64K
+ceiling. If its conservative UTF-8 budget cannot fit the reported model capacity, the pane shows
+an error asking for a shorter selection or a larger-context model. No answer request is sent in
+that case. Cloud models retain server-managed windows. This applies to summaries and correction.

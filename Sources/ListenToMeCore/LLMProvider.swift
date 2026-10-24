@@ -27,7 +27,7 @@ public protocol LLMProvider: Sendable {
 }
 
 public extension LLMProvider {
-    /// Most providers (Ollama, local or cloud) take prompts far larger than anything we build.
+    /// Providers may instead validate the assembled request against model metadata before sending it.
     var maxPromptCharacters: Int? { nil }
 
     func streamEvents(_ request: LLMRequest) -> AsyncThrowingStream<LLMStreamEvent, Error> {
