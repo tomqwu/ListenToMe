@@ -1,5 +1,9 @@
 # Speaker Diarization (experimental first cut) Implementation Plan
 
+> **Status: completed.** Implemented in PR #47 (merged 2026-06-27) and shipped, experimental and
+> opt-in, in macOS 1.2.0. The iPhone app gained its own speaker labels in iOS 1.11.0 (28) (#180), on
+> by default since 1.12.0 (29). The checkboxes below were not ticked as tasks landed.
+
 > **Update (#180):** `SpeakerDiarizer` and `SpeakerAudioBuffer` have since moved from `App/` to
 > `SharedPlatform/`, and FluidAudio is linked into the iOS target too; see docs/IOS.md → Parity with macOS.
 

@@ -1,5 +1,24 @@
 # Apple Watch Recording Implementation Plan
 
+> **Status (2026-10-24): built on `main`, not shipped.** Slices 1–3 merged unreleased: Slice 1 in
+> #189, Slice 2 in #190 and Slice 3 in #193. `make ios-build` compiles the watch app, but it is
+> embedded in the iOS app only with `WATCH_EMBED=YES` (off by default), and `scripts/ios-testflight.sh`
+> refuses an archive that contains it, so no TestFlight build has shipped it.
+>
+> | Task | State on `main` |
+> | --- | --- |
+> | 1–6 | Done (#189) |
+> | 7 | Done (#189), except Step 5: the physical-device acceptance (spec §6 steps 1–4) has not run |
+> | 8–10, 12, 13 | Done (#190) |
+> | 11 | Done (#190); its device-only tests (Steps 3 and 5) have not run on a device |
+> | 14 | Deferred to [#192](https://github.com/tomqwu/ListenToMe/issues/192) (spec decision 11); only the guard landed, in #193 |
+> | 15 | **Not run.** The device spike waits on the maintainer: branch `spike/181-watch-audio`, `SPIKE.md`, on a real watch, results posted on [#181](https://github.com/tomqwu/ListenToMe/issues/181). Slice 3 was built on the "go" path |
+> | 16–19 | Done (#193) |
+> | 20 | Done (#193), except Step 5: the physical-device acceptance listed in #193's description has not run |
+> | 21 | Not started. It waits on Task 15 and the Task 20 acceptance, then ships on a TestFlight train |
+>
+> The checkboxes below were not ticked as tasks landed; this table is the record.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** A watchOS companion to ListenToMeIOS that remote-controls the iPhone recorder (Slice 1) and
@@ -960,7 +979,8 @@ recorded is being sent to iPhone."
   `retryDelay` (Task 16), `WatchRecordingEnd` (Task 8).
 - Produces: `@MainActor final class WatchOutbox` with `func add(_ url: URL, _ metadata: WatchChunkMetadata) throws`,
   `func reconcileAtLaunch(outstanding: [WCSessionFileTransfer])`,
-  `func transferFinished(_ transfer: WCSessionFileTransfer, error: Error?)`,
+  `func transferFinished(fileURL: URL, metadata: WatchChunkMetadata?, error: (any Error)?)` (as built;
+  `WatchLinkClient` passes the transfer's file URL and decoded metadata),
   `private(set) var waitingRecordings: Int`, `func deleteWaiting()`.
 
 - [ ] **Step 1: Implement.** `add` moves the finalized chunk to `Application Support/Outbox/<id>/<index>.m4a`

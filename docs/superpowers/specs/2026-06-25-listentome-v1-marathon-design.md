@@ -1,5 +1,11 @@
 # ListenToMe v1.0 Marathon — Design
 
+> **Status: completed.** Phases 0–5 shipped in macOS 1.0.0 (2026-06-25): competition analysis (#31),
+> presets (#29), reference budget (#32), WhisperKit (#35), beautification (#33), README and MIT
+> license (#34) and release tooling (#36). Historical: some v1.0 "out of scope" items below were
+> later brought into scope — the iPhone/iPad app, persisted History, and per-vendor cloud AI presets
+> over HTTP (#214).
+
 **Goal:** Take ListenToMe from a working personal tool to a polished, publicly-released v1.0:
 finish the feature backlog, add use-case preset contexts, give it a real visual identity, research
 the competition, overhaul the docs, and ship a signed + notarized GitHub release.

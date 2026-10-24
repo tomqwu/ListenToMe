@@ -21,6 +21,10 @@ a single user-visible fix warrants going out on its own.
 - Otherwise, if the day's self-started train has already departed, the change rides the next one. Leave it merged with its
   `CHANGELOG.md` entry under the unreleased macOS heading and report it as merged, not released.
 - Documentation-only changes never require a binary release.
+- **macOS releases are paused at 1.4.4 (14) on the maintainer's decision.** Mac work merged since
+  then stays under `## macOS (unreleased since 1.4.4)` in `CHANGELOG.md` and is reported as merged,
+  not released. Do not start a macOS train on your own initiative while the pause holds; the next
+  macOS release happens when the maintainer calls it.
 - When a train is due, publication is already authorized — do not ask the maintainer to repeat
   "publish". Touch ID and Apple ID prompts must still be answered by the maintainer.
 
@@ -203,8 +207,19 @@ the `ListenToMeCore` test suite and the 95% coverage floor). A build with outsta
 Never publish an unsigned artifact as a production release. Publish the verified DMG as a GitHub Release:
 
 ```bash
-gh release create v1.0.0 dist/ListenToMe-1.0.0.dmg \
-  --title "ListenToMe 1.0.0" --generate-notes
+gh release create v<version> dist/ListenToMe-<version>.dmg \
+  --target <artifact-source-commit> \
+  --title "ListenToMe <version>" --generate-notes
 ```
 
-This creates the `v1.0.0` tag, the release, and auto-generated notes, and uploads the dmg.
+This creates the `v<version>` tag at that commit, the release, and auto-generated notes, and uploads
+the dmg. (The command `scripts/release.sh` prints omits `--target`; add it.) Then download the
+published asset into a fresh directory and compare checksums before calling it published:
+
+```bash
+DL="$(mktemp -d)"
+gh release download v<version> --pattern 'ListenToMe-<version>.dmg' --dir "$DL"
+shasum -a 256 dist/ListenToMe-<version>.dmg "$DL/ListenToMe-<version>.dmg"   # must match
+gh release view v<version> --json tagName,targetCommitish,isDraft,isPrerelease
+git ls-remote --tags origin 'v<version>' 'v<version>^{}'   # must resolve to the artifact source commit
+```

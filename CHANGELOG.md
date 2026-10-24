@@ -17,6 +17,33 @@ does not show it again, and a fresh install does not see it at all; see
 - iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
 - Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
 
+## macOS (unreleased since 1.4.4)
+
+- Export adds plain text, SRT and WebVTT subtitles and versioned JSON beside Markdown, recap and PDF, in the top bar and in a History conversation's detail sheet (which gains recap and PDF too). Files are named after the conversation's title and date instead of the clock time. With WhisperKit, exports carry `[mm:ss]` timestamps and subtitle cues, and each Listen in the same conversation now continues its timeline instead of restarting at 0:00; the default SpeechAnalyzer reports no times yet (#68), so its exports omit them and subtitles are unavailable. (#130)
+- Save to folder notes record the language the conversation was transcribed in, kept with the conversation, instead of the current setting; Retry and Save all use each conversation's own. (#206)
+- Conversations name themselves. A saved conversation still titled "Conversation — <date>" gets a short title after Stop, Save or New conversation, once it has about 30 words of transcript. The title comes from the finished Summary, from the Summary model when it is Apple Intelligence or local Ollama, or from keywords found on this Mac. With Ollama Cloud, a cloud AI service or an OpenAI-compatible server nothing is sent for a title. A typed title is never replaced; Load from Calendar replaces a default or automatic one. A Save to folder note updates in place. Settings → Name conversations automatically (on by default). (#221)
+- On-demand Quick and Deep answers stay grounded with Auto off (the default). They used to read the last 4,000 characters (about four minutes; in practice half of that) and no summary, without saying so. Quick now reads up to about 16,000 characters and Deep 32,000 on Ollama and cloud models, and everything Apple Intelligence's window holds; in a longer meeting the Listener summary stands in for exactly the speech its ledger read (never one cut off at the output limit), the start and the latest part of the speech it did not read are sent, an oversized latest line keeps its most recent words so the window always holds, and the pane says what was used ("Using the Listener summary of the first ~10 min, the ~4 min after it and the last ~12 min of the conversation (~19 min in between left out)."). The line belongs to the answer it describes and disappears when a recap or a failed retry replaces that answer. (#114)
+- An answer or summary that stops at the model's output limit (`finish_reason`/`done_reason` `length`, Claude `max_tokens`) keeps its text, and the pane says "The answer was cut off at the model's output limit." instead of showing it as complete. (#215)
+- Domain vocabularies and My terms (Settings → Vocabularies): the same seven presets and your own list as on iPhone. They bias SpeechAnalyzer while you listen (live, no restart; the legacy recognizer from the next utterance), add the domain and a glossary to Listener, Quick and Deep, and lay the Listener summary out by domain. A banner above the transcript offers a preset when the conversation sounds like one — decided on this Mac, never turned on by itself — and right-clicking a transcript line adds a word to My terms. (#222)
+- **Suggested · from context** chips above the fixed Quick actions: with Auto on, two or three one-tap prompts drawn from the conversation, carried by the Auto Quick check at no extra model call. A click sends the literal text through Quick (right-click → **Ask in Deep**); nothing is sent by itself. They refresh at most every 20 seconds, a used chip is not suggested again, and a new conversation, a model change, Auto off or AI off clears them. (#61)
+- History (⌘F) search ranks by meaning as well as words with an on-device index (Apple NaturalLanguage), shows the matching excerpt under each result and marks conversations found only by meaning as "Related". The index sits beside the conversations (Dev and Release builds keep separate ones), is excluded from backups, rebuilds itself when damaged, and Clear history deletes it. Languages without an on-device model keep the keyword search. (#57)
+- **Ask your history** in the History sheet answers the search text as a question from the best matching excerpts, citing the conversations it used (click a source to open it). It uses the Deep pane's model on the current AI mode: local Ollama and Apple Intelligence stay on this Mac, AI off disables it, and Ollama Cloud, Cloud AI and OpenAI-compatible routes are named as receiving the excerpts before you ask. (#57)
+- Save audio recordings, off by default (Settings): each recording keeps the microphone and system audio as two labelled `.m4a` files beside the conversation; History plays them and, with WhisperKit, jumps to a line's time; share them from the player. Clear history deletes them, Settings has Delete all saved audio and automatic deletion after 7, 30 or 90 days, and a full disk stops the audio, never the transcript. Audio is saved only for conversations History keeps; Discard and Close without saving delete it, and a second recording in the same conversation seeks correctly. (#55)
+- New AI mode **Cloud AI service**: OpenAI, Anthropic Claude, Google Gemini, DeepSeek, OpenRouter, Groq, Mistral or xAI Grok with your own API key (Check key lists the vendor's models; Get a key and privacy-policy links). Each service is labelled "Sends your transcript to <vendor>", keeps its own Keychain key sent only to that vendor, and pane pickers list its models without ever picking one. Claude uses Anthropic's own Messages API. (#214)
+- New AI mode **OpenAI-compatible**: point the panes at LM Studio, vLLM, llama.cpp, Ollama's /v1 API or OpenRouter with an optional Keychain key bound to that server; pane pickers list its /v1/models and never pick one for you; labelled "your server" or "may leave this device", never local; redirects are not followed. Plain http to `.local` names now works. (#52)
+- Speaker identification matches voices across its periodic passes, so a participant who is silent for minutes keeps their Speaker N label and edited name; voice embeddings stay in memory for the run only. (#171)
+- The transcription-language picker lists every language this Mac can transcribe on-device (Portuguese, Italian, Hindi, Arabic and more), grouped as Installed and Downloadable with the common languages first. (#172)
+- Save to folder, off by default (Settings): each conversation is written as one Obsidian-friendly Markdown note into a folder you choose once capture stops, and updated in place as summaries change; failures show beside the saved time with Retry. (#53)
+- Mic recovers from input-device changes and sleep/wake; a denied microphone is detected before Listen. (#107, #110)
+- Ollama's own error text on HTTP failures; Apple Intelligence prompts bounded with a visible notice. (#118, #119)
+- Automatic reviews survive notes typing, never overwrite a fresh manual answer, and use size-scaled deadlines. (#111, #115, #117)
+- Manual prompts include provisional speech; live path no longer rebuilds the transcript per partial. (#113, #116)
+- Panes keep their output on failure, "Thinking…" status for reasoning models, proactive Quick answers re-wired with a toggle. (#137, #112)
+- SpeechRecognizer task identity, bounded speaker-audio memory, latched diarizer failures. (#108, #109)
+- Preparing state, Session menu shortcuts, calendar title, and other lifecycle papercuts. (#136, #147)
+- History stays readable when one saved conversation file is damaged: that file is set aside (renamed, never deleted) and History shows a warning instead of failing. Search matches notes and speaker names and ignores accents and full-width differences; reference files read `.rtf` and non-UTF-8 text, and a file that cannot be read shows "Not included" with the reason. (#120, #139)
+- Model prompts fence transcript, notes and reference text as data. (#140)
+
 ## iOS 1.15.0 (32) — 2026-10-24
 
 - Summarize selection: tap the checklist button on the Live transcript, pick lines (tap, or drag down their circles), and tap Summarize selection — or touch and hold a line for Summarize from here / Select from here. Only the selected lines, with their times and speakers (and your vocabulary and My terms), go to your chosen summary provider (on-device with Apple Intelligence by default; with another provider the sheet names it and sends only when you tap Summarize). The sheet offers Copy, Share and Add to notes; the last five are saved with the conversation under its Summary and included in exports (Markdown, plain text, JSON) and Save to folder notes. Cancel stops one mid-answer. A long selection is shortened to its first and latest lines and says so. (#234)
@@ -61,31 +88,6 @@ does not show it again, and a fresh install does not see it at all; see
 - History warns about an unreadable saved conversation (quarantined, never deleted) instead of hiding the whole list; search covers notes and matches accents and full-width text. (#120, #139)
 - Model prompts fence transcript, notes and reference text as data. (#140)
 
-## macOS (unreleased since 1.4.4)
-
-- Export adds plain text, SRT and WebVTT subtitles and versioned JSON beside Markdown, recap and PDF, in the top bar and in a History conversation's detail sheet (which gains recap and PDF too). Files are named after the conversation's title and date instead of the clock time. With WhisperKit, exports carry `[mm:ss]` timestamps and subtitle cues, and each Listen in the same conversation now continues its timeline instead of restarting at 0:00; the default SpeechAnalyzer reports no times yet (#68), so its exports omit them and subtitles are unavailable. (#130)
-- Save to folder notes record the language the conversation was transcribed in, kept with the conversation, instead of the current setting; Retry and Save all use each conversation's own. (#206)
-- Conversations name themselves. A saved conversation still titled "Conversation — <date>" gets a short title after Stop, Save or New conversation, once it has about 30 words of transcript. The title comes from the finished Summary, from the Summary model when it is Apple Intelligence or local Ollama, or from keywords found on this Mac. With Ollama Cloud, a cloud AI service or an OpenAI-compatible server nothing is sent for a title. A typed title is never replaced; Load from Calendar replaces a default or automatic one. A Save to folder note updates in place. Settings → Name conversations automatically (on by default). (#221)
-- On-demand Quick and Deep answers stay grounded with Auto off (the default). They used to read the last 4,000 characters (about four minutes; in practice half of that) and no summary, without saying so. Quick now reads up to about 16,000 characters and Deep 32,000 on Ollama and cloud models, and everything Apple Intelligence's window holds; in a longer meeting the Listener summary stands in for exactly the speech its ledger read (never one cut off at the output limit), the start and the latest part of the speech it did not read are sent, an oversized latest line keeps its most recent words so the window always holds, and the pane says what was used ("Using the Listener summary of the first ~10 min, the ~4 min after it and the last ~12 min of the conversation (~19 min in between left out)."). The line belongs to the answer it describes and disappears when a recap or a failed retry replaces that answer. (#114)
-- An answer or summary that stops at the model's output limit (`finish_reason`/`done_reason` `length`, Claude `max_tokens`) keeps its text, and the pane says "The answer was cut off at the model's output limit." instead of showing it as complete. (#215)
-- Domain vocabularies and My terms (Settings → Vocabularies): the same seven presets and your own list as on iPhone. They bias SpeechAnalyzer while you listen (live, no restart; the legacy recognizer from the next utterance), add the domain and a glossary to Listener, Quick and Deep, and lay the Listener summary out by domain. A banner above the transcript offers a preset when the conversation sounds like one — decided on this Mac, never turned on by itself — and right-clicking a transcript line adds a word to My terms. (#222)
-- **Suggested · from context** chips above the fixed Quick actions: with Auto on, two or three one-tap prompts drawn from the conversation, carried by the Auto Quick check at no extra model call. A click sends the literal text through Quick (right-click → **Ask in Deep**); nothing is sent by itself. They refresh at most every 20 seconds, a used chip is not suggested again, and a new conversation, a model change, Auto off or AI off clears them. (#61)
-- History (⌘F) search ranks by meaning as well as words with an on-device index (Apple NaturalLanguage), shows the matching excerpt under each result and marks conversations found only by meaning as "Related". The index sits beside the conversations (Dev and Release builds keep separate ones), is excluded from backups, rebuilds itself when damaged, and Clear history deletes it. Languages without an on-device model keep the keyword search. (#57)
-- **Ask your history** in the History sheet answers the search text as a question from the best matching excerpts, citing the conversations it used (click a source to open it). It uses the Deep pane's model on the current AI mode: local Ollama and Apple Intelligence stay on this Mac, AI off disables it, and Ollama Cloud, Cloud AI and OpenAI-compatible routes are named as receiving the excerpts before you ask. (#57)
-- Save audio recordings, off by default (Settings): each recording keeps the microphone and system audio as two labelled `.m4a` files beside the conversation; History plays them and, with WhisperKit, jumps to a line's time; share them from the player. Clear history deletes them, Settings has Delete all saved audio and automatic deletion after 7, 30 or 90 days, and a full disk stops the audio, never the transcript. Audio is saved only for conversations History keeps; Discard and Close without saving delete it, and a second recording in the same conversation seeks correctly. (#55)
-- New AI mode **Cloud AI service**: OpenAI, Anthropic Claude, Google Gemini, DeepSeek, OpenRouter, Groq, Mistral or xAI Grok with your own API key (Check key lists the vendor's models; Get a key and privacy-policy links). Each service is labelled "Sends your transcript to <vendor>", keeps its own Keychain key sent only to that vendor, and pane pickers list its models without ever picking one. Claude uses Anthropic's own Messages API. (#214)
-- New AI mode **OpenAI-compatible**: point the panes at LM Studio, vLLM, llama.cpp, Ollama's /v1 API or OpenRouter with an optional Keychain key bound to that server; pane pickers list its /v1/models and never pick one for you; labelled "your server" or "may leave this device", never local; redirects are not followed. Plain http to `.local` names now works. (#52)
-- Speaker identification matches voices across its periodic passes, so a participant who is silent for minutes keeps their Speaker N label and edited name; voice embeddings stay in memory for the run only. (#171)
-- The transcription-language picker lists every language this Mac can transcribe on-device (Portuguese, Italian, Hindi, Arabic and more), grouped as Installed and Downloadable with the common languages first. (#172)
-- Save to folder, off by default (Settings): each conversation is written as one Obsidian-friendly Markdown note into a folder you choose once capture stops, and updated in place as summaries change; failures show beside the saved time with Retry. (#53)
-- Mic recovers from input-device changes and sleep/wake; a denied microphone is detected before Listen. (#107, #110)
-- Ollama's own error text on HTTP failures; Apple Intelligence prompts bounded with a visible notice. (#118, #119)
-- Automatic reviews survive notes typing, never overwrite a fresh manual answer, and use size-scaled deadlines. (#111, #115, #117)
-- Manual prompts include provisional speech; live path no longer rebuilds the transcript per partial. (#113, #116)
-- Panes keep their output on failure, "Thinking…" status for reasoning models, proactive Quick answers re-wired with a toggle. (#137, #112)
-- SpeechRecognizer task identity, bounded speaker-audio memory, latched diarizer failures. (#108, #109)
-- Preparing state, Session menu shortcuts, calendar title, and other lifecycle papercuts. (#136, #147)
-
 ## iOS 1.10.4 (26) — 2026-09-14
 
 - What's New appears only when the bundled notes change; first installs no longer see "In this update". (#138)
@@ -93,6 +95,19 @@ does not show it again, and a fresh install does not see it at all; see
 - Transcription language is remembered across launches; History is searchable. (#138)
 - Conversations and attachments are written with device data protection, and a Settings toggle keeps them (and shared imports) out of iCloud and Finder backups. (#138)
 - An Apple Intelligence install never contacts ollama.com; the model catalog refreshes only after you choose Ollama with a key or your own server. (#138)
+
+## iOS 1.10.3 (25) — 2026-09-14 — Recording that survives the real world
+
+- Calls, AirPods and switching apps no longer end a recording silently; you are told why it stopped
+  and can resume.
+- Calendar imports keep meeting links private, Apple Intelligence Quick answers are plain bullets,
+  and typing no longer costs a save per keystroke.
+
+## iOS 1.10.2 (24) — 2026-09-14 — On-device by default, or your own server
+
+- New installs summarize on-device with Apple Intelligence. A provider you already chose is kept.
+- Optional Ollama server URL: use a server you run. Your cloud key is never sent there.
+- Summaries now say who said what, and never read your typed notes as speech.
 
 ## macOS 1.4.4 — 2026-09-14
 
@@ -108,6 +123,17 @@ does not show it again, and a fresh install does not see it at all; see
   the meeting. (#100, #101)
 - CI now runs the `ListenToMeCore` test suite and the 95% coverage floor on every pull request, and
   `main` requires those checks. (#105)
+
+## iOS 1.10.1 (23) — 2026-09-13 — Know what changed
+
+- See the installed version and release highlights after an update.
+- Reopen this changelog anytime from More → What's New.
+
+## iOS 1.10.0 (22) — 2026-09-13 — Automatic reviews
+
+- Auto updates Quick, Summary and Deep when new speech calls for a review. Manual Generate is still
+  available.
+- Quick stays concise, with clearer progress and recovery when a model response needs another try.
 
 ## macOS 1.4.3 — 2026-09-13
 
@@ -143,30 +169,6 @@ does not show it again, and a fresh install does not see it at all; see
   Macs; selecting it pauses Auto without a Cloud fallback.
 - Stop, provider changes and Auto off cancel obsolete work. Failed evaluations preserve the current
   summary and retry unread input.
-
-## iOS 1.10.3 (25) — Recording that survives the real world
-
-- Calls, AirPods and switching apps no longer end a recording silently; you are told why it stopped
-  and can resume.
-- Calendar imports keep meeting links private, Apple Intelligence Quick answers are plain bullets,
-  and typing no longer costs a save per keystroke.
-
-## iOS 1.10.2 (24) — On-device by default, or your own server
-
-- New installs summarize on-device with Apple Intelligence. A provider you already chose is kept.
-- Optional Ollama server URL: use a server you run. Your cloud key is never sent there.
-- Summaries now say who said what, and never read your typed notes as speech.
-
-## iOS 1.10.1 (23) — Know what changed
-
-- See the installed version and release highlights after an update.
-- Reopen this changelog anytime from More → What's New.
-
-## iOS 1.10.0 (22) — Automatic reviews
-
-- Auto updates Quick, Summary and Deep when new speech calls for a review. Manual Generate is still
-  available.
-- Quick stays concise, with clearer progress and recovery when a model response needs another try.
 
 ---
 

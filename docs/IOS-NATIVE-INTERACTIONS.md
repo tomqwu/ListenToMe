@@ -6,8 +6,11 @@ a short footer makes the gestures discoverable. Persistent trash icons were remo
 
 - Leading edge / swipe right: Share, tinted with the app accent.
 - Trailing edge / swipe left: Delete, red, followed by confirmation.
-- Touch and hold: the same Share and Delete actions.
+- Touch and hold: Share, **Export as** (Markdown, plain text, SRT, WebVTT or JSON; #130), **Share audio**
+  when the conversation has saved audio (#55), and Delete.
 - VoiceOver: named Share and Delete actions on the row.
+- **Delete all conversations…** (#220) sits at the bottom of the list (hidden while a search is typed)
+  and asks first, naming the count.
 
 Full-swipe execution is disabled. The swipe Delete button opens confirmation without applying
 SwiftUI's immediate destructive-row removal animation. The confirmation's Delete action is destructive.
@@ -22,7 +25,8 @@ The system supplies gesture animation, symbols, menus, sheets and appearance ada
 
 The Auto switch remains opt-in, with its value persisted on this device. The panel explains whether
 Auto is off, waiting for speech or another response, updating, up to date, unavailable, or retrying.
-Cloud disclosure remains visible when Ollama Auto is enabled. A failure preserves the previous output
+Auto needs Ollama, a cloud AI service or an OpenAI-compatible server (not Apple Intelligence), and the
+Auto control names where it sends speech (`summaryEndpointLabel`). A failure preserves the previous output
 and shows the error in the Quick Summary panel.
 
 After any summary request, the scheduler rechecks at the remaining automatic cooldown. If a response

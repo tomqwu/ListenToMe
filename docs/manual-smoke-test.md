@@ -65,7 +65,7 @@ Prereq: Ollama running with at least one chat-capable model installed (local or 
     (its record is cumulative and is saved), so a Refresh taken while finalized speech is still
     queued covers that speech only — the hypothesis arrives on a later refresh, and its finalized
     text is summarized afterwards either way.
-12b. **Grounding with Auto off** (issue #114): leave **Auto** off and do not press **Refresh**. Open a
+12a. **Grounding with Auto off** (issue #114): leave **Auto** off and do not press **Refresh**. Open a
     long saved conversation (40+ minutes) or record one, with a decision stated in the first two
     minutes. Press **⌘⇧Space** → the Quick pane shows "Using the opening ~N min and the last ~M min of
     the conversation (~K min in between left out)." under its header, and the answer can use the
@@ -76,7 +76,7 @@ Prereq: Ollama running with at least one chat-capable model installed (local or 
     summary's real span and a gap ("in between left out"), never claim the summary covers the new
     speech. A short conversation shows no line. Turn **Auto** on and let the recap replace a manual
     Quick answer (or click **Show recap**) → the answer's line disappears with it.
-12b′. **Enormous last line** (issue #114, Apple Intelligence): import or paste a transcript whose
+12b. **Enormous last line** (issue #114, Apple Intelligence): import or paste a transcript whose
     last line is several thousand words long and ask Deep → it answers (never "This request is too
     long for Apple Intelligence's on-device context window"), and the line ends "The latest line
     was shortened."
@@ -110,6 +110,9 @@ If dual-channel transcription shows only one speaker (a console error mentioning
 single-source for the MVP or the Phase-2 SpeechAnalyzer engine.
 
 ## Automatic reviews follow your settings
+
+macOS (iPhone has no response-language, preset or reference settings, and no Deep since 1.15.0, #235;
+its Auto Summary is covered under [iPhone: Quick and Summary only](#iphone-quick-and-summary-only-235)):
 
 1. In Settings, set **AI response language** to a language other than the one you will speak, pick a
    use-case preset, and attach a reference file. Turn **Auto** on and Listen.
@@ -254,6 +257,9 @@ tables behind them are covered by `CaptureRecoveryTests`.
 5. Switch back to **Local only** or **Cloud** with the same conversation (Settings → save): the trim
    notice disappears immediately, and the next answer reads up to 16,000 (Quick) or 32,000 (Deep)
    characters of transcript, or all of it for Recap and Action items.
+6. **Many short lines.** Back on Apple Intelligence, have a long back-and-forth of short utterances
+   with named speakers (rename both speakers to long names). Ask Deep for **Action items**: the
+   speaker labels count against the window too, so this must answer rather than fail.
 7. **iPhone Quick on a long conversation (#114, #215).** On iPhone with Apple Intelligence,
    open a conversation longer than about ten minutes with no Summary. **Generate Quick Summary**
    must answer (it used to say "exceeds the selected provider's
@@ -266,9 +272,6 @@ tables behind them are covered by `CaptureRecoveryTests`.
    Auto on, a recap that rewrites the Quick Summary removes the previous answer's line. With a cloud
    model whose output limit is tiny, Summary keeps its partial text and
    shows "The answer was cut off at the model's output limit."
-6. **Many short lines.** Still on Apple Intelligence, have a long back-and-forth of short utterances
-   with named speakers (rename both speakers to long names). Ask Deep for **Action items**: the
-   speaker labels count against the window too, so this must answer rather than fail.
 
 ## OpenAI-compatible server (#52)
 
@@ -551,7 +554,8 @@ iPhone (simulator is enough):
    times, including after a resumed recording (times keep counting up).
 2. **History** → touch and hold a conversation → **Export as** → **JSON** → Save to Files: valid
    JSON with the conversation's language. An imported-notes conversation offers no subtitles.
-3. An Apple Watch conversation's subtitles start near 00:00:00 and follow the watch recording.
+3. An Apple Watch conversation's subtitles start near 00:00:00 and follow the watch recording (watch
+   builds only: the watch app is not embedded yet, #181).
 
 ## Automatic conversation titles (#221)
 
@@ -573,7 +577,7 @@ iPhone (device for Apple Intelligence, simulator for the keyword path):
      summary, Stop: the title comes from keywords and the vendor's dashboard shows no request.
 4. **Offline / AI off.** In Airplane mode with Ollama selected but unreachable, or without Apple
    Intelligence: the title still appears, from keywords.
-5. **Apple Watch and Save to folder.** A watch recording drained into History gets a title instead of
+5. **Apple Watch and Save to folder.** (The watch part needs a watch build, #181.) A watch recording drained into History gets a title instead of
    "Apple Watch · <date>". With Save to folder on, the note's `title:` updates and no second note
    appears.
 6. **Off.** Turn the setting off, record and Stop: the name stays "New conversation".
@@ -583,6 +587,7 @@ model with Apple Intelligence or local Ollama, keywords otherwise). Stop while a
 still streaming: the title never ends mid-sentence. Click into the title field before the title
 arrives: the default title stays until a later Save. Type a title first, or Load from Calendar: it stays.
 Start a New conversation right after Stop: the saved one is renamed in History.
+
 ## iPhone: Quick and Summary only (#235)
 
 Simulator is enough for 1–3; 4 needs a cloud or OpenAI-compatible model with Auto.
@@ -626,6 +631,21 @@ physical device.
 5. **Apple Intelligence, long selection.** On a device with Apple Intelligence, select a long stretch (more
    than about ten minutes): the summary answers and the sheet says the selection was shortened.
 
+## iPhone History search by meaning and Ask your history (#57)
+
+Simulator or device; the Apple Intelligence answer in step 3 needs an eligible device.
+
+1. **Related.** Save an English conversation about a budget ("we reviewed the quarterly budget and the
+   funding round") and one about travel. A few seconds later, search `money` in History: the budget
+   conversation is listed with its excerpt, marked **· Related**. Search `budget`: the excerpt shows the
+   sentence with the word, labelled with where it came from (summary, notes or transcript).
+2. **Ask.** Type "What did we decide about the budget?": an **Ask your history about "…"** row appears.
+   With Ollama, an OpenAI-compatible server or a Cloud AI service selected, its footer says "Asking sends
+   the matching excerpts (not whole conversations) and your question to …" before anything is sent.
+3. **Answer and sources.** With Apple Intelligence the footer says the answer stays on this iPhone. Tap
+   Ask: the answer cites `[1]`, and tapping a source opens that conversation.
+4. **Deletion.** Delete the budget conversation: searching `money` no longer finds it.
+
 ## iPhone Delete all conversations (#220)
 
 Simulator or device.
@@ -641,7 +661,7 @@ Simulator or device.
    and reopen: History is still empty. Files already written by Save to folder are still there.
 4. **Settings.** Save a conversation, then use **Settings → Privacy → Delete all conversations…**:
    same alert and result.
-5. **Apple Watch.** With a watch conversation in History and another watch recording still in
+5. **Apple Watch** (watch builds only, #181). With a watch conversation in History and another watch recording still in
    "Waiting from Apple Watch", delete all: the watch conversation and its audio are gone, and the
    waiting recording stays and becomes a conversation later.
 

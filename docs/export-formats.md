@@ -5,7 +5,7 @@ ListenToMe exports a conversation in five formats, all built on the device by
 
 | Format | Extension | What it holds |
 | --- | --- | --- |
-| Markdown | `.md` | Title, recording date and language, context notes, the transcript with `[mm:ss]` timestamps, speech corrections, summaries, saved selection summaries (iPhone, #234) and attachment names |
+| Markdown | `.md` | Title, recording date and language, context notes, the transcript with `[mm:ss]` timestamps, speech corrections, summaries (Listener/Summary, Quick and Deep — on iPhone a conversation's read-only **Earlier deep analysis**, #235), saved selection summaries (iPhone, #234) and attachment names |
 | Plain text | `.txt` | The same content without Markdown: one `[mm:ss] Speaker: text` line per transcript line |
 | Subtitles (SRT) | `.srt` | Numbered cues with `HH:MM:SS,mmm` times |
 | Subtitles (WebVTT) | `.vtt` | `WEBVTT` cues with `HH:MM:SS.mmm` times and `<v Speaker>` voice tags |
@@ -13,12 +13,12 @@ ListenToMe exports a conversation in five formats, all built on the device by
 
 Where to find them:
 
-- **macOS** — **Export** in the top bar (Markdown, plain text, SRT, WebVTT, JSON, plus Recap and PDF
-  and Copy conversation), and the same **Export** menu in a History conversation's detail sheet.
-  ⌘E exports Markdown.
-- **iPhone** — **More → Export as** for the open conversation, and **Export as** in a History row's
-  context menu (touch and hold). Each item opens the share sheet with a file, so **Save to Files**,
-  Mail or AirDrop receive a real `.srt`/`.json`/… file.
+- **macOS** (on `main`, unreleased since macOS 1.4.4) — **Export** in the top bar (Markdown, plain
+  text, SRT, WebVTT, JSON, plus Recap and PDF and Copy conversation), and the same **Export** menu in a
+  History conversation's detail sheet. ⌘E exports Markdown.
+- **iPhone and iPad** (since iOS 1.15.0 (32)) — **More → Export as** for the open conversation, and
+  **Export as** in a History row's context menu (touch and hold). Each item opens the share sheet
+  with a file, so **Save to Files**, Mail or AirDrop receive a real `.srt`/`.json`/… file.
 
 ## File names
 
@@ -38,7 +38,7 @@ estimated for the others.
 | Source | Timestamps |
 | --- | --- |
 | iPhone recording (live) | Yes — the recognizer's audio range, cumulative across resumed recordings |
-| Apple Watch recording, transcribed on the iPhone | Yes — relative to the watch recording |
+| Apple Watch recording, transcribed on the iPhone (not shipped yet, [#181](https://github.com/tomqwu/ListenToMe/issues/181)) | Yes — relative to the watch recording |
 | macOS WhisperKit | Yes — each Listen (and a language change that restarts capture) continues after the conversation's last timed line |
 | macOS SpeechAnalyzer / SpeechRecognizer (default engines) | No, until [#68](https://github.com/tomqwu/ListenToMe/issues/68) |
 | Imported notes, typed text, records saved before segments were kept | No |
@@ -107,7 +107,7 @@ only for a change that is not purely additive, so a reader should accept unknown
 | `hasTimestamps` | boolean | Whether any segment carries `start`/`end` |
 | `duration` | number or `null` | Recorded seconds: each recording's span from its first timed line's start to its last one's end, added up |
 | `speakers` | array | `{ "name", "source", "id"? }` in order of first speech; `source` is `"you"` (microphone) or `"others"` (system audio); `id` is the speaker-identification ID when there is one |
-| `summary`, `quickSummary`, `deepSummary`, `notes` | string | Empty when absent |
+| `summary`, `quickSummary`, `deepSummary`, `notes` | string | Empty when absent. `deepSummary` is the Mac's Deep pane; iPhone has no Deep tab since 1.15.0 (#235), so there it is only an **Earlier deep analysis** saved before then |
 | `segments` | array | `{ "speaker", "source", "text", "start"?, "end"?, "speakerID"?, "originalText"?, "language"? }`; times in seconds (millisecond precision) on the conversation's timeline, present only for timed lines; `originalText` is the recognizer's wording before an opt-in speech correction; `language` is the BCP-47 tag the line was recognized in, when the app kept it (iPhone) |
 | `transcript` | string | Only for a conversation saved before segments were kept |
 | `attachments` | array | `{ "name" }` — names only, never the files |

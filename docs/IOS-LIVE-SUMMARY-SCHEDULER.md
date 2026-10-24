@@ -7,10 +7,10 @@ incremental input and acknowledges source revisions. `MobileQuickReader` runs on
 validates the result and applies the scheduler's resulting actions. `MobileSession` connects these
 components to the recorder, settings, persistence and manual review controls.
 
-The scheduler itself does not need an AI model. Semantic evaluation uses the selected Ollama Cloud Quick model. Apple Intelligence remains available
-for manual summaries; Auto pauses when Apple is selected because the local evaluator did not meet
-this release's reliability checks. It does not silently change provider or send local
-content to Cloud as a fallback.
+The scheduler itself does not need an AI model. Semantic evaluation uses the selected Quick model on Ollama (Cloud or your own server), a cloud AI
+service or an OpenAI-compatible server. Apple Intelligence remains available for manual summaries;
+Auto pauses when Apple is selected because the on-device model cannot be held to the evaluator's JSON
+contract. It does not silently change provider or send local content to another service as a fallback.
 
 ## Events and actions
 
@@ -23,7 +23,7 @@ content to Cloud as a fallback.
 | New speech during an evaluation | Retain it for the next batch; never run a second Quick evaluation concurrently. |
 | Valid `keep` result | Commit running context and acknowledged sources, preserving the visible summary exactly. |
 | Valid `publish` result | Commit context and replace the complete Quick bullet list. |
-| Summary/Deep recommendation | Enqueue the selected full model for medium/high confidence when Auto is on; low confidence stays manual. |
+| Summary recommendation | Enqueue the selected Summary model for medium/high confidence when Auto is on; low confidence stays manual. A Deep recommendation from the shared evaluator is ignored: iOS has no Deep (#235). |
 | Manual review completes | Clear the suggestion only if its source snapshot is still current; tell the next evaluator that review was performed. |
 | Error, timeout, or malformed result | Keep output/context/source acknowledgements unchanged and retry unread data with backoff. |
 | Auto off, Stop, background, or conversation change | Cancel the pending wake/evaluation; reject late results. |
@@ -34,8 +34,8 @@ Batch timing starts with the first pending source event; later events do not res
 The normal cadence is five seconds between request starts. A slow request is followed by a catch-up
 read once finished if its cooldown has elapsed. Speech correction gets up to two extra seconds relative
 to the batch deadline, without indefinitely postponing Quick under continuous speech. There is no
-repeating idle polling loop and no Cloud call for unchanged input. Summary and Deep requests have their
-own shared serial automatic coordinator and can run alongside the single automatic Quick evaluator. Manual Generate takes priority; see [full-review scheduling](SHARED-LIVE-SUMMARY.md#automatic-full-reviews-ios-1100).
+repeating idle polling loop and no Cloud call for unchanged input. Summary reviews have their
+own shared serial automatic coordinator (`AutomaticReviewCoordinator` with `modes: [.summary]`) and can run alongside the single automatic Quick evaluator. Manual Generate takes priority; see [full-review scheduling](SHARED-LIVE-SUMMARY.md#automatic-full-reviews-ios-1100).
 
 Failures retry at 10, 20, 40, then at most 60 seconds with the default cadence. Each evaluator call has
 a 30-second deadline and a 16 KiB streamed-response cap. New speech remains queued while retrying.
@@ -72,7 +72,8 @@ invalidate its result; later new pieces are kept pending without invalidating al
 The original transcript and published summaries are saved as before. Working evaluation context and
 recommendations are session-local; reopening a conversation rebuilds them from original finalized text
 on the next recording. Stop preserves the last published Quick Summary and cancels pending reads;
-manual Refresh can summarize the complete stopped transcript. Original audio is not retained.
+manual Refresh can summarize the complete stopped transcript. Original audio is not retained unless
+**Save audio recordings** is on (off by default, #55).
 
 ## Verification
 
@@ -81,7 +82,7 @@ manual Refresh can summarize the complete stopped transcript. Original audio is 
 - Context/contract tests cover keep acknowledgements, bounded long Chinese input, source replacement,
   deletion, stale snapshots and malformed output.
 - App-hosted loop tests drive Start/Stop with synthetic recorder events, including Auto off, corrections,
-  slow providers, deadlines, duplicate prevention, separate Deep work and saved-output recovery.
+  slow providers, deadlines, duplicate prevention, separate full-review work and saved-output recovery.
 - Native UI tests drive Start → accumulate → decision → repetition → revision → automatic full review →
   manual Generate → Stop → History, plus cancellation, partial speech and visible failure/retry. The fixture
   substitutes only speech and model transport and is excluded from device Release builds.
