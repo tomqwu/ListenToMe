@@ -13,10 +13,10 @@ extension MobileSession {
         name == microphoneLabel || name == MobileFileTranscriber.speakerName
     }
 
-    /// Apple Watch lines were never heard by this iPhone's microphone. Watch conversations ship
-    /// without speaker labels (#181 Task 14, deferred to #192), so a pass never relabels them.
+    /// Device labels identify legacy lines; namespaced speaker IDs preserve Watch provenance after
+    /// identification and rename, so live microphone/language passes never touch Watch lines.
     static func isWatchLine(_ segment: TranscriptSegment) -> Bool {
-        segment.speakerName == MobileFileTranscriber.speakerName
+        segment.speakerName == MobileFileTranscriber.speakerName || segment.speakerID?.hasPrefix("watch:") == true
     }
 
     struct SpeakerEntry: Identifiable, Equatable {

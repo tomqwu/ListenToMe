@@ -75,6 +75,7 @@ final class MobileSession {
     let vocabulary = SessionVocabulary()   // domain vocabularies and My terms (issue #222)
     var acceptsSpeechCorrection = false
     private let makeRecorder: () -> any MobileRecording
+    @ObservationIgnored var watchSpeakerContexts: [UUID: WatchSpeakerLabels] = [:]
     var watchLanguageSamples: ([WatchAudioChunk]) async throws -> [Float] = WatchLanguageAudio.samples
     let makeWatchTranscriber: () -> any WatchAudioTranscribing
     /// The foreground drain of Apple Watch recordings (issue #181); never runs while recording.

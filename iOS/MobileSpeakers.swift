@@ -204,6 +204,23 @@ final class MobileSpeakers {
         }
     }
 
+    /// File imports share the loaded model and serial queue, never the live run or its audio.
+    /// A Watch import cannot initiate model preparation or download.
+    func analyzeFileWindow(_ samples: [Float]) async throws -> DiarizedWindow? {
+        guard enabled, modelsReady, !isUnavailable else { return nil }
+        let previous = passChain
+        let work = Task { @MainActor () throws -> DiarizedWindow? in
+            await previous?.value
+            try Task.checkCancellation()
+            guard self.enabled, self.modelsReady, !self.isUnavailable, let diarizer = self.diarizer else { return nil }
+            let result = try await diarizer.diarize(samples: samples)
+            try Task.checkCancellation()
+            return self.enabled ? result : nil
+        }
+        passChain = Task { _ = try? await work.value }
+        return try await withTaskCancellationHandler { try await work.value } onCancel: { work.cancel() }
+    }
+
     /// Ends the run and releases its audio. A pass still in flight is discarded.
     func endRun() {
         run?.buffer.reset()

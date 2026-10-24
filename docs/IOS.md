@@ -1199,6 +1199,23 @@ asks for a wait of 20 seconds or less, and a 400
 `invalid_request_error` shows Anthropic's message with the key masked. Model lists come from
 `GET /v1/models`.
 
+### Watch file speaker identification (#192; not distributed)
+
+When Identify speakers is on and the models are already loaded, Watch imports analyze all available
+file audio in 60-second windows with 10-second overlap before transcribing that batch. Decoding runs
+off the UI actor with bounded PCM memory. Gaps flush the overlap so missing time is never collapsed;
+timestamps use the same ChunkFeed mapping as transcription. The file passes share the serialized
+model queue but never begin/end a live microphone run. Imports never prepare or download speaker models.
+If identification is off, unavailable, fails, or cannot confidently cover a line, it keeps Apple Watch.
+
+Speaker IDs and names are saved with text before raw chunks are deleted, including for a conversation
+that is not open. Watch provenance survives rename; live microphone and language-replay passes cannot
+relabel these lines. Named speakers reach search/export and prompts; unidentified Watch speech still
+maps to You. No additional AI summary is requested for a label change. Voiceprints remain in memory for
+one recording import only, including later arriving batches while the app stays open. After cancellation
+or relaunch, new voices start numbering after existing labels rather than guessing an identity. No audio-retention or backup behavior changes. Distribution still waits
+on #181; simulator tests with a fake diarizer do not establish real-device speaker accuracy.
+
 ## Build and run
 
 Use Xcode 26+, XcodeGen and an installed iOS 26 simulator runtime:

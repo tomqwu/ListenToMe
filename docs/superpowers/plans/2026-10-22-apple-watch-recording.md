@@ -820,6 +820,15 @@ Rules the tests pin:
 
 ### Task 14: Speaker labels on watch conversations (after #180) — deferred to #192
 
+**October 24 implementation update:** #192 replaces the old proposed live-buffer reuse below with
+`WatchSpeakerAudio` bounded file windows and `WatchSpeakerLabels`, sharing only the loaded-model serial
+queue. Labels are applied before transcription saves/deletes chunks. Live run state stays untouched;
+non-open records are handled by the existing archive path. Voiceprints are memory-only per recording and survive later batches in the same app run.
+Tests cover long files, gaps, overlapping chunk timestamps, cancellation, opt-out/model readiness,
+identity reconciliation, provenance and archive persistence. Hardware accuracy remains unverified.
+The original deferred steps below are historical, not the implementation recipe.
+
+
 > **Deferred (maintainer decision, 2026-10-23; spec decision 11).** The first watch release ships
 > watch conversations **without** speaker labels; the follow-up is
 > [#192](https://github.com/tomqwu/ListenToMe/issues/192), which lists why #180 cannot label a

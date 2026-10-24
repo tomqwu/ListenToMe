@@ -13,6 +13,8 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased since 1.16.0 (33))
 
+- Apple Watch imports can identify speakers on-device when Identify speakers is enabled and its models are already loaded. Every audio window is processed, including long recordings and gaps, without disturbing live iPhone speaker analysis. Labels are saved with the transcript before audio is deleted. Watch remains excluded from distribution pending device acceptance. (#192)
+
 - iPhone Duo lets you give more space to Transcript or Quick Summary and remembers your choice. A compact transcript actions menu keeps the landscape toolbar readable.
 
 - Apple Watch imports detect the spoken language with an already-downloaded on-device model in Automatic mode and keep that language across retries and later transfers. Unavailable or uncertain detection falls back to the device language without downloading a model. Watch remains excluded from distribution pending device acceptance. (#200)
