@@ -62,6 +62,7 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 | Ollama endpoint | The local daemon (`localhost:11434`) or Ollama Cloud | Ollama Cloud, or a server you run and address yourself (`.local`/loopback for plain `http`); a saved cloud key is never sent to another host |
 | Cloud AI services (#214) | AI mode **Cloud AI service**; service, key (**Check key** lists its models) and links in Settings; each pane's model picked in the status rail | Summary provider → **Cloud AI** → a service; key, models per role and **Test this model** in Settings (`MobileCloudAISettings`). Speech correction stays on Ollama |
 | OpenAI-compatible server (#52) | AI mode **OpenAI-compatible**; server URL and optional key in Settings; Auto runs and a model that breaks the Quick JSON contract shows the reader's failure in the Quick pane | Summary provider **OpenAI-compatible**; **Test this model** on the Quick role checks the JSON contract and a failed check pauses Auto with the reason (`MobileOpenAISettings.automaticQuickReason`). Speech correction stays on Ollama |
+| Selection summary (#234) | — (macOS later) | **Select** in the transcript, or touch and hold a line → **Summarize from here** / **Select from here**; a sheet with Copy, Share and Add to notes. Core: `TranscriptSelection`, `SelectionSummaryPrompt`, `SelectionSummary` (saved on `SessionRecord.selectionSummaries`, last 5) |
 | Answer panes | Summary (Listener), Quick and Deep, each with its own model | Summary and Quick only (#235). Deep is macOS-only: Auto ignores the evaluator's Deep recommendation, and a Deep analysis an earlier version saved stays read-only under the Summary as **Earlier deep analysis**, in share/export text and in Save to folder notes; nothing new is written to it |
 | Per-role models | A picker per pane in the status rail, over local and cloud models, auto-picked local-first (`ModelRanking`); on the OpenAI-compatible and cloud AI routes, the server's or vendor's model list, never auto-picked and none verified local | Settings → Model role for Summary / Quick (`MobileRoleModelView`), from Ollama, the cloud AI service's model list or the OpenAI-compatible server's `/v1/models`. A Deep model an earlier version saved (`mobileOllamaDeepModel`, `mobileOpenAIDeepModel`, `mobileCloudAI.<vendor>.deepModel`) is left in place and never read |
 | Local-model enforcement | `ModelPrivacy` / `localOnly` verifies downloaded weights before every request | Not applicable — on-device here means Apple Intelligence; iOS reaches Ollama only over the network |
@@ -579,6 +580,30 @@ iOS has no Deep pane (#235); Deep stays on macOS. A conversation an earlier vers
 analysis keeps it: opening it from History shows it read-only under the Summary as a collapsed
 **Earlier deep analysis**, and it stays in shared/exported text and Save to folder notes. Nothing new is
 ever written to it.
+
+### Summarize selection (#234)
+
+The transcript has a **Select** mode: the checklist button on the Live transcript (or **Select** in the
+expanded transcript) opens the full-height transcript with a circle beside each finished line. Tap
+lines to toggle them, or drag down the circles to select a range. Touch and hold any finished line
+for **Summarize from here** (that line through the latest), **Select from here** or **Copy**. A live
+line that may still change is never selectable, so this works while recording and on a conversation
+reopened from History.
+
+**Summarize selection** sends only the selected lines — each with its time and speaker label, as
+`[1:02] Alex: …` — to the provider chosen for Summary (`SelectionSummaryPrompt`, fenced as data with
+`PromptData.notice`; notes, the Summary and unselected lines are not sent). Apple Intelligence runs on
+the device; a cloud AI service, Ollama or an OpenAI-compatible server is used only when it is already the
+chosen summary provider, and the bar and the sheet say "Sends the selected lines to <destination>" first.
+When no provider can run (no key, no server, Apple Intelligence unavailable, a response already
+generating), the button is disabled and the reason is shown instead. A selection longer than the
+provider's window (Apple Intelligence's 8,000 characters, or 60,000) keeps its first and latest lines
+(`OnDemandGrounding.select`) and the sheet says "The selection was too long for this model…"; an answer
+cut off at the output limit says so too. The sheet offers **Copy**, **Share** and **Add to notes**
+(appended as "Selection summary (1:02–1:15 · 2 lines):"). The last five are saved with the conversation
+(`SessionRecord.selectionSummaries`; older records decode unchanged) and listed under the Summary. They
+are not yet part of exports or Save to folder notes; Add to notes puts one there. Domain vocabulary
+(#222) is accepted by the prompt builder and will be passed once that feature lands.
 
 ## Save to folder (#53)
 

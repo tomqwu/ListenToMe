@@ -8,6 +8,13 @@ struct MobileTranscriptReader: View {
     var restoreOriginal: ((UUID) -> Void)?
     /// Shows who said each line once speaker identification has labeled any of them (issue #180).
     var showsSpeakers = false
+    /// Select mode (issue #234): tapping a final line toggles it; dragging its circle extends a range.
+    var selection: Binding<TranscriptSelection>?
+    var selecting = false
+    /// Touch-and-hold actions on a final line; nil leaves the line's text selectable instead.
+    var lineActions: MobileTranscriptLineActions?
+    @State private var rowFrames: [UUID: CGRect] = [:]
+    private static let space = "transcriptRows"
     @State private var reviewing: TranscriptSegment?
     @State private var following = true
     @State private var readingSnapshot: [TranscriptSegment]?
@@ -23,27 +30,10 @@ struct MobileTranscriptReader: View {
                         Text("Start listening and your words will appear here.").foregroundStyle(.secondary)
                     }
                     ForEach(displayedSegments) { segment in
-                        VStack(alignment: .leading, spacing: 5) {
-                            if !segment.isFinal {
-                                Text("LIVE").font(.caption2.weight(.semibold)).foregroundStyle(MobileStyle.transcript)
-                            }
-                            if showsSpeakers {
-                                Text(segment.speakerLabel).font(.caption.weight(.semibold))
-                                    .foregroundStyle(segment.speakerID == nil ? MobileStyle.muted : MobileStyle.accent)
-                                    .accessibilityIdentifier("transcript-speaker-\(segment.id)")
-                            }
-                            Text(segment.text).font(.body).lineSpacing(4).textSelection(.enabled)
-                                .foregroundStyle(segment.isFinal ? .primary : .secondary)
-                                .accessibilityIdentifier("transcript-text-\(segment.id)")
-                            if segment.originalText != nil, restoreOriginal != nil {
-                                Button("AI corrected", systemImage: "sparkles") { reviewing = segment }
-                                    .font(.caption).buttonStyle(.borderless)
-                                    .accessibilityIdentifier("review-correction-\(segment.id)")
-                            }
-                        }.frame(maxWidth: .infinity, alignment: .leading)
+                        row(segment)
                     }
                     Color.clear.frame(height: 1).id(endID)
-                }.padding(16)
+                }.padding(16).coordinateSpace(.named(Self.space))
             }
             .accessibilityIdentifier(scrollIdentifier)
             .defaultScrollAnchor(.bottom, for: .initialOffset)
@@ -109,5 +99,72 @@ struct MobileTranscriptReader: View {
 
     private func nearEnd(_ geometry: ScrollGeometry) -> Bool {
         geometry.contentSize.height - geometry.visibleRect.maxY <= 32
+    }
+
+    // MARK: Rows and Select mode (issue #234)
+
+    @ViewBuilder
+    private func row(_ segment: TranscriptSegment) -> some View {
+        if selecting, segment.isFinal, let selection {
+            let chosen = selection.wrappedValue.ids.contains(segment.id)
+            Button { selection.wrappedValue.toggle(segment.id, in: segments) } label: {
+                HStack(alignment: .top, spacing: 10) {
+                    Image(systemName: chosen ? "checkmark.circle.fill" : "circle")
+                        .font(.title3).foregroundStyle(chosen ? MobileStyle.accent : MobileStyle.muted)
+                        .frame(width: 28, height: 28).contentShape(Rectangle())
+                        // Dragging down (or up) the circles extends the range from where it started.
+                        .highPriorityGesture(DragGesture(minimumDistance: 8, coordinateSpace: .named(Self.space))
+                            .onChanged { value in
+                                if let target = rowFrames.first(where: { $0.value.contains(value.location) })?.key {
+                                    selection.wrappedValue.extend(from: segment.id, to: target, in: segments)
+                                }
+                            })
+                        .accessibilityHidden(true)
+                    lineContent(segment, selectable: false)
+                }.frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .onGeometryChange(for: CGRect.self) { $0.frame(in: .named(Self.space)) } action: { rowFrames[segment.id] = $0 }
+            .accessibilityAddTraits(chosen ? .isSelected : [])
+            .accessibilityIdentifier("select-line-\(segment.id)")
+        } else {
+            lineContent(segment, selectable: lineActions == nil)
+                .contextMenu {
+                    if let lineActions, segment.isFinal, !selecting {
+                        Button("Summarize from here", systemImage: "text.badge.star") { lineActions.summarizeFrom(segment.id) }
+                        Button("Select from here", systemImage: "checklist") { lineActions.selectFrom(segment.id) }
+                        Button("Copy", systemImage: "doc.on.doc") { UIPasteboard.general.string = segment.text }
+                    }
+                }
+        }
+    }
+
+    private func lineContent(_ segment: TranscriptSegment, selectable: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            if !segment.isFinal {
+                Text("LIVE").font(.caption2.weight(.semibold)).foregroundStyle(MobileStyle.transcript)
+            }
+            if showsSpeakers {
+                Text(segment.speakerLabel).font(.caption.weight(.semibold))
+                    .foregroundStyle(segment.speakerID == nil ? MobileStyle.muted : MobileStyle.accent)
+                    .accessibilityIdentifier("transcript-speaker-\(segment.id)")
+            }
+            lineText(segment, selectable: selectable)
+            if segment.originalText != nil, restoreOriginal != nil, !selecting {
+                Button("AI corrected", systemImage: "sparkles") { reviewing = segment }
+                    .font(.caption).buttonStyle(.borderless)
+                    .accessibilityIdentifier("review-correction-\(segment.id)")
+            }
+        }.frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Text selection would take the long press the line's menu needs, so a line with that menu
+    /// offers Copy there instead.
+    @ViewBuilder
+    private func lineText(_ segment: TranscriptSegment, selectable: Bool) -> some View {
+        let text = Text(segment.text).font(.body).lineSpacing(4)
+            .foregroundStyle(segment.isFinal ? .primary : .secondary)
+            .accessibilityIdentifier("transcript-text-\(segment.id)")
+        if selectable { text.textSelection(.enabled) } else { text }
     }
 }

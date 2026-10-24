@@ -14,6 +14,8 @@ struct MobileWorkspaceView<Header: View>: View {
     @State private var showQuickStatus = false
     @State private var showTranscript = false
     @State private var showSpeechSettings = false
+    @State private var transcriptSelection = TranscriptSelection()   // Select mode (#234)
+    @State private var selectingTranscript = false
     @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(\.verticalSizeClass) private var verticalSize
     private var stacked: Bool { typeSize.isAccessibilitySize || verticalSize == .compact }
@@ -51,13 +53,21 @@ struct MobileWorkspaceView<Header: View>: View {
         }
         .sheet(isPresented: $showTranscript) {
             NavigationStack {
-                MobileTranscriptReader(segments: session.allSegments, scrollIdentifier: "expandedTranscriptScroll",
-                                       restoreOriginal: session.restoreSpeech, showsSpeakers: session.hasSpeakerLabels)
+                MobileSelectableTranscript(session: session, selection: $transcriptSelection,
+                                           selecting: $selectingTranscript, scrollIdentifier: "expandedTranscriptScroll")
                     .id(session.id)
                     .navigationTitle("Transcript").navigationBarTitleDisplayMode(.inline)
-                    .toolbar { Button("Done") { showTranscript = false } }
+                    .toolbar {
+                        if !selectingTranscript && session.segments.contains(where: \.isFinal) {
+                            Button("Select", systemImage: "checklist") { selectingTranscript = true }
+                                .accessibilityIdentifier("selectExpandedTranscriptLines")
+                        }
+                        Button("Done") { showTranscript = false }
+                    }
             }
         }
+        .onChange(of: showTranscript) { _, shown in if !shown { selectingTranscript = false; transcriptSelection.clear() } }
+        .onChange(of: session.id) { selectingTranscript = false; transcriptSelection.clear() }
         .sheet(isPresented: $showSpeechSettings) {
             NavigationStack {
                 Form {
@@ -86,6 +96,12 @@ struct MobileWorkspaceView<Header: View>: View {
                 if session.state == .recording {
                     Circle().fill(.red).frame(width: 6, height: 6).accessibilityLabel("Recording")
                 }
+                if session.segments.contains(where: \.isFinal) {
+                    // Selecting happens in the full-height transcript, where the selection bar fits (#234).
+                    Button("Select lines", systemImage: "checklist") { selectingTranscript = true; showTranscript = true }
+                        .labelStyle(.iconOnly).buttonStyle(.plain).foregroundStyle(MobileStyle.muted)
+                        .frame(minWidth: 44, minHeight: 44).accessibilityIdentifier("selectTranscriptLines")
+                }
                 Button("Expand transcript", systemImage: "arrow.up.left.and.arrow.down.right") { showTranscript = true }
                     .labelStyle(.iconOnly).buttonStyle(.plain)
                     .foregroundStyle(MobileStyle.muted)
@@ -113,8 +129,9 @@ struct MobileWorkspaceView<Header: View>: View {
                     .lineLimit(4).truncationMode(.head).padding(16)
                     .accessibilityIdentifier("latestTranscriptPreview")
             } else {
-                MobileTranscriptReader(segments: session.allSegments, restoreOriginal: session.restoreSpeech,
-                                       showsSpeakers: session.hasSpeakerLabels).id(session.id)
+                MobileSelectableTranscript(session: session, selection: $transcriptSelection,
+                                           selecting: $selectingTranscript, selectable: false,
+                                           startSelecting: { showTranscript = true }).id(session.id)
             }
         }.frame(maxWidth: .infinity, maxHeight: stacked ? nil : .infinity, alignment: .topLeading)
             .modifier(MobileCard())
@@ -208,6 +225,9 @@ struct MobileWorkspaceView<Header: View>: View {
                     }
                     if mode == .summary, !session.earlierDeepAnalysis.isEmpty {
                         MobileEarlierDeepAnalysis(text: session.earlierDeepAnalysis)
+                    }
+                    if mode == .summary, !session.selectionSummaries.isEmpty {
+                        MobileSavedSelectionSummaries(summaries: session.selectionSummaries)
                     }
                     if let reason = session.summaryBlockReason(for: mode), !session.isSummarizing {
                         Text(reason).font(.caption).foregroundStyle(MobileStyle.muted)

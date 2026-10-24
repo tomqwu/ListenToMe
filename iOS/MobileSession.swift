@@ -36,6 +36,8 @@ final class MobileSession {
     var quickSummary = ""
     /// Deep analysis an older version saved here; kept read-only, never generated on iOS (#235).
     var earlierDeepAnalysis = ""
+    var selectionSummaries: [SelectionSummary] = []   // the last few summaries of selected lines (#234)
+    let selectionRun = MobileSelectionRun()
     var attachments: [SessionAttachment] = []
     var generatingMode: MobileSummaryMode?
     var autoQuick = UserDefaults.standard.bool(forKey: "autoQuickSummary") {
@@ -345,7 +347,7 @@ final class MobileSession {
         manualQuickError = nil; quickReader.reset(); answerNotices = MobileAnswerNotices()
         handleSummaryEvent(.conversationChanged)
         id = UUID().uuidString; date = Date()
-        title = "New conversation"; notes = ""; summary = ""; quickSummary = ""; earlierDeepAnalysis = ""
+        title = "New conversation"; notes = ""; summary = ""; quickSummary = ""; earlierDeepAnalysis = ""; selectionSummaries = []
         segments = []; partial = nil; message = nil; attachments = []; sourceImportID = nil
         save(announce: false)
     }
@@ -366,6 +368,7 @@ final class MobileSession {
         id = record.id; date = record.date; title = record.title
         notes = record.notes ?? ""; summary = record.summary
         quickSummary = record.quickSuggestion ?? ""; earlierDeepAnalysis = record.deepAnswer ?? ""
+        selectionSummaries = record.selectionSummaries ?? []
         attachments = record.attachments ?? []; sourceImportID = record.sourceImportID
         segments = record.segments ?? []; partial = nil; message = nil
     }
@@ -590,12 +593,13 @@ extension MobileSession {
     func save(announce: Bool = true) -> Bool {
         pendingSave?.cancel()
         pendingSave = nil
-        let record = SessionRecord(id: id, title: title, date: date,
+        var record = SessionRecord(id: id, title: title, date: date,
                                    transcript: Self.transcriptText(for: allSegments),
                                    summary: summary, segments: allSegments, notes: notes,
                                    quickSuggestion: quickSummary, deepAnswer: earlierDeepAnalysis,
                                    isComplete: state == .idle && allSegments.allSatisfy(\.isFinal),
                                    attachments: attachments, sourceImportID: sourceImportID)
+        record.selectionSummaries = selectionSummaries.isEmpty ? nil : selectionSummaries
         do {
             let data = try JSONEncoder().encode(record)
             guard data != lastSavedData else {

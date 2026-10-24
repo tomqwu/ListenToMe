@@ -18,6 +18,8 @@ When the transcription language is Automatic (the default; Settings → Transcri
 
 ## Optional Ollama (Cloud or your own server)
 
+Summarize selection (select transcript lines, or touch and hold a line → Summarize from here) sends only the selected lines, with their times and speaker names, to the summary provider you chose — on the device with Apple Intelligence, or to the Ollama, OpenAI-compatible or cloud AI destination described below, which the app names before you send. The last five selection summaries are stored with the conversation like its other summaries and are deleted with it.
+
 Summaries go to Ollama only when you select Ollama as the provider. Requests are sent to the server shown in Settings: Ollama Cloud (`https://ollama.com`) unless you entered the address of an Ollama server you run on your own network, in which case the conversation text stays on that network and a saved Ollama Cloud key is never sent there. When Ollama is selected and you request an AI summary, the app sends conversation text, notes and relevant context over the network. Auto summaries send new conversation context as you speak while Auto is enabled. Optional AI speech correction sends completed phrases and nearby transcript text. Imported text included in notes or context can be part of those requests. Raw microphone audio is not sent. Your API key is stored in the device Keychain and is sent only to Ollama Cloud to authenticate requests.
 
 ## Optional OpenAI-compatible server

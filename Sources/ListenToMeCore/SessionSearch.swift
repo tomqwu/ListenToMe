@@ -24,6 +24,10 @@ public struct SessionRecord: Sendable, Equatable, Identifiable, Codable {
         self.quickSuggestion = quickSuggestion; self.deepAnswer = deepAnswer; self.isComplete = isComplete
         self.attachments = attachments; self.sourceImportID = sourceImportID
     }
+
+    /// The last few summaries of selected lines (issue #234), newest first; nil in records saved
+    /// before them or with none. Set after creating the record so older initializers stay unchanged.
+    public var selectionSummaries: [SelectionSummary]?
 }
 
 public enum SessionSearch {

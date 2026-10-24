@@ -26,6 +26,10 @@ To use a cloud AI service — OpenAI, Anthropic Claude, Google Gemini, DeepSeek,
 
 Auto reacts to new speech. Quick provides short key points; Summary updates when the conversation merits a fuller review. Both can also be generated manually. The iPhone and iPad app has two answers, Quick Summary (on the Live tab) and Summary (on the Summary tab); Deep is on the Mac app only. A conversation saved with a Deep analysis by an earlier version still has it: open it from History and expand Earlier deep analysis under the Summary. It is read-only and is kept in shared text, exports and Save to folder notes. When Auto appears inactive, open Status details and check the provider and model status. A brief pause to combine incoming speech is normal; unchanged input does not require a new summary.
 
+## Summarize part of a conversation
+
+To summarize just some lines, tap the checklist button on the Live transcript (or Select in the expanded transcript), tap the lines you want or drag down their circles, then tap Summarize selection. You can also touch and hold a line and choose Summarize from here (that line to the latest) or Select from here. Lines still being transcribed can't be selected. The summary appears in a sheet with Copy, Share and Add to notes, and the last five are kept with the conversation under its Summary. Only the selected lines are sent, with their times and speaker names, to the provider you chose for summaries: Apple Intelligence keeps them on the device, and any other provider is named before you send ("Sends the selected lines to …"). If Summarize selection is greyed out, the line under it says why, for example a missing key. A very long selection is shortened to its first and latest lines, and the sheet says so.
+
 ## Common fixes
 
 - No transcript: check microphone permission, selected language and downloaded speech assets.
