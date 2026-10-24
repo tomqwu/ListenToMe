@@ -126,7 +126,7 @@ final class MobileDeleteAllTests: XCTestCase {
 
     func testBothDeletesRunTheSameOwners() {
         let names = makeSession().conversationDataOwners.map(\.name)
-        XCTAssertEqual(names, ["attachments", "Apple Watch audio", "shared imports", "Save to folder queue",
+        XCTAssertEqual(names, ["conversation vocabularies", "attachments", "Apple Watch audio", "shared imports", "Save to folder queue",
                                "search index", "exported files", "saved audio"])
     }
 

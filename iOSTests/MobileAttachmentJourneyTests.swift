@@ -8,7 +8,10 @@ final class MobileAttachmentJourneyTests: XCTestCase {
         app.buttons["New"].tap()
         app.buttons["Notes"].tap()
         // PhotosPicker is exposed as a pop-up button by newer SDKs.
-        app.descendants(matching: .any)["Photo library"].firstMatch.tap()
+        let library = app.descendants(matching: .any)["Photo library"].firstMatch
+        for _ in 0..<6 where !library.isHittable { app.swipeUp() }
+        XCTAssertTrue(library.waitForExistence(timeout: 5), app.debugDescription)
+        library.tap()
         let photo = app.images["PXGGridLayout-Info"].firstMatch
         XCTAssertTrue(photo.waitForExistence(timeout: 30), "Requires the simulator's sample photos")
         photo.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
