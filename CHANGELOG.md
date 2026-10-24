@@ -13,6 +13,8 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased since 1.15.0 (32))
 
+- Release workflow now requires fresh screenshots across supported device categories, with source provenance and App Store Connect screenshot verification before submission. (#255)
+
 - A two-pane Live workspace on wide iPhone layouts: Transcript and Quick Summary sit side by side with independent scrolling and compact controls. Rotation preserves the selected page and conversation; portrait and accessibility text keep a readable stacked layout. (#253)
 
 - Simplified Chinese vocabularies for all seven presets: the transcription language selects the terms for recognition, correction and prompts; suggestions understand continuous Mandarin text, use a Chinese on-device embedding when available and fall back to term matching. My terms remains in any language; other transcription languages keep the English presets. (#238)

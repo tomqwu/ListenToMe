@@ -55,6 +55,11 @@ that describe the CLI as blocked or require another publication approval.
 2. Complete relevant local behavior/UI/API checks, CI, signing and distribution-package verification.
    A connected phone is not required for an authorized beta upload. Record physical-device acceptance
    separately; simulator checks do not establish production readiness.
+   Capture and inspect fresh, source-matched screenshots for all supported iPhone/iPad categories
+   and applicable store-size slots using the runbook's screenshot checklist. Preserve originals and
+   provenance in release evidence. Add Watch only when shipped. Before an authorized App Store
+   submission, upload and read back the current screenshot sets; a beta upload alone does not update
+   store images. Report pending listing uploads explicitly.
 3. Run `make ios-testflight IOS_ARCHIVE=<validated.xcarchive> IOS_RELEASE_SOURCE=<app-source-commit>`.
    Use the commit that produced the app, not a later workflow/docs-only commit. Require the actual
    accepted-upload receipt, then tag that app source and verify the remote tag. Publish the GitHub

@@ -1352,3 +1352,9 @@ adaptive two-pane layout, not a certification for any particular new device mode
 
 ## Pending iOS updates
 - Settings → Privacy names every optional off-device provider (Ollama, Cloud AI services and OpenAI-compatible servers), and explains that requests send text and included context only through the provider you choose (#247). This copy is not yet published.
+
+## Release screenshot coverage
+
+UI testing and release trains capture fresh iPhone/iPad screenshots with source and device provenance.
+Before App Store submission, verify every applicable localized screenshot set in App Store Connect;
+see the [release screenshot checklist](IOS-RELEASING.md#screenshot-capture-and-app-store-handoff-255).
