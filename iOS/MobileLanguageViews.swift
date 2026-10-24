@@ -24,7 +24,8 @@ struct MobileLanguageSettings: View {
                      "downloads once from huggingface.co. Audio is never uploaded.")
                     .font(.caption).accessibilityIdentifier("automaticLanguageExplanation")
             }
-            Text("Speech models may download on first use. Audio is transcribed on your device and is not saved.")
+            Text("Speech models may download on first use. Audio is transcribed on your device and is never sent. "
+                 + "Audio is kept only when Save audio recordings is on.")
         }
     }
 

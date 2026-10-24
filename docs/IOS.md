@@ -1358,3 +1358,5 @@ adaptive two-pane layout, not a certification for any particular new device mode
 UI testing and release trains capture fresh iPhone/iPad screenshots with source and device provenance.
 Before App Store submission, verify every applicable localized screenshot set in App Store Connect;
 see the [release screenshot checklist](IOS-RELEASING.md#screenshot-capture-and-app-store-handoff-255).
+
+Settings Transcription and Speakers descriptions explicitly explain opt-in saved audio; audio is never sent for transcription or speaker identification (#251).

@@ -14,3 +14,5 @@ Two-pane iPhone layout (#253): rotate a conversation to landscape. Scroll Transc
 independently; check Start/Stop, Notes, model selection and Expand transcript. Rotate while viewing
 Summary or the expanded transcript and verify the page and conversation are preserved. At
 accessibility text sizes the layout should stay stacked and scrollable.
+
+Check Transcription and Speakers Settings: audio is on-device, never sent, and retained only when Save audio recordings is on.
