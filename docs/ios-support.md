@@ -69,3 +69,7 @@ an already-downloaded language model on your iPhone. It never downloads that mod
 If the model is unavailable, speech is too short or detection is uncertain, it uses the device language.
 The recording keeps that choice through retries and later transfers. Choose a fixed transcription
 language before importing if you need to override Automatic. Audio stays on the iPhone for detection.
+
+In landscape Duo, the pane-width button beside Live/Summary gives more room to the transcript or
+Quick Summary, or restores equal widths. The choice is remembered. Use Transcript actions (the
+ellipsis menu) for line selection, speech correction settings, and saved recording playback.

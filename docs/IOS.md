@@ -1403,3 +1403,13 @@ receive a context sized to the complete assembled prompt, with answer space rese
 ceiling. If its conservative UTF-8 budget cannot fit the reported model capacity, the pane shows
 an error asking for a shorter selection or a larger-context model. No answer request is sent in
 that case. Cloud models retain server-managed windows. This applies to summaries and correction.
+
+### Duo pane widths
+
+In the wide iPhone Live workspace, tap **Duo pane widths** beside the Live/Summary control to choose
+Equal widths, More transcript, or More Quick Summary. The device remembers the choice; each pane
+keeps at least 280 points when space permits. Portrait and accessibility layouts still stack their
+content. **Transcript actions** holds Select lines, Speech correction settings, and Play recording
+when available. Expand transcript stays directly accessible. The width preference is device-local,
+shared by conversations, and does not change saved text or audio. It is applied only to two-pane
+Live layouts; Summary, narrow windows, and accessibility text keep their existing reading layouts.

@@ -26,6 +26,7 @@ final class MobileReleaseNotesUITests: XCTestCase {
     }
 
     func testLargeTextKeepsContinueReachableAndHistoryScrollable() {
+        XCUIDevice.shared.orientation = .portrait
         let app = XCUIApplication()
         app.useModelFixtures()
         app.launchArguments = ["-lastAcknowledgedReleaseBuild", "older",
