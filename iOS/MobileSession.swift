@@ -597,7 +597,10 @@ extension MobileSession {
                                    isComplete: state == .idle && allSegments.allSatisfy(\.isFinal),
                                    attachments: attachments, sourceImportID: sourceImportID)
         do {
-            let data = try JSONEncoder().encode(record)
+            // Sorted keys: JSONEncoder's key order can differ between encodes, which made every save of
+            // an unchanged record look new and rewrite the archive (MobileSaveCostTests).
+            let encoder = JSONEncoder(); encoder.outputFormatting = .sortedKeys
+            let data = try encoder.encode(record)
             guard data != lastSavedData else {
                 if announce { message = "Conversation saved on this device." }
                 return true
