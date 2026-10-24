@@ -19,8 +19,10 @@ extension MobileSession {
     func indexSaved(_ record: SessionRecord) { historySearch.update(record) }
 
     /// A deleted conversation's vectors are removed with it. The single removal path every deletion
-    /// (one conversation, or all of them) goes through.
-    func forgetSearchIndex(ids: [String]) {
+    /// goes through: one conversation, several, or `everything` (Delete all, which wipes the index).
+    /// Shaped to plug into a deletion-owner list as one entry (#220).
+    func forgetSearchIndex(ids: [String], everything: Bool = false) {
+        if everything { historySearch.forgetAll(); return }
         for id in ids { historySearch.forget(id: id) }
     }
 

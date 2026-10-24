@@ -87,6 +87,17 @@ final class MobileHistorySearchTests: XCTestCase {
                        + "question to http://my-mac.local:11434.")
     }
 
+    func testDeletingEverythingWipesTheIndex() async throws {
+        let (session, root) = makeSession()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let index = session.historySearch.index
+        try await index.sync(session.history)
+        session.forgetSearchIndex(ids: [], everything: true)
+        await session.historySearch.waitForMaintenance()
+        let ids = try await index.indexedIDs()
+        XCTAssertTrue(ids.isEmpty)
+    }
+
     func testDeletingAConversationRemovesItsVectors() async throws {
         let (session, root) = makeSession()
         defer { try? FileManager.default.removeItem(at: root) }
