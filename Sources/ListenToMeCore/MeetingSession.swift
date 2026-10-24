@@ -96,11 +96,15 @@ public final class MeetingSession {
     /// Set when the last prompt had to drop transcript or reference material to fit the role
     /// provider's context window (Apple Intelligence). nil for providers with no window.
     public private(set) var promptTruncationNotice: String?
-    /// Which part of the conversation the last Quick/Deep answer read, when it could not read all of
-    /// it ("Using the last ~5 min of the conversation.", issue #114). See `roleNotices(_:)`.
-    var groundingNotices: [CopilotRole: String] = [:]
-    /// Panes whose current text stopped at the model's output limit (issue #215).
-    public internal(set) var outputLimitRoles: Set<CopilotRole> = []
+    /// What each pane's notices say and the exact text they describe (issues #114, #215). A notice is
+    /// shown only while the pane still shows that text, so every path that replaces or clears it — an
+    /// automatic recap, a failed request restoring the previous answer, a rename — drops it too.
+    var roleNoticeRecords: [CopilotRole: RoleNoticeRecord] = [:]
+    /// The grounding line of the request a pane is streaming now, shown while it streams.
+    var pendingGrounding: [CopilotRole: String] = [:]
+    /// True when the last completed Listener summary stopped at the output limit, so it is never
+    /// treated as covering the speech it read (issue #114).
+    var listenerSummaryCutOff = false
 
     /// The last failure for each pane, published separately from the pane's text so a transient
     /// provider error is shown as a banner *beside* the answer the user was reading instead of
@@ -216,7 +220,6 @@ public final class MeetingSession {
         // The failure belonged to the previous model; it says nothing about this one (#137).
         roleErrors[role] = nil
         roleActivity[role] = nil
-        groundingNotices[role] = nil
         if role == .quick { quickReader.clearError() }
         handleLiveEvent(.providerChanged)
     }
@@ -239,9 +242,9 @@ public final class MeetingSession {
         store.reset()
         notes = ""; referenceContext = nil
         listenerSummary = ""; quickSuggestion = ""; quickRecap = ""; deepAnswer = ""
-        roleErrors = [:]; roleActivity = [:]; groundingNotices = [:]; outputLimitRoles = []
+        roleErrors = [:]; roleActivity = [:]; roleNoticeRecords = [:]; pendingGrounding = [:]
         manualQuickAnswer.dismiss()
-        lastCompletedListenerSummary = ""
+        lastCompletedListenerSummary = ""; listenerSummaryCutOff = false
         summarizedSegmentIDs = []
         pendingSummaryIDs = [:]
         summarizedProvisionalText = nil
@@ -627,9 +630,14 @@ extension MeetingSession {
         // finalized lines get everything it does not actually use.
         let provisional = store.provisionalContext(maxChars: allocation.transcript / 2)
         let provisionalCost = provisional.reduce(0) { $0 + TranscriptSegment.promptCharacterCost($1) }
+        // The Listener summary stands in only for the leading lines its ledger says it read, and
+        // only when it is whole: one cut off at the output limit or clamped to fit covers nothing
+        // for sure, so it is sent but never claimed to cover anything.
+        let covered = listenerSummaryCutOff || droppedSummary
+            ? 0 : OnDemandGrounding.coveredPrefix(of: store.utterances, ids: summarizedSegmentIDs)
         let selection = OnDemandGrounding.select(store.utterances, budget: allocation.transcript - provisionalCost,
-                                                 hasSummary: clampedSummary != nil)
-        groundingNotices[role] = selection.notice(summaryName: "the Listener summary")
+                                                 hasSummary: clampedSummary != nil, coveredCount: covered)
+        pendingGrounding[role] = selection.notice(summaryName: "the Listener summary")
         // A context-window clamp is reported in the footer as well; the pane's grounding line says
         // which speech was kept, whatever the reason.
         promptTruncationNotice = limit == nil ? nil : PromptBudget.truncationNotice(
@@ -689,7 +697,7 @@ extension MeetingSession {
         // Replay raw transcript when labels change so old names cannot survive only in generated prose.
         summarizedSegmentIDs = []
         summarizedProvisionalText = nil
-        lastCompletedListenerSummary = ""
+        lastCompletedListenerSummary = ""; listenerSummaryCutOff = false
         listenerSummary = ""
         startListenerRefresh()
     }
@@ -807,16 +815,18 @@ extension MeetingSession {
         responseTasks[role]?.cancel()
         let generation = (responseGenerations[role] ?? 0) + 1
         responseGenerations[role] = generation
+        pendingGrounding[role] = nil
         let request = makeRequest()
+        let grounding = pendingGrounding[role]
         let task = Task { [weak self] in
             guard let self else { return }
-            await self.run(role, request, generation: generation)
+            await self.run(role, request, generation: generation, grounding: grounding)
         }
         responseTasks[role] = task
         return task
     }
 
-    private func run(_ role: CopilotRole, _ request: LLMRequest, generation: Int) async {
+    private func run(_ role: CopilotRole, _ request: LLMRequest, generation: Int, grounding: String?) async {
         guard generation == responseGenerations[role], !Task.isCancelled else { return }
         let reviewedPieces = livePieces
         // A new manual request replaces the answer on screen; it only protects the pane again once
@@ -829,12 +839,13 @@ extension MeetingSession {
         setOutput(role, "")
         roleErrors[role] = nil
         roleActivity[role] = nil
-        outputLimitRoles.remove(role)
         streamingRoles.insert(role)
+        var cutOff = false
         defer {
             if generation == responseGenerations[role] {
                 streamingRoles.remove(role)
                 roleActivity[role] = nil
+                pendingGrounding[role] = nil
                 if role == .quick { handleLiveEvent(.manualQuickFinished) }
             }
         }
@@ -853,8 +864,13 @@ extension MeetingSession {
                     appendOutput(role, delta)
                 case .outputLimitReached:
                     // The text so far stays: it is a partial answer, and the pane says so (#215).
-                    outputLimitRoles.insert(role)
+                    cutOff = true
                 }
+            }
+            // Only a completed answer gets this request's notices; a failure keeps the previous
+            // answer's record, which then describes the text restored below (or nothing).
+            if generation == responseGenerations[role], !Task.isCancelled {
+                roleNoticeRecords[role] = RoleNoticeRecord(text: output(role), grounding: grounding, cutOff: cutOff)
             }
             // Quick has no automatic review mode; a completed manual answer instead holds the pane
             // against the automatic recap for a bounded time.
@@ -877,6 +893,7 @@ extension MeetingSession {
             // later refresh clearing the live value can't strip context from a proactive prompt.
             if role == .listener, generation == responseGenerations[role], !Task.isCancelled {
                 lastCompletedListenerSummary = listenerSummary
+                listenerSummaryCutOff = cutOff
                 summarizedSegmentIDs.formUnion(pendingSummaryIDs[generation] ?? [])
                 pendingSummaryIDs = [:]
                 summarizedProvisionalText = pendingProvisionalText[generation]
@@ -911,7 +928,7 @@ extension MeetingSession {
         quickSuggestion = output
     }
 
-    private func output(_ role: CopilotRole) -> String {
+    func output(_ role: CopilotRole) -> String {
         switch role {
         case .listener: return listenerSummary
         case .quick:    return quickSuggestion

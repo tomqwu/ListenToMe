@@ -9,9 +9,14 @@ import Foundation
 /// - the transcript budget scales with the provider: as much as fits for a provider with a declared
 ///   window (Apple Intelligence, about 4k tokens), and a larger fixed budget for Ollama and cloud
 ///   models, which declare none;
-/// - a conversation that still does not fit keeps the *latest summary* plus the most recent speech
-///   when a summary exists, and otherwise a free *head-plus-tail excerpt*: the meeting's opening
-///   (agenda, introductions, the first decisions) and the most recent speech. No extra model call;
+/// - a conversation that still does not fit leans on the latest summary for exactly the lines that
+///   summary is known to cover, and sends the speech it does not cover as a free *head-plus-tail
+///   excerpt*: the start of the uncovered speech (with no summary, the meeting's opening) and the most
+///   recent speech. A summary whose coverage is unknown — cut off at the output limit, shortened to
+///   fit, or restored from disk — is still included, but is never claimed to cover anything. No extra
+///   model call is made;
+/// - the selected lines never cost more than the budget: the opening goes first, then the latest
+///   line is shortened to its most recent words;
 /// - the excerpt is explained to the model in an app-written note outside the transcript fence, and
 ///   to the user in a one-line notice such as "Using the last ~5 min of the conversation."
 ///
@@ -25,10 +30,11 @@ public enum OnDemandGrounding {
     public static let deepTranscriptCharacters = 32_000
     /// Actions that cover the whole conversation (a recap, every action item so far).
     public static let wholeConversationCharacters = 100_000
-    /// The opening gets at most this fraction of an excerpt; the most recent speech gets the rest.
+    /// The start of the uncovered speech gets at most this fraction of an excerpt; the most recent
+    /// speech gets the rest.
     public static let openingShareDivisor = 4
     /// Prompt characters held back for `Selection.promptNote` and its separator; every note fits.
-    public static let promptNoteReserve = 360
+    public static let promptNoteReserve = 640
     /// Speech rate for lines without usable timestamps: the issue's 4,000 characters ≈ 4-5 minutes.
     static let charactersPerMinute = 850
 
@@ -43,98 +49,182 @@ public enum OnDemandGrounding {
         return kind == .deep ? deepTranscriptCharacters : quickTranscriptCharacters
     }
 
+    /// How many leading lines a summary covers: the longest prefix of `segments` whose IDs are in
+    /// `ids`. A summary covers what its request read; speech after it, or lines that were replaced
+    /// (re-transcribed, so with new IDs), are not covered.
+    public static func coveredPrefix(of segments: [TranscriptSegment], ids: Set<UUID>) -> Int {
+        segments.prefix { ids.contains($0.id) }.count
+    }
+
     public enum Shape: Sendable, Equatable {
         /// Every line fits.
         case whole
-        /// Only the most recent speech (no summary, and no room for the opening as well).
+        /// Only the most recent speech.
         case recent
-        /// The meeting's opening plus the most recent speech.
+        /// The start of the uncovered speech (with no summary, the opening) plus the most recent speech.
         case openingAndRecent
-        /// The latest summary covers the earlier part; the transcript is the most recent speech.
+        /// The summary covers the leading lines, and everything said since is sent.
         case summaryAndRecent
     }
 
     public struct Selection: Sendable, Equatable {
-        /// The finalized lines to send, in order: the opening (if any) then the most recent speech.
+        /// The lines to send, in order: the head (if any) then the most recent speech.
         public let segments: [TranscriptSegment]
         public let shape: Shape
-        /// How many of `segments` are the opening.
+        /// How many of `segments` are the head: the opening, or the speech right after the summary.
         public let openingCount: Int
+        /// Leading lines the summary stands in for, which are not sent; 0 when no summary covers any.
+        public let coveredCount: Int
+        /// A summary is sent whose coverage is unknown, so it is never claimed to cover anything.
+        public let unverifiedSummary: Bool
+        /// The latest line was shortened to its most recent words to fit.
+        public let latestShortened: Bool
+        public let coveredMinutes: Int
         public let openingMinutes: Int
         public let recentMinutes: Int
         public let omittedMinutes: Int
 
-        /// One line for the pane, or nil when the whole conversation was used. `summaryName` is what
-        /// the platform calls the summary it reused ("the Listener summary", "your Summary").
+        /// One line for the pane, or nil when every line was sent whole. `summaryName` is what the
+        /// platform calls its summary ("the Listener summary", "your Summary").
         public func notice(summaryName: String) -> String? {
+            guard shape != .whole else { return nil }
+            let covered = coveredCount > 0
+            var text = "Using "
+            if covered { text += "\(summaryName) of the first ~\(coveredMinutes) min" }
             switch shape {
             case .whole: return nil
-            case .recent: return "Using the last ~\(recentMinutes) min of the conversation."
-            case .summaryAndRecent: return "Using \(summaryName) and the last ~\(recentMinutes) min of the conversation."
+            case .summaryAndRecent:
+                text += " and everything said since (~\(recentMinutes) min)"
             case .openingAndRecent:
-                return "Using the opening ~\(openingMinutes) min and the last ~\(recentMinutes) min of the "
-                    + "conversation (~\(omittedMinutes) min in between left out)."
+                text += covered ? ", the ~\(openingMinutes) min after it and the last ~\(recentMinutes) min"
+                    : "the opening ~\(openingMinutes) min and the last ~\(recentMinutes) min"
+                text += " of the conversation"
+            case .recent:
+                text += (covered ? " and " : "") + "the last ~\(recentMinutes) min of the conversation"
             }
+            if omittedMinutes > 0 { text += " (~\(omittedMinutes) min in between left out)" }
+            text += "."
+            if latestShortened { text += " The latest line was shortened." }
+            if unverifiedSummary { text += " An earlier summary is included too." }
+            return text
         }
 
-        /// The app's own explanation for the model, placed outside the transcript fence; nil when the
-        /// whole conversation was used. Never longer than `promptNoteReserve` minus its separator.
+        /// The app's own explanation for the model, placed outside the transcript fence; nil when
+        /// every line was sent whole. Never longer than `promptNoteReserve` minus its separator.
         public var promptNote: String? {
-            switch shape {
-            case .whole: return nil
-            case .recent:
-                return "The transcript holds only the most recent ~\(recentMinutes) min of the meeting; "
-                    + "earlier speech was left out to fit, so do not assume nothing was said before it."
-            case .summaryAndRecent:
-                return "The transcript holds only the most recent ~\(recentMinutes) min of the meeting; "
-                    + "the meeting summary covers what came before it."
-            case .openingAndRecent:
-                return "The transcript is an excerpt: its first \(openingCount) lines are the opening of the "
-                    + "meeting and the rest is the most recent speech. About \(omittedMinutes) min of speech in "
-                    + "between was left out to fit, so do not assume nothing was said there."
+            guard shape != .whole else { return nil }
+            var parts: [String] = []
+            if coveredCount > 0 {
+                parts.append("The meeting summary covers the first \(coveredCount) lines (~\(coveredMinutes) min) of "
+                    + "the meeting; they are not repeated in the transcript.")
             }
+            switch shape {
+            case .whole: break
+            case .summaryAndRecent: parts.append("The transcript holds everything said after that.")
+            case .openingAndRecent:
+                parts.append("The transcript's first \(openingCount) lines are "
+                    + (coveredCount > 0 ? "the speech right after the summary" : "the opening of the meeting")
+                    + " and the rest is the most recent speech.")
+            case .recent: parts.append("The transcript holds only the most recent ~\(recentMinutes) min.")
+            }
+            if omittedMinutes > 0 {
+                parts.append("About \(omittedMinutes) min of speech before the most recent part was left out to fit, "
+                    + "so do not assume nothing was said there.")
+            }
+            if latestShortened { parts.append("Its latest line was shortened to its most recent words.") }
+            if unverifiedSummary {
+                parts.append("The summary is from earlier in the meeting and may not cover the speech left out.")
+            }
+            return parts.joined(separator: " ")
         }
     }
 
     /// Chooses the lines an on-demand answer reads, within `budget` prompt characters (charged with
-    /// `TranscriptSegment.promptCharacterCost`). The most recent line is always kept, as
-    /// `ConversationStore.recentContext` always kept it.
-    public static func select(_ segments: [TranscriptSegment], budget: Int, hasSummary: Bool) -> Selection {
+    /// `TranscriptSegment.promptCharacterCost`) — never more.
+    ///
+    /// - Parameters:
+    ///   - hasSummary: a summary is sent with the prompt.
+    ///   - coveredCount: the leading lines that summary is known to cover (see `coveredPrefix`); 0
+    ///     when its coverage is unknown, in which case it is sent but never claimed to cover anything.
+    public static func select(_ segments: [TranscriptSegment], budget: Int, hasSummary: Bool,
+                              coveredCount: Int = 0) -> Selection {
         let cost = TranscriptSegment.promptCharacterCost
+        let budget = max(0, budget)
         let total = segments.reduce(0) { $0 + cost($1) }
         guard total > budget, !segments.isEmpty else {
-            return Selection(segments: segments, shape: .whole, openingCount: 0,
+            return Selection(segments: segments, shape: .whole, openingCount: 0, coveredCount: 0,
+                             unverifiedSummary: false, latestShortened: false, coveredMinutes: 0,
                              openingMinutes: 0, recentMinutes: minutes(segments), omittedMinutes: 0)
         }
-        // The opening is worth keeping only when nothing else describes it.
-        var opening: [TranscriptSegment] = []
-        var openingCost = 0
-        if !hasSummary {
-            let openingBudget = budget / openingShareDivisor
-            for segment in segments.dropLast() {
+        let covered = hasSummary ? min(max(0, coveredCount), segments.count) : 0
+        // The summary stands in for the lines it covers; what it does not cover is the material. When
+        // it covers everything, the latest lines are still sent verbatim.
+        let start = covered < segments.count ? covered : max(0, segments.count - 1)
+        let uncovered = Array(segments[start...])
+        let uncoveredCost = uncovered.reduce(0) { $0 + cost($1) }
+
+        var head: [TranscriptSegment] = []
+        var tail: [TranscriptSegment] = []
+        var shortened = false
+        if uncoveredCost <= budget {
+            tail = uncovered
+        } else {
+            // The head is the start of what no summary covers: the opening with no summary (or one of
+            // unknown coverage), otherwise the speech right after the summary's coverage.
+            var headCost = 0
+            for segment in uncovered.dropLast() {
                 let next = cost(segment)
-                guard openingCost + next <= openingBudget else { break }
-                opening.append(segment); openingCost += next
+                guard headCost + next <= budget / openingShareDivisor else { break }
+                head.append(segment); headCost += next
+            }
+            tail = fill(uncovered.dropFirst(head.count), budget: budget - headCost)
+            if tail.isEmpty {
+                // The latest line does not fit beside the head: the head goes first, then the latest
+                // line keeps its most recent words.
+                head = []
+                tail = fill(uncovered[...], budget: budget)
+                if tail.isEmpty, let latest = uncovered.last, let trimmed = shortenedLine(latest, to: budget) {
+                    tail = [trimmed]; shortened = true
+                }
             }
         }
-        var recent: [TranscriptSegment] = []
-        var recentCost = 0
-        for segment in segments.dropFirst(opening.count).reversed() {
-            let next = cost(segment)
-            if !recent.isEmpty && recentCost + next > budget - openingCost { break }
-            recent.append(segment); recentCost += next
-        }
-        recent.reverse()
-        let omitted = Array(segments[opening.count..<(segments.count - recent.count)])
-        // Only an oversized latest line can leave nothing out; everything is then sent.
-        guard !omitted.isEmpty else {
-            return Selection(segments: segments, shape: .whole, openingCount: 0,
-                             openingMinutes: 0, recentMinutes: minutes(segments), omittedMinutes: 0)
-        }
-        let shape: Shape = hasSummary ? .summaryAndRecent : (opening.isEmpty ? .recent : .openingAndRecent)
-        return Selection(segments: opening + recent, shape: shape, openingCount: opening.count,
-                         openingMinutes: minutes(opening), recentMinutes: minutes(recent),
+        let omitted = Array(uncovered.dropFirst(head.count).dropLast(tail.count))
+        // Every line before `start` is covered by the summary (when it covers everything, `start`
+        // keeps the latest line verbatim), so those are what the notice may claim.
+        let coveredShown = covered > 0 ? start : 0
+        let shape: Shape
+        if !omitted.isEmpty || shortened { shape = head.isEmpty ? .recent : .openingAndRecent }
+        else if coveredShown > 0 { shape = .summaryAndRecent }
+        else { shape = .recent }
+        return Selection(segments: head + tail, shape: shape, openingCount: head.count,
+                         coveredCount: coveredShown, unverifiedSummary: hasSummary && covered == 0,
+                         latestShortened: shortened,
+                         coveredMinutes: minutes(Array(segments[..<coveredShown])),
+                         openingMinutes: minutes(head), recentMinutes: minutes(tail),
                          omittedMinutes: minutes(omitted))
+    }
+
+    /// The most recent whole lines of `lines` that fit `budget`, in order; empty when even the latest
+    /// one does not.
+    private static func fill(_ lines: ArraySlice<TranscriptSegment>, budget: Int) -> [TranscriptSegment] {
+        var kept: [TranscriptSegment] = []
+        var spent = 0
+        for segment in lines.reversed() {
+            let next = TranscriptSegment.promptCharacterCost(segment)
+            guard spent + next <= budget else { break }
+            kept.append(segment); spent += next
+        }
+        return kept.reversed()
+    }
+
+    /// `segment` cut to its most recent words so its prompt cost fits `budget`; nil when not even a
+    /// few words fit beside its label.
+    private static func shortenedLine(_ segment: TranscriptSegment, to budget: Int) -> TranscriptSegment? {
+        let allowance = budget - segment.speakerLabel.count - 3
+        guard allowance >= 8 else { return nil }
+        return TranscriptSegment(id: segment.id, source: segment.source, text: String(segment.text.suffix(allowance)),
+                                 isFinal: segment.isFinal, start: segment.start, end: segment.end,
+                                 speakerID: segment.speakerID, speakerName: segment.speakerName)
     }
 
     /// Whole minutes the lines span, at least 1: from their timestamps when those describe a span,
@@ -160,9 +250,12 @@ extension OnDemandGrounding {
         public let selection: Selection
         /// True when the user's notes had to be cut to leave room for speech.
         public internal(set) var notesShortened = false
-        /// The panel's line: which speech was read, and whether the notes were shortened.
+        /// True when only the end of the summary — its decisions and actions — fit.
+        public internal(set) var summaryShortened = false
+        /// The panel's line: which speech was read, and what had to be shortened.
         public func notice(summaryName: String) -> String? {
             let parts = [selection.notice(summaryName: summaryName),
+                         summaryShortened ? "Only the end of the summary fit." : nil,
                          notesShortened ? "Your notes were shortened to fit." : nil].compactMap { $0 }
             return parts.isEmpty ? nil : parts.joined(separator: " ")
         }
@@ -186,32 +279,61 @@ extension OnDemandGrounding {
         return max(PromptBudget.minimumTranscript, window - PromptBudget.answerReserve - system.count)
     }
 
-    /// Fits notes and transcript into `budget` characters of user message. Everything is sent when it
-    /// fits. Otherwise notes may take a quarter and the reused summary another quarter, and the lines
-    /// get the rest.
-    public static func excerpt(notes: String, segments: [TranscriptSegment], summary: String, budget: Int) -> Excerpt {
-        let fence = PromptData.block("transcript", "").count
+    /// Fits notes, transcript and summary into `budget` characters of user message — never more.
+    /// Everything is sent when it fits. Otherwise notes keep what the speech leaves (at least a
+    /// quarter), the summary keeps its end — its decisions and actions — within a third, and the lines
+    /// get the rest. `summaryCoveredIDs` are the lines the summary was generated from.
+    public static func excerpt(notes: String, segments: [TranscriptSegment], summary: String,
+                               summaryCoveredIDs: Set<UUID> = [], budget: Int) -> Excerpt {
         let notesLine = QuickSummaryContext.attributedNotes(notes)
-        func render(_ selection: Selection, notes: String, summary: String?) -> Excerpt {
-            let lines = selection.segments.map(QuickSummaryContext.attributed)
-            let transcript = ([notes] + lines).filter { !$0.isEmpty }.joined(separator: "\n")
-            return Excerpt(transcript: transcript, summary: summary, selection: selection)
-        }
         let whole = render(select(segments, budget: .max, hasSummary: false), notes: notesLine, summary: nil)
         if whole.userMessage.count <= budget { return whole }
-        let keptNotes = String(notesLine.prefix(max(0, budget / 4)))
+        // Fencing escapes "</" one character at a time, which no line cost counts; a rare overrun is
+        // taken back from the lines and measured again.
+        var slack = 0
+        var excerpt = fitted(notesLine: notesLine, segments: segments, summary: summary,
+                             summaryCoveredIDs: summaryCoveredIDs, budget: budget, slack: slack)
+        while excerpt.userMessage.count > budget, slack < budget {
+            slack += excerpt.userMessage.count - budget
+            excerpt = fitted(notesLine: notesLine, segments: segments, summary: summary,
+                             summaryCoveredIDs: summaryCoveredIDs, budget: budget, slack: slack)
+        }
+        return excerpt
+    }
+
+    private static func fitted(notesLine: String, segments: [TranscriptSegment], summary: String,
+                               summaryCoveredIDs: Set<UUID>, budget: Int, slack: Int) -> Excerpt {
+        let fence = PromptData.block("transcript", "").count
+        let linesCost = segments.reduce(0) { $0 + TranscriptSegment.promptCharacterCost($1) }
+        // Notes get whatever the speech does not need, and at least a quarter.
+        let notesRoom = max(budget / 4, budget - fence - linesCost - 1)
+        let keptNotes = String(notesLine.prefix(max(0, notesRoom)))
         let notesCost = keptNotes.isEmpty ? 0 : keptNotes.count + 1
-        let lineBudget = budget - fence - notesCost
+        let lineBudget = budget - fence - notesCost - slack
+        if linesCost <= lineBudget {
+            var excerpt = render(select(segments, budget: .max, hasSummary: false), notes: keptNotes, summary: nil)
+            excerpt.notesShortened = keptNotes.count < notesLine.count
+            return excerpt
+        }
         let trimmedSummary = summary.trimmingCharacters(in: .whitespacesAndNewlines)
         let summaryOverhead = 2 + Excerpt.summaryHeader.count + PromptData.block("summary", "").count
-        let keptSummary = trimmedSummary.isEmpty ? nil : String(trimmedSummary.prefix(max(0, budget / 4 - summaryOverhead)))
+        let summaryRoom = max(0, budget / 3 - summaryOverhead)
+        let keptSummary = trimmedSummary.isEmpty || summaryRoom == 0 ? nil : String(trimmedSummary.suffix(summaryRoom))
+        let summaryShortened = keptSummary.map { $0.count < trimmedSummary.count } ?? false
         let summaryCost = keptSummary.map { $0.count + summaryOverhead } ?? 0
+        // A summary that had to be shortened, like one generated from other lines, covers nothing for sure.
+        let covered = keptSummary == nil || summaryShortened ? 0 : coveredPrefix(of: segments, ids: summaryCoveredIDs)
         let selection = select(segments, budget: lineBudget - summaryCost - promptNoteReserve,
-                               hasSummary: keptSummary?.isEmpty == false)
-        // Every line fitting once the notes were shortened needs no summary to stand in for speech.
-        let reused = selection.shape == .whole || keptSummary?.isEmpty != false ? nil : keptSummary
-        var excerpt = render(selection, notes: keptNotes, summary: reused)
+                               hasSummary: keptSummary != nil, coveredCount: covered)
+        var excerpt = render(selection, notes: keptNotes, summary: selection.shape == .whole ? nil : keptSummary)
         excerpt.notesShortened = keptNotes.count < notesLine.count
+        excerpt.summaryShortened = excerpt.summary != nil && summaryShortened
         return excerpt
+    }
+
+    private static func render(_ selection: Selection, notes: String, summary: String?) -> Excerpt {
+        let lines = selection.segments.map(QuickSummaryContext.attributed)
+        let transcript = ([notes] + lines).filter { !$0.isEmpty }.joined(separator: "\n")
+        return Excerpt(transcript: transcript, summary: summary, selection: selection)
     }
 }

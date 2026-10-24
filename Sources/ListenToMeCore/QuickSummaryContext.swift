@@ -86,6 +86,12 @@ public struct QuickSummaryContext {
         return pieces
     }
 
+    /// The transcript segments a piece snapshot covers. Piece IDs are "<segment UUID>:<chunk>"; notes
+    /// and provisional `live:` pieces have no segment and are skipped.
+    public static func segmentIDs(in pieces: [Piece]) -> Set<UUID> {
+        Set(pieces.compactMap { UUID(uuidString: $0.id.components(separatedBy: ":").first ?? "") })
+    }
+
     public func hasChanges(_ pieces: [Piece]) -> Bool {
         pieces.count != acknowledged.count || pieces.contains { acknowledged[$0.id] != $0.text }
     }

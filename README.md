@@ -121,11 +121,13 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 - On-demand Quick and Deep answers stay grounded in the meeting even with Auto off (the default).
   They read the whole conversation when it fits — up to about 16,000 characters (~18 minutes of
   speech) for Quick and 32,000 for Deep on Ollama and cloud models, and whatever fits Apple
-  Intelligence's small window. A longer meeting is answered from the latest Listener summary plus the
-  most recent speech when there is a summary, and otherwise from the meeting's opening plus the most
-  recent speech, at no extra model call. The pane says which, for example "Using the last ~5 min of
-  the conversation." Listener context is shared into Quick and Deep whenever a summary exists
-  (after **Refresh**, or automatically with **Auto**).
+  Intelligence's small window. In a longer meeting the Listener summary stands in for exactly the
+  speech it has read; of the speech it has not read (with no summary, the whole meeting), the start
+  and the most recent part are sent, at no extra model call. A summary that stopped at the output
+  limit is sent but never treated as covering anything. The pane says what was used, for example
+  "Using the Listener summary of the first ~10 min, the ~4 min after it and the last ~12 min of the
+  conversation (~19 min in between left out)." Listener context is shared into Quick and Deep
+  whenever a summary exists (after **Refresh**, or automatically with **Auto**).
 - An answer or summary that stops at the model's output limit keeps its text, and the pane says "The
   answer was cut off at the model's output limit."
 - **Auto** writes Quick, Listener and Deep automatically while you listen, from the same

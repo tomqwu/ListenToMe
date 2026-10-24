@@ -5,18 +5,37 @@ import SwiftUI
 /// What the iOS Summary, Quick and Deep panels say about their current text, beside it: which part
 /// of the conversation a Quick/Deep answer read when it could not read all of it (issue #114), and
 /// whether the answer stopped at the model's output limit (issue #215). Session-only, never saved.
+///
+/// Every record names the exact text it describes and is shown only while the panel still shows that
+/// text, so an automatic recap, a cleared Quick Summary or any other path that replaces the text can
+/// never leave a stale line behind. The same rule keeps the Summary's coverage honest: the lines a
+/// Summary was generated from count as covered only while that Summary is the one on screen.
 struct MobileAnswerNotices: Equatable {
-    private var grounding: [MobileSummaryMode: String] = [:]
-    private var cutOff: Set<MobileSummaryMode> = []
+    private struct Record: Equatable {
+        let text: String
+        let grounding: String?
+        let cutOff: Bool
+        let coveredIDs: Set<UUID>
+    }
+    private var records: [MobileSummaryMode: Record] = [:]
 
-    func lines(for mode: MobileSummaryMode) -> [String] {
-        (grounding[mode].map { [$0] } ?? []) + (cutOff.contains(mode) ? [LLMOutputLimit.notice] : [])
+    func lines(for mode: MobileSummaryMode, showing text: String) -> [String] {
+        guard let record = records[mode], !record.text.isEmpty, record.text == text else { return [] }
+        return [record.grounding, record.cutOff ? LLMOutputLimit.notice : nil].compactMap { $0 }
     }
 
-    /// A new answer replaced `mode`'s text; what was said about the previous one no longer applies.
-    mutating func record(_ mode: MobileSummaryMode, grounding: String?, cutOff: Bool) {
-        self.grounding[mode] = grounding
-        if cutOff { self.cutOff.insert(mode) } else { self.cutOff.remove(mode) }
+    /// A new answer replaced `mode`'s text. `coveredIDs` are the lines it was generated from; a
+    /// Summary cut off at the output limit covers none of them for sure.
+    mutating func record(_ mode: MobileSummaryMode, text: String, grounding: String?, cutOff: Bool,
+                         coveredIDs: Set<UUID> = []) {
+        records[mode] = Record(text: text, grounding: grounding, cutOff: cutOff, coveredIDs: cutOff ? [] : coveredIDs)
+    }
+
+    /// The lines `summary` was generated from, or none when that is not the Summary recorded here
+    /// (one restored from disk, or edited since).
+    func summaryCoverage(showing summary: String) -> Set<UUID> {
+        guard let record = records[.summary], record.text == summary else { return [] }
+        return record.coveredIDs
     }
 }
 
@@ -27,7 +46,7 @@ struct MobileAnswerNoticeLines: View {
     let mode: MobileSummaryMode
 
     var body: some View {
-        ForEach(session.answerNotices.lines(for: mode), id: \.self) { line in
+        ForEach(session.answerNotices.lines(for: mode, showing: session.output(for: mode)), id: \.self) { line in
             Label(line, systemImage: line == LLMOutputLimit.notice ? "scissors" : "info.circle")
                 .font(.caption).foregroundStyle(MobileStyle.muted)
                 .fixedSize(horizontal: false, vertical: true)
@@ -51,6 +70,7 @@ extension MobileSession {
         // Capture a stable input snapshot; recording can continue while this request runs.
         let source = summarySource
         let reviewed = quickPieces
+        let sourceIDs = Set(segments.map(\.id))
         guard !source.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             message = "Add notes or record a transcript before summarizing."
             return
@@ -88,7 +108,8 @@ extension MobileSession {
             case .quick: quickSummary = try Self.quickOutput(quickResponse, prose: proseQuick, cutOff: cutOff)
             case .deep: deepThought = summaryDraft
             }
-            answerNotices.record(mode, grounding: built.grounding, cutOff: cutOff)
+            answerNotices.record(mode, text: output(for: mode), grounding: built.grounding, cutOff: cutOff,
+                                 coveredIDs: mode == .summary ? sourceIDs : [])
             if let reviewMode = AutomaticReviewMode(rawValue: mode.rawValue) {
                 automaticReviews.markManualCompletion(reviewMode, source: source)
             }
@@ -124,12 +145,16 @@ extension MobileSession {
             : (mode == .quick ? MobileQuickContext.instructions : mode.instructions)
         let excerpt = OnDemandGrounding.excerpt(
             notes: notes, segments: allSegments.map(Self.promptSegment), summary: summary,
+            summaryCoveredIDs: answerNotices.summaryCoverage(showing: summary),
             budget: OnDemandGrounding.oneShotBudget(window: cloud ? nil : PromptBudget.appleIntelligenceCharacters,
                                                     system: system))
         let grounding = excerpt.notice(summaryName: "your Summary")
         if mode == .quick && !proseQuick {
+            // The evaluator envelope has no room for an app note of its own, so the excerpt's note
+            // leads the running context the summary is carried in.
+            let context = [excerpt.selection.promptNote, excerpt.summary].compactMap { $0 }.joined(separator: "\n")
             return AnswerRequest(request: try MobileQuickContext.manualRequest(
-                source: excerpt.transcript, runningContext: excerpt.summary ?? ""), grounding: grounding)
+                source: excerpt.transcript, runningContext: context), grounding: grounding)
         }
         return AnswerRequest(request: LLMRequest(system: system,
                                                  messages: [ChatMessage(role: "user", content: excerpt.userMessage)]),

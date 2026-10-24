@@ -75,16 +75,66 @@ final class OnDemandGroundingTests: XCTestCase {
         XCTAssertTrue(selection.promptNote?.contains("first \(selection.openingCount) lines") == true)
     }
 
-    func testWithASummaryOnlyTheLatestSpeechIsSentAndTheSummaryIsNamed() {
+    /// A summary stands in only for the lines it is known to cover. Everything said since fits here,
+    /// so all of it is sent and the notice names the summary's span.
+    func testASummaryCoversOnlyTheLinesItRead() {
         let lines = meeting(minutes: 45)
-        let selection = OnDemandGrounding.select(lines, budget: 4_000, hasSummary: true)
+        let selection = OnDemandGrounding.select(lines, budget: 4_000, hasSummary: true, coveredCount: 30)
         XCTAssertEqual(selection.shape, .summaryAndRecent)
-        XCTAssertEqual(selection.openingCount, 0)
-        XCTAssertEqual(selection.segments.last, lines.last)
-        XCTAssertNotEqual(selection.segments.first, lines.first)
+        XCTAssertEqual(selection.coveredCount, 30)
+        XCTAssertEqual(selection.segments, Array(lines[30...]), "Everything since the summary, nothing before")
         XCTAssertEqual(selection.notice(summaryName: "your Summary"),
-                       "Using your Summary and the last ~\(selection.recentMinutes) min of the conversation.")
-        XCTAssertTrue(selection.promptNote?.contains("summary covers what came before") == true)
+                       "Using your Summary of the first ~\(selection.coveredMinutes) min and everything said since "
+                       + "(~\(selection.recentMinutes) min).")
+        XCTAssertEqual(selection.coveredMinutes, 30)
+        XCTAssertTrue(selection.promptNote?.contains("covers the first 30 lines") == true)
+        XCTAssertFalse(selection.unverifiedSummary)
+    }
+
+    /// The review's case: a summary from minute 10 and a question at minute 50. The prompt must not
+    /// claim the summary covers 10–32; the speech right after the summary and the latest speech are
+    /// sent, and the gap is named.
+    func testAStaleSummaryKeepsTheSpeechAfterItAndNamesTheGap() {
+        let lines = meeting(minutes: 50)
+        let selection = OnDemandGrounding.select(lines, budget: 4_000, hasSummary: true, coveredCount: 10)
+        XCTAssertEqual(selection.shape, .openingAndRecent)
+        XCTAssertEqual(selection.coveredCount, 10)
+        XCTAssertEqual(selection.segments.first, lines[10], "The head starts where the summary stops")
+        XCTAssertEqual(selection.segments.last, lines.last)
+        XCTAssertLessThanOrEqual(cost(selection.segments), 4_000)
+        let notice = selection.notice(summaryName: "the Listener summary") ?? ""
+        XCTAssertTrue(notice.hasPrefix("Using the Listener summary of the first ~10 min, the ~"), notice)
+        XCTAssertTrue(notice.contains("min in between left out"), notice)
+        let note = selection.promptNote ?? ""
+        XCTAssertTrue(note.contains("covers the first 10 lines"), note)
+        XCTAssertTrue(note.contains("the speech right after the summary"), note)
+        XCTAssertTrue(note.contains("was left out to fit"), note)
+    }
+
+    /// A summary of unknown coverage (cut off, shortened, restored) is sent but claims nothing: the
+    /// opening is kept as if there were none, and the notice says a summary is included too.
+    func testASummaryOfUnknownCoverageClaimsNothing() {
+        let lines = meeting(minutes: 45)
+        let selection = OnDemandGrounding.select(lines, budget: 4_000, hasSummary: true, coveredCount: 0)
+        XCTAssertEqual(selection.shape, .openingAndRecent)
+        XCTAssertEqual(selection.coveredCount, 0)
+        XCTAssertTrue(selection.unverifiedSummary)
+        XCTAssertEqual(selection.segments.first, lines.first)
+        XCTAssertTrue(selection.notice(summaryName: "x")?.hasSuffix("An earlier summary is included too.") == true)
+        XCTAssertTrue(selection.promptNote?.contains("may not cover the speech left out") == true)
+        XCTAssertFalse(selection.promptNote?.contains("covers the first") == true)
+    }
+
+    /// A summary that covers every line still leaves the latest one verbatim.
+    func testASummaryCoveringEverythingStillSendsTheLatestLine() {
+        let lines = meeting(minutes: 30)
+        let selection = OnDemandGrounding.select(lines, budget: 1_000, hasSummary: true, coveredCount: 30)
+        XCTAssertEqual(selection.segments, [lines.last!])
+        XCTAssertEqual(selection.shape, .summaryAndRecent)
+        XCTAssertEqual(selection.coveredCount, 29)
+        XCTAssertEqual(OnDemandGrounding.coveredPrefix(of: lines, ids: Set(lines.prefix(5).map(\.id))), 5)
+        XCTAssertEqual(OnDemandGrounding.coveredPrefix(of: lines, ids: Set(lines.dropFirst().map(\.id))), 0,
+                       "Coverage is a prefix: a gap at the start covers nothing")
     }
 
     /// A budget too small for any opening line still answers from the latest speech, and says so.
@@ -93,20 +143,59 @@ final class OnDemandGroundingTests: XCTestCase {
         let selection = OnDemandGrounding.select(lines, budget: 300, hasSummary: false)
         XCTAssertEqual(selection.shape, .recent)
         XCTAssertEqual(selection.segments, [lines.last!])
-        XCTAssertEqual(selection.notice(summaryName: "x"), "Using the last ~1 min of the conversation.")
-        XCTAssertTrue(selection.promptNote?.contains("earlier speech was left out") == true)
-        let none = OnDemandGrounding.select(lines, budget: 0, hasSummary: false)
-        XCTAssertEqual(none.segments, [lines.last!], "The latest line is always kept")
+        XCTAssertEqual(selection.notice(summaryName: "x"),
+                       "Using the last ~1 min of the conversation (~9 min in between left out).")
+        XCTAssertTrue(selection.promptNote?.contains("only the most recent ~1 min") == true)
+        XCTAssertTrue(OnDemandGrounding.select(lines, budget: 0, hasSummary: false).segments.isEmpty,
+                      "Nothing at all fits a zero budget")
     }
 
-    /// An oversized latest line cannot be dropped; when that leaves nothing out, nothing is claimed.
-    func testOnlyAnOversizedLatestLineIsNotAnExcerpt() {
+    /// An oversized latest line no longer overruns the budget (the guarantee the old window kept): the
+    /// opening goes first, then the line keeps its most recent words, and the notice says so.
+    func testAnOversizedLatestLineIsShortenedToFit() {
         let short = TranscriptSegment(source: .you, text: "Hi.", isFinal: true, start: 0, end: 1)
-        let long = TranscriptSegment(source: .others, text: String(repeating: "x", count: 900), isFinal: true,
-                                     start: 1, end: 60)
+        let long = TranscriptSegment(source: .others, text: String(repeating: "x", count: 899) + "END",
+                                     isFinal: true, start: 1, end: 60)
         let selection = OnDemandGrounding.select([short, long], budget: 400, hasSummary: false)
-        XCTAssertEqual(selection.shape, .whole)
-        XCTAssertEqual(selection.segments, [short, long])
+        XCTAssertEqual(selection.shape, .recent)
+        XCTAssertTrue(selection.latestShortened)
+        XCTAssertEqual(selection.segments.count, 1)
+        XCTAssertTrue(selection.segments[0].text.hasSuffix("END"), "The most recent words are kept")
+        XCTAssertLessThanOrEqual(cost(selection.segments), 400)
+        XCTAssertTrue(selection.notice(summaryName: "x")?.contains("The latest line was shortened.") == true)
+        XCTAssertTrue(selection.promptNote?.contains("shortened") == true)
+    }
+
+    /// Property: whatever the lines, labels, summary coverage and budget, the selection never costs
+    /// more than the budget, keeps the lines in order, and its note fits its reserve.
+    func testTheSelectionNeverExceedsItsBudget() {
+        var generator = SeededGenerator(seed: 114)
+        for _ in 0..<400 {
+            let count = Int.random(in: 1...60, using: &generator)
+            var clock = 0.0
+            var lines: [TranscriptSegment] = []
+            for _ in 0..<count {
+                let length = Int.random(in: 1...(Bool.random(using: &generator) ? 300 : 3_000), using: &generator)
+                let duration = Double.random(in: 0...90, using: &generator)
+                var line = TranscriptSegment(source: Bool.random(using: &generator) ? .you : .others,
+                                             text: String(repeating: "w", count: length), isFinal: true,
+                                             start: clock, end: clock + duration)
+                if Bool.random(using: &generator) {
+                    line.speakerName = String(repeating: "N", count: Int.random(in: 1...40, using: &generator))
+                }
+                lines.append(line)
+                clock += duration
+            }
+            let budget = Int.random(in: 0...12_000, using: &generator)
+            let hasSummary = Bool.random(using: &generator)
+            let covered = Int.random(in: 0...count, using: &generator)
+            let selection = OnDemandGrounding.select(lines, budget: budget, hasSummary: hasSummary,
+                                                     coveredCount: covered)
+            XCTAssertLessThanOrEqual(cost(selection.segments), budget, "budget \(budget), \(count) lines")
+            let ids = selection.segments.map(\.id)
+            XCTAssertEqual(ids, lines.map(\.id).filter(ids.contains), "In order")
+            XCTAssertLessThanOrEqual((selection.promptNote?.count ?? 0) + 2, OnDemandGrounding.promptNoteReserve)
+        }
     }
 
     func testMinutesComeFromTimestampsOrFromLength() {
@@ -189,20 +278,81 @@ final class OnDemandGroundingTests: XCTestCase {
         for budget in [1_500, 5_000, 6_000, 10_000] {
             for summary in ["", "We agreed on $40 per seat at minute 8."] {
                 let excerpt = OnDemandGrounding.excerpt(notes: String(repeating: "note ", count: 400),
-                                                        segments: lines, summary: summary, budget: budget)
-                XCTAssertLessThanOrEqual(excerpt.userMessage.count, budget, "budget \(budget), summary \(!summary.isEmpty)")
+                                                        segments: lines, summary: summary,
+                                                        summaryCoveredIDs: Set(lines.prefix(20).map(\.id)),
+                                                        budget: budget)
+                XCTAssertLessThanOrEqual(excerpt.userMessage.count, budget, "budget \(budget)")
                 XCTAssertNotEqual(excerpt.selection.shape, .whole)
-                XCTAssertTrue(excerpt.transcript.hasSuffix(QuickSummaryContext.attributed(lines.last!)))
                 XCTAssertTrue(excerpt.transcript.hasPrefix("Notes: note"))
                 if summary.isEmpty {
                     XCTAssertNil(excerpt.summary)
+                    XCTAssertEqual(excerpt.selection.coveredCount, 0)
                 } else {
-                    XCTAssertEqual(excerpt.selection.shape, .summaryAndRecent)
+                    XCTAssertEqual(excerpt.selection.coveredCount, 20)
                     XCTAssertTrue(excerpt.userMessage.contains(PromptData.block("summary", summary)))
                 }
                 if let note = excerpt.selection.promptNote { XCTAssertTrue(excerpt.userMessage.contains(note)) }
             }
         }
+    }
+
+    /// Only the end of a long summary fits: its decisions and actions are kept, the panel says so, and
+    /// a shortened summary is never claimed to cover anything.
+    func testALongSummaryKeepsItsEndAndSaysSo() {
+        let lines = meeting(minutes: 60)
+        let summary = String(repeating: "Background. ", count: 400) + "Decision: $40 per seat. Action: Sarah sends terms."
+        let excerpt = OnDemandGrounding.excerpt(notes: "", segments: lines, summary: summary,
+                                                summaryCoveredIDs: Set(lines.prefix(30).map(\.id)), budget: 5_000)
+        XCTAssertTrue(excerpt.summaryShortened)
+        XCTAssertTrue(excerpt.summary?.hasSuffix("Action: Sarah sends terms.") == true)
+        XCTAssertEqual(excerpt.selection.coveredCount, 0)
+        XCTAssertTrue(excerpt.notice(summaryName: "your Summary")?.contains("Only the end of the summary fit.") == true)
+        XCTAssertLessThanOrEqual(excerpt.userMessage.count, 5_000)
+    }
+
+    /// Notes over a conversation with no transcript keep all the room there is, not a quarter of it.
+    func testNotesUseTheRoomTheSpeechLeaves() {
+        let notes = String(repeating: "n", count: 3_000)
+        let excerpt = OnDemandGrounding.excerpt(notes: notes, segments: [], summary: "", budget: 2_500)
+        XCTAssertTrue(excerpt.notesShortened)
+        XCTAssertGreaterThan(excerpt.transcript.count, 2_000, "More than a quarter of the budget")
+        XCTAssertLessThanOrEqual(excerpt.userMessage.count, 2_500)
+    }
+
+    /// Property: the whole user message never exceeds the budget, including fences that escape "</".
+    func testTheExcerptNeverExceedsItsBudget() {
+        var generator = SeededGenerator(seed: 215)
+        for _ in 0..<200 {
+            let count = Int.random(in: 0...50, using: &generator)
+            var lines: [TranscriptSegment] = []
+            for index in 0..<count {
+                let length = Int.random(in: 1...2_500, using: &generator)
+                let text = Bool.random(using: &generator) ? String(repeating: "</t", count: length / 3 + 1)
+                    : String(repeating: "w", count: length)
+                lines.append(TranscriptSegment(source: .others, text: text, isFinal: true,
+                                               start: Double(index * 30), end: Double(index * 30 + 29)))
+            }
+            let budget = Int.random(in: 1_000...12_000, using: &generator)
+            let notes = String(repeating: "n", count: Int.random(in: 0...5_000, using: &generator))
+            let summary = String(repeating: "s", count: Int.random(in: 0...4_000, using: &generator))
+            let covered = Set(lines.prefix(Int.random(in: 0...count, using: &generator)).map(\.id))
+            let excerpt = OnDemandGrounding.excerpt(notes: notes, segments: lines, summary: summary,
+                                                    summaryCoveredIDs: covered, budget: budget)
+            XCTAssertLessThanOrEqual(excerpt.userMessage.count, budget, "budget \(budget), \(count) lines")
+        }
+    }
+}
+
+/// A small deterministic generator, so the property tests are reproducible.
+struct SeededGenerator: RandomNumberGenerator {
+    private var state: UInt64
+    init(seed: UInt64) { state = seed &+ 0x9E37_79B9_7F4A_7C15 }
+    mutating func next() -> UInt64 {
+        state &+= 0x9E37_79B9_7F4A_7C15
+        var value = state
+        value = (value ^ (value >> 30)) &* 0xBF58_476D_1CE4_E5B9
+        value = (value ^ (value >> 27)) &* 0x94D0_49BB_1331_11EB
+        return value ^ (value >> 31)
     }
 }
 
@@ -258,7 +408,7 @@ final class OnDemandGroundingSessionTests: XCTestCase {
         let user = provider.lastUser ?? ""
         XCTAssertTrue(user.contains("Pricing decision"), "The opening is kept when there is no summary")
         XCTAssertTrue(user.contains("what did we agree on pricing earlier"))
-        XCTAssertTrue(user.contains("The transcript is an excerpt"))
+        XCTAssertTrue(user.contains("are the opening of the meeting"))
         XCTAssertTrue(session.roleNotices(.quick).first?.hasPrefix("Using the opening ~") == true,
                       session.roleNotices(.quick).description)
         // Deep reads twice as much, so the same meeting fits it whole.
@@ -267,15 +417,51 @@ final class OnDemandGroundingSessionTests: XCTestCase {
         XCTAssertTrue(session.roleNotices(.quick).first?.hasPrefix("Using the opening") == true)
     }
 
-    func testTheListenerSummaryIsReusedWhenItExists() async {
+    /// The Listener summary stands in for exactly the lines its ledger says it read.
+    func testTheListenerSummaryCoversWhatItsLedgerRead() async {
         let (session, store, provider) = makeSession(limit: nil)
         fortyFiveMinuteMeeting(store, lineLength: 120)
         session.lastCompletedListenerSummary = "Earlier: pricing agreed at $40 per seat."
+        session.summarizedSegmentIDs = Set(store.utterances.prefix(30).map(\.id))
         await session.respondQuick(.answerQuestion)
         let user = provider.lastUser ?? ""
         XCTAssertTrue(user.contains("Earlier: pricing agreed at $40 per seat."))
-        XCTAssertTrue(user.contains("the meeting summary covers what came before"))
-        XCTAssertTrue(session.roleNotices(.quick).first?.hasPrefix("Using the Listener summary and the last ~") == true)
+        XCTAssertTrue(user.contains("covers the first 30 lines"), user)
+        XCTAssertFalse(user.contains("Pricing decision"), "Covered speech is not repeated")
+        XCTAssertTrue(session.roleNotices(.quick).first?.hasPrefix("Using the Listener summary of the first ~30 min") == true,
+                      session.roleNotices(.quick).description)
+    }
+
+    /// The review's case: Refresh at minute 10, Quick at minute 45. The summary is not claimed to
+    /// cover minutes 10–45; the speech right after it is sent, and the gap is named.
+    func testAStaleListenerSummaryIsNotClaimedToCoverLaterSpeech() async {
+        let (session, store, provider) = makeSession(limit: nil)
+        fortyFiveMinuteMeeting(store, lineLength: 120)
+        session.lastCompletedListenerSummary = "First ten minutes: introductions."
+        session.summarizedSegmentIDs = Set(store.utterances.prefix(10).map(\.id))
+        await session.respondQuick(.answerQuestion)
+        let user = provider.lastUser ?? ""
+        XCTAssertTrue(user.contains("covers the first 10 lines"), user)
+        XCTAssertTrue(user.contains("Minute 10: "), "The speech right after the summary is kept")
+        XCTAssertTrue(user.contains("was left out to fit"))
+        let notice = session.roleNotices(.quick).first ?? ""
+        XCTAssertTrue(notice.hasPrefix("Using the Listener summary of the first ~10 min, the ~"), notice)
+        XCTAssertTrue(notice.contains("in between left out"), notice)
+    }
+
+    /// A Listener summary that stopped at the output limit is sent but never claimed as coverage.
+    func testACutOffListenerSummaryIsNotTreatedAsCoverage() async {
+        let (session, store, provider) = makeSession(limit: nil)
+        fortyFiveMinuteMeeting(store, lineLength: 120)
+        session.lastCompletedListenerSummary = "Earlier: pricing agre"
+        session.summarizedSegmentIDs = Set(store.utterances.map(\.id))
+        session.listenerSummaryCutOff = true
+        await session.respondQuick(.answerQuestion)
+        let user = provider.lastUser ?? ""
+        XCTAssertFalse(user.contains("covers the first"), user)
+        XCTAssertTrue(user.contains("may not cover the speech left out"))
+        XCTAssertTrue(user.contains("Pricing decision"), "The opening is kept instead")
+        XCTAssertTrue(session.roleNotices(.quick).first?.hasSuffix("An earlier summary is included too.") == true)
     }
 
     /// Apple Intelligence: everything that fits the ~4k-token window, never more, and visible.
@@ -297,13 +483,80 @@ final class OnDemandGroundingSessionTests: XCTestCase {
         XCTAssertNotNil(session.promptTruncationNotice)
     }
 
-    func testSwitchingModelClearsThatPanesGroundingLine() async {
+    /// The guarantee the old window kept: one enormous final line — and an enormous unfinished one —
+    /// never push an Apple-sized prompt past its window. The line keeps its most recent words.
+    func testAnEnormousLatestLineStillFitsAnAppleSizedWindow() async {
+        let limit = PromptBudget.appleIntelligenceCharacters
+        let (session, store, provider) = makeSession(limit: limit)
+        fortyFiveMinuteMeeting(store)
+        store.apply(TranscriptSegment(source: .others, text: String(repeating: "long ", count: 6_000) + "FINAL WORDS",
+                                      isFinal: true, start: 2_710, end: 2_900))
+        store.apply(TranscriptSegment(source: .you, text: String(repeating: "live ", count: 6_000),
+                                      isFinal: false, start: 2_901, end: 3_000))
+        for action in [ResponseAction.answerQuestion, .recap, .actionItems] {
+            await session.respondQuick(action)
+            XCTAssertLessThanOrEqual(characters(provider.lastRequest), limit - PromptBudget.answerReserve, "quick \(action)")
+            await session.respondDeep(action)
+            XCTAssertLessThanOrEqual(characters(provider.lastRequest), limit - PromptBudget.answerReserve, "deep \(action)")
+        }
+        XCTAssertTrue(provider.lastUser?.contains("FINAL WORDS") == true)
+        XCTAssertTrue(session.roleNotices(.deep).first?.contains("The latest line was shortened.") == true,
+                      session.roleNotices(.deep).description)
+    }
+
+    /// The answer on screen is still the excerpt-grounded one after a model switch, so its line stays.
+    func testSwitchingModelKeepsTheLineOfTheAnswerStillShown() async {
+        let (session, store, _) = makeSession(limit: nil)
+        fortyFiveMinuteMeeting(store, lineLength: 120)
+        await session.respondQuick(.answerQuestion)
+        let notices = session.roleNotices(.quick)
+        XCTAssertFalse(notices.isEmpty)
+        session.setModel(.quick, "other")
+        XCTAssertEqual(session.roleNotices(.quick), notices)
+    }
+
+    /// Review item 1: the automatic recap replacing (or Auto clearing) the Quick answer takes the
+    /// answer's lines with it.
+    func testTheRecapReplacingTheAnswerTakesItsNoticesWithIt() async {
         let (session, store, _) = makeSession(limit: nil)
         fortyFiveMinuteMeeting(store, lineLength: 120)
         await session.respondQuick(.answerQuestion)
         XCTAssertFalse(session.roleNotices(.quick).isEmpty)
-        session.setModel(.quick, "other")
+        session.applyQuickRecap("- Pricing agreed.")
+        XCTAssertFalse(session.roleNotices(.quick).isEmpty, "A fresh answer still holds the pane")
+        session.dismissQuickAnswer()
+        XCTAssertEqual(session.quickSuggestion, "- Pricing agreed.")
         XCTAssertTrue(session.roleNotices(.quick).isEmpty)
+        session.setOutput(.quick, "")
+        XCTAssertTrue(session.roleNotices(.quick).isEmpty)
+    }
+
+    /// Review item 3: a failed request that restores the previous answer restores that answer's own
+    /// lines, not the failed request's; a failure that keeps partial text shows none.
+    func testAFailedRequestNeverShowsItsNoticesOnTheRestoredAnswer() async {
+        let store = ConversationStore()
+        let provider = SwitchableProvider()
+        let session = MeetingSession(
+            store: store, context: ContextEngine(debounce: 5),
+            makeCapture: { MockCapture() }, makeTranscriber: { MockTranscriber() },
+            makeProvider: { _ in provider }, models: [.listener: "L", .quick: "Q", .deep: "D"], clock: { 0 })
+        store.apply(TranscriptSegment(source: .others, text: "Short meeting?", isFinal: true, start: 0, end: 1))
+        provider.events = [.content("Complete but cut"), .outputLimitReached]
+        await session.respondDeep(.answerQuestion)
+        XCTAssertEqual(session.roleNotices(.deep), [LLMOutputLimit.notice])
+
+        fortyFiveMinuteMeeting(store, lineLength: 240)   // the next request is an excerpt…
+        provider.events = []
+        provider.failure = URLError(.networkConnectionLost)   // …that fails before any text
+        await session.respondDeep(.answerQuestion)
+        XCTAssertEqual(session.deepAnswer, "Complete but cut", "The previous answer is restored")
+        XCTAssertEqual(session.roleNotices(.deep), [LLMOutputLimit.notice], "…with its own line, not the excerpt's")
+
+        provider.events = [.content("Half an ans")]
+        await session.respondDeep(.answerQuestion)
+        XCTAssertEqual(session.deepAnswer, "Half an ans", "Partial text is kept")
+        XCTAssertTrue(session.roleNotices(.deep).isEmpty, "A failed answer carries no grounding or cut-off line")
+        XCTAssertNotNil(session.roleError(.deep))
     }
 
     /// Unfinalized speech still reaches the answer, and no longer halves the finalized window.
@@ -316,5 +569,22 @@ final class OnDemandGroundingSessionTests: XCTestCase {
         let user = provider.lastUser ?? ""
         XCTAssertTrue(user.contains("(provisional) and one more thing"))
         XCTAssertTrue(user.contains("Pricing decision"))
+    }
+}
+
+/// Streams the events it is given, then fails with `failure` when one is set.
+final class SwitchableProvider: LLMProvider, @unchecked Sendable {
+    let id = "switchable"
+    var events: [LLMStreamEvent] = []
+    var failure: (any Error)?
+    func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
+        LLMOutputLimit.textStream(streamEvents(request))
+    }
+    func streamEvents(_ request: LLMRequest) -> AsyncThrowingStream<LLMStreamEvent, Error> {
+        let events = events, failure = failure
+        return AsyncThrowingStream { continuation in
+            for event in events { continuation.yield(event) }
+            if let failure { continuation.finish(throwing: failure) } else { continuation.finish() }
+        }
     }
 }

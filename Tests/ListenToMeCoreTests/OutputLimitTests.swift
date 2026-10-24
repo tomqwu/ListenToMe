@@ -228,10 +228,36 @@ final class OutputLimitSessionTests: XCTestCase {
 
     func testAutomaticReviewsRecordTheirOwnCutOff() {
         let (session, _) = session(ScriptedEventProvider(events: [.content("x")]))
+        session.setOutput(.deep, "Half a review")
         session.recordAutomaticReview(.deep, cutOff: true)
         XCTAssertEqual(session.roleNotices(.deep), [LLMOutputLimit.notice])
+        XCTAssertEqual(session.outputLimitRoles, [.deep])
+        session.setOutput(.deep, "A newer review")
+        XCTAssertTrue(session.roleNotices(.deep).isEmpty, "The line belongs to the text it was recorded for")
         session.recordAutomaticReview(.deep, cutOff: false)
         XCTAssertTrue(session.roleNotices(.deep).isEmpty)
+    }
+
+    /// Review item 7: Claude hitting its cap before any answer text reports the cut-off, as it did
+    /// before #215, not an empty or thinking-only answer.
+    func testClaudeCutOffBeforeAnyTextIsStillTheCutOff() async {
+        OpenAIStubProtocol.reply = OpenAIStubProtocol.sse(claudeStream([], stopReason: "max_tokens"))
+        defer { OpenAIStubProtocol.reset() }
+        let provider = AnthropicProvider(model: "claude-opus-5-5", apiKey: "sk-ant-synthetic-0000",
+                                         urlSession: OpenAIStubProtocol.session(), maximumResponseBytes: 1 << 24,
+                                         sleep: { _ in })
+        do {
+            for try await _ in provider.streamEvents(LLMRequest(system: "s", messages: [])) {}
+            XCTFail("No answer text is not a complete answer")
+        } catch { XCTAssertEqual(error as? AnthropicError, .cutOff) }
+    }
+
+    /// Review item 6: a Quick contract probe cut off at the output limit is the model failing the
+    /// contract, so Auto pauses for it instead of retrying a model that always hits the cap.
+    func testAnOutputLimitIsAQuickContractFailure() {
+        XCTAssertTrue(OpenAICompatibleContractLedger.isContractFailure(LLMOutputLimitError()))
+        XCTAssertTrue(OpenAICompatibleContractLedger.isContractFailure(AnthropicError.cutOff))
+        XCTAssertFalse(OpenAICompatibleContractLedger.isContractFailure(URLError(.timedOut)))
     }
 }
 

@@ -519,7 +519,9 @@ extension MobileSession {
                 guard let self else { return }
                 if mode == .summary { self.summary = output } else { self.deepThought = output }
                 if let shown = MobileSummaryMode(rawValue: mode.rawValue) {
-                    self.answerNotices.record(shown, grounding: nil, cutOff: self.automaticReviews.cutOffModes.contains(mode))
+                    self.answerNotices.record(shown, text: output, grounding: nil,
+                                              cutOff: self.automaticReviews.cutOffModes.contains(mode),
+                                              coveredIDs: QuickSummaryContext.segmentIDs(in: reviewed))
                 }
                 // Same rule that kept the review alive: a notes keystroke or appended speech does not
                 // make the finished review stale, so it must not leave the recommendation outstanding

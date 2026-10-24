@@ -109,8 +109,14 @@ extension MobileAISettings {
         } catch where OpenAICompatibleContractLedger.isContractFailure(error) {
             // A reasoning-only or empty answer is as unusable to Auto as malformed JSON.
             record(false)
-            status = "\(model) answered, but not in the Quick Summary format that Auto and Quick need "
-                + "(\(error.localizedDescription)) Auto is paused for this model; Summary and Deep can still use it."
+            if error is LLMOutputLimitError || (error as? AnthropicError) == .cutOff {
+                // A Quick update cut off at the cap is unreadable JSON every time (#215).
+                status = "\(model) stopped at its output limit before finishing a Quick Summary update. Auto is "
+                    + "paused for this model; raise its output limit, or use it for Summary and Deep."
+            } else {
+                status = "\(model) answered, but not in the Quick Summary format that Auto and Quick need "
+                    + "(\(error.localizedDescription)) Auto is paused for this model; Summary and Deep can still use it."
+            }
         } catch {
             status = "Connection test failed: \(Self.errorMessage(error))"
         }

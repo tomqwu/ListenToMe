@@ -78,14 +78,29 @@ reports the trim in the status line instead of failing with a context-window err
 `OnDemandGrounding`'s choice, shared by both apps. Its budget scales with the provider: everything the
 window holds for a provider that declares one (Apple Intelligence), and 16,000 characters for Quick or
 32,000 for Deep for one that does not (Ollama, cloud, OpenAI-compatible); recap and action items keep
-their 100,000. When the conversation does not fit, the latest summary (macOS: the last completed
-Listener summary; iOS: the Summary panel) plus the most recent speech is sent; with no summary yet —
-Auto is off by default — the opening (at most a quarter of the budget) plus the most recent speech is
-sent instead. No extra model call is made. An app-written note outside the transcript fence tells the
-model which part it is reading, its room held back up front (`promptNoteReserve`) so the window still
-holds, and the pane shows one line such as "Using the last ~5 min of the conversation." Minutes come
+their 100,000. When the conversation does not fit, the latest summary stands in for exactly the
+leading lines it is known to cover (`coveredPrefix`): on macOS the prefix of the Listener ledger
+(`summarizedSegmentIDs`), on iOS the segment IDs the Summary panel's text was generated from in this
+session. Of the speech no summary covers — with no summary yet (Auto is off by default), the whole
+meeting — the start (at most a quarter of the budget) and the most recent part are sent, and the gap
+between them is named. A summary of unknown coverage — cut off at the output limit, clamped or
+shortened to fit, restored from disk or edited — is still sent, but is never claimed to cover anything.
+The selected lines never cost more than the budget: when the latest line alone does not fit, the start
+goes first and then the latest line keeps its most recent words. No extra model call is made. An
+app-written note outside the transcript fence tells the model which part it is reading, its room held
+back up front (`promptNoteReserve`) so the window still holds, and the pane shows one line such as
+"Using the Listener summary of the first ~10 min, the ~4 min after it and the last ~12 min of the
+conversation (~19 min in between left out)." The line belongs to the exact text it describes
+(`RoleNoticeRecord`, `MobileAnswerNotices`): a recap, a dismissal, a failed retry that restores the
+previous answer, or Auto rewriting the text all leave the line of the text actually shown. Minutes come
 from the lines' timestamps, or from their length when they have none. On iOS a Summary that does not
 fit is still refused; only Quick and Deep excerpt.
+
+Ollama receives no `num_ctx`, so a local model runs with the server's default context. Ollama 0.35 on
+the development Mac loaded `qwen3:0.6b` with a 40,960-token context and read a 33,000-character prompt
+whole (6,340 prompt tokens, opening included). A server with a 4,096-token default would cut the front
+of a long prompt — Deep's 32,000 characters as well as the Listener's 16,000 and recap's 100,000; see
+#230 for sizing `num_ctx`.
 
 **Output limit (#215).** A response that stopped at the output-token cap — OpenAI-compatible
 `finish_reason: "length"`, Ollama `done_reason: "length"`, Claude `stop_reason: "max_tokens"` or

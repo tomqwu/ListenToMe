@@ -89,6 +89,9 @@ struct AnthropicStreamState {
     /// complete but partial, which `reachedOutputLimit` reports.
     func complete() throws {
         guard finished else { throw OpenAICompatibleError.incomplete }
+        // Hitting the cap before any answer text is the cap's fault, not an empty or thinking-only
+        // answer, and has always been reported as the cut-off it is.
+        if reachedOutputLimit && !producedContent { throw AnthropicError.cutOff }
         guard producedContent else {
             throw producedThinking ? OpenAICompatibleError.thinkingOnly : OpenAICompatibleError.empty
         }

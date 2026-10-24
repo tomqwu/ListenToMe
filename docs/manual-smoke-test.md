@@ -69,9 +69,17 @@ Prereq: Ollama running with at least one chat-capable model installed (local or 
     long saved conversation (40+ minutes) or record one, with a decision stated in the first two
     minutes. Press **⌘⇧Space** → the Quick pane shows "Using the opening ~N min and the last ~M min of
     the conversation (~K min in between left out)." under its header, and the answer can use the
-    early decision. Press **Refresh**, wait for the Listener, ask again → the line reads "Using the
-    Listener summary and the last ~M min of the conversation." A short conversation shows no line.
-    Switch the Quick model → the line disappears.
+    early decision. Press **Refresh**, wait for the Listener (and any follow-up batches), ask again →
+    the line reads "Using the Listener summary of the first ~N min and everything said since (~M min)."
+    (or, for a meeting that is still too long, "…of the first ~N min, the ~H min after it and the last
+    ~M min…"). Keep talking for 20+ minutes without Refresh and ask again → the line must name the
+    summary's real span and a gap ("in between left out"), never claim the summary covers the new
+    speech. A short conversation shows no line. Turn **Auto** on and let the recap replace a manual
+    Quick answer (or click **Show recap**) → the answer's line disappears with it.
+12b′. **Enormous last line** (issue #114, Apple Intelligence): import or paste a transcript whose
+    last line is several thousand words long and ask Deep → it answers (never "This request is too
+    long for Apple Intelligence's on-device context window"), and the line ends "The latest line
+    was shortened."
 12c. **Output limit** (issue #215): give **Deep** a cloud or OpenAI-compatible model with a small
     output limit (an LM Studio server with max tokens 64, or Ollama with `num_predict` 64 in a
     Modelfile) and ask **Deep answer** → the partial answer stays and the pane shows "The answer was
@@ -220,8 +228,12 @@ tables behind them are covered by `CaptureRecoveryTests`.
    **Generate Deep Summary** must both answer (they used to say "exceeds the selected provider's
    summary limit") and show "Using the opening ~N min and the last ~M min of the conversation (~K min
    in between left out)." above the text. **Summary** itself still says the conversation exceeds the
-   limit. In a conversation that already has a Summary (one generated when it was shorter, or on a
-   cloud model), Deep instead shows "Using your Summary and the last ~M min of the conversation." With a cloud model whose output limit is tiny, Deep keeps its partial text and
+   limit. Record a few minutes, generate **Summary**, keep recording well past the window, then
+   generate Deep → "Using your Summary of the first ~N min, the ~H min after it and the last ~M min of
+   the conversation (~K min in between left out)." A conversation reopened from History has a Summary
+   of unknown coverage: Deep keeps the opening and adds "An earlier summary is included too." With
+   Auto on, a recap that rewrites the Quick Summary removes the previous answer's line. With a cloud
+   model whose output limit is tiny, Deep keeps its partial text and
    shows "The answer was cut off at the model's output limit."
 6. **Many short lines.** Still on Apple Intelligence, have a long back-and-forth of short utterances
    with named speakers (rename both speakers to long names). Ask Deep for **Action items**: the

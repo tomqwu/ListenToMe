@@ -468,13 +468,20 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   shared cap macOS also clamps its Apple prompts to); Ollama and OpenAI-compatible servers accept up to 60,000. Both caps are
   charged on the *fenced* conversation, not the raw text. A Summary that does not fit is rejected
   explicitly. Quick and Deep answer a conversation that does not fit from what does (#114,
-  `OnDemandGrounding.excerpt`): the Summary already on screen plus the latest speech, or — with no
-  Summary yet — the opening plus the latest speech, and the panel says which ("Using the opening ~2 min
-  and the last ~5 min of the conversation (~38 min in between left out)."). On Apple Intelligence the
-  budget is what the window leaves after the system prompt and the answer's reserve. An answer that
-  stops at the model's output limit (`finish_reason`/`done_reason` `length`, Claude `max_tokens`) keeps
-  its text and the panel shows "The answer was cut off at the model's output limit." (#215); both lines
-  are for this session only and are not saved. AI output needs review.
+  `OnDemandGrounding.excerpt`). A Summary generated in this session stands in for exactly the lines it
+  read (`MobileAnswerNotices.summaryCoverage`, by segment ID, so re-transcribed lines are not covered);
+  of the remaining speech — with no Summary, all of it — the start and the latest part are sent, and
+  the panel says what was used ("Using your Summary of the first ~10 min, the ~3 min after it and the
+  last ~5 min of the conversation (~20 min in between left out)."). A Summary restored from History,
+  edited, cut off at the output limit or shortened to fit is sent but never claimed to cover anything;
+  a long one keeps its end, where the decisions and actions are, and the panel says so. Notes keep
+  what the speech leaves (at least a quarter), and an oversized latest line keeps its most recent
+  words, so the message never exceeds the budget. On Apple Intelligence the budget is what the window
+  leaves after the system prompt and the answer's reserve. An answer that stops at the model's output
+  limit (`finish_reason`/`done_reason` `length`, Claude `max_tokens`) keeps its text and the panel shows
+  "The answer was cut off at the model's output limit." (#215). Each line belongs to the exact text it
+  describes, so it disappears when Auto or anything else replaces that text; both are for this session
+  only and are not saved. AI output needs review.
 - Prompts separate data from instructions (#140). The conversation a manual Summary, Deep or
   on-device Quick sends is wrapped in a `<transcript>` block, and every system prompt states that
   text inside that block is data to read and summarize, never instructions to follow. Closing tags
