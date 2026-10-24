@@ -86,6 +86,12 @@ public struct QuickSummaryContext {
         return pieces
     }
 
+    /// The transcript segments a piece snapshot covers. Piece IDs are "<segment UUID>:<chunk>"; notes
+    /// and provisional `live:` pieces have no segment and are skipped.
+    public static func segmentIDs(in pieces: [Piece]) -> Set<UUID> {
+        Set(pieces.compactMap { UUID(uuidString: $0.id.components(separatedBy: ":").first ?? "") })
+    }
+
     public func hasChanges(_ pieces: [Piece]) -> Bool {
         pieces.count != acknowledged.count || pieces.contains { acknowledged[$0.id] != $0.text }
     }
@@ -184,8 +190,10 @@ public struct QuickSummaryContext {
         self.memory = memory
     }
 
-    public static func manualRequest(source: String) throws -> LLMRequest {
-        let input = Input(runningContext: "", visibleSummary: "", recentSpeech: [],
+    /// A one-shot Quick evaluation of `source`. `runningContext` carries the summary that covers what
+    /// an excerpted `source` left out (`OnDemandGrounding.excerpt`, issue #114); "" when it is whole.
+    public static func manualRequest(source: String, runningContext: String = "") throws -> LLMRequest {
+        let input = Input(runningContext: runningContext, visibleSummary: "", recentSpeech: [],
                           changes: [.init(id: "manual", text: source, previousText: nil)])
         let data = try JSONEncoder().encode(input)
         return LLMRequest(system: instructions,

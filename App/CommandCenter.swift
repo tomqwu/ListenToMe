@@ -163,6 +163,15 @@ struct RoleBox<Header: View, Actions: View>: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .textSelection(.enabled)
             }
+            // Which part of the conversation the answer read when it could not read all of it, and
+            // whether it stopped at the model's output limit (issues #114, #215).
+            ForEach(session.roleNotices(role), id: \.self) { notice in
+                Label(notice, systemImage: notice == LLMOutputLimit.notice
+                      ? "scissors" : "info.circle")
+                    .font(.system(size: 10.5)).foregroundStyle(Theme.ink2)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {

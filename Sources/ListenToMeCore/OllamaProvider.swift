@@ -31,6 +31,15 @@ public enum OllamaParser {
         }
         return (obj["done"] as? Bool) == true
     }
+
+    /// `done_reason` of the final line (`"stop"`, `"length"`, …), or nil when the line carries none.
+    public static func doneReason(line: String) -> String? {
+        guard let data = line.data(using: .utf8),
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+        return obj["done_reason"] as? String
+    }
 }
 
 /// Streams chat completions from a local (or remote) Ollama server.
@@ -79,6 +88,7 @@ public struct OllamaProvider: LLMProvider {
                     var completed = false
                     var producedContent = false
                     var producedThinking = false
+                    var doneReason: String?
                     for try await line in lineSource(request) {
                         try Task.checkCancellation()
                         if let data = line.data(using: .utf8),
@@ -95,13 +105,17 @@ public struct OllamaProvider: LLMProvider {
                             producedContent = producedContent || !delta.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                             continuation.yield(.content(delta))
                         }
-                        if OllamaParser.isDone(line: line) { completed = true; break }
+                        if OllamaParser.isDone(line: line) {
+                            completed = true; doneReason = OllamaParser.doneReason(line: line); break
+                        }
                     }
                     try Task.checkCancellation()
                     guard completed else { throw OllamaStreamError.incomplete }
                     guard producedContent else {
                         throw producedThinking ? OllamaStreamError.thinkingOnly : OllamaStreamError.empty
                     }
+                    // `num_predict` ran out: the answer is partial (issue #215).
+                    if LLMOutputLimit.isLengthStop(doneReason) { continuation.yield(.outputLimitReached) }
                     continuation.finish()
                 } catch {
                     continuation.finish(throwing: error)
@@ -112,20 +126,7 @@ public struct OllamaProvider: LLMProvider {
     }
 
     public func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
-        let events = streamEvents(request)
-        return AsyncThrowingStream { continuation in
-            let task = Task {
-                do {
-                    for try await event in events {
-                        if case .content(let delta) = event { continuation.yield(delta) }
-                    }
-                    continuation.finish()
-                } catch {
-                    continuation.finish(throwing: error)
-                }
-            }
-            continuation.onTermination = { _ in task.cancel() }
-        }
+        LLMOutputLimit.textStream(streamEvents(request))
     }
 
     private static func makeLiveLineSource(

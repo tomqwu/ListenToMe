@@ -12,11 +12,6 @@ public struct ContextEngine {
     public func buildContext(from store: ConversationStore, notes: String?, maxChars: Int = 4000,
                              summary: String? = nil, responseLanguage: String? = nil,
                              references: String? = nil, personaGuidance: String? = nil) -> PromptContext {
-        let trimmed = notes?.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedSummary = summary?.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedLang = responseLanguage?.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedRefs = references?.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedPersona = personaGuidance?.trimmingCharacters(in: .whitespacesAndNewlines)
         // Non-final speech is appended after the finalized window, tagged "(provisional)", and is
         // charged to the same budget so a provider's context window still holds (issue #113). It may
         // reserve at most half the transcript allowance, so it can never crowd out the history — and
@@ -27,14 +22,23 @@ public struct ContextEngine {
         let finals = store.recentContext(maxChars: max(0, maxChars - reserved))
         let spent = finals.reduce(0) { $0 + TranscriptSegment.promptCharacterCost($1) }
         let provisional = store.provisionalContext(maxChars: min(reserved, max(0, maxChars - spent)))
-        return PromptContext(
-            messages: finals + provisional,
-            notes: (trimmed?.isEmpty == false) ? trimmed : nil,
-            summary: (trimmedSummary?.isEmpty == false) ? trimmedSummary : nil,
-            responseLanguage: (trimmedLang?.isEmpty == false) ? trimmedLang : nil,
-            references: (trimmedRefs?.isEmpty == false) ? trimmedRefs : nil,
-            personaGuidance: (trimmedPersona?.isEmpty == false) ? trimmedPersona : nil
-        )
+        return Self.context(messages: finals + provisional, notes: notes, summary: summary,
+                            responseLanguage: responseLanguage, references: references,
+                            personaGuidance: personaGuidance)
+    }
+
+    /// A prompt context over lines the caller already chose (`OnDemandGrounding`), with every
+    /// optional block trimmed and dropped when blank.
+    public static func context(messages: [TranscriptSegment], notes: String?, summary: String? = nil,
+                               responseLanguage: String? = nil, references: String? = nil,
+                               personaGuidance: String? = nil, transcriptNote: String? = nil) -> PromptContext {
+        func kept(_ value: String?) -> String? {
+            let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed?.isEmpty == false ? trimmed : nil
+        }
+        return PromptContext(messages: messages, notes: kept(notes), summary: kept(summary),
+                             responseLanguage: kept(responseLanguage), references: kept(references),
+                             personaGuidance: kept(personaGuidance), transcriptNote: kept(transcriptNote))
     }
 
     /// True when a finalized remote question arrives and the debounce window has elapsed.
