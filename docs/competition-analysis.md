@@ -95,6 +95,10 @@ Several gaps this analysis originally identified have since closed, all on-devic
 - **Speaker diarization.** An opt-in, experimental setting runs FluidAudio (CoreML Pyannote) over the Others channel locally, labels transcript lines "Speaker N", and shows per-voice talk-time — the axis Otter, Fireflies, and Natively led on. The iPhone/iPad app offers the same opt-in, on-device labeling (with renaming) for the people its one microphone hears (#180).
 - **On-device peer set has grown.** Hyprnote/Anarlog and Meetily joined Natively and MacWhisper as free/open-source, on-device-capable meeting tools since this analysis was first written — none of them offer ListenToMe's per-pane multi-model routing, live hotkey copilot loop, or Apple Intelligence on-device path with zero model download.
 - **Richer exports.** Markdown, a concise shareable recap, PDF, and copy-to-clipboard, all generated locally.
+- **Automatic meeting titles.** Otter, Granola and Fireflies name meetings for you. ListenToMe now does
+  too on both platforms (#221): a saved conversation that still has its default name gets a short title.
+  The title comes from its summary, from the user's own summary model, or from on-device keywords, and a
+  typed or calendar title is never replaced.
 - **Cross-meeting search.** Local keyword search over persisted past sessions — the Ask Granola / AskFred / Natively-RAG use case. (A semantic on-device index is still open.)
 - **Domain vocabulary.** Seven curated domain vocabularies (Medical, Legal, Software & Cloud,
   Engineering, Finance, Sales, Education & Research) plus a user "My terms" list bias on-device

@@ -112,7 +112,7 @@ struct MobileMeetingView: View {
 
     private var status: some View {
         VStack(alignment: .leading, spacing: 6) {
-            TextField("Conversation title", text: $session.title)
+            TextField("Conversation title", text: Binding(get: { session.title }, set: { session.renameByUser($0) }))
                 .focused($focusedField, equals: .title)
                 .font(verticalSizeClass == .compact ? .headline : .title2.weight(.semibold))
                 .foregroundStyle(MobileStyle.ink)
@@ -188,6 +188,7 @@ struct MobileMeetingView: View {
     private func saveManually() {
         focusedField = nil
         saveSucceeded = session.save()
+        if saveSucceeded { session.nameConversationIfNeeded() }   // in the background (#221)
         saveFeedback = saveSucceeded ? "Saved to History on this device." : session.message
         saveFeedbackID += 1
         UIAccessibility.post(notification: .announcement, argument: saveFeedback)
@@ -243,6 +244,7 @@ struct MobileMeetingView: View {
                 MobileSpeakerSettings(session: session)
                 MobileVocabularySettingsLink(session: session)
                 MobileVaultSettings(session: session)
+                MobileAutoTitleSettings()
                 Section("Recording") {
                     Text("This version records the microphone while the app is open. " +
                          "Backgrounding or a call stops recording and saves the conversation, and the status line " +
