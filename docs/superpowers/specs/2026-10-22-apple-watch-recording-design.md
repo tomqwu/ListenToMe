@@ -28,7 +28,7 @@ nowhere else.
 | On-watch transcription | **No.** `SpeechAnalyzer` and `SpeechTranscriber` are not available on watchOS (§3). The phone transcribes. |
 | Watch background recording | Needed for Slice 3. Without it, lowering the wrist suspends the app and ends the recording. **Approved** (decision 2). |
 | iPhone background recording | **Unchanged.** The iPhone never records in the background. It only *receives* files, and transcribes them while it is in the foreground. |
-| Raw audio | Kept only until it is transcribed, then deleted from both devices. No "keep the audio" option. **Approved** (decision 3). The privacy page's "does not save raw microphone audio" changes in the release that ships watch-mic capture, not before. |
+| Raw audio | Kept only until it is transcribed, then deleted from both devices. No "keep the audio" option. **Approved** (decision 3). The iPhone's own opt-in Save audio recordings (#55) does not apply to watch recordings: their chunks are still deleted once transcribed. The privacy page's "does not save raw microphone audio" changes in the release that ships watch-mic capture, not before. |
 | Targets | One embedded watchOS app target (`ListenToMeWatch`). No separate WatchKit extension target (§5.1). |
 | Shared code | The wire protocol and the chunk, ledger and retention rules go in `ListenToMeCore`, unit-tested by `swift test` under the 95% coverage floor. The watch target compiles only the files it needs. |
 | Versioning | The watch app uses the iOS app's `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION`, and the TestFlight helper checks all three bundles. |

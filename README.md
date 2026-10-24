@@ -38,7 +38,8 @@ and "Ask your history", photo/file
 attachments, Apple Notes and share-sheet imports, calendar import with e-mail and join-link
 redaction, Markdown sharing, **Export as** Markdown, plain-text, SRT/WebVTT subtitle or JSON files with
 timestamps, and an opt-in **Save to folder** that writes each conversation as a
-Markdown note into a folder you pick in Files, such as an Obsidian vault. On-device speaker identification (on by default; turn it off in
+Markdown note into a folder you pick in Files, such as an Obsidian vault, and an opt-in **Save audio recordings** that keeps
+each recording's microphone audio on the device for playback from its transcript lines. On-device speaker identification (on by default; turn it off in
 Settings) labels transcript lines Speaker 1, Speaker 2… for the people one phone hears, and you can
 rename them; its models download once from `huggingface.co`. The transcription language defaults to
 Automatic: the phone detects the spoken language on-device from the first seconds of speech and, if it
@@ -182,6 +183,11 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 - **Save to folder** (off by default, Settings): after each conversation stops, writes one
   Obsidian-friendly Markdown note (YAML front matter, summary, notes, timestamped transcript) into a
   folder you choose, and updates the same note when summaries or the title change.
+- **Save audio recordings** (off by default, Settings): keeps each recording's microphone and system
+  audio as two `.m4a` files beside the conversation on this Mac, for playback and sharing from History.
+  Saved only for conversations History keeps; Clear history, Discard, Close without saving and
+  **Delete all saved audio** remove them; optional automatic deletion after 7, 30 or
+  90 days.
 - **First-run onboarding**, a global **⌘⇧Space** hotkey for instant suggestions, and keyboard
   equivalents for every frequent action (see [Keyboard shortcuts](#keyboard-shortcuts)).
 
@@ -483,6 +489,11 @@ saying so. Press **Speakers / edit names** to retry once the network is availabl
   never transcript text, lives beside the conversations in `Search Index/`, is always excluded from
   backups, and is removed with a deleted conversation or Clear history. "Ask your history" sends only
   the top matching excerpts and the question, and only to the provider you selected.
+- **Raw audio is not kept unless you ask.** **Save audio recordings** is off by default on both
+  platforms. Turned on, it writes 16 kHz AAC `.m4a` files (about 12 MB per hour per source) beside
+  the conversations; they are never uploaded or sent to an AI service, are deleted with their
+  conversation (Clear history on the Mac), and on iPhone/iPad are always kept out of iCloud and
+  Finder backups. Apple Watch recordings keep no audio.
 - **iOS privacy policy and support.** The App Store pages are checked in and linked from the app in
   **More → Settings → Privacy**: [privacy policy](docs/ios-privacy.md) and
   [support](docs/ios-support.md).

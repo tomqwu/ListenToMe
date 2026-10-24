@@ -22,6 +22,7 @@ extension MobileSession {
             },
             // The last Export as file (#130) may belong to any conversation, so it always goes.
             ConversationDataOwner("exported files") { _ in try ConversationExportFile.removeAll() },
+            ConversationDataOwner("saved audio") { [unowned self] in try savedAudio.remove($0) },   // #55
         ]
     }
 
@@ -52,8 +53,8 @@ extension MobileSession {
 
     /// The confirmation says what goes, what stays, and that it cannot be undone.
     static func deleteAllMessage(vaultFolder: String?, watchWaiting: Bool) -> String {
-        var parts = ["This removes every conversation's transcript, notes, attachments, AI outputs and "
-                     + "Apple Watch audio from this device."]
+        var parts = ["This removes every conversation's transcript, notes, attachments, saved audio, AI outputs "
+                     + "and Apple Watch audio from this device."]
         if watchWaiting { parts.append("Recordings still waiting from Apple Watch are kept.") }
         if let vaultFolder {
             parts.append("Notes already saved to “\(vaultFolder)” stay there; ListenToMe never deletes your folder's files.")
