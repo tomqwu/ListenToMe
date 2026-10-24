@@ -777,14 +777,14 @@ never trigger it in the fixtures (`Tests/ListenToMeCoreTests/VocabularyFixtures.
 "Sounds like a medical conversation — add the Medical vocabulary?" with **Add**, **Not now** and
 **Don't suggest Medical again** — never blocks the screen and never turns anything on by itself; Add
 applies to this conversation at once and then offers **Use by default**. Each preset is offered at
-most once per conversation; a preset added for one conversation stays on while that conversation is
-open and is not saved with it (opening another conversation starts over). **Suggest
+most once per conversation; a preset added for one conversation is saved with it and restored when reopened, including after
+relaunch. New conversations start without those additions; device-wide defaults and My terms still apply. **Suggest
 vocabularies** turns it off.
 
 Limits: languages other than Simplified Chinese keep the English lists; how
 strongly `SpeechTranscriber` honors contextual strings is still to be measured on a device (#236);
-per-conversation additions are not saved and Auto Quick gets no vocabulary guidance (#237); the
-glossary reaches only the provider you chose.
+Auto Quick receives the active domain and a bounded glossary, without summary headings (#237). The
+glossary reaches only the provider you chose. Deleting a conversation also removes its saved additions.
 
 ## Suggested prompts (#61)
 

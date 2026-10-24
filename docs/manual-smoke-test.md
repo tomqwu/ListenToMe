@@ -752,3 +752,11 @@ clear them. Clear and save to remove them. Export Markdown/plain text/JSON and v
 Check Mac reopening does not overwrite the currently open record or drop attachments/languages.
 Capture native-resolution phone portrait/landscape, iPad and Mac images; inspect large text and
 keyboard reachability. Follow the release screenshot checklist.
+
+## Saved conversation vocabularies (#237)
+
+Add Medical from the suggestion banner without Use by default. Stop, start a new conversation,
+then reopen the first from History and relaunch the app: Medical must return only for the first
+conversation. Resume listening and confirm its terms reach recognition. With Auto Quick enabled,
+check that the chosen provider receives the domain and bounded glossary without Summary headings.
+Delete that conversation and confirm it is gone after relaunch; device defaults and My terms remain.

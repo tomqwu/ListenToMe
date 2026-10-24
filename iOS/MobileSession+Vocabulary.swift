@@ -58,6 +58,7 @@ extension MobileSession {
     /// The banner's "Add": the preset is on for this conversation, at once.
     func addSuggestedVocabulary() {
         vocabulary.addSuggested()
+        save(announce: false)
         applyVocabularyToRecording()
     }
 

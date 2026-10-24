@@ -744,6 +744,8 @@ extension MeetingView {
         // old records on a fresh/empty window must not silently disable future saving.
         if hasConversation { sessionSaveable = false }
         currentSessionID = UUID().uuidString
+        vocabulary.restore(domainIDs: nil, for: currentSessionID, transcriptLineCount: store.utterances.count)
+        applyVocabulary()
         conversationStartedAt = nil
         lastSavedKey = nil
     }

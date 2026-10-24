@@ -89,6 +89,8 @@ final class LivePathWorkTests: XCTestCase {
                                        quickSuggestion: "Q", deepAnswer: "D", complete: false)
         XCTAssertEqual(key, SessionCheckpointKey(revision: 3, title: "Standup", summary: "S", notes: "N",
                                                  quickSuggestion: "Q", deepAnswer: "D", complete: false))
+        XCTAssertNotEqual(key, SessionCheckpointKey(revision: 3, title: "Standup", summary: "S", notes: "N",
+            quickSuggestion: "Q", deepAnswer: "D", complete: false, vocabularyDomainIDs: ["medical"]))
         XCTAssertNotEqual(key, SessionCheckpointKey(revision: 4, title: "Standup", summary: "S", notes: "N",
                                                    quickSuggestion: "Q", deepAnswer: "D", complete: false))
         XCTAssertNotEqual(key, SessionCheckpointKey(revision: 3, title: "Standup", summary: "S2", notes: "N",

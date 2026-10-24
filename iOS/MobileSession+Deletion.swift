@@ -11,6 +11,7 @@ extension MobileSession {
     /// the records are gone; the other owners still run.
     var conversationDataOwners: [ConversationDataOwner] {
         [
+            ConversationDataOwner("conversation vocabularies") { [unowned self] in vocabulary.forget($0) },
             ConversationDataOwner("attachments") { [unowned self] in try removeAttachmentFiles($0) },
             ConversationDataOwner("Apple Watch audio") { [unowned self] in
                 try discardWatchAudio(sourceImportIDs: $0.sourceImportIDs)

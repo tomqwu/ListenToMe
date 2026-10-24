@@ -38,7 +38,7 @@ extension SessionExporter {
             hasTimestamps: TranscriptTimestamp.hasTimes(segments),
             duration: TranscriptTimestamp.duration(of: segments).map(millis), speakers: speakers,
             summary: record.summary, quickSummary: record.quickSuggestion ?? "", deepSummary: record.deepAnswer ?? "",
-            notes: record.notes ?? "", summaryInstructions: record.summaryInstructions, segments: lines,
+            notes: record.notes ?? "", summaryInstructions: record.summaryInstructions, vocabularyDomainIDs: record.vocabularyDomainIDs, segments: lines,
             transcript: record.segments == nil ? record.transcript : nil,
             attachments: (record.attachments ?? []).map { SessionExportJSON.Attachment(name: $0.name) },
             selectionSummaries: (record.selectionSummaries ?? []).map {
@@ -99,6 +99,7 @@ struct SessionExportJSON: Encodable {
     let deepSummary: String
     let notes: String
     let summaryInstructions: String?
+    let vocabularyDomainIDs: [String]?
     let segments: [Segment]
     /// Only for conversations saved before lines were kept one by one.
     let transcript: String?
@@ -108,6 +109,7 @@ struct SessionExportJSON: Encodable {
     enum CodingKeys: String, CodingKey {
         case schema, version, id, title, date, language, languages, hasTimestamps, duration, speakers
         case summary, quickSummary, deepSummary, notes, segments, transcript, attachments, selectionSummaries
+        case summaryInstructions, vocabularyDomainIDs
     }
 
     func encode(to encoder: Encoder) throws {
@@ -126,6 +128,8 @@ struct SessionExportJSON: Encodable {
         try container.encode(quickSummary, forKey: .quickSummary)
         try container.encode(deepSummary, forKey: .deepSummary)
         try container.encode(notes, forKey: .notes)
+        try container.encodeIfPresent(summaryInstructions, forKey: .summaryInstructions)
+        try container.encodeIfPresent(vocabularyDomainIDs, forKey: .vocabularyDomainIDs)
         try container.encode(segments, forKey: .segments)
         try container.encodeIfPresent(transcript, forKey: .transcript)
         try container.encode(attachments, forKey: .attachments)

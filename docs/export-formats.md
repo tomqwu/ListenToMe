@@ -107,6 +107,8 @@ only for a change that is not purely additive, so a reader should accept unknown
 | `hasTimestamps` | boolean | Whether any segment carries `start`/`end` |
 | `duration` | number or `null` | Recorded seconds: each recording's span from its first timed line's start to its last one's end, added up |
 | `speakers` | array | `{ "name", "source", "id"? }` in order of first speech; `source` is `"you"` (microphone) or `"others"` (system audio); `id` is the speaker-identification ID when there is one |
+| `vocabularyDomainIDs` | optional string array | Preset IDs added to this conversation; excludes device-wide defaults and My terms. Missing in older records |
+| `summaryInstructions` | optional string | Saved instructions for summaries, when present |
 | `summary`, `quickSummary`, `deepSummary`, `notes` | string | Empty when absent. `deepSummary` is the Mac's Deep pane; iPhone has no Deep tab since 1.15.0 (#235), so there it is only an **Earlier deep analysis** saved before then |
 | `segments` | array | `{ "speaker", "source", "text", "start"?, "end"?, "speakerID"?, "originalText"?, "language"? }`; times in seconds (millisecond precision) on the conversation's timeline, present only for timed lines; `originalText` is the recognizer's wording before an opt-in speech correction; `language` is the BCP-47 tag the line was recognized in, when the app kept it (iPhone) |
 | `transcript` | string | Only for a conversation saved before segments were kept |
