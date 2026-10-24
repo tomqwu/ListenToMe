@@ -14,15 +14,22 @@ public struct SessionRecord: Sendable, Equatable, Identifiable, Codable {
     public let isComplete: Bool?
     public let attachments: [SessionAttachment]?
     public let sourceImportID: String?
+    /// The BCP-47 language the latest recording was transcribed in (issue #206). `nil` for records saved
+    /// before it was kept, or for a conversation that was never transcribed; see `ConversationLanguages`.
+    public let language: String?
+    /// Every language the conversation was transcribed in, in order of first use.
+    public let languages: [String]?
     public init(id: String, title: String, date: Date, transcript: String, summary: String,
                 segments: [TranscriptSegment]? = nil, notes: String? = nil,
                 quickSuggestion: String? = nil, deepAnswer: String? = nil, isComplete: Bool? = nil,
-                attachments: [SessionAttachment]? = nil, sourceImportID: String? = nil) {
+                attachments: [SessionAttachment]? = nil, sourceImportID: String? = nil,
+                language: String? = nil, languages: [String]? = nil) {
         self.id = id; self.title = title; self.date = date
         self.transcript = transcript; self.summary = summary
         self.segments = segments; self.notes = notes
         self.quickSuggestion = quickSuggestion; self.deepAnswer = deepAnswer; self.isComplete = isComplete
         self.attachments = attachments; self.sourceImportID = sourceImportID
+        self.language = language; self.languages = languages
     }
 }
 

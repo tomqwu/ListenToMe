@@ -19,8 +19,7 @@ struct MacVaultSettings: View {
                 if vault.isFailing || !vault.unsavedIDs.isEmpty {
                     // The conversation being recorded is skipped (`activeRecordingID`).
                     Button("Retry") {
-                        vault.retry(history: SessionStore().all(),
-                                    language: ProviderSettings.transcriptionLocale().identifier)
+                        vault.retry(history: SessionStore().all())
                     }.disabled(!vault.hasFolder)
                 }
             }
@@ -50,6 +49,6 @@ extension MeetingView {
     func retryVaultNotesAtLaunch() {
         let vault = MarkdownVaultSync.shared
         guard vault.enabled, !vault.unsavedIDs.isEmpty else { return }
-        vault.retry(history: sessionStore.all(), language: ProviderSettings.transcriptionLocale().identifier)
+        vault.retry(history: sessionStore.all())
     }
 }

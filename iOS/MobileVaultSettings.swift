@@ -31,13 +31,11 @@ struct MobileVaultSettings: View {
                     .accessibilityIdentifier("saveToFolderStatus")
                 if vault.isFailing || !vault.unsavedIDs.isEmpty {
                     Button("Retry") {
-                        vault.retry(history: session.history, language: session.conversationLanguage,
-                                    excluding: session.vaultRecordingID)
+                        vault.retry(history: session.history, excluding: session.vaultRecordingID)
                     }.disabled(!vault.hasFolder).accessibilityIdentifier("retrySaveToFolder")
                 }
                 Button("Save all conversations now") {
-                    vault.saveAll(session.history, language: session.conversationLanguage,
-                                  excluding: session.vaultRecordingID)
+                    vault.saveAll(session.history, excluding: session.vaultRecordingID)
                 }.disabled(!vault.hasFolder || session.history.isEmpty)
             }
         } header: { Text("Save to folder") } footer: {

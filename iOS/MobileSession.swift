@@ -182,10 +182,12 @@ final class MobileSession {
             || !quickSummary.isEmpty || !deepThought.isEmpty || !attachments.isEmpty
     }
     var allSegments: [TranscriptSegment] { segments + (partial.map { [$0] } ?? []) }
-    var markdown: String {
-        let text = SessionExporter.markdown(title: title, transcript: allSegments, notes: notes, listenerSummary: summary,
-                                            quickSuggestion: quickSummary, deepAnswer: deepThought)
-        return text + (attachments.isEmpty ? "" : "\n## Attachments\n" + attachments.map { "- \($0.name)" }.joined(separator: "\n"))
+    /// The open conversation as it is saved, and as every export formats it (#130), in its languages (#206).
+    var currentRecord: SessionRecord {
+        withConversationLanguages(SessionRecord(id: id, title: title, date: date,
+            transcript: Self.transcriptText(for: allSegments), summary: summary, segments: allSegments, notes: notes,
+            quickSuggestion: quickSummary, deepAnswer: deepThought, isComplete: state == .idle
+                && allSegments.allSatisfy(\.isFinal), attachments: attachments, sourceImportID: sourceImportID))
     }
     var summaryAvailability: String? { summaryAvailability(for: .summary) }
     var automaticQuickAvailability: String? {
@@ -695,12 +697,7 @@ extension MobileSession {
     func save(announce: Bool = true) -> Bool {
         pendingSave?.cancel()
         pendingSave = nil
-        let record = SessionRecord(id: id, title: title, date: date,
-                                   transcript: Self.transcriptText(for: allSegments),
-                                   summary: summary, segments: allSegments, notes: notes,
-                                   quickSuggestion: quickSummary, deepAnswer: deepThought,
-                                   isComplete: state == .idle && allSegments.allSatisfy(\.isFinal),
-                                   attachments: attachments, sourceImportID: sourceImportID)
+        let record = currentRecord
         do {
             let data = try JSONEncoder().encode(record)
             guard data != lastSavedData else {

@@ -120,8 +120,9 @@ final class MobileVaultQueueTests: XCTestCase {
 
     func testSaveAllAndRetrySkipTheRecordingConversationAndKeepTheLanguage() async throws {
         let vault = makeVault()
-        let recording = record("Recording"), done = record("Done")
-        vault.saveAll([recording, done], language: "fr_FR", excluding: recording.id)
+        // Each note carries its own conversation's language (issue #206), not today's setting.
+        let recording = record("Recording"), done = record("Done").recording(language: "fr_FR")
+        vault.saveAll([recording, done], excluding: recording.id)
         try await settle(vault)
         let names = try notes()
         XCTAssertEqual(names.count, 1)

@@ -109,20 +109,21 @@ final class MarkdownVaultSync {
 
     /// Queues the conversation's note. Callers skip this while recording: notes are written at
     /// Stop, Save and when a summary or edit changes a stopped conversation.
-    func save(_ record: SessionRecord, language: String? = nil, startedAt: Date? = nil) {
+    /// The note's language is the one kept on the record (issue #206), never today's setting.
+    func save(_ record: SessionRecord, startedAt: Date? = nil) {
         guard enabled else { return }
-        pending[record.id] = MarkdownVault.note(for: record, language: language, startedAt: startedAt)
+        pending[record.id] = MarkdownVault.note(for: record, startedAt: startedAt)
         markUnsaved(record.id, true)
         guard writer != nil else { status = .needsFolder; return }
         drain()
     }
 
     /// Writes every conversation in History, for a folder chosen after conversations already exist.
-    /// `language` is the one ordinary saves use, so the front matter does not change between them.
-    func saveAll(_ records: [SessionRecord], language: String? = nil, excluding: String? = nil) {
+    /// Each note carries its own conversation's language, as ordinary saves do.
+    func saveAll(_ records: [SessionRecord], excluding: String? = nil) {
         guard enabled else { return }
         for record in records where pending[record.id] == nil && !isRecording(record.id, excluding) {
-            pending[record.id] = MarkdownVault.note(for: record, language: language)
+            pending[record.id] = MarkdownVault.note(for: record)
             markUnsaved(record.id, true)
         }
         guard writer != nil else { status = .needsFolder; return }
@@ -130,11 +131,11 @@ final class MarkdownVaultSync {
     }
 
     /// Tries the waiting notes again. Notes that were waiting before a relaunch come back from History.
-    func retry(history: [SessionRecord], language: String? = nil, excluding: String? = nil) {
+    func retry(history: [SessionRecord], excluding: String? = nil) {
         guard enabled else { return }
         for record in history where unsavedIDs.contains(record.id) && pending[record.id] == nil
             && !isRecording(record.id, excluding) {
-            pending[record.id] = MarkdownVault.note(for: record, language: language)
+            pending[record.id] = MarkdownVault.note(for: record)
         }
         // A conversation deleted from History since cannot be written any more.
         let recording = [excluding, activeRecordingID].compactMap { $0 }

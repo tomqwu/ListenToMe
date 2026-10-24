@@ -16,6 +16,8 @@ does not show it again, and a fresh install does not see it at all; see
 - Apple Watch companion, remote Start/Stop for the iPhone recorder (not yet shipped; ships with watch recording on the #181 train). (#181)
 - iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
 - Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
+- Export as (More, and a History row's context menu) saves the conversation as a Markdown, plain-text, SRT or WebVTT subtitle, or JSON file through the share sheet, named after its title and date. Markdown, text and subtitles carry the recording's `[mm:ss]` / cue times, including Apple Watch recordings; subtitles name speakers when more than one person talks and split long lines. The JSON format is versioned and documented. (#130)
+- Each conversation keeps the language it was actually transcribed in, including an Automatic switch and its Undo; Save to folder notes and exports use it instead of the current language setting, and a conversation that changed language lists both. (#206)
 
 ## iOS 1.14.0 (31) — 2026-10-23
 
@@ -46,6 +48,9 @@ does not show it again, and a fresh install does not see it at all; see
 - Model prompts fence transcript, notes and reference text as data. (#140)
 
 ## macOS (unreleased since 1.4.4)
+
+- Export adds plain text, SRT and WebVTT subtitles and versioned JSON beside Markdown, recap and PDF, in the top bar and in a History conversation's detail sheet (which gains recap and PDF too). Files are named after the conversation's title and date instead of the clock time. With WhisperKit, exports carry `[mm:ss]` timestamps and subtitle cues; the default SpeechAnalyzer reports no times yet (#68), so its exports omit them and subtitles are unavailable. (#130)
+- Save to folder notes record the language the conversation was transcribed in, kept with the conversation, instead of the current setting; Retry and Save all use each conversation's own. (#206)
 
 - New AI mode **Cloud AI service**: OpenAI, Anthropic Claude, Google Gemini, DeepSeek, OpenRouter, Groq, Mistral or xAI Grok with your own API key (Check key lists the vendor's models; Get a key and privacy-policy links). Each service is labelled "Sends your transcript to <vendor>", keeps its own Keychain key sent only to that vendor, and pane pickers list its models without ever picking one. Claude uses Anthropic's own Messages API. (#214)
 - New AI mode **OpenAI-compatible**: point the panes at LM Studio, vLLM, llama.cpp, Ollama's /v1 API or OpenRouter with an optional Keychain key bound to that server; pane pickers list its /v1/models and never pick one for you; labelled "your server" or "may leave this device", never local; redirects are not followed. Plain http to `.local` names now works. (#52)

@@ -3,8 +3,8 @@ import XCTest
 
 final class SessionExporterTests: XCTestCase {
     private let transcript = [
-        TranscriptSegment(source: .others, text: "Can you ship Friday?", isFinal: true, start: 0, end: 1),
-        TranscriptSegment(source: .you, text: "Yes, with the hotfix.", isFinal: true, start: 1, end: 2)
+        TranscriptSegment(source: .others, text: "Can you ship Friday?", isFinal: true, start: 0, end: 0),
+        TranscriptSegment(source: .you, text: "Yes, with the hotfix.", isFinal: true, start: 0, end: 0)
     ]
 
     func testIncludesTitleAndSpeakerLabeledTranscript() {
@@ -80,5 +80,17 @@ final class SessionExporterTests: XCTestCase {
         XCTAssertFalse(recap.contains("## Transcript"))
         XCTAssertFalse(recap.contains("- **Others:** Can you ship Friday?"))
         XCTAssertFalse(recap.contains("- **You:** Yes, with the hotfix."))
+    }
+
+    /// Issue #130: lines their engine timed carry `[mm:ss]`; a line without a time in the same
+    /// conversation gets none rather than an invented `[00:00]`.
+    func testTimedLinesCarryTimestampsAndUntimedOnesDoNot() {
+        let mixed = [
+            TranscriptSegment(source: .others, text: "Timed", isFinal: true, start: 75, end: 78),
+            TranscriptSegment(source: .you, text: "Typed", isFinal: true, start: 0, end: 0)
+        ]
+        let md = SessionExporter.markdown(title: "S", transcript: mixed)
+        XCTAssertTrue(md.contains("- [01:15] **Others:** Timed\n- **You:** Typed"), md)
+        XCTAssertFalse(SessionExporter.markdown(title: "S", transcript: mixed, timestamps: false).contains("[01:15]"))
     }
 }
