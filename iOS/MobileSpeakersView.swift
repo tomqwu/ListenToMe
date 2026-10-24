@@ -18,7 +18,8 @@ struct MobileSpeakerSettings: View {
                 .disabled(session.state != .idle)
                 .accessibilityIdentifier("identifySpeakersToggle")
             Text("Labels transcript lines Speaker 1, Speaker 2… so you can rename them in Notes. Runs on this "
-                 + "device; audio is not saved or sent. While this is on, speaker models download once from "
+                 + "device; audio is never sent and is kept only when Save audio recordings is on. "
+                 + "While this is on, speaker models download once from "
                  + "huggingface.co, before your first recording needs them. Uses more battery while listening.")
                 .font(.footnote).foregroundStyle(.secondary)
                 .accessibilityIdentifier("identifySpeakersExplanation")

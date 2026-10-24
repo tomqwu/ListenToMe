@@ -14,6 +14,7 @@ does not show it again, and a fresh install does not see it at all; see
 ## iOS (unreleased since 1.15.0 (32))
 
 - Prompt below Notes supports one-time Ask, saved summary instructions, and editable domain presets. Instructions stay with each conversation and apply to manual and automatic summaries. (#257)
+- Transcription and speaker Settings correctly explain that audio is kept only when Save audio recordings is enabled, and is never sent. (#251)
 
 - Release workflow now requires fresh screenshots across supported device categories, with source provenance and App Store Connect screenshot verification before submission. (#255)
 

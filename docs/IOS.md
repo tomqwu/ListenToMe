@@ -1375,3 +1375,4 @@ conversation. All seven presets remain available in the menu. Existing conversat
 questions can also fill the Ask draft. Requests and saved instructions are limited to 1,000 characters.
 Mac History can reopen modern saved conversations after capture/import stops; the current conversation
 must first be saved. Older records without structured transcript lines remain readable/exportable.
+Settings Transcription and Speakers descriptions explicitly explain opt-in saved audio; audio is never sent for transcription or speaker identification (#251).
