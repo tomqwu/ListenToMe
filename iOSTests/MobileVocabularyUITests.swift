@@ -91,6 +91,14 @@ final class MobileVocabularyUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Stop listening"].exists)
         capture(app, "Chinese vocabulary reaches the live recognizer")
         app.buttons["Stop listening"].tap()
+        app.buttons["More"].tap()
+        app.buttons["Settings"].tap()
+        let link = app.buttons["vocabularySettings"]
+        revealSettingsControl(link, in: app.collectionViews["aiSettingsForm"])
+        link.tap()
+        XCTAssertTrue(app.staticTexts["preset-detail-medical"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["preset-detail-medical"].label.hasPrefix("60 terms"))
+        capture(app, "Chinese preset description and term count")
     }
 
     func testDontSuggestAgainMutesThePreset() {

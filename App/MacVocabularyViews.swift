@@ -116,7 +116,9 @@ private struct FlowButtons: View {
 /// choices when Settings closes.
 struct MacVocabularySettings: View {
     private let store = VocabularySettingsStore()
-    private let catalog = VocabularyCatalog.bundled
+    private var catalog: VocabularyCatalog {
+        VocabularyCatalog.bundled.localized(for: ProviderSettings.transcriptionLocale().identifier)
+    }
     @State private var settings = VocabularySettingsStore().load()
     @State private var newTerm = ""
     @State private var problem: String?
