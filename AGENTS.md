@@ -157,9 +157,10 @@ production-app recovery and verification procedure in `docs/manual-smoke-test.md
 ## Dev app cleanup after testing
 
 After each completed macOS Dev-app testing session, preserve its screenshots, logs and source/signing
-provenance, then close the test app and move its temporary `.app` bundles to Trash. Confirm each
-bundle's `CFBundleIdentifier` is exactly `com.tomwu.ListenToMe.dev` before removal. Check for other
-running Dev sessions and unsaved work before closing or removing their app; do not interrupt them.
+provenance. Check for other running Dev sessions and unsaved work before closing or removing an
+app; do not interrupt them. Then close the completed test session's app and move its temporary `.app`
+bundles to Trash. Confirm each bundle's `CFBundleIdentifier` is exactly `com.tomwu.ListenToMe.dev`
+before removal.
 
 The maintainer authorizes cleanup of the Dev app's permissions after testing (2026-10-24):
 `tccutil reset All com.tomwu.ListenToMe.dev`. This is an app-scoped

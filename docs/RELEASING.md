@@ -84,8 +84,8 @@ by repeatedly resetting permissions during a test session.
 At the end of each macOS Dev testing session:
 
 1. Preserve screenshots, logs, source revision and signing evidence outside disposable build folders.
-2. Close the test app. Check for other running Dev sessions and unsaved work; leave those intact and
-   record the exception rather than interrupting another session.
+2. Check for other running Dev sessions and unsaved work before closing anything. Leave those
+   intact and record the exception; close only the completed test session's app.
 3. Move the inactive temporary Dev `.app` bundles to Trash, verifying `CFBundleIdentifier` is exactly
    `com.tomwu.ListenToMe.dev`. Keep a manifest of original and Trash paths when cleaning multiple copies.
 4. Reset only that Dev bundle's permissions with `tccutil reset All com.tomwu.ListenToMe.dev` and
