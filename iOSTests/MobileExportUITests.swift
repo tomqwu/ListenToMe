@@ -24,8 +24,9 @@ final class MobileExportUITests: XCTestCase {
         XCTAssertFalse(app.buttons["Subtitles (WebVTT)"].exists)
 
         app.buttons["JSON"].tap()
+        // The share sheet's header shows the file name as its caption (an `Other` element).
         let name = NSPredicate(format: "label BEGINSWITH 'Conversation ' AND label ENDSWITH '.json'")
-        let named = app.staticTexts.matching(name).firstMatch
+        let named = app.descendants(matching: .any).matching(name).firstMatch
         XCTAssertTrue(named.waitForExistence(timeout: 15), "share sheet shows the file name: \(app.debugDescription)")
     }
 }

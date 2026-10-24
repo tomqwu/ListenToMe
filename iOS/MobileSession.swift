@@ -699,7 +699,7 @@ extension MobileSession {
         pendingSave = nil
         let record = currentRecord
         do {
-            let data = try JSONEncoder().encode(record)
+            let data = try Self.stableEncoder.encode(record)
             guard data != lastSavedData else {
                 if announce { message = "Conversation saved on this device." }
                 return true

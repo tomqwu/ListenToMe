@@ -28,6 +28,14 @@ extension MobileSession {
     /// Export the chosen saved record without opening it or changing the active conversation.
     static func markdown(for record: SessionRecord) -> String { SessionExporter.markdown(for: record) }
 
+    /// Encodes the active snapshot with sorted keys, so an unchanged conversation always produces the
+    /// same bytes and `save()` can skip rewriting it (dictionary-backed key order otherwise varies).
+    static let stableEncoder: JSONEncoder = {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        return encoder
+    }()
+
     // MARK: The conversation's own languages (issue #206)
 
     /// `record` with the languages this conversation was transcribed in: what it was saved with, plus
