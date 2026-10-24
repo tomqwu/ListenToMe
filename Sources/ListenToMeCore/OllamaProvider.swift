@@ -61,13 +61,14 @@ public struct OllamaProvider: LLMProvider {
     /// Live initializer that talks to a real Ollama server over HTTP.
     public init(model: String, baseURL: URL = URL(string: "http://localhost:11434")!,
                 apiKey: String? = nil, urlSession: URLSession = .shared, localOnly: Bool = false,
-                options: OllamaGenerationOptions = .init()) {
+                options: OllamaGenerationOptions = .init(), manageContext: Bool = false) {
         self.init(model: model, baseURL: baseURL,
                   lineSource: Self.makeLiveLineSource(
-                    model: model, baseURL: baseURL, apiKey: apiKey, session: urlSession, localOnly: localOnly, options: options))
+                    model: model, baseURL: baseURL, apiKey: apiKey, session: urlSession, localOnly: localOnly, options: options, manageContext: manageContext))
     }
 
-    public static func requestBody(model: String, request: LLMRequest, options: OllamaGenerationOptions = .init()) -> Data {
+    public static func requestBody(model: String, request: LLMRequest, options: OllamaGenerationOptions = .init(),
+                                   context: OllamaContextWindow.Allocation? = nil) -> Data {
         let options = request.purpose == .quickEvaluation
             ? OllamaGenerationOptions(thinking: false, temperature: 0, maximumTokens: 3072) : options
         var messages: [[String: String]] = [["role": "system", "content": request.system]]
@@ -77,6 +78,10 @@ public struct OllamaProvider: LLMProvider {
         var generation: [String: Any] = [:]
         if let temperature = options.temperature { generation["temperature"] = temperature }
         if let maximumTokens = options.maximumTokens { generation["num_predict"] = maximumTokens }
+        if let context {
+            generation["num_ctx"] = context.contextTokens
+            generation["num_predict"] = context.outputTokens
+        }
         if !generation.isEmpty { body["options"] = generation }
         return (try? JSONSerialization.data(withJSONObject: body)) ?? Data()
     }
@@ -131,7 +136,7 @@ public struct OllamaProvider: LLMProvider {
 
     private static func makeLiveLineSource(
         model: String, baseURL: URL, apiKey: String? = nil, session: URLSession, localOnly: Bool,
-        options: OllamaGenerationOptions
+        options: OllamaGenerationOptions, manageContext: Bool
     ) -> @Sendable (LLMRequest) -> AsyncThrowingStream<String, Error> {
         return { request in
             AsyncThrowingStream { continuation in
@@ -142,19 +147,35 @@ public struct OllamaProvider: LLMProvider {
                         : session
                     defer { if localOnly { transport.invalidateAndCancel() } }
                     do {
-                        if localOnly {
-                            guard ["localhost", "127.0.0.1", "::1"].contains(baseURL.host ?? "") else {
+                        var context: OllamaContextWindow.Allocation?
+                        if localOnly || manageContext {
+                            if localOnly && !["localhost", "127.0.0.1", "::1"].contains(baseURL.host ?? "") {
                                 throw OllamaStreamError.server("Local-only mode requires a local Ollama server.")
                             }
                             var check = URLRequest(url: baseURL.appendingPathComponent("api/show"))
                             check.httpMethod = "POST"; check.timeoutInterval = 10
                             check.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                            if let apiKey, !apiKey.isEmpty { check.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization") }
                             check.httpBody = try JSONSerialization.data(withJSONObject: ["model": model])
                             let (metadata, response) = try await transport.data(for: check)
-                            guard (response as? HTTPURLResponse)?.statusCode == 200,
-                                  ModelPrivacy.isVerifiedLocal(metadata) else {
+                            guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+                                throw OllamaStreamError.server("Could not read Ollama model metadata before sizing its context window.")
+                            }
+                            if localOnly && !ModelPrivacy.isVerifiedLocal(metadata) {
                                 throw OllamaStreamError.server("This model could not be verified as local. " +
                                     "Choose a downloaded local model or explicitly enable Cloud in Settings.")
+                            }
+                            let modelInfo = try? JSONSerialization.jsonObject(with: metadata) as? [String: Any]
+                            let explicitlyRemote = ["remote_host", "remote_model"].contains {
+                                !((modelInfo?[$0] as? String) ?? "").isEmpty
+                            }
+                            if !ModelPrivacy.isVerifiedLocal(metadata) && !explicitlyRemote {
+                                throw OllamaStreamError.server("Ollama model metadata is incomplete. " +
+                                    "Refresh or update the model before retrying; no answer request was sent.")
+                            }
+                            if ModelPrivacy.isVerifiedLocal(metadata) {
+                                context = try OllamaContextWindow.allocate(metadata: metadata, request: request,
+                                    maximumTokens: request.purpose == .quickEvaluation ? 3_072 : options.maximumTokens)
                             }
                         }
                         var urlRequest = URLRequest(url: baseURL.appendingPathComponent("api/chat"))
@@ -164,7 +185,7 @@ public struct OllamaProvider: LLMProvider {
                         if let apiKey, !apiKey.isEmpty {
                             urlRequest.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
                         }
-                        urlRequest.httpBody = requestBody(model: model, request: request, options: options)
+                        urlRequest.httpBody = requestBody(model: model, request: request, options: options, context: context)
                         let (bytes, response) = try await transport.bytes(for: urlRequest)
                         if let http = response as? HTTPURLResponse,
                            !(200...299).contains(http.statusCode) {

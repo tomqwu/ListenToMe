@@ -253,6 +253,14 @@ final class SharedQuickLoopTests: XCTestCase {
         await session.ingest(.init(source: .others, text: "Why is Azure slow today?", isFinal: true, start: 0, end: 1))
         for _ in 0..<200 where session.automaticReviews.activeMode != .summary { try await Task.sleep(for: .milliseconds(5)) }
         XCTAssertEqual(session.automaticReviews.activeMode, .summary)
+        // activeMode is set before the provider stream is opened. Wait for the held request itself,
+        // otherwise release() races stream setup on a busy local or CI runner.
+        for _ in 0..<1_000 {
+            if await reviews.requestCount() > 0 { break }
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        let startedRequests = await reviews.requestCount()
+        XCTAssertEqual(startedRequests, 1)
         // Type into Notes while the review is in flight: it must neither cancel nor un-count it.
         session.notes = "Ask about the budget"
         XCTAssertEqual(session.automaticReviews.activeMode, .summary, "A notes keystroke must not cancel it")
