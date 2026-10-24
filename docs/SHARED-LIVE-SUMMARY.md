@@ -9,7 +9,7 @@ The common contract batches pending speech for five seconds. Non-final hypothese
 at 24 trimmed characters; shorter fragments wait for more speech or final recognition. Unchanged
 input does not poll. Failed reads keep previous output and retry with bounded backoff.
 A valid evaluation keeps or replaces Quick and recommends Summary/Deep with qualitative
-confidence. Medium/high recommendations enqueue the corresponding full review while Auto is on; low confidence stays manual. Transcript revisions replace previous
+confidence (iOS acts on Summary only; see below). Medium/high recommendations enqueue the corresponding full review while Auto is on; low confidence stays manual. Transcript revisions replace previous
 wording. Duplicate final segment IDs use their latest revision. Stop, Auto off and provider
 changes cancel obsolete work. Auto is opt-in on both platforms.
 
@@ -151,7 +151,7 @@ Physical-device diagnostics showed three completed reads, no unread input and no
 
 ## Automatic full reviews (iOS 1.10.0)
 
-`AutomaticReviewCoordinator` is shared by both platforms. After a completed Quick evaluation catches up with input, medium/high recommendations enqueue Summary for meaningful context and Deep for substantive questions, risks or tradeoffs. Each uses its selected model. Auto remains opt-in and manual Generate remains available.
+`AutomaticReviewCoordinator` is shared by both platforms. After a completed Quick evaluation catches up with input, medium/high recommendations enqueue Summary for meaningful context and Deep for substantive questions, risks or tradeoffs. Each uses its selected model. Auto remains opt-in and manual Generate remains available. iOS has no Deep pane (#235): its coordinator is created with `modes: [.summary]`, so on iOS Auto evaluates Quick and runs Summary only, and the evaluator's Deep recommendation (the prompt is shared and still asks for it) is ignored rather than queued.
 
 Full reviews run serially while Quick can continue evaluating new speech. Summary has a 30-second minimum between a completed review and the next automatic start, Deep 60 seconds; the first eligible review starts immediately, and a cancelled attempt does not spend that window. Pending work coalesces to the latest context. These are one-shot deadlines for queued work, never periodic model polling. Unchanged input cannot regenerate a completed review.
 
@@ -470,8 +470,8 @@ A tap sends the literal text — never automatically:
   a manual Deep answer, because the macOS Deep pane is an answer pane that every fixed Deep action
   already writes into.
 - **iOS** has no free-form Quick answer, so a tap is a separate ask (`MobileSuggestedAsk`) to the
-  Quick model, answered in a small Ask card under Quick Summary (not in Deep, whose tab is being
-  removed, #235): `MobileSession.askSystem` (the copilot prompt plus `PromptData.notice`) over an
+  Quick model, answered in a small Ask card under Quick Summary (iOS has no Deep tab since
+  #235): `MobileSession.askSystem` (the copilot prompt plus `PromptData.notice`) over an
   `OnDemandGrounding.excerpt` sized by `oneShotBudget` for the provider's window, then
   `PromptBuilder.askInstruction`, so a long conversation is answered from what fits, like any
   on-demand answer (#114). It is not a summary: `quickSummary`, `deepThought`, the saved record,

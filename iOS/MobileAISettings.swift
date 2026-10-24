@@ -22,9 +22,6 @@ final class MobileAISettings {
     var quickModel: String {
         didSet { UserDefaults.standard.set(quickModel, forKey: "mobileOllamaQuickModel"); quickSettingsChanged?() }
     }
-    var deepModel: String {
-        didSet { UserDefaults.standard.set(deepModel, forKey: "mobileOllamaDeepModel"); quickSettingsChanged?() }
-    }
     var correctTranscript: Bool {
         didSet {
             UserDefaults.standard.set(correctTranscript, forKey: "mobileCorrectTranscript")
@@ -89,7 +86,7 @@ final class MobileAISettings {
         let savedModel = UserDefaults.standard.string(forKey: "mobileOllamaModel") ?? ""
         model = savedModel
         quickModel = UserDefaults.standard.string(forKey: "mobileOllamaQuickModel") ?? savedModel
-        deepModel = UserDefaults.standard.string(forKey: "mobileOllamaDeepModel") ?? savedModel
+        // An older build's "mobileOllamaDeepModel" is left alone and never read: iOS has no Deep (#235).
         correctTranscript = UserDefaults.standard.bool(forKey: "mobileCorrectTranscript")
         correctionModel = UserDefaults.standard.string(forKey: "mobileCorrectionModel") ?? ""
         if let value = UserDefaults.standard.string(forKey: "mobileOllamaCatalog"),
@@ -220,7 +217,6 @@ final class MobileAISettings {
         switch mode {
         case .summary: return model
         case .quick: return quickModel
-        case .deep: return deepModel
         }
     }
 
@@ -229,7 +225,7 @@ final class MobileAISettings {
     func models(for role: MobileSummaryMode) -> [OllamaCloudModel] {
         if provider == .openAI { return openAI.models.map { OllamaCloudModel(name: $0) } }
         if provider == .cloud { return cloud.models.map { OllamaCloudModel(name: $0) } }
-        return role == .deep ? models.filter { !Self.isFlash($0.name) } : models
+        return models
     }
 
     func resolveRoleModels() {
@@ -244,25 +240,14 @@ final class MobileAISettings {
             quickModel = recent.first(where: { $0.family == "glm" && Self.isFlash($0.name) })?.name
                 ?? recent.first(where: { Self.isFlash($0.name) })?.name ?? model
         }
-        if deepModel.isEmpty || Self.isFlash(deepModel) {
-            let family = OllamaCloudModel(name: deepModel).family
-            deepModel = full.first(where: { $0.family == family && $0.name.lowercased().contains("pro") })?.name
-                ?? full.first(where: { $0.family == family })?.name
-                ?? full.first(where: { $0.name.lowercased().contains("pro") })?.name ?? full.first?.name ?? ""
-        }
     }
 
     func selectModel(_ value: String, for mode: MobileSummaryMode) {
         if provider == .openAI { openAI.selectModel(value, for: mode); return }
         if provider == .cloud { cloud.selectModel(value, for: mode); return }
-        guard mode != .deep || !Self.isFlash(value) else {
-            status = "Deep Summary needs a full model. Flash models are available for Quick Summary."
-            return
-        }
         switch mode {
         case .summary: model = value
         case .quick: quickModel = value
-        case .deep: deepModel = value
         }
     }
 
@@ -272,7 +257,6 @@ final class MobileAISettings {
         if provider == .openAI { return openAI.availability(for: mode) }
         if provider == .cloud { return cloud.availability(for: mode) }
         let model = selectedModel(for: mode)
-        if mode == .deep && (model.isEmpty || Self.isFlash(model)) { return "Choose a full model for Deep Summary." }
         if !hasKey && !usesCustomEndpoint { return "Add your Ollama API key in Settings." }
         if model.isEmpty { return "Refresh models and choose a model in Settings." }
         if !models.isEmpty && !models.contains(where: { $0.name == model }) {
@@ -285,9 +269,6 @@ final class MobileAISettings {
         if provider == .openAI { return try openAI.client(for: mode, transports: transports) }
         if provider == .cloud { return try cloud.client(for: mode, transports: transports) }
         let model = selectedModel(for: mode)
-        if mode == .deep && (model.isEmpty || Self.isFlash(model)) {
-            throw RecordingError.message("Choose a full model for Deep Summary. Flash models cannot be used for this role.")
-        }
         let endpoint = resolvedBaseURL
         let key = try apiKey(forEndpoint: endpoint)
         guard !key.isEmpty || usesCustomEndpoint else {

@@ -2,22 +2,25 @@ import XCTest
 
 @MainActor
 final class MobileWorkspaceUITests: XCTestCase {
-    func testDeepModelMigrationIsVisibleAndChooserExcludesFlash() {
+    /// Issue #235: a Deep model an older build saved is harmless; there is no Deep pane to use it.
+    func testAnOldDeepModelSettingIsHarmlessAndNoDeepPaneExists() {
         let app = XCUIApplication()
         let catalog = "[{\"name\":\"glm-5.3-flash\"},{\"name\":\"glm-5.3\"},{\"name\":\"deepseek-v4-pro:0813\"}]"
         app.launchArguments = ["-mobileAIProvider", "ollama", "-mobileOllamaCatalog", Data(catalog.utf8).base64EncodedString(),
-                               "-mobileOllamaDeepModel", "glm-5.3-flash", "-mobileOllamaQuickModel", "glm-5.3-flash"]
+                               "-mobileOllamaDeepModel", "glm-5.3-flash", "-mobileOllamaQuickModel", "glm-5.3-flash",
+                               "-mobileOllamaModel", "glm-5.3"]
         app.launchPastReleaseNotes()
         if app.segmentedControls["workspaceTabs"].exists {
-            app.segmentedControls["workspaceTabs"].buttons["Deep"].tap()
+            XCTAssertFalse(app.segmentedControls["workspaceTabs"].buttons["Deep"].exists)
+            app.segmentedControls["workspaceTabs"].buttons["Summary"].tap()
         }
-        let model = app.buttons["panel-model-deep"]
+        XCTAssertFalse(app.segmentedControls["reviewTabs"].exists)
+        XCTAssertFalse(app.buttons["panel-model-deep"].exists)
+        let model = app.buttons["panel-model-summary"]
         XCTAssertTrue(model.waitForExistence(timeout: 5))
         XCTAssertTrue(model.label.contains("glm-5.3"))
-        XCTAssertFalse(model.label.lowercased().contains("flash"))
         model.tap()
-        XCTAssertTrue(app.navigationBars["Deep Summary model"].waitForExistence(timeout: 5))
-        XCTAssertFalse(app.buttons["model-glm-5.3-flash"].exists)
+        XCTAssertTrue(app.navigationBars["Summary model"].waitForExistence(timeout: 5))
         let pro = app.buttons["model-deepseek-v4-pro:0813"].firstMatch
         let list = app.collectionViews["roleModelList"]
         for _ in 0..<5 where !pro.isHittable { list.swipeUp() }
@@ -25,13 +28,13 @@ final class MobileWorkspaceUITests: XCTestCase {
         pro.tap()
         app.buttons["Done"].tap()
         XCTAssertTrue(model.label.contains("deepseek-v4-pro:0813"))
-        capture(app, "Deep Summary full model")
+        capture(app, "Summary model with an old Deep setting")
     }
 
     func testReviewModesAndRecordingControlsStayAccessible() {
         let app = XCUIApplication(); app.launchPastReleaseNotes()
         if app.segmentedControls["workspaceTabs"].exists {
-            for (tab, role) in [("Live", "quick"), ("Summary", "summary"), ("Deep", "deep")] {
+            for (tab, role) in [("Live", "quick"), ("Summary", "summary")] {
                 app.segmentedControls["workspaceTabs"].buttons[tab].tap()
                 XCTAssertTrue(app.buttons["panel-model-\(role)"].isHittable)
                 XCTAssertTrue(app.buttons["Start listening"].isHittable)
@@ -42,13 +45,12 @@ final class MobileWorkspaceUITests: XCTestCase {
             XCTAssertTrue(app.otherElements["wideMeetingWorkspace"].exists)
             XCTAssertTrue(app.staticTexts["Live transcript"].isHittable)
             XCTAssertTrue(app.staticTexts["Quick Summary"].isHittable)
-            for (tab, role) in [("Summary", "summary"), ("Deep Summary", "deep")] {
-                app.segmentedControls["reviewTabs"].buttons[tab].tap()
-                XCTAssertTrue(app.buttons["panel-model-\(role)"].isHittable)
-                XCTAssertGreaterThan(app.buttons["panel-model-\(role)"].frame.minX,
-                                     app.buttons["panel-model-quick"].frame.maxX)
-                capture(app, "iPad \(tab)")
-            }
+            // Summary sits beside Live; there is no Deep pane to switch to (#235).
+            XCTAssertFalse(app.segmentedControls["reviewTabs"].exists)
+            XCTAssertTrue(app.buttons["panel-model-summary"].isHittable)
+            XCTAssertGreaterThan(app.buttons["panel-model-summary"].frame.minX,
+                                 app.buttons["panel-model-quick"].frame.maxX)
+            capture(app, "iPad Summary")
         }
     }
 

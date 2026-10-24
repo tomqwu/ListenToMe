@@ -33,7 +33,7 @@ macOS-only, and there is no Mac↔iOS sync. See
 [the version policy](docs/IOS.md#version-policy).
 
 The standalone iOS/iPadOS 26 app is the **ListenToMeIOS** target: microphone transcription, a live
-transcript with Quick Summary plus a Deep Think tab, context-aware suggested questions you can ask in one tap, local conversations with search, photo/file
+transcript with Quick Summary plus a Summary tab (Deep is macOS-only), context-aware suggested questions you can ask in one tap, local conversations with search, photo/file
 attachments, Apple Notes and share-sheet imports, calendar import with e-mail and join-link
 redaction, Markdown sharing, **Export as** Markdown, plain-text, SRT/WebVTT subtitle or JSON files with
 timestamps, and an opt-in **Save to folder** that writes each conversation as a

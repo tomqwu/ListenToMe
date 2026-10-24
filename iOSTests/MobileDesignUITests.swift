@@ -14,14 +14,24 @@ final class MobileDesignUITests: XCTestCase {
         }
         capture(app, "Branded Live workspace")
         if app.segmentedControls["workspaceTabs"].exists {
-            for tab in ["Summary", "Deep"] {
-                app.segmentedControls["workspaceTabs"].buttons[tab].tap()
-                capture(app, "Branded \(tab) workspace")
-            }
+            XCTAssertFalse(app.segmentedControls["workspaceTabs"].buttons["Deep"].exists, "No Deep tab on iOS (#235)")
+            app.segmentedControls["workspaceTabs"].buttons["Summary"].tap()
+            capture(app, "Branded Summary workspace")
         } else {
-            app.segmentedControls["reviewTabs"].buttons["Summary"].tap()
             capture(app, "Branded iPad Summary")
         }
+        // The fixture conversation was saved with a Deep analysis by an older version: read-only.
+        let earlier = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Earlier deep analysis")).firstMatch
+        for _ in 0..<5 where !earlier.isHittable { app.swipeUp() }
+        XCTAssertTrue(earlier.isHittable)
+        earlier.tap()
+        let earlierText = app.staticTexts["earlierDeepAnalysisText"]
+        XCTAssertTrue(earlierText.waitForExistence(timeout: 5))
+        for _ in 0..<5 where !earlierText.isHittable { app.swipeUp() }
+        XCTAssertTrue(earlierText.label.contains("Which feedback would change"))
+        XCTAssertFalse(app.buttons["Generate Deep Summary"].exists, "Nothing new is generated as Deep")
+        capture(app, "Earlier deep analysis, read-only")
+        for _ in 0..<5 where !app.buttons["Notes"].isHittable { app.swipeDown() }
         app.buttons["Notes"].tap()
         XCTAssertTrue(app.navigationBars["Notes"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["Import from Calendar"].exists)

@@ -5,14 +5,14 @@ Listen To Me brings live microphone transcription, editable notes and conversati
 CAPTURE AND ORGANIZE
 • Transcribe speech on-device with Apple's SpeechAnalyzer.
 • Optionally repair likely misheard words with a fast Flash model. Compare or restore each original.
-• See transcript, Quick Summary and Deep Summary together.
+• See the transcript and Quick Summary together, with a full Summary one tab away.
 • Add notes, photos and files, and give each conversation a title.
 • Import compatible copies from Apple Notes through the share extension, or add context from a selected calendar event.
 • Save conversations and reopen them from History. Search past conversations, swipe right to share, left to delete, or touch and hold for actions.
 • Share transcripts, notes and summaries as readable text or Markdown.
 
 CHOOSE HOW TO SUMMARIZE
-Choose a full Summary, a brief Quick Summary or a Deep Think analysis of decisions, risks and next steps. Each output is saved separately. Enable Auto Quick Summary for live updates while listening when the text changes, with a 15-second minimum interval between automatic requests. A visible status shows when Auto is off, waiting, updating or retrying. Apple Intelligence on a supported device is the default, or choose Ollama — Ollama Cloud with your own API key, or an Ollama server you run on your own network. Refresh the model list directly from Ollama and select a model for each mode from available models, including DeepSeek, GLM, Qwen and Kimi. Available models and variants depend on Ollama's current catalog.
+Choose a full Summary or a brief Quick Summary. Each output is saved separately. Enable Auto Quick Summary for live updates while listening when the text changes, with a 15-second minimum interval between automatic requests. A visible status shows when Auto is off, waiting, updating or retrying. Apple Intelligence on a supported device is the default, or choose Ollama — Ollama Cloud with your own API key, or an Ollama server you run on your own network. Refresh the model list directly from Ollama and select a model for each mode from available models, including DeepSeek, GLM, Qwen and Kimi. Available models and variants depend on Ollama's current catalog.
 
 YOU CONTROL CLOUD USE
 Microphone speech is transcribed on-device; raw audio is not saved. Conversations are stored locally with device data protection, and a setting keeps them out of iCloud and Finder backups. When you choose Ollama and generate an AI output or enable Auto Quick Summary, your notes and transcript are sent to the server shown in Settings: Ollama Cloud, or the server you entered yourself. Enabling AI speech correction separately sends new completed phrases and nearby transcript text to an independently selected Flash model. Original wording is kept for review and restore. Your API key is stored in this device's Keychain. An imported calendar event has join-link passcodes and e-mail addresses removed before it reaches your notes. The full privacy policy and support contact are linked in Settings.

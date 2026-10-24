@@ -12,7 +12,7 @@ extension MobileSession {
         vocabulary.recognitionTerms(for: id, heard: segments.suffix(200).map(\.text).joined(separator: " "))
     }
 
-    /// Session context for a manual Summary, Quick or Deep request: the domain, a glossary favoring
+    /// Session context for a manual Summary or Quick request: the domain, a glossary favoring
     /// terms heard recently, and (Summary only) the domain's headings. The on-device Apple model gets a
     /// smaller share, which `summarize` also charges against its transcript cap.
     func vocabularyGuidance(for mode: MobileSummaryMode, cloud: Bool) -> String? {
@@ -22,8 +22,8 @@ extension MobileSession {
             characterLimit: VocabularyPrompt.characterLimit(forPromptWindow: window), includeLayout: mode == .summary)
     }
 
-    /// Automatic Summary and Deep reviews carry the same context through their directives; only the
-    /// Summary review gets the domain's headings.
+    /// Automatic Summary reviews carry the same context, with the domain's headings, through their
+    /// directives (iOS runs no Deep, #235).
     var vocabularyDirectives: AutomaticReviewDirectives {
         AutomaticReviewDirectives(personaGuidance: VocabularyPrompt.guidance(for: activeVocabulary),
                                   summaryGuidance: VocabularyPrompt.layoutInstruction(for: activeVocabulary))

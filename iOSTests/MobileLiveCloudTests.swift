@@ -38,12 +38,12 @@ final class MobileLiveCloudTests: XCTestCase {
         guard fetched.waitForExistence(timeout: 60) else {
             XCTFail("Catalog refresh failed: \(app.staticTexts["ollamaStatus"].label)"); return
         }
-        for role in ["Summary", "Quick Summary", "Deep Summary"] {
-            let roleID = role == "Summary" ? "summary" : (role == "Quick Summary" ? "quick" : "deep")
+        for role in ["Summary", "Quick Summary"] {
+            let roleID = role == "Summary" ? "summary" : "quick"
             let choose = app.buttons["choose-model-\(roleID)"]
             reveal(choose, in: app, upwards: false)
             choose.tap()
-            let variant = role == "Deep Summary" ? "pro" : "flash"
+            let variant = role == "Summary" ? "pro" : "flash"
             let preferred = app.buttons.matching(NSPredicate(
                 format: "identifier BEGINSWITH %@ AND identifier CONTAINS %@", "model-", variant)).firstMatch
             let fallback = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "model-")).firstMatch
@@ -84,8 +84,8 @@ final class MobileLiveCloudTests: XCTestCase {
         XCTAssertTrue(full.waitForExistence(timeout: 180))
         outputs["Summary"] = full.label
         app.buttons["Done"].tap()
-        for mode in [("Quick Summary", "quick"), ("Deep Summary", "deep")] {
-            app.segmentedControls["workspaceTabs"].buttons[mode.1 == "quick" ? "Live" : "Deep"].tap()
+        for mode in [("Quick Summary", "quick")] {
+            app.segmentedControls["workspaceTabs"].buttons["Live"].tap()
             app.buttons["Generate \(mode.0)"].tap()
             let output = app.staticTexts["output-\(mode.1)"]
             let completed = XCTNSPredicateExpectation(
@@ -98,8 +98,6 @@ final class MobileLiveCloudTests: XCTestCase {
         dashboard.name = "Live cloud dashboard outputs"; dashboard.lifetime = .keepAlways; add(dashboard)
         app.terminate(); app.launchPastReleaseNotes()
         XCTAssertEqual(app.staticTexts["output-quick"].label, outputs["Quick Summary"])
-        app.segmentedControls["workspaceTabs"].buttons["Deep"].tap()
-        XCTAssertEqual(app.staticTexts["output-deep"].label, outputs["Deep Summary"])
         app.buttons["More"].tap()
         app.buttons["Full summary"].tap()
         XCTAssertEqual(app.staticTexts["savedSummary"].label, outputs["Summary"])
@@ -119,7 +117,7 @@ final class MobileLiveCloudTests: XCTestCase {
         let exported = app.textViews["Conversation notes"].value as? String ?? ""
         XCTAssertTrue(exported.contains(marker))
         // Displayed summaries are formatted; exported output intentionally retains Markdown.
-        for heading in ["## Listener", "## Quick", "## Deep"] {
+        for heading in ["## Listener", "## Quick"] {
             XCTAssertTrue(exported.contains(heading), "Missing exported section: \(heading)")
         }
         app.buttons["Done"].tap()

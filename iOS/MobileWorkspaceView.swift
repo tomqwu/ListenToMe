@@ -1,9 +1,9 @@
 import SwiftUI
 import ListenToMeCore
 
+/// The phone's two pages: Live (transcript and Quick Summary) and Summary. Deep is macOS-only (#235).
 enum MobileWorkspace: String, CaseIterable {
-    case live = "Live", summary = "Summary", deep = "Deep"
-    var mode: MobileSummaryMode { self == .summary ? .summary : .deep }
+    case live = "Live", summary = "Summary"
 }
 
 struct MobileWorkspaceView<Header: View>: View {
@@ -24,14 +24,7 @@ struct MobileWorkspaceView<Header: View>: View {
                 HStack(alignment: .top, spacing: 20) {
                     livePanels(height: geometry.size.height)
                         .frame(width: (geometry.size.width - 20) * 0.52)
-                    VStack(spacing: 16) {
-                        Picker("Review", selection: Binding(get: { selection == .live ? .deep : selection },
-                                                            set: { selection = $0 })) {
-                            Text("Summary").tag(MobileWorkspace.summary)
-                            Text("Deep Summary").tag(MobileWorkspace.deep)
-                        }.pickerStyle(.segmented).accessibilityIdentifier("reviewTabs")
-                        summaryPanel(selection == .summary ? .summary : .deep)
-                    }
+                    summaryPanel(.summary)
                 }.accessibilityElement(children: .contain).accessibilityIdentifier("wideMeetingWorkspace")
             } else {
                 VStack(spacing: 14) {
@@ -45,13 +38,13 @@ struct MobileWorkspaceView<Header: View>: View {
                             VStack(spacing: 16) {
                                 if typeSize.isAccessibilitySize { accessibilityHeader() }
                                 if selection == .live { transcriptPanel; summaryPanel(.quick) }
-                                else { summaryPanel(selection.mode) }
+                                else { summaryPanel(.summary) }
                             }
                         }.accessibilityIdentifier("dashboardScroll")
                     } else if selection == .live {
                         livePanels(height: geometry.size.height - 46)
                     } else {
-                        summaryPanel(selection.mode)
+                        summaryPanel(.summary)
                     }
                 }
             }
@@ -181,16 +174,16 @@ struct MobileWorkspaceView<Header: View>: View {
                         }
                         if session.autoQuick && session.ai.provider != .apple {
                             Text("New speech triggers Quick evaluation; related words are batched briefly. "
-                                 + "Auto also updates Summary and Deep when relevant. These use the selected "
+                                 + "Auto also updates Summary when relevant. Both use the selected "
                                  + "models on \(session.ai.summaryEndpointLabel).")
                                 .font(.caption).foregroundStyle(.secondary)
                         }
                     }
-                    if mode != .quick {
+                    if mode == .summary {
                         Text(session.automaticReviewStatus(mode)).font(.caption).foregroundStyle(MobileStyle.muted)
                             .accessibilityIdentifier("autoReviewStatus-\(mode.rawValue)")
                     }
-                    if mode != .quick, let review = session.quickReader.recommendations.first(where: { $0.mode == mode.rawValue }) {
+                    if mode == .summary, let review = session.quickReader.recommendations.first(where: { $0.mode == mode.rawValue }) {
                         VStack(alignment: .leading, spacing: 4) {
                             Label(session.autoQuick && review.confidence != "low" ? "Automatic review trigger" : "Review suggested",
                                   systemImage: "sparkles").font(.subheadline.weight(.medium))
@@ -216,6 +209,9 @@ struct MobileWorkspaceView<Header: View>: View {
                             .accessibilityIdentifier("output-\(mode.rawValue)")
                     }
                     MobileSuggestedPrompts(session: session, mode: mode)
+                    if mode == .summary, !session.earlierDeepAnalysis.isEmpty {
+                        MobileEarlierDeepAnalysis(text: session.earlierDeepAnalysis)
+                    }
                     if let reason = session.summaryBlockReason(for: mode), !session.isSummarizing {
                         Text(reason).font(.caption).foregroundStyle(MobileStyle.muted)
                             .accessibilityIdentifier("reason-\(mode.rawValue)")
@@ -261,7 +257,7 @@ struct MobileWorkspaceView<Header: View>: View {
         Toggle("Auto", isOn: $session.autoQuick).font(.caption)
             .accessibilityLabel("Auto summaries")
             .accessibilityHint(session.ai.provider != .apple
-                ? "New speech triggers Quick evaluation and relevant Summary or Deep reviews using their "
+                ? "New speech triggers Quick evaluation and relevant Summary reviews using their "
                   + "selected models on \(session.ai.summaryEndpointLabel)."
                 : "Continuous evaluation requires Ollama, a cloud AI service or an OpenAI-compatible server. "
                   + "Apple Intelligence summaries are available with Refresh.")
@@ -270,5 +266,29 @@ struct MobileWorkspaceView<Header: View>: View {
     @ViewBuilder
     private func readingArea<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         if stacked { content() } else { ScrollView { content() } }
+    }
+}
+
+/// A Deep analysis an earlier version saved with this conversation (#235). iOS no longer generates
+/// Deep, so it is shown read-only under the Summary, collapsed, and kept in exports and saved notes.
+struct MobileEarlierDeepAnalysis: View {
+    let text: String
+    @State private var expanded = false
+
+    var body: some View {
+        DisclosureGroup(isExpanded: $expanded) {
+            MarkdownText(text: text).font(.callout).lineSpacing(3).textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading).padding(.top, 6)
+                .accessibilityElement(children: .combine).accessibilityIdentifier("earlierDeepAnalysisText")
+        } label: {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Earlier deep analysis").font(.subheadline.weight(.medium)).foregroundStyle(MobileStyle.ink)
+                Text("Saved with this conversation. Read-only; Deep is available on Mac.")
+                    .font(.caption).foregroundStyle(MobileStyle.muted)
+            }
+        }
+        .padding(12)
+        .background(MobileStyle.line.opacity(0.35), in: RoundedRectangle(cornerRadius: 12))
+        .accessibilityElement(children: .contain).accessibilityIdentifier("earlierDeepAnalysis")
     }
 }

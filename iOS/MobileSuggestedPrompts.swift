@@ -3,7 +3,7 @@ import ListenToMeCore
 
 /// Context-aware one-tap prompts (#61) under the Quick Summary, with the Ask card that answers a
 /// tapped one. Each chip is a literal request of at most 60 characters, shown as plain text; a tap
-/// asks the Quick model and the answer appears right here, under Quick, never in Deep. The chips stack
+/// asks the Quick model and the answer appears right here, under Quick, never in a summary. The chips stack
 /// vertically so they wrap at phone width and at every Dynamic Type size instead of scrolling sideways.
 struct MobileSuggestedPrompts: View {
     let session: MobileSession
