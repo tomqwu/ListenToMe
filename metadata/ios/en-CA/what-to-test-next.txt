@@ -1,3 +1,7 @@
 Re-transcribe saved audio (#224): stop a saved recording, open More → Re-transcribe saved audio, choose its language and review the result. Keep original must leave the conversation untouched; Replace transcript must preserve notes, attachments, instructions and summaries across relaunch. Check playback timing and cancellation. Audio stays on-device; first use may download a speech model. Speaker names and corrections reset when replacing.
 
+Pending next train: conversation vocabularies (#237).
+
+Add a suggested vocabulary without Use by default. Stop, create a new conversation, and reopen the first from History. Its vocabulary should return, including after relaunch. Enable Auto Quick and verify domain-aware updates. Delete the conversation; defaults and My terms should remain.
+
 Apple Watch remains gated by #181 physical-device acceptance.

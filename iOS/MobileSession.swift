@@ -200,7 +200,8 @@ final class MobileSession {
             quickSuggestion: quickSummary, deepAnswer: earlierDeepAnalysis, isComplete: state == .idle
                 && allSegments.allSatisfy(\.isFinal), attachments: attachments, sourceImportID: sourceImportID,
             titleState: titleState, selectionSummaries: selectionSummaries.isEmpty ? nil : selectionSummaries,
-            summaryInstructions: summaryInstructions.isEmpty ? nil : summaryInstructions))
+            summaryInstructions: summaryInstructions.isEmpty ? nil : summaryInstructions,
+            vocabularyDomainIDs: vocabulary.domainIDs(for: id).sorted()))
     }
     var summaryAvailability: String? { summaryAvailability(for: .summary) }
     var automaticQuickAvailability: String? {
@@ -355,6 +356,7 @@ final class MobileSession {
         manualQuickError = nil; resetSuggestions(); answerNotices = MobileAnswerNotices()
         handleSummaryEvent(.conversationChanged)
         id = UUID().uuidString; date = Date()
+        vocabulary.restore(domainIDs: nil, for: id)
         title = ConversationTitle.mobileDefault; titleState = .placeholder; notes = ""; summaryInstructions = ""; summary = ""
         quickSummary = ""; earlierDeepAnalysis = ""; selectionSummaries = []
         segments = []; partial = nil; message = nil; attachments = []; sourceImportID = nil
@@ -375,6 +377,7 @@ final class MobileSession {
         manualQuickError = nil; resetSuggestions(); answerNotices = MobileAnswerNotices()
         handleSummaryEvent(.conversationChanged)
         id = record.id; date = record.date; title = record.title; titleState = record.resolvedTitleState
+        vocabulary.restore(domainIDs: record.vocabularyDomainIDs, for: id)
         notes = record.notes ?? ""; summaryInstructions = record.summaryInstructions ?? ""; summary = record.summary
         quickSummary = record.quickSuggestion ?? ""; earlierDeepAnalysis = record.deepAnswer ?? ""
         selectionSummaries = record.selectionSummaries ?? []
@@ -490,19 +493,23 @@ extension MobileSession {
             return
         }
         do {
-            guard let batch = try quickReader.context.batch(quickPieces, summary: quickSummary,
-                reviewsCompleted: quickReader.reviewsCompleted, pendingReviews: quickReader.recommendations,
-                summaryInstructions: summaryInstructions) else { return }
             let provider: any LLMProvider
             if let summaryProvider { provider = summaryProvider }
             else { provider = try ai.client(for: .quick) }
+            let vocabularyAtStart = activeVocabulary
+            let guidance = VocabularyPrompt.guidance(for: vocabularyAtStart,
+                transcript: String(summarySource.suffix(4_000)),
+                characterLimit: VocabularyPrompt.characterLimit(forPromptWindow: provider.maxPromptCharacters))
+            guard let batch = try quickReader.context.batch(quickPieces, summary: quickSummary,
+                reviewsCompleted: quickReader.reviewsCompleted, pendingReviews: quickReader.recommendations,
+                summaryInstructions: summaryInstructions, personaGuidance: guidance) else { return }
             manualQuickError = nil
             let instructionsAtStart = summaryInstructions
             let sessionID = id
             quickEvaluationCount += 1
             let previousReads = quickReader.completedReads
             await quickReader.read(batch, provider: provider, isCurrent: { [weak self] in
-                guard let self, self.id == sessionID, self.summaryInstructions == instructionsAtStart,
+                guard let self, self.id == sessionID, self.summaryInstructions == instructionsAtStart, self.activeVocabulary == vocabularyAtStart,
                       self.autoQuick, self.state == .recording else { return false }
                 return self.quickReader.context.isCurrent(batch, pieces: self.quickPieces)
             }, apply: { [weak self] output in

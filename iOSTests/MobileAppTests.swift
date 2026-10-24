@@ -136,7 +136,11 @@ final class MobileAppTests: XCTestCase {
         let app = XCUIApplication()
         app.launchPastReleaseNotes()
         app.buttons["Notes"].tap()
-        app.descendants(matching: .any)["Photo library"].firstMatch.tap()
+        // PhotosPicker is exposed as a pop-up button by newer SDKs.
+        let library = app.descendants(matching: .any)["Photo library"].firstMatch
+        for _ in 0..<6 where !library.isHittable { app.swipeUp() }
+        XCTAssertTrue(library.waitForExistence(timeout: 5), app.debugDescription)
+        library.tap()
         _ = app.staticTexts["Loading..."].firstMatch.waitForNonExistence(timeout: 30)
         XCTAssertTrue(app.buttons["Cancel"].waitForExistence(timeout: 10), app.debugDescription)
         app.buttons["Cancel"].tap()

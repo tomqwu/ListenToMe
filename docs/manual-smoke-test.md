@@ -768,3 +768,11 @@ keyboard reachability. Follow the release screenshot checklist.
    neither may replace the original. Changing the transcript invalidates a pending preview.
 5. Capture native-resolution preview screenshots on standard/large iPhone, small/large iPad and Mac,
    retaining source, device, runtime and version provenance with the test evidence.
+
+## Saved conversation vocabularies (#237)
+
+Add Medical from the suggestion banner without Use by default. Stop, start a new conversation,
+then reopen the first from History and relaunch the app: Medical must return only for the first
+conversation. Resume listening and confirm its terms reach recognition. With Auto Quick enabled,
+check that the chosen provider receives the domain and bounded glossary without Summary headings.
+Delete that conversation and confirm it is gone after relaunch; device defaults and My terms remain.
