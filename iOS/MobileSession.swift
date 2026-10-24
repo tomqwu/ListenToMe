@@ -40,8 +40,7 @@ final class MobileSession {
     var autoQuick = UserDefaults.standard.bool(forKey: "autoQuickSummary") {
         didSet { UserDefaults.standard.set(autoQuick, forKey: "autoQuickSummary"); handleSummaryEvent(.automationChanged) }
     }
-    let quickReader = MobileQuickReader()
-    let suggestedAsk = MobileSuggestedAsk()
+    let quickReader = MobileQuickReader(); let suggestedAsk = MobileSuggestedAsk()   // chip asks: #61
     let automaticReviews = AutomaticReviewCoordinator()
     private(set) var speechEventCount = 0
     private(set) var finalizedSpeechEventCount = 0
