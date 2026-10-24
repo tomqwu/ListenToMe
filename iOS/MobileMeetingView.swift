@@ -179,6 +179,7 @@ struct MobileMeetingView: View {
                     Button("Cancel summary") { session.cancelSummary() }
                     MarkdownText(text: session.summaryDraft).textSelection(.enabled)
                 }
+                if !session.isSummarizing { MobileAnswerNoticeLines(session: session, mode: summaryMode) }
                 if !session.output(for: summaryMode).isEmpty {
                     MarkdownText(text: session.output(for: summaryMode))
                         .accessibilityElement(children: .combine).accessibilityIdentifier("savedSummary")

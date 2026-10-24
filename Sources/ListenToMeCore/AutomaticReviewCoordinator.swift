@@ -71,6 +71,9 @@ public final class AutomaticReviewCoordinator {
     public private(set) var activeMode: AutomaticReviewMode?
     public private(set) var completedCounts: [AutomaticReviewMode: Int] = [:]
     public private(set) var errors: [AutomaticReviewMode: String] = [:]
+    /// Modes whose last applied review stopped at the model's output limit (issue #215). Set before
+    /// `apply` runs, so the caller can mark the pane it is about to fill.
+    public private(set) var cutOffModes: Set<AutomaticReviewMode> = []
     private var pending: [AutomaticReviewMode: Job] = [:]
     private var completedInputs: [AutomaticReviewMode: String] = [:]
     private var nextAllowed: [AutomaticReviewMode: ContinuousClock.Instant] = [:]
@@ -190,7 +193,7 @@ public final class AutomaticReviewCoordinator {
         cancelActive(); wake?.cancel(); wake = nil; pending = [:]
         lastSource = nil
         completedInputs = [:]; completedCounts = [:]; nextAllowed = [:]; failures = [:]; failedInputs = [:]
-        timedOutInputs = [:]; errors = [:]
+        timedOutInputs = [:]; errors = [:]; cutOffModes = []
     }
 
     public func status(_ mode: AutomaticReviewMode) -> String {
@@ -246,8 +249,9 @@ public final class AutomaticReviewCoordinator {
             do {
                 let request = LLMRequest(system: job.directives.system(for: job.mode),
                     messages: [.init(role: "user", content: job.directives.userMessage(job.source, mode: job.mode))])
-                let output = try await Self.collect(request, provider: provider, timeout: deadline)
+                let (output, cutOff) = try await Self.collect(request, provider: provider, timeout: deadline)
                 guard token == self.generation, self.enabled, self.covers(job) else { return }
+                if cutOff { self.cutOffModes.insert(job.mode) } else { self.cutOffModes.remove(job.mode) }
                 self.completedInputs[job.mode] = job.input; self.completedCounts[job.mode, default: 0] += 1
                 self.failures[job.mode] = 0; self.errors[job.mode] = nil
                 self.nextAllowed[job.mode] = .now + self.interval(job.mode)
@@ -296,19 +300,20 @@ public final class AutomaticReviewCoordinator {
         max(1, Int(duration.components.seconds))
     }
 
-    private static func collect(_ request: LLMRequest, provider: any LLMProvider, timeout: Duration) async throws -> String {
-        try await withThrowingTaskGroup(of: String.self) { group in
+    /// The review text, and whether it stopped at the model's output limit. A cut-off review is
+    /// still applied, as a manual one is: the pane keeps it and says it is partial (issue #215).
+    private static func collect(_ request: LLMRequest, provider: any LLMProvider,
+                                timeout: Duration) async throws -> (String, Bool) {
+        try await withThrowingTaskGroup(of: (String, Bool).self) { group in
             group.addTask {
-                var output = ""
-                for try await delta in provider.stream(request) {
-                    try Task.checkCancellation(); output += delta
-                    guard output.count <= 100_000 else { throw QuickSummaryError.message("Review response was too large.") }
-                }
+                let (output, cutOff) = try await LLMOutputLimit.collect(
+                    provider.streamEvents(request), limit: 100_000,
+                    tooLarge: QuickSummaryError.message("Review response was too large."))
                 try Task.checkCancellation()
                 guard !output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
                     throw QuickSummaryError.message("The provider returned an empty review.")
                 }
-                return output
+                return (output, cutOff)
             }
             group.addTask { try await Task.sleep(for: timeout); throw AutomaticReviewDeadlineExceeded() }
             defer { group.cancelAll() }
