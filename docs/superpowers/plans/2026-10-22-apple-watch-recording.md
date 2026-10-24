@@ -73,8 +73,9 @@ Its §3 platform facts (F1–F19, U1–U8) and §9 decisions are referenced by n
 - Watch conversations: `sourceImportID = "watch:<recordingID>"`, title
   `"Apple Watch · " + startedAt.formatted(date: .abbreviated, time: .shortened)`, segments
   `source: .you`, `speakerName: "Apple Watch"`. They land in History with a status message and never
-  switch the open conversation (decision 6). Transcription language is the phone's current
-  `MobileSession.language` when the drain runs (decision 7). No notifications (decision 8).
+  switch the open conversation (decision 6). Decision 7 is updated by #200: the first drain pins
+  the fixed phone language or the cached model's detected locale, with device-language fallback.
+  Later drains reuse that ledger locale; imports never download the detection model. No notifications (decision 8).
   `MobileFileTranscriber` is internal; no user-facing audio-file import (decision 9).
 - Release: slices 1–3 merge to `main` **unreleased** and ship together on one train after Slice 3
   passes physical-device acceptance (decision 4). `CHANGELOG.md` gets an iOS Unreleased entry per
