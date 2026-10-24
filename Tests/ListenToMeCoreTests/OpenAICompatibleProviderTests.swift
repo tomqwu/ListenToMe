@@ -79,7 +79,7 @@ final class OpenAICompatibleProviderTests: XCTestCase {
     }
 
     func testAFinishReasonWithoutDoneStillCompletes() async throws {
-        OpenAIStubProtocol.reply = OpenAIStubProtocol.sse([chunk("Done."), chunk(finish: "length")])
+        OpenAIStubProtocol.reply = OpenAIStubProtocol.sse([chunk("Done."), chunk(finish: "stop")])
         let events = try await collect(provider())
         XCTAssertEqual(events, [.content("Done.")])
     }

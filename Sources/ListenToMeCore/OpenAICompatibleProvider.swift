@@ -86,20 +86,7 @@ public struct OpenAICompatibleProvider: LLMProvider {
     }
 
     public func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
-        let events = streamEvents(request)
-        return AsyncThrowingStream { continuation in
-            let task = Task {
-                do {
-                    for try await event in events {
-                        if case .content(let delta) = event { continuation.yield(delta) }
-                    }
-                    continuation.finish()
-                } catch {
-                    continuation.finish(throwing: error)
-                }
-            }
-            continuation.onTermination = { _ in task.cancel() }
-        }
+        LLMOutputLimit.textStream(streamEvents(request))
     }
 
     private func open(_ request: LLMRequest,
@@ -132,6 +119,7 @@ public struct OpenAICompatibleProvider: LLMProvider {
             try Task.checkCancellation()
             for event in try Self.wholeCompletion(body, state: &state) { yield(event) }
             try state.complete()
+            if state.reachedOutputLimit { yield(.outputLimitReached) }
             return
         }
         var line: [UInt8] = []
@@ -161,6 +149,8 @@ public struct OpenAICompatibleProvider: LLMProvider {
         if !state.finished, !line.isEmpty { try handle() }
         try Task.checkCancellation()
         try state.complete()
+        // `finish_reason: "length"`: the answer is partial, and says so (issue #215).
+        if state.reachedOutputLimit { yield(.outputLimitReached) }
     }
 
     static func wholeCompletion(_ body: Data, state: inout OpenAICompatibleStreamState) throws -> [LLMStreamEvent] {
@@ -173,7 +163,7 @@ public struct OpenAICompatibleProvider: LLMProvider {
             throw OpenAICompatibleError.notEventStream(contentType: "application/json")
         }
         return state.acceptWhole(
-            content: message["content"] as? String,
+            content: message["content"] as? String, finishReason: choice["finish_reason"] as? String,
             thinking: (message["reasoning_content"] as? String) ?? (message["reasoning"] as? String))
     }
 }

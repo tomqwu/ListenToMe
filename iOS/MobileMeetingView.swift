@@ -176,6 +176,7 @@ struct MobileMeetingView: View {
                     Button("Cancel summary") { session.cancelSummary() }
                     MarkdownText(text: session.summaryDraft).textSelection(.enabled)
                 }
+                if !session.isSummarizing { MobileAnswerNoticeLines(session: session, mode: summaryMode) }
                 if !session.output(for: summaryMode).isEmpty {
                     MarkdownText(text: session.output(for: summaryMode))
                         .accessibilityElement(children: .combine).accessibilityIdentifier("savedSummary")
@@ -265,6 +266,7 @@ struct MobileMeetingView: View {
                          : "Conversations are included in this device's normal backup, like other app data. "
                             + "Conversation files stay encrypted until you unlock this device after a restart.")
                         .font(.caption).accessibilityIdentifier("backupExplanation")
+                    MobileDeleteAllButton(session: session)
                     Link("Privacy policy", destination: MobileMeetingView.privacyPolicyURL)
                     Link("Support", destination: MobileMeetingView.supportURL)
                     Link("Open app settings", destination: URL(string: UIApplication.openSettingsURLString)!)

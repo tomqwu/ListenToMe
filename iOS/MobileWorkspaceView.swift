@@ -205,6 +205,7 @@ struct MobileWorkspaceView<Header: View>: View {
                             .foregroundStyle(MobileStyle.tint(for: mode))
                         MarkdownText(text: session.summaryDraft).textSelection(.enabled)
                     }
+                    if session.generatingMode != mode { MobileAnswerNoticeLines(session: session, mode: mode) }
                     let output = session.output(for: mode)
                     if !output.isEmpty {
                         MarkdownText(text: output).font(.body).lineSpacing(3).textSelection(.enabled)
