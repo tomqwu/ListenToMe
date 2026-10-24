@@ -21,12 +21,11 @@ struct SessionSearchView: View {
     private var trimmedQuery: String { query.trimmingCharacters(in: .whitespacesAndNewlines) }
     /// Keyword plus on-device semantic results with snippets, once the index has answered;
     /// until then (and with no index) the keyword results the sheet always had.
-    private var hybrid: [HistorySearchResult]? {
-        guard let search = store.historySearch, !trimmedQuery.isEmpty,
-              search.resultsQuery == trimmedQuery else { return nil }
-        return search.results
-    }
+    private var hybrid: [HistorySearchResult]? { store.historySearch?.results(for: query) }
     private var shown: [SessionRecord] { hybrid?.map(\.record) ?? SessionSearch.search(records, query: query) }
+
+    /// Only a conversation the archive still holds, in its current form (never a cleared one).
+    private func open(_ id: String) { selected = records.first { $0.id == id } }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -36,11 +35,10 @@ struct SessionSearchView: View {
                 Button("Done") { dismiss() }.keyboardShortcut(.defaultAction)
             }
             TextField("Search or ask your conversations", text: $query).textFieldStyle(.roundedBorder)
-                .onChange(of: query) { store.historySearch?.search(query, in: records) }
+                .onChange(of: query) { store.historySearch?.search(query) }
             if let search = store.historySearch, !trimmedQuery.isEmpty, !records.isEmpty {
                 HistoryAskPanel(search: search, question: trimmedQuery, route: askRoute(),
-                                ask: { search.ask(trimmedQuery, in: records, route: askRoute()) },
-                                open: { id in selected = records.first { $0.id == id } })
+                                ask: { search.ask(trimmedQuery, route: askRoute()) }, open: open)
             }
             if let error = store.errorText {
                 Text(error).foregroundStyle(.red)
@@ -56,7 +54,7 @@ struct SessionSearchView: View {
                 }
             }
             List(shown) { record in
-                Button { selected = record } label: {
+                Button { open(record.id) } label: {
                     VStack(alignment: .leading, spacing: 5) {
                         HStack {
                             Text(record.title).font(.headline)

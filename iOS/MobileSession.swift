@@ -352,9 +352,9 @@ final class MobileSession {
         save(announce: false)
     }
 
-    func open(_ record: SessionRecord) {
-        guard !busy, save(announce: false) else { return }
-        restore(record)
+    func open(_ record: SessionRecord) {   // History's current copy, never a deleted or stale one
+        guard !busy, history.contains(where: { $0.id == record.id }), save(announce: false) else { return }
+        restore(history.first { $0.id == record.id } ?? record)
         save(announce: false)
     }
 

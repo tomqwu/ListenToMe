@@ -25,11 +25,19 @@ public enum HistoryQuestion {
         find it in the saved conversations, and do not guess. Be brief.
         """
 
-    /// The request for `question`. Passages are added best first until `characterBudget` would be
-    /// exceeded, so a small on-device context window gets fewer excerpts rather than a cut-off
-    /// prompt. Returns nil when no passage fits.
+    /// The prompt size Ask aims for: within Apple Intelligence's window and within the 4,096-token
+    /// default context of older or low-memory Ollama servers (about 14,000 characters including the
+    /// answer), which would otherwise drop the front of a longer prompt (#230).
+    public static let characterBudget = 8_000
+    /// An excerpt longer than this (a very long conversation has longer passages) is shortened.
+    public static let maxExcerptCharacters = 1_200
+
+    /// The request for `question`. Passages are added best first while they fit `characterBudget`;
+    /// one that does not fit is skipped, so a small context window gets fewer excerpts rather than a
+    /// cut-off prompt. Returns nil when no passage fits.
     public static func request(question: String, passages: [HistoryPassage], responseLanguage: String? = nil,
-                               characterBudget: Int = 24_000) -> (request: LLMRequest, sent: [HistoryPassage])? {
+                               characterBudget: Int = characterBudget)
+        -> (request: LLMRequest, sent: [HistoryPassage])? {
         var system = Self.system + "\n\n" + PromptData.notice
         if let responseLanguage, !responseLanguage.isEmpty { system += "\nAnswer in \(responseLanguage)." }
         let questionBlock = "Question: \(question.trimmingCharacters(in: .whitespacesAndNewlines))"
@@ -38,10 +46,14 @@ public enum HistoryQuestion {
         var sent: [HistoryPassage] = []
         for passage in passages {
             let number = sent.count + 1
-            let block = "[\(number)] \(passage.title) — \(passage.date.formatted(date: .abbreviated, time: .omitted))"
+            // The title is written by the user or derived from the meeting, so it sits inside the
+            // data fence with the excerpt; only the number, date and part are the app's own words.
+            let text = HistoryRanking.clipped(passage.text, limit: maxExcerptCharacters)
+            let block = "[\(number)] \(passage.date.formatted(date: .abbreviated, time: .omitted))"
                 + " (\(passage.source.label.lowercased()))\n"
-                + PromptData.block(passage.source == .transcript ? "transcript" : passage.source.rawValue, passage.text)
-            guard used + block.count + 2 <= characterBudget else { break }
+                + PromptData.block(passage.source == .transcript ? "transcript" : passage.source.rawValue,
+                                   "Conversation: \(passage.title)\n\(text)")
+            guard used + block.count + 2 <= characterBudget else { continue }
             used += block.count + 2
             blocks.append(block)
             sent.append(passage)
@@ -64,7 +76,8 @@ public enum HistoryQuestion {
             let inside = scanner[..<close]
             scanner = scanner[scanner.index(after: close)...]
             for piece in inside.split(whereSeparator: { $0 == "," || $0 == " " }) {
-                guard let number = Int(piece), sent.indices.contains(number - 1) else { continue }
+                // Bounds first: subtracting from an arbitrary model-written number could overflow.
+                guard let number = Int(piece), number >= 1, number <= sent.count else { continue }
                 let recordID = sent[number - 1].recordID
                 if numbers[recordID] == nil { order.append(recordID) }
                 if !(numbers[recordID]?.contains(number) ?? false) { numbers[recordID, default: []].append(number) }
@@ -96,7 +109,8 @@ public enum HistoryQuestion {
         "the", "and", "for", "are", "was", "were", "what", "when", "where", "which", "who", "whom", "why",
         "how", "did", "does", "do", "has", "have", "had", "about", "with", "that", "this", "these", "those",
         "from", "into", "our", "you", "your", "they", "them", "their", "there", "any", "all", "can", "could",
-        "would", "should", "will", "said", "say", "tell", "me", "we", "us", "is", "it", "of", "in", "on"
+        "would", "should", "will", "said", "say", "tell", "me", "we", "us", "is", "it", "of", "in", "on",
+        "next", "last", "week", "plan", "plans", "meeting", "team", "thing", "things", "time"
     ]
 
     /// The sentence the Ask control shows when the chosen provider runs off this device, naming the

@@ -53,8 +53,11 @@ public actor HistoryIndex {
     private var cache: [String: StoredRecordVectors] = [:]
     private var cachedBytes = 0
     /// Bumped by every removal, so a sync that is still running with an older list of conversations
-    /// stops before it can write vectors for one that was deleted meanwhile.
+    /// stops at the next conversation instead of embedding ones that were deleted meanwhile.
     private var removals = 0
+    /// Conversations deleted while this index is open. Their IDs are never embedded again, whatever
+    /// list of conversations a later call still carries.
+    private var deleted: Set<String> = []
 
     public init(directory: URL, embedder: any HistoryEmbedder = NaturalLanguageEmbedder(),
                 memoryBudget: Int = 32 << 20, parameters: HistoryRanking.Parameters = .init()) {
@@ -108,7 +111,7 @@ public actor HistoryIndex {
 
     /// Synchronous from the fingerprint check to the write, so a deletion cannot slip in between.
     private func embed(_ record: SessionRecord) throws -> Outcome {
-        guard Self.isValidID(record.id) else { return .skipped }
+        guard Self.isValidID(record.id), !deleted.contains(record.id) else { return .skipped }
         let chunks = HistoryChunker.chunks(for: record)
         let fingerprint = HistoryChunker.fingerprint(chunks, salt: embedder.signature)
         if catalog?[record.id]?.fingerprint == fingerprint { return .unchanged }
@@ -123,12 +126,20 @@ public actor HistoryIndex {
     public func remove(id: String) throws {
         removals += 1
         guard Self.isValidID(id) else { return }
+        deleted.insert(id)
         _ = try load()
         try deleteFile(id)
     }
 
-    /// Drops every vector (Clear history). The folder and its version marker stay.
+    /// Drops every vector (Clear history). The folder and its version marker stay. The IDs indexed
+    /// until now are never embedded again; a conversation saved afterwards is.
     public func removeAll() throws {
+        deleted.formUnion((try? load().keys).map(Array.init) ?? [])
+        try wipe()
+    }
+
+    /// Deletes every vector file; the conversations may be embedded again (rebuild).
+    private func wipe() throws {
         removals += 1
         try prepare()
         for url in try fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
@@ -143,7 +154,7 @@ public actor HistoryIndex {
     /// Discards everything and embeds `records` from scratch.
     @discardableResult
     public func rebuild(_ records: [SessionRecord]) async throws -> HistoryIndexReport {
-        try removeAll()
+        try wipe()
         return try await sync(records)
     }
 
@@ -252,52 +263,52 @@ extension HistoryIndex {
         let terms = SessionSearch.fold(trimmed).split(whereSeparator: \.isWhitespace).map(String.init)
         let keyword = SessionSearch.search(records, query: trimmed)
         let byID = Dictionary(records.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        let scan = semanticScan(trimmed, ids: Set(byID.keys))
 
-        var best: [(id: String, score: Float)] = []
-        var bestOrdinal: [String: Int] = [:]
-        for (id, vectors) in semanticScan(trimmed, ids: Set(byID.keys)) {
-            best.append((id, vectors.score))
-            bestOrdinal[id] = vectors.ordinal
-        }
-        var related = HistoryRanking.related(best, parameters: parameters)
-        // A passage is only trusted while the conversation still has the text it was computed from.
+        // Best first; a passage is only trusted while its conversation still has the text it was
+        // computed from, so stale vectors are dropped *before* the best score is taken.
+        var current: [(id: String, score: Float)] = []
         var relatedChunks: [String: HistoryChunk] = [:]
-        related = related.filter { candidate in
-            guard let record = byID[candidate.id], let ordinal = bestOrdinal[candidate.id] else { return false }
+        for (id, hit) in scan.best.sorted(by: { $0.value.score > $1.value.score }) {
+            guard parameters.isRelevant(hit.score, typical: scan.typical, sample: scan.sample) else { break }
+            guard let record = byID[id] else { continue }
             let chunks = HistoryChunker.chunks(for: record)
-            guard isCurrent(record.id, chunks), chunks.indices.contains(ordinal) else { return false }
-            relatedChunks[candidate.id] = chunks[ordinal]
-            return true
+            guard isCurrent(id, chunks), chunks.indices.contains(hit.ordinal) else { continue }
+            current.append((id, hit.score))
+            relatedChunks[id] = chunks[hit.ordinal]
         }
         let keywordIDs = Set(keyword.map(\.id))
         var semanticOnly = 0
-        related = related.filter { candidate in
+        let related = HistoryRanking.related(current, typical: scan.typical, sample: scan.sample,
+                                             parameters: parameters).filter { candidate in
             if keywordIDs.contains(candidate.id) { return true }
             semanticOnly += 1
             return semanticOnly <= parameters.maxRelated
         }
+        let relatedIDs = Set(related.map(\.id))
         let order = HistoryRanking.fuse(keyword: keyword.map(\.id), semantic: related.map(\.id),
                                         fusion: parameters.fusion)
         return order.compactMap { id in
             guard let record = byID[id] else { return nil }
             let words = keywordIDs.contains(id)
+            let chunk = relatedIDs.contains(id) ? relatedChunks[id] : nil
             let snippet = words ? HistoryRanking.keywordSnippet(record, terms: terms)
-                : relatedChunks[id].map { HistorySnippet(source: $0.source, text: HistoryRanking.clipped($0.text)) }
-            return HistorySearchResult(record: record, matchesWords: words, isRelated: relatedChunks[id] != nil,
-                                       snippet: snippet)
+                : chunk.map { HistorySnippet(source: $0.source, text: HistoryRanking.clipped($0.text)) }
+            return HistorySearchResult(record: record, matchesWords: words, isRelated: chunk != nil, snippet: snippet)
         }
     }
 
     /// The passages most relevant to `question`, at most `perConversation` from any one
-    /// conversation. Ranked by on-device similarity plus the share of the question's words a passage
-    /// contains, so a language without an embedding model still retrieves by its words.
+    /// conversation. A passage qualifies when it holds all of the question's words (or two and at
+    /// least half of them), or
+    /// when its meaning passes the same relevance test as a "Related" search result; nothing below
+    /// that is ever sent to a provider. Ranked by similarity plus the share of the words it holds.
     public func retrieve(_ question: String, in records: [SessionRecord], limit: Int = 6,
                          perConversation: Int = 2) -> [HistoryPassage] {
         let terms = HistoryQuestion.contentTerms(question)
         let queries = queryVectors(question)
-        var passages: [HistoryPassage] = []
-        var meaningOnly: Set<String> = []
-        var bestMeaning: Float = 0
+        struct Candidate { let passage: HistoryPassage; let words: Float; let meaning: Float? }
+        var candidates: [Candidate] = []
         for record in records {
             let chunks = HistoryChunker.chunks(for: record)
             var vectors: [Int: StoredChunkVector] = [:]
@@ -306,25 +317,31 @@ extension HistoryIndex {
             }
             for chunk in chunks {
                 let folded = SessionSearch.fold(chunk.text)
-                let found = terms.filter { folded.contains($0) }.count
-                let words = terms.isEmpty ? 0 : Float(found) / Float(terms.count)
-                let meaning = vectors[chunk.ordinal].flatMap { stored in
-                    queries[stored.model].map { stored.similarity($0) }
-                } ?? 0
-                guard words > 0 || meaning >= parameters.floor else { continue }
-                passages.append(HistoryPassage(recordID: record.id, title: record.title, date: record.date,
-                                               source: chunk.source, ordinal: chunk.ordinal, text: chunk.text,
-                                               score: meaning + words / 2))
-                if words == 0 { meaningOnly.insert(passages[passages.count - 1].id) }
-                bestMeaning = max(bestMeaning, meaning)
+                let words = terms.isEmpty ? 0 : Float(terms.filter { folded.contains($0) }.count) / Float(terms.count)
+                let meaning = vectors[chunk.ordinal].flatMap { stored in queries[stored.model].map(stored.similarity) }
+                let passage = HistoryPassage(recordID: record.id, title: record.title, date: record.date,
+                                             source: chunk.source, ordinal: chunk.ordinal, text: chunk.text,
+                                             score: (meaning ?? 0) + words / 2)
+                candidates.append(Candidate(passage: passage, words: words, meaning: meaning))
             }
         }
-        // A passage found by meaning alone must be close to the best one, as in `search`.
-        passages.removeAll { meaningOnly.contains($0.id) && $0.score < bestMeaning - parameters.margin }
-        passages.sort { $0.score == $1.score ? ($0.date, $0.ordinal) > ($1.date, $1.ordinal) : $0.score > $1.score }
+        let meanings = candidates.compactMap(\.meaning)
+        let typical = meanings.isEmpty ? 0 : meanings.reduce(0, +) / Float(meanings.count)
+        let top = meanings.max() ?? 0
+        let relevant = candidates.filter { candidate in
+            // Words: all of the question's, or at least two and half of them.
+            let found = Int((candidate.words * Float(terms.count)).rounded())
+            if candidate.words >= 1 || (found >= 2 && candidate.words >= 0.5) { return true }
+            guard let meaning = candidate.meaning else { return false }
+            return parameters.isRelevant(meaning, typical: typical, sample: meanings.count)
+                && meaning >= top - parameters.margin
+        }.map(\.passage)
         var taken: [String: Int] = [:]
         var result: [HistoryPassage] = []
-        for passage in passages where result.count < limit {
+        let ordered = relevant.sorted {
+            $0.score == $1.score ? ($0.date, $0.ordinal) > ($1.date, $1.ordinal) : $0.score > $1.score
+        }
+        for passage in ordered where result.count < limit {
             guard taken[passage.recordID, default: 0] < perConversation else { continue }
             taken[passage.recordID, default: 0] += 1
             result.append(passage)
@@ -337,20 +354,31 @@ extension HistoryIndex {
         catalog?[id]?.fingerprint == HistoryChunker.fingerprint(chunks, salt: embedder.signature)
     }
 
-    /// Best passage (similarity and ordinal) of every indexed conversation in `ids`.
-    private func semanticScan(_ query: String, ids: Set<String>) -> [String: (score: Float, ordinal: Int)] {
-        let queries = queryVectors(query)
-        guard !queries.isEmpty, let catalog else { return [:] }
+    /// The best passage (similarity and ordinal) of every indexed conversation in `ids`, plus the mean
+    /// similarity of all their passages and how many there were.
+    private struct Scan {
         var best: [String: (score: Float, ordinal: Int)] = [:]
+        var typical: Float = 0
+        var sample = 0
+    }
+
+    private func semanticScan(_ query: String, ids: Set<String>) -> Scan {
+        let queries = queryVectors(query)
+        guard !queries.isEmpty, let catalog else { return Scan() }
+        var best: [String: (score: Float, ordinal: Int)] = [:]
+        var total: Float = 0
+        var sample = 0
         for id in catalog.keys where ids.contains(id) {
             guard let stored = vectorsOf(id) else { continue }
             for chunk in stored.chunks {
                 guard let query = queries[chunk.model] else { continue }
                 let score = chunk.similarity(query)
+                total += score
+                sample += 1
                 if score > best[id]?.score ?? -.infinity { best[id] = (score, chunk.ordinal) }
             }
         }
-        return best
+        return Scan(best: best, typical: sample == 0 ? 0 : total / Float(sample), sample: sample)
     }
 
     /// One query vector per stored model the query plausibly belongs to.

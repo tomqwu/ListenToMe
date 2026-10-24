@@ -29,18 +29,31 @@ public protocol HistoryEmbedder: Sendable {
 }
 
 /// Apple NaturalLanguage embeddings, entirely on device. A passage's language is detected per
-/// passage (conversations often mix languages); its vector is the mean of the content words'
+/// passage (conversations often mix languages); its vector is the mean of its nouns'
 /// `NLEmbedding.wordEmbedding` vectors, or `NLEmbedding.sentenceEmbedding` where only a sentence
-/// model exists. Word vectors come first because they separated short paraphrased queries more
-/// clearly than the sentence model in our trials; `NaturalLanguageEmbedderTests` holds the
-/// paraphrase set this has to keep passing. Languages with neither model get no vector, and their
-/// conversations stay reachable through keyword search.
+/// model exists. Only nouns count, minus words every meeting uses ("meeting", "team", "week"…):
+/// verbs, auxiliaries and filler pulled every passage towards the same "talking about plans"
+/// direction, so unrelated questions looked related. A passage with too few of them (small talk,
+/// "can you hear me?") gets no vector. `NaturalLanguageEmbedderTests` holds the paraphrase set this
+/// has to keep finding and the unrelated set it must not. Languages with neither model get no
+/// vector, and their conversations stay reachable through keyword search.
 public final class NaturalLanguageEmbedder: HistoryEmbedder, @unchecked Sendable {
-    public let signature = "nl-word-mean+sentence-v1"
+    public let signature = "nl-noun-mean+sentence-v2"
     private let lock = NSLock()
     private var words: [NLLanguage: NLEmbedding?] = [:]
     private var sentences: [NLLanguage: NLEmbedding?] = [:]
-    private static let contentClasses: Set<NLTag> = [.noun, .verb, .adjective, .adverb, .otherWord]
+    private static let contentClasses: Set<NLTag> = [.noun, .otherWord]
+    /// A passage needs this many content words (or, for a sentence model, twice as many words).
+    static let minimumPassageWords = 3
+    /// English nouns too common in meetings to say what one is about.
+    static let genericNouns: Set<String> = [
+        "thing", "things", "time", "times", "way", "lot", "lots", "bit", "kind", "sort", "stuff", "point",
+        "day", "days", "week", "weeks", "month", "months", "year", "years", "today", "tomorrow", "yesterday",
+        "morning", "afternoon", "minute", "minutes", "hour", "hours", "people", "person", "everyone",
+        "someone", "anyone", "everything", "something", "anything", "nothing", "guys", "guy", "team",
+        "meeting", "meetings", "call", "project", "plan", "plans", "status", "update", "question", "idea",
+        "yeah", "okay", "ok", "um", "uh", "hmm"
+    ]
 
     public init() {}
 
@@ -48,7 +61,7 @@ public final class NaturalLanguageEmbedder: HistoryEmbedder, @unchecked Sendable
         let recognizer = NLLanguageRecognizer()
         recognizer.processString(text)
         guard let language = recognizer.dominantLanguage else { return nil }
-        return embed(text, language: language)
+        return embed(text, language: language, minimumWords: Self.minimumPassageWords)
     }
 
     public func embedQuery(_ query: String, models: Set<String>) -> [HistoryVector] {
@@ -68,16 +81,24 @@ public final class NaturalLanguageEmbedder: HistoryEmbedder, @unchecked Sendable
         return chosen.compactMap { embed(query, language: $0) }.filter { models.contains($0.model) }
     }
 
-    /// The vector for `text` in `language`, or nil when that language has no model or none of the
-    /// words are in its vocabulary.
-    public func embed(_ text: String, language: NLLanguage) -> HistoryVector? {
-        if let model = wordModel(language), let values = meanWordVector(text, language: language, model: model) {
-            return HistoryVector(model: "w:\(language.rawValue):\(model.revision)", values: values)
+    /// The vector for `text` in `language`, or nil when that language has no model or `text` has
+    /// fewer than `minimumWords` content words in its vocabulary (queries pass 1).
+    public func embed(_ text: String, language: NLLanguage, minimumWords: Int = 1) -> HistoryVector? {
+        if let model = wordModel(language) {
+            return meanWordVector(text, language: language, model: model, minimumWords: minimumWords)
+                .map { HistoryVector(model: "w:\(language.rawValue):\(model.revision)", values: $0) }
         }
-        if let model = sentenceModel(language), let values = model.vector(for: text) {
+        if let model = sentenceModel(language), wordCount(text) >= minimumWords * 2,
+           let values = model.vector(for: text) {
             return HistoryVector(model: "s:\(language.rawValue):\(model.revision)", values: values.map(Float.init))
         }
         return nil
+    }
+
+    private func wordCount(_ text: String) -> Int {
+        let tokenizer = NLTokenizer(unit: .word)
+        tokenizer.string = text
+        return tokenizer.tokens(for: text.startIndex..<text.endIndex).count
     }
 
     /// Whether this device has any embedding for `language`.
@@ -90,7 +111,8 @@ public final class NaturalLanguageEmbedder: HistoryEmbedder, @unchecked Sendable
         return parts.count == 3 ? NLLanguage(rawValue: String(parts[1])) : nil
     }
 
-    private func meanWordVector(_ text: String, language: NLLanguage, model: NLEmbedding) -> [Float]? {
+    private func meanWordVector(_ text: String, language: NLLanguage, model: NLEmbedding,
+                                minimumWords: Int) -> [Float]? {
         let tagger = NLTagger(tagSchemes: [.lexicalClass])
         tagger.string = text
         tagger.setLanguage(language, range: text.startIndex..<text.endIndex)
@@ -100,13 +122,15 @@ public final class NaturalLanguageEmbedder: HistoryEmbedder, @unchecked Sendable
                              options: [.omitPunctuation, .omitWhitespace]) { tag, range in
             // Languages the tagger cannot classify yield nil tags: every word counts there.
             if let tag, !Self.contentClasses.contains(tag) { return true }
-            if let vector = model.vector(for: text[range].lowercased()) {
+            let word = text[range].lowercased()
+            if language == .english && Self.genericNouns.contains(word) { return true }
+            if let vector = model.vector(for: word) {
                 for index in vector.indices { sum[index] += vector[index] }
                 count += 1
             }
             return true
         }
-        return count == 0 ? nil : sum.map { Float($0 / Double(count)) }
+        return count < max(minimumWords, 1) ? nil : sum.map { Float($0 / Double(count)) }
     }
 
     private func wordModel(_ language: NLLanguage) -> NLEmbedding? {

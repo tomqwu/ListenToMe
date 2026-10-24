@@ -12,8 +12,12 @@ extension MobileSession {
         SessionSearch.search(history, query: query.trimmingCharacters(in: .whitespacesAndNewlines))
     }
 
-    /// Reconciles the index with the archive (after a reload or a deletion).
-    func indexHistory() { historySearch.sync(history) }
+    /// Reconciles the index with the archive (after a reload or a deletion). Searches and questions
+    /// read `history` itself, so they never see a conversation History no longer lists.
+    func indexHistory() {
+        historySearch.records = { [weak self] in self?.history ?? [] }
+        historySearch.sync(history)
+    }
 
     /// Embeds a conversation that was just saved.
     func indexSaved(_ record: SessionRecord) { historySearch.update(record) }
@@ -44,6 +48,6 @@ extension MobileSession {
     }
 
     func askHistory(_ question: String) {
-        historySearch.ask(question, in: history, route: historyAskRoute, describe: MobileAISettings.errorMessage)
+        historySearch.ask(question, route: historyAskRoute, describe: MobileAISettings.errorMessage)
     }
 }

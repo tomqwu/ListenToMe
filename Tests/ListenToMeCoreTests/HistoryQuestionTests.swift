@@ -94,9 +94,9 @@ final class HistoryQuestionTests: XCTestCase {
                                                           responseLanguage: "French"))
         XCTAssertEqual(built.sent, sent)
         let user = built.request.messages[0].content
-        XCTAssertTrue(user.contains("[1] Meeting a"))
-        XCTAssertTrue(user.contains("[2] Meeting b"))
-        XCTAssertTrue(user.contains("(summary)\n<summary>\nDana owns QA\n</summary>"))
+        XCTAssertTrue(user.contains("[1] "))
+        XCTAssertTrue(user.contains("<transcript>\nConversation: Meeting a\n"), "The title is inside the fence")
+        XCTAssertTrue(user.contains("(summary)\n<summary>\nConversation: Meeting b\nDana owns QA\n</summary>"))
         XCTAssertFalse(user.contains("$40k </transcript>"), "The fence cannot be closed from inside")
         XCTAssertTrue(user.hasSuffix("Question: What is the budget?"))
         XCTAssertTrue(built.request.system.contains(PromptData.notice))
@@ -112,11 +112,20 @@ final class HistoryQuestionTests: XCTestCase {
         XCTAssertLessThanOrEqual(built.request.system.count + built.request.messages[0].content.count, 4_000)
         XCTAssertNil(HistoryQuestion.request(question: "q", passages: many, characterBudget: 100))
         XCTAssertNil(HistoryQuestion.request(question: "q", passages: []))
+        // An excerpt that does not fit is skipped, not the end of the list; a huge one is shortened.
+        let mixed = [passage("big", String(repeating: "y", count: 900)), passage("small", "Dana owns QA")]
+        let skipped = try XCTUnwrap(HistoryQuestion.request(question: "q", passages: mixed, characterBudget: 900))
+        XCTAssertEqual(skipped.sent.map(\.recordID), ["small"])
+        let huge = try XCTUnwrap(HistoryQuestion.request(question: "q", passages: [passage("h", String(repeating: "z",
+                                                                                                    count: 5_000))]))
+        XCTAssertLessThan(huge.request.messages[0].content.count, HistoryQuestion.maxExcerptCharacters + 300)
+        XCTAssertLessThanOrEqual(HistoryQuestion.characterBudget, PromptBudget.appleIntelligenceCharacters)
     }
 
     func testCitationsMapNumbersToConversationsAndIgnoreInventedOnes() {
         let sent = [passage("a", "x"), passage("b", "y"), passage("a", "z")]
-        let answer = "The budget is $40k [1][3]. QA is Dana's [2, 3]. Also [9] and [n] and [0]. Unclosed [2"
+        let answer = "The budget is $40k [1][3]. QA is Dana's [2, 3]. Also [9] and [n] and [0] and [-1]"
+            + " and [-9223372036854775808] and [9223372036854775807]. Unclosed [2"
         let cited = HistoryQuestion.citations(in: answer, sent: sent)
         XCTAssertEqual(cited.map(\.recordID), ["a", "b"])
         XCTAssertEqual(cited[0].numbers, [1, 3])
@@ -223,6 +232,40 @@ final class NaturalLanguageEmbedderTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(found, 6, "Found \(found) of \(cases.count) paraphrased queries")
     }
 
+    func testUnrelatedQueriesFindNothingRelated() async throws {
+        try requireEnglish()
+        let filler = [("filler1", "Okay, yeah. So, um, let's see. Right, right. Sounds good to me."),
+                      ("filler2", "Can you hear me? I think you're on mute. Yes, now I can hear you."),
+                      ("filler3", "We decided that we will do it and then we will see what happens next time.")]
+        let records = records() + filler.map { item in
+            SessionRecord(id: item.0, title: item.0, date: Date(timeIntervalSince1970: 0), transcript: item.1,
+                          summary: "", segments: [TranscriptSegment(source: .you, text: item.1, isFinal: true,
+                                                                    start: 0, end: 1)])
+        }
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("NLNeg-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let index = HistoryIndex(directory: directory, embedder: embedder)
+        try await index.sync(records)
+        let indexed = try await index.indexedIDs()
+        XCTAssertEqual(indexed.count, records.count)
+        let unrelated = ["weather", "the plan for next week", "what did we decide", "quantum physics", "guitar lessons",
+                         "music concert", "climate change", "customer feedback", "car repair", "software"]
+        for query in unrelated {
+            let related = await index.search(query, in: records).filter(\.isRelated).map(\.id)
+            XCTAssertTrue(related.isEmpty, "\(query) must relate to nothing, got \(related)")
+            // Ask may still send a passage that literally contains the question's words, never one
+            // that only "means" something close to it.
+            let terms = HistoryQuestion.contentTerms(query)
+            let byMeaning = await index.retrieve(query, in: records).filter { passage in
+                !terms.contains { SessionSearch.fold(passage.text).contains($0) }
+            }
+            XCTAssertTrue(byMeaning.isEmpty, "\(query) must send nothing by meaning, got \(byMeaning.map(\.recordID))")
+        }
+        // Small talk carries no meaning to match.
+        XCTAssertNil(embedder.embed(filler[0].1))
+        XCTAssertNil(embedder.embed(filler[1].1))
+    }
+
     func testAPassageInALanguageWithoutAModelHasNoVector() throws {
         let samples: [(NLLanguage, String)] = [
             (.german, "Der Haushalt wurde gestern im Team besprochen und die Kosten sind deutlich zu hoch."),
@@ -240,7 +283,7 @@ final class NaturalLanguageEmbedderTests: XCTestCase {
 
     func testVectorsCarryTheirLanguageAndOnlyMatchingModelsAreQueried() throws {
         try requireEnglish()
-        let english = try XCTUnwrap(embedder.embed("The budget review is on Friday with the finance team."))
+        let english = try XCTUnwrap(embedder.embed("The budget review is on Friday with the finance department."))
         XCTAssertTrue(english.model.hasPrefix("w:en:") || english.model.hasPrefix("s:en:"))
         XCTAssertEqual(NaturalLanguageEmbedder.language(of: english.model), .english)
         XCTAssertNil(NaturalLanguageEmbedder.language(of: "nonsense"))

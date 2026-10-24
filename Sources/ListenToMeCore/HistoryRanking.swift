@@ -25,25 +25,47 @@ public struct HistorySearchResult: Sendable, Equatable, Identifiable {
 /// so a conversation found both ways comes first, and a conversation found only by meaning can sit
 /// between weak keyword hits. Every keyword match is kept; semantic-only matches are bounded.
 public enum HistoryRanking {
+    /// Calibrated on Apple's English word vectors (`NaturalLanguageEmbedderTests`): paraphrases of a
+    /// passage scored 0.51–0.68 and stood 0.15–0.30 above the typical passage; unrelated questions
+    /// stayed below 0.5. The gap is the second guard, for an archive where everything is similar.
     public struct Parameters: Sendable, Equatable {
         /// Cosine similarity a passage needs before it can make its conversation "related".
         public var floor: Float
+        /// …and how far it must stand above the typical (mean) passage for the same query, so a
+        /// query that is a little similar to everything relates to nothing.
+        public var minimumGap: Float
+        /// With fewer passages than this there is no reliable "typical"; the floor rises instead.
+        public var gapSample: Int
+        public var smallSampleFloor: Float
         /// Semantic-only results must be within this distance of the best passage found.
         public var margin: Float
         /// At most this many conversations are added by meaning alone.
         public var maxRelated: Int
         /// The reciprocal-rank-fusion constant (60 is the value from the original RRF paper).
         public var fusion: Double
-        public init(floor: Float = 0.45, margin: Float = 0.08, maxRelated: Int = 8, fusion: Double = 60) {
-            self.floor = floor; self.margin = margin; self.maxRelated = maxRelated; self.fusion = fusion
+        public init(floor: Float = 0.5, minimumGap: Float = 0.1, gapSample: Int = 5, smallSampleFloor: Float = 0.55,
+                    margin: Float = 0.08, maxRelated: Int = 8, fusion: Double = 60) {
+            self.floor = floor; self.minimumGap = minimumGap; self.gapSample = gapSample
+            self.smallSampleFloor = smallSampleFloor; self.margin = margin; self.maxRelated = maxRelated
+            self.fusion = fusion
+        }
+
+        /// Whether a passage scoring `score` is relevant, given the mean score of the `sample`
+        /// passages compared with the same query.
+        func isRelevant(_ score: Float, typical: Float, sample: Int) -> Bool {
+            sample < gapSample ? score >= max(floor, smallSampleFloor)
+                : score >= floor && score - typical >= minimumGap
         }
     }
 
-    /// Semantic candidates worth showing, best first: above the floor and close to the best one.
-    static func related(_ best: [(id: String, score: Float)], parameters: Parameters) -> [(id: String, score: Float)] {
+    /// Semantic candidates worth showing, best first: relevant, and close to the best one.
+    static func related(_ best: [(id: String, score: Float)], typical: Float, sample: Int,
+                        parameters: Parameters) -> [(id: String, score: Float)] {
         let ordered = best.sorted { $0.score == $1.score ? $0.id < $1.id : $0.score > $1.score }
-        guard let top = ordered.first?.score, top >= parameters.floor else { return [] }
-        return ordered.filter { $0.score >= parameters.floor && $0.score >= top - parameters.margin }
+        guard let top = ordered.first?.score else { return [] }
+        return ordered.filter {
+            parameters.isRelevant($0.score, typical: typical, sample: sample) && $0.score >= top - parameters.margin
+        }
     }
 
     /// Fuses two rankings of conversation IDs. Ties go to keyword matches, then to keyword order.

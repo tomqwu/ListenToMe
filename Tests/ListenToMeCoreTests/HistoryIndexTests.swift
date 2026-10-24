@@ -98,12 +98,19 @@ final class HistoryIndexTests: XCTestCase {
         XCTAssertFalse(results.contains { $0.id == "budget" })
     }
 
-    func testRelatedResultsAreBoundedAndNeedTheFloor() {
-        let params = HistoryRanking.Parameters(floor: 0.5, margin: 0.1, maxRelated: 2)
-        let picked = HistoryRanking.related([("a", 0.9), ("b", 0.85), ("c", 0.79), ("d", 0.4)], parameters: params)
-        XCTAssertEqual(picked.map(\.id), ["a", "b"], "Within the margin of the best and above the floor")
-        XCTAssertTrue(HistoryRanking.related([("a", 0.3)], parameters: params).isEmpty)
-        XCTAssertTrue(HistoryRanking.related([], parameters: params).isEmpty)
+    func testRelatedResultsNeedTheFloorTheGapAndTheMargin() {
+        let params = HistoryRanking.Parameters(floor: 0.5, minimumGap: 0.2, gapSample: 5, smallSampleFloor: 0.6,
+                                               margin: 0.1, maxRelated: 2)
+        let best: [(id: String, score: Float)] = [("a", 0.9), ("b", 0.85), ("c", 0.79), ("d", 0.4)]
+        let picked = HistoryRanking.related(best, typical: 0.3, sample: 20, parameters: params)
+        XCTAssertEqual(picked.map(\.id), ["a", "b"], "Within the margin of the best, above the floor")
+        // Everything a little similar to the query: nothing stands out from the typical passage.
+        XCTAssertTrue(HistoryRanking.related(best, typical: 0.75, sample: 20, parameters: params).isEmpty)
+        XCTAssertTrue(HistoryRanking.related([("a", 0.3)], typical: 0, sample: 20, parameters: params).isEmpty)
+        XCTAssertTrue(HistoryRanking.related([], typical: 0, sample: 0, parameters: params).isEmpty)
+        // Too few passages for a typical score: the higher floor decides.
+        XCTAssertEqual(HistoryRanking.related([("a", 0.65), ("b", 0.58)], typical: 0.6, sample: 2,
+                                              parameters: params).map(\.id), ["a"])
     }
 
     func testFusionPrefersBothThenKeywordOrder() {
@@ -115,7 +122,8 @@ final class HistoryIndexTests: XCTestCase {
     }
 
     func testSemanticOnlyResultsAreCappedButKeywordMatchesAreNot() async throws {
-        let records = (0..<5).map { record("trip\($0)", "Book the flight and the hotel.", age: Double($0)) }
+        let trips = (0..<5).map { record("trip\($0)", "Book the flight and the hotel.", age: Double($0)) }
+        let records = trips + corpus.filter { $0.id != "travel" }
         let index = HistoryIndex(directory: root.appendingPathComponent("capped"), embedder: TopicEmbedder(),
                                  parameters: .init(maxRelated: 2))
         try await index.sync(records)
@@ -215,6 +223,46 @@ final class HistoryIndexTests: XCTestCase {
         XCTAssertTrue(passages.isEmpty)
     }
 
+    func testStaleVectorsDoNotHideAValidRelatedConversation() async throws {
+        let index = index()
+        let old = record("old", "The budget, the funding and the money.")
+        let half = record("half", "The budget for the trip.")
+        try await index.sync([old, half])
+        // "old" now says something else, but its (stale) vectors still score highest for "money".
+        let edited = [record("old", "We talked about the weather."), half]
+        let results = await index.search("dollars", in: edited)
+        XCTAssertEqual(results.map(\.id), ["half"], "The best *current* passage decides the margin")
+        XCTAssertEqual(results.first?.isRelated, true)
+    }
+
+    func testARemovalStopsARunningSyncAndIsNeverUndone() async throws {
+        let gate = GatedEmbedder()
+        let index = index(gate)
+        let records = (0..<6).map { record("r\($0)", "The budget and the funding.", age: Double($0)) }
+        let sync = Task { try await index.sync(records) }
+        await gate.waitUntilEmbedding()   // the first conversation is being embedded
+        let removal = Task { try await index.remove(id: "r5") }
+        await Task.yield()
+        gate.release()
+        let report = try await sync.value
+        try await removal.value
+        XCTAssertLessThan(report.embedded, 6, "The sync stopped at its next conversation")
+        let ids = try await index.indexedIDs()
+        XCTAssertFalse(ids.contains("r5"))
+        // A later sync that still carries the deleted conversation does not bring it back.
+        try await index.sync(records)
+        let again = try await index.indexedIDs()
+        XCTAssertFalse(again.contains("r5"))
+        XCTAssertEqual(again.count, 5)
+        let updated = try await index.update(records[5])
+        XCTAssertFalse(updated)
+        // After Clear history, nothing indexed before comes back either; a new conversation does.
+        try await index.removeAll()
+        try await index.sync(records + [record("new", "The funding.")])
+        let afterClear = try await index.indexedIDs()
+        XCTAssertEqual(afterClear, ["new"])
+    }
+
     func testDeletingAConversationRemovesItsVectors() async throws {
         let index = index()
         try await index.sync(corpus)
@@ -303,6 +351,18 @@ final class HistoryIndexTests: XCTestCase {
 
     // MARK: - Retrieval for "Ask your history"
 
+    func testRetrievalNeverReturnsAPassageBelowTheRelevanceFloor() async throws {
+        let records = [record("money", "The budget and the funding money."),
+                       record("weak", "The team talked about the weekly sync and the trip.", age: 1)]
+        let index = index()
+        try await index.sync(records)
+        // One of three question words, and too little meaning: not sent.
+        let passages = await index.retrieve("weekly budget review", in: records)
+        XCTAssertEqual(passages.map(\.recordID), ["money"])
+        let nothing = await index.retrieve("Who won the chess game?", in: records)
+        XCTAssertTrue(nothing.isEmpty)
+    }
+
     func testRetrievalByMeaningAloneKeepsOnlyPassagesCloseToTheBest() async throws {
         let records = [record("money", "The budget and the funding money."), record("mixed", "A budget trip.", age: 1)]
         let index = index()
@@ -325,4 +385,41 @@ final class HistoryIndexTests: XCTestCase {
         XCTAssertEqual(passages.first.map { $0.score >= passages.last!.score }, true)
         XCTAssertEqual(passages.first?.id, "\(passages.first!.recordID)#\(passages.first!.ordinal)")
     }
+}
+
+/// Blocks its first `embed` until released, so a test can act while a sync is mid-way.
+final class GatedEmbedder: HistoryEmbedder, @unchecked Sendable {
+    let signature = "gated-v1"
+    private let lock = NSLock()
+    private var started = false
+    private var waiter: CheckedContinuation<Void, Never>?
+    private let gate = DispatchSemaphore(value: 0)
+    private let inner = TopicEmbedder()
+
+    func embed(_ text: String) -> HistoryVector? {
+        lock.lock()
+        let first = !started
+        started = true
+        let waiting = waiter
+        waiter = nil
+        lock.unlock()
+        if first {
+            waiting?.resume()
+            gate.wait()
+        }
+        return inner.embed(text)
+    }
+
+    func embedQuery(_ query: String, models: Set<String>) -> [HistoryVector] { inner.embedQuery(query, models: models) }
+
+    func waitUntilEmbedding() async {
+        await withCheckedContinuation { continuation in
+            lock.lock()
+            if started { lock.unlock(); continuation.resume(); return }
+            waiter = continuation
+            lock.unlock()
+        }
+    }
+
+    func release() { gate.signal() }
 }

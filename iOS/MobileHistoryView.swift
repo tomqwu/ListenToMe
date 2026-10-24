@@ -16,9 +16,7 @@ struct MobileHistoryView: View {
     private var results: [SessionRecord] { hybrid?.map(\.record) ?? session.historyMatching(query) }
     private var trimmedQuery: String { query.trimmingCharacters(in: .whitespacesAndNewlines) }
     /// Keyword plus on-device semantic results with snippets (#57), once the index has answered.
-    private var hybrid: [HistorySearchResult]? {
-        trimmedQuery.isEmpty || session.historySearch.resultsQuery != trimmedQuery ? nil : session.historySearch.results
-    }
+    private var hybrid: [HistorySearchResult]? { session.historySearch.results(for: query) }
 
     var body: some View {
         NavigationStack {
@@ -105,7 +103,7 @@ struct MobileHistoryView: View {
                 session.refreshWatchInboxRows()
             }
             .searchable(text: $query, prompt: "Search or ask your conversations")
-            .onChange(of: query) { session.historySearch.search(query, in: session.history) }
+            .onChange(of: query) { session.historySearch.search(query) }
             .navigationTitle("History")
             .toolbar { Button("Done") { dismiss() } }
         }

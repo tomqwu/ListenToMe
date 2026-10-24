@@ -22,28 +22,42 @@ struct HistoryAskRoute {
 /// The History search field's state on both platforms (issue #57): keeps the on-device semantic
 /// index in step with the archive, runs hybrid searches off the main thread, and answers a
 /// question from the top retrieved passages with the user's chosen provider.
+///
+/// Searches and questions always read the History records *now* (`records`), never a list kept
+/// from earlier, and every change to History bumps `generation`: results computed for an older
+/// generation are never shown, so a deleted or cleared conversation cannot come back on screen.
 @MainActor @Observable
 final class HistorySearchModel {
-    private(set) var results: [HistorySearchResult]?
-    private(set) var resultsQuery = ""
     private(set) var answer = ""
     private(set) var answerQuestion = ""
     private(set) var citations: [HistoryCitation] = []
     private(set) var sentPassages = 0
     private(set) var isAsking = false
     private(set) var askError: String?
+    /// Bumped whenever History may have lost a conversation (reload, delete, clear): results from
+    /// an older generation are never shown. A save only re-runs the search, keeping the results on
+    /// screen until the new ones arrive.
+    private(set) var generation = 0
+    private var results: [HistorySearchResult]?
+    private var resultsQuery = ""
+    private var resultsGeneration = -1
 
+    /// The current History records, read when a search or a question runs.
+    @ObservationIgnored var records: @MainActor () -> [SessionRecord] = { [] }
     @ObservationIgnored let index: HistoryIndex
     @ObservationIgnored private var maintenance: Task<Void, Never>?
+    @ObservationIgnored private var removal: Task<Void, Never>?
+    /// Bumped by Clear history / Delete all: index work queued before it is dropped.
+    @ObservationIgnored private var epoch = 0
     @ObservationIgnored private var pendingSync: Task<Void, Never>?
     @ObservationIgnored private var pendingUpdate: Task<Void, Never>?
     @ObservationIgnored private var pendingUpdates: [String: SessionRecord] = [:]
     @ObservationIgnored private var searchTask: Task<Void, Never>?
+    @ObservationIgnored private var activeQuery = ""
     @ObservationIgnored private var askTask: Task<Void, Never>?
+    @ObservationIgnored private var askToken = 0
     @ObservationIgnored private let syncDelay: Duration
     @ObservationIgnored private let searchDelay: Duration
-    /// The search on screen, re-run once a sync has embedded new conversations.
-    @ObservationIgnored private var lastSearch: (query: String, records: [SessionRecord])?
 
     private static var shared: [String: HistorySearchModel] = [:]
 
@@ -62,11 +76,12 @@ final class HistorySearchModel {
         self.searchDelay = searchDelay
     }
 
-    // MARK: Index maintenance — every call runs on the index actor, in the order it was made.
+    // MARK: Index maintenance
 
     /// Reconciles the index with the whole archive after a quiet period (several reloads in a row
     /// cost one pass, and unchanged conversations are not embedded again).
     func sync(_ records: [SessionRecord]) {
+        historyChanged()
         pendingSync?.cancel()
         let delay = syncDelay
         pendingSync = Task { [weak self] in
@@ -74,7 +89,7 @@ final class HistorySearchModel {
             self?.enqueue { [weak self] index in
                 let report = try? await index.sync(records)
                 guard (report?.embedded ?? 0) + (report?.removed ?? 0) > 0 else { return }
-                await self?.refreshSearch()
+                await self?.historyChanged()
             }
         }
     }
@@ -82,6 +97,7 @@ final class HistorySearchModel {
     /// Embeds a saved conversation once saving has paused: a recording saves every few seconds, and
     /// only its latest text needs vectors, so each save restarts the wait.
     func update(_ record: SessionRecord) {
+        if !activeQuery.isEmpty { search(activeQuery) }
         pendingUpdates[record.id] = record
         pendingUpdate?.cancel()
         let delay = syncDelay
@@ -94,28 +110,46 @@ final class HistorySearchModel {
         }
     }
 
-    /// A conversation was deleted: its vectors go with it.
+    /// A conversation was deleted. Its vectors go now — not behind a sync that is still running,
+    /// which stops at its next conversation and never embeds this one again.
     func forget(id: String) {
         pendingUpdates[id] = nil
-        results?.removeAll { $0.id == id }
         citations.removeAll { $0.recordID == id }
-        enqueue { index in try? await index.remove(id: id) }
+        historyChanged()
+        removeNow { index in try? await index.remove(id: id) }
     }
 
-    /// History was cleared: every vector goes.
+    /// History was cleared: every vector goes, the running sync is cancelled and anything queued
+    /// before the clear is dropped.
     func forgetAll() {
+        epoch += 1
         pendingSync?.cancel()
         pendingUpdate?.cancel()
         pendingUpdates = [:]
-        results = nil
+        maintenance?.cancel()
         clearAnswer()
-        enqueue { index in try? await index.removeAll() }
+        historyChanged()
+        removeNow { index in try? await index.removeAll() }
     }
 
+    /// Runs `work` in order behind earlier maintenance, unless History was cleared since.
     private func enqueue(_ work: @escaping @Sendable (HistoryIndex) async -> Void) {
         let previous = maintenance
         let index = index
-        maintenance = Task {
+        let epoch = epoch
+        maintenance = Task { [weak self] in
+            await previous?.value
+            guard let self, self.epoch == epoch, !Task.isCancelled else { return }
+            await work(index)
+        }
+    }
+
+    /// Removals do not wait for maintenance: the index actor runs them at the running sync's next
+    /// step, and they run in the order they were asked for.
+    private func removeNow(_ work: @escaping @Sendable (HistoryIndex) async -> Void) {
+        let previous = removal
+        let index = index
+        removal = Task {
             await previous?.value
             await work(index)
         }
@@ -123,82 +157,113 @@ final class HistorySearchModel {
 
     // MARK: Search
 
-    /// Hybrid results for `query`, debounced. Until they arrive, `results` is nil and the view shows
-    /// the plain keyword matches it already has.
-    func search(_ query: String, in records: [SessionRecord]) {
-        searchTask?.cancel()
+    /// Hybrid results for `query`, or nil while they are being computed or no longer match History
+    /// (the view then shows the plain keyword matches).
+    func results(for query: String) -> [HistorySearchResult]? {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { results = nil; resultsQuery = ""; lastSearch = nil; return }
-        lastSearch = (trimmed, records)
-        if trimmed != resultsQuery { results = nil }
+        guard !trimmed.isEmpty, trimmed == resultsQuery, resultsGeneration == generation else { return nil }
+        return results
+    }
+
+    /// Searches the current History for `query`, debounced.
+    func search(_ query: String) {
+        searchTask?.cancel()
+        activeQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !activeQuery.isEmpty else { results = nil; resultsQuery = ""; return }
+        let trimmed = activeQuery
         let delay = searchDelay
         let index = index
         searchTask = Task { [weak self] in
             do { try await Task.sleep(for: delay) } catch { return }
-            let found = await index.search(trimmed, in: records)
-            guard !Task.isCancelled, let self else { return }
+            guard let self else { return }
+            let generation = self.generation
+            let found = await index.search(trimmed, in: self.records())
+            guard !Task.isCancelled, generation == self.generation, trimmed == self.activeQuery else { return }
             self.results = found
             self.resultsQuery = trimmed
+            self.resultsGeneration = generation
         }
     }
 
-    private func refreshSearch() {
-        guard let lastSearch else { return }
-        search(lastSearch.query, in: lastSearch.records)
+    /// History changed: results computed before are void, and the search on screen runs again.
+    private func historyChanged() {
+        generation += 1
+        if !activeQuery.isEmpty { search(activeQuery) }
     }
 
     // MARK: Ask your history
 
-    /// Retrieves the best passages for `question` and streams an answer from `route`'s provider.
-    /// Only those passages are sent; the answer's citations point back at their conversations.
-    func ask(_ question: String, in records: [SessionRecord], route: HistoryAskRoute,
+    /// Retrieves the best passages for `question` from the current History and streams an answer
+    /// from `route`'s provider. Only those passages are sent; the citations point at their
+    /// conversations. Stop or a new question ends it; Clear history clears it.
+    func ask(_ question: String, route: HistoryAskRoute,
              describe: @escaping (Error) -> String = { $0.localizedDescription }) {
         let trimmed = question.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, !isAsking else { return }
-        if let reason = route.unavailable { askError = reason; return }
+        if let reason = route.unavailable { askError = reason; answerQuestion = trimmed; return }
         askTask?.cancel()
+        askToken += 1
+        let token = askToken
         answer = ""; citations = []; askError = nil; sentPassages = 0
         answerQuestion = trimmed
         isAsking = true
         let index = index
+        let records = records()
         askTask = Task { [weak self] in
-            defer { self?.isAsking = false }
+            defer { if self?.askToken == token { self?.isAsking = false } }
+            @MainActor func current() -> Bool { !Task.isCancelled && self?.askToken == token }
             do {
                 let provider = try route.makeProvider()
                 let passages = await index.retrieve(trimmed, in: records)
-                let budget = min(provider.maxPromptCharacters ?? 24_000, 24_000)
+                guard current() else { return }
+                let budget = min(provider.maxPromptCharacters ?? HistoryQuestion.characterBudget,
+                                 HistoryQuestion.characterBudget)
                 guard let built = HistoryQuestion.request(question: trimmed, passages: passages,
                                                           responseLanguage: route.responseLanguage,
                                                           characterBudget: budget) else {
-                    self?.askError = "Nothing in your saved conversations matches that question."
+                    self?.askError = "No saved conversation is close enough to that question to answer it."
                     return
                 }
                 self?.sentPassages = built.sent.count
                 var text = ""
                 for try await delta in provider.stream(built.request) {
-                    try Task.checkCancellation()
+                    guard current() else { return }
                     text += delta
                     guard text.count <= 20_000 else { break }
                     self?.answer = text
                 }
+                guard current() else { return }
                 self?.answer = text
                 self?.citations = HistoryQuestion.citations(in: text, sent: built.sent)
-            } catch is CancellationError {
-                return
             } catch {
+                guard current(), !(error is CancellationError) else { return }
                 self?.askError = describe(error)
             }
         }
     }
 
     func cancelAsk() {
+        askToken += 1
         askTask?.cancel()
         askTask = nil
         isAsking = false
     }
 
-    /// Waits for the index work queued so far (tests, and callers that need the index settled).
-    func waitForMaintenance() async { await maintenance?.value }
+    /// Waits for the index work queued so far, removals included (tests, and callers that need the
+    /// index settled).
+    func waitForMaintenance() async {
+        await maintenance?.value
+        await removal?.value
+    }
+
+    /// Waits for the pending debounced sync to start, then for the index work it queued.
+    func waitForSync() async {
+        await pendingSync?.value
+        await waitForMaintenance()
+    }
+
+    /// Waits for the search being computed, if any.
+    func waitForSearch() async { await searchTask?.value }
 
     /// Waits for the answer being streamed, if any.
     func waitForAnswer() async { await askTask?.value }

@@ -311,24 +311,36 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
 ## Included
 
 - Semantic History search and **Ask your history** (#57). The History search field keeps the keyword
-  search and adds on-device semantic ranking: `HistoryIndex` (Core) chunks each conversation's
+  search and adds on-device semantic ranking. `HistoryIndex` (Core) chunks each conversation's
   summary, notes and transcript into short passages, detects each passage's language with
-  `NLLanguageRecognizer`, and stores a vector per passage from `NLEmbedding` (the mean of the content
-  words' word vectors, or the sentence model where only that exists). Only vectors, passage numbers
-  and a fingerprint are stored — the text stays in the archive — in `Search Index/` beside
-  `Conversations/`, always excluded from backup, versioned (a new format or embedding method rebuilds
-  it), and any damaged file is re-embedded. It is reconciled with the archive after a reload, updated a
-  few seconds after saving stops (off the main thread), and a deleted conversation's vectors are
-  removed by its `conversationDataOwners` entry (`forgetSearchIndex(ids:everything:)`), so Delete and
-  Delete all conversations (#220) both take them; macOS Clear history runs the same owner list. Results fuse the keyword and semantic orders (reciprocal-rank
-  fusion): every keyword match stays, at most eight conversations are added by meaning alone (marked
-  **Related**), and each row shows the matching excerpt. A passage in a language with no on-device
-  model gets no vector, so that conversation is found by keyword exactly as before. **Ask your
-  history** sends only the top six retrieved passages (at most two per conversation, fitted to the
-  provider's prompt limit) and the question to the selected summary provider with the Deep role's
-  model; the answer cites excerpt numbers, shown as tappable sources. Apple Intelligence answers on
-  the device; for Ollama, an OpenAI-compatible server or a cloud AI service, the footer names the
-  destination before anything is sent.
+  `NLLanguageRecognizer`, and stores a vector per passage from `NLEmbedding`: the mean of its nouns'
+  word vectors (verbs, auxiliaries and nouns every meeting uses, such as "meeting" or "week", are left
+  out), or the sentence model where only that exists. Small talk with fewer than three such words gets
+  no vector. Only vectors, passage numbers and a fingerprint are stored — the text stays in the
+  archive — in `Search Index/` beside `Conversations/`, always excluded from backup, versioned (a new
+  format or embedding method rebuilds it), and any damaged file is re-embedded. It is reconciled with
+  the archive after a reload and updated a few seconds after saving stops, off the main thread.
+- **Deletion.** A deleted conversation's vectors are removed at once by its `conversationDataOwners`
+  entry (`forgetSearchIndex(ids:everything:)`), so Delete and Delete all conversations (#220) both
+  take them. A sync still running stops at its next conversation and never embeds a deleted one again.
+  macOS Clear history runs the same owner list. Searches always read the current History, and results
+  computed before a deletion are never shown; opening a conversation that is no longer in History is
+  refused, so a stale row cannot write a deleted conversation back.
+- **Results.** The keyword and semantic orders are fused (reciprocal-rank fusion): every keyword match
+  stays, and at most eight conversations are added by meaning alone, marked **Related**. A passage is
+  related only when its similarity is at least 0.5 *and* at least 0.1 above the typical passage for
+  the same query (0.55 when there are too few passages to tell). The thresholds are calibrated on
+  Apple's English word vectors: ten unrelated queries relate to nothing, while seven of eight
+  paraphrases are found. Each row shows the matching excerpt. A passage in a language with no
+  on-device model gets no vector, so that conversation is found by keyword exactly as before.
+- **Ask your history** sends only the top six retrieved passages and the question to the selected
+  summary provider with the Deep role's model. It sends at most two passages per conversation, and
+  only passages that hold the question's words or pass the same relevance test. The prompt is fitted
+  to about 8,000 characters, which suits Apple Intelligence and the 4,096-token default context of
+  smaller Ollama servers. The answer cites excerpt numbers, shown as tappable sources. Apple
+  Intelligence answers on the device; for Ollama, an OpenAI-compatible server or a cloud AI service,
+  the footer names the destination before anything is sent. Stop ends a request for good: a stopped
+  answer never overwrites the next one.
 - Foreground microphone transcription using Apple's on-device SpeechAnalyzer. Language assets
   download on first use. Unsupported device/language and permission errors are shown in the app.
   **Settings → Transcription → Language** is remembered across launches, so a language chosen for
