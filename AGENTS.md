@@ -115,6 +115,11 @@ with the checked-in `Config/iOS/` export settings, through actual upload and tes
 verification. Read `.agents/skills/listentome-testflight/SKILL.md` when starting or resuming that
 work. Upload with
 `make ios-testflight IOS_ARCHIVE=<validated.xcarchive> IOS_RELEASE_SOURCE=<commit>`.
+After the upload is accepted and the `ios-v<version>-build<build>` tag is pushed, publish a GitHub
+**pre-release** for that tag: `gh release create ios-v<version>-build<build> --verify-tag --prerelease
+--latest=false`, titled `ListenToMe iOS <version> (<build>) — TestFlight`, with that version's
+`CHANGELOG.md` section as the notes and no attached binary (iOS installs through TestFlight only).
+Never mark an iOS release Latest; the latest macOS DMG release stays Latest.
 
 The verified default credential is the configured App Store Connect API key in
 `~/.config/listentome/testflight.json` (successful agent upload: iOS 1.4.0 build 11, September 12,
