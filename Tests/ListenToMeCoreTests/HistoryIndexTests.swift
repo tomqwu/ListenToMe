@@ -199,6 +199,28 @@ final class HistoryIndexTests: XCTestCase {
                        root.standardizedFileURL.path, "Beside the archive")
     }
 
+    func testPassagesAreEmbeddedInTheLanguageTheyWereTranscribedIn() async throws {
+        final class Recorder: HistoryEmbedder, @unchecked Sendable {
+            let signature = "recorder"
+            private let lock = NSLock()
+            private(set) var languages: [String?] = []
+            func embed(_ text: String) -> HistoryVector? { note(nil); return TopicEmbedder().embed(text) }
+            func embed(_ text: String, transcribedIn language: String) -> HistoryVector? {
+                note(language); return TopicEmbedder().embed(text)
+            }
+            func embedQuery(_ query: String, models: Set<String>) -> [HistoryVector] { [] }
+            private func note(_ language: String?) { lock.lock(); languages.append(language); lock.unlock() }
+        }
+        let recorder = Recorder()
+        let segments = [TranscriptSegment(source: .you, text: "Le budget.", isFinal: true, start: 0, end: 1,
+                                          language: "fr_FR")]
+        let record = SessionRecord(id: "fr", title: "fr", date: base, transcript: "", summary: "The budget.",
+                                   segments: segments)
+        try await index(recorder).sync([record])
+        XCTAssertEqual(recorder.languages, [nil, "fr_FR"], "Summary detected; transcript lines use their language")
+        XCTAssertNotNil(TopicEmbedder().embed("budget", transcribedIn: "en"), "The protocol default detects")
+    }
+
     func testUpdateEmbedsOneSavedConversationAndLeavesTheRest() async throws {
         let index = index()
         try await index.sync(Array(corpus.prefix(2)))

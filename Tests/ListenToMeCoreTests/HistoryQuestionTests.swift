@@ -42,10 +42,27 @@ final class HistoryChunkerTests: XCTestCase {
         XCTAssertGreaterThan(chunks.count, HistoryChunker.maxChunksPerRecord / 4)
     }
 
+    func testAPassageKeepsItsLinesTranscriptionLanguageAndALanguageChangeStartsANewOne() {
+        func line(_ text: String, _ language: String?) -> TranscriptSegment {
+            TranscriptSegment(source: .others, text: text, isFinal: true, start: 0, end: 1, language: language)
+        }
+        let chunks = HistoryChunker.chunks(for: record(summary: "Résumé", segments: [
+            line("Bonjour à tous.", "fr_FR"), line("On commence.", "fr_FR"),
+            line("Switching to English now.", "en_US"), line("Older line.", nil)
+        ]))
+        XCTAssertEqual(chunks.map(\.text), ["Résumé", "Bonjour à tous. On commence.", "Switching to English now.",
+                                             "Older line."])
+        XCTAssertEqual(chunks.map(\.language), [nil, "fr_FR", "en_US", nil])
+        let relabeled = HistoryChunker.chunks(for: record(segments: [line("Same words.", "en_US")]))
+        let original = HistoryChunker.chunks(for: record(segments: [line("Same words.", "fr_FR")]))
+        XCTAssertNotEqual(HistoryChunker.fingerprint(relabeled, salt: "s"), HistoryChunker.fingerprint(original, salt: "s"),
+                          "A corrected language re-embeds the passage")
+    }
+
     func testFingerprintIsStableAndSensitiveToTextAndMethod() {
         let chunks = HistoryChunker.chunks(for: record(summary: "Alpha"))
         XCTAssertEqual(HistoryChunker.fingerprint(chunks, salt: "a"), HistoryChunker.fingerprint(chunks, salt: "a"))
-        XCTAssertEqual(HistoryChunker.fingerprint(chunks, salt: "a"), 0xb16c_7a84_bda2_0aa9 as UInt64,
+        XCTAssertEqual(HistoryChunker.fingerprint(chunks, salt: "a"), 0xabea_702a_a360_6a2c as UInt64,
                        "FNV-1a, identical on every launch")
         XCTAssertNotEqual(HistoryChunker.fingerprint(chunks, salt: "a"), HistoryChunker.fingerprint(chunks, salt: "b"))
         let other = HistoryChunker.chunks(for: record(summary: "Alpha!"))
@@ -264,6 +281,20 @@ final class NaturalLanguageEmbedderTests: XCTestCase {
         // Small talk carries no meaning to match.
         XCTAssertNil(embedder.embed(filler[0].1))
         XCTAssertNil(embedder.embed(filler[1].1))
+    }
+
+    func testTheTranscriptionLanguageReplacesDetection() throws {
+        XCTAssertEqual(NaturalLanguageEmbedder.naturalLanguage("en_US"), .english)
+        XCTAssertEqual(NaturalLanguageEmbedder.naturalLanguage("fr-CA"), .french)
+        XCTAssertEqual(NaturalLanguageEmbedder.naturalLanguage("zh_TW"), .traditionalChinese)
+        XCTAssertEqual(NaturalLanguageEmbedder.naturalLanguage("zh-Hant"), .traditionalChinese)
+        XCTAssertEqual(NaturalLanguageEmbedder.naturalLanguage("zh-Hans-CN"), .simplifiedChinese)
+        XCTAssertEqual(NaturalLanguageEmbedder.naturalLanguage("zh"), .simplifiedChinese)
+        XCTAssertNil(NaturalLanguageEmbedder.naturalLanguage(""))
+        try requireEnglish()
+        let text = "The budget review with the finance department and the auditors."
+        XCTAssertEqual(embedder.embed(text, transcribedIn: "en_US")?.model, embedder.embed(text)?.model)
+        XCTAssertNotNil(embedder.embed(text, transcribedIn: ""), "An unusable identifier falls back to detection")
     }
 
     func testAPassageInALanguageWithoutAModelHasNoVector() throws {

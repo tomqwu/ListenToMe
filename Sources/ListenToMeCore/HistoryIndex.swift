@@ -116,7 +116,8 @@ public actor HistoryIndex {
         let fingerprint = HistoryChunker.fingerprint(chunks, salt: embedder.signature)
         if catalog?[record.id]?.fingerprint == fingerprint { return .unchanged }
         let vectors = chunks.compactMap { chunk in
-            embedder.embed(chunk.text).map { StoredChunkVector(ordinal: chunk.ordinal, vector: $0) }
+            (chunk.language.map { embedder.embed(chunk.text, transcribedIn: $0) } ?? embedder.embed(chunk.text))
+                .map { StoredChunkVector(ordinal: chunk.ordinal, vector: $0) }
         }
         try store(StoredRecordVectors(fingerprint: fingerprint, chunks: vectors), for: record.id)
         return .embedded

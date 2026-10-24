@@ -313,8 +313,9 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
 
 - Semantic History search and **Ask your history** (#57). The History search field keeps the keyword
   search and adds on-device semantic ranking. `HistoryIndex` (Core) chunks each conversation's
-  summary, notes and transcript into short passages, detects each passage's language with
-  `NLLanguageRecognizer`, and stores a vector per passage from `NLEmbedding`: the mean of its nouns'
+  summary, notes and transcript into short passages. A transcript passage uses the language its lines
+  were transcribed in (#206; a language change starts a new passage), and any other passage's language
+  is detected with `NLLanguageRecognizer`. It then stores a vector per passage from `NLEmbedding`: the mean of its nouns'
   word vectors (verbs, auxiliaries and nouns every meeting uses, such as "meeting" or "week", are left
   out), or the sentence model where only that exists. Small talk with fewer than three such words gets
   no vector. Only vectors, passage numbers and a fingerprint are stored — the text stays in the

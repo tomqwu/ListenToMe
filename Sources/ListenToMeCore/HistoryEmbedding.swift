@@ -23,9 +23,15 @@ public protocol HistoryEmbedder: Sendable {
     var signature: String { get }
     /// The vector for a passage, or nil when no on-device model covers the passage's language.
     func embed(_ text: String) -> HistoryVector?
+    /// The same, for a passage whose transcription language is known (a BCP-47 or locale identifier).
+    func embed(_ text: String, transcribedIn language: String) -> HistoryVector?
     /// Vectors for a search query, one per stored model the query plausibly belongs to. Queries are
     /// short, so the language is chosen among the models the index already holds.
     func embedQuery(_ query: String, models: Set<String>) -> [HistoryVector]
+}
+
+public extension HistoryEmbedder {
+    func embed(_ text: String, transcribedIn language: String) -> HistoryVector? { embed(text) }
 }
 
 /// Apple NaturalLanguage embeddings, entirely on device. A passage's language is detected per
@@ -62,6 +68,22 @@ public final class NaturalLanguageEmbedder: HistoryEmbedder, @unchecked Sendable
         recognizer.processString(text)
         guard let language = recognizer.dominantLanguage else { return nil }
         return embed(text, language: language, minimumWords: Self.minimumPassageWords)
+    }
+
+    /// Uses the language the line was transcribed in instead of guessing it from a few words.
+    public func embed(_ text: String, transcribedIn language: String) -> HistoryVector? {
+        guard let language = Self.naturalLanguage(language) else { return embed(text) }
+        return embed(text, language: language, minimumWords: Self.minimumPassageWords)
+    }
+
+    /// "en_US", "fr-CA", "zh-Hant-TW" → the NaturalLanguage language ("en", "fr", "zh-Hant").
+    static func naturalLanguage(_ identifier: String) -> NLLanguage? {
+        let language = Locale(identifier: identifier).language
+        guard let code = language.languageCode?.identifier, !code.isEmpty else { return nil }
+        guard code == "zh" else { return NLLanguage(rawValue: code) }
+        let region = language.region?.identifier ?? ""
+        let traditional = language.script?.identifier == "Hant" || ["TW", "HK", "MO"].contains(region)
+        return traditional ? .traditionalChinese : .simplifiedChinese
     }
 
     public func embedQuery(_ query: String, models: Set<String>) -> [HistoryVector] {

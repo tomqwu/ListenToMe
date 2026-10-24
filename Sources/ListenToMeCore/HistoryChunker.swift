@@ -19,8 +19,11 @@ public struct HistoryChunk: Sendable, Equatable {
     public let source: HistorySource
     public let ordinal: Int
     public let text: String
-    public init(source: HistorySource, ordinal: Int, text: String) {
-        self.source = source; self.ordinal = ordinal; self.text = text
+    /// The transcription language of every line in the passage (#206), when the record says and all
+    /// its lines agree; nil for summaries, notes and older records, whose language is detected.
+    public let language: String?
+    public init(source: HistorySource, ordinal: Int, text: String, language: String? = nil) {
+        self.source = source; self.ordinal = ordinal; self.text = text; self.language = language
     }
 }
 
@@ -35,17 +38,18 @@ public enum HistoryChunker {
     public static let maxChunksPerRecord = 160
 
     public static func chunks(for record: SessionRecord) -> [HistoryChunk] {
-        let sources: [(HistorySource, [String])] = [
-            (.summary, lines(record.summary)),
-            (.notes, lines(record.notes ?? "")),
-            (.transcript, transcriptUnits(record))
+        let sources: [(HistorySource, [Unit])] = [
+            (.summary, lines(record.summary).map { Unit(text: $0, language: nil) }),
+            (.notes, lines(record.notes ?? "").map { Unit(text: $0, language: nil) }),
+            (.transcript, transcriptLines(record))
         ]
         var target = targetCharacters
         while true {
             var result: [HistoryChunk] = []
             for (source, units) in sources {
-                for text in pack(units, target: target) {
-                    result.append(HistoryChunk(source: source, ordinal: result.count, text: text))
+                for unit in pack(units, target: target) {
+                    result.append(HistoryChunk(source: source, ordinal: result.count, text: unit.text,
+                                               language: unit.language))
                 }
             }
             if result.count <= maxChunksPerRecord { return result }
@@ -62,7 +66,7 @@ public enum HistoryChunker {
             hash = (hash ^ 0x1f) &* 0x0000_0100_0000_01b3
         }
         mix(salt)
-        for chunk in chunks { mix(chunk.source.rawValue); mix(chunk.text) }
+        for chunk in chunks { mix(chunk.source.rawValue); mix(chunk.language ?? ""); mix(chunk.text) }
         return hash
     }
 
@@ -73,22 +77,34 @@ public enum HistoryChunker {
     }
 
     /// Segment text without the "You:"/"Others:" prefixes, which carry no meaning to embed.
-    static func transcriptUnits(_ record: SessionRecord) -> [String] {
+    static func transcriptUnits(_ record: SessionRecord) -> [String] { transcriptLines(record).map(\.text) }
+
+    struct Unit: Equatable { let text: String; let language: String? }
+
+    static func transcriptLines(_ record: SessionRecord) -> [Unit] {
         if let segments = record.segments, !segments.isEmpty {
-            return segments.map { $0.text.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
+            return segments.compactMap { segment in
+                let text = segment.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                return text.isEmpty ? nil : Unit(text: text, language: segment.language)
+            }
         }
-        return lines(record.transcript)
+        return lines(record.transcript).map { Unit(text: $0, language: nil) }
     }
 
     /// Greedy packing of whole units up to `target` characters; a single unit longer than twice the
-    /// target is split at whitespace (or at a character count for scripts without spaces).
-    static func pack(_ units: [String], target: Int) -> [String] {
-        var result: [String] = []
+    /// target is split at whitespace (or at a character count for scripts without spaces). A change
+    /// of transcription language starts a new passage, so each passage has one language.
+    static func pack(_ units: [Unit], target: Int) -> [Unit] {
+        var result: [Unit] = []
         var current = ""
-        func flush() { if !current.isEmpty { result.append(current); current = "" } }
-        for unit in units.flatMap({ split($0, limit: target * 2) }) {
-            if !current.isEmpty && current.count + 1 + unit.count > target { flush() }
-            current = current.isEmpty ? unit : current + " " + unit
+        var language: String?
+        func flush() { if !current.isEmpty { result.append(Unit(text: current, language: language)); current = "" } }
+        for unit in units {
+            for piece in split(unit.text, limit: target * 2) {
+                if !current.isEmpty && (current.count + 1 + piece.count > target || unit.language != language) { flush() }
+                if current.isEmpty { language = unit.language }
+                current = current.isEmpty ? piece : current + " " + piece
+            }
         }
         flush()
         return result
