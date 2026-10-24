@@ -5,11 +5,11 @@ final class MobileReleaseNotesUITests: XCTestCase {
     func testUpdateShowsVersionOnceAndChangelogCanBeReopened() {
         let app = XCUIApplication()
         app.useModelFixtures()
-        app.launchArguments = ["-lastAcknowledgedReleaseBuild", "1.13.0-365n3degzb1oi"]
+        app.launchArguments = ["-lastAcknowledgedReleaseBuild", "1.14.0-3h77l5d3ivkk8"]
         app.launch()
         XCTAssertTrue(app.buttons["releaseNotesContinue"].waitForExistence(timeout: 5))
-        XCTAssertEqual(app.staticTexts["releaseVersion"].label, "Version 1.14.0 · Build 31")
-        XCTAssertTrue(app.staticTexts["Your cloud AI, your key"].exists)
+        XCTAssertEqual(app.staticTexts["releaseVersion"].label, "Version 1.15.0 · Build 32")
+        XCTAssertTrue(app.staticTexts["Find it, ask it, keep it"].exists)
         capture(app, "What’s New on update")
         app.buttons["releaseNotesContinue"].tap()
         XCTAssertTrue(app.buttons["More"].waitForExistence(timeout: 5))
@@ -35,7 +35,7 @@ final class MobileReleaseNotesUITests: XCTestCase {
         XCTAssertTrue(button.waitForExistence(timeout: 5))
         XCTAssertTrue(button.isHittable)
         let scroll = app.scrollViews["releaseNotesScroll"]
-        for _ in 0..<60 where !app.staticTexts["Automatic reviews"].isHittable { scroll.swipeUp() }
+        for _ in 0..<70 where !app.staticTexts["Automatic reviews"].isHittable { scroll.swipeUp() }
         XCTAssertTrue(app.staticTexts["Automatic reviews"].isHittable)
         capture(app, "Large text release history with reachable Continue")
         button.tap()

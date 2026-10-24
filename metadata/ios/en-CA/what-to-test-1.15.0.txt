@@ -1,0 +1,12 @@
+This build has two answers, Quick Summary and Summary: the Deep tab is gone (Deep stays on the Mac), and a conversation saved with a Deep analysis keeps it under Summary in History. It also adds search by meaning, Ask your history, automatic names, suggested prompts, export formats, vocabularies, optional saved audio and Summarize selection. Audio stays on this device.
+
+Please test:
+1. Delete all conversations from the bottom of History or Settings → Privacy. It asks first and says how many go.
+2. Record a long conversation (over 10 minutes) and refresh Quick. The answer says "Using …" to show what part it read.
+3. Record a short conversation and tap Stop. It gets a name instead of "New conversation".
+4. Under Quick, tap a suggested prompt. The answer shows in a small card under Quick.
+5. More → Export as → Subtitles (SRT) or JSON. Open the file and check the times.
+6. Settings → Vocabularies: turn on a vocabulary such as Medical. Record about a minute on another subject (for example a legal one) and check the "Sounds like…" banner. Touch and hold a line → Add to My terms.
+7. Search History by meaning (for example "money" for a budget talk), then type a question and tap Ask.
+8. Turn on Settings → Audio recordings, record, then tap a line's time to play it.
+9. Tap the checklist button on the transcript, select some lines and tap Summarize selection.
