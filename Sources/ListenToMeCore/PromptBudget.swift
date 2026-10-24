@@ -42,8 +42,10 @@ public enum PromptBudget {
         if referencesDropped { parts.append("some attached reference material") }
         if auxiliaryDropped { parts.append("your notes and the running summary") }
         guard !parts.isEmpty else { return nil }
+        // Which speech was kept is each pane's own grounding line (`OnDemandGrounding`, issue #114):
+        // with no summary it is the opening plus the most recent speech, not only the latter.
         if parts == ["older speech"] {
-            return noticePrefix + "only the most recent speech is included."
+            return noticePrefix + "some older speech was left out; each pane says which part it read."
         }
         let listed: String
         switch parts.count {

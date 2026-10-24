@@ -80,11 +80,18 @@ struct AnthropicStreamState {
         return text
     }
 
+    /// True when the answer stopped at the token cap (`max_tokens`) or ran out of context window. The
+    /// provider reports it as `LLMStreamEvent.outputLimitReached`, keeping the partial text (#215).
+    var reachedOutputLimit: Bool { stopReason == "max_tokens" || stopReason == "model_context_window_exceeded" }
+
     /// Called once the byte stream ends. Only `message_stop` completes a response; a stream that was
-    /// cut off is never accepted as a complete answer, and neither is one that hit the token cap.
+    /// cut off mid-transfer is never accepted as a complete answer. One that hit the token cap is
+    /// complete but partial, which `reachedOutputLimit` reports.
     func complete() throws {
         guard finished else { throw OpenAICompatibleError.incomplete }
-        if stopReason == "max_tokens" || stopReason == "model_context_window_exceeded" { throw AnthropicError.cutOff }
+        // Hitting the cap before any answer text is the cap's fault, not an empty or thinking-only
+        // answer, and has always been reported as the cut-off it is.
+        if reachedOutputLimit && !producedContent { throw AnthropicError.cutOff }
         guard producedContent else {
             throw producedThinking ? OpenAICompatibleError.thinkingOnly : OpenAICompatibleError.empty
         }
@@ -104,7 +111,8 @@ public enum AnthropicError: LocalizedError, Equatable {
     case stream(type: String, message: String?)
     /// `stop_reason: "refusal"`: Claude declined, after any server-side fallback.
     case refused(category: String?)
-    /// `stop_reason: "max_tokens"`: the answer reached the length limit and was cut off.
+    /// `stop_reason: "max_tokens"`: the answer reached the length limit and was cut off. Thrown only by
+    /// the plain-text `stream(_:)`; `streamEvents` reports `LLMStreamEvent.outputLimitReached` instead.
     case cutOff
     /// A 2xx response that is not an event stream (proxy page, captive portal).
     case notEventStream(contentType: String?)
@@ -130,8 +138,8 @@ public enum AnthropicError: LocalizedError, Equatable {
             return "Claude declined to answer this request\(reason), so its partial text was discarded. "
                 + "Anthropic may have re-run it on another Claude model first. Rephrase, or choose another model."
         case .cutOff:
-            return "The answer was cut off because it reached the length limit. The partial text is shown; "
-                + "retry, or ask for a shorter answer."
+            return "The answer was cut off because it reached the length limit, so it was not used. "
+                + "Retry, or ask for a shorter answer."
         case .notEventStream(let contentType):
             let kind = contentType.map { " (it sent \($0))" } ?? ""
             return "Anthropic did not answer in its streaming format\(kind). Check that no login page or proxy "
