@@ -8,7 +8,7 @@ Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags)
 
 | Surface | Latest published | State of `main` |
 | --- | --- | --- |
-| iPhone/iPad (TestFlight) | **1.15.0 (32)**, published 2026-10-24, tag `ios-v1.15.0-build32` at `f6e4c72` | Nothing user-visible after `f6e4c72` except the Apple Watch work below. |
+| iPhone/iPad (TestFlight) | **1.15.0 (32)**, published 2026-10-24, tag `ios-v1.15.0-build32` at `f6e4c72` | Pending changes since `f6e4c72`: Settings privacy copy for all optional providers (#247), plus the Apple Watch work below. |
 | macOS | **1.4.4 (14)**, 2026-09-14, tag `v1.4.4` | **Releases paused on the maintainer's decision.** About 50 commits of Mac work are merged but unreleased; see [CHANGELOG → macOS (unreleased since 1.4.4)](../CHANGELOG.md#macos-unreleased-since-144). Do not start a macOS train yourself; the maintainer calls it. |
 | Apple Watch | Not shipped | Built on `main` behind the `WATCH_EMBED` build flag (off; `scripts/ios-testflight.sh` refuses an archive that embeds it). Waits on the maintainer running `SPIKE.md` on a real watch (branch `spike/181-watch-audio`, [#181](https://github.com/tomqwu/ListenToMe/issues/181)), then the Task 20 physical-device acceptance from #193. Status table in the [watch plan](superpowers/plans/2026-10-22-apple-watch-recording.md). |
 

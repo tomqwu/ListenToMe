@@ -1348,3 +1348,6 @@ state belong to their existing parent views and survive layout changes.
 Portrait retains the vertical Live panels. Accessibility text and very short/narrow workspaces use
 one outer scroll. The wide iPad workspace still shows Live and Summary together. This feature is an
 adaptive two-pane layout, not a certification for any particular new device model.
+
+## Pending iOS updates
+- Settings → Privacy names every optional off-device provider (Ollama, Cloud AI services and OpenAI-compatible servers), and explains that requests send text and included context only through the provider you choose (#247). This copy is not yet published.
