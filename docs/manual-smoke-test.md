@@ -132,6 +132,37 @@ single-source for the MVP or the Phase-2 SpeechAnalyzer engine.
    it needed more than N seconds on the selected model and must not repeat the identical request;
    manual Generate must still work, and new speech must start a fresh attempt.
 
+## Suggested prompt chips (#61)
+
+macOS:
+
+1. With **Auto** on, Listen and discuss something with an open question, such as payment terms. After
+   the first recap, a **Suggested · from context** row of two or three short prompts must appear above
+   the fixed Quick actions, each one line of at most 60 characters, in the conversation's (or the
+   chosen response) language, with no JSON, links or placeholders.
+2. Keep talking: the chips must not change more often than every 20 seconds. Wait without clicking:
+   nothing must be sent (no new Quick answer appears on its own).
+3. Click a chip: Quick must answer that literal request, and the chip must leave the row and not come
+   back. Right-click another chip → **Ask in Deep**: Deep must answer it.
+4. Stop: the chips stay. Change the Quick model, turn **Auto** off, or set AI mode to off: the chips
+   disappear. **New** conversation: no chips. With **Auto** off for a whole recording, no chips appear
+   and no Quick check runs.
+
+iPhone (phone width and an accessibility text size):
+
+1. With **Auto** on (Ollama, a cloud AI service or an OpenAI-compatible server), record: chips appear
+   under Quick Summary, stacked and fully readable without sideways scrolling. Tap one: the app stays
+   on **Live** and an Ask card under Quick Summary shows the question in bold and the answer below it;
+   Quick Summary and Summary are unchanged (also after reopening the conversation), that chip is gone,
+   and **Close** dismisses the card. On a very long conversation with Apple Intelligence, a tap still
+   answers (from what fits) and the card says which part was read.
+2. With **Apple Intelligence** and Auto off, tap **Generate** on Quick Summary: the bullets must not
+   contain a "Suggested:" heading or `>` lines; chips appear only when the on-device model wrote the
+   block last. A model that ignores it, or writes it first, gives no chips, every bullet and no error.
+   Repeat in a non-English conversation: the heading stays "Suggested:".
+3. **New** conversation or a provider/model change clears the chips (change the model while a Quick
+   refresh is running: no chips from the old model appear); Stop keeps them.
+
 ## Automatic speakers (1.3.0)
 
 1. Before Listen, choose WhisperKit and enable Automatic speaker identification. For a room sharing
@@ -435,6 +466,36 @@ change. Move the folder to the Trash: an orange note with **Retry folder save** 
 saved time. Stop a recording and quit with ⌘Q at once: the note is in the folder. With the folder
 in the Trash, stop a recording and quit; put the folder back, relaunch: the waiting note is written.
 
+## Automatic conversation titles (#221)
+
+iPhone (device for Apple Intelligence, simulator for the keyword path):
+
+1. **Named after Stop.** With **Settings → Conversations → Name conversations automatically** on,
+   record about a minute on one topic and tap Stop. Within a few seconds "New conversation" becomes
+   a short title of six words or fewer, in the language you spoke, with no quotes or emoji. Stop
+   returns at once and does not wait for the title.
+2. **Summary first.** Generate a Full summary, start a new conversation, record and Stop: the title
+   follows the summary's first point. No extra Apple Intelligence request appears in Status details.
+3. **Never replaces yours.** Type a title while a recording is being named, or before Stop: your
+   title stays. Import a meeting from Calendar into a new conversation, record and Stop: the meeting
+   title stays. Import from Calendar into a conversation that was named automatically: the meeting's
+   name replaces it.
+   - **Not while recording.** Start recording, pull down Control Center and dismiss it: the title
+     does not change until you Stop.
+   - **Cloud sends nothing.** With Cloud AI (or an OpenAI-compatible server) selected and no
+     summary, Stop: the title comes from keywords and the vendor's dashboard shows no request.
+4. **Offline / AI off.** In Airplane mode with Ollama selected but unreachable, or without Apple
+   Intelligence: the title still appears, from keywords.
+5. **Apple Watch and Save to folder.** A watch recording drained into History gets a title instead of
+   "Apple Watch · <date>". With Save to folder on, the note's `title:` updates and no second note
+   appears.
+6. **Off.** Turn the setting off, record and Stop: the name stays "New conversation".
+
+Mac: record past 30 words and Stop; "Conversation — <date>" becomes a short title (from the Summary
+model with Apple Intelligence or local Ollama, keywords otherwise). Stop while a Summary refresh is
+still streaming: the title never ends mid-sentence. Click into the title field before the title
+arrives: the default title stays until a later Save. Type a title first, or Load from Calendar: it stays.
+Start a New conversation right after Stop: the saved one is renamed in History.
 ## iPhone: Quick and Summary only (#235)
 
 Simulator is enough for 1–3; 4 needs a cloud or OpenAI-compatible model with Auto.

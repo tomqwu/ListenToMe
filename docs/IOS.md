@@ -37,6 +37,7 @@ this table in the same PR, and never fork a copy into `App/` or `iOS/`.
 | `QuickSummaryContext` — pieces, attributed transcript and `Notes: ` lines | `MeetingSession`, `AutomaticReviewCoordinator` | `MobileQuickContext` (a typealias, `iOS/MobileQuickContext.swift`) |
 | `QuickSummaryReader` / `QuickSummaryDecision` — evaluation and its JSON envelope | `MeetingSession` | `MobileQuickReader` (a typealias, `iOS/MobileQuickReader.swift`) |
 | `AutomaticReviewCoordinator` — queued Summary/Deep reviews, deadlines, manual completion; `modes` limits which reviews it runs | `MeetingSession` (Summary and Deep) | `MobileSession.automaticReviews` (`modes: [.summary]`: iOS ignores the evaluator's Deep recommendation, #235) |
+| `SuggestedPrompts` (#61) — suggested-chip validation, 20-second refresh window, used-chip memory, the strict prose "Suggested:" block | `MeetingSession+Suggestions`, `App/SuggestedPromptChips.swift` | `iOS/MobileSession+Suggestions.swift`, `MobileSuggestedPrompts`, `MobileSuggestedAsk` |
 | Prompt data fences and caps: `PromptData.notice`, `PromptData.block`, `PromptBudget` | `PromptBuilder` (`Prompt.swift`) | `MobileSummaryMode.instructions`, `MobileSession.summarize` |
 | On-demand grounding (#114): `OnDemandGrounding` — Quick/Deep transcript budgets, the summary-plus-recent or opening-plus-recent excerpt, its model note and the pane's "Using the last ~N min…" line | `MeetingSession.clampedContext`, `roleNotices` | `MobileSession.summarize` (`iOS/MobileSession+Summarize.swift`), `answerNotices` (Quick; iOS has no Deep, #235) |
 | Output-limit signal (#215): `LLMStreamEvent.outputLimitReached`, `LLMOutputLimit` (notice, plain-text cut-off error) | `MeetingSession.run`, `RoleBox` | `MobileSession.summarize`, `MobileAnswerNoticeLines` |
@@ -72,6 +73,7 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 | Share-sheet import | — | Share extension plus an App Group inbox (`ShareExtension/`, `iOSShared/SharedInbox.swift`) |
 | AI speech correction | — | Opt-in, over a Flash model on Ollama (`MobileTranscriptCorrector`) |
 | Proactive Quick answers | Yes — needs a finalized question on the Others channel | No — there is no Others channel to detect one in |
+| Suggested prompts (#61) | **Suggested · from context** above the fixed Quick actions, from the Auto Quick check only (macOS manual Quick answers are prose with no chips); a click asks Quick, the context menu also offers **Ask in Deep**, which behaves like the **Deep answer** button; Auto off or AI off clears them | Under Quick Summary, from the Auto Quick check or a manual Quick refresh — on Apple Intelligence through the strict prose "Suggested:" block; a tap is a separate ask to the Quick model, answered in a small Ask card under Quick Summary and never replacing a summary (iOS has no free-form Quick answer and no Deep tab, #235) |
 | Third-party licenses | **Open-source licenses…** shows `App/ThirdPartyNotices.txt` as one text | **Settings → About → Acknowledgements** lists each package from the same file with its full license (`MobileAcknowledgementsView`, #202) |
 | "What's New" | GitHub release notes and `CHANGELOG.md` | In-app, shown once per set of bundled notes (`MobileReleaseNotes`) |
 | Storage protection | Plain atomic writes | Data protection (`completeUntilFirstUserAuthentication`) plus an optional backup exclusion (`PrivateStorage`) |
@@ -452,6 +454,31 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   across recordings, so after Stop/Listen (or an interruption) new voices continue the numbering
   (Speaker 3, 4…) and can be renamed to merge them; backgrounding ends identification at once without a final pass;
   more than two hours of one recording is not analyzed further.
+- Automatic titles (#221): after Stop, Save, a finished Apple Watch recording or a return to the
+  foreground, a conversation still named "New conversation" or "Apple Watch · <date>" with about
+  30 final words is named in the background. `MobileSession+AutoTitle.swift` takes the title from:
+  1. its Full summary, with no model call;
+  2. the summary provider, only when it is Apple Intelligence (the default) or the user's own
+     Ollama server (`ConversationAutoTitle.mayAskModel`). It is asked with a tiny fenced prompt of
+     the transcript's first 2,000 characters and answers in the conversation's language. Ollama
+     Cloud, a Cloud AI service or an OpenAI-compatible server is never asked for a title, so Stop
+     sends nothing;
+  3. on-device NaturalLanguage keywords.
+  Naming never runs while recording, preparing or stopping.
+  `ConversationAutoTitle` in Core holds the prompt, the cleaning (at most six words, no quotes,
+  emoji, Markdown or trailing punctuation, nothing clearly in another language) and the replace
+  rule. `SessionRecord.titleState` records where a title came from (`placeholder`, `automatic`,
+  `user`, `calendar`). A record saved before it counts as a default only when its title is exactly
+  "New conversation", or "Apple Watch · " / "Conversation — " followed by a date that parses; any
+  other title (including "Imported notes") is treated as the user's. A naming that finds nothing
+  stores `attemptedWords` and waits until the transcript doubles or grows by 100 words. Import from
+  Calendar replaces a default or automatic name (`calendarMayReplace`). The title field marks
+  edits as the user's and cancels a naming under way. A naming that finishes after the user
+  renamed the conversation, or switched to another one, is applied only if that record still
+  has its default name. An automatic title is refined at most once, after the transcript has
+  tripled. The Save to folder note is rewritten in place (its file name is keyed by the
+  conversation). Unit tests never reach a real model: they inject `onDeviceProviderOverride`.
+  Settings → Conversations → **Name conversations automatically** (on by default).
 - Editable titles and notes; atomic local saves after finalized utterances, explicit Save,
   save-before-New, local History, restoration on launch and Markdown through the share sheet.
   Title and Notes typing is saved about a second after you stop typing, and is flushed when
@@ -605,6 +632,42 @@ cut off at the output limit says so too. The sheet offers **Copy**, **Share** an
 are not yet part of exports or Save to folder notes; Add to notes puts one there. Domain vocabulary
 (#222) is accepted by the prompt builder and will be passed once that feature lands.
 
+## Suggested prompts (#61)
+
+Quick Summary can show **Suggested · from context**: two or three one-tap requests drawn from the
+conversation, such as "Who owns the Thursday review?". They are never a model call of their own. They
+ride on a pass that already runs — the Auto Quick check while Auto is on, or a manual Quick refresh
+you tap — so with Auto off and no refresh there are none, and no cloud service is called to make
+them. On Ollama, OpenAI-compatible servers and cloud AI services they arrive in the Quick decision's
+optional `suggestions` field. On Apple Intelligence the prose prompt asks for a final "Suggested:"
+heading (always in English) followed only by `> ` lines. It is read strictly: the block must be the
+last section, `>` is the only suggestion marker, and a heading anywhere else, a blank or other line
+inside the block, or a second heading means no chips — the whole answer stays the recap, so a
+suggestion block can never take a takeaway.
+
+Each chip is at most 60 characters and one line, shown as plain text; duplicates, placeholders,
+links, JSON and markup debris are dropped (`SuggestedPrompts`). Auto replaces chips at most every 20
+seconds so a chip does not change under your finger; a manual refresh replaces them at once.
+
+A tap is a **separate ask** (`MobileSuggestedAsk`), not a summary: it sends the literal text to the
+Quick model with the copilot prompt (`MobileSession.askSystem`) over the notes and the speech that
+fit the provider (`OnDemandGrounding`, as for an on-demand Quick answer, so a long conversation is
+answered from what fits rather than refused), then `PromptBuilder.askInstruction`. The answer streams
+into a small **Ask card** under Quick Summary — the question in bold, the answer below it, Cancel
+while it streams and Close to dismiss — and the app stays on Live. It never replaces Quick Summary
+or Summary on screen or in the saved conversation, never counts as a completed review and never touches
+Auto's queued reviews or recommendations. The answer is kept in memory only and is not saved with
+the conversation. A tap that cannot be sent (a response is generating, nothing has been said or the
+provider is unavailable) sends nothing, says why and keeps the chip. A chip is used up only once its
+answer has arrived, then it leaves the row and is not suggested again in that conversation; a failed
+or cancelled ask can be tapped again. Nothing is sent without a tap.
+
+A new or reopened conversation clears the chips and the ask; a provider or model change clears the
+chips, drops chips from a refresh that was still running under the old model, and stops an ask in
+progress. Stop keeps the chips, because the conversation can still be asked about. The chips stack
+vertically with tap targets of at least 44 points, so they wrap at phone width and at accessibility
+text sizes.
+
 ## Save to folder (#53)
 
 **Settings → Save to folder** is off by default. Turning it on opens the Files folder picker; the
@@ -683,7 +746,9 @@ the automatic evaluator's JSON envelope: a small on-device model cannot be held 
 JSON contract stays with the Ollama-backed Auto loop. The prose answer is read back leniently: list
 markers, numbering, a "Here is the recap:" preamble and stray code fences are tolerated, and an answer
 carrying no takeaway shows "No key takeaway yet." in the pane (a *failed* request is what keeps the
-previous summary). Generation failures are stated in plain language instead of a developer message:
+previous summary). The same prompt may end with a final "Suggested:" block of up to three `> ` requests,
+which become [suggested prompts](#suggested-prompts-61) and are removed from the bullets; any other
+shape means no chips and an unchanged recap, never a failure. Generation failures are stated in plain language instead of a developer message:
 a conversation longer than the on-device context window, a guardrail refusal, a busy or undownloaded
 model, and an unsupported language each say what happened and that Ollama can be selected instead.
 

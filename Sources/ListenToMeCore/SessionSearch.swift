@@ -14,15 +14,19 @@ public struct SessionRecord: Sendable, Equatable, Identifiable, Codable {
     public let isComplete: Bool?
     public let attachments: [SessionAttachment]?
     public let sourceImportID: String?
+    /// Where the title came from (#221); nil in records saved before it (see `ConversationTitleState.resolved`).
+    public let titleState: ConversationTitleState?
     public init(id: String, title: String, date: Date, transcript: String, summary: String,
                 segments: [TranscriptSegment]? = nil, notes: String? = nil,
                 quickSuggestion: String? = nil, deepAnswer: String? = nil, isComplete: Bool? = nil,
-                attachments: [SessionAttachment]? = nil, sourceImportID: String? = nil) {
+                attachments: [SessionAttachment]? = nil, sourceImportID: String? = nil,
+                titleState: ConversationTitleState? = nil) {
         self.id = id; self.title = title; self.date = date
         self.transcript = transcript; self.summary = summary
         self.segments = segments; self.notes = notes
         self.quickSuggestion = quickSuggestion; self.deepAnswer = deepAnswer; self.isComplete = isComplete
         self.attachments = attachments; self.sourceImportID = sourceImportID
+        self.titleState = titleState
     }
 
     /// The last few summaries of selected lines (issue #234), newest first; nil in records saved
