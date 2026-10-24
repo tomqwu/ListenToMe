@@ -26,12 +26,7 @@ private final class EventProvider: LLMProvider, @unchecked Sendable {
 /// keeps its text with a one-line notice.
 @MainActor
 final class MobileAnswerNoticeTests: XCTestCase {
-    private var root: URL!
-
-    override func setUp() {
-        super.setUp()
-        root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-    }
+    private let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
 
     override func tearDown() {
         try? FileManager.default.removeItem(at: root)
