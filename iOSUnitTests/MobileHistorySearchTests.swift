@@ -73,7 +73,10 @@ final class MobileHistorySearchTests: XCTestCase {
         let keys = ["mobileAIProvider", "mobileOllamaBaseURL", "mobileOllamaDeepModel"]
         let saved = keys.map { UserDefaults.standard.object(forKey: $0) }
         let deep = session.ai.deepModel
+        let catalog = session.ai.models   // a catalog left by another test would not list the model below
+        session.ai.models = []
         defer {
+            session.ai.models = catalog
             session.ai.deepModel = deep
             for (key, value) in zip(keys, saved) { UserDefaults.standard.set(value, forKey: key) }
         }
