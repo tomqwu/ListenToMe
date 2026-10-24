@@ -76,6 +76,33 @@ final class MobileVocabularyUITests: XCTestCase {
         capture(app, "Vocabularies settings")
     }
 
+    func testConversationVocabularyReturnsWhenReopened() {
+        let app = launch()
+        app.buttons["Start listening"].tap()
+        XCTAssertTrue(app.buttons["Stop listening"].waitForExistence(timeout: 10))
+        app.buttons["vocabularySpeak"].tap()
+        XCTAssertTrue(app.buttons["vocabularyAdd"].waitForExistence(timeout: 15))
+        app.buttons["vocabularyAdd"].tap()
+        XCTAssertTrue(waitFor(app) { $0.contains("· medical") })
+        app.buttons["Stop listening"].tap()
+        XCTAssertTrue(app.buttons["Start listening"].waitForExistence(timeout: 10))
+        app.buttons["New"].tap()
+        app.buttons["Start listening"].tap()
+        XCTAssertTrue(app.buttons["Stop listening"].waitForExistence(timeout: 10))
+        XCTAssertTrue(waitFor(app) { $0 == "recognizer: 0" }, "New does not inherit the addition")
+        app.buttons["Stop listening"].tap()
+        XCTAssertTrue(app.buttons["Start listening"].waitForExistence(timeout: 10))
+        app.buttons["History"].tap()
+        let row = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Clinic follow-up")).firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        row.tap()
+        app.buttons["Start listening"].tap()
+        XCTAssertTrue(app.buttons["Stop listening"].waitForExistence(timeout: 10))
+        XCTAssertTrue(waitFor(app) { $0.contains("· medical") }, "History restores the conversation's addition")
+        capture(app, "Reopened conversation restores Medical vocabulary")
+        app.buttons["Stop listening"].tap()
+    }
+
     func testChineseSpeechOffersPresetAndAppliesChineseRecognitionTerms() {
         let app = XCUIApplication()
         app.launchArguments = ["--vocabulary-fixture", "--chinese-vocabulary-fixture",

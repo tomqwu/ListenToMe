@@ -761,3 +761,11 @@ keyboard reachability. Follow the release screenshot checklist.
 2. Send a request beyond the selected model's safe capacity: the pane must explain that nothing
    was sent for an answer and suggest a shorter selection/larger model. Retain any previous answer.
 3. Check Quick and correction still use their output limits. Cloud requests must not set `num_ctx`.
+
+## Saved conversation vocabularies (#237)
+
+Add Medical from the suggestion banner without Use by default. Stop, start a new conversation,
+then reopen the first from History and relaunch the app: Medical must return only for the first
+conversation. Resume listening and confirm its terms reach recognition. With Auto Quick enabled,
+check that the chosen provider receives the domain and bounded glossary without Summary headings.
+Delete that conversation and confirm it is gone after relaunch; device defaults and My terms remain.

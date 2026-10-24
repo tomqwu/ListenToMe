@@ -181,12 +181,14 @@ extension MeetingSession {
         do {
             guard let batch = try quickReader.context.batch(live.pieces, summary: quickRecap,
                 reviewsCompleted: quickReader.reviewsCompleted, pendingReviews: quickReader.recommendations,
-                responseLanguage: responseLanguage, summaryInstructions: summaryInstructions) else { return }
+                responseLanguage: responseLanguage, summaryInstructions: summaryInstructions, personaGuidance: personaGuidance) else { return }
             let instructionsAtStart = summaryInstructions
+            let personaAtStart = personaGuidance
             let run = runID
             let previousReads = quickReader.completedReads
             await quickReader.read(batch, provider: provider, isCurrent: { [weak self] in
-                guard let self, self.runID == run, self.summaryInstructions == instructionsAtStart, self.isRunning, !self.isPreparing,
+                guard let self, self.runID == run, self.summaryInstructions == instructionsAtStart,
+                      self.personaGuidance == personaAtStart, self.isRunning, !self.isPreparing,
                       self.autoSummaryEnabled, self.aiEnabled else { return false }
                 return self.quickReader.context.isCurrent(batch, pieces: self.livePieces)
             }, apply: { [weak self] in self?.applyQuickRecap($0) })

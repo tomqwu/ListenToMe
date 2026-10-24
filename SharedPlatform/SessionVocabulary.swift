@@ -70,6 +70,20 @@ final class SessionVocabulary {
         tracker.conversationID == conversationID ? tracker.addedIDs : []
     }
 
+    /// Restore only the saved additions, keeping device-wide defaults and My terms independent.
+    func restore(domainIDs: [String]?, for conversationID: String, transcriptLineCount: Int = 0) {
+        check?.cancel(); check = nil
+        suggestion = nil; countedLines = transcriptLineCount
+        tracker = VocabularySuggestionTracker(conversationID: conversationID)
+        for id in Set(domainIDs ?? []) where catalog.domain(id: id) != nil { tracker.add(id) }
+    }
+
+    func forget(_ deletion: ConversationDeletion) {
+        if deletion.everything || deletion.ids.contains(tracker.conversationID) {
+            restore(domainIDs: nil, for: "")
+        }
+    }
+
     func isActive(_ id: String, in conversationID: String) -> Bool {
         settings.isDefault(id) || domainIDs(for: conversationID).contains(id)
     }
@@ -96,6 +110,7 @@ final class SessionVocabulary {
             let found = await Task.detached(priority: .utility) {
                 classifier.suggestion(for: text, excluding: excluded)
             }.value
+            guard !Task.isCancelled else { return }
             check = nil
             offer(found, conversationID: conversationID)
         }

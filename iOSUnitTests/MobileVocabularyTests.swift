@@ -48,6 +48,63 @@ final class MobileVocabularyTests: XCTestCase {
         XCTAssertTrue(predicate())
     }
 
+    func testConversationAdditionsSurviveReopenAndRelaunchButNotDeletion() throws {
+        let session = makeSession(VocabularyTestRecorder())
+        session.vocabulary.settings = VocabularySettings(defaultDomainIDs: ["legal"], myTerms: ["Okafor"])
+        session.notes = "Discuss the treatment plan."
+        session.vocabulary.add("medical", to: session.id)
+        XCTAssertTrue(session.save(announce: false))
+        let record = try XCTUnwrap(session.history.first)
+        XCTAssertEqual(record.vocabularyDomainIDs, ["medical"])
+        session.newConversation()
+        XCTAssertTrue(session.vocabulary.domainIDs(for: session.id).isEmpty)
+        session.open(record)
+        XCTAssertEqual(session.vocabulary.domainIDs(for: session.id), ["medical"])
+        XCTAssertTrue(session.save(announce: false))
+        let reopened = makeSession(VocabularyTestRecorder())
+        XCTAssertEqual(reopened.vocabulary.domainIDs(for: reopened.id), ["medical"])
+        reopened.deleteConversation(id: record.id)
+        XCTAssertFalse(reopened.history.contains { $0.id == record.id })
+        XCTAssertTrue(reopened.vocabulary.domainIDs(for: reopened.id).isEmpty)
+        XCTAssertTrue(reopened.vocabulary.settings.isDefault("legal"))
+        XCTAssertEqual(reopened.vocabulary.settings.myTerms, ["Okafor"])
+    }
+
+    func testRestoredTranscriptDoesNotCountAsNewSpeechForSuggestions() async {
+        let session = makeSession(VocabularyTestRecorder())
+        let lines = Self.medicalSpeech
+        session.vocabulary.restore(domainIDs: [], for: "restored", transcriptLineCount: lines.count)
+        session.vocabulary.heard(transcript: lines, conversationID: "restored", live: true)
+        XCTAssertNil(session.vocabulary.check)
+        XCTAssertNil(session.vocabulary.banner(for: "restored"))
+    }
+
+    func testRestoreFiltersUnknownPresetsAndClearsPreviousAdditions() {
+        let session = makeSession(VocabularyTestRecorder())
+        session.vocabulary.restore(domainIDs: ["medical", "missing", "medical"], for: "one")
+        XCTAssertEqual(session.vocabulary.domainIDs(for: "one"), ["medical"])
+        session.vocabulary.restore(domainIDs: nil, for: "one")
+        XCTAssertTrue(session.vocabulary.domainIDs(for: "one").isEmpty)
+    }
+
+    func testAutomaticQuickReceivesConversationVocabularyAndMyTerms() async throws {
+        let recorder = VocabularyTestRecorder()
+        let provider = PromptRecordingProvider()
+        let session = makeSession(recorder, provider: provider)
+        session.vocabulary.settings = VocabularySettings(myTerms: ["Dr. Okafor"])
+        session.vocabulary.add("medical", to: session.id)
+        session.start()
+        try await wait { session.state == .recording }
+        recorder.send("Discuss apixaban with Dr. Okafor tomorrow.")
+        session.autoQuick = true
+        await session.updateQuickAutomatically()
+        let request = try XCTUnwrap(provider.requests.last)
+        XCTAssertTrue(request.system.contains("Domain: Medical"))
+        XCTAssertTrue(request.system.contains("Dr. Okafor"))
+        XCTAssertFalse(request.system.contains("History, Findings, Plan"))
+        await session.stop()
+    }
+
     func testMyTermsAndDefaultPresetsReachTheRecognizerBeforeItStarts() async throws {
         let recorder = VocabularyTestRecorder()
         let session = makeSession(recorder)

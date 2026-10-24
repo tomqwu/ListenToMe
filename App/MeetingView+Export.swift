@@ -15,7 +15,8 @@ extension MeetingView {
             quickSuggestion: session.quickSuggestion, deepAnswer: session.deepAnswer, isComplete: complete,
             attachments: restoredRecord?.attachments, sourceImportID: restoredRecord?.sourceImportID,
             titleState: conversationTitleState, selectionSummaries: restoredRecord?.selectionSummaries,
-            summaryInstructions: session.summaryInstructions
+            summaryInstructions: session.summaryInstructions,
+            vocabularyDomainIDs: vocabulary.domainIDs(for: currentSessionID).sorted()
         ).with(languages: conversationLanguages)
     }
 

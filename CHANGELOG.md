@@ -15,6 +15,8 @@ does not show it again, and a fresh install does not see it at all; see
 
 - Local Ollama requests size their context window to the full prompt instead of relying on a small server default. Prompts beyond the safe model capacity show an error before an answer request; cloud context remains server-managed. (#230)
 
+- Vocabulary presets added to a conversation are saved and restored when you reopen it. Auto Quick now uses its domain and glossary, while new conversations keep only your device-wide defaults. (#237)
+
 - Apple Watch companion, remote Start/Stop for the iPhone recorder (not yet shipped; ships with watch recording on the #181 train). (#181)
 - iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
 - Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
@@ -35,6 +37,8 @@ does not show it again, and a fresh install does not see it at all; see
 ## macOS (unreleased since 1.4.4)
 
 - Local Ollama requests size their context window to the full prompt instead of relying on a small server default. Prompts beyond the safe model capacity show an error before an answer request; cloud context remains server-managed. (#230)
+
+- Vocabulary presets added to a conversation are saved and restored when you reopen it. Auto Quick now uses its domain and glossary, while new conversations keep only your device-wide defaults. (#237)
 
 - Context now offers Ask Quick/Deep and saved summary instructions with optional domain presets. Modern History records can be reopened with their instructions. (#257)
 

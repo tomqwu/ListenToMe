@@ -346,7 +346,8 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   (term hits and Apple's on-device sentence embedding; no model call). When it is confident a banner
   asks "Sounds like a medical conversation — add the Medical vocabulary?" with **Add** (this
   conversation), **Not now** and **Don't suggest Medical again**; after Add, **Use by default** turns it
-  on for every conversation. Each preset is offered at most once per conversation and nothing turns on
+  on for every conversation. Additions are saved with their conversation and restored on reopening;
+  Auto Quick uses the active domain and a bounded glossary. Each preset is offered at most once per conversation and nothing turns on
   by itself; **Suggest vocabularies** turns the banner off. Right-click a transcript line → **Add to My
   terms…** to add a word or name from it.
 - **Reference files.** Add files/folders as context, with a configurable token budget. `.rtf` is read
