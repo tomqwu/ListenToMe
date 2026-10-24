@@ -72,6 +72,10 @@ full-resolution assets and manifest, and verify uploaded listing sets before App
   the diff against the issue). It caught real bugs in nearly every PR; keep doing it.
 - **Required checks** are the three CI checks: `ListenToMeCore tests + coverage`, `macOS 26 app build`,
   `iOS 26 app build`. Local gates are in AGENTS.md (`make validate-local`, `make lint`, `make e2e`).
+- **Mac Dev cleanup:** reuse the primary checkout's `signing.local.mk` before building in a worktree.
+  After testing, preserve evidence, close inactive test apps, move verified `.dev` bundles to Trash,
+  and reset only `com.tomwu.ListenToMe.dev` permissions. Defer cleanup for another active Dev session;
+  preserve production, conversations and keys. See AGENTS.md and docs/RELEASING.md.
 - **`make ios-test`** runs on a freshly erased, dedicated simulator (`IOS_DESTINATION=…`), created for
   the run and deleted afterwards, so state from other runs cannot leak in.
 - **UI tests use launch fixtures**, never real model downloads: `LISTENTOME_SPEAKER_MODELS_FIXTURE`
