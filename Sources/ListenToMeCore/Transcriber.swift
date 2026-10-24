@@ -15,10 +15,16 @@ public protocol Transcribing: Sendable {
     func prepare() async
     func feed(_ chunk: AudioChunk) async
     func finish() async
+    /// Words and short phrases recognition should favor (issue #222): the active vocabularies, capped by
+    /// `ActiveVocabulary.recognitionTerms`. Set before `prepare()` and again whenever the user changes
+    /// them while recording; an engine that can update a running recognizer applies them at once.
+    func setContextualStrings(_ strings: [String]) async
 }
 
 public extension Transcribing {
     var statusUpdates: AsyncStream<String> { AsyncStream { $0.finish() } }
     /// Transcribers with no one-time setup (e.g. `SFSpeechRecognizer`) need no warm-up.
     func prepare() async {}
+    /// Engines without contextual strings (WhisperKit) ignore the vocabulary.
+    func setContextualStrings(_ strings: [String]) async {}
 }

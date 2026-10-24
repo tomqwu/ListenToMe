@@ -8,7 +8,8 @@ let package = Package(
         .library(name: "ListenToMeCore", targets: ["ListenToMeCore"])
     ],
     targets: [
-        .target(name: "ListenToMeCore"),
+        // The domain vocabularies are curated term lists the project writes itself (issue #222).
+        .target(name: "ListenToMeCore", resources: [.copy("Resources/Vocabularies")]),
         // Golden export files are read from the source tree (SessionExportGoldenTests), not bundled.
         .testTarget(name: "ListenToMeCoreTests", dependencies: ["ListenToMeCore"], exclude: ["Golden"])
     ]

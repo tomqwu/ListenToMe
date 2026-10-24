@@ -8,7 +8,10 @@ struct MobileTranscriptReader: View {
     var restoreOriginal: ((UUID) -> Void)?
     /// Shows who said each line once speaker identification has labeled any of them (issue #180).
     var showsSpeakers = false
+    /// "Add to My terms" from a line's context menu (issue #222); returns why a term was not added.
+    var addTerm: ((String) -> String?)?
     @State private var reviewing: TranscriptSegment?
+    @State private var addingFrom: TranscriptSegment?
     @State private var following = true
     @State private var readingSnapshot: [TranscriptSegment]?
     private var displayedSegments: [TranscriptSegment] { readingSnapshot ?? segments }
@@ -41,6 +44,12 @@ struct MobileTranscriptReader: View {
                                     .accessibilityIdentifier("review-correction-\(segment.id)")
                             }
                         }.frame(maxWidth: .infinity, alignment: .leading)
+                            .contextMenu {
+                                if addTerm != nil, segment.isFinal {
+                                    Button("Add to My terms…", systemImage: "text.badge.plus") { addingFrom = segment }
+                                        .accessibilityIdentifier("addToMyTerms")
+                                }
+                            }
                     }
                     Color.clear.frame(height: 1).id(endID)
                 }.padding(16)
@@ -95,6 +104,9 @@ struct MobileTranscriptReader: View {
                         .background(.regularMaterial)
                 }
             }
+        }
+        .sheet(item: $addingFrom) { segment in
+            MobileAddTermSheet(line: segment.text) { addTerm?($0) }
         }
         .sheet(item: $reviewing) { segment in
             MobileSpeechCorrectionReview(segment: segment) { id in
