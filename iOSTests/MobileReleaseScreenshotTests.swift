@@ -11,6 +11,7 @@ final class MobileReleaseScreenshotTests: XCTestCase {
         defer { XCUIDevice.shared.orientation = .portrait }
         app.launchPastReleaseNotes()
         XCTAssertTrue(app.buttons["Notes"].waitForExistence(timeout: 5))
+        app.scrollViews["transcriptScroll"].swipeDown()
         capture("01 Live portrait")
         XCUIDevice.shared.orientation = .landscapeLeft
         let landscape = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
@@ -19,6 +20,7 @@ final class MobileReleaseScreenshotTests: XCTestCase {
         }, object: nil)
         XCTAssertEqual(XCTWaiter.wait(for: [landscape], timeout: 5), .completed)
         XCTAssertTrue(app.buttons["Notes"].isHittable)
+        app.scrollViews["transcriptScroll"].swipeDown()
         capture("02 Live landscape")
         XCUIDevice.shared.orientation = .portrait
         app.buttons["Notes"].tap()
