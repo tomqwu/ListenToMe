@@ -6,12 +6,21 @@ import ListenToMeCore
 final class MobileAITests: XCTestCase {
     func testFreshSettingsDefaultToOnDeviceAndPreserveAnyExplicitChoice() {
         let previous = UserDefaults.standard.object(forKey: "mobileAIProvider")
-        defer { UserDefaults.standard.set(previous, forKey: "mobileAIProvider") }
+        let previousVendor = UserDefaults.standard.object(forKey: "mobileCloudAIVendor")
+        defer {
+            UserDefaults.standard.set(previous, forKey: "mobileAIProvider")
+            UserDefaults.standard.set(previousVendor, forKey: "mobileCloudAIVendor")
+        }
         UserDefaults.standard.removeObject(forKey: "mobileAIProvider")
+        UserDefaults.standard.removeObject(forKey: "mobileCloudAIVendor")
         let expected: MobileAISettings.Provider =
             AppleIntelligenceProvider.unavailableReason == nil ? .apple : .ollama
         XCTAssertEqual(MobileAISettings.defaultProvider, expected)
         XCTAssertEqual(MobileAISettings().provider, expected)
+        // Cloud without a selected service deliberately falls back to the on-device default.
+        UserDefaults.standard.set(MobileAISettings.Provider.cloud.rawValue, forKey: "mobileAIProvider")
+        XCTAssertEqual(MobileAISettings().provider, expected)
+        UserDefaults.standard.set(CloudAIPreset.ID.openAI.rawValue, forKey: "mobileCloudAIVendor")
         // A saved choice from an earlier build must survive the new default.
         for choice in MobileAISettings.Provider.allCases {
             UserDefaults.standard.set(choice.rawValue, forKey: "mobileAIProvider")
