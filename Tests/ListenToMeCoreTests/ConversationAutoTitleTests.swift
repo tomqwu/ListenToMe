@@ -184,16 +184,36 @@ final class ConversationAutoTitleTests: XCTestCase {
         XCTAssertFalse(title.contains("Microphone"))
     }
 
+    /// Each comma-separated part of a keyword title is the conversation's own words, found inside one
+    /// of its sentences (so in its language, and never a phrase run across a full stop), and the
+    /// whole title is at most six words.
+    private func assertTakenFromOneSentenceEach(_ title: String, of text: String,
+                                                file: StaticString = #filePath, line: UInt = #line) {
+        let sentences = text.lowercased().components(separatedBy: ". ")
+        for part in title.lowercased().components(separatedBy: ", ") {
+            XCTAssertTrue(sentences.contains { $0.contains(part) }, "“\(part)” in \(title)", file: file, line: line)
+        }
+        XCTAssertLessThanOrEqual(title.split(separator: " ").count, ConversationAutoTitle.maximumWords,
+                                 file: file, line: line)
+    }
+
     func testKeywordsStayInTheConversationsLanguageAndWithinASentence() throws {
         let french = "Nous devons parler du budget marketing pour la campagne. Le budget marketing est serré. "
             + "La campagne doit se concentrer sur la vidéo. Revoyons le budget le mois prochain."
+        // Whether French has a part-of-speech model differs between SDKs: with one this is
+        // "Budget marketing, campagne", without one the frequent-word fallback gives
+        // "Budget, marketing, campagne". Both are fine; what matters holds either way.
         let titre = try XCTUnwrap(ConversationAutoTitle.keywords(french, language: "fr_FR"))
-        XCTAssertTrue(titre.lowercased().hasPrefix("budget marketing"), titre)
+        XCTAssertTrue(titre.lowercased().hasPrefix("budget"), titre)
+        assertTakenFromOneSentenceEach(titre, of: french)
+        // The fallback itself only tokenizes, so it is the same on every SDK.
+        XCTAssertEqual(Array(ConversationAutoTitle.frequentWords(french).prefix(3)), ["budget", "marketing", "campagne"])
         let german = "Wir müssen über das Marketingbudget sprechen. Das Marketingbudget ist knapp. "
             + "Die Kampagne sollte sich auf Videos konzentrieren. Die Kampagne prüfen wir nächsten Monat."
         let titel = try XCTUnwrap(ConversationAutoTitle.keywords(german, language: "de_DE"))
         XCTAssertTrue(titel.contains("Marketingbudget"), titel)
         XCTAssertFalse(titel.contains("Wir") || titel.contains("das"), titel)
+        assertTakenFromOneSentenceEach(titel, of: german)
         let english = "The onboarding flow has too many steps. Alex will redesign the onboarding flow."
         XCTAssertEqual(ConversationAutoTitle.keywords(english, language: "en"), "Onboarding flow")
     }
