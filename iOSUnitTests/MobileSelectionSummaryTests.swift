@@ -65,6 +65,9 @@ final class MobileSelectionSummaryTests: XCTestCase {
         XCTAssertNil(session.selectionRun.notice)
         XCTAssertEqual(session.selectionSummaries.first?.span, "1:02–1:15 · 2 lines")
         XCTAssertEqual(session.summary, "", "The conversation's Summary is untouched")
+        XCTAssertTrue(session.markdown.contains("## Selection summaries\n\n### 1:02–1:15 · 2 lines"), session.markdown)
+        let saved = try XCTUnwrap(session.history.first)
+        XCTAssertTrue(SessionExporter.json(for: saved).contains("\"selectionSummaries\""))
 
         let reloaded = MobileSession(storageDirectory: root)
         XCTAssertEqual(reloaded.selectionSummaries.map(\.text), ["- Ship Friday; QA Thursday."])

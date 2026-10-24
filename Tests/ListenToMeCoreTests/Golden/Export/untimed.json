@@ -1,0 +1,45 @@
+{
+  "attachments" : [
+
+  ],
+  "date" : "2026-10-23T14:35:00Z",
+  "deepSummary" : "",
+  "duration" : null,
+  "hasTimestamps" : false,
+  "id" : "untimed-1",
+  "language" : "en-US",
+  "languages" : [
+    "en-US"
+  ],
+  "notes" : "",
+  "quickSummary" : "",
+  "schema" : "listentome.conversation",
+  "segments" : [
+    {
+      "source" : "you",
+      "speaker" : "You",
+      "text" : "Hello there."
+    },
+    {
+      "source" : "others",
+      "speaker" : "Others",
+      "text" : "Hi!"
+    }
+  ],
+  "selectionSummaries" : [
+
+  ],
+  "speakers" : [
+    {
+      "name" : "You",
+      "source" : "you"
+    },
+    {
+      "name" : "Others",
+      "source" : "others"
+    }
+  ],
+  "summary" : "",
+  "title" : "Conversation — Oct 23, 2026 at 2:35 PM",
+  "version" : 1
+}

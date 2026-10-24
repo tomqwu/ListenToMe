@@ -1,0 +1,85 @@
+{
+  "attachments" : [
+    {
+      "name" : "plan.pdf"
+    }
+  ],
+  "date" : "2026-10-23T14:35:00Z",
+  "deepSummary" : "Plan the staged rollout.",
+  "duration" : 3739,
+  "hasTimestamps" : true,
+  "id" : "1A2B3C4D-0000-4000-8000-000000000001",
+  "language" : "fr-FR",
+  "languages" : [
+    "en-US",
+    "fr-FR"
+  ],
+  "notes" : "Bring the release checklist.",
+  "quickSummary" : "Ask about the beta flag.",
+  "schema" : "listentome.conversation",
+  "segments" : [
+    {
+      "end" : 5.2,
+      "source" : "others",
+      "speaker" : "Alice",
+      "speakerID" : "spk-1",
+      "start" : 3,
+      "text" : "Can we ship Friday?"
+    },
+    {
+      "end" : 6.9,
+      "source" : "others",
+      "speaker" : "Alice",
+      "speakerID" : "spk-1",
+      "start" : 5.6,
+      "text" : "Or is that too soon?"
+    },
+    {
+      "end" : 70.5,
+      "originalText" : "Yes with the hot fix and the beta flag",
+      "source" : "you",
+      "speaker" : "You",
+      "start" : 65.25,
+      "text" : "Yes, with the hotfix & the <beta> flag."
+    },
+    {
+      "end" : 3741,
+      "source" : "others",
+      "speaker" : "Alice",
+      "speakerID" : "spk-1",
+      "start" : 3725.5,
+      "text" : "Then let's plan the rollout carefully: first the internal dogfood group on Monday, then ten percent of customers on Wednesday, and everyone else by Friday afternoon if the crash rate stays flat."
+    },
+    {
+      "end" : 3742,
+      "language" : "fr-FR",
+      "source" : "others",
+      "speaker" : "Bob",
+      "speakerID" : "spk-2",
+      "start" : 3742,
+      "text" : "Agreed."
+    }
+  ],
+  "selectionSummaries" : [
+
+  ],
+  "speakers" : [
+    {
+      "id" : "spk-1",
+      "name" : "Alice",
+      "source" : "others"
+    },
+    {
+      "name" : "You",
+      "source" : "you"
+    },
+    {
+      "id" : "spk-2",
+      "name" : "Bob",
+      "source" : "others"
+    }
+  ],
+  "summary" : "Ship on Friday.",
+  "title" : "Weekly sync: Q4 <plan>",
+  "version" : 1
+}

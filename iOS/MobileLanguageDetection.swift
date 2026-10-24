@@ -114,6 +114,8 @@ final class MobileLanguageDetection {
     /// Undo was tapped while recording was stopping; it applies once the recording has ended.
     var pendingUndo = false
     private var runToken = 0
+    /// Each conversation's language changes since it was opened (issue #206), applied at every save.
+    @ObservationIgnored var languageChanges: [String: [String]] = [:]
     private var identifier: (any MobileLanguageIdentifying)?
     /// `nil` when this build has no language model: unit tests, which must never download one.
     private let makeIdentifier: (() -> any MobileLanguageIdentifying)?
@@ -149,6 +151,7 @@ final class MobileLanguageDetection {
         lastRecheck = nil
         let carried = automatic && notice?.conversation == conversation ? notice : nil
         notice = carried
+        languageChanges[conversation, default: []].append(carried?.to ?? locale)
         guard automatic, hasModel else { return nil }
         if isUnavailable { status = .idle }
         runToken &+= 1
@@ -290,6 +293,8 @@ final class MobileLanguageDetection {
         guard isCurrent(token) else { return }
         run?.tracker.didSwitch(to: change.to, at: cut)
         notice = change
+        // Which languages stay listed follows from the lines each one is in (issue #206).
+        languageChanges[change.conversation, default: []].append(change.to)
         let result = "\(Self.describe(guess)) → switched to \(change.to)" + (change.replayed ? "" : " for new speech")
         if change.midRecording { lastRecheck = result } else { lastResult = result }
         status = .idle

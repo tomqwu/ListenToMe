@@ -22,7 +22,7 @@ With Name conversations automatically on (the default; Settings → Conversation
 
 ## Optional Ollama (Cloud or your own server)
 
-Summarize selection (select transcript lines, or touch and hold a line → Summarize from here) sends only the selected lines, with their times and speaker names, to the summary provider you chose — on the device with Apple Intelligence, or to the Ollama, OpenAI-compatible or cloud AI destination described below, which the app names before you send. The last five selection summaries are stored with the conversation like its other summaries and are deleted with it.
+Summarize selection (select transcript lines, or touch and hold a line → Summarize from here) sends only the selected lines, with their times and speaker names, to the summary provider you chose — on the device with Apple Intelligence, or to the Ollama, OpenAI-compatible or cloud AI destination described below, which the app names before you send. The last five selection summaries are stored with the conversation like its other summaries, are included in its exports and Save to folder note, and are deleted with it.
 
 Summaries go to Ollama only when you select Ollama as the provider. Requests are sent to the server shown in Settings: Ollama Cloud (`https://ollama.com`) unless you entered the address of an Ollama server you run on your own network, in which case the conversation text stays on that network and a saved Ollama Cloud key is never sent there. When Ollama is selected and you request an AI summary, the app sends conversation text, notes and relevant context over the network. Auto summaries send new conversation context as you speak while Auto is enabled. Optional AI speech correction sends completed phrases and nearby transcript text. Imported text included in notes or context can be part of those requests. Raw microphone audio is not sent. Your API key is stored in the device Keychain and is sent only to Ollama Cloud to authenticate requests.
 
@@ -55,7 +55,7 @@ Save to folder (Settings → Save to folder) is off unless you turn it on and ch
 
 ## Imports and sharing
 
-You choose photos, files, shared notes and calendar events to import. Calendar access is requested for the calendar import feature; an imported event has join-link passcodes and e-mail addresses removed from its body and location before the text reaches your notes. Imported copies remain in the conversation until you delete them. A shared import the app cannot read is set aside and deleted after 24 hours. Sharing exports the content you choose to another app or recipient; that destination's privacy practices then apply. Deleting the original conversation does not delete copies you exported.
+You choose photos, files, shared notes and calendar events to import. Calendar access is requested for the calendar import feature; an imported event has join-link passcodes and e-mail addresses removed from its body and location before the text reaches your notes. Imported copies remain in the conversation until you delete them. A shared import the app cannot read is set aside and deleted after 24 hours. Sharing exports the content you choose to another app or recipient; that destination's privacy practices then apply. Export as builds the file on your device and keeps it in the app's own temporary folder only until your next export, the next launch, or until you delete a conversation. Deleting the original conversation does not delete copies you exported.
 
 ## Retention and deletion
 

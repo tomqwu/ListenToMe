@@ -50,7 +50,7 @@ extension MeetingView {
                   record.resolvedTitleState == state else { return }
             let updated = record.retitled(named?.title ?? title, state: newState)
             if sessionStore.add(updated), named != nil {
-                MarkdownVaultSync.shared.save(updated, language: language, startedAt: startedAt)
+                MarkdownVaultSync.shared.save(updated, startedAt: startedAt)   // the record's own language (#206)
             }
         }
     }

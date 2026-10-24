@@ -466,6 +466,37 @@ change. Move the folder to the Trash: an orange note with **Retry folder save** 
 saved time. Stop a recording and quit with ⌘Q at once: the note is in the folder. With the folder
 in the Trash, stop a recording and quit; put the folder back, relaunch: the waiting note is written.
 
+**Own language (#206).** iPhone: with Automatic, record in a language other than the device's until it
+switches, Stop, then set Settings → Language to another fixed language and edit the conversation's
+notes: the note's `language:` is still the switched-to language. A conversation that switched part-way
+also lists `languages:` with both. Mac: record in French, Stop, change the language to English, rename
+the conversation: the note keeps `language: "fr-FR"`.
+
+## Export formats and file names (#130)
+
+Mac:
+
+1. With **WhisperKit** selected, Listen for a minute with two people talking, then Stop. **Export**
+   lists Markdown, Plain text, Subtitles (SRT), Subtitles (WebVTT), JSON, Recap, PDF and Copy. The
+   save panel proposes `<title> <yyyy-MM-dd HHmm>.srt`, not a clock-time name. The `.srt` opens in
+   QuickTime/IINA beside a recording of the call with readable two-line cues; the `.vtt` validates
+   (for example in a browser `<track>`); Markdown and text lines start with `[mm:ss]`.
+2. With **SpeechAnalyzer** (the default), record and open **Export**: the subtitle items are disabled
+   with a note saying why, and Markdown/text have no `[mm:ss]` (nothing invented).
+3. **History** → open a conversation → **Export**: the same formats plus Recap and PDF, named after
+   that conversation, not "Conversation.md".
+4. Open the `.json` in a JSON viewer: `schema` `listentome.conversation`, `version` 1, `language`,
+   `speakers` and `segments` as in [export-formats.md](export-formats.md).
+
+iPhone (simulator is enough):
+
+1. Record a few lines, Stop, then **More → Export as**: five formats. Pick **Subtitles (SRT)** →
+   **Save to Files**: the file is named after the title and date and its cues match the transcript
+   times, including after a resumed recording (times keep counting up).
+2. **History** → touch and hold a conversation → **Export as** → **JSON** → Save to Files: valid
+   JSON with the conversation's language. An imported-notes conversation offers no subtitles.
+3. An Apple Watch conversation's subtitles start near 00:00:00 and follow the watch recording.
+
 ## Automatic conversation titles (#221)
 
 iPhone (device for Apple Intelligence, simulator for the keyword path):
@@ -524,6 +555,7 @@ physical device.
 2. **Summarize.** Tap Summarize selection: the sheet shows the time span, where the lines go, and bullets
    about only those lines. Copy, Share and Add to notes work; Notes gains "Selection summary (… · N lines)".
    Close it: the Summary tab lists the selection summary; relaunch and reopen from History: still there.
+   Export as Markdown and JSON, and check Save to folder: each carries it under Selection summaries.
 3. **Touch and hold.** Touch and hold a line → Summarize from here summarizes it through the latest line;
    Select from here opens Select mode with those lines picked. Copy copies the line.
 4. **Provider and reasons.** With a cloud AI service or OpenAI-compatible server chosen, the bar and the sheet

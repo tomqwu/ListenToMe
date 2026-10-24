@@ -1,0 +1,30 @@
+{
+  "attachments" : [
+
+  ],
+  "date" : "2026-10-23T14:35:00Z",
+  "deepSummary" : "",
+  "duration" : null,
+  "hasTimestamps" : false,
+  "id" : "legacy-1",
+  "language" : null,
+  "languages" : [
+
+  ],
+  "notes" : "",
+  "quickSummary" : "",
+  "schema" : "listentome.conversation",
+  "segments" : [
+
+  ],
+  "selectionSummaries" : [
+
+  ],
+  "speakers" : [
+
+  ],
+  "summary" : "Said hello.",
+  "title" : "Old notes",
+  "transcript" : "You: hello\nOthers: hi",
+  "version" : 1
+}

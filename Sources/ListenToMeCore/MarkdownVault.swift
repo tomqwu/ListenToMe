@@ -28,11 +28,11 @@ public enum MarkdownVault {
 
     /// `startedAt` replaces `record.date` when the caller's record date moves with each checkpoint
     /// (macOS), so the note's date and file name stay those of the conversation's start.
-    public static func note(for record: SessionRecord, language: String? = nil, startedAt: Date? = nil,
+    public static func note(for record: SessionRecord, startedAt: Date? = nil,
                             timeZone: TimeZone = .current) -> MarkdownVaultNote {
         let date = startedAt ?? record.date
         return MarkdownVaultNote(id: record.id, fileName: fileName(id: record.id, date: date, timeZone: timeZone),
-                                 markdown: markdown(for: record, language: language, date: date, timeZone: timeZone))
+                                 markdown: markdown(for: record, date: date, timeZone: timeZone))
     }
 
     /// A short, stable, filesystem-safe token for a conversation ID: the first eight hex digits of a
@@ -92,7 +92,11 @@ public enum MarkdownVault {
 
     /// YAML front matter (date, duration, language, speakers, tags), then the summary, notes and
     /// the transcript with speaker names and timestamps where the recording has them.
-    public static func markdown(for record: SessionRecord, language: String? = nil, date: Date? = nil,
+    ///
+    /// `language` is the one the conversation was recorded in (issue #206), kept on the record, so a
+    /// later edit, Save all or Retry never rewrites it with today's setting; a conversation that switched
+    /// languages also lists them all under `languages`. Records from before #206 omit both.
+    public static func markdown(for record: SessionRecord, date: Date? = nil,
                                 timeZone: TimeZone = .current) -> String {
         let segments = record.segments ?? []
         let dateFormatter = ISO8601DateFormatter()
@@ -102,9 +106,13 @@ public enum MarkdownVault {
         // The ID comes first, so the writer finds it in the first lines however long the title is.
         var front = ["---", "listentome_id: \(yaml(record.id))", "title: \(yaml(singleLine(record.title)))",
                      "date: \(dateFormatter.string(from: date ?? record.date))"]
-        if let duration = duration(of: segments) { front.append("duration: \(yaml(timestamp(duration)))") }
-        if let language = language?.trimmingCharacters(in: .whitespaces), !language.isEmpty {
-            front.append("language: \(yaml(Locale(identifier: language).identifier(.bcp47)))")
+        if let duration = TranscriptTimestamp.duration(of: segments) {
+            front.append("duration: \(yaml(TranscriptTimestamp.clock(duration)))")
+        }
+        let languages = record.conversationLanguages
+        if let language = languages.current { front.append("language: \(yaml(language))") }
+        if languages.all.count > 1 {
+            front.append((["languages:"] + languages.all.map { "  - \(yaml($0))" }).joined(separator: "\n"))
         }
         let names = speakers(in: segments)
         let speakerLines = names.map { "  - \(yaml($0))" }
@@ -121,6 +129,7 @@ public enum MarkdownVault {
         section("Summary", record.summary)
         section("Quick summary", record.quickSuggestion)
         section("Deep summary", record.deepAnswer)
+        section("Selection summaries", SelectionSummary.markdown(record.selectionSummaries ?? []))
         section("Notes", record.notes)
         section("Transcript", transcript(record))
         let attachments = (record.attachments ?? []).map { "- \(singleLine($0.name))" }
@@ -132,11 +141,10 @@ public enum MarkdownVault {
     /// records that kept only flattened text are written as they were saved.
     static func transcript(_ record: SessionRecord) -> String {
         guard let segments = record.segments, !segments.isEmpty else { return record.transcript }
-        let timed = segments.contains { $0.start > 0 || $0.end > 0 }
         return segments.compactMap { segment -> String? in
             let text = segment.text.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !text.isEmpty else { return nil }
-            let stamp = timed ? "[\(timestamp(segment.start))] " : ""
+            let stamp = TranscriptTimestamp.isTimed(segment) ? "[\(TranscriptTimestamp.clock(segment.start))] " : ""
             return "- \(stamp)**\(singleLine(segment.speakerLabel)):** \(singleLine(text))"
         }.joined(separator: "\n")
     }
@@ -150,20 +158,6 @@ public enum MarkdownVault {
                   seen.insert(name).inserted else { return nil }
             return name
         }
-    }
-
-    static func duration(of segments: [TranscriptSegment]) -> TimeInterval? {
-        guard let first = segments.map(\.start).min(), let last = segments.map(\.end).max(),
-              last > first else { return nil }
-        return last - first
-    }
-
-    /// `12:05`, or `1:02:05` past an hour.
-    static func timestamp(_ seconds: TimeInterval) -> String {
-        let total = max(0, Int(seconds.rounded(.down)))
-        let hours = total / 3600, minutes = total % 3600 / 60, secs = total % 60
-        return hours > 0 ? String(format: "%d:%02d:%02d", hours, minutes, secs)
-            : String(format: "%02d:%02d", minutes, secs)
     }
 
     /// A double-quoted YAML scalar: safe for colons, `#`, quotes and leading dashes in titles and names.

@@ -87,10 +87,13 @@ final class SelectionSummaryTests: XCTestCase {
         let old = #"{"id":"a","title":"Old","date":0,"transcript":"","summary":""}"#
         let record = try JSONDecoder().decode(SessionRecord.self, from: Data(old.utf8))
         XCTAssertNil(record.selectionSummaries, "A record saved before #234 still decodes")
-        var updated = record
-        updated.selectionSummaries = list
+        let updated = SessionRecord(id: "a", title: "Old", date: record.date, transcript: "", summary: "",
+                                    selectionSummaries: list)
         let round = try JSONDecoder().decode(SessionRecord.self, from: JSONEncoder().encode(updated))
         XCTAssertEqual(round.selectionSummaries, list)
+        // Every copy of a record keeps them: a new title, the conversation's languages, a watch recording.
+        XCTAssertEqual(updated.retitled("New", state: ConversationTitleState(source: .user)).selectionSummaries, list)
+        XCTAssertEqual(updated.recording(language: "fr-FR").selectionSummaries, list)
     }
 }
 
