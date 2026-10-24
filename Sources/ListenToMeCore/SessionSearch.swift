@@ -16,17 +16,23 @@ public struct SessionRecord: Sendable, Equatable, Identifiable, Codable {
     public let sourceImportID: String?
     /// Where the title came from (#221); nil in records saved before it (see `ConversationTitleState.resolved`).
     public let titleState: ConversationTitleState?
+    /// The BCP-47 language the latest recording was transcribed in (issue #206). `nil` for records saved
+    /// before it was kept, or for a conversation that was never transcribed; see `ConversationLanguages`.
+    public let language: String?
+    /// Every language the conversation's lines are in, in order of first use.
+    public let languages: [String]?
     public init(id: String, title: String, date: Date, transcript: String, summary: String,
                 segments: [TranscriptSegment]? = nil, notes: String? = nil,
                 quickSuggestion: String? = nil, deepAnswer: String? = nil, isComplete: Bool? = nil,
                 attachments: [SessionAttachment]? = nil, sourceImportID: String? = nil,
-                titleState: ConversationTitleState? = nil) {
+                titleState: ConversationTitleState? = nil, language: String? = nil, languages: [String]? = nil) {
         self.id = id; self.title = title; self.date = date
         self.transcript = transcript; self.summary = summary
         self.segments = segments; self.notes = notes
         self.quickSuggestion = quickSuggestion; self.deepAnswer = deepAnswer; self.isComplete = isComplete
         self.attachments = attachments; self.sourceImportID = sourceImportID
         self.titleState = titleState
+        self.language = language; self.languages = languages
     }
 }
 

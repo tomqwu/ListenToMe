@@ -66,6 +66,10 @@ struct MobileMeetingView: View {
                                 .disabled(!session.hasContent)
                             ShareLink(item: session.markdown) { Label("Share Markdown", systemImage: "doc.text") }
                                 .disabled(!session.hasContent)
+                            Menu("Export as", systemImage: "doc.badge.arrow.up") {
+                                ConversationExportLinks(record: session.currentRecord)
+                            }
+                            .disabled(!session.hasContent).accessibilityIdentifier("exportAs")
                             Button("Import from Calendar", systemImage: "calendar") { showCalendar = true }
                             Button("Full summary") { showFullSummary = true }
                             Button("Settings", systemImage: "gearshape") { showSettings = true }

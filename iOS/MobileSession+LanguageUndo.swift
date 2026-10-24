@@ -90,6 +90,9 @@ extension MobileSession {
         languageDetection.clearNotice()
         language = change.from
         languageDetection.automatic = false
+        // The conversation's saved language follows the Undo (issue #206).
+        noteLanguageUndo(change)
+        if change.conversation == id, hasContent { save(announce: false) }
     }
 
     /// Lines a switch replaced come back in place of the switched recording's own lines from where it

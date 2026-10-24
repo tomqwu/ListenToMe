@@ -57,7 +57,7 @@ Save to folder (Settings → Save to folder) is off unless you turn it on and ch
 
 ## Imports and sharing
 
-You choose photos, files, shared notes and calendar events to import. Calendar access is requested for the calendar import feature; an imported event has join-link passcodes and e-mail addresses removed from its body and location before the text reaches your notes. Imported copies remain in the conversation until you delete them. A shared import the app cannot read is set aside and deleted after 24 hours. Sharing exports the content you choose to another app or recipient; that destination's privacy practices then apply. Deleting the original conversation does not delete copies you exported.
+You choose photos, files, shared notes and calendar events to import. Calendar access is requested for the calendar import feature; an imported event has join-link passcodes and e-mail addresses removed from its body and location before the text reaches your notes. Imported copies remain in the conversation until you delete them. A shared import the app cannot read is set aside and deleted after 24 hours. Sharing exports the content you choose to another app or recipient; that destination's privacy practices then apply. Export as builds the file on your device and keeps it in the app's own temporary folder only until your next export, the next launch, or until you delete a conversation. Deleting the original conversation does not delete copies you exported.
 
 ## Retention and deletion
 
