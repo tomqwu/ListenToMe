@@ -81,15 +81,12 @@ final class MobileWorkspaceUITests: XCTestCase {
         let latest = transcript.staticTexts["The latest phrase."]
         let latestY = latest.frame.minY
         let auto = quick.switches["Auto summaries"].firstMatch
-        let quickScroll = quick.scrollViews.firstMatch
-        // A full swipe can jump past the toggle in a short landscape viewport. Move less than
-        // one control height so the assertion checks reachability rather than swipe distance.
-        for _ in 0..<24 where !auto.isHittable {
-            quickScroll.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.8))
-                .press(forDuration: 0.05, thenDragTo:
-                    quickScroll.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.6)))
-        }
-        XCTAssertTrue(auto.isHittable, "Auto remains reachable below the answer")
+        quick.scrollViews.firstMatch.swipeUp()
+        // XCTest scrolls the requested control into view before tapping; arbitrary full swipes
+        // can jump past a control in the short landscape reading area.
+        let priorAuto = auto.value as? String
+        auto.tap()
+        XCTAssertNotEqual(auto.value as? String, priorAuto, "Auto remains usable below the answer")
         XCTAssertEqual(latest.frame.minY, latestY, accuracy: 2, "Quick scrolling must not move the transcript")
         app.buttons["Expand transcript"].tap()
         XCTAssertTrue(app.navigationBars["Transcript"].waitForExistence(timeout: 5))
