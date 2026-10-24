@@ -298,9 +298,10 @@ public extension QuickSummaryDecision {
                 "action": ["type": "string", "enum": ["keep", "publish"]],
                 "context": ["type": "string"],
                 "bullets": ["type": "array", "items": ["type": "string"]],
-                "reviews": ["type": "array", "items": review]
+                "reviews": ["type": "array", "items": review],
+                "suggestions": ["type": "array", "items": ["type": "string"]]
             ],
-            "required": ["action", "context", "bullets", "reviews"],
+            "required": ["action", "context", "bullets", "reviews", "suggestions"],
             "additionalProperties": false
         ]
     }

@@ -104,7 +104,7 @@ final class AnthropicProviderTests: XCTestCase {
         let format = try XCTUnwrap(config["format"] as? [String: Any])
         XCTAssertEqual(format["type"] as? String, "json_schema")
         let schema = try XCTUnwrap(format["schema"] as? [String: Any])
-        XCTAssertEqual(Set(schema["required"] as? [String] ?? []), ["action", "context", "bullets", "reviews"])
+        XCTAssertEqual(Set(schema["required"] as? [String] ?? []), ["action", "context", "bullets", "reviews", "suggestions"])
         XCTAssertEqual(schema["additionalProperties"] as? Bool, false)
         XCTAssertEqual((body["messages"] as? [[String: String]])?.last?["role"], "user", "Never an assistant prefill")
         XCTAssertNil(body["temperature"])

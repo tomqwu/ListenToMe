@@ -216,6 +216,7 @@ struct MobileWorkspaceView<Header: View>: View {
                             .accessibilityElement(children: .combine)
                             .accessibilityIdentifier("output-\(mode.rawValue)")
                     }
+                    MobileSuggestedPrompts(session: session, mode: mode)
                     if let reason = session.summaryBlockReason(for: mode), !session.isSummarizing {
                         Text(reason).font(.caption).foregroundStyle(MobileStyle.muted)
                             .accessibilityIdentifier("reason-\(mode.rawValue)")
