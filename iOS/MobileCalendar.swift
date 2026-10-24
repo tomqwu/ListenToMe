@@ -106,7 +106,9 @@ extension MobileSession {
             message = "Wait for the current summary to finish before importing calendar details."
             return false
         }
-        if title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || title == ConversationTitle.mobileDefault {
+        // A default or automatic name (#221) gives way to the meeting's; a typed one never does.
+        if title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || ConversationAutoTitle.calendarMayReplace(state: titleState, title: title) {
             title = event.meeting.title
             titleState = .calendar   // never renamed automatically (#221)
         }

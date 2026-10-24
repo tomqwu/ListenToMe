@@ -115,6 +115,7 @@ extension MeetingView {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 TextField("Conversation title", text: conversationTitleBinding)
+                    .focused($titleFieldFocused)
                     .textFieldStyle(.plain).fontWeight(.semibold)
                     .accessibilityLabel("Conversation title")
                 Spacer()

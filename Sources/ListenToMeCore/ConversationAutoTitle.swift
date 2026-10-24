@@ -30,16 +30,48 @@ public enum ConversationAutoTitle {
         guard words >= minimumWords else { return false }
         switch state.source {
         case .user, .calendar: return false
-        case .placeholder: return ConversationTitle.isPlaceholder(title)
+        case .placeholder:
+            if let tried = state.attemptedWords, words < tried * 2, words - tried < retryMinimumGrowth { return false }
+            return ConversationTitle.isPlaceholder(title)
         case .automatic:
             guard state.refined != true, let before = state.automaticWords else { return false }
             return words >= before * refineFactor && words - before >= refineMinimumGrowth
         }
     }
 
+    /// After naming produced nothing, it is tried again only once the transcript has doubled or
+    /// grown by this many words, not on every Save and return to the app.
+    static let retryMinimumGrowth = 100
+
     /// The state to save with a title just named automatically.
     public static func namedState(after state: ConversationTitleState, words: Int) -> ConversationTitleState {
         .automatic(words: words, refined: state.source == .automatic)
+    }
+
+    /// The state to save when naming produced nothing: a default name remembers how long the
+    /// transcript was, and a refinement that failed is not tried again.
+    public static func attemptedState(after state: ConversationTitleState, words: Int) -> ConversationTitleState {
+        var next = state
+        if state.source == .automatic { next.refined = true } else { next.attemptedWords = words }
+        return next
+    }
+
+    /// Whether Load/Import from Calendar may name the conversation after its meeting: over a
+    /// default name or an automatic one, never over a title the user typed.
+    public static func calendarMayReplace(state: ConversationTitleState, title: String) -> Bool {
+        switch state.source {
+        case .automatic: return true
+        case .placeholder: return ConversationTitle.isPlaceholder(title)
+        case .user, .calendar: return false
+        }
+    }
+
+    /// Whether naming may ask the summary model without a request from the user: only when it runs
+    /// on this device or on the user's own Ollama. With Ollama Cloud, a cloud AI service or an
+    /// OpenAI-compatible server, a conversation without a summary is named from on-device
+    /// keywords, so Stop sends nothing for a title.
+    public static func mayAskModel(_ mode: AIProcessingMode) -> Bool {
+        mode == .apple || mode == .local
     }
 
     /// Words in `text`, in any script.
@@ -107,30 +139,52 @@ public enum ConversationAutoTitle {
     static let refusals = ["i'm sorry", "i am sorry", "sorry,", "i can't", "i cannot", "as an ai", "i'm unable",
                            "i am unable", "unfortunately"]
 
-    /// A model's answer as a title: the first line, without a "Title:" label, Markdown, quotes,
-    /// emoji or trailing punctuation, at most `maximumWords` words. Nil for an empty, generic or
-    /// refusing answer, or one clearly in another language than the conversation's.
+    /// Words that mark a chatty opener ("Sure, here is a short title for this conversation:").
+    static let openers = ["here is", "here's", "title for", "a title", "short title", "suggested title"]
+
+    /// A model's answer as a title: the first line, without reasoning blocks, Markdown, quotes,
+    /// emoji, a "Title:" label or chatty opener, or trailing punctuation, at most `maximumWords`
+    /// words. When the first line is only a label, the next line is the title. Nil for an empty,
+    /// generic or refusing answer, or one clearly in another language than the conversation's.
     public static func sanitize(_ raw: String, language: String?) -> String? {
-        let lines = raw.components(separatedBy: .newlines).map { $0.trimmingCharacters(in: .whitespaces) }
-        guard var text = lines.first(where: { !$0.isEmpty }) else { return nil }
-        if refusals.contains(where: { text.lowercased().hasPrefix($0) }) { return nil }
-        text = stripLabel(text)
-        text = String(text.unicodeScalars.filter { !isEmoji($0) && !"*_`#\"“”„«»「」『』".unicodeScalars.contains($0) })
-        text = text.split(whereSeparator: \.isWhitespace).joined(separator: " ")
-        text = trimmed(text)
-        text = limited(text)
-        guard text.filter(\.isLetter).count >= 2, !junk.contains(text.lowercased()),
-              !ConversationTitle.isPlaceholder(text), !isOtherLanguage(text, than: language) else { return nil }
-        return capitalized(text)
+        let lines = withoutReasoning(raw).components(separatedBy: .newlines).map(cleanLine).filter { !$0.isEmpty }
+        guard let first = lines.first else { return nil }
+        if refusals.contains(where: { first.lowercased().hasPrefix($0) }) { return nil }
+        var text = trimmed(stripLabel(first))
+        if text.isEmpty, lines.count > 1 { text = trimmed(stripLabel(lines[1])) }
+        guard let shortened = limited(text), shortened.filter(\.isLetter).count >= 2,
+              !junk.contains(shortened.lowercased()), !ConversationTitle.isPlaceholder(shortened),
+              !isOtherLanguage(shortened, than: language) else { return nil }
+        return capitalized(shortened)
     }
 
-    /// Drops "Title:" and "Here is a title:" in front of the answer.
+    /// Without `<think>…</think>` blocks and stray reasoning tags some local models print first.
+    static func withoutReasoning(_ text: String) -> String {
+        text.replacingOccurrences(of: #"<think>[\s\S]*?</think>"#, with: "\n",
+                                  options: [.regularExpression, .caseInsensitive])
+            .replacingOccurrences(of: #"</?think>"#, with: "\n", options: [.regularExpression, .caseInsensitive])
+    }
+
+    /// One line without emoji, Markdown emphasis or quotes, with single spaces.
+    static func cleanLine(_ line: String) -> String {
+        String(line.unicodeScalars.filter { !isEmoji($0) && !"*_`#\"“”„«»「」『』".unicodeScalars.contains($0) })
+            .split(whereSeparator: \.isWhitespace).joined(separator: " ")
+    }
+
+    /// Drops "Title:" in front of the answer, and everything up to the last colon of a chatty
+    /// opener such as "Sure, here is a short title for this conversation:".
     static func stripLabel(_ text: String) -> String {
-        guard let colon = text.firstIndex(where: { $0 == ":" || $0 == "：" }) else { return text }
-        let label = text[..<colon].trimmingCharacters(in: .whitespaces).lowercased()
-        let isLabel = labels.contains { label == $0 || label.hasSuffix(" " + $0) }
-            || label.hasPrefix("here is") || label.hasPrefix("here's")
-        return isLabel ? String(text[text.index(after: colon)...]).trimmingCharacters(in: .whitespaces) : text
+        let isColon: (Character) -> Bool = { $0 == ":" || $0 == "：" }
+        if let colon = text.firstIndex(where: isColon) {
+            let label = text[..<colon].trimmingCharacters(in: .whitespaces).lowercased()
+            if labels.contains(where: { label == $0 || label.hasSuffix(" " + $0) }) {
+                return String(text[text.index(after: colon)...]).trimmingCharacters(in: .whitespaces)
+            }
+        }
+        if let colon = text.lastIndex(where: isColon), openers.contains(where: { text[..<colon].lowercased().contains($0) }) {
+            return String(text[text.index(after: colon)...]).trimmingCharacters(in: .whitespaces)
+        }
+        return text
     }
 
     static func isEmoji(_ scalar: Unicode.Scalar) -> Bool {
@@ -151,15 +205,16 @@ public enum ConversationAutoTitle {
         return result.trimmingCharacters(in: edgePunctuation)
     }
 
-    /// At most `maximumWords` words, or `maximumUnspacedCharacters` for a script without spaces.
-    static func limited(_ text: String) -> String {
+    /// At most `maximumWords` words and `maximumCharacters`, cut only between words. A script written
+    /// without spaces is measured in characters, `maximumUnspacedCharacters` overall. A single word
+    /// longer than the limit is not cut in half: nil, so keywords name the conversation instead.
+    static func limited(_ text: String) -> String? {
+        if isUnspacedScript(text) { return trimmed(String(text.prefix(maximumUnspacedCharacters))) }
         let words = text.split(separator: " ")
-        if words.count == 1, text.count > maximumUnspacedCharacters, !text.unicodeScalars.allSatisfy(\.isASCII) {
-            return trimmed(String(text.prefix(maximumUnspacedCharacters)))
-        }
+        guard let first = words.first, first.count <= maximumCharacters else { return nil }
         var kept = words.prefix(maximumWords).joined(separator: " ")
         while kept.count > maximumCharacters, let space = kept.lastIndex(of: " ") { kept = String(kept[..<space]) }
-        return trimmed(String(kept.prefix(maximumCharacters)))
+        return trimmed(kept)
     }
 
     static func capitalized(_ text: String) -> String {
@@ -249,8 +304,7 @@ extension ConversationAutoTitle {
             picked = chosen.map { $0.joined(separator: " ") }
         }
         guard !picked.isEmpty else { return nil }
-        let unspaced = picked.allSatisfy { !$0.contains(" ") } && !(picked.first?.unicodeScalars.allSatisfy(\.isASCII) ?? true)
-            && isUnspacedScript(text)
+        let unspaced = isUnspacedScript(picked.joined())
         let joined = picked.joined(separator: unspaced ? "、" : ", ")
         return sanitize(joined, language: nil)
     }
@@ -325,9 +379,14 @@ extension ConversationAutoTitle {
             .map(\.key)
     }
 
+    /// Mostly Chinese, Japanese, Thai, Lao, Khmer or Myanmar letters: scripts written without spaces
+    /// between words, so lengths are counted in characters. Korean uses spaces and is not included.
     static func isUnspacedScript(_ text: String) -> Bool {
-        let letters = text.filter(\.isLetter)
+        let letters = text.unicodeScalars.filter { $0.properties.isAlphabetic }
         guard !letters.isEmpty else { return false }
-        return Double(text.filter(\.isWhitespace).count) / Double(letters.count) < 0.05
+        let ranges: [ClosedRange<UInt32>] = [0x3040...0x30FF, 0x3400...0x4DBF, 0x4E00...0x9FFF, 0xF900...0xFAFF,
+                                             0x20000...0x2FA1F, 0x0E00...0x0EFF, 0x1780...0x17FF, 0x1000...0x109F]
+        let unspaced = letters.filter { scalar in ranges.contains { $0.contains(scalar.value) } }
+        return unspaced.count * 3 >= letters.count
     }
 }

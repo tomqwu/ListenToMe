@@ -178,6 +178,72 @@ final class MobileAutoTitleTests: XCTestCase {
         XCTAssertEqual(renamed.segments?.count, Self.meeting.count)
     }
 
+    /// #221 review: a return to the app mid-recording (Control Center) must not name half a
+    /// transcript or send anything.
+    func testNothingIsNamedWhileRecording() async {
+        let provider = TitleProvider("Spring marketing budget")
+        let session = makeSession(provider)
+        XCTAssertTrue(session.save())
+        for state in [MobileSession.State.preparing, .recording, .stopping] {
+            session.state = state
+            session.nameConversationIfNeeded()
+            XCTAssertNil(session.autoTitleTasks[session.id], "\(state)")
+        }
+        session.state = .idle
+        await name(session)
+        XCTAssertEqual(session.title, "Spring marketing budget")
+        XCTAssertEqual(provider.requests, 1)
+    }
+
+    /// #221 review: with Ollama Cloud, a Cloud AI service or an OpenAI-compatible server, Stop sends
+    /// nothing for a title; keywords name it. Apple Intelligence and the user's own Ollama may be asked.
+    func testOnlyOnDeviceOrOwnOllamaModelsAreAskedForATitle() {
+        let session = makeSession(TitleProvider("Unused"))
+        XCTAssertEqual(session.autoTitleMode, .apple)
+        XCTAssertNotNil(session.autoTitleProvider)
+        for provider in [MobileAISettings.Provider.openAI, .cloud] {
+            session.ai.provider = provider
+            XCTAssertFalse(ConversationAutoTitle.mayAskModel(session.autoTitleMode), provider.rawValue)
+            XCTAssertNil(session.autoTitleProvider, provider.rawValue)
+        }
+        session.ai.provider = .ollama
+        XCTAssertEqual(session.autoTitleMode, session.ai.usesCustomEndpoint ? .local : .cloud)
+        if !session.ai.usesCustomEndpoint { XCTAssertNil(session.autoTitleProvider, "Ollama Cloud") }
+    }
+
+    /// #221 review: a naming that found nothing is remembered, not retried on every Save.
+    func testANamingThatFoundNothingIsNotRetriedUntilTheTranscriptGrows() async {
+        let provider = TitleProvider("I'm sorry, I can't help with that.")
+        let filler = Array(repeating: "Yeah okay um uh yeah okay um uh yeah okay.", count: 4)
+        let session = makeSession(provider, lines: filler)
+        XCTAssertTrue(session.save())
+        await name(session)
+        XCTAssertEqual(session.title, "New conversation")
+        XCTAssertEqual(session.titleState.attemptedWords, ConversationAutoTitle.wordCount(filler.joined(separator: "\n")))
+        XCTAssertEqual(MobileSession(storageDirectory: root, sharedInbox: root.appendingPathComponent("inbox"))
+            .titleState.attemptedWords, session.titleState.attemptedWords, "remembered across launches")
+        await name(session)
+        XCTAssertEqual(provider.requests, 1, "not asked again for the same transcript")
+    }
+
+    /// #221 review: Import from Calendar replaces an automatic name with the meeting's.
+    func testCalendarReplacesAnAutomaticName() async throws {
+        let session = makeSession(TitleProvider("Spring marketing budget"))
+        XCTAssertTrue(session.save())
+        await name(session)
+        XCTAssertEqual(session.titleState.source, .automatic)
+        let source = EKEvent(eventStore: EKEventStore())
+        source.title = "Release review"
+        source.startDate = Date()
+        source.endDate = source.startDate.addingTimeInterval(1_800)
+        XCTAssertTrue(session.importCalendarEvent(MobileCalendar.event(source)))
+        XCTAssertEqual(session.title, "Release review")
+        XCTAssertEqual(session.titleState, .calendar)
+        session.renameByUser("Our review")
+        XCTAssertTrue(session.importCalendarEvent(MobileCalendar.event(source)))
+        XCTAssertEqual(session.title, "Our review", "a typed title is never replaced")
+    }
+
     func testAnOlderConversationRecordDecodesAsDefault() throws {
         let session = makeSession()
         XCTAssertTrue(session.save())

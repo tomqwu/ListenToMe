@@ -24,4 +24,16 @@ public enum ConversationTitle {
     public static func isPlaceholder(_ title: String) -> Bool {
         isGenerated(title) || title.hasPrefix(watchPrefix) || title == mobileDefault || title == importedDefault
     }
+
+    /// The style both platforms format the date of a generated title with.
+    public static let dateStyle = Date.FormatStyle(date: .abbreviated, time: .shortened)
+
+    /// Exactly a title the app generated, for records saved before titles carried their origin.
+    public static func isLegacyDefault(_ title: String, style: Date.FormatStyle = dateStyle) -> Bool {
+        if title == mobileDefault { return true }
+        for prefix in [watchPrefix, generatedPrefix] where title.hasPrefix(prefix) {
+            return (try? Date(String(title.dropFirst(prefix.count)), strategy: style.parseStrategy)) != nil
+        }
+        return false
+    }
 }

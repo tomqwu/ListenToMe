@@ -19,11 +19,15 @@ public struct ConversationTitleState: Codable, Sendable, Equatable {
     public var automaticWords: Int?
     /// The automatic title was refined once already; it is not changed again.
     public var refined: Bool?
+    /// Final-transcript words when naming last produced nothing, so it is not tried again on every
+    /// Save or return to the app until the conversation has grown (see `ConversationAutoTitle.shouldName`).
+    public var attemptedWords: Int?
 
-    public init(source: Source, automaticWords: Int? = nil, refined: Bool? = nil) {
+    public init(source: Source, automaticWords: Int? = nil, refined: Bool? = nil, attemptedWords: Int? = nil) {
         self.source = source
         self.automaticWords = automaticWords
         self.refined = refined
+        self.attemptedWords = attemptedWords
     }
 
     public static let placeholder = ConversationTitleState(source: .placeholder)
@@ -34,12 +38,16 @@ public struct ConversationTitleState: Codable, Sendable, Equatable {
         ConversationTitleState(source: .automatic, automaticWords: words, refined: refined ? true : nil)
     }
 
-    /// A record saved before #221 has no state: its title says whether it still has a default name.
+    /// A record saved before #221 has no state. It counts as still having its default name only when
+    /// the title is exactly one the app generated: "New conversation", or "Apple Watch · " /
+    /// "Conversation — " followed by a date that parses back. Anything else, including "Imported
+    /// notes" and a date in a format this device no longer reads, is treated as the user's: an old
+    /// default may then keep its name, but a title someone chose is never renamed.
     public static func resolved(_ state: ConversationTitleState?, title: String) -> ConversationTitleState {
-        state ?? (ConversationTitle.isPlaceholder(title) ? .placeholder : .user)
+        state ?? (ConversationTitle.isLegacyDefault(title) ? .placeholder : .user)
     }
 
-    private enum CodingKeys: String, CodingKey { case source, automaticWords, refined }
+    private enum CodingKeys: String, CodingKey { case source, automaticWords, refined, attemptedWords }
 
     /// A source written by a newer version decodes as `.user`, so it is never overwritten and the
     /// record still opens.
@@ -49,6 +57,7 @@ public struct ConversationTitleState: Codable, Sendable, Equatable {
         source = Source(rawValue: raw) ?? .user
         automaticWords = try? container.decodeIfPresent(Int.self, forKey: .automaticWords)
         refined = try? container.decodeIfPresent(Bool.self, forKey: .refined)
+        attemptedWords = try? container.decodeIfPresent(Int.self, forKey: .attemptedWords)
     }
 }
 

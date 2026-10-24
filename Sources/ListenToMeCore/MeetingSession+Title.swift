@@ -9,4 +9,8 @@ public extension MeetingSession {
               providerAvailability(model) == nil else { return nil }
         return providers[.listener]
     }
+
+    /// The last Summary that finished streaming, for naming. `listenerSummary` can be a refresh
+    /// still arriving word by word, and half a sentence must not become the title.
+    var completedListenerSummary: String { lastCompletedListenerSummary }
 }

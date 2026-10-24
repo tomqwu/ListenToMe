@@ -18,7 +18,7 @@ When the transcription language is Automatic (the default; Settings → Transcri
 
 ## Automatic conversation titles
 
-With Name conversations automatically on (the default; Settings → Conversations), a conversation that still has its default name is given a short title after you stop or save. If it already has a summary, the title is taken from that summary on your device. Otherwise the app asks the same summary provider you chose in Settings, with the first part of the transcript: Apple Intelligence on your device by default, or the Ollama server, OpenAI-compatible server or cloud AI service you selected, under the terms described below. No other service is contacted for titles. When no AI provider is available, the title comes from keywords found on your device. Turn the setting off to keep default names and send nothing for titles.
+With Name conversations automatically on (the default; Settings → Conversations), a conversation that still has its default name is given a short title after you stop or save. If it already has a summary, the title is taken from that summary on your device. Otherwise, when your summary provider is Apple Intelligence (the default, on your device) or an Ollama server you entered yourself, the app asks it for a title with the first part of the transcript. With Ollama Cloud, an OpenAI-compatible server or a cloud AI service, nothing is sent for a title: it comes from keywords found on your device, as it does when no AI provider is available. No other service is contacted for titles. Turn the setting off to keep default names and send nothing for titles.
 
 ## Optional Ollama (Cloud or your own server)
 

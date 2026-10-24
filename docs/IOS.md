@@ -452,14 +452,21 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   foreground, a conversation still named "New conversation" or "Apple Watch · <date>" with about
   30 final words is named in the background. `MobileSession+AutoTitle.swift` takes the title from:
   1. its Full summary, with no model call;
-  2. the summary provider the user chose (Apple Intelligence by default, or the Ollama, Cloud AI or
-     OpenAI-compatible service already selected), asked with a tiny fenced prompt of the
-     transcript's first 2,000 characters and answered in the conversation's language;
+  2. the summary provider, only when it is Apple Intelligence (the default) or the user's own
+     Ollama server (`ConversationAutoTitle.mayAskModel`). It is asked with a tiny fenced prompt of
+     the transcript's first 2,000 characters and answers in the conversation's language. Ollama
+     Cloud, a Cloud AI service or an OpenAI-compatible server is never asked for a title, so Stop
+     sends nothing;
   3. on-device NaturalLanguage keywords.
+  Naming never runs while recording, preparing or stopping.
   `ConversationAutoTitle` in Core holds the prompt, the cleaning (at most six words, no quotes,
   emoji, Markdown or trailing punctuation, nothing clearly in another language) and the replace
   rule. `SessionRecord.titleState` records where a title came from (`placeholder`, `automatic`,
-  `user`, `calendar`); records saved before it decode from their title. The title field marks
+  `user`, `calendar`). A record saved before it counts as a default only when its title is exactly
+  "New conversation", or "Apple Watch · " / "Conversation — " followed by a date that parses; any
+  other title (including "Imported notes") is treated as the user's. A naming that finds nothing
+  stores `attemptedWords` and waits until the transcript doubles or grows by 100 words. Import from
+  Calendar replaces a default or automatic name (`calendarMayReplace`). The title field marks
   edits as the user's and cancels a naming under way. A naming that finishes after the user
   renamed the conversation, or switched to another one, is applied only if that record still
   has its default name. An automatic title is refined at most once, after the transcript has

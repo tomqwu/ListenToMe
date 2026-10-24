@@ -282,8 +282,9 @@ struct SettingsView: View {
             Toggle("Name conversations automatically", isOn: $autoName)
             Text(
                 "After you stop or save, a conversation still titled “Conversation — <date>” gets a short title " +
-                "from its summary, from the Summary pane's model, or from keywords found on this Mac. " +
-                "A title you type or load from Calendar is never replaced."
+                "from its finished summary, from the Summary model with Apple Intelligence or local Ollama, " +
+                "or from keywords found on this Mac. With Ollama Cloud, a cloud AI service or an " +
+                "OpenAI-compatible server, nothing is sent for a title. A title you type is never replaced."
             )
             .font(.caption).foregroundStyle(.secondary)
 

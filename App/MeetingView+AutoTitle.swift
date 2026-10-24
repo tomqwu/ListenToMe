@@ -18,26 +18,29 @@ extension MeetingView {
     }
 
     /// Names the open conversation in the background if it still has its default title and enough
-    /// final words. The Summary pane's provider names it when AI is on and that model is available;
-    /// otherwise the summary or on-device keywords do.
+    /// final words. The source is the last completed Summary; otherwise the Summary pane's model,
+    /// only with Apple Intelligence or local Ollama; otherwise on-device keywords.
     func nameConversationIfNeeded() {
         guard ProviderSettings.autoNameConversations, ProviderSettings.saveSessionsForSearch, sessionSaveable else { return }
         let spoken = store.utterances.filter(\.isFinal).map(\.text).joined(separator: "\n")
         let words = ConversationAutoTitle.wordCount(spoken)
         let target = currentSessionID, title = conversationTitle, state = conversationTitleState
         guard ConversationAutoTitle.shouldName(state: state, title: title, words: words) else { return }
-        let provider = session.conversationTitleProvider
-        let summary = session.listenerSummary
+        let provider = ConversationAutoTitle.mayAskModel(ProviderSettings.aiMode) ? session.conversationTitleProvider : nil
+        // Never a refresh still streaming in: half a sentence must not become the title.
+        let summary = session.completedListenerSummary
         let language = ProviderSettings.transcriptionLocale().identifier
         let startedAt = conversationStartedAt
         autoTitleTask = Task {
-            guard let named = await ConversationAutoTitle.title(transcript: spoken, summary: summary,
-                                                                language: language, provider: provider),
-                  !Task.isCancelled else { return }
-            let newState = ConversationAutoTitle.namedState(after: state, words: words)
+            let named = await ConversationAutoTitle.title(transcript: spoken, summary: summary,
+                                                          language: language, provider: provider)
+            guard !Task.isCancelled else { return }
+            let newState = named.map { _ in ConversationAutoTitle.namedState(after: state, words: words) }
+                ?? ConversationAutoTitle.attemptedState(after: state, words: words)
             if target == currentSessionID {
-                guard conversationTitle == title, conversationTitleState == state else { return }
-                conversationTitle = named.title
+                // A title field being edited would write its own text back when editing ends.
+                guard conversationTitle == title, conversationTitleState == state, !titleFieldFocused else { return }
+                if let named { conversationTitle = named.title }
                 conversationTitleState = newState
                 _ = checkpoint(complete: !wantsCapture && !lifecycleBusy, force: true)
                 return
@@ -45,8 +48,8 @@ extension MeetingView {
             // A New conversation started meanwhile: rename the saved record, unless renamed since.
             guard let record = sessionStore.all().first(where: { $0.id == target }), record.title == title,
                   record.resolvedTitleState == state else { return }
-            let updated = record.retitled(named.title, state: newState)
-            if sessionStore.add(updated) {
+            let updated = record.retitled(named?.title ?? title, state: newState)
+            if sessionStore.add(updated), named != nil {
                 MarkdownVaultSync.shared.save(updated, language: language, startedAt: startedAt)
             }
         }

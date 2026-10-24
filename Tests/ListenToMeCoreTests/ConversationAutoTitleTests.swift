@@ -273,6 +273,86 @@ final class ConversationAutoTitleTests: XCTestCase {
             XCTAssertFalse(ConversationTitle.isPlaceholder(title), title)
         }
     }
+
+    /// A record from before #221 is renamed only if its title is exactly one the app generated.
+    func testOldRecordsAreDefaultOnlyForExactlyGeneratedTitles() {
+        let date = Date(timeIntervalSince1970: 1_800_000_000).formatted(ConversationTitle.dateStyle)
+        for title in ["New conversation", "Conversation — " + date, "Apple Watch · " + date] {
+            XCTAssertEqual(ConversationTitleState.resolved(nil, title: title), .placeholder, title)
+        }
+        for title in ["Imported notes", "Conversation — planning", "Apple Watch · run with Sam", "new conversation",
+                      "New conversation ", "Standup"] {
+            XCTAssertEqual(ConversationTitleState.resolved(nil, title: title), .user, title)
+        }
+        // A saved state always wins over the title.
+        XCTAssertEqual(ConversationTitleState.resolved(.placeholder, title: "Imported notes"), .placeholder)
+    }
+
+    /// A naming that produced nothing is not retried on every Save and foreground (#221 review).
+    func testANamingThatFoundNothingWaitsForTheTranscriptToGrow() throws {
+        let tried = ConversationAutoTitle.attemptedState(after: .placeholder, words: 40)
+        XCTAssertEqual(tried.source, .placeholder)
+        XCTAssertEqual(tried.attemptedWords, 40)
+        XCTAssertFalse(ConversationAutoTitle.shouldName(state: tried, title: "New conversation", words: 40))
+        XCTAssertFalse(ConversationAutoTitle.shouldName(state: tried, title: "New conversation", words: 79))
+        XCTAssertTrue(ConversationAutoTitle.shouldName(state: tried, title: "New conversation", words: 80), "doubled")
+        let long = ConversationAutoTitle.attemptedState(after: .placeholder, words: 500)
+        XCTAssertFalse(ConversationAutoTitle.shouldName(state: long, title: "New conversation", words: 599))
+        XCTAssertTrue(ConversationAutoTitle.shouldName(state: long, title: "New conversation", words: 600), "+100")
+        // A refinement that found nothing is not tried again.
+        let failedRefine = ConversationAutoTitle.attemptedState(after: .automatic(words: 40), words: 400)
+        XCTAssertFalse(ConversationAutoTitle.shouldName(state: failedRefine, title: "Budget", words: 5_000))
+        let round = try JSONDecoder().decode(ConversationTitleState.self, from: JSONEncoder().encode(tried))
+        XCTAssertEqual(round, tried)
+    }
+
+    func testOnlyAnOnDeviceOrOwnOllamaModelIsAskedWithoutARequest() {
+        XCTAssertTrue(ConversationAutoTitle.mayAskModel(.apple))
+        XCTAssertTrue(ConversationAutoTitle.mayAskModel(.local))
+        for mode in [AIProcessingMode.off, .cloud, .cloudAI, .openAI] {
+            XCTAssertFalse(ConversationAutoTitle.mayAskModel(mode), mode.rawValue)
+        }
+    }
+
+    func testCalendarReplacesDefaultAndAutomaticNamesButNeverTypedOnes() {
+        XCTAssertTrue(ConversationAutoTitle.calendarMayReplace(state: .placeholder, title: "New conversation"))
+        XCTAssertTrue(ConversationAutoTitle.calendarMayReplace(state: .automatic(words: 40), title: "Budget review"))
+        XCTAssertFalse(ConversationAutoTitle.calendarMayReplace(state: .placeholder, title: "Standup"))
+        XCTAssertFalse(ConversationAutoTitle.calendarMayReplace(state: .user, title: "New conversation"))
+        XCTAssertFalse(ConversationAutoTitle.calendarMayReplace(state: .calendar, title: "Release review"))
+    }
+
+    /// Answers seen from real models (#221 review): Markdown labels, chatty openers, a label on its
+    /// own line, reasoning tags.
+    func testSanitizingHandlesChattyAndReasoningAnswers() {
+        let cases: [(String, String?)] = [
+            ("**Title:** Spring budget review", "Spring budget review"),
+            ("Sure, here is a short title for this conversation: Budget review", "Budget review"),
+            ("Here is a title:\nBudget review", "Budget review"),
+            ("**Title:**\n\nBudget review", "Budget review"),
+            ("<think>\nThe user wants a title. Maybe budget.\n</think>\nSpring budget review", "Spring budget review"),
+            ("<think>", nil),
+            ("<think>\nstill thinking", "Still thinking"),
+            ("Title: Q3: hiring plan", "Q3: hiring plan"),
+        ]
+        for (raw, expected) in cases {
+            XCTAssertEqual(ConversationAutoTitle.sanitize(raw, language: "en"), expected, raw)
+        }
+    }
+
+    func testLengthIsMeasuredByScriptAndNeverCutsAWord() throws {
+        // Mixed Latin and Chinese is still measured in characters.
+        let mixed = try XCTUnwrap(ConversationAutoTitle.sanitize("Q3 预算评审以及下个季度的社交视频广告活动安排的讨论", language: "zh-Hans"))
+        XCTAssertLessThanOrEqual(mixed.count, ConversationAutoTitle.maximumUnspacedCharacters, mixed)
+        XCTAssertTrue(mixed.hasPrefix("Q3 预算评审"), mixed)
+        // A long German compound stays whole.
+        XCTAssertEqual(ConversationAutoTitle.sanitize("Geschäftsführerbesprechungsprotokoll", language: "de"),
+                       "Geschäftsführerbesprechungsprotokoll")
+        // One word longer than the limit is not cut in half: nil, so keywords take over.
+        XCTAssertNil(ConversationAutoTitle.sanitize(String(repeating: "a", count: 70), language: nil))
+        XCTAssertFalse(ConversationAutoTitle.isUnspacedScript("한국어 회의 요약"), "Korean uses spaces")
+        XCTAssertTrue(ConversationAutoTitle.isUnspacedScript("会議の要約"))
+    }
 }
 
 /// macOS names conversations with the Summary pane's provider only when the user can use it (#221).
@@ -284,6 +364,37 @@ final class MeetingSessionTitleProviderTests: XCTestCase {
                        makeProvider: { model in MockLLMProvider(id: model, deltas: ["ok"]) },
                        models: [.listener: listener, .quick: "Q", .deep: "D"],
                        providerAvailability: { unavailable.contains($0) ? "Model not installed" : nil })
+    }
+
+    /// Streams half a sentence, then holds the rest until released.
+    private final class HalfStreamProvider: LLMProvider, @unchecked Sendable {
+        let id = "half-stream"
+        private let lock = NSLock()
+        private var finish: (@Sendable () -> Void)?
+        func release() { lock.withLock { finish }?() }
+        func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
+            AsyncThrowingStream { continuation in
+                continuation.yield("- The team agreed to move the")
+                lock.withLock { finish = { continuation.yield(" budget to video."); continuation.finish() } }
+            }
+        }
+    }
+
+    /// A Summary refresh still streaming must not name the conversation after half a sentence.
+    func testOnlyACompletedSummaryIsOfferedForNaming() async throws {
+        let provider = HalfStreamProvider()
+        let session = MeetingSession(store: ConversationStore(), context: ContextEngine(debounce: 0),
+                                     makeCapture: { MockCapture() }, makeTranscriber: { MockTranscriber() },
+                                     makeProvider: { _ in provider }, models: [.listener: "L", .quick: "Q", .deep: "D"])
+        session.store.apply(TranscriptSegment(source: .others, text: "Let's move the budget to video.", isFinal: true,
+                                              start: 0, end: 2))
+        let refresh = Task { await session.refreshListener() }
+        for _ in 0..<500 where session.listenerSummary.isEmpty { await Task.yield() }
+        XCTAssertEqual(session.listenerSummary, "- The team agreed to move the", "the pane shows the stream")
+        XCTAssertEqual(session.completedListenerSummary, "", "naming sees no summary yet")
+        provider.release()
+        await refresh.value
+        XCTAssertEqual(session.completedListenerSummary, "- The team agreed to move the budget to video.")
     }
 
     func testTheSummaryPanesProviderNamesConversationsWhenAvailable() {

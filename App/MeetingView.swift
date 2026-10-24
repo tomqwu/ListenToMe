@@ -90,6 +90,7 @@ struct MeetingView: View {
     /// Where the title came from, so an automatic name never replaces a typed one (#221).
     @State var conversationTitleState = ConversationTitleState.placeholder
     @State var autoTitleTask: Task<Void, Never>?
+    @FocusState var titleFieldFocused: Bool
     @State var saveMessage = "Not saved yet"
     @State var saveFailed = false
     @State var lastSavedKey: SessionCheckpointKey?
@@ -659,7 +660,9 @@ extension MeetingView {
             // Title the conversation after the meeting — History, exports and the window all showed
             // "Conversation — <date>" even though the app knew the real name (issue #136). Only the
             // generated title is replaced, so a title the user typed is never clobbered.
-            if ConversationTitle.isGenerated(conversationTitle), !info.title.isEmpty {
+            // An automatic name (#221) is replaced too: the meeting's own name is better.
+            if ConversationAutoTitle.calendarMayReplace(state: conversationTitleState, title: conversationTitle),
+               !info.title.isEmpty {
                 conversationTitle = info.title
                 conversationTitleState = .calendar   // never renamed automatically (#221)
             }

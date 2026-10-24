@@ -22,12 +22,23 @@ extension MobileSession {
         autoTitleTasks[id] = nil
     }
 
-    /// The provider the user chose for summaries, when it can answer now: Apple Intelligence on this
-    /// device by default, or the Ollama, Cloud AI or OpenAI-compatible service picked in Settings.
-    /// Nil means on-device keywords. Never a service the user has not chosen.
+    /// The summary provider as a privacy mode: Ollama on the user's own server counts as local.
+    var autoTitleMode: AIProcessingMode {
+        switch ai.provider {
+        case .apple: return .apple
+        case .ollama: return ai.usesCustomEndpoint ? .local : .cloud
+        case .openAI: return .openAI
+        case .cloud: return .cloudAI
+        }
+    }
+
+    /// The provider the user chose for summaries, when naming may ask it: Apple Intelligence on this
+    /// device (the default) or the user's own Ollama server, and only when it can answer now. With
+    /// Ollama Cloud, a Cloud AI service or an OpenAI-compatible server this is nil, so a title comes
+    /// from the summary or on-device keywords and Stop sends nothing anywhere.
     var autoTitleProvider: (any LLMProvider)? {
         // A test session's injected `summaryProvider` counts its own requests; titles leave it alone.
-        guard summaryProvider == nil else { return nil }
+        guard summaryProvider == nil, ConversationAutoTitle.mayAskModel(autoTitleMode) else { return nil }
         if ai.provider == .apple, let onDeviceProviderOverride { return onDeviceProviderOverride }
         // While the app hosts unit tests no real model is asked; tests inject `onDeviceProviderOverride`.
         guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil,
@@ -36,9 +47,10 @@ extension MobileSession {
     }
 
     /// Names `recordID` (the open conversation by default) in the background if it still has its
-    /// default name and enough words. `language` defaults to the conversation's.
+    /// default name and enough words. `language` defaults to the conversation's. Never while
+    /// recording: a return from Control Center mid-recording must not name half a transcript.
     func nameConversationIfNeeded(_ recordID: String? = nil, language: String? = nil) {
-        guard Self.namesConversationsAutomatically, isForeground else { return }
+        guard Self.namesConversationsAutomatically, isForeground, state == .idle else { return }
         let target = recordID ?? id
         guard autoTitleTasks[target] == nil, let snapshot = autoTitleSnapshot(target),
               ConversationAutoTitle.shouldName(state: snapshot.state, title: snapshot.title, words: snapshot.words)
@@ -50,8 +62,8 @@ extension MobileSession {
                                                           language: language, provider: provider)
             guard let self else { return }
             self.autoTitleTasks[target] = nil
-            guard !Task.isCancelled, let named else { return }
-            self.applyAutoTitle(named.title, to: target, from: snapshot)
+            guard !Task.isCancelled else { return }
+            self.applyAutoTitle(named?.title, to: target, from: snapshot)
         }
     }
 
@@ -83,22 +95,25 @@ extension MobileSession {
 
     /// Applies the title where the conversation lives now, unless the user renamed it meanwhile.
     /// Saving it also updates the Save to folder note; its file name is keyed by the conversation.
-    private func applyAutoTitle(_ named: String, to target: String, from snapshot: AutoTitleSnapshot) {
-        let state = ConversationAutoTitle.namedState(after: snapshot.state, words: snapshot.words)
+    /// `nil` (nothing usable) keeps the name and records the attempt, so naming is not tried again
+    /// on every Save or return to the app until the transcript has grown.
+    private func applyAutoTitle(_ named: String?, to target: String, from snapshot: AutoTitleSnapshot) {
+        let state = named == nil ? ConversationAutoTitle.attemptedState(after: snapshot.state, words: snapshot.words)
+            : ConversationAutoTitle.namedState(after: snapshot.state, words: snapshot.words)
         if target == id {
             guard title == snapshot.title, titleState == snapshot.state else { return }
-            title = named
+            if let named { title = named }
             titleState = state
             save(announce: false)
             return
         }
         guard let record = history.first(where: { $0.id == target }), record.title == snapshot.title,
               record.resolvedTitleState == snapshot.state else { return }
-        let updated = record.retitled(named, state: state)
+        let updated = record.retitled(named ?? record.title, state: state)
         do {
             try archive.save(updated)
             remember(updated)
-            Self.markdownVault.save(updated, language: transcriptionLanguage)
+            if named != nil { Self.markdownVault.save(updated, language: transcriptionLanguage) }
         } catch {
             // The default name stays; the next save tries again.
         }
