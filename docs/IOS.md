@@ -450,6 +450,31 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   across recordings, so after Stop/Listen (or an interruption) new voices continue the numbering
   (Speaker 3, 4…) and can be renamed to merge them; backgrounding ends identification at once without a final pass;
   more than two hours of one recording is not analyzed further.
+- Automatic titles (#221): after Stop, Save, a finished Apple Watch recording or a return to the
+  foreground, a conversation still named "New conversation" or "Apple Watch · <date>" with about
+  30 final words is named in the background. `MobileSession+AutoTitle.swift` takes the title from:
+  1. its Full summary, with no model call;
+  2. the summary provider, only when it is Apple Intelligence (the default) or the user's own
+     Ollama server (`ConversationAutoTitle.mayAskModel`). It is asked with a tiny fenced prompt of
+     the transcript's first 2,000 characters and answers in the conversation's language. Ollama
+     Cloud, a Cloud AI service or an OpenAI-compatible server is never asked for a title, so Stop
+     sends nothing;
+  3. on-device NaturalLanguage keywords.
+  Naming never runs while recording, preparing or stopping.
+  `ConversationAutoTitle` in Core holds the prompt, the cleaning (at most six words, no quotes,
+  emoji, Markdown or trailing punctuation, nothing clearly in another language) and the replace
+  rule. `SessionRecord.titleState` records where a title came from (`placeholder`, `automatic`,
+  `user`, `calendar`). A record saved before it counts as a default only when its title is exactly
+  "New conversation", or "Apple Watch · " / "Conversation — " followed by a date that parses; any
+  other title (including "Imported notes") is treated as the user's. A naming that finds nothing
+  stores `attemptedWords` and waits until the transcript doubles or grows by 100 words. Import from
+  Calendar replaces a default or automatic name (`calendarMayReplace`). The title field marks
+  edits as the user's and cancels a naming under way. A naming that finishes after the user
+  renamed the conversation, or switched to another one, is applied only if that record still
+  has its default name. An automatic title is refined at most once, after the transcript has
+  tripled. The Save to folder note is rewritten in place (its file name is keyed by the
+  conversation). Unit tests never reach a real model: they inject `onDeviceProviderOverride`.
+  Settings → Conversations → **Name conversations automatically** (on by default).
 - Editable titles and notes; atomic local saves after finalized utterances, explicit Save,
   save-before-New, local History, restoration on launch and Markdown through the share sheet.
   Title and Notes typing is saved about a second after you stop typing, and is flushed when
