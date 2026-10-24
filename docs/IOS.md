@@ -1,7 +1,7 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.14.0 (31).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.15.0 (32).
 
 ## What this app is for
 
@@ -103,7 +103,7 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 **The two apps keep independent version lines.** They are separate products in separate distribution
 channels, and an iOS build number already accepted by App Store Connect can never be reused. A higher
 iOS version does *not* mean the iPhone app is ahead of the Mac app; today macOS is 1.4.4 (14) and iOS
-is 1.14.0 (31).
+is 1.15.0 (32).
 
 - **`MARKETING_VERSION`** (iOS, in `project.yml`): a **minor** bump for user-visible features, a
   **patch** bump for fixes.
@@ -123,6 +123,10 @@ is 1.14.0 (31).
 The archive, upload, tagging and verification steps themselves are not repeated here: follow
 [IOS-RELEASING.md](IOS-RELEASING.md) for iOS, [RELEASING.md](RELEASING.md) for macOS, and
 [AGENTS.md](../AGENTS.md) for the release workflow that governs both.
+
+## iOS 1.15.0 (32)
+
+Two answer panes (#235): the Deep tab is removed on iPhone and iPad — Quick Summary and Summary remain, Auto runs no Deep reviews and Settings asks for no Deep model; a conversation saved with a Deep analysis keeps it read-only under **Earlier deep analysis** in History, in shared text, exports and Save to folder notes ([Conversation actions](#conversation-actions)). Semantic History search and **Ask your history** (#57): an on-device index (Apple's NaturalLanguage embeddings, excluded from backups, deleted with its conversation) adds meaning-based results marked Related, and Ask answers from the top excerpts with tappable sources, labelled before it sends excerpts to a non-Apple provider. **Summarize selection** (#234): select transcript lines, or touch and hold → Summarize from here, and only those lines go to the chosen provider; the last five are saved under the Summary and in exports ([Summarize selection](#summarize-selection-234)). Domain vocabularies and My terms with an on-device suggestion banner (#222; [Domain vocabularies and My terms](#domain-vocabularies-and-my-terms-222)); context-aware **Suggested prompts** under Quick, answered in an Ask card (#61; [Suggested prompts](#suggested-prompts-61)); **Export as** Markdown, plain text, SRT, WebVTT or JSON (#130; [Export formats](#export-formats-130)) and the per-conversation transcription language (#206); opt-in **Save audio recordings** with tap-to-play, excluded from backups (#55; [Save audio recordings](#save-audio-recordings-55)); automatic conversation names after Stop or Save (#221); **Delete all conversations** in History and Settings → Privacy (#220); Quick grounding for long conversations with the "Using …" note, and the output-limit notice (#114, #215). The privacy policy in [ios-privacy.md](ios-privacy.md) covers saved audio, the search index, Ask your history, vocabularies, automatic titles, selection summaries and exports; its effective date is now October 24, 2026. No SwiftPM package changed since 1.14.0 (31), so `ThirdPartyNotices.txt` is unchanged. The Apple Watch target is versioned with the app but is not embedded in this build (`WATCH_EMBED` off; #181 ships on a later train). [What to Test](../metadata/ios/en-CA/what-to-test-1.15.0.txt).
 
 ## iOS 1.14.0 (31)
 

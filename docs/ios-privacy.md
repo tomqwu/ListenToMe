@@ -1,6 +1,6 @@
 # Listen To Me — iPhone and iPad privacy policy
 
-Effective October 23, 2026. Developer: Tom Wu. Contact: [tom@cloudnativity.io](mailto:tom@cloudnativity.io).
+Effective October 24, 2026. Developer: Tom Wu. Contact: [tom@cloudnativity.io](mailto:tom@cloudnativity.io).
 
 ## Your conversations
 
@@ -26,9 +26,11 @@ The vocabulary presets, your My terms list and your vocabulary choices are store
 
 With Name conversations automatically on (the default; Settings → Conversations), a conversation that still has its default name is given a short title after you stop or save. If it already has a summary, the title is taken from that summary on your device. Otherwise, when your summary provider is Apple Intelligence (the default, on your device) or an Ollama server you entered yourself, the app asks it for a title with the first part of the transcript. With Ollama Cloud, an OpenAI-compatible server or a cloud AI service, nothing is sent for a title: it comes from keywords found on your device, as it does when no AI provider is available. No other service is contacted for titles. Turn the setting off to keep default names and send nothing for titles.
 
-## Optional Ollama (Cloud or your own server)
+## Summarize selection
 
 Summarize selection (select transcript lines, or touch and hold a line → Summarize from here) sends only the selected lines, with their times and speaker names and the vocabulary context other summaries carry, to the summary provider you chose. With Apple Intelligence it runs on the device and starts at once. With Ollama, an OpenAI-compatible server or a cloud AI service (described below), the summary sheet first names the destination ("Sends the selected lines to …") and nothing is sent until you tap Summarize. The last five selection summaries are stored with the conversation like its other summaries and are included in its exports and its Save to folder note. Deleting the conversation deletes them from the app; a note Save to folder already wrote to your folder, and anything you exported or shared, is not deleted.
+
+## Optional Ollama (Cloud or your own server)
 
 Summaries go to Ollama only when you select Ollama as the provider. Requests are sent to the server shown in Settings: Ollama Cloud (`https://ollama.com`) unless you entered the address of an Ollama server you run on your own network, in which case the conversation text stays on that network and a saved Ollama Cloud key is never sent there. When Ollama is selected and you request an AI summary, the app sends conversation text, notes and relevant context over the network. Auto summaries send new conversation context as you speak while Auto is enabled. Optional AI speech correction sends completed phrases and nearby transcript text. Imported text included in notes or context can be part of those requests. Raw microphone audio is not sent. Your API key is stored in the device Keychain and is sent only to Ollama Cloud to authenticate requests.
 

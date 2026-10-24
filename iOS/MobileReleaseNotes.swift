@@ -48,6 +48,13 @@ enum MobileReleaseNotes {
         var id: String { version }
     }
     static let releases: [Release] = [
+        .init(version: "1.15.0", title: "Find it, ask it, keep it", details: [
+            "Two answers: Quick and Summary. The Deep tab is gone; a saved Deep analysis stays under Summary in History.",
+            "Search History by meaning and Ask your history, with sources. Conversations name themselves after Stop.",
+            "Select lines and tap Summarize selection. Tap a suggested prompt under Quick for a short answer.",
+            "Vocabularies and My terms help recognition. Export as subtitles, text or JSON. Delete all conversations at once.",
+            "Optional: keep the audio on this device and tap a line's time to play it. Long talks get better Quick answers."
+        ]),
         .init(version: "1.14.0", title: "Your cloud AI, your key", details: [
             "Cloud AI: summarize with OpenAI, Claude, Gemini, DeepSeek, OpenRouter, Groq, Mistral or xAI Grok using your own key.",
             "Each service keeps its own key in the Keychain and says plainly that it sends your transcript to that vendor.",
