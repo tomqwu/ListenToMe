@@ -1,7 +1,7 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.15.0 (32).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.16.0 (33).
 
 ## What this app is for
 
@@ -108,7 +108,7 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 **The two apps keep independent version lines.** They are separate products in separate distribution
 channels, and an iOS build number already accepted by App Store Connect can never be reused. A higher
 iOS version does *not* mean the iPhone app is ahead of the Mac app; today macOS is 1.4.4 (14) and iOS
-is 1.15.0 (32).
+is 1.16.0 (33).
 
 - **`MARKETING_VERSION`** (iOS, in `project.yml`): a **minor** bump for user-visible features, a
   **patch** bump for fixes.
@@ -128,6 +128,15 @@ is 1.15.0 (32).
 The archive, upload, tagging and verification steps themselves are not repeated here: follow
 [IOS-RELEASING.md](IOS-RELEASING.md) for iOS, [RELEASING.md](RELEASING.md) for macOS, and
 [AGENTS.md](../AGENTS.md) for the release workflow that governs both.
+
+## iOS 1.16.0 (33)
+
+Prompt below Notes adds one-time Ask and saved per-conversation summary instructions, with editable
+domain presets (#257). Wide iPhone Live layouts show Transcript and Quick side by side (#253).
+All seven vocabulary presets include Simplified Chinese terms (#238). Privacy and audio-retention
+copy now describe selected remote providers and opt-in audio correctly (#247, #251). The release
+workflow captures native screenshots for compact/large iPhone and iPad views (#255). Watch remains
+excluded; no dependency or license inventory changed. [What to Test](../metadata/ios/en-CA/what-to-test-1.16.0.txt).
 
 ## iOS 1.15.0 (32)
 

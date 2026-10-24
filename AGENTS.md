@@ -37,6 +37,8 @@ next release train" is a complete and accurate status report.
 ## Release trains: when to publish
 
 Publication is batched into release trains. It is not performed once per fix.
+Every major iOS release includes a validated TestFlight build (maintainer instruction,
+2026-10-24); do not finish a major release with only a tag or GitHub release page.
 
 - Publish when a batch of merged work is complete, or when a single user-visible fix warrants going
   out on its own.

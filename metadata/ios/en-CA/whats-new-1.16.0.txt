@@ -1,0 +1,37 @@
+Big update: smarter transcripts, your choice of AI, and new ways to find and reuse what was said.
+
+KNOW WHO SAID WHAT
+• Speaker names are on automatically and appear even in short recordings. Rename anyone, and they keep their name after going quiet.
+
+ANY LANGUAGE, AUTOMATICALLY
+• Automatic language detection, done on your iPhone. If the conversation switches language partway through, the app follows it and rewrites the earlier lines. Undo is one tap away.
+• Choose from every language your device can transcribe.
+
+YOUR WORDS, SPELLED RIGHT
+• All seven vocabulary presets now include Simplified Chinese terms when transcribing Chinese.
+• Vocabularies for Medical, Legal, Software & Cloud, Engineering, Finance, Sales and Education & Research, plus My terms for names and jargon in any language. When a conversation sounds like one of these fields, the app offers the matching vocabulary.
+
+YOUR QUESTIONS AND INSTRUCTIONS
+• Prompt below Notes lets you ask a one-time question or save instructions for future summaries in that conversation. Choose and edit a domain preset before sending; suggestions never enable themselves.
+
+YOUR AI, YOUR CHOICE
+• Apple Intelligence on your device is still the default.
+• Optionally connect your own key for OpenAI, Claude, Gemini, DeepSeek, OpenRouter, Groq, Mistral or xAI, or your own server such as LM Studio. Each option says clearly where your transcript goes.
+• Quick and Summary now handle long conversations and tell you what they used. The Deep tab is gone; earlier Deep analyses are kept.
+• Suggested questions appear under Quick. Tap one to ask it.
+
+FIND AND REUSE
+• Search History by meaning, not just exact words, and ask questions across your past conversations with linked sources.
+• Select any lines and summarize just that part.
+• Conversations name themselves after you stop.
+• Export as Markdown, plain text, subtitles (SRT/WebVTT) or JSON, or save every conversation automatically to a folder such as an Obsidian vault.
+
+OPTIONAL AUDIO
+• Keep the audio with each conversation (off by default). Tap a line to hear it. It never leaves your device and is excluded from backups.
+
+ALSO
+• Rotate iPhone for side-by-side Transcript and Quick, with independent scrolling. Portrait and accessibility text keep a stacked layout.
+• Delete all conversations in one step.
+• Acknowledgements for the open-source components the app uses.
+
+Transcription stays on-device. Apple Intelligence is the default summary provider on supported devices. Optional Ollama, cloud AI and custom servers receive text and included context only when you choose them; microphone audio is never sent.

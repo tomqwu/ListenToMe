@@ -25,7 +25,10 @@ Recent iOS trains (full text in [CHANGELOG.md](../CHANGELOG.md)):
   analysis"); domain vocabularies and My terms; semantic search and Ask your history; opt-in saved
   audio; Summarize selection.
 
-## Merged feature follow-up (unreleased)
+## 1.16.0 (33) release train
+
+- Candidate 1.16.0 (33) includes the following merged work; upload receipt and tester verification
+  must be recorded before calling it published. Major iOS releases include TestFlight.
 
 - #257: Context/Notes prompt editor with Ask once, saved summary instructions, and optional domain presets.
 
@@ -103,9 +106,7 @@ is the tracking issue.
 
 **macOS — P1/P2** (lands on `main`; ships when the maintainer resumes Mac releases)
 
-- P1: [#104](https://github.com/tomqwu/ListenToMe/issues/104) reopen a saved conversation into the workspace,
-  [#103](https://github.com/tomqwu/ListenToMe/issues/103) free-form Ask input for Quick and Deep,
-  [#68](https://github.com/tomqwu/ListenToMe/issues/68) transcript timestamps and follow-latest
+- P1: [#68](https://github.com/tomqwu/ListenToMe/issues/68) transcript timestamps and follow-latest
 - P2: [#131](https://github.com/tomqwu/ListenToMe/issues/131) per-conversation delete,
   [#126](https://github.com/tomqwu/ListenToMe/issues/126) select/copy/edit transcript lines,
   [#127](https://github.com/tomqwu/ListenToMe/issues/127) cancel a streaming response or import,
@@ -119,7 +120,6 @@ is the tracking issue.
 [#230](https://github.com/tomqwu/ListenToMe/issues/230) (P2, size Ollama `num_ctx` to the prompt),
 [#210](https://github.com/tomqwu/ListenToMe/issues/210),
 [#176](https://github.com/tomqwu/ListenToMe/issues/176),
-[#241](https://github.com/tomqwu/ListenToMe/issues/241),
 [#134](https://github.com/tomqwu/ListenToMe/issues/134) (P2, coverage scope),
 [#141](https://github.com/tomqwu/ListenToMe/issues/141),
 [#148](https://github.com/tomqwu/ListenToMe/issues/148),
@@ -131,15 +131,13 @@ is the tracking issue.
 [#209](https://github.com/tomqwu/ListenToMe/issues/209),
 [#216](https://github.com/tomqwu/ListenToMe/issues/216),
 [#223](https://github.com/tomqwu/ListenToMe/issues/223),
-[#227](https://github.com/tomqwu/ListenToMe/issues/227),
 [#58](https://github.com/tomqwu/ListenToMe/issues/58),
 [#60](https://github.com/tomqwu/ListenToMe/issues/60),
 [#62](https://github.com/tomqwu/ListenToMe/issues/62).
 
 ## Known flaky or order-dependent tests
 
-- [#241](https://github.com/tomqwu/ListenToMe/issues/241): `MobileAITests.testFreshSettingsDefaultToOnDeviceAndPreserveAnyExplicitChoice`
-  passes in the full suite and fails in isolation (it depends on UI-test defaults).
+- #241 is fixed: provider-default tests explicitly set/restore the cloud vendor and pass before UI tests on a fresh simulator.
 - [#176](https://github.com/tomqwu/ListenToMe/issues/176): the iOS UI test bundle is flaky under
   machine load.
 - `Tests/ListenToMeCoreTests/SharedQuickLoopTests.swift` has a timing flake; re-run before suspecting
@@ -150,7 +148,7 @@ is the tracking issue.
 - **App Store listing URLs** (privacy policy and support) point at the `codex/app-store-release`
   branch and should be repointed to `main` in App Store Connect. Do not delete that branch until they
   are.
-- **Physical-device checks pending for 1.15.0:** vocabulary accuracy, saved audio, Summarize
-  selection and Ask your history. 1.15.0 (32) is a TestFlight beta without physical-device
+- **Physical-device checks pending for 1.16.0:** prompts, two-pane rotation, vocabulary accuracy, saved audio, Summarize
+  selection and Ask your history. The beta train has no physical-device
   acceptance; do not call it production-ready.
 - **Apple Watch spike** and acceptance, above.

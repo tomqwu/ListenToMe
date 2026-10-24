@@ -1,0 +1,11 @@
+ListenToMe 1.16.0 (33) — conversation prompts, two-pane iPhone and Chinese vocabularies
+
+In Notes, use Prompt → Ask once to ask your own question. Try a domain preset, edit it and tap Ask Quick; choosing a preset alone must not send anything. Check the answer below Prompt and in Quick.
+
+Switch to Summary instructions, enter or choose instructions and tap Save instructions. Generate Quick/Summary and try Auto. Reopen the conversation and confirm the instructions persist; New must clear them. Clear and save to remove them. Ask once must not change the saved instructions.
+
+Rotate iPhone to landscape: Transcript and Quick should scroll independently, with recording, Notes and models reachable. Rotate while viewing Summary or expanded Transcript; preserve the page and conversation. Check smaller iPhones, iPad and accessibility text sizes.
+
+Choose Chinese (Simplified) for transcription and try each of the seven vocabulary presets. My terms keeps your spellings. Suggested domains are optional and never enable themselves. Check language switching and Undo. Physical-device recognition accuracy still needs comparison; simulator checks cover routing and UI only.
+
+Check Privacy, Transcription and Speakers Settings: optional remote providers receive text/context only when selected; audio stays on-device and is retained only when Save audio recordings is enabled. Microphone recording requires a physical device. Apple Watch is not included in this beta.
