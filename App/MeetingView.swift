@@ -36,6 +36,7 @@ struct MeetingView: View {
     @State var verifiedLocalModels: Set<String> = []
     @State var transcriptionLocaleID: String
     @State var presetID: String
+    @State var vocabulary = SessionVocabulary()   // domain vocabularies and My terms (issue #222)
     @State var referencePaths: [URL]
     @State private var referenceLoadToken = 0
     @State var referenceSkipped: [TextFileReader.Skipped] = []
@@ -235,6 +236,7 @@ struct MeetingView: View {
                 .padding(.bottom, 4)
                 .background(Theme.windowBackground)
             }
+            MacVocabularyBanner(vocabulary: vocabulary, conversationID: currentSessionID, apply: applyVocabulary)
             // HSplitView so the user can drag the rail/transcript/copilot dividers; each column
             // carries its own min/ideal/max width so the handles have room to move.
             HSplitView {
@@ -259,11 +261,13 @@ struct MeetingView: View {
                 identifySpeakers(showSheet: false)
             }
         }
-        .onChange(of: store.revision) { _, _ in _ = checkpoint() }
+        .onChange(of: store.revision) { _, _ in _ = checkpoint(); considerVocabularySuggestion() }
+        .onChange(of: currentSessionID) { _, _ in applyVocabulary() }
         .sheet(isPresented: $showSettings, onDismiss: {
             session.aiEnabled = ProviderSettings.aiMode != .off
             session.responseLanguage = ProviderSettings.responseLanguageDirective()
             appearance = ProviderSettings.appearance   // apply an appearance change live
+            vocabulary.reloadSettings(); applyVocabulary()
             // Rebuild attached references so a changed reference-budget takes effect immediately.
             if !referencePaths.isEmpty { loadReferences(into: session) }
             markSaveableAfterSettings(); Task { await reloadAndHealModels() }
@@ -308,8 +312,7 @@ struct MeetingView: View {
             session.proactiveEnabled = UserDefaults.standard.object(forKey: Self.proactiveDefaultsKey) as? Bool ?? true
             session.aiEnabled = ProviderSettings.aiMode != .off
             session.responseLanguage = ProviderSettings.responseLanguageDirective()
-            let preset = PresetCatalog.preset(id: presetID)
-            session.personaGuidance = preset.personaGuidance
+            applyVocabulary()   // the preset persona, the vocabularies' guidance and recognition terms
             ApplicationLifecycle.shared.prepareToClose = { await prepareToClose() }
             if !referencePaths.isEmpty { loadReferences(into: session) }
             hotkey.start { Task { await session.respondQuick(.answerQuestion) } }

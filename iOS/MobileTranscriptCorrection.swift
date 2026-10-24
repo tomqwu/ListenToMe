@@ -12,16 +12,30 @@ enum MobileTranscriptCorrection {
     Return ONLY a JSON object with one string field: {"text":"the text, corrected only if necessary"}.
     """
 
-    static func request(text: String, context: String) throws -> LLMRequest {
-        let data = try JSONEncoder().encode(["context": String(context.suffix(2_000)), "text": text])
-        return LLMRequest(system: instructions, messages: [.init(role: "user", content: String(decoding: data, as: UTF8.self))])
+    /// With a glossary (issue #222), the request lists the user's expected terms and the instructions
+    /// say to use their spelling only for a near-miss; without one, the request is unchanged.
+    static func request(text: String, context: String, glossary: [String] = []) throws -> LLMRequest {
+        struct Payload: Encodable { let context: String; let glossary: [String]?; let text: String }
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        let data = try encoder.encode(Payload(context: String(context.suffix(2_000)),
+                                              glossary: glossary.isEmpty ? nil : glossary, text: text))
+        let system = glossary.isEmpty ? instructions : instructions + "\n" + VocabularyPrompt.correctionInstruction
+        return LLMRequest(system: system, messages: [.init(role: "user", content: String(decoding: data, as: UTF8.self))])
     }
 
-    static func validatedText(_ response: String, original: String) throws -> String {
+    /// Numbers inside a glossary term the edit uses ("EC2", "ISO 9001") are part of that term, so
+    /// correcting "the e c2 instance" to "the EC2 instance" is not treated as changing a number; every
+    /// other number must survive unchanged.
+    static func validatedText(_ response: String, original: String, glossary: [String] = []) throws -> String {
         let text = try finalText(response).trimmingCharacters(in: .whitespacesAndNewlines)
         let before = original.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty, text.count <= 1_200, !text.contains("\n"),
-              protectedTerms(text) == protectedTerms(before),
+        let used = glossary.filter { text.range(of: $0, options: .caseInsensitive) != nil }
+        let termNumbers = Set(protectedTerms(used.joined(separator: " ")))
+        let numbers = { (line: String) in
+            protectedTerms(VocabularyPrompt.removingTerms(used, from: line)).filter { !termNumbers.contains($0) }
+        }
+        guard !text.isEmpty, text.count <= 1_200, !text.contains("\n"), numbers(text) == numbers(before),
               editDistance(before.lowercased(), text.lowercased()) <= max(2, before.count / 5) else {
             throw RecordingError.message("The proposed edit was too uncertain to apply.")
         }

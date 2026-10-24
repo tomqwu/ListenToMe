@@ -1,6 +1,7 @@
 {
   "id": "software-cloud",
   "name": "Software & Cloud",
+  "topic": "software or cloud",
   "description": "A software, cloud or DevOps conversation: code, services and APIs, infrastructure, deployments, incidents, databases and security.",
   "summaryLayout": ["Decisions", "Action items", "Incidents and risks", "Open questions"],
   "terms": [

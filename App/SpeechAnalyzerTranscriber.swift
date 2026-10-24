@@ -23,6 +23,8 @@ actor SpeechAnalyzerTranscriber: Transcribing {
     /// for a channel that will never receive audio (issue #147). `feed` still builds the pipeline
     /// lazily if system audio does start flowing, so a false negative only costs the warm-up.
     private let warmSystemAudio: Bool
+    /// The active vocabularies' contextual strings (issue #222), for every analyzer this run creates.
+    private var contextualStrings: [String] = []
 
     init(locale: Locale = .current, warmSystemAudio: Bool = true) {
         self.locale = locale
@@ -46,6 +48,13 @@ actor SpeechAnalyzerTranscriber: Transcribing {
             guard !stopped, !Task.isCancelled else { return }
             _ = await ensurePipeline(for: source)
         }
+    }
+
+    /// Applies to the running analyzers at once (`SpeechAnalyzer.setContext`) and to any built later.
+    func setContextualStrings(_ strings: [String]) async {
+        guard strings != contextualStrings else { return }
+        contextualStrings = strings
+        for pipeline in pipelines.values { await SpeechVocabularyContext.apply(strings, to: pipeline.analyzer) }
     }
 
     func feed(_ chunk: AudioChunk) async {
@@ -120,6 +129,7 @@ actor SpeechAnalyzerTranscriber: Transcribing {
             return nil
         }
         let analyzer = SpeechAnalyzer(modules: [transcriber])
+        if !contextualStrings.isEmpty { await SpeechVocabularyContext.apply(contextualStrings, to: analyzer) }
         let (inputSequence, inputContinuation) = AsyncStream<AnalyzerInput>.makeStream()
 
         let id = UUID()

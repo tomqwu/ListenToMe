@@ -1,6 +1,7 @@
 {
   "id": "sales",
   "name": "Sales",
+  "topic": "sales",
   "description": "A sales conversation with a prospect or customer: discovery questions, qualification, pricing and discounts, proposals, objections, competitors, procurement and renewals.",
   "summaryLayout": [
     "Customer needs",

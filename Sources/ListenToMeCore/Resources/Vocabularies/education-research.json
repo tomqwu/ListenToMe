@@ -1,6 +1,7 @@
 {
   "id": "education-research",
   "name": "Education & Research",
+  "topic": "education or research",
   "description": "A teaching, studying or research conversation: lectures and courses, assignments and grading, methods, experiments, statistics, papers and peer review.",
   "summaryLayout": [
     "Key concepts",

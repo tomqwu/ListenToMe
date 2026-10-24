@@ -59,7 +59,8 @@ struct MobileWorkspaceView<Header: View>: View {
         .sheet(isPresented: $showTranscript) {
             NavigationStack {
                 MobileTranscriptReader(segments: session.allSegments, scrollIdentifier: "expandedTranscriptScroll",
-                                       restoreOriginal: session.restoreSpeech, showsSpeakers: session.hasSpeakerLabels)
+                                       restoreOriginal: session.restoreSpeech, showsSpeakers: session.hasSpeakerLabels,
+                                       addTerm: session.addToMyTerms)
                     .id(session.id)
                     .navigationTitle("Transcript").navigationBarTitleDisplayMode(.inline)
                     .toolbar { Button("Done") { showTranscript = false } }
@@ -121,7 +122,8 @@ struct MobileWorkspaceView<Header: View>: View {
                     .accessibilityIdentifier("latestTranscriptPreview")
             } else {
                 MobileTranscriptReader(segments: session.allSegments, restoreOriginal: session.restoreSpeech,
-                                       showsSpeakers: session.hasSpeakerLabels).id(session.id)
+                                       showsSpeakers: session.hasSpeakerLabels, addTerm: session.addToMyTerms)
+                    .id(session.id)
             }
         }.frame(maxWidth: .infinity, maxHeight: stacked ? nil : .infinity, alignment: .topLeading)
             .modifier(MobileCard())

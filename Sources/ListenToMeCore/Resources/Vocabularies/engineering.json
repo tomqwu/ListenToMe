@@ -1,6 +1,7 @@
 {
   "id": "engineering",
   "name": "Engineering",
+  "topic": "engineering",
   "description": "A physical-engineering conversation (mechanical, electrical, civil, manufacturing): designs and drawings, tolerances, materials, loads, testing, safety and build schedules.",
   "summaryLayout": ["Decisions", "Actions", "Risks"],
   "terms": [

@@ -1,6 +1,7 @@
 {
   "id": "legal",
   "name": "Legal",
+  "topic": "legal",
   "description": "A legal conversation: facts of a matter, claims and defenses, contracts and clauses, procedure, deadlines, evidence and advice.",
   "summaryLayout": ["Facts", "Issues", "Options and advice", "Next steps"],
   "terms": [

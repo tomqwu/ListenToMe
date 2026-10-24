@@ -74,6 +74,26 @@ final class VocabularyCatalogTests: XCTestCase {
         }
     }
 
+    func testSuggestionTextNamesTheConversation() {
+        let catalog = VocabularyCatalog.bundled
+        XCTAssertEqual(catalog.domain(id: "medical")?.suggestionText,
+                       "Sounds like a medical conversation — add the Medical vocabulary?")
+        XCTAssertEqual(catalog.domain(id: "engineering")?.suggestionText,
+                       "Sounds like an engineering conversation — add the Engineering vocabulary?")
+        XCTAssertEqual(catalog.domain(id: "software-cloud")?.suggestionText,
+                       "Sounds like a software or cloud conversation — add the Software & Cloud vocabulary?")
+        XCTAssertEqual(domain(terms(200)).suggestionText, "Sounds like a test conversation — add the Test vocabulary?")
+    }
+
+    func testTranscriptLineCandidatesForMyTerms() {
+        XCTAssertEqual(VocabularyText.candidates(in: "Okay so Liu Yang said the Acme Cloud rollout moves to Kubeflow"),
+                       ["Liu Yang", "Acme Cloud", "Yang", "Acme", "Cloud", "rollout", "moves", "Kubeflow"])
+        XCTAssertEqual(VocabularyText.candidates(in: "that is what they said"), [], "common words are never offered")
+        XCTAssertEqual(VocabularyText.candidates(in: "Kubeflow Airflow Dagster", limit: 2), ["Kubeflow Airflow Dagster", "Kubeflow"])
+        XCTAssertTrue(VocabularyText.candidates(in: "我们明天和张伟讨论预算").contains { $0.count >= 2 })
+        XCTAssertEqual(VocabularyText.candidates(in: "a b c", limit: 0), [])
+    }
+
     func testTokensKeepProgrammingAndAccountingSpellings() {
         XCTAssertEqual(VocabularyText.tokens("C++ and C# in the P&L, Node.js p-value"),
                        ["C++", "and", "C#", "in", "the", "P&L", "Node", "js", "p", "value"])

@@ -28,9 +28,14 @@ protocol MobileRecording: AnyObject {
     /// recording so far is being transcribed again, and the recording time at which the old one stopped.
     func switchLocale(to locale: Locale, replay: SpeakerAudioBuffer?, replayFrom: @MainActor () -> Int?,
                       willReplace: @escaping @MainActor (Bool, TimeInterval) -> Void) async throws
+    /// The active vocabularies' recognition terms (issue #222). Called before `start` and again whenever
+    /// they change while recording; the running analyzer, and any analyzer a language switch creates,
+    /// gets them without restarting capture.
+    func setContextualStrings(_ strings: [String]) async
 }
 
 extension MobileRecording {
+    func setContextualStrings(_ strings: [String]) async {}
     func attachSpeakerAudio(_ buffer: SpeakerAudioBuffer?) {}
     func attachLanguageAudio(_ buffer: SpeakerAudioBuffer?) {}
     func switchLocale(to locale: Locale, replay: SpeakerAudioBuffer?, replayFrom: @MainActor () -> Int?,
@@ -77,6 +82,14 @@ final class MobileRecorder: MobileRecording {
     /// The same audio for spoken-language detection; `nil` unless the language is Automatic.
     private var languageAudio: SpeakerAudioBuffer?
     private var languageGeneration = 0
+    /// Contextual strings for every analyzer this recording creates, including after a language switch.
+    private var contextualStrings: [String] = []
+
+    func setContextualStrings(_ strings: [String]) async {
+        guard strings != contextualStrings else { return }
+        contextualStrings = strings
+        if let analyzer { await SpeechVocabularyContext.apply(strings, to: analyzer) }
+    }
 
     func attachSpeakerAudio(_ buffer: SpeakerAudioBuffer?) {
         speakerAudio = buffer
@@ -102,6 +115,7 @@ final class MobileRecorder: MobileRecording {
         try session.setCategory(.record, mode: .measurement, options: [.allowBluetoothHFP])
         try session.setActive(true)
         let analyzer = SpeechAnalyzer(modules: [transcriber])
+        if !contextualStrings.isEmpty { await SpeechVocabularyContext.apply(contextualStrings, to: analyzer) }
         self.analyzer = analyzer
         self.analyzerFormat = format
         self.report = onFailure
@@ -152,6 +166,8 @@ final class MobileRecorder: MobileRecording {
         defer { isSwitching = false }
         let (transcriber, format) = try await MobileSpeechModel.prepare(locale: locale, volatileResults: true)
         let analyzer = SpeechAnalyzer(modules: [transcriber])
+        // The new language's analyzer hears the same vocabulary as the one it replaces.
+        if !contextualStrings.isEmpty { await SpeechVocabularyContext.apply(contextualStrings, to: analyzer) }
         try await analyzer.prepareToAnalyze(in: format)
         // Replayed audio reaches the new analyzer much faster than real time; live audio queues behind it.
         let (inputs, input) = AsyncStream<AnalyzerInput>.makeStream(bufferingPolicy: .bufferingOldest(1_024))
@@ -308,7 +324,7 @@ final class MobileRecorder: MobileRecording {
     private func cleanup() {
         analyzer = nil; input = nil; audio = nil; feedTask = nil; resultsTask = nil
         analyzerFormat = nil; report = nil; tapFormat = nil; speakerAudio = nil
-        languageAudio = nil; sink = nil; deliver = nil; isStopping = false; finishing = []
+        languageAudio = nil; sink = nil; deliver = nil; isStopping = false; finishing = []; contextualStrings = []
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 }

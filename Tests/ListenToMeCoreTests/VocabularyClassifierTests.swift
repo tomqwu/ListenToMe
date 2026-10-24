@@ -127,15 +127,16 @@ final class VocabularyClassifierTests: XCTestCase {
         let text = try XCTUnwrap(VocabularyFixtures.positives["legal"])
         var tracker = VocabularySuggestionTracker(conversationID: "a")
         let settings = VocabularySettings()
-        XCTAssertEqual(tracker.evaluate(text: text, settings: settings, classifier: termsOnly), "legal")
+        XCTAssertEqual(tracker.evaluate(newSpeech: text, recent: text, settings: settings, classifier: termsOnly), "legal")
         XCTAssertEqual(tracker.offeredIDs, ["legal"])
-        XCTAssertNil(tracker.evaluate(text: text + " " + text, settings: settings, classifier: termsOnly))
+        XCTAssertNil(tracker.evaluate(newSpeech: text, recent: text, settings: settings, classifier: termsOnly))
         tracker.begin(conversationID: "a")
         XCTAssertEqual(tracker.offeredIDs, ["legal"], "the same conversation keeps its state")
         tracker.begin(conversationID: "b")
         XCTAssertEqual(tracker.offeredIDs, [])
         XCTAssertEqual(tracker.conversationID, "b")
-        XCTAssertEqual(tracker.evaluate(text: text, settings: settings, classifier: termsOnly), "legal")
+        XCTAssertEqual(tracker.heardWords, 0)
+        XCTAssertEqual(tracker.evaluate(newSpeech: text, recent: text, settings: settings, classifier: termsOnly), "legal")
     }
 
     func testTheClassifierWaitsForEnoughNewSpeech() throws {
@@ -143,24 +144,32 @@ final class VocabularyClassifierTests: XCTestCase {
         let words = text.split(separator: " ")
         var tracker = VocabularySuggestionTracker(conversationID: "a")
         let opening = words.prefix(100).joined(separator: " ")
-        XCTAssertNil(tracker.evaluate(text: opening, settings: VocabularySettings(), classifier: termsOnly))
-        XCTAssertEqual(tracker.evaluate(text: text, settings: VocabularySettings(), classifier: termsOnly), "legal")
+        let rest = words.dropFirst(100).joined(separator: " ")
+        XCTAssertNil(tracker.dueCheck(settings: VocabularySettings()))
+        XCTAssertNil(tracker.evaluate(newSpeech: opening, recent: opening, settings: VocabularySettings(),
+                                      classifier: termsOnly))
+        XCTAssertEqual(tracker.evaluate(newSpeech: rest, recent: text, settings: VocabularySettings(),
+                                        classifier: termsOnly), "legal")
+        // The next check waits for another `evaluationStep` words.
+        XCTAssertNil(tracker.dueCheck(settings: VocabularySettings()))
+        tracker.heard(String(repeating: "word ", count: VocabularySuggestionTracker.evaluationStep))
+        XCTAssertEqual(tracker.dueCheck(settings: VocabularySettings()), ["legal"])
     }
 
     func testSuggestionsRespectSettingsAndThisConversationsChoices() throws {
         let text = try XCTUnwrap(VocabularyFixtures.positives["sales"])
         var tracker = VocabularySuggestionTracker(conversationID: "a")
-        XCTAssertNil(tracker.evaluate(text: text, settings: VocabularySettings(suggestionsEnabled: false),
+        XCTAssertNil(tracker.evaluate(newSpeech: text, recent: text, settings: VocabularySettings(suggestionsEnabled: false),
                                       classifier: termsOnly))
-        XCTAssertNil(tracker.evaluate(text: text, settings: VocabularySettings(mutedSuggestionIDs: ["sales"]),
+        XCTAssertNil(tracker.evaluate(newSpeech: "", recent: text, settings: VocabularySettings(mutedSuggestionIDs: ["sales"]),
                                       classifier: termsOnly))
         tracker = VocabularySuggestionTracker(conversationID: "a")
-        XCTAssertNil(tracker.evaluate(text: text, settings: VocabularySettings(defaultDomainIDs: ["sales"]),
+        XCTAssertNil(tracker.evaluate(newSpeech: text, recent: text, settings: VocabularySettings(defaultDomainIDs: ["sales"]),
                                       classifier: termsOnly))
         tracker = VocabularySuggestionTracker(conversationID: "a")
         tracker.add("sales")
         XCTAssertEqual(tracker.addedIDs, ["sales"])
-        XCTAssertNil(tracker.evaluate(text: text, settings: VocabularySettings(), classifier: termsOnly))
+        XCTAssertNil(tracker.evaluate(newSpeech: text, recent: text, settings: VocabularySettings(), classifier: termsOnly))
         tracker.remove("sales")
         XCTAssertEqual(tracker.addedIDs, [])
         XCTAssertTrue(tracker.offeredIDs.contains("sales"), "removing it does not offer it again")

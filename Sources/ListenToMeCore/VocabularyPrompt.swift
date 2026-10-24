@@ -23,7 +23,8 @@ public enum VocabularyPrompt {
         guard !vocabulary.isEmpty, characterLimit > 0 else { return nil }
         var parts: [String] = []
         if !vocabulary.domains.isEmpty {
-            parts.append("Domain: " + vocabulary.domains.map { "\($0.name) — \($0.description)" }.joined(separator: " "))
+            let domains = vocabulary.domains.map { "\($0.name) — \($0.description)" }
+            parts.append("Domain: " + domains.joined(separator: " "))
         }
         if includeLayout, let layout = vocabulary.layoutDomain {
             parts.append("When writing a summary or meeting record, organize it under these headings: "
@@ -51,7 +52,9 @@ public enum VocabularyPrompt {
         let spoken = transcript?.lowercased() ?? ""
         var seen = Set<String>()
         var ordered: [String] = []
-        func take(_ terms: [String]) { for term in terms where seen.insert(term.lowercased()).inserted { ordered.append(term) } }
+        func take(_ terms: [String]) {
+            for term in terms where seen.insert(term.lowercased()).inserted { ordered.append(term) }
+        }
         take(vocabulary.myTerms)
         let presetTerms = interleaved(vocabulary.domains.map(\.terms))
         if !spoken.isEmpty { take(presetTerms.filter { spoken.contains($0.lowercased()) }) }
@@ -100,7 +103,8 @@ public enum VocabularyPrompt {
             let score = resemblance(of: term, in: words)
             return score >= 0.6 ? (term, score) : nil
         }
-        for (term, _) in scored.sorted(by: { $0.1 > $1.1 }) where result.count < limit && seen.insert(term.lowercased()).inserted {
+        let ranked = scored.sorted { $0.1 > $1.1 }.map(\.0)
+        for term in ranked where result.count < limit && seen.insert(term.lowercased()).inserted {
             result.append(term)
         }
         return result
@@ -149,6 +153,7 @@ extension LLMRequest {
     /// is none. Used where a platform builds its own request instead of going through `PromptBuilder`.
     public func addingGuidance(_ guidance: String?) -> LLMRequest {
         guard let guidance, !guidance.isEmpty else { return self }
-        return LLMRequest(system: system + "\nContext for this session: " + guidance, messages: messages, purpose: purpose)
+        return LLMRequest(system: system + "\nContext for this session: " + guidance, messages: messages,
+                          purpose: purpose)
     }
 }

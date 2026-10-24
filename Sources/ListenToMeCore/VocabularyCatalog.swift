@@ -1,4 +1,5 @@
 import Foundation
+import NaturalLanguage
 
 /// One preset domain vocabulary (issue #222): a short description for prompts, an optional summary
 /// layout, and a curated term list the project writes itself. The first terms are the ones speech
@@ -6,6 +7,8 @@ import Foundation
 public struct VocabularyDomain: Codable, Sendable, Equatable, Identifiable {
     public let id: String
     public let name: String
+    /// How the suggestion names the conversation: "Sounds like a {topic} conversation".
+    public let topic: String?
     /// One sentence describing the kind of conversation, used in prompts.
     public let description: String
     /// A safety note shown wherever the vocabulary is offered (Medical: not a medical device).
@@ -14,14 +17,22 @@ public struct VocabularyDomain: Codable, Sendable, Equatable, Identifiable {
     public let summaryLayout: [String]
     public let terms: [String]
 
-    public init(id: String, name: String, description: String, notice: String? = nil,
+    public init(id: String, name: String, topic: String? = nil, description: String, notice: String? = nil,
                 summaryLayout: [String], terms: [String]) {
         self.id = id
         self.name = name
+        self.topic = topic
         self.description = description
         self.notice = notice
         self.summaryLayout = summaryLayout
         self.terms = terms
+    }
+
+    /// The banner's question: "Sounds like a medical conversation — add the Medical vocabulary?"
+    public var suggestionText: String {
+        let subject = topic ?? name.lowercased()
+        let article = subject.first.map { "aeiou".contains($0.lowercased()) } == true ? "an" : "a"
+        return "Sounds like \(article) \(subject) conversation — add the \(name) vocabulary?"
     }
 }
 
@@ -138,6 +149,51 @@ public enum VocabularyText {
         if !current.isEmpty { tokens.append(current) }
         return tokens
     }
+
+    /// Words and names in a transcript line worth offering for My terms: capitalized runs ("Liu Yang",
+    /// "Acme Cloud") first, then other words of four or more letters that are not common English, in
+    /// the order spoken. Text without spaces (Chinese, Japanese) is split by the language's tokenizer.
+    public static func candidates(in line: String, limit: Int = 12) -> [String] {
+        let words = wordTokens(line)
+        var result: [String] = []
+        var seen = Set<String>()
+        func offer(_ term: String) {
+            guard result.count < limit, seen.insert(term.lowercased()).inserted else { return }
+            result.append(term)
+        }
+        var run: [String] = []
+        for word in words + [""] {
+            if word.first?.isUppercase == true, !commonWords.contains(word.lowercased()) {
+                run.append(word)
+            } else {
+                if run.count > 1 { offer(run.prefix(maximumRun).joined(separator: " ")) }
+                run = []
+            }
+        }
+        for word in words where word.count >= 4 || (word.count >= 2 && !word.unicodeScalars.allSatisfy(\.isASCII)) {
+            if !commonWords.contains(word.lowercased()) { offer(word) }
+        }
+        return result
+    }
+
+    private static let maximumRun = 3
+
+    private static func wordTokens(_ text: String) -> [String] {
+        let tokenizer = NLTokenizer(unit: .word)
+        tokenizer.string = text
+        return tokenizer.tokens(for: text.startIndex..<text.endIndex).map { String(text[$0]) }
+    }
+
+    /// Frequent English words that are never worth a My terms entry.
+    static let commonWords: Set<String> = [
+        "about", "after", "again", "also", "because", "been", "before", "being", "could", "does", "doing", "done",
+        "each", "even", "every", "from", "going", "good", "have", "here", "into", "just", "know", "like", "make",
+        "maybe", "more", "most", "much", "need", "next", "only", "other", "over", "really", "right", "said", "same",
+        "should", "some", "something", "still", "such", "sure", "take", "than", "thank", "thanks", "that", "their",
+        "them", "then", "there", "these", "they", "thing", "things", "think", "this", "those", "through", "time",
+        "today", "very", "want", "well", "were", "what", "when", "where", "which", "while", "will", "with", "would",
+        "yeah", "your", "okay", "alright", "i", "i'm", "we", "you", "the", "and", "but", "so", "a", "an", "it"
+    ]
 
     /// True for an all-capitals abbreviation such as "CBC", "EC2" or "GD&T". The classifier matches
     /// these only in capitals, so "bid" (an offer) never counts as BID (twice a day).

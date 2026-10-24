@@ -374,6 +374,52 @@ Physical iPhone or iPad only. The full check is step 12 of the physical-device l
 5. **Mixed sentences are a known limit.** A sentence mixing English words into Mandarin stays in the
    recording's current language (#205).
 
+## Domain vocabularies and My terms (#222)
+
+Needs a physical iPhone (the simulator has no speech recognition) and the Mac app; read each script
+aloud at a normal pace, once with the vocabulary off and once on, in a new conversation each time.
+
+**Medical script** (≈1 minute): "Sixty-eight-year-old with atrial fibrillation on apixaban five
+milligrams BID and metoprolol tartrate twenty-five. Worsening dyspnea, orthopnea, bilateral pitting
+edema. Troponin negative times two, BNP eleven hundred, creatinine up to one point six. Get an
+echocardiogram; last ejection fraction thirty-five percent. Switch furosemide to forty IV twice daily,
+hold lisinopril, recheck a BMP in the morning."
+
+**Cloud/DevOps script** (≈1 minute): "The canary in the EKS cluster failed, so we rolled back with
+kubectl and Argo CD. Terraform drift on the VPC peering broke the Istio ingress. PagerDuty paged
+on-call at eleven; Grafana showed p99 latency on the gRPC service doubling and Postgres connection
+exhaustion. Action items: raise the HikariCP pool, add a Prometheus alert, and write the postmortem in
+Confluence."
+
+1. **Off.** Settings → Vocabularies: every preset off, My terms empty. Record both scripts. Note the
+   misheard terms (typical: "apixaban", "metoprolol", "BNP", "kubectl", "Argo CD", "Istio",
+   "HikariCP"). Expected: after about a minute the banner asks "Sounds like a medical conversation —
+   add the Medical vocabulary?" (and for the second script "…a software or cloud conversation…"); it
+   does not turn anything on.
+2. **Add mid-recording.** In a new conversation, read the medical script and tap **Add** when the
+   banner appears: recording keeps running (no gap in the transcript), and terms spoken after Add come
+   out spelled as in the preset. Record in the doc which terms improved (on vs off).
+3. **On by default.** Turn Medical and Software & Cloud on (Use by default) and add "HikariCP" and a
+   colleague's name to My terms. Read both scripts again: compare the misheard terms with step 1.
+   Expected: fewer misses; any term still missed goes in My terms.
+4. **Language switch keeps the vocabulary.** With Automatic language, start in Chinese and switch to
+   English mid-recording: after "Detected English · switched", English domain terms are still favored.
+5. **Correction.** With AI speech correction on, say "we deployed on cooper netties": the correction
+   reads "Kubernetes" (Software & Cloud on), and Review shows the original.
+6. **Summary layout.** Generate Summary for the medical recording: it is organized under History,
+   Findings and Plan. Turn off Organize summaries by domain: the next Summary is not.
+7. **Banner choices.** Not now hides it for this conversation only; Don't suggest Medical again keeps
+   it away in new conversations until Settings → Suggest Medical again; Suggest vocabularies off stops
+   all banners.
+8. **My terms.** Long-press a transcript line → Add to My terms… → tap a word: it appears in Settings.
+   Export as plain text, delete the terms, import the file: they come back.
+9. **Mac.** Repeat 2, 3 and 6 with SpeechAnalyzer (right-click a transcript line to add a term; the
+   banner sits above the transcript). With the SpeechRecognizer engine, a term added mid-recording
+   applies from the next utterance.
+
+Record the off/on examples here when the device pass is run (date, device, script, terms fixed, terms
+still missed).
+
 ## Save to folder — Markdown vault (#53)
 
 iPhone (simulator is enough for 1–5; 6 needs a physical device signed in to iCloud):

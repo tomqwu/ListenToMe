@@ -41,6 +41,7 @@ this table in the same PR, and never fork a copy into `App/` or `iOS/`.
 | `SessionArchive` — the on-disk conversation format | `App/SessionStore.swift` | `iOS/MobileSession.swift` |
 | Speaker identification: `SpeakerDiarizer` and `SpeakerAudioBuffer` (`SharedPlatform/`, FluidAudio), `SpeakerIdentityTracker`, `SpeakerLabeling`, `SpeakerStats`, `SpeakerAnalysisPolicy` | `App/MeetingView+Speakers.swift` | `MobileSpeakers`, `iOS/MobileSession+Speakers.swift`; iOS language detection (#197) reuses `SpeakerAudioBuffer`, keeping its trailing two minutes (#199) |
 | Save to folder (#53): `MarkdownVault` (note format and file names), `MarkdownVaultWriter` (bookmark, atomic coordinated write, failure wording), `MarkdownVaultSync` (`SharedPlatform/`, setting, queue, status, Retry) | `App/MacVaultSettings.swift`, `App/MeetingView+Conversations.swift` (`checkpoint`) | `iOS/MobileVaultSettings.swift`, `iOS/MobileSession+Vault.swift` |
+| Domain vocabularies (#222): `VocabularyCatalog` (bundled presets and their validation), `VocabularySettings` / `ActiveVocabulary` (My terms, defaults, the 100-term recognition cap), `VocabularyPrompt` (prompt guidance, correction glossary), `VocabularyClassifier` / `VocabularySuggestionTracker` (on-device suggestion); `SessionVocabulary` and `SpeechVocabularyContext` (`SharedPlatform/`, banner state and the `AnalysisContext`) | `App/MacVocabularyViews.swift`, `MeetingSession.contextualStrings`, `App/SpeechAnalyzerTranscriber.swift` | `iOS/MobileSession+Vocabulary.swift`, `iOS/MobileVocabularyViews.swift`, `iOS/MobileRecorder.swift` |
 | `SessionSearch` — History search and its matching rules | `App/SessionSearchView.swift`, `App/MeetingView.swift` | `MobileHistoryView` via `MobileSession` |
 | `AppleIntelligenceProvider` (`SharedPlatform/`) — on-device transport and its failure wording | `App/MeetingView.swift` | `MobileSession`, `MobileAISettings` |
 | `OllamaProvider`, `LLMRequest` / `ChatMessage`, `OllamaGenerationOptions` | `App/MeetingView.swift` | `MobileAISettings.client(for:)` |
@@ -66,7 +67,9 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 | Presets and reference context | Use-case presets (`PresetCatalog`) and file/folder reference context (`ReferenceBuilder`, `FileContextLoader`) | Not today. Attachments instead: extracted text is appended to Notes, so it reaches the model inside `<transcript>`, not a `<reference>` block |
 | Calendar import | **Load from Calendar** fills Context notes (`App/CalendarService.swift`); text is imported as written | **Import from Calendar** removes e-mail addresses and link passcodes first (`MeetingContext.redactingLinksAndAddresses`, `MobileCalendar.attendeeNames`) |
 | Share-sheet import | — | Share extension plus an App Group inbox (`ShareExtension/`, `iOSShared/SharedInbox.swift`) |
-| AI speech correction | — | Opt-in, over a Flash model on Ollama (`MobileTranscriptCorrector`) |
+| AI speech correction | — | Opt-in, over a Flash model on Ollama (`MobileTranscriptCorrector`); with vocabularies on, the request carries a glossary of My terms and near-miss preset terms (#222) |
+| Vocabulary guidance in prompts (#222) | Rides in the persona line every pane's prompt carries (`VocabularyPrompt.combined`), so `PromptBuilder.scaffoldCharacterCost` measures it | Appended to the Summary/Quick/Deep system prompt (`LLMRequest.addingGuidance`) and to the automatic reviews' directives; on Apple Intelligence it is capped at 400 characters and counted against the 8,000-character transcript cap |
+| Add to My terms (#222) | Right-click a transcript line | Long-press a transcript line |
 | Proactive Quick answers | Yes — needs a finalized question on the Others channel | No — there is no Others channel to detect one in |
 | Third-party licenses | **Open-source licenses…** shows `App/ThirdPartyNotices.txt` as one text | **Settings → About → Acknowledgements** lists each package from the same file with its full license (`MobileAcknowledgementsView`, #202) |
 | "What's New" | GitHub release notes and `CHANGELOG.md` | In-app, shown once per set of bundled notes (`MobileReleaseNotes`) |
@@ -535,6 +538,61 @@ The **Live** tab shows the transcript above a full-width **Quick Summary**. **De
 separately, restored with its conversation and included when sharing. These are distinct prompts;
 Deep Think does not promise a provider-specific reasoning mode. Requests use the selected provider
 and preserve previous completed output on failure or cancellation.
+
+## Domain vocabularies and My terms (#222)
+
+**More → Settings → Vocabularies** lists seven presets — Medical, Legal, Software & Cloud,
+Engineering, Finance, Sales and Education & Research — each a curated, English-first list of a few
+hundred terms the project wrote itself (`Sources/ListenToMeCore/Resources/Vocabularies/*.json`; no
+licensed dictionaries), plus **My terms**: people, products and company jargon in any language. Each
+preset has a **Use by default** switch, a description, and (Medical) the note that the app is not a
+medical device. My terms can be added, edited (tap), deleted (swipe), imported from a text file (one
+term per line, `#` comments ignored) and exported as plain text; long-pressing a transcript line opens
+**Add to My terms…** with that line's distinctive words and names one tap away. Settings are stored in
+`UserDefaults` (`vocabularySettings`), so a device backup includes them like any other setting.
+
+The active vocabulary for a conversation is the default presets, any preset added from the banner for
+that conversation, and My terms. It is used in three places:
+
+- **Recognition.** `ActiveVocabulary.recognitionTerms()` takes at most 100 phrases of up to three
+  words (Apple's guidance for `AnalysisContext.contextualStrings`): My terms first — up to 60 when a
+  preset is on — then the presets' leading terms, which are the ones speech engines mis-hear most.
+  `MobileRecorder` sets them on the `SpeechAnalyzer` before it starts, again with
+  `SpeechAnalyzer.setContext(_:)` when they change while recording (no restart of the microphone), and
+  on the new analyzer a language switch creates (#197/#199). Apple Watch recordings are transcribed
+  with the default presets and My terms. Verified API: `SpeechAnalyzer.setContext(_:)`,
+  `AnalysisContext.contextualStrings: [ContextualStringsTag: [String]]` in the iOS 27.0 / macOS SDK's
+  `Speech.framework/Modules/Speech.swiftmodule/arm64e-apple-ios.swiftinterface`; Apple's documentation
+  describes the bias for `DictationTranscriber`, so how much it helps `SpeechTranscriber` is checked on
+  a device (see the manual smoke test), not assumed.
+- **AI speech correction.** The correction request gains a `glossary` field (My terms, then preset
+  terms that resemble the phrase, at most 40) and one instruction: use the glossary spelling for a
+  near-miss and never insert a term nobody said. The validator still refuses changed numbers and
+  negation, except digits that belong to a glossary term the edit uses ("e c2" → "EC2").
+- **Summary, Quick and Deep.** The domain's description and a glossary (My terms, then terms heard
+  recently, then the rest) are appended as "Context for this session" — at most 1,500 characters, or
+  400 on Apple Intelligence, where the guidance is charged against the 8,000-character transcript
+  cap. With **Organize summaries by domain** on, Summary follows the domain's headings (Medical:
+  History / Findings / Plan; Engineering: Decisions / Actions / Risks; Sales: Customer needs /
+  Objections / Next steps…). Automatic Summary and Deep reviews carry the same guidance.
+
+**Suggestion banner.** After about a minute of final speech (150 words), and again every 50 words,
+`VocabularyClassifier` checks the recent speech on the device, off the main thread, with no model call:
+a preset needs at least 4 different terms at 2 weighted hits per 100 words (terms shared by several
+presets count less), must lead every other preset by 1.5×, and must be among the top two by Apple's
+NaturalLanguage sentence embedding (similarity to the preset's description, minus that of everyday
+small talk); with no embedding on the device it needs 6 different terms instead. Abbreviations count
+only in capitals, so "bid" is not BID. The thresholds keep false positives low: everyday chats about a
+doctor's visit, a lease or a car purchase, an ordinary team meeting and an English/Chinese mixed chat
+never trigger it in the fixtures (`Tests/ListenToMeCoreTests/VocabularyFixtures.swift`). The banner —
+"Sounds like a medical conversation — add the Medical vocabulary?" with **Add**, **Not now** and
+**Don't suggest Medical again** — never blocks the screen and never turns anything on by itself; Add
+applies to this conversation at once and then offers **Use by default**. Each preset is offered at
+most once per conversation; per-conversation choices last while the app is open. **Suggest
+vocabularies** turns it off.
+
+Limits: presets are English-first (code-switched speech still matches English terms); WhisperKit is
+not used for iOS transcription; the glossary reaches only the provider you chose.
 
 ## Save to folder (#53)
 

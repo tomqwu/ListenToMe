@@ -1,6 +1,7 @@
 {
   "id": "medical",
   "name": "Medical",
+  "topic": "medical",
   "description": "A clinical or health-care conversation: symptoms, history, examination findings, test results, diagnoses, medications and care plans.",
   "notice": "ListenToMe is not a medical device. Transcripts and AI output can be wrong; do not use them for clinical decisions.",
   "summaryLayout": [

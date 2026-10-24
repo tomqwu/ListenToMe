@@ -183,6 +183,7 @@ extension MobileSession {
                                       chunkEnds: chunks.map { $0.startOffset + $0.duration })
         do {
             let transcriber = makeWatchTranscriber()
+            transcriber.setContextualStrings(vocabulary.recognitionTerms(for: recordID))   // issue #222
             let locale = Locale(identifier: transcriptionLanguage)
             try await transcriber.transcribe(chunks, locale: locale) { [weak self] line in
                 guard let self, line.start >= resumeAt else { return }

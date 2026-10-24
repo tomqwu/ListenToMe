@@ -1,6 +1,7 @@
 {
   "id": "finance",
   "name": "Finance",
+  "topic": "finance",
   "description": "A finance or accounting conversation: financial statements, metrics, valuation, budgeting and forecasting, markets, tax, audit and treasury.",
   "summaryLayout": ["Figures discussed", "Decisions", "Risks", "Follow-ups"],
   "terms": [

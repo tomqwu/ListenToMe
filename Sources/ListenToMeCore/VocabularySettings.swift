@@ -32,7 +32,8 @@ public struct VocabularySettings: Codable, Sendable, Equatable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let fallback = VocabularySettings()
-        defaultDomainIDs = try container.decodeIfPresent([String].self, forKey: .defaultDomainIDs) ?? fallback.defaultDomainIDs
+        defaultDomainIDs = try container.decodeIfPresent([String].self, forKey: .defaultDomainIDs)
+            ?? fallback.defaultDomainIDs
         myTerms = try container.decodeIfPresent([String].self, forKey: .myTerms) ?? fallback.myTerms
         myTermsEnabled = try container.decodeIfPresent(Bool.self, forKey: .myTermsEnabled) ?? fallback.myTermsEnabled
         suggestionsEnabled = try container.decodeIfPresent(Bool.self, forKey: .suggestionsEnabled)
@@ -61,10 +62,13 @@ public struct VocabularySettings: Codable, Sendable, Equatable {
         let cleaned = VocabularyText.normalizedTerm(term)
         if cleaned.isEmpty { return "Enter a word or short phrase." }
         if cleaned.count > Self.termCharacterLimit { return "Keep terms under \(Self.termCharacterLimit) characters." }
-        if myTerms.enumerated().contains(where: { $0.offset != index && $0.element.lowercased() == cleaned.lowercased() }) {
+        let key = cleaned.lowercased()
+        if myTerms.enumerated().contains(where: { $0.offset != index && $0.element.lowercased() == key }) {
             return "“\(cleaned)” is already in My terms."
         }
-        if index == nil, myTerms.count >= Self.myTermsLimit { return "My terms holds up to \(Self.myTermsLimit) terms." }
+        if index == nil, myTerms.count >= Self.myTermsLimit {
+            return "My terms holds up to \(Self.myTermsLimit) terms."
+        }
         return nil
     }
 
@@ -112,7 +116,9 @@ public struct VocabularySettingsStore {
 
     public func load() -> VocabularySettings {
         guard let data = defaults.data(forKey: Self.key),
-              let settings = try? JSONDecoder().decode(VocabularySettings.self, from: data) else { return VocabularySettings() }
+              let settings = try? JSONDecoder().decode(VocabularySettings.self, from: data) else {
+            return VocabularySettings()
+        }
         return settings
     }
 
