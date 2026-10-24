@@ -629,8 +629,10 @@ most once per conversation; a preset added for one conversation stays on while t
 open and is not saved with it (opening another conversation starts over). **Suggest
 vocabularies** turns it off.
 
-Limits: presets are English-first (code-switched speech still matches English terms); WhisperKit is
-not used for iOS transcription; the glossary reaches only the provider you chose.
+Limits: presets are English-first (code-switched speech still matches English terms; #238); how
+strongly `SpeechTranscriber` honors contextual strings is still to be measured on a device (#236);
+per-conversation additions are not saved and Auto Quick gets no vocabulary guidance (#237); the
+glossary reaches only the provider you chose.
 
 ## Save to folder (#53)
 
