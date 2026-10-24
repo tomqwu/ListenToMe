@@ -1,1 +1,5 @@
-No pending iOS feature notes. Apple Watch remains gated by #181 physical-device acceptance.
+Pending next train: conversation vocabularies (#237).
+
+Add a suggested vocabulary without Use by default. Stop, create a new conversation, and reopen the first from History. Its vocabulary should return, including after relaunch. Enable Auto Quick and verify domain-aware updates. Delete the conversation; defaults and My terms should remain.
+
+Apple Watch remains gated by #181 physical-device acceptance.

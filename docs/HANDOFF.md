@@ -47,6 +47,12 @@ Recent iOS trains (full text in [CHANGELOG.md](../CHANGELOG.md)):
   other languages keep English lists. Chinese suggestions work without spaces and use the local
   Chinese embedding when present. Device accuracy acceptance is still pending (#236).
 
+## Merged for the next train
+
+- #237: per-conversation vocabulary additions survive History reopen and relaunch, are deleted
+  with the conversation, and reach Auto Quick as bounded domain/glossary guidance. Device defaults
+  and My terms remain independent. JSON exports include vocabulary IDs and saved prompt instructions.
+
 ## Screenshot release requirement
 
 Every train captures fresh source-matched screenshots for all supported device categories. Follow
@@ -102,7 +108,6 @@ is the tracking issue.
 - [#224](https://github.com/tomqwu/ListenToMe/issues/224) Re-transcribe a conversation from its saved audio (P2)
 - [#205](https://github.com/tomqwu/ListenToMe/issues/205) Opt-in multilingual Whisper transcription for mixed-language sentences (P3)
 - [#236](https://github.com/tomqwu/ListenToMe/issues/236) Measure and strengthen vocabulary biasing for SpeechTranscriber (P2)
-- [#237](https://github.com/tomqwu/ListenToMe/issues/237) Save per-conversation vocabulary choices; vocabulary guidance for Auto Quick (P3)
 - [#54](https://github.com/tomqwu/ListenToMe/issues/54) Meeting auto-detection / auto-start (P2)
 
 **Apple Watch — waiting on the maintainer's device spike**

@@ -10,6 +10,8 @@ public struct SessionRecord: Sendable, Equatable, Identifiable, Codable {
     public let segments: [TranscriptSegment]?
     public let notes: String?
     public let summaryInstructions: String?
+    /// Presets added to this conversation; global defaults and My terms remain device settings.
+    public let vocabularyDomainIDs: [String]?
     public let quickSuggestion: String?
     public let deepAnswer: String?
     public let isComplete: Bool?
@@ -30,7 +32,7 @@ public struct SessionRecord: Sendable, Equatable, Identifiable, Codable {
                 quickSuggestion: String? = nil, deepAnswer: String? = nil, isComplete: Bool? = nil,
                 attachments: [SessionAttachment]? = nil, sourceImportID: String? = nil,
                 titleState: ConversationTitleState? = nil, language: String? = nil, languages: [String]? = nil,
-                selectionSummaries: [SelectionSummary]? = nil, summaryInstructions: String? = nil) {
+                selectionSummaries: [SelectionSummary]? = nil, summaryInstructions: String? = nil, vocabularyDomainIDs: [String]? = nil) {
         self.id = id; self.title = title; self.date = date
         self.transcript = transcript; self.summary = summary
         self.segments = segments; self.notes = notes
@@ -40,6 +42,7 @@ public struct SessionRecord: Sendable, Equatable, Identifiable, Codable {
         self.language = language; self.languages = languages
         self.selectionSummaries = selectionSummaries
         self.summaryInstructions = summaryInstructions
+        self.vocabularyDomainIDs = vocabularyDomainIDs
     }
 }
 

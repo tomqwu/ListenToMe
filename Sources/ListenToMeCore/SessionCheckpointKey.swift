@@ -13,17 +13,19 @@ public struct SessionCheckpointKey: Hashable, Sendable {
     public let summary: String
     public let notes: String
     public let summaryInstructions: String
+    public let vocabularyDomainIDs: [String]
     public let quickSuggestion: String
     public let deepAnswer: String
     public let complete: Bool
 
     public init(revision: Int, title: String, summary: String, notes: String,
-                quickSuggestion: String, deepAnswer: String, complete: Bool, summaryInstructions: String = "") {
+                quickSuggestion: String, deepAnswer: String, complete: Bool, summaryInstructions: String = "", vocabularyDomainIDs: [String] = []) {
         self.revision = revision
         self.title = title
         self.summary = summary
         self.notes = notes
         self.summaryInstructions = summaryInstructions
+        self.vocabularyDomainIDs = vocabularyDomainIDs
         self.quickSuggestion = quickSuggestion
         self.deepAnswer = deepAnswer
         self.complete = complete

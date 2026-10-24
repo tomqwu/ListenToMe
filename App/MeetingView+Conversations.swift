@@ -20,7 +20,8 @@ extension MeetingView {
         let key = SessionCheckpointKey(
             revision: store.revision, title: conversationTitle, summary: session.listenerSummary,
             notes: session.notes, quickSuggestion: session.quickSuggestion,
-            deepAnswer: session.deepAnswer, complete: complete, summaryInstructions: session.summaryInstructions)
+            deepAnswer: session.deepAnswer, complete: complete, summaryInstructions: session.summaryInstructions,
+            vocabularyDomainIDs: vocabulary.domainIDs(for: currentSessionID).sorted())
         guard force || key != lastSavedKey else { return true }
         // The record keeps the conversation's start (its first checkpoint), so History, its exports
         // and the Save to folder note all carry the same date and file name as the live export.
@@ -102,6 +103,8 @@ extension MeetingView {
             restoredRecord = nil
             session.resetConversation()
             currentSessionID = UUID().uuidString; conversationStartedAt = nil
+            vocabulary.restore(domainIDs: nil, for: currentSessionID)
+            applyVocabulary()
             conversationLanguages = ConversationLanguages()
             conversationTitle = ConversationTitle.generated(Date().formatted(date: .abbreviated, time: .shortened))
             conversationTitleState = .placeholder
@@ -143,6 +146,9 @@ extension MeetingView {
         currentSessionID = record.id; conversationStartedAt = record.date
         conversationTitle = record.title; conversationTitleState = record.resolvedTitleState
         conversationLanguages = record.conversationLanguages
+        vocabulary.restore(domainIDs: record.vocabularyDomainIDs, for: currentSessionID,
+                           transcriptLineCount: store.utterances.count)
+        applyVocabulary()
         lastSavedKey = nil; sessionSaveable = ProviderSettings.saveSessionsForSearch
         saveMessage = "Opened conversation"; saveFailed = false
     }
