@@ -2,11 +2,11 @@ import Foundation
 import ListenToMeCore
 import Observation
 
-/// A tapped suggestion's question and its answer (#61). It is deliberately *not* a Deep Summary:
-/// it never replaces the Deep analysis on screen or in the saved conversation, never counts as a
-/// completed Deep review, and never touches Auto's queued reviews or recommendations. The answer
-/// lives only in memory, under its question, until it is closed, a new conversation starts or the
-/// provider changes.
+/// A tapped suggestion's question and its answer (#61), shown in the Ask card under Quick Summary.
+/// It is deliberately not a summary: it never replaces Quick Summary or Deep on screen or in the saved
+/// conversation, never counts as a completed review, and never touches Auto's queued reviews or
+/// recommendations. The answer lives only in memory, under its question, until it is closed, a new
+/// conversation starts or the provider changes.
 @MainActor @Observable
 final class MobileSuggestedAsk {
     static let maximumAnswerCharacters = 100_000
@@ -14,17 +14,19 @@ final class MobileSuggestedAsk {
     private(set) var answer = ""
     private(set) var isAnswering = false
     private(set) var error: String?
+    /// Which part of the conversation the answer read, when not all of it fitted (`OnDemandGrounding`).
+    private(set) var grounding: String?
     @ObservationIgnored private var task: Task<Void, Never>?
     @ObservationIgnored private var generation = 0
 
     /// Streams `request` to `client` under `question`, replacing any earlier ask. `answered` runs only
     /// when a complete, non-empty answer arrived — never on a failure or cancellation.
-    func start(question: String, request: LLMRequest, client: any LLMProvider,
+    func start(question: String, request: LLMRequest, grounding: String? = nil, client: any LLMProvider,
                answered: @escaping @MainActor () -> Void) {
         cancel()
         generation += 1
         let token = generation
-        self.question = question
+        self.question = question; self.grounding = grounding
         answer = ""; error = nil; isAnswering = true
         task = Task { [weak self] in
             do {
@@ -64,7 +66,7 @@ final class MobileSuggestedAsk {
     /// Removes the question and its answer.
     func reset() {
         cancel()
-        question = nil; answer = ""; error = nil
+        question = nil; answer = ""; error = nil; grounding = nil
     }
 
     /// Test-only: waits for the answer in progress.

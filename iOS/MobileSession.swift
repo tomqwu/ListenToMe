@@ -79,7 +79,7 @@ final class MobileSession {
     @ObservationIgnored var watchDrainRequested = false
     /// The Apple Watch's own recording, from its application context (Slice 3); see `receiveWatchContext`.
     var watchCaptureStatus: WatchCaptureStatus?
-    private var manualQuickError: String?
+    var manualQuickError: String?
     var quickSummaryError: String? { manualQuickError ?? quickReader.error }
     private(set) var sourceImportID: String?
     var segments: [TranscriptSegment] = [] { didSet { scheduleAutoQuick() } }
@@ -94,6 +94,7 @@ final class MobileSession {
     }
     let ai = MobileAISettings()
     var summaryDraft = ""
+    var answerNotices = MobileAnswerNotices()   // Grounding and cut-off lines (issues #114, #215)
     private var summaryTask: Task<Void, Never>?
     /// The transcription language survives relaunch: a user who records in Mandarin on an en_US
     /// phone should not silently fall back to the English model after every app restart.
@@ -340,7 +341,7 @@ final class MobileSession {
         guard !busy, save(announce: false) else { return }
         speechCorrection.cancel()
         acceptsSpeechCorrection = false
-        manualQuickError = nil; resetSuggestions()
+        manualQuickError = nil; resetSuggestions(); answerNotices = MobileAnswerNotices()
         handleSummaryEvent(.conversationChanged)
         id = UUID().uuidString; date = Date()
         title = "New conversation"; notes = ""; summary = ""; quickSummary = ""; deepThought = ""
@@ -359,7 +360,7 @@ final class MobileSession {
         lastSavedData = nil
         speechCorrection.cancel()
         acceptsSpeechCorrection = false
-        manualQuickError = nil; resetSuggestions()
+        manualQuickError = nil; resetSuggestions(); answerNotices = MobileAnswerNotices()
         handleSummaryEvent(.conversationChanged)
         id = record.id; date = record.date; title = record.title
         notes = record.notes ?? ""; summary = record.summary
@@ -467,7 +468,7 @@ extension MobileSession {
         }
     }
 
-    private var quickPieces: [MobileQuickContext.Piece] {
+    var quickPieces: [MobileQuickContext.Piece] {
         MobileQuickContext.pieces(notes: notes, segments: segments.map(Self.promptSegment),
                                   liveSegments: partial.map { [Self.promptSegment($0)] } ?? [])
     }
@@ -517,6 +518,11 @@ extension MobileSession {
             }, apply: { [weak self] mode, output, reviewed in
                 guard let self else { return }
                 if mode == .summary { self.summary = output } else { self.deepThought = output }
+                if let shown = MobileSummaryMode(rawValue: mode.rawValue) {
+                    self.answerNotices.record(shown, text: output, grounding: nil,
+                                              cutOff: self.automaticReviews.cutOffModes.contains(mode),
+                                              coveredIDs: QuickSummaryContext.segmentIDs(in: reviewed))
+                }
                 // Same rule that kept the review alive: a notes keystroke or appended speech does not
                 // make the finished review stale, so it must not leave the recommendation outstanding
                 // and re-run the identical model call.
@@ -558,76 +564,6 @@ extension MobileSession {
             return quickReader.unchanged ? "Up to date · Summary unchanged." : "Up to date · Listening for new information."
         }
         return "Auto on · New speech is waiting for the next check."
-    }
-
-    func summarize(mode: MobileSummaryMode = .summary) async {
-        if let reason = summaryBlockReason(for: mode) { message = reason; return }
-        // Capture a stable input snapshot; recording can continue while this request runs.
-        let source = summarySource
-        let reviewed = quickPieces
-        guard !source.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            message = "Add notes or record a transcript before summarizing."
-            return
-        }
-        let cloud = summaryProvider != nil || ai.provider != .apple
-        // The transcript is fenced as data, exactly as the macOS panes fence it (issue #140); the
-        // cap is charged on the fenced text so the Apple window still holds.
-        let fencedSource = PromptData.block("transcript", source)
-        // The on-device Apple path shares its character cap with macOS (PromptBudget).
-        guard fencedSource.count <= (cloud ? 60_000 : PromptBudget.appleIntelligenceCharacters) else {
-            message = "This conversation exceeds the selected provider's summary limit. Export it or shorten your notes."
-            return
-        }
-        generatingMode = mode
-        isSummarizing = true
-        if mode == .quick { manualQuickError = nil; quickReader.startManualQuick() }
-        message = nil
-        summaryDraft = ""
-        defer { isSummarizing = false; summaryDraft = ""; generatingMode = nil }
-        do {
-            // Apple Intelligence's on-device model cannot be held to the evaluator's JSON envelope,
-            // so manual Quick asks it for the bullets directly. See docs/IOS.md → Apple Intelligence.
-            let proseQuick = mode == .quick && !cloud
-            let request: LLMRequest
-            switch mode {
-            case .quick where proseQuick:
-                request = LLMRequest(system: MobileQuickContext.manualProseInstructions,
-                                     messages: [ChatMessage(role: "user", content: fencedSource)])
-            case .quick: request = try MobileQuickContext.manualRequest(source: source)
-            default: request = LLMRequest(system: mode.instructions,
-                                          messages: [ChatMessage(role: "user", content: fencedSource)])
-            }
-            var quickResponse = ""
-            // One transport per provider: the Apple path streams through AppleIntelligenceProvider,
-            // which maps FoundationModels generation failures to messages a user can act on.
-            let client: any LLMProvider = try summaryProvider
-                ?? (cloud ? ai.client(for: mode) : (onDeviceProviderOverride ?? AppleIntelligenceProvider()))
-            for try await delta in client.stream(request) {
-                try Task.checkCancellation()
-                if mode == .quick { quickResponse += delta } else { summaryDraft += delta }
-                guard summaryDraft.count <= 100_000, quickResponse.utf8.count <= 16_384 else {
-                    throw RecordingError.message("Summary response was too large.")
-                }
-            }
-            try Task.checkCancellation()
-            switch mode {
-            case .summary: summary = summaryDraft
-            case .quick:
-                quickSummary = try manualQuickSummary(quickResponse, prose: proseQuick)
-            case .deep: deepThought = summaryDraft
-            }
-            if let reviewMode = AutomaticReviewMode(rawValue: mode.rawValue) {
-                automaticReviews.markManualCompletion(reviewMode, source: source)
-            }
-            if MobileQuickContext.isContinuation(of: reviewed, in: quickPieces) {
-                quickReader.markReviewed(mode.rawValue)
-            }
-            save(announce: false)
-        } catch {
-            let failure = "\(mode.title) failed: \(MobileAISettings.errorMessage(error)) Your previous summary is kept."
-            message = failure
-            if mode == .quick { manualQuickError = failure }
-        }
     }
 }
 

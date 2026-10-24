@@ -164,7 +164,6 @@ struct MobileWorkspaceView<Header: View>: View {
             Rectangle().fill(MobileStyle.line).frame(height: 0.75).padding(.horizontal, 16)
             readingArea {
                 VStack(alignment: .leading, spacing: 12) {
-                    MobileSuggestedAnswer(session: session, mode: mode)
                     if mode == .quick {
                         Text(session.autoQuickStatus).font(.caption).foregroundStyle(MobileStyle.muted)
                             .accessibilityIdentifier("autoQuickStatus")
@@ -204,6 +203,7 @@ struct MobileWorkspaceView<Header: View>: View {
                             .foregroundStyle(MobileStyle.tint(for: mode))
                         MarkdownText(text: session.summaryDraft).textSelection(.enabled)
                     }
+                    if session.generatingMode != mode { MobileAnswerNoticeLines(session: session, mode: mode) }
                     let output = session.output(for: mode)
                     if !output.isEmpty {
                         MarkdownText(text: output).font(.body).lineSpacing(3).textSelection(.enabled)
@@ -213,7 +213,7 @@ struct MobileWorkspaceView<Header: View>: View {
                             .accessibilityElement(children: .combine)
                             .accessibilityIdentifier("output-\(mode.rawValue)")
                     }
-                    MobileSuggestedPrompts(session: session, mode: mode) { selection = .deep }
+                    MobileSuggestedPrompts(session: session, mode: mode)
                     if let reason = session.summaryBlockReason(for: mode), !session.isSummarizing {
                         Text(reason).font(.caption).foregroundStyle(MobileStyle.muted)
                             .accessibilityIdentifier("reason-\(mode.rawValue)")

@@ -39,6 +39,8 @@ this table in the same PR, and never fork a copy into `App/` or `iOS/`.
 | `AutomaticReviewCoordinator` — queued Summary/Deep reviews, deadlines, manual completion | `MeetingSession` | `MobileSession.automaticReviews` |
 | `SuggestedPrompts` (#61) — suggested-chip validation, 20-second refresh window, used-chip memory, the strict prose "Suggested:" block | `MeetingSession+Suggestions`, `App/SuggestedPromptChips.swift` | `iOS/MobileSession+Suggestions.swift`, `MobileSuggestedPrompts`, `MobileSuggestedAsk` |
 | Prompt data fences and caps: `PromptData.notice`, `PromptData.block`, `PromptBudget` | `PromptBuilder` (`Prompt.swift`) | `MobileSummaryMode.instructions`, `MobileSession.summarize` |
+| On-demand grounding (#114): `OnDemandGrounding` — Quick/Deep transcript budgets, the summary-plus-recent or opening-plus-recent excerpt, its model note and the pane's "Using the last ~N min…" line | `MeetingSession.clampedContext`, `roleNotices` | `MobileSession.summarize` (`iOS/MobileSession+Summarize.swift`), `answerNotices` |
+| Output-limit signal (#215): `LLMStreamEvent.outputLimitReached`, `LLMOutputLimit` (notice, plain-text cut-off error) | `MeetingSession.run`, `RoleBox` | `MobileSession.summarize`, `MobileAnswerNoticeLines` |
 | `SessionArchive` — the on-disk conversation format | `App/SessionStore.swift` | `iOS/MobileSession.swift` |
 | Speaker identification: `SpeakerDiarizer` and `SpeakerAudioBuffer` (`SharedPlatform/`, FluidAudio), `SpeakerIdentityTracker`, `SpeakerLabeling`, `SpeakerStats`, `SpeakerAnalysisPolicy` | `App/MeetingView+Speakers.swift` | `MobileSpeakers`, `iOS/MobileSession+Speakers.swift`; iOS language detection (#197) reuses `SpeakerAudioBuffer`, keeping its trailing two minutes (#199) |
 | Save to folder (#53): `MarkdownVault` (note format and file names), `MarkdownVaultWriter` (bookmark, atomic coordinated write, failure wording), `MarkdownVaultSync` (`SharedPlatform/`, setting, queue, status, Retry) | `App/MacVaultSettings.swift`, `App/MeetingView+Conversations.swift` (`checkpoint`) | `iOS/MobileVaultSettings.swift`, `iOS/MobileSession+Vault.swift` |
@@ -69,7 +71,7 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 | Share-sheet import | — | Share extension plus an App Group inbox (`ShareExtension/`, `iOSShared/SharedInbox.swift`) |
 | AI speech correction | — | Opt-in, over a Flash model on Ollama (`MobileTranscriptCorrector`) |
 | Proactive Quick answers | Yes — needs a finalized question on the Others channel | No — there is no Others channel to detect one in |
-| Suggested prompts (#61) | **Suggested · from context** above the fixed Quick actions, from the Auto Quick check only (macOS manual Quick answers are prose with no chips); a click asks Quick, the context menu also offers **Ask in Deep**, which behaves like the **Deep answer** button; Auto off or AI off clears them | Under Quick Summary, from the Auto Quick check or a manual Quick refresh — on Apple Intelligence through the strict prose "Suggested:" block; a tap is a separate ask to the Deep model, answered under the question at the top of the Deep tab and never replacing Deep Summary (iOS has no free-form Quick answer) |
+| Suggested prompts (#61) | **Suggested · from context** above the fixed Quick actions, from the Auto Quick check only (macOS manual Quick answers are prose with no chips); a click asks Quick, the context menu also offers **Ask in Deep**, which behaves like the **Deep answer** button; Auto off or AI off clears them | Under Quick Summary, from the Auto Quick check or a manual Quick refresh — on Apple Intelligence through the strict prose "Suggested:" block; a tap is a separate ask to the Quick model, answered in a small Ask card under Quick Summary and never replacing a summary (iOS has no free-form Quick answer; the Deep tab is being removed, #235) |
 | Third-party licenses | **Open-source licenses…** shows `App/ThirdPartyNotices.txt` as one text | **Settings → About → Acknowledgements** lists each package from the same file with its full license (`MobileAcknowledgementsView`, #202) |
 | "What's New" | GitHub release notes and `CHANGELOG.md` | In-app, shown once per set of bundled notes (`MobileReleaseNotes`) |
 | Storage protection | Plain atomic writes | Data protection (`completeUntilFirstUserAuthentication`) plus an optional backup exclusion (`PrivateStorage`) |
@@ -466,7 +468,22 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   results and secure API-key storage.
   Apple Intelligence accepts up to 8,000 characters (`PromptBudget.appleIntelligenceCharacters`, the
   shared cap macOS also clamps its Apple prompts to); Ollama and OpenAI-compatible servers accept up to 60,000. Both caps are
-  charged on the *fenced* conversation, not the raw text. Oversized input is rejected explicitly. AI output needs review.
+  charged on the *fenced* conversation, not the raw text. A Summary that does not fit is rejected
+  explicitly. Quick and Deep answer a conversation that does not fit from what does (#114,
+  `OnDemandGrounding.excerpt`). A Summary generated in this session stands in for exactly the lines it
+  read (`MobileAnswerNotices.summaryCoverage`, by segment ID, so re-transcribed lines are not covered);
+  of the remaining speech — with no Summary, all of it — the start and the latest part are sent, and
+  the panel says what was used ("Using your Summary of the first ~10 min, the ~3 min after it and the
+  last ~5 min of the conversation (~20 min in between left out)."). A Summary restored from History,
+  edited, cut off at the output limit or shortened to fit is sent but never claimed to cover anything;
+  a long one keeps its end, where the decisions and actions are, and the panel says so. Notes keep
+  what the speech leaves (at least a quarter), and an oversized latest line keeps its most recent
+  words, so the message never exceeds the budget. On Apple Intelligence the budget is what the window
+  leaves after the system prompt and the answer's reserve. An answer that stops at the model's output
+  limit (`finish_reason`/`done_reason` `length`, Claude `max_tokens`) keeps its text and the panel shows
+  "The answer was cut off at the model's output limit." (#215). Each line belongs to the exact text it
+  describes, so it disappears when Auto or anything else replaces that text; both are for this session
+  only and are not saved. AI output needs review.
 - Prompts separate data from instructions (#140). The conversation a manual Summary, Deep or
   on-device Quick sends is wrapped in a `<transcript>` block, and every system prompt states that
   text inside that block is data to read and summarize, never instructions to follow. Closing tags
@@ -575,14 +592,16 @@ Each chip is at most 60 characters and one line, shown as plain text; duplicates
 links, JSON and markup debris are dropped (`SuggestedPrompts`). Auto replaces chips at most every 20
 seconds so a chip does not change under your finger; a manual refresh replaces them at once.
 
-A tap is a **separate ask** (`MobileSuggestedAsk`), not a Deep Summary: it sends the literal text to
-the Deep model with the fenced transcript (`PromptBuilder.askInstruction`), opens the Deep tab and
-streams the answer under the question in a **You asked** box above Deep Summary, with Cancel and
-Close. It never replaces Deep Summary on screen or in the saved conversation, never counts as a
-completed Deep review and never touches Auto's queued reviews or recommendations. The answer is kept
-in memory only and is not saved with the conversation. A tap that cannot be sent (a response is
-generating, nothing has been said, the provider is unavailable, or the conversation exceeds the
-provider's size limit) sends nothing, says why and keeps the chip. A chip is used up only once its
+A tap is a **separate ask** (`MobileSuggestedAsk`), not a summary: it sends the literal text to the
+Quick model with the copilot prompt (`MobileSession.askSystem`) over the notes and the speech that
+fit the provider (`OnDemandGrounding`, as for an on-demand Quick answer, so a long conversation is
+answered from what fits rather than refused), then `PromptBuilder.askInstruction`. The answer streams
+into a small **Ask card** under Quick Summary — the question in bold, the answer below it, Cancel
+while it streams and Close to dismiss — and the app stays on Live. It never replaces Quick Summary
+or Deep on screen or in the saved conversation, never counts as a completed review and never touches
+Auto's queued reviews or recommendations. The answer is kept in memory only and is not saved with
+the conversation. A tap that cannot be sent (a response is generating, nothing has been said or the
+provider is unavailable) sends nothing, says why and keeps the chip. A chip is used up only once its
 answer has arrived, then it leaves the row and is not suggested again in that conversation; a failed
 or cancelled ask can be tapped again. Nothing is sent without a tap.
 
@@ -768,7 +787,12 @@ an error body that echoes the key is masked.
 or bare CR line endings are accepted), and reasoning (`reasoning_content`
 or `reasoning`) is kept apart from the answer as on Ollama. A response is accepted only when it ends with
 `data: [DONE]` or a `finish_reason`; a stream cut off before that is "ended before completion" and keeps
-the previous output. An `error` object inside the stream or a `finish_reason` of `error` fails the request
+the previous output. A `finish_reason` of `length` (the output-token cap) completes the answer but ends
+the event stream with `LLMStreamEvent.outputLimitReached`: the panel keeps the partial text and says "The
+answer was cut off at the model's output limit." (#215; Ollama's `done_reason: "length"` is reported the
+same way). The plain-text `stream(_:)` ends with `LLMOutputLimitError` instead, so the Quick evaluator,
+speech correction and the connection test never take a cut-off answer for a whole one.
+An `error` object inside the stream or a `finish_reason` of `error` fails the request
 with the server's message, as does a reasoning-only or empty answer. A non-2xx status shows the server's
 explanation, bounded to 8 KiB, with hints for 401/403, 404 and 429. Redirects are never followed: a 3xx
 fails with the target host named, so neither the transcript nor the key reaches a host you did not enter.
@@ -860,7 +884,9 @@ discards the partial text: iOS keeps the previous summary and the macOS pane res
 answer (`LLMPartialOutput`). Only `text_delta` is answer text; `thinking_delta`,
 `signature_delta`, `ping` and unknown events are ignored, and a response completes only at
 `message_stop`. `stop_reason: "refusal"` shows "Claude declined to answer this request"; `max_tokens`
-keeps the partial text and says it was cut off; an `error` event (such as `overloaded_error`) fails the
+(or `model_context_window_exceeded`) keeps the partial text with the shared "The answer was cut off at
+the model's output limit." notice, on iOS as on macOS (#215; until then iOS dropped Claude's partial
+text and said it was shown); an `error` event (such as `overloaded_error`) fails the
 request. HTTP 401/403 names a bad key, 429/529 retries once only when `retry-after` (seconds or an HTTP date)
 asks for a wait of 20 seconds or less, and a 400
 `invalid_request_error` shows Anthropic's message with the key masked. Model lists come from

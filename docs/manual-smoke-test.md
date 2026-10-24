@@ -65,6 +65,26 @@ Prereq: Ollama running with at least one chat-capable model installed (local or 
     (its record is cumulative and is saved), so a Refresh taken while finalized speech is still
     queued covers that speech only — the hypothesis arrives on a later refresh, and its finalized
     text is summarized afterwards either way.
+12b. **Grounding with Auto off** (issue #114): leave **Auto** off and do not press **Refresh**. Open a
+    long saved conversation (40+ minutes) or record one, with a decision stated in the first two
+    minutes. Press **⌘⇧Space** → the Quick pane shows "Using the opening ~N min and the last ~M min of
+    the conversation (~K min in between left out)." under its header, and the answer can use the
+    early decision. Press **Refresh**, wait for the Listener (and any follow-up batches), ask again →
+    the line reads "Using the Listener summary of the first ~N min and everything said since (~M min)."
+    (or, for a meeting that is still too long, "…of the first ~N min, the ~H min after it and the last
+    ~M min…"). Keep talking for 20+ minutes without Refresh and ask again → the line must name the
+    summary's real span and a gap ("in between left out"), never claim the summary covers the new
+    speech. A short conversation shows no line. Turn **Auto** on and let the recap replace a manual
+    Quick answer (or click **Show recap**) → the answer's line disappears with it.
+12b′. **Enormous last line** (issue #114, Apple Intelligence): import or paste a transcript whose
+    last line is several thousand words long and ask Deep → it answers (never "This request is too
+    long for Apple Intelligence's on-device context window"), and the line ends "The latest line
+    was shortened."
+12c. **Output limit** (issue #215): give **Deep** a cloud or OpenAI-compatible model with a small
+    output limit (an LM Studio server with max tokens 64, or Ollama with `num_predict` 64 in a
+    Modelfile) and ask **Deep answer** → the partial answer stays and the pane shows "The answer was
+    cut off at the model's output limit." with no error banner. Ask again with a normal limit → the
+    line disappears.
 13. **History while recording** (issue #116): with a few saved conversations and recording active,
     open **History**, leave it open for ~30 seconds and type into **Context notes** — the list stays
     responsive and typing does not lag; the archive is read once when the sheet opens, not once a
@@ -131,10 +151,11 @@ macOS:
 iPhone (phone width and an accessibility text size):
 
 1. With **Auto** on (Ollama, a cloud AI service or an OpenAI-compatible server), record: chips appear
-   under Quick Summary, stacked and fully readable without sideways scrolling. Tap one: the app opens
-   **Deep** and shows a **You asked** box with the question and its answer above Deep Summary, which
-   is unchanged (also after reopening the conversation); back on **Live**, that chip is gone. With a
-   conversation too long for the provider, a tap says so and the chip stays.
+   under Quick Summary, stacked and fully readable without sideways scrolling. Tap one: the app stays
+   on **Live** and an Ask card under Quick Summary shows the question in bold and the answer below it;
+   Quick Summary and Deep are unchanged (also after reopening the conversation), that chip is gone,
+   and **Close** dismisses the card. On a very long conversation with Apple Intelligence, a tap still
+   answers (from what fits) and the card says which part was read.
 2. With **Apple Intelligence** and Auto off, tap **Generate** on Quick Summary: the bullets must not
    contain a "Suggested:" heading or `>` lines; chips appear only when the on-device model wrote the
    block last. A model that ignores it, or writes it first, gives no chips, every bullet and no error.
@@ -224,12 +245,27 @@ tables behind them are covered by `CaptureRecoveryTests`.
    instead of failing with a FoundationModels context-window error, and the status line under the
    transcript must name what was dropped — "Trimmed to fit this model's context window — older
    speech and some attached reference material were left out." Detach the reference folder and ask
-   again: the notice must change to the speech-only wording. With a very long **Context notes**
+   again: the notice must change to the speech-only wording ("some older speech was left out; each
+   pane says which part it read."), and the Deep pane must show its own "Using the …" line (#114).
+   With a very long **Context notes**
    entry, the notice must instead name "your notes and the running summary". In no case may the pane
    show "This request is too long for Apple Intelligence's on-device context window." — that string
    is the provider's last-resort guard and means the prompt reached it unbounded; report it as a bug.
 5. Switch back to **Local only** or **Cloud** with the same conversation (Settings → save): the trim
-   notice disappears immediately and the full transcript is used again.
+   notice disappears immediately, and the next answer reads up to 16,000 (Quick) or 32,000 (Deep)
+   characters of transcript, or all of it for Recap and Action items.
+7. **iPhone Quick and Deep on a long conversation (#114, #215).** On iPhone with Apple Intelligence,
+   open a conversation longer than about ten minutes with no Summary. **Generate Quick Summary** and
+   **Generate Deep Summary** must both answer (they used to say "exceeds the selected provider's
+   summary limit") and show "Using the opening ~N min and the last ~M min of the conversation (~K min
+   in between left out)." above the text. **Summary** itself still says the conversation exceeds the
+   limit. Record a few minutes, generate **Summary**, keep recording well past the window, then
+   generate Deep → "Using your Summary of the first ~N min, the ~H min after it and the last ~M min of
+   the conversation (~K min in between left out)." A conversation reopened from History has a Summary
+   of unknown coverage: Deep keeps the opening and adds "An earlier summary is included too." With
+   Auto on, a recap that rewrites the Quick Summary removes the previous answer's line. With a cloud
+   model whose output limit is tiny, Deep keeps its partial text and
+   shows "The answer was cut off at the model's output limit."
 6. **Many short lines.** Still on Apple Intelligence, have a long back-and-forth of short utterances
    with named speakers (rename both speakers to long names). Ask Deep for **Action items**: the
    speaker labels count against the window too, so this must answer rather than fail.

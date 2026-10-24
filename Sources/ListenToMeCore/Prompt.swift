@@ -36,15 +36,19 @@ public struct PromptContext: Sendable, Equatable {
     public let references: String?
     /// Use-case persona/role guidance from a preset, appended to every pane's system prompt.
     public let personaGuidance: String?
+    /// The app's own note on which part of the meeting `messages` covers, when it is an excerpt
+    /// (`OnDemandGrounding.Selection.promptNote`, issue #114). An instruction, so never fenced.
+    public let transcriptNote: String?
     public init(messages: [TranscriptSegment], notes: String?, summary: String? = nil,
                 responseLanguage: String? = nil, references: String? = nil,
-                personaGuidance: String? = nil) {
+                personaGuidance: String? = nil, transcriptNote: String? = nil) {
         self.messages = messages
         self.notes = notes
         self.summary = summary
         self.responseLanguage = responseLanguage
         self.references = references
         self.personaGuidance = personaGuidance
+        self.transcriptNote = transcriptNote
     }
 }
 
@@ -240,6 +244,7 @@ public enum PromptBuilder {
         // The app's own note about provisional lines stays *outside* the fence: it is an
         // instruction the app wrote, not meeting data (issues #113, #140).
         if hasProvisional(context) { user += provisionalNotice + "\n\n" }
+        if let note = context.transcriptNote, present(note) { user += note + "\n\n" }
         if let summary = context.summary, !summary.trimmingCharacters(in: .whitespaces).isEmpty {
             user += "Meeting summary so far (from the listener):\n"
                 + PromptData.block("summary", summary) + "\n\n"

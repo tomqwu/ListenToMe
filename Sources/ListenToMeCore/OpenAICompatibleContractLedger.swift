@@ -30,9 +30,11 @@ public struct OpenAICompatibleContractLedger: Equatable, Sendable {
     }
 
     /// True for outcomes that show the model cannot hold the contract, as opposed to a network or
-    /// server failure: an unusable decision, or an answer that was empty or only reasoning.
+    /// server failure: an unusable decision, an answer that was empty or only reasoning, or one that
+    /// stopped at the output limit — the evaluator's JSON never fits that model's cap (#215).
     public static func isContractFailure(_ error: Error) -> Bool {
-        if error is QuickSummaryError { return true }
+        if error is QuickSummaryError || error is LLMOutputLimitError { return true }
+        if case AnthropicError.cutOff = error { return true }
         switch error as? OpenAICompatibleError {
         case .thinkingOnly?, .empty?: return true
         default: return false

@@ -114,7 +114,8 @@ public struct AnthropicProvider: LLMProvider {
         AsyncThrowingStream { continuation in
             let task = Task {
                 do {
-                    try await run(request) { continuation.yield(.content($0)) }
+                    let cutOff = try await run(request) { continuation.yield(.content($0)) }
+                    if cutOff { continuation.yield(.outputLimitReached) }
                     continuation.finish()
                 } catch {
                     continuation.finish(throwing: Self.mapped(error, host: baseURL, apiKey: apiKey))
@@ -124,21 +125,9 @@ public struct AnthropicProvider: LLMProvider {
         }
     }
 
+    /// Plain text only. A cut-off answer ends with `AnthropicError.cutOff`, as it always has.
     public func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
-        let events = streamEvents(request)
-        return AsyncThrowingStream { continuation in
-            let task = Task {
-                do {
-                    for try await event in events {
-                        if case .content(let delta) = event { continuation.yield(delta) }
-                    }
-                    continuation.finish()
-                } catch {
-                    continuation.finish(throwing: error)
-                }
-            }
-            continuation.onTermination = { _ in task.cancel() }
-        }
+        LLMOutputLimit.textStream(streamEvents(request), cutOff: AnthropicError.cutOff)
     }
 
     private func urlRequest(_ request: LLMRequest, fallbacks: Bool) -> URLRequest {
@@ -187,7 +176,8 @@ public struct AnthropicProvider: LLMProvider {
             && !AnthropicFallbackSupport.shared.isRejected(model)
     }
 
-    private func run(_ request: LLMRequest, yield: (String) -> Void) async throws {
+    /// Streams the answer through `yield`; returns true when it stopped at the output limit.
+    private func run(_ request: LLMRequest, yield: (String) -> Void) async throws -> Bool {
         let (bytes, http) = try await open(request)
         let contentType = http.value(forHTTPHeaderField: "Content-Type")
         var state = AnthropicStreamState(maximumBytes: maximumResponseBytes)
@@ -224,6 +214,7 @@ public struct AnthropicProvider: LLMProvider {
         if !state.finished, !line.isEmpty { try handle() }
         try Task.checkCancellation()
         try state.complete()
+        return state.reachedOutputLimit
     }
 
     /// Connection failures name the host; cancellation stays cancellation; server text is masked.

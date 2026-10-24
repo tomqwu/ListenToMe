@@ -97,8 +97,13 @@ extension MeetingSession {
                 return provider
             }, apply: { [weak self] mode, output, reviewed in
                 guard let self else { return }
-                self.setOutput(mode == .summary ? .listener : .deep, output)
-                if mode == .summary { self.lastCompletedListenerSummary = output }
+                let role: CopilotRole = mode == .summary ? .listener : .deep
+                self.setOutput(role, output)
+                self.recordAutomaticReview(role, cutOff: self.automaticReviews.cutOffModes.contains(mode))
+                if mode == .summary {
+                    self.lastCompletedListenerSummary = output
+                    self.listenerSummaryCutOff = self.automaticReviews.cutOffModes.contains(mode)
+                }
                 // The review still answers the current input when that input merely continued the
                 // snapshot it read; otherwise the recommendation stays outstanding. Comparing the
                 // joined source instead would re-run the identical review after a notes keystroke.
@@ -115,7 +120,7 @@ extension MeetingSession {
     /// The transcript segments a piece snapshot covers. Piece IDs are "<segment UUID>:<chunk>";
     /// notes and provisional `live:` pieces have no segment and are skipped.
     static func segmentIDs(in pieces: [QuickSummaryContext.Piece]) -> Set<UUID> {
-        Set(pieces.compactMap { UUID(uuidString: $0.id.components(separatedBy: ":").first ?? "") })
+        QuickSummaryContext.segmentIDs(in: pieces)
     }
 
     func handleLiveEvent(_ event: LiveSummaryScheduler.Event) {

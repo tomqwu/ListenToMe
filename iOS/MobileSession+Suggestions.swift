@@ -4,71 +4,75 @@ import ListenToMeCore
 /// Context-aware "Suggested" prompt chips on iOS (#61). The chips ride on passes that already run —
 /// the Auto Quick evaluation (inside `QuickSummaryReader.read`) and a manual Quick Summary refresh the
 /// user asked for — so no model is ever called just to make them. A tap sends the literal text to the
-/// Deep model as a separate ask (`MobileSuggestedAsk`); nothing is sent by itself.
+/// Quick model as a separate ask (`MobileSuggestedAsk`), answered in a small card under Quick Summary;
+/// nothing is sent by itself.
 extension MobileSession {
     /// The chips shown under the Quick Summary.
     var suggestedPrompts: [String] { quickReader.suggestions.prompts }
 
     /// Why no chip can be sent right now (an answer or a summary is generating, recording is stopping,
-    /// nothing has been said, or the Deep provider is unavailable), or nil.
-    var suggestionBlockReason: String? { suggestionBlockReason(for: nil) }
-
-    /// As `suggestionBlockReason`, plus the provider's size limit for this particular request.
-    func suggestionBlockReason(for prompt: String?) -> String? {
+    /// nothing has been said, or the Quick provider is unavailable), or nil.
+    var suggestionBlockReason: String? {
         if suggestedAsk.isAnswering { return "Wait for the current answer, or cancel it." }
-        if let reason = summaryBlockReason(for: .deep) { return reason }
-        guard let prompt else { return nil }
-        let request = Self.askRequest(source: summarySource, prompt: prompt)
-        let size = request.system.count + request.messages.reduce(0) { $0 + $1.content.count }
-        let limit = askUsesCloud ? 60_000 : PromptBudget.appleIntelligenceCharacters
-        guard size <= limit else {
-            return "This conversation exceeds the selected provider's summary limit. Export it or shorten your notes."
-        }
-        return nil
+        return summaryBlockReason(for: .quick)
     }
 
-    /// Sends a tapped chip's literal text to the Deep model as a separate ask: the answer appears under
-    /// the question in the Deep tab and leaves Deep Summary, its saved text and Auto's review state
-    /// untouched. A blocked tap sends nothing, says why and keeps the chip; the chip is used up only
-    /// once its answer has arrived, so a failed or cancelled ask can be tapped again.
+    /// Sends a tapped chip's literal text to the Quick model as a separate ask. Its answer appears in
+    /// the Ask card under Quick Summary; Quick Summary, Deep, the saved conversation and Auto's review
+    /// state are untouched. A long conversation is answered from what fits, exactly like an on-demand
+    /// Quick or Deep answer (`OnDemandGrounding`). A blocked tap sends nothing, says why and keeps the
+    /// chip; the chip is used up only once its answer has arrived, so a failed or cancelled ask can be
+    /// tapped again.
     /// - Returns: true when the request was sent.
     @discardableResult
     func askSuggested(_ prompt: String) -> Bool {
-        if let reason = suggestionBlockReason(for: prompt) { message = reason; return false }
+        if let reason = suggestionBlockReason { message = reason; return false }
         let client: any LLMProvider
         do {
             client = try summaryProvider
-                ?? (askUsesCloud ? ai.client(for: .deep) : (onDeviceProviderOverride ?? AppleIntelligenceProvider()))
+                ?? (askUsesCloud ? ai.client(for: .quick) : (onDeviceProviderOverride ?? AppleIntelligenceProvider()))
         } catch {
             message = "Could not ask: \(MobileAISettings.errorMessage(error))"
             return false
         }
         message = nil
-        suggestedAsk.start(question: prompt, request: Self.askRequest(source: summarySource, prompt: prompt),
+        let (request, grounding) = askRequest(prompt)
+        suggestedAsk.start(question: prompt, request: request, grounding: grounding,
                            client: client) { [weak self] in self?.quickReader.useSuggestion(prompt) }
         return true
     }
 
     private var askUsesCloud: Bool { summaryProvider != nil || ai.provider != .apple }
 
-    /// The Deep model's instructions over the fenced transcript, then the tapped request.
-    static func askRequest(source: String, prompt: String) -> LLMRequest {
-        LLMRequest(system: MobileSummaryMode.deep.instructions, messages: [ChatMessage(role: "user",
-            content: PromptData.block("transcript", source) + "\n\n" + PromptBuilder.askInstruction(prompt))])
+    /// The copilot's answer prompt over the notes and the speech that fits the provider (fenced as
+    /// data), then the tapped request; plus the card's line saying which part of the conversation was read.
+    func askRequest(_ prompt: String) -> (LLMRequest, String?) {
+        let system = Self.askSystem
+        let instruction = "\n\n" + PromptBuilder.askInstruction(prompt) + " Answer briefly."
+        let window: Int? = askUsesCloud ? nil : PromptBudget.appleIntelligenceCharacters
+        let excerpt = OnDemandGrounding.excerpt(
+            notes: notes, segments: allSegments.map(Self.promptSegment), summary: summary,
+            summaryCoveredIDs: answerNotices.summaryCoverage(showing: summary),
+            budget: OnDemandGrounding.oneShotBudget(window: window, system: system) - instruction.count)
+        let request = LLMRequest(system: system,
+                                 messages: [ChatMessage(role: "user", content: excerpt.userMessage + instruction)])
+        return (request, excerpt.notice(summaryName: "your Summary"))
+    }
+
+    /// The macOS Quick copilot prompt with the data-not-instructions notice, so a chip is answered the
+    /// way a fixed Quick action is.
+    static var askSystem: String {
+        PromptBuilder.systemWithDirectives(PromptBuilder.systemPrompt, PromptContext(messages: [], notes: nil))
     }
 
     /// Reads a manual Quick Summary answer into the pane's text and offers the suggestions it carries:
     /// the JSON decision's `suggestions` for Ollama, OpenAI-compatible and cloud models, or the strict
-    /// "Suggested:" block for Apple Intelligence's prose. Anything unparseable means no chips, and
+    /// final "Suggested:" block for Apple Intelligence's prose. Anything unparseable means no chips, and
     /// chips from a refresh that started before a provider or model change are dropped by the reader.
-    func manualQuickSummary(_ response: String, prose: Bool) throws -> String {
-        guard !prose else {
-            quickReader.offerSuggestions(SuggestedPrompts.splitProse(response).suggestions)
-            return MobileQuickContext.proseSummary(response) ?? "No key takeaway yet."
-        }
-        let decision = try QuickSummaryDecision.parse(response)
-        quickReader.offerSuggestions(decision.suggestions)
-        return decision.summary ?? "No key takeaway yet."
+    func offerManualQuickSuggestions(_ response: String, prose: Bool) {
+        let suggestions = prose ? SuggestedPrompts.splitProse(response).suggestions
+            : ((try? QuickSummaryDecision.parse(response))?.suggestions ?? [])
+        quickReader.offerSuggestions(suggestions)
     }
 
     /// A new or reopened conversation: no chips, no used-chip memory and no open ask.

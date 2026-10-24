@@ -4,9 +4,14 @@ import Foundation
 /// `qwen3`) emit reasoning deltas before — sometimes instead of — the answer. They are carried
 /// separately so a pane can show "Thinking…" instead of staying blank for a minute, and so the
 /// reasoning is never persisted into the answer text (issue #137).
+///
+/// `outputLimitReached` is the stream-end signal of issue #215: when a server stops because the
+/// answer hit its output-token cap, the provider yields it once, after the last delta, and then
+/// finishes normally. The text so far is a partial answer; keep it and show `LLMOutputLimit.notice`.
 public enum LLMStreamEvent: Sendable, Equatable {
     case content(String)
     case thinking(String)
+    case outputLimitReached
 }
 
 /// A streaming chat model. Implementations yield token/text deltas as they arrive.

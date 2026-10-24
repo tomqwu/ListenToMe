@@ -67,11 +67,12 @@ final class MobileSuggestedPromptsTests: XCTestCase {
     }
 
     /// Review finding: a chip answer used to replace Deep Summary, its saved text and Auto's Deep
-    /// review state. It is now a separate ask.
-    func testATapIsASeparateAskThatLeavesDeepSummaryAndReviewStateAlone() async throws {
+    /// review state. It is now a separate ask, answered in the Ask card under Quick (#235 removes Deep).
+    func testATapIsASeparateAskThatLeavesEverySummaryAndReviewStateAlone() async throws {
         let stub = SuggestionStub(response: "Nobody owns it yet.")
         let session = MobileSession(storageDirectory: root, summaryProvider: stub)
         session.notes = "Who owns the Thursday review?"
+        session.quickSummary = "- Review on Thursday."
         session.deepThought = "Existing Deep analysis."
         session.save(announce: false)
         session.quickReader.offerSuggestions(["Who owns the Thursday review?", "Draft a reminder"])
@@ -82,17 +83,20 @@ final class MobileSuggestedPromptsTests: XCTestCase {
         await session.suggestedAsk.waitForAnswer()
 
         let request = try XCTUnwrap(stub.requests.last)
-        XCTAssertEqual(request.system, MobileSummaryMode.deep.instructions)
+        XCTAssertEqual(request.system, MobileSession.askSystem)
+        XCTAssertEqual(request.purpose, .chat)
         let user = request.messages.last?.content ?? ""
-        XCTAssertTrue(user.hasPrefix(PromptData.block("transcript", session.summarySource)))
-        XCTAssertTrue(user.hasSuffix(PromptBuilder.askInstruction("Who owns the Thursday review?")))
+        XCTAssertTrue(user.hasPrefix("<transcript>\nNotes: Who owns the Thursday review?"), user)
+        XCTAssertTrue(user.hasSuffix(PromptBuilder.askInstruction("Who owns the Thursday review?") + " Answer briefly."))
         XCTAssertEqual(session.suggestedAsk.question, "Who owns the Thursday review?")
         XCTAssertEqual(session.suggestedAsk.answer, "Nobody owns it yet.")
         XCTAssertEqual(session.suggestedPrompts, ["Draft a reminder"])
+        XCTAssertEqual(session.quickSummary, "- Review on Thursday.")
         XCTAssertEqual(session.deepThought, "Existing Deep analysis.")
-        XCTAssertFalse(session.quickReader.reviewsCompleted.contains("deep"), "Not counted as a Deep review")
-        XCTAssertEqual(MobileSession(storageDirectory: root).deepThought, "Existing Deep analysis.",
-                       "The saved Deep analysis is untouched")
+        XCTAssertTrue(session.quickReader.reviewsCompleted.isEmpty, "Not counted as any review")
+        let saved = MobileSession(storageDirectory: root)
+        XCTAssertEqual(saved.deepThought, "Existing Deep analysis.", "The saved conversation is untouched")
+        XCTAssertEqual(saved.quickSummary, "- Review on Thursday.")
 
         session.newConversation()
         XCTAssertNil(session.suggestedAsk.question, "A new conversation closes the ask")
@@ -109,9 +113,10 @@ final class MobileSuggestedPromptsTests: XCTestCase {
         XCTAssertEqual(session.suggestedPrompts, ["Draft a reminder"], "Tap it again to retry")
     }
 
-    /// Review finding: the chip used to be used up before the size limit refused the request.
-    func testATapOverTheProviderLimitSendsNothingAndKeepsTheChip() {
-        let onDevice = SuggestionStub(response: "unused")
+    /// Review finding: the chip used to be used up before a size limit refused the request. A long
+    /// conversation is now answered from what fits, like every on-demand answer (#114).
+    func testALongConversationIsAnsweredFromWhatFitsTheAppleWindow() async throws {
+        let onDevice = SuggestionStub(response: "Draft: see you Thursday.")
         let session = MobileSession(storageDirectory: root)
         session.onDeviceProviderOverride = onDevice
         let original = session.ai.provider
@@ -119,12 +124,14 @@ final class MobileSuggestedPromptsTests: XCTestCase {
         session.ai.provider = .apple
         session.notes = String(repeating: "Pricing is open. ", count: 600)
         session.quickReader.offerSuggestions(["Draft a reminder"])
-        XCTAssertNil(session.suggestionBlockReason, "Chips stay tappable; the limit is checked per request")
-        XCTAssertFalse(session.askSuggested("Draft a reminder"))
-        XCTAssertEqual(session.suggestedPrompts, ["Draft a reminder"])
-        XCTAssertTrue(session.message?.contains("summary limit") ?? false, session.message ?? "")
-        XCTAssertTrue(onDevice.requests.isEmpty)
-        XCTAssertNil(session.suggestedAsk.question)
+        XCTAssertTrue(session.askSuggested("Draft a reminder"))
+        await session.suggestedAsk.waitForAnswer()
+        let request = try XCTUnwrap(onDevice.requests.last)
+        let size = request.system.count + request.messages.reduce(0) { $0 + $1.content.count }
+        XCTAssertLessThanOrEqual(size, PromptBudget.appleIntelligenceCharacters)
+        XCTAssertTrue(request.messages.last?.content.hasSuffix(" Answer briefly.") ?? false)
+        XCTAssertTrue(session.suggestedPrompts.isEmpty)
+        XCTAssertEqual(session.suggestedAsk.answer, "Draft: see you Thursday.")
     }
 
     func testABlockedTapSendsNothingAndKeepsTheChip() {
