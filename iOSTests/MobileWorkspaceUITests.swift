@@ -101,6 +101,42 @@ final class MobileWorkspaceUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["output-quick"].label.contains("Next steps"), "the answer survives rotation")
     }
 
+    func testDuoPaneWidthsAndCompactTranscriptActions() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--transcript-scroll-fixture", "--two-pane-layout-fixture",
+                               "-mobileCorrectTranscript", "NO", "-autoQuickSummary", "NO"]
+        XCUIDevice.shared.orientation = .landscapeLeft
+        defer { XCUIDevice.shared.orientation = .portrait }
+        app.launchPastReleaseNotes()
+        let transcript = app.otherElements["transcriptPanel"]
+        let quick = app.otherElements["summary-panel-quick"]
+        XCTAssertTrue(app.buttons["duoPaneWidths"].waitForExistence(timeout: 10))
+        app.buttons["duoPaneWidths"].tap()
+        app.buttons["More transcript"].tap()
+        XCTAssertGreaterThan(transcript.frame.width, quick.frame.width)
+        capture(app, "Duo with more transcript space")
+        app.buttons["duoPaneWidths"].tap()
+        app.buttons["More Quick Summary"].tap()
+        XCTAssertGreaterThan(quick.frame.width, transcript.frame.width)
+        XCTAssertTrue(app.buttons["Expand transcript"].isHittable)
+        app.buttons["duoTranscriptActions"].tap()
+        XCTAssertTrue(app.buttons["Select lines"].isHittable)
+        app.buttons["Select lines"].tap()
+        XCTAssertTrue(app.navigationBars["Transcript"].waitForExistence(timeout: 5))
+        app.buttons["Done"].tap()
+        XCUIDevice.shared.orientation = .portrait
+        XCUIDevice.shared.orientation = .landscapeLeft
+        XCTAssertTrue(app.buttons["duoPaneWidths"].waitForExistence(timeout: 5))
+        XCTAssertGreaterThan(quick.frame.width, transcript.frame.width)
+        capture(app, "Duo with more Quick Summary space")
+        app.terminate()
+        app.launchPastReleaseNotes()
+        XCTAssertTrue(app.buttons["duoPaneWidths"].waitForExistence(timeout: 10))
+        XCTAssertGreaterThan(quick.frame.width, transcript.frame.width, "the choice survives relaunch")
+        app.buttons["duoPaneWidths"].tap()
+        app.buttons["Equal widths"].tap()
+    }
+
     private func capture(_ app: XCUIApplication, _ name: String) {
         let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot()); shot.name = name; shot.lifetime = .keepAlways; add(shot)
     }

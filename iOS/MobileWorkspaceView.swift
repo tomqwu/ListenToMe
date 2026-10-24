@@ -11,6 +11,7 @@ struct MobileWorkspaceView<Header: View>: View {
     @Binding var selection: MobileWorkspace
     let chooseModel: (MobileSummaryMode) -> Void
     let accessibilityHeader: () -> Header
+    @AppStorage("mobileDuoPaneBalance") private var paneBalance = MeetingPaneBalance.balanced.rawValue
     @State private var showQuickStatus = false
     @State private var showTranscript = false
     @State private var showSpeechSettings = false
@@ -34,15 +35,20 @@ struct MobileWorkspaceView<Header: View>: View {
                 }.accessibilityElement(children: .contain).accessibilityIdentifier("wideMeetingWorkspace")
             } else {
                 VStack(spacing: 14) {
-                    Picker("Workspace", selection: $selection) {
-                        ForEach(MobileWorkspace.allCases, id: \.self) { page in
-                            Text(page.rawValue).tag(page)
-                        }
-                    }.pickerStyle(.segmented).accessibilityIdentifier("workspaceTabs")
+                    HStack(spacing: 8) {
+                        Picker("Workspace", selection: $selection) {
+                            ForEach(MobileWorkspace.allCases, id: \.self) { page in
+                                Text(page.rawValue).tag(page)
+                            }
+                        }.pickerStyle(.segmented).accessibilityIdentifier("workspaceTabs")
+                        if layout == .twoPane, selection == .live { paneBalanceMenu }
+                    }
                     if layout == .twoPane {
                         if selection == .live {
                             HStack(alignment: .top, spacing: 12) {
                                 transcriptPanel(compact: true)
+                                    .frame(width: (MeetingPaneBalance(rawValue: paneBalance) ?? .balanced)
+                                        .transcriptWidth(available: geometry.size.width - 12))
                                 summaryPanel(.quick, compact: true)
                             }.accessibilityElement(children: .contain).accessibilityIdentifier("twoPaneMeetingWorkspace")
                         } else {
@@ -99,6 +105,18 @@ struct MobileWorkspaceView<Header: View>: View {
         }
     }
 
+    private var paneBalanceMenu: some View {
+        Menu {
+            Picker("Duo pane widths", selection: $paneBalance) {
+                Text("Equal widths").tag(MeetingPaneBalance.balanced.rawValue)
+                Text("More transcript").tag(MeetingPaneBalance.transcript.rawValue)
+                Text("More Quick Summary").tag(MeetingPaneBalance.quick.rawValue)
+            }
+        } label: {
+            Image(systemName: "rectangle.split.2x1").frame(minWidth: 44, minHeight: 44)
+        }.accessibilityLabel("Duo pane widths").accessibilityIdentifier("duoPaneWidths")
+    }
+
     private func livePanels(height: CGFloat) -> some View {
         VStack(spacing: 16) {
             transcriptPanel().frame(height: min(260, max(160, (height - 16) * 0.34)))
@@ -115,19 +133,25 @@ struct MobileWorkspaceView<Header: View>: View {
                 if session.state == .recording {
                     Circle().fill(.red).frame(width: 6, height: 6).accessibilityLabel("Recording")
                 }
-                if session.segments.contains(where: \.isFinal) {
+                if !compact, session.segments.contains(where: \.isFinal) {
                     // Selecting happens in the full-height transcript, where the selection bar fits (#234).
                     Button("Select lines", systemImage: "checklist") { selectingTranscript = true; showTranscript = true }
                         .labelStyle(.iconOnly).buttonStyle(.plain).foregroundStyle(MobileStyle.muted)
                         .frame(minWidth: 44, minHeight: 44).accessibilityIdentifier("selectTranscriptLines")
                 }
                 if compact {
-                    Button("Speech correction settings", systemImage: "sparkles") { showSpeechSettings = true }
-                        .labelStyle(.iconOnly).buttonStyle(.plain).foregroundStyle(MobileStyle.accent)
-                        .frame(minWidth: 44, minHeight: 44)
-                        .accessibilityIdentifier("speechCorrectionSettings")
-                }
-                if session.canPlaySavedAudio {
+                    Menu {
+                        if session.segments.contains(where: \.isFinal) {
+                            Button("Select lines", systemImage: "checklist") { selectingTranscript = true; showTranscript = true }
+                        }
+                        Button("Speech correction settings", systemImage: "sparkles") { showSpeechSettings = true }
+                        if session.canPlaySavedAudio {
+                            Button("Play recording", systemImage: "play.circle") { showTranscript = true }
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle").frame(minWidth: 44, minHeight: 44)
+                    }.accessibilityLabel("Transcript actions").accessibilityIdentifier("duoTranscriptActions")
+                } else if session.canPlaySavedAudio {
                     Button("Play recording", systemImage: "play.circle") { showTranscript = true }
                         .labelStyle(.iconOnly).buttonStyle(.plain).foregroundStyle(MobileStyle.accent)
                         .frame(minWidth: 44, minHeight: 44).accessibilityIdentifier("playSavedAudio")
