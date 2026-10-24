@@ -15,10 +15,12 @@ extension MobileSession {
     /// Session context for a manual Summary or Quick request: the domain, a glossary favoring
     /// terms heard recently, and (Summary only) the domain's headings. The on-device Apple model gets a
     /// smaller share, which `summarize` also charges against its transcript cap.
-    func vocabularyGuidance(for mode: MobileSummaryMode, cloud: Bool) -> String? {
+    /// `heard` ranks the glossary by other text than the latest conversation, such as the lines a
+    /// selection summary sends (#234).
+    func vocabularyGuidance(for mode: MobileSummaryMode, cloud: Bool, heard: String? = nil) -> String? {
         let window = cloud ? nil : PromptBudget.appleIntelligenceCharacters
         return VocabularyPrompt.guidance(
-            for: activeVocabulary, transcript: String(summarySource.suffix(4_000)),
+            for: activeVocabulary, transcript: String((heard ?? summarySource).suffix(4_000)),
             characterLimit: VocabularyPrompt.characterLimit(forPromptWindow: window), includeLayout: mode == .summary)
     }
 

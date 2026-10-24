@@ -1,31 +1,31 @@
 import SwiftUI
 import ListenToMeCore
 
-/// Touch-and-hold actions on a final transcript line (issue #234).
+/// Touch-and-hold (and VoiceOver) actions on a final transcript line (issue #234).
 struct MobileTranscriptLineActions {
     let summarizeFrom: (UUID) -> Void
     let selectFrom: (UUID) -> Void
-}
-
-/// A request to summarize these lines, shown as a sheet.
-struct MobileSelectionRequest: Identifiable {
-    let id = UUID()
-    let lines: [TranscriptSegment]
+    /// Why Summarize from here cannot run for that line, shown under the disabled menu item.
+    let summarizeBlockReason: (UUID) -> String?
 }
 
 /// The transcript reader with Select mode (issue #234): tap lines to toggle them, drag down the
 /// circles to extend a range, or touch and hold a line for Summarize from here / Select from here.
 /// The Live panel shows lines only (`selectable: false`) and hands selecting to the full-height
 /// transcript, where the selection bar has room; both share one selection.
+///
+/// The summary sheet is not presented from here: a view that hosts it is replaced whenever the
+/// workspace switches layout (rotation, Dynamic Type), which would close the sheet mid-answer. The
+/// owner presents `request` from a view that survives those changes.
 struct MobileSelectableTranscript: View {
     let session: MobileSession
     @Binding var selection: TranscriptSelection
     @Binding var selecting: Bool
+    @Binding var request: MobileSelectionRequest?
     var scrollIdentifier = "transcriptScroll"
     /// Select mode and its bar are shown here; otherwise `startSelecting` opens the view that has them.
     var selectable = true
     var startSelecting: () -> Void = {}
-    @State private var request: MobileSelectionRequest?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -33,13 +33,13 @@ struct MobileSelectableTranscript: View {
                                    restoreOriginal: session.restoreSpeech, showsSpeakers: session.hasSpeakerLabels,
                                    selection: $selection, selecting: selectable && selecting,
                                    lineActions: MobileTranscriptLineActions(summarizeFrom: { id in
-                                       var from = TranscriptSelection()
-                                       from.selectFrom(id, in: session.allSegments)
-                                       request = MobileSelectionRequest(lines: from.selected(in: session.allSegments))
+                                       request = MobileSelectionRequest(lines: Self.fromHere(id, in: session.allSegments))
                                    }, selectFrom: { id in
                                        selection.selectFrom(id, in: session.allSegments)
                                        selecting = true
                                        startSelecting()
+                                   }, summarizeBlockReason: { id in
+                                       session.selectionSummaryBlockReason(Self.fromHere(id, in: session.allSegments))
                                    }), addTerm: session.addToMyTerms)
             if selectable && selecting {
                 MobileSelectionBar(session: session, selected: selection.selected(in: session.allSegments),
@@ -48,9 +48,14 @@ struct MobileSelectableTranscript: View {
                                    }, done: { selecting = false; selection.clear() })
             }
         }
-        .sheet(item: $request) { request in
-            MobileSelectionSummarySheet(session: session, selected: request.lines)
-                .presentationDetents([.medium, .large])
-        }
+        // A language Undo or re-transcription replaces lines; what is gone leaves the selection.
+        .onChange(of: session.allSegments.map(\.id)) { selection.prune(keeping: session.allSegments) }
+    }
+
+    /// The final lines from `id` through the latest.
+    static func fromHere(_ id: UUID, in segments: [TranscriptSegment]) -> [TranscriptSegment] {
+        var from = TranscriptSelection()
+        from.selectFrom(id, in: segments)
+        return from.selected(in: segments)
     }
 }

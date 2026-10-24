@@ -134,8 +134,11 @@ final class MobileSelectionSummaryTests: XCTestCase {
         session.segments = lines()
         session.isSummarizing = true
         XCTAssertNotNil(session.selectionSummaryBlockReason(session.segments))
-        session.requestSelectionSummary(session.segments)
-        XCTAssertEqual(session.selectionRun.error, session.selectionSummaryBlockReason(session.segments))
+        let request = MobileSelectionRequest(lines: session.segments)
+        session.prepareSelectionSummary(request)
+        session.startSelectionSummary(request)
+        XCTAssertEqual(session.selectionRun.phase, .blocked)
+        XCTAssertEqual(session.selectionRun.message, session.selectionSummaryBlockReason(session.segments))
         session.isSummarizing = false
         XCTAssertTrue(provider.requests.isEmpty)
     }
@@ -158,7 +161,125 @@ final class MobileSelectionSummaryTests: XCTestCase {
         let session = onDeviceSession(provider)
         session.segments = lines()
         await session.summarizeSelection([session.segments[1]])
-        XCTAssertTrue(session.selectionRun.error?.hasPrefix("Selection summary failed:") == true)
+        XCTAssertEqual(session.selectionRun.phase, .failed)
+        XCTAssertTrue(session.selectionRun.message?.hasPrefix("Selection summary failed:") == true)
         XCTAssertTrue(session.selectionSummaries.isEmpty)
+        XCTAssertFalse(session.isSummarizing)
+    }
+
+    // MARK: PR #244 review
+
+    /// Review 2: with any provider that is not on this device, opening the sheet only prepares the
+    /// request; nothing is sent until the user taps Summarize. On this device it starts at once.
+    func testAServerProviderSendsOnlyAfterTheTap() async throws {
+        let provider = SelectionProvider([.content("- Ship Friday.")])
+        let session = MobileSession(storageDirectory: root, summaryProvider: provider)
+        session.segments = lines()
+        XCTAssertFalse(session.selectionSummaryStaysOnDevice)
+        let request = MobileSelectionRequest(lines: [session.segments[1]])
+        session.prepareSelectionSummary(request)
+        XCTAssertEqual(session.selectionRun.phase, .ready)
+        try await Task.sleep(for: .milliseconds(50))
+        XCTAssertTrue(provider.requests.isEmpty, "Nothing leaves before Summarize is tapped")
+        session.startSelectionSummary(request)
+        await session.selectionRun.task?.value
+        XCTAssertEqual(provider.requests.count, 1)
+        XCTAssertEqual(session.selectionRun.phase, .finished)
+
+        let onDevice = SelectionProvider([.content("- Local.")])
+        let local = onDeviceSession(onDevice)
+        local.segments = lines()
+        XCTAssertTrue(local.selectionSummaryStaysOnDevice)
+        local.prepareSelectionSummary(MobileSelectionRequest(lines: [local.segments[1]]))
+        XCTAssertEqual(local.selectionRun.phase, .running, "Apple Intelligence starts without a second tap")
+        await local.selectionRun.task?.value
+        XCTAssertEqual(onDevice.requests.count, 1)
+    }
+
+    /// Review 3: a new request never shows the text of an earlier one, and the run says which request
+    /// and conversation its state belongs to.
+    func testPreparingANewRequestClearsTheEarlierAnswer() async throws {
+        let provider = SelectionProvider([.content("- First answer.")])
+        let session = onDeviceSession(provider)
+        session.segments = lines()
+        await session.summarizeSelection([session.segments[1]])
+        XCTAssertEqual(session.selectionRun.text, "- First answer.")
+        let blocked = MobileSelectionRequest(lines: [])
+        session.prepareSelectionSummary(blocked)
+        XCTAssertEqual(session.selectionRun.phase, .blocked)
+        XCTAssertEqual(session.selectionRun.text, "", "A blocked request shows no earlier text")
+        XCTAssertNil(session.selectionRun.result)
+        XCTAssertTrue(session.selectionRun.matches(blocked.id, conversation: session.id))
+        let other = MobileSelectionRequest(lines: [session.segments[2]])
+        XCTAssertFalse(session.selectionRun.matches(other.id, conversation: session.id))
+        XCTAssertFalse(session.selectionRun.matches(blocked.id, conversation: "another-conversation"))
+    }
+
+    /// Review 5: Cancel stops the run, says "Cancelled." rather than a failure, frees the session, and the
+    /// old task can never finish into the next run.
+    func testACancelledRunCannotOverwriteTheNextOne() async throws {
+        let held = HeldSelectionProvider()
+        let session = onDeviceSession(SelectionProvider([]))
+        session.onDeviceProviderOverride = held
+        session.segments = lines()
+        let first = MobileSelectionRequest(lines: [session.segments[1]])
+        session.prepareSelectionSummary(first)
+        try await waitUntil { await held.started == 1 }
+        XCTAssertTrue(session.isSummarizing, "A selection summary holds the session like any other request")
+        XCTAssertNotNil(session.summaryBlockReason(for: .summary), "Summary waits for it")
+        session.cancelSelectionSummary()
+        XCTAssertEqual(session.selectionRun.phase, .cancelled)
+        XCTAssertEqual(session.selectionRun.message, "Cancelled.")
+        XCTAssertFalse(session.isSummarizing)
+
+        session.onDeviceProviderOverride = SelectionProvider([.content("- Second answer.")])
+        let second = MobileSelectionRequest(lines: [session.segments[2]])
+        session.prepareSelectionSummary(second)
+        await session.selectionRun.task?.value
+        await held.release("- Stale answer.")
+        try await Task.sleep(for: .milliseconds(100))
+        XCTAssertEqual(session.selectionRun.phase, .finished)
+        XCTAssertEqual(session.selectionRun.text, "- Second answer.")
+        XCTAssertEqual(session.selectionSummaries.map(\.text), ["- Second answer."], "The stale run saves nothing")
+        XCTAssertFalse(session.isSummarizing)
+    }
+
+    /// Review note: a manual Summary blocks a selection summary, and the reverse (above), symmetrically;
+    /// the main Cancel summary also stops a selection summary.
+    func testCancelSummaryAlsoStopsASelectionSummary() async throws {
+        let held = HeldSelectionProvider()
+        let session = onDeviceSession(SelectionProvider([]))
+        session.onDeviceProviderOverride = held
+        session.segments = lines()
+        session.prepareSelectionSummary(MobileSelectionRequest(lines: [session.segments[1]]))
+        try await waitUntil { await held.started == 1 }
+        session.cancelSummary()
+        XCTAssertEqual(session.selectionRun.phase, .cancelled)
+        XCTAssertFalse(session.isSummarizing)
+        await held.release("- Late.")
+    }
+
+    private func waitUntil(timeout: Duration = .seconds(5), _ predicate: () async -> Bool) async throws {
+        let deadline = ContinuousClock.now + timeout
+        while !(await predicate()), ContinuousClock.now < deadline { try await Task.sleep(for: .milliseconds(20)) }
+        let satisfied = await predicate()
+        XCTAssertTrue(satisfied)
+    }
+}
+
+/// Holds its answer until `release`, so a test can cancel a run that is still streaming.
+private actor HeldSelectionProvider: LLMProvider {
+    nonisolated let id = "held-selection-test"
+    private(set) var started = 0
+    private var continuations: [AsyncThrowingStream<String, Error>.Continuation] = []
+    func release(_ text: String) {
+        for continuation in continuations { continuation.yield(text); continuation.finish() }
+        continuations = []
+    }
+    private func hold(_ continuation: AsyncThrowingStream<String, Error>.Continuation) {
+        started += 1; continuations.append(continuation)
+    }
+    nonisolated func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
+        AsyncThrowingStream { continuation in Task { await self.hold(continuation) } }
     }
 }

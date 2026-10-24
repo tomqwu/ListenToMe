@@ -16,6 +16,10 @@ struct MobileWorkspaceView<Header: View>: View {
     @State private var showSpeechSettings = false
     @State private var transcriptSelection = TranscriptSelection()   // Select mode (#234)
     @State private var selectingTranscript = false
+    /// Selection summaries asked for from the Live panel and from the expanded transcript. Each is
+    /// presented from a view that survives layout changes (the panel itself is rebuilt on rotation).
+    @State private var panelRequest: MobileSelectionRequest?
+    @State private var expandedRequest: MobileSelectionRequest?
     @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(\.verticalSizeClass) private var verticalSize
     private var stacked: Bool { typeSize.isAccessibilitySize || verticalSize == .compact }
@@ -54,7 +58,8 @@ struct MobileWorkspaceView<Header: View>: View {
         .sheet(isPresented: $showTranscript) {
             NavigationStack {
                 MobileSelectableTranscript(session: session, selection: $transcriptSelection,
-                                           selecting: $selectingTranscript, scrollIdentifier: "expandedTranscriptScroll")
+                                           selecting: $selectingTranscript, request: $expandedRequest,
+                                           scrollIdentifier: "expandedTranscriptScroll")
                     .id(session.id)
                     .navigationTitle("Transcript").navigationBarTitleDisplayMode(.inline)
                     .toolbar {
@@ -65,6 +70,12 @@ struct MobileWorkspaceView<Header: View>: View {
                         Button("Done") { showTranscript = false }
                     }
             }
+            .sheet(item: $expandedRequest) { request in
+                MobileSelectionSummarySheet(session: session, request: request).presentationDetents([.medium, .large])
+            }
+        }
+        .sheet(item: $panelRequest) { request in
+            MobileSelectionSummarySheet(session: session, request: request).presentationDetents([.medium, .large])
         }
         .onChange(of: showTranscript) { _, shown in if !shown { selectingTranscript = false; transcriptSelection.clear() } }
         .onChange(of: session.id) { selectingTranscript = false; transcriptSelection.clear() }
@@ -130,7 +141,7 @@ struct MobileWorkspaceView<Header: View>: View {
                     .accessibilityIdentifier("latestTranscriptPreview")
             } else {
                 MobileSelectableTranscript(session: session, selection: $transcriptSelection,
-                                           selecting: $selectingTranscript, selectable: false,
+                                           selecting: $selectingTranscript, request: $panelRequest, selectable: false,
                                            startSelecting: { showTranscript = true }).id(session.id)
             }
         }.frame(maxWidth: .infinity, maxHeight: stacked ? nil : .infinity, alignment: .topLeading)

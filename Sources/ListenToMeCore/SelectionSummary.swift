@@ -38,6 +38,12 @@ public struct SelectionSummary: Codable, Sendable, Equatable, Identifiable {
         guard !list.isEmpty else { return nil }
         return list.map { "### \($0.span)\n\n\($0.text)" }.joined(separator: "\n\n")
     }
+
+    /// The plain-text export's section: the span on its own line, then the summary, one blank line apart.
+    public static func plainText(_ list: [SelectionSummary]) -> String? {
+        guard !list.isEmpty else { return nil }
+        return list.map { "\($0.span)\n\($0.text)" }.joined(separator: "\n\n")
+    }
 }
 
 /// Builds the prompt for a selection summary: the selected lines with their timestamps and speaker

@@ -90,6 +90,12 @@ final class MobileSelectionSummaryUITests: XCTestCase {
         app.buttons["summarizeSelection"].tap()
         XCTAssertTrue(app.staticTexts["selectionSummaryDestination"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["selectionSummaryDestination"].label.hasPrefix("Sends the selected lines to "))
+        // Review 2: a server provider waits for the tap; the destination is on screen first.
+        let send = app.buttons["startSelectionSummary"]
+        XCTAssertTrue(send.waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["selectionSummaryText"].exists, "Nothing is sent before Summarize")
+        capture(app, "Server provider: destination shown before Summarize")
+        send.tap()
         wait(app.staticTexts["selectionSummaryText"], contains: "Summary of 3 selected lines")
         app.buttons["closeSelectionSummary"].tap()
     }
@@ -101,12 +107,64 @@ final class MobileSelectionSummaryUITests: XCTestCase {
         XCTAssertFalse(app.buttons["summarizeSelection"].isEnabled)
         XCTAssertTrue(app.staticTexts["selectionBlockReason"].exists)
         capture(app, "Summarize selection unavailable, with the reason")
+        app.buttons["endSelection"].tap()
+        // Review 2: the touch-and-hold item is disabled too, with the reason under it.
+        let text = app.scrollViews["expandedTranscriptScroll"].staticTexts.matching(NSPredicate(
+            format: "identifier BEGINSWITH %@ AND label CONTAINS %@", "transcript-text-", "We ship the beta")).firstMatch
+        XCTAssertTrue(text.waitForExistence(timeout: 5))
+        text.press(forDuration: 1.2)
+        let item = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Summarize from here")).firstMatch
+        XCTAssertTrue(item.waitForExistence(timeout: 5))
+        XCTAssertFalse(item.isEnabled)
+        XCTAssertTrue(app.buttons["Select from here"].isEnabled)
+        capture(app, "Summarize from here disabled, with the reason")
     }
 
-    private func wait(_ element: XCUIElement, contains text: String) {
+    /// Review 3 and 5: Cancel says "Cancelled." (not a failure); the next sheet never shows the earlier
+    /// answer. The slow fixture holds each answer for two seconds.
+    func testCancelAndANewSheetStartClean() {
+        let app = launch(["--selection-slow"])
+        app.buttons["selectTranscriptLines"].tap()
+        line("We ship the beta", in: app).tap()
+        app.buttons["summarizeSelection"].tap()
+        let cancel = app.buttons["cancelSelectionSummary"]
+        XCTAssertTrue(cancel.waitForExistence(timeout: 5))
+        cancel.tap()
+        XCTAssertTrue(app.staticTexts["selectionSummaryCancelled"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["selectionSummaryCancelled"].label, "Cancelled.")
+        XCTAssertFalse(app.staticTexts["selectionSummaryError"].exists)
+        app.buttons["restartSelectionSummary"].tap()
+        wait(app.staticTexts["selectionSummaryText"], contains: "Summary of 1 selected line.", timeout: 15)
+        app.buttons["closeSelectionSummary"].tap()
+        line("QA signs off", in: app).tap()
+        app.buttons["summarizeSelection"].tap()
+        XCTAssertTrue(app.buttons["cancelSelectionSummary"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["selectionSummaryText"].exists, "The earlier answer is not shown")
+        wait(app.staticTexts["selectionSummaryText"], contains: "Summary of 2 selected lines", timeout: 15)
+        app.buttons["closeSelectionSummary"].tap()
+    }
+
+    /// Review 4: the Live panel's sheet stays open when the layout changes mid-answer.
+    func testThePanelSheetSurvivesRotation() {
+        let app = launch(["--selection-slow"])
+        defer { XCUIDevice.shared.orientation = .portrait }
+        let text = app.staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label CONTAINS %@",
+                                                        "transcript-text-", "Marketing waits")).firstMatch
+        XCTAssertTrue(text.waitForExistence(timeout: 5))
+        text.press(forDuration: 1.2)
+        XCTAssertTrue(app.buttons["Summarize from here"].waitForExistence(timeout: 5))
+        app.buttons["Summarize from here"].tap()
+        XCTAssertTrue(app.buttons["cancelSelectionSummary"].waitForExistence(timeout: 5))
+        XCUIDevice.shared.orientation = .landscapeLeft
+        wait(app.staticTexts["selectionSummaryText"], contains: "Summary of 1 selected line.", timeout: 15)
+        XCTAssertTrue(app.buttons["closeSelectionSummary"].exists, "The sheet is still open after rotating")
+        app.buttons["closeSelectionSummary"].tap()
+    }
+
+    private func wait(_ element: XCUIElement, contains text: String, timeout: TimeInterval = 10) {
         let predicate = NSPredicate(format: "label CONTAINS %@", text)
         XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: predicate, object: element)],
-                                      timeout: 10), .completed, element.label)
+                                      timeout: timeout), .completed, element.label)
     }
 
     private func capture(_ app: XCUIApplication, _ name: String) {

@@ -33,6 +33,24 @@ final class SelectionSummaryExportTests: XCTestCase {
         XCTAssertFalse(SessionExporter.markdown(for: record(nil)).contains("Selection summaries"))
     }
 
+    /// The `.txt` export carries them too, as plain text after the other summaries.
+    func testPlainTextListsThemAfterTheOtherSummaries() throws {
+        let text = SessionExporter.plainText(for: record(summaries))
+        XCTAssertTrue(text.contains("""
+        Selection summaries
+        1:02–1:15 · 2 lines
+        - Ship Friday; QA Thursday.
+
+        0:00–0:04 · 1 line
+        - Greetings.
+        """), text)
+        XCTAssertFalse(text.contains("###"), "No Markdown headings in plain text")
+        XCTAssertLessThan(try XCTUnwrap(text.range(of: "Recap")).lowerBound,
+                          try XCTUnwrap(text.range(of: "Selection summaries")).lowerBound)
+        XCTAssertFalse(SessionExporter.plainText(for: record(nil)).contains("Selection summaries"))
+        XCTAssertTrue(SessionExporter.export(record(summaries), as: .plainText).contains("Selection summaries"))
+    }
+
     func testJSONCarriesThemAndAnEmptyArrayOtherwise() throws {
         let json = SessionExporter.json(for: record(summaries))
         let object = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any])

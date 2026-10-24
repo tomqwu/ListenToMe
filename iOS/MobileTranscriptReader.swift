@@ -134,20 +134,35 @@ struct MobileTranscriptReader: View {
             .accessibilityAddTraits(chosen ? .isSelected : [])
             .accessibilityIdentifier("select-line-\(segment.id)")
         } else {
-            lineContent(segment, selectable: lineActions == nil)
-                .contextMenu {
-                    if segment.isFinal, !selecting {
-                        if let lineActions {
-                            Button("Summarize from here", systemImage: "text.badge.star") { lineActions.summarizeFrom(segment.id) }
-                            Button("Select from here", systemImage: "checklist") { lineActions.selectFrom(segment.id) }
-                            Button("Copy", systemImage: "doc.on.doc") { UIPasteboard.general.string = segment.text }
-                        }
-                        if addTerm != nil {
-                            Button("Add to My terms…", systemImage: "text.badge.plus") { addingFrom = segment }
-                                .accessibilityIdentifier("addToMyTerms")
-                        }
+            lineContent(segment, selectable: !selecting)
+                .contextMenu { if segment.isFinal, !selecting { lineMenu(segment) } }
+                .accessibilityActions {
+                    // The touch-and-hold menu's actions, for VoiceOver's actions rotor.
+                    if let lineActions, segment.isFinal, !selecting {
+                        Button("Summarize from here") { lineActions.summarizeFrom(segment.id) }
+                            .disabled(lineActions.summarizeBlockReason(segment.id) != nil)
+                        Button("Select from here") { lineActions.selectFrom(segment.id) }
                     }
                 }
+        }
+    }
+
+    /// A final line's touch-and-hold menu. Summarize from here is disabled, with the reason under it,
+    /// when no provider can run.
+    @ViewBuilder
+    private func lineMenu(_ segment: TranscriptSegment) -> some View {
+        if let lineActions {
+            let reason = lineActions.summarizeBlockReason(segment.id)
+            Button { lineActions.summarizeFrom(segment.id) } label: {
+                Label("Summarize from here", systemImage: "text.badge.star")
+                if let reason { Text(reason) }
+            }.disabled(reason != nil)
+            Button("Select from here", systemImage: "checklist") { lineActions.selectFrom(segment.id) }
+            Button("Copy", systemImage: "doc.on.doc") { UIPasteboard.general.string = segment.text }
+        }
+        if addTerm != nil {
+            Button("Add to My terms…", systemImage: "text.badge.plus") { addingFrom = segment }
+                .accessibilityIdentifier("addToMyTerms")
         }
     }
 
@@ -170,8 +185,8 @@ struct MobileTranscriptReader: View {
         }.frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// Text selection would take the long press the line's menu needs, so a line with that menu
-    /// offers Copy there instead.
+    /// Text stays selectable alongside the line's menu, as before #234; only Select mode, where a tap
+    /// toggles the whole line, turns it off.
     @ViewBuilder
     private func lineText(_ segment: TranscriptSegment, selectable: Bool) -> some View {
         let text = Text(segment.text).font(.body).lineSpacing(4)

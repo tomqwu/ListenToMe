@@ -134,6 +134,7 @@ public enum SessionExporter {
         section("Summary", record.summary)
         section("Quick summary", record.quickSuggestion)
         section("Deep summary", record.deepAnswer)
+        section("Selection summaries", SelectionSummary.plainText(record.selectionSummaries ?? []))
         section("Notes", record.notes)
         let transcript: String
         if let segments = record.segments {

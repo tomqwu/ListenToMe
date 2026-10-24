@@ -37,13 +37,19 @@ struct MobileSelectionBar: View {
 }
 
 /// The selection summary: bullets of only the chosen lines, with Copy, Share and Add to notes.
+///
+/// It shows nothing from an earlier request: opening it prepares a clean run keyed to this request
+/// and this conversation. On Apple Intelligence it starts at once; with any other provider it first
+/// says where the lines go and sends them only when the user taps Summarize.
 struct MobileSelectionSummarySheet: View {
     let session: MobileSession
-    let selected: [TranscriptSegment]
+    let request: MobileSelectionRequest
     @Environment(\.dismiss) private var dismiss
     @State private var copied = false
     @State private var added = false
     private var run: MobileSelectionRun { session.selectionRun }
+    /// The run state, only while it belongs to this request in the open conversation.
+    private var current: Bool { run.matches(request.id, conversation: session.id) }
 
     var body: some View {
         NavigationStack {
@@ -52,26 +58,11 @@ struct MobileSelectionSummarySheet: View {
                     Text(span).font(.subheadline.weight(.medium)).foregroundStyle(MobileStyle.muted)
                         .accessibilityIdentifier("selectionSpan")
                     Label(session.selectionSummaryDestination,
-                          systemImage: session.ai.provider == .apple ? "iphone" : "network")
+                          systemImage: session.selectionSummaryStaysOnDevice ? "iphone" : "network")
                         .font(.caption).foregroundStyle(MobileStyle.muted)
+                        .fixedSize(horizontal: false, vertical: true)
                         .accessibilityIdentifier("selectionSummaryDestination")
-                    if let notice = run.notice {
-                        Label(notice, systemImage: "scissors").font(.caption).foregroundStyle(MobileStyle.muted)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .accessibilityIdentifier("selectionSummaryNotice")
-                    }
-                    if run.isRunning {
-                        Label("Summarizing…", systemImage: "sparkles").font(.caption).foregroundStyle(MobileStyle.accent)
-                    }
-                    if !run.text.isEmpty {
-                        MarkdownText(text: run.text).font(.body).lineSpacing(3).textSelection(.enabled)
-                            .accessibilityElement(children: .combine).accessibilityIdentifier("selectionSummaryText")
-                    }
-                    if let error = run.error {
-                        Label(error, systemImage: "exclamationmark.circle").font(.callout)
-                            .accessibilityIdentifier("selectionSummaryError")
-                    }
-                    if let result = run.result { actions(result) }
+                    if current { state }
                     Text("AI output can be wrong. Check it against the transcript.")
                         .font(.caption2).foregroundStyle(MobileStyle.muted)
                 }.frame(maxWidth: .infinity, alignment: .leading).padding(20)
@@ -79,20 +70,74 @@ struct MobileSelectionSummarySheet: View {
             .navigationTitle("Selection summary").navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    if run.isRunning { Button("Cancel") { run.cancel() } }
+                    if current && run.isRunning {
+                        Button("Cancel") { session.cancelSelectionSummary() }
+                            .accessibilityIdentifier("cancelSelectionSummary")
+                    }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }.accessibilityIdentifier("closeSelectionSummary")
                 }
             }
         }
-        .onAppear { session.requestSelectionSummary(selected) }
-        .onDisappear { if run.isRunning { run.cancel() } }
+        .onAppear { session.prepareSelectionSummary(request) }
+        .onDisappear { if current && run.isRunning { session.cancelSelectionSummary() } }
+    }
+
+    @ViewBuilder
+    private var state: some View {
+        switch run.phase {
+        case .ready:
+            Button { session.startSelectionSummary(request) } label: {
+                Label("Summarize", systemImage: "paperplane").frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent).tint(MobileStyle.accent)
+            .accessibilityHint(session.selectionSummaryDestination)
+            .accessibilityIdentifier("startSelectionSummary")
+        case .running:
+            Label("Summarizing…", systemImage: "sparkles").font(.caption).foregroundStyle(MobileStyle.accent)
+            answer
+        case .finished:
+            notice
+            answer
+            if let result = run.result { actions(result) }
+        case .blocked:
+            Label(run.message ?? "", systemImage: "info.circle").font(.callout)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("selectionSummaryBlocked")
+        case .failed:
+            notice
+            Label(run.message ?? "", systemImage: "exclamationmark.circle").font(.callout)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("selectionSummaryError")
+        case .cancelled:
+            Text(run.message ?? "Cancelled.").font(.callout).foregroundStyle(MobileStyle.muted)
+                .accessibilityIdentifier("selectionSummaryCancelled")
+            Button("Summarize again", systemImage: "arrow.clockwise") { session.startSelectionSummary(request) }
+                .buttonStyle(.bordered).accessibilityIdentifier("restartSelectionSummary")
+        }
+    }
+
+    @ViewBuilder
+    private var notice: some View {
+        if let notice = run.notice {
+            Label(notice, systemImage: "scissors").font(.caption).foregroundStyle(MobileStyle.muted)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("selectionSummaryNotice")
+        }
+    }
+
+    @ViewBuilder
+    private var answer: some View {
+        if !run.text.isEmpty {
+            MarkdownText(text: run.text).font(.body).lineSpacing(3).textSelection(.enabled)
+                .accessibilityElement(children: .combine).accessibilityIdentifier("selectionSummaryText")
+        }
     }
 
     private var span: String {
-        guard let first = selected.first, let last = selected.last else { return "" }
-        return SelectionSummary(start: first.start, end: last.end, lineCount: selected.count,
+        guard let first = request.lines.first, let last = request.lines.last else { return "" }
+        return SelectionSummary(start: first.start, end: last.end, lineCount: request.lines.count,
                                 shortened: false, text: "").span
     }
 

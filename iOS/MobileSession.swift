@@ -335,7 +335,7 @@ final class MobileSession {
         acceptsSpeechCorrection = false
         flushPendingSave()
         speechCorrection.cancel()
-        summaryTask?.cancel()
+        cancelSummary()   // the manual request and any selection summary (#234)
         quickReader.cancel()
         let token = UIApplication.shared.beginBackgroundTask(withName: "Save conversation")
         defer { if token != .invalid { UIApplication.shared.endBackgroundTask(token) } }
@@ -548,7 +548,7 @@ extension MobileSession {
         return automaticReviews.status(reviewMode)
     }
 
-    func cancelSummary() { summaryTask?.cancel() }
+    func cancelSummary() { summaryTask?.cancel(); cancelSelectionSummary() }
 
     var autoQuickStatus: String {
         guard autoQuick else { return "Auto off · Turn on Auto for live updates, or tap Refresh." }

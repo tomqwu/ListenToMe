@@ -625,19 +625,30 @@ reopened from History.
 `[1:02] Alex: …` — to the provider chosen for Summary (`SelectionSummaryPrompt`, fenced as data with
 `PromptData.notice`; notes, the Summary and unselected lines are not sent). Apple Intelligence runs on
 the device; a cloud AI service, Ollama or an OpenAI-compatible server is used only when it is already the
-chosen summary provider, and the bar and the sheet say "Sends the selected lines to <destination>" first.
-When no provider can run (no key, no server, Apple Intelligence unavailable, a response already
-generating), the button is disabled and the reason is shown instead. A selection longer than the
+chosen summary provider. The bar names the destination, and so does the sheet: on Apple Intelligence it
+starts at once; with any other provider it shows "Sends the selected lines to <destination>" and a
+**Summarize** button and sends nothing until that is tapped. When no provider can run (no key, no
+server, Apple Intelligence unavailable, a response already generating), Summarize selection and the
+touch-and-hold **Summarize from here** are disabled with the reason (VoiceOver gets both line actions too).
+A running selection summary holds `isSummarizing` like a manual Summary or Quick request, so each
+blocks the other, Auto's full reviews wait, and **Cancel** (or the main Cancel summary) stops it with
+"Cancelled.". The sheet's state (`MobileSelectionRun`) is keyed to the request and the conversation and
+reset whenever a sheet opens; every run carries a generation token, so a cancelled or replaced run can
+neither stream into nor finish the next one. The sheets are presented from the workspace (Live panel)
+and from the expanded transcript, views that survive rotation and Dynamic Type layout changes. Selected
+lines that disappear (a language Undo or re-transcription) leave the selection. Transcript text stays
+selectable everywhere except in Select mode. A selection longer than the
 provider's window (Apple Intelligence's 8,000 characters, or 60,000) keeps its first and latest lines
 (`OnDemandGrounding.select`) and the sheet says "The selection was too long for this model…"; an answer
 cut off at the output limit says so too. The sheet offers **Copy**, **Share** and **Add to notes**
 (appended as "Selection summary (1:02–1:15 · 2 lines):"). The last five are saved with the conversation
 (`SessionRecord.selectionSummaries`; older records decode unchanged, and every copy of a record — a new
 title, its languages, an Apple Watch recording — keeps them) and listed under the Summary. They are
-exported under **Selection summaries** in Markdown and readable text, as `selectionSummaries` in JSON
+exported under **Selection summaries** in Markdown, plain text and readable share text, as `selectionSummaries` in JSON
 (see [export formats](export-formats.md)) and in Save to folder notes. The active domain vocabulary and
 My terms (#222) reach the prompt as the same "Context for this session" guidance Quick gets
-(`vocabularyGuidance`, without summary headings, the smaller share on Apple Intelligence), charged to the budget.
+(`vocabularyGuidance`, without summary headings, the smaller share on Apple Intelligence, its glossary ranked by
+the selected lines), charged to the budget.
 
 ## Domain vocabularies and My terms (#222)
 

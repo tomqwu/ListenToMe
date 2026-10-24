@@ -37,6 +37,14 @@ public struct TranscriptSelection: Sendable, Equatable {
 
     public mutating func clear() { ids = []; anchor = nil }
 
+    /// Forgets lines that are no longer in `segments` (a language Undo or re-transcription replaces
+    /// lines with new IDs), so nothing stays selected that the user cannot see.
+    public mutating func prune(keeping segments: [TranscriptSegment]) {
+        let present = Set(segments.lazy.filter(\.isFinal).map(\.id))
+        ids.formIntersection(present)
+        if let anchor, !present.contains(anchor) { self.anchor = nil }
+    }
+
     /// The selected lines that still exist, in transcript order. A line removed or re-transcribed
     /// since it was picked simply drops out.
     public func selected(in segments: [TranscriptSegment]) -> [TranscriptSegment] {

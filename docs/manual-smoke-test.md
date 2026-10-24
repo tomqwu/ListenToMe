@@ -605,8 +605,14 @@ physical device.
 3. **Touch and hold.** Touch and hold a line → Summarize from here summarizes it through the latest line;
    Select from here opens Select mode with those lines picked. Copy copies the line.
 4. **Provider and reasons.** With a cloud AI service or OpenAI-compatible server chosen, the bar and the sheet
-   say "Sends the selected lines to <destination>" before anything is sent. Remove the key or server: the
-   button is disabled and the reason is shown. While a Summary is generating, it says to wait.
+   say "Sends the selected lines to <destination>", and the sheet sends nothing until you tap Summarize
+   (check the server's log). Remove the key or server: Summarize selection and the touch-and-hold
+   Summarize from here are disabled with the reason. While a Summary is generating, both say to wait;
+   while a selection summary is being written, Generate Summary says to wait.
+4a. **Cancel, rotate, reopen.** Start a selection summary and tap Cancel: "Cancelled.", no failure, and
+   Summarize again works. Start one from the Live panel and rotate the phone: the sheet stays open and the
+   answer arrives. Open a second selection sheet: it never shows the first one's text. Long-press text in
+   a line outside Select mode: it can still be selected and copied.
 5. **Apple Intelligence, long selection.** On a device with Apple Intelligence, select a long stretch (more
    than about ten minutes): the summary answers and the sheet says the selection was shortened.
 

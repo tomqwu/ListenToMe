@@ -7,12 +7,13 @@ import ListenToMeCore
 ///
 /// `--selection-summary-fixture` answers on "this device" (the on-device path, faked);
 /// `--selection-server` routes it through the chosen server instead, to show the disclosure;
-/// `--selection-unavailable` leaves no usable provider, so Summarize selection says why.
+/// `--selection-unavailable` leaves no usable provider, so Summarize selection says why;
+/// `--selection-slow` holds each answer for two seconds, so a test can cancel or rotate mid-answer.
 struct MobileSelectionSummaryFixture: View {
     @State private var session: MobileSession = {
         let arguments = ProcessInfo.processInfo.arguments
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("SelectionUI-\(UUID())")
-        let provider = SelectionFixtureProvider()
+        let provider = SelectionFixtureProvider(slow: arguments.contains("--selection-slow"))
         let server = arguments.contains("--selection-server")
         let session = MobileSession(storageDirectory: root, summaryProvider: server ? provider : nil)
         session.ai.provider = arguments.contains("--selection-unavailable") || server ? .ollama : .apple
@@ -38,13 +39,19 @@ struct MobileSelectionSummaryFixture: View {
 /// Echoes which selected lines it was given, so a test can see exactly what was sent.
 private struct SelectionFixtureProvider: LLMProvider {
     let id = "selection-ui-fixture"
+    let slow: Bool
     func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
         AsyncThrowingStream { continuation in
-            let user = request.messages.first?.content ?? ""
-            let lines = user.split(separator: "\n").filter { $0.hasPrefix("[") }
-            continuation.yield("- Summary of \(lines.count) selected line\(lines.count == 1 ? "" : "s").\n")
-            if let first = lines.first { continuation.yield("- Starts with: \(first)") }
-            continuation.finish()
+            let task = Task {
+                if slow { try? await Task.sleep(for: .seconds(2)) }
+                guard !Task.isCancelled else { continuation.finish(throwing: CancellationError()); return }
+                let user = request.messages.first?.content ?? ""
+                let lines = user.split(separator: "\n").filter { $0.hasPrefix("[") }
+                continuation.yield("- Summary of \(lines.count) selected line\(lines.count == 1 ? "" : "s").\n")
+                if let first = lines.first { continuation.yield("- Starts with: \(first)") }
+                continuation.finish()
+            }
+            continuation.onTermination = { _ in task.cancel() }
         }
     }
 }

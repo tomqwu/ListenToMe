@@ -138,6 +138,23 @@ final class TranscriptSelectionTests: XCTestCase {
         XCTAssertEqual(fresh.ids.count, 1)
     }
 
+    /// Lines that are gone (a language Undo or re-transcription replaces them with new IDs) leave the
+    /// selection, so a later line with a reused position is never silently selected.
+    func testPruneDropsLinesThatNoLongerExist() {
+        var selection = TranscriptSelection()
+        selection.toggle(lines[1].id, in: lines)
+        selection.toggle(lines[2].id, in: lines)
+        let replaced = [lines[0], lines[2]] + (3..<5).map {
+            TranscriptSegment(source: .you, text: "New \($0)", isFinal: true, start: Double($0), end: Double($0) + 1)
+        }
+        selection.prune(keeping: replaced)
+        XCTAssertEqual(selection.ids, [lines[2].id])
+        XCTAssertEqual(selection.anchor, lines[2].id, "The anchor survives while its line does")
+        selection.prune(keeping: [lines[0]])
+        XCTAssertTrue(selection.isEmpty)
+        XCTAssertNil(selection.anchor, "A vanished anchor is dropped too")
+    }
+
     func testSelectFromHereReplacesTheSelectionAndClearEmptiesIt() {
         var selection = TranscriptSelection()
         selection.toggle(lines[0].id, in: lines)
