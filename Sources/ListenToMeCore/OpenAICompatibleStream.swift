@@ -66,6 +66,9 @@ struct OpenAICompatibleStreamState {
     private(set) var receivedBytes = 0
     private(set) var finished = false
     private var sawFinishReason = false
+    /// The last `finish_reason` the server sent; `"length"` means the output cap cut the answer off.
+    private(set) var finishReason: String?
+    var reachedOutputLimit: Bool { LLMOutputLimit.isLengthStop(finishReason) }
     private var producedContent = false
     private var producedThinking = false
     /// The `data:` payload of an event whose JSON spans several `data:` lines, joined with "\n" as
@@ -123,14 +126,15 @@ struct OpenAICompatibleStreamState {
                 producedContent = producedContent || !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 events.append(.content(content))
             }
-            if finishReason != nil { sawFinishReason = true }
+            if let finishReason { sawFinishReason = true; self.finishReason = finishReason }
             return events
         }
     }
 
     /// Records a complete non-streamed answer (a server that ignored `"stream": true`).
-    mutating func acceptWhole(content: String?, thinking: String?) -> [LLMStreamEvent] {
+    mutating func acceptWhole(content: String?, finishReason: String? = nil, thinking: String?) -> [LLMStreamEvent] {
         finished = true
+        self.finishReason = finishReason
         var events: [LLMStreamEvent] = []
         if let thinking, !thinking.isEmpty {
             producedThinking = !thinking.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
