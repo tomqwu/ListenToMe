@@ -24,14 +24,22 @@ extension SessionExporter {
     static let maximumCueDuration: TimeInterval = 7
     /// Two short lines by the same speaker this close together are shown as one cue.
     static let mergeGap: TimeInterval = 1
-    /// A line the engine timed with no length (start == end) is shown this long, or until the next cue.
+    /// A line the engine timed with no length (start == end) is shown for about as long as it takes to
+    /// read at this many characters a second (at least `minimumCueDuration`), or until the next cue.
+    static let readingSpeed: Double = 15
     static let minimumCueDuration: TimeInterval = 1
 
-    /// The cues for `segments`: timed lines in recording order, short neighbours by the same speaker
-    /// merged, long lines split at word boundaries with their time shared by length.
-    public static func cues(for segments: [TranscriptSegment]) -> [SubtitleCue] {
+    /// The cues for `segments`, recording by recording (`TranscriptTimestamp.recordings`): timed lines
+    /// in time order, short neighbours by the same speaker merged, long lines split at word boundaries
+    /// with their time shared by length. Nothing is merged across recordings. With `reservingNames`,
+    /// each cue leaves room for a `Speaker: ` prefix within the character limit.
+    public static func cues(for segments: [TranscriptSegment], reservingNames: Bool = false) -> [SubtitleCue] {
+        TranscriptTimestamp.recordings(segments).flatMap { cues(inRecording: $0, reservingNames: reservingNames) }
+    }
+
+    private static func cues(inRecording segments: [TranscriptSegment], reservingNames: Bool) -> [SubtitleCue] {
         let timed = segments.enumerated()
-            .filter { TranscriptTimestamp.isTimed($0.element) && !MarkdownVault.singleLine($0.element.text).isEmpty }
+            .filter { !MarkdownVault.singleLine($0.element.text).isEmpty }
             .sorted { ($0.element.start, $0.offset) < ($1.element.start, $1.offset) }
             .map { SubtitleCue(start: $0.element.start, end: max($0.element.start, $0.element.end),
                                speaker: MarkdownVault.singleLine($0.element.speakerLabel),
@@ -39,8 +47,10 @@ extension SessionExporter {
         var merged: [SubtitleCue] = []
         for cue in timed {
             let joiner = isUnspaced(merged.last?.text ?? "") && isUnspaced(cue.text) ? "" : " "
-            if let last = merged.last, last.speaker == cue.speaker, cue.start - last.end <= mergeGap,
-               (last.text + joiner + cue.text).count <= limit(for: last.text + joiner + cue.text),
+            if let last = merged.last, last.speaker == cue.speaker, cue.start >= last.start,
+               cue.start - last.end <= mergeGap,
+               (last.text + joiner + cue.text).count <= limit(for: last.text + joiner + cue.text,
+                                                              speaker: cue.speaker, reservingNames: reservingNames),
                max(last.end, cue.end) - last.start <= maximumCueDuration {
                 merged[merged.count - 1].text += joiner + cue.text
                 merged[merged.count - 1].end = max(last.end, cue.end)
@@ -48,25 +58,32 @@ extension SessionExporter {
                 merged.append(cue)
             }
         }
-        var cues = merged.flatMap(split)
-        for index in cues.indices where cues[index].end - cues[index].start < minimumCueDuration / 2 {
-            var end = cues[index].start + minimumCueDuration
-            if index + 1 < cues.count, cues[index + 1].start > cues[index].start {
-                end = min(end, cues[index + 1].start)
-            }
-            cues[index].end = max(cues[index].end, end)
+        // A line timed with no length gets an estimated reading time, never past the next cue's start,
+        // so its pieces follow one another instead of stacking at one instant.
+        for index in merged.indices where merged[index].end - merged[index].start < minimumCueDuration / 2 {
+            let cue = merged[index]
+            var end = cue.start + max(minimumCueDuration, Double(cue.text.count) / readingSpeed)
+            if let next = merged[(index + 1)...].first(where: { $0.start > cue.start }) { end = min(end, next.start) }
+            merged[index].end = max(cue.end, end)
         }
-        return cues
+        return merged.flatMap { split($0, reservingNames: reservingNames) }
+    }
+
+    /// True when more than one person speaks in the timed lines, so cues name the speaker.
+    static func namesSpeakers(_ segments: [TranscriptSegment]) -> Bool {
+        Set(segments.filter { TranscriptTimestamp.isTimed($0) && !MarkdownVault.singleLine($0.text).isEmpty }
+            .map { MarkdownVault.singleLine($0.speakerLabel) }).count > 1
     }
 
     /// SubRip: numbered cues, `HH:MM:SS,mmm` times, and the speaker's name in front of each cue when
-    /// more than one person speaks.
+    /// more than one person speaks (counted within the cue's character limit). `<`, `>` and `&` become
+    /// `‹`, `›` and `＆`, so players never read text as formatting tags or entities and no cue holds `-->`.
     public static func srt(for record: SessionRecord) -> String {
-        let cues = cues(for: record.segments ?? [])
-        let named = Set(cues.map(\.speaker)).count > 1
-        return cues.enumerated().map { index, cue in
+        let segments = record.segments ?? []
+        let named = namesSpeakers(segments)
+        return cues(for: segments, reservingNames: named).enumerated().map { index, cue in
             let text = (named ? "\(cue.speaker): " : "") + cue.text
-            let body = wrap(text.replacingOccurrences(of: "-->", with: "->")).joined(separator: "\n")
+            let body = wrap(srtSafe(text)).joined(separator: "\n")
             return "\(index + 1)\n\(TranscriptTimestamp.subtitle(cue.start, separator: ",")) --> "
                 + "\(TranscriptTimestamp.subtitle(cue.end, separator: ","))\n\(body)\n"
         }.joined(separator: "\n")
@@ -75,9 +92,9 @@ extension SessionExporter {
     /// WebVTT: `HH:MM:SS.mmm` times and a `<v Speaker>` voice tag on each cue when more than one person
     /// speaks. `&`, `<` and `>` are escaped, so the cue text can never close a tag or hold `-->`.
     public static func webVTT(for record: SessionRecord) -> String {
-        let cues = cues(for: record.segments ?? [])
-        let named = Set(cues.map(\.speaker)).count > 1
-        let body = cues.map { cue in
+        let segments = record.segments ?? []
+        let named = namesSpeakers(segments)
+        let body = cues(for: segments).map { cue in
             let lines = wrap(cue.text).map(escapeVTT).joined(separator: "\n")
             let voice = named ? "<v \(escapeVTT(cue.speaker))>" : ""
             return "\(TranscriptTimestamp.subtitle(cue.start, separator: ".")) --> "
@@ -101,14 +118,17 @@ extension SessionExporter {
         }
     }
 
-    private static func limit(for text: String) -> Int {
-        isUnspaced(text) ? maximumUnspacedCueCharacters : maximumCueCharacters
+    /// The characters a cue's words may take, less the room its `Speaker: ` prefix needs.
+    private static func limit(for text: String, speaker: String = "", reservingNames: Bool = false) -> Int {
+        let base = isUnspaced(text) ? maximumUnspacedCueCharacters : maximumCueCharacters
+        return max(base / 2, base - (reservingNames ? speaker.count + 2 : 0))
     }
 
     /// A cue too long to read in one go becomes several, each given a share of its time by length.
-    static func split(_ cue: SubtitleCue) -> [SubtitleCue] {
+    static func split(_ cue: SubtitleCue, reservingNames: Bool = false) -> [SubtitleCue] {
         let duration = cue.end - cue.start
-        let byLength = Int((Double(cue.text.count) / Double(limit(for: cue.text))).rounded(.up))
+        let limit = limit(for: cue.text, speaker: cue.speaker, reservingNames: reservingNames)
+        let byLength = Int((Double(cue.text.count) / Double(limit)).rounded(.up))
         let byTime = Int((duration / maximumCueDuration).rounded(.up))
         let pieces = chunks(cue.text, into: max(1, byLength, byTime))
         guard pieces.count > 1 else { return [cue] }
@@ -141,8 +161,8 @@ extension SessionExporter {
         return pieces.map { $0.joined(separator: separator) }
     }
 
-    /// One line, or two balanced lines split at the space nearest the middle; longer text wraps at the
-    /// line limit.
+    /// One line, or two balanced lines split at the space nearest the middle that keeps both within the
+    /// line limit; longer text wraps at the line limit.
     static func wrap(_ text: String) -> [String] {
         let unspaced = isUnspaced(text)
         let width = unspaced ? maximumUnspacedLineCharacters : maximumLineCharacters
@@ -155,9 +175,10 @@ extension SessionExporter {
                 .map { String(characters[$0..<min($0 + width, characters.count)]) }
         }
         let characters = Array(text)
-        let spaces = characters.indices.filter { characters[$0] == " " }
-        if let best = spaces.min(by: { abs($0 - characters.count / 2) < abs($1 - characters.count / 2) }),
-           best <= width, characters.count - best - 1 <= width {
+        let fitting = characters.indices.filter {
+            characters[$0] == " " && $0 <= width && characters.count - $0 - 1 <= width
+        }
+        if let best = fitting.min(by: { abs($0 - characters.count / 2) < abs($1 - characters.count / 2) }) {
             return [String(characters[..<best]), String(characters[(best + 1)...])]
         }
         var lines: [String] = [], current = ""
@@ -177,5 +198,12 @@ extension SessionExporter {
     static func escapeVTT(_ text: String) -> String {
         text.replacingOccurrences(of: "&", with: "&amp;").replacingOccurrences(of: "<", with: "&lt;")
             .replacingOccurrences(of: ">", with: "&gt;")
+    }
+
+    /// SubRip has no escapes, and players read `<b>`-style tags and `&…;` entities, so these characters
+    /// are replaced by look-alikes. Replacing every `>` also means no cue text can hold `-->`.
+    static func srtSafe(_ text: String) -> String {
+        text.replacingOccurrences(of: "<", with: "‹").replacingOccurrences(of: ">", with: "›")
+            .replacingOccurrences(of: "&", with: "＆")
     }
 }

@@ -278,7 +278,7 @@ final class MobileSession {
                     if self.stageLanguageSegment(segment, offset: offset) { return }
                     let timed = TranscriptSegment(source: .you, text: segment.text, isFinal: segment.isFinal,
                                                   start: offset + segment.start, end: offset + segment.end,
-                                                  speakerName: Self.microphoneLabel)
+                                                  speakerName: Self.microphoneLabel, language: self.recordingLanguage)
                     if timed.isFinal {
                         self.segments.append(timed)
                         self.partial = nil

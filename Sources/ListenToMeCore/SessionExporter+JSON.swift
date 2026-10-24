@@ -28,7 +28,8 @@ extension SessionExporter {
                                              speakerID: segment.speakerID, source: segment.source.rawValue,
                                              text: segment.text, start: timed ? millis(segment.start) : nil,
                                              end: timed ? millis(max(segment.start, segment.end)) : nil,
-                                             originalText: segment.originalText)
+                                             originalText: segment.originalText,
+                                             language: segment.language.flatMap(ConversationLanguages.normalized))
         }
         let languages = record.conversationLanguages
         let document = SessionExportJSON(
@@ -64,6 +65,8 @@ struct SessionExportJSON: Encodable {
         let start: Double?
         let end: Double?
         let originalText: String?
+        /// The language this line was recognized in, when the app kept it (#206).
+        let language: String?
     }
     struct Attachment: Encodable { let name: String }
 

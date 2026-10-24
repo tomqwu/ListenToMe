@@ -6,7 +6,7 @@ Or is that too soon?
 2
 00:01:05,250 --> 00:01:10,500
 You: Yes, with the hotfix
-& the <beta> flag.
+＆ the ‹beta› flag.
 
 3
 01:02:05,500 --> 01:02:10,747

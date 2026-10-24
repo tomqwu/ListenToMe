@@ -27,7 +27,7 @@ final class SessionExportGoldenTests: XCTestCase {
                               + "else by Friday afternoon if the crash rate stays flat.", isFinal: true,
                               start: 3725.5, end: 3741, speakerID: "spk-1", speakerName: "Alice"),
             TranscriptSegment(source: .others, text: "Agreed.", isFinal: true, start: 3742, end: 3742,
-                              speakerID: "spk-2", speakerName: "Bob")
+                              speakerID: "spk-2", speakerName: "Bob", language: "fr_FR")
         ],
         notes: "Bring the release checklist.", quickSuggestion: "Ask about the beta flag.",
         deepAnswer: "Plan the staged rollout.",

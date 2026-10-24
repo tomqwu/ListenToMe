@@ -38,22 +38,24 @@ extension MobileSession {
 
     // MARK: The conversation's own languages (issue #206)
 
-    /// `record` with the languages this conversation was transcribed in: what it was saved with, plus
-    /// what happened since it was opened (a recording, an Automatic switch, an Undo, Apple Watch lines).
+    /// `record` with the languages this conversation was transcribed in: the languages its lines are in
+    /// (each line keeps the one it was recognized in), and as the current one the latest recording's,
+    /// switch's or Undo's since it was opened, else what it was saved with.
     func withConversationLanguages(_ record: SessionRecord) -> SessionRecord {
         let saved = history.first { $0.id == record.id }?.conversationLanguages ?? record.conversationLanguages
-        return record.with(languages: saved.applying(languageDetection.languageChanges[record.id] ?? []))
+        return record.with(languages: saved.resolving(recorded: languageDetection.languageChanges[record.id] ?? [],
+                                                      segments: record.segments ?? []))
     }
 
     /// New lines of the open conversation were transcribed in `identifier` outside a recording.
     func noteConversationLanguage(_ identifier: String) {
-        languageDetection.languageChanges[id, default: []].append(.recorded(identifier))
+        languageDetection.languageChanges[id, default: []].append(identifier)
     }
 
-    /// An Undo put the switched lines back in the language before the switch.
+    /// An Undo switched transcription back to the language before the switch. Lines spoken after the
+    /// switch keep theirs, so the switched-to language stays listed while any line is in it.
     func noteLanguageUndo(_ change: MobileLanguageDetection.Switch) {
-        languageDetection.languageChanges[change.conversation, default: []]
-            .append(.replaced(change.to, with: change.from))
+        languageDetection.languageChanges[change.conversation, default: []].append(change.from)
     }
 }
 
@@ -74,8 +76,15 @@ struct ConversationExportFile: Transferable {
         FileManager.default.temporaryDirectory.appendingPathComponent("ConversationExports", isDirectory: true)
     }
 
+    /// Removes every exported file: before the next export, at launch, and when conversations are
+    /// deleted (an owner in `conversationDataOwners`), so no copy outlives Delete or Delete all.
+    static func removeAll() throws {
+        guard FileManager.default.fileExists(atPath: folder.path) else { return }
+        try FileManager.default.removeItem(at: folder)
+    }
+
     func write() throws -> URL {
-        try? FileManager.default.removeItem(at: Self.folder)
+        try? Self.removeAll()
         let directory = Self.folder.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try PrivateStorage.createDirectory(at: directory)
         let url = directory.appendingPathComponent(fileName)

@@ -197,11 +197,12 @@ extension MobileSession {
                                       chunkEnds: chunks.map { $0.startOffset + $0.duration })
         do {
             let transcriber = makeWatchTranscriber()
-            let locale = Locale(identifier: transcriptionLanguage)
-            try await transcriber.transcribe(chunks, locale: locale) { [weak self] line in
+            let language = transcriptionLanguage
+            try await transcriber.transcribe(chunks, locale: Locale(identifier: language)) { [weak self] line in
                 guard let self, line.start >= resumeAt else { return }
                 pending.lines.append(TranscriptSegment(source: .you, text: line.text, isFinal: true, start: line.start,
-                                                       end: line.end, speakerName: MobileFileTranscriber.speakerName))
+                                                       end: line.end, speakerName: MobileFileTranscriber.speakerName,
+                                                       language: language))
                 if pending.shouldSave(after: line) {
                     try self.saveWatchLines(pending, recordID: recordID, of: recordingID)
                 }

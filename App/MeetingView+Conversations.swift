@@ -19,17 +19,18 @@ extension MeetingView {
             notes: session.notes, quickSuggestion: session.quickSuggestion,
             deepAnswer: session.deepAnswer, complete: complete)
         guard force || key != lastSavedKey else { return true }
-        let record = currentRecord(complete: complete)
+        // The record keeps the conversation's start (its first checkpoint), so History, its exports
+        // and the Save to folder note all carry the same date and file name as the live export.
+        let started = conversationStartedAt ?? Date()
+        let record = currentRecord(date: started, complete: complete)
         guard sessionStore.add(record) else {
             saveMessage = sessionStore.errorText ?? "Save failed. Retry or Export to keep this conversation."
             saveFailed = true
             return false
         }
         lastSavedKey = key
-        // Save to folder (issue #53): written once capture has stopped, then on each later change.
-        // The record's date moves with every checkpoint; the note keeps the conversation's start.
-        let started = conversationStartedAt ?? record.date
         conversationStartedAt = started
+        // Save to folder (issue #53): written once capture has stopped, then on each later change.
         let vault = MarkdownVaultSync.shared
         vault.activeRecordingID = complete ? nil : currentSessionID
         if complete {

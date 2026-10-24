@@ -4,9 +4,9 @@ import Foundation
 /// `SessionRecord` so Save to folder and exports describe the conversation itself rather than whatever
 /// the language setting says today.
 ///
-/// `current` is the language its latest recording was transcribed in, including an Automatic switch
-/// (#197/#199); `all` lists every language it was transcribed in, in order of first use. Identifiers are
-/// stored as BCP-47 tags (`en-US`), so `en_US` and `en-US` are the same language.
+/// `current` is the language its latest recording is transcribed in, including an Automatic switch
+/// (#197/#199) and an Undo; `all` lists every language its lines are in, in order of first use.
+/// Identifiers are stored as BCP-47 tags (`en-US`), so `en_US` and `en-US` are the same language.
 public struct ConversationLanguages: Sendable, Equatable {
     public private(set) var current: String?
     public private(set) var all: [String]
@@ -23,45 +23,30 @@ public struct ConversationLanguages: Sendable, Equatable {
 
     public var isEmpty: Bool { all.isEmpty }
 
-    /// A recording, or the part after a switch, is transcribed in `identifier`.
+    /// A recording, the part after a switch, or the language an Undo switched back to, is transcribed
+    /// in `identifier`. Nothing is ever removed here: what leaves `all` is decided by the lines
+    /// (`resolving(recorded:segments:)`), so an Undo cannot drop a language that lines are still in.
     public mutating func record(_ identifier: String) {
         guard let tag = Self.normalized(identifier) else { return }
         current = tag
         if !all.contains(tag) { all.append(tag) }
     }
 
-    /// Every line that was in `old` is now in `new`: a first-check switch that transcribed the whole
-    /// conversation again, or an Undo that brought the original lines back. `new` takes `old`'s place.
-    public mutating func replace(_ old: String, with new: String) {
-        guard let from = Self.normalized(old), let to = Self.normalized(new) else { return }
-        guard from != to else { return record(to) }
-        if let index = all.firstIndex(of: from) {
-            if all.contains(to) { all.remove(at: index) } else { all[index] = to }
-        } else if !all.contains(to) {
-            all.append(to)
+    /// The languages after `recorded` (each recording's, switch's and Undo's language, in order), for
+    /// a conversation whose lines are `segments`. When every line says which language it was recognized
+    /// in, `all` is exactly those languages (plus the one being recorded now), so a whole conversation
+    /// transcribed again in another language no longer lists the first. Lines saved before languages
+    /// were kept per line cannot say, so then nothing already listed is dropped.
+    public func resolving(recorded: [String], segments: [TranscriptSegment]) -> ConversationLanguages {
+        var events = self
+        recorded.forEach { events.record($0) }
+        var lineLanguages: [String] = []
+        for tag in segments.compactMap({ $0.language.flatMap(Self.normalized) }) where !lineLanguages.contains(tag) {
+            lineLanguages.append(tag)
         }
-        current = to
-    }
-
-    /// What happened to a conversation's language while it was open, kept by the app until the next
-    /// save. Re-applying the same changes to the saved languages gives the same result, so every save
-    /// can apply all of them to whatever was saved last.
-    public enum Change: Sendable, Equatable {
-        case recorded(String)
-        case replaced(String, with: String)
-    }
-
-    public mutating func apply(_ change: Change) {
-        switch change {
-        case .recorded(let identifier): record(identifier)
-        case .replaced(let old, let new): replace(old, with: new)
-        }
-    }
-
-    public func applying(_ changes: [Change]) -> ConversationLanguages {
-        var copy = self
-        changes.forEach { copy.apply($0) }
-        return copy
+        let everyLineKnown = !segments.isEmpty && segments.allSatisfy { $0.language != nil }
+        return ConversationLanguages(current: events.current,
+                                     all: everyLineKnown ? lineLanguages : events.all + lineLanguages)
     }
 
     /// A BCP-47 tag, or nil for an empty identifier.
@@ -90,8 +75,6 @@ public extension SessionRecord {
 
     /// The same record, noting that new lines were transcribed in `identifier` (an Apple Watch file).
     func recording(language identifier: String) -> SessionRecord {
-        var value = conversationLanguages
-        value.record(identifier)
-        return with(languages: value)
+        with(languages: conversationLanguages.resolving(recorded: [identifier], segments: segments ?? []))
     }
 }

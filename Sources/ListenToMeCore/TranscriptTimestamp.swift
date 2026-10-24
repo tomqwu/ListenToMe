@@ -37,11 +37,33 @@ public enum TranscriptTimestamp {
             + String(format: "%03d", rest)
     }
 
-    /// The span from the first line's start to the last line's end, or nil without times.
+    /// How far a line may start before the lines already heard and still belong to the same
+    /// recording: the two channels finalize lines out of order by a few seconds.
+    public static let regressionTolerance: TimeInterval = 10
+
+    /// The timed lines grouped into recordings, in the order they were saved. A line that starts well
+    /// before the recording so far has ended begins a new one: conversations saved before each Mac
+    /// capture continued the timeline restart at zero for every Listen.
+    public static func recordings(_ segments: [TranscriptSegment]) -> [[TranscriptSegment]] {
+        var spans: [[TranscriptSegment]] = [], reachedEnd = -TimeInterval.infinity
+        for segment in segments where isTimed(segment) {
+            if spans.isEmpty || segment.start < reachedEnd - regressionTolerance {
+                spans.append([])
+                reachedEnd = -TimeInterval.infinity
+            }
+            spans[spans.count - 1].append(segment)
+            reachedEnd = max(reachedEnd, segment.end)
+        }
+        return spans
+    }
+
+    /// The recorded time: each recording's span from its first start to its last end, added up, or
+    /// nil without times.
     public static func duration(of segments: [TranscriptSegment]) -> TimeInterval? {
-        let timed = segments.filter(isTimed)
-        guard let first = timed.map(\.start).min(), let last = timed.map(\.end).max(),
-              last > first else { return nil }
-        return last - first
+        let total = recordings(segments).reduce(0.0) { sum, span in
+            guard let first = span.map(\.start).min(), let last = span.map(\.end).max() else { return sum }
+            return sum + max(0, last - first)
+        }
+        return total > 0 ? total : nil
     }
 }

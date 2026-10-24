@@ -40,12 +40,17 @@ final class MobileConversationLanguageTests: MobileLanguageTestCase {
         XCTAssertTrue(SessionExporter.json(for: edited).contains("\"language\" : \"zh-CN\""))
     }
 
-    func testUndoPutsTheOriginalLanguageBack() async throws {
+    /// Review of #233, finding 2: Undo brings back only the lines before the switch; speech after it
+    /// stays Chinese, so Chinese stays listed while the current language is the original one again.
+    func testUndoPutsTheOriginalLanguageBackAndKeepsLanguagesLinesAreStillIn() async throws {
         let session = try await switchWholeConversationToChinese()
         session.undoLanguageSwitch()
+        XCTAssertEqual(session.segments.map(\.text), ["Wo men jin tian", "kai hui tao lun", "开会"])
         let record = try XCTUnwrap(saved(session))
         XCTAssertEqual(record.language, device)
-        XCTAssertEqual(record.languages, [device])
+        XCTAssertEqual(record.languages, [device, "zh-CN"])
+        XCTAssertEqual(record.segments?.map { $0.language.flatMap(ConversationLanguages.normalized) },
+                       [device, device, "zh-CN"], "each line keeps the language it was recognized in")
     }
 
     func testAMidRecordingSwitchKeepsBothLanguages() async throws {
@@ -97,5 +102,25 @@ final class MobileExportFileTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: url.path), "the previous export is not kept")
         XCTAssertTrue(FileManager.default.fileExists(atPath: second.path))
         XCTAssertEqual(SessionExporter.formats(for: record), SessionExportFormat.allCases)
+    }
+
+    /// Review of #233, finding 4: the last export's file does not outlive Delete or Delete all.
+    func testDeletingConversationsRemovesTheExportedFile() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("export-delete-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let session = MobileSession(storageDirectory: root)
+        session.notes = "Exported"
+        XCTAssertTrue(session.save(announce: false))
+        let exported = try ConversationExportFile(record: session.currentRecord, format: .markdown).write()
+        XCTAssertTrue(FileManager.default.fileExists(atPath: exported.path))
+        session.deleteConversation(id: session.id)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: ConversationExportFile.folder.path))
+
+        session.notes = "Again"
+        XCTAssertTrue(session.save(announce: false))
+        _ = try ConversationExportFile(record: session.currentRecord, format: .json).write()
+        session.deleteAllConversations()
+        XCTAssertFalse(FileManager.default.fileExists(atPath: ConversationExportFile.folder.path))
+        XCTAssertNoThrow(try ConversationExportFile.removeAll(), "nothing to remove is not an error")
     }
 }

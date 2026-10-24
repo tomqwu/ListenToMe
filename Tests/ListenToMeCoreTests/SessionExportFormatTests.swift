@@ -66,7 +66,79 @@ final class SessionExportFormatTests: XCTestCase {
         XCTAssertEqual(cues.first?.start, 0)
         XCTAssertEqual(cues.last?.end, 21)
         XCTAssertEqual(SessionExporter.cues(for: [line("word", 0, 30)]).count, 1, "one word cannot be split")
-        XCTAssertTrue(SessionExporter.srt(for: record([line("a --> b", 1, 2)])).contains("a -> b"))
+        XCTAssertTrue(SessionExporter.srt(for: record([line("a --> b", 1, 2)])).contains("a --› b"))
+    }
+
+    // MARK: Review of #233
+
+    /// Finding 5 and 9: no cue text can hold `-->` however many dashes precede it, and SubRip text
+    /// never carries `<…>` tags or `&…;` entities a player would interpret.
+    func testSRTTextIsSafeForPlayers() {
+        let srt = SessionExporter.srt(for: record([line("a ---> b <i>x</i> &amp; c", 1, 2)]))
+        let text = srt.components(separatedBy: "\n").dropFirst(2).joined(separator: "\n")
+        XCTAssertFalse(text.contains("-->"), srt)
+        XCTAssertFalse(text.contains("<") || text.contains(">") || text.contains("&"), srt)
+        XCTAssertTrue(text.contains("a ---› b ‹i›x‹/i› ＆amp; c"), srt)
+        XCTAssertEqual(SessionExporter.srtSafe(SessionExporter.srtSafe("a<b")), "a‹b")
+    }
+
+    /// Finding 6: with several speakers the `Speaker: ` prefix counts toward the cue limit, so every SRT
+    /// cue fits in two lines of 42.
+    func testNamedSRTCuesStayWithinTwoLines() {
+        let long = String(repeating: "word ", count: 16) + "end"   // 83 characters
+        let srt = SessionExporter.srt(for: record([line(long, 1, 6, speaker: "Alexandra"),
+                                                   line("Yes.", 7, 8, speaker: "Bob")]))
+        for cue in srt.components(separatedBy: "\n\n") {
+            let textLines = cue.split(separator: "\n").dropFirst(2)
+            XCTAssertLessThanOrEqual(textLines.count, 2, srt)
+            XCTAssertTrue(textLines.allSatisfy { $0.count <= SessionExporter.maximumLineCharacters }, srt)
+        }
+        XCTAssertTrue(srt.contains("Alexandra: "), srt)
+    }
+
+    /// Finding 8: a long line timed with no length is spread over an estimated reading time, never past
+    /// the next line, instead of stacking every piece at one instant.
+    func testZeroLengthLongLineGetsSequentialCues() {
+        let long = String(repeating: "word ", count: 40) + "end"   // 203 characters, about 13.5 s to read
+        let cues = SessionExporter.cues(for: [line(long, 10, 10), line("Next.", 30, 31)])
+        let pieces = cues.dropLast()
+        XCTAssertGreaterThan(pieces.count, 1)
+        XCTAssertTrue(zip(pieces, pieces.dropFirst()).allSatisfy { $0.end <= $1.start && $0.start < $1.start },
+                      "\(pieces)")
+        XCTAssertTrue(pieces.allSatisfy { $0.end > $0.start })
+        XCTAssertLessThanOrEqual(pieces.last?.end ?? 0, 30)
+        let clamped = SessionExporter.cues(for: [line(long, 10, 10), line("Next.", 12, 13)])
+        XCTAssertEqual(clamped.dropLast().last?.end, 12, "never past the next line's start")
+    }
+
+    /// Finding 1 (exporter side): conversations saved before each Mac capture continued the timeline
+    /// restart at zero for every Listen. Lines are never merged across that regression, and the
+    /// duration adds up the recordings instead of reporting the longest.
+    func testRecordingsThatRestartAtZeroAreKeptApart() {
+        let first = [line("One.", 1, 2, speaker: "A"), line("Two.", 50, 60, speaker: "A")]
+        let second = [line("Three.", 1.5, 2.5, speaker: "A"), line("Four.", 20, 30, speaker: "A")]
+        let spans = TranscriptTimestamp.recordings(first + second)
+        XCTAssertEqual(spans.map { $0.map(\.text) }, [["One.", "Two."], ["Three.", "Four."]])
+        XCTAssertEqual(TranscriptTimestamp.duration(of: first + second), 59 + 28.5)
+        let cues = SessionExporter.cues(for: first + second)
+        XCTAssertEqual(cues.map(\.text), ["One.", "Two.", "Three.", "Four."], "nothing merged or interleaved")
+        // Two channels finalizing a few seconds out of order stay one recording.
+        let outOfOrder = [line("Late", 8, 9, speaker: "A"), line("Early", 3, 4, speaker: "B")]
+        XCTAssertEqual(TranscriptTimestamp.recordings(outOfOrder).count, 1)
+    }
+
+    /// Finding 7: the whole file name stays within 200 UTF-8 bytes, cut on whole characters.
+    func testFileNameIsCappedInBytesOnCharacterBoundaries() {
+        for title in [String(repeating: "👨‍👩‍👧‍👦", count: 60), String(repeating: "会议记录", count: 15),
+                      String(repeating: "ä", count: 60)] {
+            let name = SessionExporter.fileName(title: title, date: date, fileExtension: "json", suffix: "recap",
+                                                timeZone: utc)
+            XCTAssertLessThanOrEqual(name.utf8.count, SessionExporter.maximumNameBytes, name)
+            XCTAssertTrue(name.hasSuffix(" 2026-10-23 1435 recap.json"), name)
+            XCTAssertTrue(name.unicodeScalars.allSatisfy { $0.properties.generalCategory != .unassigned })
+            let stem = name.replacingOccurrences(of: " 2026-10-23 1435 recap.json", with: "")
+            XCTAssertTrue(title.hasPrefix(stem), "cut on a whole character: \(stem)")
+        }
     }
 
     func testUnspacedScriptsSplitAndWrapAtCharacters() {
@@ -133,27 +205,51 @@ final class SessionExportFormatTests: XCTestCase {
         XCTAssertEqual(ConversationLanguages(current: "de_DE", all: ["en_US"]).all, ["en-US", "de-DE"])
     }
 
-    func testReplacementForAWholeReTranscriptionAndUndo() {
-        let start = ConversationLanguages().applying([.recorded("en-US")])
-        let switched = start.applying([.replaced("en-US", with: "fr-FR")])
-        XCTAssertEqual(switched.all, ["fr-FR"])
-        XCTAssertEqual(switched.current, "fr-FR")
-        let undone = switched.applying([.replaced("fr-FR", with: "en-US")])
-        XCTAssertEqual(undone, ConversationLanguages(current: "en-US", all: ["en-US"]))
-        let both = ConversationLanguages(current: "fr-FR", all: ["en-US", "fr-FR"])
-            .applying([.replaced("fr-FR", with: "en-US")])
-        XCTAssertEqual(both.all, ["en-US"], "the replaced language goes when the other is already there")
-        XCTAssertEqual(ConversationLanguages().applying([.replaced("de", with: "fr")]).all, ["fr"])
-        XCTAssertEqual(ConversationLanguages().applying([.replaced("fr", with: "fr")]).all, ["fr"])
-        XCTAssertEqual(ConversationLanguages().applying([.replaced("", with: "fr")]).all, [])
+    private func spoken(_ text: String, _ start: TimeInterval, _ language: String?) -> TranscriptSegment {
+        TranscriptSegment(source: .you, text: text, isFinal: true, start: start, end: start + 1, language: language)
     }
 
-    func testChangesReappliedToTheirOwnResultGiveTheSameLanguages() {
-        let changes: [ConversationLanguages.Change] = [.recorded("en-US"), .recorded("fr-FR"),
-                                                       .replaced("fr-FR", with: "en-US"), .recorded("de-DE")]
-        let once = ConversationLanguages().applying(changes)
-        XCTAssertEqual(once.applying(changes), once)
-        XCTAssertEqual(once.all, ["en-US", "de-DE"])
+    func testLanguagesFollowTheLinesTheyAreIn() {
+        // A first check that transcribed everything again in Chinese leaves nothing in English.
+        let replayed = ConversationLanguages().resolving(recorded: ["en-US", "zh-CN"],
+                                                         segments: [spoken("我们", 1, "zh-CN"), spoken("开会", 5, "zh_CN")])
+        XCTAssertEqual(replayed, ConversationLanguages(current: "zh-CN", all: ["zh-CN"]))
+        // Review finding 2, example A: Undo after twenty minutes of Spanish keeps Spanish listed, because
+        // only the lines before the switch return to English; the current language is English again.
+        let undoneA = ConversationLanguages().resolving(
+            recorded: ["en-US", "es-ES", "en-US"],
+            segments: [spoken("Hello", 1, "en-US"), spoken("Hola", 70, "es-ES"), spoken("Adiós", 1_200, "es-ES")])
+        XCTAssertEqual(undoneA.all, ["en-US", "es-ES"])
+        XCTAssertEqual(undoneA.current, "en-US")
+        // Example B: an earlier German recording keeps German when an Undo of French → German follows.
+        let undoneB = ConversationLanguages(current: "de-DE", all: ["de-DE", "fr-FR"]).resolving(
+            recorded: ["fr-FR", "de-DE", "fr-FR"],
+            segments: [spoken("Guten Tag", 1, "de-DE"), spoken("Bonjour", 100, "fr-FR")])
+        XCTAssertEqual(undoneB.all, ["de-DE", "fr-FR"])
+        XCTAssertEqual(undoneB.current, "fr-FR")
+        // Lines saved before languages were kept per line cannot say, so nothing listed is dropped.
+        let legacy = ConversationLanguages(current: "de-DE", all: ["de-DE"]).resolving(
+            recorded: ["fr-FR"], segments: [spoken("Alt", 1, nil), spoken("Nouveau", 5, "fr-FR")])
+        XCTAssertEqual(legacy.all, ["de-DE", "fr-FR"])
+        XCTAssertEqual(ConversationLanguages().resolving(recorded: [], segments: []).all, [])
+    }
+
+    func testResolvingAgainOnItsOwnResultGivesTheSameLanguages() {
+        let recorded = ["en-US", "fr-FR", "en-US", "de-DE"]
+        let lines = [spoken("a", 1, "en-US"), spoken("b", 5, "fr-FR")]
+        let once = ConversationLanguages().resolving(recorded: recorded, segments: lines)
+        XCTAssertEqual(once.resolving(recorded: recorded, segments: lines), once)
+        XCTAssertEqual(once.all, ["en-US", "fr-FR", "de-DE"], "the language being recorded now is listed")
+        XCTAssertEqual(once.current, "de-DE")
+    }
+
+    func testShiftingMovesOnlyTimedLines() {
+        let timed = spoken("a", 2, "en-US").shifted(by: 100)
+        XCTAssertEqual([timed.start, timed.end], [102, 103])
+        XCTAssertEqual(timed.language, "en-US")
+        let untimed = line("b", 0, 0).shifted(by: 100)
+        XCTAssertEqual([untimed.start, untimed.end], [0, 0])
+        XCTAssertEqual(spoken("c", 2, nil).shifted(by: 0).start, 2)
     }
 
     func testRecordsWithoutLanguagesStillDecodeAndKeepThemOnceSaved() throws {

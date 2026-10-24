@@ -605,17 +605,22 @@ stays, because the folder belongs to the user. On the Mac, the note's date is th
 checkpoint, quitting waits up to five seconds for the last note, and waiting notes are retried at launch.
 
 The front matter's `language` is the conversation's own (#206), never the current setting: every
-`SessionRecord` carries `language` (the latest recording's) and `languages` (all, in order of first
-use), as optional fields, so records written before decode with both missing. On iOS,
-`MobileLanguageDetection.languageChanges` collects what happened while the conversation was open — each
-recording's language at `beginRun`, an Automatic switch (one that transcribed the whole conversation
-again replaces the starting language; a part-way switch adds the new one), an Undo (puts the original
-back) and Apple Watch lines (transcribed in the transcription language) — and `currentRecord` applies
-those changes to the languages last saved in History at every save, so re-applying them is harmless.
-A watch conversation that is not open gets its language when the drain saves it. On the Mac the
-capture's language is noted when Listen starts (and for audio-file imports); WhisperKit in Automatic
-mode reports no language, so none is recorded. A conversation never transcribed, or saved before #206,
-has no `language` line (and **Save all conversations now** and Retry write each record's own value).
+`SessionRecord` carries `language` (the current one) and `languages` (every language its lines are in,
+in order of first use), as optional fields, so records written before decode with both missing. On iOS
+each `TranscriptSegment` also keeps the `language` it was recognized in (live lines, replayed lines
+after a switch, Apple Watch lines; a speech correction keeps it), and
+`ConversationLanguages.resolving(recorded:segments:)` derives `languages` from the lines whenever every
+line has one: a first check that transcribes everything again drops the starting language, and an Undo
+— which restores only the lines before the switch (`LanguageDetectionPolicy.restoring`) — keeps the
+switched-to language while lines after the switch are in it (review of #233). The current language
+comes from `MobileLanguageDetection.languageChanges`, the languages recorded while the conversation
+was open: each recording's at `beginRun`, an Automatic switch's, an Undo's (the original language) and
+Apple Watch lines'. Lines saved before per-line languages cannot say, so nothing already listed is
+dropped for them. A watch conversation that is not open gets its language when the drain saves it. On
+the Mac the capture's language is noted when Listen starts (and for audio-file imports); WhisperKit in
+Automatic mode reports no language, so none is recorded. A conversation never transcribed, or saved
+before #206, has no `language` line (and **Save all conversations now** and Retry write each record's
+own value).
 
 ## Export formats (#130)
 
@@ -623,7 +628,9 @@ has no `language` line (and **Save all conversations now** and Retry write each 
 Markdown, plain text, Subtitles (SRT), Subtitles (WebVTT) and JSON, each as a file in the share sheet
 (`ConversationExportFile`, a `Transferable` with one `FileRepresentation` per format). The file is
 written to `tmp/ConversationExports/<uuid>/` with `PrivateStorage` data protection only when a share
-destination asks for it, and the previous export's folder is removed then. Names come from the title
+destination asks for it. The folder is removed at the next export, at launch, and by an owner in
+`conversationDataOwners` on every Delete and Delete all, so no export copy outlives the conversation
+in the app. Names (at most 200 UTF-8 bytes, cut on whole characters) come from the title
 and date (`Standup 2026-10-23 1435.srt`, made filesystem-safe; a default title becomes
 `Conversation`). Every iPhone and Apple Watch line carries the recognizer's audio range, cumulative
 across resumed recordings, so Markdown and plain text show `[mm:ss]` and the subtitle formats are
