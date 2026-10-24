@@ -1,7 +1,8 @@
 import XCTest
 
 /// Context-aware "Suggested" chips (#61) through the real Start path with the synthetic-speech
-/// fixture: the chips arrive with the Auto Quick decision, fit the phone width, and a tap is answered in the Ask card under Quick.
+/// fixture: the chips arrive with the Auto Quick decision, fit the phone width, and a tap is answered
+/// in the Ask card under Quick.
 @MainActor
 final class MobileSuggestedPromptsUITests: XCTestCase {
     func testChipsArriveWithAutoFitThePhoneAndATapAnswersUnderQuick() {

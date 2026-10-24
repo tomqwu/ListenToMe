@@ -87,7 +87,8 @@ final class MobileSuggestedPromptsTests: XCTestCase {
         XCTAssertEqual(request.purpose, .chat)
         let user = request.messages.last?.content ?? ""
         XCTAssertTrue(user.hasPrefix("<transcript>\nNotes: Who owns the Thursday review?"), user)
-        XCTAssertTrue(user.hasSuffix(PromptBuilder.askInstruction("Who owns the Thursday review?") + " Answer briefly."))
+        let instruction = PromptBuilder.askInstruction("Who owns the Thursday review?") + " Answer briefly."
+        XCTAssertTrue(user.hasSuffix(instruction))
         XCTAssertEqual(session.suggestedAsk.question, "Who owns the Thursday review?")
         XCTAssertEqual(session.suggestedAsk.answer, "Nobody owns it yet.")
         XCTAssertEqual(session.suggestedPrompts, ["Draft a reminder"])

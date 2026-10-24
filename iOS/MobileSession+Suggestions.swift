@@ -65,14 +65,16 @@ extension MobileSession {
         PromptBuilder.systemWithDirectives(PromptBuilder.systemPrompt, PromptContext(messages: [], notes: nil))
     }
 
-    /// Reads a manual Quick Summary answer into the pane's text and offers the suggestions it carries:
+    /// The manual Quick Summary's text (`quickOutput`), offering the suggestions the answer carries:
     /// the JSON decision's `suggestions` for Ollama, OpenAI-compatible and cloud models, or the strict
     /// final "Suggested:" block for Apple Intelligence's prose. Anything unparseable means no chips, and
     /// chips from a refresh that started before a provider or model change are dropped by the reader.
-    func offerManualQuickSuggestions(_ response: String, prose: Bool) {
+    func quickOutputOfferingChips(_ response: String, prose: Bool, cutOff: Bool) throws -> String {
+        let output = try Self.quickOutput(response, prose: prose, cutOff: cutOff)
         let suggestions = prose ? SuggestedPrompts.splitProse(response).suggestions
             : ((try? QuickSummaryDecision.parse(response))?.suggestions ?? [])
         quickReader.offerSuggestions(suggestions)
+        return output
     }
 
     /// A new or reopened conversation: no chips, no used-chip memory and no open ask.

@@ -34,7 +34,7 @@ struct MobileSuggestedPrompts: View {
                     }
                     .buttonStyle(.bordered).tint(MobileStyle.accent)
                     .disabled(session.suggestionBlockReason != nil)
-                    .accessibilityHint("Asks this question about the conversation; the answer appears below Quick Summary.")
+                    .accessibilityHint("Asks this question; the answer appears below Quick Summary.")
                     .accessibilityIdentifier("suggestedPrompt-\(index)")
                 }
             }
