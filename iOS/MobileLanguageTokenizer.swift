@@ -13,14 +13,14 @@ struct MobileLanguageTokenizer: WhisperTokenizer {
     init(_ tokenizer: any Tokenizer) throws {
         func token(_ text: String) throws -> Int {
             guard let id = tokenizer.convertTokenToId(text), tokenizer.convertIdToToken(id) == text else {
-                throw RecordingError.message("The downloaded language tokenizer is incomplete.")
+                throw RecordingError.message("The downloaded language tokenizer is missing \(text).")
             }
             return id
         }
         self.tokenizer = tokenizer
         specialTokens = try SpecialTokens(
             endToken: token("<|endoftext|>"), englishToken: token("<|en|>"),
-            noSpeechToken: token("<|nospeech|>"), noTimestampsToken: token("<|notimestamps|>"),
+            noSpeechToken: token("<|nocaptions|>"), noTimestampsToken: token("<|notimestamps|>"),
             specialTokenBegin: token("<|endoftext|>"), startOfPreviousToken: token("<|startofprev|>"),
             startOfTranscriptToken: token("<|startoftranscript|>"), timeTokenBegin: token("<|0.00|>"),
             transcribeToken: token("<|transcribe|>"), translateToken: token("<|translate|>"), whitespaceToken: token("Ġ"))

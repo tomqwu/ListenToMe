@@ -20,6 +20,7 @@ final class MobileLanguageTokenizerTests: XCTestCase {
         XCTAssertNotEqual(tokenizer.convertTokenToId(" "), 220)
         let adapter = try MobileLanguageTokenizer(tokenizer)
         XCTAssertEqual(adapter.specialTokens.whitespaceToken, 220)
+        XCTAssertEqual(adapter.specialTokens.noSpeechToken, 50362)
         XCTAssertEqual(adapter.specialTokens.startOfTranscriptToken, 50258)
         XCTAssertTrue(adapter.allLanguageTokens.contains(50260))
         XCTAssertEqual(adapter.convertIdToToken(50260), "<|zh|>")

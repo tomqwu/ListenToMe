@@ -83,6 +83,15 @@
       "rstrip": false,
       "normalized": true,
       "special": false
+    },
+    {
+      "id": 50362,
+      "content": "<|nocaptions|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
     }
   ],
   "normalizer": null,
@@ -206,7 +215,8 @@
       "<|transcribe|>": 50359,
       "<|startofprev|>": 50361,
       "<|notimestamps|>": 50363,
-      "<|0.00|>": 50364
+      "<|0.00|>": 50364,
+      "<|nocaptions|>": 50362
     },
     "merges": []
   }
