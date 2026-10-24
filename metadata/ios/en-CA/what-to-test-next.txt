@@ -1,1 +1,3 @@
-No pending iOS feature notes. Apple Watch remains gated by #181 physical-device acceptance.
+Custom Ollama: ask about the opening of a long conversation using a locally hosted model. Confirm the answer retains it even with a 4K server default. An oversized prompt must show a clear error instead of silently discarding its beginning. Cloud model context is unchanged. (#230)
+
+Apple Watch remains gated by #181 physical-device acceptance.

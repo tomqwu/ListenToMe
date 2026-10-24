@@ -30,6 +30,6 @@ extension MobileAISettings {
         return OllamaProvider(model: correctionModel, baseURL: endpoint, apiKey: key.isEmpty ? nil : key,
                               urlSession: transports.session(for: MobileTransports.correction,
                                                              identity: Self.transportIdentity(endpoint, key)),
-                              options: .init(thinking: false, temperature: 0, maximumTokens: 700))
+                              options: .init(thinking: false, temperature: 0, maximumTokens: 700), manageContext: usesCustomEndpoint)
     }
 }

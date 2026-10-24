@@ -47,6 +47,11 @@ Recent iOS trains (full text in [CHANGELOG.md](../CHANGELOG.md)):
   other languages keep English lists. Chinese suggestions work without spaces and use the local
   Chinese embedding when present. Device accuracy acceptance is still pending (#236).
 
+## Next train: local Ollama context capacity
+
+- #230 sizes local model context to the assembled prompt with a conservative UTF-8 budget and
+  reserved output space. Oversized requests fail clearly before chat; cloud context stays unchanged.
+
 ## Screenshot release requirement
 
 Every train captures fresh source-matched screenshots for all supported device categories. Follow
@@ -125,7 +130,6 @@ is the tracking issue.
 
 **Technical follow-ups**
 
-[#230](https://github.com/tomqwu/ListenToMe/issues/230) (P2, size Ollama `num_ctx` to the prompt),
 [#210](https://github.com/tomqwu/ListenToMe/issues/210),
 [#176](https://github.com/tomqwu/ListenToMe/issues/176),
 [#134](https://github.com/tomqwu/ListenToMe/issues/134) (P2, coverage scope),

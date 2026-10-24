@@ -676,3 +676,15 @@ conversation. All seven presets remain available in the menu. Existing conversat
 questions can also fill the Ask draft. Requests and saved instructions are limited to 1,000 characters.
 Mac History can reopen modern saved conversations after capture/import stops; the current conversation
 must first be saved. Older records without structured transcript lines remain readable/exportable.
+
+### Local Ollama context capacity (#230)
+
+Local Ollama mode and a custom Ollama endpoint inspect model metadata before answering. For a
+locally hosted model, requests select an 8K/16K/32K/64K context bucket, capped by the model's
+reported capacity, and reserve space for the answer. The budget counts UTF-8 bytes conservatively,
+including prompt framing; it does not assume English text. If the assembled request cannot fit,
+the pane asks for a shorter selection or a larger-context model before sending the answer request.
+The app does not silently remove the opening. This can reject some prompts a specific tokenizer
+could fit. Larger contexts require more memory. Default local answers are bounded to 4,096 tokens (at most a quarter of a small model window);
+Quick and correction keep their smaller limits, and output-limit notices still apply.
+Ollama Cloud models and other cloud providers keep their server-managed context.
