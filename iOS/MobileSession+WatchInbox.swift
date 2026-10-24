@@ -81,12 +81,16 @@ extension MobileSession {
         refreshWatchInboxRows()
     }
 
-    /// A deleted watch conversation takes its raw audio with it, so the drain cannot bring it back, and
-    /// leaves a tombstone so a part the watch sends again is discarded (#191).
-    func discardWatchAudio(sourceImportID: String?) {
-        guard let source = sourceImportID, source.hasPrefix("watch:"),
-              let recordingID = UUID(uuidString: String(source.dropFirst("watch:".count))) else { return }
-        deleteWatchRecording(recordingID, conversationDeleted: true)
+    /// Deleted watch conversations take their raw audio with them, so the drain cannot bring them back,
+    /// and leave tombstones so a part the watch sends again is discarded (#191). Run by the
+    /// conversation-deletion path (MobileSession+Deletion.swift); throws if any audio remains.
+    func discardWatchAudio(sourceImportIDs: [String]) throws {
+        let recordings = sourceImportIDs.compactMap { source -> UUID? in
+            guard source.hasPrefix("watch:") else { return nil }
+            return UUID(uuidString: String(source.dropFirst("watch:".count)))
+        }
+        guard !recordings.isEmpty else { return }
+        try removeWatchRecordings(recordings, tombstoneAt: Date())
     }
 
     /// The user's Retry on a failed recording.
@@ -96,23 +100,33 @@ extension MobileSession {
     }
 
     /// Deletes the recording's audio. Text already transcribed stays in its conversation.
-    /// `conversationDeleted` leaves a tombstone; see `WatchInbox.removeRecording(_:tombstoneAt:)`.
-    func deleteWatchRecording(_ recordingID: UUID, conversationDeleted: Bool = false) {
-        let drain = watchDrainTask
-        drain?.cancel()
-        do {
-            try watchInbox.removeRecording(recordingID, tombstoneAt: conversationDeleted ? Date() : nil)
-        } catch {
+    func deleteWatchRecording(_ recordingID: UUID) {
+        do { try removeWatchRecordings([recordingID], tombstoneAt: nil) } catch {
             message = "Could not delete the Apple Watch audio: \(error.localizedDescription)"
         }
-        refreshWatchInboxRows()
-        // Any other recording the cancelled drain was going to transcribe resumes.
-        if drain != nil {
-            Task { [weak self] in
-                await drain?.value
-                self?.importWatchInbox()
+    }
+
+    /// Stops a drain that may be transcribing them, removes the recordings, and lets the drain resume
+    /// for every other recording. A `deletedAt` leaves a tombstone; see
+    /// `WatchInbox.removeRecording(_:tombstoneAt:)`. Every recording is tried; the first error is thrown.
+    private func removeWatchRecordings(_ recordingIDs: [UUID], tombstoneAt deletedAt: Date?) throws {
+        let drain = watchDrainTask
+        drain?.cancel()
+        defer {
+            refreshWatchInboxRows()
+            // Any other recording the cancelled drain was going to transcribe resumes.
+            if drain != nil {
+                Task { [weak self] in
+                    await drain?.value
+                    self?.importWatchInbox()
+                }
             }
         }
+        var failure: Error?
+        for recordingID in recordingIDs {
+            do { try watchInbox.removeRecording(recordingID, tombstoneAt: deletedAt) } catch { failure = failure ?? error }
+        }
+        if let failure { throw failure }
     }
 
     // MARK: Drain

@@ -58,6 +58,10 @@ struct MobileHistoryView: View {
                 } footer: {
                     if !session.history.isEmpty { Text("Swipe right to share, left to delete. Touch and hold for more actions.") }
                 }
+                // Hidden while searching, so it never reads as "delete these results".
+                if !session.history.isEmpty, query.isEmpty {
+                    Section { MobileDeleteAllButton(session: session) }
+                }
             }
             .alert("Delete conversation?", isPresented: $showDeletion, presenting: pendingDeletion) { record in
                 Button("Delete conversation", role: .destructive) {

@@ -20,8 +20,12 @@ extension MobileSession {
         }
     }
 
-    /// A deleted conversation's queued note is dropped, so a later Retry cannot write it.
-    func forgetVaultNote(_ id: String) { Self.markdownVault.forget(id: id) }
+    /// Deleted conversations' queued notes are dropped, so a later Retry cannot write them. Notes
+    /// already in the folder stay: the folder belongs to the user.
+    func forgetVaultNotes(_ deletion: ConversationDeletion) {
+        if deletion.everything { Self.markdownVault.forgetAll(); return }
+        deletion.ids.forEach { Self.markdownVault.forget(id: $0) }
+    }
 
     /// The conversation Save all and Retry must not write: the one being recorded.
     var vaultRecordingID: String? { state == .idle ? nil : id }

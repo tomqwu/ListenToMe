@@ -267,6 +267,7 @@ struct MobileMeetingView: View {
                          : "Conversations are included in this device's normal backup, like other app data. "
                             + "Conversation files stay encrypted until you unlock this device after a restart.")
                         .font(.caption).accessibilityIdentifier("backupExplanation")
+                    MobileDeleteAllButton(session: session)
                     Link("Privacy policy", destination: MobileMeetingView.privacyPolicyURL)
                     Link("Support", destination: MobileMeetingView.supportURL)
                     Link("Open app settings", destination: URL(string: UIApplication.openSettingsURLString)!)
