@@ -78,7 +78,7 @@ struct MobileSavedAudioTranscript: View {
                                        let index = session.allSegments.firstIndex { $0.id == segment.id } ?? 0
                                        return playback.target(for: segment, index: index)
                                    } : nil,
-                                   playAudio: { playback.play($0) })
+                                   playAudio: { playback.play($0) }, addTerm: session.addToMyTerms)
                 .id(session.id)
         }
         .task(id: "\(session.id)-\(session.savedAudio.revision)-\(session.state == .idle)") {

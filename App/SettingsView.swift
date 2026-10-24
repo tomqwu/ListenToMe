@@ -292,6 +292,9 @@ struct SettingsView: View {
             MacVaultSettings()
 
             Divider()
+            MacVocabularySettings()
+
+            Divider()
             MacSavedAudioSettings()
 
                 }

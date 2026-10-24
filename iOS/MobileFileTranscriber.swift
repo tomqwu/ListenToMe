@@ -21,6 +21,12 @@ struct WatchAudioChunk: Sendable, Equatable {
 protocol WatchAudioTranscribing: AnyObject {
     func transcribe(_ chunks: [WatchAudioChunk], locale: Locale,
                     onFinal: @escaping @MainActor (TranscriptSegment) throws -> Void) async throws
+    /// The vocabularies' recognition terms for the next `transcribe` (issue #222).
+    func setContextualStrings(_ strings: [String])
+}
+
+extension WatchAudioTranscribing {
+    func setContextualStrings(_ strings: [String]) {}
 }
 
 /// The on-device `SpeechAnalyzer` file path. Internal to Apple Watch recordings (decision 9): there is
@@ -28,6 +34,9 @@ protocol WatchAudioTranscribing: AnyObject {
 @MainActor
 final class MobileFileTranscriber: WatchAudioTranscribing {
     static let speakerName = "Apple Watch"
+    private var contextualStrings: [String] = []
+
+    func setContextualStrings(_ strings: [String]) { contextualStrings = strings }
 
     func transcribe(_ chunks: [WatchAudioChunk], locale: Locale,
                     onFinal: @escaping @MainActor (TranscriptSegment) throws -> Void) async throws {
@@ -40,6 +49,7 @@ final class MobileFileTranscriber: WatchAudioTranscribing {
         let (transcriber, format) = try await MobileSpeechModel.prepare(locale: locale, volatileResults: false)
         try Task.checkCancellation()
         let analyzer = SpeechAnalyzer(modules: [transcriber])
+        if !contextualStrings.isEmpty { await SpeechVocabularyContext.apply(contextualStrings, to: analyzer) }
         try await analyzer.prepareToAnalyze(in: format)
         let feed = ChunkFeed(chunks: chunks, format: format)
         let results = Task { @MainActor in
@@ -57,9 +67,12 @@ final class MobileFileTranscriber: WatchAudioTranscribing {
                 }
             }
         }
+        let strings = contextualStrings
         do {
             try await withTaskCancellationHandler {
                 try await analyzer.start(inputSequence: ChunkInputs(feed: feed))
+                // Again after start: a context set before it is not documented to survive it.
+                if !strings.isEmpty { await SpeechVocabularyContext.apply(strings, to: analyzer) }
                 // The feed ends after the last chunk, or as soon as it is stopped.
                 try await analyzer.finalizeAndFinishThroughEndOfInput()
                 try await results.value

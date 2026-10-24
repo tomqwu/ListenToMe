@@ -69,6 +69,7 @@ final class MobileSession {
     var onDeviceProviderOverride: (any LLMProvider)?
     let correctionProvider: (any LLMProvider)?
     let speechCorrection = MobileTranscriptCorrector()
+    let vocabulary = SessionVocabulary()   // domain vocabularies and My terms (issue #222)
     var acceptsSpeechCorrection = false
     private let makeRecorder: () -> any MobileRecording
     let makeWatchTranscriber: () -> any WatchAudioTranscribing
@@ -264,15 +265,14 @@ final class MobileSession {
         // Keep any unfinished hypothesis from an interrupted earlier run.
         if let partial { segments.append(partial); self.partial = nil }
         state = .preparing
-        let recorder = makeRecorder()
-        self.recorder = recorder
+        let recorder = makeRecorder(); self.recorder = recorder
         let offset = segments.map(\.end).max() ?? 0
         attachRunAudio(to: recorder, offset: offset)   // speakers, language and saved audio share one timeline
         // An Apple Watch drain stops before the microphone is prepared, and resumes after.
         let drain = watchDrainTask
         drain?.cancel()
         startTask = Task {
-            await drain?.value
+            await drain?.value; await recorder.setContextualStrings(self.vocabularyRecognitionTerms)
             do {
                 try await recorder.start(locale: Locale(identifier: recordingLanguage)) { [weak self] segment in
                     guard let self else { return }
@@ -516,7 +516,7 @@ extension MobileSession {
 
     private func synchronizeAutomaticReviews() {
         automaticReviews.synchronize(enabled: autoQuick && state == .recording && automaticQuickAvailability == nil,
-            manualBusy: isSummarizing, pieces: quickPieces, source: summarySource,
+            manualBusy: isSummarizing, pieces: quickPieces, source: summarySource, directives: vocabularyDirectives,
             provider: { [weak self] mode in   // Summary only: the coordinator runs no Deep on iOS (#235)
                 guard let self, mode == .summary else { throw CancellationError() }
                 if let reason = self.summaryAvailability(for: .summary) { throw QuickSummaryError.message(reason) }

@@ -11,7 +11,10 @@ struct MobileTranscriptReader: View {
     /// Where a line plays from in the saved audio (issue #55); `nil` hides the play controls.
     var audioTarget: ((TranscriptSegment) -> SavedAudioSeek.Target?)?
     var playAudio: ((SavedAudioSeek.Target) -> Void)?
+    /// "Add to My terms" from a line's context menu (issue #222); returns why a term was not added.
+    var addTerm: ((String) -> String?)?
     @State private var reviewing: TranscriptSegment?
+    @State private var addingFrom: TranscriptSegment?
     @State private var following = true
     @State private var readingSnapshot: [TranscriptSegment]?
     private var displayedSegments: [TranscriptSegment] { readingSnapshot ?? segments }
@@ -52,6 +55,12 @@ struct MobileTranscriptReader: View {
                             }
                         }.frame(maxWidth: .infinity, alignment: .leading)
                             .modifier(MobilePlayOnTap(target: audioTarget?(segment), play: playAudio))
+                            .contextMenu {
+                                if addTerm != nil, segment.isFinal {
+                                    Button("Add to My terms…", systemImage: "text.badge.plus") { addingFrom = segment }
+                                        .accessibilityIdentifier("addToMyTerms")
+                                }
+                            }
                     }
                     Color.clear.frame(height: 1).id(endID)
                 }.padding(16)
@@ -106,6 +115,9 @@ struct MobileTranscriptReader: View {
                         .background(.regularMaterial)
                 }
             }
+        }
+        .sheet(item: $addingFrom) { segment in
+            MobileAddTermSheet(line: segment.text) { addTerm?($0) }
         }
         .sheet(item: $reviewing) { segment in
             MobileSpeechCorrectionReview(segment: segment) { id in
