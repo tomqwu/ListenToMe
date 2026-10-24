@@ -1410,4 +1410,6 @@ In the wide iPhone Live workspace, tap **Duo pane widths** beside the Live/Summa
 Equal widths, More transcript, or More Quick Summary. The device remembers the choice; each pane
 keeps at least 280 points when space permits. Portrait and accessibility layouts still stack their
 content. **Transcript actions** holds Select lines, Speech correction settings, and Play recording
-when available. Expand transcript stays directly accessible.
+when available. Expand transcript stays directly accessible. The width preference is device-local,
+shared by conversations, and does not change saved text or audio. It is applied only to two-pane
+Live layouts; Summary, narrow windows, and accessibility text keep their existing reading layouts.
