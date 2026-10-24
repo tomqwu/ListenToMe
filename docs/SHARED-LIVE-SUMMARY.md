@@ -371,3 +371,53 @@ carries them as `LLMStreamEvent.thinking`, and `MeetingSession.roleStatus(role)`
 in the pane header, so a long think phase no longer looks like a hung request. Reasoning is never
 written into the answer, and a response that is *only* reasoning fails as
 `OllamaStreamError.thinkingOnly`, which says so.
+
+## Suggested prompt chips (#61)
+
+The evaluator envelope gains one **optional** key, `suggestions`: with `publish`, two or three short
+requests the user could tap to ask next ("Counter the net-30 ask"), each at most 60 characters on one
+line; `[]` with `keep`. `QuickSummaryDecision.parse` accepts the four-key envelope unchanged and the
+five-key one with `suggestions`; any other extra key is still rejected. A malformed `suggestions`
+value (a string, numbers, `null`) costs only the chips — it never fails the recap, because the recap
+is the contract and the chips are an extra. `QuickSummaryDecision.jsonSchema`, which Claude's
+structured output uses, lists the key as required so Claude always emits it.
+
+Every candidate passes `SuggestedPrompts.sanitize`: list markers, quotes and emphasis are stripped;
+entries that are empty, longer than 60 characters (rejected, never truncated), multi-line, links,
+JSON or markup, placeholders ("none", "request") or carry fewer than three letters are dropped;
+duplicates are folded case-, accent- and punctuation-insensitively; at most three remain.
+
+No model call exists only to make chips. They ride on passes that already run:
+
+| Pass | When | Platforms |
+| --- | --- | --- |
+| Auto Quick evaluation (`QuickSummaryReader.read`) | Auto on, recording, a read that caught up with the input (a catch-up read with `hasMore` offers none) | macOS and iOS |
+| Manual Quick Summary refresh (JSON) | the user tapped Generate on Ollama, an OpenAI-compatible server or a cloud AI service | iOS |
+| Manual Quick Summary refresh (prose) | the user tapped Generate on Apple Intelligence | iOS |
+
+So with Auto off and no manual refresh, no chips are produced, and no cloud provider is ever called
+for them beyond the pass the user already chose. macOS manual Quick answers ("Draft reply"…) are prose
+and carry no chips. Apple Intelligence's prose prompt (`QuickSummaryContext.manualProseInstructions`)
+appends `SuggestedPrompts.proseInstructions`: a trailing `Suggested:` heading followed by `> ` lines.
+`SuggestedPrompts.splitProse` reads it strictly — only list-marked lines directly after a heading that
+is exactly `Suggested:` (bold or heading markers allowed); the first unmarked line ends the block —
+and `proseSummary` strips the block before reading bullets, so chips are never shown as takeaways.
+Anything else means no chips.
+
+Cadence: the first valid set shows at once. Automatic passes replace chips already on screen at most
+every `SuggestedPrompts.minimumRefreshInterval` (20 s) on the reader's injected clock; a newer set that
+arrives sooner is held and shown on the first pass after the window, even a pass that brings nothing.
+An empty or junk-only pass keeps the chips. A manual refresh replaces them at once. A cancelled,
+failed or stale read (`isCurrent` false) offers nothing.
+
+A tap sends the literal text through the normal path — never automatically. macOS sends
+`ResponseAction.ask(prompt)` through Quick (context menu: Deep), so it gets the same grounding, budget,
+AI-off guard and manual-answer freshness as the fixed actions; iOS sends it through Deep Summary
+(`PromptBuilder.askInstruction` after the fenced transcript), shown with the request in bold. The
+request is quoted on one line after the transcript fence, in instruction position, because the user
+chose to send it. A tapped chip leaves the row and is not suggested again in that conversation.
+
+Clearing: a new or reopened conversation resets the reader, chips and used-chip memory included; a
+provider, model or route change and turning AI off clear the chips (`QuickSummaryReader.providerChanged`
+on iOS, `handleLiveEvent(.providerChanged)` on macOS); macOS hides chips while AI is off. Stop keeps
+them: the conversation can still be asked about, and they simply stop refreshing.

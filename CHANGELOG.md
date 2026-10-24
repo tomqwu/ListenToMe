@@ -16,6 +16,7 @@ does not show it again, and a fresh install does not see it at all; see
 - Apple Watch companion, remote Start/Stop for the iPhone recorder (not yet shipped; ships with watch recording on the #181 train). (#181)
 - iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
 - Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
+- **Suggested · from context** under Quick Summary: two or three short questions drawn from the conversation, shown after an Auto check or a Quick refresh (Apple Intelligence included) at no extra request. Tap one to ask Deep Summary; nothing is sent without a tap. They change at most every 20 seconds and clear on a new conversation or a provider change. (#61)
 
 ## iOS 1.14.0 (31) — 2026-10-23
 
@@ -47,6 +48,7 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## macOS (unreleased since 1.4.4)
 
+- **Suggested · from context** chips above the fixed Quick actions: with Auto on, two or three one-tap prompts drawn from the conversation, carried by the Auto Quick check at no extra model call. A click sends the literal text through Quick (right-click → **Ask in Deep**); nothing is sent by itself. They refresh at most every 20 seconds, a used chip is not suggested again, and a new conversation, a model change or AI off clears them. (#61)
 - New AI mode **Cloud AI service**: OpenAI, Anthropic Claude, Google Gemini, DeepSeek, OpenRouter, Groq, Mistral or xAI Grok with your own API key (Check key lists the vendor's models; Get a key and privacy-policy links). Each service is labelled "Sends your transcript to <vendor>", keeps its own Keychain key sent only to that vendor, and pane pickers list its models without ever picking one. Claude uses Anthropic's own Messages API. (#214)
 - New AI mode **OpenAI-compatible**: point the panes at LM Studio, vLLM, llama.cpp, Ollama's /v1 API or OpenRouter with an optional Keychain key bound to that server; pane pickers list its /v1/models and never pick one for you; labelled "your server" or "may leave this device", never local; redirects are not followed. Plain http to `.local` names now works. (#52)
 - Speaker identification matches voices across its periodic passes, so a participant who is silent for minutes keeps their Speaker N label and edited name; voice embeddings stay in memory for the run only. (#171)

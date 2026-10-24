@@ -120,6 +120,9 @@ extension MeetingSession {
 
     func handleLiveEvent(_ event: LiveSummaryScheduler.Event) {
         if event == .conversationChanged || event == .providerChanged { automaticReviews.reset() }
+        // A model, route or AI on/off change makes the chips describe a pass the current settings
+        // would not make (#61). A new conversation resets the reader, chips included.
+        if event == .providerChanged { quickReader.clearSuggestions() }
         // One snapshot per event: the pieces, the joined review source and the pending check all
         // read the same memoized value instead of rebuilding the transcript three times (issue #116).
         let live = liveSnapshot()

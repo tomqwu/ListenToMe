@@ -6,6 +6,9 @@ public struct QuickSummaryDecision: Decodable, Sendable {
     public let context: String
     public let bullets: [String]
     public let reviews: [Review]
+    /// Optional suggested prompts (#61), already cleaned by `SuggestedPrompts.sanitize`. Junk entries
+    /// are dropped rather than failing the decision: the chips are an extra, the recap is the contract.
+    public var suggestions: [String] = []
     public struct Review: Codable, Equatable, Sendable {
         public let mode: String
         public let confidence: String
@@ -23,7 +26,7 @@ public struct QuickSummaryDecision: Decodable, Sendable {
         for start in answer.indices.reversed().filter({ answer[$0] == "{" }).prefix(64) {
             let data = Data(answer[start...].utf8)
             guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  Set(object.keys) == Set(["action", "context", "bullets", "reviews"]),
+                  acceptedKeys.contains(Set(object.keys)),
                   let result = try? JSONDecoder().decode(Self.self, from: data) else { continue }
             guard ["keep", "publish"].contains(result.action), result.context.count <= 2_000,
                   result.reviews.count <= 2, Set(result.reviews.map(\.mode)).count == result.reviews.count,
@@ -37,12 +40,34 @@ public struct QuickSummaryDecision: Decodable, Sendable {
         }
         throw invalidResponse
     }
+    /// The envelope's keys. `suggestions` is optional, so models and fixtures that predate it stay valid.
+    static let acceptedKeys: [Set<String>] = [["action", "context", "bullets", "reviews"],
+                                              ["action", "context", "bullets", "reviews", "suggestions"]]
     private static var invalidResponse: QuickSummaryError { .message("The model did not return a usable Quick Summary update.") }
+}
+
+extension QuickSummaryDecision {
+    private enum CodingKeys: String, CodingKey { case action, context, bullets, reviews, suggestions }
+
+    /// Decoded by hand so a malformed `suggestions` value costs the chips, never the recap.
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        action = try container.decode(String.self, forKey: .action)
+        context = try container.decode(String.self, forKey: .context)
+        bullets = try container.decode([String].self, forKey: .bullets)
+        reviews = try container.decode([Review].self, forKey: .reviews)
+        let raw = (try? container.decodeIfPresent([String].self, forKey: .suggestions)) ?? nil
+        suggestions = SuggestedPrompts.sanitize(raw ?? [])
+    }
 }
 
 @MainActor @Observable
 public final class QuickSummaryReader {
-    public init() {}
+    /// - Parameter now: seconds on the session's clock; it drives the suggestion refresh window.
+    public init(now: @escaping @MainActor () -> TimeInterval = { Date().timeIntervalSince1970 }) { self.now = now }
+    @ObservationIgnored private let now: @MainActor () -> TimeInterval
+    /// The context-aware chips (#61), refreshed by completed evaluations and manual Quick passes.
+    public private(set) var suggestions = SuggestedPrompts()
     public private(set) var context = QuickSummaryContext()
     public private(set) var isReading = false
     public private(set) var error: String?
@@ -64,7 +89,31 @@ public final class QuickSummaryReader {
     public func reset() {
         cancel(); context = QuickSummaryContext(); error = nil; unchanged = false; completedReads = 0; failures = 0
         recommendations = []; reviewsCompleted = []; reviewRevisions = [:]; isCatchingUp = false
+        suggestions = SuggestedPrompts()
     }
+
+    /// Offers the suggestions of a pass that ran outside `read`: a manual Quick Summary the user
+    /// asked for, which replaces the chips at once.
+    public func offerSuggestions(_ candidates: [String]) {
+        suggestions.offer(candidates, at: now(), force: true)
+    }
+
+    /// Chips follow the review-suggestion rule: only a read that caught up with the input describes
+    /// the whole conversation, so a catch-up read offers none of its own.
+    private func offerSuggestions(of decision: QuickSummaryDecision, complete: Bool) {
+        guard complete else { return }
+        suggestions.offer(decision.suggestions, at: now())
+    }
+
+    /// The user tapped a chip: it leaves the row and is not offered again in this conversation.
+    public func useSuggestion(_ prompt: String) { suggestions.use(prompt) }
+
+    /// Drops every chip: the provider changed or AI was turned off, so they no longer describe a
+    /// pass the current settings would make.
+    public func clearSuggestions() { suggestions.clear() }
+
+    /// The Quick provider or model changed: its last failure and its chips no longer apply.
+    public func providerChanged() { clearError(); clearSuggestions() }
 
     public func markReviewed(_ mode: String) {
         guard mode != "quick" else { return }
@@ -111,6 +160,7 @@ public final class QuickSummaryReader {
                     }
                 }
                 reviewsCompleted.removeAll { completedBeforeRead.contains($0) && !completedDuringRead.contains($0) }
+                offerSuggestions(of: decision, complete: !batch.hasMore)
             } catch {
                 guard generation == token, !Task.isCancelled else { return }
                 failures += 1

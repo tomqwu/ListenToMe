@@ -56,9 +56,14 @@ private actor FixtureSummaryProvider: LLMProvider {
             let bullets = input.contains("Alex") ? ["**Alex** owns onboarding.", "Review on Thursday."] : ["Review on **Thursday**."]
             // The declared purpose, not the prompt text: the evaluator's system prompt varies with
             // the response-language setting and the data-not-instructions notice (#166).
+            // Suggested chips (#61) ride on the same decision; a tapped chip reaches Deep literally.
+            let suggestions = ["Who owns the Thursday review?", "Draft a reminder for Thursday"]
             if request.purpose == .quickEvaluation,
-               let data = try? JSONSerialization.data(withJSONObject: ["reviews": [], "action": "publish", "context": bullets.joined(), "bullets": bullets]) {
+               let data = try? JSONSerialization.data(withJSONObject: ["reviews": [], "action": "publish",
+                   "context": bullets.joined(), "bullets": bullets, "suggestions": suggestions]) {
                 continuation.yield(String(decoding: data, as: UTF8.self))
+            } else if input.contains(#"The user asks: "Who owns the Thursday review?""#) {
+                continuation.yield("Nobody has claimed the Thursday review yet.")
             } else { continuation.yield(bullets.map { "- " + $0 }.joined(separator: "\n")) }
             continuation.finish()
         }

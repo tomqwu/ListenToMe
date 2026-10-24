@@ -171,7 +171,7 @@ final class MobileSession {
         ai.correctionSettingsChanged = { [weak self] in self?.speechCorrection.cancel() }
         ai.quickSettingsChanged = { [weak self] in
             guard let self else { return }
-            self.quickReader.clearError()
+            self.quickReader.providerChanged()
             self.handleSummaryEvent(.providerChanged)
         }
     }
@@ -463,12 +463,12 @@ extension MobileSession {
 }
 
 extension MobileSession {
-    func requestSummary(for mode: MobileSummaryMode = .summary) {
+    func requestSummary(for mode: MobileSummaryMode = .summary, question: String? = nil) {
         guard summaryTask == nil else { return }
         if let reason = summaryBlockReason(for: mode) { message = reason; return }
         if mode == .quick { handleSummaryEvent(.manualQuickStarted); quickReader.clearError() }
         summaryTask = Task {
-            await summarize(mode: mode)
+            await summarize(mode: mode, question: question)
             summaryTask = nil
             // New speech can arrive during any request. Resume at the remaining cooldown,
             // instead of adding another full interval after the response finishes.
@@ -598,7 +598,7 @@ extension MobileSession {
         return "Auto on · New speech is waiting for the next check."
     }
 
-    func summarize(mode: MobileSummaryMode = .summary) async {
+    func summarize(mode: MobileSummaryMode = .summary, question: String? = nil) async {
         if let reason = summaryBlockReason(for: mode) { message = reason; return }
         // Capture a stable input snapshot; recording can continue while this request runs.
         let source = summarySource
@@ -608,9 +608,9 @@ extension MobileSession {
             return
         }
         let cloud = summaryProvider != nil || ai.provider != .apple
-        // The transcript is fenced as data, exactly as the macOS panes fence it (issue #140); the
-        // cap is charged on the fenced text so the Apple window still holds.
-        let fencedSource = PromptData.block("transcript", source)
+        // The transcript is fenced as data as on macOS (#140), then any tapped suggestion's request
+        // (#61); the cap is charged on that whole message so the Apple window still holds.
+        let fencedSource = Self.userMessage(source, question: question)
         // The on-device Apple path shares its character cap with macOS (PromptBudget).
         guard fencedSource.count <= (cloud ? 60_000 : PromptBudget.appleIntelligenceCharacters) else {
             message = "This conversation exceeds the selected provider's summary limit. Export it or shorten your notes."
@@ -651,9 +651,8 @@ extension MobileSession {
             switch mode {
             case .summary: summary = summaryDraft
             case .quick:
-                quickSummary = (proseQuick ? MobileQuickContext.proseSummary(quickResponse)
-                    : try QuickSummaryDecision.parse(quickResponse).summary) ?? "No key takeaway yet."
-            case .deep: deepThought = summaryDraft
+                quickSummary = try manualQuickSummary(quickResponse, prose: proseQuick)
+            case .deep: deepThought = Self.answer(summaryDraft, question: question)
             }
             if let reviewMode = AutomaticReviewMode(rawValue: mode.rawValue) {
                 automaticReviews.markManualCompletion(reviewMode, source: source)

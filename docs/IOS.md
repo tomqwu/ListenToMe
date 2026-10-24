@@ -37,6 +37,7 @@ this table in the same PR, and never fork a copy into `App/` or `iOS/`.
 | `QuickSummaryContext` — pieces, attributed transcript and `Notes: ` lines | `MeetingSession`, `AutomaticReviewCoordinator` | `MobileQuickContext` (a typealias, `iOS/MobileQuickContext.swift`) |
 | `QuickSummaryReader` / `QuickSummaryDecision` — evaluation and its JSON envelope | `MeetingSession` | `MobileQuickReader` (a typealias, `iOS/MobileQuickReader.swift`) |
 | `AutomaticReviewCoordinator` — queued Summary/Deep reviews, deadlines, manual completion | `MeetingSession` | `MobileSession.automaticReviews` |
+| `SuggestedPrompts` (#61) — suggested-chip validation, 20-second refresh window, used-chip memory, the strict prose "Suggested:" block | `MeetingSession+Suggestions`, `App/SuggestedPromptChips.swift` | `iOS/MobileSession+Suggestions.swift`, `MobileSuggestedPrompts` |
 | Prompt data fences and caps: `PromptData.notice`, `PromptData.block`, `PromptBudget` | `PromptBuilder` (`Prompt.swift`) | `MobileSummaryMode.instructions`, `MobileSession.summarize` |
 | `SessionArchive` — the on-disk conversation format | `App/SessionStore.swift` | `iOS/MobileSession.swift` |
 | Speaker identification: `SpeakerDiarizer` and `SpeakerAudioBuffer` (`SharedPlatform/`, FluidAudio), `SpeakerIdentityTracker`, `SpeakerLabeling`, `SpeakerStats`, `SpeakerAnalysisPolicy` | `App/MeetingView+Speakers.swift` | `MobileSpeakers`, `iOS/MobileSession+Speakers.swift`; iOS language detection (#197) reuses `SpeakerAudioBuffer`, keeping its trailing two minutes (#199) |
@@ -68,6 +69,7 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 | Share-sheet import | — | Share extension plus an App Group inbox (`ShareExtension/`, `iOSShared/SharedInbox.swift`) |
 | AI speech correction | — | Opt-in, over a Flash model on Ollama (`MobileTranscriptCorrector`) |
 | Proactive Quick answers | Yes — needs a finalized question on the Others channel | No — there is no Others channel to detect one in |
+| Suggested prompts (#61) | **Suggested · from context** above the fixed Quick actions, from the Auto Quick check only (macOS manual Quick answers are prose with no chips); a tap asks Quick, the context menu also offers **Ask in Deep**; AI off hides and clears them | Under Quick Summary, from the Auto Quick check or a manual Quick refresh — on Apple Intelligence through the strict prose "Suggested:" block; a tap asks **Deep Summary** (iOS has no free-form Quick answer) and opens the Deep tab |
 | Third-party licenses | **Open-source licenses…** shows `App/ThirdPartyNotices.txt` as one text | **Settings → About → Acknowledgements** lists each package from the same file with its full license (`MobileAcknowledgementsView`, #202) |
 | "What's New" | GitHub release notes and `CHANGELOG.md` | In-app, shown once per set of bundled notes (`MobileReleaseNotes`) |
 | Storage protection | Plain atomic writes | Data protection (`completeUntilFirstUserAuthentication`) plus an optional backup exclusion (`PrivateStorage`) |
@@ -536,6 +538,27 @@ separately, restored with its conversation and included when sharing. These are 
 Deep Think does not promise a provider-specific reasoning mode. Requests use the selected provider
 and preserve previous completed output on failure or cancellation.
 
+## Suggested prompts (#61)
+
+Quick Summary can show **Suggested · from context**: two or three one-tap requests drawn from the
+conversation, such as "Who owns the Thursday review?". They are never a model call of their own. They
+ride on a pass that already runs — the Auto Quick check while Auto is on, or a manual Quick refresh
+you tap — so with Auto off and no refresh there are none, and no cloud service is called to make
+them. On Ollama, OpenAI-compatible servers and cloud AI services they arrive in the Quick decision's
+optional `suggestions` field; on Apple Intelligence the prose prompt asks for a trailing
+"Suggested:" block of `> ` lines, read strictly — without that heading there are no chips, and the
+block never appears among the takeaways.
+
+Each chip is at most 60 characters and one line; duplicates, placeholders, links, JSON and markup are
+dropped (`SuggestedPrompts`). Auto replaces chips at most every 20 seconds so a chip does not change
+under your finger; a manual refresh replaces them at once. A tap sends the literal text to **Deep
+Summary** with the fenced transcript (`PromptBuilder.askInstruction`), opens the Deep tab, and shows
+the request in bold above the answer; the chip leaves the row and is not suggested again in that
+conversation. Nothing is sent without a tap, and chips are disabled while another response is
+generating. A new or reopened conversation and a provider or model change clear them; Stop keeps them,
+because the conversation can still be asked about. The chips stack vertically, so they wrap at phone
+width and at accessibility text sizes.
+
 ## Save to folder (#53)
 
 **Settings → Save to folder** is off by default. Turning it on opens the Files folder picker; the
@@ -614,7 +637,9 @@ the automatic evaluator's JSON envelope: a small on-device model cannot be held 
 JSON contract stays with the Ollama-backed Auto loop. The prose answer is read back leniently: list
 markers, numbering, a "Here is the recap:" preamble and stray code fences are tolerated, and an answer
 carrying no takeaway shows "No key takeaway yet." in the pane (a *failed* request is what keeps the
-previous summary). Generation failures are stated in plain language instead of a developer message:
+previous summary). The same prompt may end with a "Suggested:" block of up to three `> ` requests,
+which become [suggested prompts](#suggested-prompts-61) and are removed from the bullets; any other
+shape means no chips, never a failure. Generation failures are stated in plain language instead of a developer message:
 a conversation longer than the on-device context window, a guardrail refusal, a busy or undownloaded
 model, and an unsupported language each say what happened and that Ollama can be selected instead.
 
