@@ -630,7 +630,7 @@ fit the provider (`OnDemandGrounding`, as for an on-demand Quick answer, so a lo
 answered from what fits rather than refused), then `PromptBuilder.askInstruction`. The answer streams
 into a small **Ask card** under Quick Summary — the question in bold, the answer below it, Cancel
 while it streams and Close to dismiss — and the app stays on Live. It never replaces Quick Summary
-or Deep on screen or in the saved conversation, never counts as a completed review and never touches
+or Summary on screen or in the saved conversation, never counts as a completed review and never touches
 Auto's queued reviews or recommendations. The answer is kept in memory only and is not saved with
 the conversation. A tap that cannot be sent (a response is generating, nothing has been said or the
 provider is unavailable) sends nothing, says why and keeps the chip. A chip is used up only once its
