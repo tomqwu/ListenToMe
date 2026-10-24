@@ -21,12 +21,12 @@ struct MobileWorkspaceView<Header: View>: View {
     @State private var panelRequest: MobileSelectionRequest?
     @State private var expandedRequest: MobileSelectionRequest?
     @Environment(\.dynamicTypeSize) private var typeSize
-    @Environment(\.verticalSizeClass) private var verticalSize
-    private var stacked: Bool { typeSize.isAccessibilitySize || verticalSize == .compact }
 
     var body: some View {
         GeometryReader { geometry in
-            if geometry.size.width >= 760 && geometry.size.height >= 600 && !stacked {
+            let layout = MeetingWorkspaceLayout.resolve(width: geometry.size.width, height: geometry.size.height,
+                                                        accessibilityText: typeSize.isAccessibilitySize)
+            if layout == .wide {
                 HStack(alignment: .top, spacing: 20) {
                     livePanels(height: geometry.size.height)
                         .frame(width: (geometry.size.width - 20) * 0.52)
@@ -39,12 +39,21 @@ struct MobileWorkspaceView<Header: View>: View {
                             Text(page.rawValue).tag(page)
                         }
                     }.pickerStyle(.segmented).accessibilityIdentifier("workspaceTabs")
-                    if stacked {
+                    if layout == .twoPane {
+                        if selection == .live {
+                            HStack(alignment: .top, spacing: 12) {
+                                transcriptPanel(compact: true)
+                                summaryPanel(.quick, compact: true)
+                            }.accessibilityElement(children: .contain).accessibilityIdentifier("twoPaneMeetingWorkspace")
+                        } else {
+                            summaryPanel(.summary, compact: true)
+                        }
+                    } else if layout == .scrolling {
                         ScrollView {
                             VStack(spacing: 16) {
                                 if typeSize.isAccessibilitySize { accessibilityHeader() }
-                                if selection == .live { transcriptPanel; summaryPanel(.quick) }
-                                else { summaryPanel(.summary) }
+                                if selection == .live { transcriptPanel(scrolling: true); summaryPanel(.quick, scrolling: true) }
+                                else { summaryPanel(.summary, scrolling: true) }
                             }
                         }.accessibilityIdentifier("dashboardScroll")
                     } else if selection == .live {
@@ -92,16 +101,16 @@ struct MobileWorkspaceView<Header: View>: View {
 
     private func livePanels(height: CGFloat) -> some View {
         VStack(spacing: 16) {
-            transcriptPanel.frame(height: min(260, max(160, (height - 16) * 0.34)))
+            transcriptPanel().frame(height: min(260, max(160, (height - 16) * 0.34)))
             summaryPanel(.quick).frame(maxHeight: .infinity)
         }
     }
 
-    private var transcriptPanel: some View {
+    private func transcriptPanel(scrolling: Bool = false, compact: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
-                MobileRoleIcon(symbol: "waveform", tint: MobileStyle.transcript)
-                Text("Live transcript").font(.headline).foregroundStyle(MobileStyle.ink)
+                if !compact { MobileRoleIcon(symbol: "waveform", tint: MobileStyle.transcript) }
+                Text("Live transcript").font(compact ? .subheadline.bold() : .headline).foregroundStyle(MobileStyle.ink)
                 Spacer()
                 if session.state == .recording {
                     Circle().fill(.red).frame(width: 6, height: 6).accessibilityLabel("Recording")
@@ -112,6 +121,12 @@ struct MobileWorkspaceView<Header: View>: View {
                         .labelStyle(.iconOnly).buttonStyle(.plain).foregroundStyle(MobileStyle.muted)
                         .frame(minWidth: 44, minHeight: 44).accessibilityIdentifier("selectTranscriptLines")
                 }
+                if compact {
+                    Button("Speech correction settings", systemImage: "sparkles") { showSpeechSettings = true }
+                        .labelStyle(.iconOnly).buttonStyle(.plain).foregroundStyle(MobileStyle.accent)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .accessibilityIdentifier("speechCorrectionSettings")
+                }
                 if session.canPlaySavedAudio {
                     Button("Play recording", systemImage: "play.circle") { showTranscript = true }
                         .labelStyle(.iconOnly).buttonStyle(.plain).foregroundStyle(MobileStyle.accent)
@@ -121,16 +136,18 @@ struct MobileWorkspaceView<Header: View>: View {
                     .labelStyle(.iconOnly).buttonStyle(.plain)
                     .foregroundStyle(MobileStyle.muted)
                     .frame(minWidth: 44, minHeight: 44)
-            }.padding(.horizontal, 16).padding(.vertical, 8)
+            }.padding(.horizontal, compact ? 12 : 16).padding(.vertical, compact ? 4 : 8)
             Rectangle().fill(MobileStyle.line).frame(height: 0.75).padding(.horizontal, 16)
-            Button { showSpeechSettings = true } label: {
-                Label(session.ai.correctTranscript ? session.speechCorrectionStatus : "Improve speech · Set up AI correction",
-                      systemImage: session.speechCorrection.working ? "ellipsis" : "sparkles")
-                    .font(.caption).lineLimit(stacked ? nil : 2)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 16).padding(.vertical, 6)
-            }.buttonStyle(.plain).foregroundStyle(MobileStyle.accent)
-                .accessibilityIdentifier("speechCorrectionSettings")
+            if !compact {
+                Button { showSpeechSettings = true } label: {
+                    Label(session.ai.correctTranscript ? session.speechCorrectionStatus : "Improve speech · Set up AI correction",
+                          systemImage: session.speechCorrection.working ? "ellipsis" : "sparkles")
+                        .font(.caption).lineLimit(scrolling ? nil : 2)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 16).padding(.vertical, 6)
+                }.buttonStyle(.plain).foregroundStyle(MobileStyle.accent)
+                    .accessibilityIdentifier("speechCorrectionSettings")
+            }
             if session.allSegments.isEmpty {
                 HStack(spacing: 12) {
                     Image(systemName: "waveform").font(.title2).foregroundStyle(MobileStyle.transcript.opacity(0.6))
@@ -138,7 +155,7 @@ struct MobileWorkspaceView<Header: View>: View {
                     Text("Start listening and your words will appear here.")
                         .font(.subheadline).foregroundStyle(MobileStyle.muted)
                 }.padding(16)
-            } else if stacked {
+            } else if scrolling {
                 // Keep one outer scroll at large text sizes/short heights. Full history has its own reader.
                 Text(session.allSegments.last?.text ?? "").font(.body).lineSpacing(4)
                     .lineLimit(4).truncationMode(.head).padding(16)
@@ -148,13 +165,101 @@ struct MobileWorkspaceView<Header: View>: View {
                                            selecting: $selectingTranscript, request: $panelRequest, selectable: false,
                                            startSelecting: { showTranscript = true }).id(session.id)
             }
-        }.frame(maxWidth: .infinity, maxHeight: stacked ? nil : .infinity, alignment: .topLeading)
+        }.frame(maxWidth: .infinity, maxHeight: scrolling ? nil : .infinity, alignment: .topLeading)
             .modifier(MobileCard())
             .accessibilityElement(children: .contain).accessibilityIdentifier("transcriptPanel")
     }
 
-    private func summaryPanel(_ mode: MobileSummaryMode) -> some View {
+    private func summaryPanel(_ mode: MobileSummaryMode, scrolling: Bool = false, compact: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 0) {
+            summaryHeader(mode, compact: compact)
+            readingArea(scrolling: scrolling) {
+                VStack(alignment: .leading, spacing: 12) {
+                    if mode == .quick && !compact { quickStatus(compact: false) }
+                    if mode == .summary {
+                        Text(session.automaticReviewStatus(mode)).font(.caption).foregroundStyle(MobileStyle.muted)
+                            .accessibilityIdentifier("autoReviewStatus-\(mode.rawValue)")
+                    }
+                    if mode == .summary, let review = session.quickReader.recommendations.first(where: { $0.mode == mode.rawValue }) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Label(session.autoQuick && review.confidence != "low" ? "Automatic review trigger" : "Review suggested",
+                                  systemImage: "sparkles").font(.subheadline.weight(.medium))
+                            Text(review.reason).font(.caption)
+                            Text("AI confidence: \(review.confidence) · Generate when ready.")
+                                .font(.caption2).foregroundStyle(MobileStyle.muted)
+                        }.foregroundStyle(MobileStyle.tint(for: mode))
+                            .accessibilityElement(children: .combine).accessibilityIdentifier("review-suggestion-\(mode.rawValue)")
+                    }
+                    if session.generatingMode == mode {
+                        Label("Updating…", systemImage: "sparkles").font(.caption)
+                            .foregroundStyle(MobileStyle.tint(for: mode))
+                        MarkdownText(text: session.summaryDraft).textSelection(.enabled)
+                    }
+                    if session.generatingMode != mode { MobileAnswerNoticeLines(session: session, mode: mode) }
+                    let output = session.output(for: mode)
+                    if !output.isEmpty {
+                        MarkdownText(text: output).font(.body).lineSpacing(3).textSelection(.enabled)
+                            .accessibilityElement(children: .combine).accessibilityIdentifier("output-\(mode.rawValue)")
+                    } else if session.generatingMode != mode && (mode != .quick || session.quickSummaryError == nil) {
+                        MobileOutputPlaceholder(mode: mode)
+                            .accessibilityElement(children: .combine)
+                            .accessibilityIdentifier("output-\(mode.rawValue)")
+                    }
+                    MobileSuggestedPrompts(session: session, mode: mode)
+                    if mode == .quick && compact { quickStatus(compact: true) }
+                    if mode == .summary, !session.earlierDeepAnalysis.isEmpty {
+                        MobileEarlierDeepAnalysis(text: session.earlierDeepAnalysis)
+                    }
+                    if mode == .summary, !session.selectionSummaries.isEmpty {
+                        MobileSavedSelectionSummaries(summaries: session.selectionSummaries)
+                    }
+                    if let reason = session.summaryBlockReason(for: mode), !session.isSummarizing {
+                        Text(reason).font(.caption).foregroundStyle(MobileStyle.muted)
+                            .accessibilityIdentifier("reason-\(mode.rawValue)")
+                    }
+                }.frame(maxWidth: .infinity, alignment: .leading).padding(16)
+            }
+        }.frame(maxWidth: .infinity, maxHeight: scrolling ? nil : .infinity, alignment: .topLeading)
+            .modifier(MobileCard())
+            .accessibilityElement(children: .contain).accessibilityIdentifier("summary-panel-\(mode.rawValue)")
+    }
+
+    private func quickStatus(compact: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if compact { autoToggle }
+
+            Text(session.autoQuickStatus).font(.caption).foregroundStyle(MobileStyle.muted)
+                .accessibilityIdentifier("autoQuickStatus")
+            Button("Status details") { showQuickStatus = true }
+                .font(.caption).accessibilityIdentifier("quickStatusDetails")
+                .alert("Quick Summary status", isPresented: $showQuickStatus) {
+                    Button("Copy") { UIPasteboard.general.string = session.quickDiagnostics }
+                    Button("Close", role: .cancel) {}
+                } message: { Text(session.quickDiagnostics) }
+            if let error = session.quickSummaryError {
+                Label(error, systemImage: "exclamationmark.circle").font(.caption)
+                    .foregroundStyle(.secondary).accessibilityIdentifier("quickSummaryError")
+            }
+            if session.autoQuick && session.ai.provider != .apple {
+                Text("New speech triggers Quick evaluation; related words are batched briefly. "
+                     + "Auto also updates Summary when relevant. Both use the selected "
+                     + "models on \(session.ai.summaryEndpointLabel).")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func summaryHeader(_ mode: MobileSummaryMode, compact: Bool) -> some View {
+        if compact {
+            HStack(spacing: 8) {
+                Text(mode.title).font(.subheadline.bold()).foregroundStyle(MobileStyle.ink)
+                Spacer(minLength: 0)
+                modelButton(mode).frame(maxWidth: 110)
+                generateButton(mode)
+            }.padding(8)
+            Rectangle().fill(MobileStyle.line).frame(height: 0.75).padding(.horizontal, 12)
+        } else {
             VStack(alignment: .leading, spacing: 10) {
                 if typeSize.isAccessibilitySize {
                     HStack {
@@ -187,73 +292,7 @@ struct MobileWorkspaceView<Header: View>: View {
                                    startPoint: .topLeading, endPoint: .bottomTrailing)
                 }
             Rectangle().fill(MobileStyle.line).frame(height: 0.75).padding(.horizontal, 16)
-            readingArea {
-                VStack(alignment: .leading, spacing: 12) {
-                    if mode == .quick {
-                        Text(session.autoQuickStatus).font(.caption).foregroundStyle(MobileStyle.muted)
-                            .accessibilityIdentifier("autoQuickStatus")
-                        Button("Status details") { showQuickStatus = true }
-                            .font(.caption).accessibilityIdentifier("quickStatusDetails")
-                            .alert("Quick Summary status", isPresented: $showQuickStatus) {
-                                Button("Copy") { UIPasteboard.general.string = session.quickDiagnostics }
-                                Button("Close", role: .cancel) {}
-                            } message: { Text(session.quickDiagnostics) }
-                        if let error = session.quickSummaryError {
-                            Label(error, systemImage: "exclamationmark.circle").font(.caption)
-                                .foregroundStyle(.secondary).accessibilityIdentifier("quickSummaryError")
-                        }
-                        if session.autoQuick && session.ai.provider != .apple {
-                            Text("New speech triggers Quick evaluation; related words are batched briefly. "
-                                 + "Auto also updates Summary when relevant. Both use the selected "
-                                 + "models on \(session.ai.summaryEndpointLabel).")
-                                .font(.caption).foregroundStyle(.secondary)
-                        }
-                    }
-                    if mode == .summary {
-                        Text(session.automaticReviewStatus(mode)).font(.caption).foregroundStyle(MobileStyle.muted)
-                            .accessibilityIdentifier("autoReviewStatus-\(mode.rawValue)")
-                    }
-                    if mode == .summary, let review = session.quickReader.recommendations.first(where: { $0.mode == mode.rawValue }) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Label(session.autoQuick && review.confidence != "low" ? "Automatic review trigger" : "Review suggested",
-                                  systemImage: "sparkles").font(.subheadline.weight(.medium))
-                            Text(review.reason).font(.caption)
-                            Text("AI confidence: \(review.confidence) · Generate when ready.")
-                                .font(.caption2).foregroundStyle(MobileStyle.muted)
-                        }.foregroundStyle(MobileStyle.tint(for: mode))
-                            .accessibilityElement(children: .combine).accessibilityIdentifier("review-suggestion-\(mode.rawValue)")
-                    }
-                    if session.generatingMode == mode {
-                        Label("Updating…", systemImage: "sparkles").font(.caption)
-                            .foregroundStyle(MobileStyle.tint(for: mode))
-                        MarkdownText(text: session.summaryDraft).textSelection(.enabled)
-                    }
-                    if session.generatingMode != mode { MobileAnswerNoticeLines(session: session, mode: mode) }
-                    let output = session.output(for: mode)
-                    if !output.isEmpty {
-                        MarkdownText(text: output).font(.body).lineSpacing(3).textSelection(.enabled)
-                            .accessibilityElement(children: .combine).accessibilityIdentifier("output-\(mode.rawValue)")
-                    } else if session.generatingMode != mode && (mode != .quick || session.quickSummaryError == nil) {
-                        MobileOutputPlaceholder(mode: mode)
-                            .accessibilityElement(children: .combine)
-                            .accessibilityIdentifier("output-\(mode.rawValue)")
-                    }
-                    MobileSuggestedPrompts(session: session, mode: mode)
-                    if mode == .summary, !session.earlierDeepAnalysis.isEmpty {
-                        MobileEarlierDeepAnalysis(text: session.earlierDeepAnalysis)
-                    }
-                    if mode == .summary, !session.selectionSummaries.isEmpty {
-                        MobileSavedSelectionSummaries(summaries: session.selectionSummaries)
-                    }
-                    if let reason = session.summaryBlockReason(for: mode), !session.isSummarizing {
-                        Text(reason).font(.caption).foregroundStyle(MobileStyle.muted)
-                            .accessibilityIdentifier("reason-\(mode.rawValue)")
-                    }
-                }.frame(maxWidth: .infinity, alignment: .leading).padding(16)
-            }
-        }.frame(maxWidth: .infinity, maxHeight: stacked ? nil : .infinity, alignment: .topLeading)
-            .modifier(MobileCard())
-            .accessibilityElement(children: .contain).accessibilityIdentifier("summary-panel-\(mode.rawValue)")
+        }
     }
 
     @ViewBuilder
@@ -297,8 +336,8 @@ struct MobileWorkspaceView<Header: View>: View {
     }
 
     @ViewBuilder
-    private func readingArea<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        if stacked { content() } else { ScrollView { content() } }
+    private func readingArea<Content: View>(scrolling: Bool, @ViewBuilder content: () -> Content) -> some View {
+        if scrolling { content() } else { ScrollView { content() } }
     }
 }
 

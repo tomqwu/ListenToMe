@@ -9,3 +9,8 @@ Check Automatic language switches and Undo; reopen a Chinese conversation with S
 English and confirm its Summary still uses the Chinese glossary. Other languages retain English
 preset terms. Safety notices and summary headings stay in English. This needs physical-device
 accuracy comparison; simulator checks cover routing and the interface only.
+
+Two-pane iPhone layout (#253): rotate a conversation to landscape. Scroll Transcript and Quick
+independently; check Start/Stop, Notes, model selection and Expand transcript. Rotate while viewing
+Summary or the expanded transcript and verify the page and conversation are preserved. At
+accessibility text sizes the layout should stay stacked and scrollable.

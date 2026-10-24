@@ -22,22 +22,24 @@ struct MobileTranscriptFixture: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
-                Button("Grow phrase") {
-                    guard let partial = session.partial else { return }
-                    let words = String(repeating: " More words arrive while the same phrase is transcribed.", count: 8)
-                    session.partial = TranscriptSegment(id: partial.id, source: .you,
-                        text: partial.text + words,
-                        isFinal: false, start: partial.start, end: partial.end + 1)
-                }.accessibilityIdentifier("fixture-grow")
-                Button("Finalize") {
-                    guard let partial = session.partial else { return }
-                    session.segments.append(TranscriptSegment(source: .you, text: partial.text,
-                        isFinal: true, start: partial.start, end: partial.end))
-                    session.partial = TranscriptSegment(source: .you, text: "A new finalized phrase follows.",
-                        isFinal: false, start: partial.end, end: partial.end + 1)
-                }.accessibilityIdentifier("fixture-finalize")
-            }.font(.caption).buttonStyle(.bordered).dynamicTypeSize(.large)
+            if !ProcessInfo.processInfo.arguments.contains("--two-pane-layout-fixture") {
+                HStack {
+                    Button("Grow phrase") {
+                        guard let partial = session.partial else { return }
+                        let words = String(repeating: " More words arrive while the same phrase is transcribed.", count: 8)
+                        session.partial = TranscriptSegment(id: partial.id, source: .you,
+                            text: partial.text + words,
+                            isFinal: false, start: partial.start, end: partial.end + 1)
+                    }.accessibilityIdentifier("fixture-grow")
+                    Button("Finalize") {
+                        guard let partial = session.partial else { return }
+                        session.segments.append(TranscriptSegment(source: .you, text: partial.text,
+                            isFinal: true, start: partial.start, end: partial.end))
+                        session.partial = TranscriptSegment(source: .you, text: "A new finalized phrase follows.",
+                            isFinal: false, start: partial.end, end: partial.end + 1)
+                    }.accessibilityIdentifier("fixture-finalize")
+                }.font(.caption).buttonStyle(.bordered).dynamicTypeSize(.large)
+            }
             MobileMeetingView(session: session)
         }
     }

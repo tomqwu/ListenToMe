@@ -1336,6 +1336,19 @@ Automatic Quick Summary now evaluates substantial live recognition text at the s
 
 Quick publishes its first short recap for a clear topic, problem, tentative proposal or substantive question without waiting for a decision. Questions are summarized, not answered, and ambiguous acronyms are preserved. Repetition still avoids unnecessary changes. Empty results say “Speech checked · No takeaway yet,” including after recording stops. [What to Test](../metadata/ios/en-CA/what-to-test-1.9.4.txt).
 
-## Pending iOS updates
+## Adaptive two-pane iPhone workspace (#253, unreleased)
 
+The Live page places Transcript and Quick Summary side by side when its available workspace is at
+least 640 points wide and 180 points tall. Each pane scrolls independently; compact headers keep
+model selection, Generate, speech correction settings and Expand transcript reachable, and Auto stays in the Quick pane's
+scrolling content, below an existing answer. A compact title/status row and recording dock leave more
+reading room in landscape. Layout uses the current workspace geometry, so rotation and window resizing
+recompute it. The selected Live/Summary page, conversation, expanded transcript and selection-sheet
+state belong to their existing parent views and survive layout changes.
+
+Portrait retains the vertical Live panels. Accessibility text and very short/narrow workspaces use
+one outer scroll. The wide iPad workspace still shows Live and Summary together. This feature is an
+adaptive two-pane layout, not a certification for any particular new device model.
+
+## Pending iOS updates
 - Settings → Privacy names every optional off-device provider (Ollama, Cloud AI services and OpenAI-compatible servers), and explains that requests send text and included context only through the provider you choose (#247). This copy is not yet published.

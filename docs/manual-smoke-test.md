@@ -731,3 +731,13 @@ Mac (`make run`; macOS releases are paused, so this is for the build only):
 
 Simulator tests cover term routing, continuous-text matching and the rendered banner using a fake
 recorder. They do not prove physical-device recognition accuracy.
+
+## Two-pane iPhone layout (#253)
+
+1. Open a conversation containing transcript lines and Quick output in portrait. Rotate to landscape:
+   Transcript and Quick sit beside one another, each scrolls, and Start/Stop, Notes, model selection,
+   Generate and Expand transcript remain reachable. Scroll one pane without moving the other.
+2. Open the expanded transcript, rotate, and close it. It must remain open until Done. Pick Summary,
+   rotate both ways and confirm the selection, conversation title and saved output remain.
+3. At accessibility text sizes, rotate both ways: use one outer scroll, without narrow side-by-side
+   text columns. Recording controls stay available. On iPad, check wide and narrow window sizes.
