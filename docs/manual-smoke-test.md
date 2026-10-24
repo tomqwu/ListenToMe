@@ -399,3 +399,22 @@ Listen, then Stop: the note appears once the checkpoint is complete, and updates
 change. Move the folder to the Trash: an orange note with **Retry folder save** appears beside the
 saved time. Stop a recording and quit with ⌘Q at once: the note is in the folder. With the folder
 in the Trash, stop a recording and quit; put the folder back, relaunch: the waiting note is written.
+
+## iPhone Delete all conversations (#220)
+
+Simulator or device.
+
+1. **Unavailable while busy.** Start listening, open History: **Delete all conversations…** is
+   disabled with "Stop recording or wait for the AI response to delete conversations." Stop.
+2. **Confirmation.** With three saved conversations (one with an attachment), tap the button at the
+   bottom of History. The alert reads "Delete all 3 conversations?" and says it cannot be undone.
+   With Save to folder on, it also says notes already saved to the folder stay. Cancel: nothing
+   changes. Type a search: the button is hidden.
+3. **Everything goes.** Confirm: History shows "No saved conversations", the title reads "New
+   conversation" and the status line says "3 conversations deleted from this device." Force-quit
+   and reopen: History is still empty. Files already written by Save to folder are still there.
+4. **Settings.** Save a conversation, then use **Settings → Privacy → Delete all conversations…**:
+   same alert and result.
+5. **Apple Watch.** With a watch conversation in History and another watch recording still in
+   "Waiting from Apple Watch", delete all: the watch conversation and its audio are gone, and the
+   waiting recording stays and becomes a conversation later.
