@@ -243,6 +243,19 @@ final class SessionExportFormatTests: XCTestCase {
         XCTAssertEqual(once.current, "de-DE")
     }
 
+    /// Every record copy keeps the languages (#206) and the title state (#221).
+    func testRecordCopiesKeepLanguagesAndTitleState() throws {
+        let record = SessionRecord(id: "r", title: "T", date: date, transcript: "", summary: "",
+                                   titleState: .automatic(words: 40), language: "fr-FR",
+                                   languages: ["en-US", "fr-FR"])
+        let retitled = record.retitled("Budget", state: .user)
+        XCTAssertEqual(retitled.language, "fr-FR")
+        XCTAssertEqual(retitled.languages, ["en-US", "fr-FR"])
+        XCTAssertEqual(record.with(languages: ConversationLanguages(current: "de-DE")).titleState,
+                       .automatic(words: 40))
+        XCTAssertEqual(record.recording(language: "it-IT").titleState, .automatic(words: 40))
+    }
+
     func testShiftingMovesOnlyTimedLines() {
         let timed = spoken("a", 2, "en-US").shifted(by: 100)
         XCTAssertEqual([timed.start, timed.end], [102, 103])
