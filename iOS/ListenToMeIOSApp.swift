@@ -76,6 +76,8 @@ struct ListenToMeIOSApp: App {
             MobileTranscriptFixture()
         } else if ProcessInfo.processInfo.arguments.contains("--design-review-fixture") {
             MobileDesignFixture()
+        } else if ProcessInfo.processInfo.arguments.contains("--vocabulary-fixture") {
+            MobileVocabularyFixture()
         } else {
             MobileMeetingView(session: session)
         }

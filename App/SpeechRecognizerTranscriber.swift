@@ -44,6 +44,10 @@ actor SpeechRecognizerTranscriber: Transcribing {
             : "Speech permission denied. Open Permissions, then restart listening.")
     }
 
+    private var contextualStrings: [String] = []
+
+    func setContextualStrings(_ strings: [String]) async { contextualStrings = strings }
+
     func feed(_ chunk: AudioChunk) async {
         guard authorized, !stopped else { return }
         guard let state = states[chunk.source] ?? startTask(for: chunk.source) else { return }
@@ -124,6 +128,9 @@ actor SpeechRecognizerTranscriber: Transcribing {
             return nil
         }
         let state = SourceState(recognizer: recognizer)
+        // SFSpeechRecognitionRequest's own contextual strings; a new task starts each utterance, so a
+        // change while recording applies from the next utterance (issue #222).
+        state.request.contextualStrings = contextualStrings
         let token = router.install(for: source)
         state.token = token
         state.task = recognizer.recognitionTask(with: state.request) { [weak self, router] result, error in
