@@ -282,6 +282,16 @@ pickup labeled YOU or an enabled toggle alone as proof of system-audio capture.
 4. **Search normalization.** Save a conversation containing "café", "Zürich" and full-width "ＡＩ".
    In History search, `cafe`, `zurich` and `ai` must each find it, a query pasted with a tab between
    two words must match, and searching `you` must not return every conversation.
+5. **Semantic search and Ask your history (#57).** Save an English conversation about a budget
+   ("we reviewed the quarterly budget and the funding round") and one about travel. A few seconds
+   later, search `money` in History: the budget conversation must be listed, marked **Related**, with
+   its excerpt. Search `budget`: the excerpt shows the sentence with the word. On local Ollama, ask
+   "What did we decide about the budget?": the answer cites `[1]`, and clicking the source opens that
+   conversation; the line beside **Ask your history** must say nothing leaves the Mac. Switch to AI
+   off: the button is disabled with the reason. Switch to Ollama Cloud: the line must name Ollama
+   Cloud as receiving the excerpts. **Clear history**, then confirm
+   `~/Library/Application Support/ListenToMe Dev/Search Index/` holds only `index.json` (the
+   Release build uses `ListenToMe/Search Index/`).
 
 ## macOS lifecycle and UX papercuts (#136, #147)
 

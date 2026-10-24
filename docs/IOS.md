@@ -41,7 +41,8 @@ this table in the same PR, and never fork a copy into `App/` or `iOS/`.
 | `SessionArchive` — the on-disk conversation format | `App/SessionStore.swift` | `iOS/MobileSession.swift` |
 | Speaker identification: `SpeakerDiarizer` and `SpeakerAudioBuffer` (`SharedPlatform/`, FluidAudio), `SpeakerIdentityTracker`, `SpeakerLabeling`, `SpeakerStats`, `SpeakerAnalysisPolicy` | `App/MeetingView+Speakers.swift` | `MobileSpeakers`, `iOS/MobileSession+Speakers.swift`; iOS language detection (#197) reuses `SpeakerAudioBuffer`, keeping its trailing two minutes (#199) |
 | Save to folder (#53): `MarkdownVault` (note format and file names), `MarkdownVaultWriter` (bookmark, atomic coordinated write, failure wording), `MarkdownVaultSync` (`SharedPlatform/`, setting, queue, status, Retry) | `App/MacVaultSettings.swift`, `App/MeetingView+Conversations.swift` (`checkpoint`) | `iOS/MobileVaultSettings.swift`, `iOS/MobileSession+Vault.swift` |
-| `SessionSearch` — History search and its matching rules | `App/SessionSearchView.swift`, `App/MeetingView.swift` | `MobileHistoryView` via `MobileSession` |
+| `SessionSearch` — History keyword search and its matching rules | `App/SessionSearchView.swift`, `App/MeetingView.swift` | `MobileHistoryView` via `MobileSession` |
+| Semantic History search and Ask your history (#57): `HistoryIndex` (on-device index beside the archive), `HistoryChunker`, `NaturalLanguageEmbedder`, `HistoryRanking`, `HistoryQuestion`; `HistorySearchModel` (`SharedPlatform/`) | `App/SessionStore.swift`, `App/SessionSearchView.swift`, `App/HistoryAskPanel.swift`, `App/MeetingView+HistoryAsk.swift` | `iOS/MobileSession+HistorySearch.swift`, `iOS/MobileHistoryView.swift`, `iOS/MobileHistoryAskView.swift` |
 | `AppleIntelligenceProvider` (`SharedPlatform/`) — on-device transport and its failure wording | `App/MeetingView.swift` | `MobileSession`, `MobileAISettings` |
 | `OllamaProvider`, `LLMRequest` / `ChatMessage`, `OllamaGenerationOptions` | `App/MeetingView.swift` | `MobileAISettings.client(for:)` |
 | Cloud AI presets (#214): `CloudAIPreset` (addresses, headers, key binding), `OpenAICompatibleDialect` (vendor request quirks), `AnthropicProvider` (native Messages API), `CloudAICatalog` (model lists), `CloudAISettingsChange` (macOS save plan) | `App/CloudAISettings.swift` | `MobileCloudAISettings`, `MobileAISettings.client(for:)` |
@@ -305,6 +306,24 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
 
 ## Included
 
+- Semantic History search and **Ask your history** (#57). The History search field keeps the keyword
+  search and adds on-device semantic ranking: `HistoryIndex` (Core) chunks each conversation's
+  summary, notes and transcript into short passages, detects each passage's language with
+  `NLLanguageRecognizer`, and stores a vector per passage from `NLEmbedding` (the mean of the content
+  words' word vectors, or the sentence model where only that exists). Only vectors, passage numbers
+  and a fingerprint are stored — the text stays in the archive — in `Search Index/` beside
+  `Conversations/`, always excluded from backup, versioned (a new format or embedding method rebuilds
+  it), and any damaged file is re-embedded. It is reconciled with the archive after a reload, updated a
+  few seconds after saving stops (off the main thread), and a deleted conversation's vectors are
+  removed in `forgetSearchIndex(ids:)`. Results fuse the keyword and semantic orders (reciprocal-rank
+  fusion): every keyword match stays, at most eight conversations are added by meaning alone (marked
+  **Related**), and each row shows the matching excerpt. A passage in a language with no on-device
+  model gets no vector, so that conversation is found by keyword exactly as before. **Ask your
+  history** sends only the top six retrieved passages (at most two per conversation, fitted to the
+  provider's prompt limit) and the question to the selected summary provider with the Deep role's
+  model; the answer cites excerpt numbers, shown as tappable sources. Apple Intelligence answers on
+  the device; for Ollama, an OpenAI-compatible server or a cloud AI service, the footer names the
+  destination before anything is sent.
 - Foreground microphone transcription using Apple's on-device SpeechAnalyzer. Language assets
   download on first use. Unsupported device/language and permission errors are shown in the app.
   **Settings → Transcription → Language** is remembered across launches, so a language chosen for

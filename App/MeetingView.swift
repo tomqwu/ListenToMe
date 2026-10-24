@@ -160,13 +160,7 @@ struct MeetingView: View {
                     ) as any Transcribing
                 }
             },
-            makeProvider: { model in
-                if ProviderSettings.aiMode == .apple { return AppleIntelligenceProvider() as any LLMProvider }
-                if ProviderSettings.aiMode == .openAI { return ProviderSettings.openAIProvider(model: model) }
-                if ProviderSettings.aiMode == .cloudAI { return ProviderSettings.cloudAIProvider(model: model) }
-                return OllamaProvider(model: model, baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey(),
-                               localOnly: ProviderSettings.aiMode != .cloud)
-            },
+            makeProvider: { Self.provider(model: $0) },
             models: [
                 .listener: ProviderSettings.model(for: .listener),
                 .quick: ProviderSettings.model(for: .quick),
@@ -177,6 +171,15 @@ struct MeetingView: View {
     }
 
     // MARK: - Ollama cloud routing
+
+    /// The provider for `model` on the current AI route; also answers "Ask your history" (#57).
+    nonisolated static func provider(model: String) -> any LLMProvider {
+        if ProviderSettings.aiMode == .apple { return AppleIntelligenceProvider() as any LLMProvider }
+        if ProviderSettings.aiMode == .openAI { return ProviderSettings.openAIProvider(model: model) }
+        if ProviderSettings.aiMode == .cloudAI { return ProviderSettings.cloudAIProvider(model: model) }
+        return OllamaProvider(model: model, baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey(),
+                              localOnly: ProviderSettings.aiMode != .cloud)
+    }
 
     nonisolated private static func ollamaKey() -> String? {
         guard ProviderSettings.aiMode == .cloud else { return nil }
@@ -286,7 +289,8 @@ struct MeetingView: View {
             }.padding().frame(width: 700, height: 560)
         }
         .sheet(isPresented: $showSearch) {
-            SessionSearchView(store: sessionStore, onClear: { dropCurrentSessionFromSaving() })
+            SessionSearchView(store: sessionStore, onClear: { dropCurrentSessionFromSaving() },
+                              askRoute: { Self.historyAskRoute() })
         }
         .sheet(isPresented: $showSpeakerBreakdown) {
             SpeakerBreakdownView(

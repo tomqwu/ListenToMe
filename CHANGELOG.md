@@ -13,6 +13,9 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased since 1.14.0 (31))
 
+- History search understands meaning as well as words: a search for "money" can also find the conversation where you discussed the budget, marked "Related", and every result shows the matching excerpt (summary, notes or transcript). The search index is built on this iPhone with Apple's on-device language models, is never backed up and never leaves the device; deleting a conversation deletes its index entry. Languages without an on-device model keep the keyword search. (#57)
+- Ask your history: type a question in the History search field and tap Ask to get an answer from the best matching excerpts of your saved conversations, with tappable sources. With Apple Intelligence it stays on this iPhone; with Ollama, an OpenAI-compatible server or a cloud AI service, History says before you ask that the excerpts (not whole conversations) and the question are sent to that service. (#57)
+
 - Apple Watch companion, remote Start/Stop for the iPhone recorder (not yet shipped; ships with watch recording on the #181 train). (#181)
 - iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
 - Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
@@ -46,6 +49,9 @@ does not show it again, and a fresh install does not see it at all; see
 - Model prompts fence transcript, notes and reference text as data. (#140)
 
 ## macOS (unreleased since 1.4.4)
+
+- History (⌘F) search ranks by meaning as well as words with an on-device index (Apple NaturalLanguage), shows the matching excerpt under each result and marks conversations found only by meaning as "Related". The index sits beside the conversations (Dev and Release builds keep separate ones), is excluded from backups, rebuilds itself when damaged, and Clear history deletes it. Languages without an on-device model keep the keyword search. (#57)
+- **Ask your history** in the History sheet answers the search text as a question from the best matching excerpts, citing the conversations it used (click a source to open it). It uses the Deep pane's model on the current AI mode: local Ollama and Apple Intelligence stay on this Mac, AI off disables it, and Ollama Cloud, Cloud AI and OpenAI-compatible routes are named as receiving the excerpts before you ask. (#57)
 
 - New AI mode **Cloud AI service**: OpenAI, Anthropic Claude, Google Gemini, DeepSeek, OpenRouter, Groq, Mistral or xAI Grok with your own API key (Check key lists the vendor's models; Get a key and privacy-policy links). Each service is labelled "Sends your transcript to <vendor>", keeps its own Keychain key sent only to that vendor, and pane pickers list its models without ever picking one. Claude uses Anthropic's own Messages API. (#214)
 - New AI mode **OpenAI-compatible**: point the panes at LM Studio, vLLM, llama.cpp, Ollama's /v1 API or OpenRouter with an optional Keychain key bound to that server; pane pickers list its /v1/models and never pick one for you; labelled "your server" or "may leave this device", never local; redirects are not followed. Plain http to `.local` names now works. (#52)

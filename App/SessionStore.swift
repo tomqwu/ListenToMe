@@ -11,6 +11,9 @@ final class SessionStore {
     /// which only the failure paths read: the first migration usually happens during an autosave,
     /// so the warning has to survive until History is opened.
     private(set) var archiveWarning: String?
+    /// The on-device semantic index beside this archive (#57). Dev and Release builds keep separate
+    /// archives ("ListenToMe Dev" vs "ListenToMe"), so they keep separate indexes too.
+    let historySearch: HistorySearchModel?
 
     init() {
         do {
@@ -18,10 +21,13 @@ final class SessionStore {
                                                   appropriateFor: nil, create: true)
             let legacy = base.appendingPathComponent("ListenToMe/sessions.json")
             let folder = Bundle.main.bundleIdentifier?.hasSuffix(".dev") == true ? "ListenToMe Dev" : "ListenToMe"
-            archive = SessionArchive(directory: base.appendingPathComponent(folder + "/Conversations"), legacyURL: legacy,
+            let conversations = base.appendingPathComponent(folder + "/Conversations")
+            archive = SessionArchive(directory: conversations, legacyURL: legacy,
                                      ownsLegacyFile: folder == "ListenToMe")
+            historySearch = HistorySearchModel.shared(besideArchive: conversations)
         } catch {
             archive = nil
+            historySearch = nil
             errorText = error.localizedDescription
         }
     }
@@ -36,6 +42,7 @@ final class SessionStore {
             // Sticky for the app run: the damaged file is renamed by the first scan, so a later
             // scan is clean and must not erase a note raised by an autosave's migration.
             if let warning = result.warning { archiveWarning = warning }
+            historySearch?.sync(result.records)   // vectors of anything no longer here are dropped
             return result.records
         } catch { errorText = "Couldn't read history: \(error.localizedDescription)"; return [] }
     }
@@ -46,6 +53,7 @@ final class SessionStore {
             guard let archive else { throw CocoaError(.fileWriteUnknown) }
             // A failed legacy migration is a warning, not a failed save.
             if let warning = try archive.save(record) { archiveWarning = warning }
+            historySearch?.update(record)
             errorText = nil
             return true
         } catch { errorText = "Couldn't save: \(error.localizedDescription)"; return false }
@@ -61,6 +69,7 @@ final class SessionStore {
             // Clear deletes the quarantined files too, so any earlier warning is obsolete.
             archiveWarning = try archive.clear()
             MarkdownVaultSync.shared.forgetAll()   // A cleared conversation's note must not be written later.
+            historySearch?.forgetAll()             // ...and its vectors go with it (#57).
             errorText = nil
             return true
         } catch { errorText = "Couldn't clear history: \(error.localizedDescription)"; return false }

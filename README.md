@@ -33,7 +33,8 @@ macOS-only, and there is no Mac↔iOS sync. See
 [the version policy](docs/IOS.md#version-policy).
 
 The standalone iOS/iPadOS 26 app is the **ListenToMeIOS** target: microphone transcription, a live
-transcript with Quick Summary plus a Deep Think tab, local conversations with search, photo/file
+transcript with Quick Summary plus a Deep Think tab, local conversations with on-device semantic search
+and "Ask your history", photo/file
 attachments, Apple Notes and share-sheet imports, calendar import with e-mail and join-link
 redaction, Markdown sharing, and an opt-in **Save to folder** that writes each conversation as a
 Markdown note into a folder you pick in Files, such as an Obsidian vault. On-device speaker identification (on by default; turn it off in
@@ -266,6 +267,13 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   Search is case-, accent- and width-insensitive ("cafe" finds "café", "ai" finds "ＡＩ"), splits the
   query on any whitespace including tabs, ranks whole-word matches above matches inside longer words,
   and covers title, summary, notes and the transcript's own words (not the "You:"/"Others:" prefixes).
+  Results also rank by meaning with an on-device semantic index (Apple NaturalLanguage embeddings,
+  built beside the conversations, excluded from backups, separate for Dev and Release builds): a
+  conversation found only by meaning is marked **Related**, and each result shows its matching
+  excerpt. A language without an on-device embedding model keeps the keyword search. **Ask your
+  history** answers the search text as a question from the best matching excerpts (never whole
+  conversations) with the Deep pane's model and cites the conversations it used; on Ollama Cloud,
+  Cloud AI or an OpenAI-compatible server the sheet says the excerpts are sent there first (#57).
 - **Export (⌘E).** Export the current conversation as Markdown; PDF and recap are also in Export.
   With autosaving off, Save opens Save As and New/Close offers Save As, Cancel or explicit discard.
 - **Load from Calendar.** Fills Context notes from your current or next meeting *and* titles the
@@ -388,6 +396,10 @@ saying so. Press **Speakers / edit names** to retry once the network is availabl
   are included in the device's normal iCloud/Finder backup by default, so a restored phone keeps
   them; **Settings → Privacy → Exclude conversations from iCloud backup** keeps them off any backup.
   Model catalogs are fetched only from a destination you configured — never anonymously.
+- **History search index (both apps).** The semantic index holds only vectors and passage numbers,
+  never transcript text, lives beside the conversations in `Search Index/`, is always excluded from
+  backups, and is removed with a deleted conversation or Clear history. "Ask your history" sends only
+  the top matching excerpts and the question, and only to the provider you selected.
 - **iOS privacy policy and support.** The App Store pages are checked in and linked from the app in
   **More → Settings → Privacy**: [privacy policy](docs/ios-privacy.md) and
   [support](docs/ios-support.md).
