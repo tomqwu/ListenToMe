@@ -175,28 +175,7 @@ struct MobileWorkspaceView<Header: View>: View {
             summaryHeader(mode, compact: compact)
             readingArea(scrolling: scrolling) {
                 VStack(alignment: .leading, spacing: 12) {
-                    if mode == .quick {
-                        if compact { autoToggle }
-
-                        Text(session.autoQuickStatus).font(.caption).foregroundStyle(MobileStyle.muted)
-                            .accessibilityIdentifier("autoQuickStatus")
-                        Button("Status details") { showQuickStatus = true }
-                            .font(.caption).accessibilityIdentifier("quickStatusDetails")
-                            .alert("Quick Summary status", isPresented: $showQuickStatus) {
-                                Button("Copy") { UIPasteboard.general.string = session.quickDiagnostics }
-                                Button("Close", role: .cancel) {}
-                            } message: { Text(session.quickDiagnostics) }
-                        if let error = session.quickSummaryError {
-                            Label(error, systemImage: "exclamationmark.circle").font(.caption)
-                                .foregroundStyle(.secondary).accessibilityIdentifier("quickSummaryError")
-                        }
-                        if session.autoQuick && session.ai.provider != .apple {
-                            Text("New speech triggers Quick evaluation; related words are batched briefly. "
-                                 + "Auto also updates Summary when relevant. Both use the selected "
-                                 + "models on \(session.ai.summaryEndpointLabel).")
-                                .font(.caption).foregroundStyle(.secondary)
-                        }
-                    }
+                    if mode == .quick && !compact { quickStatus(compact: false) }
                     if mode == .summary {
                         Text(session.automaticReviewStatus(mode)).font(.caption).foregroundStyle(MobileStyle.muted)
                             .accessibilityIdentifier("autoReviewStatus-\(mode.rawValue)")
@@ -227,6 +206,7 @@ struct MobileWorkspaceView<Header: View>: View {
                             .accessibilityIdentifier("output-\(mode.rawValue)")
                     }
                     MobileSuggestedPrompts(session: session, mode: mode)
+                    if mode == .quick && compact { quickStatus(compact: true) }
                     if mode == .summary, !session.earlierDeepAnalysis.isEmpty {
                         MobileEarlierDeepAnalysis(text: session.earlierDeepAnalysis)
                     }
@@ -242,6 +222,31 @@ struct MobileWorkspaceView<Header: View>: View {
         }.frame(maxWidth: .infinity, maxHeight: scrolling ? nil : .infinity, alignment: .topLeading)
             .modifier(MobileCard())
             .accessibilityElement(children: .contain).accessibilityIdentifier("summary-panel-\(mode.rawValue)")
+    }
+
+    private func quickStatus(compact: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if compact { autoToggle }
+
+            Text(session.autoQuickStatus).font(.caption).foregroundStyle(MobileStyle.muted)
+                .accessibilityIdentifier("autoQuickStatus")
+            Button("Status details") { showQuickStatus = true }
+                .font(.caption).accessibilityIdentifier("quickStatusDetails")
+                .alert("Quick Summary status", isPresented: $showQuickStatus) {
+                    Button("Copy") { UIPasteboard.general.string = session.quickDiagnostics }
+                    Button("Close", role: .cancel) {}
+                } message: { Text(session.quickDiagnostics) }
+            if let error = session.quickSummaryError {
+                Label(error, systemImage: "exclamationmark.circle").font(.caption)
+                    .foregroundStyle(.secondary).accessibilityIdentifier("quickSummaryError")
+            }
+            if session.autoQuick && session.ai.provider != .apple {
+                Text("New speech triggers Quick evaluation; related words are batched briefly. "
+                     + "Auto also updates Summary when relevant. Both use the selected "
+                     + "models on \(session.ai.summaryEndpointLabel).")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        }
     }
 
     @ViewBuilder

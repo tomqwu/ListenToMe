@@ -74,7 +74,14 @@ final class MobileWorkspaceUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Start listening"].isHittable)
         XCTAssertTrue(app.buttons["Expand transcript"].isHittable)
         XCTAssertTrue(app.buttons["panel-model-quick"].isHittable)
+        XCTAssertTrue(app.staticTexts["output-quick"].isHittable, "show the answer before status details")
         capture(app, "iPhone two-pane Live workspace")
+        let latest = transcript.staticTexts["The latest phrase."]
+        let latestY = latest.frame.minY
+        let auto = quick.switches["Auto summaries"].firstMatch
+        for _ in 0..<3 where !auto.isHittable { quick.scrollViews.firstMatch.swipeUp() }
+        XCTAssertTrue(auto.isHittable, "Auto remains reachable below the answer")
+        XCTAssertEqual(latest.frame.minY, latestY, accuracy: 2, "Quick scrolling must not move the transcript")
         app.buttons["Expand transcript"].tap()
         XCTAssertTrue(app.navigationBars["Transcript"].waitForExistence(timeout: 5))
         XCUIDevice.shared.orientation = .portrait
