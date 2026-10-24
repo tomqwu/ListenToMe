@@ -1,5 +1,7 @@
 # iOS GUI review — 1.5.0 (13)
 
+> Historical review of 1.5.0. The Deep tab and its orchid colour were removed from iOS in 1.15.0 (#235); see [IOS.md](IOS.md#parity-with-macos) for current behaviour.
+
 Reviewed the installed simulator app on September 12, 2026. The waveform app icon was already present,
 but its identity was missing from the conversation screen. This release brings that existing identity
 into the app and gives its reading surfaces a consistent visual hierarchy.

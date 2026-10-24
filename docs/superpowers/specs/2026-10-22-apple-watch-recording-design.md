@@ -1,11 +1,16 @@
 # Apple Watch recording — design
 
 **Issue:** [#181](https://github.com/tomqwu/ListenToMe/issues/181), part of
-[#98](https://github.com/tomqwu/ListenToMe/issues/98). **Status:** approved design. The
-maintainer's answers are recorded in [§9 Decisions](#9-decisions). The implementation plan is
-[2026-10-22-apple-watch-recording.md](../plans/2026-10-22-apple-watch-recording.md). No app code
-exists yet, and nothing in [docs/IOS.md](../../IOS.md) changes until slices 1–3 ship together on one
-release train (decision 4).
+[#98](https://github.com/tomqwu/ListenToMe/issues/98). **Status:** approved design; slices 1–3
+are built on `main` and **not shipped** (2026-10-24). The maintainer's answers are recorded in
+[§9 Decisions](#9-decisions). The implementation plan is
+[2026-10-22-apple-watch-recording.md](../plans/2026-10-22-apple-watch-recording.md), and its status
+block lists which tasks are done. Slices 1–3 merged unreleased in #189, #190 and #193; the watch app is
+embedded only when the `WATCH_EMBED` build flag is on (off by default), so no TestFlight build has
+included it. Before the release train, the maintainer runs the device spike on a real watch (branch
+`spike/181-watch-audio`, `SPIKE.md`, results posted on #181), then the Task 20 physical-device
+acceptance listed in #193. The user-facing docs, including the [docs/IOS.md](../../IOS.md) watch
+section, change in that train's release-prep change (decision 4).
 
 **Request (TestFlight feedback on iOS 1.10.5 (27)):** "use Apple Watch to record conversations."
 
@@ -145,7 +150,8 @@ reference documentation. **U** means not verified. Every U item is a spike task 
 
 ### 4.2 Documents that must change when Slice 3 ships
 
-- `docs/ios-privacy.md` currently says the app "does not save raw microphone audio". It must
+- `docs/ios-privacy.md` says the app does not save raw microphone audio unless the opt-in Save audio
+  recordings setting (#55) is on, and that Apple Watch recordings keep no audio. It must also
   describe watch recordings being held as audio on the watch and the iPhone until they are
   transcribed, then deleted.
 - `docs/IOS.md` needs a new row in tier 2 or tier 3 for Apple Watch, or a watch section, saying the
@@ -537,7 +543,8 @@ Slice 2 can be built and tested without watch capture.
   v1: it needs both apps reachable and the phone app awake (F9), so it fails exactly when the phone
   "is not at hand". It also gains nothing over chunks for an after-the-fact transcript.
 - **Transcribing on the watch.** Not possible with Apple's on-device engine (F1). Shipping
-  WhisperKit to the watch contradicts tier 3 (no WhisperKit on mobile) and the watch's power budget.
+  WhisperKit to the watch contradicts tier 3 (no WhisperKit transcription on mobile; the iPhone app
+  links WhisperKit only to detect the spoken language) and the watch's power budget.
 - **An independent watch app** (F12). Rejected: it is useless without the phone's transcriber, and
   it would invite a standalone listing.
 
@@ -560,7 +567,8 @@ implementation, on 2026-10-23.
 3. **Transient raw audio is approved, with no "keep the audio" option.** Watch audio is stored on
    the watch and on the iPhone only until it is transcribed, then deleted automatically.
    `docs/ios-privacy.md` changes its "does not save raw microphone audio" wording in the release that
-   ships watch-mic capture, not before.
+   ships watch-mic capture, not before. Keeping watch audio when Save audio recordings (#55) is on is a
+   separate, open proposal ([#225](https://github.com/tomqwu/ListenToMe/issues/225)).
 4. **Slice 1 is not released alone.** Slices 1–3 merge to `main` unreleased and ship together on one
    release train when watch-mic capture (Slice 3) works. User-facing docs change in that train's
    release-prep change. `CHANGELOG.md` carries the work under Unreleased until then.

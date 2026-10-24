@@ -35,7 +35,7 @@ macOS defaults to Ollama with its local versus Cloud privacy setting. iOS defaul
 on-device Apple Intelligence and falls back to Ollama only where Apple Intelligence cannot run, so
 Auto starts paused there until Ollama is selected. Existing explicit provider/model choices are
 preserved on both platforms. iOS uses the configured Ollama connection — Ollama Cloud, or a server
-the user entered. Apple Intelligence is available for manual summaries on supported devices.
+the user entered — or, when the user picks one, an OpenAI-compatible server or a Cloud AI service (below). Apple Intelligence is available for manual summaries on supported devices.
 Selecting Apple pauses Auto with an explanation; it never silently routes speech to Cloud.
 OpenAI-compatible servers (#52) get the same prompt and the same strict decision contract as Ollama,
 but not a byte-identical request: there is no portable `think: false`. `OpenAICompatibleProvider.requestBody`
@@ -94,7 +94,8 @@ conversation (~19 min in between left out)." The line belongs to the exact text 
 (`RoleNoticeRecord`, `MobileAnswerNotices`): a recap, a dismissal, a failed retry that restores the
 previous answer, or Auto rewriting the text all leave the line of the text actually shown. Minutes come
 from the lines' timestamps, or from their length when they have none. On iOS a Summary that does not
-fit is still refused; only Quick and Deep excerpt.
+fit is still refused; only Quick (and a suggested-prompt ask, below) excerpts — iOS has no Deep since
+1.15.0 (#235), so on-demand Deep grounding is macOS-only.
 
 Ollama receives no `num_ctx`, so a local model runs with the server's default context. Ollama 0.35 on
 the development Mac loaded `qwen3:0.6b` with a 40,960-token context and read a 33,000-character prompt
@@ -130,7 +131,7 @@ based on hardware capability.
 
 ## Validation and release evidence
 
-Target versions are macOS 1.4.0 (10) and iOS 1.9.0 (17). Candidate checks and native benchmark
+The shared scheduler first shipped in macOS 1.4.0 (10) and iOS 1.9.0 (17). Candidate checks and native benchmark
 results are in `dist/shared-summary-evidence/`; per-release upload and artifact evidence live in
 the respective versioned `dist/` directories. A candidate or simulator pass alone is not a
 production acceptance claim. Physical iPhone/iPad acceptance remains separate from TestFlight.
@@ -203,7 +204,8 @@ Converging the two is tracked separately; nothing here depends on them matching 
 ### User directives
 
 `AutomaticReviewCoordinator.synchronize` takes an `AutomaticReviewDirectives` value carrying the
-response language, the preset persona guidance and the attached reference material. The automatic
+response language, the preset persona guidance, the attached reference material and, for Summary
+reviews only, the active vocabulary's summary headings (`summaryGuidance`, #222). The automatic
 system prompt is built through `PromptBuilder.systemWithDirectives`, the same path the manual panes
 use, so persona and language wording is identical. Automatic Deep also receives the attached
 reference material in its user message, matching manual Deep; automatic Summary keeps the manual
@@ -216,9 +218,11 @@ contradictory language rules.
 A queued or in-flight review keeps the directives it was created with, so a settings change
 mid-request never relabels output produced from older context; the next review uses the new
 settings. With no directives set, the review prompts and the Quick evaluator prompt are unchanged.
-iOS exposes no response-language, persona or reference settings yet, so it passes none.
+iOS exposes no response-language, persona or reference settings yet; it passes only the active
+vocabulary's glossary as persona guidance and its Summary headings (`vocabularyDirectives`, #222),
+and none at all when no vocabulary is on.
 
-## Snapshot validity, review deadlines and the two kinds of Quick output (next release)
+## Snapshot validity, review deadlines and the two kinds of Quick output (macOS unreleased since 1.4.4; in iOS by 1.15.0)
 
 ### Validity is decided per piece, not on the joined transcript
 
@@ -348,7 +352,7 @@ On the macOS UI side, `checkpoint()` compares a cheap `SessionCheckpointKey`
 loads the archive in `.task` rather than seeding `@State` in `init`, so the once-a-second elapsed
 tick no longer re-reads and re-decodes every saved conversation on the main thread.
 
-## Prompt data fences, queue persistence and pane failure handling (next release)
+## Prompt data fences, queue persistence and pane failure handling (macOS unreleased since 1.4.4; in iOS by 1.15.0)
 
 ### Untrusted text is fenced and declared as data (#140)
 
@@ -361,8 +365,8 @@ summarize, never instructions to follow. The action instruction always sits outs
 
 This is shared, so both platforms are identical: the macOS manual panes (`PromptBuilder.build`,
 `buildDeep`, `buildListener`), the automatic reviews on both platforms
-(`AutomaticReviewDirectives.system`/`userMessage`), and the iOS manual Summary/Deep/on-device Quick
-paths, which fence `summarySource` and carry the same notice. The Quick evaluator already stated
+(`AutomaticReviewDirectives.system`/`userMessage`), and the iOS manual Summary and on-device Quick
+paths (iOS Deep was removed in 1.15.0, #235), which fence `summarySource` and carry the same notice. The Quick evaluator already stated
 that its JSON input fields are data, and keeps its own wording.
 
 `PromptBuilder.provisionalNotice` stays *outside* the transcript fence: like the action instruction
@@ -474,7 +478,7 @@ A tap sends the literal text — never automatically:
   #235): `MobileSession.askSystem` (the copilot prompt plus `PromptData.notice`) over an
   `OnDemandGrounding.excerpt` sized by `oneShotBudget` for the provider's window, then
   `PromptBuilder.askInstruction`, so a long conversation is answered from what fits, like any
-  on-demand answer (#114). It is not a summary: `quickSummary`, `deepThought`, the saved record,
+  on-demand answer (#114). It is not a summary: `quickSummary`, `summary`, the saved record,
   `markManualCompletion`, `markReviewed` and Auto's queue are untouched, and the answer is kept in
   memory only. A blocked tap keeps its chip, and a chip is used up only once its answer arrived.
 

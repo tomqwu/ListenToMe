@@ -1,5 +1,7 @@
 # Quick evaluator benchmark — September 12, 2026
 
+> Historical benchmark for 1.8.0. Since then Auto also runs automatic Summary reviews (1.10.0), accepts cloud AI services and OpenAI-compatible servers as well as Ollama, and iOS has no Deep (1.15.0, #235); see [IOS.md](IOS.md#parity-with-macos).
+
 The automatic evaluator retains **GLM 5.3 Flash** as its default. DeepSeek 4.1 Flash is faster and remains selectable, but GLM passed more checks in this small test. Existing saved selections are preserved. The scheduler is deterministic Swift code on the device; a model evaluates meaning, never owns timers or executes Summary/Deep automatically.
 
 ## Latest catalog and method

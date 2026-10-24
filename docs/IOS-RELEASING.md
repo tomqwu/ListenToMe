@@ -297,6 +297,24 @@ Select the `en-CA` localization; if absent, create it using Apple's resource-spe
 and required relationships. Read back metadata after writes. Save sanitized resource/status responses
 with the release evidence. Never add unrelated testers or enable external/public distribution.
 
+**Reusable verification script.** Recent releases keep a parameterized script that performs the table
+above in their evidence directory: `dist/ios-<version>-build<n>-evidence/asc-verify-script.py` (most
+recently `dist/ios-1.15.0-build32-evidence/`). `dist/` is gitignored, so this is local evidence, not
+repository source: copy the previous release's script into the new evidence directory and read it
+before running it, for example
+
+```sh
+uv run --with 'PyJWT[crypto]' python "$IOS_EVIDENCE/asc-verify-script.py" "$IOS_BUILD" \
+  "metadata/ios/en-CA/what-to-test-${IOS_VERSION}.txt" "$IOS_EVIDENCE/asc-verify.json" \
+  metadata/ios/en-CA/beta-description.txt > "$IOS_EVIDENCE/asc-verify.log" 2>&1
+```
+
+It reads the key references from `~/.config/listentome/testflight.json` and keeps the JWT in memory. It
+checks the build up to four times, five minutes apart, and exits 3 if the build is not `VALID` yet —
+run it again later; never re-upload. It then checks the internal **Dev** group and its testers, adds
+the build to Dev only if it is missing, writes and reads back the en-CA What to Test (and, with the
+fourth argument, the beta description), and saves the sanitized record to `asc-verify.json`.
+
 `GET /v1/betaTesters/<TESTER_ID>/builds` lists **individually assigned builds**, not all builds
 accessible through a group. In build 11's verified release it returned an old direct assignment;
 Dev group access still worked. Do not misdiagnose that response as missing access or create another
@@ -305,7 +323,7 @@ not prove the tester installed or exercised the new build on a phone.
 
 ## Troubleshooting and handoff
 
-### Current verified baseline: API key, September 12, 2026
+### Verified baseline: API key, first proved September 12, 2026
 
 The agent uploaded **1.4.0 (11)** through the repository helper with explicit API-key authentication.
 Apple accepted it at **12:12:56 UTC**, then reported `VALID` and `IN_BETA_TESTING`. Dev build access,
@@ -320,6 +338,12 @@ This completed the automated path without native Organizer control or another ma
   there, rather than storing credentials or their values in skills/memory.
 - Workflow implementation: [PR #85](https://github.com/tomqwu/ListenToMe/pull/85), merged with all CI
   green; 12 helper tests passed and a real API-key upload proved the route.
+
+The same route has carried every build since. The most recent accepted upload is **1.15.0 (32)**,
+accepted 2026-10-24 at 07:30:25 UTC from `f6e4c72` and tagged `ios-v1.15.0-build32`, then verified
+`VALID`, `IN_BETA_TESTING` and in Dev with matching en-CA metadata; its evidence (upload receipt,
+`PUBLISH-STATUS.md`, `asc-verify.json`, local checks) is in `dist/ios-1.15.0-build32-evidence/`.
+Physical-device acceptance was not recorded for it.
 
 Use this evidence to distinguish the working path from historical Xcode-session failures. Recheck
 live state for a new release; do not treat this historical build number as the next build to upload.

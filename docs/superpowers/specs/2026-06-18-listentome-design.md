@@ -1,7 +1,10 @@
 # ListenToMe — Design Spec
 
 **Date:** 2026-06-18
-**Status:** Approved-for-planning (pending final user review)
+**Status:** Implemented — built from this spec by the [MVP plan](../plans/2026-06-18-listentome-mvp.md)
+and shipped in macOS 1.0.0 (2026-06-25). Historical: where it differs from the app, the app wins. For
+example, 1.0.0 went Ollama-only instead of separate Claude/OpenAI/DeepSeek providers; per-vendor
+cloud AI presets over plain HTTP returned later (#214).
 
 ## 1. Summary
 

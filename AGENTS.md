@@ -1,5 +1,9 @@
 # ListenToMe repository workflow
 
+**Current state:** for what is published, what is merged but unreleased, open priorities and pending
+maintainer items, read the dated snapshot in [docs/HANDOFF.md](docs/HANDOFF.md). The rules below win
+over it.
+
 ## Local validation policy
 
 Run all tests on the local Mac using `make validate-local`, including core coverage, iOS simulator

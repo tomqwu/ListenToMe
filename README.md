@@ -33,9 +33,13 @@ macOS-only, and there is no Mac↔iOS sync. See
 [the version policy](docs/IOS.md#version-policy).
 
 The standalone iOS/iPadOS 26 app is the **ListenToMeIOS** target: microphone transcription, a live
-transcript with Quick Summary plus a Summary tab (Deep is macOS-only), **Summarize selection** for just
+transcript with Quick Summary plus a Summary tab (Deep is macOS-only; a Deep analysis saved by an earlier
+build stays readable under **Earlier deep analysis**), an opt-in **Auto** (off by default; with Ollama, a
+cloud AI service or an OpenAI-compatible server) that refreshes Quick Summary and Summary as people
+talk, **Summarize selection** for just
 the lines you pick (Select, or touch and hold a line → Summarize from here), context-aware suggested questions
-you can ask in one tap, local conversations with on-device semantic search and "Ask your history", photo/file
+you can ask in one tap, local conversations that name themselves, with on-device semantic search, "Ask
+your history" and **Delete all conversations**, photo/file
 attachments, Apple Notes and share-sheet imports, calendar import with e-mail and join-link
 redaction, Markdown sharing, **Export as** Markdown, plain-text, SRT/WebVTT subtitle or JSON files with
 timestamps, and an opt-in **Save to folder** that writes each conversation as a
@@ -56,6 +60,9 @@ elsewhere. Domain vocabularies (Medical, Legal, Software & Cloud, Engineering, F
 Education & Research) and your own **My terms** list help recognition, AI speech correction and
 summaries on both platforms; after about a minute of speech the phone may suggest one, decided on the
 device. Presets, reference files, audio-file import and WhisperKit transcription are macOS-only.
+The iPhone and iPad app is distributed through TestFlight; the latest build is **1.15.0 (32)**
+(2026-10-24). An Apple Watch companion is built behind a build flag but not shipped yet
+([#181](https://github.com/tomqwu/ListenToMe/issues/181)).
 See [iOS setup, validation and distribution](docs/IOS.md).
 
 ```sh
@@ -117,7 +124,7 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 
 **Four-pane AI copilot**
 - **Transcript** — live, source-labeled, no model.
-- **Listener** — rolling summary plus open questions / action items.
+- **Summary** (the Listener) — rolling summary plus open questions / action items.
 - **Quick** — fast suggestions on the global hotkey, buttons, or proactively when someone asks a
   question. **Proactive** (the checkbox in the Quick pane header, on by default) answers a finalized
   question from **Others** automatically: your own questions never trigger it, repeat questions are
@@ -179,7 +186,8 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 - **File & folder reference context** with a configurable token budget.
 - **Export** as Markdown, plain text, SRT or WebVTT subtitles, or versioned JSON, plus recap and PDF,
   in files named after the conversation (`Weekly sync 2026-10-23 1435.srt`). Lines carry `[mm:ss]`
-  timestamps where the engine reports them (WhisperKit, iPhone and Apple Watch recordings); see
+  timestamps where the engine reports them (WhisperKit and iPhone recordings; Apple Watch recordings
+  too once the Watch app ships); see
   [Export formats](docs/export-formats.md).
 - **Save to folder** (off by default, Settings): after each conversation stops, writes one
   Obsidian-friendly Markdown note (YAML front matter, summary, notes, timestamped transcript) into a
@@ -208,6 +216,12 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 - Grab the notarized `.dmg` from [Releases](https://github.com/tomqwu/ListenToMe/releases),
   open it, and drag **ListenToMe** to **Applications**. See [`CHANGELOG.md`](CHANGELOG.md) for
   what changed in recent macOS and iOS releases.
+- The latest macOS release is **1.4.4** (2026-09-14), and macOS releases are paused for now. This
+  README describes `main`: Mac features merged since 1.4.4 — among them Cloud AI services,
+  OpenAI-compatible servers, vocabularies, Save to folder, saved audio, the new export formats and
+  History search by meaning — are listed under
+  [macOS (unreleased since 1.4.4)](CHANGELOG.md#macos-unreleased-since-144) and are available only
+  when you build from source until the next release.
 
 **Build from source**
 ```bash
@@ -361,7 +375,7 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   - A naming that finds nothing is not retried until the transcript doubles or grows by 100 words.
   - An automatic title may be refined once after the conversation grows several times over.
   - Turn it off with Settings → **Name conversations automatically**. The iPhone does the same for
-    "New conversation" and Apple Watch recordings.
+    "New conversation" (and Apple Watch recordings, once the Watch app ships).
 
 ### Keyboard shortcuts
 
@@ -503,7 +517,9 @@ saying so. Press **Speakers / edit names** to retry once the network is availabl
 
 - **`ListenToMeCore`** (Swift package): all testable logic — conversation state, VAD, question
   detection, prompt building, Ollama provider, model router, context engine, `MeetingSession`.
-- **`iOS/`**: iPhone/iPad SwiftUI app, foreground microphone capture with SpeechAnalyzer, optional Foundation Models summaries.
+- **`iOS/`**: iPhone/iPad SwiftUI app, foreground microphone capture with SpeechAnalyzer, Apple Intelligence
+  (Foundation Models) summaries by default on capable devices.
+- **`Watch/`**: Apple Watch companion, embedded only with the `WATCH_EMBED` build flag (off; not shipped).
 - **`App/`**: macOS glue — `DualChannelCapture`, `SpeechRecognizerTranscriber`, SwiftUI UI, hotkey.
 
 See [`docs/reviews/2026-09-10/design-and-gap-review.md`](docs/reviews/2026-09-10/design-and-gap-review.md)

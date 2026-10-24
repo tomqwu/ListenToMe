@@ -1,5 +1,10 @@
 # Preset Context System Implementation Plan (Phase 1)
 
+> **Status: completed.** Implemented in PR #29 (merged 2026-06-25) and shipped in macOS 1.0.0 with 12
+> presets; six more followed in macOS 1.1.0 (#41), 18 in all. Presets are macOS-only; the iPhone app
+> has none (see [docs/IOS.md → Parity with macOS](../../IOS.md#parity-with-macos)). The checkboxes
+> below were not ticked as tasks landed.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add use-case presets (Meeting, Interview, etc.) that fill the Context-notes field and tailor the AI panes' behavior via persona guidance injected into prompts.

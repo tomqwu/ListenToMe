@@ -8,8 +8,10 @@ The first iOS version is a standalone app, separate from the macOS release. It r
 **ListenToMe for iPhone and iPad is a personal capture and recall companion — not a port of the macOS
 meeting copilot.** It records and transcribes what *this device's* microphone hears: an in-person
 conversation, a lecture, an interview, a phone left on the table. It summarizes on-device by default
-(Apple Intelligence, where the device supports it) and keeps every conversation local, searchable and
-shareable.
+(Apple Intelligence, where the device supports it) — or with Ollama, a cloud AI service or an
+OpenAI-compatible server only when you choose one — and keeps every conversation local, searchable by
+words and by meaning (with **Ask your history**), and shareable or exportable. Its answers are Quick
+Summary and Summary; Deep stays on the Mac.
 
 **It is deliberately not a copilot for calls or video meetings.** iOS does not let an app capture
 another app's audio, so the dual-channel "You / Others" experience — and everything built on knowing
@@ -18,7 +20,7 @@ stays macOS-only. This is a platform boundary, not a backlog item: there is no p
 that captures system or call audio. Recording is foreground-only (`iOS/Info.plist` declares no
 `UIBackgroundModes`); backgrounding stops recording and saves the conversation.
 
-Apple Watch recording ([#181](https://github.com/tomqwu/ListenToMe/issues/181)) is under design, see [the spec](superpowers/specs/2026-10-22-apple-watch-recording-design.md); the tiers below are unchanged until it ships.
+Apple Watch recording ([#181](https://github.com/tomqwu/ListenToMe/issues/181)) is built but not shipped: the watch app (`Watch/`) compiles with the iOS app but is embedded only with `WATCH_EMBED=YES`, which no release has used, and it waits on an on-watch audio spike and device acceptance; see [the spec](superpowers/specs/2026-10-22-apple-watch-recording-design.md). The tiers below are unchanged until it ships.
 
 ## Parity with macOS
 
@@ -79,6 +81,9 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 | Add to My terms (#222) | Right-click a transcript line | Long-press a transcript line |
 | Proactive Quick answers | Yes — needs a finalized question on the Others channel | No — there is no Others channel to detect one in |
 | Suggested prompts (#61) | **Suggested · from context** above the fixed Quick actions, from the Auto Quick check only (macOS manual Quick answers are prose with no chips); a click asks Quick, the context menu also offers **Ask in Deep**, which behaves like the **Deep answer** button; Auto off or AI off clears them | Under Quick Summary, from the Auto Quick check or a manual Quick refresh — on Apple Intelligence through the strict prose "Suggested:" block; a tap is a separate ask to the Quick model, answered in a small Ask card under Quick Summary and never replacing a summary (iOS has no free-form Quick answer and no Deep tab, #235) |
+| Ask your history (#57) | Uses the Deep pane's model on the current AI mode; AI off disables it | Uses the Summary role's model on the selected summary provider (iOS has no Deep role, #235) |
+| Automatic titles (#221) | Renames a saved "Conversation — <date>" after Stop, Save or New conversation; **Settings → Name conversations automatically** | Renames "New conversation" or "Apple Watch · <date>" after Stop, Save, a finished Apple Watch recording or a return to the foreground; **Settings → Conversations → Name conversations automatically**. Both on by default, sharing `ConversationAutoTitle` |
+| Deleting everything (#220) | **Clear history…** in the History sheet | **Delete all conversations…** at the bottom of History and in **Settings → Privacy**. Each platform runs its own `conversationDataOwners` list (Core `ConversationDataOwner`), so saved audio and the search index go with the conversations |
 | Third-party licenses | **Open-source licenses…** shows `App/ThirdPartyNotices.txt` as one text | **Settings → About → Acknowledgements** lists each package from the same file with its full license (`MobileAcknowledgementsView`, #202) |
 | "What's New" | GitHub release notes and `CHANGELOG.md` | In-app, shown once per set of bundled notes (`MobileReleaseNotes`) |
 | Saved audio (#55) | Off by default (Settings); one `.m4a` per source per run — microphone and system audio as separate labelled files — under Application Support, following Time Machine; saved only while Save sessions locally keeps the conversation, deleted by Discard and Close without saving; placed at #233's `recordingOffset`; History → a conversation plays it, and only WhisperKit lines (real times) can jump into it | Off by default (**Settings → Audio recordings**); the microphone audio the transcriber accepted, one `.m4a` per run, always excluded from backups; the expanded transcript plays it and every line can jump to its time |
@@ -162,7 +167,7 @@ A fresh install now defaults to on-device Apple Intelligence, falling back to Ol
 
 ## Attributed summary input
 
-Summary, Deep and Quick all read the transcript with speaker labels and the user's typed notes
+Summary and Quick (and Deep, on macOS) all read the transcript with speaker labels and the user's typed notes
 marked as `Notes:`. Summaries can therefore attribute a question or a commitment instead of
 reporting the owner as unstated, and never present a typed note as something that was said.
 
@@ -615,7 +620,8 @@ Summaries render headings, bullets, bold, italics and inline code, including str
 ## Conversation actions
 
 History supports swipe right to share, swipe left to delete, and a touch-and-hold menu. Deletion asks for
-confirmation and removes that conversation's transcript, notes, original attachments, saved audio and all three AI outputs. Deleting
+confirmation and removes that conversation's transcript, notes, original attachments, saved audio, search-index entry and every saved AI output (Summary, Quick
+Summary, selection summaries and any earlier Deep analysis). Deleting
 an active conversation creates an empty active snapshot so the deleted content does not reappear
 on restart. Other conversations are preserved.
 
@@ -803,7 +809,8 @@ chosen folder (On My iPhone, iCloud Drive, an Obsidian vault) is kept as a bookm
 any later summary, title, notes or speaker-name change — `exportToVault` queues its note. Live
 transcript lines during recording are not written to the folder. `MarkdownVault` builds the note
 (YAML front matter with title, date, duration, BCP-47 language, speakers, the `listentome` tag and the
-conversation ID; then Summary, Quick summary, Deep summary, Notes, a transcript with `[mm:ss]`
+conversation ID; then Summary, Quick summary, Deep summary (only when the conversation has one — on
+iOS, an earlier version's), Selection summaries, Notes, a transcript with `[mm:ss]`
 timestamps and speaker names, and attachment names). The file is named
 `<yyyy-MM-dd HHmm> ListenToMe <key>.md`, where the key is the first eight hex digits of the
 conversation ID; an existing note is found by that suffix and its `listentome_id` front matter, so a
@@ -979,8 +986,8 @@ only the shared provider's failure wording is now the same on both platforms.
 ## Ollama (Cloud or your own server)
 
 Open **More → Settings → Summary provider → Ollama Cloud**. Enter your key and tap **Save API key**,
-then **Refresh models from API**, select a **Model role**, **Choose model**, and **Test connection**.
-Each of the three roles has an independent model selection. When a new key is entered, the test
+then **Refresh models from API**, choose the **Summary model** and **Quick Summary model**, and tap
+**Test connection**. Each role has an independent model selection, and speech correction has its own. When a new key is entered, the test
 button becomes **Save key and test connection** and saves that key before sending the request. Keys are stored in
 iOS Keychain with `WhenUnlockedThisDeviceOnly`, never in preferences, session exports or the app binary.
 Enter the key separately on each device. Remove API key deletes it from this device.

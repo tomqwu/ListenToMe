@@ -1,5 +1,11 @@
 # ListenToMe MVP Implementation Plan
 
+> **Status: completed.** Implemented in PR #1 (merged 2026-06-20) and shipped in macOS 1.0.0
+> (2026-06-25). This is a historical record: later work changed the design (SpeechAnalyzer became
+> the default engine, the app went Ollama-only with Listener / Quick / Deep panes, and much more), so
+> read [README.md](../../../README.md) and [CHANGELOG.md](../../../CHANGELOG.md) for current behavior.
+> The checkboxes below were not ticked as tasks landed.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** A native macOS app that listens to a meeting (your mic + the other participants' system audio), transcribes it live on-device, and produces real-time suggestions — both on demand (hotkey + buttons) and proactively when someone asks a question — using a configurable local Ollama model.
