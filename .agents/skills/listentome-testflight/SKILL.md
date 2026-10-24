@@ -57,7 +57,11 @@ that describe the CLI as blocked or require another publication approval.
    separately; simulator checks do not establish production readiness.
 3. Run `make ios-testflight IOS_ARCHIVE=<validated.xcarchive> IOS_RELEASE_SOURCE=<app-source-commit>`.
    Use the commit that produced the app, not a later workflow/docs-only commit. Require the actual
-   accepted-upload receipt, then tag that app source and verify the remote tag.
+   accepted-upload receipt, then tag that app source and verify the remote tag. Publish the GitHub
+   pre-release for that tag (`--prerelease --latest=false`, CHANGELOG section as notes, no binary) as
+   described in `docs/IOS-RELEASING.md`; never make it Latest over the macOS release. The page must be complete: version/build, source
+   commit, full notes, What to Test, privacy changes, and App Store "What's New" text since the last
+   production release (currently 1.10.5).
 4. Verify processing `VALID`, internal state `IN_BETA_TESTING`, the build's Dev relationship, and the
    intended tester's accepted group membership. Apply and read back the prepared en-CA description
    and What to Test. `/betaTesters/{id}/builds` lists **individual assignments only**; absence there

@@ -1,20 +1,39 @@
-Turn conversations into notes you can return to.
+Turn conversations into notes you can return to — privately, on your iPhone and iPad.
 
-Listen To Me brings live microphone transcription, editable notes and conversation summaries to iPhone and iPad. Follow the transcript as you speak, capture your own thoughts alongside it, and keep everything together in local conversation history.
+Listen To Me transcribes conversations live on your device, labels who is speaking, and turns what was said into summaries, answers and searchable notes. Everything stays on your device unless you choose otherwise.
 
-CAPTURE AND ORGANIZE
-• Transcribe speech on-device with Apple's SpeechAnalyzer.
-• Optionally repair likely misheard words with a fast Flash model. Compare or restore each original.
-• See the transcript and Quick Summary together, with a full Summary one tab away.
-• Add notes, photos and files, and give each conversation a title.
-• Import compatible copies from Apple Notes through the share extension, or add context from a selected calendar event.
-• Save conversations and reopen them from History. Search past conversations, swipe right to share, left to delete, or touch and hold for actions.
-• Share transcripts, notes and summaries as readable text or Markdown.
+TRANSCRIBE ANYTHING
+• Live, on-device transcription with Apple's speech engine.
+• Speaker names appear automatically. Rename anyone, and they keep their name even after a long pause.
+• Automatic language detection: if the conversation switches language partway through, the app follows it and rewrites the earlier lines. You can also pick from every language your device supports.
+• Vocabularies for Medical, Legal, Software & Cloud, Engineering, Finance, Sales and Education & Research, plus your own My terms list for names and jargon in any language, help get specialist words right. The app suggests the right vocabulary when a conversation sounds like one of these fields.
+• Optional AI correction fixes likely misheard words, and you can review or restore the original.
 
-CHOOSE HOW TO SUMMARIZE
-Choose a full Summary or a brief Quick Summary. Each output is saved separately. Enable Auto Quick Summary for live updates while listening when the text changes, with a 15-second minimum interval between automatic requests. A visible status shows when Auto is off, waiting, updating or retrying. Apple Intelligence on a supported device is the default, or choose Ollama — Ollama Cloud with your own API key, or an Ollama server you run on your own network. Refresh the model list directly from Ollama and select a model for each mode from available models, including DeepSeek, GLM, Qwen and Kimi. Available models and variants depend on Ollama's current catalog.
+SUMMARIZE AND ASK
+• Quick Summary keeps up while you listen. Summary covers the whole conversation. Both handle long meetings and tell you what they used.
+• Suggested questions appear under Quick. Tap one to get an answer.
+• Select any lines and summarize just that part.
+• Conversations name themselves after you stop.
 
-YOU CONTROL CLOUD USE
-Microphone speech is transcribed on-device; raw audio is not saved. Conversations are stored locally with device data protection, and a setting keeps them out of iCloud and Finder backups. When you choose Ollama and generate an AI output or enable Auto Quick Summary, your notes and transcript are sent to the server shown in Settings: Ollama Cloud, or the server you entered yourself. Enabling AI speech correction separately sends new completed phrases and nearby transcript text to an independently selected Flash model. Original wording is kept for review and restore. Your API key is stored in this device's Keychain. An imported calendar event has join-link passcodes and e-mail addresses removed before it reaches your notes. The full privacy policy and support contact are linked in Settings.
+FIND IT LATER
+• History search understands meaning, not just exact words.
+• Ask your history a question and get an answer that links to the conversations it came from.
+• Add notes, photos, files and calendar context to any conversation.
 
-Requires iOS or iPadOS 26 or later. Speech transcription depends on device and language support, with language assets downloaded when needed. Apple Intelligence summaries require a supported device and enabled Apple Intelligence; where it is unavailable the app falls back to Ollama and says why. Ollama Cloud requires an internet connection and your own account access. Recording uses the microphone while the app is in the foreground; it does not capture other apps or phone calls, and it resumes on its own after a call, Siri or an alarm. Review AI-generated summaries and transcript corrections for accuracy.
+SHARE AND KEEP
+• Export as Markdown, plain text, SRT or WebVTT subtitles, or JSON.
+• Save every conversation automatically as a Markdown note in a folder you choose, such as an Obsidian vault in iCloud Drive.
+• Optionally keep the audio with each conversation and tap any line to hear that moment.
+• Delete one conversation, or all of them, at any time.
+
+YOUR AI, YOUR CHOICE
+Apple Intelligence on your device is the default. If you prefer, connect your own:
+• Ollama, on your own computer or Ollama Cloud.
+• Any OpenAI-compatible server, such as LM Studio, vLLM or llama.cpp.
+• A cloud AI service with your own API key: OpenAI, Anthropic Claude, Google Gemini, DeepSeek, OpenRouter, Groq, Mistral or xAI.
+Each option says clearly where your text goes. You pick the model, and the app never chooses a paid model for you.
+
+PRIVATE BY DEFAULT
+Transcription, speaker labels, language detection, vocabularies and search run on your device. Audio is not kept unless you turn on Save audio recordings, and saved audio never leaves your device and is excluded from backups. Conversations are stored with device data protection, and you can keep them out of iCloud and Finder backups. Text is sent off your device only when you choose an outside AI service, and only to that service. API keys are stored in your device's Keychain. The full privacy policy and support contact are linked in Settings.
+
+Requires iOS or iPadOS 26 or later. Speech recognition, speaker labels and language detection depend on device and language support; the models download once on first use. Apple Intelligence features require a supported device with Apple Intelligence turned on. Cloud services require an internet connection and your own account. Recording uses the microphone while the app is in the foreground; it does not record other apps or phone calls, and it resumes on its own after a call, Siri or an alarm. Review AI-generated summaries and corrections for accuracy.
