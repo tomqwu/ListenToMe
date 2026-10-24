@@ -41,6 +41,7 @@ final class MobileSession {
         didSet { UserDefaults.standard.set(autoQuick, forKey: "autoQuickSummary"); handleSummaryEvent(.automationChanged) }
     }
     let quickReader = MobileQuickReader()
+    let suggestedAsk = MobileSuggestedAsk()
     let automaticReviews = AutomaticReviewCoordinator()
     private(set) var speechEventCount = 0
     private(set) var finalizedSpeechEventCount = 0
@@ -60,7 +61,7 @@ final class MobileSession {
     }
     private var quickScheduler: MobileSummaryScheduler
     private var autoTask: Task<Void, Never>?
-    private let summaryProvider: (any LLMProvider)?
+    let summaryProvider: (any LLMProvider)?
     /// The on-device transport used when the provider is Apple Intelligence. Only tests replace it,
     /// so the simulator can exercise the on-device path without an Apple Intelligence capable host.
     var onDeviceProviderOverride: (any LLMProvider)?
@@ -171,7 +172,7 @@ final class MobileSession {
         ai.correctionSettingsChanged = { [weak self] in self?.speechCorrection.cancel() }
         ai.quickSettingsChanged = { [weak self] in
             guard let self else { return }
-            self.quickReader.providerChanged()
+            self.suggestionsProviderChanged()
             self.handleSummaryEvent(.providerChanged)
         }
     }
@@ -340,7 +341,7 @@ final class MobileSession {
         guard !busy, save(announce: false) else { return }
         speechCorrection.cancel()
         acceptsSpeechCorrection = false
-        manualQuickError = nil; quickReader.reset()
+        manualQuickError = nil; resetSuggestions()
         handleSummaryEvent(.conversationChanged)
         id = UUID().uuidString; date = Date()
         title = "New conversation"; notes = ""; summary = ""; quickSummary = ""; deepThought = ""
@@ -359,7 +360,7 @@ final class MobileSession {
         lastSavedData = nil
         speechCorrection.cancel()
         acceptsSpeechCorrection = false
-        manualQuickError = nil; quickReader.reset()
+        manualQuickError = nil; resetSuggestions()
         handleSummaryEvent(.conversationChanged)
         id = record.id; date = record.date; title = record.title
         notes = record.notes ?? ""; summary = record.summary
@@ -463,12 +464,12 @@ extension MobileSession {
 }
 
 extension MobileSession {
-    func requestSummary(for mode: MobileSummaryMode = .summary, question: String? = nil) {
+    func requestSummary(for mode: MobileSummaryMode = .summary) {
         guard summaryTask == nil else { return }
         if let reason = summaryBlockReason(for: mode) { message = reason; return }
         if mode == .quick { handleSummaryEvent(.manualQuickStarted); quickReader.clearError() }
         summaryTask = Task {
-            await summarize(mode: mode, question: question)
+            await summarize(mode: mode)
             summaryTask = nil
             // New speech can arrive during any request. Resume at the remaining cooldown,
             // instead of adding another full interval after the response finishes.
@@ -598,7 +599,7 @@ extension MobileSession {
         return "Auto on · New speech is waiting for the next check."
     }
 
-    func summarize(mode: MobileSummaryMode = .summary, question: String? = nil) async {
+    func summarize(mode: MobileSummaryMode = .summary) async {
         if let reason = summaryBlockReason(for: mode) { message = reason; return }
         // Capture a stable input snapshot; recording can continue while this request runs.
         let source = summarySource
@@ -608,9 +609,9 @@ extension MobileSession {
             return
         }
         let cloud = summaryProvider != nil || ai.provider != .apple
-        // The transcript is fenced as data as on macOS (#140), then any tapped suggestion's request
-        // (#61); the cap is charged on that whole message so the Apple window still holds.
-        let fencedSource = Self.userMessage(source, question: question)
+        // The transcript is fenced as data, exactly as the macOS panes fence it (issue #140); the
+        // cap is charged on the fenced text so the Apple window still holds.
+        let fencedSource = PromptData.block("transcript", source)
         // The on-device Apple path shares its character cap with macOS (PromptBudget).
         guard fencedSource.count <= (cloud ? 60_000 : PromptBudget.appleIntelligenceCharacters) else {
             message = "This conversation exceeds the selected provider's summary limit. Export it or shorten your notes."
@@ -618,7 +619,7 @@ extension MobileSession {
         }
         generatingMode = mode
         isSummarizing = true
-        if mode == .quick { manualQuickError = nil; quickReader.clearError() }
+        if mode == .quick { manualQuickError = nil; quickReader.startManualQuick() }
         message = nil
         summaryDraft = ""
         defer { isSummarizing = false; summaryDraft = ""; generatingMode = nil }
@@ -652,7 +653,7 @@ extension MobileSession {
             case .summary: summary = summaryDraft
             case .quick:
                 quickSummary = try manualQuickSummary(quickResponse, prose: proseQuick)
-            case .deep: deepThought = Self.answer(summaryDraft, question: question)
+            case .deep: deepThought = summaryDraft
             }
             if let reviewMode = AutomaticReviewMode(rawValue: mode.rawValue) {
                 automaticReviews.markManualCompletion(reviewMode, source: source)

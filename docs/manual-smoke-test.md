@@ -124,19 +124,23 @@ macOS:
    nothing must be sent (no new Quick answer appears on its own).
 3. Click a chip: Quick must answer that literal request, and the chip must leave the row and not come
    back. Right-click another chip → **Ask in Deep**: Deep must answer it.
-4. Stop: the chips stay. Change the Quick model, or set AI mode to off: the chips disappear. **New**
-   conversation: no chips. With **Auto** off for a whole recording, no chips appear and no Quick check
-   runs.
+4. Stop: the chips stay. Change the Quick model, turn **Auto** off, or set AI mode to off: the chips
+   disappear. **New** conversation: no chips. With **Auto** off for a whole recording, no chips appear
+   and no Quick check runs.
 
 iPhone (phone width and an accessibility text size):
 
 1. With **Auto** on (Ollama, a cloud AI service or an OpenAI-compatible server), record: chips appear
    under Quick Summary, stacked and fully readable without sideways scrolling. Tap one: the app opens
-   **Deep** and shows the request in bold above the answer; back on **Live**, that chip is gone.
+   **Deep** and shows a **You asked** box with the question and its answer above Deep Summary, which
+   is unchanged (also after reopening the conversation); back on **Live**, that chip is gone. With a
+   conversation too long for the provider, a tap says so and the chip stays.
 2. With **Apple Intelligence** and Auto off, tap **Generate** on Quick Summary: the bullets must not
    contain a "Suggested:" heading or `>` lines; chips appear only when the on-device model wrote the
-   block. A model that ignores it gives no chips and no error.
-3. **New** conversation or a provider/model change clears the chips; Stop keeps them.
+   block last. A model that ignores it, or writes it first, gives no chips, every bullet and no error.
+   Repeat in a non-English conversation: the heading stays "Suggested:".
+3. **New** conversation or a provider/model change clears the chips (change the model while a Quick
+   refresh is running: no chips from the old model appear); Stop keeps them.
 
 ## Automatic speakers (1.3.0)
 

@@ -90,10 +90,12 @@ public struct SuggestedPrompts: Equatable, Sendable {
         // A chip is one line. A newline means the model wrote a paragraph or several items in one.
         guard !candidate.contains(where: \.isNewline) else { return nil }
         var text = candidate.trimmingCharacters(in: .whitespaces)
-        text = strippedMarker(text)
-        // Quotes and Markdown emphasis around the request are decoration, not part of it.
-        let quotes = CharacterSet(charactersIn: "\"'`“”‘’«»*_")
-        text = text.trimmingCharacters(in: quotes.union(.whitespaces))
+        // Unwrap first, or "**Ask about Q3**" would lose its leading "*" as a list marker.
+        text = strippedMarker(unwrappedEmphasis(text))
+        // Quotes around the request are decoration, not part of it. So is emphasis wrapping the whole
+        // request ("**Ask about Q3**"); markup inside it ("Explain __init__") is left alone.
+        let quotes = CharacterSet(charactersIn: "\"“”‘’«»")
+        text = unwrappedEmphasis(text.trimmingCharacters(in: quotes.union(.whitespaces)))
         text = text.split(whereSeparator: \.isWhitespace).joined(separator: " ")
         guard !text.isEmpty, text.count <= maximumLength,
               text.filter(\.isLetter).count >= 3 else { return nil }
@@ -119,6 +121,15 @@ public struct SuggestedPrompts: Equatable, Sendable {
             .trimmingCharacters(in: .punctuationCharacters.union(.whitespaces))
     }
 
+    /// `text` without one pair of emphasis markers that wraps all of it.
+    private static func unwrappedEmphasis(_ text: String) -> String {
+        for marker in ["**", "__", "*", "_", "`"] where text.count > marker.count * 2
+            && text.hasPrefix(marker) && text.hasSuffix(marker) {
+            return String(text.dropFirst(marker.count).dropLast(marker.count)).trimmingCharacters(in: .whitespaces)
+        }
+        return text
+    }
+
     /// The text without a leading "-", "*", "•", ">" or "1." / "1)" list marker.
     private static func strippedMarker(_ line: String) -> String {
         var rest = Substring(line)
@@ -137,30 +148,38 @@ public struct SuggestedPrompts: Equatable, Sendable {
     // MARK: - On-device prose
 
     /// The clause the prose (Apple Intelligence) Quick prompt appends. The on-device model has a small
-    /// window and cannot be held to the JSON envelope, so it is asked for a marked trailing block that
-    /// `splitProse` reads strictly; anything else means no chips.
+    /// window and cannot be held to the JSON envelope, so it is asked for one marked trailing block
+    /// that `splitProse` reads strictly; anything else means no chips. The heading stays in English
+    /// in every conversation language, so one parser serves them all.
     public static let proseInstructions = """
-    Then, only if something substantive was said, add a line "Suggested:" and up to three short \
-    requests the user could ask next about this conversation, one per line starting with "> ", each \
-    at most 60 characters.
+    Then, only if something substantive was said, end with a line "Suggested:" (always this English \
+    word, whatever the language) and up to three short requests the user could ask next about this \
+    conversation, one per line starting with "> ", each at most 60 characters. Write nothing after them.
     """
 
     /// Splits a prose Quick answer into the recap text and its suggested prompts.
     ///
-    /// Strict by design: suggestions are read only from list-marked lines directly after a line that
-    /// is exactly a "Suggested:" heading (bold or heading markers allowed). Without that heading the
-    /// whole answer is the recap and there are no chips; the first unmarked line ends the block.
+    /// Strict by design, so a suggestion block can never take a real takeaway:
+    /// - the block must be the answer's final section: exactly one "Suggested:" heading (a few English
+    ///   variants, bold or heading markers allowed), followed only by `> ` lines up to the end (blank
+    ///   lines and a closing code fence after the block are ignored);
+    /// - `>` is the only suggestion marker: `-`, `*`, `•` and numbered lines are bullets, never chips;
+    /// - a heading anywhere else, a second heading, or any blank or other line inside the block means
+    ///   no chips, and the whole answer stays the recap;
+    /// - a block with no recap above it, or after "No key takeaway yet.", gives no chips.
     public static func splitProse(_ response: String) -> (body: String, suggestions: [String]) {
-        let lines = response.components(separatedBy: .newlines)
-        guard let header = lines.firstIndex(where: isSuggestionHeading) else { return (response, []) }
-        var candidates: [String] = []
-        for line in lines[(header + 1)...] {
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            if trimmed.isEmpty { continue }
-            guard let marker = trimmed.first, "-*•>".contains(marker) || marker.isNumber else { break }
-            candidates.append(trimmed)
+        var lines = response.components(separatedBy: .newlines)
+        while let last = lines.last?.trimmingCharacters(in: .whitespaces), last.isEmpty || last == "```" {
+            lines.removeLast()
         }
-        return (lines[..<header].joined(separator: "\n"), sanitize(candidates))
+        let headings = lines.indices.filter { isSuggestionHeading(lines[$0]) }
+        guard headings.count == 1, let heading = headings.first else { return (response, []) }
+        let block = lines[(heading + 1)...].map { $0.trimmingCharacters(in: .whitespaces) }
+        guard !block.isEmpty, block.allSatisfy({ $0.hasPrefix(">") }) else { return (response, []) }
+        let body = lines[..<heading].joined(separator: "\n")
+        let recap = body.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !recap.isEmpty, !recap.lowercased().hasPrefix("no key takeaway") else { return (body, []) }
+        return (body, sanitize(block))
     }
 
     private static func isSuggestionHeading(_ line: String) -> Bool {

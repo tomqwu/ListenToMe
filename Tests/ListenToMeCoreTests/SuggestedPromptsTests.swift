@@ -13,6 +13,10 @@ final class SuggestedPromptsTests: XCTestCase {
             "> Draft a reply to Sam", "Ask about the budget",
         ]), ["Counter the net-30 ask", "Summarize pricing options", "Who owns the rollout?"])
         XCTAssertEqual(SuggestedPrompts.clean("**Ask   about   Q3**"), "Ask about Q3", "Emphasis is decoration")
+        XCTAssertEqual(SuggestedPrompts.clean("Explain __init__ in Python"), "Explain __init__ in Python",
+                       "Markup inside a chip is kept")
+        XCTAssertEqual(SuggestedPrompts.clean("What's Sam's deadline?"), "What's Sam's deadline?",
+                       "Apostrophes are part of the words")
         XCTAssertEqual(SuggestedPrompts.clean("“Clarify   the   SLA”"), "Clarify the SLA")
     }
 
@@ -135,7 +139,7 @@ final class SuggestedPromptsTests: XCTestCase {
 
     // MARK: - On-device prose
 
-    func testProseSuggestionsAreReadStrictlyAndNeverShownAsTakeaways() {
+    func testAFinalSuggestedBlockBecomesChipsAndNeverTakeaways() {
         let response = """
         - Pricing is still open.
         - Sam owns the proposal.
@@ -143,12 +147,42 @@ final class SuggestedPromptsTests: XCTestCase {
         > Summarize pricing options
         > Draft a reply to Sam
         > {"oops": true}
-        Thanks for listening!
-        > Ignored after the block ended
+
         """
         let split = SuggestedPrompts.splitProse(response)
         XCTAssertEqual(split.suggestions, ["Summarize pricing options", "Draft a reply to Sam"])
         XCTAssertEqual(QuickSummaryContext.proseSummary(response), "- Pricing is still open.\n- Sam owns the proposal.")
+        for heading in ["Suggested questions:", "### Suggestions:", "suggested prompts:"] {
+            XCTAssertEqual(SuggestedPrompts.splitProse("- Pricing is open.\n\(heading)\n> Ask about pricing").suggestions,
+                           ["Ask about pricing"], heading)
+        }
+        let fenced = "```\n- Pricing is open.\nSuggested:\n> Ask about pricing\n```"
+        XCTAssertEqual(SuggestedPrompts.splitProse(fenced).suggestions, ["Ask about pricing"])
+        XCTAssertEqual(QuickSummaryContext.proseSummary(fenced), "- Pricing is open.")
+    }
+
+    /// Review finding: a heading written first or mid-answer, a blank line, or bullet-style lines
+    /// inside the block used to turn real takeaways ("2025 budget approved") into chips.
+    func testASuggestedHeadingAnywhereButTheEndKeepsEveryBulletAndGivesNoChips() {
+        let cases: [(String, String)] = [
+            ("Suggested:\n> Ask about pricing\n- Pricing is open.\n- Sam owns it.", "- Pricing is open.\n- Sam owns it."),
+            ("- Pricing is open.\nSuggested:\n> Ask about pricing\n- Sam owns it.", "- Pricing is open.\n- Sam owns it."),
+            ("- Pricing is open.\nSuggested:\n- 2025 budget approved", "- Pricing is open.\n- 2025 budget approved"),
+            ("- Pricing is open.\nSuggested:\n1. Who owns the budget?", "- Pricing is open.\n- Who owns the budget?"),
+            ("- Pricing is open.\nSuggested:\n> Ask about pricing\n\n> Ask about Sam", "- Pricing is open."),
+            ("- Pricing is open.\nSuggested:\n> Ask one\nSuggested:\n> Ask two", "- Pricing is open."),
+            ("- Pricing is open.\nSuggested:\n> Ask about pricing\nThanks!", "- Pricing is open."),
+        ]
+        for (response, recap) in cases {
+            let split = SuggestedPrompts.splitProse(response)
+            XCTAssertEqual(split.suggestions, [], response)
+            XCTAssertEqual(split.body, response, "The whole answer stays the recap: \(response)")
+            XCTAssertEqual(QuickSummaryContext.proseSummary(response), recap, response)
+        }
+        XCTAssertEqual(SuggestedPrompts.splitProse("Suggested:\n> Ask about pricing").suggestions, [],
+                       "No recap above the block, no chips")
+        XCTAssertTrue(SuggestedPrompts.proseInstructions.contains("always this English"),
+                      "Other languages keep the English heading the parser reads")
     }
 
     func testProseWithoutTheHeadingHasNoChipsAndAnUnchangedRecap() {
@@ -251,6 +285,26 @@ final class SuggestedPromptsReaderTests: XCTestCase {
         XCTAssertTrue(reader.suggestions.isEmpty, "A catch-up read has not seen the whole conversation yet")
     }
 
+    /// Review finding: a manual refresh is not cancelled by a settings change, so its chips must not
+    /// come back after the provider or model changed.
+    func testChipsFromAPassThatStartedBeforeAProviderChangeAreDropped() async throws {
+        let reader = QuickSummaryReader()
+        reader.startManualQuick()
+        reader.providerChanged()
+        reader.offerSuggestions(["Old model chip"])
+        XCTAssertTrue(reader.suggestions.isEmpty)
+        reader.startManualQuick()
+        reader.offerSuggestions(["New model chip"])
+        XCTAssertEqual(reader.suggestions.prompts, ["New model chip"])
+
+        let auto = QuickSummaryReader()
+        let provider = SuggestingProvider(suggestions: ["Old model chip"])
+        await auto.read(try batch("Pricing?"), provider: provider,
+                        isCurrent: { auto.clearSuggestions(); return true }, apply: { _ in })
+        XCTAssertTrue(auto.suggestions.isEmpty, "Chips cleared while the read ran never come back")
+        XCTAssertEqual(auto.completedReads, 1, "The recap itself still lands")
+    }
+
     func testResetProviderChangeAndManualPassesManageChips() {
         let reader = QuickSummaryReader()
         reader.offerSuggestions(["Ask about pricing"])
@@ -324,7 +378,9 @@ final class SuggestedPromptsReaderTests: XCTestCase {
     func testAIOffProviderChangeAndNewConversationClearChips() async throws {
         let provider = SuggestingProvider(suggestions: ["Summarize pricing options"])
         let session = makeSession(provider)
+        session.autoSummaryEnabled = true
         session.quickReader.offerSuggestions(["Summarize pricing options"])
+        XCTAssertEqual(session.suggestedPrompts, ["Summarize pricing options"])
         session.aiEnabled = false
         XCTAssertTrue(session.suggestedPrompts.isEmpty)
         let before = provider.requests.count
@@ -339,6 +395,20 @@ final class SuggestedPromptsReaderTests: XCTestCase {
 
         session.quickReader.offerSuggestions(["Next steps?"])
         session.resetConversation()
+        XCTAssertTrue(session.suggestedPrompts.isEmpty)
+    }
+
+    /// Review finding: on macOS only Auto makes chips, so turning it off must not leave them behind.
+    func testTurningAutoOffClearsAndHidesChips() async throws {
+        let provider = SuggestingProvider(suggestions: ["Summarize pricing options"])
+        let session = makeSession(provider)
+        session.autoSummaryEnabled = true
+        session.quickReader.offerSuggestions(["Summarize pricing options"])
+        XCTAssertEqual(session.suggestedPrompts, ["Summarize pricing options"])
+        session.autoSummaryEnabled = false
+        XCTAssertTrue(session.suggestedPrompts.isEmpty)
+        XCTAssertTrue(session.quickReader.suggestions.isEmpty, "Cleared, not merely hidden")
+        session.autoSummaryEnabled = true
         XCTAssertTrue(session.suggestedPrompts.isEmpty)
     }
 

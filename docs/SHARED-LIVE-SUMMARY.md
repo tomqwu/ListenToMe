@@ -398,26 +398,51 @@ No model call exists only to make chips. They ride on passes that already run:
 So with Auto off and no manual refresh, no chips are produced, and no cloud provider is ever called
 for them beyond the pass the user already chose. macOS manual Quick answers ("Draft reply"…) are prose
 and carry no chips. Apple Intelligence's prose prompt (`QuickSummaryContext.manualProseInstructions`)
-appends `SuggestedPrompts.proseInstructions`: a trailing `Suggested:` heading followed by `> ` lines.
-`SuggestedPrompts.splitProse` reads it strictly — only list-marked lines directly after a heading that
-is exactly `Suggested:` (bold or heading markers allowed); the first unmarked line ends the block —
-and `proseSummary` strips the block before reading bullets, so chips are never shown as takeaways.
-Anything else means no chips.
+appends `SuggestedPrompts.proseInstructions`: a final `Suggested:` heading, kept in English in every
+conversation language, followed only by `> ` lines. `SuggestedPrompts.splitProse` reads it strictly so
+a suggestion block can never take a real takeaway:
+
+- the block must be the answer's final section — exactly one heading (`Suggested:`, `Suggestions:`,
+  `Suggested prompts:` or `Suggested questions:`, bold or heading markers allowed) followed only by
+  `>` lines to the end; trailing blank lines and a closing code fence are ignored;
+- `>` is the only suggestion marker; `-`, `*`, `•` and numbered lines are bullets, never chips;
+- a heading anywhere else, a second heading, or a blank or other line inside the block means no
+  chips, and the whole answer stays the recap;
+- a block with no recap above it, or after "No key takeaway yet.", gives no chips.
+
+`proseSummary` strips a valid block before reading bullets. Anything else means no chips.
 
 Cadence: the first valid set shows at once. Automatic passes replace chips already on screen at most
 every `SuggestedPrompts.minimumRefreshInterval` (20 s) on the reader's injected clock; a newer set that
 arrives sooner is held and shown on the first pass after the window, even a pass that brings nothing.
 An empty or junk-only pass keeps the chips. A manual refresh replaces them at once. A cancelled,
-failed or stale read (`isCurrent` false) offers nothing.
+failed or stale read (`isCurrent` false) offers nothing. `QuickSummaryReader.providerGeneration` is
+bumped whenever chips are cleared or the reader is reset; an Auto read or a manual refresh
+(`startManualQuick`) that began under an older generation has its chips dropped, so a model change
+during a still-running refresh can never bring the old model's chips back.
 
-A tap sends the literal text through the normal path — never automatically. macOS sends
-`ResponseAction.ask(prompt)` through Quick (context menu: Deep), so it gets the same grounding, budget,
-AI-off guard and manual-answer freshness as the fixed actions; iOS sends it through Deep Summary
-(`PromptBuilder.askInstruction` after the fenced transcript), shown with the request in bold. The
-request is quoted on one line after the transcript fence, in instruction position, because the user
-chose to send it. A tapped chip leaves the row and is not suggested again in that conversation.
+A tap sends the literal text — never automatically:
 
-Clearing: a new or reopened conversation resets the reader, chips and used-chip memory included; a
-provider, model or route change and turning AI off clear the chips (`QuickSummaryReader.providerChanged`
-on iOS, `handleLiveEvent(.providerChanged)` on macOS); macOS hides chips while AI is off. Stop keeps
-them: the conversation can still be asked about, and they simply stop refreshing.
+- **macOS** sends `ResponseAction.ask(prompt)` through Quick, or Deep from the context menu, so it gets
+  the same grounding, budget, AI-off guard and manual-answer freshness as the fixed actions. **Ask in
+  Deep** deliberately behaves like the **Deep answer** button: it replaces the Deep pane and counts as
+  a manual Deep answer, because the macOS Deep pane is an answer pane that every fixed Deep action
+  already writes into.
+- **iOS** has no free-form Quick answer, so a tap is a separate ask (`MobileSuggestedAsk`) to the Deep
+  model: `MobileSummaryMode.deep.instructions` over the fenced transcript, then
+  `PromptBuilder.askInstruction`. Its answer is shown under the question in the Deep tab and kept in
+  memory only. It is not a Deep Summary: `deepThought`, the saved record, `markManualCompletion`,
+  `markReviewed` and Auto's queue are untouched. The size limit (60,000 characters, or Apple
+  Intelligence's 8,000 for system plus user text) is checked before anything is sent; a blocked tap
+  keeps its chip, and a chip is used up only once its answer arrived.
+
+The request is quoted on one line after the transcript fence, in instruction position, because the
+user chose to send it. A used chip is not suggested again in that conversation.
+
+Clearing: a new or reopened conversation resets the reader, chips and used-chip memory included (and
+on iOS closes the ask); a provider, model or route change and turning AI off clear the chips
+(`QuickSummaryReader.providerChanged` on iOS, which also stops an ask in progress;
+`handleLiveEvent(.providerChanged)` on macOS). On macOS only Auto makes chips, so turning Auto off
+clears them too and they are hidden while AI or Auto is off; on iOS a manual refresh still makes them
+with Auto off, so Auto off does not clear them there. Stop keeps them: the conversation can still be
+asked about, and they simply stop refreshing.

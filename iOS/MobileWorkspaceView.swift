@@ -164,6 +164,7 @@ struct MobileWorkspaceView<Header: View>: View {
             Rectangle().fill(MobileStyle.line).frame(height: 0.75).padding(.horizontal, 16)
             readingArea {
                 VStack(alignment: .leading, spacing: 12) {
+                    MobileSuggestedAnswer(session: session, mode: mode)
                     if mode == .quick {
                         Text(session.autoQuickStatus).font(.caption).foregroundStyle(MobileStyle.muted)
                             .accessibilityIdentifier("autoQuickStatus")

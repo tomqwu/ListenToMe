@@ -33,8 +33,7 @@ macOS-only, and there is no Mac↔iOS sync. See
 [the version policy](docs/IOS.md#version-policy).
 
 The standalone iOS/iPadOS 26 app is the **ListenToMeIOS** target: microphone transcription, a live
-transcript with Quick Summary plus a Deep Think tab, context-aware suggested prompts that ask Deep in
-one tap, local conversations with search, photo/file
+transcript with Quick Summary plus a Deep Think tab, context-aware suggested questions you can ask in one tap, local conversations with search, photo/file
 attachments, Apple Notes and share-sheet imports, calendar import with e-mail and join-link
 redaction, Markdown sharing, and an opt-in **Save to folder** that writes each conversation as a
 Markdown note into a folder you pick in Files, such as an Obsidian vault. On-device speaker identification (on by default; turn it off in
@@ -130,9 +129,10 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
   actions. They come from the Auto Quick check that already runs — no extra model call — so there are
   none with Auto or AI off. A tap sends the literal text through Quick (right-click for **Ask in
   Deep**); nothing is sent by itself. Chips refresh at most every 20 seconds, a tapped chip is not
-  suggested again, and a new conversation, a model change or AI off clears them; Stop keeps them.
+  suggested again, and a new conversation, a model change, Auto off or AI off clears them; Stop keeps them.
   On iPhone and iPad the chips sit under Quick Summary after an Auto check or a manual refresh
-  (including Apple Intelligence's), and a tap asks Deep Summary.
+  (including Apple Intelligence's); a tap asks the Deep model and shows the answer under the question
+  in the Deep tab, separate from Deep Summary, which it never replaces.
 - An answer you asked for in Quick ("Draft reply", "Key terms"…) stays on screen: the automatic
   recap keeps updating behind it and **Show recap** switches back. Typing in Notes never cancels a
   running automatic review, and a review that exceeds its deadline says so instead of repeating the

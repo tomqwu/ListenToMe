@@ -68,6 +68,11 @@ public final class QuickSummaryReader {
     @ObservationIgnored private let now: @MainActor () -> TimeInterval
     /// The context-aware chips (#61), refreshed by completed evaluations and manual Quick passes.
     public private(set) var suggestions = SuggestedPrompts()
+    /// Bumped whenever chips are cleared or the reader is reset. A pass that started under an older provider or model may still
+    /// finish (a manual refresh is not cancelled by a settings change); its chips are then dropped.
+    public private(set) var providerGeneration = 0
+    /// The provider generation the current manual Quick pass started under (`startManualQuick`).
+    private var manualPassGeneration: Int?
     public private(set) var context = QuickSummaryContext()
     public private(set) var isReading = false
     public private(set) var error: String?
@@ -89,19 +94,29 @@ public final class QuickSummaryReader {
     public func reset() {
         cancel(); context = QuickSummaryContext(); error = nil; unchanged = false; completedReads = 0; failures = 0
         recommendations = []; reviewsCompleted = []; reviewRevisions = [:]; isCatchingUp = false
-        suggestions = SuggestedPrompts()
+        suggestions = SuggestedPrompts(); providerGeneration += 1
+    }
+
+    /// A manual Quick Summary the user asked for is starting: clears the last failure and records the
+    /// provider generation its chips will belong to.
+    public func startManualQuick() {
+        clearError()
+        manualPassGeneration = providerGeneration
     }
 
     /// Offers the suggestions of a pass that ran outside `read`: a manual Quick Summary the user
-    /// asked for, which replaces the chips at once.
+    /// asked for, which replaces the chips at once. Chips from a pass that started before a provider
+    /// or model change are dropped, so an old model's chips never come back.
     public func offerSuggestions(_ candidates: [String]) {
+        defer { manualPassGeneration = nil }
+        if let started = manualPassGeneration, started != providerGeneration { return }
         suggestions.offer(candidates, at: now(), force: true)
     }
 
     /// Chips follow the review-suggestion rule: only a read that caught up with the input describes
     /// the whole conversation, so a catch-up read offers none of its own.
-    private func offerSuggestions(of decision: QuickSummaryDecision, complete: Bool) {
-        guard complete else { return }
+    private func offerSuggestions(of decision: QuickSummaryDecision, complete: Bool, provider generation: Int) {
+        guard complete, generation == providerGeneration else { return }
         suggestions.offer(decision.suggestions, at: now())
     }
 
@@ -110,7 +125,7 @@ public final class QuickSummaryReader {
 
     /// Drops every chip: the provider changed or AI was turned off, so they no longer describe a
     /// pass the current settings would make.
-    public func clearSuggestions() { suggestions.clear() }
+    public func clearSuggestions() { suggestions.clear(); providerGeneration += 1 }
 
     /// The Quick provider or model changed: its last failure and its chips no longer apply.
     public func providerChanged() { clearError(); clearSuggestions() }
@@ -133,6 +148,7 @@ public final class QuickSummaryReader {
               isCurrent: @escaping () -> Bool, apply: @escaping (String) -> Void) async {
         guard task == nil else { return }
         let token = generation
+        let providerAtStart = providerGeneration
         let completedBeforeRead = reviewsCompleted
         let revisionsBeforeRead = reviewRevisions
         isReading = true
@@ -160,7 +176,7 @@ public final class QuickSummaryReader {
                     }
                 }
                 reviewsCompleted.removeAll { completedBeforeRead.contains($0) && !completedDuringRead.contains($0) }
-                offerSuggestions(of: decision, complete: !batch.hasMore)
+                offerSuggestions(of: decision, complete: !batch.hasMore, provider: providerAtStart)
             } catch {
                 guard generation == token, !Task.isCancelled else { return }
                 failures += 1

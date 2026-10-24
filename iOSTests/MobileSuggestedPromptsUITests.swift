@@ -19,14 +19,18 @@ final class MobileSuggestedPromptsUITests: XCTestCase {
         for element in [chip, second] {
             XCTAssertGreaterThanOrEqual(element.frame.minX, window.minX, "A chip must not overflow the screen")
             XCTAssertLessThanOrEqual(element.frame.maxX, window.maxX, "A chip must not overflow the screen")
+            XCTAssertGreaterThanOrEqual(element.frame.height, 44, "A chip is a full-size tap target")
         }
         capture(app, "Suggested chips under the Quick Summary")
 
         chip.tap()
-        let deep = app.staticTexts["output-deep"]
-        expect(deep, containing: "Nobody has claimed the Thursday review")
-        XCTAssertTrue(deep.label.contains("Who owns the Thursday review?"), "The answer keeps what was asked")
-        capture(app, "Deep answer to a tapped chip")
+        let answer = app.staticTexts["suggestedAnswer"]
+        expect(answer, containing: "Nobody has claimed the Thursday review")
+        XCTAssertEqual(app.staticTexts["suggestedQuestion"].label, "Who owns the Thursday review?",
+                       "The answer sits under what was asked")
+        XCTAssertFalse(app.staticTexts["output-deep"].label.contains("Nobody has claimed"),
+                       "A chip answer never replaces Deep Summary")
+        capture(app, "Answer to a tapped chip above Deep Summary")
 
         if app.segmentedControls["workspaceTabs"].exists {
             app.segmentedControls["workspaceTabs"].buttons["Live"].tap()
