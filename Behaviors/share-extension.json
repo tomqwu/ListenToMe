@@ -1,0 +1,22 @@
+{
+  "feature": "Share extension import",
+  "scenarios": [
+    {
+      "id": "SHARE-001",
+      "name": "Import shared notes with source attribution",
+      "given": "text and a URL have been shared to ListenToMe",
+      "when": "the user opens the imported context",
+      "then": "notes retain the supplied text and source",
+      "covers": [
+        "ShareExtension/*"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileAppTests.swift",
+          "test": "MobileAppTests/testShareExtensionImportsNotesAndPreservesSource"
+        }
+      ]
+    }
+  ]
+}

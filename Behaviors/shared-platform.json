@@ -1,0 +1,41 @@
+{
+  "feature": "Shared platform services",
+  "scenarios": [
+    {
+      "id": "SHARED-001",
+      "name": "Preserve speaker order",
+      "given": "two voices appear in a transcript",
+      "when": "speaker labels are assigned",
+      "then": "labels follow appearance order",
+      "covers": [
+        "SharedPlatform/*",
+        "Sources/ListenToMeCore/Speaker*"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SpeakerLabelingTests.swift",
+          "test": "SpeakerLabelingTests/testTwoSpeakersLabeledByAppearanceOrder"
+        }
+      ]
+    },
+    {
+      "id": "SHARED-002",
+      "name": "Keep owned audio idempotent across retries",
+      "given": "Watch audio has been retained once",
+      "when": "import retries and the app relaunches",
+      "then": "one copy remains with its original timeline",
+      "covers": [
+        "SharedPlatform/SavedAudio*",
+        "Sources/ListenToMeCore/Saved*"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SavedWatchAudioTests.swift",
+          "test": "SavedWatchAudioTests/testRetryAndRelaunchKeepOneCopyAndItsOriginalTimeline"
+        }
+      ]
+    }
+  ]
+}

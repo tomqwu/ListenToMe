@@ -4,6 +4,16 @@ A snapshot for an agent picking up ListenToMe cold. [AGENTS.md](../AGENTS.md) an
 [CLAUDE.md](../CLAUDE.md) stay the rules; this note is only the state of things on the date above.
 Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags) before acting on it.
 
+## Repository-wide BDD adoption (October 25)
+
+All behavior changes, including older branches when integrated, now follow [BDD](BDD.md): write
+Given/When/Then scenarios in `Behaviors/`, reproduce with a failing native test, implement, then
+refactor under passing tests. `make bdd-check` and the required core CI job enforce scenario/test
+traceability for app and delivery changes. Use the PR template for actual red/green evidence.
+The initial catalog adopts representative existing tests; it does not claim exhaustive legacy
+coverage or historical red runs. Existing full validation, rendered UI/audio acceptance, independent
+review and release gates remain required. This workflow change alone calls for no binary release.
+
 ## Product state
 
 | Surface | Latest published | State of `main` |
