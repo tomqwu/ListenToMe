@@ -231,6 +231,21 @@ PR #274 adds optional per-server limits with reserved answer space and a no-send
 
 PR #277 implements per-passage vector reuse and fixes a Mac shared-search reader lifetime bug found during installed-app acceptance. Full `make validate-local` passed on `bacbb7d`: 1,060 Core tests (seven skips, 98.1048% line coverage), 459 iOS tests (449 passed, ten skipped, zero failures), release helpers, lint, signed Mac build and both real server contracts. All three required CI checks passed. Installed Mac History search/vector reuse/removal and independent review passed; screenshots and cleanup evidence are preserved. This change is ready for merge after the documentation update checks; it is not published. Broader semantic language support remains open: contextual mean pooling and tested normalizations did not meet paraphrase/negative-query quality acceptance. No additional models are downloaded or enabled.
 
+## Ollama endpoint candidate (#149) — October 25
+
+`codex/149-ollama-endpoint` shares the OpenAI-compatible local-network HTTP rule, reports omitted
+URL components without echoing credentials or query values, and uses Ollama Cloud in destination
+prose. The existing automatic-catalog guard already requires the Ollama provider plus a saved key
+or custom endpoint; the removed workspace prose now uses the shared endpoint label. The provider
+default's recomputation until an explicit choice is now documented. Full `make validate-local` passed
+at `a756271`, including simulator unit/UI tests, Core coverage, helpers, lint, signed Mac build and
+real provider contracts. Signed focused checks also passed after repairing IPv6 normalization. Both
+Settings notice/recovery screenshots were inspected. Current-main integration at `5a1ddd8` passed
+all 403 iOS unit tests (397 passed, six skipped), 1,061 Core tests (seven skipped, 98.1056% coverage),
+lint and the signed Mac build. Independent integration review found no blockers. Hosted checks for
+the final documentation commit remain pending; physical-device acceptance is pending. Not published.
+
+
 ## In progress: speaker lifecycle follow-ups (#188)
 
 Branch `codex/188-speaker-lifecycle` cancels final labeling on background, clears the run buffer and
@@ -259,3 +274,7 @@ Summary simulator journey now verifies provisional request tagging and removal a
 all five focused checks passed at `00cc28f`, and both native-resolution screenshots were inspected.
 Current-main integration lint/Core (1,061 tests, seven skips, 98.1056%) and all three hosted checks passed.
 Physical-device acceptance and publication remain pending. Evidence: `dist/live-snapshot-164`.
+
+## Mac Auto compatibility acceptance (#209) — October 25
+
+The final installed-Mac settings interaction passed at `c3746b5`: saved 4K persists, an oversized probe sends nothing, an unsaved 8K edit disables probing, Cancel restores 4K, and a valid synthetic response succeeds with server-managed context. Original provider/model settings were restored. Screenshots, the one synthetic request, source/signing provenance and successful Dev-only cleanup are preserved in the October 25 external `auto-compatibility-209/native-final` evidence. Current-main integration includes only the already-merged iOS endpoint validation and documentation; Mac application source is unchanged from this acceptance. Final integration checks and merge remain pending.
