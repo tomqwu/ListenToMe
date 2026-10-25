@@ -4,6 +4,10 @@ A snapshot for an agent picking up ListenToMe cold. [AGENTS.md](../AGENTS.md) an
 [CLAUDE.md](../CLAUDE.md) stay the rules; this note is only the state of things on the date above.
 Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags) before acting on it.
 
+## October 25 validation follow-up
+
+The #127 full run at `0464e9d` exposed a shared iOS test synchronization race: the automatic-review coordinator sets its active mode before the fake provider receives the request. The test now waits for the provider-held continuation before editing Notes and releasing the response. Its cancellation, completed-output and no-repeat assertions remain intact. The focused regression passed 20 consecutive iterations on the 1.17.0 candidate source with this fix; independent review found no blockers. This is test-only. Full validation must be rerun on the updated candidate; the failed run is preserved externally. No publication is claimed.
+
 ## Product state
 
 | Surface | Latest published | State of `main` |
