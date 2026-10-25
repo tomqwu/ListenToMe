@@ -227,8 +227,8 @@ archive failure and partial owner failure. Focused storage tests passed (22), fu
 passed (98.1087%), both iOS simulator architectures compiled, and lint, signed Mac build and
 independent review passed. Full `make validate-local` passed at `b11a101`, including simulator
 unit/UI tests, Core coverage, release helpers and real provider contracts. The #223 records snapshot
-is published after deletion. Current-main integration checks and native acceptance remain pending;
-the Mac is locked.
+is published after deletion. Current-main integration lint, Core tests, signed Mac build and independent
+review passed at `f3dd237`. Final hosted checks and native acceptance remain pending; the Mac is locked.
 Not merged or published.
 ## Ollama endpoint candidate (#149) — October 25
 
