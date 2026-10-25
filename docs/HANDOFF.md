@@ -309,3 +309,16 @@ preparation/analysis across cancellation and replacement, and verify an old drai
 a later recording. Five focused regressions and all 1,088 Core tests passed (seven skips, 98.1432%
 coverage), with lint, signed Mac build, iOS test build and independent review clear. Full local
 validation is queued; native OTHERS acceptance remains required. This is partial #134 work, not completion of the remaining platform orchestration.
+
+### Checkpoint state extraction (#134) — October 25
+
+`codex/134-checkpoint-work` follows the speaker-work candidate. Core now owns the checkpoint dirty
+marker and original start date; the Mac adapter supplies eligibility, record assembly and durable
+write, then performs its existing UI and Save to folder effects. Disabled and empty saves do not
+build records. A failed write acknowledges neither the key nor a new start date, so identical content
+can retry. Reopen/New/clear reset the coordinator explicitly. This is partial #134 work. Five focused regressions, 1,093 Core tests (seven skips; 98.147%
+Core coverage), lint and the signed Mac build passed. Independent review found no blockers. Generic iOS and Watch simulator
+builds passed. The full local gate is queued; native OTHERS/save acceptance remains required.
+No Dev app has been launched for this extraction. When integrating #126, replace its lastSavedKey
+persisted-state check with equivalent coordinator/restored-record evidence so removing the last line
+still writes the empty edited record.

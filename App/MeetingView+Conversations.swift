@@ -11,34 +11,33 @@ extension MeetingView {
 
     @discardableResult
     func checkpoint(complete: Bool = false, force: Bool = false) -> Bool {
-        guard ProviderSettings.saveSessionsForSearch, sessionSaveable else { return false }
-        guard hasConversation else { return true }
-        // Compare a cheap dirty key BEFORE building anything: the timer fires once a second for the
-        // whole meeting, and rebuilding the joined transcript first made every idle tick
-        // O(transcript) on the main actor (issue #116). `store.revision` stands in for the
-        // transcript; Date is intentionally excluded so ticks do not rewrite unchanged content.
-        let key = SessionCheckpointKey(
-            revision: store.revision, title: conversationTitle, summary: session.listenerSummary,
-            notes: session.notes, quickSuggestion: session.quickSuggestion,
-            deepAnswer: session.deepAnswer, complete: complete, summaryInstructions: session.summaryInstructions,
-            vocabularyDomainIDs: vocabulary.domainIDs(for: currentSessionID).sorted())
-        guard force || key != lastSavedKey else { return true }
-        // The record keeps the conversation's start (its first checkpoint), so History, its exports
-        // and the Save to folder note all carry the same date and file name as the live export.
-        let started = conversationStartedAt ?? Date()
-        let record = currentRecord(date: started, complete: complete)
-        guard sessionStore.add(record) else {
+        let outcome = checkpointCoordinator.checkpoint(
+            allowed: ProviderSettings.saveSessionsForSearch && sessionSaveable,
+            hasContent: hasConversation, force: force,
+            makeKey: {
+                SessionCheckpointKey(
+                    revision: store.revision, title: conversationTitle, summary: session.listenerSummary,
+                    notes: session.notes, quickSuggestion: session.quickSuggestion,
+                    deepAnswer: session.deepAnswer, complete: complete, summaryInstructions: session.summaryInstructions,
+                    vocabularyDomainIDs: vocabulary.domainIDs(for: currentSessionID).sorted())
+            },
+            makeRecord: { currentRecord(date: $0, complete: complete) },
+            persist: { sessionStore.add($0) })
+        let record: SessionRecord
+        switch outcome {
+        case .disabled: return false
+        case .empty, .unchanged: return true
+        case .failed:
             saveMessage = sessionStore.errorText ?? "Save failed. Retry or Export to keep this conversation."
             saveFailed = true
             return false
+        case .saved(let saved): record = saved
         }
-        lastSavedKey = key
-        conversationStartedAt = started
         // Save to folder (issue #53): written once capture has stopped, then on each later change.
         let vault = MarkdownVaultSync.shared
         vault.activeRecordingID = complete ? nil : currentSessionID
         if complete {
-            vault.save(record, startedAt: started)
+            vault.save(record, startedAt: record.date)
         }
         saveMessage = "Saved at " + Date().formatted(date: .omitted, time: .standard)
         saveFailed = false
@@ -99,7 +98,7 @@ extension MeetingView {
             beginDiarizationRunReset()
             restoredRecord = nil
             session.resetConversation()
-            currentSessionID = UUID().uuidString; conversationStartedAt = nil
+            currentSessionID = UUID().uuidString; checkpointCoordinator.reset()
             vocabulary.restore(domainIDs: nil, for: currentSessionID)
             applyVocabulary()
             conversationLanguages = ConversationLanguages()
@@ -107,7 +106,6 @@ extension MeetingView {
             conversationTitleState = .placeholder
             sessionSaveable = ProviderSettings.saveSessionsForSearch
             othersAudioSink.reset(); microphoneAudioSink.reset()
-            lastSavedKey = nil
             saveMessage = "New conversation"; saveFailed = false
             clearReferences(session: session)
             transcriptAtBottom = true
@@ -140,13 +138,13 @@ extension MeetingView {
         othersAudioSink.reset(); microphoneAudioSink.reset()
         restoredRecord = record
         guard session.restoreConversation(record) else { return }
-        currentSessionID = record.id; conversationStartedAt = record.date
+        currentSessionID = record.id; checkpointCoordinator.reset(startedAt: record.date)
         conversationTitle = record.title; conversationTitleState = record.resolvedTitleState
         conversationLanguages = record.conversationLanguages
         vocabulary.restore(domainIDs: record.vocabularyDomainIDs, for: currentSessionID,
                            transcriptLineCount: store.utterances.count)
         applyVocabulary()
-        lastSavedKey = nil; sessionSaveable = ProviderSettings.saveSessionsForSearch
+        sessionSaveable = ProviderSettings.saveSessionsForSearch
         saveMessage = "Opened conversation"; saveFailed = false
     }
 

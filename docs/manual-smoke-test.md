@@ -853,3 +853,13 @@ finishes. The old request must not clear the new run's status or analyze its aud
 pass, Stop, and confirm the final pass includes final transcript lines. Verify actual system-audio
 transcription remains labeled OTHERS. Capture the relevant status UI and preserve source/signing
 provenance; complete the authorized Dev-app cleanup after the testing session.
+
+### Checkpoint persistence after coordinator extraction (#134)
+
+In an isolated Dev conversation, capture finalized OTHERS speech, Stop, and confirm History and the
+optional Save to folder note retain the original date across subsequent recording cycles. Reopen a
+record and save an edit; then start New and save identical text as a distinct conversation. Use the
+existing isolated archive-failure setup to trigger a failed write, restore writable storage and Retry
+save; the failed content must persist. Clear History during an active conversation and confirm later
+Stop does not restore it. Preserve screenshots and signing/source evidence, then clean up the completed
+Dev session as documented. Core tests supplement these installed-app checks, not replace them.

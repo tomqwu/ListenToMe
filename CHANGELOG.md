@@ -63,6 +63,8 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## macOS (unreleased since 1.4.4)
 
+- Maintenance: checkpoint saves now use a tested Core coordinator. Failed writes remain retryable, unchanged timer ticks avoid rebuilding transcripts, and reopened conversations retain their original date. Saving and privacy controls are unchanged. (#134, partial)
+
 - Speaker identification retries stay bound to their recording. A cancelled model retry cannot resume into a newer recording or clear its speaker status. (#134, partial)
 
 - Maintenance: the Markdown renderer now lives in the shared platform target, with unchanged rendering. (#134, partial)

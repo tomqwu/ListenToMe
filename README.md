@@ -712,3 +712,7 @@ guidance. The shared Markdown renderer lives in `SharedPlatform`, included direc
 `SpeakerPassCoordinator` owns Mac speaker-pass task cancellation and the model-preparation barrier;
 platform run IDs still protect results produced during analysis. Its Core regressions cover late
 preparation and replacement-task completion, separately from native audio acceptance.
+
+`ConversationCheckpointCoordinator` owns the Mac checkpoint dirty marker and original start date.
+Core tests exercise failed archive writes and retry, unchanged-content skips, completion/forced saves
+and resets; platform adapters retain consent eligibility, record assembly and Save to folder effects.

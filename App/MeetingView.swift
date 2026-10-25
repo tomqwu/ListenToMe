@@ -24,11 +24,11 @@ struct MeetingView: View {
     /// upsert one growing record instead of writing a fresh superset each time.
     @State var currentSessionID = UUID().uuidString
     /// When the current conversation's first checkpoint was taken; the Save to folder note's date.
-    @State var conversationStartedAt: Date?
+    @State var checkpointCoordinator = ConversationCheckpointCoordinator()
+    var conversationStartedAt: Date? { checkpointCoordinator.startedAt }
     /// The languages this conversation was transcribed in, kept on its record (issue #206).
     @State var conversationLanguages = ConversationLanguages()
-    /// `lastSavedUtteranceCount`: count at the last save, so an unchanged transcript isn't re-saved on
-    /// Stop. `sessionSaveable`: whether this window-session may be persisted — tainted to false the
+    /// `sessionSaveable`: whether this window-session may be persisted — tainted to false the
     /// moment saving is ever observed off (or history is cleared), so "turn off to keep nothing" holds
     /// for the whole session. `savingEnabledBeforeSettings`: toggle value snapshotted when Settings
     /// opened, so an off→on round-trip is still caught.
@@ -101,7 +101,6 @@ struct MeetingView: View {
     @FocusState var titleFieldFocused: Bool
     @State var saveMessage = "Not saved yet"
     @State var saveFailed = false
-    @State var lastSavedKey: SessionCheckpointKey?
     private let hotkey = HotkeyMonitor()
 
     /// mm:ss since the current recording run started (00:00 when idle).
@@ -673,8 +672,7 @@ extension MeetingView {
         currentSessionID = UUID().uuidString
         vocabulary.restore(domainIDs: nil, for: currentSessionID, transcriptLineCount: store.utterances.count)
         applyVocabulary()
-        conversationStartedAt = nil
-        lastSavedKey = nil
+        checkpointCoordinator.reset()
     }
 
     /// On Stop, persist the finished session for cross-meeting search when this window-session is
