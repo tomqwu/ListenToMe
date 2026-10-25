@@ -50,6 +50,26 @@ final class MeetingSessionTimelineTests: XCTestCase {
         TranscriptSegment(source: source, text: text, isFinal: true, start: start, end: end)
     }
 
+    func testDelayedBatchedSourcesKeepReportedRangesAndOldRunCannotLeakAfterRestart() async throws {
+        let (session, made) = makeSession()
+        try await session.start()
+        let old = try XCTUnwrap(made.all.last)
+        old.emit(say("Delayed microphone", 2, 4, source: .you))
+        old.emit(say("Delayed system audio", 8, 10))
+        await waitUntil { session.store.utterances.count == 2 }
+        XCTAssertEqual(session.store.utterances.map(\.start), [2, 8])
+        XCTAssertEqual(session.store.utterances.map(\.end), [4, 10])
+        await session.stopAndWait()
+        try await session.start()
+        old.emit(say("Obsolete final", 100, 101))
+        made.all.last?.emit(say("New run", 1, 2, source: .you))
+        await waitUntil { session.store.utterances.count == 3 }
+        await session.stopAndWait()
+        XCTAssertEqual(session.store.utterances.map(\.text), ["Delayed microphone", "Delayed system audio", "New run"])
+        XCTAssertEqual(session.store.utterances.last?.start, 11)
+        XCTAssertEqual(session.store.utterances.last?.end, 12)
+    }
+
     func testSecondRecordingContinuesTheConversationTimeline() async throws {
         let (session, made) = makeSession()
         try await session.start()

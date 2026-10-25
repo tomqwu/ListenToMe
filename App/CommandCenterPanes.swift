@@ -171,16 +171,42 @@ extension MeetingView {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 14).padding(.vertical, 12)
             }
-            // Follow the newest line only while the user is at the bottom; if they scroll up to read
-            // history, stop auto-scrolling until they return to the bottom.
-            .onScrollGeometryChange(for: Bool.self) { geo in
-                geo.contentOffset.y + geo.containerSize.height >= geo.contentSize.height - 24
-            } action: { _, atBottom in transcriptAtBottom = atBottom }
-            .onChange(of: store.utterances.count) { _, _ in
-                if transcriptAtBottom { proxy.scrollTo(Self.scrollBottomID, anchor: .bottom) }
+            .task(id: TranscriptScrollKey(revision: store.revision, you: store.partials[.you],
+                                          others: store.partials[.others])) {
+                do { try await Task.sleep(for: .milliseconds(100)) } catch { return }
+                if transcriptFollow.shouldScroll { proxy.scrollTo(Self.scrollBottomID, anchor: .bottom) }
             }
-            .onChange(of: store.partial?.text) { _, _ in
-                if transcriptAtBottom { proxy.scrollTo(Self.scrollBottomID, anchor: .bottom) }
+            .onScrollGeometryChange(for: Bool.self) { geometry in
+                geometry.contentOffset.y + geometry.containerSize.height >= geometry.contentSize.height - 24
+            } action: { _, atEnd in transcriptFollow.geometryChanged(atEnd: atEnd) }
+            .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                let target = max(0, geometry.contentSize.height - geometry.containerSize.height
+                                 + geometry.contentInsets.bottom)
+                return abs(geometry.contentOffset.y - target) > 2 ? geometry.contentSize.height.rounded() : 0
+            } action: { _, displaced in
+                guard displaced > 0, transcriptFollow.shouldScroll else { return }
+                Task { @MainActor in
+                    await Task.yield()
+                    if transcriptFollow.shouldScroll { proxy.scrollTo(Self.scrollBottomID, anchor: .bottom) }
+                }
+            }
+            .onScrollPhaseChange { _, phase, context in
+                if phase == .tracking || phase == .interacting || phase == .decelerating {
+                    transcriptFollow.beginUserScroll()
+                } else if phase == .idle && transcriptFollow.userScrolling {
+                    let geometry = context.geometry
+                    transcriptFollow.endUserScroll(atEnd:
+                        geometry.contentOffset.y + geometry.containerSize.height >= geometry.contentSize.height - 24)
+                }
+            }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                if !transcriptFollow.following {
+                    Button("Latest", systemImage: "arrow.down") {
+                        transcriptFollow.latest()
+                        proxy.scrollTo(Self.scrollBottomID, anchor: .bottom)
+                    }.buttonStyle(.bordered).padding(4)
+                        .accessibilityLabel("Jump to latest transcript")
+                }
             }
         }
         .frame(maxHeight: .infinity)
@@ -398,4 +424,10 @@ extension MeetingView {
                 }
             })
     }
+}
+
+private struct TranscriptScrollKey: Equatable {
+    let revision: Int
+    let you: TranscriptSegment?
+    let others: TranscriptSegment?
 }

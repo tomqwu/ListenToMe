@@ -40,7 +40,8 @@ estimated for the others.
 | iPhone recording (live) | Yes — the recognizer's audio range, cumulative across resumed recordings |
 | Apple Watch recording, transcribed on the iPhone (not shipped yet, [#181](https://github.com/tomqwu/ListenToMe/issues/181)) | Yes — relative to the watch recording |
 | macOS WhisperKit | Yes — each Listen (and a language change that restarts capture) continues after the conversation's last timed line |
-| macOS SpeechAnalyzer / SpeechRecognizer (default engines) | No, until [#68](https://github.com/tomqwu/ListenToMe/issues/68) |
+| macOS SpeechAnalyzer | Yes — recognition audio ranges mapped to capture time, continuous across resumed recordings |
+| macOS legacy SpeechRecognizer | No — lines remain untimed |
 | Imported notes, typed text, records saved before segments were kept | No |
 
 A line without a time is exported without a `[mm:ss]` prefix (Markdown, plain text) and without

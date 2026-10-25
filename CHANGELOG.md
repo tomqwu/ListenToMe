@@ -52,6 +52,8 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## macOS (unreleased since 1.4.4)
 
+- SpeechAnalyzer lines use recognition audio ranges on the capture timeline, enabling timestamped exports, saved-audio seeking and speaker labels. Delayed callbacks preserve capture time. Transcript follow-latest survives text growth and resizing, pauses for user scrolling, and resumes with Latest. (#68)
+
 - Select and copy transcript text, double-click a finalized line to edit it, or delete it with confirmation. Manual edits preserve the recognized original in exports and refresh existing summaries; stale AI answers are cleared. Saved audio and exported copies are unchanged. (#126)
 
 - Changing speaker labels or names no longer generates a first Listener summary when Auto is off. Existing summaries are rebuilt with the updated labels; interrupted summaries cannot restore old names. Explicit Refresh remains available. (#167)

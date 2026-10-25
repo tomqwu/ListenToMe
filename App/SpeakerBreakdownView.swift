@@ -37,7 +37,7 @@ struct SpeakerBreakdownView: View {
                 Text("Only the first ~2 hours of each channel are analyzed.").font(.caption)
             }
             if perLineLabelsUnavailable {
-                Text("Choose WhisperKit in Settings before Listen to include speaker names in transcript lines, " +
+                Text("Choose SpeechAnalyzer or WhisperKit in Settings before Listen to include speaker names in transcript lines, " +
                      "AI answers, and exports. This engine supports the voice breakdown only.")
                     .font(.caption)
             }

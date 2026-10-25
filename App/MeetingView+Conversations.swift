@@ -114,7 +114,7 @@ extension MeetingView {
             lastSavedKey = nil
             saveMessage = "New conversation"; saveFailed = false
             clearReferences(session: session)
-            transcriptAtBottom = true
+            transcriptFollow = TranscriptFollowState()
         }
     }
 
