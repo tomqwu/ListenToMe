@@ -33,7 +33,8 @@ Recent iOS trains (full text in [CHANGELOG.md](../CHANGELOG.md)):
   Major iOS releases include TestFlight. No physical installation is claimed.
 - Sixteen fresh native screenshots cover iPhone 17 Pro/Pro Max and iPad mini/13-inch Pro. Originals,
   orientation-normalized copies, hashes and source manifest are in the release evidence. Listing
-  upload remains pending: App Store 1.15.0 is waiting for review and this train did not alter it.
+  upload remains pending: 1.15.0 was waiting for review at capture time and this train did not alter it.
+  The October 25 Apple API preflight now reports 1.15.0 READY_FOR_SALE.
 - Validation: 1,028 core tests (98.162% coverage), 364 iOS unit tests, release helpers, lint, app builds
   and real Ollama contracts completed. Two initial full UI failures were resolved by focused reruns;
   the original aggregate command was not a clean pass. Four final capture tests passed.
@@ -259,3 +260,16 @@ Summary simulator journey now verifies provisional request tagging and removal a
 all five focused checks passed at `00cc28f`, and both native-resolution screenshots were inspected.
 Current-main integration lint/Core (1,061 tests, seven skips, 98.1056%) and all three hosted checks passed.
 Physical-device acceptance and publication remain pending. Evidence: `dist/live-snapshot-164`.
+
+## iOS 1.17.0 (34) train preparation — October 25
+
+`codex/ios-1.17.0-build34` starts from merged `bbf90b6`. The batch contains only merged iOS work:
+Duo width choices, conversation vocabularies, language activity checks, speaker lifecycle fixes,
+live-summary/provisional handling, History index reuse, provider context limits and Ollama endpoint
+feedback. Watch remains excluded. No draft backlog PR is included. Apple API preflight confirms
+1.16.0 (33) uploaded October 24 is the latest accepted beta, with no build 34 yet, and 1.15.0 is
+READY_FOR_SALE; App Store What's New therefore starts after 1.15.0. Version and notes are prepared. Core tests (1,061; seven skips; 98.1056% coverage), lint,
+signed Mac build, iOS/Watch builds and iOS test-target compilation passed. Independent review found
+no blockers. Full local validation, fresh four-category screenshots, required CI, main merge, signed
+archive, upload and tester verification are pending. Release captures now include History and Settings
+alongside Live, Prompt and Summary. Neither publication nor physical acceptance is claimed.

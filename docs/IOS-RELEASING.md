@@ -179,7 +179,7 @@ The macOS signing, notarization and recovery runbook is in
 Run `-only-testing:ListenToMeIOSUITests/MobileReleaseScreenshotTests` from the candidate source
 on dedicated iPhone 17 Pro, iPhone 17 Pro Max, iPad mini (A17 Pro) and iPad Pro 13-inch simulators
 (or current supported equivalents). Erase these dedicated simulators before capture so stale
-preferences and queued exports cannot add warning banners. The test captures portrait/landscape Live, Prompt and Summary
+preferences and queued exports cannot add warning banners. The test captures portrait/landscape Live, Prompt, Summary, History and Settings
 using synthetic content in the real views. It never sends a model request. Export original PNG
 attachments with `xcrun xcresulttool export attachments --path <result.xcresult> --output-path <folder>`.
 Inspect every image and record the source, app version/build, simulator/runtime, orientation, native
@@ -191,6 +191,10 @@ record both hashes and the transform. Verify the actual upload dimensions and ab
 Never resize one device capture to impersonate another.
 
 ## 1. Identify the exact release and validate it
+
+App Store Connect reported **1.15.0 READY_FOR_SALE** on October 25, 2026. Recheck the production
+version each train and prepare App Store “What’s New” from that baseline; the TestFlight version
+and the production baseline need not match.
 
 Read `AGENTS.md`, inspect `git status`, and fetch the merged branch. Preserve unrelated work; use a
 clean checkout/worktree if needed. Inspect the new PR's code, test evidence, and hosted CI. Reuse

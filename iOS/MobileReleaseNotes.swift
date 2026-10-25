@@ -48,6 +48,16 @@ enum MobileReleaseNotes {
         var id: String { version }
     }
     static let releases: [Release] = [
+        .init(version: "1.17.0", title: "Your workspace, your conversation", details: [
+            "Give Transcript or Quick more room in iPhone Duo. Your pane-width choice is remembered.",
+            "Conversation vocabularies return when you reopen History and guide automatic Quick updates.",
+            "Automatic language checks can start from speech activity even when the current language recognizes no words.",
+            "Stop and backgrounding stay responsive during speaker labeling; old work cannot relabel a new recording.",
+            "Summaries mark unfinished speech as provisional, and unchanged live text reuses its prepared snapshot.",
+            "History search reuses unchanged passages when saving long conversations. Supported semantic languages are unchanged.",
+            "Set a context limit for your OpenAI-compatible server. Local Ollama requests size their context to the prompt.",
+            "Ollama settings explain unsupported HTTP addresses and omitted URL parts without exposing query values."
+        ]),
         .init(version: "1.16.0", title: "Your questions, your instructions", details: [
             "Prompt below Notes: ask a one-time question or save instructions for future summaries in this conversation.",
             "Choose a domain preset, edit it, then Ask or Save. Suggested presets never turn on by themselves.",

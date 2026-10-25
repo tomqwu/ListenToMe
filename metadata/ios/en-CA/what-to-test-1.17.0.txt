@@ -1,0 +1,14 @@
+ListenToMe 1.17.0 (34) — iPhone/iPad beta
+
+1. Duo: rotate iPhone to landscape, choose equal, Transcript-first and Quick-first widths, scroll each pane, use Transcript actions and rotate back. Confirm the width choice survives reopening. Check large-text and narrow layouts stay usable.
+2. Vocabulary: add a suggested domain without Use by default. Start another conversation, then reopen the first from History and relaunch. Its vocabulary should return and guide Auto Quick; device defaults and My terms should remain independent.
+3. Automatic language: with its model already downloaded, speak another language while the starting transcriber recognizes no words. Check detection, later re-checks, Undo, Low Power Mode and Stop. Silence or isolated sounds should not start checks or a first model download.
+4. Speakers: Stop and immediately background while final labeling runs. Return and start again. Neither action should wait for old analysis, and old labels must not affect the new recording. Keep the app open after Stop when you want final labeling to finish.
+5. Summary, Quick and Ask: request an answer while speech is unfinished. Very short hypotheses should be omitted; longer ones must remain provisional. Finalize/correct text, rename a speaker, edit Notes and reopen History; requests must use current text. Saved exports keep the original transcript wording.
+6. History: save a long conversation, edit its summary/notes, then search and Ask your history. Excerpts and positions must stay current after relaunch. Delete the conversation and check it disappears. Existing indexes rebuild once; semantic language coverage is unchanged.
+7. Custom server: set a 4K context limit and try oversized Notes. The limit error should appear before a request is sent; short requests should work. Change server URLs and verify limits remain per server after relaunch.
+8. Local Ollama: test a long conversation with a 4K server default. The assembled prompt should receive enough context or a clear capacity error. Cloud context is unchanged. In Settings, try unsupported plain-HTTP public/VPN addresses, then HTTPS or .local. Rejected input must keep the old server. Pasted paths/query values should be omitted with a notice that reveals no query values.
+
+Privacy: no new default off-device transmission. Apple processing and search embeddings stay on-device. Optional selected AI servers receive transcript text and included context; audio is not sent to AI providers. Existing opt-in saved-audio, deletion and retention settings remain in effect.
+
+Apple Watch is not included in this TestFlight build. Simulator validation is not physical-device acceptance; device accuracy, battery and paired-Watch acceptance remain outstanding. This beta is not a production App Store submission.

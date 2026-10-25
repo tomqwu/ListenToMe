@@ -1,7 +1,7 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, version 1.16.0 (33).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, candidate version 1.17.0 (34).
 
 ## What this app is for
 
@@ -108,7 +108,7 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 **The two apps keep independent version lines.** They are separate products in separate distribution
 channels, and an iOS build number already accepted by App Store Connect can never be reused. A higher
 iOS version does *not* mean the iPhone app is ahead of the Mac app; today macOS is 1.4.4 (14) and iOS
-is 1.16.0 (33).
+has published TestFlight 1.16.0 (33), with 1.17.0 (34) being prepared.
 
 - **`MARKETING_VERSION`** (iOS, in `project.yml`): a **minor** bump for user-visible features, a
   **patch** bump for fixes.
@@ -128,6 +128,17 @@ is 1.16.0 (33).
 The archive, upload, tagging and verification steps themselves are not repeated here: follow
 [IOS-RELEASING.md](IOS-RELEASING.md) for iOS, [RELEASING.md](RELEASING.md) for macOS, and
 [AGENTS.md](../AGENTS.md) for the release workflow that governs both.
+
+## iOS 1.17.0 (34) — candidate
+
+This batch adds remembered iPhone Duo pane widths (#268), per-conversation vocabularies (#237),
+speech-activity language re-checks (#216), responsive speaker finalization on background (#188),
+live-summary caching and provisional speech handling (#164), per-passage History index reuse (#223),
+custom-server context limits (#210), local Ollama prompt sizing (#230), and clearer Ollama endpoint
+validation (#149). Supported semantic languages are unchanged. Watch stays excluded from the archive;
+no dependency or license inventory changed. Full validation, fresh device screenshots, merged-source
+archive and accepted upload are pending. Physical-device acceptance remains separate.
+[What to Test](../metadata/ios/en-CA/what-to-test-1.17.0.txt).
 
 ## iOS 1.16.0 (33)
 
