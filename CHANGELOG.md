@@ -13,6 +13,8 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased since 1.16.0 (33))
 
+- Maintenance: manual-summary evidence rules and input-budget checks now use the tested shared Core builder; Markdown rendering uses the shared platform source. Existing summary wording and output remain unchanged. (#134, partial)
+
 - Automatic conversation naming now shares one task coordinator across Mac and iOS. Repeated requests for the same conversation join the existing task; a cancelled older task cannot clear or apply over a replacement. Typed/calendar names and on-device/local-provider privacy rules are preserved. (#134, partial)
 
 - Recording start/stop tasks now use a shared capture coordinator. Concurrent Stop requests wait for the same finalization, and callbacks from a completed recording cannot append text or stop a later recording. Final utterances produced during Stop remain included. (#134, partial)
@@ -60,6 +62,8 @@ does not show it again, and a fresh install does not see it at all; see
 - Settings → Privacy now explains that optional Ollama, Cloud AI and OpenAI-compatible requests send text and included context to the provider you choose; Apple Intelligence stays on-device. (#247)
 
 ## macOS (unreleased since 1.4.4)
+
+- Maintenance: the Markdown renderer now lives in the shared platform target, with unchanged rendering. (#134, partial)
 
 - Automatic conversation naming now shares one task coordinator across Mac and iOS. Repeated requests for the same conversation join the existing task; a cancelled older task cannot clear or apply over a replacement. Typed/calendar names and on-device/local-provider privacy rules are preserved. (#134, partial)
 

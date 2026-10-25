@@ -704,3 +704,7 @@ Capture lifecycle task ownership is shared in `CaptureCoordinator`: iOS and Mac 
 recorders, permission policy and persistence effects. Core tests cover start/stop/restart races;
 platform GUI/audio acceptance remains a separate requirement. Other platform orchestration is
 still being migrated under #134; Core coverage does not represent whole-product coverage.
+
+Manual whole-conversation summary instructions, transcript fencing and input-budget checks live in
+Core's `PromptBuilder.buildSummary`; iOS supplies its provider allocation and vocabulary/provisional
+guidance. The shared Markdown renderer lives in `SharedPlatform`, included directly by both apps.

@@ -135,18 +135,11 @@ extension MobileSession {
                                proseQuick: Bool, guidance: String?) throws -> AnswerRequest? {
         let live = liveSnapshot()
         let promptGuidance = VocabularyPrompt.combined(persona: guidance, guidance: live.provisionalNotice)
-        // Exactly what `addingGuidance` appends to a system prompt.
-        let guidanceCost = LLMRequest(system: "", messages: []).addingGuidance(promptGuidance).system.count
         if mode == .summary {
-            // The transcript is fenced as data, exactly as the macOS panes fence it (issue #140); the
-            // cap is charged on the fenced text so the Apple window still holds (PromptBudget).
-            let fencedSource = PromptData.block("transcript", source)
             let limit = cloud ? OnDemandGrounding.oneShotCharacters : PromptBudget.appleIntelligenceCharacters
-            guard fencedSource.count + guidanceCost <= limit else { return nil }
-            return AnswerRequest(request: LLMRequest(system: mode.instructions,
-                                                     messages: [ChatMessage(role: "user", content: fencedSource)])
-                                    .addingGuidance(promptGuidance),
-                                 grounding: nil)
+            guard let request = PromptBuilder.buildSummary(source: source, maximumInputCharacters: limit,
+                                                     guidance: promptGuidance) else { return nil }
+            return AnswerRequest(request: request, grounding: nil)
         }
         let system = proseQuick ? MobileQuickContext.manualProseInstructions : MobileQuickContext.instructions
         let excerpt = OnDemandGrounding.excerpt(

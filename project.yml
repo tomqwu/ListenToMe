@@ -64,7 +64,6 @@ targets:
     sources:
       - iOS
       - SharedPlatform
-      - App/MarkdownText.swift
       - iOSShared
       # Licenses of every resolved SwiftPM package, shown in Settings → About → Acknowledgements (#202).
       - path: App/ThirdPartyNotices.txt

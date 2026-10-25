@@ -507,3 +507,12 @@ on iOS closes the ask); a provider, model or route change and turning AI off cle
 clears them too and they are hidden while AI or Auto is off; on iOS a manual refresh still makes them
 with Auto off, so Auto off does not clear them there. Stop keeps them: the conversation can still be
 asked about, and they simply stop refreshing.
+
+## Manual summary construction (#134)
+
+`PromptBuilder.buildSummary` owns the full-summary evidence instructions, transcript fencing and
+whole-input acceptance check. iOS passes its existing provider input allocation and combined
+vocabulary/provisional guidance; guidance and fence overhead count toward that allocation. A request
+that does not fit still returns no request instead of dropping earlier speech. `MobileSummaryMode`
+keeps UI labels and delegates its instruction text to Core. Rolling Listener and structured Quick
+retain their distinct response contracts. `SharedPlatform/MarkdownText.swift` is included by both apps.
