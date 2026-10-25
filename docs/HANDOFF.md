@@ -220,3 +220,7 @@ PR #274 adds optional per-server limits with reserved answer space and a no-send
 ## In progress: compute transparency (#60)
 
 Branch `codex/60-compute-transparency` shows the exact WhisperKit ModelComputeOptions used by its constructor, separately from runtime accelerator status. Apple Speech compute is framework-managed; no active GPU/Neural Engine claim is inferred. Lint and signed Mac build pass. Independent review caught and fixed the Stop-drain status; full local validation and rendered installed-app acceptance remain pending. Not merged or published.
+
+## In progress: Whisper model choices (#58)
+
+Branch `codex/58-whisper-models` stacks on #60. Adds persistent multilingual Tiny/Base/Small choices with Base compatibility default, next-capture application, named loading/failure status, and a loaded-variant check. No model is downloaded merely by selecting it. Qualitative tradeoffs reference official Whisper documentation. Two focused tests and all 1,062 Core tests pass (seven skips, 98.1077% coverage); lint and signed Mac build pass. Independent review caught and fixed lazy loading before variant validation (`load: true`). Full local validation and real selected-model/native audio acceptance remain pending; not merged or published.

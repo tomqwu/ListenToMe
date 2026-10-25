@@ -54,6 +54,8 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## macOS (unreleased since 1.4.4)
 
+- WhisperKit offers explicit multilingual Tiny, Base and Small models. Base remains the default; saved choices apply on the next capture, with the selected model named during loading and on failure. Loaded model identity is checked before use. (#58)
+
 - Engine → Compute details separates configured compute units from runtime accelerator information. WhisperKit displays the exact policy passed to the model; Apple Speech manages its own policy. Hardware activity is shown as Not exposed rather than inferred from configuration. (#60)
 
 - History search keeps its records when SwiftUI recreates a view, instead of replacing matching rows with an empty asynchronous result. (#223 acceptance fix)
