@@ -74,7 +74,7 @@ struct MeetingView: View {
     @State var speakerAnalyzedSamples: [SpeakerSource: Int] = [:]
     /// One-line rail status (e.g. speaker models unavailable); nil when there is nothing to say.
     @State var speakerStatus: String?
-    @State var speakerTask: Task<Void, Never>?
+    @State var speakerWork = SpeakerPassCoordinator()
     @State var nextSpeakerAnalysis = Date.distantFuture
     @State var diarizationRunStartIndex = 0
     @State var diarizationRunToken = 0
@@ -434,8 +434,7 @@ extension MeetingView {
     /// bail via its token guard WITHOUT clearing `speakerLoading`, so we clear the spinner/error state
     /// here. This guarantees that starting/restarting always frees the "Identify speakers" button.
     func beginDiarizationRunReset() {
-        speakerTask?.cancel()
-        speakerTask = nil
+        speakerWork.cancel()
         let run = diarizationRunToken + 1
         let remotePrefix = run == 1 ? "Speaker" : "Run \(run) speaker"
         let micPrefix = run == 1 ? "Mic speaker" : "Run \(run) mic speaker"
@@ -630,7 +629,7 @@ extension MeetingView {
     func tearDownOnDisappear(session: MeetingSession) {
         hotkey.stop()
         for role in CopilotRole.allCases { session.cancelResponse(role) }
-        speakerTask?.cancel()
+        speakerWork.cancel()
         diarizationRunToken &+= 1
         let wasCapturing = wantsCapture
         importTask?.cancel()    // stop an in-flight file import when the window closes

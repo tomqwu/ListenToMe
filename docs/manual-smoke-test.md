@@ -845,3 +845,11 @@ while the old one is being named: only the saved older record may change. Repeat
 and Save to folder on iOS. Cloud/provider restrictions remain unchanged; these tests do not authorize
 a model download or cloud naming. Core tests also force a cancellation-ignoring old result to arrive
 after its replacement starts and verify the replacement remains registered and is the only one applied.
+
+### Speaker retry across a recording change (#134)
+
+With speaker models delayed, request Identify speakers, then start a new recording before preparation
+finishes. The old request must not clear the new run's status or analyze its audio. Complete a current
+pass, Stop, and confirm the final pass includes final transcript lines. Verify actual system-audio
+transcription remains labeled OTHERS. Capture the relevant status UI and preserve source/signing
+provenance; complete the authorized Dev-app cleanup after the testing session.

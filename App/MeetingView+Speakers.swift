@@ -8,29 +8,29 @@ extension MeetingView {
         speakerLoading = true
         // An explicit press is the retry gesture for a latched model-load failure (issue #109).
         let retryModels = showSheet
-        speakerTask = Task {
-            if retryModels {
-                await diarizer.retryModelLoad()
-                speakerStatus = nil
-            }
-            await analyzeSpeakers()
-        }
+        let token = diarizationRunToken
+        speakerWork.start(prepare: {
+            if retryModels { await diarizer.retryModelLoad() }
+        }, operation: {
+            guard token == diarizationRunToken else { return }
+            if retryModels { speakerStatus = nil }
+            await analyzeSpeakers(token: token)
+        })
     }
 
     /// Drain a periodic pass before a final pass, so Stop includes the transcriber's last utterance.
     func finishSpeakerAnalysis(expectedRun: Int? = nil) async {
         let token = expectedRun ?? diarizationRunToken
         guard token == diarizationRunToken else { return }
-        await speakerTask?.value
+        await speakerWork.wait()
         guard token == diarizationRunToken, diarizationSinkAttached else { return }
         identifySpeakers(showSheet: false)
-        await speakerTask?.value
+        await speakerWork.wait()
     }
 
     /// One pass over every attached channel. Returns nothing; all results land in `MeetingView`
     /// state. Cancelled/superseded runs bail through the run-token guards.
-    private func analyzeSpeakers() async {
-        let token = diarizationRunToken
+    private func analyzeSpeakers(token: Int) async {
         let started = Date()
         speakerError = nil
         var outcome = SpeakerAnalysisOutcome.completed

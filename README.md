@@ -708,3 +708,7 @@ still being migrated under #134; Core coverage does not represent whole-product 
 Manual whole-conversation summary instructions, transcript fencing and input-budget checks live in
 Core's `PromptBuilder.buildSummary`; iOS supplies its provider allocation and vocabulary/provisional
 guidance. The shared Markdown renderer lives in `SharedPlatform`, included directly by both apps.
+
+`SpeakerPassCoordinator` owns Mac speaker-pass task cancellation and the model-preparation barrier;
+platform run IDs still protect results produced during analysis. Its Core regressions cover late
+preparation and replacement-task completion, separately from native audio acceptance.

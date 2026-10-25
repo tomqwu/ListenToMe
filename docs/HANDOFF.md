@@ -298,3 +298,14 @@ coverage), as did lint, the signed Mac build, iOS test build and independent rev
 unit tests passed (397 passed, six device-only skips) at `5b33139`. Full local validation and rendered
 acceptance remain pending. This is
 another partial #134 step; remaining view/session orchestration is not claimed complete.
+
+### Speaker pass task ownership (#134) — October 25
+
+`codex/134-speaker-work` follows the shared-summary candidate. Core's `SpeakerPassCoordinator` owns
+explicit/periodic pass tasks and generation-fences model preparation. Mac captures its recording token
+before retry preparation, so a cancelled old retry cannot clear a newer run's status or enter analysis
+with the new token. Existing in-flight analysis/result guards remain. Tests hold uncooperative
+preparation/analysis across cancellation and replacement, and verify an old drain does not wait for
+a later recording. Five focused regressions and all 1,088 Core tests passed (seven skips, 98.1432%
+coverage), with lint, signed Mac build, iOS test build and independent review clear. Full local
+validation is queued; native OTHERS acceptance remains required. This is partial #134 work, not completion of the remaining platform orchestration.
