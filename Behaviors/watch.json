@@ -1,0 +1,87 @@
+{
+  "feature": "Watch capture, transfer and retention",
+  "scenarios": [
+    {
+      "id": "WATCH-001",
+      "name": "Retain Watch audio only with consent",
+      "given": "a Watch recording arrives on iPhone",
+      "when": "transcription finishes with Save audio recordings on or off",
+      "then": "opt-in retains playable audio and opt-out removes the inbox copy",
+      "covers": [
+        "Watch/*",
+        "iOS/Watch*",
+        "iOS/MobileSession+Watch*",
+        "SharedPlatform/SavedAudio*"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileWatchAudioTests.swift",
+          "test": "MobileWatchAudioTests/testOptInRetainsPlayableAudioAndOffDeletesOnlyInboxCopy"
+        }
+      ],
+      "manual": {
+        "reason": "Paired-device capture and reconnection need a real Watch and iPhone; simulator acceptance is separate.",
+        "steps": [
+          "With retention enabled, record while disconnected and reconnect; verify the recording transfers once and plays on iPhone.",
+          "Repeat with retention disabled and verify transcription without retained playback audio.",
+          "Keep Watch excluded from distribution until the #181 physical-device gate passes."
+        ]
+      }
+    },
+    {
+      "id": "WATCH-002",
+      "name": "Queue finalized chunks once",
+      "given": "a Watch recording contains finalized and active chunks",
+      "when": "the outbox selects pending transfers",
+      "then": "only finalized chunks not already queued are selected",
+      "covers": [
+        "Watch/*",
+        "Sources/ListenToMeCore/Watch*"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/WatchCapturePolicyTests.swift",
+          "test": "WatchCapturePolicyTests/testChunksToQueueAreTheFinalizedOnesNotAlreadyQueued"
+        }
+      ]
+    },
+    {
+      "id": "WATCH-003",
+      "name": "Ignore duplicate Watch delivery",
+      "given": "a chunk has already been accepted on iPhone",
+      "when": "WatchConnectivity delivers it again",
+      "then": "the duplicate has no effect",
+      "covers": [
+        "Watch/*",
+        "iOS/Watch*"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/WatchInboxTests.swift",
+          "test": "WatchInboxTests/testDuplicateDeliveryIsANoOp"
+        }
+      ]
+    },
+    {
+      "id": "WATCH-004",
+      "name": "Reject remote start while phone is inactive",
+      "given": "the iPhone app is not active",
+      "when": "the Watch requests a remote start",
+      "then": "no phone recorder is created",
+      "covers": [
+        "Watch/*",
+        "iOS/MobileSession+Watch*"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileWatchRemoteTests.swift",
+          "test": "MobileWatchRemoteTests/testStartFromWatchWhileNotActiveNeverCreatesARecorder"
+        }
+      ]
+    }
+  ]
+}

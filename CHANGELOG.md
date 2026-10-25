@@ -11,6 +11,13 @@ does not show it again, and a fresh install does not see it at all; see
 [`docs/IOS.md`](docs/IOS.md) for the fuller per-build technical notes and
 [`metadata/ios/en-CA/`](metadata/ios/en-CA/) for TestFlight "What to Test" text.
 
+## Repository tooling (unreleased)
+
+- Require Given/When/Then behavior contracts and changed native regression-test bindings for behavior
+  changes across apps, shared services and delivery tooling. Add a baseline scenario catalog,
+  executable native-test adapter, local/CI gates and PR evidence template. This changes development
+  workflow only; it does not require a binary release or claim exhaustive legacy acceptance.
+
 ## iOS (unreleased since 1.17.0 (34) candidate)
 
 - Documentation: the Watch speaker-privacy section now agrees with the existing opt-in saved-audio retention policy. No app behavior changes. (#225)

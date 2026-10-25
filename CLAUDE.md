@@ -22,6 +22,12 @@ verification apply in full. The checklist below adds documentation and issue hyg
 replace that workflow. Documentation-only changes do not require an unrelated model request or
 binary release.
 
+All behavior changes follow the repository-wide [BDD workflow](docs/BDD.md): scenario first,
+failing native test, implementation, passing test, then refactor. Bind Given/When/Then scenarios in
+`Behaviors/` to concrete test methods, run `make bdd-check`, and include scenario IDs plus actual
+red/green evidence in the PR. This applies to app code and build/release automation alike; the
+existing validation, independent review and publication gates remain required.
+
 ## Definition of Done
 
 A change is **not done** until ALL of the following are true. Treat this as a checklist on every task.

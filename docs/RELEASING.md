@@ -8,6 +8,10 @@ This document describes how the maintainer builds and publishes an official, sig
 > Signing, notarization, GUI, permissions and real-audio acceptance still require a local Mac.
 > Use the mandatory gates in [the production roadmap](reviews/2026-09-10/production-roadmap.md).
 
+For the changed behaviors, check [BDD scenarios](BDD.md), the PR's real red/green evidence and
+`make bdd-check` alongside the existing acceptance gates. Baseline contracts and automated passes
+never replace installed-app GUI/system-audio acceptance or signed artifact verification.
+
 ## Release cadence: trains, not one release per fix
 
 macOS publication is batched into **release trains**, as specified in [AGENTS.md](../AGENTS.md). A

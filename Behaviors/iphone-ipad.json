@@ -1,0 +1,130 @@
+{
+  "feature": "iPhone and iPad journeys",
+  "scenarios": [
+    {
+      "id": "IOS-001",
+      "name": "Keep the Live workspace reachable",
+      "given": "the app is showing Live",
+      "when": "the user switches between Live and Summary",
+      "then": "both pages and recording controls remain accessible with no Deep page",
+      "covers": [
+        "iOS/*",
+        "iOSShared/*"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileAppTests.swift",
+          "test": "MobileAppTests/testLiveLayoutAndSummaryTab"
+        }
+      ]
+    },
+    {
+      "id": "IOS-002",
+      "name": "Remember model choices per summary role",
+      "given": "Quick and Summary have different model choices",
+      "when": "the app is relaunched",
+      "then": "each role keeps its own chosen model",
+      "covers": [
+        "iOS/*"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileAppTests.swift",
+          "test": "MobileAppTests/testEachSummaryRoleCanChooseAndPersistItsOwnModel"
+        }
+      ]
+    },
+    {
+      "id": "IOS-003",
+      "name": "Keep Duo readable through rotation",
+      "given": "a wide iPhone window supports two panes",
+      "when": "the user rotates between portrait and landscape",
+      "then": "pane layout and the selected page survive rotation",
+      "covers": [
+        "iOS/MobileLive*",
+        "iOS/MobileDashboard*",
+        "Sources/ListenToMeCore/MeetingWorkspace*"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileWorkspaceUITests.swift",
+          "test": "MobileWorkspaceUITests/testPhoneTwoPaneLayoutAndPageSelectionSurviveRotation"
+        }
+      ]
+    },
+    {
+      "id": "IOS-004",
+      "name": "Choose Duo widths and transcript actions",
+      "given": "the phone is showing the two-pane Live workspace",
+      "when": "the user changes pane priority and opens transcript actions",
+      "then": "the requested pane balance and compact actions remain usable",
+      "covers": [
+        "iOS/*",
+        "Sources/ListenToMeCore/MeetingPane*"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileWorkspaceUITests.swift",
+          "test": "MobileWorkspaceUITests/testDuoPaneWidthsAndCompactTranscriptActions"
+        }
+      ]
+    },
+    {
+      "id": "IOS-005",
+      "name": "Save prompt presets below Notes",
+      "given": "the Notes prompt editor is open",
+      "when": "the user chooses a preset and saves summary instructions",
+      "then": "reopening Notes preserves the saved instructions",
+      "covers": [
+        "iOS/*",
+        "SharedPlatform/ConversationPromptEditor.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileConversationPromptUITests.swift",
+          "test": "MobileConversationPromptUITests/testPromptPresetsSaveAndReopenNotes"
+        }
+      ]
+    },
+    {
+      "id": "IOS-006",
+      "name": "Keep optional cloud processing off by default",
+      "given": "a fresh app has no selected cloud service",
+      "when": "the user explicitly selects a service",
+      "then": "only that selected cloud service becomes active",
+      "covers": [
+        "iOS/*"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileCloudAISettingsTests.swift",
+          "test": "MobileCloudAISettingsTests/testNothingIsSelectedByDefaultAndChoosingAServiceSelectsOnlyThatService"
+        }
+      ]
+    },
+    {
+      "id": "IOS-007",
+      "name": "Keep vault writing opt-in",
+      "given": "Save to folder has never been enabled",
+      "when": "a conversation is saved",
+      "then": "no vault note is written",
+      "covers": [
+        "iOS/*",
+        "SharedPlatform/MarkdownVaultSync.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileVaultTests.swift",
+          "test": "MobileVaultTests/testOffByDefaultAndNothingIsWritten"
+        }
+      ]
+    }
+  ]
+}

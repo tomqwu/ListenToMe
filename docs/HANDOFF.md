@@ -4,6 +4,16 @@ A snapshot for an agent picking up ListenToMe cold. [AGENTS.md](../AGENTS.md) an
 [CLAUDE.md](../CLAUDE.md) stay the rules; this note is only the state of things on the date above.
 Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags) before acting on it.
 
+## Repository-wide BDD adoption (October 25)
+
+All behavior changes, including older branches when integrated, now follow [BDD](BDD.md): write
+Given/When/Then scenarios in `Behaviors/`, reproduce with a failing native test, implement, then
+refactor under passing tests. `make bdd-check` and the required core CI job enforce scenario/test
+traceability for app and delivery changes. Use the PR template for actual red/green evidence.
+The initial catalog adopts representative existing tests; it does not claim exhaustive legacy
+coverage or historical red runs. Existing full validation, rendered UI/audio acceptance, independent
+review and release gates remain required. This workflow change alone calls for no binary release.
+
 ## October 25 validation follow-up
 
 The #127 full run at `0464e9d` exposed a shared iOS test synchronization race: the automatic-review coordinator sets its active mode before the fake provider receives the request. The test now waits for the provider-held continuation before editing Notes and releasing the response. Its cancellation, completed-output and no-repeat assertions remain intact. The focused regression passed 20 consecutive iterations on the 1.17.0 candidate source with this fix; independent review found no blockers. This is test-only. The integrated `dbd1cc7` candidate subsequently passed full validation and four device capture tests (details below); the original failed run is preserved externally. No publication is claimed.

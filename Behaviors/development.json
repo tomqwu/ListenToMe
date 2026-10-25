@@ -1,0 +1,86 @@
+{
+  "feature": "Repository behavior-driven workflow",
+  "scenarios": [
+    {
+      "id": "DEV-001",
+      "name": "Reject unbound behavior changes",
+      "given": "a production or delivery behavior is changed",
+      "when": "the author runs the change-aware BDD check",
+      "then": "an updated scenario and a changed bound test method are required",
+      "covers": [
+        "scripts/*",
+        ".github/workflows/*",
+        "Makefile",
+        "Package.swift",
+        "project.yml",
+        "Config/*",
+        "watch-embed.yml",
+        "signing.local.mk.example",
+        ".gitignore",
+        ".swiftlint.yml"
+      ],
+      "bindings": [
+        {
+          "suite": "tooling",
+          "file": "scripts/test-bdd.py",
+          "test": "BDDTests/test_behavior_change_requires_scenario_and_changed_bound_method"
+        }
+      ]
+    },
+    {
+      "id": "DEV-002",
+      "name": "Reject stale executable bindings",
+      "given": "a scenario names a test that was renamed or removed",
+      "when": "the BDD catalog is validated",
+      "then": "validation fails with the missing class and method",
+      "covers": [
+        "scripts/bdd.py",
+        "scripts/test-bdd.py",
+        ".github/workflows/*"
+      ],
+      "bindings": [
+        {
+          "suite": "tooling",
+          "file": "scripts/test-bdd.py",
+          "test": "BDDTests/test_binding_must_exist_in_the_declared_class"
+        }
+      ]
+    },
+    {
+      "id": "DEV-003",
+      "name": "Reject empty or skipped native runs",
+      "given": "a selected native command exits successfully without all bound tests passing",
+      "when": "the BDD runner reads its output",
+      "then": "the run fails rather than reporting scenario acceptance",
+      "covers": [
+        "scripts/bdd.py",
+        "scripts/test-bdd.py"
+      ],
+      "bindings": [
+        {
+          "suite": "tooling",
+          "file": "scripts/test-bdd.py",
+          "test": "BDDTests/test_zero_tests_skips_and_partial_runs_are_not_passes"
+        }
+      ]
+    },
+    {
+      "id": "DEV-004",
+      "name": "Accept passing unittest selectors across Python versions",
+      "given": "Python unittest reports a passing bound method",
+      "when": "verbose output names either its class or its class and method",
+      "then": "the exact passing selector is accepted in both formats",
+      "covers": [
+        "scripts/bdd.py",
+        "scripts/test-bdd.py"
+      ],
+      "bindings": [
+        {
+          "suite": "tooling",
+          "file": "scripts/test-bdd.py",
+          "test": "BDDTests/test_python_versions_report_both_supported_verbose_selector_formats"
+        }
+      ]
+    }
+  ]
+}

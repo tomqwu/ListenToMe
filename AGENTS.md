@@ -4,6 +4,32 @@
 maintainer items, read the dated snapshot in [docs/HANDOFF.md](docs/HANDOFF.md). The rules below win
 over it.
 
+## Behavior-driven development (all repository work)
+
+Read [docs/BDD.md](docs/BDD.md) before changing behavior. The executable contract catalog is
+[`Behaviors/`](Behaviors/). This applies to macOS, iPhone/iPad (including Duo), Watch, shared code,
+imports, persistence, privacy, build configuration and delivery tooling, including work already in
+progress on older branches when it is integrated.
+
+1. Before implementation, write/update an observable **Given / When / Then** scenario and bind it
+   to a concrete native XCTest or Python unittest method. Include unhappy paths, privacy and
+   cancellation where relevant. Do not write scenarios that merely describe internal function calls.
+2. Run that test and record the expected failure (**red**), implement the smallest change to make
+   it pass (**green**), then refactor while keeping it green. For a regression, first reproduce it.
+   Never invent a historical red result for existing tests adopted into the catalog.
+3. Run `make bdd-check` and the relevant native suites, then the existing validation/acceptance
+   gates below. `BDD_BASE` is the actual base for a stacked PR. Test runs and code review must
+   establish that assertions prove the stated outcome; structural traceability alone cannot do so.
+4. In the PR, identify scenario IDs, red/green commands and outcomes, refactoring, and outstanding
+   manual/device acceptance. Use the PR template. Every changed behavior needs an updated scenario
+   and an added/changed bound test method; changing a test-file header alone does not qualify.
+
+The BDD gate runs inside the existing required core CI check and `make validate-local`. It never
+replaces full test coverage, rendered UI inspection, real OTHERS audio acceptance or physical-device
+gates. Documentation-only work needs content/link checks, not an unrelated binary test or release.
+The catalog starts with baseline journeys; that is not a claim that every legacy behavior has been
+specified or every scenario has just passed. Extend it as each issue is implemented.
+
 ## Local validation policy
 
 Run all tests on the local Mac using `make validate-local`, including core coverage, iOS simulator
