@@ -103,6 +103,7 @@ extension MeetingView {
             beginDiarizationRunReset()
             restoredRecord = nil
             session.resetConversation()
+            startError = nil; exportError = nil
             currentSessionID = UUID().uuidString; conversationStartedAt = nil
             vocabulary.restore(domainIDs: nil, for: currentSessionID)
             applyVocabulary()

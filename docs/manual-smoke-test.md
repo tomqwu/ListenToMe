@@ -871,6 +871,21 @@ and its in-app shortcut/buttons remain usable. Close/reopen the conversation win
 check registration cleanup. Do not reset production permissions to run this check; use the Dev test
 identity and preserve evidence before its authorized scoped cleanup.
 
+### Independent Mac error banners (#173)
+
+1. Produce a microphone-denied capture failure using the existing denied-permission test setup;
+   do not reset production permissions. Confirm the capture message offers Open Settings.
+2. While that message is visible, attempt an export to an unwritable destination. Both messages
+   must remain visible. Dismiss file or calendar message: the capture message and its Settings
+   action remain. Repeat, then dismiss capture message: the export error remains.
+3. Retry an export to a writable destination. The file error clears without clearing a capture
+   failure. Starting capture clears only the capture message, not an unrelated file error.
+4. Trigger Calendar denial using an existing denied test profile. Its separate message must offer
+   Open Calendar privacy settings; dismissing capture must not remove that action. An import failure
+   uses the file/Calendar banner and must not replace a capture failure.
+5. Start a new conversation and confirm errors from the previous one are cleared. Capture native
+   screenshots with both banners, each independently dismissed, and the Calendar action. Preserve
+   source/signing provenance and complete Dev-app cleanup after acceptance.
 ### iOS Ollama endpoint feedback (#149)
 
 In Settings, select Ollama and save `http://your-mac.local:11434`. Try saving

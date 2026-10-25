@@ -94,6 +94,7 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 - Calendar context selects the most recently started overlapping meeting. Reference attachments reject symbolic links, heading whitespace renders correctly, and Markdown exports keep speech literal. Release discovery/signing and real-contract test gates now fail safely. (#141)
 - The global ⌘⇧Space shortcut registers only that key combination and no longer asks for Accessibility access. Conflicts show a notice while the in-app shortcut remains available. (#124)
 
+- Capture failures and file/Calendar failures have separate dismissible messages. Retrying export, import or Calendar work clears only that operation’s message; microphone and Calendar privacy actions stay attached to the relevant error. (#173)
 - History search keeps its records when SwiftUI recreates a view, instead of replacing matching rows with an empty asynchronous result. (#223 acceptance fix)
 
 - History search reuses unchanged passage vectors when a conversation is saved, including after summary insertion. Changed text or transcription language is re-indexed on-device; duplicate passages share one embedding attempt per save, including unsupported text. Existing indexes rebuild once. Semantic language coverage is unchanged. (#223, partial)
