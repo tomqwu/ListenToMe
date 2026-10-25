@@ -105,6 +105,8 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 
 - Capture failures and file/Calendar failures have separate dismissible messages. Retrying export, import or Calendar work clears only that operation’s message; microphone and Calendar privacy actions stay attached to the relevant error. (#173)
 - Automatic reviews count the complete request toward their 60,000-character limit, including instructions and any attached references. Oversized requests stop before sending and explain what to shorten. Changing directives alone keeps the existing review; new context or manual generation uses the new settings. (#148)
+- Select and copy transcript text, double-click a finalized line to edit it, or delete it with confirmation. Manual edits preserve the recognized original in exports and refresh existing summaries; stale AI answers are cleared. Saved audio and exported copies are unchanged. (#126)
+
 - Changing speaker labels or names no longer generates a first Listener summary when Auto is off. Existing summaries are rebuilt with the updated labels; interrupted summaries cannot restore old names. Explicit Refresh remains available. (#167)
 - Import MP4/MOV meeting recordings directly, reading their first audio track on-device. Choose You or Others for imported speech; video without audio shows a clear error. Audio/video imports share progress and cancellation controls. (#128)
 

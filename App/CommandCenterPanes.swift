@@ -187,25 +187,15 @@ extension MeetingView {
     }
 
     private func transcriptRow(for seg: TranscriptSegment) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text(CommandCenterLabels.stamp(seg.start))
-                .font(.system(size: 10.5, design: .monospaced))
-                .foregroundStyle(Theme.ink3)
-                .frame(width: 40, alignment: .leading)
-            Text(speakerRowLabel(for: seg))
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(seg.source == .you ? Theme.you : Theme.others)
-                .frame(width: 100, alignment: .leading)
-                .lineLimit(2)
-                .help(seg.speakerLabel)
-            Text(seg.text)
-                .font(.system(size: 12.5)).foregroundStyle(Theme.ink)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .padding(.vertical, 3)
-        .contextMenu {
-            if seg.isFinal { Button("Add to My terms…") { vocabulary.termSourceLine = seg.text } }
-        }
+        EditableTranscriptRow(segment: seg, speakerLabel: speakerRowLabel(for: seg),
+            copyTranscript: {
+                let lines = store.utterances + [SpeakerSource.you, .others].compactMap { store.partials[$0] }
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(lines.map { "\($0.speakerLabel): \($0.text)" }
+                    .joined(separator: "\n"), forType: .string)
+            }, edit: { editTranscriptLine(seg, text: $0) },
+            delete: { deleteTranscriptLine(seg) },
+            addTerm: { vocabulary.termSourceLine = seg.text })
     }
 
     /// Channel/speaker label for a transcript row: "YOU" for the mic; for the Others channel the

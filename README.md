@@ -736,3 +736,4 @@ MOV. Choose **Others** (the default) or **You** in the file picker to label the 
 imports decode only their first audio track on-device; video frames are not transcribed and a movie
 with no audio produces a clear error. These imports use the selected transcription language and the
 same progress/Cancel controls as audio files. Importing does not upload the recording (#128).
+On Mac, select transcript text or use its row menu to copy a line or the transcript. Double-click a finalized line (or choose **Edit line…**) to correct it, then Save or Cancel. **Delete line…** asks for confirmation. Corrections retain the recognized original in exports. Existing summaries rebuild from edited text; Auto off does not create a first summary. Audio recordings and previously exported files are unchanged.

@@ -32,7 +32,7 @@ public struct TranscriptSegment: Identifiable, Sendable, Equatable, Codable {
     public let end: TimeInterval
     public var speakerID: String?
     public var speakerName: String?
-    /// Present only after an opt-in speech correction; the recognizer's wording remains recoverable.
+    /// Present after an AI or manual speech correction; the recognizer's wording remains recoverable.
     public let originalText: String?
     public let correctionModel: String?
     /// The transcription language this line was recognized in (BCP-47 or a locale identifier), when
