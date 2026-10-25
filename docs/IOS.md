@@ -1240,6 +1240,14 @@ make ios-build
 make ios-test IOS_DESTINATION='platform=iOS Simulator,name=iPhone 17 Pro'
 ```
 
+UI tests run serially (`-parallel-testing-enabled NO`) to avoid competing fixture schedulers
+and permission dialogs. For release acceptance, supply the UUID of a dedicated erased simulator
+in `IOS_DESTINATION`; do not erase a simulator used by another session. Launch waits for either
+release notes or an interactive workspace. Calendar accepts the actual permission prompt or an
+already-authorized date picker; correction and summary assertions wait on their final UI state.
+The bounded waits fail with diagnostics rather than adding fixed sleeps. (#176)
+
+
 For provider-default test isolation (#241), run `MobileAITests` on a freshly erased dedicated
 simulator before any UI tests (`-only-testing:ListenToMeIOSUnitTests/MobileAITests`). The test sets
 and restores both the provider and cloud vendor, and checks the no-vendor fallback explicitly;

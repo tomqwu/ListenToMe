@@ -23,6 +23,13 @@ extension XCUIApplication {
         }
         launch()
         let button = buttons["releaseNotesContinue"]
-        if button.waitForExistence(timeout: 2) { button.tap() }
+        // Wait for a usable launch surface, not a two-second guess: under load the
+        // release sheet can arrive after the old wait and cover the first test action.
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            button.exists || (self.buttons["More"].exists && self.buttons["More"].isHittable)
+        }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 30), .completed,
+                       "Expected release notes or the interactive workspace")
+        if button.exists { button.tap() }
     }
 }
