@@ -35,11 +35,11 @@ public struct HistoryIndexReport: Sendable, Equatable {
 ///   Release build that keep separate archives also keep separate indexes. The folder is always
 ///   excluded from backup: it is derived data, rebuilt from the archive whenever it is missing,
 ///   damaged, or written by another index version or embedding method.
-/// - `sync` is incremental: only conversations whose text changed are embedded again, and a
+/// - `sync` is incremental: only changed passages in changed conversations are embedded again, and a
 ///   conversation no longer in the archive loses its vectors. An actor, so all of it runs off the
 ///   main thread; vectors are held in memory only up to `memoryBudget` and read from disk beyond it.
 public actor HistoryIndex {
-    public static let version = 1
+    public static let version = 2
     public static let folderName = "Search Index"
     static let fileExtension = "vectors"
 
@@ -115,9 +115,27 @@ public actor HistoryIndex {
         let chunks = HistoryChunker.chunks(for: record)
         let fingerprint = HistoryChunker.fingerprint(chunks, salt: embedder.signature)
         if catalog?[record.id]?.fingerprint == fingerprint { return .unchanged }
-        let vectors = chunks.compactMap { chunk in
-            (chunk.language.map { embedder.embed(chunk.text, transcribedIn: $0) } ?? embedder.embed(chunk.text))
-                .map { StoredChunkVector(ordinal: chunk.ordinal, vector: $0) }
+        // Passage identity includes text, source, language and embedding method, but not its
+        // ordinal: adding a summary must not re-embed every unchanged transcript passage.
+        let previous = vectorsOf(record.id)?.chunks ?? []
+        var reusable = Dictionary(previous.map { ($0.fingerprint, $0) },
+                                  uniquingKeysWith: { first, _ in first })
+        var unavailable = Set<UInt64>()
+        let vectors = chunks.compactMap { chunk -> StoredChunkVector? in
+            let passageFingerprint = HistoryChunker.fingerprint([chunk], salt: embedder.signature)
+            if let stored = reusable[passageFingerprint] {
+                return StoredChunkVector(ordinal: chunk.ordinal, model: stored.model, scale: stored.scale,
+                                         values: stored.values, fingerprint: passageFingerprint)
+            }
+            guard !unavailable.contains(passageFingerprint) else { return nil }
+            let embedded = chunk.language.map { embedder.embed(chunk.text, transcribedIn: $0) }
+                ?? embedder.embed(chunk.text)
+            let vector = embedded
+                .map { StoredChunkVector(ordinal: chunk.ordinal, vector: $0, fingerprint: passageFingerprint) }
+            // Retry unavailable assets on a later changed save; only deduplicate this update.
+            if vector == nil { unavailable.insert(passageFingerprint) }
+            reusable[passageFingerprint] = vector
+            return vector
         }
         try store(StoredRecordVectors(fingerprint: fingerprint, chunks: vectors), for: record.id)
         return .embedded
