@@ -729,3 +729,10 @@ check** after opening/installing Ollama or downloading a model. **Copy model dow
 on your behalf. See [Ollama for Mac](https://ollama.com/download/mac) and the
 [Llama 3.2 model page](https://ollama.com/library/llama3.2). Transcription and saving remain available
 with AI off (#129).
+
+
+**More → Import audio or video…** accepts supported audio files and movie containers such as MP4 and
+MOV. Choose **Others** (the default) or **You** in the file picker to label the imported speech. Movie
+imports decode only their first audio track on-device; video frames are not transcribed and a movie
+with no audio produces a clear error. These imports use the selected transcription language and the
+same progress/Cancel controls as audio files. Importing does not upload the recording (#128).
