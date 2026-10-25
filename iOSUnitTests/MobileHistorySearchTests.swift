@@ -239,6 +239,31 @@ private final class GatedBudgetEmbedder: HistoryEmbedder, @unchecked Sendable {
 /// "Ask your history" Stop really stops (issue #57 review).
 @MainActor
 final class MobileHistoryAskStopTests: XCTestCase {
+    func testDeletingAConversationCancelsAnAnswerThatCapturedItsText() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let model = HistorySearchModel(index: HistoryIndex(directory: root, embedder: GatedBudgetEmbedder(open: true)),
+                                       syncDelay: .zero, searchDelay: .zero)
+        var records = [SessionRecord(id: "a", title: "Budget", date: Date(), transcript: "The budget is 40k.",
+                                    summary: "")]
+        model.records = { records }
+        let slow = LateProvider(text: "Deleted conversation answer [1].")
+        model.ask("budget", route: HistoryAskRoute(unavailable: nil, destination: nil, responseLanguage: nil,
+                                                   makeProvider: { slow }))
+        await slow.waitUntilStreaming()
+        records = []
+        model.forget(id: "a")
+        XCTAssertFalse(model.isAsking)
+        XCTAssertEqual(model.answer, "")
+        XCTAssertEqual(model.answerQuestion, "")
+        XCTAssertEqual(model.sentPassages, 0)
+        slow.release()
+        await slow.waitUntilFinished()
+        await model.waitForMaintenance()
+        XCTAssertEqual(model.answer, "")
+        XCTAssertTrue(model.citations.isEmpty)
+    }
+
     func testAStoppedAnswerNeverWritesOverTheNextOne() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }

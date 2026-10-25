@@ -55,6 +55,7 @@ enum MobileReleaseNotes {
             "Stop and backgrounding stay responsive during speaker labeling; old work cannot relabel a new recording.",
             "Summaries mark unfinished speech as provisional, and unchanged live text reuses its prepared snapshot.",
             "History search reuses unchanged passages when saving long conversations. Supported semantic languages are unchanged.",
+            "Deleting a conversation clears History answers and citations, including answers still streaming.",
             "Set a context limit for your OpenAI-compatible server. Local Ollama requests size their context to the prompt.",
             "Ollama settings explain unsupported HTTP addresses and omitted URL parts without exposing query values."
         ]),

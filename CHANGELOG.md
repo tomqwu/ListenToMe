@@ -29,6 +29,9 @@ does not show it again, and a fresh install does not see it at all; see
 
 This train is being validated; no upload is claimed yet.
 
+- Deleting a conversation immediately cancels and clears its streamed History answer and citations, preventing deleted content from returning when an old request finishes. (#131)
+
+- Deleting a conversation clears and cancels Ask your history answers so a late response cannot restore deleted text or citations. (#131)
 - Ollama settings reject unsupported plain-HTTP addresses before saving and explain when pasted URL parts are omitted. Destination prose names Ollama Cloud clearly; provider-default and catalog-refresh behavior are documented. (#149)
 
 - Backgrounding cancels final speaker labeling already started after Stop and clears the recording buffer without waiting. Queued work stays bound to its original recording, so an old pass cannot analyze or relabel a new recording. Lifecycle and model-backup tests cover these paths. (#188)
@@ -63,6 +66,7 @@ This train is being validated; no upload is claimed yet.
 
 ## macOS (unreleased since 1.4.4)
 
+- Delete one saved conversation from its History row menu or detail view, with confirmation. Its saved audio, search entry and pending folder-save work are removed while other conversations stay intact; deleting the open conversation prevents it from being saved again. Exported copies remain where you saved them. (#131)
 - Custom-server Settings can check the Quick model's Auto compatibility with a synthetic exchange. A format failure pauses Auto for that server/model until a successful recheck; network errors and cancellation preserve prior results. (#209)
 
 - History search keeps its records when SwiftUI recreates a view, instead of replacing matching rows with an empty asynchronous result. (#223 acceptance fix)

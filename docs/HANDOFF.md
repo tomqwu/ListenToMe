@@ -236,6 +236,17 @@ PR #274 adds optional per-server limits with reserved answer space and a no-send
 
 PR #277 implements per-passage vector reuse and fixes a Mac shared-search reader lifetime bug found during installed-app acceptance. Full `make validate-local` passed on `bacbb7d`: 1,060 Core tests (seven skips, 98.1048% line coverage), 459 iOS tests (449 passed, ten skipped, zero failures), release helpers, lint, signed Mac build and both real server contracts. All three required CI checks passed. Installed Mac History search/vector reuse/removal and independent review passed; screenshots and cleanup evidence are preserved. This change is ready for merge after the documentation update checks; it is not published. Broader semantic language support remains open: contextual mean pooling and tested normalizations did not meet paraphrase/negative-query quality acceptance. No additional models are downloaded or enabled.
 
+## Per-conversation Mac deletion candidate (#131) — October 25
+
+`codex/131-delete-conversation` adds confirmed deletion in History row menus and detail views.
+Archive deletion precedes registered data-owner cleanup; other records stay intact. The open
+conversation is excluded from future saves after deletion. Tests cover real archive/audio files,
+archive failure and partial owner failure. Focused storage tests passed (22), full Core coverage
+passed (98.1087%), both iOS simulator architectures compiled, and lint, signed Mac build and
+independent review passed. Full `make validate-local` passed at `b11a101`, including simulator
+unit/UI tests, Core coverage, release helpers and real provider contracts. The #223 records snapshot
+is published after deletion. Current-main integration lint, Core tests, signed Mac build and independent
+review passed at `f3dd237`. All three hosted checks passed at `5f42af9`. Installed-Mac acceptance passed at that source using disposable records and generated audio: Cancel retains audio/playback; row/detail deletion removes the chosen record; neighboring records and exports remain; deleting the open conversation prevents re-saving; New saves normally; locked archive and audio fixtures produce the expected retained-record and partial-erasure warnings. Original archive hashes were unchanged and Dev cleanup succeeded. Evidence is preserved in the October 25 external `history-delete-131/native` folder. Latest-main integration at `41d33cf` passed 1,068 Core tests (seven skips, zero failures; 98.1107% coverage), lint, the stable development-signed Mac build and independent review. The deletion implementation is unchanged from native acceptance. All three final-head checks passed; PR #284 merged at `5eb674f`, closing #131. Mac publication remains paused.
 ## Ollama endpoint candidate (#149) — October 25
 
 `codex/149-ollama-endpoint` shares the OpenAI-compatible local-network HTTP rule, reports omitted
@@ -282,9 +293,9 @@ Physical-device acceptance and publication remain pending. Evidence: `dist/live-
 
 ## iOS 1.17.0 (34) train preparation — October 25
 
-`codex/ios-1.17.0-build34` integrates merged `3d32345`. The batch contains only merged iOS work:
+`codex/ios-1.17.0-build34` integrates merged `5eb674f`. The batch contains only merged iOS work:
 Duo width choices, conversation vocabularies, language activity checks, speaker lifecycle fixes,
-live-summary/provisional handling, History index reuse, provider context limits and Ollama endpoint
+live-summary/provisional handling, History index reuse and deletion privacy, provider context limits and Ollama endpoint
 feedback. Watch remains excluded. No draft backlog PR is included. Apple API preflight confirms
 1.16.0 (33) uploaded October 24 is the latest accepted beta, with no build 34 yet, and 1.15.0 is
 READY_FOR_SALE; App Store What's New therefore starts after 1.15.0. Version and notes are prepared. Core tests (1,061; seven skips; 98.1056% coverage), lint,
@@ -292,6 +303,8 @@ signed Mac build, iOS/Watch builds and iOS test-target compilation passed. Indep
 no blockers. Full local validation, fresh four-category screenshots, required CI, main merge, signed
 archive, upload and tester verification are pending. Release captures now include History and Settings
 alongside Live, Prompt and Summary. Neither publication nor physical acceptance is claimed.
+
+The first candidate `e176222` completed full `make validate-local` (470 iOS tests: 460 passed, ten intentional skips, zero failures) and all four device capture tests, with all six required screens per device. That evidence is preserved externally under `ios-next-train/validation` and `validation-e176222-state.json`. The release candidate now includes the newly merged #131 shared History privacy fix: deleting a conversation cancels and clears an active Ask answer on iOS too. Updated release copy and fresh validation/captures for this integrated source are pending. The earlier evidence is not claimed as validation of the integrated source.
 ## Mac Auto compatibility acceptance (#209) — October 25
 
-The final installed-Mac settings interaction passed at `c3746b5`: saved 4K persists, an oversized probe sends nothing, an unsaved 8K edit disables probing, Cancel restores 4K, and a valid synthetic response succeeds with server-managed context. Original provider/model settings were restored. Screenshots, the one synthetic request, source/signing provenance and successful Dev-only cleanup are preserved in the October 25 external `auto-compatibility-209/native-final` evidence. Current-main integration includes only the already-merged iOS endpoint validation and documentation; Mac application source is unchanged from this acceptance. Final integration at `8e9e612` passed 1,065 Core tests (seven skips, 98.1098% coverage), lint, the signed Mac build and all 403 iOS unit tests (397 passed, six skipped). Independent integration review found no blockers. All three final-head checks passed; PR #275 merged at `3d32345`. Mac publication remains paused.
+The final installed-Mac settings interaction passed at `c3746b5`: saved 4K persists, an oversized probe sends nothing, an unsaved 8K edit disables probing, Cancel restores 4K, and a valid synthetic response succeeds with server-managed context. Original provider/model settings were restored. Screenshots, the one synthetic request, source/signing provenance and successful Dev-only cleanup are preserved in the October 25 external `auto-compatibility-209/native-final` evidence. Current-main integration includes only the already-merged iOS endpoint validation and documentation; Mac application source is unchanged from this acceptance. Final integration at `8e9e612` passed 1,065 Core tests (seven skips, 98.1098% coverage), lint, the signed Mac build and all 403 iOS unit tests (397 passed, six skipped). Independent integration review found no blockers. All three final-head checks passed and PR #275 merged at `3d32345`; #209 is closed. Mac publication remains paused.

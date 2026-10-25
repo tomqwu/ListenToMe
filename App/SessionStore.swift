@@ -107,6 +107,19 @@ final class SessionStore {
     }
 
     @discardableResult
+    func delete(_ record: SessionRecord) -> Bool {
+        do {
+            guard let archive else { throw CocoaError(.fileWriteUnknown) }
+            let result = try ConversationRemoval.remove(record, from: archive, owners: conversationDataOwners)
+            if let warning = result.archiveWarning { archiveWarning = warning }
+            known.removeAll { $0.id == record.id }
+            publishRecords()
+            errorText = ConversationDataErasure.failureNote(result.failedOwners)
+            return true
+        } catch { errorText = "Couldn't delete conversation: \(error.localizedDescription)"; return false }
+    }
+
+    @discardableResult
     func clear() -> Bool {
         do {
             guard let archive else { throw CocoaError(.fileWriteUnknown) }

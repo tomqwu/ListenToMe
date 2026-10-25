@@ -114,7 +114,9 @@ final class HistorySearchModel {
     /// which stops at its next conversation and never embeds this one again.
     func forget(id: String) {
         pendingUpdates[id] = nil
-        citations.removeAll { $0.recordID == id }
+        // An in-flight answer captured records before deletion; it must not restore deleted text
+        // or citations after the row disappears. Clear completed answers for the same reason.
+        clearAnswer()
         historyChanged()
         removeNow { index in try? await index.remove(id: id) }
     }
