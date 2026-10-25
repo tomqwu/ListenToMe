@@ -390,6 +390,7 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   Formats, cue rules and the JSON schema:
   [docs/export-formats.md](docs/export-formats.md).
   With autosaving off, Save opens Save As and New/Close offers Save As, Cancel or explicit discard.
+- **Meeting suggestions (optional).** Enable **Suggest current calendar meetings** in Settings and explicitly allow Calendar access. While a new conversation is empty and idle, the app checks every 30 seconds for an event happening now. **Use context and Start** adds event context and starts listening using your current AI settings; **Dismiss** suppresses that occurrence across restarts. Suggestions never start capture automatically or infer a call from an open Zoom/Teams process.
 - **Load from Calendar.** Fills Context notes from your current or next meeting *and* titles the
   conversation after the event (only while the title is still the generated "Conversation — <date>",
   so a title you typed is kept). If Calendar access is denied the banner says so and offers **Open

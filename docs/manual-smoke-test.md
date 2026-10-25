@@ -1047,3 +1047,12 @@ Play known system audio with the microphone quiet; confirm the system RMS meter 
 ## Whisper model selection (#58)
 
 Start from no saved preference and verify Base. Select Tiny, Cancel Settings, reopen and confirm Base; then select Tiny and Save, relaunch and confirm Tiny. Start capture and verify the status names Tiny and loaded variant validation succeeds. Repeat with Base and Small using the same microphone/system test audio, recording observed quality and latency without generalizing to other Macs. Change the selection during a capture: that capture keeps its model; the next uses the saved choice. Simulate a download/load failure and confirm the selected model is named with retry guidance. Confirm no model download occurs merely by opening Settings. Preserve screenshots, logs, exact source, selected/loaded variants and actual OTHERS transcription evidence.
+
+## Optional calendar suggestions (#54)
+
+1. With Calendar access absent and the feature off, wait 35 seconds: no permission prompt or recording. Enable the setting and Save; passive checks still must not prompt. Use **Allow Calendar access** explicitly to grant or deny. Denial must leave capture stopped and show guidance. Canceling Settings must not persist the opt-in.
+2. In an empty, idle conversation with an event happening now, wait up to 30 seconds. Inspect the banner and capture a native screenshot. Future, ended, all-day, canceled, free and declined events must not trigger it.
+3. Dismiss the suggestion, restart the app and verify the same occurrence stays suppressed; a later recurrence may be suggested. Start/import/open a conversation and verify no suggestion overwrites its content.
+4. Click **Use context and Start**: the title and Context use the event, normal capture preflight runs, and recording starts only after this explicit action. Check the selected AI provider privacy behavior. Stop, preserve evidence, and complete the app-scoped Dev cleanup procedure.
+
+These are acceptance steps, not a record of a completed native run.
