@@ -1205,7 +1205,8 @@ When Identify speakers is on and the models are already loaded, Watch imports an
 file audio in 60-second windows with 10-second overlap before transcribing that batch. Decoding runs
 off the UI actor with bounded PCM memory. Gaps flush the overlap so missing time is never collapsed;
 timestamps use the same ChunkFeed mapping as transcription. The file passes share the serialized
-model queue but never begin/end a live microphone run. Imports never prepare or download speaker models.
+model queue but never begin/end a live microphone run. Cancellation releases the import immediately,
+even if model processing ignores it; the late result is discarded while later model passes stay serialized. Imports never prepare or download speaker models.
 If identification is off, unavailable, fails, or cannot confidently cover a line, it keeps Apple Watch.
 
 Speaker IDs and names are saved with text before raw chunks are deleted, including for a conversation

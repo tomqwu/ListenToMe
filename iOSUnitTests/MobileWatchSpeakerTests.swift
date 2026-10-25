@@ -8,16 +8,22 @@ import XCTest
 final class MobileWatchSpeakerTests: XCTestCase {
     private var root: URL!
     private var priorEnabled: Any?
+    private var priorLanguage: Any?
+    private var priorAutomatic: Any?
 
     override func setUp() async throws {
         root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         priorEnabled = UserDefaults.standard.object(forKey: MobileSpeakers.enabledKey)
+        priorLanguage = UserDefaults.standard.object(forKey: MobileSession.languageKey)
+        priorAutomatic = UserDefaults.standard.object(forKey: MobileLanguageDetection.automaticKey)
         UserDefaults.standard.set(true, forKey: MobileSpeakers.enabledKey)
     }
 
     override func tearDown() async throws {
         UserDefaults.standard.set(priorEnabled, forKey: MobileSpeakers.enabledKey)
+        UserDefaults.standard.set(priorLanguage, forKey: MobileSession.languageKey)
+        UserDefaults.standard.set(priorAutomatic, forKey: MobileLanguageDetection.automaticKey)
         try? FileManager.default.removeItem(at: root)
     }
 
@@ -149,6 +155,42 @@ final class MobileWatchSpeakerTests: XCTestCase {
         XCTAssertTrue(session.watchSpeakerContexts.isEmpty, "Completed imports discard voiceprints")
     }
 
+    func testStartDoesNotWaitForCancellationInsensitiveWatchDiarizer() async throws {
+        let model = WatchSpeakerModel()
+        await model.holdPass()
+        let transcriber = FakeWatchTranscriber()
+        let session = MobileSession(storageDirectory: root, makeRecorder: { LifecycleTestRecorder() },
+                                    makeWatchTranscriber: { transcriber }, makeDiarizer: { model })
+        session.applicationIsActive = { true }
+        session.languageChoice = "en-US"
+        session.speakers.startPreparing()
+        await session.speakers.preparation?.value
+        let chunk = try audio(seconds: 10)
+        let recording = UUID()
+        let metadata = WatchChunkMetadata(recordingID: recording, index: 0, startOffset: 0, duration: 10,
+                                          isLast: true, startedAt: Date(), watchBuild: "test")
+        XCTAssertEqual(session.watchInbox.accept(fileAt: chunk.url, metadata: metadata.transferMetadata, now: Date()), .stored)
+        session.importWatchInbox()
+        for _ in 0..<100 {
+            if await model.counts().1 > 0 { break }
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        let counts = await model.counts()
+        XCTAssertEqual(counts.1, 1)
+        session.start()
+        for _ in 0..<100 where session.state != .recording { try await Task.sleep(for: .milliseconds(10)) }
+        XCTAssertEqual(session.state, .recording, "Start must finish while the Watch model is still held")
+        XCTAssertTrue(transcriber.calls.isEmpty)
+        XCTAssertTrue(session.watchSpeakerContexts.isEmpty)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: session.watchInbox.chunkURL(recordingID: recording, index: 0).path))
+        await model.releasePass()
+        // Do not resume the inbox at Stop in this test; no late Watch result may become transcript.
+        session.applicationIsActive = { false }
+        await session.stop()
+        await session.speakerFinalPass?.value
+        XCTAssertTrue(session.history.filter { MobileSession.isFromAppleWatch($0) }.allSatisfy { $0.segments?.isEmpty != false })
+    }
+
     func testExistingPreparationIsAwaitedAndCancellationDoesNotConsumeAudio() async throws {
         let model = WatchSpeakerModel()
         await model.holdPreparation()
@@ -185,6 +227,10 @@ private actor WatchSpeakerModel: MobileSpeakerDiarizing {
     private var preparations = 0
     private var passes = 0
     func counts() -> (Int, Int) { (preparations, passes) }
+    private var holdAnalysis = false
+    private var analysisGate: CheckedContinuation<Void, Never>?
+    func holdPass() { holdAnalysis = true }
+    func releasePass() { holdAnalysis = false; analysisGate?.resume(); analysisGate = nil }
     private var shouldHold = false
     private var gate: CheckedContinuation<Void, Never>?
     func holdPreparation() { shouldHold = true }
@@ -196,6 +242,7 @@ private actor WatchSpeakerModel: MobileSpeakerDiarizing {
     func retryModelLoad() async {}
     func diarize(samples: [Float]) async throws -> DiarizedWindow {
         passes += 1
+        if holdAnalysis { await withCheckedContinuation { analysisGate = $0 } }
         return DiarizedWindow(segments: [DiarizedSegment(speakerId: "voice", start: 0,
                                                         duration: Double(samples.count) / 16_000)],
                               embeddings: ["voice": [1, 0]])

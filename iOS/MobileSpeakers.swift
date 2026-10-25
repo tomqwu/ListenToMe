@@ -218,7 +218,7 @@ final class MobileSpeakers {
             return self.enabled ? result : nil
         }
         passChain = Task { _ = try? await work.value }
-        return try await withTaskCancellationHandler { try await work.value } onCancel: { work.cancel() }
+        return try await MobileSpeakerFileWait.value(of: work)
     }
 
     /// Ends the run and releases its audio. A pass still in flight is discarded.

@@ -124,10 +124,12 @@ own implementation, relevant local acceptance, independent review and merged PR 
 
 1. **#192 — Watch speaker labels:** bounded file windows, isolated from live microphone runs,
    already-loaded models only, labels saved before audio deletion. In progress.
-2. **#216 — language re-check reliability:** use audio speech activity when recognizer output is absent.
-3. **#224 — re-transcribe saved audio:** inspect and finish the existing PR #264 before duplicating work.
-4. **#176 — UI-test reliability:** remove remaining state/time assumptions in the full local gate.
-5. **#225 — optional retained Watch audio:** resolve the retention/privacy decision before implementation.
+2. **#225 — Watch audio sync and optional retention:** approved October 24: queue while disconnected,
+   sync to the paired iPhone after reconnect, and retain playback audio only when Save audio recordings
+   is on. Off keeps delete-after-transcription. Cover retries, crash safety, deletion and consent/privacy copy.
+3. **#216 — language re-check reliability:** use audio speech activity when recognizer output is absent.
+4. **#224 — re-transcribe saved audio:** finish existing PR #264; its live Mac audio gate is still pending.
+5. **#176 — UI-test reliability:** remove remaining state/time assumptions in the full local gate.
 6. Then iOS/provider improvements (#210, #209, #223, #164, #188, #167, #148, #149), followed by
    the Mac conversation tools (#131, #126, #127, #128, #129, #124, #68, #173, #56), then the remaining
    enhancements and review trackers (#58, #60, #62, #54, #134, #141, #98).
