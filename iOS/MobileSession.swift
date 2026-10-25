@@ -8,7 +8,7 @@ import UIKit
 
 @MainActor @Observable
 final class MobileSession {
-    enum State { case idle, preparing, recording, stopping }
+    typealias State = CaptureCoordinator.Phase
     /// Why capture last ended. `.interruption` is the only reason the system may resume from.
     enum StopReason: Equatable { case user, interruption, routeLost, background }
     var state = State.idle {
@@ -19,7 +19,7 @@ final class MobileSession {
             publishWatchStatus()
         }
     }
-    private(set) var stopReason: StopReason? { didSet { if stopReason != oldValue { publishWatchStatus() } } }
+    var stopReason: StopReason? { didSet { if stopReason != oldValue { publishWatchStatus() } } }
     private(set) var isForeground = true
     /// When the current recording run started, for the Apple Watch remote's elapsed time (issue #181).
     private(set) var recordingStartedAt: Date?
@@ -74,7 +74,7 @@ final class MobileSession {
     let speechCorrection = MobileTranscriptCorrector()
     let vocabulary = SessionVocabulary()   // domain vocabularies and My terms (issue #222)
     var acceptsSpeechCorrection = false
-    private let makeRecorder: () -> any MobileRecording
+    let makeRecorder: () -> any MobileRecording
     @ObservationIgnored var watchSpeakerContexts: [UUID: WatchSpeakerLabels] = [:]
     var watchLanguageSamples: ([WatchAudioChunk]) async throws -> [Float] = WatchLanguageAudio.samples
     let makeWatchTranscriber: () -> any WatchAudioTranscribing
@@ -117,8 +117,8 @@ final class MobileSession {
     }
     private(set) var id = UUID().uuidString
     private var date = Date()
-    private(set) var recorder: (any MobileRecording)?
-    private var startTask: Task<Void, Never>?
+    var recorder: (any MobileRecording)?
+    let captureCoordinator = CaptureCoordinator()
     /// On-device speaker identification (issues #180, #195) and its periodic pass while recording.
     let speakers: MobileSpeakers
     let languageDetection: MobileLanguageDetection   // Automatic transcription language (issue #197)
@@ -264,80 +264,6 @@ final class MobileSession {
 
     func recheckSummary(for mode: MobileSummaryMode) {
         message = summaryBlockReason(for: mode) ?? "Ready to generate \(mode.title)."
-    }
-
-    func start() {
-        guard state == .idle, !isSummarizing else { return }
-        message = nil
-        stopReason = nil
-        speechCorrection.cancel()
-        acceptsSpeechCorrection = true
-        // Keep any unfinished hypothesis from an interrupted earlier run.
-        if let partial { segments.append(partial); self.partial = nil }
-        state = .preparing
-        let recorder = makeRecorder(); self.recorder = recorder
-        let offset = segments.map(\.end).max() ?? 0
-        attachRunAudio(to: recorder, offset: offset)   // speakers, language and saved audio share one timeline
-        // An Apple Watch drain stops before the microphone is prepared, and resumes after.
-        let drain = watchDrainTask
-        drain?.cancel()
-        startTask = Task {
-            await drain?.value; await recorder.setContextualStrings(self.vocabularyRecognitionTerms)
-            do {
-                try await recorder.start(locale: Locale(identifier: recordingLanguage)) { [weak self] segment in
-                    guard let self else { return }
-                    self.speechEventCount += 1
-                    if segment.isFinal { self.finalizedSpeechEventCount += 1 }
-                    self.lastSpeechEvent = Date()
-                    if self.stageLanguageSegment(segment, offset: offset) { return }
-                    let timed = TranscriptSegment(source: .you, text: segment.text, isFinal: segment.isFinal,
-                                                  start: offset + segment.start, end: offset + segment.end,
-                                                  speakerName: Self.microphoneLabel, language: self.recordingLanguage)
-                    if timed.isFinal {
-                        self.segments.append(timed)
-                        self.partial = nil
-                        self.save(announce: false)
-                        self.checkSpeech(timed)
-                    } else {
-                        self.partial = timed.text.isEmpty ? nil : timed
-                    }
-                    self.scheduleAutoQuick()
-                } onFailure: { [weak self] error in
-                    guard let self, self.state == .recording || self.state == .preparing else { return }
-                    self.message = error
-                    Task { await self.stop() }
-                }
-                try Task.checkCancellation()
-                state = .recording
-                UIApplication.shared.isIdleTimerDisabled = true
-                startRecognitionLoops()
-            } catch {
-                try? await recorder.stop()
-                speakers.endRun(); endLanguageRun(); endSavedAudioRun()
-                self.recorder = nil
-                state = .idle
-                if !(error is CancellationError) { message = error.localizedDescription }
-                save(announce: false)
-            }
-            startTask = nil
-        }
-    }
-
-    func stop() async {
-        guard state == .recording else {
-            if state == .preparing { startTask?.cancel(); await startTask?.value }
-            return
-        }
-        state = .stopping
-        languageDetection.activityLoop?.cancel(); languageDetection.activityLoop = nil
-        if stopReason == nil { stopReason = .user }
-        do { try await recorder?.stop() } catch { message = "Could not finalize transcript: \(error.localizedDescription)" }
-        recorder = nil
-        UIApplication.shared.isIdleTimerDisabled = false
-        state = .idle
-        save(announce: false); nameConversationIfNeeded()   // in the background (#221)
-        finishSpeakerIdentification()
-        endLanguageRun(); endSavedAudioRun()
     }
 
     func background() async {
@@ -909,4 +835,25 @@ extension MobileSession {
         stopReason = reason
         if message == before { message = text }
     }
+}
+
+// Kept beside private speech counters; capture task orchestration lives in Core.
+extension MobileSession {
+    func receiveCaptureSegment(_ segment: TranscriptSegment, offset: TimeInterval) {
+        speechEventCount += 1
+        if segment.isFinal { finalizedSpeechEventCount += 1 }
+        lastSpeechEvent = Date()
+        if stageLanguageSegment(segment, offset: offset) { return }
+        let timed = TranscriptSegment(source: .you, text: segment.text, isFinal: segment.isFinal,
+                                      start: offset + segment.start, end: offset + segment.end,
+                                      speakerName: Self.microphoneLabel, language: recordingLanguage)
+        if timed.isFinal {
+            segments.append(timed); partial = nil
+            save(announce: false); checkSpeech(timed)
+        } else {
+            partial = timed.text.isEmpty ? nil : timed
+        }
+        scheduleAutoQuick()
+    }
+
 }

@@ -251,3 +251,14 @@ Physical-device acceptance and publication remain pending. Evidence: `dist/live-
 `codex/134-mac-app-tests` adds a headless Mac test bundle for production FileContextLoader and SpeakerAudioBuffer, runs it in local validation and a separate CI job, and moves SessionStore's archive/error/snapshot/clear orchestration into Core ConversationRepository. Per-save index updates, reload sync and archive-first secondary cleanup remain distinct. Core regressions cover unavailable storage, damaged history, persisted snapshot ordering and secondary-owner failure. Three Mac adapter tests, 1,064 Core tests (seven skips, 98.1153% Core coverage), lint and signed Mac build passed; independent review found no blockers. Full local validation and hosted CI remain pending. No Dev app was launched and no permissions were touched by the headless tests.
 
 This does **not** close #134: capture/finalization orchestration remains in the platform adapters and requires a separate controlled migration. iOS simulator tests remain local per AGENTS.md. When #131 integrates, move its per-conversation delete into ConversationRepository and preserve snapshot publication. Core coverage is not whole-product coverage.
+
+### #134 capture coordinator — partial candidate, October 25
+
+Branch `codex/134-capture-coordinator` builds on PR #297. Core `CaptureCoordinator` owns iOS
+preparation/start/stop tasks and run-token fencing. The platform adapter keeps hardware policy,
+language/speaker/saved-audio handling and persistence. Five Core race regressions pass; two new
+iOS adapter tests exercise stale callbacks and concurrent Stop with final transcript persistence.
+Independent review found no correctness blockers. The iOS app/test targets compiled, and 20 focused
+simulator unit tests passed, including both new adapter regressions. Core coverage is 98.1309%;
+lint passed. Broader iOS unit validation and the full local gate remain pending. This does not close #134: Mac view orchestration and broader shared lifecycle
+migration remain required. No release or physical-device acceptance is claimed.

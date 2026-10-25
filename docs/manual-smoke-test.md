@@ -817,3 +817,12 @@ Capture the settings UI at native resolution and restore original preferences af
 ## Automated adapter coverage (#134)
 
 `make app-test` runs a hostless macOS XCTest bundle: the actual FileContextLoader and SpeakerAudioBuffer sources, native RTF decoding, AVAudioConverter resampling, cap and prior-generation rejection. It launches no ListenToMe Dev app and requests no capture permissions. Its `.xcresult` coverage describes only the compiled adapter sources and test code. Core ConversationRepository tests cover archive-first cleanup, failed/unavailable storage, sticky damaged-file warnings, and durable snapshot publication. Neither suite substitutes for installed-app GUI/audio acceptance.
+
+### iOS capture coordinator regression (#134)
+
+Start and immediately Stop while preparation is active; no recording should begin later. Start again,
+speak, then Stop twice through phone/Watch controls. Both callers must finish after the same drain;
+final words must appear in History as a complete record. Start a second recording and confirm old
+recorder callbacks cannot append text or report a failure in it. Repeat background/interruption,
+language switching, speaker identification and Save audio recordings on/off. Simulator fakes exercise
+late callbacks and held finalization; they do not prove physical microphone or paired-Watch behavior.

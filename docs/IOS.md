@@ -1486,3 +1486,13 @@ characters before using unfinished speech. They mark it as provisional and instr
 to record it as a decision, owner, deadline or action item. The marker and instruction count toward
 the prompt budget; a shortened hypothesis keeps its marker. Saved transcripts and exports retain
 the recognizer's original text.
+
+### Capture task ownership (#134)
+
+`MobileSession+Capture` adapts the platform recorder to Core `CaptureCoordinator`. The coordinator
+owns preparation, start, cancellation and joined Stop tasks, with a token for each run. It accepts
+final utterances while Stop drains and rejects callbacks after that run finishes. The adapter retains
+foreground/interruption policy, speaker/language buffers, saved-audio cleanup and final checkpoints.
+No recording permission, background capability, model or audio destination changes. Core tests cover
+transition races; simulator adapter tests must also pass before this candidate is merged. This partial
+extraction does not complete the remaining Mac view and shared lifecycle work in #134.
