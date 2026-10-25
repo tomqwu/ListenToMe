@@ -115,6 +115,7 @@ extension MeetingSession {
                 self.recordAutomaticReview(role, cutOff: self.automaticReviews.cutOffModes.contains(mode))
                 if mode == .summary {
                     self.lastCompletedListenerSummary = output
+                    self.speakerSummaryNeedsRebuild = false
                     self.listenerSummaryCutOff = self.automaticReviews.cutOffModes.contains(mode)
                 }
                 // The review still answers the current input when that input merely continued the

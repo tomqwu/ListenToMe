@@ -53,6 +53,7 @@ final class MeetingSessionTests: XCTestCase {
     func testRenamingClearsOldAnswersAndRebuildsListener() async {
         let (session, store) = makeSession()
         speak(store)
+        await session.refreshListener()
         await session.respondQuick(.answerQuestion)
         await session.respondDeep(.answerQuestion)
         XCTAssertFalse(session.quickSuggestion.isEmpty)

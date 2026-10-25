@@ -95,12 +95,14 @@ public final class MeetingSession {
     /// separate from `listenerSummary` (the live display value, which is cleared to "" while a new
     /// refresh streams) so a proactive Quick can't read an empty/partial in-flight summary.
     var lastCompletedListenerSummary = ""
+    /// A completed summary still needs replacement if another label change interrupts its rebuild.
+    var speakerSummaryNeedsRebuild = false
     var summarizedSegmentIDs = Set<UUID>()
     private var pendingSummaryIDs: [Int: Set<UUID>] = [:]
     /// The provisional (non-final) lines the last completed refresh actually sent. Unfinalized
     /// speech has no ledger entry — it is never final — so this is what keeps a second Refresh with
     /// the same unconfirmed wording a no-op (issues #113, #137).
-    private var summarizedProvisionalText: String?
+    var summarizedProvisionalText: String?
     private var pendingProvisionalText: [Int: String] = [:]
     /// Transcript characters one listener refresh asks for; also the window the Refresh button's
     /// provisional comparison measures, so the two always describe the same lines.
@@ -268,6 +270,7 @@ public final class MeetingSession {
 
     public func resetConversation() {
         guard !isRunning, !isTranscribingFile else { return }
+        speakerSummaryNeedsRebuild = false
         for role in CopilotRole.allCases { cancelResponse(role) }
         // No proactive task needs cancelling here: `ingest` only fires while running, and `stop()`
         // (which must precede a reset) already cancelled it.
@@ -708,23 +711,6 @@ extension MeetingSession {
         }.value
     }
 
-    /// True when the store holds speech the Listener has not summarized yet: finalized utterances
-    /// outside its ledger, or unfinalized speech whose wording differs from what the last refresh
-    /// already sent as provisional context (issue #113) — a caught-up refresh carries that instead.
-    /// A refresh with nothing new is a no-op, so the UI disables Refresh on `!hasUnsummarizedSpeech`
-    /// (issue #137).
-    public var hasUnsummarizedSpeech: Bool {
-        if store.utterances.contains(where: { !summarizedSegmentIDs.contains($0.id) }) { return true }
-        guard store.hasProvisionalSpeech else { return false }
-        return Self.signature(of: store.provisionalContext(maxChars: Self.listenerTranscriptBudget))
-            != summarizedProvisionalText
-    }
-
-    /// The provisional lines a refresh sends, as one comparable string.
-    static func signature(of segments: [TranscriptSegment]) -> String {
-        segments.map { "\($0.speakerLabel): \($0.text)" }.joined(separator: "\n")
-    }
-
     /// Streams a Listener refresh (rolling summary + open items). Awaits completion.
     public func refreshListener() async {
         guard hasUnsummarizedSpeech else { return }
@@ -734,15 +720,25 @@ extension MeetingSession {
 
     /// New attribution should ground the next answer in the labeled transcript, not an older recap.
     ///
-    /// This still re-summarizes the whole meeting, even with Auto off — tracked as #167 (part of
-    /// #98) and deliberately out of scope for #137, which only stopped the *no-op* refresh.
+    /// Editing speakers alone must not create a first summary while Auto is off. Existing summaries
+    /// still need rebuilding: substituting names in generated prose cannot reliably repair attribution.
     public func speakerAttributionsChanged() {
+        speakerSummaryNeedsRebuild = speakerSummaryNeedsRebuild || !lastCompletedListenerSummary
+            .trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let shouldRefresh = autoSummaryEnabled || speakerSummaryNeedsRebuild
+        // The direct diarization path does not go through speakerNamesChanged. Invalidate its old
+        // stream even when no replacement request will be started.
+        cancelResponse(.listener)
+        pendingSummaryIDs = [:]
+        pendingProvisionalText = [:]
+        pendingGrounding[.listener] = nil
+        roleNoticeRecords[.listener] = nil
         // Replay raw transcript when labels change so old names cannot survive only in generated prose.
         summarizedSegmentIDs = []
         summarizedProvisionalText = nil
         lastCompletedListenerSummary = ""; listenerSummaryCutOff = false
         listenerSummary = ""
-        startListenerRefresh()
+        if shouldRefresh { startListenerRefresh() }
     }
 
     /// Renaming invalidates prose produced with old names; rebuild the listener from the transcript.
@@ -936,6 +932,7 @@ extension MeetingSession {
             // later refresh clearing the live value can't strip context from a proactive prompt.
             if role == .listener, generation == responseGenerations[role], !Task.isCancelled {
                 lastCompletedListenerSummary = listenerSummary
+                speakerSummaryNeedsRebuild = false
                 listenerSummaryCutOff = cutOff
                 summarizedSegmentIDs.formUnion(pendingSummaryIDs[generation] ?? [])
                 pendingSummaryIDs = [:]

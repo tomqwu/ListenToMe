@@ -199,6 +199,15 @@ is the tracking issue.
 - `Tests/ListenToMeCoreTests/SharedQuickLoopTests.swift` has a timing flake; re-run before suspecting
   your change.
 
+## Speaker-summary request candidate (#167) — October 25
+
+Local work on `codex/167-speaker-summary-refresh` prevents speaker edits from creating a first
+Listener summary with Auto off. It invalidates the old stream and ledger even when no replacement
+request starts, while retaining explicit Refresh and rebuilding completed summaries. Focused Core
+coverage passed (1,064 tests, seven skips, zero failures; 98.11% line coverage). Lint and independent
+review passed, including fixes for repeated edits during rebuilding and rejected resets. Full
+validation, rendered Mac acceptance and hosted CI remain pending. This work is not merged or published.
+
 ## Waiting on the maintainer
 
 - **App Store listing URLs** (privacy policy and support) point at the `codex/app-store-release`
