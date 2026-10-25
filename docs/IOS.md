@@ -1469,3 +1469,12 @@ check the complete system/messages using conservative UTF-8 byte budgeting befor
 oversized text fails locally, including Unicode-heavy input. This is a conservative estimate, not
 a tokenizer guarantee. Unknown retains the previous request behavior. No credentials or audio
 are changed, and this setting applies only to Custom server, not cloud vendor presets.
+
+### Live summary snapshots and unfinished speech (#164)
+
+Repeated live events reuse their summary input until finalized speech, speaker labels, the current
+hypothesis or notes change. Manual Summary, Quick Summary and Ask require at least 24 trimmed
+characters before using unfinished speech. They mark it as provisional and instruct the model not
+to record it as a decision, owner, deadline or action item. The marker and instruction count toward
+the prompt budget; a shortened hypothesis keeps its marker. Saved transcripts and exports retain
+the recognizer's original text.

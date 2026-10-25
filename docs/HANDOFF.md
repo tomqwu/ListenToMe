@@ -212,3 +212,14 @@ is the tracking issue.
 ## Context capacity candidate (#210) — October 25
 
 PR #274 adds optional per-server limits with reserved answer space and a no-send oversized-prompt error. Full `make validate-local` passed on `a6ec6b8`: 1,056 Core tests (seven skips, 98.1079% coverage), 394 iOS unit tests and 65 UI tests (459 total, ten skips, zero failures), release helpers, lint, signed Mac build and real Ollama/OpenAI-compatible contracts. Mac settings acceptance and independent review passed. A Pro Max screenshot run exposed a caret-position assumption in the URL-editing test; selecting all and asserting the exact replacement value fixed it, and the focused rerun passed. Only test/documentation changes followed the full gate. Four-device capture evidence is being finalized in `dist/context-budget-210`; this is not published.
+
+## In progress: iOS live snapshot and provisional prompts (#164)
+
+Branch `codex/164-ios-live-snapshot` implements memoized live summary inputs and provisional
+floor/tag/notice handling for manual Summary, Quick and Ask. The shared excerpt shortener preserves
+the marker and minimum evidence. Twenty-one Core grounding tests pass; iOS app and all test targets
+compile for both simulator architectures, lint passes, and independent logic review found no blockers.
+Four new iOS runtime regressions, full local validation, rendered simulator acceptance and CI remain
+pending. Work proceeded in the available checkout while #209's additional Mac UI check was blocked
+by the lock screen and #223 waited for the serialized simulator validation queue. No merge or
+publication is claimed. Evidence: `dist/live-snapshot-164`.

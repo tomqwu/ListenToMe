@@ -91,7 +91,11 @@ final class MobileSession {
     var manualQuickError: String?
     var quickSummaryError: String? { manualQuickError ?? quickReader.error }
     private(set) var sourceImportID: String?
-    var segments: [TranscriptSegment] = [] { didSet { scheduleAutoQuick() } }
+    var segments: [TranscriptSegment] = [] { didSet { liveRevision += 1; scheduleAutoQuick() } }
+    var liveRevision = 0
+    @ObservationIgnored var liveCacheKey: LiveKey?
+    @ObservationIgnored var liveCache: LiveSnapshot?
+    @ObservationIgnored var liveSnapshotComputations = 0
     var partial: TranscriptSegment?
     var history: [SessionRecord] = []
     var message: String?
@@ -239,14 +243,10 @@ final class MobileSession {
 
     /// Every line carries its speaker label and typed notes are marked, so summaries never have to
     /// guess who said what. See docs/SHARED-LIVE-SUMMARY.md for the shared rule.
-    var summarySource: String {
-        ([MobileQuickContext.attributedNotes(notes)]
-            + allSegments.map { MobileQuickContext.attributed(Self.promptSegment($0)) })
-            .filter { !$0.isEmpty }.joined(separator: "\n")
-    }
+    var summarySource: String { liveSnapshot().source }
 
     func summaryBlockReason(for mode: MobileSummaryMode) -> String? {
-        Self.summaryBlockReason(state: state, generating: isSummarizing, source: summarySource,
+        Self.summaryBlockReason(state: state, generating: isSummarizing, source: liveSnapshot().manualSource,
                                 providerReason: summaryAvailability(for: mode))
     }
 
@@ -455,14 +455,15 @@ extension MobileSession {
 
     private func handleSummaryEvent(_ event: MobileSummaryScheduler.Event) {
         if event == .conversationChanged || event == .providerChanged { automaticReviews.reset() }
-        synchronizeAutomaticReviews()
+        let live = liveSnapshot()
+        synchronizeAutomaticReviews(live)
         if event == .automationChanged || event == .providerChanged,
-           !quickReader.context.hasChanges(quickPieces), !quickReader.isCatchingUp {
-            automaticReviews.offer(quickReader.recommendations, source: summarySource)
+           !quickReader.context.hasChanges(live.pieces), !quickReader.isCatchingUp {
+            automaticReviews.offer(quickReader.recommendations, source: live.source)
         }
         if event == .timerFired { quickWakeCount += 1 }
         let snapshot = MobileSummaryScheduler.Snapshot(recording: state == .recording, automatic: autoQuick,
-            pending: quickReader.context.hasChanges(quickPieces), reading: quickReader.isReading,
+            pending: quickReader.context.hasChanges(live.pieces), reading: quickReader.isReading,
             manualQuick: generatingMode == .quick, available: automaticQuickAvailability == nil,
             correctingSpeech: speechCorrection.working, failures: quickReader.failures)
         for action in quickScheduler.plan(event, state: snapshot) {
@@ -480,10 +481,7 @@ extension MobileSession {
         }
     }
 
-    var quickPieces: [MobileQuickContext.Piece] {
-        MobileQuickContext.pieces(notes: notes, segments: segments.map(Self.promptSegment),
-                                  liveSegments: partial.map { [Self.promptSegment($0)] } ?? [])
-    }
+    var quickPieces: [MobileQuickContext.Piece] { liveSnapshot().pieces }
 
     func updateQuickAutomatically() async {
         guard autoQuick, state == .recording, !quickReader.isReading, generatingMode != .quick else { return }
@@ -527,9 +525,11 @@ extension MobileSession {
         }
     }
 
-    private func synchronizeAutomaticReviews() {
+    private func synchronizeAutomaticReviews() { synchronizeAutomaticReviews(liveSnapshot()) }
+
+    private func synchronizeAutomaticReviews(_ live: LiveSnapshot) {
         automaticReviews.synchronize(enabled: autoQuick && state == .recording && automaticQuickAvailability == nil,
-            manualBusy: isSummarizing, pieces: quickPieces, source: summarySource, directives: vocabularyDirectives,
+            manualBusy: isSummarizing, pieces: live.pieces, source: live.source, directives: vocabularyDirectives,
             provider: { [weak self] mode in   // Summary only: the coordinator runs no Deep on iOS (#235)
                 guard let self, mode == .summary else { throw CancellationError() }
                 if let reason = self.summaryAvailability(for: .summary) { throw QuickSummaryError.message(reason) }

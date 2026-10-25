@@ -13,6 +13,8 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased since 1.16.0 (33))
 
+- Live summaries reuse their transcript snapshot between unchanged events. Manual Summary, Quick and Ask omit very short recognition hypotheses and mark longer unfinished speech as provisional, with guidance against treating it as a confirmed decision. The marker survives prompt trimming; saved transcripts remain unchanged. (#164)
+
 - OpenAI-compatible servers can use an optional per-server context limit. Answer space is reserved and oversized requests stop before sending; Mac prompt trimming includes a visible notice. Unknown capacity preserves server-managed behavior. (#210)
 
 - Documentation: the Watch speaker-privacy section now agrees with the existing opt-in saved-audio retention policy. No app behavior changes. (#225)
