@@ -226,3 +226,14 @@ intentional skips), 98.1971% line coverage; lint, nine release-helper regression
 and iOS test build passed. Independent review found an AAC read-past-EOF error, now corrected and
 reviewed clear with a compressed-file regression added. Full validation, AAC runtime test and
 installed Mac GUI/OTHERS acceptance remain pending. No merge or publication is claimed. Mac remains locked; no permission reset was attempted.
+
+
+### #129 local Ollama onboarding — implementation candidate, October 25
+
+`codex/129-ollama-onboarding` builds on PR #285's capability-discovery fixes. It distinguishes an
+unavailable catalog, empty installation, non-chat/unverified models and ready local models; adds
+onboarding readiness and rail Retry/setup actions; and annotates picker choices without mistaking a
+failed probe for an absent model. The download command is copied only; no model was downloaded or
+installed. Eighteen focused tests and 1,078 Core tests passed (seven skips, 98.1662% line coverage),
+as did lint, Mac and iOS test builds. Independent review found no correctness blockers. Full local
+validation and rendered Mac readiness flows remain pending. Not merged or published.

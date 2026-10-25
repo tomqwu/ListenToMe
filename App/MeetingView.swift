@@ -87,6 +87,7 @@ struct MeetingView: View {
     @State var activeEngine: String?
     @State var diarizer = SpeakerDiarizer()
     @State var modelStatus = ""
+    @State var localOllamaReadiness: LocalOllamaReadiness?
     @State private var modelLoadToken = 0
     @State private var showLicenses = false
     @State var lifecycleBusy = false
@@ -223,8 +224,13 @@ struct MeetingView: View {
             topControlBar(session: session, showPermissions: $showPermissions)
             conversationStatus
             if !modelStatus.isEmpty && ProviderSettings.aiMode != .off {
-                Text(modelStatus).font(.callout).foregroundStyle(.orange)
-                    .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 14)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(modelStatus).font(.callout).foregroundStyle(.orange)
+                    if ProviderSettings.aiMode == .local, let readiness = localOllamaReadiness {
+                        LocalOllamaHelp(readiness: readiness) { Task { await reloadAndHealModels() } }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 14)
             }
             if let startError {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -760,11 +766,13 @@ extension MeetingView {
 
     /// Reloads the installed Ollama chat models into the per-pane pickers.
     func reloadModels() async {
+        localOllamaReadiness = nil
         if ProviderSettings.aiMode == .apple {
             chatModels = ["Apple Intelligence"]; verifiedLocalModels = []; return
         }
         let discovered = await Self.discoverChatModels()
         chatModels = discovered.names
+        localOllamaReadiness = discovered.localReadiness
         verifiedLocalModels = discovered.verifiedLocal
     }
 
@@ -778,6 +786,7 @@ extension MeetingView {
         for role in CopilotRole.allCases { session.setModel(role, session.models[role] ?? "") }
         modelLoadToken += 1
         let token = modelLoadToken
+        localOllamaReadiness = nil
         if ProviderSettings.aiMode == .apple {
             chatModels = ["Apple Intelligence"]
             verifiedLocalModels = []
@@ -788,9 +797,14 @@ extension MeetingView {
         let discovered = await Self.discoverChatModels()
         guard token == modelLoadToken else { return }
         chatModels = discovered.names
+        localOllamaReadiness = discovered.localReadiness
         verifiedLocalModels = discovered.verifiedLocal
         modelStatus = ProviderSettings.aiMode == .off ? "AI is off" : (discovered.problem ?? (chatModels.isEmpty
             ? "No available AI models. Check Ollama and AI mode in Settings, then Refresh models." : ""))
+        if ProviderSettings.aiMode == .local, let readiness = localOllamaReadiness,
+           readiness.status != .ready || !readiness.unverified.isEmpty {
+            modelStatus = readiness.message
+        }
         // Locality comes from Ollama's own /api/show metadata, never from the model's name, so an
         // unpinned pane can never be auto-assigned a cloud model while a local one exists (#137).
         // An OpenAI-compatible catalog is never auto-assigned from (#52): see PaneModelHealing.

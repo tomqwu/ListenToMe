@@ -693,3 +693,14 @@ The app does not silently remove the opening. This can reject some prompts a spe
 could fit. Larger contexts require more memory. Default local answers are bounded to 4,096 tokens (at most a quarter of a small model window);
 Quick and correction keep their smaller limits, and output-limit notices still apply.
 Ollama Cloud models and other cloud providers keep their server-managed context.
+
+
+Local Ollama setup checks readiness in onboarding and the model status rail. **Could not reach** means
+the server or its catalog could not be read; **no models installed** means the server replied with an
+empty catalog. Capability checks that fail are labelled **not verified**, preserving pinned choices.
+A missing model is labelled **not installed** only after a successful catalog read. Use **Retry local
+check** after opening/installing Ollama or downloading a model. **Copy model download command** copies
+`ollama pull llama3.2` for you to run in Terminal; ListenToMe does not execute it or download a model
+on your behalf. See [Ollama for Mac](https://ollama.com/download/mac) and the
+[Llama 3.2 model page](https://ollama.com/library/llama3.2). Transcription and saving remain available
+with AI off (#129).

@@ -369,7 +369,9 @@ extension MeetingView {
             }
         )) {
             ForEach(modelOptions(role: role, session: session), id: \.self) { model in
-                Text("\(label) · \(model)").tag(model)
+                let modelLabel = ProviderSettings.aiMode == .local
+                    ? localOllamaReadiness?.label(for: model) ?? "\(model) (not verified)" : model
+                Text("\(label) · \(modelLabel)").tag(model)
             }
         }
         .labelsHidden().controlSize(.small)

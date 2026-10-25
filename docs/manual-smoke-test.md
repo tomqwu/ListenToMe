@@ -833,3 +833,21 @@ Capture the settings UI at native resolution and restore original preferences af
   angle brackets and multiline speaker names; speech stays literal while AI Markdown still formats.
 - With an all-day busy block and a shorter current meeting, Calendar chooses the latest-starting
   active timed meeting. At its end boundary it chooses an ongoing or next meeting correctly.
+
+
+## First-run local Ollama readiness (#129)
+
+Use a disposable local server fixture or a separate test machine; do not stop the shared Ollama server
+while contract tests or another recording are active. In onboarding, choose Local Ollama and verify:
+
+- Unreachable/malformed catalog: a reachability/catalog warning and Install link, with Retry.
+- A successful empty catalog: no installed models, a copyable `ollama pull llama3.2` command and Retry.
+- Installed embedding-only/cloud-only models: no verified local chat model; never silently route to cloud.
+- Failed capability probe: not verified, with existing pinned model retained and no false missing-model label.
+- Ready local chat model: green readiness row; status-rail picker shows its normal name. A mixed ready/
+  unverified catalog keeps the good model usable and reports the uncertain count.
+
+Switch modes or leave the Ollama step during a check, then return and retry. Stale results must not
+replace the new check or leave the spinner stuck. The rail reports the same states after Refresh
+models. Copy the download command into an inspection field and verify the exact text; do not run it
+as part of this UI check. Capture onboarding, warning and ready-state screenshots with source provenance.
