@@ -811,7 +811,7 @@ and select Check Auto compatibility. Confirm a synthetic exchange is sent to tha
 and model, without conversation text. A valid evaluator answer enables Auto; plain prose, malformed
 JSON or reasoning-only output records a format failure and pauses Auto with a reason. Summary
 remains usable. A successful recheck clears that server/model failure; choosing another model does
-not inherit it. A connection failure and Cancel preserve the old result. Unsaved URL/key edits
+not inherit it. A connection failure and Cancel preserve the old result. Unsaved URL/key/context-limit edits
 disable the check, so draft fields cannot change the recipient. Capture the result screen and restore
 original settings after the test.
 
