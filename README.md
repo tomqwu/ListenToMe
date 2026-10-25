@@ -363,7 +363,9 @@ once. macOS asks each binary for keychain access the first time it reads the ite
 - **New conversation (⌘N).** Finishes and saves the current conversation, then clears transcript,
   AI context, notes, names and attached references. Model/language/appearance preferences remain.
 - **History (⌘F).** Search saved conversations, open their full contents, copy them, and export them
-  in any format below, including recap and PDF.
+  in any format below, including recap and PDF. Delete one conversation from its row’s context
+  menu or detail view after confirmation; its saved audio and search entry are removed too. Other
+  conversations and previously exported copies stay intact.
   Search is case-, accent- and width-insensitive ("cafe" finds "café", "ai" finds "ＡＩ"), splits the
   query on any whitespace including tabs, ranks whole-word matches above matches inside longer words,
   and covers title, summary, notes and the transcript's own words (not the "You:"/"Others:" prefixes).

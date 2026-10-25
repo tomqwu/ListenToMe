@@ -312,6 +312,9 @@ struct MeetingView: View {
         }
         .sheet(isPresented: $showSearch) {
             SessionSearchView(store: sessionStore, onClear: { dropCurrentSessionFromSaving() },
+                              onDelete: { id in
+                                  if id == currentSessionID { dropCurrentSessionFromSaving() }
+                              },
                               onOpen: { openConversation($0) }, askRoute: { Self.historyAskRoute() })
         }
         .sheet(isPresented: $showSpeakerBreakdown) {
