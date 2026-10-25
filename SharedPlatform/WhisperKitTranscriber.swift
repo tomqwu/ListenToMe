@@ -290,6 +290,7 @@ actor WhisperKitTranscriber: Transcribing {
             do {
                 let kit = try await WhisperKit(
                     model: Self.modelName,
+                    computeOptions: WhisperComputePolicy.options,
                     verbose: false,
                     logLevel: .error,
                     download: true
