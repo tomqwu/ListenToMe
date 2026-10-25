@@ -61,8 +61,8 @@ Education & Research) and your own **My terms** list help recognition, AI speech
 summaries on both platforms; after about a minute of speech the phone may suggest one, decided on the
 device. Meeting use-case presets, reference files, audio-file import and WhisperKit transcription are macOS-only.
 Editable domain prompt presets are available on both platforms.
-The iPhone and iPad app is distributed through TestFlight; the latest build is **1.16.0 (33)**
-(2026-10-24). An Apple Watch companion is built behind a build flag but not shipped yet
+The iPhone and iPad app is distributed through TestFlight; the latest build is **1.17.0 (34)**
+([2026-10-25 TestFlight release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.17.0-build34)). An Apple Watch companion is built behind a build flag but not shipped yet
 ([#181](https://github.com/tomqwu/ListenToMe/issues/181)).
 See [iOS setup, validation and distribution](docs/IOS.md).
 
@@ -77,7 +77,7 @@ make ios-test
 
 ![ListenToMe — four-pane meeting copilot](docs/images/screenshot.png)
 
-**iPhone and iPad** (1.17.0 candidate)
+**iPhone and iPad** (1.17.0)
 
 <p>
 <img src="docs/images/ios/iphone-01-live.png" width="200" alt="Live transcript and Quick Summary">
@@ -562,7 +562,8 @@ explicit AI processing modes, and the iOS app.
 GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs checks for PRs to `main` on
 `macos-26` runners: both app targets compile with the checked-in dependency lock, and the full
 `ListenToMeCore` test suite (unit + headless integration/e2e) runs with a **coverage floor of 95%**
-enforced by `scripts/check-coverage.sh`. SwiftLint, iOS simulator UI tests, GUI/audio acceptance, and
+enforced by `scripts/check-coverage.sh`. The core check also enforces [BDD contracts](docs/BDD.md),
+tests their failure paths, and executes bound core/tooling scenarios. SwiftLint, iOS simulator UI tests, GUI/audio acceptance, and
 distribution checks require local validation via [`docs/manual-smoke-test.md`](docs/manual-smoke-test.md).
 
 `make e2e` runs the checks CI can't (it needs a real Mac + Ollama): it builds the app target,
@@ -656,7 +657,11 @@ the server's base URL: LM Studio (`http://localhost:1234/v1`), vLLM or llama.cpp
 
 ## Contributing
 
-PRs welcome. Before pushing, run the CI-equivalent gate:
+PRs welcome. Follow the repository-wide [BDD workflow](docs/BDD.md): define Given/When/Then examples
+in [Behaviors](Behaviors/), reproduce them with failing native tests, implement, then refactor with
+passing tests. Include scenario IDs and actual red/green evidence in the PR. Existing tests in the
+initial catalog are baseline adoption; they do not establish complete legacy behavior coverage.
+Before pushing, run:
 
 ```bash
 make pre-push

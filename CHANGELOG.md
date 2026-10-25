@@ -11,7 +11,14 @@ does not show it again, and a fresh install does not see it at all; see
 [`docs/IOS.md`](docs/IOS.md) for the fuller per-build technical notes and
 [`metadata/ios/en-CA/`](metadata/ios/en-CA/) for TestFlight "What to Test" text.
 
-## iOS (unreleased since 1.17.0 (34) candidate)
+## Repository tooling (unreleased)
+
+- Require Given/When/Then behavior contracts and changed native regression-test bindings for behavior
+  changes across apps, shared services and delivery tooling. Add a baseline scenario catalog,
+  executable native-test adapter, local/CI gates and PR evidence template. This changes development
+  workflow only; it does not require a binary release or claim exhaustive legacy acceptance.
+
+## iOS (unreleased since 1.17.0 (34))
 
 - Documentation: the Watch speaker-privacy section now agrees with the existing opt-in saved-audio retention policy. No app behavior changes. (#225)
 
@@ -25,9 +32,9 @@ does not show it again, and a fresh install does not see it at all; see
 - iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
 - Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
 
-## iOS 1.17.0 (34) — release candidate
+## iOS 1.17.0 (34) — 2026-10-25 (TestFlight)
 
-Local candidate validation and screenshots are complete. The merged-source archive and accepted TestFlight upload are pending; no publication is claimed.
+Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple accepted the upload on October 25; processing is VALID, internal state is IN_BETA_TESTING, and Dev access plus en-CA metadata were read back. Physical-device acceptance and App Store listing screenshot upload remain pending.
 
 - Deleting a conversation immediately cancels and clears its streamed History answer and citations, preventing deleted content from returning when an old request finishes. (#131)
 

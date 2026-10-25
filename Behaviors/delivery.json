@@ -1,0 +1,67 @@
+{
+  "feature": "Build and beta distribution safeguards",
+  "scenarios": [
+    {
+      "id": "RELEASE-001",
+      "name": "Require actual upload acceptance",
+      "given": "an archive export succeeded without upload acceptance",
+      "when": "the TestFlight helper evaluates its result",
+      "then": "no accepted-upload receipt is created",
+      "covers": [
+        "scripts/ios-testflight.sh",
+        "scripts/test-ios-testflight.py",
+        "Config/*",
+        "project.yml",
+        "watch-embed.yml",
+        "Makefile",
+        "Package.swift",
+        "signing.local.mk.example"
+      ],
+      "bindings": [
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_export_alone_is_not_acceptance"
+        }
+      ]
+    },
+    {
+      "id": "RELEASE-002",
+      "name": "Do not upload the same build twice",
+      "given": "Apple has accepted an upload",
+      "when": "the helper is called again for that build",
+      "then": "the accepted receipt prevents another upload",
+      "covers": [
+        "scripts/ios-testflight.sh",
+        "scripts/test-ios-testflight.py"
+      ],
+      "bindings": [
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_acceptance_receipt_and_duplicate_guard"
+        }
+      ]
+    },
+    {
+      "id": "RELEASE-003",
+      "name": "Keep unreleased Watch out of the beta",
+      "given": "the Watch physical-device release gate is still open",
+      "when": "a candidate embeds a Watch app",
+      "then": "the helper refuses distribution",
+      "covers": [
+        "Watch/*",
+        "watch-embed.yml",
+        "project.yml",
+        "scripts/ios-testflight.sh"
+      ],
+      "bindings": [
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_embedded_watch_app_is_rejected_until_watch_release"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,126 @@
+{
+  "feature": "Grounded AI, language, vocabulary and user control",
+  "scenarios": [
+    {
+      "id": "AI-001",
+      "name": "Keep saved conversation instructions",
+      "given": "a conversation has custom summary instructions",
+      "when": "it is archived and reopened",
+      "then": "the same instructions survive while older archives remain readable",
+      "covers": [
+        "Sources/ListenToMeCore/*",
+        "SharedPlatform/ConversationPromptEditor.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationPromptTests.swift",
+          "test": "ConversationPromptTests/testInstructionsSurviveArchiveAndRecordTransformations"
+        }
+      ]
+    },
+    {
+      "id": "AI-002",
+      "name": "Keep Ask separate from summaries",
+      "given": "a conversation already has summaries and review state",
+      "when": "the user taps a suggested question",
+      "then": "a separate answer is generated without changing summaries or review state",
+      "covers": [
+        "iOS/MobileSession*"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSuggestedPromptsTests.swift",
+          "test": "MobileSuggestedPromptsTests/testATapIsASeparateAskThatLeavesEverySummaryAndReviewStateAlone"
+        }
+      ]
+    },
+    {
+      "id": "AI-003",
+      "name": "Protect custom-server credentials",
+      "given": "an API key is associated with a custom server origin",
+      "when": "a request targets another scheme, host or port",
+      "then": "the key stays bound to its original origin",
+      "covers": [
+        "Sources/ListenToMeCore/OpenAI*"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/OpenAICompatibleEndpointTests.swift",
+          "test": "OpenAICompatibleEndpointTests/testOriginsBindKeysToSchemeHostAndPort"
+        }
+      ]
+    },
+    {
+      "id": "AI-004",
+      "name": "Bind each cloud service to its own credentials",
+      "given": "several cloud presets have credentials",
+      "when": "the user switches between vendors",
+      "then": "each vendor uses its own origin-bound Keychain item",
+      "covers": [
+        "Sources/ListenToMeCore/Cloud*"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CloudAIPresetTests.swift",
+          "test": "CloudAIPresetTests/testEachVendorHasItsOwnKeychainItemBoundToItsOwnOrigin"
+        }
+      ]
+    },
+    {
+      "id": "AI-005",
+      "name": "Respect a fixed transcription language",
+      "given": "the user has chosen a fixed language",
+      "when": "automatic detection proposes another language",
+      "then": "the fixed language is never overridden",
+      "covers": [
+        "Sources/ListenToMeCore/Language*"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/LanguageDetectionPolicyTests.swift",
+          "test": "LanguageDetectionPolicyTests/testAFixedLanguageIsNeverOverridden"
+        }
+      ]
+    },
+    {
+      "id": "AI-006",
+      "name": "Preserve per-conversation vocabulary",
+      "given": "a conversation has domain and personal vocabulary",
+      "when": "it is archived, transformed and exported",
+      "then": "its vocabulary survives those transformations",
+      "covers": [
+        "Sources/ListenToMeCore/ConversationVocabulary*",
+        "SharedPlatform/SessionVocabulary.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationVocabularyTests.swift",
+          "test": "ConversationVocabularyTests/testVocabularySurvivesArchiveTransformationsAndExport"
+        }
+      ]
+    },
+    {
+      "id": "AI-007",
+      "name": "Summarize the selected evidence",
+      "given": "the user selects timed transcript lines with speakers",
+      "when": "a selection-summary request is assembled",
+      "then": "the prompt includes only those selected lines with their provenance",
+      "covers": [
+        "Sources/ListenToMeCore/Selection*"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SelectionSummaryTests.swift",
+          "test": "SelectionSummaryTests/testThePromptCarriesOnlyTheSelectionWithTimesAndSpeakers"
+        }
+      ]
+    }
+  ]
+}

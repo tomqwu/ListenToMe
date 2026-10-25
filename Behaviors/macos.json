@@ -1,0 +1,53 @@
+{
+  "feature": "Mac capture and workspace",
+  "scenarios": [
+    {
+      "id": "MAC-001",
+      "name": "Prepare speech before capture",
+      "given": "the speech model is not yet prepared",
+      "when": "the user starts listening",
+      "then": "the transcriber is prepared before capture starts",
+      "covers": [
+        "App/*"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/TranscriberPrepareTests.swift",
+          "test": "TranscriberPrepareTests/testStartPreparesTranscriberBeforeStartingCapture"
+        }
+      ],
+      "manual": {
+        "reason": "Installed Mac audio and TCC cannot be accepted by a headless test.",
+        "steps": [
+          "Install the candidate with the stable Dev signing identity.",
+          "Play known system speech and verify actual transcript lines labeled OTHERS; inspect affected controls and capture screenshots.",
+          "Preserve source/signing evidence and clean only the completed Dev session according to AGENTS.md."
+        ]
+      }
+    },
+    {
+      "id": "MAC-002",
+      "name": "Allocate readable workspace panes",
+      "given": "the workspace offers room for different reading priorities",
+      "when": "the user changes pane balance",
+      "then": "requested reading space is allocated without sacrificing minimum widths",
+      "covers": [
+        "App/*",
+        "Sources/ListenToMeCore/MeetingPane*"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/MeetingPaneBalanceTests.swift",
+          "test": "MeetingPaneBalanceTests/testBalanceAllocatesRequestedReadingSpace"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/MeetingPaneBalanceTests.swift",
+          "test": "MeetingPaneBalanceTests/testNarrowPaneNeverSacrificesOtherPanesMinimum"
+        }
+      ]
+    }
+  ]
+}

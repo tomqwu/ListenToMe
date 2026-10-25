@@ -199,6 +199,10 @@ and the production baseline need not match.
 Read `AGENTS.md`, inspect `git status`, and fetch the merged branch. Preserve unrelated work; use a
 clean checkout/worktree if needed. Inspect the new PR's code, test evidence, and hosted CI. Reuse
 valid evidence for the exact source rather than rerunning tests solely because the agent changed.
+Check the changed [BDD scenarios](BDD.md), their actual red/green evidence and any listed manual
+acceptance. `make bdd-check` enforces changed behavior/test bindings; `make ios-test` also verifies
+that all bound iOS unit/UI tests actually passed in the full run. Neither substitutes for device
+acceptance or an Apple upload receipt.
 Run missing relevant checks: lint, core coverage, iOS build/UI tests and macOS build. Exercise the
 changed user flow locally and inspect its rendered UI; GitHub Actions builds both apps and runs the
 headless `ListenToMeCore` unit/integration test suite plus the 95% coverage floor as a CI check; GUI,

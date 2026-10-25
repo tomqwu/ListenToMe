@@ -1,0 +1,64 @@
+{
+  "feature": "Conversation persistence and privacy",
+  "scenarios": [
+    {
+      "id": "DATA-001",
+      "name": "Recover a saved conversation",
+      "given": "a conversation has been checkpointed",
+      "when": "the archive is reopened and the same conversation is saved again",
+      "then": "one conversation with its original content remains readable",
+      "covers": [
+        "Sources/ListenToMeCore/Session*",
+        "Sources/ListenToMeCore/Conversation*"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SessionArchiveTests.swift",
+          "test": "SessionArchiveTests/testCheckpointSurvivesReopeningAndUpsertsOneConversation"
+        }
+      ]
+    },
+    {
+      "id": "DATA-002",
+      "name": "Delete only the chosen conversation",
+      "given": "two conversations have private owned data",
+      "when": "the user deletes one conversation",
+      "then": "only that conversation and its owned data are erased",
+      "covers": [
+        "Sources/ListenToMeCore/Conversation*",
+        "SharedPlatform/HistorySearchModel.swift",
+        "iOS/MobileSession+History*"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationRemovalTests.swift",
+          "test": "ConversationRemovalTests/testRemovingOneConversationErasesOnlyItsOwnedDataAndKeepsOthers"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileHistorySearchTests.swift",
+          "test": "MobileHistoryAskStopTests/testDeletingAConversationCancelsAnAnswerThatCapturedItsText"
+        }
+      ]
+    },
+    {
+      "id": "DATA-003",
+      "name": "Export conversation formats",
+      "given": "a conversation has timed transcript segments",
+      "when": "the user exports supported formats",
+      "then": "each format preserves the expected content and timestamps",
+      "covers": [
+        "Sources/ListenToMeCore/Session*"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SessionExportGoldenTests.swift",
+          "test": "SessionExportGoldenTests/testTimedConversationInEveryFormat"
+        }
+      ]
+    }
+  ]
+}

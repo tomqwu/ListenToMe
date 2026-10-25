@@ -1,5 +1,11 @@
 # ListenToMe — Manual Smoke Test
 
+For changed behavior, start from its [BDD scenario](BDD.md) and record source-matched acceptance
+against the stated Given/When/Then outcome. Run `make bdd-check` before the existing local gates;
+`make bdd-manual` lists hardware acceptance obligations without marking them passed. The catalog
+and automated tests do not replace the installed-app checks below. Reuse standing authorization
+for the same Dev environment; involve the maintainer only for new access or OS authentication.
+
 > **Note:** `make e2e` already covers the app build, app-bundle path resolution, and a real LLM
 > contract test (streaming through `OllamaProvider`). This document covers the audio/transcription
 > path that cannot be automated: mic capture, system-audio capture, and live speech-to-text — all

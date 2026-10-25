@@ -33,7 +33,7 @@ run: build
 	echo "Launching $$APP"; \
 	open "$$APP"
 
-pre-push: lint test build
+pre-push: bdd-check lint test build
 	@echo "pre-push checks passed"
 
 e2e: build
@@ -79,9 +79,12 @@ watch-build: gen
 		-onlyUsePackageVersionsFromResolvedFile $(IOS_SIGN_FLAGS) build
 
 ios-test: gen
+	mkdir -p dist/bdd
 	xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMeIOS -configuration Debug \
 		-destination '$(IOS_DESTINATION)' -derivedDataPath .build/ios \
-		-onlyUsePackageVersionsFromResolvedFile $(IOS_SIGN_FLAGS) -parallel-testing-enabled NO test
+		-onlyUsePackageVersionsFromResolvedFile $(IOS_SIGN_FLAGS) -parallel-testing-enabled NO test | tee dist/bdd/ios-full.log
+	python3 scripts/bdd.py --verify-log ios-unit dist/bdd/ios-full.log
+	python3 scripts/bdd.py --verify-log ios-ui dist/bdd/ios-full.log
 
 ios-archive: gen
 	xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMeIOS -configuration Release \
@@ -101,9 +104,25 @@ ios-testflight:
 validate-local:
 	@test "$$(uname -s)" = Darwin || { echo 'Run validation on a local Mac'; exit 1; }
 	@test "$${GITHUB_ACTIONS:-false}" != true || { echo 'GUI/audio/device/e2e validation must run locally, not in GitHub Actions'; exit 1; }
+	$(MAKE) bdd-check
+	python3 scripts/test-bdd.py
 	bash -n scripts/ios-testflight.sh
 	python3 scripts/test-ios-testflight.py
 	$(MAKE) lint
 	./scripts/check-coverage.sh 95
 	$(MAKE) ios-test
 	$(MAKE) e2e
+
+# Given/When/Then contracts bind directly to native tests; no second test framework.
+# Override BDD_BASE for a stacked PR's actual base. The default checks against main.
+BDD_BASE ?= origin/main
+BDD_SUITE ?= core
+.PHONY: bdd-check bdd-test bdd-manual
+bdd-check:
+	python3 scripts/bdd.py --base '$(BDD_BASE)'
+
+bdd-test: bdd-check
+	python3 scripts/bdd.py --run '$(BDD_SUITE)' --destination '$(IOS_DESTINATION)'
+
+bdd-manual:
+	python3 scripts/bdd.py --manual
