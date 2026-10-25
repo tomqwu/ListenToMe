@@ -220,9 +220,12 @@ public enum OnDemandGrounding {
     /// `segment` cut to its most recent words so its prompt cost fits `budget`; nil when not even a
     /// few words fit beside its label.
     private static func shortenedLine(_ segment: TranscriptSegment, to budget: Int) -> TranscriptSegment? {
-        let allowance = budget - segment.speakerLabel.count - 3
-        guard allowance >= 8 else { return nil }
-        return TranscriptSegment(id: segment.id, source: segment.source, text: String(segment.text.suffix(allowance)),
+        let tag = !segment.isFinal && segment.text.hasPrefix(ConversationStore.provisionalTag)
+            ? ConversationStore.provisionalTag : ""
+        let allowance = budget - segment.speakerLabel.count - 3 - tag.count
+        guard allowance >= (tag.isEmpty ? 8 : ConversationStore.provisionalMinimumCharacters) else { return nil }
+        let text = tag + String(segment.text.dropFirst(tag.count).suffix(allowance))
+        return TranscriptSegment(id: segment.id, source: segment.source, text: text,
                                  isFinal: segment.isFinal, start: segment.start, end: segment.end,
                                  speakerID: segment.speakerID, speakerName: segment.speakerName)
     }

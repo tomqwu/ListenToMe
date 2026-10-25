@@ -67,8 +67,8 @@ struct MobileAISettingsView: View {
                         .disabled(ai.testing || ai.refreshing)
                 }
                 Text("Point this at an Ollama server you run — use your computer's name, for example "
-                     + "http://your-mac.local:11434 on the same Wi-Fi network. iOS blocks plain http to a "
-                     + "numeric address such as 192.168.1.10, so the .local name is required. "
+                     + "http://your-mac.local:11434 on the same Wi-Fi network. Plain http is allowed only for "
+                     + ".local, localhost, loopback or link-local addresses. Use https for other addresses. "
                      + "No API key is needed for your own server, and your saved Ollama Cloud key is "
                      + "never sent there. The app never switches servers on its own.").font(.caption)
                 Button(ai.refreshing ? "Refreshing models…" : "Refresh models from API") {
@@ -118,7 +118,7 @@ struct MobileAISettingsView: View {
 
     /// Names the exact destination so the recipient of a summary is never implicit.
     private var destinationExplanation: String {
-        let endpoint: String = ai.endpointDescription
+        let endpoint: String = ai.endpointLabel
         let lead: String = ai.provider == .ollama
             ? "Summarize sends your notes and transcript to \(endpoint) using the selected model. "
             : "Speech correction uses \(endpoint). Your summaries " + (ai.provider == .apple

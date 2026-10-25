@@ -47,11 +47,13 @@ extension MobileSession {
     /// The copilot's answer prompt over the notes and the speech that fits the provider (fenced as
     /// data), then the tapped request; plus the card's line saying which part of the conversation was read.
     func askRequest(_ prompt: String) -> (LLMRequest, String?) {
-        let system = Self.askSystem
+        let live = liveSnapshot()
+        let system = LLMRequest(system: Self.askSystem, messages: [])
+            .addingGuidance(live.provisionalNotice).system
         let instruction = "\n\n" + PromptBuilder.askInstruction(prompt) + " Answer briefly."
         let window: Int? = askUsesCloud ? nil : PromptBudget.appleIntelligenceCharacters
         let excerpt = OnDemandGrounding.excerpt(
-            notes: notes, segments: allSegments.map(Self.promptSegment), summary: summary,
+            notes: notes, segments: live.manualSegments, summary: summary,
             summaryCoveredIDs: answerNotices.summaryCoverage(showing: summary),
             budget: OnDemandGrounding.oneShotBudget(window: window, system: system) - instruction.count)
         let request = LLMRequest(system: system,
