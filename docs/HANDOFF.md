@@ -232,3 +232,16 @@ Watch speaker transcript/Notes simulator screenshots were preserved and visually
 simulator acceptance, not physical-device acceptance. Current-main integration passed at `ac20342`: all
 46 focused iOS lifecycle/backup/preparation/Watch checks, Core tests (1,060, seven skips, 98.1048%), lint,
 signed Mac build and all three hosted checks. Evidence: `dist/speaker-lifecycle-188` and external release evidence. Not merged or published.
+
+## In progress: iOS live snapshot and provisional prompts (#164)
+
+Branch `codex/164-ios-live-snapshot` implements memoized live summary inputs and provisional
+floor/tag/notice handling for manual Summary, Quick and Ask. The shared excerpt shortener preserves
+the marker and minimum evidence. Twenty-one Core grounding tests pass; iOS app and all test targets
+compile for both simulator architectures, lint passes, and independent logic review found no blockers.
+Full `make validate-local` passed at `2d1b2cd`, including the new iOS runtime regressions, Core
+coverage above 98%, release helpers, signed Mac build and real provider contracts. A dedicated manual
+Summary simulator journey now verifies provisional request tagging and removal after final recognition;
+all five focused checks passed at `00cc28f`, and both native-resolution screenshots were inspected.
+Current-main integration lint/Core (1,061 tests, seven skips, 98.1056%) and all three hosted checks passed.
+Physical-device acceptance and publication remain pending. Evidence: `dist/live-snapshot-164`.
