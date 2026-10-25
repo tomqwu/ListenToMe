@@ -15,6 +15,16 @@ does not show it again, and a fresh install does not see it at all; see
 
 - Re-transcribe saved audio in a chosen language, preview the result, then replace the transcript or keep the original. Notes, attachments and summaries stay; speaker names and corrections reset. Recognition stays on-device. (#224)
 
+- Automatic language detection can start and re-check from microphone audio activity even when the current transcriber recognizes no words. Silence skips inference, isolated sounds do not download the model, and Stop remains responsive. All analysis stays on-device using the existing temporary buffer. (#216)
+
+- Watch imports retain playable audio only when Save audio recordings is on, with reconnect queueing, retry-safe storage, consistent playback timing and existing deletion/expiry controls (#225). Watch remains excluded from distribution.
+
+- Apple Watch imports can identify speakers on-device when Identify speakers is enabled and its models are already loaded. Every audio window is processed, including long recordings and gaps, without disturbing live iPhone speaker analysis. Labels are saved with the transcript before audio is deleted. Watch remains excluded from distribution pending device acceptance. (#192)
+
+- iPhone Duo lets you give more space to Transcript or Quick Summary and remembers your choice. A compact transcript actions menu keeps the landscape toolbar readable.
+
+- Apple Watch imports detect the spoken language with an already-downloaded on-device model in Automatic mode and keep that language across retries and later transfers. Unavailable or uncertain detection falls back to the device language without downloading a model. Watch remains excluded from distribution pending device acceptance. (#200)
+
 - Local Ollama requests size their context window to the full prompt instead of relying on a small server default. Prompts beyond the safe model capacity show an error before an answer request; cloud context remains server-managed. (#230)
 
 - Vocabulary presets added to a conversation are saved and restored when you reopen it. Auto Quick now uses its domain and glossary, while new conversations keep only your device-wide defaults. (#237)

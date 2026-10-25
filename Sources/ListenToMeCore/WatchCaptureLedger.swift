@@ -14,8 +14,14 @@ public struct WatchCaptureLedger: Codable, Equatable, Sendable {
         public let index: Int
         public let startOffset: TimeInterval
         public let duration: TimeInterval
+        /// A retained copy was committed; retries must not undo a later user deletion.
+        public var audioSaved: Bool?
         public var state: ChunkState
-        public var end: TimeInterval { startOffset + duration }
+        public var audioOffset: TimeInterval?
+        public var audioDuration: TimeInterval?
+        public var effectiveOffset: TimeInterval { audioOffset ?? startOffset }
+        public var effectiveDuration: TimeInterval { audioDuration ?? duration }
+        public var end: TimeInterval { effectiveOffset + effectiveDuration }
     }
 
     /// How long a missing chunk is waited for after the last delivery, and how long a recording with
@@ -26,6 +32,18 @@ public struct WatchCaptureLedger: Codable, Equatable, Sendable {
 
     public let recordingID: UUID
     public let startedAt: Date
+    /// Chosen before transcription; retained across retries, new chunks and app launches.
+    public private(set) var transcriptionLocale: String?
+
+    public mutating func pinTranscriptionLocale(_ locale: String) {
+        if transcriptionLocale == nil { transcriptionLocale = locale }
+    }
+    public mutating func markAudioSaved(_ index: Int, offset: TimeInterval, duration: TimeInterval) {
+        guard let position = chunks.firstIndex(where: { $0.index == index }) else { return }
+        chunks[position].audioSaved = true
+        chunks[position].audioOffset = offset
+        chunks[position].audioDuration = duration
+    }
     /// Sorted by index.
     public private(set) var chunks: [Chunk] = []
     /// The index of the recording's last chunk, once the watch has said which one it is.

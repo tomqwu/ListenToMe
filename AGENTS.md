@@ -152,3 +152,19 @@ store listing with stale screenshots or claim screenshot publication without upl
 
 Never reset broad macOS permissions. For the known ScreenCaptureKit -3801 issue, use the targeted
 production-app recovery and verification procedure in `docs/manual-smoke-test.md` when authorized.
+
+
+## Dev app cleanup after testing
+
+After each completed macOS Dev-app testing session, preserve its screenshots, logs and source/signing
+provenance. Check for other running Dev sessions and unsaved work before closing or removing an
+app; do not interrupt them. Then close the completed test session's app and move its temporary `.app`
+bundles to Trash. Confirm each bundle's `CFBundleIdentifier` is exactly `com.tomwu.ListenToMe.dev`
+before removal.
+
+The maintainer authorizes cleanup of the Dev app's permissions after testing (2026-10-24):
+`tccutil reset All com.tomwu.ListenToMe.dev`. This is an app-scoped
+reset, never a system-wide reset. Do not reset production `com.tomwu.ListenToMe`, other applications,
+or the login keychain. Preserve conversation data, settings and API keys. Record cleanup results and
+any active-session exception. Perform cleanup at the end of the test session, not between builds or
+while an acceptance run is active. See `docs/RELEASING.md` for signing and cleanup details.

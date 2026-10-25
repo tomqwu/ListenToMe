@@ -33,7 +33,7 @@ nowhere else.
 | On-watch transcription | **No.** `SpeechAnalyzer` and `SpeechTranscriber` are not available on watchOS (§3). The phone transcribes. |
 | Watch background recording | Needed for Slice 3. Without it, lowering the wrist suspends the app and ends the recording. **Approved** (decision 2). |
 | iPhone background recording | **Unchanged.** The iPhone never records in the background. It only *receives* files, and transcribes them while it is in the foreground. |
-| Raw audio | Kept only until it is transcribed, then deleted from both devices. No "keep the audio" option. **Approved** (decision 3). The iPhone's own opt-in Save audio recordings (#55) does not apply to watch recordings: their chunks are still deleted once transcribed. The privacy page's "does not save raw microphone audio" changes in the release that ships watch-mic capture, not before. |
+| Raw audio | Decision 3 revised October 24 (#225): Watch queues until paired-phone transfer succeeds. Phone keeps playback copies only when Save audio recordings is on during import; otherwise deletes temporary parts after transcription. Same protected storage, backup exclusion, deletion and expiry as iPhone saved audio. |
 | Targets | One embedded watchOS app target (`ListenToMeWatch`). No separate WatchKit extension target (§5.1). |
 | Shared code | The wire protocol and the chunk, ledger and retention rules go in `ListenToMeCore`, unit-tested by `swift test` under the 95% coverage floor. The watch target compiles only the files it needs. |
 | Versioning | The watch app uses the iOS app's `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION`, and the TestFlight helper checks all three bundles. |
@@ -137,12 +137,13 @@ reference documentation. **U** means not verified. Every U item is a spike task 
    `UIBackgroundModes`. A watch message that wakes the phone app in the background is answered
    without activating the audio session. Received watch audio is transcribed only while the phone
    app is in the foreground (§5.5).
-5. **Raw audio is transient.** The watch deletes each chunk once the transfer to the phone reports
+5. **Transfer audio is transient; playback retention is opt-in (#225).** The watch deletes each chunk once the transfer to the phone reports
    success (`session(_:didFinish:error:)` with no error). The phone deletes each chunk once its
-   transcript segments are saved in the conversation archive. Chunks waiting on either device are
+   transcript segments are saved in the conversation archive. With Save audio recordings on during
+   import, a committed playback copy is retained first. Chunks waiting on either device are
    written with data protection (`completeUntilFirstUserAuthentication` on the phone, matching the
-   archive). On the phone they are covered by the existing **Exclude conversations from iCloud
-   backup** setting, the same as the share inbox. Any audio still waiting is visible: on the watch
+   archive). On the phone both temporary and retained audio are always excluded from iCloud/Finder
+   backups, independent of the conversation backup setting. Any audio still waiting is visible: on the watch
    as "N recordings waiting for iPhone", on the phone as a pending row in History. Both offer
    Delete.
 6. **Consent.** The first watch recording shows the same reminder as the privacy page: only record
@@ -150,10 +151,8 @@ reference documentation. **U** means not verified. Every U item is a spike task 
 
 ### 4.2 Documents that must change when Slice 3 ships
 
-- `docs/ios-privacy.md` says the app does not save raw microphone audio unless the opt-in Save audio
-  recordings setting (#55) is on, and that Apple Watch recordings keep no audio. It must also
-  describe watch recordings being held as audio on the watch and the iPhone until they are
-  transcribed, then deleted.
+- `docs/ios-privacy.md` describes temporary transfer storage separately from opt-in playback
+  retention, Watch-to-paired-iPhone sync, expiry/deletion controls and storage-failure recovery.
 - `docs/IOS.md` needs a new row in tier 2 or tier 3 for Apple Watch, or a watch section, saying the
   watch records in the background with a system indicator and the iPhone still does not. The tier-3
   row "Background recording" stays true for the iPhone. Also update the version policy (three
@@ -330,8 +329,7 @@ never finalized, because the app was killed mid-chunk, is discarded and the reco
    - Title "Apple Watch · <start time>".
    - Segments with `source: .you` and `speakerName: "Apple Watch"`.
 
-   The language is the phone's **Transcription → Language** at the time the drain runs
-   (decision 7). Chunks are fed **in index order into one `SpeechAnalyzer` session** as buffers carrying
+   The locale is pinned in the ledger before the first transcription (decision 7, updated by #200). Chunks are fed **in index order into one `SpeechAnalyzer` session** as buffers carrying
    `bufferStartTime = startOffset` (F14), so words that span a chunk boundary are not cut. The
    segments from each chunk are appended and the archive is saved. Only then is that chunk's audio
    deleted and the chunk marked transcribed in the manifest. A drain that is interrupted by
@@ -340,10 +338,9 @@ never finalized, because the app was killed mid-chunk, is discarded and the reco
 4. **Complete.** When the last chunk is transcribed, the inbox folder is removed, History shows the
    conversation with a "From Apple Watch" note, and a status message says so. The open conversation
    is not switched, and no notification is posted (decisions 6 and 8). The conversation then
-   behaves like any other: search, Summary, Quick, export, delete (Deep is macOS-only since #235). Its lines keep the
-   "Apple Watch" label: #180's speaker identification does not run on them, never relabels them, and
-   prompts read them as "You" (decision 11; speaker labels for watch recordings are
-   [#192](https://github.com/tomqwu/ListenToMe/issues/192)).
+   behaves like any other: search, Summary, Quick, export, delete (Deep is macOS-only since #235). Its lines use file-based speaker identification when enabled and models are loaded (#192),
+   or keep Apple Watch when no confident identity is available. Unidentified lines read as You in
+   prompts. Live microphone passes never relabel Watch lines, including after speaker rename.
 5. **Gaps.** If `isLast` has arrived but an index is still missing 24 hours later, the drain
    transcribes what it has and adds a visible note: "Part of this recording (about N min) did not
    arrive from Apple Watch."
@@ -564,11 +561,10 @@ implementation, on 2026-10-23.
    `UIBackgroundModes: [audio]`, so lowering the wrist does not end a recording. The iPhone app stays
    foreground-only and declares no background modes. The question as posed included the risk that
    App Review questions recording under the audio mode (F5); the approval is recorded on that basis.
-3. **Transient raw audio is approved, with no "keep the audio" option.** Watch audio is stored on
-   the watch and on the iPhone only until it is transcribed, then deleted automatically.
-   `docs/ios-privacy.md` changes its "does not save raw microphone audio" wording in the release that
-   ships watch-mic capture, not before. Keeping watch audio when Save audio recordings (#55) is on is a
-   separate, open proposal ([#225](https://github.com/tomqwu/ListenToMe/issues/225)).
+3. **Watch audio retention approved October 24 (#225).** Queue audio on the Watch while disconnected;
+   transfer only to the paired iPhone and delete the Watch copy after transfer success. On the phone,
+   Save audio recordings applies at import: on retains a playable copy; off deletes temporary audio
+   after transcription. The updated consent is shown once again (V2), including to earlier testers.
 4. **Slice 1 is not released alone.** Slices 1–3 merge to `main` unreleased and ship together on one
    release train when watch-mic capture (Slice 3) works. User-facing docs change in that train's
    release-prep change. `CHANGELOG.md` carries the work under Unreleased until then.
@@ -576,8 +572,7 @@ implementation, on 2026-10-23.
    200 MB free storage, and stop and save at 10% battery.
 6. **A finished watch conversation lands in History** with a status message. It does not switch the
    conversation that is open.
-7. **Transcription language:** the phone's current **Transcription → Language** at transcription
-   time. Nothing is chosen on the watch.
+7. **Transcription language (#200):** a fixed phone language is respected; Automatic uses an already-downloaded language model and falls back to the device locale when unavailable or uncertain. The chosen locale is pinned before transcription and survives later drains and Settings changes. Nothing is chosen on the watch; import does not download the detection model.
 8. **No phone notification in v1.** History and the status message report a ready watch
    conversation, so the app gains no notification-permission prompt.
 9. **`MobileFileTranscriber` stays internal to watch captures.** This spec made no explicit
@@ -585,9 +580,11 @@ implementation, on 2026-10-23.
    `docs/IOS.md` tier 2 keeps "Audio-file import: No". A user-facing audio-file import would be its
    own issue.
 10. **Minimum watchOS is 26.0**, matching the iOS floor. The spikes do not raise it.
-11. **Watch conversations ship without speaker labels** (maintainer decision, 2026-10-23; plan Task 14
-    deferred). #180 labels only the open conversation from a live buffer of at most the last 600 s,
-    which does not fit a drained recording of up to 3 hours whose audio is deleted as it goes.
-    Watch lines keep `speakerName: "Apple Watch"`, a speaker pass never relabels them, and prompts
-    read them as "You" like "Microphone". File-based identification for watch recordings is
-    [#192](https://github.com/tomqwu/ListenToMe/issues/192).
+11. **Watch file speaker labels (#192, October 24).** Supersedes the October 23 deferral: the
+    maintainer prioritized continuing Watch features. File imports use bounded 60-second/10-second
+    overlapping windows, the shared serialized loaded-model queue, and an independent identity tracker.
+    They never start/end a live microphone run or trigger model preparation. Labels are saved with text
+    before chunk deletion. Gaps retain recording time. Voiceprints remain in memory for an unfinished recording;
+    subsequent batches preserve identities and renames. Cancellation/relaunch starts new numbering. Named lines carry a `watch:` speaker-ID
+    namespace so later microphone/language passes cannot touch them. No retention change. Real-device
+    accuracy and the #181 distribution gates remain pending; see docs/IOS.md for the detailed behavior.

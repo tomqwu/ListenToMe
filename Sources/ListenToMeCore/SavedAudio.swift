@@ -111,10 +111,13 @@ public struct SavedAudioRun: Codable, Equatable, Sendable, Identifiable {
     public var duration: TimeInterval?
     /// Why writing stopped early, when it did.
     public var failure: String?
+    /// Origin of imported audio; absent in older microphone/system manifests.
+    public var deviceName: String?
 
     public init(index: Int, source: SpeakerSource, fileName: String, startedAt: Date, timelineOffset: TimeInterval,
                 timesMatchAudio: Bool, firstSegment: Int? = nil, duration: TimeInterval? = nil,
-                failure: String? = nil) {
+                failure: String? = nil, deviceName: String? = nil) {
+        self.deviceName = deviceName
         self.index = index
         self.source = source
         self.fileName = fileName
@@ -128,7 +131,7 @@ public struct SavedAudioRun: Codable, Equatable, Sendable, Identifiable {
 
     /// "Part 2 · System audio", for the player's picker.
     public func title(partCount: Int) -> String {
-        let name = source == .you ? "Microphone" : "System audio"
+        let name = deviceName ?? (source == .you ? "Microphone" : "System audio")
         return partCount > 1 ? "Part \(index) · \(name)" : name
     }
 }
@@ -231,6 +234,45 @@ public final class SavedAudioLibrary: @unchecked Sendable {
             try writeLocked(manifest, to: folder)
             cache[conversationID] = nil
             return runs
+        }
+    }
+
+    /// Copies a Watch part before its inbox copy can be deleted. The stable name makes retries
+    /// idempotent, including a crash between the file move and the atomic manifest write.
+    /// Never replaces an unreadable existing index or a successfully imported part.
+    @discardableResult
+    public func importWatchChunk(from source: URL, conversationID: String, recordingID: UUID, chunkIndex: Int,
+                                 startedAt: Date, timelineOffset: TimeInterval,
+                                 duration: TimeInterval) throws -> SavedAudioRun {
+        guard chunkIndex >= 0, timelineOffset.isFinite, timelineOffset >= 0,
+              duration.isFinite, duration > 0 else { throw CocoaError(.fileReadCorruptFile) }
+        let folder = try directory(for: conversationID)
+        return try lock.withLock {
+            try PrivateStorage.createDirectory(at: root)
+            try PrivateStorage.createDirectory(at: folder)
+            if excludeFromBackup { try PrivateStorage.setExcludedFromBackup(true, at: root) }
+            let manifestURL = folder.appendingPathComponent(Self.manifestName)
+            var manifest = fileManager.fileExists(atPath: manifestURL.path)
+                ? try JSONDecoder().decode(Manifest.self, from: Data(contentsOf: manifestURL)) : Manifest(runs: [])
+            let name = "watch-\(recordingID.uuidString)-\(chunkIndex).m4a"
+            let destination = folder.appendingPathComponent(name)
+            let existing = manifest.runs.first { $0.fileName == name }
+            if let existing, fileManager.fileExists(atPath: destination.path) { return existing }
+            // A leftover unindexed destination may be an interrupted import. Copy again from the
+            // still-owned inbox file rather than trusting incomplete or corrupt bytes.
+            let temporary = folder.appendingPathComponent(".watch-import-\(UUID().uuidString)")
+            defer { try? fileManager.removeItem(at: temporary) }
+            try fileManager.copyItem(at: source, to: temporary)
+            try fileManager.setAttributes(PrivateStorage.directoryAttributes, ofItemAtPath: temporary.path)
+            if fileManager.fileExists(atPath: destination.path) { try fileManager.removeItem(at: destination) }
+            try fileManager.moveItem(at: temporary, to: destination)
+            let run = existing ?? SavedAudioRun(index: (manifest.runs.map(\.index).max() ?? 0) + 1,
+                source: .you, fileName: name, startedAt: startedAt, timelineOffset: timelineOffset,
+                timesMatchAudio: true, duration: duration, deviceName: "Apple Watch")
+            if existing == nil { manifest.runs.append(run) }
+            try writeLocked(manifest, to: folder)
+            cache[conversationID] = nil
+            return run
         }
     }
 

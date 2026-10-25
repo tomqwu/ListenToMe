@@ -4,9 +4,10 @@ import WatchKit
 /// The watch's first screen (issue #181, Slice 3): record on the watch, recordings still waiting for
 /// the iPhone, and below them the Slice 1 remote for the iPhone's own recorder.
 struct WatchRootView: View {
-    static let consentKey = "watchRecordingConsentShown"
+    static let consentKey = "watchRecordingConsentShownV2"
     static let consentText = "Only record people who have agreed to be recorded. The audio goes only to your "
-        + "iPhone, which transcribes it on-device and then deletes it."
+        + "iPhone when connected. It transcribes on-device and keeps audio for playback only when "
+        + "\"Save audio recordings\" is on; otherwise it deletes audio after transcription."
 
     let link: WatchLinkClient
     let recorder: WatchRecorder

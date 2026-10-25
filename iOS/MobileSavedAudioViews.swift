@@ -31,7 +31,8 @@ struct MobileSavedAudioSettings: View {
             Text("Off by default. When on, the microphone audio of each recording is saved with its conversation "
                  + "on this device, so you can play it back and share it. It is never uploaded, and it is always "
                  + "left out of iCloud and Finder backups. \(SavedAudioPolicy.estimateText()). Deleting a "
-                 + "conversation deletes its audio. Apple Watch recordings keep no audio. Turning this off stops "
+                 + "conversation deletes its audio. Watch recordings sync to iPhone when connected and are kept here "
+                 + "only when this setting is on during import. Turning this off stops "
                  + "saving at once, even mid-recording, and keeps audio already saved; delete it here.")
                 .accessibilityIdentifier("savedAudioExplanation")
         }

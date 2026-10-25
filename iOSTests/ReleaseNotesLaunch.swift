@@ -11,6 +11,11 @@ extension XCUIApplication {
 
     @MainActor func launchPastReleaseNotes() {
         useModelFixtures()
+        // The Save to folder journey intentionally leaves an unconfigured destination. Its warning
+        // consumes workspace height, so unrelated journeys must start with this opt-in feature off.
+        if !launchArguments.contains("-markdownVaultEnabled") {
+            launchArguments += ["-markdownVaultEnabled", "NO"]
+        }
         // UIKit can retain the previous launch's accessibility-size override in a long UI run.
         // Give ordinary journeys an explicit baseline while preserving large-text test overrides.
         if !launchArguments.contains("-UIPreferredContentSizeCategoryName") {

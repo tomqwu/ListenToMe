@@ -785,3 +785,36 @@ then reopen the first from History and relaunch the app: Medical must return onl
 conversation. Resume listening and confirm its terms reach recognition. With Auto Quick enabled,
 check that the chosen provider receives the domain and bounded glossary without Summary headings.
 Delete that conversation and confirm it is gone after relaunch; device defaults and My terms remain.
+
+### Watch file speaker labels (#192, candidate only)
+
+Simulator coverage uses `MobileWatchSpeakerTests` (real decoded WAV windows and a fake diarizer) and
+`MobileWatchSpeakerUITests` (synthetic labeled Watch conversation in the actual transcript/Notes views).
+It verifies bounded windows, gap timing, already-running preparation, cancellation, delayed chunks,
+renames, archive persistence and labels saved before chunk deletion. It does not establish speaker accuracy.
+
+On a paired Watch/iPhone candidate, with Identify speakers on and models ready, record two people,
+transfer in multiple batches, and verify names persist through later arrivals, History reopen, rename,
+search and export. Repeat with identification off and unavailable models: keep Apple Watch labels and
+initiate no model download from the import. Interrupt with backgrounding and an iPhone recording;
+retry safely without changing the live microphone's speaker run. After relaunch, new identities may
+receive new numbers because voiceprints are never saved. Verify that raw audio is deleted after text
+and labels are saved, and that relabeling does not request another AI summary. Watch remains excluded
+from distribution until #181 acceptance passes.
+
+### Watch audio retention (#225; development only)
+
+On a paired Watch/iPhone, record while disconnected and confirm pending audio stays on Watch.
+Reconnect and open the iPhone app: confirm one conversation appears, and Watch waiting count clears
+only after successful transfer. With Save audio recordings off, no playback copy should remain after
+transcription. With it on before import, expand the transcript, play and seek a line, and share a part;
+the player names the source Apple Watch. Restart during import and retry: no duplicate text or audio.
+Cause a storage failure: inbox audio stays available for Retry/Delete. Delete saved audio while an
+import is failed, retry, and confirm deleted copies do not return. Delete the conversation and verify
+both retained and pending audio are gone. Check expiry using an old recording. Confirm updated Watch
+consent mentions reconnect and optional retention. Simulator tests cover import/playback/storage;
+real WatchConnectivity transfer and Watch background recording require the paired-device #181 gate.
+
+### iOS audio-driven language checks (#216)
+
+In Automatic, speak in a language the starting transcriber does not recognize. Check that an initial language check still occurs after at least eight seconds of activity, and continuous talking can trigger later checks without new transcript results. Check the detected-language notice, Undo and Stop. Silence and sparse isolated sounds must not trigger an initial download; loud noise may qualify as activity but must still pass language confidence and switch rules. Re-checks pause in Low Power Mode, background and serious thermal state. Stop during model preparation must remain responsive. The simulator fixture verifies control flow with synthetic audio and a deterministic model; it does not establish real speech accuracy or device battery acceptance.

@@ -391,8 +391,9 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   While recording, the audio the transcriber accepts is copied into a 16 kHz buffer that keeps the
   trailing two minutes (about 7.7 MB plus one 10-second block, in memory only; older audio is
   released in whole blocks as the recording goes on, #199). Once 8 seconds of speech have been heard (or 30 seconds
-  have passed since the first speech), up to 30 seconds from just before the first speech are
-  checked. `LanguageDetectionPolicy` switches only when Whisper is at least 80% sure, the
+  have passed since the first recognized speech), up to 30 seconds from just before that speech are
+  checked. Without recognized words, eight seconds of audio activity within the trailing 30 seconds
+  can start the first check and model preparation; isolated sounds do not start a download (#216). `LanguageDetectionPolicy` switches only when Whisper is at least 80% sure, the
   language differs from the one being transcribed, and SpeechTranscriber supports it; Whisper's
   "zh" (Mandarin) becomes zh-CN, or zh-TW on a device in Taiwan, Hong Kong or Macao, and never the
   Cantonese zh-HK model. To switch, the recorder installs the new locale's speech assets if needed
@@ -422,14 +423,23 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   launches substitute a language model that loads at once and never switches
   (`LISTENTOME_LANGUAGE_MODEL_FIXTURE`, DEBUG simulator builds only, set with the speaker fixture by
   `useModelFixtures()`), and the unit-test host one that never loads, so no test downloads Whisper.
-  Apple Watch recordings are transcribed in the device language under Automatic: detection runs on
-  live recordings only (#200).
+  Apple Watch imports in Automatic use the already-downloaded language model (#200), sampling up to
+  30 seconds of voiced audio within the first five minutes available. At least eight seconds and
+  80% confidence are required; otherwise the device language is used. Import never downloads the
+  language model. The chosen locale is saved before transcription and reused across retries, new
+  chunks and app launches, even if Settings changes. Fixed language choices skip detection.
+  Older partially transcribed recordings inherit their saved transcript language. Watch remains
+  excluded from distribution pending the physical-device acceptance in #181.
 - Re-checking the language during a recording (#199), Automatic only. After the first check,
   `LanguageTracker` (ListenToMeCore, with `LanguageRecheckPolicy`) re-checks the trailing 30 seconds
   once a minute of recording time, only when that window holds at least 10 seconds of speech, so
-  silence costs nothing. Speech here is what the transcriber reports, and a transcriber in the wrong
-  language may report little of it, so a re-check overdue by a whole interval needs only 4 seconds; a
-  transcriber that reports nothing at all triggers no re-check (audio-level speech activity is #216). Re-checks pause in Low Power Mode, while the app is in the background and
+  silence skips inference. Activity combines reported speech with audio energy, without double-counting
+  overlapping intervals (#216). Every five seconds, a background task scans new complete 20 ms frames
+  from the existing bounded audio buffer; activity above RMS 0.02 can trigger checks even when the
+  recognizer produces no words. Energy is not a speech classifier: loud noise can qualify, but model
+  confidence and the existing switch policy still decide whether to change language. A re-check
+  overdue by a whole interval needs only 4 seconds of activity. The scanner pauses outside active
+  foreground recording, and Stop cancels it without waiting for model preparation. Re-checks pause in Low Power Mode, while the app is in the background and
   while the device is hot (serious or critical thermal state); the first check is not affected.
   Re-checks run quietly, without a status line. Hysteresis: a confident (≥ 80%) different language
   only makes a candidate, and a check 20 seconds later must hear the same language again before the
@@ -938,9 +948,16 @@ share sheet). Each line shows its time; tapping the line or its time plays the p
 from that moment (`SavedAudioSeek`). History marks conversations with saved audio and offers **Share
 audio** in the touch-and-hold menu. Starting a recording stops playback.
 
-Apple Watch recordings keep no audio, even with this setting on: the watch inbox deletes each chunk
-once its text is saved (#181 decision 3), and keeping it would need a second retention path for audio
-the iPhone never heard (#225). UI tests use `--saved-audio-fixture`, a
+Apple Watch (#225, unreleased) uses the same opt-in library: before a batch is transcribed,
+`retainWatchAudio` copies each part with a stable recording/chunk filename and an atomic manifest.
+A failed copy or manifest write leaves inbox audio for retry. The inbox records committed copies and
+effective timeline offsets/durations, so retries neither duplicate files nor undo a later Delete all
+saved audio, and overlapping parts retain their playback/transcription alignment after relaunch.
+The setting is read per import batch; off keeps the temporary delete-after-transcription path.
+Retention uses the recording date; old imports are immediately subject to the chosen expiry.
+WatchConnectivity already queues disconnected transfers and deletes Watch files only after success.
+No cloud audio transport is added. Watch remains excluded from release until #181 acceptance.
+UI tests use `--saved-audio-fixture`, a
 synthetic tone written by the real writer; no test records the microphone.
 
 ## Photos, files and Apple Notes
@@ -1194,6 +1211,24 @@ asks for a wait of 20 seconds or less, and a 400
 `invalid_request_error` shows Anthropic's message with the key masked. Model lists come from
 `GET /v1/models`.
 
+### Watch file speaker identification (#192; not distributed)
+
+When Identify speakers is on and the models are already loaded, Watch imports analyze all available
+file audio in 60-second windows with 10-second overlap before transcribing that batch. Decoding runs
+off the UI actor with bounded PCM memory. Gaps flush the overlap so missing time is never collapsed;
+timestamps use the same ChunkFeed mapping as transcription. The file passes share the serialized
+model queue but never begin/end a live microphone run. Cancellation releases the import immediately,
+even if model processing ignores it; the late result is discarded while later model passes stay serialized. Imports never prepare or download speaker models.
+If identification is off, unavailable, fails, or cannot confidently cover a line, it keeps Apple Watch.
+
+Speaker IDs and names are saved with text before raw chunks are deleted, including for a conversation
+that is not open. Watch provenance survives rename; live microphone and language-replay passes cannot
+relabel these lines. Named speakers reach search/export and prompts; unidentified Watch speech still
+maps to You. No additional AI summary is requested for a label change. Voiceprints remain in memory for
+one recording import only, including later arriving batches while the app stays open. After cancellation
+or relaunch, new voices start numbering after existing labels rather than guessing an identity. No audio-retention or backup behavior changes. Distribution still waits
+on #181; simulator tests with a fake diarizer do not establish real-device speaker accuracy.
+
 ## Build and run
 
 Use Xcode 26+, XcodeGen and an installed iOS 26 simulator runtime:
@@ -1412,3 +1447,13 @@ receive a context sized to the complete assembled prompt, with answer space rese
 ceiling. If its conservative UTF-8 budget cannot fit the reported model capacity, the pane shows
 an error asking for a shorter selection or a larger-context model. No answer request is sent in
 that case. Cloud models retain server-managed windows. This applies to summaries and correction.
+
+### Duo pane widths
+
+In the wide iPhone Live workspace, tap **Duo pane widths** beside the Live/Summary control to choose
+Equal widths, More transcript, or More Quick Summary. The device remembers the choice; each pane
+keeps at least 280 points when space permits. Portrait and accessibility layouts still stack their
+content. **Transcript actions** holds Select lines, Speech correction settings, and Play recording
+when available. Expand transcript stays directly accessible. The width preference is device-local,
+shared by conversations, and does not change saved text or audio. It is applied only to two-pane
+Live layouts; Summary, narrow windows, and accessibility text keep their existing reading layouts.

@@ -76,6 +76,8 @@ final class MobileSession {
     let vocabulary = SessionVocabulary()   // domain vocabularies and My terms (issue #222)
     var acceptsSpeechCorrection = false
     private let makeRecorder: () -> any MobileRecording
+    @ObservationIgnored var watchSpeakerContexts: [UUID: WatchSpeakerLabels] = [:]
+    var watchLanguageSamples: ([WatchAudioChunk]) async throws -> [Float] = WatchLanguageAudio.samples
     let makeWatchTranscriber: () -> any WatchAudioTranscribing
     /// The foreground drain of Apple Watch recordings (issue #181); never runs while recording.
     @ObservationIgnored var watchDrainTask: Task<Void, Never>?
@@ -306,7 +308,7 @@ final class MobileSession {
                 try Task.checkCancellation()
                 state = .recording
                 UIApplication.shared.isIdleTimerDisabled = true
-                startSpeakerLoop()
+                startRecognitionLoops()
             } catch {
                 try? await recorder.stop()
                 speakers.endRun(); endLanguageRun(); endSavedAudioRun()
@@ -325,6 +327,7 @@ final class MobileSession {
             return
         }
         state = .stopping
+        languageDetection.activityLoop?.cancel(); languageDetection.activityLoop = nil
         if stopReason == nil { stopReason = .user }
         do { try await recorder?.stop() } catch { message = "Could not finalize transcript: \(error.localizedDescription)" }
         recorder = nil

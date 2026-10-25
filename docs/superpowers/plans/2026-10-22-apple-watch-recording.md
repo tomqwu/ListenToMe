@@ -1,3 +1,7 @@
+> **October 24 update (#225):** historical delete-after-transcription steps below apply to the
+> temporary inbox. Save audio recordings now opts Watch imports into the shared playback library.
+> Consent V2 explains reconnect sync and optional retention. Device distribution still waits on #181.
+
 # Apple Watch Recording Implementation Plan
 
 > **Status (2026-10-24): built on `main`, not shipped.** Slices 1–3 merged unreleased: Slice 1 in
@@ -73,8 +77,9 @@ Its §3 platform facts (F1–F19, U1–U8) and §9 decisions are referenced by n
 - Watch conversations: `sourceImportID = "watch:<recordingID>"`, title
   `"Apple Watch · " + startedAt.formatted(date: .abbreviated, time: .shortened)`, segments
   `source: .you`, `speakerName: "Apple Watch"`. They land in History with a status message and never
-  switch the open conversation (decision 6). Transcription language is the phone's current
-  `MobileSession.language` when the drain runs (decision 7). No notifications (decision 8).
+  switch the open conversation (decision 6). Decision 7 is updated by #200: the first drain pins
+  the fixed phone language or the cached model's detected locale, with device-language fallback.
+  Later drains reuse that ledger locale; imports never download the detection model. No notifications (decision 8).
   `MobileFileTranscriber` is internal; no user-facing audio-file import (decision 9).
 - Release: slices 1–3 merge to `main` **unreleased** and ship together on one train after Slice 3
   passes physical-device acceptance (decision 4). `CHANGELOG.md` gets an iOS Unreleased entry per
@@ -93,7 +98,7 @@ Its §3 platform facts (F1–F19, U1–U8) and §9 decisions are referenced by n
   - "This Apple Watch recording ended unexpectedly. The last few minutes may be missing."
   - "Apple Watch recording added to History."
   - Consent (first watch recording): "Only record people who have agreed to be recorded. The audio
-    goes only to your iPhone, which transcribes it on-device and then deletes it."
+    goes only to your iPhone, which transcribes on-device and keeps playback audio only when Save audio recordings is on."
   - Watch `NSMicrophoneUsageDescription`: "ListenToMe records on your Apple Watch and sends the audio
     only to your paired iPhone, where it is transcribed on-device."
 
@@ -818,6 +823,15 @@ Rules the tests pin:
 - [ ] **Step 5: Commit** `feat(ios): show Apple Watch recordings waiting in History (#181)`.
 
 ### Task 14: Speaker labels on watch conversations (after #180) — deferred to #192
+
+**October 24 implementation update:** #192 replaces the old proposed live-buffer reuse below with
+`WatchSpeakerAudio` bounded file windows and `WatchSpeakerLabels`, sharing only the loaded-model serial
+queue. Labels are applied before transcription saves/deletes chunks. Live run state stays untouched;
+non-open records are handled by the existing archive path. Voiceprints are memory-only per recording and survive later batches in the same app run.
+Tests cover long files, gaps, overlapping chunk timestamps, cancellation, opt-out/model readiness,
+identity reconciliation, provenance and archive persistence. Hardware accuracy remains unverified.
+The original deferred steps below are historical, not the implementation recipe.
+
 
 > **Deferred (maintainer decision, 2026-10-23; spec decision 11).** The first watch release ships
 > watch conversations **without** speaker labels; the follow-up is

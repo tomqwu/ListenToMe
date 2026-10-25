@@ -63,6 +63,16 @@ Recent iOS trains (full text in [CHANGELOG.md](../CHANGELOG.md)):
 
 ## Merged for the next train
 
+- #268: iPhone Duo remembers equal, transcript-first or Quick-first pane widths, with readable
+  minimum widths. Secondary transcript actions share a compact menu; Expand remains directly
+  reachable. Narrow and accessibility layouts retain their stacked fallback.
+
+- #200: Watch imports in Automatic use only an already-downloaded language model, scan past leading
+  silence, and pin the chosen locale in the ledger before transcription. Retries and later chunks
+  keep it even after Settings changes. Missing or uncertain detection falls back without downloading.
+  Watch remains excluded from distribution; Mandarin on an English iPhone still needs paired-device
+  acceptance. This does not change the #181 embedding gate.
+
 - #237: per-conversation vocabulary additions survive History reopen and relaunch, are deleted
   with the conversation, and reach Auto Quick as bounded domain/glossary guidance. Device defaults
   and My terms remain independent. JSON exports include vocabulary IDs and saved prompt instructions.
@@ -81,6 +91,10 @@ full-resolution assets and manifest, and verify uploaded listing sets before App
   the diff against the issue). It caught real bugs in nearly every PR; keep doing it.
 - **Required checks** are the three CI checks: `ListenToMeCore tests + coverage`, `macOS 26 app build`,
   `iOS 26 app build`. Local gates are in AGENTS.md (`make validate-local`, `make lint`, `make e2e`).
+- **Mac Dev cleanup:** reuse the primary checkout's `signing.local.mk` before building in a worktree.
+  After testing, preserve evidence, close inactive test apps, move verified `.dev` bundles to Trash,
+  and reset only `com.tomwu.ListenToMe.dev` permissions. Defer cleanup for another active Dev session;
+  preserve production, conversations and keys. See AGENTS.md and docs/RELEASING.md.
 - **`make ios-test`** runs on a freshly erased, dedicated simulator (`IOS_DESTINATION=…`), created for
   the run and deleted afterwards, so state from other runs cannot leak in.
 - **UI tests use launch fixtures**, never real model downloads: `LISTENTOME_SPEAKER_MODELS_FIXTURE`
@@ -112,6 +126,32 @@ full-resolution assets and manifest, and verify uploaded listing sets before App
 - **Nothing leaves the device by default.** Cloud AI is opt-in, with clear "Sends your transcript to …"
   labels. **Never auto-assign a paid hosted model**; the user picks every model.
 
+## Sequential implementation plan — October 24
+
+The maintainer asked to finish issues one at a time, with Watch and Duo first. Each item gets its
+own implementation, relevant local acceptance, independent review and merged PR before the next.
+
+1. **#192 — Watch speaker labels:** bounded file windows, isolated from live microphone runs,
+   already-loaded models only, labels saved before audio deletion. Merged in #270; not released.
+2. **#225 — Watch audio sync and optional retention:** approved October 24: queue while disconnected,
+   sync to the paired iPhone after reconnect, and retain playback audio only when Save audio recordings
+   is on. Off keeps delete-after-transcription. Merged in #271 with retry, deletion, consent and
+   playback coverage; not released. Watch distribution remains gated by #181.
+3. **#216 — language re-check reliability:** implemented in #272; full `make validate-local` passed
+   (1,050 Core tests, 98.10% coverage; 393 iOS unit and 65 UI tests, ten iOS skips, zero failures),
+   including real Ollama contracts. Independent review and 20 fresh screenshots across two iPhone
+   and two iPad sizes passed. Evidence: `dist/language-activity-216`; not released.
+4. **#224 — re-transcribe saved audio:** finish existing PR #264; its live Mac audio gate is still pending.
+5. **#176 — UI-test reliability:** remove remaining state/time assumptions in the full local gate.
+6. Then iOS/provider improvements (#210, #209, #223, #164, #188, #167, #148, #149), followed by
+   the Mac conversation tools (#131, #126, #127, #128, #129, #124, #68, #173, #56), then the remaining
+   enhancements and review trackers (#58, #60, #62, #54, #134, #141, #98).
+
+#181 distribution, #205 mixed-language accuracy and #236 vocabulary accuracy retain their hardware
+acceptance gates. Simulator checks proceed without waiting for hardware; they do not close those gates.
+Duo #253/#268 and Watch language #200 are already merged; newly demonstrated gaps get separate issues.
+Release trains remain batched, with TestFlight for each major iOS release and fresh device screenshots.
+
 ## Open work, prioritized
 
 All in [GitHub Issues](https://github.com/tomqwu/ListenToMe/issues); [#98](https://github.com/tomqwu/ListenToMe/issues/98)
@@ -126,9 +166,9 @@ is the tracking issue.
 **Apple Watch — waiting on the maintainer's device spike**
 
 [#181](https://github.com/tomqwu/ListenToMe/issues/181) (record from the watch),
-[#192](https://github.com/tomqwu/ListenToMe/issues/192) (speaker labels on watch recordings),
-[#200](https://github.com/tomqwu/ListenToMe/issues/200) (language detection for watch recordings),
-[#225](https://github.com/tomqwu/ListenToMe/issues/225) (keep watch audio when Save audio recordings is on).
+[#192](https://github.com/tomqwu/ListenToMe/issues/192) (merged in #270; paired-device speaker acceptance pending),
+[#200](https://github.com/tomqwu/ListenToMe/issues/200) (implemented; paired-device language acceptance pending),
+[#225](https://github.com/tomqwu/ListenToMe/issues/225) (merged in #271; paired-device retention acceptance pending).
 
 **macOS — P1/P2** (lands on `main`; ships when the maintainer resumes Mac releases)
 
