@@ -528,7 +528,8 @@ saying so. Press **Speakers / edit names** to retry once the network is availabl
   platforms. Turned on, it writes 16 kHz AAC `.m4a` files (about 12 MB per hour per source) beside
   the conversations; they are never uploaded or sent to an AI service, are deleted with their
   conversation (Clear history on the Mac), and on iPhone/iPad are always kept out of iCloud and
-  Finder backups. Apple Watch recordings keep no audio.
+  Finder backups. The unreleased Watch feature also retains imported audio when this setting is on;
+  otherwise it deletes temporary transfer audio after transcription.
 - **iOS privacy policy and support.** The App Store pages are checked in and linked from the app in
   **More → Settings → Privacy**: [privacy policy](docs/ios-privacy.md) and
   [support](docs/ios-support.md).

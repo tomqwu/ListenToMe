@@ -41,8 +41,8 @@ extension MobileSession {
         guard watchDrainTask == nil else { watchDrainRequested = true; return }
         watchInbox.tidy(now: now)
         refreshWatchInboxRows()
-        let ledgers = watchInbox.ledgers().map(reconcileWithSavedLines)
-        guard ledgers.contains(where: { Self.hasWork($0.nextBatch(now: now)) }) else { return }
+        let ledgers = watchInbox.ledgers()
+        guard ledgers.contains(where: { hasWatchWork($0, now: now) }) else { return }
         watchDrainRequested = false
         watchDrainTask = Task { [weak self] in
             await self?.drainWatchInbox(now: now)
@@ -140,9 +140,19 @@ extension MobileSession {
         !batch.indices.isEmpty || !batch.newGaps.isEmpty || batch.finishes
     }
 
+    /// Saved text can settle missing earlier parts after the user deletes the inbox. Let that
+    /// reconciliation run before deciding a later Continue part must wait for the gap timeout.
+    private func hasWatchWork(_ ledger: WatchCaptureLedger, now: Date) -> Bool {
+        if Self.hasWork(ledger.nextBatch(now: now)) { return true }
+        guard ledger.failure == nil, !ledger.completed,
+              let record = history.first(where: { $0.sourceImportID == Self.watchSourceID(ledger.recordingID) })
+        else { return false }
+        return savedWatchLinesEnd(record.id) != nil
+    }
+
     /// Oldest recording first. A failure stops that recording only.
     private func drainWatchInbox(now: Date) async {
-        for ledger in watchInbox.ledgers() where Self.hasWork(ledger.nextBatch(now: now)) {
+        for ledger in watchInbox.ledgers() where hasWatchWork(ledger, now: now) {
             guard !Task.isCancelled else { return }
             do {
                 try await drainWatchRecording(ledger.recordingID, now: now)
@@ -163,7 +173,8 @@ extension MobileSession {
 
     private func drainWatchRecording(_ recordingID: UUID, now: Date) async throws {
         guard let stored = watchInbox.ledger(recordingID) else { return }
-        var ledger = reconcileWithSavedLines(stored)
+        var ledger = try reconcileWithSavedLines(stored)
+        guard Self.hasWork(ledger.nextBatch(now: now)) else { return }
         let recordID = try watchRecordID(for: ledger)
         while true {
             try Task.checkCancellation()
@@ -188,10 +199,11 @@ extension MobileSession {
 
     private func transcribeWatchChunks(_ indices: [Int], of ledger: WatchCaptureLedger, recordID: String) async throws {
         let recordingID = ledger.recordingID
-        let chunks = indices.compactMap { index in ledger.chunks.first { $0.index == index } }.map {
+        var chunks = indices.compactMap { index in ledger.chunks.first { $0.index == index } }.map {
             WatchAudioChunk(index: $0.index, url: watchInbox.chunkURL(recordingID: recordingID, index: $0.index),
-                            startOffset: $0.startOffset, duration: $0.duration)
+                            startOffset: $0.effectiveOffset, duration: $0.effectiveDuration)
         }
+        chunks = try retainWatchAudio(chunks, ledger: ledger, recordID: recordID)
         guard let end = chunks.map({ $0.startOffset + $0.duration }).max() else { return }
         // Lines before this point were saved before an interruption; a resumed pass hears them again.
         let resumeAt = ledger.transcribedThrough - 0.05
@@ -262,7 +274,7 @@ extension MobileSession {
     /// manifest that starts over for a conversation that already has watch lines (the audio was
     /// deleted from History, or the manifest was unreadable) settles every chunk before the first one
     /// it holds, instead of waiting a day for chunks that are already text.
-    private func reconcileWithSavedLines(_ ledger: WatchCaptureLedger) -> WatchCaptureLedger {
+    private func reconcileWithSavedLines(_ ledger: WatchCaptureLedger) throws -> WatchCaptureLedger {
         let source = Self.watchSourceID(ledger.recordingID)
         guard let record = history.first(where: { $0.sourceImportID == source }),
               let saved = savedWatchLinesEnd(record.id) else { return ledger }
@@ -270,9 +282,14 @@ extension MobileSession {
             && !ledger.chunks.contains { $0.state == .transcribed }
         let firstHeld = ledger.chunks.first?.index ?? ((ledger.lastIndex ?? -1) + 1)
         guard saved > ledger.transcribedThrough || (startsOver && firstHeld > 0) else { return ledger }
-        let updated = try? markWatchTranscribed(ledger.recordingID, through: saved,
+        let chunks = ledger.chunks.filter { $0.state == .received }.map {
+            WatchAudioChunk(index: $0.index, url: watchInbox.chunkURL(recordingID: ledger.recordingID, index: $0.index),
+                            startOffset: $0.effectiveOffset, duration: $0.effectiveDuration)
+        }
+        _ = try retainWatchAudio(chunks, ledger: ledger, recordID: record.id)
+        let updated = try markWatchTranscribed(ledger.recordingID, through: saved,
                                                 settleBelow: startsOver ? firstHeld : nil)
-        return (updated ?? nil) ?? ledger
+        return updated ?? ledger
     }
 
     /// Where the saved Apple Watch lines of this conversation end, if it has any.

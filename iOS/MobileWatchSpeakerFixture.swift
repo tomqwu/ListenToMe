@@ -1,5 +1,6 @@
 #if DEBUG && targetEnvironment(simulator)
 import SwiftUI
+import AVFoundation
 import ListenToMeCore
 
 /// Synthetic Watch label results in the actual History/Notes/transcript views, without a model download.
@@ -23,6 +24,21 @@ struct MobileWatchSpeakerFixture: View {
                                    sourceImportID: "watch:" + UUID().uuidString)
         session.restore(record)
         session.save(announce: false)
+        let url = root.appendingPathComponent("watch-tone.m4a")
+        do {
+            let format = AVAudioFormat(standardFormatWithSampleRate: 16_000, channels: 1)!
+            let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 320_000)!
+            buffer.frameLength = 320_000
+            for i in 0..<320_000 { buffer.floatChannelData![0][i] = Float(sin(Double(i) * 0.06) * 0.1) }
+            do {
+                let file = try AVAudioFile(forWriting: url, settings: [AVFormatIDKey: kAudioFormatMPEG4AAC,
+                    AVSampleRateKey: 16_000, AVNumberOfChannelsKey: 1])
+                try file.write(from: buffer)
+            }
+            try session.savedAudio.library.importWatchChunk(from: url, conversationID: record.id,
+                recordingID: UUID(), chunkIndex: 0, startedAt: Date(), timelineOffset: 0, duration: 20)
+            session.savedAudio.refresh()
+        } catch { session.message = "Fixture audio failed: \(error.localizedDescription)" }
         return session
     }()
 

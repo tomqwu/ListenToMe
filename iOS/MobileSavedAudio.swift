@@ -5,7 +5,7 @@ import Observation
 /// Settings → Save audio recordings (issue #55). Off by default. When on, each recording run writes the
 /// microphone audio the transcriber heard to `SavedAudio/<conversation>/part-NNN-microphone.m4a`, always
 /// excluded from iCloud and Finder backups and protected until the device is first unlocked. Apple Watch
-/// recordings keep no audio: the iPhone deletes each watch chunk once its text is saved (#181).
+/// recordings are copied here on import only when enabled, before the inbox removes them (#225).
 @MainActor @Observable
 final class MobileSavedAudio {
     var enabled: Bool {

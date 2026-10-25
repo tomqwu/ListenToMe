@@ -785,3 +785,16 @@ retry safely without changing the live microphone's speaker run. After relaunch,
 receive new numbers because voiceprints are never saved. Verify that raw audio is deleted after text
 and labels are saved, and that relabeling does not request another AI summary. Watch remains excluded
 from distribution until #181 acceptance passes.
+
+### Watch audio retention (#225; development only)
+
+On a paired Watch/iPhone, record while disconnected and confirm pending audio stays on Watch.
+Reconnect and open the iPhone app: confirm one conversation appears, and Watch waiting count clears
+only after successful transfer. With Save audio recordings off, no playback copy should remain after
+transcription. With it on before import, expand the transcript, play and seek a line, and share a part;
+the player names the source Apple Watch. Restart during import and retry: no duplicate text or audio.
+Cause a storage failure: inbox audio stays available for Retry/Delete. Delete saved audio while an
+import is failed, retry, and confirm deleted copies do not return. Delete the conversation and verify
+both retained and pending audio are gone. Check expiry using an old recording. Confirm updated Watch
+consent mentions reconnect and optional retention. Simulator tests cover import/playback/storage;
+real WatchConnectivity transfer and Watch background recording require the paired-device #181 gate.

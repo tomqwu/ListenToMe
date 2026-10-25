@@ -123,7 +123,7 @@ The maintainer asked to finish issues one at a time, with Watch and Duo first. E
 own implementation, relevant local acceptance, independent review and merged PR before the next.
 
 1. **#192 — Watch speaker labels:** bounded file windows, isolated from live microphone runs,
-   already-loaded models only, labels saved before audio deletion. In progress.
+   already-loaded models only, labels saved before audio deletion. Merged in #270; not released.
 2. **#225 — Watch audio sync and optional retention:** approved October 24: queue while disconnected,
    sync to the paired iPhone after reconnect, and retain playback audio only when Save audio recordings
    is on. Off keeps delete-after-transcription. Cover retries, crash safety, deletion and consent/privacy copy.

@@ -11,3 +11,5 @@ Watch language detection (#200; only when the Watch companion is enabled for tes
 Duo: rotate an iPhone to landscape, change pane widths through all three choices, scroll each pane, select transcript lines through Transcript actions, rotate back and forth, and verify your width choice survives. Check saved-audio playback remains available in Transcript actions.
 
 Watch candidate (#192, not embedded for distribution): with speaker models ready and Identify speakers on, import a multi-speaker recording and check History, rename, export and resumed transfers. Off/unavailable keeps Apple Watch labels and starts no model download.
+
+Watch development builds (#225): test reconnect transfer, Save audio recordings on/off, playback from a transcript time, import retry, Delete all saved audio and expiry. Watch is not embedded in TestFlight until device acceptance.

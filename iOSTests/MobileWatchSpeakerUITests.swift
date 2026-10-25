@@ -10,7 +10,12 @@ final class MobileWatchSpeakerUITests: XCTestCase {
         app.buttons["Expand transcript"].tap()
         XCTAssertTrue(app.staticTexts["Speaker 1"].firstMatch.waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Speaker 2"].firstMatch.exists)
-        capture("Watch recording with identified speakers")
+        XCTAssertTrue(app.otherElements["savedAudioPlayer"].waitForExistence(timeout: 5))
+        app.buttons["Play from 0:11"].tap()
+        XCTAssertTrue(app.buttons["Pause"].waitForExistence(timeout: 5))
+        app.buttons["Pause"].tap()
+        XCTAssertTrue(app.buttons["shareSavedAudio"].exists)
+        capture("Watch recording with identified speakers and saved audio")
         app.navigationBars["Transcript"].buttons["Done"].tap()
         app.buttons["Notes"].tap()
         let field = app.textFields.matching(NSPredicate(format: "identifier BEGINSWITH 'speakerName-watch:'")).firstMatch

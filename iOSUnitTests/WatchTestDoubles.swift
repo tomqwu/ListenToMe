@@ -39,6 +39,7 @@ final class FakeWatchTranscriber: WatchAudioTranscribing {
     private(set) var locales: [Locale] = []
     /// The chunk indices of every call, in order.
     private(set) var calls: [[Int]] = []
+    private(set) var offsets: [[TimeInterval]] = []
     let events: WatchEventLog
     private var gate: CheckedContinuation<Void, Never>?
 
@@ -57,6 +58,7 @@ final class FakeWatchTranscriber: WatchAudioTranscribing {
                     onFinal: @escaping @MainActor (TranscriptSegment) throws -> Void) async throws {
         locales.append(locale)
         calls.append(chunks.map(\.index))
+        offsets.append(chunks.map(\.startOffset))
         for chunk in chunks {
             if chunk.index == gateBefore {
                 gateBefore = nil
