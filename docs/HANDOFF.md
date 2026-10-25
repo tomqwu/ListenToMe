@@ -117,6 +117,28 @@ full-resolution assets and manifest, and verify uploaded listing sets before App
 - **Nothing leaves the device by default.** Cloud AI is opt-in, with clear "Sends your transcript to …"
   labels. **Never auto-assign a paid hosted model**; the user picks every model.
 
+## Sequential implementation plan — October 24
+
+The maintainer asked to finish issues one at a time, with Watch and Duo first. Each item gets its
+own implementation, relevant local acceptance, independent review and merged PR before the next.
+
+1. **#192 — Watch speaker labels:** bounded file windows, isolated from live microphone runs,
+   already-loaded models only, labels saved before audio deletion. In progress.
+2. **#225 — Watch audio sync and optional retention:** approved October 24: queue while disconnected,
+   sync to the paired iPhone after reconnect, and retain playback audio only when Save audio recordings
+   is on. Off keeps delete-after-transcription. Cover retries, crash safety, deletion and consent/privacy copy.
+3. **#216 — language re-check reliability:** use audio speech activity when recognizer output is absent.
+4. **#224 — re-transcribe saved audio:** finish existing PR #264; its live Mac audio gate is still pending.
+5. **#176 — UI-test reliability:** remove remaining state/time assumptions in the full local gate.
+6. Then iOS/provider improvements (#210, #209, #223, #164, #188, #167, #148, #149), followed by
+   the Mac conversation tools (#131, #126, #127, #128, #129, #124, #68, #173, #56), then the remaining
+   enhancements and review trackers (#58, #60, #62, #54, #134, #141, #98).
+
+#181 distribution, #205 mixed-language accuracy and #236 vocabulary accuracy retain their hardware
+acceptance gates. Simulator checks proceed without waiting for hardware; they do not close those gates.
+Duo #253/#268 and Watch language #200 are already merged; newly demonstrated gaps get separate issues.
+Release trains remain batched, with TestFlight for each major iOS release and fresh device screenshots.
+
 ## Open work, prioritized
 
 All in [GitHub Issues](https://github.com/tomqwu/ListenToMe/issues); [#98](https://github.com/tomqwu/ListenToMe/issues/98)

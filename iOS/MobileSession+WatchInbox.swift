@@ -124,6 +124,7 @@ extension MobileSession {
         }
         var failure: Error?
         for recordingID in recordingIDs {
+            watchSpeakerContexts[recordingID] = nil
             do { try watchInbox.removeRecording(recordingID, tombstoneAt: deletedAt) } catch { failure = failure ?? error }
         }
         if let failure { throw failure }
@@ -146,6 +147,7 @@ extension MobileSession {
             do {
                 try await drainWatchRecording(ledger.recordingID, now: now)
             } catch is CancellationError {
+                watchSpeakerContexts[ledger.recordingID] = nil
                 return
             } catch let error where error is WatchConversationUnavailable || Self.isTransient(error) {
                 continue
@@ -197,13 +199,16 @@ extension MobileSession {
                                       chunkEnds: chunks.map { $0.startOffset + $0.duration })
         do {
             let language = try await watchTranscriptionLocale(ledger, chunks: chunks, recordID: recordID)
+            let labels = try await watchSpeakerLabels(chunks, recordID: recordID, recordingID: recordingID)
             let transcriber = makeWatchTranscriber()
             transcriber.setContextualStrings(vocabulary.recognitionTerms(for: recordID, localeIdentifier: language))
             try await transcriber.transcribe(chunks, locale: Locale(identifier: language)) { [weak self] line in
                 guard let self, line.start >= resumeAt else { return }
-                pending.lines.append(TranscriptSegment(source: .you, text: line.text, isFinal: true, start: line.start,
-                                                       end: line.end, speakerName: MobileFileTranscriber.speakerName,
-                                                       language: language))
+                var segment = TranscriptSegment(source: .you, text: line.text, isFinal: true, start: line.start,
+                                                end: line.end, speakerName: MobileFileTranscriber.speakerName,
+                                                language: language)
+                if self.speakers.enabled { segment = labels.label(segment) }
+                pending.lines.append(segment)
                 if pending.shouldSave(after: line) {
                     try self.saveWatchLines(pending, recordID: recordID, of: recordingID)
                 }
@@ -234,6 +239,7 @@ extension MobileSession {
         try updateWatchRecord(recordID, note: unexpected ? Self.watchUnexpectedEndNote : nil, complete: true)
         // Kept open if a chunk arrived since: the next drain picks it up.
         guard try watchInbox.completeRecording(ledger.recordingID, now: now) else { return }
+        watchSpeakerContexts[ledger.recordingID] = nil
         message = Self.watchAddedMessage
         nameConversationIfNeeded(recordID, language: ledger.transcriptionLocale ?? transcriptionLanguage)   // #221
     }
@@ -272,7 +278,7 @@ extension MobileSession {
     /// Where the saved Apple Watch lines of this conversation end, if it has any.
     private func savedWatchLinesEnd(_ recordID: String) -> TimeInterval? {
         history.first { $0.id == recordID }?.segments?
-            .filter { $0.speakerName == MobileFileTranscriber.speakerName }.map(\.end).max()
+            .filter(Self.isWatchLine).map(\.end).max()
     }
 
     // MARK: The conversation

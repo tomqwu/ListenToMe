@@ -73,3 +73,11 @@ language before importing if you need to override Automatic. Audio stays on the 
 In landscape Duo, the pane-width button beside Live/Summary gives more room to the transcript or
 Quick Summary, or restores equal widths. The choice is remembered. Use Transcript actions (the
 ellipsis menu) for line selection, speech correction settings, and saved recording playback.
+
+### Apple Watch speaker labels (development candidate)
+
+Watch is not yet included in TestFlight. With Identify speakers on and the models already loaded,
+imported recordings receive Speaker 1, Speaker 2… labels on the iPhone. They can be renamed in Notes
+and remain in History and exports. Uncertain or unavailable identification keeps Apple Watch; imports
+never download speaker models. Later batches keep identities and renames while the app stays open. After cancellation or relaunch,
+an import can introduce new speaker numbers because voiceprints are never saved. Raw Watch audio is still deleted after its text and labels are saved.
