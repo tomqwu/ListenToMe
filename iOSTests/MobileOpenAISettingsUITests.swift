@@ -24,9 +24,17 @@ final class MobileOpenAISettingsUITests: XCTestCase {
         XCTAssertTrue(status.label.contains("Plain http:// is only allowed"), status.label)
         revealSettingsControl(field, in: form, towardTop: true)
         // A refused address stays in the field so it can be corrected; clear it first.
-        field.tap()
-        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 40))
+        // Tapping a long URL can put the caret in its middle on larger phones. Select all
+        // rather than assuming repeated backspaces start at the end of the rejected address.
+        field.press(forDuration: 1.2)
+        let selectAll = app.menuItems["Select All"].firstMatch
+        let selectAllButton = app.buttons["Select All"].firstMatch
+        if selectAll.waitForExistence(timeout: 3) { selectAll.tap() } else {
+            XCTAssertTrue(selectAllButton.waitForExistence(timeout: 3))
+            selectAllButton.tap()
+        }
         field.typeText("http://studio.local:1234")
+        XCTAssertEqual(field.value as? String, "http://studio.local:1234")
         app.buttons["saveOpenAIBaseURL"].tap()
         revealSettingsControl(app.staticTexts["openAIServer"], in: form, towardTop: true)
         XCTAssertTrue(app.staticTexts["openAIServer"].label.contains("http://studio.local:1234/v1"))
@@ -36,6 +44,18 @@ final class MobileOpenAISettingsUITests: XCTestCase {
         revealSettingsControl(app.buttons["summaryProvider"], in: form, towardTop: true)
         XCTAssertTrue(app.buttons["summaryProvider"].label.contains("OpenAI-compatible · your server"),
                       app.buttons["summaryProvider"].label)
+        let capacity = app.buttons["openAIContextWindow"]
+        revealSettingsControl(capacity, in: form)
+        capacity.tap()
+        app.buttons["4K tokens"].tap()
+        let selected = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            capacity.label.contains("4K") || (capacity.value as? String)?.contains("4K") == true
+        }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [selected], timeout: 15), .completed)
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Custom server context capacity"; screenshot.lifetime = .keepAlways; add(screenshot)
+        capacity.tap()
+        app.buttons["Unknown — server managed"].tap()
         revealSettingsControl(app.buttons["Remove server"], in: form)
         app.buttons["Remove server"].tap()
         revealSettingsControl(app.buttons["summaryProvider"], in: form, towardTop: true)

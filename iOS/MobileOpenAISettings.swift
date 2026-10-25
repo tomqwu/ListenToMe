@@ -20,6 +20,7 @@ final class MobileOpenAISettings {
         static let catalog = "mobileOpenAICatalog"
         static let summary = "mobileOpenAIModel"
         static let quick = "mobileOpenAIQuickModel"
+        static let contextWindows = "mobileOpenAIContextWindows"
         static let contractFailures = "mobileOpenAIQuickContractFailures"
     }
 
@@ -32,6 +33,18 @@ final class MobileOpenAISettings {
     private(set) var quickModel: String {
         didSet { UserDefaults.standard.set(quickModel, forKey: Keys.quick); changed?() }
     }
+    private(set) var contextWindows: [String: Int] {
+        didSet { UserDefaults.standard.set(contextWindows, forKey: Keys.contextWindows); changed?() }
+    }
+    var contextWindow: OpenAIContextWindow? {
+        contextWindows[baseURL].flatMap { OpenAIContextWindow(tokens: $0) }
+    }
+    func setContextTokens(_ tokens: Int) {
+        guard isConfigured else { return }
+        if let window = OpenAIContextWindow(tokens: tokens) { contextWindows[baseURL] = window.tokens }
+        else if tokens == 0 { contextWindows.removeValue(forKey: baseURL) }
+    }
+
     private(set) var hasKey = false
     /// Server and model pairs that failed the Auto JSON check, so Auto can pause with a reason.
     private(set) var contractLedger: OpenAICompatibleContractLedger {
@@ -42,6 +55,7 @@ final class MobileOpenAISettings {
 
     init() {
         let defaults = UserDefaults.standard
+        contextWindows = defaults.dictionary(forKey: Keys.contextWindows) as? [String: Int] ?? [:]
         let saved = defaults.string(forKey: Keys.baseURL) ?? ""
         // Re-validate on load: a value from an older build or a hand-edited plist is not trusted.
         baseURL = (try? OpenAICompatibleEndpoint.normalize(saved).absoluteString) ?? ""
@@ -206,6 +220,7 @@ final class MobileOpenAISettings {
                                          identity: "openai\u{1}" + MobileAISettings.transportIdentity(endpoint, key))
         return OpenAICompatibleProvider(
             model: selectedModel(for: mode), baseURL: endpoint, apiKey: key, urlSession: session,
-            options: mode == .quick ? .init(temperature: 0, maximumTokens: 3_072) : .init())
+            options: mode == .quick ? .init(temperature: 0, maximumTokens: 3_072) : .init(),
+            contextWindow: contextWindow)
     }
 }

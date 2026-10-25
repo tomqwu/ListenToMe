@@ -15,3 +15,5 @@ Watch candidate (#192, not embedded for distribution): with speaker models ready
 Watch development builds (#225): test reconnect transfer, Save audio recordings on/off, playback from a transcript time, import retry, Delete all saved audio and expiry. Watch is not embedded in TestFlight until device acceptance.
 
 Automatic language (#216): speak continuously in a different language when the starting transcriber produces no words. Confirm detection and later re-checks still occur. Silence and isolated sounds should not start checks or a first model download. Check Undo, Low Power Mode, returning from background and Stop during model preparation.
+
+Custom server context (#210): choose 4K in Server context window, then request a summary of oversized notes. Confirm the configured-limit error appears before the server receives a request. A short request should still work. Switch to a different API URL and verify Unknown, then switch back and verify 4K survives relaunch. On Mac, verify trimming notices for older context and a clear error when the remaining request still cannot fit.
