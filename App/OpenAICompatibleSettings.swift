@@ -13,6 +13,21 @@ extension ProviderSettings {
         set { UserDefaults.standard.set(newValue, forKey: "openAIBaseURL") }
     }
 
+    static func openAIContextWindow(for raw: String) -> OpenAIContextWindow? {
+        guard let url = try? OpenAICompatibleEndpoint.normalize(raw),
+              let values = UserDefaults.standard.dictionary(forKey: "openAIContextWindows") as? [String: Int],
+              let tokens = values[url.absoluteString] else { return nil }
+        return OpenAIContextWindow(tokens: tokens)
+    }
+
+    static func saveOpenAIContextTokens(_ tokens: Int) {
+        guard let endpoint = openAIEndpoint() else { return }
+        var values = UserDefaults.standard.dictionary(forKey: "openAIContextWindows") as? [String: Int] ?? [:]
+        if let window = OpenAIContextWindow(tokens: tokens) { values[endpoint.absoluteString] = window.tokens }
+        else if tokens == 0 { values.removeValue(forKey: endpoint.absoluteString) }
+        UserDefaults.standard.set(values, forKey: "openAIContextWindows")
+    }
+
     /// `scheme://host:port` the saved key belongs to.
     private static var openAIKeyOrigin: String {
         get { UserDefaults.standard.string(forKey: "openAIKeyOrigin") ?? "" }
@@ -89,7 +104,8 @@ extension ProviderSettings {
             return UnavailableProvider(reason: "Choose a model for this pane in the status rail. ListenToMe never "
                 + "picks one from an OpenAI-compatible server's list for you.")
         }
-        return OpenAICompatibleProvider(model: model, baseURL: endpoint, apiKey: openAIKey(), urlSession: openAISession)
+        return OpenAICompatibleProvider(model: model, baseURL: endpoint, apiKey: openAIKey(), urlSession: openAISession,
+                                        contextWindow: openAIContextWindow(for: openAIBaseURL))
     }
 }
 
@@ -128,6 +144,7 @@ struct UnavailableProvider: LLMProvider {
 struct OpenAICompatibleSettingsSection: View {
     @Binding var baseURL: String
     @Binding var key: String
+    @Binding var contextTokens: Int
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -135,6 +152,13 @@ struct OpenAICompatibleSettingsSection: View {
                 .textFieldStyle(.roundedBorder)
             SecureField("API key for this server (optional)", text: $key)
                 .textFieldStyle(.roundedBorder)
+            Picker("Server context window", selection: $contextTokens) {
+                Text("Unknown — server managed").tag(0)
+                ForEach(OpenAIContextWindow.choices, id: \.self) { Text("\($0 / 1_024)K tokens").tag($0) }
+            }.accessibilityIdentifier("openAIContextWindow")
+            Text("Match this server's configured context size. Saved per server URL. Older context may be "
+                 + "trimmed with a notice; requests that still exceed the limit stop before sending.")
+                .font(.caption).foregroundStyle(.secondary)
             Text(note).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
         }
     }

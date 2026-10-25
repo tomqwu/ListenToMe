@@ -36,6 +36,18 @@ final class MobileOpenAISettingsUITests: XCTestCase {
         revealSettingsControl(app.buttons["summaryProvider"], in: form, towardTop: true)
         XCTAssertTrue(app.buttons["summaryProvider"].label.contains("OpenAI-compatible · your server"),
                       app.buttons["summaryProvider"].label)
+        let capacity = app.buttons["openAIContextWindow"]
+        revealSettingsControl(capacity, in: form)
+        capacity.tap()
+        app.buttons["4K tokens"].tap()
+        let selected = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            capacity.label.contains("4K") || (capacity.value as? String)?.contains("4K") == true
+        }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [selected], timeout: 15), .completed)
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Custom server context capacity"; screenshot.lifetime = .keepAlways; add(screenshot)
+        capacity.tap()
+        app.buttons["Unknown — server managed"].tap()
         revealSettingsControl(app.buttons["Remove server"], in: form)
         app.buttons["Remove server"].tap()
         revealSettingsControl(app.buttons["summaryProvider"], in: form, towardTop: true)
