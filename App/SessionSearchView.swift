@@ -6,6 +6,7 @@ struct SessionSearchView: View {
     @Environment(\.dismiss) private var dismiss
     let store: SessionStore
     let onClear: () -> Void
+    let onDelete: (String) -> Void
     let onOpen: ((SessionRecord) -> Void)?
     /// Read when the user asks, so a Settings change since the sheet opened is honoured (#57).
     let askRoute: () -> HistoryAskRoute
@@ -13,10 +14,13 @@ struct SessionSearchView: View {
     @State private var records: [SessionRecord] = []
     @State private var selected: SessionRecord?
     @State private var confirmClear = false
+    @State private var deleting: SessionRecord?
 
-    init(store: SessionStore, onClear: @escaping () -> Void = {}, onOpen: ((SessionRecord) -> Void)? = nil,
+    init(store: SessionStore, onClear: @escaping () -> Void = {}, onDelete: @escaping (String) -> Void = { _ in },
+         onOpen: ((SessionRecord) -> Void)? = nil,
          askRoute: @escaping () -> HistoryAskRoute = { .unavailable("Asking is not available here.") }) {
-        self.store = store; self.onClear = onClear; self.onOpen = onOpen; self.askRoute = askRoute
+        self.store = store; self.onClear = onClear; self.onDelete = onDelete
+        self.onOpen = onOpen; self.askRoute = askRoute
     }
 
     private var trimmedQuery: String { query.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -75,6 +79,9 @@ struct SessionSearchView: View {
                 }
                 .buttonStyle(.plain)
                 .padding(.vertical, 5)
+                .contextMenu {
+                    Button("Delete conversation…", role: .destructive) { deleting = record }
+                }
             }
             if records.isEmpty && store.errorText == nil { Text("Saved conversations will appear here.") }
             HStack {
@@ -97,11 +104,28 @@ struct SessionSearchView: View {
             Text("Export any conversations you want to keep first. Saved audio is deleted too. "
                  + "This cannot be undone in the app.")
         }
+        .confirmationDialog("Delete this conversation?", isPresented: Binding(
+            get: { deleting != nil }, set: { if !$0 { deleting = nil } }
+        ), presenting: deleting) { record in
+            Button("Delete conversation", role: .destructive) { _ = delete(record) }
+        } message: { record in
+            Text("Delete “\(record.title)” and its saved audio from this device? "
+                 + "Exported copies are kept. This cannot be undone in the app.")
+        }
         .sheet(item: $selected) { record in
             SessionDetailView(record: record, onOpen: onOpen.map { action in
                 { selected = nil; dismiss(); action(record) }
-            })
+            }, onDelete: { delete(record) })
         }
+    }
+
+    private func delete(_ record: SessionRecord) -> String? {
+        guard store.delete(record) else { return store.errorText ?? "Could not delete conversation." }
+        records.removeAll { $0.id == record.id }
+        onDelete(record.id)
+        if selected?.id == record.id { selected = nil }
+        deleting = nil
+        return nil
     }
 }
 
@@ -109,6 +133,8 @@ private struct SessionDetailView: View {
     @Environment(\.dismiss) private var dismiss
     let record: SessionRecord
     var onOpen: (() -> Void)?
+    let onDelete: () -> String?
+    @State private var confirmDelete = false
     @State private var error: String?
 
     private var markdown: String { SessionExporter.markdown(for: record) }
@@ -133,9 +159,16 @@ private struct SessionDetailView: View {
                                            onError: { error = $0 })
                 }.fixedSize()
                 Spacer()
+                Button("Delete…", role: .destructive) { confirmDelete = true }
                 Button("Done") { dismiss() }.keyboardShortcut(.defaultAction)
             }
         }
         .padding(20).frame(width: 720, height: 580)
+        .confirmationDialog("Delete this conversation?", isPresented: $confirmDelete) {
+            Button("Delete conversation", role: .destructive) { error = onDelete() }
+        } message: {
+            Text("The conversation and saved audio will be deleted from this device. "
+                 + "Exported copies are kept. This cannot be undone in the app.")
+        }
     }
 }

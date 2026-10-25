@@ -825,6 +825,18 @@ notice and that requests still too large (including large instructions or Unicod
 “No text was sent” before the server receives them. Choose Unknown to restore server-managed behavior.
 Capture the settings UI at native resolution and restore original preferences after testing.
 
+
+### Delete one Mac conversation (#131)
+
+Use disposable Dev conversations A and B, with Save audio recordings enabled for A. Open History,
+right-click A and choose Delete conversation. Cancel once and confirm both records and A's playback
+remain. Confirm the second attempt: A disappears from keyword and semantic search, A's saved audio
+is gone, and B remains readable. Repeat through the detail view's Delete button and capture the
+confirmation and resulting list. Exported copies must remain untouched.
+Delete the currently open saved conversation while capture is stopped, then Save/Stop: it must not
+reappear. Start New and verify the new conversation can save normally. A failed archive delete must
+keep the row and audio, with a visible error. If an owned-data cleanup fails after text deletion,
+show the partial-erasure warning. Do not modify production conversations or permissions.
 ### iOS Ollama endpoint feedback (#149)
 
 In Settings, select Ollama and save `http://your-mac.local:11434`. Try saving
