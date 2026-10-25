@@ -24,6 +24,11 @@ progress on older branches when it is integrated.
    manual/device acceptance. Use the PR template. Every changed behavior needs an updated scenario
    and an added/changed bound test method; changing a test-file header alone does not qualify.
 
+Finish the current change through validation, review, required CI and merge before opening another
+feature PR. Keep future work in GitHub Issues instead of accumulating speculative draft PRs. Work
+down the existing draft queue sequentially; consolidate drafts for the same issue while preserving
+their commits and evidence.
+
 The BDD gate runs inside the existing required core CI check and `make validate-local`. It never
 replaces full test coverage, rendered UI inspection, real OTHERS audio acceptance or physical-device
 gates. Documentation-only work needs content/link checks, not an unrelated binary test or release.

@@ -18,7 +18,7 @@ does not show it again, and a fresh install does not see it at all; see
   executable native-test adapter, local/CI gates and PR evidence template. This changes development
   workflow only; it does not require a binary release or claim exhaustive legacy acceptance.
 
-## iOS (unreleased since 1.17.0 (34) candidate)
+## iOS (unreleased since 1.17.0 (34))
 
 - Failed listening starts now show the full error in an alert, with retry and a link to recording settings. Cancelling preparation does not show a false error. This improves diagnosis; the reported physical-iPad startup cause is not yet confirmed. (#306)
 
@@ -34,9 +34,9 @@ does not show it again, and a fresh install does not see it at all; see
 - iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
 - Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
 
-## iOS 1.17.0 (34) — release candidate
+## iOS 1.17.0 (34) — 2026-10-25 (TestFlight)
 
-Local candidate validation and screenshots are complete. The merged-source archive and accepted TestFlight upload are pending; no publication is claimed.
+Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple accepted the upload on October 25; processing is VALID, internal state is IN_BETA_TESTING, and Dev access plus en-CA metadata were read back. Physical-device acceptance and App Store listing screenshot upload remain pending.
 
 - Deleting a conversation immediately cancels and clears its streamed History answer and citations, preventing deleted content from returning when an old request finishes. (#131)
 
