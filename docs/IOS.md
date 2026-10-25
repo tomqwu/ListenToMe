@@ -135,9 +135,16 @@ This batch adds remembered iPhone Duo pane widths (#268), per-conversation vocab
 speech-activity language re-checks (#216), responsive speaker finalization on background (#188),
 live-summary caching and provisional speech handling (#164), per-passage History index reuse (#223),
 custom-server context limits (#210), local Ollama prompt sizing (#230), and clearer Ollama endpoint
-validation (#149). Supported semantic languages are unchanged. Watch stays excluded from the archive;
-no dependency or license inventory changed. Full validation, fresh device screenshots, merged-source
-archive and accepted upload are pending. Physical-device acceptance remains separate.
+validation (#149). Deleting a conversation cancels and clears its active History answer and citations
+so a late response cannot restore deleted content (#131). Supported semantic languages are unchanged.
+Watch stays excluded from the archive; no dependency or license inventory changed. At `dbd1cc7`,
+`make validate-local` passed: 1,068 Core tests (seven intentional skips, 98.1107% coverage) and 471 iOS
+tests (461 passed, ten intentional skips, zero failures), plus lint, release helpers, the signed Mac
+build and real Ollama/OpenAI-compatible contracts. Four device capture tests passed; all 24 final
+native-resolution images were visually accepted, with both phone sets retaken after rejecting a
+system-notification overlay. Originals, hashes and device/source provenance are preserved. The
+merged-source archive, accepted upload and listing screenshot upload are pending. Physical-device
+acceptance remains separate.
 [What to Test](../metadata/ios/en-CA/what-to-test-1.17.0.txt).
 
 ## iOS 1.16.0 (33)

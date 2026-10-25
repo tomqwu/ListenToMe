@@ -27,11 +27,10 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS 1.17.0 (34) — release candidate
 
-This train is being validated; no upload is claimed yet.
+Local candidate validation and screenshots are complete. The merged-source archive and accepted TestFlight upload are pending; no publication is claimed.
 
 - Deleting a conversation immediately cancels and clears its streamed History answer and citations, preventing deleted content from returning when an old request finishes. (#131)
 
-- Deleting a conversation clears and cancels Ask your history answers so a late response cannot restore deleted text or citations. (#131)
 - Ollama settings reject unsupported plain-HTTP addresses before saving and explain when pasted URL parts are omitted. Destination prose names Ollama Cloud clearly; provider-default and catalog-refresh behavior are documented. (#149)
 
 - Backgrounding cancels final speaker labeling already started after Stop and clears the recording buffer without waiting. Queued work stays bound to its original recording, so an old pass cannot analyze or relabel a new recording. Lifecycle and model-backup tests cover these paths. (#188)

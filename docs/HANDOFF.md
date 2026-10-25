@@ -6,7 +6,7 @@ Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags)
 
 ## October 25 validation follow-up
 
-The #127 full run at `0464e9d` exposed a shared iOS test synchronization race: the automatic-review coordinator sets its active mode before the fake provider receives the request. The test now waits for the provider-held continuation before editing Notes and releasing the response. Its cancellation, completed-output and no-repeat assertions remain intact. The focused regression passed 20 consecutive iterations on the 1.17.0 candidate source with this fix; independent review found no blockers. This is test-only. Full validation must be rerun on the updated candidate; the failed run is preserved externally. No publication is claimed.
+The #127 full run at `0464e9d` exposed a shared iOS test synchronization race: the automatic-review coordinator sets its active mode before the fake provider receives the request. The test now waits for the provider-held continuation before editing Notes and releasing the response. Its cancellation, completed-output and no-repeat assertions remain intact. The focused regression passed 20 consecutive iterations on the 1.17.0 candidate source with this fix; independent review found no blockers. This is test-only. The integrated `dbd1cc7` candidate subsequently passed full validation and four device capture tests (details below); the original failed run is preserved externally. No publication is claimed.
 
 ## Product state
 
@@ -298,13 +298,25 @@ Duo width choices, conversation vocabularies, language activity checks, speaker 
 live-summary/provisional handling, History index reuse and deletion privacy, provider context limits and Ollama endpoint
 feedback. Watch remains excluded. No draft backlog PR is included. Apple API preflight confirms
 1.16.0 (33) uploaded October 24 is the latest accepted beta, with no build 34 yet, and 1.15.0 is
-READY_FOR_SALE; App Store What's New therefore starts after 1.15.0. Version and notes are prepared. Core tests (1,061; seven skips; 98.1056% coverage), lint,
-signed Mac build, iOS/Watch builds and iOS test-target compilation passed. Independent review found
-no blockers. Full local validation, fresh four-category screenshots, required CI, main merge, signed
-archive, upload and tester verification are pending. Release captures now include History and Settings
-alongside Live, Prompt and Summary. Neither publication nor physical acceptance is claimed.
+READY_FOR_SALE; App Store What's New therefore starts after 1.15.0. Version and notes are prepared.
 
-The first candidate `e176222` completed full `make validate-local` (470 iOS tests: 460 passed, ten intentional skips, zero failures) and all four device capture tests, with all six required screens per device. That evidence is preserved externally under `ios-next-train/validation` and `validation-e176222-state.json`. The release candidate now includes the newly merged #131 shared History privacy fix: deleting a conversation cancels and clears an active Ask answer on iOS too. Updated release copy and fresh validation/captures for this integrated source are pending. The earlier evidence is not claimed as validation of the integrated source.
+Integrated candidate `dbd1cc7` passed full `make validate-local`: 1,068 Core tests (seven intentional
+skips, 98.1107% coverage), 471 iOS tests (461 passed, ten intentional skips, zero failures), lint,
+release helpers, the signed Mac build and real Ollama/OpenAI-compatible contracts. All four device
+capture tests passed. The 24 final native-resolution images (six per iPhone 17 Pro/Pro Max and iPad
+mini/13-inch Pro) were inspected and accepted; both phone sets were retaken on the same source after
+rejecting a system-notification overlay in the first captures. Originals, normalized images, native
+sizes, hashes, device/runtime/source provenance and review results are preserved externally and in
+`dist/ios-1.17.0-build34-evidence/`. README images now use the accepted 1.17.0 set.
+
+The earlier `e176222` run (470 iOS tests) is preserved as superseded evidence, not validation of the
+integrated source. The current candidate includes #131 on iOS: deleting a conversation cancels and
+clears active History answers and citations. Required CI and main merge must complete for the final
+documentation/media head before archiving. Signed archive, accepted upload and tester verification
+remain pending. Physical-device
+acceptance and App Store listing screenshot upload remain separate and pending. No publication is
+claimed. Watch stays excluded; no draft backlog feature is included.
+
 ## Mac Auto compatibility acceptance (#209) — October 25
 
 The final installed-Mac settings interaction passed at `c3746b5`: saved 4K persists, an oversized probe sends nothing, an unsaved 8K edit disables probing, Cancel restores 4K, and a valid synthetic response succeeds with server-managed context. Original provider/model settings were restored. Screenshots, the one synthetic request, source/signing provenance and successful Dev-only cleanup are preserved in the October 25 external `auto-compatibility-209/native-final` evidence. Current-main integration includes only the already-merged iOS endpoint validation and documentation; Mac application source is unchanged from this acceptance. Final integration at `8e9e612` passed 1,065 Core tests (seven skips, 98.1098% coverage), lint, the signed Mac build and all 403 iOS unit tests (397 passed, six skipped). Independent integration review found no blockers. All three final-head checks passed and PR #275 merged at `3d32345`; #209 is closed. Mac publication remains paused.

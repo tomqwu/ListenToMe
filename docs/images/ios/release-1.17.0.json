@@ -1,0 +1,236 @@
+{
+  "version": "1.17.0",
+  "build": "34",
+  "source": "dbd1cc77730a04bd24742a9d3ae3f7b77ae43a8c",
+  "captureKind": "Debug simulator real views with synthetic content",
+  "locale": "en-CA (xcodebuild -testLanguage en -testRegion CA)",
+  "physicalDeviceAcceptance": "not performed",
+  "listingUpload": "not uploaded",
+  "watch": "not embedded; excluded",
+  "visualReviewSummary": {
+    "status": "passed",
+    "count": 24,
+    "source": "dbd1cc77730a04bd24742a9d3ae3f7b77ae43a8c",
+    "reviewedAt": "2026-10-25T16:11:53.194039+00:00",
+    "physicalDeviceAcceptance": "pending",
+    "listingUpload": "pending"
+  },
+  "kind": "README selection of the complete native 24-image release evidence set; simulator fixtures, candidate upload pending",
+  "capturedSourceTree": "6aa60a227e25745a25c2dcd5779b027ef507c1ae",
+  "assets": [
+    {
+      "file": "docs/images/ios/iphone-01-live.png",
+      "original": "validation-clean-captures/iphone-pro-max/results/screenshots/62F7CFE7-F08B-4E25-843C-21704E1EFC9D.png",
+      "name": "01 Live portrait",
+      "device": {
+        "phase": "iphone-pro-max",
+        "device": "iPhone-17-Pro-Max",
+        "simulator": "1425F4A1-4D7C-48C2-8C4C-BFDA60FEF2A0",
+        "runtime": "iOS 26.5",
+        "started": "2026-10-25T11:46:40.043983",
+        "prewarmSeconds": 30
+      },
+      "actualDevice": {
+        "architecture": "arm64",
+        "deviceId": "1425F4A1-4D7C-48C2-8C4C-BFDA60FEF2A0",
+        "deviceName": "ListenToMe117-iphone-pro-max",
+        "modelName": "iPhone 17 Pro Max",
+        "osBuildNumber": "23F77",
+        "osVersion": "26.5",
+        "platform": "iOS Simulator"
+      },
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "capturedAt": 1792943294.296,
+      "orientation": "portrait",
+      "originalSha256": "63c877356f3fa1212da5ee57b02225a149d86593b21d08647b3bc3aefea53231",
+      "sha256": "e597c63ab7c26b655085874ad74f22a033213f717d6fa29fa91ba87b41e141a5",
+      "originalExifOrientation": 1,
+      "originalPixels": [
+        1320,
+        2868
+      ],
+      "pixels": [
+        1320,
+        2868
+      ],
+      "transform": "EXIF orientation applied without resizing; RGB PNG",
+      "visualReview": "passed",
+      "reviewedAt": "2026-10-25T16:11:53.194039+00:00",
+      "reviewMethod": "Every final image viewed at native resolution with view_image; iPhone Pro review carried forward from preceding turn, remaining 18 inspected in this turn.",
+      "reviewNotes": "No unexpected system overlay, keyboard or obscured controls. Content extending beyond a scroll viewport (transcript, Notes, Settings) is expected; original native dimensions preserved.",
+      "evidenceFile": "screenshots/iphone-pro-max/01-live-portrait.png",
+      "repository_file": "docs/images/ios/iphone-01-live.png"
+    },
+    {
+      "file": "docs/images/ios/iphone-02-summary.png",
+      "original": "validation-clean-captures/iphone-pro-max/results/screenshots/864AA7B9-0703-48C3-B5FE-CB5F87FD3B6B.png",
+      "name": "04 Summary portrait",
+      "device": {
+        "phase": "iphone-pro-max",
+        "device": "iPhone-17-Pro-Max",
+        "simulator": "1425F4A1-4D7C-48C2-8C4C-BFDA60FEF2A0",
+        "runtime": "iOS 26.5",
+        "started": "2026-10-25T11:46:40.043983",
+        "prewarmSeconds": 30
+      },
+      "actualDevice": {
+        "architecture": "arm64",
+        "deviceId": "1425F4A1-4D7C-48C2-8C4C-BFDA60FEF2A0",
+        "deviceName": "ListenToMe117-iphone-pro-max",
+        "modelName": "iPhone 17 Pro Max",
+        "osBuildNumber": "23F77",
+        "osVersion": "26.5",
+        "platform": "iOS Simulator"
+      },
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "capturedAt": 1792943311.883,
+      "orientation": "portrait",
+      "originalSha256": "f707acdfe0b41b81ce06d996a795c45bc34a5491388b34561a0aad74940c2f13",
+      "sha256": "1decfb1f7cf4ba04da31a96c552c71bdc74e5901cdb82d57bbab248317148b60",
+      "originalExifOrientation": 1,
+      "originalPixels": [
+        1320,
+        2868
+      ],
+      "pixels": [
+        1320,
+        2868
+      ],
+      "transform": "EXIF orientation applied without resizing; RGB PNG",
+      "visualReview": "passed",
+      "reviewedAt": "2026-10-25T16:11:53.194039+00:00",
+      "reviewMethod": "Every final image viewed at native resolution with view_image; iPhone Pro review carried forward from preceding turn, remaining 18 inspected in this turn.",
+      "reviewNotes": "No unexpected system overlay, keyboard or obscured controls. Content extending beyond a scroll viewport (transcript, Notes, Settings) is expected; original native dimensions preserved.",
+      "evidenceFile": "screenshots/iphone-pro-max/04-summary-portrait.png",
+      "repository_file": "docs/images/ios/iphone-02-summary.png"
+    },
+    {
+      "file": "docs/images/ios/iphone-03-prompt.png",
+      "original": "validation-clean-captures/iphone-pro-max/results/screenshots/4A79B0A9-FABC-40DB-B5B3-FECC92C6E22A.png",
+      "name": "03 Conversation prompt",
+      "device": {
+        "phase": "iphone-pro-max",
+        "device": "iPhone-17-Pro-Max",
+        "simulator": "1425F4A1-4D7C-48C2-8C4C-BFDA60FEF2A0",
+        "runtime": "iOS 26.5",
+        "started": "2026-10-25T11:46:40.043983",
+        "prewarmSeconds": 30
+      },
+      "actualDevice": {
+        "architecture": "arm64",
+        "deviceId": "1425F4A1-4D7C-48C2-8C4C-BFDA60FEF2A0",
+        "deviceName": "ListenToMe117-iphone-pro-max",
+        "modelName": "iPhone 17 Pro Max",
+        "osBuildNumber": "23F77",
+        "osVersion": "26.5",
+        "platform": "iOS Simulator"
+      },
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "capturedAt": 1792943307.88,
+      "orientation": "portrait",
+      "originalSha256": "47525ef9cd10ea9e3cf943d37c9e4fe397e974bae6e3ff2cc451d93efaafcea0",
+      "sha256": "c93c6848571c9e942ed0ebdde3336175f10518554e62b95ca21d6e6e3195825c",
+      "originalExifOrientation": 1,
+      "originalPixels": [
+        1320,
+        2868
+      ],
+      "pixels": [
+        1320,
+        2868
+      ],
+      "transform": "EXIF orientation applied without resizing; RGB PNG",
+      "visualReview": "passed",
+      "reviewedAt": "2026-10-25T16:11:53.194039+00:00",
+      "reviewMethod": "Every final image viewed at native resolution with view_image; iPhone Pro review carried forward from preceding turn, remaining 18 inspected in this turn.",
+      "reviewNotes": "No unexpected system overlay, keyboard or obscured controls. Content extending beyond a scroll viewport (transcript, Notes, Settings) is expected; original native dimensions preserved.",
+      "evidenceFile": "screenshots/iphone-pro-max/03-conversation-prompt.png",
+      "repository_file": "docs/images/ios/iphone-03-prompt.png"
+    },
+    {
+      "file": "docs/images/ios/ipad-01-workspace.png",
+      "original": "validation-integrated/ipad-pro-13/results/screenshots/EF1AD7F5-062F-41A9-9AE6-ABF84048E4F3.png",
+      "name": "01 Live portrait",
+      "device": {
+        "phase": "ipad-pro-13",
+        "device": "iPad-Pro-13-inch-M5-16GB",
+        "simulator": "FC74FE11-6F29-4EC6-80AB-2608A4FA1002",
+        "runtime": "iOS 26.5",
+        "started": "2026-10-25T11:37:03.718508"
+      },
+      "actualDevice": {
+        "architecture": "arm64",
+        "deviceId": "FC74FE11-6F29-4EC6-80AB-2608A4FA1002",
+        "deviceName": "ListenToMe117-ipad-pro-13",
+        "modelName": "iPad Pro 13-inch (M5)",
+        "osBuildNumber": "23F77",
+        "osVersion": "26.5",
+        "platform": "iOS Simulator"
+      },
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "capturedAt": 1792942684.986,
+      "orientation": "portrait",
+      "originalSha256": "e9303520bba1c0f5851dbd3778ee09a6d08ddfd88159c4093e660c141cd2c3bb",
+      "sha256": "1d4af19533e304f1e49de6b4f8ac551a5e256cb92b71ae9a297267f30bb5ad41",
+      "originalExifOrientation": 1,
+      "originalPixels": [
+        2064,
+        2752
+      ],
+      "pixels": [
+        2064,
+        2752
+      ],
+      "transform": "EXIF orientation applied without resizing; RGB PNG",
+      "visualReview": "passed",
+      "reviewedAt": "2026-10-25T16:11:53.194039+00:00",
+      "reviewMethod": "Every final image viewed at native resolution with view_image; iPhone Pro review carried forward from preceding turn, remaining 18 inspected in this turn.",
+      "reviewNotes": "No unexpected system overlay, keyboard or obscured controls. Content extending beyond a scroll viewport (transcript, Notes, Settings) is expected; original native dimensions preserved.",
+      "evidenceFile": "screenshots/ipad-pro-13/01-live-portrait.png",
+      "repository_file": "docs/images/ios/ipad-01-workspace.png"
+    },
+    {
+      "file": "docs/images/ios/iphone-04-two-pane.png",
+      "original": "validation-clean-captures/iphone-pro-max/results/screenshots/8DACF7B6-FAA0-41DA-847A-B15D6720C463.png",
+      "name": "02 Live landscape",
+      "device": {
+        "phase": "iphone-pro-max",
+        "device": "iPhone-17-Pro-Max",
+        "simulator": "1425F4A1-4D7C-48C2-8C4C-BFDA60FEF2A0",
+        "runtime": "iOS 26.5",
+        "started": "2026-10-25T11:46:40.043983",
+        "prewarmSeconds": 30
+      },
+      "actualDevice": {
+        "architecture": "arm64",
+        "deviceId": "1425F4A1-4D7C-48C2-8C4C-BFDA60FEF2A0",
+        "deviceName": "ListenToMe117-iphone-pro-max",
+        "modelName": "iPhone 17 Pro Max",
+        "osBuildNumber": "23F77",
+        "osVersion": "26.5",
+        "platform": "iOS Simulator"
+      },
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "capturedAt": 1792943297.648,
+      "orientation": "landscape",
+      "originalSha256": "c342d27bac54efabdce0c43475ff8af27bca9444eaa14a841eb181ebd97f72d2",
+      "sha256": "ae0d5e99c64a20b3708380e0225dd12787a1dfb649705c7fd75e1408415aa236",
+      "originalExifOrientation": 8,
+      "originalPixels": [
+        1320,
+        2868
+      ],
+      "pixels": [
+        2868,
+        1320
+      ],
+      "transform": "EXIF orientation applied without resizing; RGB PNG",
+      "visualReview": "passed",
+      "reviewedAt": "2026-10-25T16:11:53.194039+00:00",
+      "reviewMethod": "Every final image viewed at native resolution with view_image; iPhone Pro review carried forward from preceding turn, remaining 18 inspected in this turn.",
+      "reviewNotes": "No unexpected system overlay, keyboard or obscured controls. Content extending beyond a scroll viewport (transcript, Notes, Settings) is expected; original native dimensions preserved.",
+      "evidenceFile": "screenshots/iphone-pro-max/02-live-landscape.png",
+      "repository_file": "docs/images/ios/iphone-04-two-pane.png"
+    }
+  ]
+}

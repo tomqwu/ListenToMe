@@ -77,7 +77,7 @@ make ios-test
 
 ![ListenToMe — four-pane meeting copilot](docs/images/screenshot.png)
 
-**iPhone and iPad** (1.16.0)
+**iPhone and iPad** (1.17.0 candidate)
 
 <p>
 <img src="docs/images/ios/iphone-01-live.png" width="200" alt="Live transcript and Quick Summary">
@@ -89,7 +89,7 @@ make ios-test
 <img src="docs/images/ios/iphone-04-two-pane.png" width="600" alt="iPhone landscape with independent transcript and Quick Summary panes">
 
 Live transcript with Quick Summary · Summary · conversation prompts · iPad workspace · two-pane iPhone.
-Native simulator captures use synthetic content; [capture provenance](docs/images/ios/release-1.16.0.json).
+Native simulator captures use synthetic content; [capture provenance](docs/images/ios/release-1.17.0.json).
 The complete four-device release set is preserved locally for the next authorized App Store submission.
 
 ## Why ListenToMe
