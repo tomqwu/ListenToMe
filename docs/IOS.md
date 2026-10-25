@@ -1001,7 +1001,9 @@ turned off, the model not ready, or an unlisted reason reported by the system ("
 unavailable. Choose another provider in Settings."). That explanation is shown only while the device is actually on the
 unchosen Ollama fallback; once you pick a provider yourself it disappears, and it is never shown to
 someone who selected Apple Intelligence deliberately. A provider you have chosen before is always
-kept across updates — the default applies only when no choice has been saved. Automatic Quick Summary requires Ollama, a cloud AI
+kept across updates — the default applies only when no choice has been saved. Until you choose a
+provider, availability is checked again on each launch; enabling or disabling Apple Intelligence
+can therefore change that unchosen default. Selecting a provider pins your choice. Automatic Quick Summary requires Ollama, a cloud AI
 service or an OpenAI-compatible server, so it stays unavailable with an explanation until you select one yourself.
 
 On Apple Intelligence every AI output goes through `AppleIntelligenceProvider`, the same transport
@@ -1036,18 +1038,18 @@ Enter the key separately on each device. Remove API key deletes it from this dev
 
 **Server URL** is blank by default, which means `https://ollama.com`. Enter an `http://` or `https://`
 address — for example `http://your-mac.local:11434` for an Ollama server running on your own Mac on the
-same Wi-Fi network — and tap **Save server URL**. Only the scheme, host and port are kept; anything that
+same Wi-Fi network — and tap **Save server URL**. Only the scheme, host and port are kept; Settings reports when a pasted path, query, fragment or
+credentials were omitted, without echoing those values. Anything that
 is not a valid http(s) URL with a host is rejected and the previous server stays in place. Entering
 `https://ollama.com` yourself is recognised as Ollama Cloud, not as your own server. **Use Ollama Cloud
 instead** clears the setting.
 
-**Use the computer's `.local` name, not its IP address.** The app declares
-`NSAllowsLocalNetworking`, which exempts plain `http` only for `.local`, link-local and loopback
-names — not for a numeric private address such as `192.168.1.10`. A plain-`http` URL whose host is a
-private IPv4 literal (`10.x`, `172.16–31.x`, `192.168.x`) is therefore refused at save time with a
-message naming the `http://your-mac.local:11434` form, instead of failing opaquely on the first
-request. `https://` to any address, and `http://127.0.0.1`, remain accepted. Reaching a LAN address
-uses iOS local-network access, so iOS asks for that permission the first time.
+**Use HTTPS, or a local-network HTTP address.** Plain `http` is accepted only for `.local`,
+`localhost`, loopback and link-local addresses, using the same rule as OpenAI-compatible settings.
+Other addresses, including private IPv4, CGNAT/VPN ranges, public IPv4 and IPv6 literals, require
+`https://`. A rejected URL leaves the previous server unchanged and explains the accepted forms.
+Loopback addresses refer to the iPhone itself, not your Mac. Reaching a LAN address uses iOS
+local-network access, so iOS asks for that permission the first time.
 
 **Your Ollama Cloud API key is never sent to a server you enter.** The saved credential belongs to
 ollama.com; requests to any other host go out without an `Authorization` header, so a private endpoint
@@ -1056,7 +1058,7 @@ Cloud. No API key is needed for your own server; one is still required for Ollam
 
 Nothing is discovered automatically and the app never changes the server for you: the destination
 is shown as **Server: …** in Settings and repeated in the refresh, connection-test and error status text
-so you can always see where a summary would go. A server you enter is your own machine, not ollama.com.
+so you can always see where a summary would go. Requests use the server you entered instead of ollama.com.
 
 Refresh calls `/api/tags` on the selected server (`https://ollama.com` unless you entered one) with Bearer
 authentication when a key is saved, and preserves exact returned

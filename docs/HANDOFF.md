@@ -212,3 +212,12 @@ is the tracking issue.
 ## Context capacity candidate (#210) — October 25
 
 PR #274 adds optional per-server limits with reserved answer space and a no-send oversized-prompt error. Full `make validate-local` passed on `a6ec6b8`: 1,056 Core tests (seven skips, 98.1079% coverage), 394 iOS unit tests and 65 UI tests (459 total, ten skips, zero failures), release helpers, lint, signed Mac build and real Ollama/OpenAI-compatible contracts. Mac settings acceptance and independent review passed. A Pro Max screenshot run exposed a caret-position assumption in the URL-editing test; selecting all and asserting the exact replacement value fixed it, and the focused rerun passed. Only test/documentation changes followed the full gate. Four-device capture evidence is being finalized in `dist/context-budget-210`; this is not published.
+
+## Ollama endpoint candidate (#149) — October 25
+
+`codex/149-ollama-endpoint` shares the OpenAI-compatible local-network HTTP rule, reports omitted
+URL components without echoing credentials or query values, and uses Ollama Cloud in destination
+prose. The existing automatic-catalog guard already requires the Ollama provider plus a saved key
+or custom endpoint; the removed workspace prose now uses the shared endpoint label. The provider
+default's recomputation until an explicit choice is now documented. Validation and review pending;
+not merged or published.
