@@ -234,6 +234,7 @@ public final class MeetingSession {
     /// Changes the model for a role and rebuilds its provider.
     public func setModel(_ role: CopilotRole, _ model: String) {
         cancelResponse(role)
+        stoppedResponseText[role] = nil
         models[role] = model
         providers[role] = makeProvider(model)
         // The new provider may have a different context window (or none), so the old notice no
@@ -244,6 +245,22 @@ public final class MeetingSession {
         roleActivity[role] = nil
         if role == .quick { quickReader.clearError() }
         handleLiveEvent(.providerChanged)
+    }
+
+    /// Explicit user cancellation keeps the partial answer without marking its source as reviewed.
+    private var stoppedResponseText: [CopilotRole: String] = [:]
+    public var stoppedResponseRoles: Set<CopilotRole> {
+        Set(stoppedResponseText.compactMap { role, text in output(role) == text ? role : nil })
+    }
+
+    public func stopResponse(_ role: CopilotRole) {
+        guard streamingRoles.contains(role) else { return }
+        cancelResponse(role)
+        stoppedResponseText[role] = output(role)
+        if role == .quick {
+            if !quickSuggestion.isEmpty { manualQuickAnswer.completed(at: clock()) }
+            handleLiveEvent(.manualQuickFinished)
+        }
     }
 
     public func cancelResponse(_ role: CopilotRole) {
@@ -282,6 +299,7 @@ public final class MeetingSession {
         notes = ""; summaryInstructions = ""; referenceContext = nil
         listenerSummary = ""; quickSuggestion = ""; quickRecap = ""; deepAnswer = ""
         roleErrors = [:]; roleActivity = [:]; roleNoticeRecords = [:]; pendingGrounding = [:]
+        stoppedResponseText.removeAll()
         manualQuickAnswer.dismiss()
         lastCompletedListenerSummary = ""; listenerSummaryCutOff = false
         summarizedSegmentIDs = []
@@ -793,6 +811,7 @@ extension MeetingSession {
         guard aiEnabled else { return Task {} }
         if role == .quick { handleLiveEvent(.manualQuickStarted) }
         streamingRoles.insert(role)
+        stoppedResponseText[role] = nil
         responseTasks[role]?.cancel()
         let generation = (responseGenerations[role] ?? 0) + 1
         responseGenerations[role] = generation

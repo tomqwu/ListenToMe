@@ -4,7 +4,7 @@ import ListenToMeCore
 extension MeetingView {
     var canRetranscribe: Bool {
         _ = MacSavedAudio.shared.revision
-        return !wantsCapture && !lifecycleBusy && !session.isTranscribingFile && session.streamingRoles.isEmpty
+        return !wantsCapture && !lifecycleBusy && !isImporting && session.streamingRoles.isEmpty
             && sessionSaveable && ProviderSettings.saveSessionsForSearch
             && MacSavedAudio.shared.library.hasAudio(currentSessionID)
     }

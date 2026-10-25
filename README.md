@@ -713,3 +713,10 @@ The app does not silently remove the opening. This can reject some prompts a spe
 could fit. Larger contexts require more memory. Default local answers are bounded to 4,096 tokens (at most a quarter of a small model window);
 Quick and correction keep their smaller limits, and output-limit notices still apply.
 Ollama Cloud models and other cloud providers keep their server-managed context.
+
+
+On Mac, each streaming answer has a **Stop** button. Escape stops the answer when that pane has
+keyboard focus. Partial text stays visible with a stopped notice; a new request clears it. File
+imports show the filename and percentage of source audio read, then **Finalizing transcript…** while
+recognition finishes. **Cancel import** stops pending recognition and keeps text already received,
+marked incomplete; the window stays open and normal controls return after cleanup (#127).

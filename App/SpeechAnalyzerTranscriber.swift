@@ -70,8 +70,18 @@ actor SpeechAnalyzerTranscriber: Transcribing {
         stopped = true
         for pipeline in pipelines.values {
             pipeline.inputContinuation.finish()
-            do { try await pipeline.analyzer.finalizeAndFinishThroughEndOfInput() } catch {
-                statusContinuation.yield("Transcript finalization failed: \(error.localizedDescription)")
+            let analyzer = pipeline.analyzer
+            do {
+                try await withTaskCancellationHandler {
+                    try Task.checkCancellation()
+                    try await analyzer.finalizeAndFinishThroughEndOfInput()
+                } onCancel: {
+                    Task { await analyzer.cancelAndFinishNow() }
+                }
+            } catch {
+                if !Task.isCancelled {
+                    statusContinuation.yield("Transcript finalization failed: \(error.localizedDescription)")
+                }
             }
             await pipeline.resultsTask.value   // drain finalized results; the stream ends after finalize
         }

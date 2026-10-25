@@ -927,6 +927,20 @@ identity and preserve evidence before its authorized scoped cleanup.
 5. Start a new conversation and confirm errors from the previous one are cleared. Capture native
    screenshots with both banners, each independently dismissed, and the Calendar action. Preserve
    source/signing provenance and complete Dev-app cleanup after acceptance.
+
+## Cancel an answer or import (#127)
+
+1. Start a slow streamed Quick, Summary or Deep answer. Stop only that pane, retaining its partial
+   text and showing a stopped notice. Late tokens/errors must not alter it; other streaming panes
+   continue. Request a fresh answer and check the notice clears. Focus a pane and press Escape:
+   only its stream stops. Stop during reasoning before text arrives must show that no answer arrived.
+2. Import a long file. The status row shows its filename and increasing **% read**, then
+   **Finalizing transcript…**; percentage measures file input, not completed recognition. Cancel
+   midway or during finalization. Show **Stopping…**, disable repeat cancellation, keep recognized
+   lines and show incomplete status. After cleanup, Start/New/Import are usable without closing the
+   window. Reopen the saved conversation and verify the incomplete flag persists.
+3. Cancel while speech assets prepare, then start another import after cleanup. Old tasks must not
+   overwrite its progress or transcript. New conversation clears stopped-answer/import notices.
 ### iOS Ollama endpoint feedback (#149)
 
 In Settings, select Ollama and save `http://your-mac.local:11434`. Try saving

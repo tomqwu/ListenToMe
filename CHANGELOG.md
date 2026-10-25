@@ -106,6 +106,12 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 - Capture failures and file/Calendar failures have separate dismissible messages. Retrying export, import or Calendar work clears only that operation’s message; microphone and Calendar privacy actions stay attached to the relevant error. (#173)
 - Automatic reviews count the complete request toward their 60,000-character limit, including instructions and any attached references. Oversized requests stop before sending and explain what to shorten. Changing directives alone keeps the existing review; new context or manual generation uses the new settings. (#148)
 - Changing speaker labels or names no longer generates a first Listener summary when Auto is off. Existing summaries are rebuilt with the updated labels; interrupted summaries cannot restore old names. Explicit Refresh remains available. (#167)
+- Stop a streaming pane answer while keeping its partial text. File imports show the filename, source-reading progress and a Cancel button; cancelling keeps recognized lines and marks the import incomplete. (#127)
+
+- Failed model discovery preserves pinned choices and reports uncertainty. MiniMax is no longer ranked as a “mini” model. Verified local Ollama requests allow cold loads up to five minutes. (#141)
+- Audio imports report read failures and keep partial transcripts marked incomplete across reopening. Legacy speech waits for final callbacks with a 30-second deadline; system capture rejects failed PCM copies and minimizes unused video work. (#141)
+- Calendar context selects the most recently started overlapping meeting. Reference attachments reject symbolic links, heading whitespace renders correctly, and Markdown exports keep speech literal. Release discovery/signing and real-contract test gates now fail safely. (#141)
+- Custom-server Settings can check the Quick model's Auto compatibility with a synthetic exchange. A format failure pauses Auto for that server/model until a successful recheck; network errors and cancellation preserve prior results. (#209)
 
 - History search keeps its records when SwiftUI recreates a view, instead of replacing matching rows with an empty asynchronous result. (#223 acceptance fix)
 
