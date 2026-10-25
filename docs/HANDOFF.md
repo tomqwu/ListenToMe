@@ -128,8 +128,10 @@ own implementation, relevant local acceptance, independent review and merged PR 
    sync to the paired iPhone after reconnect, and retain playback audio only when Save audio recordings
    is on. Off keeps delete-after-transcription. Merged in #271 with retry, deletion, consent and
    playback coverage; not released. Watch distribution remains gated by #181.
-3. **#216 — language re-check reliability:** implemented on `codex/audio-language-rechecks`;
-   focused Core and iOS tests plus the zero-recognizer-results UI flow pass. Full validation pending.
+3. **#216 — language re-check reliability:** implemented in #272; full `make validate-local` passed
+   (1,050 Core tests, 98.10% coverage; 393 iOS unit and 65 UI tests, ten iOS skips, zero failures),
+   including real Ollama contracts. Independent review and 20 fresh screenshots across two iPhone
+   and two iPad sizes passed. Evidence: `dist/language-activity-216`; not released.
 4. **#224 — re-transcribe saved audio:** finish existing PR #264; its live Mac audio gate is still pending.
 5. **#176 — UI-test reliability:** remove remaining state/time assumptions in the full local gate.
 6. Then iOS/provider improvements (#210, #209, #223, #164, #188, #167, #148, #149), followed by
