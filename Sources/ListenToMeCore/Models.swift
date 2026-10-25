@@ -12,12 +12,16 @@ public struct AudioChunk: Sendable, Equatable {
     public let sampleRate: Double
     public let source: SpeakerSource
     public let timestamp: TimeInterval
+    /// Monotonic capture time for live meter freshness. File imports need no wall-clock stamp.
+    public let capturedAtUptime: TimeInterval?
 
-    public init(samples: [Float], sampleRate: Double, source: SpeakerSource, timestamp: TimeInterval) {
+    public init(samples: [Float], sampleRate: Double, source: SpeakerSource, timestamp: TimeInterval,
+                capturedAtUptime: TimeInterval? = nil) {
         self.samples = samples
         self.sampleRate = sampleRate
         self.source = source
         self.timestamp = timestamp
+        self.capturedAtUptime = capturedAtUptime
     }
 }
 

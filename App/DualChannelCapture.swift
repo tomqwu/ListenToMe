@@ -293,7 +293,7 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
         let chunk = AudioChunk(samples: samples,
                                sampleRate: mono.format.sampleRate,
                                source: source,
-                               timestamp: timestamp)
+                               timestamp: timestamp, capturedAtUptime: startHostSeconds + timestamp)
         if case .dropped(let lost) = continuation.yield(chunk),
            lock.withLock({ reportedDrops.insert(lost.source).inserted }) {
             statusContinuation.yield(CaptureStatus(source: lost.source,
