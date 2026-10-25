@@ -54,6 +54,8 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## macOS (unreleased since 1.4.4)
 
+- Import MP4/MOV meeting recordings directly, reading their first audio track on-device. Choose You or Others for imported speech; video without audio shows a clear error. Audio/video imports share progress and cancellation controls. (#128)
+
 - Stop a streaming pane answer while keeping its partial text. File imports show the filename, source-reading progress and a Cancel button; cancelling keeps recognized lines and marks the import incomplete. (#127)
 
 - Failed model discovery preserves pinned choices and reports uncertainty. MiniMax is no longer ranked as a “mini” model. Verified local Ollama requests allow cold loads up to five minutes. (#141)

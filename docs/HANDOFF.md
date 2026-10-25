@@ -238,3 +238,14 @@ The Core suite passed 1,077 tests (seven skips, 98.1999% coverage), including pa
 late-token rejection, restart and cancelled-import preservation. Lint, Mac and iOS test builds passed.
 Independent review found a misplaced reference-file guard; corrected and reviewed clear. Full local
 validation, progress runtime test and rendered Mac acceptance remain pending. No merge or release claimed.
+
+
+### #128 movie import and source selection — implementation candidate, October 25
+
+`codex/128-video-import` builds on #127 (PR #287), which in turn depends on #141. It adds MP4/MOV
+selection, an Others/You picker and first-audio-track decoding with AVAssetReaderAudioMixOutput.
+A native Mac reader probe passed synthetic MP4/MOV decoding, nonzero samples, source attribution,
+progress/EOF, ordinary M4A fallback, cancellation between buffers and no-audio rejection. Lint, Mac
+and iOS test builds passed; independent review found no blockers. A post-read cancellation check
+drops a buffer if cancellation arrived during its read; active I/O preemption is not claimed. Full
+local validation, simulator runtime tests and rendered Mac transcription/Cancel acceptance remain pending. No merge/release claimed.

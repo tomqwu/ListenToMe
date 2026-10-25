@@ -99,7 +99,7 @@ fresh language in Settings; WhisperKit: a fresh profile).
    preparing on-device speech model…"**.
 2. While the download is still running, press **Stop**. Teardown must complete within a second or
    two: the header returns to **Transcription: stopped**, and **Listen/Stop**, **New conversation**
-   and **More → Import audio file…** are all enabled again (no lingering "Finalizing…").
+   and **More → Import audio or video…** are all enabled again (no lingering "Finalizing…").
 3. Repeat, and this time close the window with the red button, then try **Cmd-Q**, while the
    download is in flight — both must work immediately instead of being silently refused.
 4. Press **Listen** again after the model finishes installing: the pipeline is already warm, so
@@ -848,3 +848,18 @@ Capture the settings UI at native resolution and restore original preferences af
    window. Reopen the saved conversation and verify the incomplete flag persists.
 3. Cancel while speech assets prepare, then start another import after cleanup. Old tasks must not
    overwrite its progress or transcript. New conversation clears stopped-answer/import notices.
+
+
+## Movie import and source choice (#128)
+
+- Import a normal M4A/WAV as Others, then an MP4 and MOV containing speech. In the picker select You
+  for one video and Others for the other. Confirm resulting transcript labels/statistics match the
+  selected source, and movie imports read their first audio track without playing video.
+- Import a silent video: report no audio track and restore Start/New/Import controls. Try a damaged
+  container and an unsupported file; show a readable error without replacing the existing transcript.
+- Cancel during movie preparation, reading and finalization. Keep recognized text marked incomplete,
+  preserve prior conversation content, and allow another import after cleanup. Capture the source
+  picker, labelled transcript, progress and no-audio error with source/version provenance.
+- Automated fixtures are synthetic one-second tone/black-frame MP4/MOV files under iOSUnitTests/Fixtures;
+  their generation commands are in that folder's README. The native reader check is decoding evidence,
+  not a speech-recognition or physical-device acceptance pass.
