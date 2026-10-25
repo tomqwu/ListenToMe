@@ -6,11 +6,14 @@ import XCTest
 final class MobileReleaseScreenshotTests: XCTestCase {
     func testCaptureReleaseScreens() {
         let app = XCUIApplication()
-        app.launchArguments = ["--design-review-fixture", "-autoQuickSummary", "NO", "-mobileAIProvider", "apple"]
+        app.launchArguments = ["--design-review-fixture", "-autoQuickSummary", "NO", "-mobileAIProvider", "apple",
+                               "-mobileCorrectTranscript", "NO"]
         XCUIDevice.shared.orientation = .portrait
         defer { XCUIDevice.shared.orientation = .portrait }
         app.launchPastReleaseNotes()
         XCTAssertTrue(app.buttons["Notes"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "Correction paused")).firstMatch.exists,
+                       "Release captures must not inherit correction settings from another UI journey")
         app.scrollViews["transcriptScroll"].swipeDown()
         capture("01 Live portrait")
         XCUIDevice.shared.orientation = .landscapeLeft
