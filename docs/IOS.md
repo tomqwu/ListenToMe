@@ -943,9 +943,16 @@ share sheet). Each line shows its time; tapping the line or its time plays the p
 from that moment (`SavedAudioSeek`). History marks conversations with saved audio and offers **Share
 audio** in the touch-and-hold menu. Starting a recording stops playback.
 
-Apple Watch recordings keep no audio, even with this setting on: the watch inbox deletes each chunk
-once its text is saved (#181 decision 3), and keeping it would need a second retention path for audio
-the iPhone never heard (#225). UI tests use `--saved-audio-fixture`, a
+Apple Watch (#225, unreleased) uses the same opt-in library: before a batch is transcribed,
+`retainWatchAudio` copies each part with a stable recording/chunk filename and an atomic manifest.
+A failed copy or manifest write leaves inbox audio for retry. The inbox records committed copies and
+effective timeline offsets/durations, so retries neither duplicate files nor undo a later Delete all
+saved audio, and overlapping parts retain their playback/transcription alignment after relaunch.
+The setting is read per import batch; off keeps the temporary delete-after-transcription path.
+Retention uses the recording date; old imports are immediately subject to the chosen expiry.
+WatchConnectivity already queues disconnected transfers and deletes Watch files only after success.
+No cloud audio transport is added. Watch remains excluded from release until #181 acceptance.
+UI tests use `--saved-audio-fixture`, a
 synthetic tone written by the real writer; no test records the microphone.
 
 ## Photos, files and Apple Notes

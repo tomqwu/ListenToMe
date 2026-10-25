@@ -1,3 +1,7 @@
+> **October 24 update (#225):** historical delete-after-transcription steps below apply to the
+> temporary inbox. Save audio recordings now opts Watch imports into the shared playback library.
+> Consent V2 explains reconnect sync and optional retention. Device distribution still waits on #181.
+
 # Apple Watch Recording Implementation Plan
 
 > **Status (2026-10-24): built on `main`, not shipped.** Slices 1–3 merged unreleased: Slice 1 in
@@ -94,7 +98,7 @@ Its §3 platform facts (F1–F19, U1–U8) and §9 decisions are referenced by n
   - "This Apple Watch recording ended unexpectedly. The last few minutes may be missing."
   - "Apple Watch recording added to History."
   - Consent (first watch recording): "Only record people who have agreed to be recorded. The audio
-    goes only to your iPhone, which transcribes it on-device and then deletes it."
+    goes only to your iPhone, which transcribes on-device and keeps playback audio only when Save audio recordings is on."
   - Watch `NSMicrophoneUsageDescription`: "ListenToMe records on your Apple Watch and sends the audio
     only to your paired iPhone, where it is transcribed on-device."
 
