@@ -133,7 +133,7 @@ own implementation, relevant local acceptance, independent review and merged PR 
    including real Ollama contracts. Independent review and 20 fresh screenshots across two iPhone
    and two iPad sizes passed. Evidence: `dist/language-activity-216`; not released.
 4. **#224 — re-transcribe saved audio:** finish existing PR #264; its live Mac audio gate is still pending.
-5. **#176 — UI-test reliability:** remove remaining state/time assumptions in the full local gate.
+5. **#176 — UI-test reliability:** merged in #273 at `991128b`. Full local validation passed: 1,050 Core tests at 98.10% coverage; 393 iOS unit and 65 UI tests, ten iOS skips, zero failures; real Ollama contracts passed. Seventy-five native screenshots and the xcresult are preserved in `dist/ui-reliability-176` and the October 25 external evidence folder. Test-only; no binary release needed.
 6. Then iOS/provider improvements (#210, #209, #223, #164, #188, #167, #148, #149), followed by
    the Mac conversation tools (#131, #126, #127, #128, #129, #124, #68, #173, #56), then the remaining
    enhancements and review trackers (#58, #60, #62, #54, #134, #141, #98).
@@ -209,8 +209,7 @@ is the tracking issue.
 ## Known flaky or order-dependent tests
 
 - #241 is fixed: provider-default tests explicitly set/restore the cloud vendor and pass before UI tests on a fresh simulator.
-- [#176](https://github.com/tomqwu/ListenToMe/issues/176): the iOS UI test bundle is flaky under
-  machine load.
+- #176 is fixed in #273: serial simulator execution and condition-based permission/correction/summary waits passed the full local gate on a dedicated simulator, including overlapping Mac build and acceptance work.
 - `Tests/ListenToMeCoreTests/SharedQuickLoopTests.swift` has a timing flake; re-run before suspecting
   your change.
 
@@ -223,3 +222,7 @@ is the tracking issue.
   selection and Ask your history. The beta train has no physical-device
   acceptance; do not call it production-ready.
 - **Apple Watch spike** and acceptance, above.
+
+## Context capacity merged (#210) — October 25
+
+PR #274 adds optional per-server limits with reserved answer space and a no-send oversized-prompt error. Full `make validate-local` passed on `a6ec6b8`: 1,056 Core tests (seven skips, 98.1079% coverage), 394 iOS unit tests and 65 UI tests (459 total, ten skips, zero failures), release helpers, lint, signed Mac build and real Ollama/OpenAI-compatible contracts. Mac settings acceptance and independent review passed. A Pro Max screenshot run exposed a caret-position assumption in the URL-editing test; selecting all and asserting the exact replacement value fixed it, and the focused rerun passed. Only test/documentation changes followed the full gate. All 20 native screenshots across four device categories were inspected and passed. PR #274 merged as `98a8f646637f7766480cb2fab3de8761e86ffe3b` with all three required CI checks green. Evidence is preserved in `dist/context-budget-210` and the October 25 external evidence folder; this is not published.

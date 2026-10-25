@@ -13,6 +13,10 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased since 1.16.0 (33))
 
+- OpenAI-compatible servers can use an optional per-server context limit. Answer space is reserved and oversized requests stop before sending; Mac prompt trimming includes a visible notice. Unknown capacity preserves server-managed behavior. (#210)
+
+- Documentation: the Watch speaker-privacy section now agrees with the existing opt-in saved-audio retention policy. No app behavior changes. (#225)
+
 - Validation: simulator UI journeys wait for permission and correction state changes under load; the test target runs serially. No app behavior or binary release change. (#176)
 
 - Automatic language detection can start and re-check from microphone audio activity even when the current transcriber recognizes no words. Silence skips inference, isolated sounds do not download the model, and Stop remains responsive. All analysis stays on-device using the existing temporary buffer. (#216)
@@ -49,6 +53,8 @@ does not show it again, and a fresh install does not see it at all; see
 ## macOS (unreleased since 1.4.4)
 
 - Custom-server Settings can check the Quick model's Auto compatibility with a synthetic exchange. A format failure pauses Auto for that server/model until a successful recheck; network errors and cancellation preserve prior results. (#209)
+
+- OpenAI-compatible servers can use an optional per-server context limit. Answer space is reserved and oversized requests stop before sending; Mac prompt trimming includes a visible notice. Unknown capacity preserves server-managed behavior. (#210)
 
 - Local Ollama requests size their context window to the full prompt instead of relying on a small server default. Prompts beyond the safe model capacity show an error before an answer request; cloud context remains server-managed. (#230)
 

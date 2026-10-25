@@ -8,7 +8,7 @@ import ListenToMeCore
 final class MobileOpenAISettingsTests: XCTestCase {
     private let keys = ["mobileAIProvider", "mobileOpenAIBaseURL", "mobileOpenAIKeyOrigin", "mobileOpenAICatalog",
                         "mobileOpenAIModel", "mobileOpenAIQuickModel", "mobileOpenAIDeepModel",
-                        "mobileOpenAIQuickContractFailures"]
+                        "mobileOpenAIQuickContractFailures", "mobileOpenAIContextWindows"]
     private var saved: [String: Any] = [:]
     private var savedKey = ""
 
@@ -24,6 +24,25 @@ final class MobileOpenAISettingsTests: XCTestCase {
         for key in keys { UserDefaults.standard.set(saved[key], forKey: key) }
         try MobileKeychain.save(savedKey, account: MobileKeychain.openAIAccount)
         OpenAIModelsStub.reply = nil
+    }
+
+    func testContextCapacityIsExplicitPersistedAndScopedToFullServerURL() throws {
+        let settings = MobileOpenAISettings()
+        settings.setContextTokens(4_096)
+        XCTAssertNil(settings.contextWindow)
+        XCTAssertTrue(settings.saveBaseURL("http://studio.local:1234/v1").saved)
+        XCTAssertNil(settings.contextWindow)
+        settings.setContextTokens(4_096)
+        XCTAssertEqual(MobileOpenAISettings().contextWindow?.tokens, 4_096)
+        settings.setContextTokens(-1)
+        XCTAssertEqual(settings.contextWindow?.tokens, 4_096)
+        XCTAssertTrue(settings.saveBaseURL("http://studio.local:1234/other/v1").saved)
+        XCTAssertNil(settings.contextWindow, "Different API paths may run different backends")
+        settings.setContextTokens(16_384)
+        XCTAssertTrue(settings.saveBaseURL("http://studio.local:1234/v1").saved)
+        XCTAssertEqual(settings.contextWindow?.tokens, 4_096)
+        settings.setContextTokens(0)
+        XCTAssertNil(MobileOpenAISettings().contextWindow)
     }
 
     func testTheProviderIsAnExplicitPersistedChoiceAndNothingIsSetByDefault() {
@@ -101,11 +120,14 @@ final class MobileOpenAISettingsTests: XCTestCase {
         for mode in MobileSummaryMode.allCases { settings.selectModel("qwen3-8b", for: mode) }
         XCTAssertEqual(settings.model, ollamaModel, "Ollama selections are untouched")
         XCTAssertEqual(settings.selectedModel(for: .quick), "qwen3-8b", "Any listed model may serve Quick")
+        settings.openAI.setContextTokens(4_096)
         for mode in MobileSummaryMode.allCases {
             XCTAssertNil(settings.availability(for: mode))
             let client = try XCTUnwrap(try settings.client(for: mode) as? OpenAICompatibleProvider)
             XCTAssertEqual(client.baseURL.absoluteString, "http://localhost:1234/v1")
             XCTAssertEqual(client.model, "qwen3-8b")
+            XCTAssertEqual(client.contextWindow?.tokens, 4_096)
+            XCTAssertEqual(client.maxPromptCharacters, 1_792)
         }
         XCTAssertEqual(settings.transports.builtSessions, 1, "Every summary role shares one transport")
         settings.provider = .ollama

@@ -29,6 +29,8 @@ public struct OpenAICompatibleProvider: LLMProvider {
     private let maximumResponseBytes: Int
     /// The vendor's request shape (issue #214); `.standard` for a server the user typed.
     public let dialect: OpenAICompatibleDialect
+    public let contextWindow: OpenAIContextWindow?
+    public var maxPromptCharacters: Int? { contextWindow?.maxPromptCharacters }
 
     /// Default cap on everything one response streams, framing included. Event-stream framing costs
     /// roughly 150 bytes per token, so this comfortably fits the apps' 100,000-character answers.
@@ -39,7 +41,8 @@ public struct OpenAICompatibleProvider: LLMProvider {
     public init(model: String, baseURL: URL, apiKey: String? = nil, urlSession: URLSession = .shared,
                 options: Options = .init(), idleTimeout: TimeInterval = 90,
                 maximumResponseBytes: Int = OpenAICompatibleProvider.defaultMaximumResponseBytes,
-                dialect: OpenAICompatibleDialect = .standard) {
+                dialect: OpenAICompatibleDialect = .standard, contextWindow: OpenAIContextWindow? = nil) {
+        self.contextWindow = contextWindow
         self.dialect = dialect
         self.model = model
         self.baseURL = baseURL
@@ -59,13 +62,17 @@ public struct OpenAICompatibleProvider: LLMProvider {
     /// gets the request again without them (`reasoningHints: false`).
     /// A preset's `dialect` renames the token cap, drops the temperature or picks the vendor's own hint.
     public static func requestBody(model: String, request: LLMRequest, options: Options = .init(),
-                                   reasoningHints: Bool = true, dialect: OpenAICompatibleDialect = .standard) -> Data {
+                                   reasoningHints: Bool = true, dialect: OpenAICompatibleDialect = .standard,
+                                   contextWindow: OpenAIContextWindow? = nil) -> Data {
         let quick = request.purpose == .quickEvaluation
         var messages: [[String: String]] = [["role": "system", "content": request.system]]
         messages += request.messages.map { ["role": $0.role, "content": $0.content] }
         var body: [String: Any] = ["model": model, "messages": messages, "stream": true]
         if dialect.sendsTemperature, let temperature = quick ? 0 : options.temperature { body["temperature"] = temperature }
-        if let maximumTokens = quick ? 3_072 : options.maximumTokens { body[dialect.maximumTokensField] = maximumTokens }
+        let requestedOutput = quick ? 3_072 : options.maximumTokens
+        if let maximumTokens = contextWindow?.outputTokens(requested: requestedOutput) ?? requestedOutput {
+            body[dialect.maximumTokensField] = maximumTokens
+        }
         if quick && reasoningHints { dialect.addQuickReasoningHints(to: &body) }
         return (try? JSONSerialization.data(withJSONObject: body, options: [.sortedKeys])) ?? Data()
     }
@@ -98,11 +105,12 @@ public struct OpenAICompatibleProvider: LLMProvider {
         urlRequest.setValue("text/event-stream", forHTTPHeaderField: "Accept")
         for (name, value) in dialect.headers { urlRequest.setValue(value, forHTTPHeaderField: name) }
         urlRequest.httpBody = Self.requestBody(model: model, request: request, options: options,
-                                               reasoningHints: reasoningHints, dialect: dialect)
+                                               reasoningHints: reasoningHints, dialect: dialect, contextWindow: contextWindow)
         return try await OpenAICompatibleTransport.open(urlRequest, session: session, apiKey: apiKey)
     }
 
     private func run(_ request: LLMRequest, yield: (LLMStreamEvent) -> Void) async throws {
+        try contextWindow?.validate(request, requestedOutput: request.purpose == .quickEvaluation ? 3_072 : options.maximumTokens)
         let bytes: URLSession.AsyncBytes, http: HTTPURLResponse
         do {
             (bytes, http) = try await open(request, reasoningHints: true)

@@ -814,3 +814,13 @@ remains usable. A successful recheck clears that server/model failure; choosing 
 not inherit it. A connection failure and Cancel preserve the old result. Unsaved URL/key edits
 disable the check, so draft fields cannot change the recipient. Capture the result screen and restore
 original settings after the test.
+
+## Custom-server context capacity (#210)
+
+In Settings, select OpenAI-compatible and a test server. Set Server context window to 4K and save.
+Reopen Settings and verify 4K persists. A different API URL should show Unknown; returning to the
+original URL restores its setting. Cancel an edit and verify no setting changes. For short synthetic
+text, confirm the server receives an output cap of 1,024. With long text, verify Mac's trimming
+notice and that requests still too large (including large instructions or Unicode text) fail with
+“No text was sent” before the server receives them. Choose Unknown to restore server-managed behavior.
+Capture the settings UI at native resolution and restore original preferences after testing.
