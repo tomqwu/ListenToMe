@@ -98,7 +98,7 @@ struct MeetingView: View {
     @State var saveMessage = "Not saved yet"
     @State var saveFailed = false
     @State var lastSavedKey: SessionCheckpointKey?
-    private let hotkey = HotkeyMonitor()
+    @State private var hotkey = HotkeyMonitor()
 
     /// mm:ss since the current recording run started (00:00 when idle).
     var elapsedLabel: String { CommandCenterLabels.elapsed(since: recordingStartedAt, now: now) }
@@ -328,6 +328,11 @@ struct MeetingView: View {
         }, content: {
             OnboardingView()
         })
+        .safeAreaInset(edge: .bottom) {
+            if let message = hotkey.statusMessage {
+                Text(message).font(.caption).foregroundStyle(.secondary).padding(6)
+            }
+        }
         .onAppear {
             session.autoSummaryEnabled = UserDefaults.standard.bool(forKey: "autoQuickSummary")
             // Proactive answers default ON (README/smoke test): absent a stored choice, keep them on.

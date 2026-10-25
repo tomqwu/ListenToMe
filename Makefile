@@ -103,6 +103,7 @@ validate-local:
 	@test "$${GITHUB_ACTIONS:-false}" != true || { echo 'GUI/audio/device/e2e validation must run locally, not in GitHub Actions'; exit 1; }
 	bash -n scripts/ios-testflight.sh
 	python3 scripts/test-ios-testflight.py
+	bash scripts/test-hotkey.sh
 	$(MAKE) lint
 	./scripts/check-coverage.sh 95
 	$(MAKE) ios-test

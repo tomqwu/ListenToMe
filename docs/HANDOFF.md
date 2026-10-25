@@ -212,3 +212,15 @@ is the tracking issue.
 ## Context capacity candidate (#210) — October 25
 
 PR #274 adds optional per-server limits with reserved answer space and a no-send oversized-prompt error. Full `make validate-local` passed on `a6ec6b8`: 1,056 Core tests (seven skips, 98.1079% coverage), 394 iOS unit tests and 65 UI tests (459 total, ten skips, zero failures), release helpers, lint, signed Mac build and real Ollama/OpenAI-compatible contracts. Mac settings acceptance and independent review passed. A Pro Max screenshot run exposed a caret-position assumption in the URL-editing test; selecting all and asserting the exact replacement value fixed it, and the focused rerun passed. Only test/documentation changes followed the full gate. Four-device capture evidence is being finalized in `dist/context-budget-210`; this is not published.
+
+
+### #124 permission-free hotkey — implementation candidate, October 25
+
+`codex/124-permission-free-hotkey` replaces global key monitoring with Carbon registration for
+⌘⇧Space, handles pressed/released events without repeats, and releases its registration on Stop or
+deinit. A registration conflict shows a notice with an in-app-only fallback. The model and Permissions
+sheet no longer inspect/request Accessibility. README and smoke steps are updated. A process-level
+Carbon test passed identity filtering, repeat suppression, release, stop/restart, conflict and deinit
+without keyboard injection or an Accessibility grant. Mac compilation and lint passed; independent
+review found no actionable issues. Full validation and rendered foreground/background acceptance
+remain pending. No release claimed.
