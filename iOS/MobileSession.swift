@@ -120,6 +120,9 @@ final class MobileSession {
     let languageDetection: MobileLanguageDetection   // Automatic transcription language (issue #197)
     let savedAudio: MobileSavedAudio   // Save audio recordings, off by default (issue #55)
     var speakerLoop: Task<Void, Never>?
+    @ObservationIgnored var speakerSleep: @Sendable (TimeInterval) async throws -> Void = {
+        try await Task.sleep(for: .seconds($0))
+    }
     /// Stop's final speaker pass, which runs after the session is already idle.
     var speakerFinalPass: Task<Void, Never>?
     let archive: SessionArchive
@@ -338,6 +341,7 @@ final class MobileSession {
     }
 
     func background() async {
+        cancelSpeakerIdentification()
         acceptsSpeechCorrection = false
         flushPendingSave()
         speechCorrection.cancel()

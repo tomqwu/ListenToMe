@@ -261,7 +261,15 @@ final class MobileSpeakers {
     /// a pass queued for a recording that has since ended does nothing. `nil` when there is nothing to
     /// do (no run, nothing new, too little audio, models unavailable) or the pass failed or was
     /// superseded.
+    #if DEBUG
+    /// Lets lifecycle regressions observe a pass queued behind a held model, before it can execute.
+    private(set) var scheduledPassCount = 0
+    #endif
+
     func analyze(token: Int? = nil) async -> Pass? {
+        #if DEBUG
+        scheduledPassCount += 1
+        #endif
         let previous = passChain
         let pass = Task { @MainActor () -> Pass? in
             await previous?.value
@@ -300,7 +308,6 @@ final class MobileSpeakers {
                         offset: updated.offset + snapshot.startOffset, firstLine: updated.firstLine)
         } catch {
             guard run?.token == current.token else { return nil }
-            if status == .analyzing { status = .idle }
             if let reason = (error as? SpeakerDiarizer.DiarizationError)?.modelFailureReason {
                 status = .unavailable(reason)
                 lastFailure = reason

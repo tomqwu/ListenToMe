@@ -212,3 +212,15 @@ is the tracking issue.
 ## Context capacity candidate (#210) — October 25
 
 PR #274 adds optional per-server limits with reserved answer space and a no-send oversized-prompt error. Full `make validate-local` passed on `a6ec6b8`: 1,056 Core tests (seven skips, 98.1079% coverage), 394 iOS unit tests and 65 UI tests (459 total, ten skips, zero failures), release helpers, lint, signed Mac build and real Ollama/OpenAI-compatible contracts. Mac settings acceptance and independent review passed. A Pro Max screenshot run exposed a caret-position assumption in the URL-editing test; selecting all and asserting the exact replacement value fixed it, and the focused rerun passed. Only test/documentation changes followed the full gate. Four-device capture evidence is being finalized in `dist/context-budget-210`; this is not published.
+
+## In progress: speaker lifecycle follow-ups (#188)
+
+Branch `codex/188-speaker-lifecycle` cancels final labeling on background, clears the run buffer and
+binds queued passes to their original recording token. Tests now drive the actual periodic loop,
+bound Stop/background return while a model is held, and cover a cancellation-ignoring final pass,
+queued old work followed by restart, and actual default-model-directory backup exclusion. Existing
+Watch prompt mapping tests already cover the issue's device-label item. Speaker privacy/support
+wording now distinguishes clearing the run buffer from an in-flight model operation finishing.
+The iOS app and test targets compile for both simulator architectures, lint passes, and independent
+review found and then cleared a queued-old-run race. Runtime tests, full validation, rendered
+acceptance and CI remain pending. Evidence: `dist/speaker-lifecycle-188`. Not merged or published.
