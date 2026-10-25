@@ -45,6 +45,8 @@ struct MeetingView: View {
     @State var referenceSkipped: [TextFileReader.Skipped] = []
     @State var restartTask: Task<Void, Never>?
     @State var importTask: Task<Void, Never>?
+    @State var importStatus = AudioImportStatus()
+    var isImporting: Bool { importTask != nil || session.isTranscribingFile }
     @State var transcriptAtBottom = true
     /// User intent to be capturing — the toolbar button's source of truth. Stays true across the
     /// brief teardown window of a locale restart (when `session.isRunning` is transiently false),
@@ -274,7 +276,7 @@ struct MeetingView: View {
         // Tick the elapsed timer once per second while recording.
         .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { date in
             if recordingStartedAt != nil { now = date }
-            if !saveFailed { _ = checkpoint(complete: !wantsCapture && !lifecycleBusy && !session.isTranscribingFile) }
+            if !saveFailed { _ = checkpoint(complete: !wantsCapture && !lifecycleBusy && !isImporting) }
             // Not while preparing: the session is "running" from Start, but no audio has reached the
             // diarization sink yet, so an analysis here would run against the previous run's
             // leftovers (or nothing at all) — the same reason automatic reviews are gated (#147).
@@ -371,12 +373,12 @@ extension MeetingView {
             }
             .buttonStyle(.borderedProminent)
             .help("Start or stop capturing microphone and system audio")
-            .disabled(lifecycleBusy || session.isTranscribingFile)
+            .disabled(lifecycleBusy || isImporting)
             Button { saveConversation() } label: { Label("Save conversation", systemImage: "square.and.arrow.down") }
                 .disabled(!hasConversation)
                 .help("Save without stopping capture (Command-S)")
             Button { newConversation() } label: { Label("New conversation", systemImage: "plus") }
-                .disabled(lifecycleBusy || session.isTranscribingFile)
+                .disabled(lifecycleBusy || isImporting)
                 .help("Save this conversation, then start a clean one (Command-N)")
             Button { showSearch = true } label: { Label("History", systemImage: "clock") }
                 .help("Open saved conversations (Command-F)")
@@ -391,7 +393,7 @@ extension MeetingView {
             Menu {
                 Button("Refresh models") { Task { await reloadAndHealModels() } }
                 Button("Import audio file…") { importAudioFile(session: session) }
-                    .disabled(wantsCapture || lifecycleBusy || session.isTranscribingFile)
+                    .disabled(wantsCapture || lifecycleBusy || isImporting)
                 Button("Permissions…") { showPermissions.wrappedValue = true }
                 Button("Open-source licenses…") { showLicenses = true }
             } label: { Label("More", systemImage: "ellipsis") }
@@ -646,12 +648,14 @@ extension MeetingView {
     /// Imports an audio file and transcribes it into the Transcript pane (labeled "Others"),
     /// using the currently-selected language. Independent of live recording.
     func importAudioFile(session: MeetingSession) {
+        guard !isImporting, !lifecycleBusy, !wantsCapture else { return }
         let panel = NSOpenPanel()
         panel.canChooseFiles = true
         panel.allowsMultipleSelection = false
         panel.allowedContentTypes = [.audio]
         panel.message = "Choose an audio file to transcribe"
-        guard panel.runModal() == .OK, let url = panel.url else { return }
+        guard panel.runModal() == .OK, let url = panel.url,
+              !isImporting, !lifecycleBusy, !wantsCapture else { return }
         guard let producer = AudioFileChunkProducer(url: url, source: .others) else {
             startError = "Couldn't read that audio file."
             return
@@ -661,10 +665,16 @@ extension MeetingView {
         // lossless), regardless of the live-capture engine setting; the chosen language still applies.
         let locale = ProviderSettings.transcriptionLocale()
         noteCaptureLanguage(engine: "speechAnalyzer")
-        importTask?.cancel()
+        importStatus.begin(fileName: url.lastPathComponent)
+        let progress = importStatus
         importTask = Task {
+            defer { importTask = nil }
             await session.transcribeAudio(
-                nextChunk: { try await producer.next() },
+                nextChunk: {
+                    let chunk = try await producer.next()
+                    await progress.update(await producer.progress())
+                    return chunk
+                },
                 transcriber: { SpeechAnalyzerTranscriber(locale: locale) as any Transcribing })
         }
     }

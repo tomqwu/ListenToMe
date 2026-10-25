@@ -833,3 +833,18 @@ Capture the settings UI at native resolution and restore original preferences af
   angle brackets and multiline speaker names; speech stays literal while AI Markdown still formats.
 - With an all-day busy block and a shorter current meeting, Calendar chooses the latest-starting
   active timed meeting. At its end boundary it chooses an ongoing or next meeting correctly.
+
+
+## Cancel an answer or import (#127)
+
+1. Start a slow streamed Quick, Summary or Deep answer. Stop only that pane, retaining its partial
+   text and showing a stopped notice. Late tokens/errors must not alter it; other streaming panes
+   continue. Request a fresh answer and check the notice clears. Focus a pane and press Escape:
+   only its stream stops. Stop during reasoning before text arrives must show that no answer arrived.
+2. Import a long file. The status row shows its filename and increasing **% read**, then
+   **Finalizing transcript…**; percentage measures file input, not completed recognition. Cancel
+   midway or during finalization. Show **Stopping…**, disable repeat cancellation, keep recognized
+   lines and show incomplete status. After cleanup, Start/New/Import are usable without closing the
+   window. Reopen the saved conversation and verify the incomplete flag persists.
+3. Cancel while speech assets prepare, then start another import after cleanup. Old tasks must not
+   overwrite its progress or transcript. New conversation clears stopped-answer/import notices.

@@ -35,6 +35,16 @@ final class AudioFileChunkProducer: @unchecked Sendable {
         }
     }
 
+    /// Fraction of source frames read, serialized with decoding; not recognition completion.
+    func progress() async -> Double {
+        await withCheckedContinuation { continuation in
+            queue.async {
+                let fraction = self.file.length > 0 ? Double(self.framePosition) / Double(self.file.length) : 0
+                continuation.resume(returning: min(1, max(0, fraction)))
+            }
+        }
+    }
+
     /// Reads forward until it yields a convertible chunk or hits EOF (nil). Serial-queue only.
     private func readBlock() throws -> AudioChunk? {
         while true {

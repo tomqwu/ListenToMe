@@ -21,8 +21,18 @@ final class MobileAudioFileReaderTests: XCTestCase {
         }
         let expectedFrames = try AVAudioFile(forReading: url).length
         let reader = try XCTUnwrap(AudioFileChunkProducer(url: url, source: .others))
+        let initialProgress = await reader.progress()
+        XCTAssertEqual(initialProgress, 0)
         var frames = 0
-        while let chunk = try await reader.next() { frames += chunk.samples.count }
+        var previousProgress = 0.0
+        while let chunk = try await reader.next() {
+            frames += chunk.samples.count
+            let progress = await reader.progress()
+            XCTAssertGreaterThanOrEqual(progress, previousProgress)
+            XCTAssertLessThanOrEqual(progress, 1)
+            previousProgress = progress
+        }
+        XCTAssertEqual(previousProgress, 1)
         XCTAssertEqual(Int64(frames), expectedFrames)
         XCTAssertGreaterThan(frames, 0)
         let eof = try await reader.next()

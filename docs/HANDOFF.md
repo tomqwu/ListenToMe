@@ -226,3 +226,15 @@ intentional skips), 98.1971% line coverage; lint, nine release-helper regression
 and iOS test build passed. Independent review found an AAC read-past-EOF error, now corrected and
 reviewed clear with a compressed-file regression added. Full validation, AAC runtime test and
 installed Mac GUI/OTHERS acceptance remain pending. No merge or publication is claimed. Mac remains locked; no permission reset was attempted.
+
+
+### #127 cancellable answers and imports — implementation candidate, October 25
+
+`codex/127-cancel-work` is based on #141's import-error/incomplete-state fixes (PR #285). It adds
+per-pane Stop and focus-scoped Escape, preserves partial output with a text-bound stopped notice,
+and exposes filename/read progress/Cancel for file imports. Cancellation asks SpeechAnalyzer to end
+pending analysis and retains already delivered text. Finalization is distinguished from 100% read.
+The Core suite passed 1,077 tests (seven skips, 98.1999% coverage), including partial-answer stop,
+late-token rejection, restart and cancelled-import preservation. Lint, Mac and iOS test builds passed.
+Independent review found a misplaced reference-file guard; corrected and reviewed clear. Full local
+validation, progress runtime test and rendered Mac acceptance remain pending. No merge or release claimed.

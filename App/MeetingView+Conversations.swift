@@ -71,7 +71,7 @@ extension MeetingView {
     }
 
     func newConversation() {
-        guard !lifecycleBusy, !session.isTranscribingFile else { return }
+        guard !lifecycleBusy, !isImporting else { return }
         lifecycleBusy = true
         Task {
             defer { lifecycleBusy = false }
@@ -119,7 +119,7 @@ extension MeetingView {
 
     func openConversation(_ record: SessionRecord) {
         guard record.id != currentSessionID else { return }
-        guard !lifecycleBusy, !session.isRunning, !session.isTranscribingFile else {
+        guard !lifecycleBusy, !session.isRunning, !isImporting else {
             saveMessage = "Stop recording or importing before opening another conversation."
             saveFailed = true
             return
@@ -164,7 +164,7 @@ extension MeetingView {
                 Text(lifecycleBusy ? "Finalizing…" : (wantsCapture
                     ? (session.isPreparing ? "Preparing…"
                        : (recordingStartedAt == nil ? "Starting…" : "Recording \(elapsedLabel)"))
-                    : "Ready"))
+                    : (isImporting ? "Transcribing file…" : "Ready")))
                 Text(ProviderSettings.aiModeLabel)
             }
             HStack(alignment: .top, spacing: 16) {
@@ -197,6 +197,19 @@ extension MeetingView {
                     }
                 }.frame(maxWidth: .infinity, alignment: .trailing)
             }
+            if isImporting {
+                HStack {
+                    Text(importStatus.fileName).lineLimit(1).truncationMode(.middle)
+                    ProgressView(value: importStatus.fraction).frame(width: 100)
+                    Text(importStatus.cancelling ? "Stopping…" : importStatus.progressLabel)
+                    Button("Cancel import") {
+                        importStatus.cancelling = true
+                        importTask?.cancel()
+                    }.disabled(importStatus.cancelling)
+                }
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel("Audio import progress")
+            }
             if store.partial != nil {
                 Text("Saving keeps finalized text; the current spoken phrase is still being transcribed.")
                     .foregroundStyle(.secondary)
@@ -213,9 +226,9 @@ extension MeetingView {
     }
 
     var conversationCommands: ConversationCommands {
-        ConversationCommands(canSave: hasConversation, canStartNew: !lifecycleBusy && !session.isTranscribingFile,
+        ConversationCommands(canSave: hasConversation, canStartNew: !lifecycleBusy && !isImporting,
             isCapturing: wantsCapture,
-            canToggleCapture: !lifecycleBusy && !session.isTranscribingFile,
+            canToggleCapture: !lifecycleBusy && !isImporting,
             canUseAI: session.aiEnabled,
             save: saveConversation, new: newConversation, history: { showSearch = true },
             export: exportSession, settings: { openSettings($showSettings) },

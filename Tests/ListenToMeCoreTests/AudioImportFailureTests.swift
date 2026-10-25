@@ -22,6 +22,22 @@ final class AudioImportFailureTests: XCTestCase {
         XCTAssertFalse(model.hasIncompleteImport)
     }
 
+    func testCancellationRetainsRecognizedLinesAndEndsTheImport() async {
+        let reader = CancellableAudioReader()
+        let store = ConversationStore()
+        let model = MeetingSession(store: store, context: ContextEngine(debounce: 0),
+                                   makeCapture: { MockCapture() }, makeTranscriber: { EchoTranscriber() },
+                                   makeProvider: { MockLLMProvider(id: $0, deltas: []) }, models: [:])
+        let task = Task { await model.transcribeAudio(nextChunk: { try await reader.next() }) }
+        await reader.waitUntilReadingMore()
+        task.cancel()
+        await task.value
+        XCTAssertFalse(model.isTranscribingFile)
+        XCTAssertTrue(model.hasIncompleteImport)
+        XCTAssertEqual(store.utterances.count, 1)
+        XCTAssertTrue(model.transcriptionStatus.contains("incomplete"))
+    }
+
     func testReadFailurePreservesPartialTranscriptAndMarksItIncomplete() async {
         let reader = FailingAudioReader()
         let store = ConversationStore()
@@ -48,4 +64,19 @@ private actor FailingAudioReader {
         read = true
         return AudioChunk(samples: [0.1], sampleRate: 16_000, source: .others, timestamp: 0)
     }
+}
+
+private actor CancellableAudioReader {
+    private var read = false
+    private let waiting = AsyncStream<Void>.makeStream()
+    func next() async throws -> AudioChunk? {
+        if read {
+            waiting.continuation.yield(())
+            try await Task.sleep(for: .seconds(600))
+            return nil
+        }
+        read = true
+        return AudioChunk(samples: [0.1], sampleRate: 16_000, source: .others, timestamp: 0)
+    }
+    func waitUntilReadingMore() async { for await _ in waiting.stream { return } }
 }
