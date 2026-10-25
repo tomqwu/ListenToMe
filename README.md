@@ -693,3 +693,7 @@ The app does not silently remove the opening. This can reject some prompts a spe
 could fit. Larger contexts require more memory. Default local answers are bounded to 4,096 tokens (at most a quarter of a small model window);
 Quick and correction keep their smaller limits, and output-limit notices still apply.
 Ollama Cloud models and other cloud providers keep their server-managed context.
+
+### Structured Summary on Mac
+
+Summary requests ask the selected model for Open / To-do / Decided items with verbatim transcript evidence. Valid output becomes cards with expandable Sources; copied text, History and exports retain readable Markdown. Owners and deadlines are optional and require matching words in the cited speech. Source checks verify quoted wording, not the model's interpretation: review decisions and commitments before relying on them. Unfinalized speech is not accepted as card evidence. A model that returns freeform or invalid structured output falls back to the normal text pane. No additional model request is made. Earlier items and their source excerpts are included in the rolling record for later batches. iPhone keeps the readable summary and preserves unchanged structured metadata when saving an imported record.

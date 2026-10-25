@@ -176,7 +176,10 @@ struct RoleBox<Header: View, Actions: View>: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         Group {
-                            if !outputText.isEmpty {
+                            if role == .listener, !session.streamingRoles.contains(role),
+                               let grid = session.visibleSituation {
+                                SituationGridView(grid: grid, segments: session.store.utterances)
+                            } else if !outputText.isEmpty {
                                 MarkdownText(text: outputText).foregroundStyle(Theme.ink)
                             } else if session.streamingRoles.contains(role) {
                                 Text("💭 Thinking…").foregroundStyle(Theme.ink2)

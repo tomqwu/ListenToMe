@@ -16,7 +16,7 @@ extension MeetingView {
             attachments: restoredRecord?.attachments, sourceImportID: restoredRecord?.sourceImportID,
             titleState: conversationTitleState, selectionSummaries: restoredRecord?.selectionSummaries,
             summaryInstructions: session.summaryInstructions,
-            vocabularyDomainIDs: vocabulary.domainIDs(for: currentSessionID).sorted()
+            vocabularyDomainIDs: vocabulary.domainIDs(for: currentSessionID).sorted(), situationGrid: session.visibleSituation
         ).with(languages: conversationLanguages)
     }
 

@@ -141,3 +141,7 @@ Exports are built on the device. On macOS the file goes where you save it. On iP
 to the app's own temporary folder, with the same data protection as History, only when you pick a share
 destination. It is removed at the next export, at the next launch, and when you delete any conversation
 or use Delete all conversations; where a copy goes after you share it is up to the destination you chose.
+
+### Structured Mac summaries
+
+Structured Summary cards keep their readable Markdown, including literal source excerpts, in the usual `summary` field for all exports. The app's Codable conversation archive also keeps an optional `situationGrid` (summary plus open/todo/decided items, quotes, optional owner/deadline). Old archives remain readable. Mac revalidates excerpts against finalized transcript lines before displaying cards; iPhone preserves unchanged metadata on restore/save and Watch appends. A replaced summary or changed supporting evidence invalidates the cards.

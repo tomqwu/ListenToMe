@@ -825,3 +825,7 @@ visible and no new request starts. Manual generation uses the new setting immedi
 triggered by new speech uses it too. Rename a speaker during a Quick read: old-label output must
 not apply, unread speech must still be processed, and already acknowledged speech should not be
 resent solely because of the label change.
+
+## Structured Summary cards (#62)
+
+Use a new test conversation with an unresolved question, explicit action/owner/deadline and decision. Generate Summary with the chosen provider; inspect the three categories and expand each source. Confirm speaker labels match and untimed lines show no invented clock. Copy/export must be readable. Add more speech, refresh, and verify prior unresolved items remain; explicitly resolve an item and check the new state. Reopen from History, rename the conversation and verify cards survive. With a model returning freeform, malformed JSON or unsupported quotes, inspect the normal fallback text. Cancel or fail a refresh: never label partial output as a validated grid. Capture native screenshots and preserve candidate provenance. Actual model interpretation and rendered UI acceptance remain separate from schema/unit checks.

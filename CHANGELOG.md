@@ -54,6 +54,8 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## macOS (unreleased since 1.4.4)
 
+- Summary can render Open / To-do / Decided cards when the model returns validated structured output. Expand Sources for verbatim evidence and speaker labels; times appear only when the engine supplied them. Explicit owner/deadline fields require matching source text. Unsupported or invalid output remains readable as freeform text. Structured records retain readable exports and reopen on Mac. (#62)
+
 - Automatic reviews count the complete request toward their 60,000-character limit, including instructions and any attached references. Oversized requests stop before sending and explain what to shorten. Changing directives alone keeps the existing review; new context or manual generation uses the new settings. (#148)
 
 - OpenAI-compatible servers can use an optional per-server context limit. Answer space is reserved and oversized requests stop before sending; Mac prompt trimming includes a visible notice. Unknown capacity preserves server-managed behavior. (#210)

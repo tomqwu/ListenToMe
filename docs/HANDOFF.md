@@ -224,3 +224,7 @@ and independent review. The app/test targets compile for both simulator architec
 UI scenario passed and its two native screenshots were inspected: the limit notice is readable, and
 shortening input produces Summary successfully. Full validation, hosted CI and Mac installed-app
 acceptance remain pending. Not merged or published.
+
+### #62 structured Summary — implementation candidate, October 25
+
+Branch `codex/62-situation-grid` (based on #148) requests structured Summary output on Mac, validates verbatim final-transcript evidence and literal optional owner/deadline fields, and renders Open / To-do / Decided with expandable sources. Human-readable summaries/exports and freeform fallback remain. Optional archive metadata survives retitle/language-copy and unchanged iOS save/Watch append. No extra model request is added. Core tests passed (1,064 tests, seven skips, 98.1273% coverage), lint and Mac/iOS test builds passed. Independent review caught and cleared untimed timestamps, archive-copy loss, repeated validation scans and normalized-output notice loss; regressions cover these paths. Native UI/provider quality acceptance, the new iOS metadata runtime test and full local validation remain pending. This is not merged or published.

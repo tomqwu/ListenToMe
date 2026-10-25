@@ -6,6 +6,7 @@ public struct SessionRecord: Sendable, Equatable, Identifiable, Codable {
     public let title: String
     public let date: Date
     public let transcript: String   // joined "You: …\nOthers: …" lines
+    public let situationGrid: SituationGrid?
     public let summary: String
     public let segments: [TranscriptSegment]?
     public let notes: String?
@@ -32,7 +33,9 @@ public struct SessionRecord: Sendable, Equatable, Identifiable, Codable {
                 quickSuggestion: String? = nil, deepAnswer: String? = nil, isComplete: Bool? = nil,
                 attachments: [SessionAttachment]? = nil, sourceImportID: String? = nil,
                 titleState: ConversationTitleState? = nil, language: String? = nil, languages: [String]? = nil,
-                selectionSummaries: [SelectionSummary]? = nil, summaryInstructions: String? = nil, vocabularyDomainIDs: [String]? = nil) {
+                selectionSummaries: [SelectionSummary]? = nil, summaryInstructions: String? = nil, vocabularyDomainIDs: [String]? = nil,
+                      situationGrid: SituationGrid? = nil) {
+        self.situationGrid = situationGrid
         self.id = id; self.title = title; self.date = date
         self.transcript = transcript; self.summary = summary
         self.segments = segments; self.notes = notes
