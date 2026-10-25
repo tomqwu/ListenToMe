@@ -2,6 +2,12 @@
 import copy
 import importlib.util
 import json
+import os
+import re
+import shlex
+import shutil
+import sys
+import textwrap
 from pathlib import Path
 import subprocess
 import tempfile
@@ -183,6 +189,74 @@ class BDDTests(unittest.TestCase):
         binding["test"] = "OtherTests/test_rejects_export"
         with self.assertRaises(bdd.ContractError):
             bdd.binding_body(self.root, binding)
+
+    def test_ci_uses_current_target_and_keeps_push_and_unbound_change_checks(self):
+        # Run the actual CI shell against a Git remote that advanced after PR creation.
+        # Already-merged behavior is excluded; new unbound behavior still fails.
+        self.scenario["covers"] = ["App/Example.swift", "Makefile"]
+        released = copy.deepcopy(self.scenario)
+        released.update(id="REL-001", name="Previously released behavior",
+                        covers=["App/AlreadyReleased.swift"])
+        self.write("App/AlreadyReleased.swift", "struct Released {}\n")
+        self.write("Behaviors/released.json", json.dumps({"feature": "Release", "scenarios": [released]}))
+        runner = Path(self.temp.name).parent / (self.root.name + "-runner.py")
+        self.addCleanup(runner.unlink, missing_ok=True)
+        runner.write_text("import importlib.util,sys\nfrom pathlib import Path\n"
+                          + "s=importlib.util.spec_from_file_location('bdd', "
+                          + repr(str(Path(bdd.__file__))) + ")\n"
+                          + "m=importlib.util.module_from_spec(s);s.loader.exec_module(m)\n"
+                          + "m.check(Path.cwd(),sys.argv[1])\n")
+        self.write("Makefile", "bdd-check:\n\t" + shlex.quote(sys.executable) + " "
+                   + shlex.quote(str(runner)) + ' "$(BDD_BASE)"\n')
+        self.save()
+        self.git("add", ".")
+        self.git("-c", "user.name=BDD fixture", "-c", "user.email=bdd@example.invalid",
+                 "commit", "-qm", "fixture delivery baseline")
+        stale_base = self.git("rev-parse", "HEAD").strip()
+        remote = Path(self.temp.name).parent / (self.root.name + "-remote.git")
+        self.addCleanup(shutil.rmtree, remote, ignore_errors=True)
+        self.git("clone", "--bare", str(self.root), str(remote))
+        self.git("remote", "add", "origin", str(remote))
+        self.write("App/AlreadyReleased.swift", "struct Released { let version: Int }\n")
+        self.git("add", ".")
+        self.git("-c", "user.name=BDD fixture", "-c", "user.email=bdd@example.invalid",
+                 "commit", "-qm", "release already merged after PR opened")
+        target = self.git("rev-parse", "HEAD").strip()
+        self.git("push", "origin", "HEAD:refs/heads/release-base")
+        # Put a valid new behavior and its changed native assertion in this PR.
+        self.write("App/Example.swift", "struct Example { let title: String }\n")
+        self.scenario["then"] += " with the new title"
+        self.save()
+        self.change_test()
+        workflow = (Path(bdd.__file__).parent.parent / ".github/workflows/ci.yml").read_text()
+        step = workflow.split("- name: Check behavior scenarios and changed regression tests\n", 1)[1]
+        step = step.split("      - name:", 1)[0]
+        value = re.search(r"^        run: (.*)$", step, re.M)
+        self.assertIsNotNone(value)
+        shell = textwrap.dedent(step[value.end() + 1:]) if value[1] == "|" else value[1]
+
+        def run_ci(branch, before):
+            return subprocess.run(["bash", "-e", "-o", "pipefail", "-c", shell], cwd=self.root,
+                                  env={**os.environ, "BDD_BASE": before, "BDD_TARGET_BRANCH": branch},
+                                  text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+        result = run_ci("release-base", stale_base)
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.git("add", ".")
+        self.git("-c", "user.name=BDD fixture", "-c", "user.email=bdd@example.invalid",
+                 "commit", "-qm", "valid PR behavior")
+        valid_head = self.git("rev-parse", "HEAD").strip()
+        result = run_ci("", target)
+        self.assertEqual(result.returncode, 0, result.stdout)
+        # A new change to the released behavior has no updated scenario or assertion.
+        self.write("App/AlreadyReleased.swift", "struct Released { let unbound: Bool }\n")
+        for branch, before in (("release-base", stale_base), ("", target), ("", valid_head)):
+            result = run_ci(branch, before)
+            self.assertNotEqual(result.returncode, 0, result.stdout)
+            self.assertIn("App/AlreadyReleased.swift: add/update", result.stdout)
+        result = run_ci("missing-target", stale_base)
+        self.assertNotEqual(result.returncode, 0, result.stdout)
+        self.assertEqual(self.git("rev-parse", "refs/remotes/origin/release-base").strip(), target)
 
     def test_native_commands_select_exact_methods_and_dedicated_simulator(self):
         commands = bdd.commands([self.scenario], "core", "")

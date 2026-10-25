@@ -79,7 +79,9 @@ code roots fail until they are assigned a scoped contract. Docs, release copy an
 changes do not demand an unrelated production scenario. Python test helpers remain tooling.
 
 The required **ListenToMeCore tests + coverage** CI job checks PR changes against their actual base,
-tests the gate, executes bound core/tooling scenarios and retains the 95% core coverage floor.
+fetches the current target branch for PRs (including stacked PR targets), tests the gate, executes
+bound core/tooling scenarios and retains the 95% core coverage floor. A push compares against its
+event’s before commit. Failed target fetches fail the check; they never fall back to a stale PR base.
 The existing macOS and iOS build checks remain required. Main also requires branches to be up to
 date before merge, so older drafts must incorporate the current BDD workflow. The three required
 check names are unchanged; the live Main ruleset's strict up-to-date requirement was enabled and

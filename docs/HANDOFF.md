@@ -18,7 +18,11 @@ The BDD workflow's full local run at `9ceee7a` passed: 1,068 Core tests (seven s
 coverage), 471 iOS tests (461 passed, ten intentional skips, zero failures), release helpers, lint,
 signed Mac build and real Ollama/OpenAI contracts. The log confirms every bound iOS unit/UI method
 passed. Integration keeps product sources identical to the validated `dbd1cc7` release candidate
-and workflow code identical to that full BDD run; PR #305 records final review/CI/merge evidence.
+and retains that validated workflow, with a subsequently reproduced CI base-selection fix: PRs
+fetch their current target branch instead of using the stale base SHA saved when the PR opened.
+The new DEV-005 regression runs the actual CI shell against an advancing local Git remote; it
+failed on already-merged behavior before the fix and passed afterward, retaining push/unbound-change
+and failed-fetch checks. All 17 gate regressions pass. PR #305 records final review/CI/merge evidence.
 Main's strict up-to-date branch requirement is enabled and read back, retaining the three checks.
 
 The maintainer requires finishing work before opening more feature PRs. Six redundant #134 drafts

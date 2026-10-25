@@ -43,7 +43,13 @@ jobs:
       - name: Check behavior scenarios and changed regression tests
         env:
           BDD_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
-        run: make bdd-check BDD_BASE="$BDD_BASE"
+          BDD_TARGET_BRANCH: ${{ github.base_ref }}
+        run: |
+          if [ -n "$BDD_TARGET_BRANCH" ]; then
+            git fetch --no-tags origin "refs/heads/$BDD_TARGET_BRANCH"
+            BDD_BASE="$(git rev-parse FETCH_HEAD)"
+          fi
+          make bdd-check BDD_BASE="$BDD_BASE"
       - name: Test BDD gate failure paths
         run: python3 scripts/test-bdd.py
       - name: Execute headless behavior scenarios

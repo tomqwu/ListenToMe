@@ -89,6 +89,24 @@
           "test": "BDDTests/test_python_versions_report_both_supported_verbose_selector_formats"
         }
       ]
+    },
+    {
+      "id": "DEV-005",
+      "name": "Check PR changes against the current target branch",
+      "given": "a pull request includes changes already merged to its target since it was opened",
+      "when": "the CI behavior gate evaluates the pull request or a push",
+      "then": "the PR gate excludes already merged changes but rejects new unbound behavior, and pushes retain their before-commit comparison",
+      "covers": [
+        ".github/workflows/ci.yml",
+        "scripts/test-bdd.py"
+      ],
+      "bindings": [
+        {
+          "suite": "tooling",
+          "file": "scripts/test-bdd.py",
+          "test": "BDDTests/test_ci_uses_current_target_and_keeps_push_and_unbound_change_checks"
+        }
+      ]
     }
   ]
 }
