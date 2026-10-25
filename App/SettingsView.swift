@@ -202,6 +202,9 @@ struct SettingsView: View {
                     .onChange(of: openAIBaseURL) {
                         openAIContextTokens = ProviderSettings.openAIContextWindow(for: openAIBaseURL)?.tokens ?? 0
                     }
+                OpenAICompatibilityView(savedConfiguration: ProviderSettings.aiMode == .openAI
+                    && openAIBaseURL == ProviderSettings.openAIBaseURL && openAIKey == originalOpenAIKey
+                    && openAIContextTokens == (ProviderSettings.openAIContextWindow(for: openAIBaseURL)?.tokens ?? 0))
             }
             if aiMode == .cloudAI {
                 CloudAISettingsSection(vendor: $cloudVendor, key: $cloudKey)
