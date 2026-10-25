@@ -113,13 +113,14 @@ final class MobileAISettings {
     /// Accepts only an http(s) URL with a host; returns nil for anything else.
     static func normalizedBaseURL(_ raw: String) -> URL? {
         let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, let url = URL(string: trimmed),
-              let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https",
-              let host = url.host(), !host.isEmpty else { return nil }
+        guard !trimmed.isEmpty, let parsed = URLComponents(string: trimmed),
+              let scheme = parsed.scheme?.lowercased(), scheme == "http" || scheme == "https",
+              let host = parsed.host, !host.isEmpty else { return nil }
+        // URL.host() removes IPv6 brackets; URLComponents.host needs the literal host form.
         var components = URLComponents()
         components.scheme = scheme
         components.host = host
-        components.port = url.port
+        components.port = parsed.port
         return components.url
     }
 
