@@ -48,7 +48,9 @@ enum MobileReleaseNotes {
         var id: String { version }
     }
     static let releases: [Release] = [
-        .init(version: "1.17.1", title: "Recording that fits your device", details: [
+        .init(version: "1.18.0", title: "Recording, review and recovery", details: [
+            "Re-transcribe saved audio in a chosen language, review it and choose whether to replace the transcript. Notes and summaries are kept.",
+            "Automatic reviews include instructions and references in their size limits. Stop and cancelled work stay bound to the right recording.",
             "Compatible older iPads use Apple's on-device dictation when advanced transcription is unavailable.",
             "Recording checks this device and language before enabling Start, with a clear reason and recovery when unavailable.",
             "Failed model or microphone setup shows the full error. Cancelling preparation does not show a false failure.",

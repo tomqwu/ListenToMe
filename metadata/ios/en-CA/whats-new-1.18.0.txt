@@ -9,6 +9,8 @@ Your conversation, your workspace—and recording that fits your device.
 • Compatible older iPads can use Apple's on-device dictation when advanced transcription is unavailable. Language choices and Automatic use the supported local speech modules.
 • Recording checks device/language support before enabling Start and explains recovery when unavailable. Unexpected model or microphone setup failures show the full error; cancellation stays quiet.
 • Settings explains unavailable Apple Intelligence and requires an explicit alternate provider setup. Recording needs no summary AI model.
+• Re-transcribe retained audio in a chosen language, preview the result and replace it only when ready. Notes, attachments and summaries stay; speaker corrections reset. Recognition remains on-device.
+• Automatic review limits include the complete request. Stop, restart and naming keep each recording and conversation isolated.
 • Optional saved audio plays from the Live transcript after Stop. Enable Save audio recordings before listening; earlier unsaved audio cannot be recovered later.
 
 Conversations stay private by default. Speech runs on-device, cloud AI remains an explicit choice, and retained audio stays opt-in. Apple Watch is not included in this build.

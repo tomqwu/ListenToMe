@@ -4,7 +4,7 @@ macOS SwiftUI **meeting copilot**: fully on-device transcription (Apple SpeechAn
 plus real-time AI via Ollama (local + cloud), with per-pane model selection and use-case presets.
 
 - **Engine** logic lives in `Sources/ListenToMeCore` (SwiftPM library, **has tests** in `Tests/ListenToMeCoreTests`).
-- **UI** lives in `App/` (SwiftUI; **no UI tests** — verify UI changes with `make build` plus a manual `make run`).
+- **UI** lives in `App/` (SwiftUI; **no UI tests** — headless adapter tests run through `make app-test`; verify UI changes with `make build` plus a manual `make run`).
 - Build: `make build`. Run: `make run`. Full check (build + bundle path + `OllamaProvider` contract test): `make e2e`.
 
 ## Canonical release workflow

@@ -6,7 +6,7 @@
       "name": "Preserve capture and conversation ownership during orchestration changes",
       "given": "a recording, summary, naming or checkpoint operation is pending",
       "when": "Stop, New, restart or a newer generation supersedes it",
-      "then": "old completions cannot restart capture, overwrite a newer conversation or corrupt saved state",
+      "then": "old completions cannot restart capture, overwrite a newer conversation or corrupt saved state; deleting one conversation preserves other records and reports secondary erasure failures; unsupported native languages cannot allocate a recorder, genuine preparation failures remain actionable, and late errors after Stop stay silent",
       "covers": [
         "App/MeetingView+AutoTitle.swift",
         "App/MeetingView+Capture.swift",
@@ -25,7 +25,10 @@
         "iOS/MobileSession+Capture.swift",
         "iOS/MobileSession+Summarize.swift",
         "iOS/MobileSession.swift",
-        "iOS/MobileSummaryMode.swift"
+        "iOS/MobileSummaryMode.swift",
+        "App/FileContextLoader.swift",
+        "App/MacCapturePreflight.swift",
+        "App/MacCheckpointController.swift"
       ],
       "bindings": [
         {
@@ -197,6 +200,51 @@
           "suite": "ios-unit",
           "file": "iOSUnitTests/MobileCaptureCoordinatorTests.swift",
           "test": "MobileCaptureCoordinatorTests/testConcurrentStopWaitsForFinalTextAndSavesCompleteRecord"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/PlatformAdapterTests.swift",
+          "test": "PlatformAdapterTests/testOldAudioCallbackCannotContaminateRestartedRunOrItsOffset"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/PlatformAdapterTests.swift",
+          "test": "PlatformAdapterTests/testRealConverterResamplesAndCapsInsteadOfGrowingWithoutBound"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/PlatformAdapterTests.swift",
+          "test": "PlatformAdapterTests/testReferenceFilesDecodeRichTextAndReportOversizeAndMissingFiles"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationRepositoryTests.swift",
+          "test": "ConversationRepositoryTests/testSingleDeletionPublishesRemainingHistoryAndReportsOwnerFailure"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileRecordingCapabilityTests.swift",
+          "test": "MobileRecordingCapabilityTests/testUnsupportedLanguageBlocksStartBeforeCreatingRecorder"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileStartFailureTests.swift",
+          "test": "MobileStartFailureTests/testPermissionFailureAfterCancellationDoesNotPresentAStartupError"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileStartFailureTests.swift",
+          "test": "MobileStartFailureTests/testStartFailureStaysActionableUntilRetryAndDoesNotReplaceTheNextSuccessfulRun"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacOrchestrationAdapterTests.swift",
+          "test": "MacOrchestrationAdapterTests/testUnsupportedCapabilityAndCancelledPermissionNeverAuthorizeCapture"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacOrchestrationAdapterTests.swift",
+          "test": "MacOrchestrationAdapterTests/testCheckpointPrivacyFailureRetryAndStatusUseDurableState"
         }
       ],
       "manual": {
@@ -434,7 +482,7 @@
         {
           "suite": "core",
           "file": "Tests/ListenToMeCoreTests/MeetingSessionTimelineTests.swift",
-          "test": "Transcribers/testDelayedBatchedSourcesKeepReportedRangesAndOldRunCannotLeakAfterRestart"
+          "test": "MeetingSessionTimelineTests/testDelayedBatchedSourcesKeepReportedRangesAndOldRunCannotLeakAfterRestart"
         }
       ],
       "manual": {
@@ -591,7 +639,8 @@
         "App/SpeechAnalyzerTranscriber.swift",
         "SharedPlatform/AudioFileReader.swift",
         "Sources/ListenToMeCore/MeetingSession.swift",
-        "Sources/ListenToMeCore/OpenAICompatibleContractProbe.swift"
+        "Sources/ListenToMeCore/OpenAICompatibleContractProbe.swift",
+        "App/AudioFileReader.swift"
       ],
       "bindings": [
         {
@@ -666,7 +715,9 @@
         "iOS/MobileSession.swift",
         "scripts/release-paths.sh",
         "scripts/release.sh",
-        "scripts/run-contract-tests.py"
+        "scripts/run-contract-tests.py",
+        "scripts/test-contract-gate.py",
+        "scripts/test-release-paths.py"
       ],
       "bindings": [
         {
@@ -985,22 +1036,22 @@
         {
           "suite": "core",
           "file": "Tests/ListenToMeCoreTests/HistoryIndexReuseTests.swift",
-          "test": "Counter/testSummaryInsertionAndSinglePassageEditReuseVectorsAfterReopeningWithoutMemoryCache"
+          "test": "HistoryIndexReuseTests/testSummaryInsertionAndSinglePassageEditReuseVectorsAfterReopeningWithoutMemoryCache"
         },
         {
           "suite": "core",
           "file": "Tests/ListenToMeCoreTests/HistoryIndexReuseTests.swift",
-          "test": "Counter/testLanguageAndEmbeddingMethodChangesInvalidateReusablePassages"
+          "test": "HistoryIndexReuseTests/testLanguageAndEmbeddingMethodChangesInvalidateReusablePassages"
         },
         {
           "suite": "core",
           "file": "Tests/ListenToMeCoreTests/HistoryIndexReuseTests.swift",
-          "test": "Counter/testAppendingToLongConversationEmbedsOnlyNewPassagesAndDuplicatePassagesShareWork"
+          "test": "HistoryIndexReuseTests/testAppendingToLongConversationEmbedsOnlyNewPassagesAndDuplicatePassagesShareWork"
         },
         {
           "suite": "core",
           "file": "Tests/ListenToMeCoreTests/HistoryIndexReuseTests.swift",
-          "test": "Counter/testUnavailableDuplicatePassagesAreAttemptedOncePerChangedSave"
+          "test": "HistoryIndexReuseTests/testUnavailableDuplicatePassagesAreAttemptedOncePerChangedSave"
         },
         {
           "suite": "core",
@@ -1010,7 +1061,7 @@
         {
           "suite": "core",
           "file": "Tests/ListenToMeCoreTests/SavedAudioTests.swift",
-          "test": "Holder/testRetranscriptionAlignmentRollsBackWhenArchiveCommitFails"
+          "test": "SavedAudioTests/testRetranscriptionAlignmentRollsBackWhenArchiveCommitFails"
         },
         {
           "suite": "ios-ui",
@@ -1120,6 +1171,62 @@
           "Exercise affected installed-app flows; keep physical Watch pairing and real OTHERS audio evidence separate."
         ]
       }
+    },
+    {
+      "id": "BATCH-286",
+      "name": "Global Quick shortcut handles only its own press",
+      "given": "Quick is registered for Command Shift Space",
+      "when": "the OS delivers unrelated, repeated, released, stopped or conflicting hotkeys",
+      "then": "only its own initial press invokes Quick; repeats and stopped registrations do not run, conflicts expose a fallback notice",
+      "covers": [
+        "App/HotkeyMonitor.swift",
+        "scripts/test-hotkey.sh",
+        "scripts/test-hotkey.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/HotkeyMonitorTests.swift",
+          "test": "HotkeyMonitorTests/testCarbonPressReleaseIdentityConflictAndLifetime"
+        }
+      ]
+    },
+    {
+      "id": "BATCH-292",
+      "name": "Compute details distinguish configured policy from runtime evidence",
+      "given": "Apple Speech or WhisperKit is selected",
+      "when": "compute details are inspected while idle, preparing or recording",
+      "then": "the configured units match the transcriber policy and runtime hardware remains explicitly not exposed",
+      "covers": [
+        "App/TranscriptionComputeInfo.swift",
+        "SharedPlatform/WhisperComputePolicy.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/TranscriptionComputeTests.swift",
+          "test": "TranscriptionComputeTests/testConfiguredUnitsAndRuntimeLabelsNeverClaimObservedHardware"
+        }
+      ]
+    },
+    {
+      "id": "BATCH-283",
+      "name": "Operation failures remain independent and dismissible",
+      "given": "a capture failure is visible",
+      "when": "a file import fails or its message is dismissed",
+      "then": "the file message is separate and dismissing it preserves the capture failure and its recovery action",
+      "covers": [
+        "App/MeetingErrorBanner.swift",
+        "App/MacOperationErrors.swift",
+        "App/MeetingView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacOperationErrorsTests.swift",
+          "test": "MacOperationErrorsTests/testImportFailureAndDismissalPreserveCaptureRecovery"
+        }
+      ]
     }
   ]
 }

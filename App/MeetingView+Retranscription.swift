@@ -32,7 +32,7 @@ extension MeetingView {
         guard session.restoreConversation(updated) else { throw ConversationRetranscription.Failure.changed }
         restoredRecord = updated
         conversationLanguages = updated.conversationLanguages
-        lastSavedKey = nil
+        checkpointCoordinator.reset(startedAt: conversationStartedAt)
         _ = checkpoint(complete: true, force: true)
         saveMessage = "Transcript replaced. Notes and summaries kept; review summaries for changes."
         saveFailed = false

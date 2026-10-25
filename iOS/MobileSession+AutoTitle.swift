@@ -18,8 +18,7 @@ extension MobileSession {
         guard newTitle != title else { return }
         title = newTitle
         titleState = .user
-        autoTitleTasks[id]?.cancel()
-        autoTitleTasks[id] = nil
+        titleCoordinator.cancel(id)
     }
 
     /// The summary provider as a privacy mode: Ollama on the user's own server counts as local.
@@ -49,40 +48,21 @@ extension MobileSession {
     /// Names `recordID` (the open conversation by default) in the background if it still has its
     /// default name and enough words. `language` defaults to the conversation's. Never while
     /// recording: a return from Control Center mid-recording must not name half a transcript.
-    func nameConversationIfNeeded(_ recordID: String? = nil, language: String? = nil) {
-        guard Self.namesConversationsAutomatically, isForeground, state == .idle else { return }
+    @discardableResult
+    func nameConversationIfNeeded(_ recordID: String? = nil, language: String? = nil) -> Task<Void, Never>? {
+        guard Self.namesConversationsAutomatically, isForeground, state == .idle else { return nil }
         let target = recordID ?? id
-        guard autoTitleTasks[target] == nil, let snapshot = autoTitleSnapshot(target),
+        guard let snapshot = autoTitleSnapshot(target),
               ConversationAutoTitle.shouldName(state: snapshot.state, title: snapshot.title, words: snapshot.words)
-        else { return }
+        else { return nil }
         let provider = autoTitleProvider
         let language = language ?? (target == id ? conversationLanguage : transcriptionLanguage)
-        autoTitleTasks[target] = Task { [weak self] in
-            let named = await ConversationAutoTitle.title(transcript: snapshot.spoken, summary: snapshot.summary,
-                                                          language: language, provider: provider)
-            guard let self else { return }
-            self.autoTitleTasks[target] = nil
-            guard !Task.isCancelled else { return }
-            self.applyAutoTitle(named?.title, to: target, from: snapshot)
+        return titleCoordinator.name(target, snapshot: snapshot, language: language, provider: provider) { [weak self] result in
+            self?.applyAutoTitle(result, to: target, from: snapshot)
         }
     }
 
-    /// What naming starts from; the title is applied only if it is still exactly this.
-    struct AutoTitleSnapshot: Sendable {
-        let title: String
-        let state: ConversationTitleState
-        let spoken: String
-        let summary: String
-        let words: Int
-
-        init(title: String, state: ConversationTitleState, segments: [TranscriptSegment], summary: String) {
-            self.title = title
-            self.state = state
-            spoken = segments.filter(\.isFinal).map(\.text).joined(separator: "\n")
-            self.summary = summary
-            words = ConversationAutoTitle.wordCount(spoken)
-        }
-    }
+    typealias AutoTitleSnapshot = ConversationTitleCoordinator.Snapshot
 
     private func autoTitleSnapshot(_ target: String) -> AutoTitleSnapshot? {
         if target == id {
@@ -97,9 +77,9 @@ extension MobileSession {
     /// Saving it also updates the Save to folder note; its file name is keyed by the conversation.
     /// `nil` (nothing usable) keeps the name and records the attempt, so naming is not tried again
     /// on every Save or return to the app until the transcript has grown.
-    private func applyAutoTitle(_ named: String?, to target: String, from snapshot: AutoTitleSnapshot) {
-        let state = named == nil ? ConversationAutoTitle.attemptedState(after: snapshot.state, words: snapshot.words)
-            : ConversationAutoTitle.namedState(after: snapshot.state, words: snapshot.words)
+    private func applyAutoTitle(_ result: ConversationTitleCoordinator.Result, to target: String,
+                                from snapshot: AutoTitleSnapshot) {
+        let named = result.title, state = result.state
         if target == id {
             guard title == snapshot.title, titleState == snapshot.state else { return }
             if let named { title = named }

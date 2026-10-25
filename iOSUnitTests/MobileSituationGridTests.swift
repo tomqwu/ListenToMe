@@ -19,7 +19,7 @@ final class MobileSituationGridTests: XCTestCase {
         session.restore(record)
         XCTAssertEqual(session.currentRecord.situationGrid, grid)
         XCTAssertEqual(session.currentRecord.hasIncompleteImport, true)
-        XCTAssertFalse(session.currentRecord.isComplete)
+        XCTAssertEqual(session.currentRecord.isComplete, false)
         session.notes = "More notes"
         XCTAssertEqual(session.currentRecord.situationGrid, grid)
         session.summary = "New summary"

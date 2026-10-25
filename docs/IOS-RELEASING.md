@@ -425,7 +425,7 @@ accepted on 2026-10-25 from `cbd2e454dbf502df5832dc3654ee2d284f147380`, tagged
 `ios-v1.17.0-build34`, and verified `VALID`, `IN_BETA_TESTING` and in Dev with matching en-CA
 metadata. Evidence remains in `dist/ios-1.17.0-build34-evidence/` of the release worktree and the
 external October 25 release evidence. This receipt does not cover newer compatibility changes.
-The feedback candidate is 1.17.1 (35); it is not uploaded until a new acceptance receipt exists.
+The feedback candidate is 1.18.0 (35); it is not uploaded until a new acceptance receipt exists.
 App Store Connect reported production 1.15.0 READY_FOR_SALE at the October 25 preflight; recheck
 before the next train. Physical candidate checks and App Store screenshot listing uploads remain
 separate from TestFlight processing/access evidence.

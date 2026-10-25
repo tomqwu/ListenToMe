@@ -126,7 +126,7 @@ final class MobileVaultQueueTests: XCTestCase {
         try await settle(vault)
         XCTAssertEqual(try notes().count, 1)
         session.nameConversationIfNeeded()
-        await session.autoTitleTasks[session.id]?.value
+        await session.titleCoordinator.wait(for: session.id)
         try await settle(vault)
         let files = try notes()
         XCTAssertEqual(files.count, 1, "renamed in place, not duplicated")

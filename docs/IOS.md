@@ -129,7 +129,9 @@ The archive, upload, tagging and verification steps themselves are not repeated 
 [IOS-RELEASING.md](IOS-RELEASING.md) for iOS, [RELEASING.md](RELEASING.md) for macOS, and
 [AGENTS.md](../AGENTS.md) for the release workflow that governs both.
 
-## Unreleased recording and AI compatibility (#306, #307)
+## iOS 1.18.0 (35) — combined candidate
+
+This unpublished candidate consolidates the open PR batch, including on-device saved-audio re-transcription (#224), full automatic-review budgets (#148), conversation/capture ownership (#134, partial), reliability follow-ups (#141) and the compatibility fixes below. Mac-only features remain unreleased; Watch remains excluded pending physical acceptance.
 
 The reported iPad Pro 12.9-inch (4th generation), iPadOS 27.0.1, supports on-device dictation but
 reports advanced SpeechTranscriber unavailable and Apple Intelligence device-not-eligible. These
@@ -1556,3 +1558,18 @@ characters before using unfinished speech. They mark it as provisional and instr
 to record it as a decision, owner, deadline or action item. The marker and instruction count toward
 the prompt budget; a shortened hypothesis keeps its marker. Saved transcripts and exports retain
 the recognizer's original text.
+
+### Capture task ownership (#134)
+
+`MobileSession+Capture` adapts the platform recorder to Core `CaptureCoordinator`. The coordinator
+owns preparation, start, cancellation and joined Stop tasks, with a token for each run. It accepts
+final utterances while Stop drains and rejects callbacks after that run finishes. The adapter retains
+foreground/interruption policy, speaker/language buffers, saved-audio cleanup and final checkpoints.
+No recording permission, background capability, model or audio destination changes. Core tests cover
+transition races; simulator adapter tests must also pass before this candidate is merged. This partial
+extraction does not complete the remaining Mac view and shared lifecycle work in #134.
+
+Automatic naming task ownership now lives in Core `ConversationTitleCoordinator`, shared with Mac.
+It tracks each conversation independently and ignores cancelled generations. The iOS adapter still
+selects eligible on-device/local providers and checks the captured title/state before persisting a
+result. Watch-import naming and Save to folder use the same path; no new data destination is added.

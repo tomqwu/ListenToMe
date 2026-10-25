@@ -1,4 +1,4 @@
-ListenToMe 1.17.1 (35) — iPhone/iPad compatibility feedback beta
+ListenToMe 1.18.0 (35) — combined iPhone/iPad beta
 
 1. Older iPad: open Live and wait for the recording support check. On a supported language, Start should enable even when Apple Intelligence is unavailable. Allow microphone access, speak a new phrase, verify Listening and new transcript words, then Stop. Compatible devices use on-device dictation when advanced transcription is unsupported. Check a supported newer iPhone as well.
 2. Unsupported language/device or denied microphone: Start stays disabled with the actual reason and applicable recording/microphone settings recovery. Return after changing settings or language and verify readiness refreshes. If a later asset download fails, the full startup alert should appear; retry or cancel without a false error.
@@ -11,3 +11,6 @@ ListenToMe 1.17.1 (35) — iPhone/iPad compatibility feedback beta
 Privacy: no new default off-device transmission or automatic cloud routing. Speech and readiness checks use local Apple capabilities; the user-selected AI provider receives only the text/context already described in Settings. Retained audio remains opt-in with existing deletion and retention controls. Permissions, data and keys are preserved during testing.
 
 Watch remains excluded from this TestFlight build. Physical recording, language accuracy, playback audibility and paired Watch behavior require their own acceptance; a simulator pass is not physical-device verification. This beta does not submit a public App Store release.
+
+Re-transcription: save audio first, then More → Re-transcribe saved audio. Choose a supported language, review the preview, cancel without changes, then retry and replace. Verify notes and summaries remain, old speaker corrections reset, and unavailable languages fail clearly.
+Recording lifecycle: Stop during preparation, retry, change language, stop again and open another conversation. No late failure or old transcript should appear in the new recording.

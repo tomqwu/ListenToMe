@@ -15,11 +15,18 @@ struct MeetingView: View {
     @State var nextMeetingPoll = Date.distantPast
     @State var session: MeetingSession
     @State var store: ConversationStore
-    @State var startError: String?
+    @State var operationErrors = MacOperationErrors()
+    var startError: String? {
+        get { operationErrors.capture }
+        nonmutating set { operationErrors.capture = newValue }
+    }
     @State var recordingAvailability: FeatureAvailability = .temporarilyUnavailable(reason: "Checking recording support…")
     @State var capabilityGeneration = 0
     @State var captureStartGate = CaptureStartGate()
-    @State var exportError: String?
+    var exportError: String? {
+        get { operationErrors.file }
+        nonmutating set { operationErrors.file = newValue }
+    }
     @State var showSettings = false
     @State private var permissions = PermissionsModel()
     @State private var showPermissions = false
@@ -32,11 +39,12 @@ struct MeetingView: View {
     /// upsert one growing record instead of writing a fresh superset each time.
     @State var currentSessionID = UUID().uuidString
     /// When the current conversation's first checkpoint was taken; the Save to folder note's date.
-    @State var conversationStartedAt: Date?
+    @State var checkpointController = MacCheckpointController()
+    var checkpointCoordinator: ConversationCheckpointCoordinator { checkpointController.coordinator }
+    var conversationStartedAt: Date? { checkpointCoordinator.startedAt }
     /// The languages this conversation was transcribed in, kept on its record (issue #206).
     @State var conversationLanguages = ConversationLanguages()
-    /// `lastSavedUtteranceCount`: count at the last save, so an unchanged transcript isn't re-saved on
-    /// Stop. `sessionSaveable`: whether this window-session may be persisted — tainted to false the
+    /// `sessionSaveable`: whether this window-session may be persisted — tainted to false the
     /// moment saving is ever observed off (or history is cleared), so "turn off to keep nothing" holds
     /// for the whole session. `savingEnabledBeforeSettings`: toggle value snapshotted when Settings
     /// opened, so an off→on round-trip is still caught.
@@ -51,7 +59,7 @@ struct MeetingView: View {
     @State var referencePaths: [URL]
     @State private var referenceLoadToken = 0
     @State var referenceSkipped: [TextFileReader.Skipped] = []
-    @State var restartTask: Task<Void, Never>?
+    @State var captureCoordinator = CaptureCoordinator()
     @State var importTask: Task<Void, Never>?
     @State var importStatus = AudioImportStatus()
     var isImporting: Bool { importTask != nil || session.isTranscribingFile }
@@ -59,11 +67,11 @@ struct MeetingView: View {
     /// User intent to be capturing — the toolbar button's source of truth. Stays true across the
     /// brief teardown window of a locale restart (when `session.isRunning` is transiently false),
     /// so a Stop press is never lost.
-    @State var wantsCapture = false
+    var wantsCapture: Bool { captureCoordinator.wantsCapture }
     /// When the current recording run began, for the elapsed mm:ss timer. nil while idle.
     @State var recordingStartedAt: Date?
     /// Ticks while recording so the elapsed timer updates once per second.
-    @State private var now = Date()
+    @State var now = Date()
     /// Live appearance (System/Light/Dark) applied to the root via `.preferredColorScheme`.
     @State private var appearance = ProviderSettings.appearance
     @State var othersAudioSink: SpeakerAudioBuffer
@@ -84,7 +92,7 @@ struct MeetingView: View {
     @State var speakerAnalyzedSamples: [SpeakerSource: Int] = [:]
     /// One-line rail status (e.g. speaker models unavailable); nil when there is nothing to say.
     @State var speakerStatus: String?
-    @State var speakerTask: Task<Void, Never>?
+    @State var speakerWork = SpeakerPassCoordinator()
     @State var nextSpeakerAnalysis = Date.distantFuture
     @State var diarizationRunStartIndex = 0
     @State var diarizationRunToken = 0
@@ -100,15 +108,25 @@ struct MeetingView: View {
     @State var localOllamaReadiness: LocalOllamaReadiness?
     @State private var modelLoadToken = 0
     @State private var showLicenses = false
-    @State var lifecycleBusy = false
+    @State private var conversationTransitionBusy = false
+    var lifecycleBusy: Bool {
+        get { conversationTransitionBusy || (!wantsCapture && captureCoordinator.phase != .idle) }
+        nonmutating set { conversationTransitionBusy = newValue }
+    }
     @State var conversationTitle = ConversationTitle.generated(Date().formatted(date: .abbreviated, time: .shortened))
     /// Where the title came from, so an automatic name never replaces a typed one (#221).
     @State var conversationTitleState = ConversationTitleState.placeholder
-    @State var autoTitleTask: Task<Void, Never>?
+    @State var titleCoordinator = ConversationTitleCoordinator()
     @FocusState var titleFieldFocused: Bool
-    @State var saveMessage = "Not saved yet"
-    @State var saveFailed = false
-    @State var lastSavedKey: SessionCheckpointKey?
+    var saveMessage: String {
+        get { checkpointController.message }
+        nonmutating set { checkpointController.message = newValue }
+    }
+    var saveFailed: Bool {
+        get { checkpointController.failed }
+        nonmutating set { checkpointController.failed = newValue }
+    }
+    var lastSavedKey: SessionCheckpointKey? { checkpointCoordinator.lastSavedKey }
     @State private var hotkey = HotkeyMonitor()
 
     /// mm:ss since the current recording run started (00:00 when idle).
@@ -421,60 +439,8 @@ extension MeetingView {
         .background(Theme.windowBackground)
     }
 
-    /// Listen/Stop press: start or stop capture, tracking the elapsed-timer anchor and saving on Stop.
-    func toggleCapture(session: MeetingSession) {
-        guard !lifecycleBusy else { return }
-        if wantsCapture || captureStartGate.isPending {
-            captureStartGate.cancel()
-            lifecycleBusy = true
-            Task {
-                defer { lifecycleBusy = false }
-                _ = checkpoint()
-                wantsCapture = false
-                recordingStartedAt = nil
-                restartTask?.cancel()
-                await session.stopAndWait()
-                await MacSavedAudio.shared.waitForWrites()
-                activeEngine = nil
-                _ = checkpoint(complete: true, force: true)
-                nameConversationIfNeeded()
-                Task { await finishSpeakerAnalysis() }
-            }
-            return
-        }
-        guard let token = captureStartGate.begin() else { return }
-        Task {
-            defer { captureStartGate.finish(token) }
-            startError = nil
-            do {
-                _ = try await captureStartGate.perform(token, prepare: {
-                    await refreshFeatureAvailability()
-                    return recordingAvailability.canRun
-                }, authorize: {
-                    await captureStartGate.resolvePermission(token, check: { await microphoneDecision() },
-                                                            onBlocked: { startError = $0 })
-                }, start: {
-                    wantsCapture = true
-                    beginDiarizationRunReset()
-                    activeEngine = ProviderSettings.transcriptionEngine
-                    try await session.start()
-                    guard wantsCapture, session.isRunning, captureStartGate.isCurrent(token) else { return }
-                    noteCaptureLanguage()
-                    anchorDiarizationRun()
-                    now = Date(); recordingStartedAt = Date()
-                })
-            } catch {
-                guard captureStartGate.isCurrent(token) else { return }
-                startError = error.localizedDescription
-                wantsCapture = false
-                activeEngine = nil
-            }
-        }
-    }
-
-    /// Resolve the OS permission without publishing a Start error. The owning token decides whether
-    /// a late denial still belongs to this conversation before the banner is updated.
-    private func microphoneDecision() async -> CapturePreflight.Decision {
+    /// Resolve permission; capture ownership fences any late denial.
+    func microphoneDecision() async -> CapturePreflight.Decision {
         var decision = CapturePreflight.decide(microphone: PermissionsModel.currentMicrophoneAuthorization())
         if decision == .requestAccess {
             let granted = await PermissionsModel.requestMicrophoneAccess()
@@ -482,39 +448,6 @@ extension MeetingView {
             decision = CapturePreflight.decideAfterRequest(granted: granted)
         }
         return decision
-    }
-
-    /// Restarts an active session after a language change so the new transcriber applies immediately
-    /// (the locale is read only when a transcriber is created, at start). Called from the rail's
-    /// Language picker binding.
-    func restartForLocaleChange(session: MeetingSession) {
-        restartTask?.cancel()
-        restartTask = Task {
-            await session.stopAndWait()   // await teardown so the new transcriber can't overlap the old
-            // Bail if the user pressed Stop or closed the window during teardown — don't resume
-            // recording against their intent.
-            guard wantsCapture, !Task.isCancelled else { return }
-            await refreshFeatureAvailability()
-            guard wantsCapture, !Task.isCancelled else { return }
-            guard recordingAvailability.canRun else {
-                wantsCapture = false; activeEngine = nil
-                return
-            }
-            // The restart rebuilds the capture, resetting the Others buffer's 0-based timeline. Drop
-            // stale labels + bump the token before start; anchor only after start returns (the prior
-            // teardown above already drained, but the new finals land after start re-attaches).
-            beginDiarizationRunReset()
-            do {
-                startError = nil
-                activeEngine = ProviderSettings.transcriptionEngine
-                try await session.start()
-                guard wantsCapture, session.isRunning, !Task.isCancelled else { return }
-                noteCaptureLanguage()
-                anchorDiarizationRun()
-            } catch {
-                startError = error.localizedDescription; wantsCapture = false; activeEngine = nil
-            }
-        }
     }
 
     /// Pre-start half of a diarization-run reset: clear stale inline labels and bump the run token so
@@ -526,8 +459,7 @@ extension MeetingView {
     /// bail via its token guard WITHOUT clearing `speakerLoading`, so we clear the spinner/error state
     /// here. This guarantees that starting/restarting always frees the "Identify speakers" button.
     func beginDiarizationRunReset() {
-        speakerTask?.cancel()
-        speakerTask = nil
+        speakerWork.cancel()
         let run = diarizationRunToken + 1
         let remotePrefix = run == 1 ? "Speaker" : "Run \(run) speaker"
         let micPrefix = run == 1 ? "Mic speaker" : "Run \(run) mic speaker"
@@ -562,7 +494,7 @@ extension MeetingView {
     /// the time `session.start()` returns, the previous run's drain is complete (its finals are in the
     /// store) and the new capture has reset+attached the sink, so `store.utterances.count` marks where
     /// this run's lines begin and the live settings match the capture/transcriber just built.
-    private func anchorDiarizationRun() {
+    func anchorDiarizationRun() {
         diarizationRunStartIndex = store.utterances.count
         MacSavedAudio.shared.anchorRun(firstSegment: store.utterances.count)
         // Snapshot the settings the new run's capture/transcriber were built from. `makeCapture` read
@@ -704,7 +636,7 @@ extension MeetingView {
                     },
                     transcriber: { SpeechAnalyzerTranscriber(locale: locale) as any Transcribing })
             } catch {
-                if !Task.isCancelled { startError = "Couldn't import this recording: \(error.localizedDescription)" }
+                if !Task.isCancelled { operationErrors.importFailed(error) }
             }
         }
     }
@@ -741,19 +673,17 @@ extension MeetingView {
         captureStartGate.close()
         hotkey.stop()
         for role in CopilotRole.allCases { session.cancelResponse(role) }
-        speakerTask?.cancel()
+        speakerWork.cancel()
         diarizationRunToken &+= 1
         let wasCapturing = wantsCapture
-        wantsCapture = false
-        restartTask?.cancel()   // don't let a pending locale restart resume capture after close
         importTask?.cancel()    // stop an in-flight file import when the window closes
         if wasCapturing {
             _ = checkpoint()
-            Task {
-                await session.stopAndWait()
+            captureCoordinator.requestStop(after: {
                 _ = checkpoint(complete: true, force: true)
-            }
+            })
         } else {
+            captureCoordinator.requestStop()
             session.stop()
         }
     }
@@ -787,8 +717,7 @@ extension MeetingView {
         currentSessionID = UUID().uuidString
         vocabulary.restore(domainIDs: nil, for: currentSessionID, transcriptLineCount: store.utterances.count)
         applyVocabulary()
-        conversationStartedAt = nil
-        lastSavedKey = nil
+        checkpointCoordinator.reset()
     }
 
     /// On Stop, persist the finished session for cross-meeting search when this window-session is

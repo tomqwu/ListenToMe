@@ -1059,3 +1059,52 @@ These are acceptance steps, not a record of a completed native run.
 ## Structured Summary cards (#62)
 
 Use a new test conversation with an unresolved question, explicit action/owner/deadline and decision. Generate Summary with the chosen provider; inspect the three categories and expand each source. Confirm speaker labels match and untimed lines show no invented clock. Copy/export must be readable. Add more speech, refresh, and verify prior unresolved items remain; explicitly resolve an item and check the new state. Reopen from History, rename the conversation and verify cards survive. With a model returning freeform, malformed JSON or unsupported quotes, inspect the normal fallback text. Cancel or fail a refresh: never label partial output as a validated grid. Capture native screenshots and preserve candidate provenance. Actual model interpretation and rendered UI acceptance remain separate from schema/unit checks.
+## Automated adapter coverage (#134)
+
+`make app-test` runs a hostless macOS XCTest bundle: the actual FileContextLoader and SpeakerAudioBuffer sources, native RTF decoding, AVAudioConverter resampling, cap and prior-generation rejection. It launches no ListenToMe Dev app and requests no capture permissions. Its `.xcresult` coverage describes only the compiled adapter sources and test code. Core ConversationRepository tests cover archive-first cleanup, failed/unavailable storage, sticky damaged-file warnings, and durable snapshot publication. Neither suite substitutes for installed-app GUI/audio acceptance.
+
+### iOS capture coordinator regression (#134)
+
+Start and immediately Stop while preparation is active; no recording should begin later. Start again,
+speak, then Stop twice through phone/Watch controls. Both callers must finish after the same drain;
+final words must appear in History as a complete record. Start a second recording and confirm old
+recorder callbacks cannot append text or report a failure in it. Repeat background/interruption,
+language switching, speaker identification and Save audio recordings on/off. Simulator fakes exercise
+late callbacks and held finalization; they do not prove physical microphone or paired-Watch behavior.
+
+### Mac capture coordinator regression (#134)
+
+During first-run preparation, press Stop and confirm it does not wait for the model download or
+start recording later. While recording, change language twice, then Stop before restart completes:
+no superseded restart may resume capture. Start again after Stop and verify the previous final
+checkpoint is complete, the new live record is incomplete, and old speaker work cannot label the
+new run. New and window close must drain final text/audio before their existing save decision.
+Verify actual system-audio transcription labeled OTHERS and preserve native screenshots and
+source/signing provenance. Core state-machine tests do not replace installed-app audio acceptance.
+
+### Shared naming coordinator regression (#134)
+
+Save or stop the same eligible conversation repeatedly while naming is pending; only one naming task
+should run. Type a title before completion and confirm it remains unchanged. Start a new conversation
+while the old one is being named: only the saved older record may change. Repeat with Watch imports
+and Save to folder on iOS. Cloud/provider restrictions remain unchanged; these tests do not authorize
+a model download or cloud naming. Core tests also force a cancellation-ignoring old result to arrive
+after its replacement starts and verify the replacement remains registered and is the only one applied.
+
+### Speaker retry across a recording change (#134)
+
+With speaker models delayed, request Identify speakers, then start a new recording before preparation
+finishes. The old request must not clear the new run's status or analyze its audio. Complete a current
+pass, Stop, and confirm the final pass includes final transcript lines. Verify actual system-audio
+transcription remains labeled OTHERS. Capture the relevant status UI and preserve source/signing
+provenance; complete the authorized Dev-app cleanup after the testing session.
+
+### Checkpoint persistence after coordinator extraction (#134)
+
+In an isolated Dev conversation, capture finalized OTHERS speech, Stop, and confirm History and the
+optional Save to folder note retain the original date across subsequent recording cycles. Reopen a
+record and save an edit; then start New and save identical text as a distinct conversation. Use the
+existing isolated archive-failure setup to trigger a failed write, restore writable storage and Retry
+save; the failed content must persist. Clear History during an active conversation and confirm later
+Stop does not restore it. Preserve screenshots and signing/source evidence, then clean up the completed
+Dev session as documented. Core tests supplement these installed-app checks, not replace them.

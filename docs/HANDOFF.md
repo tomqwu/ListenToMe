@@ -4,84 +4,43 @@ A snapshot for an agent picking up ListenToMe cold. [AGENTS.md](../AGENTS.md) an
 [CLAUDE.md](../CLAUDE.md) stay the rules; this note is only the state of things on the date above.
 Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags) before acting on it.
 
-## Compatibility feedback candidate — October 25
+## Combined PR train — October 25
 
-Current branch `codex/306-ipad-start` combines #306 and #307 with the maintainer's cross-platform
-compatibility request. It is not merged or published yet. iOS metadata is prepared for **1.17.1 (35)**;
-latest accepted TestFlight remains **1.17.0 (34)**. Do not upload 34 again. The configured ASC API key
-worked at preflight; production reported 1.15.0 READY_FOR_SALE and build 35 was unused. Recheck before upload.
+The maintainer explicitly requested consolidation of all 18 open PRs into one release and TestFlight
+publication. Existing PR #308 (`codex/306-ipad-start`) is the integration PR; no new feature PR was
+opened. It preserves the heads of #264, #280, #281, #283, #285–#296 and #303, including the older
+refactor stack. Do not delete their history or describe #134's partial refactor as the whole issue done.
+The combined candidate is **iOS 1.18.0 (35)**; the unpublished 1.17.1 candidate is folded into it.
+Latest accepted TestFlight remains **1.17.0 (34)** from `cbd2e454dbf502df5832dc3654ee2d284f147380`.
+Build 35 must be checked for reuse before uploading. Nothing in this integration is published yet.
 
-The connected iPad Pro 12.9-inch (4th generation), iPadOS 27.0.1, reproduced the old failure. Its native
-capability probe reported SpeechTranscriber unavailable, DictationTranscriber English supported and
-Apple Intelligence device-not-eligible. The local fallback candidate then passed actual new microphone
-speech, Stop and retained Play/Pause UI on that iPad. At `e0e5062`, both that iPad and the iPhone 12 Pro
-Max passed actual new speech, Stop and retained Play/Pause UI using the default Automatic language.
-The iPad also passed the native unavailable-Apple-provider settings check. Later changes shorten the
-Live/Summary compatibility help and refresh cached AI eligibility; final frozen-source validation remains required.
-Existing iPad data/preferences were backed up and preserved. Synthetic sound is gated on confirmed
-Listening, never played while Start is failing. Native `devicectl device capture screenshot` is available.
+Integration found real regressions: shared file re-transcription lost older-device dictation fallback;
+summary/title/language copies lost incomplete-import provenance; the old capture adapter bypassed
+readiness/start-error state; and cancelled normal OS errors could reappear after Stop. Native/Core
+red and green evidence is preserved in the external `listentome-features/combined-train` folder.
+Existing branch tests are baseline adoption, with no invented historical red. Independent review
+found the cancelled-error and removed-title-task references and required direct native Mac capture
+and checkpoint adapter bindings. Final frozen full validation, review, CI, merge, fresh screenshots,
+archive/upload receipt and Apple tester/metadata readback are still required.
 
-Implementation: advanced/dictation module fallback and lazy result delivery; shared language catalog;
-proactive iOS capture gates; explicit unavailable Apple choices; Watch local/remote readiness; Mac
-AI/engine/permission gates. Foreground and Start-token fences prevent delayed imports/capture/errors
-after cancellation. [Compatibility](device-compatibility.md) is mandatory BDD across all platforms.
-Watch remains excluded; Mac releases remain paused.
+The earlier feedback-only `40d8e9a` full validation and 24 inspected images are historical evidence,
+not acceptance of this combined source. Earlier physical iPad/iPhone recording and opt-in Play/Pause
+checks passed at `e0e5062`; the connected iPad Pro4 has local dictation support but cannot use advanced
+speech or Apple Intelligence. Those physical checks must be identified by their source, never
+silently attributed to this release. The Mac GUI remains locked at the latest UI check; an unlock
+request is already pending. Do not ask for permission resets to solve a lock. Existing Dev cleanup
+was completed; new native headless tests do not open a Dev app or user conversations.
 
-Focused evidence in the external October 25 `listentome-features/ipad-start-306` folder:
-`compatibility-final-focused-green` passed 40 native iOS unit tests plus five UI tests, with only the
-intentional physical-only capability report skipped. Inputs stayed unchanged and the dedicated simulator
-was deleted. Its five screenshots were inspected. The subsequent `compatibility-core-permission-green.log`
-passed all 17 focused Core readiness/cancellation tests, after the late permission-denial regression
-failed in `late-permission-error-red.log`. Independent review cleared the two lifecycle blockers and the
-final permission callback fix. Earlier actual red/green and physical evidence is preserved in the same
-folder; do not invent red outcomes for baseline tests. The `e0e5062` signed Mac Dev app passed actual
-system-audio transcription labeled OTHERS and native settings inspection. Its original settings were
-restored and verified, both owned Dev bundles moved to Trash, and only `com.tomwu.ListenToMe.dev`
-permissions reset. Watch simulator inspection passed offline remote gating and denied-microphone
-recovery; its dedicated simulator was deleted. This does not establish paired physical Watch behavior.
+**Watch remains excluded from distribution** until the physical paired-device spike/recording-sync
+acceptance in #181/#193. Simulator native tests do not waive this gate. No physical Watch was found;
+the maintainer's model/watchOS question is pending. Once included, install the iPhone beta in
+TestFlight, then use its App Details → Information Watch install action on the paired iPhone, or
+Watch → My Watch → Available Apps → Install. Current published builds have no Watch companion.
+Mac DMG releases remain paused. This request authorizes a single TestFlight beta, not a public
+App Store submission or store screenshot upload.
 
-The `7bdc8e8` full run passed 1,085 Core tests (seven skips, 98.1239% coverage) and all 432
-native iOS unit tests (seven skips), but failed four UI methods (eight assertions) among 71 UI tests
-(five skips). This was not a full pass; e2e was not reached. The preserved failures exposed an
-implicit transcript fixture profile and compact landscape reachability assumptions. The fixture now
-explicitly supplies readiness, Live/Summary help has full instructions under Info, and native model
-selection verifies the short-viewport scrolling fallback. All six affected UI methods passed focused
-runs; final aggregate validation remains pending. Physical screenshots use the full native display.
-
-The native Mac suite now compiles the production capability adapters and menu controllers. A real
-language-check race reproduced before the generation/locale ownership fix; all 12 native Mac tests
-then passed, including unavailable Apple choice preservation and denied microphone behavior.
-Existing adapter cases are baseline adoption, with no invented historical red. The native Watch
-suite passed three controller/recorder tests plus the rendered denied-microphone/offline-phone UI
-journey after its actual expected UI red. Local refusal precedes permission/capture and remote
-readiness preserves Stop. A first root-project run also had a unit-host launch setup failure;
-a fresh derived-data build on a booted dedicated simulator passed all four tests. This does not
-establish physical pairing or Watch audio. Native run snapshots and simulator cleanup are preserved.
-
-The BDD runner now supports native Mac/Watch targets and verifies their exact passing selectors;
-full validation includes those suites. A reviewer-requested missing-Watch-ID rejection reproduced
-four assertions, then all 19 tooling regressions passed. Independent review cleared native adapter
-and control coverage and the dedicated-destination guard. The clean frozen `40d8e9a` candidate subsequently passed full `make validate-local`: 1,085 Core
-tests (seven skips, 98.1239% coverage), 503 iOS tests (491 passed, 12 intentional skips), all 12 native
-Mac tests, all four native Watch tests, 19 BDD helper regressions, release helpers, lint, signed Mac
-build and both real Ollama/OpenAI-compatible contracts using `qwen3:0.6b`. All bound native selectors
-passed. Inputs stayed unchanged and both dedicated validation simulators were deleted. All four final
-screenshot journeys passed on that source; all 24 native-resolution images were visually inspected,
-hash/dimension verified and backed up externally (`ios-feedback-train/screenshots-final`). Originals,
-normalized unresized RGB copies and source/version/device/locale provenance remain preserved.
-
-The final Mac menu build at `40d8e9a` passed strict signature/Dev identity checks and remains closed.
-Its rendered language-refresh/settings check is pending because the Mac UI tool reports the host
-locked; one unlock request is pending. This is separate from the completed physical iPhone/iPad and
-earlier Mac OTHERS acceptance. Native controller/adapter tests pass; do not call the pending Mac menu
-journey accepted. No new Dev permissions changed, and no completed Dev UI session awaits cleanup.
-Hosted CI, merge and the accepted 1.17.1 (35) beta upload remain pending. App Store listing screenshot
-upload remains pending; this beta does not submit a production App Store version.
-
-No new speculative PRs: finish this feedback change before resuming the 17 existing drafts. The old
-#60 full run had one failed test with two assertions; triage its preserved result rather than
-restarting blindly. No new Mac Dev session was launched by headless native tests. Prior exact-Dev
-cleanup remains complete; production data, keys and permissions remain preserved.
+The sections below preserve older checkpoints; the current combined-train state above supersedes
+older per-PR candidate and "next train" planning. Update this block after verified merge/publication.
 
 ## Repository-wide BDD adoption (October 25)
 

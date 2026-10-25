@@ -64,8 +64,7 @@ final class MobileAutoTitleTests: XCTestCase {
     }
 
     private func name(_ session: MobileSession, _ id: String? = nil) async {
-        session.nameConversationIfNeeded(id)
-        await session.autoTitleTasks[id ?? session.id]?.value
+        await session.nameConversationIfNeeded(id)?.value
     }
 
     func testASavedDefaultConversationIsNamedByTheChosenProviderAndKeepsIt() async throws {
@@ -91,8 +90,7 @@ final class MobileAutoTitleTests: XCTestCase {
         provider.gated = true
         let session = makeSession(provider)
         XCTAssertTrue(session.save())
-        session.nameConversationIfNeeded()
-        let task = try XCTUnwrap(session.autoTitleTasks[session.id])
+        let task = try XCTUnwrap(session.nameConversationIfNeeded())
         for _ in 0..<200 where provider.gate == nil { await Task.yield() }
         session.renameByUser("Budget sync")
         provider.gate?.resume()
@@ -165,8 +163,7 @@ final class MobileAutoTitleTests: XCTestCase {
         let session = makeSession(provider)
         XCTAssertTrue(session.save())
         let first = session.id
-        session.nameConversationIfNeeded()
-        let task = try XCTUnwrap(session.autoTitleTasks[first])
+        let task = try XCTUnwrap(session.nameConversationIfNeeded())
         for _ in 0..<200 where provider.gate == nil { await Task.yield() }
         session.newConversation()
         provider.gate?.resume()
@@ -187,7 +184,7 @@ final class MobileAutoTitleTests: XCTestCase {
         for state in [MobileSession.State.preparing, .recording, .stopping] {
             session.state = state
             session.nameConversationIfNeeded()
-            XCTAssertNil(session.autoTitleTasks[session.id], "\(state)")
+            XCTAssertFalse(session.titleCoordinator.isNaming(session.id), "\(state)")
         }
         session.state = .idle
         await name(session)

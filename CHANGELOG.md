@@ -17,17 +17,8 @@ does not show it again, and a fresh install does not see it at all; see
   changes across apps, shared services and delivery tooling. Add a baseline scenario catalog,
   executable native-test adapter, local/CI gates and PR evidence template. This changes development
   workflow only; it does not require a binary release or claim exhaustive legacy acceptance.
-- Re-transcribe saved audio in a chosen language, preview the result, then replace the transcript or keep the original. Notes, attachments and summaries stay; speaker names and corrections reset while Apple Watch device labels remain. Recognition stays on-device. (#224)
-- Ollama settings reject unsupported plain-HTTP addresses before saving and explain when pasted URL parts are omitted. Destination prose names Ollama Cloud clearly; provider-default and catalog-refresh behavior are documented. (#149)
 
 ## iOS (unreleased since 1.17.0 (34))
-
-- Watch local Record/Continue checks its microphone and resources independently of iPhone connectivity. Remote Start requires a reachable compatible phone with confirmed recording support, while reachable Stop remains usable after a Start capability change. Commands are never queued. Watch remains excluded from distribution.
-- Live summaries reuse their transcript snapshot between unchanged events. Manual Summary, Quick and Ask omit very short recognition hypotheses and mark longer unfinished speech as provisional, with guidance against treating it as a confirmed decision. The marker survives prompt trimming; saved transcripts remain unchanged. (#164)
-- History search reuses unchanged passage vectors when a conversation is saved, including after summary insertion. Changed text or transcription language is re-indexed on-device; duplicate passages share one embedding attempt per save, including unsupported text. Existing indexes rebuild once. Semantic language coverage is unchanged. (#223, partial)
-- Markdown exports keep transcript text and speaker names literal. Verified local Ollama requests allow cold models up to five minutes to start; cloud deadlines remain unchanged. Incomplete file-import state survives reopening and editing. (#141)
-
-- OpenAI-compatible servers can use an optional per-server context limit. Answer space is reserved and oversized requests stop before sending; Mac prompt trimming includes a visible notice. Unknown capacity preserves server-managed behavior. (#210)
 
 - Documentation: the Watch speaker-privacy section now agrees with the existing opt-in saved-audio retention policy. No app behavior changes. (#225)
 
@@ -41,13 +32,20 @@ does not show it again, and a fresh install does not see it at all; see
 - iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
 - Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
 
-## iOS 1.17.1 (35) — candidate
+## iOS 1.18.0 (35) — candidate
 
-Prepared for the tester-feedback TestFlight train. Not uploaded or published yet.
+Combined TestFlight train requested October 25. Not uploaded or published yet.
 
-- Compatible older iPhones/iPads use Apple's on-device dictation when advanced transcription is unavailable. Fixed and Automatic language choices include languages supported by the available local modules. (#306)
-- Check recording support before enabling Start, with device/language and denied-microphone recovery. Live and Summary keep compatibility help compact, with full instructions under Info and accessible model controls at large text sizes. Unexpected preparation failures show the full error; cancellation stays quiet and a delayed foreground check cannot consume shared imports after backgrounding. (#306)
-- Unavailable Apple Intelligence is not offered as a working summary choice. Explain runtime eligibility/setup and require explicit alternate provider configuration while preserving saved choices and keys. Recording stays independent of summary AI. (#307)
+- Compatible older iPhones/iPads use Apple's on-device dictation when advanced transcription is unavailable. Fixed and Automatic language choices use supported local modules. (#306)
+- Check recording support before enabling Start, with clear device/language and microphone recovery. Genuine preparation failures remain actionable; cancelling preparation or leaving the app suppresses obsolete callbacks. Recording remains independent of summary AI. (#306)
+- Explain unavailable Apple Intelligence and require an explicit supported alternate provider; preserve saved choices and keys. Live/Summary help stays compact and supports large text and landscape. (#307)
+- Re-transcribe retained audio in a chosen language, review the result and replace or cancel. Recognition stays on-device; notes, attachments, summaries and Watch device attribution remain. Replaced evidence invalidates stale speaker corrections and summary cards. (#224)
+- Automatic reviews enforce their full assembled request limit, including directives and references, before sending. Directive edits alone keep the existing review. (#148)
+- Shared recording, naming and speaker-work coordinators preserve Stop finalization, cancellation, conversation identity and old-callback isolation. (#134, partial)
+- Harden literal Markdown export, incomplete-import provenance, reference-file handling, model discovery and cold local Ollama requests. Existing provider privacy choices remain unchanged. (#141)
+- Integration regression coverage preserves dictation fallback during file re-transcription and incomplete-import status through summary/save/title/language copies.
+
+Privacy: speech and re-transcription remain on-device; saved audio is opt-in. Optional AI providers receive only the text/context already explicitly configured. Apple Watch is not embedded in this build; paired-device acceptance remains pending (#181, #193).
 
 ## iOS 1.17.0 (34) — 2026-10-25 (TestFlight)
 
@@ -55,11 +53,7 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 
 - Deleting a conversation immediately cancels and clears its streamed History answer and citations, preventing deleted content from returning when an old request finishes. (#131)
 
-- Markdown exports keep transcript text and speaker names literal. Verified local Ollama requests allow cold models up to five minutes to start; cloud deadlines remain unchanged. Incomplete file-import state survives reopening and editing. (#141)
-
 - Ollama settings reject unsupported plain-HTTP addresses before saving and explain when pasted URL parts are omitted. Destination prose names Ollama Cloud clearly; provider-default and catalog-refresh behavior are documented. (#149)
-
-- Automatic reviews count the complete request toward their 60,000-character limit, including instructions and any attached references. Oversized requests stop before sending and explain what to shorten. Changing directives alone keeps the existing review; new context or manual generation uses the new settings. (#148)
 
 - Backgrounding cancels final speaker labeling already started after Stop and clears the recording buffer without waiting. Queued work stays bound to its original recording, so an old pass cannot analyze or relabel a new recording. Lifecycle and model-backup tests cover these paths. (#188)
 
@@ -125,6 +119,17 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 - WhisperKit offers explicit multilingual Tiny, Base and Small models. Base remains the default; saved choices apply on the next capture, with the selected model named during loading and on failure. Loaded model identity is checked before use. (#58)
 
 - Engine → Compute details separates configured compute units from runtime accelerator information. WhisperKit displays the exact policy passed to the model; Apple Speech manages its own policy. Hardware activity is shown as Not exposed rather than inferred from configuration. (#60)
+- Maintenance: checkpoint saves now use a tested Core coordinator. Failed writes remain retryable, unchanged timer ticks avoid rebuilding transcripts, and reopened conversations retain their original date. Saving and privacy controls are unchanged. (#134, partial)
+
+- Speaker identification retries stay bound to their recording. A cancelled model retry cannot resume into a newer recording or clear its speaker status. (#134, partial)
+
+- Maintenance: the Markdown renderer now lives in the shared platform target, with unchanged rendering. (#134, partial)
+
+- Automatic conversation naming now shares one task coordinator across Mac and iOS. Repeated requests for the same conversation join the existing task; a cancelled older task cannot clear or apply over a replacement. Typed/calendar names and on-device/local-provider privacy rules are preserved. (#134, partial)
+
+- Recording Start, Stop and language restarts now use the shared capture coordinator. Stop interrupts pending model preparation, superseded language restarts cannot resume capture, and the final checkpoint completes before a new recording can start. Optional speaker analysis stays bound to the stopped run. (#134, partial)
+
+- Validation: add headless Mac file-loading and audio-buffer tests. Archive save/read/clear orchestration now uses a shared tested repository while retaining existing error messages and secondary-data cleanup ordering. No new UI or permission behavior. (#134, partial)
 
 - History search keeps its records when SwiftUI recreates a view, instead of replacing matching rows with an empty asynchronous result. (#223 acceptance fix)
 

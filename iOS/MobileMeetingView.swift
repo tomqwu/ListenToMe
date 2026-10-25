@@ -324,6 +324,9 @@ struct MobileMeetingView: View {
             .background(MobileStyle.canvas.opacity(0.96))
     }
 
+}
+
+extension MobileMeetingView {
     private var settings: some View {
         NavigationStack {
             Form {

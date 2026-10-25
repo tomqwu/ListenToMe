@@ -163,7 +163,7 @@
       "name": "Offer compatible Mac AI and transcription choices before capture",
       "given": "Mac runtime reports unavailable Apple Intelligence, a denied microphone or unsupported selected speech engine/language",
       "when": "settings and listening controls are displayed or refreshed",
-      "then": "unavailable Apple selection is refused without changing the saved provider, AI execution and listening are gated independently, and blocked recording explains permissions or compatible engine/language alternatives before microphone activation",
+      "then": "unavailable Apple selection is refused without changing the saved provider, AI execution and listening are gated independently, and blocked recording explains permissions or compatible engine/language alternatives before microphone activation; native microphone and legacy speech authorization map to distinct recovery states",
       "covers": [
         "Sources/ListenToMeCore/MacFeatureReadiness.swift",
         "App/MacDeviceCapabilities.swift",
@@ -173,7 +173,9 @@
         "App/CommandCenterPanes.swift",
         "App/MeetingView+Capabilities.swift",
         "App/MacCapabilityChoices.swift",
-        "App/MacAIAvailability.swift"
+        "App/MacAIAvailability.swift",
+        "App/PermissionsModel.swift",
+        "App/PermissionsView.swift"
       ],
       "bindings": [
         {
