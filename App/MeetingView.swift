@@ -173,7 +173,7 @@ struct MeetingView: View {
                     // (enables multilingual / code-switching); an explicit pick forces that language.
                     let whisperLocale = ProviderSettings.transcriptionLocaleID.isEmpty
                         ? nil : ProviderSettings.transcriptionLocale()
-                    return WhisperKitTranscriber(locale: whisperLocale) as any Transcribing
+                    return WhisperKitTranscriber(locale: whisperLocale, model: ProviderSettings.whisperModel) as any Transcribing
                 default:
                     // Don't warm the system-audio analyzer when this process can't capture system
                     // audio: it would leave an idle analyzer + results task for the whole session

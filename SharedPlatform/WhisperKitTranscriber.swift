@@ -42,9 +42,8 @@ actor WhisperKitTranscriber: Transcribing {
     /// first word that crosses the VAD speech threshold isn't lost.
     private static let prerollSamples = 4_800
 
-    /// Small multilingual model. Other valid choices: "tiny", "small". "base" balances quality
-    /// and the first-run download size.
-    private static let modelName = "base"
+    /// Fixed for this transcriber lifetime; changing Settings affects only the next capture.
+    let model: WhisperModelChoice
 
     private let language: String?
 
@@ -74,8 +73,10 @@ actor WhisperKitTranscriber: Transcribing {
     ///   picker setting) to leave `language` nil and enable Whisper's own language detection — the
     ///   right setting for multilingual / code-switching speech. A non-nil locale forces its
     ///   language code, and a locale whose language can't be determined also falls back to auto.
-    init(locale: Locale? = nil, decodeFixture: (@Sendable ([Float]) async throws -> String)? = nil) {
+    init(locale: Locale? = nil, model: WhisperModelChoice = .base,
+         decodeFixture: (@Sendable ([Float]) async throws -> String)? = nil) {
         self.decodeFixture = decodeFixture
+        self.model = model
         self.language = locale.flatMap(Self.whisperLanguageCode(for:))
         var cont: AsyncStream<TranscriptSegment>.Continuation!
         segments = AsyncStream { cont = $0 }
@@ -285,22 +286,27 @@ actor WhisperKitTranscriber: Transcribing {
             loadTask = Task { KitBox(fixture: decodeFixture) }
             return
         }
-        statusContinuation.yield("Transcription: downloading/loading Whisper model…")
+        statusContinuation.yield("Transcription: downloading/loading Whisper \(model.title)…")
         loadTask = Task {
             do {
                 let kit = try await WhisperKit(
-                    model: Self.modelName,
+                    model: model.rawValue,
                     computeOptions: WhisperComputePolicy.options,
                     verbose: false,
                     logLevel: .error,
+                    load: true,
                     download: true
                 )
-                statusContinuation.yield("Transcription: Whisper ready")
+                guard model.matchesLoadedVariant(kit.modelVariant.description) else {
+                    throw NSError(domain: "ListenToMe.WhisperModel", code: 1, userInfo: [NSLocalizedDescriptionKey:
+                        "Requested multilingual \(model.title), but loaded \(kit.modelVariant.description)."])
+                }
+                statusContinuation.yield("Transcription: Whisper \(model.title) ready")
                 self.finishModelLoad()
                 return KitBox(kit: kit)
             } catch {
                 self.failure = error.localizedDescription
-                statusContinuation.yield("Whisper model failed: \(error.localizedDescription). Stop and restart to retry.")
+                statusContinuation.yield("Whisper \(model.title) failed: \(error.localizedDescription). Stop and restart to retry.")
                 self.finishModelLoad()
                 return nil
             }

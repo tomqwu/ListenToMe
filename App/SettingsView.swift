@@ -16,6 +16,10 @@ enum ProviderSettings {
         get { UserDefaults.standard.string(forKey: "transcriptionEngine") ?? "speechAnalyzer" }
         set { UserDefaults.standard.set(newValue, forKey: "transcriptionEngine") }
     }
+    static var whisperModel: WhisperModelChoice {
+        get { WhisperModelChoice.load(from: .standard) }
+        set { newValue.save(to: .standard) }
+    }
     /// BCP-47 locale id for transcription; empty means follow the system language ("Auto").
     static var transcriptionLocaleID: String {
         get { UserDefaults.standard.string(forKey: "transcriptionLocale") ?? "" }
@@ -155,6 +159,7 @@ struct SettingsView: View {
     @State private var aiMode: AIProcessingMode
     @State private var saveError: String?
     @State private var engine: String
+    @State private var whisperModel = ProviderSettings.whisperModel
     private let originalKey: String
     @State private var ollamaKey: String
     @State private var responseLanguageID: String
@@ -227,6 +232,15 @@ struct SettingsView: View {
                 .font(.caption).foregroundStyle(.secondary)
 
             MacEngineChoice(selection: $engine)
+            if engine == "whisperKit" {
+                Picker("Whisper model", selection: $whisperModel) {
+                    ForEach(WhisperModelChoice.allCases) { Text($0.title).tag($0) }
+                }
+                Text(whisperModel.tradeoff + " All choices support multiple languages. "
+                     + "Speed and accuracy depend on your Mac, language and audio. "
+                     + "Applies at the next Start; uncached models download then.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
             Text(
                 "SpeechAnalyzer transcribes both channels concurrently and downloads its model on first use; " +
                 "SpeechRecognizer is the fallback. WhisperKit adds multilingual / code-switching transcription " +
@@ -364,6 +378,7 @@ struct SettingsView: View {
         ProviderSettings.saveOpenAIContextTokens(openAIContextTokens)
         ProviderSettings.aiMode = aiMode
         ProviderSettings.transcriptionEngine = engine
+        ProviderSettings.whisperModel = whisperModel
         ProviderSettings.responseLanguageID = responseLanguageID
         ProviderSettings.referenceBudget = referenceBudget
         ProviderSettings.saveSessionsForSearch = saveSessions
