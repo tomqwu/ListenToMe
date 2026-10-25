@@ -209,3 +209,7 @@ is the tracking issue.
   selection and Ask your history. The beta train has no physical-device
   acceptance; do not call it production-ready.
 - **Apple Watch spike** and acceptance, above.
+
+## In progress: History index reuse (#223)
+
+PR #277 implements per-passage vector reuse and fixes a Mac shared-search reader lifetime bug found during installed-app acceptance. Core tests and signed Mac GUI acceptance pass; full local validation/CI remain pending. Broader semantic language support remains open: contextual mean pooling and tested normalizations did not meet paraphrase/negative-query quality acceptance. No additional models are downloaded or enabled.
