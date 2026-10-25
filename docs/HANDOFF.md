@@ -225,7 +225,8 @@ and Calendar failures, with independent dismissal and message-derived privacy ac
 work clears only its own banner; New clears stale conversation errors. Lint, signed Mac build and
 independent review passed. Full `make validate-local` passed at `9baf36e`, including Core coverage, simulator unit/UI
 tests, release helpers and real Ollama/OpenAI-compatible contracts. The manual regression is written;
-rendered installed-app acceptance and current-main integration checks remain pending. No Dev app was launched while the Mac was locked. Not merged
+current-main integration lint, Core tests, signed Mac build and independent review also passed.
+Rendered installed-app acceptance and final hosted checks remain pending. No Dev app was launched while the Mac was locked. Not merged
 or published.
 ## Ollama endpoint candidate (#149) — October 25
 
