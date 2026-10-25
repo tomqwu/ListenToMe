@@ -126,6 +126,22 @@ final class MobileWatchAudioTests: XCTestCase {
         XCTAssertEqual(SavedAudioSeek.target(for: last, index: 1, in: runs)?.time, 0)
     }
 
+    func testContinueAfterInboxDeletionRetainsNewPartWithoutWaitingForMissingParts() async throws {
+        let fake = FakeWatchTranscriber()
+        fake.script = [0: [.init(text: "Before", start: 0, end: 2)],
+                       2: [.init(text: "After", start: 4, end: 6)]]
+        let session = session(fake, enabled: true)
+        try deliver(session)
+        await drain(session)
+        let id = try record(session).id
+        session.deleteWatchRecording(recording)
+        try deliver(session, index: 2, offset: 4)
+        await drain(session)
+        XCTAssertEqual(try record(session).segments?.map(\.text), ["Before", "After"])
+        XCTAssertEqual(try record(session).isComplete, true)
+        XCTAssertEqual(session.savedAudio.runs(for: id).map(\.timelineOffset), [0, 4])
+    }
+
     func testStorageFailureKeepsInboxThenRetryCommitsOneCopyBeforeDeletingIt() async throws {
         let fake = FakeWatchTranscriber()
         fake.script = [0: [.init(text: "Saved once", start: 0, end: 2)]]

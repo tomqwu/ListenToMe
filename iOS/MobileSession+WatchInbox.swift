@@ -42,7 +42,7 @@ extension MobileSession {
         watchInbox.tidy(now: now)
         refreshWatchInboxRows()
         let ledgers = watchInbox.ledgers()
-        guard ledgers.contains(where: { Self.hasWork($0.nextBatch(now: now)) }) else { return }
+        guard ledgers.contains(where: { hasWatchWork($0, now: now) }) else { return }
         watchDrainRequested = false
         watchDrainTask = Task { [weak self] in
             await self?.drainWatchInbox(now: now)
@@ -140,9 +140,19 @@ extension MobileSession {
         !batch.indices.isEmpty || !batch.newGaps.isEmpty || batch.finishes
     }
 
+    /// Saved text can settle missing earlier parts after the user deletes the inbox. Let that
+    /// reconciliation run before deciding a later Continue part must wait for the gap timeout.
+    private func hasWatchWork(_ ledger: WatchCaptureLedger, now: Date) -> Bool {
+        if Self.hasWork(ledger.nextBatch(now: now)) { return true }
+        guard ledger.failure == nil, !ledger.completed,
+              let record = history.first(where: { $0.sourceImportID == Self.watchSourceID(ledger.recordingID) })
+        else { return false }
+        return savedWatchLinesEnd(record.id) != nil
+    }
+
     /// Oldest recording first. A failure stops that recording only.
     private func drainWatchInbox(now: Date) async {
-        for ledger in watchInbox.ledgers() where Self.hasWork(ledger.nextBatch(now: now)) {
+        for ledger in watchInbox.ledgers() where hasWatchWork(ledger, now: now) {
             guard !Task.isCancelled else { return }
             do {
                 try await drainWatchRecording(ledger.recordingID, now: now)
@@ -164,6 +174,7 @@ extension MobileSession {
     private func drainWatchRecording(_ recordingID: UUID, now: Date) async throws {
         guard let stored = watchInbox.ledger(recordingID) else { return }
         var ledger = try reconcileWithSavedLines(stored)
+        guard Self.hasWork(ledger.nextBatch(now: now)) else { return }
         let recordID = try watchRecordID(for: ledger)
         while true {
             try Task.checkCancellation()
