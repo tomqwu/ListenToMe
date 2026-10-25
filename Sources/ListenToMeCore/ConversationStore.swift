@@ -42,6 +42,29 @@ public final class ConversationStore {
         for segment in segments { count(segment, by: 1) }
     }
 
+    /// Changes finalized wording while preserving recognition provenance and capture identity.
+    @discardableResult
+    public func edit(id: UUID, text: String) -> Bool {
+        let text = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty, let index = utterances.firstIndex(where: { $0.id == id && $0.isFinal }),
+              utterances[index].text != text else { return false }
+        let old = utterances[index]
+        let edited = TranscriptSegment(id: old.id, source: old.source, text: text, isFinal: true,
+            start: old.start, end: old.end, speakerID: old.speakerID, speakerName: old.speakerName,
+            originalText: old.originalText ?? old.text, correctionModel: "Manual", language: old.language)
+        count(old, by: -1); utterances[index] = edited; count(edited, by: 1)
+        revision += 1
+        return true
+    }
+
+    @discardableResult
+    public func delete(id: UUID) -> Bool {
+        guard let index = utterances.firstIndex(where: { $0.id == id && $0.isFinal }) else { return false }
+        count(utterances.remove(at: index), by: -1)
+        revision += 1
+        return true
+    }
+
     private func count(_ segment: TranscriptSegment, by delta: Int) {
         if segment.source == .you { youCount += delta } else { othersCount += delta }
         transcriptCharacterCount += delta * segment.text.count

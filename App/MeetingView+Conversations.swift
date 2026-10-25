@@ -5,7 +5,8 @@ import ListenToMeCore
 
 extension MeetingView {
     var hasConversation: Bool {
-        !session.summaryInstructions.isEmpty || !store.utterances.isEmpty
+        lastSavedKey != nil || restoredRecord != nil
+            || !session.summaryInstructions.isEmpty || !store.utterances.isEmpty
             || !session.notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
