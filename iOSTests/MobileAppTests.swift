@@ -69,6 +69,9 @@ final class MobileAppTests: XCTestCase {
         let window = app.windows.firstMatch
         XCTAssertGreaterThan(window.frame.width, window.frame.height)
         let scroll = app.scrollViews["dashboardScroll"]
+        let recordingReason = app.staticTexts["recordingSupportReason"]
+        XCTAssertTrue(recordingReason.exists, "Unavailable recording still needs an explanation on Summary")
+        XCTAssertFalse(app.buttons["Start listening"].isEnabled)
         let model = app.buttons["panel-model-summary"]
         // Large text can put the model above or below the viewport. Avoid swiping past it to the end.
         for _ in 0..<20 {

@@ -267,6 +267,7 @@ final class MobileSession {
     }
 
     func recheckSummary(for mode: MobileSummaryMode) {
+        ai.refreshAppleAvailability()
         message = summaryBlockReason(for: mode) ?? "Ready to generate \(mode.title)."
     }
 

@@ -247,6 +247,23 @@
           "test": "MobileSceneCapabilityTests/testLateActiveCapabilityCheckDoesNotImportAfterBackground"
         }
       ]
+    },
+    {
+      "id": "CAPTURE-009",
+      "name": "Keep Summary controls reachable alongside compatibility help at large text sizes",
+      "given": "live recording is unavailable and the user uses accessibility text in iPhone landscape",
+      "when": "the user opens Summary and scrolls to its model control",
+      "then": "the compatibility reason remains available with recovery, the Summary model control is hittable inside the scroll viewport, and the disabled recording control does not prevent reading or configuring summaries",
+      "covers": [
+        "iOS/MobileMeetingView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileAppTests.swift",
+          "test": "MobileAppTests/testLandscapeAndLargeTextTabs"
+        }
+      ]
     }
   ]
 }

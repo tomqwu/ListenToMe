@@ -48,7 +48,7 @@
       "id": "CAPABILITY-003",
       "name": "Refresh summary eligibility when returning to the foreground",
       "given": "Apple Intelligence readiness changes while the app is away",
-      "when": "the app returns to the foreground or settings refresh availability",
+      "when": "the app returns to the foreground, settings refresh availability or the user taps Check again",
       "then": "the current reason and selectable choice update without automatically selecting another provider or requiring summary AI for microphone capture",
       "covers": [
         "iOS/MobileAISettings.swift",
@@ -65,6 +65,11 @@
           "suite": "ios-unit",
           "file": "iOSUnitTests/MobileAICapabilityTests.swift",
           "test": "MobileAICapabilityTests/testForegroundRefreshesCapabilityWithoutSelectingAProvider"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileAICapabilityTests.swift",
+          "test": "MobileAICapabilityTests/testCheckAgainRefreshesAppleReadinessWithoutChangingTheSavedProvider"
         }
       ]
     }

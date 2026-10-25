@@ -86,7 +86,8 @@ final class MobilePhysicalCaptureUITests: XCTestCase {
     }
 
     private func capture(_ app: XCUIApplication, _ name: String) {
-        let attachment = XCTAttachment(screenshot: app.screenshot())
+        // Full device capture avoids UIKit's cropped landscape app-screenshot coordinates on iPad.
+        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)

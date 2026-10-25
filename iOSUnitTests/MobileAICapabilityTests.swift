@@ -63,6 +63,31 @@ final class MobileAICapabilityTests: XCTestCase {
         XCTAssertEqual(ai.availability, reason)
     }
 
+    func testCheckAgainRefreshesAppleReadinessWithoutChangingTheSavedProvider() {
+        var reason: String? = nil
+        let ai = MobileAISettings(appleAvailability: { reason })
+        ai.selectSummaryRoute(.apple)
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let keys = [MobileSession.languageKey, MobileLanguageDetection.automaticKey]
+        let saved = keys.map { UserDefaults.standard.object(forKey: $0) }
+        defer { for (key, value) in zip(keys, saved) { UserDefaults.standard.set(value, forKey: key) } }
+        let session = MobileSession(storageDirectory: root, ai: ai)
+        session.languageChoice = "en-US"
+        session.notes = "Summarize these notes."
+        reason = "Apple Intelligence is preparing its model."
+        ai.refreshAppleAvailability()
+        XCTAssertEqual(session.summaryAvailability, reason)
+        reason = nil
+        session.recheckSummary(for: .summary)
+        XCTAssertNil(ai.appleUnavailableReason)
+        XCTAssertNil(session.summaryAvailability)
+        XCTAssertEqual(session.message, "Ready to generate Summary.")
+        XCTAssertEqual(ai.provider, .apple)
+        XCTAssertNil(ai.cloud.vendor)
+        XCTAssertNil(session.generatingMode, "Check again must not generate or send conversation text")
+    }
+
     func testForegroundRefreshesCapabilityWithoutSelectingAProvider() async throws {
         var reason: String? = "Apple Intelligence is preparing."
         let ai = MobileAISettings(appleAvailability: { reason })

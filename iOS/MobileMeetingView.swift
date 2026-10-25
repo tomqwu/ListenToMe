@@ -139,7 +139,7 @@ struct MobileMeetingView: View {
                 captureStatusLabel
             }
             if session.state == .idle, let reason = session.recordingAvailability.reason {
-                Text(reason).font(.callout).accessibilityIdentifier("recordingSupportReason")
+                Text(recordingSupportText(reason)).font(.callout).accessibilityIdentifier("recordingSupportReason")
                 if let action = session.recordingAvailability.setupAction {
                     Button(action) { UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!) }
                 } else if !session.recordingAvailability.canRun {
@@ -157,6 +157,13 @@ struct MobileMeetingView: View {
             }
         }.frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 20).padding(.vertical, verticalSizeClass == .compact ? 6 : 14)
+    }
+
+    /// Summary keeps the cause and recovery visible without repeating Live's longer instructions.
+    /// This also keeps its model control reachable in the short landscape viewport at large text sizes.
+    private func recordingSupportText(_ reason: String) -> String {
+        guard workspace == .summary, let sentence = reason.range(of: ". ") else { return reason }
+        return String(reason[..<sentence.upperBound]).trimmingCharacters(in: .whitespaces)
     }
 
     private var titleEditor: some View {

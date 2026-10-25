@@ -177,6 +177,7 @@ final class MobileWatchSpeakerTests: XCTestCase {
         }
         let counts = await model.counts()
         XCTAssertEqual(counts.1, 1)
+        await session.refreshRecordingSupport()
         session.start()
         for _ in 0..<100 where session.state != .recording { try await Task.sleep(for: .milliseconds(10)) }
         XCTAssertEqual(session.state, .recording, "Start must finish while the Watch model is still held")

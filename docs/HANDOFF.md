@@ -14,8 +14,10 @@ worked at preflight; production reported 1.15.0 READY_FOR_SALE and build 35 was 
 The connected iPad Pro 12.9-inch (4th generation), iPadOS 27.0.1, reproduced the old failure. Its native
 capability probe reported SpeechTranscriber unavailable, DictationTranscriber English supported and
 Apple Intelligence device-not-eligible. The local fallback candidate then passed actual new microphone
-speech, Stop and retained Play/Pause UI on that iPad. Prior iPhone 12 Pro Max advanced transcription also
-passed, but final-source device regressions remain required; do not call simulator tests physical passes.
+speech, Stop and retained Play/Pause UI on that iPad. At `e0e5062`, both that iPad and the iPhone 12 Pro
+Max passed actual new speech, Stop and retained Play/Pause UI using the default Automatic language.
+The iPad also passed the native unavailable-Apple-provider settings check. Later changes shorten the
+Summary header and refresh cached AI eligibility; final frozen-source validation remains required.
 Existing iPad data/preferences were backed up and preserved. Synthetic sound is gated on confirmed
 Listening, never played while Start is failing. Native `devicectl device capture screenshot` is available.
 
@@ -32,8 +34,23 @@ was deleted. Its five screenshots were inspected. The subsequent `compatibility-
 passed all 17 focused Core readiness/cancellation tests, after the late permission-denial regression
 failed in `late-permission-error-red.log`. Independent review cleared the two lifecycle blockers and the
 final permission callback fix. Earlier actual red/green and physical evidence is preserved in the same
-folder; do not invent red outcomes for baseline tests. Full validation, final device/Mac/Watch acceptance,
-release screenshots, CI/merge and accepted beta upload remain pending at this snapshot.
+folder; do not invent red outcomes for baseline tests. The `e0e5062` signed Mac Dev app passed actual
+system-audio transcription labeled OTHERS and native settings inspection. Its original settings were
+restored and verified, both owned Dev bundles moved to Trash, and only `com.tomwu.ListenToMe.dev`
+permissions reset. Watch simulator inspection passed offline remote gating and denied-microphone
+recovery; its dedicated simulator was deleted. This does not establish paired physical Watch behavior.
+
+The initial full run passed 1,085 Core tests (seven skips, 98.1239% coverage), then reproduced a
+large-text landscape reachability regression and was intentionally stopped; it is not a full pass.
+CAPTURE-009 failed before shortening the Summary-only compatibility reason, then its two focused UI
+tests and the long release-history accessibility test passed. Older unit fixtures now explicitly
+refresh language readiness and choose their fake HTTP provider; all 431 unit tests then passed (seven
+intentional skips). CAPABILITY-003's new Check again example reproduced a stale Apple readiness cache
+and passed after refreshing it. The final ten AI/recording readiness tests also passed, with real
+language-change invalidation assertions. Source hashes and simulator cleanup are recorded for each run.
+Full frozen-source validation, final release screenshots, CI/merge and accepted beta upload remain
+pending at this snapshot. Physical capture screenshots now use the full display to avoid XCTest's
+landscape app-coordinate crop; a direct native iPad screenshot confirmed the actual layout is intact.
 
 No new speculative PRs: the live queue remains 17 existing drafts. Finish this feedback change before
 resuming the sequential backlog; the old #60 validation queue ended with two failures, so triage its

@@ -29,7 +29,7 @@
     {
       "id": "DEVICE-002",
       "name": "Setup remains explicit before execution",
-      "given": "a supported feature needs microphone permission or a model/provider setup",
+      "given": "a supported feature has denied microphone access or requires summary model/provider setup",
       "when": "the user sees its controls",
       "then": "configuration remains available with an actionable reason but execution stays blocked",
       "covers": [

@@ -21,7 +21,7 @@ does not show it again, and a fresh install does not see it at all; see
 ## iOS (unreleased since 1.17.0 (34))
 
 - Compatible older iPhones/iPads use Apple's on-device dictation when advanced transcription is unavailable. Fixed and Automatic language choices include languages supported by the available local modules. (#306)
-- Check recording support before enabling Start, with device/language and denied-microphone recovery. Unexpected preparation failures show the full error; cancellation stays quiet and a delayed foreground check cannot consume shared imports after backgrounding. (#306)
+- Check recording support before enabling Start, with device/language and denied-microphone recovery. Summary keeps compatibility help compact so model controls remain reachable at large text sizes. Unexpected preparation failures show the full error; cancellation stays quiet and a delayed foreground check cannot consume shared imports after backgrounding. (#306)
 - Unavailable Apple Intelligence is not offered as a working summary choice. Explain runtime eligibility/setup and require explicit alternate provider configuration while preserving saved choices and keys. Recording stays independent of summary AI. (#307)
 - Watch local Record/Continue checks its microphone and resources independently of iPhone connectivity. Remote Start requires a reachable compatible phone with confirmed recording support, while reachable Stop remains usable after a Start capability change. Commands are never queued. Watch remains excluded from distribution.
 

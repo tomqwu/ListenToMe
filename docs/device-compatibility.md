@@ -20,6 +20,10 @@ cloud provider, sends conversation text, requests microphone permission or downl
 | Watch iPhone remote | Require reachability, matching protocol and explicit current phone recording capability. | Block Start with recovery for an unknown/older phone or unsupported capture. A reachable active recording can still be stopped even if Start capability is lost. Commands are never queued. |
 | Normal iPhone/iPad simulator app | Live capture is unsupported. Notes, history and export remain usable. | Explain before Start and do not request microphone access. Synthetic release fixtures explicitly supply a compatible profile; their screenshots do not prove microphone acceptance. |
 
+Live shows full recording compatibility instructions; Summary keeps the cause and settings recovery
+visible without repeating the longer Live instructions, so its model control stays reachable at
+accessibility text sizes in a short landscape viewport.
+
 Start preparation has cancellation ownership across asynchronous checks. Stop, New and window close
 invalidate an old Mac request before permission, capture or a late denial can affect a new
 conversation. A superseded iOS foreground handler cannot consume shared imports after backgrounding.
@@ -31,7 +35,7 @@ fallback then produced new real microphone words and retained opt-in audio with 
 This is evidence for that device and path, not a claim about every iPad/language or an accepted
 TestFlight upload. Final source acceptance and remaining limitations belong in the release evidence.
 
-Compatibility is part of [BDD](BDD.md): `DEVICE-001`–`DEVICE-008`, `CAPTURE-001`–`CAPTURE-008` and
+Compatibility is part of [BDD](BDD.md): `DEVICE-001`–`DEVICE-008`, `CAPTURE-001`–`CAPTURE-009` and
 `CAPABILITY-001`–`CAPABILITY-003` bind policy, native adapters and controls to concrete tests.
 Core policy tests alone do not establish native UI or physical readiness. Keep simulator, actual
 microphone/OTHERS capture, Watch pairing, accuracy and publication evidence separate. See

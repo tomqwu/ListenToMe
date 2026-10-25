@@ -132,11 +132,11 @@ final class MobileSessionTests: XCTestCase {
     }
 
     func testRoleModelsPersistAndMissingRoleDoesNotDisableOtherRoles() {
+        let keys = ["mobileAIProvider", "mobileOllamaModel", "mobileOllamaQuickModel", "mobileOllamaCatalog"]
+        let saved = keys.map { UserDefaults.standard.object(forKey: $0) }
+        defer { for (key, value) in zip(keys, saved) { UserDefaults.standard.set(value, forKey: key) } }
         let settings = MobileAISettings()
-        let original = MobileSummaryMode.allCases.map { settings.selectedModel(for: $0) }
-        defer {
-            for (mode, model) in zip(MobileSummaryMode.allCases, original) { settings.selectModel(model, for: mode) }
-        }
+        settings.provider = .ollama // Catalog membership is an Ollama rule, independent of the device default.
         settings.selectModel("summary-model", for: .summary)
         settings.selectModel("quick-model", for: .quick)
         let restored = MobileAISettings()

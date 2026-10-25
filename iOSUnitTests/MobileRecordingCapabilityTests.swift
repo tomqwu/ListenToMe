@@ -5,14 +5,38 @@ import XCTest
 
 @MainActor
 final class MobileRecordingCapabilityTests: XCTestCase {
+    private let languageKeys = [MobileSession.languageKey, MobileLanguageDetection.automaticKey]
+    private var savedLanguage: [Any?] = []
+    override func setUp() async throws {
+        savedLanguage = languageKeys.map { UserDefaults.standard.object(forKey: $0) }
+    }
+    override func tearDown() async throws {
+        for (key, value) in zip(languageKeys, savedLanguage) { UserDefaults.standard.set(value, forKey: key) }
+    }
+
     func testUnsupportedLanguageBlocksStartBeforeCreatingRecorder() async {
         var created = 0
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
+        var supported = true
+        var checkedLocales: [String] = []
         let session = MobileSession(storageDirectory: root, makeRecorder: {
             created += 1; return MobileRecorder()
-        }, recordingSupport: { _ in .unsupported(reason: "Choose a supported transcription language.") })
+        }, recordingSupport: { locale in
+            checkedLocales.append(locale.identifier)
+            return supported ? .ready : .unsupported(reason: "Choose a supported transcription language.")
+        })
+        session.languageChoice = "en-US"
         await session.refreshRecordingSupport()
+        XCTAssertTrue(session.recordingAvailability.canRun)
+        supported = false
+        session.languageChoice = "xx-XX"
+        XCTAssertFalse(session.recordingAvailability.canRun, "Changing language must invalidate a previously ready Start immediately")
+        session.start()
+        XCTAssertEqual(created, 0, "The previous language's ready result cannot authorize this one")
+        await session.refreshRecordingSupport()
+        XCTAssertEqual(checkedLocales.count, 2)
+        XCTAssertEqual(checkedLocales.last, Locale(identifier: "xx-XX").identifier)
         session.start()
         XCTAssertEqual(created, 0)
         XCTAssertEqual(session.state, .idle)
@@ -59,9 +83,11 @@ final class MobileRecordingCapabilityTests: XCTestCase {
             if calls == 1 { return await withCheckedContinuation { pending = $0 } }
             return .unsupported(reason: "Current language is unavailable.")
         })
+        session.languageChoice = "en-US"
         let oldCheck = Task { await session.refreshRecordingSupport() }
         for _ in 0..<400 where pending == nil { try? await Task.sleep(for: .milliseconds(5)) }
         XCTAssertNotNil(pending)
+        session.languageChoice = "xx-XX"
         await session.refreshRecordingSupport()
         pending?.resume(returning: .ready)
         await oldCheck.value

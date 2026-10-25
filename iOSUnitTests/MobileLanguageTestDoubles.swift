@@ -163,6 +163,8 @@ class MobileLanguageTestCase: XCTestCase {
     }
 
     func record(_ session: MobileSession) async throws {
+        // The real workspace refreshes metadata after a language choice before enabling Start.
+        await session.refreshRecordingSupport()
         session.start()
         for _ in 0..<400 where session.state != .recording { try await Task.sleep(for: .milliseconds(5)) }
         XCTAssertEqual(session.state, .recording)
