@@ -129,6 +129,7 @@ validate-local:
 	python3 scripts/test-contract-gate.py
 	bash -n scripts/release.sh scripts/release-paths.sh
 	python3 scripts/test-release-paths.py
+	bash scripts/test-hotkey.sh
 	$(MAKE) lint
 	./scripts/check-coverage.sh 95
 	$(MAKE) ios-test

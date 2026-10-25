@@ -4,7 +4,6 @@ import AVFoundation
 import Speech
 import CoreGraphics
 import ScreenCaptureKit
-import ApplicationServices
 import AppKit
 import ListenToMeCore
 
@@ -16,7 +15,6 @@ final class PermissionsModel {
     private(set) var microphone: Status = .notDetermined
     private(set) var speech: Status = .notDetermined
     private(set) var screenRecording: Status = .notDetermined
-    private(set) var accessibility: Status = .notDetermined
     /// True when the Screen Recording grant is live in TCC but this process was launched before it
     /// (stale preflight): the badge shows Granted, and the UI should steer the user to Quit & Reopen
     /// so capture can actually use the grant.
@@ -25,7 +23,6 @@ final class PermissionsModel {
     private var screenRequested = false
     private var screenProbeInFlight = false
     private(set) var screenVerificationMessage: String?
-    private var accessibilityRequested = false
     /// Set once a live ScreenCaptureKit probe confirms the grant, so later `refresh()` calls don't
     /// downgrade it from the stale (process-cached) CoreGraphics preflight value.
     private var screenProbedGranted = false
@@ -36,7 +33,7 @@ final class PermissionsModel {
     /// effective until relaunch anyway, so remembering a past `true` never overstates access.
     private var screenLiveNameConfirmed = false
 
-    /// The three permissions required for core capture+transcription (Accessibility is optional).
+    /// The three permissions required for core capture+transcription.
     var allRequiredGranted: Bool {
         microphone == .granted && speech == .granted && screenRecording == .granted
     }
@@ -57,8 +54,6 @@ final class PermissionsModel {
         )
         screenRecording = Self.map(resolution.status)
         screenNeedsRelaunchHint = resolution.needsRelaunchHint
-        accessibility = AXIsProcessTrusted()
-            ? .granted : (accessibilityRequested ? .denied : .notDetermined)
         // Refresh must stay prompt-free. ScreenCaptureKit may show a system consent dialog,
         // so run it only from the explicit Recheck action, never on launch or activation.
 
@@ -158,16 +153,6 @@ final class PermissionsModel {
         // used to send already-authorized users to Settings and briefly label them Denied.
         probeScreenRecording()
     }
-    func requestAccessibility() {
-        accessibilityRequested = true
-        let trusted = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
-        // Same one-time-prompt limitation: open the pane directly when not yet trusted.
-        if !trusted {
-            openSettings("Privacy_Accessibility")
-        }
-        refresh()
-    }
-
     /// Relaunches the app — required for macOS to recognize a newly-granted Screen Recording
     /// permission (`CGPreflightScreenCaptureAccess` only updates after a restart).
     /// Finalize BEFORE launching the replacement instance. `prepareToClose()` returns false while a

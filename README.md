@@ -260,11 +260,11 @@ make pre-push # lint + tests + build (the CI-equivalent gate)
 ```
 
 Optional: copy `signing.local.mk.example` to `signing.local.mk` (gitignored) and set your
-code-signing identity so granted macOS permissions (mic/screen/accessibility) persist across
+code-signing identity so granted macOS permissions (mic/screen) persist across
 rebuilds (otherwise each rebuild re-asks). Find it via `security find-identity -v -p codesigning`.
 
-On first run, grant Microphone, Speech Recognition, Screen Recording (for system audio), and
-Accessibility (for the global hotkey) in System Settings → Privacy & Security. The app shows an
+On first run, grant Microphone, Speech Recognition and Screen Recording (for system audio) in
+System Settings → Privacy & Security. The global hotkey needs no Accessibility permission. The app shows an
 onboarding sheet on first launch; grant these permissions from **More → Permissions…** at any time
 after that. **Quit & Reopen** (offered after granting Screen Recording) finalizes and saves the
 current conversation first — if you cancel that save, nothing is relaunched, so you never end up
@@ -409,7 +409,7 @@ once. macOS asks each binary for keychain access the first time it reads the ite
 | Shortcut | Action |
 | --- | --- |
 | ⌘⇧L | Start / Stop listening |
-| ⌘⇧Space | Quick answer (global — works while another app is front, needs Accessibility) |
+| ⌘⇧Space | Quick answer (global — works while another app is front, no Accessibility permission) |
 | ⌘⇧D | Deep answer |
 | ⌘⇧R | Recap so far |
 | ⌘⇧U | Refresh summary |
@@ -514,7 +514,7 @@ saying so. Press **Speakers / edit names** to retry once the network is availabl
   unrestricted user-level file and network access rather than the narrower access a sandboxed app
   would be limited to. This is so file/folder reference context can read arbitrary paths you attach
   without security-scoped bookmarks. It still asks macOS for the Microphone, Speech Recognition,
-  Screen Recording, and Accessibility permissions listed above, and only uses them for the features
+  and Screen Recording permissions listed above, and only uses them for the features
   described in this README.
 - **Vocabularies stay on the device.** Presets, My terms and the suggestion check (term counts plus
   Apple's on-device NaturalLanguage sentence embedding) never leave the device and make no network

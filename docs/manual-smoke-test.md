@@ -19,8 +19,8 @@ Prereq: Ollama running with at least one chat-capable model installed (local or 
    installed release: it appears as **ListenToMe (Dev)** (bundle id `com.tomwu.ListenToMe.dev`)
    and holds its own permission grants. Grant permissions to that row, not the release's.
 2. On first launch, the app shows an **onboarding** sheet, not a Permissions panel. Grant
-   Microphone, Speech Recognition, Screen Recording (system audio), and Accessibility (global
-   hotkey) in System Settings → Privacy & Security. Reopen the in-app Permissions sheet anytime via
+   Microphone, Speech Recognition and Screen Recording (system audio) in System Settings →
+   Privacy & Security. The global hotkey needs no Accessibility grant. Reopen the in-app Permissions sheet anytime via
    **More → Permissions…**. Re-click **Listen** after granting if needed.
 3. In the **left status rail**, under **Models**, confirm a **model picker** per pane is populated
    with your installed Ollama models (the pane header only shows the current selection as text).
@@ -861,6 +861,15 @@ show the partial-erasure warning. Do not modify production conversations or perm
   angle brackets and multiline speaker names; speech stays literal while AI Markdown still formats.
 - With an all-day busy block and a shorter current meeting, Calendar chooses the latest-starting
   active timed meeting. At its end boundary it chooses an ongoing or next meeting correctly.
+## Permission-free global shortcut (#124)
+
+With Accessibility ungranted, press ⌘⇧Space in ListenToMe and with another app focused: each press
+requests one Quick answer. Holding the shortcut must not repeat; release and press again for another
+answer. Other keys and extra-modifier variants must not trigger it. Permissions shows no Accessibility
+request or toggle advice. If another app owns the combination, ListenToMe shows an unavailable notice
+and its in-app shortcut/buttons remain usable. Close/reopen the conversation window and repeat to
+check registration cleanup. Do not reset production permissions to run this check; use the Dev test
+identity and preserve evidence before its authorized scoped cleanup.
 
 ### iOS Ollama endpoint feedback (#149)
 
