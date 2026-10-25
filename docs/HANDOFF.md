@@ -1,4 +1,4 @@
-# Handoff — 2026-10-24
+# Handoff — 2026-10-25
 
 A snapshot for an agent picking up ListenToMe cold. [AGENTS.md](../AGENTS.md) and
 [CLAUDE.md](../CLAUDE.md) stay the rules; this note is only the state of things on the date above.
@@ -14,15 +14,26 @@ The initial catalog adopts representative existing tests; it does not claim exha
 coverage or historical red runs. Existing full validation, rendered UI/audio acceptance, independent
 review and release gates remain required. This workflow change alone calls for no binary release.
 
+The BDD workflow's full local run at `9ceee7a` passed: 1,068 Core tests (seven skips, 98.1107%
+coverage), 471 iOS tests (461 passed, ten intentional skips, zero failures), release helpers, lint,
+signed Mac build and real Ollama/OpenAI contracts. The log confirms every bound iOS unit/UI method
+passed. Integration keeps product sources identical to the validated `dbd1cc7` release candidate
+and workflow code identical to that full BDD run; PR #305 records final review/CI/merge evidence.
+Main's strict up-to-date branch requirement is enabled and read back, retaining the three checks.
+
+The maintainer requires finishing work before opening more feature PRs. Six redundant #134 drafts
+(#297–#302) were closed as superseded by #303 after verifying their heads are ancestors of it. All
+branches/commits and evidence remain preserved; acceptance of the consolidated code is still required.
+
 ## October 25 validation follow-up
 
-The #127 full run at `0464e9d` exposed a shared iOS test synchronization race: the automatic-review coordinator sets its active mode before the fake provider receives the request. The test now waits for the provider-held continuation before editing Notes and releasing the response. Its cancellation, completed-output and no-repeat assertions remain intact. The focused regression passed 20 consecutive iterations on the 1.17.0 candidate source with this fix; independent review found no blockers. This is test-only. The integrated `dbd1cc7` candidate subsequently passed full validation and four device capture tests (details below); the original failed run is preserved externally. No publication is claimed.
+The #127 full run at `0464e9d` exposed a shared iOS test synchronization race: the automatic-review coordinator sets its active mode before the fake provider receives the request. The test now waits for the provider-held continuation before editing Notes and releasing the response. Its cancellation, completed-output and no-repeat assertions remain intact. The focused regression passed 20 consecutive iterations on the 1.17.0 candidate source with this fix; independent review found no blockers. This is test-only. The integrated `dbd1cc7` candidate subsequently passed full validation and four device capture tests (details below); the original failed run is preserved externally. The 1.17.0 train subsequently published as recorded below.
 
 ## Product state
 
 | Surface | Latest published | State of `main` |
 | --- | --- | --- |
-| iPhone/iPad (TestFlight) | **1.16.0 (33)**, published 2026-10-24, tag `ios-v1.16.0-build33` at `980c471` | This feature batch is published to Dev; Watch remains excluded. Physical-device acceptance is pending. |
+| iPhone/iPad (TestFlight) | **1.17.0 (34)**, published 2026-10-25, tag `ios-v1.17.0-build34` at `cbd2e45` | This feature batch is published to Dev; Watch remains excluded. Physical-device acceptance is pending. |
 | macOS | **1.4.4 (14)**, 2026-09-14, tag `v1.4.4` | **Releases paused on the maintainer's decision.** About 50 commits of Mac work are merged but unreleased; see [CHANGELOG → macOS (unreleased since 1.4.4)](../CHANGELOG.md#macos-unreleased-since-144). Do not start a macOS train yourself; the maintainer calls it. |
 | Apple Watch | Not shipped | Built on `main` behind the `WATCH_EMBED` build flag (off; `scripts/ios-testflight.sh` refuses an archive that embeds it). Waits on the maintainer running `SPIKE.md` on a real watch (branch `spike/181-watch-audio`, [#181](https://github.com/tomqwu/ListenToMe/issues/181)), then the Task 20 physical-device acceptance from #193. Status table in the [watch plan](superpowers/plans/2026-10-22-apple-watch-recording.md). |
 
@@ -146,7 +157,7 @@ own implementation, relevant local acceptance, independent review and merged PR 
 3. **#216 — language re-check reliability:** implemented in #272; full `make validate-local` passed
    (1,050 Core tests, 98.10% coverage; 393 iOS unit and 65 UI tests, ten iOS skips, zero failures),
    including real Ollama contracts. Independent review and 20 fresh screenshots across two iPhone
-   and two iPad sizes passed. Evidence: `dist/language-activity-216`; not released.
+   and two iPad sizes passed. Evidence: `dist/language-activity-216`; included in TestFlight 1.17.0 (34).
 4. **#224 — re-transcribe saved audio:** finish existing PR #264; its live Mac audio gate is still pending.
 5. **#176 — UI-test reliability:** merged in #273 at `991128b`. Full local validation passed: 1,050 Core tests at 98.10% coverage; 393 iOS unit and 65 UI tests, ten iOS skips, zero failures; real Ollama contracts passed. Seventy-five native screenshots and the xcresult are preserved in `dist/ui-reliability-176` and the October 25 external evidence folder. Test-only; no binary release needed.
 6. Then iOS/provider improvements (#210, #209, #223, #164, #188, #167, #148, #149), followed by
@@ -240,11 +251,11 @@ is the tracking issue.
 
 ## Context capacity merged (#210) — October 25
 
-PR #274 adds optional per-server limits with reserved answer space and a no-send oversized-prompt error. Full `make validate-local` passed on `a6ec6b8`: 1,056 Core tests (seven skips, 98.1079% coverage), 394 iOS unit tests and 65 UI tests (459 total, ten skips, zero failures), release helpers, lint, signed Mac build and real Ollama/OpenAI-compatible contracts. Mac settings acceptance and independent review passed. A Pro Max screenshot run exposed a caret-position assumption in the URL-editing test; selecting all and asserting the exact replacement value fixed it, and the focused rerun passed. Only test/documentation changes followed the full gate. All 20 native screenshots across four device categories were inspected and passed. PR #274 merged as `98a8f646637f7766480cb2fab3de8761e86ffe3b` with all three required CI checks green. Evidence is preserved in `dist/context-budget-210` and the October 25 external evidence folder; this is not published.
+PR #274 adds optional per-server limits with reserved answer space and a no-send oversized-prompt error. Full `make validate-local` passed on `a6ec6b8`: 1,056 Core tests (seven skips, 98.1079% coverage), 394 iOS unit tests and 65 UI tests (459 total, ten skips, zero failures), release helpers, lint, signed Mac build and real Ollama/OpenAI-compatible contracts. Mac settings acceptance and independent review passed. A Pro Max screenshot run exposed a caret-position assumption in the URL-editing test; selecting all and asserting the exact replacement value fixed it, and the focused rerun passed. Only test/documentation changes followed the full gate. All 20 native screenshots across four device categories were inspected and passed. PR #274 merged as `98a8f646637f7766480cb2fab3de8761e86ffe3b` with all three required CI checks green. Evidence is preserved in `dist/context-budget-210` and the October 25 external evidence folder. The iOS behavior is published in TestFlight 1.17.0 (34); macOS publication remains paused.
 
 ## In progress: History index reuse (#223)
 
-PR #277 implements per-passage vector reuse and fixes a Mac shared-search reader lifetime bug found during installed-app acceptance. Full `make validate-local` passed on `bacbb7d`: 1,060 Core tests (seven skips, 98.1048% line coverage), 459 iOS tests (449 passed, ten skipped, zero failures), release helpers, lint, signed Mac build and both real server contracts. All three required CI checks passed. Installed Mac History search/vector reuse/removal and independent review passed; screenshots and cleanup evidence are preserved. This change is ready for merge after the documentation update checks; it is not published. Broader semantic language support remains open: contextual mean pooling and tested normalizations did not meet paraphrase/negative-query quality acceptance. No additional models are downloaded or enabled.
+PR #277 implements per-passage vector reuse and fixes a Mac shared-search reader lifetime bug found during installed-app acceptance. Full `make validate-local` passed on `bacbb7d`: 1,060 Core tests (seven skips, 98.1048% line coverage), 459 iOS tests (449 passed, ten skipped, zero failures), release helpers, lint, signed Mac build and both real server contracts. All three required CI checks passed. Installed Mac History search/vector reuse/removal and independent review passed; screenshots and cleanup evidence are preserved. The per-passage iOS behavior is included in TestFlight 1.17.0 (34); Mac publication remains paused. Broader semantic language support remains open: contextual mean pooling and tested normalizations did not meet paraphrase/negative-query quality acceptance. No additional models are downloaded or enabled.
 
 ## Per-conversation Mac deletion candidate (#131) — October 25
 
@@ -269,7 +280,7 @@ real provider contracts. Signed focused checks also passed after repairing IPv6 
 Settings notice/recovery screenshots were inspected. Current-main integration at `5a1ddd8` passed
 all 403 iOS unit tests (397 passed, six skipped), 1,061 Core tests (seven skipped, 98.1056% coverage),
 lint and the signed Mac build. Independent integration review found no blockers. Hosted checks for
-the final documentation commit remain pending; physical-device acceptance is pending. Not published.
+the final documentation commit subsequently passed and the integration merged. iOS changes are published in TestFlight 1.17.0 (34); physical-device acceptance remains pending and Mac publication remains paused.
 
 
 ## In progress: speaker lifecycle follow-ups (#188)
@@ -286,7 +297,7 @@ Independent review cleared the queued-old-run race and same-file backup-policy e
 Watch speaker transcript/Notes simulator screenshots were preserved and visually reviewed. This is
 simulator acceptance, not physical-device acceptance. Current-main integration passed at `ac20342`: all
 46 focused iOS lifecycle/backup/preparation/Watch checks, Core tests (1,060, seven skips, 98.1048%), lint,
-signed Mac build and all three hosted checks. Evidence: `dist/speaker-lifecycle-188` and external release evidence. Not merged or published.
+signed Mac build and all three hosted checks. Evidence: `dist/speaker-lifecycle-188` and external release evidence. The merged iOS behavior is included in TestFlight 1.17.0 (34); physical-device acceptance remains pending. Watch is still excluded from distribution.
 
 ## In progress: iOS live snapshot and provisional prompts (#164)
 
@@ -299,16 +310,15 @@ coverage above 98%, release helpers, signed Mac build and real provider contract
 Summary simulator journey now verifies provisional request tagging and removal after final recognition;
 all five focused checks passed at `00cc28f`, and both native-resolution screenshots were inspected.
 Current-main integration lint/Core (1,061 tests, seven skips, 98.1056%) and all three hosted checks passed.
-Physical-device acceptance and publication remain pending. Evidence: `dist/live-snapshot-164`.
+Included in TestFlight 1.17.0 (34). Physical-device acceptance remains pending. Evidence: `dist/live-snapshot-164`.
 
-## iOS 1.17.0 (34) train preparation — October 25
+## iOS 1.17.0 (34) TestFlight publication — October 25
 
 `codex/ios-1.17.0-build34` integrates merged `5eb674f`. The batch contains only merged iOS work:
 Duo width choices, conversation vocabularies, language activity checks, speaker lifecycle fixes,
 live-summary/provisional handling, History index reuse and deletion privacy, provider context limits and Ollama endpoint
-feedback. Watch remains excluded. No draft backlog PR is included. Apple API preflight confirms
-1.16.0 (33) uploaded October 24 is the latest accepted beta, with no build 34 yet, and 1.15.0 is
-READY_FOR_SALE; App Store What's New therefore starts after 1.15.0. Version and notes are prepared.
+feedback. Watch remains excluded. No draft backlog PR is included. The preflight identified 1.15.0
+as READY_FOR_SALE, so the prepared App Store What's New covers everything after 1.15.0.
 
 Integrated candidate `dbd1cc7` passed full `make validate-local`: 1,068 Core tests (seven intentional
 skips, 98.1107% coverage), 471 iOS tests (461 passed, ten intentional skips, zero failures), lint,
@@ -319,13 +329,19 @@ rejecting a system-notification overlay in the first captures. Originals, normal
 sizes, hashes, device/runtime/source provenance and review results are preserved externally and in
 `dist/ios-1.17.0-build34-evidence/`. README images now use the accepted 1.17.0 set.
 
-The earlier `e176222` run (470 iOS tests) is preserved as superseded evidence, not validation of the
-integrated source. The current candidate includes #131 on iOS: deleting a conversation cancels and
-clears active History answers and citations. Required CI and main merge must complete for the final
-documentation/media head before archiving. Signed archive, accepted upload and tester verification
-remain pending. Physical-device
-acceptance and App Store listing screenshot upload remain separate and pending. No publication is
-claimed. Watch stays excluded; no draft backlog feature is included.
+The earlier `e176222` run (470 iOS tests) is preserved as superseded evidence. The integrated
+candidate includes #131 on iOS. Final docs/media source `cbd2e45` passed all three required checks
+and PR #304 merged at `166b380`. The signed archive/export and distribution package checks passed;
+the helper's accepted-upload receipt records 2026-10-25 16:27:39 UTC. Apple processing is VALID,
+internal state IN_BETA_TESTING, Dev includes build 34 with both existing testers enrolled, and en-CA
+What to Test/beta description readback matches. Enrollment state is not evidence of a new install.
+
+The remote `ios-v1.17.0-build34` tag peels to exact archive source `cbd2e45`. The complete
+[GitHub pre-release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.17.0-build34) was read
+back with no binary asset; macOS v1.4.4 stays Latest. Receipt, source/signing/package checks,
+metadata, tag/release readback and the matching validated IPA are preserved externally in the
+October 25 `ios-next-train` evidence. Physical-device acceptance and App Store screenshot listing
+upload remain pending. No production App Store submission was made.
 
 ## Mac Auto compatibility acceptance (#209) — October 25
 

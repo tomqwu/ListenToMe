@@ -61,8 +61,8 @@ Education & Research) and your own **My terms** list help recognition, AI speech
 summaries on both platforms; after about a minute of speech the phone may suggest one, decided on the
 device. Meeting use-case presets, reference files, audio-file import and WhisperKit transcription are macOS-only.
 Editable domain prompt presets are available on both platforms.
-The iPhone and iPad app is distributed through TestFlight; the latest build is **1.16.0 (33)**
-(2026-10-24). An Apple Watch companion is built behind a build flag but not shipped yet
+The iPhone and iPad app is distributed through TestFlight; the latest build is **1.17.0 (34)**
+([2026-10-25 TestFlight release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.17.0-build34)). An Apple Watch companion is built behind a build flag but not shipped yet
 ([#181](https://github.com/tomqwu/ListenToMe/issues/181)).
 See [iOS setup, validation and distribution](docs/IOS.md).
 
@@ -77,7 +77,7 @@ make ios-test
 
 ![ListenToMe — four-pane meeting copilot](docs/images/screenshot.png)
 
-**iPhone and iPad** (1.17.0 candidate)
+**iPhone and iPad** (1.17.0)
 
 <p>
 <img src="docs/images/ios/iphone-01-live.png" width="200" alt="Live transcript and Quick Summary">

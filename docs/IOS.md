@@ -1,7 +1,7 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, candidate version 1.17.0 (34).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, latest TestFlight version 1.17.0 (34).
 
 ## What this app is for
 
@@ -108,7 +108,7 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 **The two apps keep independent version lines.** They are separate products in separate distribution
 channels, and an iOS build number already accepted by App Store Connect can never be reused. A higher
 iOS version does *not* mean the iPhone app is ahead of the Mac app; today macOS is 1.4.4 (14) and iOS
-has published TestFlight 1.16.0 (33), with 1.17.0 (34) being prepared.
+has published TestFlight 1.17.0 (34).
 
 - **`MARKETING_VERSION`** (iOS, in `project.yml`): a **minor** bump for user-visible features, a
   **patch** bump for fixes.
@@ -129,7 +129,7 @@ The archive, upload, tagging and verification steps themselves are not repeated 
 [IOS-RELEASING.md](IOS-RELEASING.md) for iOS, [RELEASING.md](RELEASING.md) for macOS, and
 [AGENTS.md](../AGENTS.md) for the release workflow that governs both.
 
-## iOS 1.17.0 (34) — candidate
+## iOS 1.17.0 (34) — TestFlight, October 25
 
 This batch adds remembered iPhone Duo pane widths (#268), per-conversation vocabularies (#237),
 speech-activity language re-checks (#216), responsive speaker finalization on background (#188),
@@ -143,8 +143,11 @@ tests (461 passed, ten intentional skips, zero failures), plus lint, release hel
 build and real Ollama/OpenAI-compatible contracts. Four device capture tests passed; all 24 final
 native-resolution images were visually accepted, with both phone sets retaken after rejecting a
 system-notification overlay. Originals, hashes and device/source provenance are preserved. The
-merged-source archive, accepted upload and listing screenshot upload are pending. Physical-device
-acceptance remains separate.
+signed archive and distribution package passed verification. Apple accepted the upload from
+`cbd2e454dbf502df5832dc3654ee2d284f147380` at 16:27:39 UTC on October 25. Processing is VALID,
+internal state is IN_BETA_TESTING, Dev contains the build, and en-CA metadata matches. The remote
+tag points to that source and the GitHub pre-release was read back; macOS remains Latest.
+Physical-device acceptance and App Store listing screenshot upload remain pending.
 [What to Test](../metadata/ios/en-CA/what-to-test-1.17.0.txt).
 
 ## iOS 1.16.0 (33)

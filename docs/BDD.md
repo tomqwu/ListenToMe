@@ -11,6 +11,10 @@ test selector, so there is no duplicate Cucumber implementation or dependency to
 
 ## Working an issue
 
+Finish the current change through validation, review, CI and merge before opening another feature
+PR. Future work stays in GitHub Issues. Work down existing drafts sequentially and consolidate
+multiple drafts for the same issue without deleting their source or acceptance evidence.
+
 1. Understand the issue and choose concrete examples before writing production code. State the
    starting condition, user action/event and observable outcome. Add edge cases, failures, data
    erasure, cancellation and off-device consent as the behavior requires.
@@ -76,7 +80,10 @@ changes do not demand an unrelated production scenario. Python test helpers rema
 
 The required **ListenToMeCore tests + coverage** CI job checks PR changes against their actual base,
 tests the gate, executes bound core/tooling scenarios and retains the 95% core coverage floor.
-The existing macOS and iOS build checks remain required. No additional branch-rule setup is needed.
+The existing macOS and iOS build checks remain required. Main also requires branches to be up to
+date before merge, so older drafts must incorporate the current BDD workflow. The three required
+check names are unchanged; the live Main ruleset's strict up-to-date requirement was enabled and
+read back on October 25, 2026.
 Local `pre-push` and `make validate-local` include the structural/change-aware check. The latter also
 tests the gate, checks observed iOS binding results and retains all native, helper and real model
 contracts. Python execution checks exact verbose selectors rather than accepting aggregate counts.

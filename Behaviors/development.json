@@ -25,7 +25,15 @@
           "file": "scripts/test-bdd.py",
           "test": "BDDTests/test_behavior_change_requires_scenario_and_changed_bound_method"
         }
-      ]
+      ],
+      "manual": {
+        "reason": "The hosted main-branch ruleset requires readback from GitHub; offline test structure cannot establish the remote policy.",
+        "steps": [
+          "Read the active Main branch ruleset and verify strict_required_status_checks_policy is true.",
+          "Verify exactly the existing core coverage, macOS build and iOS build checks remain required, with no bypass actors.",
+          "Integrate current main before merging older drafts; preserve the reviewed ruleset readback with acceptance evidence."
+        ]
+      }
     },
     {
       "id": "DEV-002",
