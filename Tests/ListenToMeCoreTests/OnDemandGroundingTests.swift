@@ -21,6 +21,21 @@ final class OnDemandGroundingTests: XCTestCase {
         segments.reduce(0) { $0 + TranscriptSegment.promptCharacterCost($1) }
     }
 
+    func testShorteningProvisionalSpeechPreservesItsTagAndMinimumEvidence() throws {
+        let line = TranscriptSegment(source: .you,
+            text: ConversationStore.provisionalTag + String(repeating: "earlier ", count: 100) + "latest words",
+            isFinal: false, start: 0, end: 1)
+        let selected = OnDemandGrounding.select([line], budget: 100, hasSummary: false)
+        let kept = try XCTUnwrap(selected.segments.first)
+        XCTAssertTrue(kept.text.hasPrefix(ConversationStore.provisionalTag))
+        XCTAssertTrue(kept.text.hasSuffix("latest words"))
+        XCTAssertFalse(kept.isFinal)
+        XCTAssertLessThanOrEqual(cost(selected.segments), 100)
+        let tooSmall = line.speakerLabel.count + 3 + ConversationStore.provisionalTag.count
+            + ConversationStore.provisionalMinimumCharacters - 1
+        XCTAssertTrue(OnDemandGrounding.select([line], budget: tooSmall, hasSummary: false).segments.isEmpty)
+    }
+
     // MARK: - Budget
 
     func testBudgetScalesWithTheProvider() {

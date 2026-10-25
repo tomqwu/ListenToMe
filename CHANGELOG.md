@@ -15,6 +15,11 @@ does not show it again, and a fresh install does not see it at all; see
 
 - Automatic reviews count the complete request toward their 60,000-character limit, including instructions and any attached references. Oversized requests stop before sending and explain what to shorten. Changing directives alone keeps the existing review; new context or manual generation uses the new settings. (#148)
 
+- Backgrounding cancels final speaker labeling already started after Stop and clears the recording buffer without waiting. Queued work stays bound to its original recording, so an old pass cannot analyze or relabel a new recording. Lifecycle and model-backup tests cover these paths. (#188)
+
+- Live summaries reuse their transcript snapshot between unchanged events. Manual Summary, Quick and Ask omit very short recognition hypotheses and mark longer unfinished speech as provisional, with guidance against treating it as a confirmed decision. The marker survives prompt trimming; saved transcripts remain unchanged. (#164)
+- History search reuses unchanged passage vectors when a conversation is saved, including after summary insertion. Changed text or transcription language is re-indexed on-device; duplicate passages share one embedding attempt per save, including unsupported text. Existing indexes rebuild once. Semantic language coverage is unchanged. (#223, partial)
+
 - OpenAI-compatible servers can use an optional per-server context limit. Answer space is reserved and oversized requests stop before sending; Mac prompt trimming includes a visible notice. Unknown capacity preserves server-managed behavior. (#210)
 
 - Documentation: the Watch speaker-privacy section now agrees with the existing opt-in saved-audio retention policy. No app behavior changes. (#225)
@@ -55,6 +60,10 @@ does not show it again, and a fresh install does not see it at all; see
 ## macOS (unreleased since 1.4.4)
 
 - Automatic reviews count the complete request toward their 60,000-character limit, including instructions and any attached references. Oversized requests stop before sending and explain what to shorten. Changing directives alone keeps the existing review; new context or manual generation uses the new settings. (#148)
+
+- History search keeps its records when SwiftUI recreates a view, instead of replacing matching rows with an empty asynchronous result. (#223 acceptance fix)
+
+- History search reuses unchanged passage vectors when a conversation is saved, including after summary insertion. Changed text or transcription language is re-indexed on-device; duplicate passages share one embedding attempt per save, including unsupported text. Existing indexes rebuild once. Semantic language coverage is unchanged. (#223, partial)
 
 - OpenAI-compatible servers can use an optional per-server context limit. Answer space is reserved and oversized requests stop before sending; Mac prompt trimming includes a visible notice. Unknown capacity preserves server-managed behavior. (#210)
 

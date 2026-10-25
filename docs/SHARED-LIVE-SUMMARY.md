@@ -354,6 +354,21 @@ On the macOS UI side, `checkpoint()` compares a cheap `SessionCheckpointKey`
 loads the archive in `.task` rather than seeding `@State` in `init`, so the once-a-second elapsed
 tick no longer re-reads and re-decodes every saved conversation on the main thread.
 
+### iOS parity (#164)
+
+`MobileSession.liveSnapshot()` caches pieces and the attributed source on finalized-segment revision,
+the complete partial segment and notes. Finalized corrections, speaker changes and restored records
+invalidate the revision; partial text or metadata and notes invalidate the rest of the key.
+`handleSummaryEvent` obtains one snapshot and shares it with review synchronization and scheduling.
+Auto keeps its existing source representation and acknowledgement rules.
+
+Manual Summary, Quick and Ask use a separate view of that same snapshot: non-final text below 24
+trimmed characters is omitted, while longer hypotheses carry `(provisional) ` and the shared
+`PromptBuilder.provisionalNotice`. The notice is system guidance outside the transcript data, and its
+size is charged to the prompt budget. Shortening a long hypothesis retains both its marker and at
+least 24 characters of evidence. Finalized wording has no provisional marker; the stored transcript
+and exports are not altered by prompt preparation.
+
 ## Prompt data fences, queue persistence and pane failure handling (macOS unreleased since 1.4.4; in iOS by 1.15.0)
 
 ### Untrusted text is fenced and declared as data (#140)

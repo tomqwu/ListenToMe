@@ -141,6 +141,28 @@ final class MobileIncrementalSummaryUITests: XCTestCase {
         app.buttons["Stop listening"].tap()
     }
 
+    func testManualSummaryIncludesLiveRecognitionAndDropsMarkerAfterFinalization() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--incremental-summary-fixture", "-autoQuickSummary", "NO",
+                               "-mobileAIProvider", "apple", "-mobileCorrectTranscript", "NO"]
+        app.launchPastReleaseNotes()
+        app.buttons["Start listening"].tap()
+        speech("speechLiveDecision", app: app)
+        reviewTab("Summary", app: app)
+        app.buttons["Generate Summary"].tap()
+        wait(app.staticTexts["output-summary"], contains: "Recognition is provisional.")
+        capture(app, "Manual Summary includes tagged live recognition")
+        speech("speechDecision", app: app)
+        app.buttons["Generate Summary"].tap()
+        let finalized = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "label CONTAINS %@ AND NOT (label CONTAINS %@)",
+                                   "reviewed manually.", "Recognition is provisional."),
+            object: app.staticTexts["output-summary"])
+        XCTAssertEqual(XCTWaiter.wait(for: [finalized], timeout: 15), .completed)
+        capture(app, "Manual Summary removes provisional guidance after final recognition")
+        app.buttons["Stop listening"].tap()
+    }
+
     private func launch(slow: Bool = false, backlog: Bool = false) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["--incremental-summary-fixture", "-autoQuickSummary", "YES",

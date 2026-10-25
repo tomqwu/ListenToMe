@@ -147,3 +147,34 @@ final class HeldCorrectionProvider: LLMProvider {
         AsyncThrowingStream { continuation in Task { @MainActor in self.hold(continuation) } }
     }
 }
+
+/// Drives the session's actual periodic loop without waiting for its production interval.
+actor ManualSpeakerClock {
+    private var waiters: [UUID: CheckedContinuation<Void, Error>] = [:]
+    private var order: [UUID] = []
+
+    func sleep(_ delay: TimeInterval) async throws {
+        let id = UUID()
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                if Task.isCancelled { continuation.resume(throwing: CancellationError()); return }
+                waiters[id] = continuation
+                order.append(id)
+            }
+        } onCancel: {
+            Task { await self.cancel(id) }
+        }
+    }
+
+    private func cancel(_ id: UUID) {
+        waiters.removeValue(forKey: id)?.resume(throwing: CancellationError())
+        order.removeAll { $0 == id }
+    }
+
+    func advance() -> Bool {
+        guard let id = order.first else { return false }
+        order.removeFirst()
+        waiters.removeValue(forKey: id)?.resume()
+        return true
+    }
+}
