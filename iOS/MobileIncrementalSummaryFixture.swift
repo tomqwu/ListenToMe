@@ -92,7 +92,10 @@ private struct IncrementalFixtureProvider: LLMProvider {
                         // (notice, persona, language) appended by PromptBuilder.systemWithDirectives.
                         let automatic = AutomaticReviewMode.allCases
                             .contains { request.system.hasPrefix($0.instructions) }
-                        continuation.yield("- The delivery discussion has been reviewed " + (automatic ? "automatically." : "manually."))
+                        let provisional = request.system.contains(PromptBuilder.provisionalNotice)
+                            && request.messages.contains { $0.content.contains(ConversationStore.provisionalTag) }
+                        continuation.yield("- The delivery discussion has been reviewed " + (automatic ? "automatically." : "manually.")
+                            + (provisional ? " Recognition is provisional." : ""))
                         continuation.finish()
                         return
                     }
