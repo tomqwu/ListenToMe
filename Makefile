@@ -81,7 +81,7 @@ watch-build: gen
 ios-test: gen
 	xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMeIOS -configuration Debug \
 		-destination '$(IOS_DESTINATION)' -derivedDataPath .build/ios \
-		-onlyUsePackageVersionsFromResolvedFile $(IOS_SIGN_FLAGS) test
+		-onlyUsePackageVersionsFromResolvedFile $(IOS_SIGN_FLAGS) -parallel-testing-enabled NO test
 
 ios-archive: gen
 	xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMeIOS -configuration Release \
