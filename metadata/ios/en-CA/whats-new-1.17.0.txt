@@ -1,0 +1,13 @@
+Since App Store 1.15.0:
+
+• A prompt below Notes lets you ask once or save instructions for future summaries in that conversation. Pick and edit an optional domain preset.
+• iPhone Duo places Transcript and Quick side by side in landscape. Choose equal widths or give either pane more space; your choice is remembered. Narrow windows and larger text retain a stacked layout.
+• Simplified Chinese terms are included in all seven vocabulary presets. Conversation vocabularies now return when you reopen History and guide automatic Quick updates.
+• Automatic language checks can start from speech activity even when the current transcriber recognizes no words.
+• Speaker labeling no longer holds up Stop or backgrounding, and an older pass cannot relabel a new recording.
+• Live summaries reuse unchanged text and treat unfinished speech as provisional. History search reuses unchanged passages when long conversations are saved; supported semantic languages are unchanged.
+• Deleting a conversation clears History answers and citations immediately, including answers still streaming.
+• OpenAI-compatible servers support optional per-server context limits. Local Ollama requests size context to the assembled prompt, and Settings explain unsupported HTTP addresses and omitted URL parts.
+• Privacy explanations clarify which optional AI providers receive text and that audio is retained only when Save audio recordings is enabled.
+
+Apple Watch is not included in this version. On-device processing remains the default; optional remote AI uses the provider you select.

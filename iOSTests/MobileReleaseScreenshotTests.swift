@@ -45,6 +45,14 @@ final class MobileReleaseScreenshotTests: XCTestCase {
         }
         XCTAssertTrue(app.buttons["panel-model-summary"].waitForExistence(timeout: 5))
         capture("04 Summary portrait")
+        app.buttons["History"].tap()
+        XCTAssertTrue(app.navigationBars["History"].waitForExistence(timeout: 5))
+        capture("05 Conversation history")
+        app.buttons["Done"].tap()
+        app.buttons["More"].tap()
+        app.buttons["Settings"].tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
+        capture("06 Settings")
     }
 
     private func reveal(_ element: XCUIElement, in form: XCUIElement) {

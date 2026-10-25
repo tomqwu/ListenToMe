@@ -66,7 +66,7 @@ that describe the CLI as blocked or require another publication approval.
    pre-release for that tag (`--prerelease --latest=false`, CHANGELOG section as notes, no binary) as
    described in `docs/IOS-RELEASING.md`; never make it Latest over the macOS release. The page must be complete: version/build, source
    commit, full notes, What to Test, privacy changes, and App Store "What's New" text since the last
-   production release (currently 1.10.5).
+   production release (App Store Connect reported 1.15.0 READY_FOR_SALE on October 25, 2026; recheck each train).
 4. Verify processing `VALID`, internal state `IN_BETA_TESTING`, the build's Dev relationship, and the
    intended tester's accepted group membership. Apply and read back the prepared en-CA description
    and What to Test. `/betaTesters/{id}/builds` lists **individual assignments only**; absence there

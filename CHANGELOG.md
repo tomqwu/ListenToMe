@@ -11,9 +11,26 @@ does not show it again, and a fresh install does not see it at all; see
 [`docs/IOS.md`](docs/IOS.md) for the fuller per-build technical notes and
 [`metadata/ios/en-CA/`](metadata/ios/en-CA/) for TestFlight "What to Test" text.
 
-## iOS (unreleased since 1.16.0 (33))
+## iOS (unreleased since 1.17.0 (34) candidate)
 
-- Deleting a conversation clears and cancels Ask your history answers so a late response cannot restore deleted text or citations. (#131)
+- Documentation: the Watch speaker-privacy section now agrees with the existing opt-in saved-audio retention policy. No app behavior changes. (#225)
+
+- Watch imports retain playable audio only when Save audio recordings is on, with reconnect queueing, retry-safe storage, consistent playback timing and existing deletion/expiry controls (#225). Watch remains excluded from distribution.
+
+- Apple Watch imports can identify speakers on-device when Identify speakers is enabled and its models are already loaded. Every audio window is processed, including long recordings and gaps, without disturbing live iPhone speaker analysis. Labels are saved with the transcript before audio is deleted. Watch remains excluded from distribution pending device acceptance. (#192)
+
+- Apple Watch imports detect the spoken language with an already-downloaded on-device model in Automatic mode and keep that language across retries and later transfers. Unavailable or uncertain detection falls back to the device language without downloading a model. Watch remains excluded from distribution pending device acceptance. (#200)
+
+- Apple Watch companion, remote Start/Stop for the iPhone recorder (not yet shipped; ships with watch recording on the #181 train). (#181)
+- iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
+- Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
+
+## iOS 1.17.0 (34) — release candidate
+
+Local candidate validation and screenshots are complete. The merged-source archive and accepted TestFlight upload are pending; no publication is claimed.
+
+- Deleting a conversation immediately cancels and clears its streamed History answer and citations, preventing deleted content from returning when an old request finishes. (#131)
+
 - Ollama settings reject unsupported plain-HTTP addresses before saving and explain when pasted URL parts are omitted. Destination prose names Ollama Cloud clearly; provider-default and catalog-refresh behavior are documented. (#149)
 
 - Backgrounding cancels final speaker labeling already started after Stop and clears the recording buffer without waiting. Queued work stays bound to its original recording, so an old pass cannot analyze or relabel a new recording. Lifecycle and model-backup tests cover these paths. (#188)
@@ -23,27 +40,15 @@ does not show it again, and a fresh install does not see it at all; see
 
 - OpenAI-compatible servers can use an optional per-server context limit. Answer space is reserved and oversized requests stop before sending; Mac prompt trimming includes a visible notice. Unknown capacity preserves server-managed behavior. (#210)
 
-- Documentation: the Watch speaker-privacy section now agrees with the existing opt-in saved-audio retention policy. No app behavior changes. (#225)
-
 - Validation: simulator UI journeys wait for permission and correction state changes under load; the test target runs serially. No app behavior or binary release change. (#176)
 
 - Automatic language detection can start and re-check from microphone audio activity even when the current transcriber recognizes no words. Silence skips inference, isolated sounds do not download the model, and Stop remains responsive. All analysis stays on-device using the existing temporary buffer. (#216)
 
-- Watch imports retain playable audio only when Save audio recordings is on, with reconnect queueing, retry-safe storage, consistent playback timing and existing deletion/expiry controls (#225). Watch remains excluded from distribution.
-
-- Apple Watch imports can identify speakers on-device when Identify speakers is enabled and its models are already loaded. Every audio window is processed, including long recordings and gaps, without disturbing live iPhone speaker analysis. Labels are saved with the transcript before audio is deleted. Watch remains excluded from distribution pending device acceptance. (#192)
-
 - iPhone Duo lets you give more space to Transcript or Quick Summary and remembers your choice. A compact transcript actions menu keeps the landscape toolbar readable.
-
-- Apple Watch imports detect the spoken language with an already-downloaded on-device model in Automatic mode and keep that language across retries and later transfers. Unavailable or uncertain detection falls back to the device language without downloading a model. Watch remains excluded from distribution pending device acceptance. (#200)
 
 - Local Ollama requests size their context window to the full prompt instead of relying on a small server default. Prompts beyond the safe model capacity show an error before an answer request; cloud context remains server-managed. (#230)
 
 - Vocabulary presets added to a conversation are saved and restored when you reopen it. Auto Quick now uses its domain and glossary, while new conversations keep only your device-wide defaults. (#237)
-
-- Apple Watch companion, remote Start/Stop for the iPhone recorder (not yet shipped; ships with watch recording on the #181 train). (#181)
-- iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
-- Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
 
 ## iOS 1.16.0 (33) — 2026-10-24
 
