@@ -298,5 +298,7 @@ The merge preserves #164's live snapshot invalidation alongside #141's incomplet
 Independent review caught replacement dropping incomplete-import provenance; the corrected replacement
 retains it because saved tracks cannot recover missing imported material. Core and iOS regressions
 cover metadata copying and reopening; the Core regression failed before the correction.
-Earlier full validation remains recorded above; new integration checks and the required native
-OTHERS acceptance are pending. No merge or publication is claimed.
+Earlier full validation remains recorded above. Integration at `b596609` passed 1,084 Core tests
+(seven skipped, 98.122% coverage), lint, the signed Mac build, the iOS test build and 19 focused
+simulator checks (17 passed, two device-only skips). Independent review is clear after the provenance
+fix. A fresh full validation is queued; required native OTHERS acceptance remains pending. No merge or publication is claimed.
