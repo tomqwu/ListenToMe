@@ -23,6 +23,18 @@ found the cancelled-error and removed-title-task references and required direct 
 and checkpoint adapter bindings. Final frozen full validation, review, CI, merge, fresh screenshots,
 archive/upload receipt and Apple tester/metadata readback are still required.
 
+The first combined freeze `3f4d1e2` passed all 20 native Mac tests and the signed Mac app build.
+Both connected physical iPad/iPhone passed real new microphone speech, Stop and opt-in Play/Pause
+on that source, with one synthetic phrase played only after both confirmed Listening. Native
+screenshots were inspected and preserved. Independent review cleared the integration. Hosted CI's
+Core BDD run then aborted in the default naming initializer with "freed pointer was not the last
+allocation"; its async public-default closure matches the trigger described in
+[Swift #92017](https://github.com/swiftlang/swift/issues/92017). The partial full validation was
+interrupted and preserved, not reported passed. The default closure now lives in a non-inline
+convenience initializer inside Core; an additional native client file exercises linkage. A local
+pre-workaround run passed, so the genuine red is the hosted crash, not a fabricated local failure.
+Restart final frozen validation and CI on the corrected source before publication.
+
 The earlier feedback-only `40d8e9a` full validation and 24 inspected images are historical evidence,
 not acceptance of this combined source. Earlier physical iPad/iPhone recording and opt-in Play/Pause
 checks passed at `e0e5062`; the connected iPad Pro4 has local dictation support but cannot use advanced

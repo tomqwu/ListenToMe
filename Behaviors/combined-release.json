@@ -6,7 +6,7 @@
       "name": "Preserve capture and conversation ownership during orchestration changes",
       "given": "a recording, summary, naming or checkpoint operation is pending",
       "when": "Stop, New, restart or a newer generation supersedes it",
-      "then": "old completions cannot restart capture, overwrite a newer conversation or corrupt saved state; deleting one conversation preserves other records and reports secondary erasure failures; unsupported native languages cannot allocate a recorder, genuine preparation failures remain actionable, and late errors after Stop stay silent",
+      "then": "old completions cannot restart capture, overwrite a newer conversation or corrupt saved state; deleting one conversation preserves other records and reports secondary erasure failures; unsupported native languages cannot allocate a recorder, genuine preparation failures remain actionable, and late errors after Stop stay silent; the default on-device naming path works across native client modules without an async allocator abort",
       "covers": [
         "App/MeetingView+AutoTitle.swift",
         "App/MeetingView+Capture.swift",
@@ -245,6 +245,11 @@
           "suite": "mac-unit",
           "file": "macOSTests/MacOrchestrationAdapterTests.swift",
           "test": "MacOrchestrationAdapterTests/testCheckpointPrivacyFailureRetryAndStatusUseDurableState"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationTitleDefaultClientTests.swift",
+          "test": "ConversationTitleDefaultClientTests/testDefaultInitializerAcrossClientFilesKeepsLocalSummaryTitle"
         }
       ],
       "manual": {

@@ -1,6 +1,6 @@
 # Device and feature compatibility
 
-The compatibility changes below are an implementation candidate for iOS 1.17.1 (35) and the
+The compatibility changes below are an implementation candidate for iOS 1.18.0 (35) and the
 unreleased Mac app. The published beta remains 1.17.0 (34) until an accepted upload is recorded in
 [HANDOFF](HANDOFF.md). Apple Watch is not embedded for distribution.
 

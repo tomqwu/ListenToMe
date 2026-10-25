@@ -32,10 +32,17 @@ public final class ConversationTitleCoordinator {
     private var entries: [String: Entry] = [:]
     private let generate: Generator
 
-    public init(generate: @escaping Generator = { snapshot, language, provider in
-        await ConversationAutoTitle.title(transcript: snapshot.spoken, summary: snapshot.summary,
-                                          language: language, provider: provider)?.title
-    }) { self.generate = generate }
+    public init(generate: @escaping Generator) { self.generate = generate }
+
+    // Keep the async closure inside this module. Public default-argument closures can emit
+    // mismatched async frames in older Swift clients (swiftlang/swift#92017).
+    public convenience init() {
+        self.init(generate: { snapshot, language, provider in
+            let result = await ConversationAutoTitle.title(transcript: snapshot.spoken, summary: snapshot.summary,
+                                                          language: language, provider: provider)
+            return result?.title
+        })
+    }
 
     public func isNaming(_ id: String) -> Bool { entries[id] != nil }
     public func wait(for id: String) async { await entries[id]?.task.value }
