@@ -72,6 +72,8 @@ final class MobileAutomaticSummaryTests: XCTestCase {
         session.autoQuick = true
         session.start()
         try await waitUntil { session.automaticReviews.activeMode == .summary }
+        // The coordinator marks a job active before the provider actor receives its stream.
+        try await waitUntil { await provider.hasPendingReview() }
         session.notes = "Ask about the budget"
         XCTAssertEqual(session.automaticReviews.activeMode, .summary,
                        "Typed notes are context, not a transcript revision")
@@ -162,6 +164,7 @@ private actor SlowSummaryProvider: LLMProvider {
 private actor HeldReviewProvider: LLMProvider {
     nonisolated let id = "held-review-test"
     private var review: AsyncThrowingStream<String, Error>.Continuation?
+    func hasPendingReview() -> Bool { review != nil }
     func releaseReview() -> Bool {
         guard let review else { return false }
         review.yield("Full review"); review.finish(); self.review = nil
