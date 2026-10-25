@@ -254,7 +254,18 @@ final class MobileAppTests: XCTestCase {
         revealSettingsControl(serverField, in: form)
         XCTAssertTrue(serverField.exists)
         XCTAssertTrue(app.staticTexts["ollamaServer"].label.contains("https://ollama.com"))
-        revealSettingsControl(app.buttons["summaryProvider"], in: form, towardTop: true)
+        // Reopen at the top instead of pulling the sheet down while searching for a lazy picker.
+        // Repeated downward drags can dismiss Settings after reaching its scroll boundary.
+        app.buttons["Done"].tap()
+        app.buttons["More"].tap()
+        app.buttons["Settings"].tap()
+        XCTAssertTrue(app.buttons["summaryProvider"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.secureTextFields["ollamaAPIKey"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["savedAPIKey"].exists, "Removing the key must survive reopening Settings")
+        let removal = XCTAttachment(screenshot: app.screenshot())
+        removal.name = "API key remains removed after Settings reopens"
+        removal.lifetime = .keepAlways
+        add(removal)
         app.buttons["summaryProvider"].tap()
         app.buttons["Apple Intelligence · on-device"].tap()
     }
