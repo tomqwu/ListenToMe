@@ -295,5 +295,8 @@ The candidate now includes current main and the #141 review fixes. Its WhisperKi
 uses the shared throwing audio reader, and cancels the transcriber and drains its output task on
 read or recognition failure before reporting the error. Normal AAC EOF remains successful.
 The merge preserves #164's live snapshot invalidation alongside #141's incomplete-import state.
+Independent review caught replacement dropping incomplete-import provenance; the corrected replacement
+retains it because saved tracks cannot recover missing imported material. Core and iOS regressions
+cover metadata copying and reopening; the Core regression failed before the correction.
 Earlier full validation remains recorded above; new integration checks and the required native
 OTHERS acceptance are pending. No merge or publication is claimed.

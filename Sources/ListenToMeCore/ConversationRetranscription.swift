@@ -31,7 +31,8 @@ public struct ConversationRetranscription: Sendable {
             quickSuggestion: current.quickSuggestion, deepAnswer: current.deepAnswer,
             isComplete: current.isComplete, attachments: current.attachments, sourceImportID: current.sourceImportID,
             titleState: current.titleState, language: language, languages: [language],
-            selectionSummaries: current.selectionSummaries, summaryInstructions: current.summaryInstructions, vocabularyDomainIDs: current.vocabularyDomainIDs)
+            selectionSummaries: current.selectionSummaries, summaryInstructions: current.summaryInstructions, vocabularyDomainIDs: current.vocabularyDomainIDs,
+            hasIncompleteImport: current.hasIncompleteImport)
     }
 
     /// File recognition starts at zero. Place each track on the saved recording's timeline and

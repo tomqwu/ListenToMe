@@ -7,8 +7,8 @@ final class ConversationRetranscriptionTests: XCTestCase {
 
     func testReplacementPreservesCurrentMetadataAndRejectsChangedTranscript() throws {
         let record = SessionRecord(id: "one", title: "Meeting", date: Date(), transcript: "You: Original", summary: "Summary",
-                                   segments: [original], notes: "Notes", quickSuggestion: "Quick", deepAnswer: "Deep",
-                                   summaryInstructions: "Decisions first", vocabularyDomainIDs: ["medical"])
+                                   segments: [original], notes: "Notes", quickSuggestion: "Quick", deepAnswer: "Deep", isComplete: false,
+                                   summaryInstructions: "Decisions first", vocabularyDomainIDs: ["medical"], hasIncompleteImport: true)
         let preview = try ConversationRetranscription(original: record, segments: [revised], language: "fr-FR")
         let result = try preview.applying(to: record.retitled("Renamed", state: .user))
         XCTAssertEqual(result.title, "Renamed")
@@ -19,6 +19,8 @@ final class ConversationRetranscriptionTests: XCTestCase {
         XCTAssertEqual(result.deepAnswer, "Deep")
         XCTAssertEqual(result.summaryInstructions, "Decisions first")
         XCTAssertEqual(result.vocabularyDomainIDs, ["medical"])
+        XCTAssertEqual(result.hasIncompleteImport, true)
+        XCTAssertEqual(result.isComplete, false)
         XCTAssertEqual(result.language, "fr-FR")
         XCTAssertEqual(result.languages, ["fr-FR"])
         XCTAssertThrowsError(try preview.applying(to: result))

@@ -41,6 +41,28 @@ final class MobileRetranscriptionTests: XCTestCase {
         XCTAssertNil(eof, "Normal AAC EOF must not be reported as a failed re-transcription")
     }
 
+    func testReplacementAndReopenPreserveIncompleteImportWarning() throws {
+        let session = MobileSession(storageDirectory: root)
+        let original = TranscriptSegment(source: .others, text: "Partial import", isFinal: true, start: 0, end: 2)
+        let record = SessionRecord(id: session.id, title: "Incomplete meeting", date: Date(),
+            transcript: "Others: Partial import", summary: "Existing summary", segments: [original],
+            isComplete: false, hasIncompleteImport: true)
+        session.restore(record)
+        XCTAssertTrue(session.save(announce: false))
+        let run = try audio(session.savedAudio.library, id: session.id)
+        let replacement = TranscriptSegment(source: .you, text: "Later saved recording", isFinal: true, start: 0, end: 2)
+        let preview = try ConversationRetranscription(original: session.currentRecord, segments: [replacement],
+            language: "en-US", audioRuns: [run])
+        try session.applyRetranscription(preview)
+        XCTAssertTrue(session.hasIncompleteImport)
+        XCTAssertEqual(session.currentRecord.isComplete, false)
+        let reopened = MobileSession(storageDirectory: root)
+        XCTAssertTrue(reopened.hasIncompleteImport)
+        XCTAssertEqual(reopened.currentRecord.isComplete, false)
+        XCTAssertEqual(reopened.segments, [replacement])
+        XCTAssertEqual(reopened.summary, "Existing summary")
+    }
+
     func testApplyPreservesNotesAndSummariesAndRejectsStalePreview() throws {
         let session = MobileSession(storageDirectory: root)
         session.notes = "Keep these notes"; session.summary = "Keep summary"
