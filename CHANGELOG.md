@@ -104,6 +104,8 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 - The global ⌘⇧Space shortcut registers only that key combination and no longer asks for Accessibility access. Conflicts show a notice while the in-app shortcut remains available. (#124)
 
 - Capture failures and file/Calendar failures have separate dismissible messages. Retrying export, import or Calendar work clears only that operation’s message; microphone and Calendar privacy actions stay attached to the relevant error. (#173)
+- Summary can render Open / To-do / Decided cards when the model returns validated structured output. Expand Sources for verbatim evidence and speaker labels; times appear only when the engine supplied them. Explicit owner/deadline fields require matching source text. Unsupported or invalid output remains readable as freeform text. Structured records retain readable exports and reopen on Mac. (#62)
+
 - Automatic reviews count the complete request toward their 60,000-character limit, including instructions and any attached references. Oversized requests stop before sending and explain what to shorten. Changing directives alone keeps the existing review; new context or manual generation uses the new settings. (#148)
 - The rail shows measured microphone and system-audio RMS levels, distinguishing silence, missing audio and unavailable channels. AI panes show first-answer-content and total request timing, including automatic reviews, with separate completion, cancellation and failure states. Metrics stay on-device and are not saved. (#56)
 

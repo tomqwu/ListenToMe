@@ -210,9 +210,9 @@
     {
       "id": "BATCH-296",
       "name": "Validate summary cards against literal transcript evidence",
-      "given": "a structured summary includes source references",
+      "given": "a structured summary includes source references and the conversation may contain an incomplete file import",
       "when": "the response is rendered or saved and reopened",
-      "then": "validated cards preserve literal sources and malformed or unsupported references fall back to readable text",
+      "then": "validated cards preserve literal sources and malformed or unsupported references fall back to readable text; retitle, language copies and reopening preserve incomplete-import provenance together with structured summary evidence",
       "covers": [
         "App/CommandCenter.swift",
         "App/MeetingView+Export.swift",

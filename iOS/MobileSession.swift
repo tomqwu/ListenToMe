@@ -36,6 +36,7 @@ final class MobileSession {
     @ObservationIgnored var autoTitleTasks: [String: Task<Void, Never>] = [:]
     var summaryInstructions = "" { didSet { handleSummaryEvent(.notesChanged) } }
     var notes = "" { didSet { handleSummaryEvent(.notesChanged) } }
+    var restoredSituation: SituationGrid?
     var summary = ""
     var quickSummary = ""
     /// Deep analysis an older version saved here; kept read-only, never generated on iOS (#235).
@@ -216,16 +217,7 @@ final class MobileSession {
             || !quickSummary.isEmpty || !earlierDeepAnalysis.isEmpty || !attachments.isEmpty
     }
     var allSegments: [TranscriptSegment] { segments + (partial.map { [$0] } ?? []) }
-    /// The open conversation as it is saved, and as every export formats it (#130), in its languages (#206).
-    var currentRecord: SessionRecord {
-        withConversationLanguages(SessionRecord(id: id, title: title, date: date,
-            transcript: Self.transcriptText(for: allSegments), summary: summary, segments: allSegments, notes: notes,
-            quickSuggestion: quickSummary, deepAnswer: earlierDeepAnalysis, isComplete: !hasIncompleteImport && state == .idle
-                && allSegments.allSatisfy(\.isFinal), attachments: attachments, sourceImportID: sourceImportID,
-            titleState: titleState, selectionSummaries: selectionSummaries.isEmpty ? nil : selectionSummaries,
-            summaryInstructions: summaryInstructions.isEmpty ? nil : summaryInstructions,
-            vocabularyDomainIDs: vocabulary.domainIDs(for: id).sorted(), hasIncompleteImport: hasIncompleteImport ? true : nil))
-    }
+
     var summaryAvailability: String? { summaryAvailability(for: .summary) }
     var automaticQuickAvailability: String? {
         if summaryProvider != nil { return nil }
@@ -374,6 +366,7 @@ final class MobileSession {
         handleSummaryEvent(.conversationChanged)
         id = UUID().uuidString; date = Date()
         vocabulary.restore(domainIDs: nil, for: id)
+        restoredSituation = nil
         title = ConversationTitle.mobileDefault; titleState = .placeholder; notes = ""; summaryInstructions = ""; summary = ""
         quickSummary = ""; earlierDeepAnalysis = ""; selectionSummaries = []
         segments = []; partial = nil; message = nil; attachments = []; sourceImportID = nil; hasIncompleteImport = false
@@ -387,6 +380,7 @@ final class MobileSession {
     }
 
     func restore(_ record: SessionRecord) {
+        restoredSituation = record.situationGrid
         pendingSave?.cancel(); pendingSave = nil
         lastSavedData = nil
         speechCorrection.cancel()
@@ -924,5 +918,20 @@ extension MobileSession {
         await stop()
         stopReason = reason
         if message == before { message = text }
+    }
+}
+
+extension MobileSession {
+    /// The open conversation as it is saved, and as every export formats it (#130), in its languages (#206).
+    var currentRecord: SessionRecord {
+        withConversationLanguages(SessionRecord(id: id, title: title, date: date,
+            transcript: Self.transcriptText(for: allSegments), summary: summary, segments: allSegments, notes: notes,
+            quickSuggestion: quickSummary, deepAnswer: earlierDeepAnalysis, isComplete: !hasIncompleteImport && state == .idle
+                && allSegments.allSatisfy(\.isFinal), attachments: attachments, sourceImportID: sourceImportID,
+            titleState: titleState, selectionSummaries: selectionSummaries.isEmpty ? nil : selectionSummaries,
+            summaryInstructions: summaryInstructions.isEmpty ? nil : summaryInstructions,
+            vocabularyDomainIDs: vocabulary.domainIDs(for: id).sorted(),
+            hasIncompleteImport: hasIncompleteImport ? true : nil,
+            situationGrid: restoredSituation.flatMap { $0.markdown == summary && $0.isValid(segments: allSegments) ? $0 : nil }))
     }
 }

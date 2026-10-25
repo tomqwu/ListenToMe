@@ -1,3 +1,5 @@
+import Foundation
+
 extension MeetingSession {
     func output(_ role: CopilotRole) -> String {
         switch role {

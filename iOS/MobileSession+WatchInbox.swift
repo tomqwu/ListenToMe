@@ -337,7 +337,8 @@ extension MobileSession {
                                     sourceImportID: record.sourceImportID, titleState: record.titleState,
                                     language: record.language, languages: record.languages,
                                     selectionSummaries: record.selectionSummaries, summaryInstructions: record.summaryInstructions,
-                      vocabularyDomainIDs: record.vocabularyDomainIDs, hasIncompleteImport: record.hasIncompleteImport)
+                      vocabularyDomainIDs: record.vocabularyDomainIDs, hasIncompleteImport: record.hasIncompleteImport,
+                      situationGrid: record.situationGrid)
         let languaged = added.compactMap(\.language).reduce(updated) { $0.recording(language: $1) }
         try archive.save(languaged)
         remember(languaged)

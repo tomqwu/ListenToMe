@@ -337,6 +337,7 @@ struct MeetingView: View {
         }
         .onAppear {
             captureStartGate.reopen()
+            session.structuredListenerEnabled = true
             session.autoSummaryEnabled = UserDefaults.standard.bool(forKey: "autoQuickSummary")
             // Proactive answers default ON (README/smoke test): absent a stored choice, keep them on.
             session.proactiveEnabled = UserDefaults.standard.object(forKey: Self.proactiveDefaultsKey) as? Bool ?? true

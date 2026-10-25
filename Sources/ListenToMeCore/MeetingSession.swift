@@ -64,6 +64,9 @@ public final class MeetingSession {
     public let store: ConversationStore
 
     /// Per-role output properties
+    public var structuredListenerEnabled = false
+    var listenerSituation: SituationGrid?
+    @ObservationIgnored var situationCache: SituationGridCache?
     public private(set) var listenerSummary = ""
     public internal(set) var quickSuggestion = ""
     public private(set) var deepAnswer = ""
@@ -285,6 +288,7 @@ public final class MeetingSession {
         hasIncompleteImport = record.hasIncompleteImport == true
         notes = record.notes ?? ""
         summaryInstructions = record.summaryInstructions ?? ""
+        listenerSituation = record.situationGrid
         listenerSummary = record.summary
         lastCompletedListenerSummary = record.summary
         quickSuggestion = record.quickSuggestion ?? ""
@@ -302,6 +306,7 @@ public final class MeetingSession {
         quickReader.reset(); handleLiveEvent(.conversationChanged)
         store.reset(); recordingOffset = 0; hasIncompleteImport = false
         notes = ""; summaryInstructions = ""; referenceContext = nil
+        listenerSituation = nil
         listenerSummary = ""; quickSuggestion = ""; quickRecap = ""; deepAnswer = ""
         roleErrors = [:]; roleActivity = [:]; roleNoticeRecords = [:]; pendingGrounding = [:]
         stoppedResponseText.removeAll()
@@ -880,6 +885,7 @@ extension MeetingSession {
             // Only a completed answer gets this request's notices; a failure keeps the previous
             // answer's record, which then describes the text restored below (or nothing).
             if generation == responseGenerations[role], !Task.isCancelled {
+                normalizeCompletedSituation(role)
                 roleNoticeRecords[role] = RoleNoticeRecord(text: output(role), grounding: grounding, cutOff: cutOff)
             }
             // Quick has no automatic review mode; a completed manual answer instead holds the pane
