@@ -78,6 +78,13 @@ watch-build: gen
 		-destination 'generic/platform=watchOS Simulator' -derivedDataPath .build/ios \
 		-onlyUsePackageVersionsFromResolvedFile $(IOS_SIGN_FLAGS) build
 
+# Headless macOS platform adapters; does not launch the Dev app or request permissions.
+.PHONY: app-test
+app-test: gen
+	xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMeAppTests -configuration Debug \
+		-destination 'platform=macOS' -derivedDataPath .build/mac-tests \
+		-onlyUsePackageVersionsFromResolvedFile CODE_SIGN_IDENTITY=- -parallel-testing-enabled NO test
+
 ios-test: gen
 	xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMeIOS -configuration Debug \
 		-destination '$(IOS_DESTINATION)' -derivedDataPath .build/ios \
@@ -105,5 +112,6 @@ validate-local:
 	python3 scripts/test-ios-testflight.py
 	$(MAKE) lint
 	./scripts/check-coverage.sh 95
+	$(MAKE) app-test
 	$(MAKE) ios-test
 	$(MAKE) e2e

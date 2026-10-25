@@ -245,3 +245,9 @@ Summary simulator journey now verifies provisional request tagging and removal a
 all five focused checks passed at `00cc28f`, and both native-resolution screenshots were inspected.
 Current-main integration lint/Core (1,061 tests, seven skips, 98.1056%) and all three hosted checks passed.
 Physical-device acceptance and publication remain pending. Evidence: `dist/live-snapshot-164`.
+
+### #134 adapter coverage and archive extraction — partial implementation, October 25
+
+`codex/134-mac-app-tests` adds a headless Mac test bundle for production FileContextLoader and SpeakerAudioBuffer, runs it in local validation and a separate CI job, and moves SessionStore's archive/error/snapshot/clear orchestration into Core ConversationRepository. Per-save index updates, reload sync and archive-first secondary cleanup remain distinct. Core regressions cover unavailable storage, damaged history, persisted snapshot ordering and secondary-owner failure. Three Mac adapter tests, 1,064 Core tests (seven skips, 98.1153% Core coverage), lint and signed Mac build passed; independent review found no blockers. Full local validation and hosted CI remain pending. No Dev app was launched and no permissions were touched by the headless tests.
+
+This does **not** close #134: capture/finalization orchestration remains in the platform adapters and requires a separate controlled migration. iOS simulator tests remain local per AGENTS.md. When #131 integrates, move its per-conversation delete into ConversationRepository and preserve snapshot publication. Core coverage is not whole-product coverage.

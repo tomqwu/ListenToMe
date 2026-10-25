@@ -813,3 +813,7 @@ text, confirm the server receives an output cap of 1,024. With long text, verify
 notice and that requests still too large (including large instructions or Unicode text) fail with
 “No text was sent” before the server receives them. Choose Unknown to restore server-managed behavior.
 Capture the settings UI at native resolution and restore original preferences after testing.
+
+## Automated adapter coverage (#134)
+
+`make app-test` runs a hostless macOS XCTest bundle: the actual FileContextLoader and SpeakerAudioBuffer sources, native RTF decoding, AVAudioConverter resampling, cap and prior-generation rejection. It launches no ListenToMe Dev app and requests no capture permissions. Its `.xcresult` coverage describes only the compiled adapter sources and test code. Core ConversationRepository tests cover archive-first cleanup, failed/unavailable storage, sticky damaged-file warnings, and durable snapshot publication. Neither suite substitutes for installed-app GUI/audio acceptance.

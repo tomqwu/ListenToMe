@@ -57,6 +57,8 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## macOS (unreleased since 1.4.4)
 
+- Validation: add headless Mac file-loading and audio-buffer tests. Archive save/read/clear orchestration now uses a shared tested repository while retaining existing error messages and secondary-data cleanup ordering. No new UI or permission behavior. (#134, partial)
+
 - History search keeps its records when SwiftUI recreates a view, instead of replacing matching rows with an empty asynchronous result. (#223 acceptance fix)
 
 - History search reuses unchanged passage vectors when a conversation is saved, including after summary insertion. Changed text or transcription language is re-indexed on-device; duplicate passages share one embedding attempt per save, including unsupported text. Existing indexes rebuild once. Semantic language coverage is unchanged. (#223, partial)

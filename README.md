@@ -7,7 +7,7 @@
 **The free, open-source, fully on-device meeting copilot for macOS — with a private capture-and-recall companion for iPhone and iPad. Bring your own model, stay private, shape it to any conversation.**
 
 [![CI](https://github.com/tomqwu/ListenToMe/actions/workflows/ci.yml/badge.svg)](https://github.com/tomqwu/ListenToMe/actions/workflows/ci.yml)
-![Coverage](https://img.shields.io/badge/Core_coverage-96%25-brightgreen)
+![Coverage](https://img.shields.io/badge/Core_floor-95%25-brightgreen)
 ![Platform](https://img.shields.io/badge/macOS-26%2B-black?logo=apple)
 ![Swift](https://img.shields.io/badge/Swift-6.0-orange?logo=swift)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -560,7 +560,11 @@ explicit AI processing modes, and the iOS app.
 GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs checks for PRs to `main` on
 `macos-26` runners: both app targets compile with the checked-in dependency lock, and the full
 `ListenToMeCore` test suite (unit + headless integration/e2e) runs with a **coverage floor of 95%**
-enforced by `scripts/check-coverage.sh`. SwiftLint, iOS simulator UI tests, GUI/audio acceptance, and
+enforced by `scripts/check-coverage.sh`. This percentage covers Core only, not the whole product.
+A separate headless `make app-test` target exercises production macOS file-loading and shared audio-buffer
+adapters with native framework execution and collects its own coverage; it does not claim coverage of
+SwiftUI, real capture, permissions or every App file. It runs in CI and `make validate-local`.
+SwiftLint, iOS simulator unit/UI tests, GUI/audio acceptance, and
 distribution checks require local validation via [`docs/manual-smoke-test.md`](docs/manual-smoke-test.md).
 
 `make e2e` runs the checks CI can't (it needs a real Mac + Ollama): it builds the app target,

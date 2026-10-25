@@ -151,6 +151,21 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         SWIFT_VERSION: "6.0"
         DEVELOPMENT_TEAM: T32FW7PZ3S
+  ListenToMeAppTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - AppTests
+      - App/FileContextLoader.swift
+      - SharedPlatform/SpeakerAudioBuffer.swift
+    dependencies:
+      - package: ListenToMeCore
+        product: ListenToMeCore
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: "6.0"
+        TEST_HOST: ""
   ListenToMeIOSUnitTests:
     type: bundle.unit-test
     platform: iOS
@@ -169,6 +184,14 @@ targets:
         BUNDLE_LOADER: "$(TEST_HOST)"
         DEVELOPMENT_TEAM: T32FW7PZ3S
 schemes:
+  ListenToMeAppTests:
+    build:
+      targets:
+        ListenToMeAppTests: [test]
+    test:
+      gatherCoverageData: true
+      targets:
+        - ListenToMeAppTests
   ListenToMeIOS:
     build:
       targets:

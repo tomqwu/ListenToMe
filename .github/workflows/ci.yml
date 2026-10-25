@@ -22,6 +22,15 @@ jobs:
         run: make build SIGN_FLAGS='CODE_SIGNING_ALLOWED=NO'
       - name: Verify dependency resolution stayed locked
         run: diff -u Config/Package.resolved ListenToMe.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+  adapters:
+    name: macOS adapter tests
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install project generator
+        run: brew install xcodegen
+      - name: Test headless platform adapters
+        run: make app-test
   ios:
     name: iOS 26 app build
     runs-on: macos-26
