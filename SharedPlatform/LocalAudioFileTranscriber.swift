@@ -32,18 +32,7 @@ final class LocalAudioFileTranscriber {
     #if os(iOS)
     static func prepare(locale: Locale, environment: MobileSpeechModel.Environment = .init()) async throws
         -> (MobilePreparedTranscriber, AVAudioFormat) {
-        guard environment.speechAvailable(), let supported = await environment.speechLocale(locale) else {
-            throw LocalAudioFileError.message("On-device transcription is unavailable for this language.")
-        }
-        let transcriber = MobilePreparedTranscriber(SpeechTranscriber(
-            locale: supported, transcriptionOptions: [], reportingOptions: [], attributeOptions: [.audioTimeRange]),
-            text: { $0.text })
-        try await environment.install(transcriber.module)
-        try Task.checkCancellation()
-        guard let format = await environment.format(transcriber.module) else {
-            throw LocalAudioFileError.message("The speech model has no supported audio format.")
-        }
-        return (transcriber, format)
+        try await MobileSpeechModel.prepare(locale: locale, volatileResults: false, environment: environment)
     }
     #else
     private static func prepare(locale: Locale) async throws -> (SpeechTranscriber, AVAudioFormat) {
