@@ -226,5 +226,6 @@ compile for both simulator architectures, lint passes, and independent logic rev
 Full `make validate-local` passed at `2d1b2cd`, including the new iOS runtime regressions, Core
 coverage above 98%, release helpers, signed Mac build and real provider contracts. A dedicated manual
 Summary simulator journey now verifies provisional request tagging and removal after final recognition;
-its runtime screenshots and current-main integration checks are queued. No merge or publication is
-claimed. Evidence: `dist/live-snapshot-164`.
+all five focused checks passed at `00cc28f`, and both native-resolution screenshots were inspected.
+Current-main integration lint/Core (1,061 tests, seven skips, 98.1056%) and all three hosted checks passed.
+Physical-device acceptance and publication remain pending. Evidence: `dist/live-snapshot-164`.
