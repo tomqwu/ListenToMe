@@ -13,6 +13,8 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased since 1.16.0 (33))
 
+- Markdown exports keep transcript text and speaker names literal. Verified local Ollama requests allow cold models up to five minutes to start; cloud deadlines remain unchanged. Incomplete file-import state survives reopening and editing. (#141)
+
 - OpenAI-compatible servers can use an optional per-server context limit. Answer space is reserved and oversized requests stop before sending; Mac prompt trimming includes a visible notice. Unknown capacity preserves server-managed behavior. (#210)
 
 - Documentation: the Watch speaker-privacy section now agrees with the existing opt-in saved-audio retention policy. No app behavior changes. (#225)
@@ -51,6 +53,10 @@ does not show it again, and a fresh install does not see it at all; see
 - Settings → Privacy now explains that optional Ollama, Cloud AI and OpenAI-compatible requests send text and included context to the provider you choose; Apple Intelligence stays on-device. (#247)
 
 ## macOS (unreleased since 1.4.4)
+
+- Failed model discovery preserves pinned choices and reports uncertainty. MiniMax is no longer ranked as a “mini” model. Verified local Ollama requests allow cold loads up to five minutes. (#141)
+- Audio imports report read failures and keep partial transcripts marked incomplete across reopening. Legacy speech waits for final callbacks with a 30-second deadline; system capture rejects failed PCM copies and minimizes unused video work. (#141)
+- Calendar context selects the most recently started overlapping meeting. Reference attachments reject symbolic links, heading whitespace renders correctly, and Markdown exports keep speech literal. Release discovery/signing and real-contract test gates now fail safely. (#141)
 
 - OpenAI-compatible servers can use an optional per-server context limit. Answer space is reserved and oversized requests stop before sending; Mac prompt trimming includes a visible notice. Unknown capacity preserves server-managed behavior. (#210)
 

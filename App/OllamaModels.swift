@@ -4,7 +4,7 @@ import ListenToMeCore
 /// Queries the Ollama server (local or cloud) for installed models and their capabilities.
 enum OllamaModels {
     static func installed(baseURL: URL = URL(string: "http://localhost:11434")!,
-                          apiKey: String? = nil) async -> [String] {
+                          apiKey: String? = nil) async -> [String]? {
         var req = URLRequest(url: baseURL.appendingPathComponent("api/tags"))
         req.timeoutInterval = 5
         if let apiKey, !apiKey.isEmpty {
@@ -13,7 +13,7 @@ enum OllamaModels {
         guard let (data, resp) = try? await URLSession.shared.data(for: req),
               (resp as? HTTPURLResponse)?.statusCode == 200,
               let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let models = obj["models"] as? [[String: Any]] else { return [] }
+              let models = obj["models"] as? [[String: Any]] else { return nil }
         return models.compactMap { $0["name"] as? String }
     }
 
@@ -21,10 +21,7 @@ enum OllamaModels {
     /// "completion") and whether its metadata verifies it as a downloaded local model.
     /// Locality is reported for every mode, so callers can hand the verified-local set to
     /// `ModelRanking.roleDefaults` instead of guessing from the name (issue #137).
-    struct Capability {
-        var chatCapable = false
-        var verifiedLocal = false
-    }
+    typealias Capability = OllamaModelCapability
 
     static func capability(_ name: String,
                            baseURL: URL = URL(string: "http://localhost:11434")!,
@@ -37,18 +34,16 @@ enum OllamaModels {
         }
         req.httpBody = try? JSONSerialization.data(withJSONObject: ["model": name])
         guard let (data, resp) = try? await URLSession.shared.data(for: req),
-              (resp as? HTTPURLResponse)?.statusCode == 200,
-              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let caps = obj["capabilities"] as? [String] else { return Capability() }
-        let local = ModelPrivacy.isVerifiedLocal(data)
-        return Capability(chatCapable: caps.contains("completion") && (!localOnly || local),
-                          verifiedLocal: local)
+              (resp as? HTTPURLResponse)?.statusCode == 200 else { return Capability() }
+        return Capability(metadata: data, localOnly: localOnly)
     }
 
     /// The models a route offers, with the subset whose `/api/show` metadata verifies them as local.
     struct Discovery {
         var names: [String] = []
         var verifiedLocal: Set<String> = []
+        var unverified: Set<String> = []
+        var catalogFailed = false
         /// Why the list is empty, when the route can say (OpenAI-compatible servers, issue #52).
         var problem: String?
     }
@@ -57,7 +52,9 @@ enum OllamaModels {
     /// Probes capabilities concurrently for fast cloud responses.
     static func chatModels(baseURL: URL = URL(string: "http://localhost:11434")!,
                            apiKey: String? = nil, localOnly: Bool = false) async -> Discovery {
-        let names = await installed(baseURL: baseURL, apiKey: apiKey)
+        guard let names = await installed(baseURL: baseURL, apiKey: apiKey) else {
+            return Discovery(catalogFailed: true, problem: "Could not load the model catalog. Pinned choices are kept; retry Refresh models.")
+        }
         guard !names.isEmpty else { return Discovery() }
 
         // Probe each model concurrently, preserving input order.
@@ -74,7 +71,10 @@ enum OllamaModels {
         }
 
         let chat = zip(names, capabilities).filter { $0.1.chatCapable }
+        let unverified = Set(zip(names, capabilities).filter { $0.1.status == .unverified }.map(\.0))
         return Discovery(names: chat.map(\.0),
-                         verifiedLocal: Set(chat.filter { $0.1.verifiedLocal }.map(\.0)))
+                         verifiedLocal: Set(chat.filter { $0.1.verifiedLocal }.map(\.0)), unverified: unverified,
+                         problem: unverified.isEmpty ? nil
+                            : "\(unverified.count) model(s) could not be verified. Pinned choices are kept; retry Refresh models.")
     }
 }

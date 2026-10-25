@@ -12,11 +12,12 @@ extension MeetingView {
             id: currentSessionID, title: conversationTitle, date: date,
             transcript: store.utterances.map { "\($0.speakerLabel): \($0.text)" }.joined(separator: "\n"),
             summary: session.listenerSummary, segments: store.utterances, notes: session.notes,
-            quickSuggestion: session.quickSuggestion, deepAnswer: session.deepAnswer, isComplete: complete,
+            quickSuggestion: session.quickSuggestion, deepAnswer: session.deepAnswer, isComplete: complete && !session.hasIncompleteImport,
             attachments: restoredRecord?.attachments, sourceImportID: restoredRecord?.sourceImportID,
             titleState: conversationTitleState, selectionSummaries: restoredRecord?.selectionSummaries,
             summaryInstructions: session.summaryInstructions,
-            vocabularyDomainIDs: vocabulary.domainIDs(for: currentSessionID).sorted()
+            vocabularyDomainIDs: vocabulary.domainIDs(for: currentSessionID).sorted(),
+            hasIncompleteImport: session.hasIncompleteImport ? true : nil
         ).with(languages: conversationLanguages)
     }
 

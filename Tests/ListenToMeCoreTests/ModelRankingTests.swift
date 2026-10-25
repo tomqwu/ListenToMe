@@ -119,6 +119,16 @@ final class ModelRankingTests: XCTestCase {
         XCTAssertNotEqual(defaults[.quick], defaults[.deep])
     }
 
+    func testMiniMaxIsNotRankedAsAMiniVariant() {
+        for name in ["minimax-m2.5", "minimax-m3", "ministral"] {
+            XCTAssertFalse(ModelRanking.hasMarker(name, "mini"))
+            XCTAssertGreaterThan(ModelRanking.weight(name), ModelRanking.weight("example-mini"))
+        }
+        XCTAssertTrue(ModelRanking.hasMarker("vendor/model-mini:latest", "mini"))
+        XCTAssertEqual(ModelRanking.roleDefaults(from: ["minimax-m3", "example-mini"])[.quick], "example-mini")
+        XCTAssertEqual(ModelRanking.describe("minimax-m3"), "frontier, multimodal")
+    }
+
     func testGeminiProNotMisreadAsFastMiniModel() {
         // "gemini" must NOT match the "mini" fast marker (token-boundary matching). The Pro model
         // is the strong/Deep pick; the lighter 8B llama is Quick.

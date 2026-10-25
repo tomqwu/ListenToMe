@@ -240,6 +240,10 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
         }
         let filter = SCContentFilter(display: display, excludingWindows: [])
         let config = SCStreamConfiguration()
+        // Audio-only output still creates a screen stream: keep its unused video work minimal.
+        config.width = 2
+        config.height = 2
+        config.minimumFrameInterval = CMTime(seconds: 1, preferredTimescale: 600)
         config.capturesAudio = true
         config.excludesCurrentProcessAudio = true
         config.sampleRate = 48000
@@ -357,8 +361,9 @@ private extension CMSampleBuffer {
         guard frames > 0, let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frames)
         else { return nil }
         buffer.frameLength = frames
-        CMSampleBufferCopyPCMDataIntoAudioBufferList(
-            self, at: 0, frameCount: Int32(frames), into: buffer.mutableAudioBufferList)
+        guard CMSampleBufferCopyPCMDataIntoAudioBufferList(
+            self, at: 0, frameCount: Int32(frames), into: buffer.mutableAudioBufferList) == noErr
+        else { return nil }
         // If not already mono Float32, return as-is; the recognizer adapts to buffer.format.
         return buffer
     }

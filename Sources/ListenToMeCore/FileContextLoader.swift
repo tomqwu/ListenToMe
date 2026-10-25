@@ -1,10 +1,9 @@
 import Foundation
-import ListenToMeCore
 
 /// Reads attached files and folders into reference `Document`s for prompt grounding. Folders are
 /// enumerated recursively; only text/code files within size/count caps are included. Runs off the
 /// main actor (file I/O). The app is not sandboxed, so plain paths work without security bookmarks.
-enum FileContextLoader {
+public enum FileContextLoader {
     /// File extensions treated as readable text/code.
     static let textExtensions: Set<String> = [
         "txt", "md", "markdown", "rtf", "swift", "py", "js", "ts", "tsx", "jsx", "json", "yaml",
@@ -17,20 +16,25 @@ enum FileContextLoader {
 
     /// Documents that made it into the prompt, plus the entries that did not (with a reason) so the
     /// UI can tell the user what the model will not see.
-    struct Result: Sendable {
-        var documents: [ReferenceBuilder.Document] = []
-        var skipped: [TextFileReader.Skipped] = []
+    public struct Result: Sendable {
+        public var documents: [ReferenceBuilder.Document] = []
+        public var skipped: [TextFileReader.Skipped] = []
     }
 
     /// Loads documents from the given URLs: files are read directly; directories are walked for
     /// matching text files. Entries that cannot be read, are empty or are oversized are reported in
     /// `Result.skipped` instead of being dropped silently.
-    static func load(_ urls: [URL]) -> Result {
+    public static func load(_ urls: [URL]) -> Result {
         var result = Result()
         let fileManager = FileManager.default
 
         for url in urls {
             if result.documents.count >= maxFiles { break }
+            let attributes = try? fileManager.attributesOfItem(atPath: url.path)
+            if attributes?[.type] as? FileAttributeType == .typeSymbolicLink {
+                result.skipped.append(.init(name: url.lastPathComponent, reason: "symbolic link"))
+                continue
+            }
             var isDirectory: ObjCBool = false
             guard fileManager.fileExists(atPath: url.path, isDirectory: &isDirectory) else {
                 result.skipped.append(.init(name: url.lastPathComponent, reason: "not found"))
@@ -89,6 +93,9 @@ enum FileContextLoader {
         guard let attributes = try? FileManager.default.attributesOfItem(atPath: url.path),
               let size = attributes[.size] as? Int else {
             return .skipped(.init(name: name, reason: "unreadable"))
+        }
+        guard attributes[.type] as? FileAttributeType != .typeSymbolicLink else {
+            return .skipped(.init(name: name, reason: "symbolic link"))
         }
         guard size > 0 else { return .skipped(.init(name: name, reason: "empty")) }
         guard size <= maxFileBytes else { return .skipped(.init(name: name, reason: "larger than 200 KB")) }

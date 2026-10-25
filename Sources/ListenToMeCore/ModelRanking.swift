@@ -12,9 +12,10 @@ public enum ModelRanking {
 
     /// True if any token of `model` *begins with* `marker`. Token-prefix matching (not raw
     /// substring) rejects cross-token false hits like "gemini" ⊃ "mini" while still catching
+    /// "mini" is an exact token so MiniMax/Ministral are not mistaken for a size variant. Other
     /// variant forms like "reasoning" ~ "reason" and "codellama"/"codegemma" ~ "code".
     static func hasMarker(_ model: String, _ marker: String) -> Bool {
-        tokens(model).contains { $0.hasPrefix(marker) }
+        tokens(model).contains { marker == "mini" ? $0 == marker : $0.hasPrefix(marker) }
     }
 
     /// A rough "capability weight" used only for *ordering* (not absolute meaning): larger
