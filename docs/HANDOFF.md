@@ -217,6 +217,22 @@ PR #277 implements per-passage vector reuse and fixes a Mac shared-search reader
 
 PR #274 adds optional per-server limits with reserved answer space and a no-send oversized-prompt error. Full `make validate-local` passed on `a6ec6b8`: 1,056 Core tests (seven skips, 98.1079% coverage), 394 iOS unit tests and 65 UI tests (459 total, ten skips, zero failures), release helpers, lint, signed Mac build and real Ollama/OpenAI-compatible contracts. Mac settings acceptance and independent review passed. A Pro Max screenshot run exposed a caret-position assumption in the URL-editing test; selecting all and asserting the exact replacement value fixed it, and the focused rerun passed. Only test/documentation changes followed the full gate. Four-device capture evidence is being finalized in `dist/context-budget-210`; this is not published.
 
+## In progress: speaker lifecycle follow-ups (#188)
+
+Branch `codex/188-speaker-lifecycle` cancels final labeling on background, clears the run buffer and
+binds queued passes to their original recording token. Tests now drive the actual periodic loop,
+bound Stop/background return while a model is held, and cover a cancellation-ignoring final pass,
+queued old work followed by restart, and actual default-model-directory backup exclusion. Existing
+Watch prompt mapping tests already cover the issue's device-label item. Speaker privacy/support
+wording now distinguishes clearing the run buffer from an in-flight model operation finishing.
+Full `make validate-local` passed on `f1bd693`: Core coverage above 98%, 462 simulator tests
+(452 passed, ten skipped), release helpers, lint, signed Mac build and real provider contracts.
+Independent review cleared the queued-old-run race and same-file backup-policy extraction. Native-resolution
+Watch speaker transcript/Notes simulator screenshots were preserved and visually reviewed. This is
+simulator acceptance, not physical-device acceptance. Current-main integration passed at `ac20342`: all
+46 focused iOS lifecycle/backup/preparation/Watch checks, Core tests (1,060, seven skips, 98.1048%), lint,
+signed Mac build and all three hosted checks. Evidence: `dist/speaker-lifecycle-188` and external release evidence. Not merged or published.
+
 ## In progress: iOS live snapshot and provisional prompts (#164)
 
 Branch `codex/164-ios-live-snapshot` implements memoized live summary inputs and provisional

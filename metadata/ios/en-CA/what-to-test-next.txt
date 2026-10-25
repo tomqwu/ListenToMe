@@ -20,4 +20,6 @@ History index reuse (#223, partial): save a long conversation, add or edit its s
 
 Custom server context (#210): choose 4K in Server context window, then request a summary of oversized notes. Confirm the configured-limit error appears before the server receives a request. A short request should still work. Switch to a different API URL and verify Unknown, then switch back and verify 4K survives relaunch. On Mac, verify trimming notices for older context and a clear error when the remaining request still cannot fit.
 
+Speaker lifecycle (#188): with speaker models ready, stop a recording and immediately background the app while final labeling runs. Return and begin another recording. Stop and backgrounding must remain responsive; old labeling must not change the new recording. Keep the app open after Stop when you want the final pass to finish.
+
 Live summaries (#164): during a long recording, use Summary, Quick and Ask while speech is still unfinished. Very short hypotheses should be omitted; longer hypotheses should inform the answer without becoming a confirmed decision. Finalize or correct the words, rename a speaker, edit Notes and reopen the conversation; the next request must use the current text. Confirm original transcript wording remains in exports.

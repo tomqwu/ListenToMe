@@ -507,7 +507,10 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   their label and name (#171). A centroid learns only from speech no earlier pass heard. The embeddings
   live in memory for the recording only and are never saved. Stop returns at once; a final pass then labels the last words while the
   app stays open, queued behind any pass still running, and its result is dropped if a
-  new recording or another conversation has started. The final pass is skipped while the models have
+  new recording or another conversation has started. Backgrounding also cancels an already-started
+  final pass and clears the recording buffer without waiting. Model work already in flight may finish
+  with its temporary input copy, but its result is discarded; queued passes retain their original
+  recording token and cannot analyze a later run (#188). The final pass is skipped while the models have
   not loaded yet, so Stop never starts or waits for the download; with the models ready, a recording
   shorter than the first periodic pass is labeled at Stop (#195). On every periodic tick, audio no later window can reach is released, so
   at most ten minutes (about 38 MB) is held even when passes keep failing, and only the last minute
@@ -523,7 +526,7 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   you tap **Retry** or start a new recording. Limits: overlapping speech and short utterances are
   often left as **Microphone** or attributed to whoever spoke longest; a voice is not recognized
   across recordings, so after Stop/Listen (or an interruption) new voices continue the numbering
-  (Speaker 3, 4…) and can be renamed to merge them; backgrounding ends identification at once without a final pass;
+  (Speaker 3, 4…) and can be renamed to merge them; backgrounding ends the labeling run without awaiting model work;
   more than two hours of one recording is not analyzed further.
 - Automatic titles (#221): after Stop, Save, a finished Apple Watch recording or a return to the
   foreground, a conversation still named "New conversation" or "Apple Watch · <date>" with about

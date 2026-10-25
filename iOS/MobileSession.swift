@@ -124,6 +124,9 @@ final class MobileSession {
     let languageDetection: MobileLanguageDetection   // Automatic transcription language (issue #197)
     let savedAudio: MobileSavedAudio   // Save audio recordings, off by default (issue #55)
     var speakerLoop: Task<Void, Never>?
+    @ObservationIgnored var speakerSleep: @Sendable (TimeInterval) async throws -> Void = {
+        try await Task.sleep(for: .seconds($0))
+    }
     /// Stop's final speaker pass, which runs after the session is already idle.
     var speakerFinalPass: Task<Void, Never>?
     let archive: SessionArchive
@@ -338,6 +341,7 @@ final class MobileSession {
     }
 
     func background() async {
+        cancelSpeakerIdentification()
         acceptsSpeechCorrection = false
         flushPendingSave()
         speechCorrection.cancel()
@@ -405,6 +409,10 @@ final class MobileSession {
     /// The user has seen the note about a set-aside file and dismissed it.
     func dismissArchiveWarning() { archiveWarning = nil }
 
+}
+
+// Storage policy is independent of capture lifecycle.
+extension MobileSession {
     /// Applies the current backup choice to everything a conversation is made of. Re-applied after
     /// each toggle and at launch, because a directory recreated later starts without the flag.
     func applyBackupExclusion() {

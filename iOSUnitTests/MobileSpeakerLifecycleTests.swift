@@ -126,15 +126,27 @@ final class MobileSpeakerLifecycleTests: MobileSpeakerTestCase {
 
     func testStopReturnsToIdleWhileAPassIsStillRunning() async throws {
         let session = makeSession()
+        let clock = ManualSpeakerClock()
+        session.speakerSleep = { try await clock.sleep($0) }
         try await recordPastTheFirstPass(session)
         await diarizer.holdNext()
-        let periodic = Task { await session.periodicSpeakerPass() }
+        let periodic = try XCTUnwrap(session.speakerLoop)
+        var advanced = false
+        for _ in 0..<300 where !advanced {
+            advanced = await clock.advance()
+            if !advanced { try await Task.sleep(for: .milliseconds(10)) }
+        }
+        XCTAssertTrue(advanced, "The session's own loop must reach its timer")
         try await waitUntilHolding()
-        await session.stop()
+        var returned = false
+        let stopping = Task { await session.stop(); returned = true }
+        for _ in 0..<100 where !returned { try await Task.sleep(for: .milliseconds(10)) }
+        XCTAssertTrue(returned, "Stopping must return before the held session loop finishes")
         XCTAssertEqual(session.state, .idle, "Stop does not wait for the diarizer")
         XCTAssertFalse(session.busy)
         await diarizer.release()
-        _ = await periodic.value
+        await stopping.value
+        await periodic.value
         await session.speakerFinalPass?.value
         XCTAssertEqual(session.segments.last?.speakerName, "Speaker 1", "The pass in flight still lands")
         let calls = await diarizer.calls()
@@ -161,16 +173,86 @@ final class MobileSpeakerLifecycleTests: MobileSpeakerTestCase {
 
     func testBackgroundingWithAPassInFlightDoesNotWait() async throws {
         let session = makeSession()
+        let clock = ManualSpeakerClock()
+        session.speakerSleep = { try await clock.sleep($0) }
         try await recordPastTheFirstPass(session)
         await diarizer.holdNext()
-        let periodic = Task { await session.periodicSpeakerPass() }
+        let periodic = try XCTUnwrap(session.speakerLoop)
+        var advanced = false
+        for _ in 0..<300 where !advanced {
+            advanced = await clock.advance()
+            if !advanced { try await Task.sleep(for: .milliseconds(10)) }
+        }
+        XCTAssertTrue(advanced, "The session's own loop must reach its timer")
         try await waitUntilHolding()
-        await session.handleScenePhase(.background)
+        var returned = false
+        let stopping = Task { await session.handleScenePhase(.background); returned = true }
+        for _ in 0..<100 where !returned { try await Task.sleep(for: .milliseconds(10)) }
+        XCTAssertTrue(returned, "Stopping must return before the held session loop finishes")
         XCTAssertEqual(session.state, .idle)
         XCTAssertFalse(session.speakers.isRunning, "The run ends at once; its audio is released")
         await diarizer.release()
-        _ = await periodic.value
+        await stopping.value
+        await periodic.value
         XCTAssertEqual(session.segments.last?.speakerName, "Microphone")
+    }
+
+    func testBackgroundingInvalidatesAnAlreadyRunningFinalPassAndReleasesAudio() async throws {
+        let session = makeSession()
+        try await recordPastTheFirstPass(session)
+        let audio = try XCTUnwrap(recorder.speakerAudio)
+        await diarizer.holdNext()
+        await session.stop()
+        let final = try XCTUnwrap(session.speakerFinalPass)
+        try await waitUntilHolding()
+        XCTAssertTrue(session.speakers.isRunning)
+        await session.handleScenePhase(.background)
+        XCTAssertTrue(final.isCancelled)
+        XCTAssertNil(session.speakerFinalPass)
+        XCTAssertFalse(session.speakers.isRunning)
+        XCTAssertEqual(audio.retainedSampleCount, 0)
+        // This fake deliberately ignores task cancellation and returns its labels later.
+        await diarizer.release()
+        await final.value
+        XCTAssertEqual(session.segments.last?.speakerName, "Microphone")
+        XCTAssertFalse(session.speakers.isRunning)
+    }
+
+    func testCancelledPeriodicPassQueuedBehindAnotherPassCannotAnalyzeANewRun() async throws {
+        let session = makeSession()
+        let clock = ManualSpeakerClock()
+        session.speakerSleep = { try await clock.sleep($0) }
+        try await recordPastTheFirstPass(session)
+        await diarizer.holdNext()
+        let predecessor = Task { await session.runSpeakerPass() }
+        try await waitUntilHolding()
+        let queuedBefore = session.speakers.scheduledPassCount
+        let periodic = try XCTUnwrap(session.speakerLoop)
+        var advanced = false
+        for _ in 0..<300 where !advanced {
+            advanced = await clock.advance()
+            if !advanced { try await Task.sleep(for: .milliseconds(10)) }
+        }
+        XCTAssertTrue(advanced)
+        for _ in 0..<300 where session.speakers.scheduledPassCount == queuedBefore {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        XCTAssertEqual(session.speakers.scheduledPassCount, queuedBefore + 1,
+                       "The real loop must queue behind the held predecessor before backgrounding")
+        await session.handleScenePhase(.background)
+        await session.handleScenePhase(.active)
+        try await record(session)
+        recorder.feedAudio(seconds: 5)
+        recorder.send("A different recording has begun.", 0, 4)
+        await diarizer.release()
+        _ = await predecessor.value
+        await periodic.value
+        let calls = await diarizer.calls()
+        XCTAssertEqual(calls, 2, "The cancelled old loop must not analyze audio from the new recording")
+        XCTAssertEqual(session.segments.last?.speakerName, "Microphone")
+        XCTAssertTrue(session.speakers.isRunning)
+        await session.stop()
+        await session.speakerFinalPass?.value
     }
 
     func testBackgroundingSkipsTheFinalPass() async throws {
