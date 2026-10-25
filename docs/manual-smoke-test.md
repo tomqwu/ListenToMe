@@ -717,8 +717,8 @@ Mac (`make run`; macOS releases are paused, so this is for the build only):
 1. In **Settings**, turn on "Save audio recordings (microphone and system audio)". Listen with system
    audio playing, Stop. **History** → the conversation shows **Saved audio** with Microphone and System
    audio parts that play.
-2. With the WhisperKit engine, **Play from a line** lists the lines and plays each from its time; with
-   SpeechAnalyzer, the note says those lines cannot jump into the audio.
+2. With SpeechAnalyzer or WhisperKit, **Play from a line** lists the lines and plays each from its time;
+   legacy SpeechRecognizer lines remain untimed.
 3. **Clear history** deletes the audio too; **Delete all saved audio** in Settings keeps history.
 4. Record two runs in one conversation with WhisperKit (Stop, Listen again): a line from the second run
    plays its own words, not the first run's.
@@ -1033,3 +1033,7 @@ as part of this UI check. Capture onboarding, warning and ready-state screenshot
 ## Transcript editing (#126)
 
 With Auto off, record or reopen several finalized lines. Select and copy a phrase; use Copy line and Copy transcript. Double-click a line, change a name, Cancel, and verify no change; repeat with Save. Empty edits must be disabled. Confirm timestamps, speaker and language survive, and export lists original and corrected wording. Edit an existing summary and verify its replacement uses the corrected text. Edit before any summary and verify no AI request starts. Delete a line, first cancelling then confirming; verify other lines remain and the reopened History/export/search reflect deletion. Delete the final line of a saved conversation with empty notes, reopen it, and verify the empty transcript stays empty. During a later capture run, delete an earlier-run line and verify speaker labels still cover the current run. Saved audio and previously exported files remain unchanged. Capture native screenshots of editing and confirmation.
+
+## Capture timeline and follow-latest (#68)
+
+With SpeechAnalyzer, record known alternating microphone and system audio separated by silence. Verify OTHERS transcription and line timestamps against saved audio, including delayed finalization, Stop/Listen again, and line playback in the second run. Cancel during preparation and confirm no late line enters the next conversation. While partials grow on both channels, resize the window and confirm Latest remains followed. Scroll up during bursts; the view must not jump to the bottom. Use Latest and confirm following resumes. Preserve screenshots and actual-audio evidence; Core timing tests and a signed build are not substitutes for this acceptance.

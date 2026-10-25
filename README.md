@@ -207,7 +207,7 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 - **File & folder reference context** with a configurable token budget.
 - **Export** as Markdown, plain text, SRT or WebVTT subtitles, or versioned JSON, plus recap and PDF,
   in files named after the conversation (`Weekly sync 2026-10-23 1435.srt`). Lines carry `[mm:ss]`
-  timestamps where the engine reports them (WhisperKit and iPhone recordings; Apple Watch recordings
+  timestamps where the engine reports them (SpeechAnalyzer, WhisperKit and iPhone recordings; Apple Watch recordings
   too once the Watch app ships); see
   [Export formats](docs/export-formats.md).
 - **Save to folder** (off by default, Settings): after each conversation stops, writes one
@@ -385,9 +385,9 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   Cloud AI or an OpenAI-compatible server the sheet says the excerpts are sent there first (#57).
 - **Export (⌘E).** Export the current conversation as Markdown; the Export menu also offers plain
   text, SRT and WebVTT subtitles, JSON, recap and PDF. Files are named after the conversation's title
-  and date. Timestamps and subtitles need an engine that reports times: WhisperKit does; the default
-  SpeechAnalyzer does not yet ([#68](https://github.com/tomqwu/ListenToMe/issues/68)), so its exports
-  have no `[mm:ss]` and the subtitle formats are unavailable. Formats, cue rules and the JSON schema:
+  and date. Timestamps and subtitles need an engine that reports times: SpeechAnalyzer and WhisperKit
+  do; legacy SpeechRecognizer exports remain untimed and cannot use subtitle formats.
+  Formats, cue rules and the JSON schema:
   [docs/export-formats.md](docs/export-formats.md).
   With autosaving off, Save opens Save As and New/Close offers Save As, Cancel or explicit discard.
 - **Load from Calendar.** Fills Context notes from your current or next meeting *and* titles the
@@ -472,8 +472,8 @@ older transcript labels but does not recognize people from past runs.
 
 Enable **Identify people sharing my microphone** to also separate voices on the microphone channel.
 The two audio channels are analyzed independently; the same person heard on both is not automatically
-merged. Without this option, microphone speech remains **You**. SpeechAnalyzer and SpeechRecognizer
-support the voice breakdown only; per-line attribution requires WhisperKit timestamps.
+merged. Without this option, microphone speech remains **You**. SpeechAnalyzer and WhisperKit support per-line attribution. Legacy SpeechRecognizer
+supports the voice breakdown only because its lines remain untimed.
 
 This is delayed, periodic identification, with one speaker assigned per transcript line. Overlapping
 speech can be misattributed. Analysis covers the first approximately two hours of each enabled channel.
@@ -737,3 +737,5 @@ imports decode only their first audio track on-device; video frames are not tran
 with no audio produces a clear error. These imports use the selected transcription language and the
 same progress/Cancel controls as audio files. Importing does not upload the recording (#128).
 On Mac, select transcript text or use its row menu to copy a line or the transcript. Double-click a finalized line (or choose **Edit line…**) to correct it, then Save or Cancel. **Delete line…** asks for confirmation. Corrections retain the recognized original in exports. Existing summaries rebuild from edited text; Auto off does not create a first summary. Audio recordings and previously exported files are unchanged.
+
+The Mac transcript follows incoming speech and wrapped/resized rows until you scroll back to read. Choose **Latest** to resume following. SpeechAnalyzer timestamps come from recognition audio ranges on each capture timeline, not from result delivery time.

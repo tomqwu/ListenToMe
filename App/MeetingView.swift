@@ -52,7 +52,7 @@ struct MeetingView: View {
     @State var importTask: Task<Void, Never>?
     @State var importStatus = AudioImportStatus()
     var isImporting: Bool { importTask != nil || session.isTranscribingFile }
-    @State var transcriptAtBottom = true
+    @State var transcriptFollow = TranscriptFollowState()
     /// User intent to be capturing — the toolbar button's source of truth. Stays true across the
     /// brief teardown window of a locale restart (when `session.isRunning` is transiently false),
     /// so a Stop press is never lost.
@@ -156,7 +156,7 @@ struct MeetingView: View {
                 // `MeetingSession.start` makes the capture on the main actor, after placing the recording.
                 let saved = MainActor.assumeIsolated {
                     savedAudioRuns.writersForNewCapture(
-                        timesMatchAudio: ProviderSettings.transcriptionEngine == "whisperKit")
+                        timesMatchAudio: ProviderSettings.transcriptionEngine != "speechRecognizer")
                 }
                 return DualChannelCapture(othersSink: diarize ? othersSink : nil, sinkGeneration: gen,
                                           microphoneSink: identifyMic ? microphoneSink : nil,
@@ -564,7 +564,7 @@ extension MeetingView {
         // both during the `start()` that just returned — so reading them now matches this run, and
         // re-enables Identify only when the sink is actually attached and live.
         diarizationSinkAttached = ProviderSettings.speakerDiarizationEnabled
-        diarizationRunUsesTimestamps = ProviderSettings.transcriptionEngine == "whisperKit"
+        diarizationRunUsesTimestamps = ProviderSettings.transcriptionEngine != "speechRecognizer"
         microphoneSinkAttached = diarizationSinkAttached && ProviderSettings.microphoneDiarizationEnabled
         nextSpeakerAnalysis = Date().addingTimeInterval(SpeakerAnalysisPolicy.minimumRest)
     }
