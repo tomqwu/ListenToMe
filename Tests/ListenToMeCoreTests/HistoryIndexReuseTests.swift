@@ -7,12 +7,15 @@ final class HistoryIndexReuseTests: XCTestCase {
         let signature: String
         private let lock = NSLock()
         private var calls: [String] = []
-        init(signature: String = "count-v1") { self.signature = signature }
+        let available: Bool
+        init(signature: String = "count-v1", available: Bool = true) {
+            self.signature = signature; self.available = available
+        }
         var count: Int { lock.withLock { calls.count } }
         func embed(_ text: String) -> HistoryVector? { embed(text, transcribedIn: "unknown") }
         func embed(_ text: String, transcribedIn language: String) -> HistoryVector? {
             lock.withLock { calls.append(language + text) }
-            return HistoryVector(model: "test", values: [1, 0])
+            return available ? HistoryVector(model: "test", values: [1, 0]) : nil
         }
         func embedQuery(_ query: String, models: Set<String>) -> [HistoryVector] { [] }
     }
@@ -85,6 +88,27 @@ final class HistoryIndexReuseTests: XCTestCase {
             directory.appendingPathComponent("long.vectors"))))
         XCTAssertEqual(stored.chunks.count, 122, "Both duplicate positions remain searchable")
         XCTAssertEqual(stored.chunks.suffix(2).map(\.ordinal), [120, 121])
+    }
+
+    func testUnavailableDuplicatePassagesAreAttemptedOncePerChangedSave() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let counter = Counter(available: false)
+        let index = HistoryIndex(directory: directory, embedder: counter)
+        let line = String(repeating: "unsupported passage ", count: 25)
+        func conversation(summary: String) -> SessionRecord {
+            SessionRecord(id: "unsupported", title: "Test", date: Date(timeIntervalSince1970: 0),
+                          transcript: [line, line, line].joined(separator: "\n"), summary: summary)
+        }
+        let original = conversation(summary: "")
+        XCTAssertEqual(HistoryChunker.chunks(for: original).count, 3)
+        try await index.update(original)
+        XCTAssertEqual(counter.count, 1)
+        try await index.update(conversation(summary: "New summary"))
+        XCTAssertEqual(counter.count, 3, "Unavailable passages retry on a changed save, once per distinct passage")
+        let stored = try XCTUnwrap(HistoryIndexFile.decode(Data(contentsOf:
+            directory.appendingPathComponent("unsupported.vectors"))))
+        XCTAssertTrue(stored.chunks.isEmpty, "Unavailable passages must not create searchable vectors")
     }
 
 }

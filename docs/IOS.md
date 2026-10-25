@@ -348,7 +348,9 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   the archive after a reload and updated a few seconds after saving stops, off the main thread.
   Unchanged passages reuse their stored vectors even when an inserted summary changes their positions;
   text, source, transcription-language or embedding-method changes invalidate reuse. Format 2 rebuilds
-  older indexes once. This reduces repeated embedding work without changing semantic language coverage (#223).
+  older indexes once. Duplicate passages share one embedding attempt per changed save, including when
+  a model is unavailable; unavailable passages are retried on a later changed save. This reduces repeated
+  embedding work without changing semantic language coverage (#223).
 - **Deletion.** A deleted conversation's vectors are removed at once by its `conversationDataOwners`
   entry (`forgetSearchIndex(ids:everything:)`), so Delete and Delete all conversations (#220) both
   take them. A sync still running stops at its next conversation and never embeds a deleted one again.

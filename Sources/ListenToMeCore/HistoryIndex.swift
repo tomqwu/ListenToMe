@@ -120,16 +120,20 @@ public actor HistoryIndex {
         let previous = vectorsOf(record.id)?.chunks ?? []
         var reusable = Dictionary(previous.map { ($0.fingerprint, $0) },
                                   uniquingKeysWith: { first, _ in first })
+        var unavailable = Set<UInt64>()
         let vectors = chunks.compactMap { chunk -> StoredChunkVector? in
             let passageFingerprint = HistoryChunker.fingerprint([chunk], salt: embedder.signature)
             if let stored = reusable[passageFingerprint] {
                 return StoredChunkVector(ordinal: chunk.ordinal, model: stored.model, scale: stored.scale,
                                          values: stored.values, fingerprint: passageFingerprint)
             }
+            guard !unavailable.contains(passageFingerprint) else { return nil }
             let embedded = chunk.language.map { embedder.embed(chunk.text, transcribedIn: $0) }
                 ?? embedder.embed(chunk.text)
             let vector = embedded
                 .map { StoredChunkVector(ordinal: chunk.ordinal, vector: $0, fingerprint: passageFingerprint) }
+            // Retry unavailable assets on a later changed save; only deduplicate this update.
+            if vector == nil { unavailable.insert(passageFingerprint) }
             reusable[passageFingerprint] = vector
             return vector
         }

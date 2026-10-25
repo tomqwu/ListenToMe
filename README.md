@@ -526,7 +526,8 @@ saying so. Press **Speakers / edit names** to retry once the network is availabl
 - **History search index (both apps).** The semantic index holds only vectors, passage numbers and fingerprints,
   never transcript text, lives beside the conversations in `Search Index/`, is always excluded from
   backups, and is removed with a deleted conversation or Clear history. Unchanged passages reuse their
-  vectors after a save; changed text or language is embedded again on-device. "Ask your history" sends only
+  vectors after a save; changed text or language is embedded again on-device. Duplicate passages share
+  one embedding attempt per changed save, including unsupported text. "Ask your history" sends only
   the top matching excerpts and the question, and only to the provider you selected.
 - **Raw audio is not kept unless you ask.** **Save audio recordings** is off by default on both
   platforms. Turned on, it writes 16 kHz AAC `.m4a` files (about 12 MB per hour per source) beside
