@@ -229,5 +229,6 @@ Full `make validate-local` passed on `f1bd693`: Core coverage above 98%, 462 sim
 (452 passed, ten skipped), release helpers, lint, signed Mac build and real provider contracts.
 Independent review cleared the queued-old-run race and same-file backup-policy extraction. Native-resolution
 Watch speaker transcript/Notes simulator screenshots were preserved and visually reviewed. This is
-simulator acceptance, not physical-device acceptance. Current-main integration and hosted CI are being
-rechecked. Evidence: `dist/speaker-lifecycle-188` and external release evidence. Not merged or published.
+simulator acceptance, not physical-device acceptance. Current-main integration passed at `ac20342`: all
+46 focused iOS lifecycle/backup/preparation/Watch checks, Core tests (1,060, seven skips, 98.1048%), lint,
+signed Mac build and all three hosted checks. Evidence: `dist/speaker-lifecycle-188` and external release evidence. Not merged or published.
