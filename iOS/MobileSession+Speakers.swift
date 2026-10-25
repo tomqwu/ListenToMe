@@ -47,10 +47,11 @@ extension MobileSession {
     func startSpeakerLoop() {
         speakerLoop?.cancel()
         guard speakers.isRunning else { speakerLoop = nil; return }
+        let sleep = speakerSleep
         speakerLoop = Task { [weak self] in
             var delay = SpeakerAnalysisPolicy.minimumRest
             while !Task.isCancelled {
-                do { try await Task.sleep(for: .seconds(delay)) } catch { return }
+                do { try await sleep(delay); try Task.checkCancellation() } catch { return }
                 guard let self, self.state == .recording else { return }
                 delay = await self.periodicSpeakerPass()
             }
@@ -74,7 +75,10 @@ extension MobileSession {
     @discardableResult
     func runSpeakerPass(token: Int? = nil) async -> SpeakerAnalysisOutcome {
         let conversation = id
-        if let pass = await speakers.analyze(token: token), id == conversation { applySpeakerLabels(pass) }
+        let run = token ?? speakers.runToken
+        if let pass = await speakers.analyze(token: run), id == conversation, speakers.runToken == run {
+            applySpeakerLabels(pass)
+        }
         return speakers.isUnavailable ? .modelsUnavailable : .completed
     }
 
@@ -96,6 +100,14 @@ extension MobileSession {
             await self.runSpeakerPass(token: token)
             if self.speakers.runToken == token { self.speakers.endRun() }
         }
+    }
+
+    /// Backgrounding invalidates both a recording pass and an already-started final pass without
+    /// awaiting model work. An uncooperative model may finish, but its run token can no longer apply.
+    func cancelSpeakerIdentification() {
+        speakerLoop?.cancel(); speakerLoop = nil
+        speakerFinalPass?.cancel(); speakerFinalPass = nil
+        speakers.endRun()
     }
 
     /// Prepares the speaker models at a foreground launch (or return) with Identify speakers on, so the
