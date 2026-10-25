@@ -231,7 +231,10 @@ and iOS test build passed. Independent review found an AAC read-past-EOF error, 
 reviewed clear with a compressed-file regression added. The focused AAC runtime regression and full `make validate-local` passed at `a65c5e6`:
 460 iOS tests (450 passed, ten skipped), Core coverage, release helpers, lint, signed build and
 real Ollama/OpenAI-compatible contracts. Logs, xcresult and native screenshots are preserved externally.
-Current-main integration checks and installed Mac GUI/OTHERS acceptance remain pending. No merge or publication is claimed. Mac remains locked; no permission reset was attempted.
+Current-main integration at `7521cb1` passed all 404 iOS unit tests (398 passed, six skipped),
+1,080 Core tests (seven skips; 98.1945% coverage), lint and the signed Mac build. Independent integration
+review found no blockers. Hosted checks for the final documentation commit and installed Mac GUI/OTHERS
+acceptance remain pending. No merge or publication is claimed. Mac remains locked; no permission reset was attempted.
 
 ## Ollama endpoint candidate (#149) — October 25
 
