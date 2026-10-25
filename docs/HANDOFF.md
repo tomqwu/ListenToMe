@@ -275,3 +275,14 @@ installed Mac GUI/OTHERS acceptance is pending while the Mac is locked. No relea
 
 This stage still does not close #134: other view tasks (import, model discovery, optional AI and
 speaker work) and the full shared-session architecture remain to be migrated and tested.
+
+### #134 shared naming task ownership — partial candidate, October 25
+
+`codex/134-title-coordinator` builds on the Mac capture migration. Core ConversationTitleCoordinator
+owns per-conversation naming tasks, deduplication and cancellation generations. Both platform adapters
+retain provider/privacy selection and snapshot checks before updating current or saved titles. An
+older cancelled task cannot remove a newer task entry. Mac switching/manual rename cancellation and
+iOS snapshot-guard behavior are preserved; New can still finish naming the saved older conversation.
+Five new Core regressions and the full 1,080-test Core suite pass (seven skips, 98.1333% coverage); lint,
+signed Mac build and independent review pass. iOS runtime and full local validation remain pending.
+This is another partial #134 extraction; other view tasks and full shared-session migration remain.

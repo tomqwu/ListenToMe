@@ -12,8 +12,7 @@ extension MeetingView {
             guard newValue != conversationTitle else { return }
             conversationTitle = newValue
             conversationTitleState = .user
-            autoTitleTask?.cancel()
-            autoTitleTask = nil
+            titleCoordinator.cancel(currentSessionID)
         })
     }
 
@@ -31,16 +30,13 @@ extension MeetingView {
         let summary = session.completedListenerSummary
         let language = ProviderSettings.transcriptionLocale().identifier
         let startedAt = conversationStartedAt
-        autoTitleTask = Task {
-            let named = await ConversationAutoTitle.title(transcript: spoken, summary: summary,
-                                                          language: language, provider: provider)
-            guard !Task.isCancelled else { return }
-            let newState = named.map { _ in ConversationAutoTitle.namedState(after: state, words: words) }
-                ?? ConversationAutoTitle.attemptedState(after: state, words: words)
+        let snapshot = ConversationTitleCoordinator.Snapshot(title: title, state: state, spoken: spoken, summary: summary)
+        titleCoordinator.name(target, snapshot: snapshot, language: language, provider: provider) { result in
+            let named = result.title, newState = result.state
             if target == currentSessionID {
                 // A title field being edited would write its own text back when editing ends.
                 guard conversationTitle == title, conversationTitleState == state, !titleFieldFocused else { return }
-                if let named { conversationTitle = named.title }
+                if let named { conversationTitle = named }
                 conversationTitleState = newState
                 _ = checkpoint(complete: !wantsCapture && !lifecycleBusy, force: true)
                 return
@@ -48,7 +44,7 @@ extension MeetingView {
             // A New conversation started meanwhile: rename the saved record, unless renamed since.
             guard let record = sessionStore.all().first(where: { $0.id == target }), record.title == title,
                   record.resolvedTitleState == state else { return }
-            let updated = record.retitled(named?.title ?? title, state: newState)
+            let updated = record.retitled(named ?? title, state: newState)
             if sessionStore.add(updated), named != nil {
                 MarkdownVaultSync.shared.save(updated, startedAt: startedAt)   // the record's own language (#206)
             }

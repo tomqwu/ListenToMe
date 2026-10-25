@@ -32,7 +32,7 @@ final class MobileSession {
     }
     var title = ConversationTitle.mobileDefault
     var titleState = ConversationTitleState.placeholder   // where the title came from (#221)
-    @ObservationIgnored var autoTitleTasks: [String: Task<Void, Never>] = [:]
+    @ObservationIgnored let titleCoordinator = ConversationTitleCoordinator()
     var summaryInstructions = "" { didSet { handleSummaryEvent(.notesChanged) } }
     var notes = "" { didSet { handleSummaryEvent(.notesChanged) } }
     var summary = ""

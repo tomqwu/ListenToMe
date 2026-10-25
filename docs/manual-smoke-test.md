@@ -836,3 +836,12 @@ checkpoint is complete, the new live record is incomplete, and old speaker work 
 new run. New and window close must drain final text/audio before their existing save decision.
 Verify actual system-audio transcription labeled OTHERS and preserve native screenshots and
 source/signing provenance. Core state-machine tests do not replace installed-app audio acceptance.
+
+### Shared naming coordinator regression (#134)
+
+Save or stop the same eligible conversation repeatedly while naming is pending; only one naming task
+should run. Type a title before completion and confirm it remains unchanged. Start a new conversation
+while the old one is being named: only the saved older record may change. Repeat with Watch imports
+and Save to folder on iOS. Cloud/provider restrictions remain unchanged; these tests do not authorize
+a model download or cloud naming. Core tests also force a cancellation-ignoring old result to arrive
+after its replacement starts and verify the replacement remains registered and is the only one applied.

@@ -1496,3 +1496,8 @@ foreground/interruption policy, speaker/language buffers, saved-audio cleanup an
 No recording permission, background capability, model or audio destination changes. Core tests cover
 transition races; simulator adapter tests must also pass before this candidate is merged. This partial
 extraction does not complete the remaining Mac view and shared lifecycle work in #134.
+
+Automatic naming task ownership now lives in Core `ConversationTitleCoordinator`, shared with Mac.
+It tracks each conversation independently and ignores cancelled generations. The iOS adapter still
+selects eligible on-device/local providers and checks the captured title/state before persisting a
+result. Watch-import naming and Save to folder use the same path; no new data destination is added.

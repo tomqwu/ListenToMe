@@ -13,6 +13,8 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased since 1.16.0 (33))
 
+- Automatic conversation naming now shares one task coordinator across Mac and iOS. Repeated requests for the same conversation join the existing task; a cancelled older task cannot clear or apply over a replacement. Typed/calendar names and on-device/local-provider privacy rules are preserved. (#134, partial)
+
 - Recording start/stop tasks now use a shared capture coordinator. Concurrent Stop requests wait for the same finalization, and callbacks from a completed recording cannot append text or stop a later recording. Final utterances produced during Stop remain included. (#134, partial)
 
 - Backgrounding cancels final speaker labeling already started after Stop and clears the recording buffer without waiting. Queued work stays bound to its original recording, so an old pass cannot analyze or relabel a new recording. Lifecycle and model-backup tests cover these paths. (#188)
@@ -58,6 +60,8 @@ does not show it again, and a fresh install does not see it at all; see
 - Settings → Privacy now explains that optional Ollama, Cloud AI and OpenAI-compatible requests send text and included context to the provider you choose; Apple Intelligence stays on-device. (#247)
 
 ## macOS (unreleased since 1.4.4)
+
+- Automatic conversation naming now shares one task coordinator across Mac and iOS. Repeated requests for the same conversation join the existing task; a cancelled older task cannot clear or apply over a replacement. Typed/calendar names and on-device/local-provider privacy rules are preserved. (#134, partial)
 
 - Recording Start, Stop and language restarts now use the shared capture coordinator. Stop interrupts pending model preparation, superseded language restarts cannot resume capture, and the final checkpoint completes before a new recording can start. Optional speaker analysis stays bound to the stopped run. (#134, partial)
 

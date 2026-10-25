@@ -97,7 +97,7 @@ struct MeetingView: View {
     @State var conversationTitle = ConversationTitle.generated(Date().formatted(date: .abbreviated, time: .shortened))
     /// Where the title came from, so an automatic name never replaces a typed one (#221).
     @State var conversationTitleState = ConversationTitleState.placeholder
-    @State var autoTitleTask: Task<Void, Never>?
+    @State var titleCoordinator = ConversationTitleCoordinator()
     @FocusState var titleFieldFocused: Bool
     @State var saveMessage = "Not saved yet"
     @State var saveFailed = false

@@ -96,7 +96,6 @@ extension MeetingView {
             }
             discardAudioIfNotInHistory()
             if persisted { nameConversationIfNeeded() }   // the saved one, in the background (#221)
-            autoTitleTask = nil   // it renames the saved record; typing the new title must not cancel it
             beginDiarizationRunReset()
             restoredRecord = nil
             session.resetConversation()
@@ -135,7 +134,7 @@ extension MeetingView {
                 return
             }
         }
-        autoTitleTask?.cancel(); autoTitleTask = nil
+        titleCoordinator.cancel(currentSessionID)
         beginDiarizationRunReset()
         clearReferences(session: session)
         othersAudioSink.reset(); microphoneAudioSink.reset()
