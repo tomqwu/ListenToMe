@@ -180,7 +180,9 @@ public struct OllamaProvider: LLMProvider {
                         }
                         var urlRequest = URLRequest(url: baseURL.appendingPathComponent("api/chat"))
                         urlRequest.httpMethod = "POST"
-                        urlRequest.timeoutInterval = 90
+                        // A verified local model may need minutes to page in before its first token.
+                        // Automatic-review deadlines still bound their own work independently.
+                        urlRequest.timeoutInterval = context == nil ? 90 : 300
                         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
                         if let apiKey, !apiKey.isEmpty {
                             urlRequest.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")

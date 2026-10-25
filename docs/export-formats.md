@@ -141,3 +141,8 @@ Exports are built on the device. On macOS the file goes where you save it. On iP
 to the app's own temporary folder, with the same data protection as History, only when you pick a share
 destination. It is removed at the next export, at the next launch, and when you delete any conversation
 or use Delete all conversations; where a copy goes after you share it is up to the destination you chose.
+
+
+Markdown exports escape literal transcript text, speaker names, correction text, titles and attachment
+names so speech cannot introduce links or markup. Embedded newlines in a transcript segment or speaker
+name become spaces. Context notes and generated AI sections retain their intentional Markdown (#141).

@@ -26,27 +26,30 @@ final class AudioFileChunkProducer: @unchecked Sendable {
     }
 
     /// The next chunk, or nil at end of file. Reads happen on a serial background queue.
-    func next() async -> AudioChunk? {
-        await withCheckedContinuation { (continuation: CheckedContinuation<AudioChunk?, Never>) in
+    func next() async throws -> AudioChunk? {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<AudioChunk?, Error>) in
             queue.async { [weak self] in
-                continuation.resume(returning: self?.readBlock())
+                do { continuation.resume(returning: try self?.readBlock()) }
+                catch { continuation.resume(throwing: error) }
             }
         }
     }
 
     /// Reads forward until it yields a convertible chunk or hits EOF (nil). Serial-queue only.
-    private func readBlock() -> AudioChunk? {
+    private func readBlock() throws -> AudioChunk? {
         while true {
+            // Compressed decoders may throw EOF (-39) on an extra read after the last frame.
+            guard file.framePosition < file.length else { return nil }
             guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: Self.blockSize)
-            else { return nil }
-            do { try file.read(into: buffer, frameCount: Self.blockSize) } catch { return nil }
+            else { throw CocoaError(.fileReadUnknown) }
+            try file.read(into: buffer, frameCount: Self.blockSize)
             if buffer.frameLength == 0 { return nil }   // end of file
             let timestamp = Double(framePosition) / sampleRate
             framePosition += AVAudioFramePosition(buffer.frameLength)
             if let chunk = Self.chunk(from: buffer, source: source, timestamp: timestamp) {
                 return chunk
             }
-            // conversion produced nothing for this block; advance to the next
+            throw CocoaError(.fileReadCorruptFile)   // never present a failed conversion as a complete import
         }
     }
 

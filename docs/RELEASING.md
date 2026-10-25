@@ -257,3 +257,12 @@ unavailable and ready AI/engine controls and cancellation across capability/perm
 verify actual system-audio OTHERS transcription on the supported route. Preserve screenshots and
 source/signing provenance before the existing app-scoped Dev cleanup; do not reset production or
 interrupt another active session. Mac releases remain paused unless the maintainer calls a train.
+
+### Build product and signing guards (#141)
+
+The release helper requires the app at the selected DerivedData configuration's exact build-product
+path. A Debug or unrelated app is never a fallback for a missing Release app. Nested frameworks and
+dynamic libraries are signed depth-first before their enclosing bundle; traversal/signing failure
+stops the release. `scripts/test-release-paths.py` exercises these guards without real signing.
+`make e2e` additionally requires at least one passing XCTest case from each requested real-contract
+suite; empty discovery and all-skipped runs fail even if the test process exits successfully.

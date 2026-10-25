@@ -48,6 +48,8 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 
 - Deleting a conversation immediately cancels and clears its streamed History answer and citations, preventing deleted content from returning when an old request finishes. (#131)
 
+- Markdown exports keep transcript text and speaker names literal. Verified local Ollama requests allow cold models up to five minutes to start; cloud deadlines remain unchanged. Incomplete file-import state survives reopening and editing. (#141)
+
 - Ollama settings reject unsupported plain-HTTP addresses before saving and explain when pasted URL parts are omitted. Destination prose names Ollama Cloud clearly; provider-default and catalog-refresh behavior are documented. (#149)
 
 - Backgrounding cancels final speaker labeling already started after Stop and clears the recording buffer without waiting. Queued work stays bound to its original recording, so an old pass cannot analyze or relabel a new recording. Lifecycle and model-backup tests cover these paths. (#188)
@@ -87,6 +89,9 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 
 - Delete one saved conversation from its History row menu or detail view, with confirmation. Its saved audio, search entry and pending folder-save work are removed while other conversations stay intact; deleting the open conversation prevents it from being saved again. Exported copies remain where you saved them. (#131)
 - Custom-server Settings can check the Quick model's Auto compatibility with a synthetic exchange. A format failure pauses Auto for that server/model until a successful recheck; network errors and cancellation preserve prior results. (#209)
+- Failed model discovery preserves pinned choices and reports uncertainty. MiniMax is no longer ranked as a “mini” model. Verified local Ollama requests allow cold loads up to five minutes. (#141)
+- Audio imports report read failures and keep partial transcripts marked incomplete across reopening. Legacy speech waits for final callbacks with a 30-second deadline; system capture rejects failed PCM copies and minimizes unused video work. (#141)
+- Calendar context selects the most recently started overlapping meeting. Reference attachments reject symbolic links, heading whitespace renders correctly, and Markdown exports keep speech literal. Release discovery/signing and real-contract test gates now fail safely. (#141)
 
 - History search keeps its records when SwiftUI recreates a view, instead of replacing matching rows with an empty asynchronous result. (#223 acceptance fix)
 

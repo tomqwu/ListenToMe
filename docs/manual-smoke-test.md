@@ -843,6 +843,25 @@ Delete the currently open saved conversation while capture is stopped, then Save
 reappear. Start New and verify the new conversation can save normally. A failed archive delete must
 keep the row and audio, with a visible error. If an owned-data cleanup fails after text deletion,
 show the partial-erasure warning. Do not modify production conversations or permissions.
+## Review follow-ups (#141)
+
+- With a pinned local model, make discovery or one capability probe fail. The active pinned choice
+  must remain selected with a visible verification warning; an unverified request must still obey
+  the existing local-only privacy check. Restore the server and retry discovery.
+- Cold-load a verified local model: allow up to five minutes for a manual answer. Cancellation stays
+  responsive; Auto review retains its shorter coordinator deadline. Cloud requests retain 90 seconds.
+- Import a damaged/truncated audio file. A read failure must show an incomplete-transcript warning,
+  preserve already recognized lines, and leave the saved record incomplete after reopening/renaming.
+  New conversation clears this state. Stop legacy speech and verify final words are retained; a
+  finalization deadline must show a warning instead of silently pretending the tail completed.
+- Verify real system audio produces OTHERS transcription after the minimal video configuration;
+  microphone-only pickup is not acceptance. Preserve recording, logs, screenshots and provenance.
+- Attach a direct file or folder symlink: it must be skipped. A regular file over 200 KB must also
+  be skipped. Render a heading with trailing spaces and export transcript containing Markdown links,
+  angle brackets and multiline speaker names; speech stays literal while AI Markdown still formats.
+- With an all-day busy block and a shorter current meeting, Calendar chooses the latest-starting
+  active timed meeting. At its end boundary it chooses an ongoing or next meeting correctly.
+
 ### iOS Ollama endpoint feedback (#149)
 
 In Settings, select Ollama and save `http://your-mac.local:11434`. Try saving

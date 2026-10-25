@@ -690,7 +690,7 @@ extension MeetingView {
         importTask?.cancel()
         importTask = Task {
             await session.transcribeAudio(
-                nextChunk: { await producer.next() },
+                nextChunk: { try await producer.next() },
                 transcriber: { SpeechAnalyzerTranscriber(locale: locale) as any Transcribing })
         }
     }
@@ -817,8 +817,8 @@ extension MeetingView {
         guard token == modelLoadToken else { return }
         chatModels = discovered.names
         verifiedLocalModels = discovered.verifiedLocal
-        modelStatus = ProviderSettings.aiMode == .off ? "AI is off" : (chatModels.isEmpty
-            ? (discovered.problem ?? "No available AI models. Check Ollama and AI mode in Settings, then Refresh models.") : "")
+        modelStatus = ProviderSettings.aiMode == .off ? "AI is off" : (discovered.problem ?? (chatModels.isEmpty
+            ? "No available AI models. Check Ollama and AI mode in Settings, then Refresh models." : ""))
         // Locality comes from Ollama's own /api/show metadata, never from the model's name, so an
         // unpinned pane can never be auto-assigned a cloud model while a local one exists (#137).
         // An OpenAI-compatible catalog is never auto-assigned from (#52): see PaneModelHealing.
@@ -829,7 +829,8 @@ extension MeetingView {
             let current = ProviderSettings.model(for: role)
             let decision = PaneModelHealing.decide(current: current, pinned: ProviderSettings.isPinned(role),
                                                    available: chatModels, fallback: defaults[role],
-                                                   autoAssign: autoAssign)
+                                                   autoAssign: autoAssign, verificationUncertain:
+                                                    discovered.catalogFailed || discovered.unverified.contains(current))
             if decision.persist { ProviderSettings.setModel(decision.model, for: role) }
             session.setModel(role, decision.model)   // rebuild the provider so it picks up the new base URL/key
         }

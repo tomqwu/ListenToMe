@@ -92,6 +92,7 @@ final class MobileSession {
     var manualQuickError: String?
     var quickSummaryError: String? { manualQuickError ?? quickReader.error }
     private(set) var sourceImportID: String?
+    private(set) var hasIncompleteImport = false
     var segments: [TranscriptSegment] = [] { didSet { liveRevision += 1; scheduleAutoQuick() } }
     var liveRevision = 0
     @ObservationIgnored var liveCacheKey: LiveKey?
@@ -218,11 +219,11 @@ final class MobileSession {
     var currentRecord: SessionRecord {
         withConversationLanguages(SessionRecord(id: id, title: title, date: date,
             transcript: Self.transcriptText(for: allSegments), summary: summary, segments: allSegments, notes: notes,
-            quickSuggestion: quickSummary, deepAnswer: earlierDeepAnalysis, isComplete: state == .idle
+            quickSuggestion: quickSummary, deepAnswer: earlierDeepAnalysis, isComplete: !hasIncompleteImport && state == .idle
                 && allSegments.allSatisfy(\.isFinal), attachments: attachments, sourceImportID: sourceImportID,
             titleState: titleState, selectionSummaries: selectionSummaries.isEmpty ? nil : selectionSummaries,
             summaryInstructions: summaryInstructions.isEmpty ? nil : summaryInstructions,
-            vocabularyDomainIDs: vocabulary.domainIDs(for: id).sorted()))
+            vocabularyDomainIDs: vocabulary.domainIDs(for: id).sorted(), hasIncompleteImport: hasIncompleteImport ? true : nil))
     }
     var summaryAvailability: String? { summaryAvailability(for: .summary) }
     var automaticQuickAvailability: String? {
@@ -374,7 +375,7 @@ final class MobileSession {
         vocabulary.restore(domainIDs: nil, for: id)
         title = ConversationTitle.mobileDefault; titleState = .placeholder; notes = ""; summaryInstructions = ""; summary = ""
         quickSummary = ""; earlierDeepAnalysis = ""; selectionSummaries = []
-        segments = []; partial = nil; message = nil; attachments = []; sourceImportID = nil
+        segments = []; partial = nil; message = nil; attachments = []; sourceImportID = nil; hasIncompleteImport = false
         save(announce: false)
     }
 
@@ -396,7 +397,7 @@ final class MobileSession {
         notes = record.notes ?? ""; summaryInstructions = record.summaryInstructions ?? ""; summary = record.summary
         quickSummary = record.quickSuggestion ?? ""; earlierDeepAnalysis = record.deepAnswer ?? ""
         selectionSummaries = record.selectionSummaries ?? []
-        attachments = record.attachments ?? []; sourceImportID = record.sourceImportID
+        attachments = record.attachments ?? []; sourceImportID = record.sourceImportID; hasIncompleteImport = record.hasIncompleteImport == true
         segments = record.segments ?? []; partial = nil; message = nil
     }
 

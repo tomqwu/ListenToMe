@@ -27,6 +27,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 cd "${REPO_ROOT}"
+source "${SCRIPT_DIR}/release-paths.sh"
 
 APP_NAME="ListenToMe"
 VOLNAME="ListenToMe"
@@ -86,15 +87,7 @@ if ! build_config "Release"; then
 fi
 
 # --- locate the built app --------------------------------------------------------------
-APP_PATH="${DERIVED}/Build/Products/${USED_CONFIG}/${APP_NAME}.app"
-if [[ ! -d "${APP_PATH}" ]]; then
-  # Fall back to a search in case the products dir differs.
-  APP_PATH="$(find "${DERIVED}/Build/Products" -maxdepth 2 -name "${APP_NAME}.app" -type d 2>/dev/null | head -1 || true)"
-fi
-if [[ -z "${APP_PATH}" || ! -d "${APP_PATH}" ]]; then
-  echo "release: could not locate built ${APP_NAME}.app under ${DERIVED}/Build/Products" >&2
-  exit 1
-fi
+APP_PATH="$(release_app_path "${DERIVED}" "${USED_CONFIG}" "${APP_NAME}")"
 echo "==> Built app: ${APP_PATH}"
 
 # --- conditional code signing ----------------------------------------------------------
@@ -103,12 +96,7 @@ if [[ -n "${DEVELOPER_ID_APP:-}" ]]; then
   echo "==> Code signing (hardened runtime) with: ${DEVELOPER_ID_APP}"
   # Sign nested code (embedded frameworks/dylibs, e.g. WhisperKit's) inside-out FIRST, without the
   # app entitlements — frameworks must not carry the app's entitlements.
-  if [[ -d "${APP_PATH}/Contents/Frameworks" ]]; then
-    find "${APP_PATH}/Contents/Frameworks" \( -name "*.framework" -o -name "*.dylib" \) -print0 \
-      | while IFS= read -r -d '' nested; do
-          codesign --force --options runtime --timestamp --sign "${DEVELOPER_ID_APP}" "${nested}"
-        done
-  fi
+  release_sign_nested "${APP_PATH}" "${DEVELOPER_ID_APP}"
   # Sign the outer app bundle LAST, WITH the release entitlements, so the notarized build keeps the
   # microphone entitlement (com.apple.security.device.audio-input). Not --deep (would re-sign nested
   # with the app's entitlements).

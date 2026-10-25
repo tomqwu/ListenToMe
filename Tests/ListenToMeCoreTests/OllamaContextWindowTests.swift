@@ -55,6 +55,7 @@ final class OllamaContextWindowTests: XCTestCase {
                     if count <= 0 { break }; data.append(buffer, count: count)
                 }
             }
+            XCTAssertEqual(request.timeoutInterval, 300, "Allow a cold local model five idle minutes")
             chatBodies.append(try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any]))
             return (HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!,
                     Data(#"{"message":{"content":"Opening preserved"},"done":true}"#.utf8))
@@ -78,6 +79,7 @@ final class OllamaContextWindowTests: XCTestCase {
         var paths: [String] = []
         StubURLProtocol.handler = { request in
             paths.append(request.url!.path)
+            if request.url!.path == "/api/chat" { XCTAssertEqual(request.timeoutInterval, 90) }
             let payload = request.url!.path == "/api/show"
                 ? #"{"remote_host":"https://ollama.com","remote_model":"cloud"}"#
                 : #"{"message":{"content":"Cloud answer"},"done":true}"#
