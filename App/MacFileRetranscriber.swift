@@ -11,25 +11,30 @@ enum MacFileRetranscriber {
         var lines: [TranscriptSegment] = []
         let drain = Task { for await line in transcriber.segments where line.isFinal { lines.append(line) } }
         return try await withTaskCancellationHandler {
-            await transcriber.prepare()
-            var started = ContinuousClock.now
-            var seconds = 0.0
-            var fed = false
-            while !Task.isCancelled, let chunk = await producer.next() {
-                await transcriber.feed(chunk)
-                if !fed { started = .now; fed = true }
-                seconds += Double(chunk.samples.count) / max(1, chunk.sampleRate)
-                // Pace long files like the existing import path; model setup is excluded.
-                let elapsed = Double(started.duration(to: .now).components.seconds)
-                let lead = seconds - elapsed * 8
-                if lead > 8 { try? await Task.sleep(for: .seconds(min(lead, 5))) }
+            do {
+                await transcriber.prepare()
+                var started = ContinuousClock.now
+                var seconds = 0.0
+                var fed = false
+                while !Task.isCancelled, let chunk = try await producer.next() {
+                    await transcriber.feed(chunk)
+                    if !fed { started = .now; fed = true }
+                    seconds += Double(chunk.samples.count) / max(1, chunk.sampleRate)
+                    // Pace long files like the existing import path; model setup is excluded.
+                    let elapsed = Double(started.duration(to: .now).components.seconds)
+                    let lead = seconds - elapsed * 8
+                    if lead > 8 { try? await Task.sleep(for: .seconds(min(lead, 5))) }
+                }
+                await transcriber.finish()
+                await drain.value
+                try Task.checkCancellation()
+                if let failure = await transcriber.failure { throw LocalAudioFileError.message(failure) }
+                return lines
+            } catch {
+                await transcriber.cancel()
+                await drain.value
+                throw error
             }
-            await transcriber.finish()
-            await drain.value
-            try Task.checkCancellation()
-            if let failure = await producer.failure() { throw failure }
-            if let failure = await transcriber.failure { throw LocalAudioFileError.message(failure) }
-            return lines
         } onCancel: {
             Task { await transcriber.cancel() }
         }

@@ -1,4 +1,5 @@
 import SwiftUI
+import ListenToMeCore
 
 /// Renders LLM markdown output with inline styling (bold, italic, inline code, bullets, headings)
 /// while rendering fenced code blocks (``` … ```) verbatim in a monospaced box. Splitting code
@@ -85,23 +86,6 @@ struct MarkdownText: View {
     /// inline parser produces readable output: headings become bold, bullet markers become "•".
     /// Caller has already removed fenced code blocks; here we only guard indentation-based code.
     static func preprocess(_ raw: String) -> String {
-        raw.split(separator: "\n", omittingEmptySubsequences: false).map { line -> String in
-            let trimmed = line.drop(while: { $0 == " " })
-            let indent = String(line.prefix(line.count - trimmed.count))
-            // Markdown treats lines indented by 4+ spaces as code blocks; leave them verbatim so
-            // code/diff lines aren't rewritten. (Costs the "•" on deeply-nested bullets — a fair
-            // trade against corrupting code.)
-            if indent.filter({ $0 == " " }).count >= 4 { return String(line) }
-            // Headings ("# " … "###### ") -> bold the heading text.
-            if let heading = trimmed.range(of: "^#{1,6}[ \t]+", options: .regularExpression) {
-                return "\(indent)**\(trimmed[heading.upperBound...])**"
-            }
-            // Unordered bullets ("* ", "- ", "+ ") -> "• ". Requires whitespace after the marker so
-            // "**bold**" (starts with "**", no space) is left alone for the inline parser.
-            if let bullet = trimmed.range(of: "^[*\\-+][ \t]+", options: .regularExpression) {
-                return "\(indent)•  \(trimmed[bullet.upperBound...])"
-            }
-            return String(line)
-        }.joined(separator: "\n")
+        InlineMarkdownPreprocessor.preprocess(raw)
     }
 }

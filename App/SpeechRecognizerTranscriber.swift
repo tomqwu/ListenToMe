@@ -25,6 +25,7 @@ actor SpeechRecognizerTranscriber: Transcribing {
     private nonisolated let router = RouterBox()
     private var authorized = false
     private var stopped = false
+    private var finalization: RecognitionFinalization?
     private let locale: Locale
 
     init(locale: Locale = Locale(identifier: "en-US")) {
@@ -71,11 +72,15 @@ actor SpeechRecognizerTranscriber: Transcribing {
 
     func finish() async {
         stopped = true
+        let drain = RecognitionFinalization(tokens: Set(states.values.filter { !$0.done }.map(\.token)))
+        finalization = drain
         for state in states.values { state.request.endAudio() }
-        for _ in 0..<30 {
-            if states.values.allSatisfy({ $0.done }) { break }
-            try? await Task.sleep(nanoseconds: 100_000_000)
+        let completed = await drain.wait(timeout: .seconds(30))
+        if !completed {
+            statusContinuation.yield("Speech finalization stopped before all results arrived; the last words may be incomplete.")
         }
+        for state in states.values where !state.done { state.task?.cancel() }
+        finalization = nil
         states.removeAll()
         router.removeAll()
         continuation.finish()
@@ -170,12 +175,13 @@ actor SpeechRecognizerTranscriber: Transcribing {
 
     /// A source's utterance finalized normally: start a fresh task and replay any audio buffered
     /// during the finalization gap (through the new VAD so its speech state stays consistent).
-    private func taskEnded(_ source: SpeakerSource, token: UUID) {
+    private func taskEnded(_ source: SpeakerSource, token: UUID) async {
         // Mark the finalized task done BEFORE anything can bail, so `finish()`'s drain never waits
         // on a task that has already delivered its final result. Only this task's own state is
         // touched — never the state of a task that has since replaced it.
         guard states[source]?.token == token else { return }
         states[source]?.done = true
+        if let finalization { await finalization.complete(token) }
         // Only the task that actually finalized may restart the source.
         guard router.mayRestart(token: token, for: source) else { return }
         let pending = states[source]?.pendingChunks ?? []
@@ -205,11 +211,12 @@ actor SpeechRecognizerTranscriber: Transcribing {
 
     /// A source's task errored. Tear it down WITHOUT an immediate restart so a persistent startup
     /// error can't spin; the next incoming chunk for this source lazily creates a fresh task.
-    private func taskFailed(_ source: SpeakerSource, token: UUID) {
+    private func taskFailed(_ source: SpeakerSource, token: UUID) async {
         // The router already retired this token; only tear down the state it actually owns, so a
         // task that has since been replaced can never drop the live task's request or pending audio.
         guard states[source]?.token == token else { return }
         states[source]?.done = true
+        if let finalization { await finalization.complete(token) }
         states[source] = nil
     }
 

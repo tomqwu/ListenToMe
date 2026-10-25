@@ -11,7 +11,6 @@ final class AudioFileChunkProducer: @unchecked Sendable {
     private let format: AVAudioFormat
     private let sampleRate: Double
     private let source: SpeakerSource
-    private var readError: Error?
     private var framePosition: AVAudioFramePosition = 0
     private let queue = DispatchQueue(label: "com.tomwu.ListenToMe.audio-file-reader")
     private static let blockSize: AVAudioFrameCount = 8192
@@ -27,35 +26,30 @@ final class AudioFileChunkProducer: @unchecked Sendable {
     }
 
     /// The next chunk, or nil at end of file. Reads happen on a serial background queue.
-    func next() async -> AudioChunk? {
-        await withCheckedContinuation { (continuation: CheckedContinuation<AudioChunk?, Never>) in
+    func next() async throws -> AudioChunk? {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<AudioChunk?, Error>) in
             queue.async { [weak self] in
-                continuation.resume(returning: self?.readBlock())
+                do { continuation.resume(returning: try self?.readBlock()) }
+                catch { continuation.resume(throwing: error) }
             }
         }
     }
 
-    func failure() async -> Error? {
-        await withCheckedContinuation { continuation in
-            queue.async { continuation.resume(returning: self.readError) }
-        }
-    }
-
     /// Reads forward until it yields a convertible chunk or hits EOF (nil). Serial-queue only.
-    private func readBlock() -> AudioChunk? {
+    private func readBlock() throws -> AudioChunk? {
         while true {
+            // Compressed decoders may throw EOF (-39) on an extra read after the last frame.
             guard file.framePosition < file.length else { return nil }
             guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: Self.blockSize)
-            else { readError = CocoaError(.fileReadUnknown); return nil }
-            do { try file.read(into: buffer, frameCount: Self.blockSize) } catch { readError = error; return nil }
+            else { throw CocoaError(.fileReadUnknown) }
+            try file.read(into: buffer, frameCount: Self.blockSize)
             if buffer.frameLength == 0 { return nil }   // end of file
             let timestamp = Double(framePosition) / sampleRate
             framePosition += AVAudioFramePosition(buffer.frameLength)
             if let chunk = Self.chunk(from: buffer, source: source, timestamp: timestamp) {
                 return chunk
             }
-            readError = CocoaError(.fileReadCorruptFile)
-            return nil   // never silently omit an unreadable block from a replacement transcript
+            throw CocoaError(.fileReadCorruptFile)   // never present a failed conversion as a complete import
         }
     }
 

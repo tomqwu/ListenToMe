@@ -251,3 +251,13 @@ shasum -a 256 dist/ListenToMe-<version>.dmg "$DL/ListenToMe-<version>.dmg"   # m
 gh release view v<version> --json tagName,targetCommitish,isDraft,isPrerelease
 git ls-remote --tags origin 'v<version>' 'v<version>^{}'   # must resolve to the artifact source commit
 ```
+
+
+### Build product and signing guards (#141)
+
+The release helper requires the app at the selected DerivedData configuration's exact build-product
+path. A Debug or unrelated app is never a fallback for a missing Release app. Nested frameworks and
+dynamic libraries are signed depth-first before their enclosing bundle; traversal/signing failure
+stops the release. `scripts/test-release-paths.py` exercises these guards without real signing.
+`make e2e` additionally requires at least one passing XCTest case from each requested real-contract
+suite; empty discovery and all-skipped runs fail even if the test process exits successfully.

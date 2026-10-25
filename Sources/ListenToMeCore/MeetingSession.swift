@@ -32,12 +32,12 @@ public final class MeetingSession {
     /// system-audio stream. The UI shows this as a visible alert instead of a grey caption, because
     /// the rail keeps saying Recording and the elapsed timer keeps counting (issue #107).
     public var captureDegraded: Bool { !degradedSources.isEmpty }
-    public private(set) var transcriptionStatus = "Transcription: idle"
+    public internal(set) var transcriptionStatus = "Transcription: idle"
     public var captureStatus: String {
         "Mic: \(captureMessages[.you] ?? "idle") · System: \(captureMessages[.others] ?? "idle")"
     }
     private var captureStatusTask: Task<Void, Never>?
-    private var transcriptionStatusTask: Task<Void, Never>?
+    var transcriptionStatusTask: Task<Void, Never>?
 
     /// Forces all AI replies (Listener/Quick/Deep) into this language, e.g. "Simplified Chinese";
     /// nil/empty leaves the model free to match the conversation. Set from the UI's Settings.
@@ -136,7 +136,9 @@ public final class MeetingSession {
     public func roleStatus(_ role: CopilotRole) -> String? { roleActivity[role] }
 
     /// True while an imported audio file is being transcribed into the store.
-    public private(set) var isTranscribingFile = false
+    public internal(set) var isTranscribingFile = false
+    /// A decode failure or cancellation left only part of an imported file in this conversation.
+    public internal(set) var hasIncompleteImport = false
 
     /// Where the current recording starts on the conversation's timeline (review of #233): each
     /// capture's engine times restart at zero, so its timed lines are moved past the end of the
@@ -165,13 +167,13 @@ public final class MeetingSession {
 
     private var context: ContextEngine
     private let makeCapture: @Sendable () -> any AudioCapturing
-    private let makeTranscriber: @Sendable () -> any Transcribing
+    let makeTranscriber: @Sendable () -> any Transcribing
     let providerAvailability: @Sendable (String) -> String?
     private let makeProvider: @Sendable (String) -> any LLMProvider
     var providers: [CopilotRole: any LLMProvider]
     private var capture: (any AudioCapturing)?
     private var transcriber: (any Transcribing)?
-    private let clock: @Sendable () -> TimeInterval
+    let clock: @Sendable () -> TimeInterval
     /// See `drain(_:grace:)`. Injectable so a test's own per-chunk feed cost can't race the
     /// default deadline (issue #147).
     private let capturePumpDrainGrace: Duration
@@ -190,7 +192,7 @@ public final class MeetingSession {
     private var segmentPump: Task<Void, Never>?
     /// In-flight transcriber teardown from the last stop. `start()` awaits it before creating a new
     /// transcriber so a quick restart can't run two transcribers at once (SFSpeechRecognizer 1100).
-    private var stopDrain: Task<Void, Never>?
+    var stopDrain: Task<Void, Never>?
     /// In-flight automatic (proactive) Quick fire started from `ingest`.
     private var proactiveTask: Task<Void, Never>?
     private var responseTasks: [CopilotRole: Task<Void, Never>] = [:]
@@ -257,6 +259,7 @@ public final class MeetingSession {
         guard !isRunning, !isTranscribingFile, record.segments != nil || record.transcript.isEmpty else { return false }
         resetConversation()
         store.restore(record.segments ?? [])
+        hasIncompleteImport = record.hasIncompleteImport == true
         notes = record.notes ?? ""
         summaryInstructions = record.summaryInstructions ?? ""
         listenerSummary = record.summary
@@ -272,7 +275,7 @@ public final class MeetingSession {
         // No proactive task needs cancelling here: `ingest` only fires while running, and `stop()`
         // (which must precede a reset) already cancelled it.
         quickReader.reset(); handleLiveEvent(.conversationChanged)
-        store.reset(); recordingOffset = 0
+        store.reset(); recordingOffset = 0; hasIncompleteImport = false
         notes = ""; summaryInstructions = ""; referenceContext = nil
         listenerSummary = ""; quickSuggestion = ""; quickRecap = ""; deepAnswer = ""
         roleErrors = [:]; roleActivity = [:]; roleNoticeRecords = [:]; pendingGrounding = [:]
@@ -428,7 +431,7 @@ public final class MeetingSession {
     /// has no documented cancellation guarantee), and the import path's caller cancels the task and
     /// then awaits it — so a plain `await prepare()` could still block for the whole download.
     /// The abandoned child task is cancelled and left to unwind on its own (issue #99).
-    private static func prepareRacingCancellation(_ transcriber: any Transcribing) async {
+    static func prepareRacingCancellation(_ transcriber: any Transcribing) async {
         let done = DoneFlag()
         let task = Task { await transcriber.prepare(); done.set() }
         while !done.value {
@@ -507,73 +510,12 @@ public final class MeetingSession {
 }
 
 extension MeetingSession {
-    // MARK: - Audio file transcription
-
-    /// Transcribes audio pulled from `nextChunk` (e.g. an imported file) into the store, independent
-    /// of live capture. `nextChunk` is called one chunk at a time and returns nil at end of input,
-    /// so the transcriber's feed rate paces reading (no unbounded buffering). Creates its own
-    /// transcriber, drains its segments into the store live, and finishes when input ends. Re-entry
-    /// is ignored, and it waits for any prior transcriber to finish draining so two transcribers
-    /// never run at once (avoids SFSpeechRecognizer's 1100 overlap error).
-    ///
-    /// `transcriber` lets the caller force a batch-friendly engine for imports (SpeechAnalyzer
-    /// finalizes all fed audio, so fast-feeding is lossless); when nil the session's live factory
-    /// is used.
-    public func transcribeAudio(
-        nextChunk: @escaping @Sendable () async -> AudioChunk?,
-        transcriber makeTranscriber: (@Sendable () -> any Transcribing)? = nil
-    ) async {
-        guard !isTranscribingFile, !isRunning else { return }
-        isTranscribingFile = true
-        defer { isTranscribingFile = false }
-        await stopDrain?.value
-        stopDrain = nil
-        startRecordingTimeline()
-        let transcriber = (makeTranscriber ?? self.makeTranscriber)()
-        await transcriber.setContextualStrings(contextualStrings)
-        transcriptionStatusTask?.cancel()
-        transcriptionStatusTask = Task {
-            for await status in transcriber.statusUpdates { self.transcriptionStatus = status }
-        }
-        defer { transcriptionStatusTask?.cancel() }
-        let segmentStream = transcriber.segments
-        let drain = Task { [weak self] in
-            for await segment in segmentStream {
-                self?.applyTranscribedSegment(segment)
-            }
-        }
-        // Warm the pipeline before reading the file so the first chunks don't sit behind one-time
-        // model setup, and so a cancelled import isn't stuck inside `feed`. Waited for through
-        // `prepareRacingCancellation` because the caller (window close) cancels the import task and
-        // then awaits it: we must return as soon as we're cancelled even if the platform's download
-        // call ignores cancellation.
-        await Self.prepareRacingCancellation(transcriber)
-        // Pace by audio duration so a long file can't be read into the transcriber's queue far
-        // faster than it's processed: cap how far (in audio seconds) reading runs ahead of an
-        // 8x-realtime budget. The clock starts AFTER the first feed so one-time SpeechAnalyzer
-        // model setup/download isn't credited as throughput. Stops promptly on cancellation.
-        var startWall = clock()
-        var audioSecondsFed = 0.0
-        var pacing = false
-        while !Task.isCancelled, let chunk = await nextChunk() {
-            await transcriber.feed(chunk)
-            if !pacing { startWall = clock(); pacing = true; continue }   // exclude setup time
-            audioSecondsFed += Double(chunk.samples.count) / max(chunk.sampleRate, 1)
-            let lead = audioSecondsFed - (clock() - startWall) * 8.0
-            if lead > 8.0 {
-                try? await Task.sleep(nanoseconds: UInt64(min(lead, 5.0) * 1_000_000_000))
-            }
-        }
-        await transcriber.finish()
-        await drain.value
-    }
-
-    private func applyTranscribedSegment(_ segment: TranscriptSegment) {
+    func applyTranscribedSegment(_ segment: TranscriptSegment) {
         store.apply(segment.shifted(by: recordingOffset))
     }
 
     /// A new recording continues after the conversation's last timed line.
-    private func startRecordingTimeline() {
+    func startRecordingTimeline() {
         recordingOffset = store.utterances.filter(TranscriptTimestamp.isTimed).map(\.end).max() ?? 0
     }
 

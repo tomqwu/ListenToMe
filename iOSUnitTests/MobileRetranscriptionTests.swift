@@ -35,10 +35,10 @@ final class MobileRetranscriptionTests: XCTestCase {
         }
         let reader = try XCTUnwrap(AudioFileChunkProducer(url: url, source: .others))
         var samples = 0
-        while let chunk = await reader.next() { samples += chunk.samples.count; XCTAssertEqual(chunk.source, .others) }
+        while let chunk = try await reader.next() { samples += chunk.samples.count; XCTAssertEqual(chunk.source, .others) }
         XCTAssertEqual(samples, Int(frames))
-        let error = await reader.failure()
-        XCTAssertNil(error, "Normal AAC EOF must not be reported as a failed re-transcription")
+        let eof = try await reader.next()
+        XCTAssertNil(eof, "Normal AAC EOF must not be reported as a failed re-transcription")
     }
 
     func testApplyPreservesNotesAndSummariesAndRejectsStalePreview() throws {

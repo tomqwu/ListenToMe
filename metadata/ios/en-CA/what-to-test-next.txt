@@ -27,3 +27,6 @@ Ollama settings: try a plain-HTTP public or VPN IP address; the previous server 
 Speaker lifecycle (#188): with speaker models ready, stop a recording and immediately background the app while final labeling runs. Return and begin another recording. Stop and backgrounding must remain responsive; old labeling must not change the new recording. Keep the app open after Stop when you want the final pass to finish.
 
 Live summaries (#164): during a long recording, use Summary, Quick and Ask while speech is still unfinished. Very short hypotheses should be omitted; longer hypotheses should inform the answer without becoming a confirmed decision. Finalize or correct the words, rename a speaker, edit Notes and reopen the conversation; the next request must use the current text. Confirm original transcript wording remains in exports.
+Review follow-ups (#141): Export speech containing Markdown links/brackets and check it stays literal.
+Try a cold local Ollama model; manual requests allow five minutes while cloud timeouts stay unchanged.
+Reopen and rename a partially imported Mac conversation on iPhone; its incomplete state must persist.

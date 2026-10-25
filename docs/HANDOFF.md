@@ -275,3 +275,25 @@ Summary simulator journey now verifies provisional request tagging and removal a
 all five focused checks passed at `00cc28f`, and both native-resolution screenshots were inspected.
 Current-main integration lint/Core (1,061 tests, seven skips, 98.1056%) and all three hosted checks passed.
 Physical-device acceptance and publication remain pending. Evidence: `dist/live-snapshot-164`.
+
+### #141 review follow-ups — implementation candidate, October 25
+
+Working branch `codex/141-review-followups` addresses discovery uncertainty, MiniMax ranking, cold
+local requests, import errors and legacy finalization, headings, symlink attachments, overlapping
+calendar events, exact release product/depth-first signing, literal transcript Markdown, PCM failure
+checks/minimal screen video work, and non-vacuous real-contract gates. Core capture-start and late
+provider-failure regressions supplement the existing provider-error coverage. Incomplete imports are
+persisted across record edits and both platforms. Focused tests and 1,075 Core tests passed (seven
+intentional skips), 98.1971% line coverage; lint, nine release-helper regressions, signed Mac build
+and iOS test build passed. Independent review found an AAC read-past-EOF error, now corrected and
+reviewed clear with a compressed-file regression added. Full validation, AAC runtime test and
+installed Mac GUI/OTHERS acceptance remain pending. No merge or publication is claimed. Mac remains locked; no permission reset was attempted.
+
+### Saved-audio re-transcription integration (#224) — October 25
+
+The candidate now includes current main and the #141 review fixes. Its WhisperKit file consumer
+uses the shared throwing audio reader, and cancels the transcriber and drains its output task on
+read or recognition failure before reporting the error. Normal AAC EOF remains successful.
+The merge preserves #164's live snapshot invalidation alongside #141's incomplete-import state.
+Earlier full validation remains recorded above; new integration checks and the required native
+OTHERS acceptance are pending. No merge or publication is claimed.
