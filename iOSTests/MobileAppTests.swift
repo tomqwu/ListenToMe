@@ -240,6 +240,9 @@ final class MobileAppTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["savedAPIKey"].waitForExistence(timeout: 3))
         app.secureTextFields["ollamaAPIKey"].tap()
         app.secureTextFields["ollamaAPIKey"].typeText("replacement-ui-key")
+        app.secureTextFields["ollamaAPIKey"].typeText("\n")
+        expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: app.keyboards.firstMatch)
+        waitForExpectations(timeout: 5)
         let form = app.collectionViews["aiSettingsForm"]
         let saveAndTest = app.buttons["Save key and test connection"]
         revealSettingsControl(saveAndTest, in: form)
