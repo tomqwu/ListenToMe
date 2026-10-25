@@ -44,6 +44,7 @@ enum OllamaModels {
         var verifiedLocal: Set<String> = []
         var unverified: Set<String> = []
         var catalogFailed = false
+        var localReadiness: LocalOllamaReadiness?
         /// Why the list is empty, when the route can say (OpenAI-compatible servers, issue #52).
         var problem: String?
     }
@@ -53,9 +54,13 @@ enum OllamaModels {
     static func chatModels(baseURL: URL = URL(string: "http://localhost:11434")!,
                            apiKey: String? = nil, localOnly: Bool = false) async -> Discovery {
         guard let names = await installed(baseURL: baseURL, apiKey: apiKey) else {
-            return Discovery(catalogFailed: true, problem: "Could not load the model catalog. Pinned choices are kept; retry Refresh models.")
+            return Discovery(catalogFailed: true,
+                             localReadiness: localOnly ? LocalOllamaReadiness(installed: nil) : nil,
+                             problem: "Could not load the model catalog. Pinned choices are kept; retry Refresh models.")
         }
-        guard !names.isEmpty else { return Discovery() }
+        guard !names.isEmpty else {
+            return Discovery(localReadiness: localOnly ? LocalOllamaReadiness(installed: []) : nil)
+        }
 
         // Probe each model concurrently, preserving input order.
         let capabilities: [Capability] = await withTaskGroup(of: (Int, Capability).self) { group in
@@ -74,6 +79,8 @@ enum OllamaModels {
         let unverified = Set(zip(names, capabilities).filter { $0.1.status == .unverified }.map(\.0))
         return Discovery(names: chat.map(\.0),
                          verifiedLocal: Set(chat.filter { $0.1.verifiedLocal }.map(\.0)), unverified: unverified,
+                         localReadiness: localOnly ? LocalOllamaReadiness(installed: names, available: chat.map(\.0),
+                                                                       unverified: unverified) : nil,
                          problem: unverified.isEmpty ? nil
                             : "\(unverified.count) model(s) could not be verified. Pinned choices are kept; retry Refresh models.")
     }

@@ -13,6 +13,9 @@ struct OnboardingView: View {
     @State private var permissions = PermissionsModel()
     @State private var aiMode = ProviderSettings.aiMode
     @State private var saveError: String?
+    @State private var localReadiness: LocalOllamaReadiness?
+    @State private var checkingLocal = false
+    @State private var localCheckID = UUID()
     @State private var originalKey = KeychainStore.get("ollama") ?? ""
     @State private var ollamaKey = KeychainStore.get("ollama") ?? ""
 
@@ -137,6 +140,18 @@ struct OnboardingView: View {
                 Picker("AI processing", selection: $aiMode) {
                     ForEach(AIProcessingMode.allCases, id: \.self) { Text($0.label).tag($0) }
                 }
+                if aiMode == .local {
+                    VStack(alignment: .leading, spacing: 8) {
+                        if checkingLocal { ProgressView("Checking local Ollama…") }
+                        if let readiness = localReadiness {
+                            Label(readiness.message, systemImage: readiness.status == .ready ? "checkmark.circle" : "exclamationmark.circle")
+                                .foregroundStyle(readiness.status == .ready ? Color.green : Color.orange)
+                                .fixedSize(horizontal: false, vertical: true)
+                            LocalOllamaHelp(readiness: readiness) { Task { await checkLocalOllama() } }
+                                .disabled(checkingLocal)
+                        }
+                    }
+                }
                 Text("Ollama Cloud API key").fontWeight(.medium)
                 SecureField("Paste an ollama.com API key", text: $ollamaKey)
                     .textFieldStyle(.roundedBorder)
@@ -151,6 +166,20 @@ struct OnboardingView: View {
                 .fixedSize(horizontal: false, vertical: true)
             }
         }
+        .task(id: aiMode) {
+            if aiMode == .local { await checkLocalOllama() }
+        }
+    }
+
+    private func checkLocalOllama() async {
+        let token = UUID()
+        localCheckID = token
+        localReadiness = nil
+        checkingLocal = true
+        defer { if localCheckID == token { checkingLocal = false } }
+        let discovery = await OllamaModels.chatModels(localOnly: true)
+        guard localCheckID == token, !Task.isCancelled, aiMode == .local else { return }
+        localReadiness = discovery.localReadiness
     }
 
     private var getStartedStep: some View {
