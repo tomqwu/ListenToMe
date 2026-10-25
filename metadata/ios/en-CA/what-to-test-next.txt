@@ -16,6 +16,12 @@ Watch development builds (#225): test reconnect transfer, Save audio recordings 
 
 Automatic language (#216): speak continuously in a different language when the starting transcriber produces no words. Confirm detection and later re-checks still occur. Silence and isolated sounds should not start checks or a first model download. Check Undo, Low Power Mode, returning from background and Stop during model preparation.
 
+History index reuse (#223, partial): save a long conversation, add or edit its summary/notes, then search and Ask your history again. Matching excerpts must reflect current text and positions, including after relaunch. Delete the conversation and confirm it disappears. Existing indexes rebuild once; supported semantic languages are unchanged.
+
 Custom server context (#210): choose 4K in Server context window, then request a summary of oversized notes. Confirm the configured-limit error appears before the server receives a request. A short request should still work. Switch to a different API URL and verify Unknown, then switch back and verify 4K survives relaunch. On Mac, verify trimming notices for older context and a clear error when the remaining request still cannot fit.
 
 Ollama settings: try a plain-HTTP public or VPN IP address; the previous server must stay selected. HTTPS and .local addresses remain accepted. Paste a URL with a path/query and verify the origin-only notice without revealing query contents.
+
+Speaker lifecycle (#188): with speaker models ready, stop a recording and immediately background the app while final labeling runs. Return and begin another recording. Stop and backgrounding must remain responsive; old labeling must not change the new recording. Keep the app open after Stop when you want the final pass to finish.
+
+Live summaries (#164): during a long recording, use Summary, Quick and Ask while speech is still unfinished. Very short hypotheses should be omitted; longer hypotheses should inform the answer without becoming a confirmed decision. Finalize or correct the words, rename a speaker, edit Notes and reopen the conversation; the next request must use the current text. Confirm original transcript wording remains in exports.

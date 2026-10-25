@@ -342,10 +342,15 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   is detected with `NLLanguageRecognizer`. It then stores a vector per passage from `NLEmbedding`: the mean of its nouns'
   word vectors (verbs, auxiliaries and nouns every meeting uses, such as "meeting" or "week", are left
   out), or the sentence model where only that exists. Small talk with fewer than three such words gets
-  no vector. Only vectors, passage numbers and a fingerprint are stored — the text stays in the
+  no vector. Only vectors, passage numbers and conversation/passage fingerprints are stored — the text stays in the
   archive — in `Search Index/` beside `Conversations/`, always excluded from backup, versioned (a new
   format or embedding method rebuilds it), and any damaged file is re-embedded. It is reconciled with
   the archive after a reload and updated a few seconds after saving stops, off the main thread.
+  Unchanged passages reuse their stored vectors even when an inserted summary changes their positions;
+  text, source, transcription-language or embedding-method changes invalidate reuse. Format 2 rebuilds
+  older indexes once. Duplicate passages share one embedding attempt per changed save, including when
+  a model is unavailable; unavailable passages are retried on a later changed save. This reduces repeated
+  embedding work without changing semantic language coverage (#223).
 - **Deletion.** A deleted conversation's vectors are removed at once by its `conversationDataOwners`
   entry (`forgetSearchIndex(ids:everything:)`), so Delete and Delete all conversations (#220) both
   take them. A sync still running stops at its next conversation and never embeds a deleted one again.
@@ -502,7 +507,10 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   their label and name (#171). A centroid learns only from speech no earlier pass heard. The embeddings
   live in memory for the recording only and are never saved. Stop returns at once; a final pass then labels the last words while the
   app stays open, queued behind any pass still running, and its result is dropped if a
-  new recording or another conversation has started. The final pass is skipped while the models have
+  new recording or another conversation has started. Backgrounding also cancels an already-started
+  final pass and clears the recording buffer without waiting. Model work already in flight may finish
+  with its temporary input copy, but its result is discarded; queued passes retain their original
+  recording token and cannot analyze a later run (#188). The final pass is skipped while the models have
   not loaded yet, so Stop never starts or waits for the download; with the models ready, a recording
   shorter than the first periodic pass is labeled at Stop (#195). On every periodic tick, audio no later window can reach is released, so
   at most ten minutes (about 38 MB) is held even when passes keep failing, and only the last minute
@@ -518,7 +526,7 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   you tap **Retry** or start a new recording. Limits: overlapping speech and short utterances are
   often left as **Microphone** or attributed to whoever spoke longest; a voice is not recognized
   across recordings, so after Stop/Listen (or an interruption) new voices continue the numbering
-  (Speaker 3, 4…) and can be renamed to merge them; backgrounding ends identification at once without a final pass;
+  (Speaker 3, 4…) and can be renamed to merge them; backgrounding ends the labeling run without awaiting model work;
   more than two hours of one recording is not analyzed further.
 - Automatic titles (#221): after Stop, Save, a finished Apple Watch recording or a return to the
   foreground, a conversation still named "New conversation" or "Apple Watch · <date>" with about
@@ -1471,3 +1479,12 @@ check the complete system/messages using conservative UTF-8 byte budgeting befor
 oversized text fails locally, including Unicode-heavy input. This is a conservative estimate, not
 a tokenizer guarantee. Unknown retains the previous request behavior. No credentials or audio
 are changed, and this setting applies only to Custom server, not cloud vendor presets.
+
+### Live summary snapshots and unfinished speech (#164)
+
+Repeated live events reuse their summary input until finalized speech, speaker labels, the current
+hypothesis or notes change. Manual Summary, Quick Summary and Ask require at least 24 trimmed
+characters before using unfinished speech. They mark it as provisional and instruct the model not
+to record it as a decision, owner, deadline or action item. The marker and instruction count toward
+the prompt budget; a shortened hypothesis keeps its marker. Saved transcripts and exports retain
+the recognizer's original text.
