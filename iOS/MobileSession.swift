@@ -409,6 +409,10 @@ final class MobileSession {
     /// The user has seen the note about a set-aside file and dismissed it.
     func dismissArchiveWarning() { archiveWarning = nil }
 
+}
+
+// Storage policy is independent of capture lifecycle.
+extension MobileSession {
     /// Applies the current backup choice to everything a conversation is made of. Re-applied after
     /// each toggle and at launch, because a directory recreated later starts without the flag.
     func applyBackupExclusion() {
