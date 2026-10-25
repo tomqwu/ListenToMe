@@ -1,0 +1,1125 @@
+{
+  "feature": "Combined release integration of existing pull requests",
+  "scenarios": [
+    {
+      "id": "BATCH-303",
+      "name": "Preserve capture and conversation ownership during orchestration changes",
+      "given": "a recording, summary, naming or checkpoint operation is pending",
+      "when": "Stop, New, restart or a newer generation supersedes it",
+      "then": "old completions cannot restart capture, overwrite a newer conversation or corrupt saved state",
+      "covers": [
+        "App/MeetingView+AutoTitle.swift",
+        "App/MeetingView+Capture.swift",
+        "App/MeetingView+Conversations.swift",
+        "App/MeetingView+Speakers.swift",
+        "App/MeetingView.swift",
+        "App/SessionStore.swift",
+        "SharedPlatform/MarkdownText.swift",
+        "Sources/ListenToMeCore/CaptureCoordinator.swift",
+        "Sources/ListenToMeCore/ConversationCheckpointCoordinator.swift",
+        "Sources/ListenToMeCore/ConversationRepository.swift",
+        "Sources/ListenToMeCore/ConversationTitleCoordinator.swift",
+        "Sources/ListenToMeCore/PromptBuilder+Summary.swift",
+        "Sources/ListenToMeCore/SpeakerPassCoordinator.swift",
+        "iOS/MobileSession+AutoTitle.swift",
+        "iOS/MobileSession+Capture.swift",
+        "iOS/MobileSession+Summarize.swift",
+        "iOS/MobileSession.swift",
+        "iOS/MobileSummaryMode.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CaptureCoordinatorTests.swift",
+          "test": "CaptureCoordinatorTests/testConcurrentStopsDrainOnceAndFenceLateEvents"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CaptureCoordinatorTests.swift",
+          "test": "CaptureCoordinatorTests/testStopDuringUncooperativePreparationNeverStartsAndCleansUpOnce"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CaptureCoordinatorTests.swift",
+          "test": "CaptureCoordinatorTests/testLateStartCompletionAfterStopCannotEnterRecording"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CaptureCoordinatorTests.swift",
+          "test": "CaptureCoordinatorTests/testStartAndStopFailuresRemainDistinctAndAllowRetry"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CaptureCoordinatorTests.swift",
+          "test": "CaptureCoordinatorTests/testFinalCheckpointCannotReenterStartBeforeCleanup"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CaptureRestartTests.swift",
+          "test": "CaptureRestartTests/testStopInterruptsPreparationThatIgnoresTaskCancellation"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CaptureRestartTests.swift",
+          "test": "CaptureRestartTests/testNewestRestartWinsAndPreservesIntentThroughOldDrain"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CaptureRestartTests.swift",
+          "test": "CaptureRestartTests/testStopDuringRestartNeverResumesRecordingAndAwaitsCheckpoint"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CaptureRestartTests.swift",
+          "test": "CaptureRestartTests/testRestartFailureClearsIntentAndAllowsFreshStart"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CaptureRestartTests.swift",
+          "test": "CaptureRestartTests/testStopCheckpointRunsBeforeAnotherStartAndBackgroundDoesNotHoldCapture"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CaptureRestartTests.swift",
+          "test": "CaptureRestartTests/testReentrantStopCompletionCannotStopAFutureRun"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationCheckpointCoordinatorTests.swift",
+          "test": "ConversationCheckpointCoordinatorTests/testDisabledOrEmptyCheckpointDoesNotReadOrBuildContent"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationCheckpointCoordinatorTests.swift",
+          "test": "ConversationCheckpointCoordinatorTests/testFailedWriteRetriesSameKeyAndOnlySuccessfulWritePinsDate"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationCheckpointCoordinatorTests.swift",
+          "test": "ConversationCheckpointCoordinatorTests/testUnchangedSkipsAssemblyButCompletionAndForcePersistWithOriginalDate"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationCheckpointCoordinatorTests.swift",
+          "test": "ConversationCheckpointCoordinatorTests/testFailedUpdateDoesNotAcknowledgeNewContentOrChangeExistingStart"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationCheckpointCoordinatorTests.swift",
+          "test": "ConversationCheckpointCoordinatorTests/testResetDropsDirtyMarkerAndPreservesReopenedDateWithoutBypassingPrivacy"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationRepositoryTests.swift",
+          "test": "ConversationRepositoryTests/testSaveReplaceReloadAndClearPublishDurableSnapshotsInOrder"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationRepositoryTests.swift",
+          "test": "ConversationRepositoryTests/testUnavailableArchiveDoesNotPublishOrRunDestructiveOwners"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationRepositoryTests.swift",
+          "test": "ConversationRepositoryTests/testDamagedRecordWarningStaysUntilDismissedAndGoodHistoryRemains"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationTitleCoordinatorTests.swift",
+          "test": "ConversationTitleCoordinatorTests/testRepeatedRequestsJoinOneGenerationAndApplyOnce"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationTitleCoordinatorTests.swift",
+          "test": "ConversationTitleCoordinatorTests/testCancelledOldTaskCannotClearOrApplyOverNewGeneration"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationTitleCoordinatorTests.swift",
+          "test": "ConversationTitleCoordinatorTests/testConversationsFinishIndependentlyAndCancellationIsScoped"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationTitleCoordinatorTests.swift",
+          "test": "ConversationTitleCoordinatorTests/testNoTitleRecordsAttemptAndTypedCalendarOrPartialOnlyTextNeverStarts"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationTitleCoordinatorTests.swift",
+          "test": "ConversationTitleCoordinatorTests/testDefaultGeneratorUsesExistingSummaryWithoutAProvider"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SpeakerPassCoordinatorTests.swift",
+          "test": "SpeakerPassCoordinatorTests/testResetDuringUncooperativePreparationNeverEntersOldAnalysis"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SpeakerPassCoordinatorTests.swift",
+          "test": "SpeakerPassCoordinatorTests/testCancelledInFlightAnalysisCannotClearReplacementTask"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SpeakerPassCoordinatorTests.swift",
+          "test": "SpeakerPassCoordinatorTests/testWaitingForOldPassDoesNotWaitForLaterRecording"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SpeakerPassCoordinatorTests.swift",
+          "test": "SpeakerPassCoordinatorTests/testCancellationBeforeTaskStartsSkipsPreparationAndOperation"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SpeakerPassCoordinatorTests.swift",
+          "test": "SpeakerPassCoordinatorTests/testWaitDrainsObservedPassAndDirectCancellationClearsOwnership"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SummaryPromptTests.swift",
+          "test": "SummaryPromptTests/testSummaryKeepsTypedNotesDistinctAndFencesHostileTranscript"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SummaryPromptTests.swift",
+          "test": "SummaryPromptTests/testFencingAndGuidanceBothCountAgainstWholeConversationLimit"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SummaryPromptTests.swift",
+          "test": "SummaryPromptTests/testQuickProseKeepsItsConciseEvidenceContract"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileCaptureCoordinatorTests.swift",
+          "test": "MobileCaptureCoordinatorTests/testOldRecorderCannotAppendOrStopTheNextRun"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileCaptureCoordinatorTests.swift",
+          "test": "MobileCaptureCoordinatorTests/testConcurrentStopWaitsForFinalTextAndSavesCompleteRecord"
+        }
+      ],
+      "manual": {
+        "reason": "Existing draft implementation is adopted into the combined train with no invented historical red. Native rendered UI/audio and device acceptance remain separate from these bound regressions.",
+        "steps": [
+          "Run the bound native methods and review their assertions against the outcome.",
+          "Exercise affected installed-app flows; keep physical Watch pairing and real OTHERS audio evidence separate."
+        ]
+      }
+    },
+    {
+      "id": "BATCH-296",
+      "name": "Validate summary cards against literal transcript evidence",
+      "given": "a structured summary includes source references",
+      "when": "the response is rendered or saved and reopened",
+      "then": "validated cards preserve literal sources and malformed or unsupported references fall back to readable text",
+      "covers": [
+        "App/CommandCenter.swift",
+        "App/MeetingView+Export.swift",
+        "App/MeetingView.swift",
+        "App/SituationGridView.swift",
+        "Sources/ListenToMeCore/ConversationLanguages.swift",
+        "Sources/ListenToMeCore/ConversationTitleState.swift",
+        "Sources/ListenToMeCore/MeetingSession+AutomaticReviews.swift",
+        "Sources/ListenToMeCore/MeetingSession+Output.swift",
+        "Sources/ListenToMeCore/MeetingSession+SituationGrid.swift",
+        "Sources/ListenToMeCore/MeetingSession.swift",
+        "Sources/ListenToMeCore/SessionSearch.swift",
+        "Sources/ListenToMeCore/SituationGrid.swift",
+        "iOS/MobileSession+WatchInbox.swift",
+        "iOS/MobileSession.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SituationGridTests.swift",
+          "test": "SituationGridTests/testValidGridKeepsLiteralSourcesAndSurvivesArchiveRetitleAndLanguageCopy"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SituationGridTests.swift",
+          "test": "SituationGridTests/testInvalidReferencesOwnersAndMalformedOutputFallBack"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSituationGridTests.swift",
+          "test": "MobileSituationGridTests/testRestoreSavePreservesGridUntilSummaryOrEvidenceChanges"
+        }
+      ],
+      "manual": {
+        "reason": "Existing draft implementation is adopted into the combined train with no invented historical red. Native rendered UI/audio and device acceptance remain separate from these bound regressions.",
+        "steps": [
+          "Run the bound native methods and review their assertions against the outcome.",
+          "Exercise affected installed-app flows; keep physical Watch pairing and real OTHERS audio evidence separate."
+        ]
+      }
+    },
+    {
+      "id": "BATCH-295",
+      "name": "Suggest current meetings only with explicit consent",
+      "given": "calendar suggestion is opted in and permission already exists",
+      "when": "an idle empty conversation checks overlapping current meetings or a dismissed occurrence",
+      "then": "only eligible events are offered, dismissals persist and recording requires the explicit user action",
+      "covers": [
+        "App/CalendarService.swift",
+        "App/MeetingView+Suggestions.swift",
+        "App/MeetingView.swift",
+        "App/SettingsView.swift",
+        "Sources/ListenToMeCore/MeetingInfo.swift",
+        "Sources/ListenToMeCore/MeetingSuggestionPolicy.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/MeetingSuggestionPolicyTests.swift",
+          "test": "MeetingSuggestionPolicyTests/testEligibilityRequiresOptInIdleAndCurrentEventAndGrantedLookup"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/MeetingSuggestionPolicyTests.swift",
+          "test": "MeetingSuggestionPolicyTests/testDismissalSurvivesReloadButNotNextOccurrenceOrDifferentEvent"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/MeetingSuggestionPolicyTests.swift",
+          "test": "MeetingSuggestionPolicyTests/testDismissalsAreBoundedAndExpiredEntriesArePruned"
+        }
+      ],
+      "manual": {
+        "reason": "Existing draft implementation is adopted into the combined train with no invented historical red. Native rendered UI/audio and device acceptance remain separate from these bound regressions.",
+        "steps": [
+          "Run the bound native methods and review their assertions against the outcome.",
+          "Exercise affected installed-app flows; keep physical Watch pairing and real OTHERS audio evidence separate."
+        ]
+      }
+    },
+    {
+      "id": "BATCH-294",
+      "name": "Keep explicit multilingual Whisper model choices",
+      "given": "Tiny, Base or Small is selected",
+      "when": "the preference is reopened or a model is loaded",
+      "then": "the choice persists and a different or English-only variant cannot silently replace it",
+      "covers": [
+        "App/MeetingView.swift",
+        "App/SettingsView.swift",
+        "App/WhisperKitTranscriber.swift",
+        "Sources/ListenToMeCore/WhisperModelChoice.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/WhisperModelChoiceTests.swift",
+          "test": "WhisperModelChoiceTests/testSelectionPersistsAndInvalidPreferencesKeepBase"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/WhisperModelChoiceTests.swift",
+          "test": "WhisperModelChoiceTests/testOnlyRequestedMultilingualVariantIsAccepted"
+        }
+      ],
+      "manual": {
+        "reason": "Existing draft implementation is adopted into the combined train with no invented historical red. Native rendered UI/audio and device acceptance remain separate from these bound regressions.",
+        "steps": [
+          "Run the bound native methods and review their assertions against the outcome.",
+          "Exercise affected installed-app flows; keep physical Watch pairing and real OTHERS audio evidence separate."
+        ]
+      }
+    },
+    {
+      "id": "BATCH-293",
+      "name": "Show current measured levels and request timing",
+      "given": "audio samples and AI streams arrive asynchronously",
+      "when": "capture drains a backlog or a request completes, fails, cancels or is replaced",
+      "then": "levels preserve capture-time freshness and timing belongs only to the current response",
+      "covers": [
+        "App/CommandCenter.swift",
+        "App/CommandCenterPanes.swift",
+        "App/DualChannelCapture.swift",
+        "App/LiveMetricsViews.swift",
+        "Sources/ListenToMeCore/LiveAudioLevels.swift",
+        "Sources/ListenToMeCore/MeetingSession+AutomaticReviews.swift",
+        "Sources/ListenToMeCore/MeetingSession+Output.swift",
+        "Sources/ListenToMeCore/MeetingSession.swift",
+        "Sources/ListenToMeCore/Models.swift",
+        "Sources/ListenToMeCore/ResponseTimings.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/LiveMetricsTests.swift",
+          "test": "LiveMetricsTests/testPCMLevelsDistinguishSilenceMissingAndSeparateSources"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/LiveMetricsTests.swift",
+          "test": "LiveMetricsTests/testHeldFeedDoesNotMakeBufferedOldAudioFreshWhenItDrains"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/LiveMetricsTests.swift",
+          "test": "LiveMetricsTests/testTimingForwardsContentAndDistinguishesThinkingFromFirstAnswer"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/LiveMetricsTests.swift",
+          "test": "LiveMetricsTests/testFailureAndEmptyCompletionHaveNoFirstContent"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/LiveMetricsTests.swift",
+          "test": "LiveMetricsTests/testOldResponseCannotOverwriteReplacementOrRepopulateReset"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/LiveMetricsTests.swift",
+          "test": "LiveMetricsTests/testCancellationIsNotCompletedAndCaptureMeterUsesPCM"
+        }
+      ],
+      "manual": {
+        "reason": "Existing draft implementation is adopted into the combined train with no invented historical red. Native rendered UI/audio and device acceptance remain separate from these bound regressions.",
+        "steps": [
+          "Run the bound native methods and review their assertions against the outcome.",
+          "Exercise affected installed-app flows; keep physical Watch pairing and real OTHERS audio evidence separate."
+        ]
+      }
+    },
+    {
+      "id": "BATCH-291",
+      "name": "Preserve capture timestamps and transcript reading position",
+      "given": "audio from both sources is delayed and transcript content grows",
+      "when": "results arrive, capture restarts, or the user scrolls and resumes Latest",
+      "then": "reported times retain their source clock and following changes only from user intent",
+      "covers": [
+        "App/CommandCenterPanes.swift",
+        "App/DualChannelCapture.swift",
+        "App/MeetingView+Conversations.swift",
+        "App/MeetingView.swift",
+        "App/SpeakerBreakdownView.swift",
+        "App/SpeechAnalyzerTranscriber.swift",
+        "Sources/ListenToMeCore/CaptureTimeline.swift",
+        "Sources/ListenToMeCore/TranscriptFollowState.swift",
+        "Sources/ListenToMeCore/TranscriptTimestamp.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CaptureTimelineTests.swift",
+          "test": "CaptureTimelineTests/testDelayedTwoSourceBuffersRetainCaptureTimesAndGaps"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CaptureTimelineTests.swift",
+          "test": "CaptureTimelineTests/testRestartAndInvalidSourceClocks"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CaptureTimelineTests.swift",
+          "test": "CaptureTimelineTests/testInvalidOrSilentRecognitionRangesRemainUntimed"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CaptureTimelineTests.swift",
+          "test": "TranscriptFollowStateTests/testGrowthWrappingAndResizeCannotStopFollowing"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CaptureTimelineTests.swift",
+          "test": "TranscriptFollowStateTests/testUserScrollFreezesAndLatestResumes"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CaptureTimelineTests.swift",
+          "test": "TranscriptFollowStateTests/testUserReturningToEndResumesAndNewConversationResets"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/MeetingSessionTimelineTests.swift",
+          "test": "Transcribers/testDelayedBatchedSourcesKeepReportedRangesAndOldRunCannotLeakAfterRestart"
+        }
+      ],
+      "manual": {
+        "reason": "Existing draft implementation is adopted into the combined train with no invented historical red. Native rendered UI/audio and device acceptance remain separate from these bound regressions.",
+        "steps": [
+          "Run the bound native methods and review their assertions against the outcome.",
+          "Exercise affected installed-app flows; keep physical Watch pairing and real OTHERS audio evidence separate."
+        ]
+      }
+    },
+    {
+      "id": "BATCH-290",
+      "name": "Edit transcript lines without reviving deleted content",
+      "given": "a conversation has finalized transcript and derived output",
+      "when": "the user edits or deletes a line and saves or reopens it",
+      "then": "identity and recognized originals persist, stale answers are invalidated and deleting the last line stays deleted",
+      "covers": [
+        "App/CommandCenterPanes.swift",
+        "App/EditableTranscriptRow.swift",
+        "App/MeetingView+Conversations.swift",
+        "App/MeetingView+TranscriptEditing.swift",
+        "Sources/ListenToMeCore/ConversationStore.swift",
+        "Sources/ListenToMeCore/MeetingSession+TranscriptEditing.swift",
+        "Sources/ListenToMeCore/Models.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/TranscriptEditingTests.swift",
+          "test": "TranscriptEditingTests/testEditsPreserveIdentityOriginalAndCounters"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/TranscriptEditingTests.swift",
+          "test": "TranscriptEditingTests/testRejectedEditsAndDeletesDoNotAdvanceRevisionAndDeletionKeepsOtherLines"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/TranscriptEditingTests.swift",
+          "test": "TranscriptEditingTests/testDeletingLastLineRoundTripsEmptyArchiveWithoutRestoringDeletedText"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/TranscriptEditingTests.swift",
+          "test": "TranscriptEditingTests/testManualEditKeepsPreexistingRecognitionOriginal"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/TranscriptEditingTests.swift",
+          "test": "TranscriptEditingTests/testSessionEditsInvalidateAnswersWithoutCreatingFirstSummaryWithAutoOff"
+        }
+      ],
+      "manual": {
+        "reason": "Existing draft implementation is adopted into the combined train with no invented historical red. Native rendered UI/audio and device acceptance remain separate from these bound regressions.",
+        "steps": [
+          "Run the bound native methods and review their assertions against the outcome.",
+          "Exercise affected installed-app flows; keep physical Watch pairing and real OTHERS audio evidence separate."
+        ]
+      }
+    },
+    {
+      "id": "BATCH-289",
+      "name": "Import supported movies with explicit source and cancellation",
+      "given": "a user selects an audio or movie file",
+      "when": "the reader decodes, encounters a movie without audio or is cancelled",
+      "then": "audio uses the chosen source with monotonic progress, missing audio is explained and cancellation stops consumption",
+      "covers": [
+        "App/MeetingView.swift",
+        "SharedPlatform/MediaFileReader.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileMediaFileReaderTests.swift",
+          "test": "MobileMediaFileReaderTests/testMP4AndMOVDecodeAudioWithChosenSourceAndProgress"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileMediaFileReaderTests.swift",
+          "test": "MobileMediaFileReaderTests/testAudioFileKeepsExistingDecoderAndSourceSelection"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileMediaFileReaderTests.swift",
+          "test": "MobileMediaFileReaderTests/testSilentMovieReportsNoAudioTrack"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileMediaFileReaderTests.swift",
+          "test": "MobileMediaFileReaderTests/testCancelledMovieReadStopsWithoutConsumingTheRest"
+        }
+      ],
+      "manual": {
+        "reason": "Existing draft implementation is adopted into the combined train with no invented historical red. Native rendered UI/audio and device acceptance remain separate from these bound regressions.",
+        "steps": [
+          "Run the bound native methods and review their assertions against the outcome.",
+          "Exercise affected installed-app flows; keep physical Watch pairing and real OTHERS audio evidence separate."
+        ]
+      }
+    },
+    {
+      "id": "BATCH-288",
+      "name": "Explain local model readiness without changing choices",
+      "given": "catalog or capability discovery fails or returns no usable models",
+      "when": "local model setup is refreshed",
+      "then": "unknown capability remains distinct from an empty installation and explicit pinned choices are preserved",
+      "covers": [
+        "App/CommandCenterPanes.swift",
+        "App/LocalOllamaHelp.swift",
+        "App/MeetingView.swift",
+        "App/OllamaModels.swift",
+        "App/OnboardingView.swift",
+        "Sources/ListenToMeCore/LocalOllamaReadiness.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/LocalOllamaReadinessTests.swift",
+          "test": "LocalOllamaReadinessTests/testFailedCatalogIsNotAnEmptyInstallation"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/LocalOllamaReadinessTests.swift",
+          "test": "LocalOllamaReadinessTests/testCapabilityFailureDoesNotRecommendReplacingAnInstalledModel"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/LocalOllamaReadinessTests.swift",
+          "test": "LocalOllamaReadinessTests/testUsableChatModelRemainsReadyWhileOtherProbesFail"
+        }
+      ],
+      "manual": {
+        "reason": "Existing draft implementation is adopted into the combined train with no invented historical red. Native rendered UI/audio and device acceptance remain separate from these bound regressions.",
+        "steps": [
+          "Run the bound native methods and review their assertions against the outcome.",
+          "Exercise affected installed-app flows; keep physical Watch pairing and real OTHERS audio evidence separate."
+        ]
+      }
+    },
+    {
+      "id": "BATCH-287",
+      "name": "Cancel streamed responses and audio imports",
+      "given": "an answer or file transcription is in progress",
+      "when": "the user stops or cancels it and later starts new work",
+      "then": "recognized or generated partial content remains, late callbacks are rejected and a new operation can run",
+      "covers": [
+        "App/AudioImportStatus.swift",
+        "App/CommandCenter.swift",
+        "App/MeetingView+Conversations.swift",
+        "App/MeetingView.swift",
+        "App/OpenAICompatibilityView.swift",
+        "App/OpenAICompatibleSettings.swift",
+        "App/SettingsView.swift",
+        "App/SpeechAnalyzerTranscriber.swift",
+        "SharedPlatform/AudioFileReader.swift",
+        "Sources/ListenToMeCore/MeetingSession.swift",
+        "Sources/ListenToMeCore/OpenAICompatibleContractProbe.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/AudioImportFailureTests.swift",
+          "test": "AudioImportFailureTests/testCancellationRetainsRecognizedLinesAndEndsTheImport"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/OpenAICompatibleContractProbeTests.swift",
+          "test": "OpenAICompatibleContractProbeTests/testSyntheticProbeUsesTheActualEvaluatorAndValidResultClearsFailure"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/OpenAICompatibleContractProbeTests.swift",
+          "test": "OpenAICompatibleContractProbeTests/testMalformedAnswerPausesAutoButTransportFailureKeepsPriorResult"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/OpenAICompatibleContractProbeTests.swift",
+          "test": "OpenAICompatibleContractProbeTests/testProviderCancellationNeverReturnsAPersistableOutcome"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/OpenAICompatibleContractProbeTests.swift",
+          "test": "OpenAICompatibleContractProbeTests/testCancelledBeforeStartSendsNothing"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ResponseStopTests.swift",
+          "test": "ResponseStopTests/testStopKeepsPartialRejectsLateTokensAndAllowsRestart"
+        }
+      ],
+      "manual": {
+        "reason": "Existing draft implementation is adopted into the combined train with no invented historical red. Native rendered UI/audio and device acceptance remain separate from these bound regressions.",
+        "steps": [
+          "Run the bound native methods and review their assertions against the outcome.",
+          "Exercise affected installed-app flows; keep physical Watch pairing and real OTHERS audio evidence separate."
+        ]
+      }
+    },
+    {
+      "id": "BATCH-285",
+      "name": "Preserve data and uncertainty across review failure paths",
+      "given": "imports, discovery, references, recognition or delivery encounter incomplete or failed work",
+      "when": "the user retries, saves or exports the result",
+      "then": "partial data and explicit model choices survive, uncertainty is explained and malformed or skipped delivery checks cannot pass",
+      "covers": [
+        "App/CalendarService.swift",
+        "App/DualChannelCapture.swift",
+        "App/MarkdownText.swift",
+        "App/MeetingView+Export.swift",
+        "App/MeetingView.swift",
+        "App/OllamaModels.swift",
+        "App/SpeechRecognizerTranscriber.swift",
+        "SharedPlatform/AudioFileReader.swift",
+        "Sources/ListenToMeCore/ConversationLanguages.swift",
+        "Sources/ListenToMeCore/ConversationTitleState.swift",
+        "Sources/ListenToMeCore/FileContextLoader.swift",
+        "Sources/ListenToMeCore/InlineMarkdownPreprocessor.swift",
+        "Sources/ListenToMeCore/MeetingSelection.swift",
+        "Sources/ListenToMeCore/MeetingSession+Import.swift",
+        "Sources/ListenToMeCore/MeetingSession.swift",
+        "Sources/ListenToMeCore/ModelRanking.swift",
+        "Sources/ListenToMeCore/OllamaModelCapability.swift",
+        "Sources/ListenToMeCore/OllamaProvider.swift",
+        "Sources/ListenToMeCore/PaneModelHealing.swift",
+        "Sources/ListenToMeCore/RecognitionFinalization.swift",
+        "Sources/ListenToMeCore/SessionExporter.swift",
+        "Sources/ListenToMeCore/SessionSearch.swift",
+        "iOS/MobileSession+WatchInbox.swift",
+        "iOS/MobileSession.swift",
+        "scripts/release-paths.sh",
+        "scripts/release.sh",
+        "scripts/run-contract-tests.py"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/AudioImportFailureTests.swift",
+          "test": "AudioImportFailureTests/testIncompleteImportSurvivesArchiveRoundTripAndRecordEdits"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/AudioImportFailureTests.swift",
+          "test": "AudioImportFailureTests/testReadFailurePreservesPartialTranscriptAndMarksItIncomplete"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/MeetingSelectionTests.swift",
+          "test": "MeetingSelectionTests/testStandupWinsOverAnOverlappingBusyBlock"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/MeetingSelectionTests.swift",
+          "test": "MeetingSelectionTests/testBackToBackAndEndBoundaryDoNotSelectTheFinishedMeeting"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/MeetingSelectionTests.swift",
+          "test": "MeetingSelectionTests/testSoonestUpcomingAndMissingDates"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/MeetingSessionFailurePathTests.swift",
+          "test": "MeetingSessionFailurePathTests/testCaptureStartFailureRollsBackRunningAndPreparationState"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/MeetingSessionFailurePathTests.swift",
+          "test": "MeetingSessionFailurePathTests/testCancellationDoesNotShowAProvidersLateFailure"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ModelRankingTests.swift",
+          "test": "ModelRankingTests/testMiniMaxIsNotRankedAsAMiniVariant"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/OllamaDiscoveryTests.swift",
+          "test": "OllamaDiscoveryTests/testIncompleteProbesAreUnknownRatherThanNotChatCapable"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/OllamaDiscoveryTests.swift",
+          "test": "OllamaDiscoveryTests/testVerifiedLocalAndExplicitlyRemoteModelsRemainDistinct"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/OllamaDiscoveryTests.swift",
+          "test": "OllamaDiscoveryTests/testPinnedChoiceDoesNotSwitchToFallbackOnAnUnknownProbe"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/RecognitionFinalizationTests.swift",
+          "test": "RecognitionFinalizationTests/testFinalCallbacksBeforeWaitAreRetained"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/RecognitionFinalizationTests.swift",
+          "test": "RecognitionFinalizationTests/testLateFinalCallbackCompletesWait"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/RecognitionFinalizationTests.swift",
+          "test": "RecognitionFinalizationTests/testUnknownCallbackCannotCompleteDrainAndDeadlineIsTerminal"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/RecognitionFinalizationTests.swift",
+          "test": "RecognitionFinalizationTests/testCancellationEndsWait"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ReferenceRenderingTests.swift",
+          "test": "ReferenceRenderingTests/testHeadingsTrimTrailingWhitespaceBeforeAddingEmphasis"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ReferenceRenderingTests.swift",
+          "test": "ReferenceRenderingTests/testDirectSymlinksCannotBypassReferenceSizeLimits"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ReferenceRenderingTests.swift",
+          "test": "ReferenceRenderingTests/testDirectDirectorySymlinkIsSkippedAndRealTextRemainsReadable"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SessionExporterTests.swift",
+          "test": "SessionExporterTests/testTranscriptNamesAndCorrectionTextCannotInjectMarkdown"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileAudioFileReaderTests.swift",
+          "test": "MobileAudioFileReaderTests/testCompressedAACEndsNormallyAndRepeatedEOFIsHarmless"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-contract-gate.py",
+          "test": "ContractGateTests/test_empty_success_is_not_acceptance"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-contract-gate.py",
+          "test": "ContractGateTests/test_all_skipped_is_not_acceptance"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-contract-gate.py",
+          "test": "ContractGateTests/test_another_suite_cannot_satisfy_the_gate"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-contract-gate.py",
+          "test": "ContractGateTests/test_real_xctest_passes_on_mac_and_linux"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-contract-gate.py",
+          "test": "ContractGateTests/test_failed_process_cannot_be_hidden_by_a_passing_case"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-release-paths.py",
+          "test": "ReleasePathsTests/test_debug_app_cannot_substitute_for_missing_release"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-release-paths.py",
+          "test": "ReleasePathsTests/test_exact_release_product_with_spaces_is_returned"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-release-paths.py",
+          "test": "ReleasePathsTests/test_nested_library_is_signed_before_its_framework"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-release-paths.py",
+          "test": "ReleasePathsTests/test_nested_signing_failure_is_not_ignored"
+        }
+      ],
+      "manual": {
+        "reason": "Existing draft implementation is adopted into the combined train with no invented historical red. Native rendered UI/audio and device acceptance remain separate from these bound regressions.",
+        "steps": [
+          "Run the bound native methods and review their assertions against the outcome.",
+          "Exercise affected installed-app flows; keep physical Watch pairing and real OTHERS audio evidence separate."
+        ]
+      }
+    },
+    {
+      "id": "BATCH-281",
+      "name": "Apply automatic review limits to the assembled request",
+      "given": "references and conversation directives contribute to a review",
+      "when": "the assembled request exceeds its limit or speaker labels change during an answer",
+      "then": "oversized work is refused before sending, shortening recovers and obsolete labels cannot return",
+      "covers": [
+        "Sources/ListenToMeCore/AutomaticReviewCoordinator.swift",
+        "Sources/ListenToMeCore/QuickSummaryContext.swift",
+        "iOS/MobileAutomaticSummaryFixture.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/AutomaticReviewContractTests.swift",
+          "test": "AutomaticReviewContractTests/testDeepReferencesAndDirectivesCountTowardTheAssembledLimit"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/AutomaticReviewContractTests.swift",
+          "test": "AutomaticReviewContractTests/testWhitespaceAndDataFenceEscapingCannotBypassTheLimit"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/AutomaticReviewContractTests.swift",
+          "test": "AutomaticReviewContractTests/testDirectiveOnlyChangesDoNotAutomaticallyRegenerateCompletedReview"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/AutomaticReviewContractTests.swift",
+          "test": "AutomaticReviewContractTests/testSpeakerRenameDuringQuickReadRejectsOldLabelsAndRetainsAcknowledgedSpeech"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileReviewLimitUITests.swift",
+          "test": "MobileReviewLimitUITests/testOversizedReviewExplainsTheLimitAndShorterInputRecovers"
+        }
+      ],
+      "manual": {
+        "reason": "Existing draft implementation is adopted into the combined train with no invented historical red. Native rendered UI/audio and device acceptance remain separate from these bound regressions.",
+        "steps": [
+          "Run the bound native methods and review their assertions against the outcome.",
+          "Exercise affected installed-app flows; keep physical Watch pairing and real OTHERS audio evidence separate."
+        ]
+      }
+    },
+    {
+      "id": "BATCH-280",
+      "name": "Respect Auto off when speaker labels change",
+      "given": "Auto is off with or without an existing completed summary",
+      "when": "speaker attribution or naming changes during or after generation",
+      "then": "the first summary is not started automatically, existing summaries may rebuild and old labels cannot overwrite newer work",
+      "covers": [
+        "Sources/ListenToMeCore/MeetingSession+AutomaticReviews.swift",
+        "Sources/ListenToMeCore/MeetingSession+Listener.swift",
+        "Sources/ListenToMeCore/MeetingSession.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SpeakerSummaryRefreshTests.swift",
+          "test": "SpeakerSummaryRefreshTests/testAttributionAndRenameDoNotCreateFirstSummaryWithAutoOff"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SpeakerSummaryRefreshTests.swift",
+          "test": "SpeakerSummaryRefreshTests/testCompletedSummaryRebuildsFromNewAttributionWithAutoOff"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SpeakerSummaryRefreshTests.swift",
+          "test": "SpeakerSummaryRefreshTests/testAutoAllowsFirstSummaryAfterAttribution"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SpeakerSummaryRefreshTests.swift",
+          "test": "SpeakerSummaryRefreshTests/testSecondAttributionWhileRebuildingKeepsExistingSummaryIntent"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SpeakerSummaryRefreshTests.swift",
+          "test": "SpeakerSummaryRefreshTests/testResetDoesNotCarryRebuildIntentIntoNewConversation"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SpeakerSummaryRefreshTests.swift",
+          "test": "SpeakerSummaryRefreshTests/testRejectedResetKeepsActiveConversationRebuildIntent"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SpeakerSummaryRefreshTests.swift",
+          "test": "SpeakerSummaryRefreshTests/testAIBeingOffPreventsReplacementRequest"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SpeakerSummaryRefreshTests.swift",
+          "test": "SpeakerSummaryRefreshTests/testInFlightFirstSummaryCannotRestoreOldLabelsAfterAttribution"
+        }
+      ],
+      "manual": {
+        "reason": "Existing draft implementation is adopted into the combined train with no invented historical red. Native rendered UI/audio and device acceptance remain separate from these bound regressions.",
+        "steps": [
+          "Run the bound native methods and review their assertions against the outcome.",
+          "Exercise affected installed-app flows; keep physical Watch pairing and real OTHERS audio evidence separate."
+        ]
+      }
+    },
+    {
+      "id": "BATCH-264",
+      "name": "Review re-transcription before replacing saved speech",
+      "given": "a stopped conversation has opt-in saved audio",
+      "when": "the user reviews, cancels or commits re-transcription while metadata or transcript may change",
+      "then": "cancellation and stale previews preserve originals, explicit replacement retains current metadata and correct audio provenance",
+      "covers": [
+        "App/MacFileRetranscriber.swift",
+        "App/MeetingView+Retranscription.swift",
+        "App/MeetingView.swift",
+        "App/SessionStore.swift",
+        "SharedPlatform/AudioChunkFileFeed.swift",
+        "SharedPlatform/LocalAudioFileTranscriber.swift",
+        "SharedPlatform/RetranscriptionView.swift",
+        "SharedPlatform/SavedAudioRetranscription.swift",
+        "SharedPlatform/WhisperKitTranscriber.swift",
+        "Sources/ListenToMeCore/ConversationRetranscription.swift",
+        "Sources/ListenToMeCore/HistoryIndex.swift",
+        "Sources/ListenToMeCore/HistoryIndexFile.swift",
+        "Sources/ListenToMeCore/OnDemandGrounding.swift",
+        "Sources/ListenToMeCore/SavedAudio.swift",
+        "iOS/MobileAISettings.swift",
+        "iOS/MobileAISettingsView.swift",
+        "iOS/MobileFileTranscriber.swift",
+        "iOS/MobileIncrementalSummaryFixture.swift",
+        "iOS/MobileMeetingView.swift",
+        "iOS/MobileSavedAudioFixture.swift",
+        "iOS/MobileSession+LiveSnapshot.swift",
+        "iOS/MobileSession+Retranscription.swift",
+        "iOS/MobileSession+Speakers.swift",
+        "iOS/MobileSession+Suggestions.swift",
+        "iOS/MobileSession+Summarize.swift",
+        "iOS/MobileSession.swift",
+        "iOS/MobileSpeakers.swift",
+        "iOS/MobileSpeechCorrectionView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationRetranscriptionTests.swift",
+          "test": "ConversationRetranscriptionTests/testReplacementPreservesCurrentMetadataAndRejectsChangedTranscript"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationRetranscriptionTests.swift",
+          "test": "ConversationRetranscriptionTests/testWatchTimelineAndReplacementKeepDeviceButClearInferredSpeaker"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationRetranscriptionTests.swift",
+          "test": "ConversationRetranscriptionTests/testPlacesTracksOnTheirOwnTimelineAndClearsOldSpeakerIdentity"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryIndexReuseTests.swift",
+          "test": "Counter/testSummaryInsertionAndSinglePassageEditReuseVectorsAfterReopeningWithoutMemoryCache"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryIndexReuseTests.swift",
+          "test": "Counter/testLanguageAndEmbeddingMethodChangesInvalidateReusablePassages"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryIndexReuseTests.swift",
+          "test": "Counter/testAppendingToLongConversationEmbedsOnlyNewPassagesAndDuplicatePassagesShareWork"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryIndexReuseTests.swift",
+          "test": "Counter/testUnavailableDuplicatePassagesAreAttemptedOncePerChangedSave"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/OnDemandGroundingTests.swift",
+          "test": "OnDemandGroundingTests/testShorteningProvisionalSpeechPreservesItsTagAndMinimumEvidence"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SavedAudioTests.swift",
+          "test": "Holder/testRetranscriptionAlignmentRollsBackWhenArchiveCommitFails"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileIncrementalSummaryUITests.swift",
+          "test": "MobileIncrementalSummaryUITests/testManualSummaryIncludesLiveRecognitionAndDropsMarkerAfterFinalization"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileOllamaEndpointUITests.swift",
+          "test": "MobileOllamaEndpointUITests/testRejectedHTTPAndOmittedURLPartsAreExplained"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileRetranscriptionUITests.swift",
+          "test": "MobileRetranscriptionUITests/testPreviewKeepOriginalAndReplace"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileLiveSnapshotTests.swift",
+          "test": "MobileLiveSnapshotTests/testSnapshotReusesLongTranscriptAndInvalidatesCorrectionsLabelsPartialsAndNotes"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileLiveSnapshotTests.swift",
+          "test": "MobileLiveSnapshotTests/testManualSummaryFloorsTagsAndDefinesProvisionalWithoutChangingSavedText"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileLiveSnapshotTests.swift",
+          "test": "MobileLiveSnapshotTests/testCloudQuickTagsJSONInputWhileAutoRetainsItsOriginalRepresentation"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileLiveSnapshotTests.swift",
+          "test": "MobileLiveSnapshotTests/testAppleQuickAndAskBudgetIncludeTheNoticeAndPreserveTheTagWhenShortened"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileOllamaEndpointTests.swift",
+          "test": "MobileOllamaEndpointTests/testHTTPAddressPolicyPreservesPreviousServerOnRejection"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileOllamaEndpointTests.swift",
+          "test": "MobileOllamaEndpointTests/testOmittedURLPartsAreExplainedWithoutEchoingSensitiveValues"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileRetranscriptionTests.swift",
+          "test": "MobileRetranscriptionTests/testCompressedFileReaderRecognizesEOFWithoutDroppingFrames"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileRetranscriptionTests.swift",
+          "test": "MobileRetranscriptionTests/testReplacementAndReopenPreserveIncompleteImportWarning"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileRetranscriptionTests.swift",
+          "test": "MobileRetranscriptionTests/testApplyPreservesNotesAndSummariesAndRejectsStalePreview"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileRetranscriptionTests.swift",
+          "test": "MobileRetranscriptionTests/testRetainedWatchReplacementKeepsDeviceProvenanceAfterReopen"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileRetranscriptionTests.swift",
+          "test": "MobileRetranscriptionTests/testCancelledUncooperativeRecognitionCannotOfferAReplacement"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileRetranscriptionTests.swift",
+          "test": "MobileRetranscriptionTests/testLaterTrackFailureNeverOffersPartialTranscript"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSpeakerBackupTests.swift",
+          "test": "MobileSpeakerBackupTests/testDiarizerFactoryExcludesTheActualDefaultModelDirectoryWithoutDownloading"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSpeakerLifecycleTests.swift",
+          "test": "MobileSpeakerLifecycleTests/testBackgroundingInvalidatesAnAlreadyRunningFinalPassAndReleasesAudio"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSpeakerLifecycleTests.swift",
+          "test": "MobileSpeakerLifecycleTests/testCancelledPeriodicPassQueuedBehindAnotherPassCannotAnalyzeANewRun"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/WhisperFileDrainTests.swift",
+          "test": "WhisperFileDrainTests/testFinishTranscribesBufferedFinalUtterance"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/WhisperFileDrainTests.swift",
+          "test": "WhisperFileDrainTests/testFinishDrainsQueuedBatchesAfterAcceleratedFileFeed"
+        }
+      ],
+      "manual": {
+        "reason": "Existing draft implementation is adopted into the combined train with no invented historical red. Native rendered UI/audio and device acceptance remain separate from these bound regressions.",
+        "steps": [
+          "Run the bound native methods and review their assertions against the outcome.",
+          "Exercise affected installed-app flows; keep physical Watch pairing and real OTHERS audio evidence separate."
+        ]
+      }
+    }
+  ]
+}
