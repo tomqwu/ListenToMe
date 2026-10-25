@@ -833,3 +833,12 @@ Capture the settings UI at native resolution and restore original preferences af
   angle brackets and multiline speaker names; speech stays literal while AI Markdown still formats.
 - With an all-day busy block and a shorter current meeting, Calendar chooses the latest-starting
   active timed meeting. At its end boundary it chooses an ongoing or next meeting correctly.
+
+## Optional calendar suggestions (#54)
+
+1. With Calendar access absent and the feature off, wait 35 seconds: no permission prompt or recording. Enable the setting and Save; passive checks still must not prompt. Use **Allow Calendar access** explicitly to grant or deny. Denial must leave capture stopped and show guidance. Canceling Settings must not persist the opt-in.
+2. In an empty, idle conversation with an event happening now, wait up to 30 seconds. Inspect the banner and capture a native screenshot. Future, ended, all-day, canceled, free and declined events must not trigger it.
+3. Dismiss the suggestion, restart the app and verify the same occurrence stays suppressed; a later recurrence may be suggested. Start/import/open a conversation and verify no suggestion overwrites its content.
+4. Click **Use context and Start**: the title and Context use the event, normal capture preflight runs, and recording starts only after this explicit action. Check the selected AI provider privacy behavior. Stop, preserve evidence, and complete the app-scoped Dev cleanup procedure.
+
+These are acceptance steps, not a record of a completed native run.

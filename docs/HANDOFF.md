@@ -226,3 +226,7 @@ intentional skips), 98.1971% line coverage; lint, nine release-helper regression
 and iOS test build passed. Independent review found an AAC read-past-EOF error, now corrected and
 reviewed clear with a compressed-file regression added. Full validation, AAC runtime test and
 installed Mac GUI/OTHERS acceptance remain pending. No merge or publication is claimed. Mac remains locked; no permission reset was attempted.
+
+### #54 calendar meeting suggestions — implementation candidate, October 25
+
+Branch `codex/54-meeting-suggestions` adds default-off calendar polling in a new empty, idle conversation, explicit context + Start, and persistent bounded occurrence dismissals. Passive reads require existing Calendar permission; the Settings permission button is explicit. No process detection or automatic recording. Based on #141's current-event selection fixes. Core policy tests cover denied/future/ended/busy/disabled states, repeat and recurring events, reload and bounded dismissal storage. Independent review found no blockers. Core tests passed (1,078 tests, seven skips, 98.20% coverage), along with lint and the signed Mac build. Full local validation and native permission/banner/Start acceptance remain pending; the locked Mac prevents the latter. No publication is claimed.

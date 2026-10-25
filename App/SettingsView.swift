@@ -154,6 +154,7 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var aiMode: AIProcessingMode
     @State private var saveError: String?
+    @State private var suggestMeetings = UserDefaults.standard.bool(forKey: "suggestCalendarMeetings")
     @State private var engine: String
     private let originalKey: String
     @State private var ollamaKey: String
@@ -251,6 +252,8 @@ struct SettingsView: View {
 
             Divider()
 
+            CalendarSuggestionSettings(enabled: $suggestMeetings)
+            Divider()
             Picker("Response language", selection: $responseLanguageID) {
                 ForEach(ProviderSettings.responseLanguageOptions, id: \.id) {
                     Text($0.label).tag($0.id)
@@ -360,6 +363,7 @@ struct SettingsView: View {
             return
         }
         ProviderSettings.saveOpenAIContextTokens(openAIContextTokens)
+        UserDefaults.standard.set(suggestMeetings, forKey: "suggestCalendarMeetings")
         ProviderSettings.aiMode = aiMode
         ProviderSettings.transcriptionEngine = engine
         ProviderSettings.responseLanguageID = responseLanguageID

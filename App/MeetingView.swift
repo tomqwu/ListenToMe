@@ -10,6 +10,9 @@ struct MeetingView: View {
     /// automatically). Absent = on, matching the documented default.
     static let proactiveDefaultsKey = "proactiveQuickAnswers"
 
+    @State var suggestedMeeting: MeetingInfo?
+    @State var meetingSuggestionPolicy = MeetingSuggestionPolicy()
+    @State var nextMeetingPoll = Date.distantPast
     @State var session: MeetingSession
     @State var store: ConversationStore
     @State var startError: String?
@@ -257,6 +260,7 @@ struct MeetingView: View {
                 .padding(.bottom, 4)
                 .background(Theme.windowBackground)
             }
+            calendarSuggestionBanner
             MacVocabularyBanner(vocabulary: vocabulary, conversationID: currentSessionID, apply: applyVocabulary)
             // HSplitView so the user can drag the rail/transcript/copilot dividers; each column
             // carries its own min/ideal/max width so the handles have room to move.
@@ -273,6 +277,7 @@ struct MeetingView: View {
         .frame(minWidth: 1100, minHeight: 560)
         // Tick the elapsed timer once per second while recording.
         .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { date in
+            pollMeetingSuggestion(now: date)
             if recordingStartedAt != nil { now = date }
             if !saveFailed { _ = checkpoint(complete: !wantsCapture && !lifecycleBusy && !session.isTranscribingFile) }
             // Not while preparing: the session is "running" from Start, but no audio has reached the

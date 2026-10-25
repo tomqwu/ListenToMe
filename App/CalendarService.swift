@@ -15,11 +15,13 @@ enum CalendarService {
 
     /// Requests calendar access and returns the most relevant meeting, or the specific reason there
     /// isn't one (denied / no event / EventKit failure).
-    static func currentOrNextMeeting(now: Date = Date()) async -> CalendarLookup {
+    static func currentOrNextMeeting(now: Date = Date(), requestAccess: Bool = true) async -> CalendarLookup {
+        // Passive suggestions never trigger an OS permission prompt.
+        guard requestAccess || EKEventStore.authorizationStatus(for: .event) == .fullAccess else { return .denied }
         let store = EKEventStore()
         let granted: Bool
         do {
-            granted = try await store.requestFullAccessToEvents()
+            granted = requestAccess ? try await store.requestFullAccessToEvents() : true
         } catch {
             log.error("Calendar access request failed: \(error.localizedDescription, privacy: .public)")
             return .failed(error.localizedDescription)
@@ -67,6 +69,7 @@ enum CalendarService {
     static func meetingInfo(from event: EKEvent) -> MeetingInfo {
         MeetingInfo(
             title: event.title ?? "(untitled meeting)",
+            calendarID: event.eventIdentifier,
             start: event.startDate,
             end: event.endDate,
             location: event.location,
