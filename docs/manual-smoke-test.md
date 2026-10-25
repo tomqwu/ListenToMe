@@ -210,6 +210,16 @@ iPhone (phone width and an accessibility text size):
 
 ## Capture recovery and microphone denial
 
+### Speaker edits and summary requests (#167)
+
+With Auto off and a transcript but no Listener summary, edit a speaker name and run another speaker
+attribution pass. Neither action should start a Listener model request. Press Refresh explicitly:
+the summary request must contain the updated speaker labels. Rename again after that summary has
+completed: the existing summary should rebuild from the newly labeled transcript. With AI off,
+editing names must not send a replacement request. If a first summary is still streaming when labels
+change with Auto off, it must stop and late output must not restore the old names; Refresh stays
+available. Preserve the rendered views and sanitized request evidence with the candidate.
+
 These two paths are AVFoundation/ScreenCaptureKit glue that unit tests cannot reach; the decision
 tables behind them are covered by `CaptureRecoveryTests`.
 
