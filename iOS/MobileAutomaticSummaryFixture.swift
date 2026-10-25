@@ -22,8 +22,20 @@ struct MobileAutomaticSummaryFixture: View {
     var body: some View {
         VStack(spacing: 0) {
             Button("Next test phrase") { recorder.nextPhrase() }.accessibilityIdentifier("nextTestPhrase")
+            if ProcessInfo.processInfo.arguments.contains("--review-limit-fixture") {
+                Button("Check oversized review") { requestReview(oversized: true) }
+                    .accessibilityIdentifier("oversizedReview")
+                Button("Shorten review input") { requestReview(oversized: false) }
+                    .accessibilityIdentifier("shortenReview")
+            }
             MobileMeetingView(session: session)
         }
+    }
+
+    private func requestReview(oversized: Bool) {
+        session.notes = oversized ? String(repeating: "Reference note. ", count: 4_100) : "Brief note."
+        session.automaticReviews.offer([.init(mode: "summary", confidence: "high", reason: "Fixture review")],
+                                       source: session.summarySource)
     }
 }
 

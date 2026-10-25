@@ -366,6 +366,20 @@ lint and the signed Mac build. Independent integration review found no blockers.
 the final documentation commit subsequently passed and the integration merged. iOS changes are published in TestFlight 1.17.0 (34); physical-device acceptance remains pending and Mac publication remains paused.
 
 
+## Automatic review contract candidate (#148) — October 25
+
+`codex/148-automatic-review-contract` caps the assembled request rather than only normalized
+conversation text, composes the shared language rule once, and adds direct coverage for directive-only
+changes and a speaker rename during a Quick read. The rename test preserves #180 behavior: already
+acknowledged speech is relabeled without being sent again; unread stale work is rejected and retried
+with the new label. Core validation passed (1,060 tests, seven skips, zero failures; 98.1079% coverage), along with lint
+and independent review. The app/test targets compile for both simulator architectures. A simulator
+UI scenario passed and its two native screenshots were inspected: the limit notice is readable, and
+shortening input produces Summary successfully. Full `make validate-local` passed at `209a1f8`,
+including simulator unit/UI tests, Core coverage, release helpers, real provider contracts, lint and
+the signed Mac build. Current-main integration checks and Mac installed-app acceptance remain pending.
+Not merged or published.
+
 ## In progress: speaker lifecycle follow-ups (#188)
 
 Branch `codex/188-speaker-lifecycle` cancels final labeling on background, clears the run buffer and

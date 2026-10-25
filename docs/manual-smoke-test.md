@@ -931,3 +931,14 @@ are not native acceptance. Preserve source, OS, device, native screenshots and a
 
 The prior physical iPad failure and local fallback microphone pass are preserved in the #306 evidence.
 Simulator results do not establish physical recording, model accuracy, audibility or Watch pairing.
+### Automatic review request limits and directives (#148)
+
+With Auto enabled, combine a transcript below 60,000 characters with a large attached reference on
+Mac. A Deep request whose complete prompt exceeds 60,000 characters must show a review-limit notice
+and never reach the selected provider. Shorten the reference and add meaningful speech: the next
+eligible review should succeed. Instructions, speaker labels, notes and data fences also count.
+Change response language or persona without adding speech: the completed automatic review stays
+visible and no new request starts. Manual generation uses the new setting immediately; a review
+triggered by new speech uses it too. Rename a speaker during a Quick read: old-label output must
+not apply, unread speech must still be processed, and already acknowledged speech should not be
+resent solely because of the label change.
