@@ -14,6 +14,7 @@ does not show it again, and a fresh install does not see it at all; see
 ## iOS (unreleased since 1.16.0 (33))
 
 - Deleting a conversation clears and cancels Ask your history answers so a late response cannot restore deleted text or citations. (#131)
+- History search reuses unchanged passage vectors when a conversation is saved, including after summary insertion. Changed text or transcription language is re-indexed on-device; duplicate passages share one embedding attempt per save, including unsupported text. Existing indexes rebuild once. Semantic language coverage is unchanged. (#223, partial)
 
 - OpenAI-compatible servers can use an optional per-server context limit. Answer space is reserved and oversized requests stop before sending; Mac prompt trimming includes a visible notice. Unknown capacity preserves server-managed behavior. (#210)
 
@@ -55,6 +56,9 @@ does not show it again, and a fresh install does not see it at all; see
 ## macOS (unreleased since 1.4.4)
 
 - Delete one saved conversation from its History row menu or detail view, with confirmation. Its saved audio, search entry and pending folder-save work are removed while other conversations stay intact; deleting the open conversation prevents it from being saved again. Exported copies remain where you saved them. (#131)
+- History search keeps its records when SwiftUI recreates a view, instead of replacing matching rows with an empty asynchronous result. (#223 acceptance fix)
+
+- History search reuses unchanged passage vectors when a conversation is saved, including after summary insertion. Changed text or transcription language is re-indexed on-device; duplicate passages share one embedding attempt per save, including unsupported text. Existing indexes rebuild once. Semantic language coverage is unchanged. (#223, partial)
 
 - OpenAI-compatible servers can use an optional per-server context limit. Answer space is reserved and oversized requests stop before sending; Mac prompt trimming includes a visible notice. Unknown capacity preserves server-managed behavior. (#210)
 
