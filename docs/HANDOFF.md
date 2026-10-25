@@ -226,8 +226,10 @@ or custom endpoint; the removed workspace prose now uses the shared endpoint lab
 default's recomputation until an explicit choice is now documented. Full `make validate-local` passed
 at `a756271`, including simulator unit/UI tests, Core coverage, helpers, lint, signed Mac build and
 real provider contracts. Signed focused checks also passed after repairing IPv6 normalization. Both
-Settings notice/recovery screenshots were inspected. Current-main integration and final hosted
-checks remain pending; physical-device acceptance is pending. Not merged or published.
+Settings notice/recovery screenshots were inspected. Current-main integration at `5a1ddd8` passed
+all 403 iOS unit tests (397 passed, six skipped), 1,061 Core tests (seven skipped, 98.1056% coverage),
+lint and the signed Mac build. Independent integration review found no blockers. Hosted checks for
+the final documentation commit remain pending; physical-device acceptance is pending. Not published.
 
 ## In progress: speaker lifecycle follow-ups (#188)
 
