@@ -226,8 +226,11 @@ deinit. A registration conflict shows a notice with an in-app-only fallback. The
 sheet no longer inspect/request Accessibility. README and smoke steps are updated. A process-level
 Carbon test passed identity filtering, repeat suppression, release, stop/restart, conflict and deinit
 without keyboard injection or an Accessibility grant. Mac compilation and lint passed; independent
-review found no actionable issues. Full validation and rendered foreground/background acceptance
-remain pending. No release claimed.
+review found no actionable issues. Full `make validate-local` passed at `86ec612`, including
+459 iOS tests (449 passed, ten skipped), Core coverage, lint, release helpers, signed Mac build
+and real provider contracts. Current-main integration at `953f0b9` passed Core coverage, lint and
+the signed Mac build. Rendered foreground/background acceptance and final hosted checks remain
+pending. No Dev app was launched or permissions changed during these checks. No release claimed.
 
 ## Ollama endpoint candidate (#149) — October 25
 
