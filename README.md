@@ -297,6 +297,9 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   already on screen.
 - **AI processing mode.** In **Settings**, explicitly choose **Local only**, **Apple Intelligence**,
   **Cloud**, **Cloud AI service**, **OpenAI-compatible**, or **AI off**.
+  Custom OpenAI-compatible servers also offer an optional **Server context window** setting,
+  saved per API URL. Match the server's configured capacity; output space is reserved and oversized
+  requests stop locally. Unknown retains server-managed behavior. Mac trimming shows a notice.
   Local mode verifies downloaded-model metadata before every request and rejects remote/cloud-backed
   models and redirects. Apple Intelligence runs entirely on this device; because its on-device model
   has a small context window, every prompt is capped at 8,000 characters — long meetings are answered

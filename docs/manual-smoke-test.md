@@ -802,3 +802,14 @@ real WatchConnectivity transfer and Watch background recording require the paire
 ### iOS audio-driven language checks (#216)
 
 In Automatic, speak in a language the starting transcriber does not recognize. Check that an initial language check still occurs after at least eight seconds of activity, and continuous talking can trigger later checks without new transcript results. Check the detected-language notice, Undo and Stop. Silence and sparse isolated sounds must not trigger an initial download; loud noise may qualify as activity but must still pass language confidence and switch rules. Re-checks pause in Low Power Mode, background and serious thermal state. Stop during model preparation must remain responsive. The simulator fixture verifies control flow with synthetic audio and a deterministic model; it does not establish real speech accuracy or device battery acceptance.
+
+
+## Custom-server context capacity (#210)
+
+In Settings, select OpenAI-compatible and a test server. Set Server context window to 4K and save.
+Reopen Settings and verify 4K persists. A different API URL should show Unknown; returning to the
+original URL restores its setting. Cancel an edit and verify no setting changes. For short synthetic
+text, confirm the server receives an output cap of 1,024. With long text, verify Mac's trimming
+notice and that requests still too large (including large instructions or Unicode text) fail with
+“No text was sent” before the server receives them. Choose Unknown to restore server-managed behavior.
+Capture the settings UI at native resolution and restore original preferences after testing.
