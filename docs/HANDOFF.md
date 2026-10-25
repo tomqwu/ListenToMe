@@ -209,6 +209,10 @@ is the tracking issue.
   acceptance; do not call it production-ready.
 - **Apple Watch spike** and acceptance, above.
 
+## In progress: History index reuse (#223)
+
+PR #277 implements per-passage vector reuse and fixes a Mac shared-search reader lifetime bug found during installed-app acceptance. Full `make validate-local` passed on `bacbb7d`: 1,060 Core tests (seven skips, 98.1048% line coverage), 459 iOS tests (449 passed, ten skipped, zero failures), release helpers, lint, signed Mac build and both real server contracts. All three required CI checks passed. Installed Mac History search/vector reuse/removal and independent review passed; screenshots and cleanup evidence are preserved. This change is ready for merge after the documentation update checks; it is not published. Broader semantic language support remains open: contextual mean pooling and tested normalizations did not meet paraphrase/negative-query quality acceptance. No additional models are downloaded or enabled.
+
 ## Context capacity candidate (#210) — October 25
 
 PR #274 adds optional per-server limits with reserved answer space and a no-send oversized-prompt error. Full `make validate-local` passed on `a6ec6b8`: 1,056 Core tests (seven skips, 98.1079% coverage), 394 iOS unit tests and 65 UI tests (459 total, ten skips, zero failures), release helpers, lint, signed Mac build and real Ollama/OpenAI-compatible contracts. Mac settings acceptance and independent review passed. A Pro Max screenshot run exposed a caret-position assumption in the URL-editing test; selecting all and asserting the exact replacement value fixed it, and the focused rerun passed. Only test/documentation changes followed the full gate. Four-device capture evidence is being finalized in `dist/context-budget-210`; this is not published.
@@ -219,7 +223,8 @@ Branch `codex/164-ios-live-snapshot` implements memoized live summary inputs and
 floor/tag/notice handling for manual Summary, Quick and Ask. The shared excerpt shortener preserves
 the marker and minimum evidence. Twenty-one Core grounding tests pass; iOS app and all test targets
 compile for both simulator architectures, lint passes, and independent logic review found no blockers.
-Four new iOS runtime regressions, full local validation, rendered simulator acceptance and CI remain
-pending. Work proceeded in the available checkout while #209's additional Mac UI check was blocked
-by the lock screen and #223 waited for the serialized simulator validation queue. No merge or
-publication is claimed. Evidence: `dist/live-snapshot-164`.
+Full `make validate-local` passed at `2d1b2cd`, including the new iOS runtime regressions, Core
+coverage above 98%, release helpers, signed Mac build and real provider contracts. A dedicated manual
+Summary simulator journey now verifies provisional request tagging and removal after final recognition;
+its runtime screenshots and current-main integration checks are queued. No merge or publication is
+claimed. Evidence: `dist/live-snapshot-164`.
