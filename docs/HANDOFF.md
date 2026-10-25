@@ -209,6 +209,10 @@ is the tracking issue.
   acceptance; do not call it production-ready.
 - **Apple Watch spike** and acceptance, above.
 
+## In progress: History index reuse (#223)
+
+PR #277 implements per-passage vector reuse and fixes a Mac shared-search reader lifetime bug found during installed-app acceptance. Full `make validate-local` passed on `bacbb7d`: 1,060 Core tests (seven skips, 98.1048% line coverage), 459 iOS tests (449 passed, ten skipped, zero failures), release helpers, lint, signed Mac build and both real server contracts. All three required CI checks passed. Installed Mac History search/vector reuse/removal and independent review passed; screenshots and cleanup evidence are preserved. This change is ready for merge after the documentation update checks; it is not published. Broader semantic language support remains open: contextual mean pooling and tested normalizations did not meet paraphrase/negative-query quality acceptance. No additional models are downloaded or enabled.
+
 ## Context capacity candidate (#210) — October 25
 
 PR #274 adds optional per-server limits with reserved answer space and a no-send oversized-prompt error. Full `make validate-local` passed on `a6ec6b8`: 1,056 Core tests (seven skips, 98.1079% coverage), 394 iOS unit tests and 65 UI tests (459 total, ten skips, zero failures), release helpers, lint, signed Mac build and real Ollama/OpenAI-compatible contracts. Mac settings acceptance and independent review passed. A Pro Max screenshot run exposed a caret-position assumption in the URL-editing test; selecting all and asserting the exact replacement value fixed it, and the focused rerun passed. Only test/documentation changes followed the full gate. Four-device capture evidence is being finalized in `dist/context-budget-210`; this is not published.
@@ -224,3 +228,46 @@ Carbon test passed identity filtering, repeat suppression, release, stop/restart
 without keyboard injection or an Accessibility grant. Mac compilation and lint passed; independent
 review found no actionable issues. Full validation and rendered foreground/background acceptance
 remain pending. No release claimed.
+
+## Ollama endpoint candidate (#149) — October 25
+
+`codex/149-ollama-endpoint` shares the OpenAI-compatible local-network HTTP rule, reports omitted
+URL components without echoing credentials or query values, and uses Ollama Cloud in destination
+prose. The existing automatic-catalog guard already requires the Ollama provider plus a saved key
+or custom endpoint; the removed workspace prose now uses the shared endpoint label. The provider
+default's recomputation until an explicit choice is now documented. Full `make validate-local` passed
+at `a756271`, including simulator unit/UI tests, Core coverage, helpers, lint, signed Mac build and
+real provider contracts. Signed focused checks also passed after repairing IPv6 normalization. Both
+Settings notice/recovery screenshots were inspected. Current-main integration at `5a1ddd8` passed
+all 403 iOS unit tests (397 passed, six skipped), 1,061 Core tests (seven skipped, 98.1056% coverage),
+lint and the signed Mac build. Independent integration review found no blockers. Hosted checks for
+the final documentation commit remain pending; physical-device acceptance is pending. Not published.
+
+## In progress: speaker lifecycle follow-ups (#188)
+
+Branch `codex/188-speaker-lifecycle` cancels final labeling on background, clears the run buffer and
+binds queued passes to their original recording token. Tests now drive the actual periodic loop,
+bound Stop/background return while a model is held, and cover a cancellation-ignoring final pass,
+queued old work followed by restart, and actual default-model-directory backup exclusion. Existing
+Watch prompt mapping tests already cover the issue's device-label item. Speaker privacy/support
+wording now distinguishes clearing the run buffer from an in-flight model operation finishing.
+Full `make validate-local` passed on `f1bd693`: Core coverage above 98%, 462 simulator tests
+(452 passed, ten skipped), release helpers, lint, signed Mac build and real provider contracts.
+Independent review cleared the queued-old-run race and same-file backup-policy extraction. Native-resolution
+Watch speaker transcript/Notes simulator screenshots were preserved and visually reviewed. This is
+simulator acceptance, not physical-device acceptance. Current-main integration passed at `ac20342`: all
+46 focused iOS lifecycle/backup/preparation/Watch checks, Core tests (1,060, seven skips, 98.1048%), lint,
+signed Mac build and all three hosted checks. Evidence: `dist/speaker-lifecycle-188` and external release evidence. Not merged or published.
+
+## In progress: iOS live snapshot and provisional prompts (#164)
+
+Branch `codex/164-ios-live-snapshot` implements memoized live summary inputs and provisional
+floor/tag/notice handling for manual Summary, Quick and Ask. The shared excerpt shortener preserves
+the marker and minimum evidence. Twenty-one Core grounding tests pass; iOS app and all test targets
+compile for both simulator architectures, lint passes, and independent logic review found no blockers.
+Full `make validate-local` passed at `2d1b2cd`, including the new iOS runtime regressions, Core
+coverage above 98%, release helpers, signed Mac build and real provider contracts. A dedicated manual
+Summary simulator journey now verifies provisional request tagging and removal after final recognition;
+all five focused checks passed at `00cc28f`, and both native-resolution screenshots were inspected.
+Current-main integration lint/Core (1,061 tests, seven skips, 98.1056%) and all three hosted checks passed.
+Physical-device acceptance and publication remain pending. Evidence: `dist/live-snapshot-164`.
