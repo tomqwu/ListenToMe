@@ -198,6 +198,8 @@ struct SettingsView: View {
                 .font(.caption).foregroundStyle(.secondary)
             if aiMode == .openAI {
                 OpenAICompatibleSettingsSection(baseURL: $openAIBaseURL, key: $openAIKey)
+                OpenAICompatibilityView(savedConfiguration: ProviderSettings.aiMode == .openAI
+                    && openAIBaseURL == ProviderSettings.openAIBaseURL && openAIKey == originalOpenAIKey)
             }
             if aiMode == .cloudAI {
                 CloudAISettingsSection(vendor: $cloudVendor, key: $cloudKey)

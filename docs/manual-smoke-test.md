@@ -802,3 +802,15 @@ real WatchConnectivity transfer and Watch background recording require the paire
 ### iOS audio-driven language checks (#216)
 
 In Automatic, speak in a language the starting transcriber does not recognize. Check that an initial language check still occurs after at least eight seconds of activity, and continuous talking can trigger later checks without new transcript results. Check the detected-language notice, Undo and Stop. Silence and sparse isolated sounds must not trigger an initial download; loud noise may qualify as activity but must still pass language confidence and switch rules. Re-checks pause in Low Power Mode, background and serious thermal state. Stop during model preparation must remain responsive. The simulator fixture verifies control flow with synthetic audio and a deterministic model; it does not establish real speech accuracy or device battery acceptance.
+
+
+## Mac custom-server Auto compatibility (#209)
+
+Save an OpenAI-compatible endpoint and choose a Quick model in the status rail. Reopen Settings
+and select Check Auto compatibility. Confirm a synthetic exchange is sent to that saved endpoint
+and model, without conversation text. A valid evaluator answer enables Auto; plain prose, malformed
+JSON or reasoning-only output records a format failure and pauses Auto with a reason. Summary
+remains usable. A successful recheck clears that server/model failure; choosing another model does
+not inherit it. A connection failure and Cancel preserve the old result. Unsaved URL/key edits
+disable the check, so draft fields cannot change the recipient. Capture the result screen and restore
+original settings after the test.

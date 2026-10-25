@@ -640,7 +640,11 @@ the server's base URL: LM Studio (`http://localhost:1234/v1`), vLLM or llama.cpp
   with best-effort reasoning-off hints (`reasoning_effort: "none"`, `enable_thinking: false`) instead
   of Ollama's `think: false`; a model that cannot hold it shows "did not return a usable Quick Summary update" and keeps the
   previous recap. On iPhone, **Test this model** on the Quick role checks this up front and pauses
-  Auto with the reason if it fails.
+  Auto with the reason if it fails. On Mac, save the custom-server settings, choose a Quick model
+  in the status rail, then use **Check Auto compatibility** in Settings. Only synthetic text is sent.
+  A format failure pauses Auto for that server origin and model; a successful recheck clears it.
+  Network errors and cancellation preserve the previous result. Unsaved server/key edits disable
+  the check until saved.
 - `make e2e` runs the provider contract against a real server: Ollama's own `/v1` API.
 
 ## Contributing

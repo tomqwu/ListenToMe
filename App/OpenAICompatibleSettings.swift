@@ -37,7 +37,11 @@ extension ProviderSettings {
         switch aiMode {
         case .apple: return AppleIntelligenceProvider.automaticQuickUnavailableReason
         case .openAI:
-            if openAIEndpoint() == nil { return "Set your OpenAI-compatible server URL in Settings." }
+            guard let endpoint = openAIEndpoint() else { return "Set your OpenAI-compatible server URL in Settings." }
+            if openAIContractLedger.hasFailed(endpoint, model: quickModel) {
+                return "\(quickModel) did not follow the Quick Summary format. Choose another Quick model or "
+                    + "use Check Auto compatibility in Settings to test it again."
+            }
             return quickModel.isEmpty ? "Choose a Quick model in the status rail." : nil
         case .cloudAI:
             if let reason = cloudAIUnavailableReason { return reason }
