@@ -27,8 +27,9 @@ extension MeetingView {
 
     /// Cmd-E: the full transcript as Markdown.
     func exportSession() {
+        exportError = nil
         ConversationExport.save(currentRecord(date: conversationStartedAt ?? Date()), as: .markdown) {
-            startError = $0
+            exportError = $0
         }
     }
 
@@ -90,19 +91,20 @@ struct ConversationExportMenu: View {
     let record: () -> SessionRecord
     let hasTimestamps: Bool
     let onError: (String) -> Void
+    var onBegin: () -> Void = {}
 
     var body: some View {
         ForEach(SessionExportFormat.allCases) { format in
-            Button("\(format.title)…") { ConversationExport.save(record(), as: format, onError: onError) }
+            Button("\(format.title)…") { onBegin(); ConversationExport.save(record(), as: format, onError: onError) }
                 .disabled(format.needsTimestamps && !hasTimestamps)
         }
         if !hasTimestamps {
             Text("Subtitles need a transcript with timestamps (WhisperKit, or iPhone recordings).")
         }
         Divider()
-        Button("Recap (Markdown)…") { ConversationExport.saveRecap(record(), onError: onError) }
-        Button("PDF…") { ConversationExport.savePDF(record(), onError: onError) }
+        Button("Recap (Markdown)…") { onBegin(); ConversationExport.saveRecap(record(), onError: onError) }
+        Button("PDF…") { onBegin(); ConversationExport.savePDF(record(), onError: onError) }
         Divider()
-        Button("Copy conversation") { Clipboard.copy(SessionExporter.markdown(for: record())) }
+        Button("Copy conversation") { onBegin(); Clipboard.copy(SessionExporter.markdown(for: record())) }
     }
 }

@@ -813,3 +813,20 @@ text, confirm the server receives an output cap of 1,024. With long text, verify
 notice and that requests still too large (including large instructions or Unicode text) fail with
 “No text was sent” before the server receives them. Choose Unknown to restore server-managed behavior.
 Capture the settings UI at native resolution and restore original preferences after testing.
+
+
+### Independent Mac error banners (#173)
+
+1. Produce a microphone-denied capture failure using the existing denied-permission test setup;
+   do not reset production permissions. Confirm the capture message offers Open Settings.
+2. While that message is visible, attempt an export to an unwritable destination. Both messages
+   must remain visible. Dismiss file or calendar message: the capture message and its Settings
+   action remain. Repeat, then dismiss capture message: the export error remains.
+3. Retry an export to a writable destination. The file error clears without clearing a capture
+   failure. Starting capture clears only the capture message, not an unrelated file error.
+4. Trigger Calendar denial using an existing denied test profile. Its separate message must offer
+   Open Calendar privacy settings; dismissing capture must not remove that action. An import failure
+   uses the file/Calendar banner and must not replace a capture failure.
+5. Start a new conversation and confirm errors from the previous one are cleared. Capture native
+   screenshots with both banners, each independently dismissed, and the Calendar action. Preserve
+   source/signing provenance and complete Dev-app cleanup after acceptance.

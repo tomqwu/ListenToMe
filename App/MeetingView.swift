@@ -13,6 +13,7 @@ struct MeetingView: View {
     @State var session: MeetingSession
     @State var store: ConversationStore
     @State var startError: String?
+    @State var exportError: String?
     @State var showSettings = false
     @State private var permissions = PermissionsModel()
     @State private var showPermissions = false
@@ -212,11 +213,6 @@ struct MeetingView: View {
             : URL(string: "http://localhost:11434")!
     }
 
-    /// True when the banner is showing a Calendar *denial*, the one calendar outcome the user can
-    /// fix themselves. Derived from `startError` (like the microphone case just below it) so it can
-    /// never disagree with the message on screen.
-    private var calendarDenied: Bool { startError == CalendarLookup.denied.message }
-
     var body: some View {
         @Bindable var session = session
         return VStack(spacing: 0) {
@@ -227,35 +223,12 @@ struct MeetingView: View {
                     .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 14)
             }
             if let startError {
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text("⚠️ \(startError)")
-                        .foregroundStyle(.red)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    // Only the denied case is fixable by the user in their own Privacy pane; a
-                    // restricted (managed) Mac gets the explanation without a dead-end button.
-                    if startError == CapturePreflight.deniedMessage {
-                        Button("Open Settings") { permissions.openSettings("Privacy_Microphone") }
-                    }
-                    // Calendar denial is equally fixable, and had no button at all (issue #136).
-                    if calendarDenied {
-                        Button("Open Calendar privacy settings") {
-                            permissions.openSettings("Privacy_Calendars")
-                        }
-                    }
-                    // The banner is shared by start, import, export and calendar failures and used
-                    // to clear only on the next start — so a stale export error sat above a live
-                    // recording with no way to get rid of it (issue #136).
-                    Button { self.startError = nil } label: {
-                        Image(systemName: "xmark")
-                    }
-                    .buttonStyle(.borderless)
-                    .help("Dismiss this message")
-                    .accessibilityLabel("Dismiss message")
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 14)
-                .padding(.bottom, 4)
-                .background(Theme.windowBackground)
+                MeetingErrorBanner(message: startError, dismissLabel: "Dismiss capture message",
+                                   dismiss: { self.startError = nil }, openSettings: permissions.openSettings)
+            }
+            if let exportError {
+                MeetingErrorBanner(message: exportError, dismissLabel: "Dismiss file or calendar message",
+                                   dismiss: { self.exportError = nil }, openSettings: permissions.openSettings)
             }
             MacVocabularyBanner(vocabulary: vocabulary, conversationID: currentSessionID, apply: applyVocabulary)
             // HSplitView so the user can drag the rail/transcript/copilot dividers; each column
@@ -383,7 +356,7 @@ extension MeetingView {
             Menu {
                 ConversationExportMenu(record: { currentRecord(date: conversationStartedAt ?? Date()) },
                                        hasTimestamps: TranscriptTimestamp.hasTimes(store.utterances),
-                                       onError: { startError = $0 })
+                                       onError: { exportError = $0 }, onBegin: { exportError = nil })
             } label: { Label("Export", systemImage: "square.and.arrow.up") }
                 .help("Export or copy this conversation")
             Button { openSettings($showSettings) } label: { Label("Settings", systemImage: "gearshape") }
@@ -653,10 +626,10 @@ extension MeetingView {
         panel.message = "Choose an audio file to transcribe"
         guard panel.runModal() == .OK, let url = panel.url else { return }
         guard let producer = AudioFileChunkProducer(url: url, source: .others) else {
-            startError = "Couldn't read that audio file."
+            exportError = "Couldn't read that audio file."
             return
         }
-        startError = nil
+        exportError = nil
         // Imports always use SpeechAnalyzer (it finalizes all fed audio, so fast-feeding a file is
         // lossless), regardless of the live-capture engine setting; the chosen language still applies.
         let locale = ProviderSettings.transcriptionLocale()
@@ -672,11 +645,11 @@ extension MeetingView {
     /// Pre-fills the Context-notes field from the user's current or next calendar meeting.
     /// Calendar access is async, so this runs on a Task; failures degrade to an inline message.
     func loadFromCalendar(session: MeetingSession) {
-        startError = nil
+        exportError = nil
         Task {
             let lookup = await CalendarService.currentOrNextMeeting()
             guard case .meeting(let info) = lookup else {
-                startError = lookup.message
+                exportError = lookup.message
                 return
             }
             session.notes = MeetingContext.notes(
