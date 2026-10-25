@@ -63,6 +63,40 @@ final class MobileRetranscriptionTests: XCTestCase {
         XCTAssertEqual(reopened.notes, "Latest notes")
     }
 
+    func testRetainedWatchReplacementKeepsDeviceProvenanceAfterReopen() async throws {
+        let session = MobileSession(storageDirectory: root)
+        session.segments = [.init(source: .you, text: "Original", isFinal: true, start: 10, end: 12,
+                                  speakerID: "watch:old:1", speakerName: "Alex")]
+        XCTAssertTrue(session.save(announce: false))
+        let source = root.appendingPathComponent("watch-fixture.m4a")
+        try Data([0]).write(to: source)
+        try session.savedAudio.library.importWatchChunk(from: source, conversationID: session.id,
+            recordingID: UUID(), chunkIndex: 0, startedAt: Date(), timelineOffset: 10, duration: 5)
+        let draft = SavedAudioRetranscription()
+        draft.start(original: session.currentRecord, library: session.savedAudio.library,
+                    language: "fr-FR", terms: []) { _, _, _, _ in
+            [.init(source: .you, text: "Bonjour", isFinal: true, start: 1, end: 3,
+                   speakerID: "stale", speakerName: "Old identity")]
+        }
+        let deadline = ContinuousClock.now.advanced(by: .seconds(10))
+        while draft.isRunning && ContinuousClock.now < deadline { try await Task.sleep(for: .milliseconds(10)) }
+        XCTAssertFalse(draft.isRunning)
+        let preview = try XCTUnwrap(draft.preview)
+        try session.applyRetranscription(preview)
+        let reopened = MobileSession(storageDirectory: root)
+        let line = try XCTUnwrap(reopened.segments.first)
+        XCTAssertEqual(line.text, "Bonjour")
+        XCTAssertEqual(line.start, 11)
+        XCTAssertEqual(line.end, 13)
+        XCTAssertEqual(line.speakerName, "Apple Watch")
+        XCTAssertNil(line.speakerID, "Inferred identities must be reset")
+        XCTAssertTrue(MobileSession.isWatchLine(line), "Live microphone analysis must still exclude Watch audio")
+        let run = try XCTUnwrap(reopened.savedAudio.library.runs(for: reopened.id).first)
+        XCTAssertEqual(run.deviceName, "Apple Watch")
+        XCTAssertTrue(run.title(partCount: 1).contains("Apple Watch"))
+        XCTAssertEqual(run.timelineOffset, 10)
+    }
+
     func testCancelledUncooperativeRecognitionCannotOfferAReplacement() async throws {
         let library = SavedAudioLibrary(root: root, excludeFromBackup: true)
         _ = try audio(library, id: "one")

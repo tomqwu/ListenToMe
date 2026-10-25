@@ -1438,7 +1438,9 @@ by the stale preview.
 Replacement removes every original transcript line, including lines without saved audio. It resets
 speaker identities and corrections, updates transcript/audio timing, and preserves the title, notes,
 attachments, instructions and summaries. Review those summaries against the new text. Saved audio
-files are not rewritten. Mac offers the same flow with Apple or WhisperKit recognition.
+files are not rewritten. Retained Watch audio keeps its Apple Watch playback label and device provenance
+on replacement lines, while previously inferred speaker identities are cleared. Mac offers the same
+flow with Apple or WhisperKit recognition.
 
 ## Custom Ollama context windows (#230)
 

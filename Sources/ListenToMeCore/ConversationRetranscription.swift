@@ -43,7 +43,8 @@ public struct ConversationRetranscription: Sendable {
                 throw Failure.invalidTimeline
             }
             return TranscriptSegment(source: run.source, text: line.text, isFinal: true,
-                start: run.timelineOffset + line.start, end: run.timelineOffset + line.end, language: language)
+                start: run.timelineOffset + line.start, end: run.timelineOffset + line.end,
+                speakerName: run.deviceName, language: language)
         }
     }
 
@@ -60,7 +61,7 @@ public struct ConversationRetranscription: Sendable {
                 let offset = base + max(0, run.timelineOffset - first)
                 result.append(SavedAudioRun(index: run.index, source: run.source, fileName: run.fileName,
                     startedAt: run.startedAt, timelineOffset: offset, timesMatchAudio: true,
-                    duration: run.duration, failure: run.failure))
+                    duration: run.duration, failure: run.failure, deviceName: run.deviceName))
                 end = max(end, offset + (run.duration ?? 0))
             }
         }

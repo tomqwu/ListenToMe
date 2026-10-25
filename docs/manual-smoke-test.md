@@ -766,7 +766,10 @@ keyboard reachability. Follow the release screenshot checklist.
 4. Try a multi-run conversation and both Mac tracks. Confirm subsequent runs follow earlier audio
    and both tracks retain their source. Cancel during recognition and test a missing/unreadable file:
    neither may replace the original. Changing the transcript invalidates a pending preview.
-5. Capture native-resolution preview screenshots on standard/large iPhone, small/large iPad and Mac,
+5. In a Watch development build with saved audio, replace the transcript and reopen History. The
+   player and replacement lines must still say Apple Watch; inferred names must reset. Continue
+   recording on the phone and confirm its speaker/language analysis leaves Watch lines alone.
+6. Capture native-resolution preview screenshots on standard/large iPhone, small/large iPad and Mac,
    retaining source, device, runtime and version provenance with the test evidence.
 
 ## Local Ollama context capacity (#230)

@@ -25,6 +25,21 @@ final class ConversationRetranscriptionTests: XCTestCase {
         XCTAssertThrowsError(try ConversationRetranscription(original: record, segments: [], language: "en-US"))
     }
 
+    func testWatchTimelineAndReplacementKeepDeviceButClearInferredSpeaker() throws {
+        let run = SavedAudioRun(index: 2, source: .you, fileName: "watch.m4a", startedAt: Date(),
+            timelineOffset: 45, timesMatchAudio: true, duration: 10, deviceName: "Apple Watch")
+        let normalized = try XCTUnwrap(ConversationRetranscription.timeline(for: [run]).first)
+        XCTAssertEqual(normalized.deviceName, "Apple Watch")
+        XCTAssertEqual(normalized.title(partCount: 1), "Apple Watch")
+        let line = TranscriptSegment(source: .you, text: "Hello", isFinal: true, start: 2, end: 4,
+                                     speakerID: "watch:old:1", speakerName: "Alex")
+        let placed = try XCTUnwrap(ConversationRetranscription.placing([line], run: normalized, language: "en-US").first)
+        XCTAssertEqual(placed.speakerName, "Apple Watch")
+        XCTAssertNil(placed.speakerID)
+        XCTAssertEqual(placed.start, 47)
+        XCTAssertEqual(placed.end, 49)
+    }
+
     func testPlacesTracksOnTheirOwnTimelineAndClearsOldSpeakerIdentity() throws {
         let run = SavedAudioRun(index: 2, source: .others, fileName: "part-002-system.m4a", startedAt: Date(),
                                 timelineOffset: 45, timesMatchAudio: true, duration: 10)
