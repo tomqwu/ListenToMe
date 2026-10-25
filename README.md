@@ -699,3 +699,8 @@ The app does not silently remove the opening. This can reject some prompts a spe
 could fit. Larger contexts require more memory. Default local answers are bounded to 4,096 tokens (at most a quarter of a small model window);
 Quick and correction keep their smaller limits, and output-limit notices still apply.
 Ollama Cloud models and other cloud providers keep their server-managed context.
+
+Capture lifecycle task ownership is shared in `CaptureCoordinator`: iOS and Mac adapters supply
+recorders, permission policy and persistence effects. Core tests cover start/stop/restart races;
+platform GUI/audio acceptance remains a separate requirement. Other platform orchestration is
+still being migrated under #134; Core coverage does not represent whole-product coverage.

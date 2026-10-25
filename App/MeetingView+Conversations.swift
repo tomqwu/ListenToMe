@@ -75,12 +75,10 @@ extension MeetingView {
         lifecycleBusy = true
         Task {
             defer { lifecycleBusy = false }
-            wantsCapture = false
             recordingStartedAt = nil
-            restartTask?.cancel()
             // A checkpoint is independent of transcription/model completion.
             _ = checkpoint()
-            await session.stopAndWait()
+            await captureCoordinator.stop()
             let persisted = !hasConversation || (ProviderSettings.saveSessionsForSearch && sessionSaveable
                                                  && checkpoint(complete: true, force: true))
             if !persisted {
@@ -230,10 +228,10 @@ extension MeetingView {
         guard !lifecycleBusy else { return false }
         lifecycleBusy = true
         defer { lifecycleBusy = false }
-        wantsCapture = false; recordingStartedAt = nil; activeEngine = nil
-        restartTask?.cancel(); importTask?.cancel()
+        recordingStartedAt = nil; activeEngine = nil
+        importTask?.cancel()
         _ = checkpoint()
-        await session.stopAndWait()
+        await captureCoordinator.stop()
         await MacSavedAudio.shared.waitForWrites()
         await importTask?.value
         if !hasConversation { discardAudioIfNotInHistory(); return true }

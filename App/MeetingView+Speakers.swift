@@ -18,8 +18,9 @@ extension MeetingView {
     }
 
     /// Drain a periodic pass before a final pass, so Stop includes the transcriber's last utterance.
-    func finishSpeakerAnalysis() async {
-        let token = diarizationRunToken
+    func finishSpeakerAnalysis(expectedRun: Int? = nil) async {
+        let token = expectedRun ?? diarizationRunToken
+        guard token == diarizationRunToken else { return }
         await speakerTask?.value
         guard token == diarizationRunToken, diarizationSinkAttached else { return }
         identifySpeakers(showSheet: false)

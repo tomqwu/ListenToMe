@@ -59,6 +59,8 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## macOS (unreleased since 1.4.4)
 
+- Recording Start, Stop and language restarts now use the shared capture coordinator. Stop interrupts pending model preparation, superseded language restarts cannot resume capture, and the final checkpoint completes before a new recording can start. Optional speaker analysis stays bound to the stopped run. (#134, partial)
+
 - Validation: add headless Mac file-loading and audio-buffer tests. Archive save/read/clear orchestration now uses a shared tested repository while retaining existing error messages and secondary-data cleanup ordering. No new UI or permission behavior. (#134, partial)
 
 - History search keeps its records when SwiftUI recreates a view, instead of replacing matching rows with an empty asynchronous result. (#223 acceptance fix)

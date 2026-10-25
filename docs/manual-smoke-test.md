@@ -826,3 +826,13 @@ final words must appear in History as a complete record. Start a second recordin
 recorder callbacks cannot append text or report a failure in it. Repeat background/interruption,
 language switching, speaker identification and Save audio recordings on/off. Simulator fakes exercise
 late callbacks and held finalization; they do not prove physical microphone or paired-Watch behavior.
+
+### Mac capture coordinator regression (#134)
+
+During first-run preparation, press Stop and confirm it does not wait for the model download or
+start recording later. While recording, change language twice, then Stop before restart completes:
+no superseded restart may resume capture. Start again after Stop and verify the previous final
+checkpoint is complete, the new live record is incomplete, and old speaker work cannot label the
+new run. New and window close must drain final text/audio before their existing save decision.
+Verify actual system-audio transcription labeled OTHERS and preserve native screenshots and
+source/signing provenance. Core state-machine tests do not replace installed-app audio acceptance.

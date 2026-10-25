@@ -43,17 +43,17 @@ struct MeetingView: View {
     @State var referencePaths: [URL]
     @State private var referenceLoadToken = 0
     @State var referenceSkipped: [TextFileReader.Skipped] = []
-    @State var restartTask: Task<Void, Never>?
+    @State var captureCoordinator = CaptureCoordinator()
     @State var importTask: Task<Void, Never>?
     @State var transcriptAtBottom = true
     /// User intent to be capturing — the toolbar button's source of truth. Stays true across the
     /// brief teardown window of a locale restart (when `session.isRunning` is transiently false),
     /// so a Stop press is never lost.
-    @State var wantsCapture = false
+    var wantsCapture: Bool { captureCoordinator.wantsCapture }
     /// When the current recording run began, for the elapsed mm:ss timer. nil while idle.
     @State var recordingStartedAt: Date?
     /// Ticks while recording so the elapsed timer updates once per second.
-    @State private var now = Date()
+    @State var now = Date()
     /// Live appearance (System/Light/Dark) applied to the root via `.preferredColorScheme`.
     @State private var appearance = ProviderSettings.appearance
     @State var othersAudioSink: SpeakerAudioBuffer
@@ -89,7 +89,11 @@ struct MeetingView: View {
     @State var modelStatus = ""
     @State private var modelLoadToken = 0
     @State private var showLicenses = false
-    @State var lifecycleBusy = false
+    @State private var conversationTransitionBusy = false
+    var lifecycleBusy: Bool {
+        get { conversationTransitionBusy || (!wantsCapture && captureCoordinator.phase != .idle) }
+        nonmutating set { conversationTransitionBusy = newValue }
+    }
     @State var conversationTitle = ConversationTitle.generated(Date().formatted(date: .abbreviated, time: .shortened))
     /// Where the title came from, so an automatic name never replaces a typed one (#221).
     @State var conversationTitleState = ConversationTitleState.placeholder
@@ -404,57 +408,10 @@ extension MeetingView {
         .background(Theme.windowBackground)
     }
 
-    /// Listen/Stop press: start or stop capture, tracking the elapsed-timer anchor and saving on Stop.
-    func toggleCapture(session: MeetingSession) {
-        guard !lifecycleBusy else { return }
-        Task {
-            if wantsCapture {
-                lifecycleBusy = true
-                defer { lifecycleBusy = false }
-                _ = checkpoint()
-                wantsCapture = false
-                recordingStartedAt = nil
-                restartTask?.cancel()   // cancel any in-flight locale restart
-                // Await teardown so the transcriber flushes its final segments into the store
-                // before we snapshot the transcript for search.
-                await session.stopAndWait()
-                await MacSavedAudio.shared.waitForWrites()   // the audio files are closed before Stop finishes
-                activeEngine = nil
-                _ = checkpoint(complete: true, force: true)
-                nameConversationIfNeeded()   // in the background (#221)
-                Task { await finishSpeakerAnalysis() }
-            } else {
-                startError = nil
-                // A denied microphone doesn't fail AVAudioEngine.start() — it records silence — so
-                // decide BEFORE starting whether we may listen at all (issue #110).
-                guard await ensureMicrophoneAccess() else { wantsCapture = false; return }
-                wantsCapture = true
-                do {
-                    // The Others buffer is reset in makeCapture, restarting its 0-based timeline.
-                    // Clear stale labels + bump the token BEFORE start; anchor the run only AFTER
-                    // start returns, once the prior Stop's finals have drained into the store.
-                    beginDiarizationRunReset()
-                    // Snapshot the engine this run is built from, before start() creates the
-                    // transcriber, so the rail can't claim an engine that isn't running (#136).
-                    activeEngine = ProviderSettings.transcriptionEngine
-                    try await session.start()
-                    guard wantsCapture, session.isRunning else { return }
-                    noteCaptureLanguage()
-                    anchorDiarizationRun()
-                    now = Date(); recordingStartedAt = Date()
-                } catch {
-                    startError = error.localizedDescription
-                    wantsCapture = false
-                    activeEngine = nil
-                }
-            }
-        }
-    }
-
     /// Listen pre-flight for microphone authorization (issue #110). Returns true when capture may
     /// start; otherwise sets `startError` (the banner offers Open Settings when the user can fix it
     /// themselves) and leaves the session stopped rather than recording silence.
-    private func ensureMicrophoneAccess() async -> Bool {
+    func ensureMicrophoneAccess() async -> Bool {
         var decision = CapturePreflight.decide(microphone: PermissionsModel.currentMicrophoneAuthorization())
         if decision == .requestAccess {
             let granted = await PermissionsModel.requestMicrophoneAccess()
@@ -466,33 +423,6 @@ extension MeetingView {
             return false
         }
         return true
-    }
-
-    /// Restarts an active session after a language change so the new transcriber applies immediately
-    /// (the locale is read only when a transcriber is created, at start). Called from the rail's
-    /// Language picker binding.
-    func restartForLocaleChange(session: MeetingSession) {
-        restartTask?.cancel()
-        restartTask = Task {
-            await session.stopAndWait()   // await teardown so the new transcriber can't overlap the old
-            // Bail if the user pressed Stop or closed the window during teardown — don't resume
-            // recording against their intent.
-            guard wantsCapture, !Task.isCancelled else { return }
-            // The restart rebuilds the capture, resetting the Others buffer's 0-based timeline. Drop
-            // stale labels + bump the token before start; anchor only after start returns (the prior
-            // teardown above already drained, but the new finals land after start re-attaches).
-            beginDiarizationRunReset()
-            do {
-                startError = nil
-                activeEngine = ProviderSettings.transcriptionEngine
-                try await session.start()
-                guard wantsCapture, session.isRunning, !Task.isCancelled else { return }
-                noteCaptureLanguage()
-                anchorDiarizationRun()
-            } catch {
-                startError = error.localizedDescription; wantsCapture = false; activeEngine = nil
-            }
-        }
     }
 
     /// Pre-start half of a diarization-run reset: clear stale inline labels and bump the run token so
@@ -540,7 +470,7 @@ extension MeetingView {
     /// the time `session.start()` returns, the previous run's drain is complete (its finals are in the
     /// store) and the new capture has reset+attached the sink, so `store.utterances.count` marks where
     /// this run's lines begin and the live settings match the capture/transcriber just built.
-    private func anchorDiarizationRun() {
+    func anchorDiarizationRun() {
         diarizationRunStartIndex = store.utterances.count
         MacSavedAudio.shared.anchorRun(firstSegment: store.utterances.count)
         // Snapshot the settings the new run's capture/transcriber were built from. `makeCapture` read
@@ -703,16 +633,14 @@ extension MeetingView {
         speakerTask?.cancel()
         diarizationRunToken &+= 1
         let wasCapturing = wantsCapture
-        wantsCapture = false
-        restartTask?.cancel()   // don't let a pending locale restart resume capture after close
         importTask?.cancel()    // stop an in-flight file import when the window closes
         if wasCapturing {
             _ = checkpoint()
-            Task {
-                await session.stopAndWait()
+            captureCoordinator.requestStop(after: {
                 _ = checkpoint(complete: true, force: true)
-            }
+            })
         } else {
+            captureCoordinator.requestStop()
             session.stop()
         }
     }

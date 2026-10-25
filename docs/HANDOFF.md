@@ -262,3 +262,16 @@ Independent review found no correctness blockers. The iOS app/test targets compi
 simulator unit tests passed, including both new adapter regressions. Core coverage is 98.1309%;
 lint passed. Broader iOS unit validation and the full local gate remain pending. This does not close #134: Mac view orchestration and broader shared lifecycle
 migration remain required. No release or physical-device acceptance is claimed.
+
+### #134 Mac capture migration — partial candidate, October 25
+
+`codex/134-mac-capture-coordinator` builds on PR #298. Start/Stop/locale-restart task ownership
+and recording intent move out of MeetingView into CaptureCoordinator. New and window close await
+the same teardown. A synchronous interrupt hook cancels MeetingSession model preparation, and
+final checkpoint completions run before the coordinator accepts another Start. Optional speaker
+analysis checks the stopped run token before touching buffers. Core restart and reentrancy tests
+cover the lifecycle gaps found during independent review. Local validation remains in progress;
+installed Mac GUI/OTHERS acceptance is pending while the Mac is locked. No release is claimed.
+
+This stage still does not close #134: other view tasks (import, model discovery, optional AI and
+speaker work) and the full shared-session architecture remain to be migrated and tested.
