@@ -32,6 +32,7 @@ public final class MeetingSession {
     /// system-audio stream. The UI shows this as a visible alert instead of a grey caption, because
     /// the rail keeps saying Recording and the elapsed timer keeps counting (issue #107).
     public var captureDegraded: Bool { !degradedSources.isEmpty }
+    public func captureUnavailable(_ source: SpeakerSource) -> Bool { degradedSources.contains(source) }
     public internal(set) var transcriptionStatus = "Transcription: idle"
     public var captureStatus: String {
         "Mic: \(captureMessages[.you] ?? "idle") · System: \(captureMessages[.others] ?? "idle")"
@@ -163,6 +164,8 @@ public final class MeetingSession {
     #endif
 
     public let quickReader = QuickSummaryReader()
+    public let audioLevels = LiveAudioLevels()
+    public let responseTimings = ResponseTimings()
     public let automaticReviews = AutomaticReviewCoordinator()
     var liveScheduler = LiveSummaryScheduler()
     var liveWake: Task<Void, Never>?
@@ -235,6 +238,7 @@ public final class MeetingSession {
     public func setModel(_ role: CopilotRole, _ model: String) {
         cancelResponse(role)
         stoppedResponseText[role] = nil
+        responseTimings.clear(role)
         models[role] = model
         providers[role] = makeProvider(model)
         // The new provider may have a different context window (or none), so the old notice no
@@ -291,6 +295,7 @@ public final class MeetingSession {
     public func resetConversation() {
         guard !isRunning, !isTranscribingFile else { return }
         speakerSummaryNeedsRebuild = false
+        audioLevels.reset(); responseTimings.reset()
         for role in CopilotRole.allCases { cancelResponse(role) }
         // No proactive task needs cancelling here: `ingest` only fires while running, and `stop()`
         // (which must precede a reset) already cancelled it.
@@ -334,6 +339,7 @@ public final class MeetingSession {
         self.capture = capture
         self.transcriber = transcriber
         captureMessages = [.you: "starting…", .others: "starting…"]
+        audioLevels.reset()
         degradedSources = []
         transcriptionStatus = "Transcription: waiting for audio"
         captureStatusTask?.cancel(); transcriptionStatusTask?.cancel()
@@ -396,12 +402,15 @@ public final class MeetingSession {
         guard isRunning, runID == myRun else { capture.stop(); return }
 
         let captureStream = capture.chunks
-        capturePump = Task {
+        capturePump = Task { [weak self] in
             // `drain` cancels this pump if it hasn't finished feeding the stream's remaining chunks
             // within the grace period (i.e. a `feed` parked in a model download); the cancellation
             // reaches `feed` and ends the iteration, so no explicit cancellation check is wanted
             // here — that would drop the chunk already in hand.
             for await chunk in captureStream {
+                if let self, self.runID == myRun, self.isRunning {
+                    self.audioLevels.ingest(chunk, now: ProcessInfo.processInfo.systemUptime)
+                }
                 await transcriber.feed(chunk)
             }
         }
@@ -850,8 +859,9 @@ extension MeetingSession {
             }
         }
         guard let provider = providers[role] else { return }
+        let measuredProvider = responseTimings.instrument(provider, role: role)
         do {
-            for try await event in provider.streamEvents(request) {
+            for try await event in measuredProvider.streamEvents(request) {
                 if Task.isCancelled { return }
                 if generation != responseGenerations[role] { return }
                 switch event {
@@ -927,14 +937,6 @@ extension MeetingSession {
         quickRecap = output
         guard !manualQuickAnswer.isFresh(at: clock()) else { return }
         quickSuggestion = output
-    }
-
-    func output(_ role: CopilotRole) -> String {
-        switch role {
-        case .listener: return listenerSummary
-        case .quick:    return quickSuggestion
-        case .deep:     return deepAnswer
-        }
     }
 
     func setOutput(_ role: CopilotRole, _ value: String) {

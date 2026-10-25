@@ -740,3 +740,5 @@ On Mac, select transcript text or use its row menu to copy a line or the transcr
 
 The Mac transcript follows incoming speech and wrapped/resized rows until you scroll back to read. Choose **Latest** to resume following. SpeechAnalyzer timestamps come from recognition audio ranges on each capture timeline, not from result delivery time.
 On Mac, expand **Engine → Compute details** to inspect the selected/active transcription engine’s configured compute policy. WhisperKit shows allowed units for audio features, encoder, decoder and prefill; Apple Speech manages its own policy. **Runtime accelerator** says Not running, Preparing or Not exposed. Allowing GPU/Neural Engine does not establish that a request used it.
+
+The Mac rail meters use captured PCM audio (RMS in dBFS); they do not infer sound from transcript activity. Silence, no recent audio, preparation, stopped and unavailable channels are distinct. Each AI pane shows timing for its latest request, including automatic evaluations: first answer content (excluding thinking), total elapsed time and completion/cancellation/failure. These measurements stay in memory and are not exported or sent to a provider.

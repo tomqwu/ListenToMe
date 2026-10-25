@@ -105,6 +105,8 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 
 - Capture failures and file/Calendar failures have separate dismissible messages. Retrying export, import or Calendar work clears only that operation’s message; microphone and Calendar privacy actions stay attached to the relevant error. (#173)
 - Automatic reviews count the complete request toward their 60,000-character limit, including instructions and any attached references. Oversized requests stop before sending and explain what to shorten. Changing directives alone keeps the existing review; new context or manual generation uses the new settings. (#148)
+- The rail shows measured microphone and system-audio RMS levels, distinguishing silence, missing audio and unavailable channels. AI panes show first-answer-content and total request timing, including automatic reviews, with separate completion, cancellation and failure states. Metrics stay on-device and are not saved. (#56)
+
 - SpeechAnalyzer lines use recognition audio ranges on the capture timeline, enabling timestamped exports, saved-audio seeking and speaker labels. Delayed callbacks preserve capture time. Transcript follow-latest survives text growth and resizing, pauses for user scrolling, and resumes with Latest. (#68)
 
 - Select and copy transcript text, double-click a finalized line to edit it, or delete it with confirmation. Manual edits preserve the recognized original in exports and refresh existing summaries; stale AI answers are cleared. Saved audio and exported copies are unchanged. (#126)

@@ -18,6 +18,7 @@ extension MeetingView {
             VStack(alignment: .leading, spacing: 18) {
                 RailRecStatus(isRunning: session.isRunning, isPreparing: session.isPreparing,
                               elapsed: elapsedLabel)
+                AudioLevelMeters(session: session)
 
                 railSection("Engine") {
                     Text(CommandCenterLabels.engine(active: runningEngine,

@@ -129,6 +129,7 @@ struct RoleBox<Header: View, Actions: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
+            ResponseTimingBadge(timings: session.responseTimings, role: role)
             HStack(spacing: 8) {
                 Text(title.uppercased())
                     .font(.system(size: 12, weight: .bold)).tracking(0.5)
