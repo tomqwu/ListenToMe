@@ -156,7 +156,7 @@ Physical-device diagnostics showed three completed reads, no unread input and no
 
 Full reviews run serially while Quick can continue evaluating new speech. Summary has a 30-second minimum between a completed review and the next automatic start, Deep 60 seconds; the first eligible review starts immediately, and a cancelled attempt does not spend that window. Pending work coalesces to the latest context. These are one-shot deadlines for queued work, never periodic model polling. Unchanged input cannot regenerate a completed review.
 
-Stop, Auto off, provider changes and conversation changes cancel automatic work. Manual generation takes priority and suppresses older queued work it covers. Appended speech can follow an in-flight snapshot; wording revisions invalidate stale output. Complete valid responses replace previous output atomically. Failures preserve previous output and retry at most three attempts, with 5/10-second backoff. Input is capped at 60,000 normalized characters and output at 100,000 characters. Provider unavailability is shown without silently switching models. Deadlines, snapshot validity and the Quick pane's two kinds of output are described below.
+Stop, Auto off, provider changes and conversation changes cancel automatic work. Manual generation takes priority and suppresses older queued work it covers. Appended speech can follow an in-flight snapshot; wording revisions invalidate stale output. Complete valid responses replace previous output atomically. Failures preserve previous output and retry at most three attempts, with 5/10-second backoff. The complete automatic request is capped at 60,000 characters: system instructions, attributed transcript, notes, attached Deep references and data-fence escaping all count. An oversized request is refused before provider creation; output remains capped at 100,000 characters. Provider unavailability is shown without silently switching models. Deadlines, snapshot validity and the Quick pane's two kinds of output are described below.
 
 The panels report waiting, queued, updating, up-to-date or failure status. The visible Auto label now describes all summaries, and explanatory text correctly describes speech-triggered evaluation with brief batching.
 
@@ -216,11 +216,13 @@ evaluator by **replacing** the default follow-the-transcript rule, so the prompt
 contradictory language rules.
 
 A queued or in-flight review keeps the directives it was created with, so a settings change
-mid-request never relabels output produced from older context; the next review uses the new
-settings. With no directives set, the review prompts and the Quick evaluator prompt are unchanged.
-iOS exposes no response-language, persona or reference settings yet; it passes only the active
-vocabulary's glossary as persona guidance and its Summary headings (`vocabularyDirectives`, #222),
-and none at all when no vocabulary is on.
+mid-request never relabels output produced from older context. Changing directives alone does not
+regenerate a completed automatic review or send another model request. New speech or notes can
+trigger the next eligible review with the new settings; use manual generation to apply them
+immediately. With no directives set, the review prompts and the Quick evaluator prompt are unchanged.
+iOS passes saved conversation summary instructions together with the active vocabulary's glossary
+and Summary headings through `vocabularyDirectives`; it does not expose Mac response-language or
+attached-reference settings. (#148)
 
 ## Snapshot validity, review deadlines and the two kinds of Quick output (macOS unreleased since 1.4.4; in iOS by 1.15.0)
 

@@ -65,6 +65,7 @@ struct AutomaticReviewDeadlineExceeded: Error {}
 /// Event-driven, serial full reviews. Timers exist only for queued work or a failed request.
 @MainActor @Observable
 public final class AutomaticReviewCoordinator {
+    static let maximumRequestCharacters = 60_000
     private struct Job {
         let mode: AutomaticReviewMode
         let input: String
@@ -235,8 +236,11 @@ public final class AutomaticReviewCoordinator {
             }
             return
         }
-        guard job.input.count <= 60_000 else {
-            errors[job.mode] = "Auto paused · Conversation exceeds the review limit. Export or shorten it."
+        let request = LLMRequest(system: job.directives.system(for: job.mode),
+            messages: [.init(role: "user", content: job.directives.userMessage(job.source, mode: job.mode))])
+        let requestCharacters = request.system.count + request.messages.reduce(0) { $0 + $1.content.count }
+        guard requestCharacters <= Self.maximumRequestCharacters else {
+            errors[job.mode] = "Auto paused · Request exceeds the review limit. Shorten the conversation, instructions or references."
             pending[job.mode] = nil; pump(); return
         }
         let provider: any LLMProvider
@@ -258,8 +262,6 @@ public final class AutomaticReviewCoordinator {
         task = Task { [weak self] in
             guard let self else { return }
             do {
-                let request = LLMRequest(system: job.directives.system(for: job.mode),
-                    messages: [.init(role: "user", content: job.directives.userMessage(job.source, mode: job.mode))])
                 let (output, cutOff) = try await Self.collect(request, provider: provider, timeout: deadline)
                 guard token == self.generation, self.enabled, self.covers(job) else { return }
                 if cutOff { self.cutOffModes.insert(job.mode) } else { self.cutOffModes.remove(job.mode) }

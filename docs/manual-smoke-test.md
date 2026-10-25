@@ -813,3 +813,15 @@ text, confirm the server receives an output cap of 1,024. With long text, verify
 notice and that requests still too large (including large instructions or Unicode text) fail with
 “No text was sent” before the server receives them. Choose Unknown to restore server-managed behavior.
 Capture the settings UI at native resolution and restore original preferences after testing.
+
+### Automatic review request limits and directives (#148)
+
+With Auto enabled, combine a transcript below 60,000 characters with a large attached reference on
+Mac. A Deep request whose complete prompt exceeds 60,000 characters must show a review-limit notice
+and never reach the selected provider. Shorten the reference and add meaningful speech: the next
+eligible review should succeed. Instructions, speaker labels, notes and data fences also count.
+Change response language or persona without adding speech: the completed automatic review stays
+visible and no new request starts. Manual generation uses the new setting immediately; a review
+triggered by new speech uses it too. Rename a speaker during a Quick read: old-label output must
+not apply, unread speech must still be processed, and already acknowledged speech should not be
+resent solely because of the label change.
