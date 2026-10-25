@@ -86,6 +86,24 @@ ios-test: gen
 	python3 scripts/bdd.py --verify-log ios-unit dist/bdd/ios-full.log
 	python3 scripts/bdd.py --verify-log ios-ui dist/bdd/ios-full.log
 
+.PHONY: mac-test watch-test
+mac-test: gen
+	mkdir -p dist/bdd
+	xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMeMacTests -configuration Debug \
+		-destination 'platform=macOS' -derivedDataPath .build/mac-native-tests \
+		-onlyUsePackageVersionsFromResolvedFile $(IOS_SIGN_FLAGS) -parallel-testing-enabled NO test | tee dist/bdd/mac-full.log
+	python3 scripts/bdd.py --verify-log mac-unit dist/bdd/mac-full.log
+
+watch-test: gen
+	@case '$(WATCH_DESTINATION)' in 'platform=watchOS Simulator,id='*) ;; \
+		*) echo 'Set WATCH_DESTINATION to a dedicated watchOS Simulator id'; exit 2 ;; esac
+	mkdir -p dist/bdd
+	xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMeWatchTests -configuration Debug \
+		-destination '$(WATCH_DESTINATION)' -derivedDataPath .build/watch-native-tests \
+		-onlyUsePackageVersionsFromResolvedFile $(IOS_SIGN_FLAGS) -parallel-testing-enabled NO test | tee dist/bdd/watch-full.log
+	python3 scripts/bdd.py --verify-log watch-unit dist/bdd/watch-full.log
+	python3 scripts/bdd.py --verify-log watch-ui dist/bdd/watch-full.log
+
 ios-archive: gen
 	xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMeIOS -configuration Release \
 		-destination 'generic/platform=iOS' -archivePath dist/ListenToMe-iOS.xcarchive \
@@ -111,18 +129,27 @@ validate-local:
 	$(MAKE) lint
 	./scripts/check-coverage.sh 95
 	$(MAKE) ios-test
+	$(MAKE) mac-test
+	$(MAKE) watch-test
 	$(MAKE) e2e
 
 # Given/When/Then contracts bind directly to native tests; no second test framework.
 # Override BDD_BASE for a stacked PR's actual base. The default checks against main.
 BDD_BASE ?= origin/main
 BDD_SUITE ?= core
+ifeq ($(BDD_SUITE),mac-unit)
+BDD_DESTINATION ?= platform=macOS
+else ifneq ($(filter watch-unit watch-ui,$(BDD_SUITE)),)
+BDD_DESTINATION ?= $(WATCH_DESTINATION)
+else
+BDD_DESTINATION ?= $(IOS_DESTINATION)
+endif
 .PHONY: bdd-check bdd-test bdd-manual
 bdd-check:
 	python3 scripts/bdd.py --base '$(BDD_BASE)'
 
 bdd-test: bdd-check
-	python3 scripts/bdd.py --run '$(BDD_SUITE)' --destination '$(IOS_DESTINATION)'
+	python3 scripts/bdd.py --run '$(BDD_SUITE)' --destination '$(BDD_DESTINATION)'
 
 bdd-manual:
 	python3 scripts/bdd.py --manual

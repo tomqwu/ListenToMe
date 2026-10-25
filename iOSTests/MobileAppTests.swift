@@ -320,8 +320,16 @@ final class MobileAppTests: XCTestCase {
         app.launchPastReleaseNotes()
         let reason = app.staticTexts["recordingSupportReason"]
         XCTAssertTrue(reason.waitForExistence(timeout: 5))
-        XCTAssertTrue(reason.label.contains("physical iPhone or iPad"))
-        XCTAssertTrue(reason.label.contains("Microphone permission will not fix this"))
+        XCTAssertTrue(reason.label.lowercased().contains("simulator"))
+        let details = app.buttons["recordingSupportDetails"]
+        XCTAssertTrue(details.isHittable, "Full support guidance remains reachable before Start")
+        guard details.exists else { return }
+        details.tap()
+        let support = app.alerts["Recording support"]
+        XCTAssertTrue(support.waitForExistence(timeout: 5))
+        XCTAssertTrue(support.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "physical iPhone or iPad")).firstMatch.exists)
+        XCTAssertTrue(support.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "Microphone permission will not fix this")).firstMatch.exists)
+        support.buttons["OK"].tap()
         XCTAssertFalse(app.buttons["Start listening"].isEnabled)
         XCTAssertFalse(app.buttons["Stop listening"].exists)
         XCTAssertFalse(XCUIApplication(bundleIdentifier: "com.apple.springboard").alerts.firstMatch.exists)

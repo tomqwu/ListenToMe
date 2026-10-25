@@ -138,7 +138,9 @@ Apple's on-device DictationTranscriber for both microphone and received Watch au
 choices and Automatic use the same supported-module catalog; reading it downloads no detector.
 
 Live recording checks compatibility before enabling Start. Unsupported speech, denied microphone
-access and simulator capture show a reason with applicable recovery. A subsequent failed model or
+access and simulator capture show a compact cause with applicable recovery. Live and Summary offer
+Info for the full instructions; VoiceOver keeps the complete reason, and short landscape layouts
+allow scrolling to model controls. A subsequent failed model or
 microphone preparation presents “Couldn’t start listening” with its full error and recording settings;
 cancellation does not create a false alert. A transient inactive permission prompt preserves the
 pending start. A delayed foreground capability check cannot import a queued share after backgrounding.

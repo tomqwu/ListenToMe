@@ -172,7 +172,8 @@
         "App/CommandCenter.swift",
         "App/CommandCenterPanes.swift",
         "App/MeetingView+Capabilities.swift",
-        "App/MacCapabilityChoices.swift"
+        "App/MacCapabilityChoices.swift",
+        "App/MacAIAvailability.swift"
       ],
       "bindings": [
         {
@@ -189,10 +190,50 @@
           "suite": "core",
           "file": "Tests/ListenToMeCoreTests/MacFeatureReadinessTests.swift",
           "test": "MacFeatureReadinessTests/testDeniedPermissionsBlockCaptureButUndeterminedPermissionCanBeRequestedByTap"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacCapabilityNativeBaselineTests.swift",
+          "test": "MacCapabilityNativeBaselineTests/testUnsupportedNativeLocaleExplainsRecoveryBeforeCapture"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacCapabilityNativeBaselineTests.swift",
+          "test": "MacCapabilityNativeBaselineTests/testNativeAppleSummaryChecksHardwareOrConversationLanguage"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacCapabilityAdapterTests.swift",
+          "test": "MacCapabilityAdapterTests/testDeniedMicrophoneBlocksCaptureButStillAllowsEngineConfiguration"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacCapabilityAdapterTests.swift",
+          "test": "MacCapabilityAdapterTests/testUnavailableAdvancedFrameworkDoesNotClaimItsLanguageWorks"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacCapabilityAdapterTests.swift",
+          "test": "MacCapabilityAdapterTests/testActualSelectedLocaleReachesTheNativeAdapterAndLegacyPermissionIsIndependent"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacAIAvailabilityTests.swift",
+          "test": "MacAIAvailabilityTests/testUnavailableNativeAppleChoicePreservesEveryExplicitProvider"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacAIAvailabilityTests.swift",
+          "test": "MacAIAvailabilityTests/testRetainedAppleMenuActionRechecksReadinessAndForegroundCanRecover"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacAIAvailabilityTests.swift",
+          "test": "MacAIAvailabilityTests/testSavedUnavailableAppleChoiceRemainsSavedUntilExplicitAlternativeSelection"
         }
       ],
       "manual": {
-        "reason": "Core tests execute the native Mac control policy; framework capability mapping, rendered UI and actual audio require installed-app acceptance.",
+        "reason": "Native Mac tests execute production framework mapping and menu state/actions; rendered UI and actual audio remain separate installed-app acceptance.",
         "steps": [
           "Inspect Settings AI and transcription options against actual framework availability; preserve stored choices and keys.",
           "Verify disabled Start and recovery for an unavailable profile, enabled Start on supported hardware and usable Stop after a capability change.",
@@ -246,12 +287,13 @@
     },
     {
       "id": "DEVICE-008",
-      "name": "Keep release visuals explicit about simulated compatible hardware",
-      "given": "release screenshots use a synthetic conversation and supported recording profile on a simulator",
-      "when": "the release fixture opens the real workspace views",
-      "then": "Start is enabled from the explicit fixture profile without requesting microphone permission; the normal simulator app still explains unsupported live recording",
+      "name": "Keep synthetic workspace profiles explicit about supported hardware",
+      "given": "release or transcript/Duo UI fixtures use synthetic conversations with supported recording profiles on a simulator",
+      "when": "the fixtures open the real workspace views",
+      "then": "Start is enabled from each explicit fixture profile without requesting microphone permission, transcript following and Duo geometry remain testable, and the normal simulator app still explains unsupported live recording",
       "covers": [
-        "iOS/MobileDesignFixture.swift"
+        "iOS/MobileDesignFixture.swift",
+        "iOS/MobileTranscriptFixture.swift"
       ],
       "bindings": [
         {
@@ -263,6 +305,21 @@
           "suite": "ios-ui",
           "file": "iOSTests/MobileAppTests.swift",
           "test": "MobileAppTests/testSimulatorExplainsUnavailableSpeechWithoutRequestingMicrophone"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileWorkspaceUITests.swift",
+          "test": "MobileWorkspaceUITests/testDuoPaneWidthsAndCompactTranscriptActions"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileWorkspaceUITests.swift",
+          "test": "MobileWorkspaceUITests/testPhoneTwoPaneLayoutAndPageSelectionSurviveRotation"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileTranscriptUITests.swift",
+          "test": "MobileTranscriptUITests/testCompactTranscriptFollowsPartialAndFinalTextButRespectsReadingHistory"
         }
       ]
     }

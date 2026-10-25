@@ -250,10 +250,10 @@
     },
     {
       "id": "CAPTURE-009",
-      "name": "Keep Summary controls reachable alongside compatibility help at large text sizes",
-      "given": "live recording is unavailable and the user uses accessibility text in iPhone landscape",
-      "when": "the user opens Summary and scrolls to its model control",
-      "then": "the compatibility reason remains available with recovery, the Summary model control is hittable inside the scroll viewport, and the disabled recording control does not prevent reading or configuring summaries",
+      "name": "Keep Live and Summary controls reachable alongside compatibility help",
+      "given": "live recording is unavailable in a short iPhone viewport, with normal or accessibility text",
+      "when": "the user reads Live or Summary, scrolls to an offscreen model in the short-height fallback, and opens recording support details",
+      "then": "the cause and recovery stay visible, full instructions remain available in details, model and recording controls remain reachable, and unsupported capture never requests the microphone",
       "covers": [
         "iOS/MobileMeetingView.swift"
       ],
@@ -262,6 +262,16 @@
           "suite": "ios-ui",
           "file": "iOSTests/MobileAppTests.swift",
           "test": "MobileAppTests/testLandscapeAndLargeTextTabs"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileWorkspaceUITests.swift",
+          "test": "MobileWorkspaceUITests/testReviewModesAndRecordingControlsStayAccessible"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileAppTests.swift",
+          "test": "MobileAppTests/testSimulatorExplainsUnavailableSpeechWithoutRequestingMicrophone"
         }
       ]
     }

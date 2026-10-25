@@ -17,6 +17,17 @@ final class WatchLinkClient: NSObject, WCSessionDelegate {
         WatchReadiness.remote(status: phoneStatus, reachable: isReachable, lastReply: lastReply)
     }
     @ObservationIgnored private let session = WCSession.default
+    typealias MessageSender = ([String: Any], @escaping @Sendable ([String: Any]) -> Void,
+                              @escaping @Sendable (any Error) -> Void) -> Void
+    @ObservationIgnored private let sendMessage: MessageSender
+
+    init(sendMessage: MessageSender? = nil) {
+        self.sendMessage = sendMessage ?? { message, reply, error in
+            WCSession.default.sendMessage(message, replyHandler: reply, errorHandler: error)
+        }
+        super.init()
+    }
+
     /// Recorded chunks waiting for the iPhone (Slice 3).
     @ObservationIgnored var outbox: WatchOutbox?
     /// The watch's own recording status, sent again once the session is active.
@@ -49,9 +60,9 @@ final class WatchLinkClient: NSObject, WCSessionDelegate {
         let message = WatchLink.message(for: command)
         let outcome: Result<(WatchReply, TimeInterval?), any Error> = await withCheckedContinuation { continuation in
             // @Sendable: WatchConnectivity calls these on its own queue, not the main actor.
-            session.sendMessage(message, replyHandler: { @Sendable reply in
+            sendMessage(message, { @Sendable reply in
                 continuation.resume(returning: .success((Self.decodeReply(reply), WatchLink.stamp(from: reply))))
-            }, errorHandler: { @Sendable error in
+            }, { @Sendable error in
                 continuation.resume(returning: .failure(error))
             })
         }
@@ -74,7 +85,7 @@ final class WatchLinkClient: NSObject, WCSessionDelegate {
         (try? WatchLink.reply(from: message)) ?? .unsupportedVersion
     }
 
-    private func apply(context status: PhoneRecorderStatus?, stamp: TimeInterval?, reachable: Bool) {
+    func apply(context status: PhoneRecorderStatus?, stamp: TimeInterval?, reachable: Bool) {
         isReachable = reachable
         guard let status, tracker.apply(status, stamp: stamp) else { return }
         lastReply = nil

@@ -17,7 +17,7 @@ Apple Intelligence device-not-eligible. The local fallback candidate then passed
 speech, Stop and retained Play/Pause UI on that iPad. At `e0e5062`, both that iPad and the iPhone 12 Pro
 Max passed actual new speech, Stop and retained Play/Pause UI using the default Automatic language.
 The iPad also passed the native unavailable-Apple-provider settings check. Later changes shorten the
-Summary header and refresh cached AI eligibility; final frozen-source validation remains required.
+Live/Summary compatibility help and refresh cached AI eligibility; final frozen-source validation remains required.
 Existing iPad data/preferences were backed up and preserved. Synthetic sound is gated on confirmed
 Listening, never played while Start is failing. Native `devicectl device capture screenshot` is available.
 
@@ -40,22 +40,34 @@ restored and verified, both owned Dev bundles moved to Trash, and only `com.tomw
 permissions reset. Watch simulator inspection passed offline remote gating and denied-microphone
 recovery; its dedicated simulator was deleted. This does not establish paired physical Watch behavior.
 
-The initial full run passed 1,085 Core tests (seven skips, 98.1239% coverage), then reproduced a
-large-text landscape reachability regression and was intentionally stopped; it is not a full pass.
-CAPTURE-009 failed before shortening the Summary-only compatibility reason, then its two focused UI
-tests and the long release-history accessibility test passed. Older unit fixtures now explicitly
-refresh language readiness and choose their fake HTTP provider; all 431 unit tests then passed (seven
-intentional skips). CAPABILITY-003's new Check again example reproduced a stale Apple readiness cache
-and passed after refreshing it. The final ten AI/recording readiness tests also passed, with real
-language-change invalidation assertions. Source hashes and simulator cleanup are recorded for each run.
-Full frozen-source validation, final release screenshots, CI/merge and accepted beta upload remain
-pending at this snapshot. Physical capture screenshots now use the full display to avoid XCTest's
-landscape app-coordinate crop; a direct native iPad screenshot confirmed the actual layout is intact.
+The `7bdc8e8` full run passed 1,085 Core tests (seven skips, 98.1239% coverage) and all 432
+native iOS unit tests (seven skips), but failed four UI methods (eight assertions) among 71 UI tests
+(five skips). This was not a full pass; e2e was not reached. The preserved failures exposed an
+implicit transcript fixture profile and compact landscape reachability assumptions. The fixture now
+explicitly supplies readiness, Live/Summary help has full instructions under Info, and native model
+selection verifies the short-viewport scrolling fallback. All six affected UI methods passed focused
+runs; final aggregate validation remains pending. Physical screenshots use the full native display.
 
-No new speculative PRs: the live queue remains 17 existing drafts. Finish this feedback change before
-resuming the sequential backlog; the old #60 validation queue ended with two failures, so triage its
-preserved result rather than restarting it blindly. The new `__pycache__/` ignore/test prevents generated
-Python caches from falsely dirtying candidate provenance; all 18 BDD gate regressions pass.
+The native Mac suite now compiles the production capability adapters and menu controllers. A real
+language-check race reproduced before the generation/locale ownership fix; all 12 native Mac tests
+then passed, including unavailable Apple choice preservation and denied microphone behavior.
+Existing adapter cases are baseline adoption, with no invented historical red. The native Watch
+suite passed three controller/recorder tests plus the rendered denied-microphone/offline-phone UI
+journey after its actual expected UI red. Local refusal precedes permission/capture and remote
+readiness preserves Stop. A first root-project run also had a unit-host launch setup failure;
+a fresh derived-data build on a booted dedicated simulator passed all four tests. This does not
+establish physical pairing or Watch audio. Native run snapshots and simulator cleanup are preserved.
+
+The BDD runner now supports native Mac/Watch targets and verifies their exact passing selectors;
+full validation includes those suites. A reviewer-requested missing-Watch-ID rejection reproduced
+four assertions, then all 19 tooling regressions passed. Independent review cleared native adapter
+and control coverage, subject to verifying that destination fix. Final source validation, renewed
+release screenshots, CI/merge and accepted 1.17.1 (35) beta upload remain pending.
+
+No new speculative PRs: finish this feedback change before resuming the 17 existing drafts. The old
+#60 full run had one failed test with two assertions; triage its preserved result rather than
+restarting blindly. No new Mac Dev session was launched by headless native tests. Prior exact-Dev
+cleanup remains complete; production data, keys and permissions remain preserved.
 
 ## Repository-wide BDD adoption (October 25)
 
@@ -183,7 +195,7 @@ full-resolution assets and manifest, and verify uploaded listing sets before App
   gets a GitHub **pre-release** on its `ios-v…` tag (not Latest; notes from CHANGELOG, no binary);
   these exist for every iOS tag. From the next build on, each page must be complete: version/build,
   source commit, full notes, What to Test, privacy changes, and App Store "What's New" text since
-  the last App Store production release (iOS 1.10.5).
+  the last App Store production release (ASC reported iOS 1.15.0 on October 25; recheck each train).
 - **Release archives** for recent builds are in the gitignored `dist/`:
   `ListenToMe-ios-1.13.0-build30.xcarchive`, `…-1.14.0-build31.xcarchive`,
   `…-1.15.0-build32.xcarchive`, and `ListenToMe-ios-1.16.0-build33.xcarchive`. Earlier archives were moved there from temporary worktrees after upload, so the

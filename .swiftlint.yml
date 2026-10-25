@@ -16,3 +16,6 @@ included:
   - iOSShared
   - ShareExtension
   - Watch
+  - macOSTests
+  - WatchUnitTests
+  - WatchUITests

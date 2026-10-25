@@ -18,6 +18,7 @@ struct MobileMeetingView: View {
     @State private var showNotes = false
     @State private var showCalendar = false
     @State private var showFullSummary = false
+    @State private var showRecordingSupport = false
     @State private var summaryMode = MobileSummaryMode.summary
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.verticalSizeClass) private var verticalSizeClass
@@ -112,6 +113,12 @@ struct MobileMeetingView: View {
             } message: {
                 Text(session.recordingStartFailure ?? "")
             }
+            .alert("Recording support", isPresented: $showRecordingSupport) {
+                Button("OK", role: .cancel) {}
+                Button("Recording settings") { showSettings = true }
+            } message: {
+                Text(session.recordingAvailability.reason ?? "Recording is supported.")
+            }
             .sheet(item: $modelRole) { role in
                 NavigationStack {
                     MobileRoleModelView(ai: session.ai, role: role)
@@ -139,12 +146,7 @@ struct MobileMeetingView: View {
                 captureStatusLabel
             }
             if session.state == .idle, let reason = session.recordingAvailability.reason {
-                Text(recordingSupportText(reason)).font(.callout).accessibilityIdentifier("recordingSupportReason")
-                if let action = session.recordingAvailability.setupAction {
-                    Button(action) { UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!) }
-                } else if !session.recordingAvailability.canRun {
-                    Button("Recording settings") { showSettings = true }
-                }
+                recordingSupport(reason)
             }
             MobileSpeakerStatus(session: session)
             MobileLanguageStatus(session: session)
@@ -159,11 +161,41 @@ struct MobileMeetingView: View {
             .padding(.horizontal, 20).padding(.vertical, verticalSizeClass == .compact ? 6 : 14)
     }
 
-    /// Summary keeps the cause and recovery visible without repeating Live's longer instructions.
-    /// This also keeps its model control reachable in the short landscape viewport at large text sizes.
+    /// Keep the cause and recovery visible without crowding the workspace in a short viewport.
+    /// Full instructions remain available before Start, including for VoiceOver.
     private func recordingSupportText(_ reason: String) -> String {
-        guard workspace == .summary, let sentence = reason.range(of: ". ") else { return reason }
+        guard let sentence = reason.range(of: ". ") else { return reason }
         return String(reason[..<sentence.upperBound]).trimmingCharacters(in: .whitespaces)
+    }
+
+    private func recordingSupport(_ reason: String) -> some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 12) {
+                recordingSupportCause(reason).fixedSize(horizontal: true, vertical: false)
+                recordingSupportActions.fixedSize(horizontal: true, vertical: false)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                recordingSupportCause(reason)
+                recordingSupportActions
+            }
+        }.font(.callout)
+    }
+
+    private func recordingSupportCause(_ reason: String) -> some View {
+        Text(recordingSupportText(reason)).accessibilityLabel(reason)
+            .accessibilityIdentifier("recordingSupportReason")
+    }
+
+    private var recordingSupportActions: some View {
+        HStack(spacing: 12) {
+            if let action = session.recordingAvailability.setupAction {
+                Button(action) { UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!) }
+            } else if !session.recordingAvailability.canRun {
+                Button("Recording settings") { showSettings = true }
+            }
+            Button("Recording support details", systemImage: "info.circle") { showRecordingSupport = true }
+                .labelStyle(.iconOnly).accessibilityIdentifier("recordingSupportDetails")
+        }
     }
 
     private var titleEditor: some View {

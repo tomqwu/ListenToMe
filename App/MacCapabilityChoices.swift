@@ -4,66 +4,61 @@ import ListenToMeCore
 
 struct MacAIChoice: View {
     @Binding var selection: AIProcessingMode
-    @State private var appleReason = AppleIntelligenceProvider.unavailableReason
+    @State private var availability = MacAIAvailability()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text("AI processing")
-                Menu(selection.label + (selection == .apple && appleReason != nil ? " · unavailable" : "")) {
-                    ForEach(MacFeatureReadiness.selectableAIModes(appleReason: appleReason), id: \.self) { mode in
+                Menu(selection.label + (selection == .apple && availability.reason != nil ? " · unavailable" : "")) {
+                    ForEach(availability.choices, id: \.self) { mode in
                         Button(mode.label) {
-                            appleReason = AppleIntelligenceProvider.unavailableReason
-                            selection = MacFeatureReadiness.selectAI(mode, current: selection, appleReason: appleReason)
+                            selection = availability.select(mode, current: selection)
                         }
                     }
                 }
             }
-            if let appleReason {
+            if let appleReason = availability.reason {
                 Text(appleReason + " Choose a local model or explicitly configure another provider below. Recording is independent.")
                     .font(.caption).foregroundStyle(.secondary)
             }
         }
-        .onAppear { appleReason = AppleIntelligenceProvider.unavailableReason }
+        .onAppear { availability.refresh() }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
-            appleReason = AppleIntelligenceProvider.unavailableReason
+            availability.refresh()
         }
     }
 }
 
 struct MacEngineChoice: View {
     @Binding var selection: String
-    @State private var availability: [String: FeatureAvailability] = [:]
-    private let engines = ["speechAnalyzer", "speechRecognizer", "whisperKit"]
+    @AppStorage("transcriptionLocale") private var localeID = ""
+    @State private var availability = MacEngineAvailability()
+    private var locale: Locale { localeID.isEmpty ? .current : Locale(identifier: localeID) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text("Transcription engine")
                 Menu(TranscriptionEngineLabel.name(selection)) {
-                    ForEach(engines.filter { availability[$0]?.canConfigure == true }, id: \.self) { engine in
-                        Button(TranscriptionEngineLabel.name(engine)) { selection = engine }
+                    ForEach(availability.choices(for: locale), id: \.self) { engine in
+                        Button(TranscriptionEngineLabel.name(engine)) {
+                            selection = availability.select(engine, current: selection, locale: locale)
+                        }
                     }
                 }
             }
-            if let reason = availability[selection]?.reason {
+            if let reason = availability.status(for: selection, locale: locale).reason {
                 Text(reason).font(.caption).foregroundStyle(.secondary)
             }
         }
-        .task { await refresh() }
+        .task(id: localeID) { await refresh() }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             Task { await refresh() }
         }
     }
 
     private func refresh() async {
-        let id = ProviderSettings.transcriptionLocaleID
-        let locale = id.isEmpty ? Locale.current : Locale(identifier: id)
-        var result: [String: FeatureAvailability] = [:]
-        for engine in engines {
-            result[engine] = await MacDeviceCapabilities.recording(engine: engine, locale: locale, checkMicrophone: false)
-        }
-        guard !Task.isCancelled else { return }
-        availability = result
+        await availability.refresh(locale: locale)
     }
 }

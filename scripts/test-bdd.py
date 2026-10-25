@@ -288,5 +288,26 @@ class BDDTests(unittest.TestCase):
         self.assertIn("-only-testing:ListenToMeIOSUnitTests/ExampleTests/testKeepsData", cmd)
 
 
+    def testNativeMacAndWatchUseTheirOwnTargetsAndRequireObservedPasses(self):
+        profiles=[('mac-unit','ListenToMeMacTests','ListenToMeMacUnitTests','platform=macOS'),
+                  ('watch-unit','ListenToMeWatchTests','ListenToMeWatchUnitTests','platform=watchOS Simulator,id=dedicated'),
+                  ('watch-ui','ListenToMeWatchTests','ListenToMeWatchUITests','platform=watchOS Simulator,id=dedicated')]
+        for suite,scheme,target,destination in profiles:
+            with self.subTest(suite=suite):
+                scenarios=[{'bindings':[{'suite':suite,'file':'NativeTests.swift','test':'NativeCapabilityTests/testUnavailableAction'}]}]
+                if suite.startswith('watch-'):
+                    for invalid_destination in ['', 'platform=watchOS Simulator',
+                                                'platform=watchOS Simulator,id=', 'platform=iOS Simulator,id=dedicated']:
+                        with self.subTest(destination=invalid_destination), self.assertRaises(bdd.ContractError):
+                            bdd.commands(scenarios, suite, invalid_destination)
+                command=bdd.commands(scenarios,suite,destination)[-1]
+                self.assertEqual(command[command.index('-scheme')+1],scheme)
+                self.assertIn('-only-testing:'+target+'/NativeCapabilityTests/testUnavailableAction',command)
+                observed="Test Case '-["+target+".NativeCapabilityTests testUnavailableAction]' passed (0.1 seconds)."
+                bdd.require_executed(observed,suite,['NativeCapabilityTests/testUnavailableAction'])
+                for invalid in ['',observed.replace(' passed ',' skipped '),observed.replace('testUnavailableAction','testUnrelated')]:
+                    with self.assertRaises(bdd.ContractError):
+                        bdd.require_executed(invalid,suite,['NativeCapabilityTests/testUnavailableAction'])
+
 if __name__ == "__main__":
     unittest.main()
