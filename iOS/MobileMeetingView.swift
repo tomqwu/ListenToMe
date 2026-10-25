@@ -102,6 +102,15 @@ struct MobileMeetingView: View {
             }
             .sheet(isPresented: $showHistory) { MobileHistoryView(session: session) }
             .sheet(isPresented: $showSettings) { settings }
+            .alert("Couldn’t start listening", isPresented: Binding(
+                get: { session.recordingStartFailure != nil },
+                set: { if !$0 { session.recordingStartFailure = nil } }
+            )) {
+                Button("OK", role: .cancel) { session.recordingStartFailure = nil }
+                Button("Recording settings") { showSettings = true }
+            } message: {
+                Text(session.recordingStartFailure ?? "")
+            }
             .sheet(item: $modelRole) { role in
                 NavigationStack {
                     MobileRoleModelView(ai: session.ai, role: role)

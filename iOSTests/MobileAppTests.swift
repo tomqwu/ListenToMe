@@ -316,6 +316,9 @@ final class MobileAppTests: XCTestCase {
         app.resetAuthorizationStatus(for: .microphone)
         app.launchPastReleaseNotes()
         app.buttons["Start listening"].tap()
+        let startup = app.alerts["Couldn’t start listening"]
+        XCTAssertTrue(startup.waitForExistence(timeout: 5))
+        startup.buttons["OK"].tap()
         let message = app.staticTexts["sessionMessage"]
         XCTAssertTrue(message.waitForExistence(timeout: 5))
         XCTAssertTrue(message.label.contains("Live transcription is unavailable in the iPhone simulator"))
@@ -326,6 +329,8 @@ final class MobileAppTests: XCTestCase {
         let alert = XCUIApplication(bundleIdentifier: "com.apple.springboard").alerts.firstMatch
         XCTAssertFalse(alert.exists)
         app.buttons["Start listening"].tap()
+        XCTAssertTrue(startup.waitForExistence(timeout: 5))
+        startup.buttons["OK"].tap()
         XCTAssertTrue(message.waitForExistence(timeout: 5))
         XCTAssertFalse(alert.exists)
         XCTAssertFalse(app.buttons["Stop listening"].exists)

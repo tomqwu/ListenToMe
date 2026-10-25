@@ -99,6 +99,8 @@ final class MobileSession {
     var partial: TranscriptSegment?
     var history: [SessionRecord] = []
     var message: String?
+    /// A failed start needs explicit acknowledgement; unrelated status updates must not hide it.
+    var recordingStartFailure: String?
     /// A damaged history file that the archive set aside. Kept apart from `message`, which every
     /// save, restore and delete overwrites — the user must still see this when History opens.
     var archiveWarning: String?
@@ -269,6 +271,7 @@ final class MobileSession {
     func start() {
         guard state == .idle, !isSummarizing else { return }
         message = nil
+        recordingStartFailure = nil
         stopReason = nil
         speechCorrection.cancel()
         acceptsSpeechCorrection = true
@@ -316,7 +319,10 @@ final class MobileSession {
                 speakers.endRun(); endLanguageRun(); endSavedAudioRun()
                 self.recorder = nil
                 state = .idle
-                if !(error is CancellationError) { message = error.localizedDescription }
+                if !Task.isCancelled, !(error is CancellationError) {
+                    message = error.localizedDescription
+                    recordingStartFailure = error.localizedDescription
+                }
                 save(announce: false)
             }
             startTask = nil

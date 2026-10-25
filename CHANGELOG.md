@@ -20,6 +20,8 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased since 1.17.0 (34) candidate)
 
+- Failed listening starts now show the full error in an alert, with retry and a link to recording settings. Cancelling preparation does not show a false error. This improves diagnosis; the reported physical-iPad startup cause is not yet confirmed. (#306)
+
 - Documentation: the Watch speaker-privacy section now agrees with the existing opt-in saved-audio retention policy. No app behavior changes. (#225)
 
 - Watch imports retain playable audio only when Save audio recordings is on, with reconnect queueing, retry-safe storage, consistent playback timing and existing deletion/expiry controls (#225). Watch remains excluded from distribution.

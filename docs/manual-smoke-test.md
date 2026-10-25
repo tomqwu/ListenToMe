@@ -855,3 +855,16 @@ visible error and normalization status at native resolution. Restore the origina
 Opening a model list on Apple Intelligence must not automatically fetch the Ollama catalog;
 explicit Refresh remains available. Unchosen provider defaults are recomputed on launch, while an
 explicit provider choice persists.
+
+## iPhone/iPad recording-start recovery (#306)
+
+- Given an unsupported or failing live transcription startup, tap Start listening and inspect the
+  full “Couldn’t start listening” alert. Dismiss, retry, then open Recording settings from it. The
+  original error should remain in the status caption after dismissal; preserve a native screenshot.
+- Cancel preparation: return to idle without a failure alert. On a supported physical device,
+  verify actual microphone speech capture while no summary AI model is configured.
+- For the reported physical-iPad failure, record model, iPadOS, app build and full startup error.
+  Successful simulator failure-handling tests do not identify or fix the physical cause.
+- With Save audio recordings on, record synthetic speech, Stop, reopen History and use the Live
+  transcript play icon. Verify playback; with saving off, no new recording file should be retained.
+  Preserve existing conversations, settings and API keys during physical-device acceptance.

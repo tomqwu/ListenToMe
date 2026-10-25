@@ -129,6 +129,24 @@ The archive, upload, tagging and verification steps themselves are not repeated 
 [IOS-RELEASING.md](IOS-RELEASING.md) for iOS, [RELEASING.md](RELEASING.md) for macOS, and
 [AGENTS.md](../AGENTS.md) for the release workflow that governs both.
 
+## Unreleased recording-start recovery (#306)
+
+A failed Start listening attempt presents “Couldn’t start listening” with the full underlying error,
+an OK action and Recording settings. The status caption remains available after dismissal. Retry
+clears the previous failure; cancelling preparation shows no failure alert. Recording itself does
+not require a configured summary AI model. Apple Intelligence summary eligibility and the device's
+on-device speech-engine support are separate capabilities.
+
+The tester's physical-iPad failure remains unconfirmed: this change makes the reason visible and
+testable, rather than claiming to repair an unknown device/model/permission failure. Simulator
+red/green UI acceptance and model-level cancellation/AI-independence checks are recorded separately
+from physical-device acceptance. Apple Intelligence provider-choice gating is tracked in #307.
+
+For playback, enable More → Settings → Audio recordings → Save audio recordings before recording.
+After Stop, open the conversation (from History when needed) and tap the play icon in Live transcript.
+In compact Duo, open Transcript actions → Play recording. The expanded transcript contains Play/Pause
+and playback controls. Unsaved earlier audio cannot be recovered by enabling the setting later.
+
 ## iOS 1.17.0 (34) — candidate
 
 This batch adds remembered iPhone Duo pane widths (#268), per-conversation vocabularies (#237),

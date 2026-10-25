@@ -1,3 +1,15 @@
+Unreleased iPhone/iPad startup recovery (#306)
+
+If Start listening fails, confirm an alert shows the full failure reason. Dismiss it, retry and check
+that a new failure remains visible. Recording settings should open from the alert. Cancelling
+preparation must not show a failure. A supported microphone/speech engine should record without a
+configured summary AI provider. On the affected physical iPad, capture the actual error, device,
+iPadOS and app build; simulator acceptance does not establish the physical cause.
+
+Playback: turn on Save audio recordings before recording, Stop, reopen the conversation and use the
+Live transcript play icon (Transcript actions → Play recording in compact Duo). Verify Play/Pause
+and that saving remains opt-in. No default off-device data handling change.
+
 Pending Watch train — not embedded for distribution.
 
 Apple Watch remains gated by #181 physical-device acceptance.

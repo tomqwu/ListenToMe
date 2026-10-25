@@ -330,3 +330,17 @@ claimed. Watch stays excluded; no draft backlog feature is included.
 ## Mac Auto compatibility acceptance (#209) — October 25
 
 The final installed-Mac settings interaction passed at `c3746b5`: saved 4K persists, an oversized probe sends nothing, an unsaved 8K edit disables probing, Cancel restores 4K, and a valid synthetic response succeeds with server-managed context. Original provider/model settings were restored. Screenshots, the one synthetic request, source/signing provenance and successful Dev-only cleanup are preserved in the October 25 external `auto-compatibility-209/native-final` evidence. Current-main integration includes only the already-merged iOS endpoint validation and documentation; Mac application source is unchanged from this acceptance. Final integration at `8e9e612` passed 1,065 Core tests (seven skips, 98.1098% coverage), lint, the signed Mac build and all 403 iOS unit tests (397 passed, six skipped). Independent integration review found no blockers. All three final-head checks passed and PR #275 merged at `3d32345`; #209 is closed. Mac publication remains paused.
+
+## iPad tester feedback: startup diagnostics (#306) and AI eligibility (#307)
+
+The tester reports Start listening staying/returning to idle after microphone approval. Model,
+iPadOS and installed build are not yet known, so no physical cause or recording fix is claimed.
+The local #306 change adds a prominent full-error alert and recording-settings recovery. The initial
+iPad simulator UI regression failed before implementation and passed afterwards; three model-level
+checks cover retry, cancellation and recording without summary AI. Further full validation,
+independent review, CI and merge remain required. #307 tracks unavailable Apple Intelligence
+selection and explicit alternate-provider setup; it is not implemented by the startup alert.
+
+A connected iPhone 12 Pro Max on iOS 27.0 is now authorized for testing. Xcode initially reported
+Developer Mode disabled and the phone locked; an on-device enable/restart/unlock step is pending.
+This is a new physical-device prerequisite, not authorization to reset other application permissions.

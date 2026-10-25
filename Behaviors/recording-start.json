@@ -1,0 +1,82 @@
+{
+  "feature": "Recording startup capability and recovery",
+  "scenarios": [
+    {
+      "id": "CAPTURE-001",
+      "name": "Explain a failed listening start prominently",
+      "given": "microphone recording startup fails before capture can begin",
+      "when": "the user taps Start listening",
+      "then": "a prominent alert explains the actual failure, recording stays stopped, and the user can dismiss it and open recording settings",
+      "covers": [
+        "iOS/MobileSession.swift",
+        "iOS/MobileMeetingView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileStartFailureUITests.swift",
+          "test": "MobileStartFailureUITests/testStartupFailureExplainsWhyListeningDidNotStart"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileStartFailureTests.swift",
+          "test": "MobileStartFailureTests/testStartFailureStaysActionableUntilRetryAndDoesNotReplaceTheNextSuccessfulRun"
+        }
+      ],
+      "manual": {
+        "reason": "The simulator exercises the failure UI, not real iPad microphone or speech-engine compatibility.",
+        "steps": [
+          "On the affected iPad, allow microphone access and tap Start listening; record the full error, model, OS and app build.",
+          "On a supported iPad, verify successful capture even when AI summaries are unavailable; inspect current microphone transcript and opt-in playback."
+        ]
+      }
+    },
+    {
+      "id": "CAPTURE-002",
+      "name": "Cancel preparation without a false failure",
+      "given": "listening preparation is pending",
+      "when": "the user cancels preparation before a delayed permission/model callback returns an error",
+      "then": "capture returns to idle without a startup failure, including when the late callback throws a normal error rather than CancellationError",
+      "covers": [
+        "iOS/MobileSession.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileStartFailureTests.swift",
+          "test": "MobileStartFailureTests/testCancelledPreparationDoesNotShowAStartFailure"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileStartFailureTests.swift",
+          "test": "MobileStartFailureTests/testPermissionFailureAfterCancellationDoesNotPresentAStartupError"
+        }
+      ]
+    },
+    {
+      "id": "CAPTURE-003",
+      "name": "Keep recording independent of summary AI",
+      "given": "no summary AI model is configured but speech capture is supported",
+      "when": "the user starts listening",
+      "then": "recording begins without requiring summary AI or starting a remote summary request",
+      "covers": [
+        "iOS/MobileSession.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileStartFailureTests.swift",
+          "test": "MobileStartFailureTests/testRecordingDoesNotRequireAConfiguredSummaryAIProvider"
+        }
+      ],
+      "manual": {
+        "reason": "A stand-in recorder cannot establish microphone, on-device speech compatibility or retained audio on physical hardware.",
+        "steps": [
+          "Run MobilePhysicalCaptureUITests/testPhysicalMicrophoneTranscriptionAndSavedAudioPlayback on an attended physical iPhone/iPad with LISTENTOME_PHYSICAL_AUDIO_ACCEPTANCE=1 and audible synthetic speech.",
+          "Verify Listening, current microphone transcript text, Stop, retained Play/Pause and source-matched native screenshots; preserve any real startup error.",
+          "Confirm no remote summary is invoked when Auto and speech correction are off; keep this separate from summary AI eligibility."
+        ]
+      }
+    }
+  ]
+}
