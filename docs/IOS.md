@@ -563,7 +563,9 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   see [OpenAI-compatible server](#openai-compatible-server-lm-studio-openrouter-vllm)), with streamed
   results and secure API-key storage.
   Apple Intelligence accepts up to 8,000 characters (`PromptBudget.appleIntelligenceCharacters`, the
-  shared cap macOS also clamps its Apple prompts to); Ollama and OpenAI-compatible servers accept up to 60,000. Both caps are
+  shared cap macOS also clamps its Apple prompts to); Ollama and OpenAI-compatible assembly allows up to 60,000.
+  A configured custom-server capacity also checks the complete request locally before sending,
+  so its actual limit may be lower. These assembly caps are
   charged on the *fenced* conversation, not the raw text. A Summary that does not fit is rejected
   explicitly. Quick answers a conversation that does not fit from what does (#114,
   `OnDemandGrounding.excerpt`). A Summary generated in this session stands in for exactly the lines it
@@ -1454,3 +1456,19 @@ content. **Transcript actions** holds Select lines, Speech correction settings, 
 when available. Expand transcript stays directly accessible. The width preference is device-local,
 shared by conversations, and does not change saved text or audio. It is applied only to two-pane
 Live layouts; Summary, narrow windows, and accessibility text keep their existing reading layouts.
+
+
+### OpenAI-compatible server context capacity (#210)
+
+Mac Settings and iPhone Settings → Custom server offer **Server context window**: Unknown
+(the existing default) or 4K, 8K, 16K, 32K, 64K, 128K and 256K tokens. Match the capacity
+actually configured on the server; a model's advertised maximum does not change a local runner's
+configuration. The selection is stored per normalized full API URL, including its path, and does
+not transfer to a different server. Switching back restores that server's choice.
+
+The provider reserves answer tokens (up to one quarter of the window), template overhead and
+message framing. Mac uses the existing prompt budget and truncation notice. Both platforms also
+check the complete system/messages using conservative UTF-8 byte budgeting before any request;
+oversized text fails locally, including Unicode-heavy input. This is a conservative estimate, not
+a tokenizer guarantee. Unknown retains the previous request behavior. No credentials or audio
+are changed, and this setting applies only to Custom server, not cloud vendor presets.

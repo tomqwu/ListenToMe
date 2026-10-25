@@ -35,6 +35,14 @@ struct MobileOpenAISettingsRows: View {
                  + "/v1/chat/completions servers. Plain http:// is allowed only for this device or a .local name, "
                  + "such as http://your-mac.local:1234/v1; anything else needs https://. Redirects are never "
                  + "followed. The app never switches servers on its own.").font(.caption)
+            Picker("Server context window", selection: Binding(
+                get: { openAI.contextWindow?.tokens ?? 0 }, set: { openAI.setContextTokens($0) })) {
+                Text("Unknown — server managed").tag(0)
+                ForEach(OpenAIContextWindow.choices, id: \.self) { Text("\($0 / 1_024)K tokens").tag($0) }
+            }.disabled(!openAI.isConfigured || busy).accessibilityIdentifier("openAIContextWindow")
+            Text("Match the context size configured on this server, not the model's advertised maximum. "
+                 + "This setting is saved per server URL. Space is reserved for the answer; oversized requests "
+                 + "stop before sending. Unknown keeps the current server-managed behavior.").font(.caption)
             SecureField(openAI.hasKey ? "Replace saved API key" : "API key (optional)", text: $key)
                 .textInputAutocapitalization(.never).autocorrectionDisabled()
                 .focused($editing).accessibilityIdentifier("openAIAPIKey").disabled(!openAI.isConfigured || busy)
