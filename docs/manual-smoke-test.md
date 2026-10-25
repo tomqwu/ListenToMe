@@ -833,3 +833,16 @@ Capture the settings UI at native resolution and restore original preferences af
   angle brackets and multiline speaker names; speech stays literal while AI Markdown still formats.
 - With an all-day busy block and a shorter current meeting, Calendar chooses the latest-starting
   active timed meeting. At its end boundary it chooses an ongoing or next meeting correctly.
+
+### iOS Ollama endpoint feedback (#149)
+
+In Settings, select Ollama and save `http://your-mac.local:11434`. Try saving
+`http://100.64.0.1:11434`, a public IPv4 literal, and a non-link-local IPv6 literal: each must
+explain HTTPS/local-address alternatives and keep the previous server. HTTPS addresses and
+loopback/link-local HTTP remain accepted. Loopback points to the phone itself.
+Paste `https://your-mac.local:11434/ollama?token=test-value`: confirm the saved destination is the
+origin and the status says URL parts were omitted without echoing the query value. Capture the
+visible error and normalization status at native resolution. Restore the original settings.
+Opening a model list on Apple Intelligence must not automatically fetch the Ollama catalog;
+explicit Refresh remains available. Unchosen provider defaults are recomputed on launch, while an
+explicit provider choice persists.
