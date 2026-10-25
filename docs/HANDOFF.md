@@ -61,7 +61,7 @@ establish physical pairing or Watch audio. Native run snapshots and simulator cl
 The BDD runner now supports native Mac/Watch targets and verifies their exact passing selectors;
 full validation includes those suites. A reviewer-requested missing-Watch-ID rejection reproduced
 four assertions, then all 19 tooling regressions passed. Independent review cleared native adapter
-and control coverage, subject to verifying that destination fix. The clean frozen `40d8e9a` candidate subsequently passed full `make validate-local`: 1,085 Core
+and control coverage and the dedicated-destination guard. The clean frozen `40d8e9a` candidate subsequently passed full `make validate-local`: 1,085 Core
 tests (seven skips, 98.1239% coverage), 503 iOS tests (491 passed, 12 intentional skips), all 12 native
 Mac tests, all four native Watch tests, 19 BDD helper regressions, release helpers, lint, signed Mac
 build and both real Ollama/OpenAI-compatible contracts using `qwen3:0.6b`. All bound native selectors
