@@ -695,3 +695,5 @@ The app does not silently remove the opening. This can reject some prompts a spe
 could fit. Larger contexts require more memory. Default local answers are bounded to 4,096 tokens (at most a quarter of a small model window);
 Quick and correction keep their smaller limits, and output-limit notices still apply.
 Ollama Cloud models and other cloud providers keep their server-managed context.
+
+On Mac, expand **Engine → Compute details** to inspect the selected/active transcription engine’s configured compute policy. WhisperKit shows allowed units for audio features, encoder, decoder and prefill; Apple Speech manages its own policy. **Runtime accelerator** says Not running, Preparing or Not exposed. Allowing GPU/Neural Engine does not establish that a request used it.

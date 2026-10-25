@@ -54,6 +54,8 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## macOS (unreleased since 1.4.4)
 
+- Engine → Compute details separates configured compute units from runtime accelerator information. WhisperKit displays the exact policy passed to the model; Apple Speech manages its own policy. Hardware activity is shown as Not exposed rather than inferred from configuration. (#60)
+
 - History search keeps its records when SwiftUI recreates a view, instead of replacing matching rows with an empty asynchronous result. (#223 acceptance fix)
 
 - History search reuses unchanged passage vectors when a conversation is saved, including after summary insertion. Changed text or transcription language is re-indexed on-device; duplicate passages share one embedding attempt per save, including unsupported text. Existing indexes rebuild once. Semantic language coverage is unchanged. (#223, partial)

@@ -813,3 +813,7 @@ text, confirm the server receives an output cap of 1,024. With long text, verify
 notice and that requests still too large (including large instructions or Unicode text) fail with
 “No text was sent” before the server receives them. Choose Unknown to restore server-managed behavior.
 Capture the settings UI at native resolution and restore original preferences after testing.
+
+## Compute transparency (#60)
+
+Expand Engine → Compute details for each transcription engine. Before recording, runtime says Not running. During preparation and capture, it says Preparing/Not exposed rather than claiming GPU/Neural Engine activity. WhisperKit displays the policy passed to its constructor; Apple engines say managed by Apple Speech. Change the selected engine while recording and confirm the rail keeps the active engine’s policy until the next capture. While Stop drains transcription, runtime must remain Not exposed. Import a file with WhisperKit selected for live capture: the rail must identify SpeechAnalyzer and its Apple-managed policy. Capture the expanded details as release evidence.

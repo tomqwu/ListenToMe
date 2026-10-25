@@ -13,19 +13,23 @@ extension MeetingView {
 
     func statusRail(session: MeetingSession) -> some View {
         @Bindable var session = session
+        let runningEngine = session.isTranscribingFile ? "speechAnalyzer" : activeEngine
         return ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 RailRecStatus(isRunning: session.isRunning, isPreparing: session.isPreparing,
                               elapsed: elapsedLabel)
 
                 railSection("Engine") {
-                    Text(CommandCenterLabels.engine(active: activeEngine,
+                    Text(CommandCenterLabels.engine(active: runningEngine,
                                                     saved: ProviderSettings.transcriptionEngine))
                         .font(.system(size: 12.5)).foregroundStyle(Theme.ink)
-                        .help(activeEngine == nil
+                        .help(runningEngine == nil
                               ? "The engine the next Start listening will use"
-                              : "The engine this recording is using — an engine change applies at the next Start")
+                              : "The engine this transcription is using — an engine change applies at the next Start")
                     TranscriptionLanguagePicker(selection: languageBinding(session: session))
+                    TranscriptionComputeInfo(engine: runningEngine ?? ProviderSettings.transcriptionEngine,
+                                             isRunning: runningEngine != nil,
+                                             isPreparing: session.isPreparing)
                 }
 
                 railSection("Automatic AI") {
