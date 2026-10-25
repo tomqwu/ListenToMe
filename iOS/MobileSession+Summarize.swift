@@ -68,8 +68,9 @@ extension MobileSession {
     func summarize(mode: MobileSummaryMode = .summary) async {
         if let reason = summaryBlockReason(for: mode) { message = reason; return }
         // Capture a stable input snapshot; recording can continue while this request runs.
-        let source = summarySource
-        let reviewed = quickPieces
+        let live = liveSnapshot()
+        let source = live.manualSource
+        let reviewed = live.pieces
         let sourceIDs = Set(segments.map(\.id))
         guard !source.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             message = "Add notes or record a transcript before summarizing."
@@ -111,7 +112,7 @@ extension MobileSession {
             answerNotices.record(mode, text: output(for: mode), grounding: built.grounding, cutOff: cutOff,
                                  coveredIDs: mode == .summary ? sourceIDs : [])
             if let reviewMode = AutomaticReviewMode(rawValue: mode.rawValue) {
-                automaticReviews.markManualCompletion(reviewMode, source: source)
+                automaticReviews.markManualCompletion(reviewMode, source: live.source)
             }
             if MobileQuickContext.isContinuation(of: reviewed, in: quickPieces) {
                 quickReader.markReviewed(mode.rawValue)
@@ -132,8 +133,10 @@ extension MobileSession {
     /// `guidance` (issue #222) is appended to the system prompt and charged to the same budget.
     private func answerRequest(_ mode: MobileSummaryMode, source: String, cloud: Bool,
                                proseQuick: Bool, guidance: String?) throws -> AnswerRequest? {
+        let live = liveSnapshot()
+        let promptGuidance = VocabularyPrompt.combined(persona: guidance, guidance: live.provisionalNotice)
         // Exactly what `addingGuidance` appends to a system prompt.
-        let guidanceCost = LLMRequest(system: "", messages: []).addingGuidance(guidance).system.count
+        let guidanceCost = LLMRequest(system: "", messages: []).addingGuidance(promptGuidance).system.count
         if mode == .summary {
             // The transcript is fenced as data, exactly as the macOS panes fence it (issue #140); the
             // cap is charged on the fenced text so the Apple window still holds (PromptBudget).
@@ -142,27 +145,27 @@ extension MobileSession {
             guard fencedSource.count + guidanceCost <= limit else { return nil }
             return AnswerRequest(request: LLMRequest(system: mode.instructions,
                                                      messages: [ChatMessage(role: "user", content: fencedSource)])
-                                    .addingGuidance(guidance),
+                                    .addingGuidance(promptGuidance),
                                  grounding: nil)
         }
         let system = proseQuick ? MobileQuickContext.manualProseInstructions : MobileQuickContext.instructions
         let excerpt = OnDemandGrounding.excerpt(
-            notes: notes, segments: allSegments.map(Self.promptSegment), summary: summary,
+            notes: notes, segments: live.manualSegments, summary: summary,
             summaryCoveredIDs: answerNotices.summaryCoverage(showing: summary),
             budget: OnDemandGrounding.oneShotBudget(window: cloud ? nil : PromptBudget.appleIntelligenceCharacters,
                                                     system: LLMRequest(system: system, messages: [])
-                                                        .addingGuidance(guidance).system))
+                                                        .addingGuidance(promptGuidance).system))
         let grounding = excerpt.notice(summaryName: "your Summary")
         if !proseQuick {
             // The evaluator envelope has no room for an app note of its own, so the excerpt's note
             // leads the running context the summary is carried in.
             let context = [excerpt.selection.promptNote, excerpt.summary].compactMap { $0 }.joined(separator: "\n")
             return AnswerRequest(request: try MobileQuickContext.manualRequest(
-                source: excerpt.transcript, runningContext: context).addingGuidance(guidance), grounding: grounding)
+                source: excerpt.transcript, runningContext: context).addingGuidance(promptGuidance), grounding: grounding)
         }
         return AnswerRequest(request: LLMRequest(system: system,
                                                  messages: [ChatMessage(role: "user", content: excerpt.userMessage)])
-                                .addingGuidance(guidance),
+                                .addingGuidance(promptGuidance),
                              grounding: grounding)
     }
 
