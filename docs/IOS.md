@@ -342,10 +342,13 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   is detected with `NLLanguageRecognizer`. It then stores a vector per passage from `NLEmbedding`: the mean of its nouns'
   word vectors (verbs, auxiliaries and nouns every meeting uses, such as "meeting" or "week", are left
   out), or the sentence model where only that exists. Small talk with fewer than three such words gets
-  no vector. Only vectors, passage numbers and a fingerprint are stored — the text stays in the
+  no vector. Only vectors, passage numbers and conversation/passage fingerprints are stored — the text stays in the
   archive — in `Search Index/` beside `Conversations/`, always excluded from backup, versioned (a new
   format or embedding method rebuilds it), and any damaged file is re-embedded. It is reconciled with
   the archive after a reload and updated a few seconds after saving stops, off the main thread.
+  Unchanged passages reuse their stored vectors even when an inserted summary changes their positions;
+  text, source, transcription-language or embedding-method changes invalidate reuse. Format 2 rebuilds
+  older indexes once. This reduces repeated embedding work without changing semantic language coverage (#223).
 - **Deletion.** A deleted conversation's vectors are removed at once by its `conversationDataOwners`
   entry (`forgetSearchIndex(ids:everything:)`), so Delete and Delete all conversations (#220) both
   take them. A sync still running stops at its next conversation and never embeds a deleted one again.
