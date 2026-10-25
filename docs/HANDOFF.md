@@ -6,7 +6,7 @@ Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags)
 
 ## October 25 validation follow-up
 
-The #127 full run at `0464e9d` exposed a shared iOS test synchronization race: the automatic-review coordinator sets its active mode before the fake provider receives the request. The test now waits for the provider-held continuation before editing Notes and releasing the response. Its cancellation, completed-output and no-repeat assertions remain intact. The focused regression passed 20 consecutive iterations on the 1.17.0 candidate source with this fix; independent review found no blockers. This is test-only. Full validation must be rerun on the updated candidate; the failed run is preserved externally. No publication is claimed.
+The #127 full run at `0464e9d` exposed a shared iOS test synchronization race: the automatic-review coordinator sets its active mode before the fake provider receives the request. The test now waits for the provider-held continuation before editing Notes and releasing the response. Its cancellation, completed-output and no-repeat assertions remain intact. The focused regression passed 20 consecutive iterations on the 1.17.0 candidate source with this fix; independent review found no blockers. This is test-only. Full validation passed at `de928b9`: 460 iOS tests (450 passed, ten skipped), Core coverage, helpers, lint, signed Mac build and real provider contracts. Both the failed run and successful retry are preserved externally. No publication is claimed.
 
 ## Product state
 
@@ -147,6 +147,20 @@ acceptance gates. Simulator checks proceed without waiting for hardware; they do
 Duo #253/#268 and Watch language #200 are already merged; newly demonstrated gaps get separate issues.
 Release trains remain batched, with TestFlight for each major iOS release and fresh device screenshots.
 
+## Mac Auto compatibility candidate — October 25
+
+PR #275 implements #209 on `codex/209-mac-auto-compatibility`. At source
+`1ddd0caeca4d5323e8be6ac1634d6002e62c919e`, four focused Core tests, lint and the signed
+Mac build passed, followed by independent review. Installed-app acceptance against a local
+synthetic server passed valid JSON, malformed prose, HTTP failure, cancellation, disabled checking
+for unsaved endpoint edits, visible Auto pause reason, and a successful recheck. All five requests
+contained only the synthetic exchange. Original settings were restored, the idle Dev app was closed
+and moved to Trash, and the exact Dev bundle's permissions were reset successfully.
+
+Native screenshots, signing provenance and results are preserved in `dist/mac-auto-209` and
+`/Users/tomwu/Documents/Codex/2026-10-25/listentome-features/mac-auto-209`. Full
+`make validate-local` and final hosted checks remain required before merge. This is not released.
+
 ## Open work, prioritized
 
 All in [GitHub Issues](https://github.com/tomqwu/ListenToMe/issues); [#98](https://github.com/tomqwu/ListenToMe/issues/98)
@@ -213,14 +227,13 @@ is the tracking issue.
   acceptance; do not call it production-ready.
 - **Apple Watch spike** and acceptance, above.
 
+## Context capacity merged (#210) — October 25
+
+PR #274 adds optional per-server limits with reserved answer space and a no-send oversized-prompt error. Full `make validate-local` passed on `a6ec6b8`: 1,056 Core tests (seven skips, 98.1079% coverage), 394 iOS unit tests and 65 UI tests (459 total, ten skips, zero failures), release helpers, lint, signed Mac build and real Ollama/OpenAI-compatible contracts. Mac settings acceptance and independent review passed. A Pro Max screenshot run exposed a caret-position assumption in the URL-editing test; selecting all and asserting the exact replacement value fixed it, and the focused rerun passed. Only test/documentation changes followed the full gate. All 20 native screenshots across four device categories were inspected and passed. PR #274 merged as `98a8f646637f7766480cb2fab3de8761e86ffe3b` with all three required CI checks green. Evidence is preserved in `dist/context-budget-210` and the October 25 external evidence folder; this is not published.
+
 ## In progress: History index reuse (#223)
 
 PR #277 implements per-passage vector reuse and fixes a Mac shared-search reader lifetime bug found during installed-app acceptance. Full `make validate-local` passed on `bacbb7d`: 1,060 Core tests (seven skips, 98.1048% line coverage), 459 iOS tests (449 passed, ten skipped, zero failures), release helpers, lint, signed Mac build and both real server contracts. All three required CI checks passed. Installed Mac History search/vector reuse/removal and independent review passed; screenshots and cleanup evidence are preserved. This change is ready for merge after the documentation update checks; it is not published. Broader semantic language support remains open: contextual mean pooling and tested normalizations did not meet paraphrase/negative-query quality acceptance. No additional models are downloaded or enabled.
-
-## Context capacity candidate (#210) — October 25
-
-PR #274 adds optional per-server limits with reserved answer space and a no-send oversized-prompt error. Full `make validate-local` passed on `a6ec6b8`: 1,056 Core tests (seven skips, 98.1079% coverage), 394 iOS unit tests and 65 UI tests (459 total, ten skips, zero failures), release helpers, lint, signed Mac build and real Ollama/OpenAI-compatible contracts. Mac settings acceptance and independent review passed. A Pro Max screenshot run exposed a caret-position assumption in the URL-editing test; selecting all and asserting the exact replacement value fixed it, and the focused rerun passed. Only test/documentation changes followed the full gate. Four-device capture evidence is being finalized in `dist/context-budget-210`; this is not published.
-
 
 ### #141 review follow-ups — implementation candidate, October 25
 
@@ -238,7 +251,7 @@ real Ollama/OpenAI-compatible contracts. Logs, xcresult and native screenshots a
 Current-main integration at `7521cb1` passed all 404 iOS unit tests (398 passed, six skipped),
 1,080 Core tests (seven skips; 98.1945% coverage), lint and the signed Mac build. Independent integration
 review found no blockers. Hosted checks for the final documentation commit and installed Mac GUI/OTHERS
-acceptance remain pending. No merge or publication is claimed. Mac remains locked; no permission reset was attempted.
+acceptance remain pending. No merge or publication is claimed. The Mac is unlocked; installed-app acceptance is still pending for this candidate.
 
 ## Ollama endpoint candidate (#149) — October 25
 
@@ -253,6 +266,7 @@ Settings notice/recovery screenshots were inspected. Current-main integration at
 all 403 iOS unit tests (397 passed, six skipped), 1,061 Core tests (seven skipped, 98.1056% coverage),
 lint and the signed Mac build. Independent integration review found no blockers. Hosted checks for
 the final documentation commit remain pending; physical-device acceptance is pending. Not published.
+
 
 ## In progress: speaker lifecycle follow-ups (#188)
 
@@ -291,5 +305,7 @@ and exposes filename/read progress/Cancel for file imports. Cancellation asks Sp
 pending analysis and retains already delivered text. Finalization is distinguished from 100% read.
 The Core suite passed 1,077 tests (seven skips, 98.1999% coverage), including partial-answer stop,
 late-token rejection, restart and cancelled-import preservation. Lint, Mac and iOS test builds passed.
-Independent review found a misplaced reference-file guard; corrected and reviewed clear. Full local
-validation, progress runtime test and rendered Mac acceptance remain pending. No merge or release claimed.
+Independent review found a misplaced reference-file guard; corrected and reviewed clear. The focused progress runtime test and full local validation passed at `de928b9`; rendered Mac acceptance remains pending. No merge or release claimed.
+## Mac Auto compatibility acceptance (#209) — October 25
+
+The final installed-Mac settings interaction passed at `c3746b5`: saved 4K persists, an oversized probe sends nothing, an unsaved 8K edit disables probing, Cancel restores 4K, and a valid synthetic response succeeds with server-managed context. Original provider/model settings were restored. Screenshots, the one synthetic request, source/signing provenance and successful Dev-only cleanup are preserved in the October 25 external `auto-compatibility-209/native-final` evidence. Current-main integration includes only the already-merged iOS endpoint validation and documentation; Mac application source is unchanged from this acceptance. Final integration at `8e9e612` passed 1,065 Core tests (seven skips, 98.1098% coverage), lint, the signed Mac build and all 403 iOS unit tests (397 passed, six skipped). Independent integration review found no blockers. All three final-head checks passed; PR #275 merged to main at `3d32345` and #209 is closed. Mac publication remains paused.
