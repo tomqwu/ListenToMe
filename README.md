@@ -323,14 +323,13 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   spoken by another participant or embedded in an attached file; it cannot fully prevent it, so
   treat pane output — including any links it contains — with the same care as the source material.
 - **Presets.** Pick a use-case preset to tailor how the copilot responds.
-- **Languages.** Independent **transcription-language** and **AI response-language** pickers. The
-  transcription list is not hard-coded: at launch the app asks the OS which languages on-device
-  transcription supports (`SpeechTranscriber.supportedLocales`) and which of their speech models are
-  already installed (`AssetInventory`), and lists them as **Installed** and **Downloadable**, common
-  languages first (`TranscriptionLanguageCatalog` in Core, shared by macOS and iOS). A downloadable
-  language's model downloads from Apple the first time you record in it. If the language you pick (or
-  your system language under "Auto") still isn't supported, the status line says so by name and
-  names the language it is transcribing in instead — it never silently substitutes English.
+- **Languages.** Independent **transcription-language** and **AI response-language** pickers.
+  The app queries native language support and installed Apple speech assets instead of hard-coding
+  a device list. Mac advanced speech uses `SpeechTranscriber`; iPhone/iPad use the union of supported
+  advanced and on-device dictation modules. The shared `TranscriptionLanguageCatalog` orders common
+  languages and labels **Installed** and **Downloadable** assets. Downloads begin only when requested
+  for transcription. Unsupported device/language combinations explain recovery before Start;
+  recording support is independent of Apple Intelligence summary eligibility.
 - <a id="vocabularies"></a>**Vocabularies** (#222). **Settings → Vocabularies** turns each preset on
   for every conversation ("Use by default") and edits **My terms** (add, remove, import and export one
   term per line; any language). The presets use project-authored Simplified Chinese terms for

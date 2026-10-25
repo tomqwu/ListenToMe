@@ -61,8 +61,22 @@ establish physical pairing or Watch audio. Native run snapshots and simulator cl
 The BDD runner now supports native Mac/Watch targets and verifies their exact passing selectors;
 full validation includes those suites. A reviewer-requested missing-Watch-ID rejection reproduced
 four assertions, then all 19 tooling regressions passed. Independent review cleared native adapter
-and control coverage, subject to verifying that destination fix. Final source validation, renewed
-release screenshots, CI/merge and accepted 1.17.1 (35) beta upload remain pending.
+and control coverage, subject to verifying that destination fix. The clean frozen `40d8e9a` candidate subsequently passed full `make validate-local`: 1,085 Core
+tests (seven skips, 98.1239% coverage), 503 iOS tests (491 passed, 12 intentional skips), all 12 native
+Mac tests, all four native Watch tests, 19 BDD helper regressions, release helpers, lint, signed Mac
+build and both real Ollama/OpenAI-compatible contracts using `qwen3:0.6b`. All bound native selectors
+passed. Inputs stayed unchanged and both dedicated validation simulators were deleted. All four final
+screenshot journeys passed on that source; all 24 native-resolution images were visually inspected,
+hash/dimension verified and backed up externally (`ios-feedback-train/screenshots-final`). Originals,
+normalized unresized RGB copies and source/version/device/locale provenance remain preserved.
+
+The final Mac menu build at `40d8e9a` passed strict signature/Dev identity checks and remains closed.
+Its rendered language-refresh/settings check is pending because the Mac UI tool reports the host
+locked; one unlock request is pending. This is separate from the completed physical iPhone/iPad and
+earlier Mac OTHERS acceptance. Native controller/adapter tests pass; do not call the pending Mac menu
+journey accepted. No new Dev permissions changed, and no completed Dev UI session awaits cleanup.
+Hosted CI, merge and the accepted 1.17.1 (35) beta upload remain pending. App Store listing screenshot
+upload remains pending; this beta does not submit a production App Store version.
 
 No new speculative PRs: finish this feedback change before resuming the 17 existing drafts. The old
 #60 full run had one failed test with two assertions; triage its preserved result rather than

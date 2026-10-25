@@ -201,7 +201,9 @@ clean checkout/worktree if needed. Inspect the new PR's code, test evidence, and
 valid evidence for the exact source rather than rerunning tests solely because the agent changed.
 Check the changed [BDD scenarios](BDD.md), their actual red/green evidence and any listed manual
 acceptance. `make bdd-check` enforces changed behavior/test bindings; `make ios-test` also verifies
-that all bound iOS unit/UI tests actually passed in the full run. Neither substitutes for device
+that all bound iOS unit/UI tests actually passed in the full run. Native Mac adapter/control and
+Watch unit/UI contracts also run locally through `make mac-test` and `make watch-test`; supply a
+dedicated `WATCH_DESTINATION=platform=watchOS Simulator,id=<UUID>` for full validation. Neither substitutes for device
 acceptance or an Apple upload receipt.
 Run missing relevant checks: lint, core coverage, iOS build/UI tests and macOS build. Exercise the
 changed user flow locally and inspect its rendered UI; GitHub Actions builds both apps and runs the
