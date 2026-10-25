@@ -19,7 +19,9 @@ importing Watch audio using models that are already loaded, or waiting for prepa
 The import starts no model download. Analysis holds at most one minute of decoded audio per window;
 voice summaries remain only in memory while that recording is being imported, including later parts
 that arrive in the same app run. They are discarded when import completes, is cancelled or the app closes.
-Raw parts are deleted after their text and labels are saved. There is no new saved-audio option.
+Temporary transfer parts are deleted after their text and labels are saved. When Save audio recordings
+is on, the iPhone first keeps a protected playback copy; when it is off, no playback copy is kept.
+See [Save audio recordings](#save-audio-recordings-off-by-default) below for retention, retry and deletion controls.
 
 ## Automatic transcription language
 
