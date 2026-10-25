@@ -54,7 +54,15 @@ Recent iOS trains (full text in [CHANGELOG.md](../CHANGELOG.md)):
   survive replacement. Apple runs on both platforms; Mac also offers WhisperKit.
   PR #264 remains unmerged pending actual live system-audio acceptance. Reusing the primary
   checkout's signing.local.mk restored Screen Recording access without TCC changes; the signed
-  Dev app currently reports Microphone as Not set. Saved-file recognition and simulator tests pass.
+  Dev app reports Microphone as Not set; Start and Grant showed no OS prompt in the latest signed session.
+  The 2026-10-25 automated gate on `399ef07` passes: 1,054 Core tests (98.028% coverage),
+  400 iOS unit tests and 66 UI tests (ten total skips, zero failures), lint, helpers, Mac build
+  and real Ollama contracts. Watch audio provenance survives re-transcription and reopening.
+  Current iPhone screenshots are preserved, but the Live portrait inherited a correction warning
+  and is excluded from store media; screenshot fixture isolation is fixed in PR #274 for recapture.
+  Dev test preferences were restored and the exact Dev bundles/permissions cleaned up. Evidence:
+  `/Users/tomwu/Documents/Codex/2026-10-25/listentome-features/saved-audio-retranscription-resume`.
+  This remains a candidate, not a live-audio acceptance pass or published release.
 
 ## Next train: local Ollama context capacity
 
