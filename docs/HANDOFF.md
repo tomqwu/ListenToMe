@@ -294,6 +294,7 @@ manual-summary instructions, transcript fencing and bounded-input request constr
 its provider allocation and guidance. The renderer moved from App to SharedPlatform with no rendering
 changes. Core regressions cover typed-note grounding, hostile closing tags, exact input boundaries,
 guidance overhead and Quick prose limits. All 1,083 Core tests passed (seven skips, 98.1374%
-coverage), as did lint, the signed Mac build, iOS test build and independent review. Simulator runtime
-checks and full local validation remain pending. This is
+coverage), as did lint, the signed Mac build, iOS test build and independent review. All 403 iOS
+unit tests passed (397 passed, six device-only skips) at `5b33139`. Full local validation and rendered
+acceptance remain pending. This is
 another partial #134 step; remaining view/session orchestration is not claimed complete.
