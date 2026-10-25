@@ -14,6 +14,18 @@ does not show it again, and a fresh install does not see it at all; see
 ## iOS (unreleased since 1.16.0 (33))
 
 - Re-transcribe saved audio in a chosen language, preview the result, then replace the transcript or keep the original. Notes, attachments and summaries stay; speaker names and corrections reset while Apple Watch device labels remain. Recognition stays on-device. (#224)
+- Ollama settings reject unsupported plain-HTTP addresses before saving and explain when pasted URL parts are omitted. Destination prose names Ollama Cloud clearly; provider-default and catalog-refresh behavior are documented. (#149)
+
+- Backgrounding cancels final speaker labeling already started after Stop and clears the recording buffer without waiting. Queued work stays bound to its original recording, so an old pass cannot analyze or relabel a new recording. Lifecycle and model-backup tests cover these paths. (#188)
+
+- Live summaries reuse their transcript snapshot between unchanged events. Manual Summary, Quick and Ask omit very short recognition hypotheses and mark longer unfinished speech as provisional, with guidance against treating it as a confirmed decision. The marker survives prompt trimming; saved transcripts remain unchanged. (#164)
+- History search reuses unchanged passage vectors when a conversation is saved, including after summary insertion. Changed text or transcription language is re-indexed on-device; duplicate passages share one embedding attempt per save, including unsupported text. Existing indexes rebuild once. Semantic language coverage is unchanged. (#223, partial)
+
+- OpenAI-compatible servers can use an optional per-server context limit. Answer space is reserved and oversized requests stop before sending; Mac prompt trimming includes a visible notice. Unknown capacity preserves server-managed behavior. (#210)
+
+- Documentation: the Watch speaker-privacy section now agrees with the existing opt-in saved-audio retention policy. No app behavior changes. (#225)
+
+- Validation: simulator UI journeys wait for permission and correction state changes under load; the test target runs serially. No app behavior or binary release change. (#176)
 
 - Automatic language detection can start and re-check from microphone audio activity even when the current transcriber recognizes no words. Silence skips inference, isolated sounds do not download the model, and Stop remains responsive. All analysis stays on-device using the existing temporary buffer. (#216)
 
@@ -49,6 +61,11 @@ does not show it again, and a fresh install does not see it at all; see
 ## macOS (unreleased since 1.4.4)
 
 - Re-transcribe saved audio in a chosen language, preview the result, then replace the transcript or keep the original. Notes, attachments and summaries stay; speaker names and corrections reset while Apple Watch device labels remain. Recognition stays on-device. (#224)
+- History search keeps its records when SwiftUI recreates a view, instead of replacing matching rows with an empty asynchronous result. (#223 acceptance fix)
+
+- History search reuses unchanged passage vectors when a conversation is saved, including after summary insertion. Changed text or transcription language is re-indexed on-device; duplicate passages share one embedding attempt per save, including unsupported text. Existing indexes rebuild once. Semantic language coverage is unchanged. (#223, partial)
+
+- OpenAI-compatible servers can use an optional per-server context limit. Answer space is reserved and oversized requests stop before sending; Mac prompt trimming includes a visible notice. Unknown capacity preserves server-managed behavior. (#210)
 
 - Local Ollama requests size their context window to the full prompt instead of relying on a small server default. Prompts beyond the safe model capacity show an error before an answer request; cloud context remains server-managed. (#230)
 

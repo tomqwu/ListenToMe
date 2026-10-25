@@ -32,7 +32,6 @@ final class SessionStore {
             historySearch = nil
             errorText = error.localizedDescription
         }
-        historySearch?.records = { [weak self] in self?.known ?? [] }
     }
 
     /// Readable conversations. A damaged file no longer hides the rest of the history: it is set
@@ -46,6 +45,7 @@ final class SessionStore {
             // scan is clean and must not erase a note raised by an autosave's migration.
             if let warning = result.warning { archiveWarning = warning }
             known = result.records
+            publishRecords()
             historySearch?.sync(result.records)   // vectors of anything no longer here are dropped
             return result.records
         } catch { errorText = "Couldn't read history: \(error.localizedDescription)"; return [] }
@@ -60,10 +60,18 @@ final class SessionStore {
             if let index = known.firstIndex(where: { $0.id == record.id }) { known[index] = record } else {
                 known.insert(record, at: 0)
             }
+            publishRecords()
             historySearch?.update(record)
             errorText = nil
             return true
         } catch { errorText = "Couldn't save: \(error.localizedDescription)"; return false }
+    }
+
+    /// SwiftUI can construct and discard temporary stores while retaining its original @State.
+    /// Publishing from init would replace the shared model's reader with a dead weak owner.
+    /// Publish a snapshot only after an archive read/write; temporary stores cannot erase it.
+    private func publishRecords() {
+        historySearch?.records = { [records = known] in records }
     }
 
     /// Whether History holds this conversation.
@@ -105,6 +113,7 @@ final class SessionStore {
             // Clear deletes the quarantined files too, so any earlier warning is obsolete.
             archiveWarning = try archive.clear()
             known = []
+            publishRecords()
             let everything = ConversationDeletion(ids: [], everything: true)
             errorText = ConversationDataErasure.failureNote(ConversationDataErasure.run(conversationDataOwners,
                                                                                         for: everything))

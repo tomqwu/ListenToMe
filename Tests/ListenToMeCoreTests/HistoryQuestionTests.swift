@@ -75,7 +75,7 @@ final class HistoryIndexFileTests: XCTestCase {
     func testRoundTripAndQuantizedSimilarity() throws {
         let vector = HistoryVector(model: "w:en:1", values: [3, 4, 0])
         XCTAssertEqual(vector.values, [0.6, 0.8, 0])
-        let stored = StoredChunkVector(ordinal: 7, vector: vector)
+        let stored = StoredChunkVector(ordinal: 7, vector: vector, fingerprint: 0x1234_5678)
         let record = StoredRecordVectors(fingerprint: 0xdead_beef_0123_4567, chunks: [stored])
         let decoded = try XCTUnwrap(HistoryIndexFile.decode(HistoryIndexFile.encode(record)))
         XCTAssertEqual(decoded, record)
@@ -93,6 +93,9 @@ final class HistoryIndexFileTests: XCTestCase {
         XCTAssertNil(HistoryIndexFile.decode(Data("LTMX".utf8) + good.dropFirst(4)))
         XCTAssertNil(HistoryIndexFile.decode(good.dropLast()), "Truncated")
         XCTAssertNil(HistoryIndexFile.decode(good + Data([0])), "Trailing bytes")
+        var oldFormat = good
+        oldFormat[4] = 1
+        XCTAssertNil(HistoryIndexFile.decode(oldFormat), "Files without passage fingerprints must rebuild")
         XCTAssertNotNil(HistoryIndexFile.decode(good))
     }
 }

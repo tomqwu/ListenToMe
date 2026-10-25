@@ -821,3 +821,27 @@ real WatchConnectivity transfer and Watch background recording require the paire
 ### iOS audio-driven language checks (#216)
 
 In Automatic, speak in a language the starting transcriber does not recognize. Check that an initial language check still occurs after at least eight seconds of activity, and continuous talking can trigger later checks without new transcript results. Check the detected-language notice, Undo and Stop. Silence and sparse isolated sounds must not trigger an initial download; loud noise may qualify as activity but must still pass language confidence and switch rules. Re-checks pause in Low Power Mode, background and serious thermal state. Stop during model preparation must remain responsive. The simulator fixture verifies control flow with synthetic audio and a deterministic model; it does not establish real speech accuracy or device battery acceptance.
+
+
+## Custom-server context capacity (#210)
+
+In Settings, select OpenAI-compatible and a test server. Set Server context window to 4K and save.
+Reopen Settings and verify 4K persists. A different API URL should show Unknown; returning to the
+original URL restores its setting. Cancel an edit and verify no setting changes. For short synthetic
+text, confirm the server receives an output cap of 1,024. With long text, verify Mac's trimming
+notice and that requests still too large (including large instructions or Unicode text) fail with
+“No text was sent” before the server receives them. Choose Unknown to restore server-managed behavior.
+Capture the settings UI at native resolution and restore original preferences after testing.
+
+### iOS Ollama endpoint feedback (#149)
+
+In Settings, select Ollama and save `http://your-mac.local:11434`. Try saving
+`http://100.64.0.1:11434`, a public IPv4 literal, and a non-link-local IPv6 literal: each must
+explain HTTPS/local-address alternatives and keep the previous server. HTTPS addresses and
+loopback/link-local HTTP remain accepted. Loopback points to the phone itself.
+Paste `https://your-mac.local:11434/ollama?token=test-value`: confirm the saved destination is the
+origin and the status says URL parts were omitted without echoing the query value. Capture the
+visible error and normalization status at native resolution. Restore the original settings.
+Opening a model list on Apple Intelligence must not automatically fetch the Ollama catalog;
+explicit Refresh remains available. Unchosen provider defaults are recomputed on launch, while an
+explicit provider choice persists.

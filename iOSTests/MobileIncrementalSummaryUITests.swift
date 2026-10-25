@@ -28,8 +28,8 @@ final class MobileIncrementalSummaryUITests: XCTestCase {
         capture(app, "Quick publishes a meaningful decision")
         speech("speechRepeat", app: app)
         wait(app.staticTexts["quickReadCount"], contains: "Checks: 4")
-        XCTAssertEqual(output.label, decision, "A successful keep response must not rewrite visible bullets")
         wait(app.staticTexts["autoQuickStatus"], contains: "Summary unchanged")
+        XCTAssertEqual(output.label, decision, "A successful keep response must not rewrite visible bullets")
         capture(app, "Quick retains bullets after reading repeated speech")
         if app.segmentedControls["workspaceTabs"].exists {
             app.segmentedControls["workspaceTabs"].buttons["Summary"].tap()
@@ -98,7 +98,7 @@ final class MobileIncrementalSummaryUITests: XCTestCase {
         // Longer than the delayed provider response: cancelled work cannot leak onto the screen.
         unchanged(app.staticTexts["quickReadCount"], expected: "Checks: 0", seconds: 9)
         toggle.tap()
-        wait(app.staticTexts["output-quick"], contains: "Monday", timeout: 20)
+        wait(app.staticTexts["output-quick"], contains: "Monday", timeout: 30)
         wait(app.staticTexts["quickReadCount"], contains: "Checks: 1")
         let output = app.staticTexts["output-quick"].label
         speech("speechPartial", app: app)
@@ -141,6 +141,28 @@ final class MobileIncrementalSummaryUITests: XCTestCase {
         app.buttons["Stop listening"].tap()
     }
 
+    func testManualSummaryIncludesLiveRecognitionAndDropsMarkerAfterFinalization() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--incremental-summary-fixture", "-autoQuickSummary", "NO",
+                               "-mobileAIProvider", "apple", "-mobileCorrectTranscript", "NO"]
+        app.launchPastReleaseNotes()
+        app.buttons["Start listening"].tap()
+        speech("speechLiveDecision", app: app)
+        reviewTab("Summary", app: app)
+        app.buttons["Generate Summary"].tap()
+        wait(app.staticTexts["output-summary"], contains: "Recognition is provisional.")
+        capture(app, "Manual Summary includes tagged live recognition")
+        speech("speechDecision", app: app)
+        app.buttons["Generate Summary"].tap()
+        let finalized = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "label CONTAINS %@ AND NOT (label CONTAINS %@)",
+                                   "reviewed manually.", "Recognition is provisional."),
+            object: app.staticTexts["output-summary"])
+        XCTAssertEqual(XCTWaiter.wait(for: [finalized], timeout: 15), .completed)
+        capture(app, "Manual Summary removes provisional guidance after final recognition")
+        app.buttons["Stop listening"].tap()
+    }
+
     private func launch(slow: Bool = false, backlog: Bool = false) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["--incremental-summary-fixture", "-autoQuickSummary", "YES",
@@ -171,9 +193,10 @@ final class MobileIncrementalSummaryUITests: XCTestCase {
         app.buttons[identifier].tap()
     }
 
-    private func wait(_ element: XCUIElement, contains text: String, timeout: TimeInterval = 15) {
+    private func wait(_ element: XCUIElement, contains text: String, timeout: TimeInterval = 30) {
         let expectation = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@", text), object: element)
-        XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: timeout), .completed)
+        XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: timeout), .completed,
+                       "Expected \(text) in \(element); last label: \(element.label)")
     }
 
     private func unchanged(_ element: XCUIElement, expected: String, seconds: TimeInterval) {

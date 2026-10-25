@@ -164,6 +164,7 @@ struct SettingsView: View {
     @State private var appearance: String
     @State private var speakerDiarization: Bool
     @State private var microphoneDiarization: Bool
+    @State private var openAIContextTokens = ProviderSettings.openAIContextWindow(for: ProviderSettings.openAIBaseURL)?.tokens ?? 0
     @State private var openAIBaseURL = ProviderSettings.openAIBaseURL
     private let originalOpenAIKey = ProviderSettings.openAIKey() ?? ""
     @State private var openAIKey = ProviderSettings.openAIKey() ?? ""
@@ -197,7 +198,10 @@ struct SettingsView: View {
                  "AI off keeps transcription and saving available.")
                 .font(.caption).foregroundStyle(.secondary)
             if aiMode == .openAI {
-                OpenAICompatibleSettingsSection(baseURL: $openAIBaseURL, key: $openAIKey)
+                OpenAICompatibleSettingsSection(baseURL: $openAIBaseURL, key: $openAIKey, contextTokens: $openAIContextTokens)
+                    .onChange(of: openAIBaseURL) {
+                        openAIContextTokens = ProviderSettings.openAIContextWindow(for: openAIBaseURL)?.tokens ?? 0
+                    }
             }
             if aiMode == .cloudAI {
                 CloudAISettingsSection(vendor: $cloudVendor, key: $cloudKey)
@@ -355,6 +359,7 @@ struct SettingsView: View {
                 : "Saved \(written.joined(separator: " and ")); no other settings were applied.")
             return
         }
+        ProviderSettings.saveOpenAIContextTokens(openAIContextTokens)
         ProviderSettings.aiMode = aiMode
         ProviderSettings.transcriptionEngine = engine
         ProviderSettings.responseLanguageID = responseLanguageID

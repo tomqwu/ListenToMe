@@ -113,13 +113,14 @@ final class MobileAISettings {
     /// Accepts only an http(s) URL with a host; returns nil for anything else.
     static func normalizedBaseURL(_ raw: String) -> URL? {
         let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, let url = URL(string: trimmed),
-              let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https",
-              let host = url.host(), !host.isEmpty else { return nil }
+        guard !trimmed.isEmpty, let parsed = URLComponents(string: trimmed),
+              let scheme = parsed.scheme?.lowercased(), scheme == "http" || scheme == "https",
+              let host = parsed.host, !host.isEmpty else { return nil }
+        // URL.host() removes IPv6 brackets; URLComponents.host needs the literal host form.
         var components = URLComponents()
         components.scheme = scheme
         components.host = host
-        components.port = url.port
+        components.port = parsed.port
         return components.url
     }
 
@@ -128,20 +129,10 @@ final class MobileAISettings {
     /// Ollama Cloud is identified by host, so a hand-typed https://ollama.com is still the cloud.
     static func isCloud(_ url: URL) -> Bool { url.host()?.lowercased() == cloudHost }
 
-    /// App Transport Security only exempts plain http for .local, link-local and loopback names
-    /// (NSAllowsLocalNetworking). A bare private IPv4 literal would pass validation and then fail
-    /// opaquely at request time, so it is rejected with an explanation instead.
-    static func isPlainHTTPPrivateAddress(_ url: URL) -> Bool {
-        guard url.scheme?.lowercased() == "http", let host = url.host()?.lowercased() else { return false }
-        let parts = host.split(separator: ".", omittingEmptySubsequences: false).map(String.init)
-        guard parts.count == 4, parts.allSatisfy({ UInt8($0) != nil }), let first = UInt8(parts[0]),
-              let second = UInt8(parts[1]) else { return false }
-        if first == 127 { return false }
-        if first == 10 { return true }
-        if first == 172, (16...31).contains(second) { return true }
-        if first == 192, second == 168 { return true }
-        if first == 169, second == 254 { return false }
-        return false
+    /// Apply the same explicit local-network HTTP rule as OpenAI-compatible servers.
+    static func isBlockedPlainHTTPAddress(_ url: URL) -> Bool {
+        url.scheme?.lowercased() == "http"
+            && !OpenAICompatibleEndpoint.allowsPlainHTTP(host: url.host(percentEncoded: false) ?? "")
     }
 
     var usesCustomEndpoint: Bool { !Self.isCloud(resolvedBaseURL) }
@@ -164,18 +155,25 @@ final class MobileAISettings {
             status = "That server address is not a valid http:// or https:// URL. The previous server is kept."
             return false
         }
-        guard !Self.isPlainHTTPPrivateAddress(url) else {
-            status = "iOS blocks plain http to a numeric private address. Use your computer's "
-                + "name instead, for example http://your-mac.local:11434. The previous server is kept."
+        guard !Self.isBlockedPlainHTTPAddress(url) else {
+            status = "Use https:// for this address, or a .local name such as http://your-mac.local:11434. "
+                + "Plain http is allowed only for .local, localhost, loopback or link-local addresses. "
+                + "The previous server is kept."
             return false
         }
+        let parsed = URLComponents(string: trimmed)
+        let omitted = (parsed?.path.isEmpty == false && parsed?.path != "/")
+            || parsed?.query != nil || parsed?.fragment != nil || parsed?.user != nil || parsed?.password != nil
+        let normalizationNotice = omitted
+            ? " Only the scheme, host and port are used; the path, query, fragment and credentials are not saved." : ""
         if Self.isCloud(url) {
             ollamaBaseURL = ""
-            status = "Server set to Ollama Cloud (https://ollama.com)."
+            status = "Server set to Ollama Cloud (https://ollama.com)." + normalizationNotice
             return true
         }
         ollamaBaseURL = url.absoluteString
-        status = "Server set to \(url.absoluteString). Summaries go to that machine, not to ollama.com."
+        status = "Server set to \(url.absoluteString). Requests use this server instead of ollama.com."
+            + normalizationNotice
         return true
     }
 

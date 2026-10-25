@@ -342,10 +342,15 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   is detected with `NLLanguageRecognizer`. It then stores a vector per passage from `NLEmbedding`: the mean of its nouns'
   word vectors (verbs, auxiliaries and nouns every meeting uses, such as "meeting" or "week", are left
   out), or the sentence model where only that exists. Small talk with fewer than three such words gets
-  no vector. Only vectors, passage numbers and a fingerprint are stored — the text stays in the
+  no vector. Only vectors, passage numbers and conversation/passage fingerprints are stored — the text stays in the
   archive — in `Search Index/` beside `Conversations/`, always excluded from backup, versioned (a new
   format or embedding method rebuilds it), and any damaged file is re-embedded. It is reconciled with
   the archive after a reload and updated a few seconds after saving stops, off the main thread.
+  Unchanged passages reuse their stored vectors even when an inserted summary changes their positions;
+  text, source, transcription-language or embedding-method changes invalidate reuse. Format 2 rebuilds
+  older indexes once. Duplicate passages share one embedding attempt per changed save, including when
+  a model is unavailable; unavailable passages are retried on a later changed save. This reduces repeated
+  embedding work without changing semantic language coverage (#223).
 - **Deletion.** A deleted conversation's vectors are removed at once by its `conversationDataOwners`
   entry (`forgetSearchIndex(ids:everything:)`), so Delete and Delete all conversations (#220) both
   take them. A sync still running stops at its next conversation and never embeds a deleted one again.
@@ -502,7 +507,10 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   their label and name (#171). A centroid learns only from speech no earlier pass heard. The embeddings
   live in memory for the recording only and are never saved. Stop returns at once; a final pass then labels the last words while the
   app stays open, queued behind any pass still running, and its result is dropped if a
-  new recording or another conversation has started. The final pass is skipped while the models have
+  new recording or another conversation has started. Backgrounding also cancels an already-started
+  final pass and clears the recording buffer without waiting. Model work already in flight may finish
+  with its temporary input copy, but its result is discarded; queued passes retain their original
+  recording token and cannot analyze a later run (#188). The final pass is skipped while the models have
   not loaded yet, so Stop never starts or waits for the download; with the models ready, a recording
   shorter than the first periodic pass is labeled at Stop (#195). On every periodic tick, audio no later window can reach is released, so
   at most ten minutes (about 38 MB) is held even when passes keep failing, and only the last minute
@@ -518,7 +526,7 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   you tap **Retry** or start a new recording. Limits: overlapping speech and short utterances are
   often left as **Microphone** or attributed to whoever spoke longest; a voice is not recognized
   across recordings, so after Stop/Listen (or an interruption) new voices continue the numbering
-  (Speaker 3, 4…) and can be renamed to merge them; backgrounding ends identification at once without a final pass;
+  (Speaker 3, 4…) and can be renamed to merge them; backgrounding ends the labeling run without awaiting model work;
   more than two hours of one recording is not analyzed further.
 - Automatic titles (#221): after Stop, Save, a finished Apple Watch recording or a return to the
   foreground, a conversation still named "New conversation" or "Apple Watch · <date>" with about
@@ -560,7 +568,9 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   see [OpenAI-compatible server](#openai-compatible-server-lm-studio-openrouter-vllm)), with streamed
   results and secure API-key storage.
   Apple Intelligence accepts up to 8,000 characters (`PromptBudget.appleIntelligenceCharacters`, the
-  shared cap macOS also clamps its Apple prompts to); Ollama and OpenAI-compatible servers accept up to 60,000. Both caps are
+  shared cap macOS also clamps its Apple prompts to); Ollama and OpenAI-compatible assembly allows up to 60,000.
+  A configured custom-server capacity also checks the complete request locally before sending,
+  so its actual limit may be lower. These assembly caps are
   charged on the *fenced* conversation, not the raw text. A Summary that does not fit is rejected
   explicitly. Quick answers a conversation that does not fit from what does (#114,
   `OnDemandGrounding.excerpt`). A Summary generated in this session stands in for exactly the lines it
@@ -999,7 +1009,9 @@ turned off, the model not ready, or an unlisted reason reported by the system ("
 unavailable. Choose another provider in Settings."). That explanation is shown only while the device is actually on the
 unchosen Ollama fallback; once you pick a provider yourself it disappears, and it is never shown to
 someone who selected Apple Intelligence deliberately. A provider you have chosen before is always
-kept across updates — the default applies only when no choice has been saved. Automatic Quick Summary requires Ollama, a cloud AI
+kept across updates — the default applies only when no choice has been saved. Until you choose a
+provider, availability is checked again on each launch; enabling or disabling Apple Intelligence
+can therefore change that unchosen default. Selecting a provider pins your choice. Automatic Quick Summary requires Ollama, a cloud AI
 service or an OpenAI-compatible server, so it stays unavailable with an explanation until you select one yourself.
 
 On Apple Intelligence every AI output goes through `AppleIntelligenceProvider`, the same transport
@@ -1034,18 +1046,18 @@ Enter the key separately on each device. Remove API key deletes it from this dev
 
 **Server URL** is blank by default, which means `https://ollama.com`. Enter an `http://` or `https://`
 address — for example `http://your-mac.local:11434` for an Ollama server running on your own Mac on the
-same Wi-Fi network — and tap **Save server URL**. Only the scheme, host and port are kept; anything that
+same Wi-Fi network — and tap **Save server URL**. Only the scheme, host and port are kept; Settings reports when a pasted path, query, fragment or
+credentials were omitted, without echoing those values. Anything that
 is not a valid http(s) URL with a host is rejected and the previous server stays in place. Entering
 `https://ollama.com` yourself is recognised as Ollama Cloud, not as your own server. **Use Ollama Cloud
 instead** clears the setting.
 
-**Use the computer's `.local` name, not its IP address.** The app declares
-`NSAllowsLocalNetworking`, which exempts plain `http` only for `.local`, link-local and loopback
-names — not for a numeric private address such as `192.168.1.10`. A plain-`http` URL whose host is a
-private IPv4 literal (`10.x`, `172.16–31.x`, `192.168.x`) is therefore refused at save time with a
-message naming the `http://your-mac.local:11434` form, instead of failing opaquely on the first
-request. `https://` to any address, and `http://127.0.0.1`, remain accepted. Reaching a LAN address
-uses iOS local-network access, so iOS asks for that permission the first time.
+**Use HTTPS, or a local-network HTTP address.** Plain `http` is accepted only for `.local`,
+`localhost`, loopback and link-local addresses, using the same rule as OpenAI-compatible settings.
+Other addresses, including private IPv4, CGNAT/VPN ranges, public IPv4 and IPv6 literals, require
+`https://`. A rejected URL leaves the previous server unchanged and explains the accepted forms.
+Loopback addresses refer to the iPhone itself, not your Mac. Reaching a LAN address uses iOS
+local-network access, so iOS asks for that permission the first time.
 
 **Your Ollama Cloud API key is never sent to a server you enter.** The saved credential belongs to
 ollama.com; requests to any other host go out without an `Authorization` header, so a private endpoint
@@ -1054,7 +1066,7 @@ Cloud. No API key is needed for your own server; one is still required for Ollam
 
 Nothing is discovered automatically and the app never changes the server for you: the destination
 is shown as **Server: …** in Settings and repeated in the refresh, connection-test and error status text
-so you can always see where a summary would go. A server you enter is your own machine, not ollama.com.
+so you can always see where a summary would go. Requests use the server you entered instead of ollama.com.
 
 Refresh calls `/api/tags` on the selected server (`https://ollama.com` unless you entered one) with Bearer
 authentication when a key is saved, and preserves exact returned
@@ -1237,6 +1249,14 @@ Use Xcode 26+, XcodeGen and an installed iOS 26 simulator runtime:
 make ios-build
 make ios-test IOS_DESTINATION='platform=iOS Simulator,name=iPhone 17 Pro'
 ```
+
+UI tests run serially (`-parallel-testing-enabled NO`) to avoid competing fixture schedulers
+and permission dialogs. For release acceptance, supply the UUID of a dedicated erased simulator
+in `IOS_DESTINATION`; do not erase a simulator used by another session. Launch waits for either
+release notes or an interactive workspace. Calendar accepts the actual permission prompt or an
+already-authorized date picker; correction and summary assertions wait on their final UI state.
+The bounded waits fail with diagnostics rather than adding fixed sleeps. (#176)
+
 
 For provider-default test isolation (#241), run `MobileAITests` on a freshly erased dedicated
 simulator before any UI tests (`-only-testing:ListenToMeIOSUnitTests/MobileAITests`). The test sets
@@ -1459,3 +1479,28 @@ content. **Transcript actions** holds Select lines, Speech correction settings, 
 when available. Expand transcript stays directly accessible. The width preference is device-local,
 shared by conversations, and does not change saved text or audio. It is applied only to two-pane
 Live layouts; Summary, narrow windows, and accessibility text keep their existing reading layouts.
+
+
+### OpenAI-compatible server context capacity (#210)
+
+Mac Settings and iPhone Settings → Custom server offer **Server context window**: Unknown
+(the existing default) or 4K, 8K, 16K, 32K, 64K, 128K and 256K tokens. Match the capacity
+actually configured on the server; a model's advertised maximum does not change a local runner's
+configuration. The selection is stored per normalized full API URL, including its path, and does
+not transfer to a different server. Switching back restores that server's choice.
+
+The provider reserves answer tokens (up to one quarter of the window), template overhead and
+message framing. Mac uses the existing prompt budget and truncation notice. Both platforms also
+check the complete system/messages using conservative UTF-8 byte budgeting before any request;
+oversized text fails locally, including Unicode-heavy input. This is a conservative estimate, not
+a tokenizer guarantee. Unknown retains the previous request behavior. No credentials or audio
+are changed, and this setting applies only to Custom server, not cloud vendor presets.
+
+### Live summary snapshots and unfinished speech (#164)
+
+Repeated live events reuse their summary input until finalized speech, speaker labels, the current
+hypothesis or notes change. Manual Summary, Quick Summary and Ask require at least 24 trimmed
+characters before using unfinished speech. They mark it as provisional and instruct the model not
+to record it as a decision, owner, deadline or action item. The marker and instruction count toward
+the prompt budget; a shortened hypothesis keeps its marker. Saved transcripts and exports retain
+the recognizer's original text.
