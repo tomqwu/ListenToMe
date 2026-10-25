@@ -143,6 +143,20 @@ acceptance gates. Simulator checks proceed without waiting for hardware; they do
 Duo #253/#268 and Watch language #200 are already merged; newly demonstrated gaps get separate issues.
 Release trains remain batched, with TestFlight for each major iOS release and fresh device screenshots.
 
+## Mac Auto compatibility candidate — October 25
+
+PR #275 implements #209 on `codex/209-mac-auto-compatibility`. At source
+`1ddd0caeca4d5323e8be6ac1634d6002e62c919e`, four focused Core tests, lint and the signed
+Mac build passed, followed by independent review. Installed-app acceptance against a local
+synthetic server passed valid JSON, malformed prose, HTTP failure, cancellation, disabled checking
+for unsaved endpoint edits, visible Auto pause reason, and a successful recheck. All five requests
+contained only the synthetic exchange. Original settings were restored, the idle Dev app was closed
+and moved to Trash, and the exact Dev bundle's permissions were reset successfully.
+
+Native screenshots, signing provenance and results are preserved in `dist/mac-auto-209` and
+`/Users/tomwu/Documents/Codex/2026-10-25/listentome-features/mac-auto-209`. Full
+`make validate-local` and final hosted checks remain required before merge. This is not released.
+
 ## Open work, prioritized
 
 All in [GitHub Issues](https://github.com/tomqwu/ListenToMe/issues); [#98](https://github.com/tomqwu/ListenToMe/issues/98)
