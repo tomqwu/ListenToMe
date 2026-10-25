@@ -95,7 +95,8 @@
         "iOS/MobileSpeechModel.swift",
         "iOS/MobilePreparedTranscriber.swift",
         "iOS/MobileRecorder.swift",
-        "iOS/MobileFileTranscriber.swift"
+        "iOS/MobileFileTranscriber.swift",
+        "SharedPlatform/LocalAudioFileTranscriber.swift"
       ],
       "bindings": [
         {
@@ -117,6 +118,11 @@
           "suite": "ios-unit",
           "file": "iOSUnitTests/MobileSpeechFallbackTests.swift",
           "test": "MobileSpeechFallbackTests/testCancelledDictationAssetPreparationDoesNotReturnReadyToRecord"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSpeechFallbackTests.swift",
+          "test": "MobileSpeechFallbackTests/testSharedFileRetranscriptionPreservesOlderDeviceDictationFallback"
         }
       ],
       "manual": {

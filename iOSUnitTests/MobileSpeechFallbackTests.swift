@@ -22,6 +22,22 @@ final class MobileSpeechFallbackTests: XCTestCase {
         XCTAssertEqual(format.sampleRate, 16_000)
     }
 
+    func testSharedFileRetranscriptionPreservesOlderDeviceDictationFallback() async throws {
+        var installed: [any SpeechModule] = []
+        var environment = MobileSpeechModel.Environment()
+        environment.speechAvailable = { false }
+        environment.speechLocale = { _ in XCTFail("Unavailable advanced module must not be prepared"); return nil }
+        environment.dictationLocale = { _ in Locale(identifier: "en-US") }
+        environment.install = { installed.append($0) }
+        environment.format = { _ in AVAudioFormat(standardFormatWithSampleRate: 16_000, channels: 1) }
+        let (prepared, format) = try await LocalAudioFileTranscriber.prepare(
+            locale: Locale(identifier: "en-US"), environment: environment)
+        XCTAssertTrue(prepared.module is DictationTranscriber)
+        XCTAssertEqual(installed.count, 1)
+        XCTAssertTrue(installed.first is DictationTranscriber)
+        XCTAssertEqual(format.sampleRate, 16_000)
+    }
+
     func testSupportedAdvancedEngineRemainsPreferred() async throws {
         var environment = MobileSpeechModel.Environment()
         environment.speechAvailable = { true }

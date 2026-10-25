@@ -12,6 +12,10 @@ struct MobileSavedAudioFixture: View {
         audio.enabled = true
         let session = MobileSession(storageDirectory: root, savedAudio: audio)
         session.title = "Saved audio check"
+        session.savedAudioRecognizer = { _, _, language, _ in
+            [.init(source: .you, text: "Re-transcribed saved audio example.", isFinal: true,
+                   start: 0, end: 2, language: language)]
+        }
         session.segments = [0, 3, 6].enumerated().map { index, start in
             TranscriptSegment(source: .you, text: "Line \(index + 1) of the recorded conversation.", isFinal: true,
                               start: start, end: start + 2.5)

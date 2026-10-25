@@ -63,6 +63,12 @@ Settings stays on while capture returns nothing. The split (set in `project.yml`
 `targets.ListenToMe.settings.configs.Debug`) gives each its own row, so a maintainer can keep the
 released app installed while developing.
 
+For local Mac validation in a new worktree, reuse the primary checkout's ignored
+`signing.local.mk` before `make build`/`make e2e`. Inspect the resulting app with
+`codesign -dvv`: an ad-hoc signature or a different team is not the configured development
+identity. Fix the build identity first when capture fails despite checked permissions; do not
+repeatedly toggle or reset TCC to compensate for unsigned worktree builds.
+
 Consequences worth knowing:
 
 - The dev build has its own `UserDefaults` domain, so model choices, presets, and appearance do

@@ -769,6 +769,25 @@ Check Mac reopening does not overwrite the currently open record or drop attachm
 Capture native-resolution phone portrait/landscape, iPad and Mac images; inspect large text and
 keyboard reachability. Follow the release screenshot checklist.
 
+## Saved-audio re-transcription (#224)
+
+1. Save a recording, stop, reopen it from History, and choose **More → Re-transcribe saved audio**.
+   Confirm it is unavailable without saved audio or while recording.
+2. Choose the recorded language, re-transcribe and inspect the preview. On Mac test both Apple
+   and WhisperKit with real saved system audio: final text must carry **OTHERS** and include the tail.
+   On iPhone/iPad use a physical device for real Apple recognition; simulator fixtures check UI only.
+3. Choose **Keep original** and confirm transcript, notes and summaries are unchanged. Repeat, then
+   **Replace transcript**; verify the new text, language, playback timing and History after relaunch.
+   Notes, attachments and instructions remain; old summaries remain for review.
+4. Try a multi-run conversation and both Mac tracks. Confirm subsequent runs follow earlier audio
+   and both tracks retain their source. Cancel during recognition and test a missing/unreadable file:
+   neither may replace the original. Changing the transcript invalidates a pending preview.
+5. In a Watch development build with saved audio, replace the transcript and reopen History. The
+   player and replacement lines must still say Apple Watch; inferred names must reset. Continue
+   recording on the phone and confirm its speaker/language analysis leaves Watch lines alone.
+6. Capture native-resolution preview screenshots on standard/large iPhone, small/large iPad and Mac,
+   retaining source, device, runtime and version provenance with the test evidence.
+
 ## Local Ollama context capacity (#230)
 
 1. Select a downloaded local model with a 4K default but larger supported context. Ask about an
@@ -841,6 +860,18 @@ notice and that requests still too large (including large instructions or Unicod
 “No text was sent” before the server receives them. Choose Unknown to restore server-managed behavior.
 Capture the settings UI at native resolution and restore original preferences after testing.
 
+### iOS Ollama endpoint feedback (#149)
+
+In Settings, select Ollama and save `http://your-mac.local:11434`. Try saving
+`http://100.64.0.1:11434`, a public IPv4 literal, and a non-link-local IPv6 literal: each must
+explain HTTPS/local-address alternatives and keep the previous server. HTTPS addresses and
+loopback/link-local HTTP remain accepted. Loopback points to the phone itself.
+Paste `https://your-mac.local:11434/ollama?token=test-value`: confirm the saved destination is the
+origin and the status says URL parts were omitted without echoing the query value. Capture the
+visible error and normalization status at native resolution. Restore the original settings.
+Opening a model list on Apple Intelligence must not automatically fetch the Ollama catalog;
+explicit Refresh remains available. Unchosen provider defaults are recomputed on launch, while an
+explicit provider choice persists.
 
 ### Delete one Mac conversation (#131)
 

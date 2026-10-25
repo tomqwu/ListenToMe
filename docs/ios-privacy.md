@@ -95,3 +95,10 @@ Saved summary instructions are stored with the conversation and included in its 
 They are sent with summary requests only to the AI provider you choose, alongside the included context.
 One-time Ask answers remain session-only. Domain presets are optional, editable drafts; selecting one
 does not send a request. Deleting a conversation also deletes its saved instructions.
+
+### Re-transcribing saved audio
+
+Re-transcribe saved audio processes recordings on this device with Apple speech recognition.
+A speech model may download on first use; audio is not uploaded. You preview the result before
+replacing the transcript. Keeping the original or cancelling leaves it unchanged. Replacement
+keeps notes, attachments, instructions and summaries, and leaves the saved audio files unchanged.

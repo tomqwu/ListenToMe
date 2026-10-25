@@ -73,6 +73,7 @@ final class MobileSession {
     var onDeviceProviderOverride: (any LLMProvider)?
     let correctionProvider: (any LLMProvider)?
     let speechCorrection = MobileTranscriptCorrector()
+    @ObservationIgnored var savedAudioRecognizer: SavedAudioRetranscription.Recognize = LocalAudioFileTranscriber.recognize
     let vocabulary = SessionVocabulary()   // domain vocabularies and My terms (issue #222)
     var acceptsSpeechCorrection = false
     private let makeRecorder: () -> any MobileRecording

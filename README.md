@@ -218,6 +218,11 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
   Saved only for conversations History keeps; Clear history, Discard, Close without saving and
   **Delete all saved audio** remove them; optional automatic deletion after 7, 30 or
   90 days.
+- **Re-transcribe saved audio**: open a saved conversation, choose **More → Re-transcribe saved audio**,
+  select a language and preview a new on-device recognition pass. Mac offers Apple or WhisperKit;
+  iPhone and iPad use Apple. **Replace transcript** keeps notes, attachments and summaries, while
+  replacing all transcript lines and resetting speaker names and corrections. **Keep original**
+  leaves the conversation unchanged.
 - **First-run onboarding**, a global **⌘⇧Space** hotkey for instant suggestions, and keyboard
   equivalents for every frequent action (see [Keyboard shortcuts](#keyboard-shortcuts)).
 
