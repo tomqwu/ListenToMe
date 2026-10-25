@@ -48,6 +48,14 @@ enum MobileReleaseNotes {
         var id: String { version }
     }
     static let releases: [Release] = [
+        .init(version: "1.17.1", title: "Recording that fits your device", details: [
+            "Compatible older iPads use Apple's on-device dictation when advanced transcription is unavailable.",
+            "Recording checks this device and language before enabling Start, with a clear reason and recovery when unavailable.",
+            "Failed model or microphone setup shows the full error. Cancelling preparation does not show a false failure.",
+            "Settings explains unavailable Apple Intelligence and offers explicit local or cloud provider setup. Recording needs no summary AI.",
+            "Language choices and Automatic detection include languages supported by the available local dictation engine.",
+            "Audio playback remains opt-in: enable Save audio recordings before listening, then use Play in the transcript after Stop."
+        ]),
         .init(version: "1.17.0", title: "Your workspace, your conversation", details: [
             "Give Transcript or Quick more room in iPhone Duo. Your pane-width choice is remembered.",
             "Conversation vocabularies return when you reopen History and guide automatic Quick updates.",

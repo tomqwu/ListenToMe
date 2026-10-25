@@ -2,6 +2,19 @@ import XCTest
 
 @MainActor
 final class MobileDesignUITests: XCTestCase {
+    func testReleaseFixtureRepresentsSupportedRecordingWithoutRequestingMicrophone() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--design-review-fixture", "-autoQuickSummary", "NO", "-mobileAIProvider", "apple"]
+        app.launchPastReleaseNotes()
+        let start = app.buttons["Start listening"]
+        XCTAssertTrue(start.waitForExistence(timeout: 5))
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: start)
+        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 5), .completed)
+        XCTAssertFalse(app.staticTexts["recordingSupportReason"].exists)
+        XCTAssertFalse(XCUIApplication(bundleIdentifier: "com.apple.springboard").alerts.firstMatch.exists)
+        capture(app, "Synthetic supported-device workspace for release capture")
+    }
+
     func testBrandAndConversationToolsRemainVisibleAcrossTheWorkspace() {
         let app = XCUIApplication()
         app.launchArguments = ["--design-review-fixture", "-autoQuickSummary", "NO", "-mobileAIProvider", "apple"]

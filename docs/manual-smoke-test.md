@@ -856,15 +856,35 @@ Opening a model list on Apple Intelligence must not automatically fetch the Olla
 explicit Refresh remains available. Unchosen provider defaults are recomputed on launch, while an
 explicit provider choice persists.
 
-## iPhone/iPad recording-start recovery (#306)
+## Device capability and recording recovery (#306, #307)
 
-- Given an unsupported or failing live transcription startup, tap Start listening and inspect the
-  full “Couldn’t start listening” alert. Dismiss, retry, then open Recording settings from it. The
-  original error should remain in the status caption after dismissal; preserve a native screenshot.
-- Cancel preparation: return to idle without a failure alert. On a supported physical device,
-  verify actual microphone speech capture while no summary AI model is configured.
-- For the reported physical-iPad failure, record model, iPadOS, app build and full startup error.
-  Successful simulator failure-handling tests do not identify or fix the physical cause.
-- With Save audio recordings on, record synthetic speech, Stop, reopen History and use the Live
-  transcript play icon. Verify playback; with saving off, no new recording file should be retained.
-  Preserve existing conversations, settings and API keys during physical-device acceptance.
+Use the [compatibility matrix](device-compatibility.md) and bound BDD scenarios; policy tests alone
+are not native acceptance. Preserve source, OS, device, native screenshots and actual outcomes.
+
+- On iPhone/iPad, inspect Start before tapping: unsupported device/language, simulator or denied
+  microphone must show its reason and applicable recovery, with Start disabled and no permission
+  prompt/download from the check. A supported advanced or dictation profile enables Start.
+- If later model preparation fails, inspect the full startup alert; dismiss, retry and open its
+  recording settings. Cancel preparation without a false failure. Temporary inactivity for the
+  permission prompt must preserve a pending start; backgrounding must not consume queued shares.
+- On the connected older iPad, verify actual new microphone words using dictation, then Stop. Check
+  fixed language and the default Automatic mode separately, and the advanced path on iPhone. Play
+  synthetic speech only after the test confirms Listening; stop sound immediately if capture stops.
+- With saving on, use the Live transcript Play icon after Stop (Transcript actions → Play recording
+  in compact Duo), verify Play/Pause and audible playback. With saving off, retain no new audio.
+  Enabling saving later cannot recover earlier audio. Preserve existing conversations and keys.
+- On unsupported Apple hardware or while its model is not ready, inspect Settings: Apple must not be
+  offered as working. Preserve an old saved Apple choice with its reason. Explicitly configure an
+  alternate provider, destination, model and key; never auto-route. Refresh after setup/foreground.
+- On Mac, inspect engine choices and Start for the selected language and permissions. Unsupported
+  engines are not selectable; a saved unavailable engine remains explanatory with alternatives.
+  AI gating must not disable supported capture. Verify actual microphone and system-audio OTHERS
+  text on the supported route. Stop, New and close while readiness/permission is pending: no late
+  capture or denial may affect the next conversation. Cancel a close dialog and verify explicit retry.
+- On Watch simulator, inspect independent local Record and iPhone remote. Unreachable/incompatible
+  or unchecked phone capability blocks remote Start; reachable Stop remains usable after losing
+  Start capability. Local denied microphone/low battery/storage shows its reason. Record offline
+  with later reconnect sync still requires paired physical acceptance before embedding Watch.
+
+The prior physical iPad failure and local fallback microphone pass are preserved in the #306 evidence.
+Simulator results do not establish physical recording, model accuracy, audibility or Watch pairing.

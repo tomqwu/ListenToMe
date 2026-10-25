@@ -9,7 +9,9 @@
       "then": "a prominent alert explains the actual failure, recording stays stopped, and the user can dismiss it and open recording settings",
       "covers": [
         "iOS/MobileSession.swift",
-        "iOS/MobileMeetingView.swift"
+        "iOS/MobileMeetingView.swift",
+        "iOS/MobileStartFailureFixture.swift",
+        "iOS/ListenToMeIOSApp.swift"
       ],
       "bindings": [
         {
@@ -50,6 +52,11 @@
           "suite": "ios-unit",
           "file": "iOSUnitTests/MobileStartFailureTests.swift",
           "test": "MobileStartFailureTests/testPermissionFailureAfterCancellationDoesNotPresentAStartupError"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileStartFailureTests.swift",
+          "test": "MobileStartFailureTests/testInactivePermissionPromptPreservesPendingStartUntilForegroundGrant"
         }
       ]
     },
@@ -77,6 +84,169 @@
           "Confirm no remote summary is invoked when Auto and speech correction are off; keep this separate from summary AI eligibility."
         ]
       }
+    },
+    {
+      "id": "CAPTURE-004",
+      "name": "Use available on-device dictation when advanced speech is unsupported",
+      "given": "an iPhone or iPad cannot use advanced SpeechTranscriber but supports the selected language with on-device dictation",
+      "when": "live recording or received Watch audio prepares its local transcription module",
+      "then": "preparation provides the dictation module with its audio format and time-indexed results, supported advanced speech remains preferred, and unsupported language or cancelled asset preparation never starts audio or routes speech to a remote provider",
+      "covers": [
+        "iOS/MobileSpeechModel.swift",
+        "iOS/MobilePreparedTranscriber.swift",
+        "iOS/MobileRecorder.swift",
+        "iOS/MobileFileTranscriber.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSpeechFallbackTests.swift",
+          "test": "MobileSpeechFallbackTests/testUnsupportedAdvancedSpeechPreparesSupportedOnDeviceDictation"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSpeechFallbackTests.swift",
+          "test": "MobileSpeechFallbackTests/testSupportedAdvancedEngineRemainsPreferred"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSpeechFallbackTests.swift",
+          "test": "MobileSpeechFallbackTests/testUnsupportedLanguageDoesNotInstallAModelOrReturnARecordingFormat"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSpeechFallbackTests.swift",
+          "test": "MobileSpeechFallbackTests/testCancelledDictationAssetPreparationDoesNotReturnReadyToRecord"
+        }
+      ],
+      "manual": {
+        "reason": "Native adapter tests do not prove model download, microphone recognition or file-transcription accuracy on older hardware.",
+        "steps": [
+          "On the connected iPad Pro4, preserve the failed installed-build recording test and actual unavailable-transcription screen before installing the changed app.",
+          "Run the physical capability report, then verify actual new microphone words, Stop and opt-in playback on the dictation fallback; only play synthetic speech after Listening is confirmed.",
+          "Recheck the supported iPhone advanced speech path; Watch remains excluded and paired-device acceptance remains required."
+        ]
+      }
+    },
+    {
+      "id": "CAPTURE-005",
+      "name": "Deliver local speech results without an eager extra queue",
+      "given": "live or file speech results include provisional and final text with audio ranges",
+      "when": "the consumer reads results, stops delivery or cancels",
+      "then": "ordered text, finality and timestamps are preserved while stopping or cancellation prevents reading ahead into an extra result backlog",
+      "covers": [
+        "iOS/MobilePreparedTranscriber.swift",
+        "iOS/MobileRecorder.swift",
+        "iOS/MobileFileTranscriber.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSpeechResultAdapterTests.swift",
+          "test": "MobileSpeechResultAdapterTests/testOrderedTextFinalityAndAudioRangesRemainIntact"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSpeechResultAdapterTests.swift",
+          "test": "MobileSpeechResultAdapterTests/testStoppedConsumerDoesNotReadAheadOrDropFinalizedText"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSpeechResultAdapterTests.swift",
+          "test": "MobileSpeechResultAdapterTests/testCancelledDeliveryDoesNotPullAnotherResult"
+        }
+      ]
+    },
+    {
+      "id": "CAPTURE-006",
+      "name": "Offer and detect languages supported by the active local speech modules",
+      "given": "an iPad uses on-device dictation for some or all transcription languages",
+      "when": "the language picker or Automatic language detection reads supported languages",
+      "then": "dictation-supported languages appear with correct local installed/downloadable status, advanced speech remains preferred where supported, and reading the catalog does not download a detector model",
+      "covers": [
+        "SharedPlatform/SpeechLanguageCatalog.swift",
+        "iOS/MobileLanguage.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSpeechCatalogTests.swift",
+          "test": "MobileSpeechCatalogTests/testFallbackLanguagesAreOfferedWithTheCorrectInstalledStatus"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSpeechCatalogTests.swift",
+          "test": "MobileSpeechCatalogTests/testMixedLanguageCatalogPrefersAdvancedAndKeepsDictationOnlyLanguages"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSpeechCatalogTests.swift",
+          "test": "MobileSpeechCatalogTests/testAutomaticLanguageFilterUsesTheSameCatalogWithoutLoadingWhisper"
+        }
+      ]
+    },
+    {
+      "id": "CAPTURE-007",
+      "name": "Check recording support before offering Start",
+      "given": "a device cannot capture the selected language, is a simulator or has denied microphone access",
+      "when": "the Live view opens or language and foreground state change",
+      "then": "Start remains disabled with the specific reason and applicable recovery; supported on-device dictation is allowed independently of summary AI, and late obsolete checks cannot enable an unsupported choice",
+      "covers": [
+        "iOS/MobileSpeechModel.swift",
+        "iOS/MobileSession.swift",
+        "iOS/MobileSession+RecordingSupport.swift",
+        "iOS/MobileMeetingView.swift",
+        "iOS/MobileSession+Language.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileRecordingCapabilityTests.swift",
+          "test": "MobileRecordingCapabilityTests/testUnsupportedLanguageBlocksStartBeforeCreatingRecorder"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileRecordingCapabilityTests.swift",
+          "test": "MobileRecordingCapabilityTests/testDictationSupportIsReadyWithoutInstallingOrOpeningMicrophone"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileRecordingCapabilityTests.swift",
+          "test": "MobileRecordingCapabilityTests/testDeniedMicrophoneRequiresSettingsWithoutClaimingHardwareUnsupported"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileRecordingCapabilityTests.swift",
+          "test": "MobileRecordingCapabilityTests/testSimulatorIsExplainedBeforeRequestingPermissionOrPreparingAssets"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileRecordingCapabilityTests.swift",
+          "test": "MobileRecordingCapabilityTests/testLatePreviousLanguageCheckCannotEnableUnsupportedCurrentLanguage"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileAppTests.swift",
+          "test": "MobileAppTests/testSimulatorExplainsUnavailableSpeechWithoutRequestingMicrophone"
+        }
+      ]
+    },
+    {
+      "id": "CAPTURE-008",
+      "name": "Do not import a shared conversation after leaving the foreground",
+      "given": "a foreground capability check is waiting while a shared conversation is queued",
+      "when": "the app backgrounds before that check completes",
+      "then": "the delayed foreground handler cannot replace the conversation or consume the queued share; the next current foreground can import it",
+      "covers": [
+        "iOS/MobileSession.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSceneCapabilityTests.swift",
+          "test": "MobileSceneCapabilityTests/testLateActiveCapabilityCheckDoesNotImportAfterBackground"
+        }
+      ]
     }
   ]
 }

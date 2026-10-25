@@ -20,7 +20,10 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased since 1.17.0 (34))
 
-- Failed listening starts now show the full error in an alert, with retry and a link to recording settings. Cancelling preparation does not show a false error. This improves diagnosis; the reported physical-iPad startup cause is not yet confirmed. (#306)
+- Compatible older iPhones/iPads use Apple's on-device dictation when advanced transcription is unavailable. Fixed and Automatic language choices include languages supported by the available local modules. (#306)
+- Check recording support before enabling Start, with device/language and denied-microphone recovery. Unexpected preparation failures show the full error; cancellation stays quiet and a delayed foreground check cannot consume shared imports after backgrounding. (#306)
+- Unavailable Apple Intelligence is not offered as a working summary choice. Explain runtime eligibility/setup and require explicit alternate provider configuration while preserving saved choices and keys. Recording stays independent of summary AI. (#307)
+- Watch local Record/Continue checks its microphone and resources independently of iPhone connectivity. Remote Start requires a reachable compatible phone with confirmed recording support, while reachable Stop remains usable after a Start capability change. Commands are never queued. Watch remains excluded from distribution.
 
 - Documentation: the Watch speaker-privacy section now agrees with the existing opt-in saved-audio retention policy. No app behavior changes. (#225)
 
@@ -73,6 +76,9 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 - Settings → Privacy now explains that optional Ollama, Cloud AI and OpenAI-compatible requests send text and included context to the provider you choose; Apple Intelligence stays on-device. (#247)
 
 ## macOS (unreleased since 1.4.4)
+
+- Check the selected speech engine/language and permissions before Start, with explanatory settings/permissions recovery and supported engine alternatives. Unavailable Apple Intelligence is not offered as a working AI choice; saved preferences remain intact and capture stays independent of AI.
+- Stop, New and window close cancel pending capability/permission checks. Late grants cannot start capture and late denials cannot show an error in a newer conversation.
 
 - Delete one saved conversation from its History row menu or detail view, with confirmation. Its saved audio, search entry and pending folder-save work are removed while other conversations stay intact; deleting the open conversation prevents it from being saved again. Exported copies remain where you saved them. (#131)
 - Custom-server Settings can check the Quick model's Auto compatibility with a synthetic exchange. A format failure pauses Auto for that server/model until a successful recheck; network errors and cancellation preserve prior results. (#209)

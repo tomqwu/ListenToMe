@@ -249,3 +249,11 @@ shasum -a 256 dist/ListenToMe-<version>.dmg "$DL/ListenToMe-<version>.dmg"   # m
 gh release view v<version> --json tagName,targetCommitish,isDraft,isPrerelease
 git ls-remote --tags origin 'v<version>' 'v<version>^{}'   # must resolve to the artifact source commit
 ```
+
+## Compatibility acceptance
+
+[Device readiness](device-compatibility.md) is part of BDD and installed-app acceptance. Inspect
+unavailable and ready AI/engine controls and cancellation across capability/permission awaits, then
+verify actual system-audio OTHERS transcription on the supported route. Preserve screenshots and
+source/signing provenance before the existing app-scoped Dev cleanup; do not reset production or
+interrupt another active session. Mac releases remain paused unless the maintainer calls a train.

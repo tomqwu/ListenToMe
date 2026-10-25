@@ -227,7 +227,8 @@ extension MeetingView {
             ConversationPromptEditor(instructions: Binding(get: { session.summaryInstructions },
                 set: { session.summaryInstructions = $0 }), suggestions: session.suggestedPrompts,
                 domain: vocabulary.banner(for: currentSessionID)?.domain,
-                blockReason: session.aiEnabled ? nil : "Turn AI on to ask.", allowsDeep: true,
+                blockReason: session.aiEnabled ? nil : (modelStatus.isEmpty ? "Turn AI on to ask." : modelStatus),
+                allowsDeep: true,
                 ask: { prompt, deep in Task { await session.askSuggested(prompt, deep: deep) } },
                 save: { _ = checkpoint(force: true) })
                 .id(currentSessionID)
@@ -276,7 +277,7 @@ extension MeetingView {
                 // speech arrives (issue #137).
                 Button("Refresh") { Task { await session.refreshListener() } }
                     .controlSize(.small)
-                    .disabled(!session.hasUnsummarizedSpeech)
+                    .disabled(!session.aiEnabled || !session.hasUnsummarizedSpeech)
                     .help(session.hasUnsummarizedSpeech
                           ? "Summarize the speech that has not been summarized yet"
                           : "Everything said so far is already summarized.")

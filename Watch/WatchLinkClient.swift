@@ -13,6 +13,9 @@ final class WatchLinkClient: NSObject, WCSessionDelegate {
     private(set) var isReachable = false
     private(set) var lastReply: WatchReply?
     private(set) var isSending = false
+    var remoteAvailability: FeatureAvailability {
+        WatchReadiness.remote(status: phoneStatus, reachable: isReachable, lastReply: lastReply)
+    }
     @ObservationIgnored private let session = WCSession.default
     /// Recorded chunks waiting for the iPhone (Slice 3).
     @ObservationIgnored var outbox: WatchOutbox?
@@ -39,7 +42,8 @@ final class WatchLinkClient: NSObject, WCSessionDelegate {
     }
 
     func send(_ command: WatchCommand) async {
-        guard !isSending else { return }
+        guard !isSending, isReachable else { return }
+        if command != .status, !remoteAvailability.canRun { return }
         isSending = true
         defer { isSending = false }
         let message = WatchLink.message(for: command)

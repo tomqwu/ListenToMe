@@ -4,6 +4,42 @@ A snapshot for an agent picking up ListenToMe cold. [AGENTS.md](../AGENTS.md) an
 [CLAUDE.md](../CLAUDE.md) stay the rules; this note is only the state of things on the date above.
 Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags) before acting on it.
 
+## Compatibility feedback candidate — October 25
+
+Current branch `codex/306-ipad-start` combines #306 and #307 with the maintainer's cross-platform
+compatibility request. It is not merged or published yet. iOS metadata is prepared for **1.17.1 (35)**;
+latest accepted TestFlight remains **1.17.0 (34)**. Do not upload 34 again. The configured ASC API key
+worked at preflight; production reported 1.15.0 READY_FOR_SALE and build 35 was unused. Recheck before upload.
+
+The connected iPad Pro 12.9-inch (4th generation), iPadOS 27.0.1, reproduced the old failure. Its native
+capability probe reported SpeechTranscriber unavailable, DictationTranscriber English supported and
+Apple Intelligence device-not-eligible. The local fallback candidate then passed actual new microphone
+speech, Stop and retained Play/Pause UI on that iPad. Prior iPhone 12 Pro Max advanced transcription also
+passed, but final-source device regressions remain required; do not call simulator tests physical passes.
+Existing iPad data/preferences were backed up and preserved. Synthetic sound is gated on confirmed
+Listening, never played while Start is failing. Native `devicectl device capture screenshot` is available.
+
+Implementation: advanced/dictation module fallback and lazy result delivery; shared language catalog;
+proactive iOS capture gates; explicit unavailable Apple choices; Watch local/remote readiness; Mac
+AI/engine/permission gates. Foreground and Start-token fences prevent delayed imports/capture/errors
+after cancellation. [Compatibility](device-compatibility.md) is mandatory BDD across all platforms.
+Watch remains excluded; Mac releases remain paused.
+
+Focused evidence in the external October 25 `listentome-features/ipad-start-306` folder:
+`compatibility-final-focused-green` passed 40 native iOS unit tests plus five UI tests, with only the
+intentional physical-only capability report skipped. Inputs stayed unchanged and the dedicated simulator
+was deleted. Its five screenshots were inspected. The subsequent `compatibility-core-permission-green.log`
+passed all 17 focused Core readiness/cancellation tests, after the late permission-denial regression
+failed in `late-permission-error-red.log`. Independent review cleared the two lifecycle blockers and the
+final permission callback fix. Earlier actual red/green and physical evidence is preserved in the same
+folder; do not invent red outcomes for baseline tests. Full validation, final device/Mac/Watch acceptance,
+release screenshots, CI/merge and accepted beta upload remain pending at this snapshot.
+
+No new speculative PRs: the live queue remains 17 existing drafts. Finish this feedback change before
+resuming the sequential backlog; the old #60 validation queue ended with two failures, so triage its
+preserved result rather than restarting it blindly. The new `__pycache__/` ignore/test prevents generated
+Python caches from falsely dirtying candidate provenance; all 18 BDD gate regressions pass.
+
 ## Repository-wide BDD adoption (October 25)
 
 All behavior changes, including older branches when integrated, now follow [BDD](BDD.md): write

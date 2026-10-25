@@ -21,6 +21,7 @@ final class MobileSession {
     }
     private(set) var stopReason: StopReason? { didSet { if stopReason != oldValue { publishWatchStatus() } } }
     private(set) var isForeground = true
+    @ObservationIgnored private var sceneGeneration = 0
     /// When the current recording run started, for the Apple Watch remote's elapsed time (issue #181).
     private(set) var recordingStartedAt: Date?
     /// Receives the recorder status for the Apple Watch; `nil` until the app attaches its link.
@@ -101,13 +102,16 @@ final class MobileSession {
     var message: String?
     /// A failed start needs explicit acknowledgement; unrelated status updates must not hide it.
     var recordingStartFailure: String?
+    var recordingAvailability: FeatureAvailability = .temporarilyUnavailable(reason: "Checking recording support…")
+    @ObservationIgnored var recordingSupport: (Locale) async -> FeatureAvailability
+    @ObservationIgnored var recordingSupportGeneration = 0
     /// A damaged history file that the archive set aside. Kept apart from `message`, which every
     /// save, restore and delete overwrites — the user must still see this when History opens.
     var archiveWarning: String?
     var isSummarizing = false {
         didSet { synchronizeAutomaticReviews(); if isSummarizing != oldValue { publishWatchStatus() } }
     }
-    let ai = MobileAISettings()
+    let ai: MobileAISettings
     var summaryDraft = ""
     var answerNotices = MobileAnswerNotices()   // Grounding and cut-off lines (issues #114, #215)
     private var summaryTask: Task<Void, Never>?
@@ -162,10 +166,17 @@ final class MobileSession {
          summaryProvider: (any LLMProvider)? = nil, autoInterval: Duration = .seconds(5),
          correctionProvider: (any LLMProvider)? = nil, saveDebounce: Duration = .seconds(1),
          sharedInbox: URL? = nil, watchInbox: WatchInbox? = nil,
-         makeRecorder: @escaping () -> any MobileRecording = { MobileRecorder() },
+         makeRecorder: (() -> any MobileRecording)? = nil,
          makeWatchTranscriber: @escaping () -> any WatchAudioTranscribing = { MobileFileTranscriber() },
          makeDiarizer: @escaping () -> any MobileSpeakerDiarizing = MobileSpeakers.deviceDiarizer,
-         makeLanguageModel: (() -> any MobileLanguageIdentifying)? = nil, savedAudio: MobileSavedAudio? = nil) {
+         makeLanguageModel: (() -> any MobileLanguageIdentifying)? = nil, savedAudio: MobileSavedAudio? = nil,
+         ai: MobileAISettings = MobileAISettings(),
+         recordingSupport: ((Locale) async -> FeatureAvailability)? = nil) {
+        self.recordingSupport = recordingSupport ?? (makeRecorder == nil
+            ? { await MobileSpeechModel.availability(locale: $0) } : { _ in .ready })
+        // A supplied recorder is a simulated capture implementation; its support can be supplied too.
+        if makeRecorder != nil, recordingSupport == nil { recordingAvailability = .ready }
+        self.ai = ai
         speakers = MobileSpeakers(makeDiarizer: makeDiarizer)
         self.savedAudio = savedAudio ?? MobileSavedAudio(root: storageDirectory.appendingPathComponent("SavedAudio"))
         languageDetection = MobileLanguageDetection(makeIdentifier: makeLanguageModel)
@@ -176,7 +187,7 @@ final class MobileSession {
         self.saveDebounce = saveDebounce
         self.correctionProvider = correctionProvider
         quickScheduler = MobileSummaryScheduler(interval: autoInterval)
-        self.makeRecorder = makeRecorder
+        self.makeRecorder = makeRecorder ?? { MobileRecorder() }
         self.makeWatchTranscriber = makeWatchTranscriber
         activeURL = storageDirectory.appendingPathComponent("ActiveConversation.json")
         attachmentRoot = storageDirectory.appendingPathComponent("Attachments", isDirectory: true)
@@ -222,17 +233,8 @@ final class MobileSession {
     func summaryAvailability(for mode: MobileSummaryMode) -> String? {
         if summaryProvider != nil || onDeviceProviderOverride != nil { return nil }
         if ai.provider != .apple { return ai.availability(for: mode) }
-        switch SystemLanguageModel.default.availability {
-        case .available:
-            // The *conversation's* language, not the device's: an unsupported one fails only at
-            // generation time, so it is reported here instead of as a raw FoundationModels error.
-            return AppleIntelligenceProvider.unsupportedLocaleReason(for: Locale(identifier: conversationLanguage))
-        case .unavailable(.deviceNotEligible): return "On-device summaries require an Apple Intelligence capable device."
-        case .unavailable(.appleIntelligenceNotEnabled): return "Turn on Apple Intelligence in Settings to use on-device summaries."
-        case .unavailable(.modelNotReady):
-            return "Apple Intelligence’s on-device model is not ready. Check setup in Settings → Apple Intelligence & Siri."
-        default: return "On-device summaries are unavailable on this device."
-        }
+        if let reason = ai.appleUnavailableReason { return reason }
+        return AppleIntelligenceProvider.unsupportedLocaleReason(for: Locale(identifier: conversationLanguage))
     }
 
     /// "Microphone" (and "Apple Watch" on a watch recording's lines) names a device, not a participant,
@@ -269,7 +271,7 @@ final class MobileSession {
     }
 
     func start() {
-        guard state == .idle, !isSummarizing else { return }
+        guard state == .idle, !isSummarizing, recordingAvailability.canRun else { return }
         message = nil
         recordingStartFailure = nil
         stopReason = nil
@@ -882,12 +884,17 @@ extension MobileSession {
     }
 
     func handleScenePhase(_ phase: ScenePhase) async {
+        sceneGeneration += 1
+        let generation = sceneGeneration
         isForeground = phase != .background
         // Suspension can follow .inactive without another chance to run, so pending typing is
         // written here as well as from the App body's synchronous forwarder.
         flushPendingSave()
         switch phase {
         case .active:
+            ai.refreshAppleAvailability()
+            await refreshRecordingSupport(publish: false)
+            guard !Task.isCancelled, generation == sceneGeneration, isForeground, applicationIsActive() else { return }
             importSharedInbox(); importWatchInbox(); nameConversationIfNeeded()
             prepareSpeakerModelsIfNeeded()   // speaker models load in the foreground only (#195)
             // The watch may still show "Open ListenToMe…" from a Start sent while this was closed.

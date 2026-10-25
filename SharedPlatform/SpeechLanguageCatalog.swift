@@ -3,8 +3,8 @@ import ListenToMeCore
 import Observation
 import Speech
 
-/// The languages this OS can transcribe on the device, read from `SpeechTranscriber.supportedLocales`
-/// once at launch and kept for the transcription-language pickers on macOS and iOS (issue #172).
+/// Languages supported by the active on-device modules: advanced speech on Mac, and advanced speech
+/// plus dictation fallback on iOS. Read at launch and when the language picker refreshes.
 /// `AssetInventory` says which ones already have their speech model installed; the pickers refresh
 /// that when they appear, since recording downloads a model on first use. The ordering and grouping
 /// rules are `TranscriptionLanguageCatalog` in Core.
@@ -18,11 +18,27 @@ final class SpeechLanguageCatalog {
     private(set) var installed: [String] = []
     @ObservationIgnored private var loading: Task<Void, Never>?
 
+    struct Environment {
+        var speechAvailable: () -> Bool = { SpeechTranscriber.isAvailable }
+        var speechLocales: () async -> [Locale] = { await SpeechTranscriber.supportedLocales }
+        var dictationLocales: () async -> [Locale] = { await DictationTranscriber.supportedLocales }
+        var speechLocale: (Locale) async -> Locale? = { await SpeechTranscriber.supportedLocale(equivalentTo: $0) }
+        var dictationLocale: (Locale) async -> Locale? = { await DictationTranscriber.supportedLocale(equivalentTo: $0) }
+        var installed: (any SpeechModule) async -> Bool = { await AssetInventory.status(forModules: [$0]) == .installed }
+        #if os(iOS)
+        var includeDictation = true
+        #else
+        var includeDictation = false
+        #endif
+    }
+    @ObservationIgnored private let environment: Environment
+    init(environment: Environment = Environment()) { self.environment = environment }
+
     /// Reads the OS lists, joining a read already in progress.
     func load() async {
         if let loading { return await loading.value }
         let task = Task { @MainActor in
-            let lists = await Self.read()
+            let lists = await Self.read(environment: environment)
             supported = lists.supported
             installed = lists.installed
         }
@@ -37,18 +53,26 @@ final class SpeechLanguageCatalog {
                                             selected: selected, label: label)
     }
 
-    private nonisolated static func read() async -> (supported: [String], installed: [String]) {
-        guard SpeechTranscriber.isAvailable else { return ([], []) }
-        let locales = await SpeechTranscriber.supportedLocales
+    private static func read(environment: Environment) async -> (supported: [String], installed: [String]) {
+        let hasAdvanced = environment.speechAvailable()
+        let advanced = hasAdvanced ? await environment.speechLocales() : []
+        let fallback = environment.includeDictation ? await environment.dictationLocales() : []
+        let identifiers = Set((advanced + fallback).map { $0.identifier(.bcp47) }).sorted()
+        var supported: [String] = []
         var installed: [String] = []
-        for locale in locales {
-            // The same module the recorders build, so "installed" means recording needs no download.
-            let module = SpeechTranscriber(locale: locale, transcriptionOptions: [], reportingOptions: [],
+        for identifier in identifiers {
+            let locale = Locale(identifier: identifier)
+            let module: any SpeechModule
+            if hasAdvanced, let equivalent = await environment.speechLocale(locale) {
+                module = SpeechTranscriber(locale: equivalent, transcriptionOptions: [], reportingOptions: [],
                                            attributeOptions: [.audioTimeRange])
-            if await AssetInventory.status(forModules: [module]) == .installed {
-                installed.append(locale.identifier(.bcp47))
-            }
+            } else if environment.includeDictation, let equivalent = await environment.dictationLocale(locale) {
+                module = DictationTranscriber(locale: equivalent, contentHints: [], transcriptionOptions: [],
+                                              reportingOptions: [], attributeOptions: [.audioTimeRange])
+            } else { continue }
+            supported.append(identifier)
+            if await environment.installed(module) { installed.append(identifier) }
         }
-        return (locales.map { $0.identifier(.bcp47) }, installed)
+        return (supported, installed)
     }
 }

@@ -129,18 +129,29 @@ The archive, upload, tagging and verification steps themselves are not repeated 
 [IOS-RELEASING.md](IOS-RELEASING.md) for iOS, [RELEASING.md](RELEASING.md) for macOS, and
 [AGENTS.md](../AGENTS.md) for the release workflow that governs both.
 
-## Unreleased recording-start recovery (#306)
+## Unreleased recording and AI compatibility (#306, #307)
 
-A failed Start listening attempt presents “Couldn’t start listening” with the full underlying error,
-an OK action and Recording settings. The status caption remains available after dismissal. Retry
-clears the previous failure; cancelling preparation shows no failure alert. Recording itself does
-not require a configured summary AI model. Apple Intelligence summary eligibility and the device's
-on-device speech-engine support are separate capabilities.
+The reported iPad Pro 12.9-inch (4th generation), iPadOS 27.0.1, supports on-device dictation but
+reports advanced SpeechTranscriber unavailable and Apple Intelligence device-not-eligible. These
+are independent capabilities. The candidate prefers supported advanced speech and otherwise uses
+Apple's on-device DictationTranscriber for both microphone and received Watch audio. Language
+choices and Automatic use the same supported-module catalog; reading it downloads no detector.
 
-The tester's physical-iPad failure remains unconfirmed: this change makes the reason visible and
-testable, rather than claiming to repair an unknown device/model/permission failure. Simulator
-red/green UI acceptance and model-level cancellation/AI-independence checks are recorded separately
-from physical-device acceptance. Apple Intelligence provider-choice gating is tracked in #307.
+Live recording checks compatibility before enabling Start. Unsupported speech, denied microphone
+access and simulator capture show a reason with applicable recovery. A subsequent failed model or
+microphone preparation presents “Couldn’t start listening” with its full error and recording settings;
+cancellation does not create a false alert. A transient inactive permission prompt preserves the
+pending start. A delayed foreground capability check cannot import a queued share after backgrounding.
+
+Unavailable Apple Intelligence is omitted from enabled provider choices, with its current reason
+and explicit alternatives. A saved unavailable Apple choice remains saved, and generation is blocked;
+no cloud/provider/key is selected automatically. Foreground/settings refresh changes readiness,
+not user choices. Speech capture never requires a configured summary provider.
+
+The physical iPad's prior installed build reproduced the failure; a development candidate with the
+fallback produced new microphone words and retained opt-in audio with Play/Pause controls. This does
+not establish every model/language, audible playback quality, or TestFlight publication. See the
+[platform compatibility table](device-compatibility.md), BDD contracts and source-matched evidence.
 
 For playback, enable More → Settings → Audio recordings → Save audio recordings before recording.
 After Stop, open the conversation (from History when needed) and tap the play icon in Live transcript.
@@ -415,8 +426,8 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   download on first use. Unsupported device/language and permission errors are shown in the app.
   **Settings → Transcription → Language** is remembered across launches, so a language chosen for
   daily meetings is still selected after a relaunch instead of reverting to the device's. Below
-  **Automatic** and **System**, the picker lists every language `SpeechTranscriber.supportedLocales`
-  reports for this device, read at launch, as **Installed** (speech model already on the device, per
+  **Automatic** and **System**, the picker lists the union of languages supported by the available advanced speech and on-device
+  dictation modules for this device, read at launch, as **Installed** (speech model already on the device, per
   `AssetInventory`) and **Downloadable** (downloads from Apple on first recording), with the common
   languages first (#172; rules in Core's `TranscriptionLanguageCatalog`). Where that list is
   unavailable, such as the simulator, it offers the common languages. A fixed language the OS no

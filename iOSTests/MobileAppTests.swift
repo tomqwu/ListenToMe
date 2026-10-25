@@ -270,7 +270,7 @@ final class MobileAppTests: XCTestCase {
         removal.lifetime = .keepAlways
         add(removal)
         app.buttons["summaryProvider"].tap()
-        app.buttons["Apple Intelligence · on-device"].tap()
+        app.buttons["Ollama Cloud"].tap()
     }
 
     func testDeleteConversationAndSummaryModes() {
@@ -315,25 +315,17 @@ final class MobileAppTests: XCTestCase {
         let app = XCUIApplication()
         app.resetAuthorizationStatus(for: .microphone)
         app.launchPastReleaseNotes()
-        app.buttons["Start listening"].tap()
-        let startup = app.alerts["Couldn’t start listening"]
-        XCTAssertTrue(startup.waitForExistence(timeout: 5))
-        startup.buttons["OK"].tap()
-        let message = app.staticTexts["sessionMessage"]
-        XCTAssertTrue(message.waitForExistence(timeout: 5))
-        XCTAssertTrue(message.label.contains("Live transcription is unavailable in the iPhone simulator"))
-        XCTAssertTrue(message.label.contains("physical iPhone or iPad"))
-        XCTAssertTrue(message.label.contains("Microphone permission will not fix this"))
-        XCTAssertTrue(app.buttons["Start listening"].isEnabled)
+        let reason = app.staticTexts["recordingSupportReason"]
+        XCTAssertTrue(reason.waitForExistence(timeout: 5))
+        XCTAssertTrue(reason.label.contains("physical iPhone or iPad"))
+        XCTAssertTrue(reason.label.contains("Microphone permission will not fix this"))
+        XCTAssertFalse(app.buttons["Start listening"].isEnabled)
         XCTAssertFalse(app.buttons["Stop listening"].exists)
-        let alert = XCUIApplication(bundleIdentifier: "com.apple.springboard").alerts.firstMatch
-        XCTAssertFalse(alert.exists)
-        app.buttons["Start listening"].tap()
-        XCTAssertTrue(startup.waitForExistence(timeout: 5))
-        startup.buttons["OK"].tap()
-        XCTAssertTrue(message.waitForExistence(timeout: 5))
-        XCTAssertFalse(alert.exists)
-        XCTAssertFalse(app.buttons["Stop listening"].exists)
+        XCTAssertFalse(XCUIApplication(bundleIdentifier: "com.apple.springboard").alerts.firstMatch.exists)
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Unsupported recording explained before Start"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
     }
 
     func testNotesSurviveNewConversationAndRelaunch() {

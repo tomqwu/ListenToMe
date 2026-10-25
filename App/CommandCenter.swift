@@ -197,7 +197,7 @@ struct RoleBox<Header: View, Actions: View>: View {
                     if atBottom { proxy.scrollTo(MeetingView.scrollBottomID, anchor: .bottom) }
                 }
             }
-            actions()
+            actions().disabled(!session.aiEnabled)
         }
         .padding(11)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)

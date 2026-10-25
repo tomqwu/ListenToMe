@@ -13,6 +13,9 @@ struct MeetingView: View {
     @State var session: MeetingSession
     @State var store: ConversationStore
     @State var startError: String?
+    @State var recordingAvailability: FeatureAvailability = .temporarilyUnavailable(reason: "Checking recording support…")
+    @State var capabilityGeneration = 0
+    @State var captureStartGate = CaptureStartGate()
     @State var showSettings = false
     @State private var permissions = PermissionsModel()
     @State private var showPermissions = false
@@ -222,6 +225,13 @@ struct MeetingView: View {
         return VStack(spacing: 0) {
             topControlBar(session: session, showPermissions: $showPermissions)
             conversationStatus
+            if !wantsCapture, let reason = recordingAvailability.reason {
+                HStack {
+                    Text(reason).font(.callout).frame(maxWidth: .infinity, alignment: .leading)
+                    Button("Settings") { openSettings($showSettings) }
+                    Button("Permissions") { showPermissions = true }
+                }.padding(.horizontal, 14).padding(.vertical, 6)
+            }
             if !modelStatus.isEmpty && ProviderSettings.aiMode != .off {
                 Text(modelStatus).font(.callout).foregroundStyle(.orange)
                     .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 14)
@@ -285,17 +295,18 @@ struct MeetingView: View {
         .onChange(of: store.revision) { _, _ in _ = checkpoint(); considerVocabularySuggestion() }
         .onChange(of: currentSessionID) { _, _ in applyVocabulary() }
         .sheet(isPresented: $showSettings, onDismiss: {
-            session.aiEnabled = ProviderSettings.aiMode != .off
+            session.aiEnabled = MacFeatureReadiness.aiCanRun(mode: ProviderSettings.aiMode,
+            appleReason: MacDeviceCapabilities.appleReason(locale: currentCapabilityLocale))
             session.responseLanguage = ProviderSettings.responseLanguageDirective()
             appearance = ProviderSettings.appearance   // apply an appearance change live
             vocabulary.reloadSettings(); applyVocabulary()
             // Rebuild attached references so a changed reference-budget takes effect immediately.
             if !referencePaths.isEmpty { loadReferences(into: session) }
-            markSaveableAfterSettings(); Task { await reloadAndHealModels() }
+            markSaveableAfterSettings(); Task { await refreshFeatureAvailability(); await reloadAndHealModels() }
         }, content: {
             SettingsView()
         })
-        .sheet(isPresented: $showPermissions) {
+        .sheet(isPresented: $showPermissions, onDismiss: { Task { await refreshFeatureAvailability() } }) {
             PermissionsView(permissions: permissions)
         }
         .sheet(isPresented: $showLicenses) {
@@ -332,10 +343,12 @@ struct MeetingView: View {
             OnboardingView()
         })
         .onAppear {
+            captureStartGate.reopen()
             session.autoSummaryEnabled = UserDefaults.standard.bool(forKey: "autoQuickSummary")
             // Proactive answers default ON (README/smoke test): absent a stored choice, keep them on.
             session.proactiveEnabled = UserDefaults.standard.object(forKey: Self.proactiveDefaultsKey) as? Bool ?? true
-            session.aiEnabled = ProviderSettings.aiMode != .off
+            session.aiEnabled = MacFeatureReadiness.aiCanRun(mode: ProviderSettings.aiMode,
+            appleReason: MacDeviceCapabilities.appleReason(locale: currentCapabilityLocale))
             session.responseLanguage = ProviderSettings.responseLanguageDirective()
             applyVocabulary()   // the preset persona, the vocabularies' guidance and recognition terms
             ApplicationLifecycle.shared.prepareToClose = { await prepareToClose() }
@@ -354,6 +367,10 @@ struct MeetingView: View {
             MacSavedAudio.shared.tidy(keeping: sessionStore.completeIDs())
             await reloadAndHealModels()
         }
+        .task(id: transcriptionLocaleID) { await refreshFeatureAvailability() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            Task { await refreshFeatureAvailability() }
+        }
         .background(WindowCloseHandler())
         .focusedSceneValue(\.conversationCommands, conversationCommands)
         .onDisappear { tearDownOnDisappear(session: session) }
@@ -370,11 +387,12 @@ extension MeetingView {
     private func topControlBar(session: MeetingSession, showPermissions: Binding<Bool>) -> some View {
         HStack(spacing: 8) {
             Button { toggleCapture(session: session) } label: {
-                Label(wantsCapture ? "Stop listening" : "Start listening", systemImage: wantsCapture ? "stop.fill" : "mic.fill")
+                Label(wantsCapture || captureStartGate.isPending ? "Stop listening" : "Start listening",
+                      systemImage: wantsCapture || captureStartGate.isPending ? "stop.fill" : "mic.fill")
             }
             .buttonStyle(.borderedProminent)
             .help("Start or stop capturing microphone and system audio")
-            .disabled(lifecycleBusy || session.isTranscribingFile)
+            .disabled(lifecycleBusy || session.isTranscribingFile || (!wantsCapture && !captureStartGate.isPending && !recordingAvailability.canRun))
             Button { saveConversation() } label: { Label("Save conversation", systemImage: "square.and.arrow.down") }
                 .disabled(!hasConversation)
                 .help("Save without stopping capture (Command-S)")
@@ -410,65 +428,64 @@ extension MeetingView {
     /// Listen/Stop press: start or stop capture, tracking the elapsed-timer anchor and saving on Stop.
     func toggleCapture(session: MeetingSession) {
         guard !lifecycleBusy else { return }
-        Task {
-            if wantsCapture {
-                lifecycleBusy = true
+        if wantsCapture || captureStartGate.isPending {
+            captureStartGate.cancel()
+            lifecycleBusy = true
+            Task {
                 defer { lifecycleBusy = false }
                 _ = checkpoint()
                 wantsCapture = false
                 recordingStartedAt = nil
-                restartTask?.cancel()   // cancel any in-flight locale restart
-                // Await teardown so the transcriber flushes its final segments into the store
-                // before we snapshot the transcript for search.
+                restartTask?.cancel()
                 await session.stopAndWait()
-                await MacSavedAudio.shared.waitForWrites()   // the audio files are closed before Stop finishes
+                await MacSavedAudio.shared.waitForWrites()
                 activeEngine = nil
                 _ = checkpoint(complete: true, force: true)
-                nameConversationIfNeeded()   // in the background (#221)
+                nameConversationIfNeeded()
                 Task { await finishSpeakerAnalysis() }
-            } else {
-                startError = nil
-                // A denied microphone doesn't fail AVAudioEngine.start() — it records silence — so
-                // decide BEFORE starting whether we may listen at all (issue #110).
-                guard await ensureMicrophoneAccess() else { wantsCapture = false; return }
-                wantsCapture = true
-                do {
-                    // The Others buffer is reset in makeCapture, restarting its 0-based timeline.
-                    // Clear stale labels + bump the token BEFORE start; anchor the run only AFTER
-                    // start returns, once the prior Stop's finals have drained into the store.
+            }
+            return
+        }
+        guard let token = captureStartGate.begin() else { return }
+        Task {
+            defer { captureStartGate.finish(token) }
+            startError = nil
+            do {
+                _ = try await captureStartGate.perform(token, prepare: {
+                    await refreshFeatureAvailability()
+                    return recordingAvailability.canRun
+                }, authorize: {
+                    await captureStartGate.resolvePermission(token, check: { await microphoneDecision() },
+                                                            onBlocked: { startError = $0 })
+                }, start: {
+                    wantsCapture = true
                     beginDiarizationRunReset()
-                    // Snapshot the engine this run is built from, before start() creates the
-                    // transcriber, so the rail can't claim an engine that isn't running (#136).
                     activeEngine = ProviderSettings.transcriptionEngine
                     try await session.start()
-                    guard wantsCapture, session.isRunning else { return }
+                    guard wantsCapture, session.isRunning, captureStartGate.isCurrent(token) else { return }
                     noteCaptureLanguage()
                     anchorDiarizationRun()
                     now = Date(); recordingStartedAt = Date()
-                } catch {
-                    startError = error.localizedDescription
-                    wantsCapture = false
-                    activeEngine = nil
-                }
+                })
+            } catch {
+                guard captureStartGate.isCurrent(token) else { return }
+                startError = error.localizedDescription
+                wantsCapture = false
+                activeEngine = nil
             }
         }
     }
 
-    /// Listen pre-flight for microphone authorization (issue #110). Returns true when capture may
-    /// start; otherwise sets `startError` (the banner offers Open Settings when the user can fix it
-    /// themselves) and leaves the session stopped rather than recording silence.
-    private func ensureMicrophoneAccess() async -> Bool {
+    /// Resolve the OS permission without publishing a Start error. The owning token decides whether
+    /// a late denial still belongs to this conversation before the banner is updated.
+    private func microphoneDecision() async -> CapturePreflight.Decision {
         var decision = CapturePreflight.decide(microphone: PermissionsModel.currentMicrophoneAuthorization())
         if decision == .requestAccess {
             let granted = await PermissionsModel.requestMicrophoneAccess()
             permissions.refresh()
             decision = CapturePreflight.decideAfterRequest(granted: granted)
         }
-        if case .blocked(let message, _) = decision {
-            startError = message
-            return false
-        }
-        return true
+        return decision
     }
 
     /// Restarts an active session after a language change so the new transcriber applies immediately
@@ -481,6 +498,12 @@ extension MeetingView {
             // Bail if the user pressed Stop or closed the window during teardown — don't resume
             // recording against their intent.
             guard wantsCapture, !Task.isCancelled else { return }
+            await refreshFeatureAvailability()
+            guard wantsCapture, !Task.isCancelled else { return }
+            guard recordingAvailability.canRun else {
+                wantsCapture = false; activeEngine = nil
+                return
+            }
             // The restart rebuilds the capture, resetting the Others buffer's 0-based timeline. Drop
             // stale labels + bump the token before start; anchor only after start returns (the prior
             // teardown above already drained, but the new finals land after start re-attaches).
@@ -701,6 +724,7 @@ extension MeetingView {
     /// the Stop-button flow so a meeting ended by closing the window is still saved for search
     /// (best-effort: the Task may not finish on a full app quit).
     func tearDownOnDisappear(session: MeetingSession) {
+        captureStartGate.close()
         hotkey.stop()
         for role in CopilotRole.allCases { session.cancelResponse(role) }
         speakerTask?.cancel()
@@ -776,7 +800,8 @@ extension MeetingView {
     /// role-appropriate default (Quick = lightest, Deep = heaviest, Listener = balanced).
     /// Always rebuilds every role's provider so it picks up the current base URL/key.
     func reloadAndHealModels() async {
-        session.aiEnabled = ProviderSettings.aiMode != .off
+        session.aiEnabled = MacFeatureReadiness.aiCanRun(mode: ProviderSettings.aiMode,
+            appleReason: MacDeviceCapabilities.appleReason(locale: currentCapabilityLocale))
         // Cancel old-route work immediately, before asynchronous discovery can suspend this task.
         for role in CopilotRole.allCases { session.setModel(role, session.models[role] ?? "") }
         modelLoadToken += 1
@@ -784,7 +809,7 @@ extension MeetingView {
         if ProviderSettings.aiMode == .apple {
             chatModels = ["Apple Intelligence"]
             verifiedLocalModels = []
-            modelStatus = AppleIntelligenceProvider.unavailableReason ?? ""
+            modelStatus = MacDeviceCapabilities.appleReason(locale: currentCapabilityLocale) ?? ""
             for role in CopilotRole.allCases { session.setModel(role, "Apple Intelligence") }
             return
         }

@@ -62,6 +62,24 @@
           "test": "UploadTests/test_embedded_watch_app_is_rejected_until_watch_release"
         }
       ]
+    },
+    {
+      "id": "RELEASE-004",
+      "name": "Identify the feedback beta and bundled changes accurately",
+      "given": "a user updates to the iPad compatibility feedback beta",
+      "when": "What\u2019s New appears or is reopened",
+      "then": "the app identifies version 1.17.1 build 35 with its device-compatible recording and explicit AI setup notes, acknowledges the update once and keeps prior notes readable",
+      "covers": [
+        "project.yml",
+        "iOS/MobileReleaseNotes.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileReleaseNotesUITests.swift",
+          "test": "MobileReleaseNotesUITests/testUpdateShowsVersionOnceAndChangelogCanBeReopened"
+        }
+      ]
     }
   ]
 }

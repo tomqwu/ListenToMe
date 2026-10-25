@@ -1,0 +1,14 @@
+Your conversation, your workspace—and recording that fits your device.
+
+• Prompt below Notes: ask a question once or save instructions for future summaries in that conversation. Choose an optional domain preset and edit it before use.
+• iPhone Duo puts Transcript and Quick side by side in landscape. Choose equal, Transcript-first or Quick-first widths; your choice is remembered. Narrow windows and larger text keep a readable stacked layout.
+• Conversation vocabularies return with History and guide automatic Quick updates. Chinese transcription has Simplified Chinese vocabulary terms.
+• Automatic language checks can recognize a language change even when the starting transcriber produces no words. Stop and backgrounding remain responsive during speaker analysis.
+• Summaries distinguish unfinished speech, reuse unchanged context and keep History answers and citations current after edits or deletion.
+• Configure a context limit for your OpenAI-compatible server. Local Ollama requests size their context to the prompt, and settings explain unsupported addresses clearly.
+• Compatible older iPads can use Apple's on-device dictation when advanced transcription is unavailable. Language choices and Automatic use the supported local speech modules.
+• Recording checks device/language support before enabling Start and explains recovery when unavailable. Unexpected model or microphone setup failures show the full error; cancellation stays quiet.
+• Settings explains unavailable Apple Intelligence and requires an explicit alternate provider setup. Recording needs no summary AI model.
+• Optional saved audio plays from the Live transcript after Stop. Enable Save audio recordings before listening; earlier unsaved audio cannot be recovered later.
+
+Conversations stay private by default. Speech runs on-device, cloud AI remains an explicit choice, and retained audio stays opt-in. Apple Watch is not included in this build.

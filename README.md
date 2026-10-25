@@ -64,7 +64,10 @@ Editable domain prompt presets are available on both platforms.
 The iPhone and iPad app is distributed through TestFlight; the latest build is **1.17.0 (34)**
 ([2026-10-25 TestFlight release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.17.0-build34)). An Apple Watch companion is built behind a build flag but not shipped yet
 ([#181](https://github.com/tomqwu/ListenToMe/issues/181)).
-See [iOS setup, validation and distribution](docs/IOS.md).
+See [iOS setup, validation and distribution](docs/IOS.md). Device and language support are checked
+per feature; Apple Intelligence is independent of recording. The [compatibility candidate](docs/device-compatibility.md)
+adds local dictation fallback for compatible older iPads and explicit unavailable-feature recovery;
+these changes are not part of the published 1.17.0 beta.
 
 ```sh
 make ios-build

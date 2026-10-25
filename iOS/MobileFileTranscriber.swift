@@ -48,15 +48,15 @@ final class MobileFileTranscriber: WatchAudioTranscribing {
         // Finals only: nothing is shown live, and only final text is saved.
         let (transcriber, format) = try await MobileSpeechModel.prepare(locale: locale, volatileResults: false)
         try Task.checkCancellation()
-        let analyzer = SpeechAnalyzer(modules: [transcriber])
+        let analyzer = SpeechAnalyzer(modules: [transcriber.module])
         if !contextualStrings.isEmpty { await SpeechVocabularyContext.apply(contextualStrings, to: analyzer) }
         try await analyzer.prepareToAnalyze(in: format)
         let feed = ChunkFeed(chunks: chunks, format: format)
         let results = Task { @MainActor in
-            for try await result in transcriber.results {
-                guard !feed.isStopped else { return }
+            _ = try await transcriber.consume { result in
+                guard !feed.isStopped else { return false }
                 let text = String(result.text.characters)
-                guard result.isFinal, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { continue }
+                guard result.isFinal, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return true }
                 do {
                     try onFinal(TranscriptSegment(source: .you, text: text, isFinal: true,
                                                   start: result.range.start.seconds, end: result.range.end.seconds,
@@ -65,6 +65,7 @@ final class MobileFileTranscriber: WatchAudioTranscribing {
                     feed.stop(failing: error)
                     throw error
                 }
+                return true
             }
         }
         let strings = contextualStrings

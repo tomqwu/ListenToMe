@@ -6,7 +6,9 @@ import ListenToMeCore
 struct MobileDesignFixture: View {
     @State private var session: MobileSession = {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("DesignUI-\(UUID())")
-        let session = MobileSession(storageDirectory: root)
+        // Synthetic release visuals explicitly represent a compatible recording device.
+        // The ordinary simulator app keeps its actual unavailable capture status.
+        let session = MobileSession(storageDirectory: root, recordingSupport: { _ in .ready })
         session.title = "Product planning"
         session.prepareSpeakerModelsIfNeeded()   // as the app does at a foreground launch (#195)
         session.segments = [

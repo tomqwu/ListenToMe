@@ -16,6 +16,7 @@ extension MobileSession {
     var languageChoice: String {
         get { languageDetection.automatic ? Self.automaticLanguageTag : language }
         set {
+            invalidateRecordingSupport()
             if newValue == Self.automaticLanguageTag {
                 languageDetection.automatic = true
             } else {

@@ -21,7 +21,11 @@ extension MobileAISettings {
     /// Applies a picker choice. Choosing a cloud service selects it and nothing else: no key, no model.
     func selectSummaryRoute(_ route: SummaryRoute) {
         switch route {
-        case .apple: provider = .apple
+        case .apple:
+            refreshAppleAvailability()
+            if let reason = appleUnavailableReason { status = reason; return }
+            provider = .apple
+            status = nil
         case .ollama: provider = .ollama
         case .openAI: provider = .openAI
         case .cloud(let id):

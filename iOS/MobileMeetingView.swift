@@ -92,6 +92,7 @@ struct MobileMeetingView: View {
                     controls
                 }.background(MobileStyle.canvas)
             }
+            .task(id: session.languageChoice) { await session.refreshRecordingSupport() }
             .task(id: saveFeedbackID) {
                 guard saveSucceeded else { return }
                 do { try await Task.sleep(for: .seconds(4)) } catch { return }
@@ -137,6 +138,14 @@ struct MobileMeetingView: View {
                 titleEditor
                 captureStatusLabel
             }
+            if session.state == .idle, let reason = session.recordingAvailability.reason {
+                Text(reason).font(.callout).accessibilityIdentifier("recordingSupportReason")
+                if let action = session.recordingAvailability.setupAction {
+                    Button(action) { UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!) }
+                } else if !session.recordingAvailability.canRun {
+                    Button("Recording settings") { showSettings = true }
+                }
+            }
             MobileSpeakerStatus(session: session)
             MobileLanguageStatus(session: session)
             MobileWatchRecordingLine(status: session.watchCaptureStatus)
@@ -170,6 +179,7 @@ struct MobileMeetingView: View {
     private var statusText: String {
         switch session.state {
         case .idle:
+            guard session.recordingAvailability.canRun else { return "Microphone · Unavailable" }
             return session.speakers.modelsReady && session.speakers.enabled
                 ? "Microphone · Ready · Speaker labels on" : "Microphone · Ready to listen"
         case .preparing: return "Preparing speech model… First use may download a model."
@@ -248,7 +258,8 @@ struct MobileMeetingView: View {
                     .font(.headline).frame(maxWidth: .infinity, minHeight: 24)
             }.buttonStyle(MobileRecordStyle(recording: session.state != .idle))
                 .accessibilityLabel(session.state == .idle ? "Start listening" : "Stop listening")
-                .disabled(session.state == .stopping || (session.isSummarizing && session.state == .idle))
+                .disabled(session.state == .stopping || (session.state == .idle &&
+                    (session.isSummarizing || !session.recordingAvailability.canRun)))
             if !dynamicTypeSize.isAccessibilitySize {
                 Button { showNotes = true } label: {
                     VStack(spacing: 3) {

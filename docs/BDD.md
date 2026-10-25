@@ -52,6 +52,32 @@ Example from the retained-Watch-audio contract (`WATCH-001`):
 The real catalog also records paired-device acceptance steps. Simulator tests cannot prove
 disconnected Watch transfer, real microphone/system capture or physical-device readiness.
 
+## Device compatibility is behavior
+
+For each affected feature, specify its supported and unavailable states before implementation.
+Do not infer support from the OS version or Apple Intelligence eligibility alone: local speech,
+summary AI, model readiness, microphone access and paired-device connectivity are separate capabilities.
+This applies to iPhone/iPad (including Duo), Apple Watch and Mac.
+
+Use the shared `DEVICE-001`–`DEVICE-004` readiness contract together with concrete platform scenarios:
+
+- Given supported hardware and language, when listening starts, then current microphone speech is
+  transcribed even if summary AI is unavailable. An available local dictation engine is a valid fallback.
+- Given an unsupported engine/language, when the screen opens, then Start is disabled and the reason
+  and supported alternatives are visible before a tap; no microphone request or download starts.
+- Given denied permission or missing setup, when the feature is shown, then execution is blocked
+  with an applicable recovery action. Unknown permission may still be requested by an explicit tap.
+- Given unavailable Apple Intelligence, when choosing AI, then it cannot be selected as a working
+  provider; saved choices remain intact, with explicit alternatives and no automatic cloud routing.
+- Given changed language, permissions, model readiness or connectivity, when availability refreshes,
+  then obsolete asynchronous checks cannot re-enable an unavailable action. Stop remains usable.
+- Given an unreachable or incompatible paired iPhone, when the Watch remote appears, then Start is
+  unavailable with a recovery reason; the Watch's independent offline recording remains separate.
+
+Bind platform adapters and control behavior to native tests. Generic readiness booleans alone do
+not establish native integration. Record coverage gaps explicitly and retain physical-device,
+rendered UI and real Mac OTHERS acceptance where applicable; a simulator pass cannot replace them.
+
 ## Commands and enforcement
 
 ```sh

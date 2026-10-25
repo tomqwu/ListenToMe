@@ -72,6 +72,7 @@ extension MeetingView {
 
     func newConversation() {
         guard !lifecycleBusy, !session.isTranscribingFile else { return }
+        captureStartGate.cancel()
         lifecycleBusy = true
         Task {
             defer { lifecycleBusy = false }
@@ -228,6 +229,7 @@ extension MeetingView {
     /// App/window close waits for final text, but never for optional AI or speaker analysis.
     func prepareToClose() async -> Bool {
         guard !lifecycleBusy else { return false }
+        captureStartGate.cancel()
         lifecycleBusy = true
         defer { lifecycleBusy = false }
         wantsCapture = false; recordingStartedAt = nil; activeEngine = nil

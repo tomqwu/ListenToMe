@@ -189,9 +189,7 @@ struct SettingsView: View {
             Text("Settings").font(.title2).bold()
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
-            Picker("AI processing", selection: $aiMode) {
-                ForEach(AIProcessingMode.allCases, id: \.self) { Text($0.label).tag($0) }
-            }
+            MacAIChoice(selection: $aiMode)
             Text("Cloud mode sends meeting text and attached context to Ollama Cloud. Local mode verifies " +
                  "the model before each request. Cloud AI service sends it to the service you choose below with " +
                  "your own key; OpenAI-compatible sends it to the server you enter below. " +
@@ -228,11 +226,7 @@ struct SettingsView: View {
                  "Names can be edited in Speakers; overlapping speech may be misattributed.")
                 .font(.caption).foregroundStyle(.secondary)
 
-            Picker("Transcription engine", selection: $engine) {
-                Text("SpeechAnalyzer (macOS 26, dual-channel)").tag("speechAnalyzer")
-                Text("SpeechRecognizer (legacy)").tag("speechRecognizer")
-                Text("WhisperKit (multilingual, downloads model)").tag("whisperKit")
-            }
+            MacEngineChoice(selection: $engine)
             Text(
                 "SpeechAnalyzer transcribes both channels concurrently and downloads its model on first use; " +
                 "SpeechRecognizer is the fallback. WhisperKit adds multilingual / code-switching transcription " +
@@ -319,6 +313,11 @@ struct SettingsView: View {
     }
 
     private func save() {
+        if aiMode == .apple, ProviderSettings.aiMode != .apple,
+           let reason = AppleIntelligenceProvider.unavailableReason {
+            saveError = reason + " Settings have not been applied."
+            return
+        }
         // Validate everything before writing anything. The OpenAI-compatible fields are only
         // touched when edited, so a stale stored value can never block unrelated settings.
         var openAIChange: OpenAICompatibleSettingsChange?

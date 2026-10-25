@@ -48,7 +48,7 @@ final class MobileCloudAISettingsUITests: XCTestCase {
         XCTAssertFalse(save.isEnabled, "The Anthropic key was cleared, so nothing can be saved for OpenRouter")
         revealSettingsControl(app.buttons["summaryProvider"], in: form, towardTop: true)
         app.buttons["summaryProvider"].tap()
-        app.buttons["Apple Intelligence · on-device"].tap()
+        app.buttons["Ollama Cloud"].tap()
         XCTAssertFalse(app.staticTexts["cloudAIDisclosure"].exists)
     }
 }

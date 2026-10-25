@@ -60,6 +60,27 @@ final class MobileStartFailureTests: XCTestCase {
         await session.stop()
     }
 
+    // Baseline adoption: temporary OS permission UI must not cancel a pending start.
+    func testInactivePermissionPromptPreservesPendingStartUntilForegroundGrant() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let recorder = StartFailureRecorder()
+        recorder.holdPreparation = true
+        let session = MobileSession(storageDirectory: root, makeRecorder: { recorder })
+        session.start()
+        for _ in 0..<400 where !recorder.entered { try await Task.sleep(for: .milliseconds(5)) }
+        XCTAssertTrue(recorder.entered)
+        await session.handleScenePhase(.inactive)
+        XCTAssertEqual(session.state, .preparing)
+        XCTAssertFalse(recorder.cancellationObserved)
+        await session.handleScenePhase(.active)
+        recorder.releasePreparation()
+        for _ in 0..<400 where session.state == .preparing { try await Task.sleep(for: .milliseconds(5)) }
+        XCTAssertEqual(session.state, .recording)
+        XCTAssertNil(session.recordingStartFailure)
+        await session.stop()
+    }
+
     func testPermissionFailureAfterCancellationDoesNotPresentAStartupError() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }

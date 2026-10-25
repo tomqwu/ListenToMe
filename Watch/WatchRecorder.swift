@@ -43,6 +43,13 @@ final class WatchRecorder {
             + "What was recorded is being sent to iPhone."
     }
 
+    private(set) var availability: FeatureAvailability = .temporarilyUnavailable(reason: "Checking recording support…")
+
+    func refreshAvailability() {
+        availability = WatchReadiness.local(microphoneDenied: AVAudioApplication.shared.recordPermission == .denied,
+                                           battery: Self.batteryLevel(), freeBytes: Self.freeBytes())
+    }
+
     private(set) var phase = Phase.idle {
         didSet { if phase != oldValue { onStatusChange?() } }
     }
@@ -77,6 +84,7 @@ final class WatchRecorder {
         self.makeCapture = makeCapture
         // Once, so every battery read below is current.
         WKInterfaceDevice.current().isBatteryMonitoringEnabled = true
+        refreshAvailability()
     }
 
     var isRecording: Bool {
@@ -102,6 +110,8 @@ final class WatchRecorder {
     /// A new recording. Throws, without touching the microphone, when a limit blocks it.
     func start() async throws {
         guard !isRecording else { return }
+        refreshAvailability()
+        guard availability.canRun else { throw WatchRecorderError.blocked(availability.reason ?? "Recording unavailable") }
         // A new recording ends one left stopped after an interruption.
         if case .stopped = phase { stop() }
         try checkStart(elapsed: nil)
@@ -117,6 +127,8 @@ final class WatchRecorder {
     /// since it started.
     func continueRecording() async throws {
         guard canContinue, let startedAt else { return }
+        refreshAvailability()
+        guard availability.canRun else { throw WatchRecorderError.blocked(availability.reason ?? "Recording unavailable") }
         guard nextIndex <= WatchChunkMetadata.maximumIndex else {
             throw WatchRecorderError.blocked("This recording has too many parts. Start a new recording.")
         }

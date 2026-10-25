@@ -37,9 +37,12 @@ struct WatchRecordingView: View {
                                     .multilineTextAlignment(.center)
                             }
                             if canContinue {
+                                if let reason = recorder.availability.reason {
+                                    Text(reason).font(.footnote).multilineTextAlignment(.center)
+                                }
                                 Button("Continue", action: resume)
                                     .tint(.red)
-                                    .disabled(isContinuing)
+                                    .disabled(isContinuing || !recorder.availability.canRun)
                             }
                             Button("Done") { recorder.stop() }
                         }

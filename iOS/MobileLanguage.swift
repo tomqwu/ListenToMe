@@ -39,11 +39,16 @@ actor WhisperLanguageIdentifier: MobileLanguageIdentifying {
     static let downloadDescription = "about 75 MB"
 
     private let directory: URL
+    private let catalogLocales: @Sendable () async -> [String]
     private var kit: KitBox?
     private var loading: Task<KitBox, any Error>?
 
-    init(directory: URL) {
+    init(directory: URL, catalogLocales: @escaping @Sendable () async -> [String] = {
+        await SpeechLanguageCatalog.shared.load()
+        return await SpeechLanguageCatalog.shared.supported
+    }) {
         self.directory = directory
+        self.catalogLocales = catalogLocales
     }
 
     /// The app's language model: Whisper, or a stand-in that downloads nothing while the app hosts unit
@@ -87,7 +92,7 @@ actor WhisperLanguageIdentifier: MobileLanguageIdentifying {
     }
 
     func supportedLocales() async -> [String] {
-        await SpeechTranscriber.supportedLocales.map { $0.identifier(.bcp47) }
+        await catalogLocales()
     }
 
     /// One load at a time; a failure is not kept, so the next recording tries again.
