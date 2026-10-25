@@ -197,6 +197,8 @@ public struct LanguageTracker: Sendable, Equatable {
     public private(set) var unavailable: Set<String> = []
     /// Speech heard, merged, kept only as far back as the audio is.
     private var speech: [Range<TimeInterval>] = []
+    public private(set) var reportedSpeechStart: TimeInterval?
+    private var reportedSpeechEnd: TimeInterval = 0
 
     /// A recording that continues a conversation which already switched (`resumed`) starts in the switched
     /// language and goes straight to re-checks, the first one an interval in.
@@ -208,6 +210,13 @@ public struct LanguageTracker: Sendable, Equatable {
 
     /// Notes a speech event. Results can arrive out of order (a replay hears the past again).
     public mutating func noteSpeech(start: TimeInterval, end: TimeInterval) {
+        guard start.isFinite, end.isFinite else { return }
+        reportedSpeechStart = min(reportedSpeechStart ?? start, start)
+        reportedSpeechEnd = max(reportedSpeechEnd, end)
+        noteActivity(start: start, end: end)
+    }
+
+    mutating func noteActivity(start: TimeInterval, end: TimeInterval) {
         guard start.isFinite, end.isFinite else { return }
         speechStart = min(speechStart ?? start, start)
         speechEnd = max(speechEnd, end)
@@ -234,15 +243,21 @@ public struct LanguageTracker: Sendable, Equatable {
     /// Whether to check now, `now` being the audio captured so far. A fixed language never checks. The
     /// first check waits for enough speech; re-checks wait for their time, then pause in Low Power Mode,
     /// in the background, while the device is hot and while the trailing window is mostly silence.
-    /// Speech is what the transcriber reports, and a transcriber in the wrong language may report little
+    /// Speech combines reported text and audio activity. A transcriber in the wrong language may report little
     /// of it; a re-check overdue by a whole interval therefore needs only `minimumChunkSpeech`, as the
     /// first check falls back to a whole window of time.
     public func gate(now: TimeInterval, pinned: Bool, conditions: LanguageRecheckPolicy.Conditions) -> Gate {
-        guard !pinned else { return .wait }
+        guard !pinned, now.isFinite, now >= 0 else { return .wait }
         switch phase {
         case .first:
-            guard let start = speechStart,
-                  LanguageDetectionPolicy.isReady(speechStart: start, speechEnd: speechEnd, captured: now) else {
+            if reportedSpeechStart == nil {
+                let window = max(0, now - LanguageDetectionPolicy.maximumWindow)..<max(0, now)
+                guard speech(in: window) >= LanguageDetectionPolicy.minimumSpeech,
+                      let first = speech.first(where: { $0.upperBound > window.lowerBound }) else { return .wait }
+                return .check(max(window.lowerBound, first.lowerBound - 0.5)..<window.upperBound)
+            }
+            guard let start = reportedSpeechStart,
+                  LanguageDetectionPolicy.isReady(speechStart: start, speechEnd: reportedSpeechEnd, captured: now) else {
                 return .wait
             }
             let lower = max(0, start - 0.5)

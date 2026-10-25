@@ -307,7 +307,7 @@ final class MobileSession {
                 try Task.checkCancellation()
                 state = .recording
                 UIApplication.shared.isIdleTimerDisabled = true
-                startSpeakerLoop()
+                startRecognitionLoops()
             } catch {
                 try? await recorder.stop()
                 speakers.endRun(); endLanguageRun(); endSavedAudioRun()
@@ -326,6 +326,7 @@ final class MobileSession {
             return
         }
         state = .stopping
+        languageDetection.activityLoop?.cancel(); languageDetection.activityLoop = nil
         if stopReason == nil { stopReason = .user }
         do { try await recorder?.stop() } catch { message = "Could not finalize transcript: \(error.localizedDescription)" }
         recorder = nil

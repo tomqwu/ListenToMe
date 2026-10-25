@@ -391,8 +391,9 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   While recording, the audio the transcriber accepts is copied into a 16 kHz buffer that keeps the
   trailing two minutes (about 7.7 MB plus one 10-second block, in memory only; older audio is
   released in whole blocks as the recording goes on, #199). Once 8 seconds of speech have been heard (or 30 seconds
-  have passed since the first speech), up to 30 seconds from just before the first speech are
-  checked. `LanguageDetectionPolicy` switches only when Whisper is at least 80% sure, the
+  have passed since the first recognized speech), up to 30 seconds from just before that speech are
+  checked. Without recognized words, eight seconds of audio activity within the trailing 30 seconds
+  can start the first check and model preparation; isolated sounds do not start a download (#216). `LanguageDetectionPolicy` switches only when Whisper is at least 80% sure, the
   language differs from the one being transcribed, and SpeechTranscriber supports it; Whisper's
   "zh" (Mandarin) becomes zh-CN, or zh-TW on a device in Taiwan, Hong Kong or Macao, and never the
   Cantonese zh-HK model. To switch, the recorder installs the new locale's speech assets if needed
@@ -432,9 +433,13 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
 - Re-checking the language during a recording (#199), Automatic only. After the first check,
   `LanguageTracker` (ListenToMeCore, with `LanguageRecheckPolicy`) re-checks the trailing 30 seconds
   once a minute of recording time, only when that window holds at least 10 seconds of speech, so
-  silence costs nothing. Speech here is what the transcriber reports, and a transcriber in the wrong
-  language may report little of it, so a re-check overdue by a whole interval needs only 4 seconds; a
-  transcriber that reports nothing at all triggers no re-check (audio-level speech activity is #216). Re-checks pause in Low Power Mode, while the app is in the background and
+  silence skips inference. Activity combines reported speech with audio energy, without double-counting
+  overlapping intervals (#216). Every five seconds, a background task scans new complete 20 ms frames
+  from the existing bounded audio buffer; activity above RMS 0.02 can trigger checks even when the
+  recognizer produces no words. Energy is not a speech classifier: loud noise can qualify, but model
+  confidence and the existing switch policy still decide whether to change language. A re-check
+  overdue by a whole interval needs only 4 seconds of activity. The scanner pauses outside active
+  foreground recording, and Stop cancels it without waiting for model preparation. Re-checks pause in Low Power Mode, while the app is in the background and
   while the device is hot (serious or critical thermal state); the first check is not affected.
   Re-checks run quietly, without a status line. Hysteresis: a confident (≥ 80%) different language
   only makes a candidate, and a check 20 seconds later must hear the same language again before the

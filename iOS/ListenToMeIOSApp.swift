@@ -76,6 +76,8 @@ struct ListenToMeIOSApp: App {
             MobileAutomaticSummaryFixture()
         } else if ProcessInfo.processInfo.arguments.contains("--transcript-scroll-fixture") {
             MobileTranscriptFixture()
+        } else if ProcessInfo.processInfo.arguments.contains("--language-activity-fixture") {
+            MobileLanguageActivityFixture()
         } else if ProcessInfo.processInfo.arguments.contains("--watch-speakers-fixture") {
             MobileWatchSpeakerFixture()
         } else if ProcessInfo.processInfo.arguments.contains("--saved-audio-fixture") {

@@ -126,8 +126,10 @@ own implementation, relevant local acceptance, independent review and merged PR 
    already-loaded models only, labels saved before audio deletion. Merged in #270; not released.
 2. **#225 — Watch audio sync and optional retention:** approved October 24: queue while disconnected,
    sync to the paired iPhone after reconnect, and retain playback audio only when Save audio recordings
-   is on. Off keeps delete-after-transcription. Cover retries, crash safety, deletion and consent/privacy copy.
-3. **#216 — language re-check reliability:** use audio speech activity when recognizer output is absent.
+   is on. Off keeps delete-after-transcription. Merged in #271 with retry, deletion, consent and
+   playback coverage; not released. Watch distribution remains gated by #181.
+3. **#216 — language re-check reliability:** implemented on `codex/audio-language-rechecks`;
+   focused Core and iOS tests plus the zero-recognizer-results UI flow pass. Full validation pending.
 4. **#224 — re-transcribe saved audio:** finish existing PR #264; its live Mac audio gate is still pending.
 5. **#176 — UI-test reliability:** remove remaining state/time assumptions in the full local gate.
 6. Then iOS/provider improvements (#210, #209, #223, #164, #188, #167, #148, #149), followed by
@@ -154,9 +156,9 @@ is the tracking issue.
 **Apple Watch — waiting on the maintainer's device spike**
 
 [#181](https://github.com/tomqwu/ListenToMe/issues/181) (record from the watch),
-[#192](https://github.com/tomqwu/ListenToMe/issues/192) (speaker labels on watch recordings),
+[#192](https://github.com/tomqwu/ListenToMe/issues/192) (merged in #270; paired-device speaker acceptance pending),
 [#200](https://github.com/tomqwu/ListenToMe/issues/200) (implemented; paired-device language acceptance pending),
-[#225](https://github.com/tomqwu/ListenToMe/issues/225) (keep watch audio when Save audio recordings is on).
+[#225](https://github.com/tomqwu/ListenToMe/issues/225) (merged in #271; paired-device retention acceptance pending).
 
 **macOS — P1/P2** (lands on `main`; ships when the maintainer resumes Mac releases)
 

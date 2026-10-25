@@ -798,3 +798,7 @@ import is failed, retry, and confirm deleted copies do not return. Delete the co
 both retained and pending audio are gone. Check expiry using an old recording. Confirm updated Watch
 consent mentions reconnect and optional retention. Simulator tests cover import/playback/storage;
 real WatchConnectivity transfer and Watch background recording require the paired-device #181 gate.
+
+### iOS audio-driven language checks (#216)
+
+In Automatic, speak in a language the starting transcriber does not recognize. Check that an initial language check still occurs after at least eight seconds of activity, and continuous talking can trigger later checks without new transcript results. Check the detected-language notice, Undo and Stop. Silence and sparse isolated sounds must not trigger an initial download; loud noise may qualify as activity but must still pass language confidence and switch rules. Re-checks pause in Low Power Mode, background and serious thermal state. Stop during model preparation must remain responsive. The simulator fixture verifies control flow with synthetic audio and a deterministic model; it does not establish real speech accuracy or device battery acceptance.

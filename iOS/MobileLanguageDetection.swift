@@ -92,6 +92,8 @@ final class MobileLanguageDetection {
         var tracker: LanguageTracker
         /// A check is running; the next one waits for it.
         var checking = false
+        /// Absolute sample cursor for the cheap audio-activity scan.
+        var activityThrough = 0
         var locale: String { tracker.locale }
     }
 
@@ -122,6 +124,7 @@ final class MobileLanguageDetection {
     /// The model preparation started by the run's first speech, and the run's latest check.
     @ObservationIgnored private var preparation: Task<Void, Never>?
     @ObservationIgnored var check: Task<Void, Never>?
+    @ObservationIgnored var activityLoop: Task<Void, Never>?
     /// Low Power Mode, the app's state and the device's temperature, read before each re-check.
     @ObservationIgnored var conditions: @MainActor () -> LanguageRecheckPolicy.Conditions =
         MobileLanguageDetection.deviceConditions
@@ -180,6 +183,7 @@ final class MobileLanguageDetection {
     /// Ends the recording's run and releases its audio. A check or preparation still running is
     /// dropped. `recordingLines` are the run's own lines, kept for an Undo of its switch.
     func endRun(recordingLines: Set<UUID>?) {
+        activityLoop?.cancel(); activityLoop = nil
         if let current = run, notice?.runToken == current.token, notice?.recordingLines == nil {
             notice?.recordingLines = recordingLines
         }
@@ -203,10 +207,28 @@ final class MobileLanguageDetection {
     /// first speech starts the model download. A check waits while another, a replay or an Undo runs.
     func noteSpeech(start: TimeInterval, end: TimeInterval) -> Request? {
         guard var current = run, !isUnavailable else { return nil }
-        if current.tracker.speechStart == nil { prepareModel(token: current.token) }
+        if current.tracker.reportedSpeechStart == nil { prepareModel(token: current.token) }
         current.tracker.noteSpeech(start: start, end: end)
+        run = current
+        return nextRequest()
+    }
+
+    /// Apply an off-main audio scan only to the run it sampled. Read fresh state here so recognizer
+    /// callbacks or completed model checks during the scan are never overwritten.
+    func noteAudioActivity(_ ranges: [Range<TimeInterval>], through: Int, token: Int) -> Request? {
+        guard var current = run, current.token == token, through > current.activityThrough,
+              automatic, !isUnavailable else { return nil }
+        current.activityThrough = through
+        current.tracker.noteAudioActivity(ranges)
+        run = current
+        let request = nextRequest()
+        if request != nil { prepareModel(token: token) }
+        return request
+    }
+
+    private func nextRequest() -> Request? {
+        guard var current = run, !current.checking, replay == nil, !undoing else { return nil }
         defer { run = current }
-        guard !current.checking, replay == nil, !undoing else { return nil }
         let captured = TimeInterval(current.buffer.sampleCount) / TimeInterval(LanguageDetectionPolicy.sampleRate)
         switch current.tracker.gate(now: captured, pinned: !automatic, conditions: conditions()) {
         case .wait:
