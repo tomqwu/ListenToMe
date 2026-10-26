@@ -1,8 +1,9 @@
 # Device and feature compatibility
 
-The compatibility changes below are an implementation candidate for iOS 1.18.0 (35) and the
-unreleased Mac app. The published beta remains 1.17.0 (34) until an accepted upload is recorded in
-[HANDOFF](HANDOFF.md). Apple Watch is not embedded for distribution.
+The iPhone/iPad compatibility changes below are published in [TestFlight 1.18.0 (35)](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.0-build35).
+Current-source physical acceptance remains pending. Mac changes are merged but unreleased, with
+installed GUI/OTHERS acceptance explicitly deferred by the maintainer; see [HANDOFF](HANDOFF.md).
+Apple Watch is not embedded for distribution.
 
 An OS version alone does not establish feature support. The apps require version 26 or later of
 their platform OS, then query the actual framework, selected language, permission and model state.

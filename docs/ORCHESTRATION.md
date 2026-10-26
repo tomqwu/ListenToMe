@@ -91,8 +91,11 @@ New during finalization, immediate pane Stop, multi-batch Summary and import can
 fresh native Mac screenshots and verify real system-audio transcription labeled OTHERS. Automated
 native graph tests and Core coverage do not establish rendered UI or physical capture acceptance.
 
-The earlier PR #308 candidate at b763ac3 remains preserved with its own artifacts and evidence.
-The reviewed #134 continuation at 45e015f is now included in that same integration PR; full validation
-passed on that exact product source. Required CI passed on the first docs-only integration head;
-current-head CI and screenshots are refreshing. No extra feature PR was opened.
-Do not call this work merged or published until the repository's corresponding gates are complete.
+The earlier PR #308 candidate at b763ac3 remains preserved with its original artifacts. The reviewed
+#134 continuation at 45e015f passed full local validation, and all three required checks passed on
+archive source b1570ad (documentation-only differences). PR #308 merged on October 26 at 8c8023f;
+the merge tree exactly matches b1570ad. Twenty-four fresh source-matched screenshots passed review.
+The maintainer explicitly deferred installed Mac GUI/OTHERS acceptance for this mixed-PR merge and
+iOS beta; the checks above remain pending. [TestFlight 1.18.0 (35)](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.0-build35)
+is published with Apple processing and Dev access verified. Mac features are merged but unreleased;
+no Mac binary or physical-Watch acceptance is claimed.

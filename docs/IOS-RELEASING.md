@@ -420,15 +420,20 @@ This completed the automated path without native Organizer control or another ma
 - Workflow implementation: [PR #85](https://github.com/tomqwu/ListenToMe/pull/85), merged with all CI
   green; 12 helper tests passed and a real API-key upload proved the route.
 
-The same route has carried every build since. The most recent accepted upload is **1.17.0 (34)**,
-accepted on 2026-10-25 from `cbd2e454dbf502df5832dc3654ee2d284f147380`, tagged
-`ios-v1.17.0-build34`, and verified `VALID`, `IN_BETA_TESTING` and in Dev with matching en-CA
-metadata. Evidence remains in `dist/ios-1.17.0-build34-evidence/` of the release worktree and the
-external October 25 release evidence. This receipt does not cover newer compatibility changes.
-The feedback candidate is 1.18.0 (35); it is not uploaded until a new acceptance receipt exists.
-App Store Connect reported production 1.15.0 READY_FOR_SALE at the October 25 preflight; recheck
-before the next train. Physical candidate checks and App Store screenshot listing uploads remain
-separate from TestFlight processing/access evidence.
+The same route has carried every build since. The most recent accepted upload is **1.18.0 (35)**,
+accepted on 2026-10-26 at 12:51:44 UTC from `b1570ad567a43a093294974871d7f0abf1872708`, tagged
+`ios-v1.18.0-build35`. Apple build `18ed5ceb-99cc-4658-b07b-3232b0bb23ce` is `VALID` and
+`IN_BETA_TESTING`; the existing internal Dev group includes it, both testers have accepted membership,
+and en-CA What to Test and beta description match. The [GitHub pre-release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.0-build35)
+has complete notes and remains non-Latest with no binary; macOS `v1.4.4` remains Latest.
+Evidence is in `dist/ios-1.18.0-build35-evidence/` of the release worktree, backed up externally under
+`listentome-features/combined-train/release/accepted-build35`. Twenty-four inspected source-matched
+native screenshots cover all four iPhone/iPad categories; listing upload remains pending. The API-key
+archive, export and upload completed without unlocking the Mac. The maintainer explicitly deferred
+Mac GUI/OTHERS acceptance for the mixed PR merge and this iOS beta; Mac publication remains paused.
+Current-source physical iPhone/iPad acceptance is pending, with no production-ready claim.
+App Store Connect reported production **1.15.0 READY_FOR_SALE** at the October 26 preflight; recheck
+before the next train. Earlier build-34 and physical-device evidence retains its original provenance.
 
 Use this evidence to distinguish the working path from historical Xcode-session failures. Recheck
 live state for a new release; do not treat this historical build number as the next build to upload.

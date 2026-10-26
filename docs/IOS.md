@@ -129,13 +129,13 @@ The archive, upload, tagging and verification steps themselves are not repeated 
 [IOS-RELEASING.md](IOS-RELEASING.md) for iOS, [RELEASING.md](RELEASING.md) for macOS, and
 [AGENTS.md](../AGENTS.md) for the release workflow that governs both.
 
-## iOS 1.18.0 (35) — combined candidate
+## iOS 1.18.0 (35) — published TestFlight beta
 
-This unpublished candidate consolidates the open PR batch, including on-device saved-audio re-transcription (#224), full automatic-review budgets (#148), conversation/capture ownership (#134, partial), reliability follow-ups (#141) and the compatibility fixes below. Mac-only features remain unreleased; Watch remains excluded pending physical acceptance.
+[Published October 26](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.0-build35) from `b1570ad567a43a093294974871d7f0abf1872708` after PR #308 merged. Apple accepted the upload; processing is VALID, internal testing is IN_BETA_TESTING, and the existing Dev group and en-CA metadata were verified. The combined batch includes on-device saved-audio re-transcription (#224), full automatic-review budgets (#148), completed orchestration extraction (#134), reliability follow-ups (#141) and the compatibility fixes below. Current-source physical acceptance remains pending. Mac-only features remain unreleased; the maintainer deferred their installed acceptance for this beta merge. Watch remains excluded pending paired-device acceptance.
 
 The reported iPad Pro 12.9-inch (4th generation), iPadOS 27.0.1, supports on-device dictation but
 reports advanced SpeechTranscriber unavailable and Apple Intelligence device-not-eligible. These
-are independent capabilities. The candidate prefers supported advanced speech and otherwise uses
+are independent capabilities. The app prefers supported advanced speech and otherwise uses
 Apple's on-device DictationTranscriber for both microphone and received Watch audio. Language
 choices and Automatic use the same supported-module catalog; reading it downloads no detector.
 
@@ -152,9 +152,10 @@ and explicit alternatives. A saved unavailable Apple choice remains saved, and g
 no cloud/provider/key is selected automatically. Foreground/settings refresh changes readiness,
 not user choices. Speech capture never requires a configured summary provider.
 
-The physical iPad's prior installed build reproduced the failure; a development candidate with the
-fallback produced new microphone words and retained opt-in audio with Play/Pause controls. This does
-not establish every model/language, audible playback quality, or TestFlight publication. See the
+The physical iPad's prior installed build reproduced the failure. Historical checks at `215d818`
+produced new microphone words and retained opt-in audio with Play/Pause controls on iPad and iPhone.
+The iOS persistence implementation changed afterwards; those checks do not establish physical
+acceptance of this published beta, every model/language or audible playback quality. See the
 [platform compatibility table](device-compatibility.md), BDD contracts and source-matched evidence.
 
 For playback, enable More → Settings → Audio recordings → Save audio recordings before recording.
@@ -1566,8 +1567,9 @@ owns preparation, start, cancellation and joined Stop tasks, with a token for ea
 final utterances while Stop drains and rejects callbacks after that run finishes. The adapter retains
 foreground/interruption policy, speaker/language buffers, saved-audio cleanup and final checkpoints.
 No recording permission, background capability, model or audio destination changes. Core tests cover
-transition races; simulator adapter tests must also pass before this candidate is merged. This partial
-extraction does not complete the remaining Mac view and shared lifecycle work in #134.
+transition races, and native simulator adapters passed in full validation before PR #308 merged.
+The remaining Mac view and shared lifecycle extraction in #134 is also complete; installed Mac
+GUI/OTHERS acceptance remains explicitly deferred. See [orchestration](ORCHESTRATION.md).
 
 Automatic naming task ownership now lives in Core `ConversationTitleCoordinator`, shared with Mac.
 It tracks each conversation independently and ignores cancelled generations. The iOS adapter still

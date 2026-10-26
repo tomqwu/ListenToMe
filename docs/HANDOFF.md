@@ -1,50 +1,52 @@
-# Handoff — 2026-10-25
+# Handoff — 2026-10-26
 
 A snapshot for an agent picking up ListenToMe cold. [AGENTS.md](../AGENTS.md) and
 [CLAUDE.md](../CLAUDE.md) stay the rules; this note is only the state of things on the date above.
 Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags) before acting on it.
 
-## Current consolidation and validation — maintainer away
+## Current publication — October 26
 
-PR #308 now includes the completed #134 implementation from `45e015f`, alongside all 18 original
-PR heads. The other 17 PRs were closed as superseded after their exact live heads were verified in
-ancestry; this remains the only open PR. No additional feature PR was opened. #134 is implemented
-and independently reviewed, but is not done until full validation, native acceptance, CI and merge.
-No issue is closed from local code alone.
+**PR #308 is merged; iOS 1.18.0 (35) is published to TestFlight.** All 18 prior PR heads and the
+completed #134 implementation are preserved in ancestry. Nineteen implemented issues closed with
+the merge, and no PR remains open. The source is `b1570ad567a43a093294974871d7f0abf1872708`;
+merge `8c8023f12b0c324540614adc1a1f6906e8915eaf` has the exact same tree. The maintainer explicitly
+approved “Defer Mac acceptance; merge and publish TestFlight.” Mac GUI/real OTHERS acceptance
+remains pending and Mac DMG publication stays paused.
 
-The full `make validate-local` run **passed** on clean frozen product source `45e015f` in
-`codex/134-finish-thin-views`: 1,232 Core tests (seven skips, 98.25909% line coverage), 513 iOS
-passes (12 intentional skips, zero failures), 26 native Mac passes, four Watch passes, all 91 BDD
-contracts, helper/lint/build checks and real Ollama/OpenAI-compatible contracts. Both dedicated
-simulators were deleted and all input hashes/working-tree state remained unchanged. Exact logs and
-three preserved native result bundles are in external `listentome-features/orchestration-134/
-full-validation-45e015f`. The first docs-only integration head `185bcff` passed all three required
-hosted checks; this final handoff/changelog-only follow-up refreshes CI again without product changes.
-The earlier `b763ac3` full pass and 24 inspected screenshots remain historical evidence. Fresh
-screenshots for this updated candidate are being captured before the authorized TestFlight train.
+Apple accepted the API-key upload at **2026-10-26 12:51:44 UTC**. Build
+`18ed5ceb-99cc-4658-b07b-3232b0bb23ce` is `VALID`, `IN_BETA_TESTING`, and included in the existing
+internal Dev group; both existing testers have accepted group membership. en-CA What to Test and
+beta description match their prepared files. The exact-source tag and [complete non-Latest GitHub
+pre-release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.0-build35)
+were read back; no binary is attached. Latest remains macOS `v1.4.4`. No installed TestFlight build
+or production-ready acceptance is claimed. Current-source iPhone/iPad physical checks remain pending;
+prior `215d818` microphone/Stop/Play-Pause checks are historical because persistence changed later.
+Watch stays unembedded pending its approved paired-device gates.
 
-#134 now has 14 ORCH contracts: conversation-owned Calendar/reference tasks; accepted-close
-invalidation; model-refresh privacy/choice policy; New/import transactions; synchronous pane/prompt
-command registration; current background-result ownership; native buffer/graph wiring; and iOS
-save dirty-state/ordering with native protection/backup/UI effects. The Mac root view is 274 lines
-and all files extending MeetingView have no explicit Task bodies. Seven real-filesystem iOS save
-tests passed before and after extraction. Existing formatting/selection/save policies are baseline
-adoption without invented historical red; actual cancellation and immediate-Stop regressions retain
-red/green logs. Independent review caught rejected-close invalidation, remaining pane-button wrappers
-and the last persistence extraction gap; all were corrected. A failed intermediate full Core run
-(51 assertions across two Summary continuation tests) is preserved as failed; its wait is restored.
-See [ORCHESTRATION.md](ORCHESTRATION.md) for ownership and evidence.
+Full `make validate-local` passed on clean frozen product source `45e015f`: 1,232 Core tests,
+seven skips, 98.25909% coverage; 513 iOS passes and 12 intentional skips; 26 Mac and four Watch
+passes; all 91 BDD contracts, helper/lint/build checks and real Ollama/OpenAI-compatible contracts.
+Only CHANGELOG/HANDOFF/ORCHESTRATION documentation changed before b1570ad, whose three required CI
+checks passed. All validation inputs remained unchanged. Twenty-four fresh inspected native screenshots
+from b1570ad cover iPhone Pro/Pro Max and iPad mini/13-inch Pro. Originals, lossless orientation-normalized
+copies, native dimensions and hashes are preserved; App Store listing upload remains pending.
+See [image provenance](images/ios/release-1.18.0.json). No production App Store submission was made.
 
-Installed Mac GUI and real OTHERS transcription remain pending. TestFlight upload itself uses the
-configured API key and does not require an unlocked Mac or connected phone; do not confuse the
-platform acceptance requirement with Apple authentication or an upload-tool blocker. The Mac locked again and the
-maintainer explicitly requested code work while away; do not repeatedly ask for unlock or reset
-permissions. Restore original Dev settings and complete targeted cleanup after acceptance finishes.
-Keep source/signing evidence for the exact app tested. This integration is not merged or published.
-Latest accepted TestFlight remains 1.17.0 (34); 1.18.0 (35) has no accepted upload yet. Watch remains
-unembedded pending its physical paired-device gates. Mac DMG publication remains paused.
+Release receipts, signing checks, tag/merge verification, Apple readback, screenshots and original
+red/green/native evidence are preserved externally under `listentome-features/combined-train/release`
+and `listentome-features/orchestration-134`. Four inactive temporary Dev bundles from the completed
+session were moved to Trash after checking no Dev app was running; source/signing/screenshots/logs
+were preserved. Four known changed test preferences were restored, and only
+`tccutil reset All com.tomwu.ListenToMe.dev` ran successfully. Conversation data and API keys were
+untouched. A pre-existing mac-menu build outside the completed acceptance session was left intact.
 
-## Combined PR train — October 25
+Remaining real issues: #181 paired Watch recording/sync acceptance; #205 multilingual Whisper
+physical-device accuracy/performance/battery spike; #223 additional semantic-search languages;
+#236 vocabulary-bias measurements; and their review tracker #98. The external #223 German/Spanish
+embedding experiments are no-go research, not an implemented or published language expansion.
+The dated checkpoints below are historical and do not supersede this publication record.
+
+## Historical combined PR train — October 25
 
 The maintainer explicitly requested consolidation of all 18 open PRs into one release and TestFlight
 publication. Existing PR #308 (`codex/306-ipad-start`) is the integration PR; no new feature PR was
@@ -149,7 +151,7 @@ The #127 full run at `0464e9d` exposed a shared iOS test synchronization race: t
 
 | Surface | Latest published | State of `main` |
 | --- | --- | --- |
-| iPhone/iPad (TestFlight) | **1.17.0 (34)**, published 2026-10-25, tag `ios-v1.17.0-build34` at `cbd2e45` | This feature batch is published to Dev; Watch remains excluded. Physical-device acceptance is pending. |
+| iPhone/iPad (TestFlight) | **1.18.0 (35)**, published 2026-10-26, tag `ios-v1.18.0-build35` at `b1570ad` | Combined batch published to Dev; Watch excluded. Current physical acceptance pending; Mac acceptance explicitly deferred. |
 | macOS | **1.4.4 (14)**, 2026-09-14, tag `v1.4.4` | **Releases paused on the maintainer's decision.** About 50 commits of Mac work are merged but unreleased; see [CHANGELOG → macOS (unreleased since 1.4.4)](../CHANGELOG.md#macos-unreleased-since-144). Do not start a macOS train yourself; the maintainer calls it. |
 | Apple Watch | Not shipped | Built on `main` behind the `WATCH_EMBED` build flag (off; `scripts/ios-testflight.sh` refuses an archive that embeds it). Waits on the maintainer running `SPIKE.md` on a real watch (branch `spike/181-watch-audio`, [#181](https://github.com/tomqwu/ListenToMe/issues/181)), then the Task 20 physical-device acceptance from #193. Status table in the [watch plan](superpowers/plans/2026-10-22-apple-watch-recording.md). |
 
