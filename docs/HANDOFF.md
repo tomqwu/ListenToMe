@@ -66,7 +66,20 @@ a full-validation pass. A rendered switch regression and balanced two-voice cont
 added and passing. All 39 native Mac tests, the actual Settings-switch UI regression and the
 stronger moving-overlap test pass. A separate three-person sample still merges two voices under both old and new models; this
 known limitation is disclosed in What to Test. Full validation, final review, CI, merge and the
-authorized tester-feedback TestFlight train remain pending. Current private tester audio and physical iPhone/iPad accuracy/performance are unverified.
+authorized tester-feedback TestFlight train remain pending.
+
+A second full run on `124ecbc` passed 59 UI tests with five intentional skips before stopping after
+one genuine largest-text release-history assertion and one cancellation. The failure capture shows
+readable 1.10.2 notes still above the oldest 1.10.0 heading after the test's fixed 70 swipes; Continue
+worked. The repaired harness uses observed heading position, an unobscured viewport, native far flings,
+precise near/overshoot recovery and progress diagnostics. Both focused release-note UI cases now
+pass with the oldest heading fully visible above Continue. All 454 iOS unit tests also pass with
+seven intentional skips and no failures; a clean full retry remains pending. This is not
+a full-validation pass. Its source stayed unchanged, both dedicated simulators were deleted, and
+its logs/xcresult/capture are preserved. A signed 1.18.1 (36) archive/export from `124ecbc` passed
+package checks but remains local and unpublished. It will be superseded by an exact-source candidate
+after the test repair and clean full validation. PR [#311](https://github.com/tomqwu/ListenToMe/pull/311)
+is open; its three required CI checks passed on `124ecbc`. Current private tester audio and physical iPhone/iPad accuracy/performance are unverified.
 No Mac publication or Watch embedding is authorized by this fix. App Store Connect read-only
 preflight on October 26 found build 36 unused and production baseline 1.15.0 unchanged.
 

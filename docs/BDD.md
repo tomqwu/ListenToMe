@@ -73,6 +73,16 @@ Native property tests also need reachable user controls: the opt-out contract in
 Settings-switch test while recording, rather than treating a direct property assignment as UI proof.
 See [speaker evidence and acceptance](speaker-identification.md).
 
+## Release-history accessibility acceptance
+
+`RELEASE-004` includes the actual oldest release heading and fixed Continue control at the largest
+text size. Scroll toward the observed heading through the unobscured viewport, recover from
+overshoot, and retain geometry/screenshots on stalls. A fixed gesture count cannot establish
+reachability as release history grows. The #310 train exposed the former 70-swipe test stopping
+above the oldest entry; its failed capture is evidence of an incomplete test journey, not proof
+that the app truncated history. Both the heading and Continue must remain usable in the corrected
+native test; never remove the old-heading assertion just to pass a release.
+
 ## Device compatibility is behavior
 
 For each affected feature, specify its supported and unavailable states before implementation.

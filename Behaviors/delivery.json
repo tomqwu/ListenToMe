@@ -66,18 +66,24 @@
     {
       "id": "RELEASE-004",
       "name": "Identify the feedback beta and bundled changes accurately",
-      "given": "a user updates to the speaker-identification feedback beta",
+      "given": "a user updates to the speaker-identification feedback beta using standard or the largest accessibility text",
       "when": "What\u2019s New appears or is reopened",
-      "then": "the app identifies version 1.18.1 build 36 with its Keep each voice distinct notes, acknowledges the update once and keeps prior notes readable",
+      "then": "the app identifies version 1.18.1 build 36 with its Keep each voice distinct notes, acknowledges the update once, and keeps the oldest release heading and Continue usable at the largest text size",
       "covers": [
         "project.yml",
-        "iOS/MobileReleaseNotes.swift"
+        "iOS/MobileReleaseNotes.swift",
+        "iOSTests/ReleaseHistoryScrolling.swift"
       ],
       "bindings": [
         {
           "suite": "ios-ui",
           "file": "iOSTests/MobileReleaseNotesUITests.swift",
           "test": "MobileReleaseNotesUITests/testUpdateShowsVersionOnceAndChangelogCanBeReopened"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileReleaseNotesUITests.swift",
+          "test": "MobileReleaseNotesUITests/testLargeTextKeepsContinueReachableAndHistoryScrollable"
         }
       ]
     },

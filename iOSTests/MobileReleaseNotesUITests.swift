@@ -36,8 +36,10 @@ final class MobileReleaseNotesUITests: XCTestCase {
         XCTAssertTrue(button.waitForExistence(timeout: 5))
         XCTAssertTrue(button.isHittable)
         let scroll = app.scrollViews["releaseNotesScroll"]
-        for _ in 0..<70 where !app.staticTexts["Automatic reviews"].isHittable { scroll.swipeUp() }
-        XCTAssertTrue(app.staticTexts["Automatic reviews"].isHittable)
+        let oldest = app.staticTexts["Automatic reviews"]
+        revealReleaseHeading(oldest, in: scroll, above: button, app: app)
+        XCTAssertTrue(oldest.isHittable)
+        XCTAssertTrue(button.isHittable)
         capture(app, "Large text release history with reachable Continue")
         button.tap()
         XCTAssertTrue(app.buttons["More"].waitForExistence(timeout: 5))
