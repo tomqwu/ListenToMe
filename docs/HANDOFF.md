@@ -4,7 +4,54 @@ A snapshot for an agent picking up ListenToMe cold. [AGENTS.md](../AGENTS.md) an
 [CLAUDE.md](../CLAUDE.md) stay the rules; this note is only the state of things on the date above.
 Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags) before acting on it.
 
-## Current English (US) App Review submission — October 26
+## Current US screenshot refresh and App Review — October 26, 21:13 UTC
+
+Apple accepted the refreshed **English (US), en-US** submission at
+**2026-10-26T21:13:50.231393+00:00**. Current review
+`4e63cda8-70db-4d67-9928-63409df4dbda` and version `c60352d3-eb78-479b-970c-d6ed6faa3242` read back
+**WAITING_FOR_REVIEW**, with AFTER_APPROVAL release. This is submission acceptance, not Apple
+approval or public availability. The accepted binary remains **1.18.1 (36)**, Apple build
+`2fd8477d-504e-44d2-ac7f-6c7e9236d01f`, exact artifact source
+`7643b204def6acea0b616a2c2de2bade2fc4c7c9`; no binary was re-uploaded. The US localized name is
+**Listen To Me - Real Time AI**. Actual app-wide primary locale remains **en-CA**: Apple again
+returned HTTP 409 `MISSING_SCREENSHOTS_PRIMARY_LOCALE` after all fresh US images became COMPLETE.
+The en-US localization is submitted; the primary-locale change is not complete.
+
+All **24 fresh US-region screenshots** were explicitly re-uploaded and are COMPLETE: six each on
+iPhone 17 Pro, iPhone 17 Pro Max, iPad mini (A17 Pro), and 13-inch iPad Pro (M5). Each native capture
+test passed (1 pass, 0 failures, 0 skips per device), every final image was visually inspected, and
+processed downloads match the source RGB pixels, native dimensions, MD5s and display order. App/test
+binaries were freshly built from the exact artifact source; archived source, generated project and
+product hashes were verified before/after every device. The [capture/upload catalog](images/ios/release-1.18.1-en-US-refresh.json)
+records every current Apple asset/set ID and receipt. Canadian draft and production assets remain
+unchanged; production remains 1.15.0 (32).
+
+The maintainer chose **“Resubmit 1.18.1; save Watch previews separately.”** Prior US review
+`89b4c261-b37d-4b24-aaee-20f8238d1663` was canceled and reached COMPLETE before the guarded image
+replacement. Every replaced image had hash-verified, decoded/pixel-matched backups; the deletion
+allowlist was frozen and disjoint from Canadian/production assets. One fresh image took longer to
+process and eventually completed normally. An unused retry reservation was removed after a
+fail-closed upload-instruction check; no retry image entered the submitted set. Offline fault
+injection verified recovery after deletion/write failure and idempotent completion, with the other
+23 rows preserved, plus correct use of reservation-only upload instructions.
+
+[Watch previews](images/watch/1.18.1-preview/README.md) are saved at native resolution for Series 11
+46 mm and Ultra 3 49 mm, with source/dimensions/hashes. The installed watchOS 26.5 runtime refused
+Series 12/Ultra 4 as incompatible; no model names were substituted. Existing denied-microphone/offline
+native UI tests passed on both simulators. Home captures use the normal app, without microphone
+recording or physical transfer. **Build 36 excludes Watch**; these are prospective maintainer-review
+images, not Watch customer-listing uploads or physical Watch acceptance.
+
+Canonical current evidence is
+`/Users/tomwu/Documents/Codex/2026-10-26/listentome-appstore-publication/refresh-us/`:
+`app-review-accepted.json`, review/version/name readbacks, all-image pixel/order proofs, primary-locale
+rejection, and the combined review ZIP. Use only `screenshots-final/` and
+`workspace-build-provenance.json` for the fresh images. Earlier capture attempts are superseded and
+retained; no permission changes were made. All dedicated simulators were deleted; no macOS Dev app
+session or Dev permission reset applies. PR #315 merged as `597d70a` after its three checks passed
+at `49572b1`. Do not resume any canceled earlier review or duplicate-upload build 36.
+
+## Earlier US App Review submission — replaced October 26
 
 Apple accepted the corrected **English (US), `en-US`** submission at
 **2026-10-26T20:07:35.298432+00:00**. The US localized name is the maintainer-selected
@@ -35,11 +82,11 @@ that local testing and participant requests stop; do not restart them for this s
 voice accuracy and battery remain unquantified by the agent. Watch is excluded; macOS distribution
 is unchanged. Production remains 1.15.0 (32) while Apple reviews the update.
 
-Canonical corrected evidence is
+Historical US submission evidence is
 `/Users/tomwu/Documents/Codex/2026-10-26/listentome-appstore-publication/locale-us/`:
 `app-review-accepted.json`, matching review/version/name readbacks, US screenshot proofs and both
-primary-locale errors. Parent-directory Canadian receipts are historical and canceled. Resume the
-new submission ID; never resubmit, duplicate-upload build 36 or report approval without Apple readback.
+primary-locale errors. Parent-directory Canadian receipts are historical and canceled. Read the
+old submission only as historical evidence; it was canceled for the fresh US refresh above. Never duplicate-upload build 36 or report approval without Apple readback.
 
 ## Historical Canadian submission — withdrawn October 26
 
@@ -66,8 +113,8 @@ as `493894d` after independent review and all three required checks passed.
 Receipt, request/readback evidence and the maintainer's acceptance are preserved in
 `/Users/tomwu/Documents/Codex/2026-10-26/listentome-appstore-publication/`, particularly
 `app-review-accepted.json`, `review-submission-readback.json` and `public-version-after-submit.json`.
-This Canadian submission was subsequently canceled. For current status, read US review
-`89b4c261-b37d-4b24-aaee-20f8238d1663` in `locale-us/`; never resume or resubmit the canceled review.
+This Canadian submission was subsequently canceled. For current status, read refreshed US review
+`4e63cda8-70db-4d67-9928-63409df4dbda` in `refresh-us/`; never resume or resubmit a canceled review.
 The preparation section below is historical.
 
 ## Historical public App Store preparation — October 26, iOS 1.18.1 (36)

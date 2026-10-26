@@ -131,17 +131,19 @@ The archive, upload, tagging and verification steps themselves are not repeated 
 
 ## Public App Store submission — October 26, 2026
 
-The corrected **English (US)** listing **Listen To Me - Real Time AI**, **1.18.1 (36)**, was accepted
-for App Review at **20:07:35 UTC**. It is WAITING_FOR_REVIEW and set to release after approval;
-production remains 1.15.0 (32). The first Canadian submission was canceled. All 24 explicit US
-screenshot uploads are COMPLETE and verified; they reuse identical English UI with original en-CA
-capture provenance retained. Apple's separate primary-locale change still returns HTTP 409, so the
-app-wide primary/fallback remains en-CA even though the en-US localization is submitted.
-The maintainer reports working TestFlight testing and requested no further local testing; no more
-local device checks or participant requests for this submission. No new binary was uploaded,
-Watch stays excluded and macOS distribution is separate. See
-[the corrected receipt](IOS-RELEASING.md#current-english-us-app-review-receipt--october-26) and
-[the current handoff](HANDOFF.md).
+The **English (US)** listing **Listen To Me - Real Time AI**, **1.18.1 (36)**, was resubmitted with
+24 fresh US-region screenshots and accepted for App Review at **21:13:50 UTC**. Review
+`4e63cda8-70db-4d67-9928-63409df4dbda` is WAITING_FOR_REVIEW and set to release after approval;
+production remains 1.15.0 (32). Earlier Canadian and US reviews were canceled. All 24 new US uploads
+are COMPLETE, with native dimensions, MD5s, display order and downloaded RGB pixels verified. These
+are fresh en-US captures, not reused en-CA images. Apple's separate primary-locale change still
+returns HTTP 409, so the app-wide primary/fallback remains en-CA even though en-US is submitted.
+
+The maintainer reports working TestFlight testing and requested no further local device testing or
+participant requests for this submission. The requested screenshot refresh used synthetic simulator
+content only. No new binary was uploaded; Watch stays excluded, with [native Watch previews](images/watch/1.18.1-preview/README.md)
+saved separately for maintainer review. macOS distribution is separate. See
+[the current receipt](IOS-RELEASING.md) and [the current handoff](HANDOFF.md).
 
 ## App Store Connect platform mapping
 

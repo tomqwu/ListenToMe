@@ -1,0 +1,21 @@
+{
+  "source": "49572b1959b514fa313f64377fd19112fac973c4",
+  "appSourceUnchangedSince": "7643b204def6acea0b616a2c2de2bade2fc4c7c9",
+  "locale": "en-US",
+  "runtime": "watchOS26.5",
+  "status": "prospective preview; Watch is not embedded in iOS build36 and these are not App Store listing uploads",
+  "nativeTests": "WatchCapabilityUITests/testDeniedLocalMicrophoneAndOfflineRemoteExplainRecoveryBeforeRecording passed on each simulator; no microphone or physical transfer tested",
+  "files": [
+    {
+      "path": "series11-46-home.png",
+      "simulator": "series11-46",
+      "sha256": "1d4f1d205b79e4dfdada12c7e00e34ec6192f772c6c88083b745289f3df6e40c"
+    },
+    {
+      "path": "ultra3-home.png",
+      "simulator": "ultra3",
+      "sha256": "9d1f8046c52b8241544dad67e9f97fdfb9d42804bc01a5ae8403e6aab0e44add"
+    }
+  ],
+  "fullEvidence": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-appstore-publication/refresh-us/watch-review"
+}
