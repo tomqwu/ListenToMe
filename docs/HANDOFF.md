@@ -4,7 +4,73 @@ A snapshot for an agent picking up ListenToMe cold. [AGENTS.md](../AGENTS.md) an
 [CLAUDE.md](../CLAUDE.md) stay the rules; this note is only the state of things on the date above.
 Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags) before acting on it.
 
-## Public App Store preparation — October 26, iOS 1.18.1 (36)
+## Current English (US) App Review submission — October 26
+
+Apple accepted the corrected **English (US), `en-US`** submission at
+**2026-10-26T20:07:35.298432+00:00**. The US localized name is the maintainer-selected
+**Listen To Me - Real Time AI**. Submission `89b4c261-b37d-4b24-aaee-20f8238d1663` and iOS version
+`c60352d3-eb78-479b-970c-d6ed6faa3242` read back **WAITING_FOR_REVIEW**, with **AFTER_APPROVAL** release.
+This is submission acceptance, not Apple approval or public availability. The build remains
+**1.18.1 (36)**, Apple build `2fd8477d-504e-44d2-ac7f-6c7e9236d01f`, artifact source
+`7643b204def6acea0b616a2c2de2bade2fc4c7c9`; no binary was re-uploaded.
+
+The earlier Canadian submission `25ae4878-c462-4528-a48e-01b12b028f39` was canceled and is COMPLETE.
+Apple rejected both **Listen To Me** and **ListenToMe** in the US locale as names used by another
+account. The maintainer supplied the new name; its US app-info record and the US version metadata
+were saved and read back. All **24 explicit US screenshot uploads** in four device categories are
+COMPLETE, with source checksums, native dimensions, order and downloaded RGB pixels verified.
+They reuse identical English UI captures from source `7643b20`; the original capture locale remains
+`en-CA`, not a claim of a fresh US-region capture. Canadian and existing production assets were
+read back unchanged. No further local device/UI tests were run.
+
+**Primary-locale limitation:** Apple still returns HTTP 409
+`MISSING_SCREENSHOTS_PRIMARY_LOCALE` when changing the app-wide primary locale to `en-US`, including
+a retry after all US images became COMPLETE. The actual primary remains **en-CA** and that fallback
+is retained. The **en-US localization is submitted**; do not equate that with changing the primary
+locale. Preserve the rejection and revisit only after Apple's eligibility state changes.
+
+For future releases, use `metadata/ios/en-US/` and verify actual locale/name IDs rather than copying
+historical Canadian selectors. The maintainer reports working TestFlight testing and has requested
+that local testing and participant requests stop; do not restart them for this submission. Human
+voice accuracy and battery remain unquantified by the agent. Watch is excluded; macOS distribution
+is unchanged. Production remains 1.15.0 (32) while Apple reviews the update.
+
+Canonical corrected evidence is
+`/Users/tomwu/Documents/Codex/2026-10-26/listentome-appstore-publication/locale-us/`:
+`app-review-accepted.json`, matching review/version/name readbacks, US screenshot proofs and both
+primary-locale errors. Parent-directory Canadian receipts are historical and canceled. Resume the
+new submission ID; never resubmit, duplicate-upload build 36 or report approval without Apple readback.
+
+## Historical Canadian submission — withdrawn October 26
+
+**Apple accepted the public App Review submission at 2026-10-26T19:45:08.361828+00:00.** Review
+submission `25ae4878-c462-4528-a48e-01b12b028f39` and iOS version
+`c60352d3-eb78-479b-970c-d6ed6faa3242` both read back **WAITING_FOR_REVIEW**. Accepted build **36**
+(`2fd8477d-504e-44d2-ac7f-6c7e9236d01f`) is selected, from artifact source
+`7643b204def6acea0b616a2c2de2bade2fc4c7c9`. Release is **AFTER_APPROVAL**; this is a successful
+submission, not an approved or publicly available update. The preceding public version remains
+1.15.0 (32) until Apple finishes review/release.
+
+The maintainer reported that TestFlight testing was already completed and working, and instructed
+that further local testing stop. That is maintainer-reported acceptance for this release; it is not
+an agent measurement of human speaker accuracy, audible playback quality or battery performance.
+No more local device checks or participant requests should be started for this submission. The
+basic source-equivalent development-signed capture passes below retain their original scope.
+
+The API rechecked the exact build, en-CA metadata/reviewer contacts and all **24 COMPLETE screenshots**
+with their native dimensions, checksums and order before creating one review submission, adding
+only this version and sending it. No new binary was uploaded. Watch stays excluded; the macOS draft
+and macOS publication were untouched. PR [#314](https://github.com/tomqwu/ListenToMe/pull/314) merged
+as `493894d` after independent review and all three required checks passed.
+
+Receipt, request/readback evidence and the maintainer's acceptance are preserved in
+`/Users/tomwu/Documents/Codex/2026-10-26/listentome-appstore-publication/`, particularly
+`app-review-accepted.json`, `review-submission-readback.json` and `public-version-after-submit.json`.
+This Canadian submission was subsequently canceled. For current status, read US review
+`89b4c261-b37d-4b24-aaee-20f8238d1663` in `locale-us/`; never resume or resubmit the canceled review.
+The preparation section below is historical.
+
+## Historical public App Store preparation — October 26, iOS 1.18.1 (36)
 
 The maintainer requested public App Store distribution. The configured API key can manage the
 public listing as well as TestFlight; no manual upload or new credential was needed. Apple readback

@@ -149,6 +149,11 @@ missing or rejected, and which steps only the maintainer can perform.
 
 ## Publishing an iOS release train
 
+Use **English (US), `en-US`**, for TestFlight and App Store release metadata (maintainer instruction,
+2026-10-26), with copy under `metadata/ios/en-US/`. Verify the actual localization and localized app
+name through Apple readback; preserve the existing US localized name unless the maintainer changes it.
+Historical `en-CA` receipts are evidence, not a default for new work.
+
 Use the platform-specific build, physical-device acceptance and archive/TestFlight distribution
 procedure in `docs/IOS.md` and the runbook in `docs/IOS-RELEASING.md` instead of the macOS DMG steps,
 with the checked-in `Config/iOS/` export settings, through actual upload and tester-status
