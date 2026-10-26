@@ -13,6 +13,7 @@ struct MeetingView: View {
     @State var suggestedMeeting: MeetingInfo?
     @State var calendarContext = CalendarContextCoordinator()
     @State var closeCoordinator = ConversationCloseCoordinator()
+    @State var newCoordinator = NewConversationCoordinator()
     @State var meetingSuggestionPolicy = MeetingSuggestionPolicy()
     @State var nextMeetingPoll = Date.distantPast
     @State var session: MeetingSession
@@ -23,15 +24,18 @@ struct MeetingView: View {
         nonmutating set { operationErrors.capture = newValue }
     }
     @State var recordingAvailability: FeatureAvailability = .temporarilyUnavailable(reason: "Checking recording support…")
-    @State var capabilityGeneration = 0
+    @State var capabilityWork = LatestResultCoordinator<FeatureAvailability>()
+    @State var calendarSuggestionWork = LatestResultCoordinator<CalendarLookup>()
+    @State var speakerModelReset = LatestResultCoordinator<Void>()
+    @State var speakerCheckpoint = LatestResultCoordinator<Void>()
     @State var captureStartGate = CaptureStartGate()
     var exportError: String? {
         get { operationErrors.file }
         nonmutating set { operationErrors.file = newValue }
     }
     @State var showSettings = false
-    @State private var permissions = PermissionsModel()
-    @State private var showPermissions = false
+    @State var permissions = PermissionsModel()
+    @State var showPermissions = false
     @State private var showOnboarding = false
     @State var restoredRecord: SessionRecord?
     @State var showSearch = false
@@ -51,7 +55,7 @@ struct MeetingView: View {
     /// for the whole session. `savingEnabledBeforeSettings`: toggle value snapshotted when Settings
     /// opened, so an off→on round-trip is still caught.
     @State var sessionSaveable = true
-    @State private var savingEnabledBeforeSettings = true; @State var chatModels: [String] = []
+    @State var savingEnabledBeforeSettings = true; @State var chatModels: [String] = []
     /// The discovered models whose `/api/show` metadata verifies them as local; handed to
     /// `ModelRanking.roleDefaults` so auto-defaults stay local-first (issue #137).
     @State var verifiedLocalModels: Set<String> = []
@@ -62,10 +66,11 @@ struct MeetingView: View {
     @State var referenceContext = ReferenceContextCoordinator()
     @State var referenceSkipped: [TextFileReader.Skipped] = []
     @State var captureCoordinator = CaptureCoordinator()
-    @State var importTask: Task<Void, Never>?
+    @State var importWork = FileImportCoordinator()
     @State var importStatus = AudioImportStatus()
-    var isImporting: Bool { importTask != nil || session.isTranscribingFile }
+    var isImporting: Bool { importWork.isActive || session.isTranscribingFile }
     @State var transcriptFollow = TranscriptFollowState()
+    @State var transcriptScrollWork = LatestResultCoordinator<Void>()
     /// User intent to be capturing — the toolbar button's source of truth. Stays true across the
     /// brief teardown window of a locale restart (when `session.isRunning` is transiently false),
     /// so a Stop press is never lost.
@@ -109,10 +114,10 @@ struct MeetingView: View {
     @State var modelStatus = ""
     @State var localOllamaReadiness: LocalOllamaReadiness?
     @State var modelCatalog = ModelCatalogCoordinator()
-    @State private var showLicenses = false
+    @State var showLicenses = false
     @State private var conversationTransitionBusy = false
     var lifecycleBusy: Bool {
-        get { conversationTransitionBusy || (!wantsCapture && captureCoordinator.phase != .idle) }
+        get { newCoordinator.isBusy || conversationTransitionBusy || (!wantsCapture && captureCoordinator.phase != .idle) }
         nonmutating set { conversationTransitionBusy = newValue }
     }
     @State var conversationTitle = ConversationTitle.generated(Date().formatted(date: .abbreviated, time: .shortened))
@@ -129,7 +134,7 @@ struct MeetingView: View {
         nonmutating set { checkpointController.failed = newValue }
     }
     var lastSavedKey: SessionCheckpointKey? { checkpointCoordinator.lastSavedKey }
-    @State private var hotkey = HotkeyMonitor()
+    @State var hotkey = HotkeyMonitor()
 
     /// mm:ss since the current recording run started (00:00 when idle).
     var elapsedLabel: String { CommandCenterLabels.elapsed(since: recordingStartedAt, now: now) }
@@ -149,141 +154,15 @@ struct MeetingView: View {
         _presetID = State(initialValue: PresetCatalog.preset(id: ProviderSettings.presetID).id)
         let savedPaths = (UserDefaults.standard.array(forKey: "referencePaths") as? [String]) ?? []
         _referencePaths = State(initialValue: savedPaths.map { URL(fileURLWithPath: $0) })
-        let store = ConversationStore()
-        _store = State(initialValue: store)
-        let othersSink = SpeakerAudioBuffer()
-        _othersAudioSink = State(initialValue: othersSink)
-        let microphoneSink = SpeakerAudioBuffer()
-        _microphoneAudioSink = State(initialValue: microphoneSink)
-        let savedAudioRuns = MacSavedAudio.shared.runs
-        let session = MeetingSession(
-            store: store,
-            context: ContextEngine(debounce: 8),
-            makeCapture: {
-                // Only accumulate the Others channel for diarization when the experimental setting
-                // is on — otherwise a normal meeting needlessly resamples + retains up to ~2 h of
-                // audio. Read at capture-creation time so toggling it before the next Listen applies.
-                let diarize = ProviderSettings.speakerDiarizationEnabled
-                // Always reset so a prior run's buffer is released even when the user has since
-                // turned diarization off (otherwise the old ~2 h/~460 MB samples stay resident in
-                // the @State-held sink). The reset also bumps the generation used below.
-                othersSink.reset()
-                microphoneSink.reset()
-                // Capture the generation for THIS run right after the reset above. Any late append
-                // from a prior run's capture carries an older generation and is rejected by the
-                // buffer, so it can't contaminate this run. On the non-diarize path the sink is nil
-                // and the value is unused.
-                let gen = diarize ? othersSink.currentGeneration() : 0
-                let identifyMic = diarize && ProviderSettings.microphoneDiarizationEnabled
-                // Save audio recordings (#55): the conversation was chosen in `beginDiarizationRunReset`.
-                // `MeetingSession.start` makes the capture on the main actor, after placing the recording.
-                let saved = MainActor.assumeIsolated {
-                    savedAudioRuns.writersForNewCapture(
-                        timesMatchAudio: ProviderSettings.transcriptionEngine != "speechRecognizer")
-                }
-                return DualChannelCapture(othersSink: diarize ? othersSink : nil, sinkGeneration: gen,
-                                          microphoneSink: identifyMic ? microphoneSink : nil,
-                                          microphoneGeneration: microphoneSink.currentGeneration(),
-                                          savedAudio: saved)
-            },
-            makeTranscriber: {
-                let locale = ProviderSettings.transcriptionLocale()
-                switch ProviderSettings.transcriptionEngine {
-                case "speechRecognizer":
-                    return SpeechRecognizerTranscriber(locale: locale) as any Transcribing
-                case "whisperKit":
-                    // "Auto" (empty id) → nil locale so WhisperKit auto-detects the language
-                    // (enables multilingual / code-switching); an explicit pick forces that language.
-                    let whisperLocale = ProviderSettings.transcriptionLocaleID.isEmpty
-                        ? nil : ProviderSettings.transcriptionLocale()
-                    return WhisperKitTranscriber(locale: whisperLocale, model: ProviderSettings.whisperModel) as any Transcribing
-                default:
-                    // Don't warm the system-audio analyzer when this process can't capture system
-                    // audio: it would leave an idle analyzer + results task for the whole session
-                    // (issue #147). `feed` still builds it lazily if system audio does arrive.
-                    return SpeechAnalyzerTranscriber(
-                        locale: locale,
-                        warmSystemAudio: PermissionsModel.systemAudioLikelyAvailable()
-                    ) as any Transcribing
-                }
-            },
-            makeProvider: { Self.provider(model: $0) },
-            models: [
-                .listener: ProviderSettings.model(for: .listener),
-                .quick: ProviderSettings.model(for: .quick),
-                .deep: ProviderSettings.model(for: .deep)
-            ],
-            providerAvailability: { ProviderSettings.automaticReviewUnavailableReason(quickModel: $0) }
-        )
-        _session = State(initialValue: session)
-        // Saved audio starts where the starting recording's lines start (#55; #233's recordingOffset).
-        savedAudioRuns.timelineOffset = { [weak session] in session?.recordingOffset ?? 0 }
-    }
-
-    // MARK: - Ollama cloud routing
-
-    /// The provider for `model` on the current AI route; also answers "Ask your history" (#57).
-    nonisolated static func provider(model: String) -> any LLMProvider {
-        if ProviderSettings.aiMode == .apple { return AppleIntelligenceProvider() as any LLMProvider }
-        if ProviderSettings.aiMode == .openAI { return ProviderSettings.openAIProvider(model: model) }
-        if ProviderSettings.aiMode == .cloudAI { return ProviderSettings.cloudAIProvider(model: model) }
-        return OllamaProvider(model: model, baseURL: Self.ollamaBaseURL(), apiKey: Self.ollamaKey(),
-                              localOnly: ProviderSettings.aiMode != .cloud)
-    }
-
-    nonisolated static func ollamaKey() -> String? {
-        guard ProviderSettings.aiMode == .cloud else { return nil }
-        let k = KeychainStore.get("ollama")
-        return (k?.isEmpty == false) ? k : nil
-    }
-
-    nonisolated static func ollamaBaseURL() -> URL {
-        ProviderSettings.aiMode == .cloud
-            ? URL(string: "https://ollama.com")!
-            : URL(string: "http://localhost:11434")!
+        let environment = MacMeetingEnvironment.configured()
+        _store = State(initialValue: environment.store)
+        _session = State(initialValue: environment.session)
+        _othersAudioSink = State(initialValue: environment.othersSink)
+        _microphoneAudioSink = State(initialValue: environment.microphoneSink)
     }
 
     var body: some View {
-        @Bindable var session = session
-        return VStack(spacing: 0) {
-            topControlBar(session: session, showPermissions: $showPermissions)
-            conversationStatus
-            if !wantsCapture, let reason = recordingAvailability.reason {
-                HStack {
-                    Text(reason).font(.callout).frame(maxWidth: .infinity, alignment: .leading)
-                    Button("Settings") { openSettings($showSettings) }
-                    Button("Permissions") { showPermissions = true }
-                }.padding(.horizontal, 14).padding(.vertical, 6)
-            }
-            if !modelStatus.isEmpty && ProviderSettings.aiMode != .off {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(modelStatus).font(.callout).foregroundStyle(.orange)
-                    if ProviderSettings.aiMode == .local, let readiness = localOllamaReadiness {
-                        LocalOllamaHelp(readiness: readiness) { requestModelRefresh() }
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 14)
-            }
-            if let startError {
-                MeetingErrorBanner(message: startError, dismissLabel: "Dismiss capture message",
-                                   dismiss: { self.startError = nil }, openSettings: permissions.openSettings)
-            }
-            if let exportError {
-                MeetingErrorBanner(message: exportError, dismissLabel: "Dismiss file or calendar message",
-                                   dismiss: { self.exportError = nil }, openSettings: permissions.openSettings)
-            }
-            calendarSuggestionBanner
-            MacVocabularyBanner(vocabulary: vocabulary, conversationID: currentSessionID, apply: applyVocabulary)
-            // HSplitView so the user can drag the rail/transcript/copilot dividers; each column
-            // carries its own min/ideal/max width so the handles have room to move.
-            HSplitView {
-                statusRail(session: session)
-                transcriptColumn(session: session, notes: $session.notes)
-                copilotColumn(session: session)
-            }
-            .frame(maxHeight: .infinity)
-            CommandCenterFooter(mode: ProviderSettings.aiMode)
-        }
+        return workspaceContent
         .background(Theme.windowBackground)
         .preferredColorScheme(colorScheme(for: appearance))
         .frame(minWidth: 1100, minHeight: 560)
@@ -312,11 +191,11 @@ struct MeetingView: View {
             if !referencePaths.isEmpty { loadReferences(into: session) }
             markSaveableAfterSettings()
             requestModelRefresh()
-            Task { await refreshFeatureAvailability() }
+            requestFeatureRefresh()
         }, content: {
             SettingsView()
         })
-        .sheet(isPresented: $showPermissions, onDismiss: { Task { await refreshFeatureAvailability() } }) {
+        .sheet(isPresented: $showPermissions, onDismiss: { requestFeatureRefresh() }) {
             PermissionsView(permissions: permissions)
         }
         .sheet(isPresented: $showLicenses) {
@@ -369,7 +248,7 @@ struct MeetingView: View {
             applyVocabulary()   // the preset persona, the vocabularies' guidance and recognition terms
             ApplicationLifecycle.shared.prepareToClose = { await prepareToClose() }
             if !referencePaths.isEmpty { loadReferences(into: session) }
-            hotkey.start { Task { await session.respondQuick(.answerQuestion) } }
+            hotkey.start { session.requestQuick(.answerQuestion) }
             permissions.refresh()
             // Setup appears once. Inconclusive permission checks must not reopen a modal on
             // every launch; permissions remain available explicitly from More.
@@ -385,249 +264,11 @@ struct MeetingView: View {
         }
         .task(id: transcriptionLocaleID) { await refreshFeatureAvailability() }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
-            Task { await refreshFeatureAvailability() }
+            requestFeatureRefresh()
         }
         .background(WindowCloseHandler())
         .focusedSceneValue(\.conversationCommands, conversationCommands)
         .onDisappear { tearDownOnDisappear(session: session) }
-    }
-
-}
-
-extension MeetingView {
-    // MARK: - Top control bar
-
-    /// Replaces the old icon-row toolbar: Listen/Stop + pulsing indicator + elapsed timer on the
-    /// left; the same icon actions that existed before on the right (refresh-models, import audio,
-    /// export menu, copy-session, search, permissions, settings).
-    private func topControlBar(session: MeetingSession, showPermissions: Binding<Bool>) -> some View {
-        HStack(spacing: 8) {
-            Button { toggleCapture(session: session) } label: {
-                Label(wantsCapture || captureStartGate.isPending ? "Stop listening" : "Start listening",
-                      systemImage: wantsCapture || captureStartGate.isPending ? "stop.fill" : "mic.fill")
-            }
-            .buttonStyle(.borderedProminent)
-            .help("Start or stop capturing microphone and system audio")
-            .disabled(lifecycleBusy || isImporting || (!wantsCapture && !captureStartGate.isPending && !recordingAvailability.canRun))
-            Button { saveConversation() } label: { Label("Save conversation", systemImage: "square.and.arrow.down") }
-                .disabled(!hasConversation)
-                .help("Save without stopping capture (Command-S)")
-            Button { newConversation() } label: { Label("New conversation", systemImage: "plus") }
-                .disabled(lifecycleBusy || isImporting)
-                .help("Save this conversation, then start a clean one (Command-N)")
-            Button { showSearch = true } label: { Label("History", systemImage: "clock") }
-                .help("Open saved conversations (Command-F)")
-            Menu {
-                ConversationExportMenu(record: { currentRecord(date: conversationStartedAt ?? Date()) },
-                                       hasTimestamps: TranscriptTimestamp.hasTimes(store.utterances),
-                                       onError: { exportError = $0 }, onBegin: { exportError = nil })
-            } label: { Label("Export", systemImage: "square.and.arrow.up") }
-                .help("Export or copy this conversation")
-            Button { openSettings($showSettings) } label: { Label("Settings", systemImage: "gearshape") }
-                .help("Configure transcription, AI, and saving (Command-comma)")
-            Menu {
-                Button("Re-transcribe saved audio…") { showRetranscription = true }
-                    .disabled(!canRetranscribe)
-                Button("Refresh models") { requestModelRefresh() }
-                Button("Import audio or video…") { importAudioFile(session: session) }
-                    .disabled(wantsCapture || lifecycleBusy || isImporting)
-                Button("Permissions…") { showPermissions.wrappedValue = true }
-                Button("Open-source licenses…") { showLicenses = true }
-            } label: { Label("More", systemImage: "ellipsis") }
-            Spacer(minLength: 0)
-        }
-        .font(.system(size: 13, weight: .medium))
-        .controlSize(.large)
-        .imageScale(.large)
-        .padding(.horizontal, 14).padding(.vertical, 10)
-        .background(Theme.windowBackground)
-    }
-
-    /// Resolve permission; capture ownership fences any late denial.
-    func microphoneDecision() async -> CapturePreflight.Decision {
-        var decision = CapturePreflight.decide(microphone: PermissionsModel.currentMicrophoneAuthorization())
-        if decision == .requestAccess {
-            let granted = await PermissionsModel.requestMicrophoneAccess()
-            permissions.refresh()
-            decision = CapturePreflight.decideAfterRequest(granted: granted)
-        }
-        return decision
-    }
-
-    /// Pre-start half of a diarization-run reset: clear stale inline labels and bump the run token so
-    /// any in-flight `identifySpeakers` drops its (now stale) results. Call this BEFORE `session.start()`
-    /// — the run anchor is set only AFTER start returns (see `anchorDiarizationRun`), because
-    /// `start()` awaits the prior Stop's drain, which can still append old final utterances first.
-    ///
-    /// Also release the breakdown UI: bumping the token makes a superseded `identifySpeakers` task
-    /// bail via its token guard WITHOUT clearing `speakerLoading`, so we clear the spinner/error state
-    /// here. This guarantees that starting/restarting always frees the "Identify speakers" button.
-    func beginDiarizationRunReset() {
-        speakerWork.cancel()
-        let run = diarizationRunToken + 1
-        let remotePrefix = run == 1 ? "Speaker" : "Run \(run) speaker"
-        let micPrefix = run == 1 ? "Mic speaker" : "Run \(run) mic speaker"
-        speakerTrackers = [.others: SpeakerIdentityTracker(prefix: remotePrefix),
-                           .you: SpeakerIdentityTracker(prefix: micPrefix)]
-        speakerParticipants = []
-        speakerSegments = [:]
-        speakerIdentities = [:]
-        speakerAnalyzedSamples = [:]
-        speakerStatus = nil
-        // A new recording is also a retry: the model download may well succeed now (#109).
-        Task { await diarizer.retryModelLoad() }
-        nextSpeakerAnalysis = .distantFuture
-        speakerLoading = false
-        speakerError = nil
-        diarizationRunToken &+= 1
-        // Every capture start passes here first: the next capture saves its audio into this conversation.
-        // Audio only for a conversation History will keep (#55 review): none while autosaving is off.
-        MacSavedAudio.shared.prepareRun(conversationID: ProviderSettings.saveSessionsForSearch && sessionSaveable
-                                        ? currentSessionID : nil)
-        // Disable Identify for the whole transition window: `session.start()` first awaits the prior
-        // Stop's drain, then `makeCapture` calls `othersSink.reset()`. Until that reset+attach happens
-        // the buffer still holds the PREVIOUS run's audio under the new token, so an Identify here
-        // would slip a stale result past the token guard. We re-enable in `anchorDiarizationRun()`,
-        // once start() has returned and the new run is fully live. The run snapshots are also taken
-        // there (not here), so they reflect what the new capture/transcriber actually used.
-        diarizationSinkAttached = false
-        microphoneSinkAttached = false
-    }
-
-    /// Post-start half: anchor diarization to the current run and snapshot what it actually used. By
-    /// the time `session.start()` returns, the previous run's drain is complete (its finals are in the
-    /// store) and the new capture has reset+attached the sink, so `store.utterances.count` marks where
-    /// this run's lines begin and the live settings match the capture/transcriber just built.
-    func anchorDiarizationRun() {
-        diarizationRunStartIndex = store.utterances.count
-        MacSavedAudio.shared.anchorRun(firstSegment: store.utterances.count)
-        // Snapshot the settings the new run's capture/transcriber were built from. `makeCapture` read
-        // `speakerDiarizationEnabled` to decide sink attachment and `makeTranscriber` read the engine,
-        // both during the `start()` that just returned — so reading them now matches this run, and
-        // re-enables Identify only when the sink is actually attached and live.
-        diarizationSinkAttached = ProviderSettings.speakerDiarizationEnabled
-        diarizationRunUsesTimestamps = ProviderSettings.transcriptionEngine != "speechRecognizer"
-        microphoneSinkAttached = diarizationSinkAttached && ProviderSettings.microphoneDiarizationEnabled
-        nextSpeakerAnalysis = Date().addingTimeInterval(SpeakerAnalysisPolicy.minimumRest)
-    }
-
-    /// Attach/clear files & folders whose text is fed into Quick/Deep prompts as grounding.
-
-}
-
-// MARK: - Actions (import / export / model refresh)
-
-extension MeetingView {
-    /// Imports audio or a movie audio track with the source selected in the file picker,
-    /// using the currently-selected language. Independent of live recording.
-    func importAudioFile(session: MeetingSession) {
-        guard !isImporting, !lifecycleBusy, !wantsCapture else { return }
-        let panel = NSOpenPanel()
-        panel.canChooseFiles = true
-        panel.allowsMultipleSelection = false
-        panel.allowedContentTypes = [.audio, .movie, .mpeg4Movie, .quickTimeMovie]
-        panel.message = "Choose an audio or video recording to transcribe"
-        let sourcePicker = NSSegmentedControl(labels: ["Others", "You"], trackingMode: .selectOne,
-                                             target: nil, action: nil)
-        sourcePicker.selectedSegment = 0
-        let accessory = NSStackView(views: [NSTextField(labelWithString: "Label imported speech as:"), sourcePicker])
-        accessory.orientation = .horizontal
-        accessory.spacing = 8
-        accessory.setFrameSize(NSSize(width: 390, height: 30))
-        panel.accessoryView = accessory
-        guard panel.runModal() == .OK, let url = panel.url,
-              !isImporting, !lifecycleBusy, !wantsCapture else { return }
-        let source: SpeakerSource = sourcePicker.selectedSegment == 1 ? .you : .others
-        exportError = nil
-        // Imports always use SpeechAnalyzer (it finalizes all fed audio, so fast-feeding a file is
-        // lossless), regardless of the live-capture engine setting; the chosen language still applies.
-        let locale = ProviderSettings.transcriptionLocale()
-        noteCaptureLanguage(engine: "speechAnalyzer")
-        importStatus.begin(fileName: url.lastPathComponent)
-        let progress = importStatus
-        importTask = Task {
-            defer { importTask = nil }
-            do {
-                let producer = try await MediaFileChunkProducer.open(url: url, source: source)
-                await session.transcribeAudio(
-                    nextChunk: {
-                        let chunk = try await producer.next()
-                        await progress.update(await producer.progress())
-                        return chunk
-                    },
-                    transcriber: { SpeechAnalyzerTranscriber(locale: locale) as any Transcribing })
-            } catch {
-                if !Task.isCancelled { operationErrors.importFailed(error) }
-            }
-        }
-    }
-
-    /// Window close/teardown: stop the hotkey and any pending restart/import. If recording, mirror
-    /// the Stop-button flow so a meeting ended by closing the window is still saved for search
-    /// (best-effort: the Task may not finish on a full app quit).
-    func tearDownOnDisappear(session: MeetingSession) {
-        captureStartGate.close()
-        calendarContext.cancel()
-        referenceContext.cancel()
-        modelCatalog.cancel()
-        hotkey.stop()
-        for role in CopilotRole.allCases { session.cancelResponse(role) }
-        speakerWork.cancel()
-        diarizationRunToken &+= 1
-        let wasCapturing = wantsCapture
-        importTask?.cancel()    // stop an in-flight file import when the window closes
-        if wasCapturing {
-            _ = checkpoint()
-            captureCoordinator.requestStop(after: {
-                _ = checkpoint(complete: true, force: true)
-            })
-        } else {
-            captureCoordinator.requestStop()
-            session.stop()
-        }
-    }
-
-    /// Opens Settings, snapshotting the saving toggle first so an off→on round-trip is still caught
-    /// on dismiss (see `markSaveableAfterSettings`).
-    func openSettings(_ showSettings: Binding<Bool>) {
-        // A catalog begun before editing must not heal choices during the Settings transaction.
-        modelCatalog.cancel()
-        savingEnabledBeforeSettings = ProviderSettings.saveSessionsForSearch
-        showSettings.wrappedValue = true
-    }
-
-    /// Settings-dismiss: taint the session only when saving was off at some point during the visit
-    /// (off when opened OR off now) AND content was already captured — that content was at risk, so
-    /// exclude the whole window-session. Turning saving ON before recording anything leaves it
-    /// untainted, so saving works normally for that window.
-    func markSaveableAfterSettings() {
-        let wasOff = !savingEnabledBeforeSettings || !ProviderSettings.saveSessionsForSearch
-        // "Has content" includes an in-progress partial, so audio captured mid-utterance while
-        // saving was off still taints the session.
-        let hasContent = !store.utterances.isEmpty || store.partial != nil
-        if wasOff && hasContent { sessionSaveable = false }
-    }
-
-    /// Drops the current in-memory session from future saves after the user clears history, so a
-    /// just-deleted transcript can't be re-persisted. A fresh id starts a new (still untainted)
-    /// upsert key once this session is sealed.
-    func dropCurrentSessionFromSaving() {
-        calendarContext.cancel()
-        // Only taint when the current window-session has content that was just cleared — clearing
-        // old records on a fresh/empty window must not silently disable future saving.
-        if hasConversation { sessionSaveable = false }
-        currentSessionID = UUID().uuidString
-        vocabulary.restore(domainIDs: nil, for: currentSessionID, transcriptLineCount: store.utterances.count)
-        applyVocabulary()
-        checkpointCoordinator.reset()
-    }
-
-    /// On Stop, persist the finished session for cross-meeting search when this window-session is
-    /// saveable (saving never observed off), saving is on, and there's new transcript. Reuses
-    /// `currentSessionID` so repeated Listen→Stop cycles upsert one growing record. Title = the
-    /// active preset's name (or "Session") plus the date.
-    func saveSessionIfEnabled(session: MeetingSession, force: Bool = false) {
-        _ = checkpoint(complete: !wantsCapture && !lifecycleBusy, force: force)
     }
 
 }

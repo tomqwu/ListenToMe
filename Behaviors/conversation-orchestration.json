@@ -246,6 +246,280 @@
           "test": "ModelCatalogCoordinatorTests/testNewerRefreshKeepsItsModelChoicesWhenAnOlderReplyArrives"
         }
       ]
+    },
+    {
+      "id": "ORCH-008",
+      "name": "New conversation drains and keeps the existing save decision",
+      "given": "a conversation may contain final speech still draining and may fail automatic saving",
+      "when": "the user requests New",
+      "then": "the pre-stop checkpoint precedes drain, final speech is saved before reset, cancelled or failed Save As keeps the conversation open, and overlapping New cannot prompt or reset twice",
+      "covers": [
+        "Sources/ListenToMeCore/NewConversationCoordinator.swift",
+        "App/MeetingView+Conversations.swift",
+        "App/MeetingView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/NewConversationCoordinatorTests.swift",
+          "test": "NewConversationCoordinatorTests/testFinalSpeechIsSavedBeforeNewConversationResets"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/NewConversationCoordinatorTests.swift",
+          "test": "NewConversationCoordinatorTests/testCancelledOrFailedSaveAsKeepsTheConversation"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/NewConversationCoordinatorTests.swift",
+          "test": "NewConversationCoordinatorTests/testAcceptedSaveAsOrExplicitDiscardResetsOnlyAfterDecision"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/NewConversationCoordinatorTests.swift",
+          "test": "NewConversationCoordinatorTests/testRepeatedNewWhileDrainingCannotPromptOrResetTwice"
+        }
+      ]
+    },
+    {
+      "id": "ORCH-009",
+      "name": "File import owns its cancellation and drain",
+      "given": "a selected recording is about to open or is being imported",
+      "when": "the user cancels or closes while importing",
+      "then": "pre-execution cancellation opens no media and changes no transcript, an active import remains busy until its drain completes, cancelled failures show no late error, and an uncancelled failure remains visible",
+      "covers": [
+        "Sources/ListenToMeCore/FileImportCoordinator.swift",
+        "App/MeetingView.swift",
+        "App/MeetingView+Conversations.swift",
+        "App/MeetingView+TranscriptEditing.swift",
+        "App/MeetingView+Suggestions.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/FileImportCoordinatorTests.swift",
+          "test": "FileImportCoordinatorTests/testCompletedImportOwnsOneOperationAndThenAllowsAnother"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/FileImportCoordinatorTests.swift",
+          "test": "FileImportCoordinatorTests/testFailureIsReportedAndBusyStateClears"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/FileImportCoordinatorTests.swift",
+          "test": "FileImportCoordinatorTests/testCancelledImportStaysBusyUntilDrainAndSuppressesLateFailure"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/FileImportCoordinatorTests.swift",
+          "test": "FileImportCoordinatorTests/testCancelBeforeExecutionOpensNoMediaOrTranscript"
+        }
+      ]
+    },
+    {
+      "id": "ORCH-010",
+      "name": "Pane commands register their cancellable response before returning",
+      "given": "AI is enabled and a pane button, one-time prompt, suggested chip, menu command or hotkey is pressed",
+      "when": "Stop is pressed immediately before the response task can execute",
+      "then": "the pane already exposes its running state and Stop cancels that exact request so no answer starts later; completed Quick, Deep and Summary still target their own panes; waiting for a full Summary also waits for its automatic continuation batches",
+      "covers": [
+        "Sources/ListenToMeCore/MeetingSession.swift",
+        "App/MeetingView.swift",
+        "App/MeetingView+Conversations.swift",
+        "App/CommandCenterPanes.swift",
+        "App/SuggestedPromptChips.swift",
+        "Sources/ListenToMeCore/MeetingSession+Suggestions.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/MeetingSessionTests.swift",
+          "test": "MeetingSessionTests/testImmediateStopCannotStartAnUnregisteredButtonResponse"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/MeetingSessionTests.swift",
+          "test": "MeetingSessionTests/testRespondQuickStreamsIntoQuickSuggestion"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/MeetingSessionTests.swift",
+          "test": "MeetingSessionTests/testRespondDeepStreamsIntoDeepAnswer"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/MeetingSessionTests.swift",
+          "test": "MeetingSessionTests/testRefreshListenerStreamsIntoListenerSummary"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationLifecycleTests.swift",
+          "test": "ConversationLifecycleTests/testSummaryCarriesEarlyActionsAcrossAllTranscriptBatches"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ProvisionalPromptTests.swift",
+          "test": "ProvisionalPromptTests/testProvisionalNoticeIsChargedToTheWindow"
+        }
+      ]
+    },
+    {
+      "id": "ORCH-011",
+      "name": "Window background checks publish only their latest active result",
+      "given": "a capability check, Calendar suggestion, speaker follow-up or deferred transcript scroll is pending",
+      "when": "the window closes, a newer check starts or the owning run is reset",
+      "then": "obsolete results cannot change current controls or status and cancellation before execution starts no device or Calendar query",
+      "covers": [
+        "Sources/ListenToMeCore/LatestResultCoordinator.swift",
+        "App/MeetingView+Capabilities.swift",
+        "App/MeetingView+Suggestions.swift",
+        "App/MeetingView+Speakers.swift",
+        "App/MeetingView.swift",
+        "App/CommandCenterPanes.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/LatestResultCoordinatorTests.swift",
+          "test": "LatestResultCoordinatorTests/testLatestResultSurvivesAnOlderUncooperativeReply"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/LatestResultCoordinatorTests.swift",
+          "test": "LatestResultCoordinatorTests/testCloseDiscardsAPendingResult"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/LatestResultCoordinatorTests.swift",
+          "test": "LatestResultCoordinatorTests/testCancellationBeforeExecutionStartsNoQuery"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/LatestResultCoordinatorTests.swift",
+          "test": "LatestResultCoordinatorTests/testReplacementBeforeExecutionQueriesOnlyTheLatestSelection"
+        }
+      ]
+    },
+    {
+      "id": "ORCH-012",
+      "name": "Background speaker snapshots preserve the selected recording window",
+      "given": "audio buffers have a held old snapshot and a restarted recording generation",
+      "when": "a speaker window is assembled off the UI actor",
+      "then": "late old callbacks cannot contaminate the current samples or offset and the held old snapshot remains independent, while resampling and memory caps remain enforced",
+      "covers": [
+        "SharedPlatform/SpeakerAudioBuffer.swift",
+        "App/MeetingView+Speakers.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/PlatformAdapterTests.swift",
+          "test": "PlatformAdapterTests/testOldAudioCallbackCannotContaminateRestartedRunOrItsOffset"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/PlatformAdapterTests.swift",
+          "test": "PlatformAdapterTests/testRealConverterResamplesAndCapsInsteadOfGrowingWithoutBound"
+        }
+      ]
+    },
+    {
+      "id": "ORCH-013",
+      "name": "Each Mac window owns one coherent conversation graph",
+      "given": "a Mac conversation workspace is created with native audio buffers and a Core session",
+      "when": "transcript or pane state changes and another workspace is created",
+      "then": "the session and workspace observe the same transcript store and use their own channel buffers; another workspace cannot replace their conversation state",
+      "covers": [
+        "App/MacMeetingEnvironment.swift",
+        "App/MacMeetingEnvironment+Production.swift",
+        "App/MeetingView.swift",
+        "App/MeetingView+Layout.swift",
+        "App/MeetingView+Controls.swift",
+        "App/MeetingView+Lifecycle.swift",
+        "App/MeetingView+Import.swift",
+        "App/MeetingView+Speakers.swift",
+        "App/MeetingView+Capture.swift",
+        "App/MeetingView+Models.swift",
+        "App/MeetingView+HistoryAsk.swift",
+        "project.yml"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacMeetingEnvironmentTests.swift",
+          "test": "MacMeetingEnvironmentTests/testSessionAndWorkspaceShareOneStoreAndIndependentChannelBuffers"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacMeetingEnvironmentTests.swift",
+          "test": "MacMeetingEnvironmentTests/testAnotherEnvironmentCannotReplaceTheExistingConversation"
+        }
+      ]
+    },
+    {
+      "id": "ORCH-014",
+      "name": "iOS save acknowledges both durable copies and keeps failed writes retryable",
+      "given": "an active conversation may be unchanged, empty but already in History, or encounter an archive or active-snapshot failure",
+      "when": "Save runs and is retried after storage recovers",
+      "then": "unchanged bytes cause no writes, an empty edit updates its existing History record, archive failure publishes no downstream effects, and a failed active snapshot stays dirty so retry writes both copies before acknowledging success",
+      "covers": [
+        "Sources/ListenToMeCore/ConversationPersistenceCoordinator.swift",
+        "iOS/MobileSession.swift",
+        "iOS/MobileSession+Deletion.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationPersistenceCoordinatorTests.swift",
+          "test": "ConversationPersistenceCoordinatorTests/testUnchangedDataSkipsEveryWrite"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationPersistenceCoordinatorTests.swift",
+          "test": "ConversationPersistenceCoordinatorTests/testEmptyPreviouslyArchivedConversationStillUpdatesHistory"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationPersistenceCoordinatorTests.swift",
+          "test": "ConversationPersistenceCoordinatorTests/testNewEmptyConversationWritesOnlyActiveSnapshot"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationPersistenceCoordinatorTests.swift",
+          "test": "ConversationPersistenceCoordinatorTests/testArchiveFailureHasNoDownstreamEffectsAndCanRetry"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationPersistenceCoordinatorTests.swift",
+          "test": "ConversationPersistenceCoordinatorTests/testActiveSnapshotFailureDoesNotAcknowledgeAndRetryWritesBothCopies"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationPersistenceCoordinatorTests.swift",
+          "test": "ConversationPersistenceCoordinatorTests/testInvalidationForcesAWriteAfterConversationChanges"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSaveCostTests.swift",
+          "test": "MobileSaveCostTests/testAnUnchangedRecordIsNotWrittenAgain"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSaveCostTests.swift",
+          "test": "MobileSaveCostTests/testAnAlreadySavedConversationCanPersistAnEmptyEdit"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSaveCostTests.swift",
+          "test": "MobileSaveCostTests/testArchiveFailureKeepsCurrentTextAndCanRetry"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSaveCostTests.swift",
+          "test": "MobileSaveCostTests/testActiveSnapshotFailureStaysRetryableAfterArchiveWasSaved"
+        }
+      ]
     }
   ]
 }

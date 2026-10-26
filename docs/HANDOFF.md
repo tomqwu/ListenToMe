@@ -18,13 +18,27 @@ invented historical red. Held-reply tests reproduced late Calendar overwrites, c
 publication and premature context invalidation on a rejected close (ORCH-002/004/005), then passed
 after ownership/cancellation fixes. Independent review caught the rejected-close edge and the async
 default-argument closure; both are corrected. Evidence is in the external `listentome-features/
-orchestration-134` directory. This is partial work for #134, with no new PR, merge or release claim.
+orchestration-134` directory. This remains unmerged #134 work, with no new PR or release claim.
 Full validation and rendered context/close acceptance remain required before integration.
 The next local slice moves model-catalog task ownership and pane-healing policy into Core
 (ORCH-006/007): four baseline tests adopted existing privacy/choice behavior, then eight assertions
 reproduced AI-off discovery, pre-execution cancellation and stale-route publication before the fix.
 All nine focused tests passed and independent review found no blockers. Native credentials stay in
 the adapter; this does not claim to abort network I/O already in progress.
+
+The local continuation now also extracts New/import and background-result ownership, and registers
+menu/hotkey response tasks synchronously. Actual immediate-Stop and cancelled-before-open regressions
+were reproduced before fixes. The root MeetingView is 274 lines; its extensions contain no explicit
+Task bodies. Twenty-six native Mac tests and the signed build passed. A full Core run exposed a
+refactor regression that waited only for Summary’s first batch (51 assertions across two tests);
+the original continuation-aware wait is restored and all 50 focused tests pass. Keep that failed
+run as evidence, not a candidate pass. The complete frozen validation and installed rendering/audio
+acceptance still have to pass. See [ORCHESTRATION.md](ORCHESTRATION.md) for ownership and evidence.
+The final #134 scope review identified portable save policy still in MobileSession. It now lives in
+Core ConversationPersistenceCoordinator, with encoding/private writes/backup/UI messages native.
+Seven real-filesystem iOS tests passed before extraction; the same native tests and six Core policy
+tests check parity afterward. Independent review cleared the implementation scope. #134 is not done
+until frozen validation, native acceptance, hosted CI and merge; no issue is closed on local code alone.
 
 ## Combined PR train — October 25
 

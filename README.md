@@ -553,8 +553,10 @@ saying so. Press **Speakers / edit names** to retry once the network is availabl
 
 ## Architecture
 
-- **`ListenToMeCore`** (Swift package): all testable logic — conversation state, VAD, question
-  detection, prompt building, Ollama provider, model router, context engine, `MeetingSession`.
+- **`ListenToMeCore`** (Swift package): shared conversation policy and tested task owners — capture,
+  persistence, naming, context, model selection, prompt building, providers and `MeetingSession`.
+  Native effects and some platform-specific orchestration remain in the app targets; Core coverage
+  is not a whole-product measurement. See [orchestration ownership](docs/ORCHESTRATION.md).
 - **`iOS/`**: iPhone/iPad SwiftUI app, foreground microphone capture with SpeechAnalyzer, Apple Intelligence
   (Foundation Models) summaries by default on capable devices.
 - **`Watch/`**: Apple Watch companion, embedded only with the `WATCH_EMBED` build flag (off; not shipped).
@@ -756,8 +758,11 @@ In Mac Settings, choose WhisperKit and a multilingual **Tiny**, **Base** or **Sm
 Summary requests ask the selected model for Open / To-do / Decided items with verbatim transcript evidence. Valid output becomes cards with expandable Sources; copied text, History and exports retain readable Markdown. Owners and deadlines are optional and require matching words in the cited speech. Source checks verify quoted wording, not the model's interpretation: review decisions and commitments before relying on them. Unfinalized speech is not accepted as card evidence. A model that returns freeform or invalid structured output falls back to the normal text pane. No additional model request is made. Earlier items and their source excerpts are included in the rolling record for later batches. iPhone keeps the readable summary and preserves unchanged structured metadata when saving an imported record.
 Capture lifecycle task ownership is shared in `CaptureCoordinator`: iOS and Mac adapters supply
 recorders, permission policy and persistence effects. Core tests cover start/stop/restart races;
-platform GUI/audio acceptance remains a separate requirement. Other platform orchestration is
-still being migrated under #134; Core coverage does not represent whole-product coverage.
+platform GUI/audio acceptance remains a separate requirement. Mac New/close/import, Calendar,
+reference, model-refresh and background-result task owners also live in Core. Native adapters
+supply device APIs, settings, rendering and save/export decisions. The Mac root view is under 300
+lines with no explicit Task bodies in its view extensions; that does not measure all native code.
+See [the ownership and validation boundaries](docs/ORCHESTRATION.md).
 
 Manual whole-conversation summary instructions, transcript fencing and input-budget checks live in
 Core's `PromptBuilder.buildSummary`; iOS supplies its provider allocation and vocabulary/provisional

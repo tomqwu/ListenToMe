@@ -20,6 +20,8 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased since 1.17.0 (34))
 
+- Maintenance: active/history save ordering, unchanged-save suppression and retry acknowledgement now use a tested Core owner. Native file protection, backup options, storage format and user-facing save behavior are unchanged. (#134)
+
 - Documentation: the Watch speaker-privacy section now agrees with the existing opt-in saved-audio retention policy. No app behavior changes. (#225)
 
 - Watch imports retain playable audio only when Save audio recordings is on, with reconnect queueing, retry-safe storage, consistent playback timing and existing deletion/expiry controls (#225). Watch remains excluded from distribution.
@@ -86,6 +88,8 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 - Settings → Privacy now explains that optional Ollama, Cloud AI and OpenAI-compatible requests send text and included context to the provider you choose; Apple Intelligence stays on-device. (#247)
 
 ## macOS (unreleased since 1.4.4)
+
+- Mac pane buttons, prompts, chips, menus and hotkeys register their cancellable response immediately, preventing an immediate Stop from letting an answer begin later. New and import task ownership now live in Core; cancelling before an import starts opens no media. Pending device/Calendar/speaker follow-ups cannot publish after cancellation or supersession. Root-view construction and layout are separated from these tested owners. (#134)
 
 - AI-off no longer queries model catalogs or changes saved model choices. Model refreshes are cancelled when editing Settings or closing the window; replies from an obsolete route cannot update the current route. Explicit cloud/custom choices and verified-local Ollama defaults remain unchanged. (#134, partial)
 

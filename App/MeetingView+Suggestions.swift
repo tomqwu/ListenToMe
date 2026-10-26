@@ -6,7 +6,7 @@ extension MeetingView {
     private var canSuggestMeeting: Bool {
         UserDefaults.standard.bool(forKey: "suggestCalendarMeetings") && !showSettings
             && !showSearch && !wantsCapture && !session.isRunning && !lifecycleBusy
-            && !session.isTranscribingFile && importTask == nil && !hasConversation
+            && !session.isTranscribingFile && !importWork.isActive && !hasConversation
             && restoredRecord == nil && lastSavedKey == nil && conversationTitleState == .placeholder
     }
 
@@ -45,18 +45,20 @@ extension MeetingView {
         guard now >= nextMeetingPoll else { return }
         nextMeetingPoll = now.addingTimeInterval(30)
         let conversationID = currentSessionID
-        Task {
-            let lookup = await CalendarService.currentOrNextMeeting(now: now, requestAccess: false)
+        calendarSuggestionWork.start(load: {
+            await CalendarService.currentOrNextMeeting(now: now, requestAccess: false)
+        }, apply: { lookup in
             guard canSuggestMeeting, currentSessionID == conversationID else { return }
             suggestedMeeting = meetingSuggestionPolicy.suggestion(from: lookup, enabled: true,
                                                                   idleAndEmpty: true, now: Date())
-        }
+        })
     }
 }
 
 struct CalendarSuggestionSettings: View {
     @Binding var enabled: Bool
     @State private var accessStatus: String?
+    @State private var accessWork = LatestResultCoordinator<CalendarLookup>()
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Toggle("Suggest current calendar meetings", isOn: $enabled)
@@ -65,16 +67,17 @@ struct CalendarSuggestionSettings: View {
                 .font(.caption).foregroundStyle(.secondary)
             if enabled {
                 Button("Allow Calendar access") {
-                    Task {
-                        let result = await CalendarService.currentOrNextMeeting()
+                    accessWork.start(load: { await CalendarService.currentOrNextMeeting() }, apply: { result in
                         accessStatus = result.offersPrivacySettings
                             ? "Calendar access is denied. Enable ListenToMe in System Settings → Privacy & Security → Calendars."
                             : (EKEventStore.authorizationStatus(for: .event) == .fullAccess
                                ? "Calendar access is enabled." : result.message)
-                    }
+                    })
                 }
                 if let accessStatus { Text(accessStatus).font(.caption).foregroundStyle(.secondary) }
             }
         }
+        .onDisappear { accessWork.cancel() }
+        .onChange(of: enabled) { _, isEnabled in if !isEnabled { accessWork.cancel() } }
     }
 }

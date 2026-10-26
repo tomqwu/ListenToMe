@@ -4,7 +4,7 @@ extension MeetingView {
     func editTranscriptLine(_ segment: TranscriptSegment, text: String) {
         guard session.editTranscript(id: segment.id, text: text) else { return }
         titleCoordinator.cancel(currentSessionID)
-        _ = checkpoint(complete: !wantsCapture && !lifecycleBusy && !session.isTranscribingFile && importTask == nil, force: true)
+        _ = checkpoint(complete: !wantsCapture && !lifecycleBusy && !session.isTranscribingFile && !importWork.isActive, force: true)
     }
 
     func deleteTranscriptLine(_ segment: TranscriptSegment) {
@@ -13,6 +13,6 @@ extension MeetingView {
         // The diarizer's capture-run boundary is an array position, not a timestamp.
         if index < diarizationRunStartIndex { diarizationRunStartIndex -= 1 }
         titleCoordinator.cancel(currentSessionID)
-        _ = checkpoint(complete: !wantsCapture && !lifecycleBusy && !session.isTranscribingFile && importTask == nil, force: true)
+        _ = checkpoint(complete: !wantsCapture && !lifecycleBusy && !session.isTranscribingFile && !importWork.isActive, force: true)
     }
 }

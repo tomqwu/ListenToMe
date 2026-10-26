@@ -59,47 +59,53 @@ extension MeetingView {
     func newConversation() {
         guard !lifecycleBusy, !isImporting else { return }
         captureStartGate.cancel()
-        lifecycleBusy = true
-        Task {
-            defer { lifecycleBusy = false }
-            recordingStartedAt = nil
-            // A checkpoint is independent of transcription/model completion.
-            _ = checkpoint()
+        recordingStartedAt = nil
+        newCoordinator.begin(checkpoint: { _ = checkpoint() }, stop: {
             await captureCoordinator.stop()
-            let persisted = !hasConversation || (ProviderSettings.saveSessionsForSearch && sessionSaveable
-                                                 && checkpoint(complete: true, force: true))
-            if !persisted {
-                let alert = NSAlert()
-                alert.messageText = saveFailed ? "Keep this conversation before starting a new one" : "Save this conversation?"
-                alert.informativeText = "Save As keeps a Markdown copy. Cancel keeps this conversation open."
-                alert.addButton(withTitle: "Save As…")
-                alert.addButton(withTitle: "Cancel")
-                alert.addButton(withTitle: "Discard and start new")
-                switch alert.runModal() {
-                case .alertFirstButtonReturn: guard saveConversationAs() else { return }
-                case .alertThirdButtonReturn: MacSavedAudio.shared.discard(conversationID: currentSessionID)
-                default: return
-                }
-            }
-            discardAudioIfNotInHistory()
-            if persisted { nameConversationIfNeeded() }   // the saved one, in the background (#221)
-            calendarContext.cancel()
-            beginDiarizationRunReset()
-            restoredRecord = nil
-            session.resetConversation()
-            startError = nil; exportError = nil
-            currentSessionID = UUID().uuidString; checkpointCoordinator.reset()
-            vocabulary.restore(domainIDs: nil, for: currentSessionID)
-            applyVocabulary()
-            conversationLanguages = ConversationLanguages()
-            conversationTitle = ConversationTitle.generated(Date().formatted(date: .abbreviated, time: .shortened))
-            conversationTitleState = .placeholder
-            sessionSaveable = ProviderSettings.saveSessionsForSearch
-            othersAudioSink.reset(); microphoneAudioSink.reset()
-            saveMessage = "New conversation"; saveFailed = false
-            clearReferences(session: session)
-            transcriptFollow = TranscriptFollowState()
+        }, persist: {
+            !hasConversation || (ProviderSettings.saveSessionsForSearch && sessionSaveable
+                                 && checkpoint(complete: true, force: true))
+        }, resolveUnsaved: { resolveUnsavedBeforeNew() }, reset: { persisted in
+            resetAfterNewDecision(persisted: persisted)
+        })
+    }
+
+    private func resolveUnsavedBeforeNew() -> Bool {
+        let alert = NSAlert()
+        alert.messageText = saveFailed ? "Keep this conversation before starting a new one" : "Save this conversation?"
+        alert.informativeText = "Save As keeps a Markdown copy. Cancel keeps this conversation open."
+        alert.addButton(withTitle: "Save As…")
+        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: "Discard and start new")
+        switch alert.runModal() {
+        case .alertFirstButtonReturn: return saveConversationAs()
+        case .alertThirdButtonReturn:
+            MacSavedAudio.shared.discard(conversationID: currentSessionID)
+            return true
+        default: return false
         }
+    }
+
+    private func resetAfterNewDecision(persisted: Bool) {
+        discardAudioIfNotInHistory()
+        if persisted { nameConversationIfNeeded() }   // the saved one, in the background (#221)
+        calendarContext.cancel()
+        beginDiarizationRunReset()
+        restoredRecord = nil
+        session.resetConversation()
+        startError = nil; exportError = nil
+        currentSessionID = UUID().uuidString; checkpointCoordinator.reset()
+        vocabulary.restore(domainIDs: nil, for: currentSessionID)
+        applyVocabulary()
+        conversationLanguages = ConversationLanguages()
+        conversationTitle = ConversationTitle.generated(Date().formatted(date: .abbreviated, time: .shortened))
+        conversationTitleState = .placeholder
+        sessionSaveable = ProviderSettings.saveSessionsForSearch
+        othersAudioSink.reset(); microphoneAudioSink.reset()
+        saveMessage = "New conversation"; saveFailed = false
+        clearReferences(session: session)
+        transcriptScrollWork.cancel()
+        transcriptFollow = TranscriptFollowState()
     }
 
     func openConversation(_ record: SessionRecord) {
@@ -190,7 +196,7 @@ extension MeetingView {
                     Text(importStatus.cancelling ? "Stopping…" : importStatus.progressLabel)
                     Button("Cancel import") {
                         importStatus.cancelling = true
-                        importTask?.cancel()
+                        importWork.cancel()
                     }.disabled(importStatus.cancelling)
                 }
                 .accessibilityElement(children: .contain)
@@ -219,9 +225,9 @@ extension MeetingView {
             save: saveConversation, new: newConversation, history: { showSearch = true },
             export: exportSession, settings: { openSettings($showSettings) },
             toggleCapture: { toggleCapture(session: session) },
-            deepAnswer: { Task { await session.respondDeep(.answerQuestion) } },
-            recap: { Task { await session.respondQuick(.recap) } },
-            refreshSummary: { Task { await session.refreshListener() } })
+            deepAnswer: { session.requestDeep(.answerQuestion) },
+            recap: { session.requestQuick(.recap) },
+            refreshSummary: { session.requestListenerRefresh() })
     }
 
     /// App/window close waits for final text, but never for optional AI or speaker analysis.
@@ -240,11 +246,11 @@ extension MeetingView {
         lifecycleBusy = true
         defer { lifecycleBusy = false }
         recordingStartedAt = nil; activeEngine = nil
-        importTask?.cancel()
+        importWork.cancel()
         _ = checkpoint()
         await captureCoordinator.stop()
         await MacSavedAudio.shared.waitForWrites()
-        await importTask?.value
+        await importWork.wait()
         if !hasConversation { discardAudioIfNotInHistory(); return true }
         if ProviderSettings.saveSessionsForSearch && sessionSaveable && checkpoint(complete: true, force: true) {
             // The final Save to folder note is queued by that checkpoint; let it land before quitting.

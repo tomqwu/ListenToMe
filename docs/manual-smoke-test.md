@@ -1137,3 +1137,21 @@ access. Failed discovery keeps pinned choices; custom/cloud-service catalogs nev
 for an unset pane. Close with discovery pending and verify no late UI update. Already-started
 network I/O may complete; these checks concern publication and no new request while AI is off.
 Use only an explicitly configured test destination and preserve native screenshots/source evidence.
+
+### Pane commands and New/import ownership (#134, ORCH-008–013)
+
+Use the menu or Quick hotkey, then immediately Stop the requested pane: its running state must be
+registered at the click and no answer may start afterward. Repeat Quick, Deep and Summary. Generate
+a long Summary spanning several batches and wait for completion: early actions and all later batches
+must remain, including provisional-budget handling. Stop during a later batch and retain partial text.
+
+While final speech drains, request New twice. Only one save decision may appear; final speech must
+be saved before reset. With saving unavailable, Cancel or a cancelled Save As keeps the conversation.
+Choose Save As or explicit discard and verify reset only follows that accepted decision. Import a
+recording then immediately Cancel before media opens: no transcript appears. Cancel during active
+transcription: keep recognized lines/incomplete provenance and block another import until drain.
+Close with capability or Calendar-suggestion work pending; no late result changes current controls.
+Repeat speaker rename followed by New or a new recording: the old follow-up must not checkpoint
+the new run. Retained settings, prompts, title editing, pane sizes and all sheets must render as before.
+Capture fresh native Mac screenshots; verify actual OTHERS transcription separately. Native graph
+tests prove shared-store/buffer wiring, not SwiftUI rendering or physical capture acceptance.

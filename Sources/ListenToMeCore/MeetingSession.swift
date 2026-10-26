@@ -669,26 +669,37 @@ extension MeetingSession {
             personaGuidance: conversationPersona, transcriptNote: selection.promptNote)
     }
 
-    /// Streams a Quick response for the given action. Awaits completion.
-    public func respondQuick(_ action: ResponseAction) async {
-        await startRoleTask(.quick) {
+    /// Register ownership synchronously so an immediate Stop can cancel this exact command.
+    @discardableResult
+    public func requestQuick(_ action: ResponseAction) -> Task<Void, Never> {
+        startRoleTask(.quick) {
             PromptBuilder.build(context: self.clampedContext(for: action, role: .quick, kind: .quick),
                                 action: action)
-        }.value
+        }
     }
 
-    /// Streams a Deep response for the given action. Awaits completion.
-    public func respondDeep(_ action: ResponseAction) async {
-        await startRoleTask(.deep) {
+    @discardableResult
+    public func requestDeep(_ action: ResponseAction) -> Task<Void, Never> {
+        startRoleTask(.deep) {
             PromptBuilder.buildDeep(context: self.clampedContext(for: action, role: .deep, kind: .deep),
                                     action: action)
-        }.value
+        }
     }
+
+    /// Registers the first batch; refreshListener also waits for automatic continuation batches.
+    @discardableResult
+    public func requestListenerRefresh() -> Task<Void, Never> { startListenerRefresh() }
+
+    /// Streams a Quick response for the given action. Awaits completion.
+    public func respondQuick(_ action: ResponseAction) async { await requestQuick(action).value }
+
+    /// Streams a Deep response for the given action. Awaits completion.
+    public func respondDeep(_ action: ResponseAction) async { await requestDeep(action).value }
 
     /// Streams a Listener refresh (rolling summary + open items). Awaits completion.
     public func refreshListener() async {
         guard hasUnsummarizedSpeech else { return }
-        startListenerRefresh()
+        requestListenerRefresh()
         await waitForResponse(.listener)
     }
 

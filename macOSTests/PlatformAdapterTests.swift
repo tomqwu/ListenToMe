@@ -2,17 +2,18 @@ import XCTest
 @testable import ListenToMeCore
 
 final class PlatformAdapterTests: XCTestCase {
-    func testOldAudioCallbackCannotContaminateRestartedRunOrItsOffset() {
+    func testOldAudioCallbackCannotContaminateRestartedRunOrItsOffset() async {
         let buffer = SpeakerAudioBuffer(maxSamples: 4)
         let old = buffer.currentGeneration()
         buffer.append(samples: [0.1, 0.2], sampleRate: 16_000, timestamp: 12, generation: old)
-        let snapshot = buffer.snapshot()
+        let snapshot = await buffer.snapshotOffMain()
         buffer.reset()
         buffer.append(samples: [9, 9], sampleRate: 16_000, timestamp: 99, generation: old)
         XCTAssertEqual(buffer.sampleCount, 0)
         XCTAssertEqual(buffer.startOffset, 0)
         buffer.append(samples: [0.3, 0.4], sampleRate: 16_000, timestamp: 25, generation: buffer.currentGeneration())
-        XCTAssertEqual(buffer.snapshot().samples, [0.3, 0.4])
+        let current = await buffer.snapshotOffMain()
+        XCTAssertEqual(current.samples, [0.3, 0.4])
         XCTAssertEqual(buffer.startOffset, 25)
         XCTAssertEqual(snapshot.samples, [0.1, 0.2], "A held snapshot must survive reset independently")
     }

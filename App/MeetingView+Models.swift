@@ -43,6 +43,6 @@ extension MeetingView {
         if ProviderSettings.aiMode == .openAI { return await OpenAICompatibleModels.discover() }
         if ProviderSettings.aiMode == .cloudAI { return await CloudAIModels.discover() }
         return await OllamaModels.chatModels(
-            baseURL: ollamaBaseURL(), apiKey: ollamaKey(), localOnly: ProviderSettings.aiMode != .cloud)
+            baseURL: MacMeetingEnvironment.ollamaBaseURL(), apiKey: MacMeetingEnvironment.ollamaKey(), localOnly: ProviderSettings.aiMode != .cloud)
     }
 }

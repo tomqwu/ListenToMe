@@ -56,4 +56,16 @@ extension MeetingView {
             if let error { startError = error.localizedDescription }
         })
     }
+    /// Resolve permission; capture ownership fences any late denial.
+    func microphoneDecision() async -> CapturePreflight.Decision {
+        var decision = CapturePreflight.decide(microphone: PermissionsModel.currentMicrophoneAuthorization())
+        if decision == .requestAccess {
+            let granted = await PermissionsModel.requestMicrophoneAccess()
+            permissions.refresh()
+            decision = CapturePreflight.decideAfterRequest(granted: granted)
+        }
+        return decision
+    }
+
+
 }

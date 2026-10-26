@@ -76,7 +76,7 @@ extension MobileSession {
     private func eraseConversations(_ deletion: ConversationDeletion, deleted: String) -> Bool {
         guard !busy else { return false }
         pendingSave?.cancel(); pendingSave = nil
-        lastSavedData = nil
+        persistence.invalidate()
         let deletingActive = deletion.ids.contains(id)
         let empty = SessionRecord(id: UUID().uuidString, title: "New conversation", date: Date(),
                                   transcript: "", summary: "", segments: [], notes: "")

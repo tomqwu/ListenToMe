@@ -179,6 +179,7 @@ targets:
       - App/MacOperationErrors.swift
       - App/MacCapturePreflight.swift
       - App/MacCheckpointController.swift
+      - App/MacMeetingEnvironment.swift
       - App/TranscriptionComputeInfo.swift
       - SharedPlatform/WhisperComputePolicy.swift
       - App/MacDeviceCapabilities.swift

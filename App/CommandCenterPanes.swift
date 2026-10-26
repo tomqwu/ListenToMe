@@ -190,10 +190,9 @@ extension MeetingView {
                 return abs(geometry.contentOffset.y - target) > 2 ? geometry.contentSize.height.rounded() : 0
             } action: { _, displaced in
                 guard displaced > 0, transcriptFollow.shouldScroll else { return }
-                Task { @MainActor in
-                    await Task.yield()
+                transcriptScrollWork.start(load: { await Task.yield() }, apply: { _ in
                     if transcriptFollow.shouldScroll { proxy.scrollTo(Self.scrollBottomID, anchor: .bottom) }
-                }
+                })
             }
             .onScrollPhaseChange { _, phase, context in
                 if phase == .tracking || phase == .interacting || phase == .decelerating {
@@ -250,7 +249,7 @@ extension MeetingView {
                 domain: vocabulary.banner(for: currentSessionID)?.domain,
                 blockReason: session.aiEnabled ? nil : (modelStatus.isEmpty ? "Turn AI on to ask." : modelStatus),
                 allowsDeep: true,
-                ask: { prompt, deep in Task { await session.askSuggested(prompt, deep: deep) } },
+                ask: { prompt, deep in session.requestSuggested(prompt, deep: deep) },
                 save: { _ = checkpoint(force: true) })
                 .id(currentSessionID)
             referenceFilesRow(session: session)
@@ -296,7 +295,7 @@ extension MeetingView {
                 // Refreshing with nothing new re-summarizes an empty evidence block and can reword
                 // or drop items from the record already on screen, so it is disabled until new
                 // speech arrives (issue #137).
-                Button("Refresh") { Task { await session.refreshListener() } }
+                Button("Refresh") { session.requestListenerRefresh() }
                     .controlSize(.small)
                     .disabled(!session.aiEnabled || !session.hasUnsummarizedSpeech)
                     .help(session.hasUnsummarizedSpeech
@@ -332,15 +331,15 @@ extension MeetingView {
                 SuggestedPromptChips(session: session)
                 FlowLayout(spacing: 7) {
                     Button("What should I answer?") {
-                        Task { await session.respondQuick(.answerQuestion) }
+                        session.requestQuick(.answerQuestion)
                     }
-                    Button("Recap so far") { Task { await session.respondQuick(.recap) } }
-                    Button("Follow-up") { Task { await session.respondQuick(.followUp) } }
-                    Button("Action items") { Task { await session.respondQuick(.actionItems) } }
-                    Button("Clarify simply") { Task { await session.respondQuick(.clarify) } }
-                    Button("Counterpoint") { Task { await session.respondQuick(.counterpoint) } }
-                    Button("Key terms") { Task { await session.respondQuick(.keyTerms) } }
-                    Button("Draft reply") { Task { await session.respondQuick(.draftReply) } }
+                    Button("Recap so far") { session.requestQuick(.recap) }
+                    Button("Follow-up") { session.requestQuick(.followUp) }
+                    Button("Action items") { session.requestQuick(.actionItems) }
+                    Button("Clarify simply") { session.requestQuick(.clarify) }
+                    Button("Counterpoint") { session.requestQuick(.counterpoint) }
+                    Button("Key terms") { session.requestQuick(.keyTerms) }
+                    Button("Draft reply") { session.requestQuick(.draftReply) }
                 }
                 .controlSize(.small)
             })
@@ -354,7 +353,7 @@ extension MeetingView {
             headerExtra: { EmptyView() },
             actions: {
                 reviewSuggestion("deep", session: session)
-                Button("Deep answer") { Task { await session.respondDeep(.answerQuestion) } }
+                Button("Deep answer") { session.requestDeep(.answerQuestion) }
                     .controlSize(.small)
             })
     }

@@ -1573,3 +1573,11 @@ Automatic naming task ownership now lives in Core `ConversationTitleCoordinator`
 It tracks each conversation independently and ignores cancelled generations. The iOS adapter still
 selects eligible on-device/local providers and checks the captured title/state before persisting a
 result. Watch-import naming and Save to folder use the same path; no new data destination is added.
+
+### Save transaction ownership
+
+ConversationPersistenceCoordinator in Core owns unchanged-byte suppression, deciding whether empty
+content updates an existing History entry, archive/export/active-snapshot ordering and retry eligibility
+after partial failure. MobileSession supplies stable encoding, private file writes, backup attributes,
+paths and existing UI messages. Native tests use real archive and active-snapshot failures before
+and after extraction. See [orchestration and validation boundaries](ORCHESTRATION.md).

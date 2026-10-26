@@ -140,8 +140,8 @@ final class MobileSession {
     var speakerFinalPass: Task<Void, Never>?
     let archive: SessionArchive
     let activeURL: URL
-    /// The bytes last written for this conversation. Identical bytes are not written again.
-    var lastSavedData: Data?
+    /// Core owns unchanged-save suppression and acknowledges only a complete save transaction.
+    let persistence = ConversationPersistenceCoordinator()
     private let saveDebounce: Duration
     var pendingSave: Task<Void, Never>?
     /// Capture rebuilds are coalesced: several notifications describe one physical device change.
@@ -304,7 +304,7 @@ final class MobileSession {
     func restore(_ record: SessionRecord) {
         restoredSituation = record.situationGrid
         pendingSave?.cancel(); pendingSave = nil
-        lastSavedData = nil
+        persistence.invalidate()
         speechCorrection.cancel()
         acceptsSpeechCorrection = false
         manualQuickError = nil; resetSuggestions(); answerNotices = MobileAnswerNotices()
@@ -543,18 +543,14 @@ extension MobileSession {
         let record = currentRecord
         do {
             let data = try Self.stableEncoder.encode(record)
-            guard data != lastSavedData else {
-                if announce { message = "Conversation saved on this device." }
-                return true
-            }
-            if hasContent || history.contains(where: { $0.id == id }) {
-                try archive.save(record)
+            try persistence.save(data, hasContent: hasContent, wasArchived: history.contains(where: { $0.id == id }),
+                                 archive: { _ = try archive.save(record) }, archived: {
                 remember(record); exportToVault(record)
-            }
-            try PrivateStorage.createDirectory(at: activeURL.deletingLastPathComponent())
-            try data.write(to: activeURL, options: PrivateStorage.writingOptions)
-            try? PrivateStorage.setExcludedFromBackup(excludeFromBackup, at: activeURL)
-            lastSavedData = data
+            }, activeSnapshot: {
+                try PrivateStorage.createDirectory(at: activeURL.deletingLastPathComponent())
+                try data.write(to: activeURL, options: PrivateStorage.writingOptions)
+                try? PrivateStorage.setExcludedFromBackup(excludeFromBackup, at: activeURL)
+            })
             if announce { message = "Conversation saved on this device." }
             return true
         } catch {
