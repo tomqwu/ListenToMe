@@ -431,7 +431,19 @@ This completed the automated path without native Organizer control or another ma
 - Workflow implementation: [PR #85](https://github.com/tomqwu/ListenToMe/pull/85), merged with all CI
   green; 12 helper tests passed and a real API-key upload proved the route.
 
-The same route has carried every build since. The most recent accepted upload is **1.18.0 (35)**,
+The same route has carried every build since. The most recent accepted upload is **1.18.1 (36)**,
+accepted on 2026-10-26 at 17:29:24 UTC from `7643b204def6acea0b616a2c2de2bade2fc4c7c9`, tagged
+`ios-v1.18.1-build36`. Apple build `2fd8477d-504e-44d2-ac7f-6c7e9236d01f` is `VALID` and
+`IN_BETA_TESTING`; Dev access for both existing testers and en-CA metadata were read back.
+The [complete GitHub pre-release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.1-build36)
+is non-Latest with no binary; macOS `v1.4.4` remains Latest. Evidence is under
+`dist/ios-1.18.1-build36-evidence/`, backed up externally under `2026-10-26/listentome-speakers/`.
+Twenty-four fresh native screenshots across all four iPhone/iPad categories were inspected and
+hashed. Original tester audio and physical accuracy/latency/battery remain unverified; three-person
+separation is not established. Watch is excluded, Mac publication remains paused, and App Store
+listing upload remains pending. Production 1.15.0 was rechecked before this train.
+
+The preceding combined train **1.18.0 (35)** was
 accepted on 2026-10-26 at 12:51:44 UTC from `b1570ad567a43a093294974871d7f0abf1872708`, tagged
 `ios-v1.18.0-build35`. Apple build `18ed5ceb-99cc-4658-b07b-3232b0bb23ce` is `VALID` and
 `IN_BETA_TESTING`; the existing internal Dev group includes it, both testers have accepted membership,

@@ -1,0 +1,648 @@
+{
+  "version": "1.18.1",
+  "build": "36",
+  "source": "7643b204def6acea0b616a2c2de2bade2fc4c7c9",
+  "release": "https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.1-build36",
+  "tag": "ios-v1.18.1-build36",
+  "locale": "en-CA",
+  "runtime": "iOS 26.5",
+  "captureKind": "Debug simulator real views with synthetic content",
+  "captureStarted": "2026-10-26T17:18:04.934538+00:00",
+  "visualReview": "passed",
+  "count": 24,
+  "listingUpload": "pending; no production App Store submission",
+  "physicalDeviceAcceptance": "current-source pending",
+  "watch": "not embedded; excluded",
+  "normalization": "EXIF transpose and RGB only; no resize",
+  "assets": [
+    {
+      "name": "06 Settings_0_5F376279-D359-40A3-AC0C-E6C12FC3164C.png",
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "original": "iphone-pro/originals/0F610563-D779-456E-9345-3F572063BB60.png",
+      "nativePixels": [
+        1206,
+        2622
+      ],
+      "exifOrientation": 1,
+      "originalSHA256": "95798956c246c01049bc68fd0d653e1c7d90ff34dcfa83af0b9510bdf0d9f74c",
+      "normalized": "iphone-pro/06 Settings.png",
+      "uploadPixels": [
+        1206,
+        2622
+      ],
+      "normalizedSHA256": "6a0ae4006b5c08e19f5d268f1df0afbb97710f8dd47d8b194cbde2c8198ef389",
+      "transform": "EXIF transpose, RGB; no resize",
+      "orientation": "portrait",
+      "visualReview": "passed",
+      "category": "iphone-pro",
+      "device": "iPhone-17-Pro",
+      "capturedDuring": {
+        "start": "2026-10-26T17:18:54.570948+00:00",
+        "finish": "2026-10-26T17:21:13.294054+00:00"
+      }
+    },
+    {
+      "name": "05 Conversation history_0_DD9CDBF5-7528-458E-B0C6-41B2EC382ADB.png",
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "original": "iphone-pro/originals/4634FD44-C07C-4753-B05A-955CCF45CC5D.png",
+      "nativePixels": [
+        1206,
+        2622
+      ],
+      "exifOrientation": 1,
+      "originalSHA256": "d471208e5e15a77fc5e93f6a0bcec59967ec42fdb56bae3a47cf62d73e527c67",
+      "normalized": "iphone-pro/05 Conversation history.png",
+      "uploadPixels": [
+        1206,
+        2622
+      ],
+      "normalizedSHA256": "780aab01485fcba2dd355c5df49589181312b77cda728316407ddb0e186b8022",
+      "transform": "EXIF transpose, RGB; no resize",
+      "orientation": "portrait",
+      "visualReview": "passed",
+      "category": "iphone-pro",
+      "device": "iPhone-17-Pro",
+      "capturedDuring": {
+        "start": "2026-10-26T17:18:54.570948+00:00",
+        "finish": "2026-10-26T17:21:13.294054+00:00"
+      }
+    },
+    {
+      "name": "04 Summary portrait_0_3AF3AEE2-3B37-47B8-8A5A-6E40B4FD4B73.png",
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "original": "iphone-pro/originals/7D5F456F-CE0B-4BBF-90D7-ED0EDD3ED441.png",
+      "nativePixels": [
+        1206,
+        2622
+      ],
+      "exifOrientation": 1,
+      "originalSHA256": "92b78c19abf601816c1e0e9d6d15da8812255f5d3236804ae3b02a6facd2fafd",
+      "normalized": "iphone-pro/04 Summary portrait.png",
+      "uploadPixels": [
+        1206,
+        2622
+      ],
+      "normalizedSHA256": "bc3361dd0de3298591cdb3fe6123ca42010c61e5cb948f81285eff43cb74a441",
+      "transform": "EXIF transpose, RGB; no resize",
+      "orientation": "portrait",
+      "visualReview": "passed",
+      "category": "iphone-pro",
+      "device": "iPhone-17-Pro",
+      "capturedDuring": {
+        "start": "2026-10-26T17:18:54.570948+00:00",
+        "finish": "2026-10-26T17:21:13.294054+00:00"
+      },
+      "repositoryFile": "docs/images/ios/1.18.1/iphone-02-summary.png"
+    },
+    {
+      "name": "03 Conversation prompt_0_62930FF5-4ABF-466A-81AA-66889228CF2C.png",
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "original": "iphone-pro/originals/4487AFFE-65A5-4CC7-8056-6F881626EA28.png",
+      "nativePixels": [
+        1206,
+        2622
+      ],
+      "exifOrientation": 1,
+      "originalSHA256": "d5bb7807158487d8b37301194ebf39d3951a658759432c85d1e2b68e6c204f01",
+      "normalized": "iphone-pro/03 Conversation prompt.png",
+      "uploadPixels": [
+        1206,
+        2622
+      ],
+      "normalizedSHA256": "27178931442ea3de8abeaa31da560ee3109c2600c402d4fb2b1b34d010747331",
+      "transform": "EXIF transpose, RGB; no resize",
+      "orientation": "portrait",
+      "visualReview": "passed",
+      "category": "iphone-pro",
+      "device": "iPhone-17-Pro",
+      "capturedDuring": {
+        "start": "2026-10-26T17:18:54.570948+00:00",
+        "finish": "2026-10-26T17:21:13.294054+00:00"
+      },
+      "repositoryFile": "docs/images/ios/1.18.1/iphone-03-prompt.png"
+    },
+    {
+      "name": "02 Live landscape_0_37BEFA5F-BD49-4A10-ABD1-6FD598621023.png",
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "original": "iphone-pro/originals/954F1439-8269-4CEC-87D6-1A0A7D465E57.png",
+      "nativePixels": [
+        1206,
+        2622
+      ],
+      "exifOrientation": 8,
+      "originalSHA256": "c4e9e39074606b6efb933a7f5ccce54e9a501547781115cf08852c17221e089d",
+      "normalized": "iphone-pro/02 Live landscape.png",
+      "uploadPixels": [
+        2622,
+        1206
+      ],
+      "normalizedSHA256": "89e6de7d61b938737e2abf5e92c5ca59f902a6fbc444f560e4cbd29e6cb9e8ef",
+      "transform": "EXIF transpose, RGB; no resize",
+      "orientation": "landscape",
+      "visualReview": "passed",
+      "category": "iphone-pro",
+      "device": "iPhone-17-Pro",
+      "capturedDuring": {
+        "start": "2026-10-26T17:18:54.570948+00:00",
+        "finish": "2026-10-26T17:21:13.294054+00:00"
+      },
+      "repositoryFile": "docs/images/ios/1.18.1/iphone-04-two-pane.png"
+    },
+    {
+      "name": "01 Live portrait_0_6DFE3463-319E-453D-931D-665B774EA2F7.png",
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "original": "iphone-pro/originals/F0EDE8C2-E1A2-4DE4-B650-0D692778F54E.png",
+      "nativePixels": [
+        1206,
+        2622
+      ],
+      "exifOrientation": 1,
+      "originalSHA256": "6676fb44d60752db7de7f9387f9dd286377a2fc56d5bf0b2583bbffaa1d427ba",
+      "normalized": "iphone-pro/01 Live portrait.png",
+      "uploadPixels": [
+        1206,
+        2622
+      ],
+      "normalizedSHA256": "6bb608ea1db80704064f9f090cfc714aef59f11f8745891fa26339b39ed7ba48",
+      "transform": "EXIF transpose, RGB; no resize",
+      "orientation": "portrait",
+      "visualReview": "passed",
+      "category": "iphone-pro",
+      "device": "iPhone-17-Pro",
+      "capturedDuring": {
+        "start": "2026-10-26T17:18:54.570948+00:00",
+        "finish": "2026-10-26T17:21:13.294054+00:00"
+      },
+      "repositoryFile": "docs/images/ios/1.18.1/iphone-01-live.png"
+    },
+    {
+      "name": "06 Settings_0_6343D5A6-DA98-4797-96B4-71E3B2BEF0E7.png",
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "original": "iphone-pro-max/originals/822C654D-660A-47F6-BD2B-7A53C0302F46.png",
+      "nativePixels": [
+        1320,
+        2868
+      ],
+      "exifOrientation": 1,
+      "originalSHA256": "4b628d70c2f09303da7ff54a784d48801b929215e056595465e9ef5b9e9f3373",
+      "normalized": "iphone-pro-max/06 Settings.png",
+      "uploadPixels": [
+        1320,
+        2868
+      ],
+      "normalizedSHA256": "fc7657db9c6cd8f4ba5a50e0c7d477014b1ecc60cc0de09ca49189fb67200d66",
+      "transform": "EXIF transpose, RGB; no resize",
+      "orientation": "portrait",
+      "visualReview": "passed",
+      "category": "iphone-pro-max",
+      "device": "iPhone-17-Pro-Max",
+      "capturedDuring": {
+        "start": "2026-10-26T17:21:13.692746+00:00",
+        "finish": "2026-10-26T17:22:53.435270+00:00"
+      }
+    },
+    {
+      "name": "05 Conversation history_0_70BB082F-046F-4AC4-BEF3-ACD47DB4E547.png",
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "original": "iphone-pro-max/originals/31CBC81A-A29A-4113-ADA7-5FDC5F7FE8F9.png",
+      "nativePixels": [
+        1320,
+        2868
+      ],
+      "exifOrientation": 1,
+      "originalSHA256": "c5177b99c3fba758ab5930038b198761754f0d46c35e96885aea5d38908b715c",
+      "normalized": "iphone-pro-max/05 Conversation history.png",
+      "uploadPixels": [
+        1320,
+        2868
+      ],
+      "normalizedSHA256": "8086e8774f20c9969d1ad15df4bb8d00c7ba4a34e28c5bc53361420664edaf64",
+      "transform": "EXIF transpose, RGB; no resize",
+      "orientation": "portrait",
+      "visualReview": "passed",
+      "category": "iphone-pro-max",
+      "device": "iPhone-17-Pro-Max",
+      "capturedDuring": {
+        "start": "2026-10-26T17:21:13.692746+00:00",
+        "finish": "2026-10-26T17:22:53.435270+00:00"
+      }
+    },
+    {
+      "name": "04 Summary portrait_0_7F4AB1D6-C2BD-44FB-BAA5-0550332971CA.png",
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "original": "iphone-pro-max/originals/85265248-D903-4DAC-8252-B26F8A006EC6.png",
+      "nativePixels": [
+        1320,
+        2868
+      ],
+      "exifOrientation": 1,
+      "originalSHA256": "c2c09bbf6784714c432e151a4aaf129fcc4c533469a50ad1b2f494d3caccba94",
+      "normalized": "iphone-pro-max/04 Summary portrait.png",
+      "uploadPixels": [
+        1320,
+        2868
+      ],
+      "normalizedSHA256": "e88fdbbd5622b9577168a1abba313de0b3354c117cbe94f3c74e90950c12a46b",
+      "transform": "EXIF transpose, RGB; no resize",
+      "orientation": "portrait",
+      "visualReview": "passed",
+      "category": "iphone-pro-max",
+      "device": "iPhone-17-Pro-Max",
+      "capturedDuring": {
+        "start": "2026-10-26T17:21:13.692746+00:00",
+        "finish": "2026-10-26T17:22:53.435270+00:00"
+      }
+    },
+    {
+      "name": "03 Conversation prompt_0_9B7C72C6-77BA-41D3-BF0E-49EEE8A5B60E.png",
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "original": "iphone-pro-max/originals/3858821D-E3E0-4E81-8A6F-8A05110C3B5F.png",
+      "nativePixels": [
+        1320,
+        2868
+      ],
+      "exifOrientation": 1,
+      "originalSHA256": "f156bb82dba082c5af005ddf54d10a8de41d8ccbc1f2b6a3d307fcdaa6e5985f",
+      "normalized": "iphone-pro-max/03 Conversation prompt.png",
+      "uploadPixels": [
+        1320,
+        2868
+      ],
+      "normalizedSHA256": "30e06e61f3e08fa51688cf0b98bd7d902c37567281815c1bd39879f292d6b4d2",
+      "transform": "EXIF transpose, RGB; no resize",
+      "orientation": "portrait",
+      "visualReview": "passed",
+      "category": "iphone-pro-max",
+      "device": "iPhone-17-Pro-Max",
+      "capturedDuring": {
+        "start": "2026-10-26T17:21:13.692746+00:00",
+        "finish": "2026-10-26T17:22:53.435270+00:00"
+      }
+    },
+    {
+      "name": "02 Live landscape_0_8068F563-8B80-4C48-A41D-6F1D5AB797E4.png",
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "original": "iphone-pro-max/originals/31CAED43-132A-4702-8554-FF5CF944F978.png",
+      "nativePixels": [
+        1320,
+        2868
+      ],
+      "exifOrientation": 8,
+      "originalSHA256": "c342d27bac54efabdce0c43475ff8af27bca9444eaa14a841eb181ebd97f72d2",
+      "normalized": "iphone-pro-max/02 Live landscape.png",
+      "uploadPixels": [
+        2868,
+        1320
+      ],
+      "normalizedSHA256": "9d8518c1ca750be6d0426203448a05e2e35d0309ba644530f07b150b3b8c4fd4",
+      "transform": "EXIF transpose, RGB; no resize",
+      "orientation": "landscape",
+      "visualReview": "passed",
+      "category": "iphone-pro-max",
+      "device": "iPhone-17-Pro-Max",
+      "capturedDuring": {
+        "start": "2026-10-26T17:21:13.692746+00:00",
+        "finish": "2026-10-26T17:22:53.435270+00:00"
+      }
+    },
+    {
+      "name": "01 Live portrait_0_DA79CD71-FFB8-45BE-9FD0-C1F113EC005E.png",
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "original": "iphone-pro-max/originals/5247EC58-759F-4B04-82B3-F6C3AAE442A9.png",
+      "nativePixels": [
+        1320,
+        2868
+      ],
+      "exifOrientation": 1,
+      "originalSHA256": "8ed3a256e9cacd8b6eb961a173e8ca3770a71c95a48a89f42224a887448434fc",
+      "normalized": "iphone-pro-max/01 Live portrait.png",
+      "uploadPixels": [
+        1320,
+        2868
+      ],
+      "normalizedSHA256": "fc2541f2fc0da2f21d03fb04eefdfc8c3592e4db6c4952f72c8e95ca61c29f5d",
+      "transform": "EXIF transpose, RGB; no resize",
+      "orientation": "portrait",
+      "visualReview": "passed",
+      "category": "iphone-pro-max",
+      "device": "iPhone-17-Pro-Max",
+      "capturedDuring": {
+        "start": "2026-10-26T17:21:13.692746+00:00",
+        "finish": "2026-10-26T17:22:53.435270+00:00"
+      }
+    },
+    {
+      "name": "06 Settings_0_16C7D8FF-4BBC-45F7-82E8-BB3751A63097.png",
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "original": "ipad-mini/originals/4F21D11F-1076-4E83-82BA-97BEA9CFCD52.png",
+      "nativePixels": [
+        1488,
+        2266
+      ],
+      "exifOrientation": 1,
+      "originalSHA256": "278e7447ef8fdbd0f5580a61180312989b0f5bb57ba983cb31366f72fb064767",
+      "normalized": "ipad-mini/06 Settings.png",
+      "uploadPixels": [
+        1488,
+        2266
+      ],
+      "normalizedSHA256": "0a1393241b6f347de53412770b0528fe24e463dd5e850761cf096478510725b3",
+      "transform": "EXIF transpose, RGB; no resize",
+      "orientation": "portrait",
+      "visualReview": "passed",
+      "category": "ipad-mini",
+      "device": "iPad-mini-A17-Pro",
+      "capturedDuring": {
+        "start": "2026-10-26T17:22:57.445499+00:00",
+        "finish": "2026-10-26T17:24:42.181211+00:00"
+      }
+    },
+    {
+      "name": "05 Conversation history_0_21639DA5-D680-455F-BD8C-48CBE982D5C2.png",
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "original": "ipad-mini/originals/CED83E91-775E-4726-B6EA-1D6C467C0BE7.png",
+      "nativePixels": [
+        1488,
+        2266
+      ],
+      "exifOrientation": 1,
+      "originalSHA256": "1e397b6caf3dc7a0f24ea546d0875b2bbe19b3ce2debbdceb3f8e7d8ded8eca3",
+      "normalized": "ipad-mini/05 Conversation history.png",
+      "uploadPixels": [
+        1488,
+        2266
+      ],
+      "normalizedSHA256": "d0499cea0b6ccb681c685cd1789872449e74e280e113fd0d8ef791be0ece4184",
+      "transform": "EXIF transpose, RGB; no resize",
+      "orientation": "portrait",
+      "visualReview": "passed",
+      "category": "ipad-mini",
+      "device": "iPad-mini-A17-Pro",
+      "capturedDuring": {
+        "start": "2026-10-26T17:22:57.445499+00:00",
+        "finish": "2026-10-26T17:24:42.181211+00:00"
+      }
+    },
+    {
+      "name": "04 Summary portrait_0_BA2D8E3A-DCA4-4723-B942-F4DE3ACB7EB3.png",
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "original": "ipad-mini/originals/18123EB6-B54B-46BA-89A5-EBABF293D079.png",
+      "nativePixels": [
+        1488,
+        2266
+      ],
+      "exifOrientation": 1,
+      "originalSHA256": "456a93b910930bfc42d9c5e6ae1b7d1cf2727b91c03e1fc06d3160d5d75a2c90",
+      "normalized": "ipad-mini/04 Summary portrait.png",
+      "uploadPixels": [
+        1488,
+        2266
+      ],
+      "normalizedSHA256": "7473810cf08df587f41251ff1ccad85b73566bb125e975d41f0f03bcf06e7e68",
+      "transform": "EXIF transpose, RGB; no resize",
+      "orientation": "portrait",
+      "visualReview": "passed",
+      "category": "ipad-mini",
+      "device": "iPad-mini-A17-Pro",
+      "capturedDuring": {
+        "start": "2026-10-26T17:22:57.445499+00:00",
+        "finish": "2026-10-26T17:24:42.181211+00:00"
+      }
+    },
+    {
+      "name": "03 Conversation prompt_0_85017582-E1A2-47D8-9502-AA6176416D34.png",
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "original": "ipad-mini/originals/84D01114-0B13-4477-A165-A1CA6493097C.png",
+      "nativePixels": [
+        1488,
+        2266
+      ],
+      "exifOrientation": 1,
+      "originalSHA256": "b50bacc9c71d4cb3ff1e42a48aa556cec96771a550cea752d2dab5c7b1ef241b",
+      "normalized": "ipad-mini/03 Conversation prompt.png",
+      "uploadPixels": [
+        1488,
+        2266
+      ],
+      "normalizedSHA256": "1e5b161ad93e08683cea09e64da0d128cb9cdab92412f403690f1d2ac3045e14",
+      "transform": "EXIF transpose, RGB; no resize",
+      "orientation": "portrait",
+      "visualReview": "passed",
+      "category": "ipad-mini",
+      "device": "iPad-mini-A17-Pro",
+      "capturedDuring": {
+        "start": "2026-10-26T17:22:57.445499+00:00",
+        "finish": "2026-10-26T17:24:42.181211+00:00"
+      }
+    },
+    {
+      "name": "02 Live landscape_0_D28ABE10-B21A-4FEF-BFCB-929CC169F9B7.png",
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "original": "ipad-mini/originals/71D84237-D9BA-4820-ADDD-0CD830CDEF1F.png",
+      "nativePixels": [
+        1488,
+        2266
+      ],
+      "exifOrientation": 8,
+      "originalSHA256": "944b3f5459b8acf151793591e8e19f3cbf6e59f53356e103fc222b185fc4b66d",
+      "normalized": "ipad-mini/02 Live landscape.png",
+      "uploadPixels": [
+        2266,
+        1488
+      ],
+      "normalizedSHA256": "d8327da20f5b46dea8b65278890ee24d180b4f5ef576d90b2cc3b46bbadb32e6",
+      "transform": "EXIF transpose, RGB; no resize",
+      "orientation": "landscape",
+      "visualReview": "passed",
+      "category": "ipad-mini",
+      "device": "iPad-mini-A17-Pro",
+      "capturedDuring": {
+        "start": "2026-10-26T17:22:57.445499+00:00",
+        "finish": "2026-10-26T17:24:42.181211+00:00"
+      }
+    },
+    {
+      "name": "01 Live portrait_0_CB3D0648-CA70-472D-A421-BB95F2E71967.png",
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "original": "ipad-mini/originals/7B76C9A9-9CCA-4D64-A6D9-ACF1F82680F0.png",
+      "nativePixels": [
+        1488,
+        2266
+      ],
+      "exifOrientation": 1,
+      "originalSHA256": "0fcc860850fa71a4dfb1bf28467274390a8ee85dac1dc2f1783afc06332a43f0",
+      "normalized": "ipad-mini/01 Live portrait.png",
+      "uploadPixels": [
+        1488,
+        2266
+      ],
+      "normalizedSHA256": "c8cf2de3119a20418deb2e3dbac3278e608049391c952aff9f12630f3a4df2e4",
+      "transform": "EXIF transpose, RGB; no resize",
+      "orientation": "portrait",
+      "visualReview": "passed",
+      "category": "ipad-mini",
+      "device": "iPad-mini-A17-Pro",
+      "capturedDuring": {
+        "start": "2026-10-26T17:22:57.445499+00:00",
+        "finish": "2026-10-26T17:24:42.181211+00:00"
+      }
+    },
+    {
+      "name": "06 Settings_0_9E1B19AB-4D57-42C2-AFC6-E92DF78EC2AA.png",
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "original": "ipad-pro-13/originals/D6399480-85D5-40A9-A0C2-A76260261E2B.png",
+      "nativePixels": [
+        2064,
+        2752
+      ],
+      "exifOrientation": 1,
+      "originalSHA256": "9c0b22d308f762e56b1926ff160fd3df2d79bd0fa6f9b88b430c916a5cc6f55f",
+      "normalized": "ipad-pro-13/06 Settings.png",
+      "uploadPixels": [
+        2064,
+        2752
+      ],
+      "normalizedSHA256": "0d3bd4d6ed90246e9f5adb9c5f5552f23c29c6a14479cb0b9a9032d475809051",
+      "transform": "EXIF transpose, RGB; no resize",
+      "orientation": "portrait",
+      "visualReview": "passed",
+      "category": "ipad-pro-13",
+      "device": "iPad-Pro-13-inch-M5-12GB",
+      "capturedDuring": {
+        "start": "2026-10-26T17:24:46.100320+00:00",
+        "finish": "2026-10-26T17:26:26.573900+00:00"
+      }
+    },
+    {
+      "name": "05 Conversation history_0_729FF880-95D3-46F6-8866-97BD53CDA2CE.png",
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "original": "ipad-pro-13/originals/37B9BDF5-E928-4063-BE36-9E276AF711EB.png",
+      "nativePixels": [
+        2064,
+        2752
+      ],
+      "exifOrientation": 1,
+      "originalSHA256": "2a36a98dbdee26d111950b493695105917fa6573e0c933218dbe3a6d4019ceb6",
+      "normalized": "ipad-pro-13/05 Conversation history.png",
+      "uploadPixels": [
+        2064,
+        2752
+      ],
+      "normalizedSHA256": "e1c450e07eee811bbdd3a7936128fc4c96fcfd4fa0a898faf74e98594a359a54",
+      "transform": "EXIF transpose, RGB; no resize",
+      "orientation": "portrait",
+      "visualReview": "passed",
+      "category": "ipad-pro-13",
+      "device": "iPad-Pro-13-inch-M5-12GB",
+      "capturedDuring": {
+        "start": "2026-10-26T17:24:46.100320+00:00",
+        "finish": "2026-10-26T17:26:26.573900+00:00"
+      }
+    },
+    {
+      "name": "04 Summary portrait_0_2C0A3297-DDA9-48BA-9A5A-D3AD1521A7A1.png",
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "original": "ipad-pro-13/originals/5BACDB76-4344-4B15-A5C5-EBEF6A81F994.png",
+      "nativePixels": [
+        2064,
+        2752
+      ],
+      "exifOrientation": 1,
+      "originalSHA256": "280a082a1db82878dd425fe4d7ea3e425f5392fbdc63767a66c6501d43ec0b1e",
+      "normalized": "ipad-pro-13/04 Summary portrait.png",
+      "uploadPixels": [
+        2064,
+        2752
+      ],
+      "normalizedSHA256": "45396358f9e57ac4417e1b7f7a1a4b5e5a9be51077d9000516842646c762f64c",
+      "transform": "EXIF transpose, RGB; no resize",
+      "orientation": "portrait",
+      "visualReview": "passed",
+      "category": "ipad-pro-13",
+      "device": "iPad-Pro-13-inch-M5-12GB",
+      "capturedDuring": {
+        "start": "2026-10-26T17:24:46.100320+00:00",
+        "finish": "2026-10-26T17:26:26.573900+00:00"
+      }
+    },
+    {
+      "name": "03 Conversation prompt_0_537BF7A5-C85C-4E63-90F8-8F33C6301365.png",
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "original": "ipad-pro-13/originals/C55B2497-C6D0-411B-A3BF-C06608AEEB19.png",
+      "nativePixels": [
+        2064,
+        2752
+      ],
+      "exifOrientation": 1,
+      "originalSHA256": "abcac8c57c5101e44672b7d61f15f30c11de8ec181c54f6a7525c8043d604e90",
+      "normalized": "ipad-pro-13/03 Conversation prompt.png",
+      "uploadPixels": [
+        2064,
+        2752
+      ],
+      "normalizedSHA256": "913cac4280d0b5977472a5fb99a2dafa0c8aa02ea095fb95c18d7b207d739de7",
+      "transform": "EXIF transpose, RGB; no resize",
+      "orientation": "portrait",
+      "visualReview": "passed",
+      "category": "ipad-pro-13",
+      "device": "iPad-Pro-13-inch-M5-12GB",
+      "capturedDuring": {
+        "start": "2026-10-26T17:24:46.100320+00:00",
+        "finish": "2026-10-26T17:26:26.573900+00:00"
+      }
+    },
+    {
+      "name": "02 Live landscape_0_DBEF9772-C5AB-42E9-B352-6054095CFEFA.png",
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "original": "ipad-pro-13/originals/BD2219FC-48AB-4BB2-B7EF-A8314B2DF274.png",
+      "nativePixels": [
+        2064,
+        2752
+      ],
+      "exifOrientation": 8,
+      "originalSHA256": "81048973cfb51f6ed6b11ee4e7fe70f86caf2f74b8610d0da8d2d8d265a577dd",
+      "normalized": "ipad-pro-13/02 Live landscape.png",
+      "uploadPixels": [
+        2752,
+        2064
+      ],
+      "normalizedSHA256": "f8a29a6c5384e30a1b7978e760652278eca6164bf7bf55ce7cb307f23a42f8dc",
+      "transform": "EXIF transpose, RGB; no resize",
+      "orientation": "landscape",
+      "visualReview": "passed",
+      "category": "ipad-pro-13",
+      "device": "iPad-Pro-13-inch-M5-12GB",
+      "capturedDuring": {
+        "start": "2026-10-26T17:24:46.100320+00:00",
+        "finish": "2026-10-26T17:26:26.573900+00:00"
+      }
+    },
+    {
+      "name": "01 Live portrait_0_ABAF8146-5846-47EA-8EFE-8A0DC7C99805.png",
+      "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+      "original": "ipad-pro-13/originals/2834A32D-7473-493C-9A2F-7D3280DB8364.png",
+      "nativePixels": [
+        2064,
+        2752
+      ],
+      "exifOrientation": 1,
+      "originalSHA256": "fd70f578553d1b2f4b47ac9a54456259b08735316fd9d807582856cd3dfc3377",
+      "normalized": "ipad-pro-13/01 Live portrait.png",
+      "uploadPixels": [
+        2064,
+        2752
+      ],
+      "normalizedSHA256": "d570e6a524c92764bbcf1f87d942e791f82a9bbbb38b440fc7462a8958f759e1",
+      "transform": "EXIF transpose, RGB; no resize",
+      "orientation": "portrait",
+      "visualReview": "passed",
+      "category": "ipad-pro-13",
+      "device": "iPad-Pro-13-inch-M5-12GB",
+      "capturedDuring": {
+        "start": "2026-10-26T17:24:46.100320+00:00",
+        "finish": "2026-10-26T17:26:26.573900+00:00"
+      },
+      "repositoryFile": "docs/images/ios/1.18.1/ipad-01-workspace.png"
+    }
+  ]
+}

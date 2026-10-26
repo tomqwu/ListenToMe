@@ -46,8 +46,8 @@ timestamps, and an opt-in **Save to folder** that writes each conversation as a
 Markdown note into a folder you pick in Files, such as an Obsidian vault, and an opt-in **Save audio recordings** that keeps
 each recording's microphone audio on the device for playback from its transcript lines. On-device speaker identification (on by default; turn it off in
 Settings) labels transcript lines Speaker 1, Speaker 2… for the people one phone hears, and you can
-rename them; its models download once from `huggingface.co`. The unreleased [speaker fix](docs/speaker-identification.md)
-uses a recording-scoped streaming model; the published 1.18.0 beta still uses the earlier pipeline. The transcription language defaults to
+rename them; its models download once from `huggingface.co`. The [speaker fix](docs/speaker-identification.md) in TestFlight 1.18.1
+uses a recording-scoped streaming model; similar voices can still merge in group conversations. The transcription language defaults to
 Automatic: the phone detects the spoken language on-device from the first seconds of speech and, if it
 differs from the device language, switches and transcribes the recording again; it re-checks about once
 a minute while people talk, so a meeting that changes language part-way switches too (its small Whisper
@@ -62,8 +62,8 @@ Education & Research) and your own **My terms** list help recognition, AI speech
 summaries on both platforms; after about a minute of speech the phone may suggest one, decided on the
 device. Meeting use-case presets, reference files, audio-file import and WhisperKit transcription are macOS-only.
 Editable domain prompt presets are available on both platforms.
-The iPhone and iPad app is distributed through TestFlight; the latest build is **1.18.0 (35)**
-([2026-10-26 TestFlight release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.0-build35)). An Apple Watch companion is built behind a build flag but not shipped yet
+The iPhone and iPad app is distributed through TestFlight; the latest build is **1.18.1 (36)**
+([2026-10-26 TestFlight release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.1-build36)). An Apple Watch companion is built behind a build flag but not shipped yet
 ([#181](https://github.com/tomqwu/ListenToMe/issues/181)).
 See [iOS setup, validation and distribution](docs/IOS.md). Device and language support are checked
 per feature; Apple Intelligence is independent of recording. The [compatibility support](docs/device-compatibility.md)
@@ -81,19 +81,19 @@ make ios-test
 
 ![ListenToMe — four-pane meeting copilot](docs/images/screenshot.png)
 
-**iPhone and iPad** (1.18.0)
+**iPhone and iPad** (1.18.1)
 
 <p>
-<img src="docs/images/ios/1.18.0/iphone-01-live.png" width="200" alt="Live transcript and Quick Summary">
-<img src="docs/images/ios/1.18.0/iphone-02-summary.png" width="200" alt="Summary with decisions and next steps">
-<img src="docs/images/ios/1.18.0/iphone-03-prompt.png" width="200" alt="Ask once or save summary instructions below Notes">
-<img src="docs/images/ios/1.18.0/ipad-01-workspace.png" width="300" alt="iPad transcript, Quick Summary and Summary workspace">
+<img src="docs/images/ios/1.18.1/iphone-01-live.png" width="200" alt="Live transcript and Quick Summary">
+<img src="docs/images/ios/1.18.1/iphone-02-summary.png" width="200" alt="Summary with decisions and next steps">
+<img src="docs/images/ios/1.18.1/iphone-03-prompt.png" width="200" alt="Ask once or save summary instructions below Notes">
+<img src="docs/images/ios/1.18.1/ipad-01-workspace.png" width="300" alt="iPad transcript, Quick Summary and Summary workspace">
 </p>
 
-<img src="docs/images/ios/1.18.0/iphone-04-two-pane.png" width="600" alt="iPhone landscape with independent transcript and Quick Summary panes">
+<img src="docs/images/ios/1.18.1/iphone-04-two-pane.png" width="600" alt="iPhone landscape with independent transcript and Quick Summary panes">
 
 Live transcript with Quick Summary · Summary · conversation prompts · iPad workspace · two-pane iPhone.
-Native simulator captures use synthetic content; [capture provenance](docs/images/ios/release-1.18.0.json).
+Native simulator captures use synthetic content; [capture provenance](docs/images/ios/release-1.18.1.json).
 The complete four-device release set is preserved locally for the next authorized App Store submission.
 
 ## Why ListenToMe

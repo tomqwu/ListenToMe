@@ -18,7 +18,7 @@ does not show it again, and a fresh install does not see it at all; see
   executable native-test adapter, local/CI gates and PR evidence template. This changes development
   workflow only; it does not require a binary release or claim exhaustive legacy acceptance.
 
-## iOS (unreleased since 1.18.0 (35))
+## iOS (unreleased since 1.18.1 (36))
 
 
 - Documentation: the Watch speaker-privacy section now agrees with the existing opt-in saved-audio retention policy. No app behavior changes. (#225)
@@ -33,10 +33,9 @@ does not show it again, and a fresh install does not see it at all; see
 - iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
 - Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
 
-## iOS 1.18.1 (36) — TestFlight candidate
+## iOS 1.18.1 (36) — 2026-10-26 (TestFlight)
 
-Prepared for the speaker-identification feedback train. Upload acceptance and physical-device
-accuracy/performance remain pending; this section does not claim publication.
+Published from `7643b204def6acea0b616a2c2de2bade2fc4c7c9`; Apple accepted the upload at 2026-10-26T17:29:24.328646+00:00. Processing is VALID, internal state is IN_BETA_TESTING, both existing Dev testers have group access, and en-CA metadata was read back. [Full release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.1-build36). Physical-device accuracy/performance and original tester audio remain unverified; three-person separation is not established. App Store listing screenshot upload remains pending. Watch is excluded and Mac publication remains paused.
 
 - Fix live speaker identification merging brief alternating voices into Speaker 1. A recording-scoped streaming model carries voice identities and edited names through overlapping windows and silence. Stop flushes delayed words; the Settings switch can disable labels while listening, releasing its audio and voice state. Re-enabling waits until Stop. Similar voices can still merge in group conversations. Real-model native regression tests supplement simulator controls. Original tester audio and physical-device accuracy/performance acceptance remain pending. (#310)
 

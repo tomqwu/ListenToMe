@@ -1,7 +1,7 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, latest TestFlight version 1.18.0 (35).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, latest TestFlight version 1.18.1 (36).
 
 ## What this app is for
 
@@ -108,7 +108,7 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 **The two apps keep independent version lines.** They are separate products in separate distribution
 channels, and an iOS build number already accepted by App Store Connect can never be reused. A higher
 iOS version does *not* mean the iPhone app is ahead of the Mac app; today macOS is 1.4.4 (14) and iOS
-has published TestFlight 1.18.0 (35).
+has published TestFlight 1.18.1 (36).
 
 - **`MARKETING_VERSION`** (iOS, in `project.yml`): a **minor** bump for user-visible features, a
   **patch** bump for fixes.
@@ -129,15 +129,19 @@ The archive, upload, tagging and verification steps themselves are not repeated 
 [IOS-RELEASING.md](IOS-RELEASING.md) for iOS, [RELEASING.md](RELEASING.md) for macOS, and
 [AGENTS.md](../AGENTS.md) for the release workflow that governs both.
 
-## iOS 1.18.1 (36) — TestFlight candidate, not published
+## App Store Connect platform mapping
 
-The locally validated tester-feedback speaker fix uses per-recording LS-EEND streaming for the live microphone,
+The iOS platform covers this universal iPhone/iPad app (`TARGETED_DEVICE_FAMILY=1,2`); no separate iPadOS platform is added. The Watch companion belongs to the same iOS app record and must actually be embedded in an uploaded build before it can be installed. It is excluded from the current beta pending #181 acceptance. macOS requires its own compatible archive and distribution; the current native Mac app is distributed as a signed/notarized DMG, and Mac publication remains paused. Adding a platform does not convert a DMG or include an unembedded Watch target. See [Apple’s platform guide](https://developer.apple.com/help/app-store-connect/create-an-app-record/add-platforms/).
+
+## iOS 1.18.1 (36) — published TestFlight beta
+
+The published tester-feedback speaker fix uses per-recording LS-EEND streaming for the live microphone,
 with stable recording-scoped identities, bounded prediction history and final tail flushing.
 The Settings switch can turn identification off while listening, releasing its audio and blocking
 late labels; re-enabling waits until Stop. Mac capture and Watch/file
 imports retain the existing offline pipeline. The [model contract and evidence limits](speaker-identification.md)
 and [What to Test](../metadata/ios/en-CA/what-to-test-1.18.1.txt) describe real-model gates and pending
-original-recording / physical-device acceptance. Published TestFlight remains 1.18.0 (35).
+original-recording / physical-device acceptance. Apple accepted the upload at 2026-10-26T17:29:24.328646+00:00; processing is VALID, internal state is IN_BETA_TESTING, existing Dev access and en-CA metadata were read back. [Release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.1-build36). All 24 source-matched native screenshots were inspected; App Store listing upload remains pending.
 
 ## iOS 1.18.0 (35) — published TestFlight beta
 
