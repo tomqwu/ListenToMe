@@ -38,6 +38,19 @@ measurements; #223 additional semantic-search languages; #236 physical vocabular
 and tracker #98. The dated sections below preserve earlier checkpoints and do not supersede this
 publication record. No public App Store submission was made.
 
+## Additional semantic-search languages — #223, October 26 follow-up
+
+The new [evaluation record](semantic-search-evaluation.md) preserves isolated MiniLM, E5-base and
+MPNet runs. Token parity passed; the final frozen MPNet holdout retrieved 36/40 expected matches
+and rejected all 16 negatives, but Spanish recall was 7/10 versus the required 80%. Independent
+review confirmed the no-go. Four-language integration is not accepted, #223 remains open, and
+production still uses existing Apple embeddings/keyword fallback. No app dependency/model was
+changed. Original plans, corpus/model/source hashes and raw scores are outside the worktree under
+`2026-10-26/listentome-semantic223`; do not retune and relabel these observed sets held-out.
+Connected physical iPhone/iPad currently report Developer Mode enabled and no passcode required;
+this enables the next vocabulary measurements (#236), not a claim those checks passed. No physical
+paired Watch was found; same-machine simulator Watch inventory is not hardware acceptance.
+
 ## Historical combined publication — October 26, iOS 1.18.0 (35)
 
 **PR #308 is merged; iOS 1.18.0 (35) is published to TestFlight.** All 18 prior PR heads and the
