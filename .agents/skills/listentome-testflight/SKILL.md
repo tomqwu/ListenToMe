@@ -45,6 +45,12 @@ that describe the CLI as blocked or require another publication approval.
 
 ## Complete the release
 
+Use English (US), `en-US`, and `metadata/ios/en-US/` for new release metadata. Verify the returned
+locale and localized app name; English text in an `en-CA` record does not satisfy this requirement.
+Historical Canadian receipts below retain their original locale. If Apple blocks a localized name
+or a primary-language change, preserve the exact error and distinguish the new localization from
+the app's primary locale rather than silently falling back to Canada.
+
 1. Confirm a train is actually due: the maintainer called it, or it is requested tester-feedback
    work that is merged with its candidate checks green, or no TestFlight build has already been
    uploaded today and the merged work is either a complete batch or a user-visible fix that
@@ -68,7 +74,7 @@ that describe the CLI as blocked or require another publication approval.
    commit, full notes, What to Test, privacy changes, and App Store "What's New" text since the last
    production release (App Store Connect reported 1.15.0 READY_FOR_SALE on October 25, 2026; recheck each train).
 4. Verify processing `VALID`, internal state `IN_BETA_TESTING`, the build's Dev relationship, and the
-   intended tester's accepted group membership. Apply and read back the prepared en-CA description
+   intended tester's accepted group membership. Apply and read back the prepared en-US description
    and What to Test. `/betaTesters/{id}/builds` lists **individual assignments only**; absence there
    does not disprove access through Dev. Do not claim a physical installation was observed.
 5. Report upload, processing and tester access from evidence. Archive/export, dry-run and offline

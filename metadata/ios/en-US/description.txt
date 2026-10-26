@@ -1,0 +1,30 @@
+Turn conversations into notes you can return to—privately, on iPhone and iPad.
+
+Listen To Me brings live transcription, notes and optional AI summaries into one conversation workspace.
+
+RECORD AND REVIEW
+• Transcribe microphone speech on-device using Apple's speech technology. Supported languages and engines depend on your device.
+• Optional on-device speaker identification adds numbered labels you can rename. Similar voices, short replies and group conversations may be misidentified; review the labels.
+• Choose a supported transcription language, or use Automatic to detect and follow language changes. Mixed-language sentences may be less accurate.
+• Add domain vocabularies and My terms for names and jargon. Recognition hints do not guarantee correct spelling. Optional AI correction lets you review and restore the original text.
+• Turn on Save audio recordings before listening to retain audio for playback after Stop. Earlier unsaved audio cannot be recovered. Re-transcribe retained audio on-device, preview it and replace the transcript when ready.
+
+SUMMARIZE AND ASK
+• Generate Quick Summary or a fuller Summary, or enable automatic updates with a configured compatible provider.
+• Below Notes, ask a one-time question or save instructions for that conversation's future summaries. Optional domain presets are editable.
+• Summarize selected transcript lines, add files and photos, and include selected calendar context.
+• On iPhone, landscape Duo places Transcript and Quick side by side when space and text size allow. Choose and remember your pane balance. iPad uses its wider workspace.
+
+FIND AND SHARE
+• Reopen conversations in History. Search by words and, where an on-device language model is available, by meaning.
+• Ask questions across matching conversations and follow the source citations.
+• Export notes, transcripts and summaries, or save Markdown to a folder you choose, including an iCloud Drive vault.
+• Delete individual conversations or clear your history.
+
+YOUR AI, YOUR CHOICE
+Use Apple Intelligence where supported and enabled, your own local Ollama or OpenAI-compatible server, or a supported cloud AI service with your own account and key. Settings explains unavailable capabilities and where requests go. Recording does not require a summary AI provider. Third-party services may charge for usage.
+
+PRIVATE BY DEFAULT
+Speech recognition, speaker analysis and search run on-device. The app does not upload your audio. Retaining audio is optional and retained audio is excluded from backups. Conversation backups follow your settings. Choosing cloud AI sends relevant text and context to that provider; choose an on-device provider to keep inference local. API keys are stored in this device's Keychain. Privacy and support links are in Settings.
+
+Requires iOS or iPadOS 26 or later. Available features depend on hardware, language, permissions and model readiness; some on-device models require an initial download. Apple Watch is not included in this version. Recording uses the foreground microphone and does not capture other apps or phone calls. Review transcripts, speaker labels and AI output for accuracy.

@@ -24,6 +24,25 @@ honestly documented device limitations are sufficient to distribute an authorize
 testing. Physical-device acceptance is still required before calling the app production-ready or
 submitting a production App Store release. Missing hardware must not be reported as an upload blocker.
 
+## Delivery language — English (US)
+
+Use **English (US), `en-US`**, for new TestFlight and App Store metadata, from
+`metadata/ios/en-US/` (maintainer instruction, October 26, 2026). Read back the actual localization
+ID, locale, localized app name, description and release notes. English text stored as `en-CA` is
+not a US localization. The maintainer-selected English (US) name for this update is **Listen To Me - Real Time AI**.
+Apple rejected both older name variants in that locale as already used by another account.
+
+Treat an app's primary locale separately from its localized version metadata. Apple can require
+approved localized screenshots before allowing the primary locale to change. Preserve any actual
+rejection and report the primary locale honestly; do not claim it changed merely because `en-US`
+metadata was created. Historical Canadian receipts below retain their original locale.
+
+For new screenshot captures, select English and US region explicitly (`-testLanguage en -testRegion US`).
+Reusing identical English UI images for another localization does not change their original capture
+locale: retain that provenance and separately verify the target locale's asset IDs, processing,
+native dimensions, order and downloaded pixels. Do not rerun local device testing for the current
+submission; the maintainer has already reported working TestFlight testing and requested it stop.
+
 ## Speaker-model candidate gate (#310)
 
 A speaker-identification train must include the real-model `SpeakerModelQualityTests` and
@@ -35,7 +54,35 @@ capture retain the existing offline pipeline; do not claim the iOS live fix chan
 Follow [the model acceptance checklist](speaker-identification.md). The original tester recording
 remains untested unless retained audio is provided. The beta upload policy above still applies.
 
-## Public App Review receipt — October 26
+## Current English (US) App Review receipt — October 26
+
+Apple accepted the corrected **en-US** submission at **2026-10-26T20:07:35.298432+00:00** under the
+maintainer-selected name **Listen To Me - Real Time AI**. Review submission
+`89b4c261-b37d-4b24-aaee-20f8238d1663` and version `c60352d3-eb78-479b-970c-d6ed6faa3242` read back
+WAITING_FOR_REVIEW. The same accepted **1.18.1 (36)** build/source remains selected; release is
+AFTER_APPROVAL. No replacement binary, local device retest or approval/public-availability claim.
+
+The first Canadian review `25ae4878-c462-4528-a48e-01b12b028f39` was canceled and is COMPLETE.
+The exact US version localization is `b5e13b58-07ea-40a4-adbb-d013adbb362b`; the US app-info
+localization is `57150306-ffc1-4b1b-817e-89e6b3fe63d4`. Name, current US copy, reviewer contact,
+exact build and all 24 US images were rechecked before the single corrected review was sent.
+Each US screenshot is COMPLETE with native dimensions, checksum, order and downloaded RGB identity
+verified. The original source-matched captures were en-CA and are reused for identical English UI;
+retain that provenance rather than claiming a fresh US capture.
+
+The app's primary locale remains **en-CA**: Apple's primary-locale PATCH returned HTTP 409
+`MISSING_SCREENSHOTS_PRIMARY_LOCALE` even after US image processing completed. The US localization
+is submitted, while the Canadian primary/fallback is retained. Do not retry an unchanged rejection,
+claim US primary status or edit the approved production version to bypass Apple's requirements.
+The [Apple localization rules](https://developer.apple.com/help/app-store-connect/manage-app-information/localize-app-information)
+explain the distinction and primary-language prerequisites.
+
+Corrected receipts/scripts are in the external `listentome-appstore-publication/locale-us/` directory.
+Use the new review ID for status readback; parent-directory receipts describe the canceled first
+submission. Maintainer-reported working TestFlight acceptance applies; further local tests and
+participant requests remain stopped for this submission. The earlier receipt below is historical.
+
+## Historical Canadian App Review receipt — withdrawn October 26
 
 Apple accepted public submission of **iOS 1.18.1 (36)** at **2026-10-26T19:45:08.361828+00:00**.
 Review submission `25ae4878-c462-4528-a48e-01b12b028f39` and version
@@ -280,7 +327,7 @@ identical. The `ListenToMeWatch` target keeps the same version and build as the 
 extension, and every archive runs **without** `WATCH_EMBED` until the
 [#181](https://github.com/tomqwu/ListenToMe/issues/181) train: `scripts/ios-testflight.sh` refuses an
 archive that contains `ListenToMeIOS.app/Watch/`. Choose a build number not already accepted by App
-Store Connect. Update the matching `metadata/ios/en-CA/what-to-test-<version>.txt` and `docs/IOS.md`.
+Store Connect. Update the matching `metadata/ios/en-US/what-to-test-<version>.txt` and `docs/IOS.md`.
 Merge source changes after CI passes.
 
 **Third-party notices.** Every SwiftPM package pinned in `Config/Package.resolved` must ship its
@@ -437,11 +484,13 @@ not reuse build 11's IDs for a later release.
 | Beta description | `GET /v1/betaAppLocalizations?filter[app]=6811155732`, then `PATCH /v1/betaAppLocalizations/<LOCALIZATION_ID>` with `attributes.description` from the prepared beta description. Preserve other fields. |
 
 PATCH bodies use `{"data":{"type":"<RESOURCE_TYPE>","id":"<ID>","attributes":{...}}}`.
-Select the `en-CA` localization; if absent, create it using Apple's resource-specific create endpoint
+Select the `en-US` localization; if absent, create it using Apple's resource-specific create endpoint
 and required relationships. Read back metadata after writes. Save sanitized resource/status responses
 with the release evidence. Never add unrelated testers or enable external/public distribution.
 
-**Reusable verification script.** Recent releases keep a parameterized script that performs the table
+**Reusable verification script.** Historical scripts can hard-code `en-CA`; adapt and inspect their
+actual API locale selectors and file paths for `en-US` before a new train. A US metadata file alone
+does not change the API localization. Recent releases keep a parameterized script that performs the table
 above in their evidence directory: `dist/ios-<version>-build<n>-evidence/asc-verify-script.py` (most
 recently `dist/ios-1.16.0-build33-evidence/`). `dist/` is gitignored, so this is local evidence, not
 repository source: copy the previous release's script into the new evidence directory and read it
@@ -449,8 +498,8 @@ before running it, for example
 
 ```sh
 uv run --with 'PyJWT[crypto]' python "$IOS_EVIDENCE/asc-verify-script.py" "$IOS_BUILD" \
-  "metadata/ios/en-CA/what-to-test-${IOS_VERSION}.txt" "$IOS_EVIDENCE/asc-verify.json" \
-  metadata/ios/en-CA/beta-description.txt > "$IOS_EVIDENCE/asc-verify.log" 2>&1
+  "metadata/ios/en-US/what-to-test-${IOS_VERSION}.txt" "$IOS_EVIDENCE/asc-verify.json" \
+  metadata/ios/en-US/beta-description.txt > "$IOS_EVIDENCE/asc-verify.log" 2>&1
 ```
 
 It reads the key references from `~/.config/listentome/testflight.json` and keeps the JWT in memory. It

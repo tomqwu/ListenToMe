@@ -131,13 +131,16 @@ The archive, upload, tagging and verification steps themselves are not repeated 
 
 ## Public App Store submission — October 26, 2026
 
-Apple accepted **1.18.1 (36)** for public App Review at **19:45:08 UTC**. It is **WAITING_FOR_REVIEW**
-and set to release automatically after approval; production remains **1.15.0 (32)** until that
-happens. All 24 current en-CA screenshots are uploaded, processed and verified. The maintainer
-reported completed, working TestFlight testing and requested no further local testing for this
-submission. That confirmation is separate from agent-measured voice accuracy or battery results.
-No new binary was uploaded; Watch stays excluded and macOS distribution is separate. See
-[the receipt and runbook](IOS-RELEASING.md#public-app-review-receipt--october-26) and
+The corrected **English (US)** listing **Listen To Me - Real Time AI**, **1.18.1 (36)**, was accepted
+for App Review at **20:07:35 UTC**. It is WAITING_FOR_REVIEW and set to release after approval;
+production remains 1.15.0 (32). The first Canadian submission was canceled. All 24 explicit US
+screenshot uploads are COMPLETE and verified; they reuse identical English UI with original en-CA
+capture provenance retained. Apple's separate primary-locale change still returns HTTP 409, so the
+app-wide primary/fallback remains en-CA even though the en-US localization is submitted.
+The maintainer reports working TestFlight testing and requested no further local testing; no more
+local device checks or participant requests for this submission. No new binary was uploaded,
+Watch stays excluded and macOS distribution is separate. See
+[the corrected receipt](IOS-RELEASING.md#current-english-us-app-review-receipt--october-26) and
 [the current handoff](HANDOFF.md).
 
 ## App Store Connect platform mapping
