@@ -4,6 +4,44 @@ A snapshot for an agent picking up ListenToMe cold. [AGENTS.md](../AGENTS.md) an
 [CLAUDE.md](../CLAUDE.md) stay the rules; this note is only the state of things on the date above.
 Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags) before acting on it.
 
+## Public App Store preparation — October 26, iOS 1.18.1 (36)
+
+The maintainer requested public App Store distribution. The configured API key can manage the
+public listing as well as TestFlight; no manual upload or new credential was needed. Apple readback
+still reports iOS **1.15.0 (32) READY_FOR_SALE**. Draft **1.18.1** (`c60352d3-eb78-479b-970c-d6ed6faa3242`)
+is PREPARE_FOR_SUBMISSION with accepted build **36** selected, release after approval, and en-CA
+metadata/reviewer instructions saved and read back. This is preparation, not a review submission or
+public release. No review submission was created.
+
+All **24** source-`7643b20` screenshots now report COMPLETE in four native iPhone/iPad sets. The
+source checksums, dimensions, order and downloaded RGB pixels match. Five inherited draft images
+were backed up/decoded/hashed before replacement; all production locales, image IDs/order and
+metadata were read back unchanged after draft cleanup. Independent review cleared the guarded
+screenshot finalization. The checked-in description reflects device-dependent capabilities and
+known speaker limits. Watch remains excluded; the macOS 1.0 draft has no selected build and was
+untouched.
+
+Basic attended capture passed on **iPhone 12 Pro Max / iOS 27.0** and **iPad Pro 12.9-inch (4th
+generation) / iPadOS 27.0.1**: one native test per device, zero failures/skips, fresh microphone
+transcription, Stop and retained Play/Pause controls. The installed app was development-signed
+Release with app inputs verified identical to accepted source `7643b20`; this is not proof of
+installing the App Store/TestFlight artifact. Audible playback quality was not separately attested.
+Speakers, Auto and correction were off in these basic runs. Human speaker accuracy, returning edited
+names, latency/battery and the remaining affected-device gates are still pending; do not submit
+production yet.
+
+Preserve the failures: the first iPhone run rejected pre-existing test text after an interrupted New
+tap; the first fresh human-speech run timed out without the expected phrase; the first iPad runner
+required Apple's on-device XCTest passcode authentication before UI automation. None is a passing
+capture result. The repaired physical-only harness requires the actual empty-transcript placeholder
+and absence of old phrases, bounds New retries and returns before opening the microphone if freshness
+fails. The successful synthetic sample played only after native Listening confirmation. The phone
+is now idle with native speaker models ready, awaiting the maintainer's two-person availability.
+
+Evidence and resumable, identity-guarded API scripts are outside the checkout under
+`/Users/tomwu/Documents/Codex/2026-10-26/listentome-appstore-publication/`; never create a second draft,
+re-upload accepted build 36 or replace already-matching screenshots to resume this work.
+
 ## Current TestFlight publication — October 26, iOS 1.18.1 (36)
 
 PR [#311](https://github.com/tomqwu/ListenToMe/pull/311) merged as `51cc890` and closed #310.

@@ -29,10 +29,23 @@ final class MobilePhysicalCaptureUITests: XCTestCase {
         let newConversation = app.buttons["New"]
         XCTAssertTrue(newConversation.waitForExistence(timeout: 20))
         XCTAssertTrue(newConversation.isEnabled)
-        newConversation.tap() // saves the previous conversation; never deletes history
-        let phrase = app.staticTexts.containing(NSPredicate(
+        let phrase = app.staticTexts.matching(NSPredicate(
             format: "label CONTAINS[c] 'physical recording' OR label CONTAINS[c] 'microphone test'"))
-        XCTAssertEqual(phrase.count, 0, "Old text must not satisfy this capture run")
+        var fresh = false
+        for attempt in 0..<3 {
+            newConversation.tap() // saves the previous conversation; never deletes history
+            let empty = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+                app.staticTexts["Start listening and your words will appear here."].exists && phrase.count == 0
+            }, object: nil)
+            if XCTWaiter.wait(for: [empty], timeout: 5) == .completed {
+                fresh = true
+                break
+            }
+            capture(app, "New conversation did not clear earlier test text, attempt \(attempt + 1)")
+        }
+        XCTAssertTrue(fresh, "Old text must not satisfy this capture run")
+        guard fresh else { return } // Never open the microphone after a failed freshness check.
+        print("LTM_PHYSICAL_FRESH_TRANSCRIPT_CONFIRMED")
         let start = app.buttons["Start listening"]
         XCTAssertTrue(start.waitForExistence(timeout: 20))
         addUIInterruptionMonitor(withDescription: "Microphone access for physical recording") { alert in

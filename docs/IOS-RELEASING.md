@@ -35,6 +35,37 @@ capture retain the existing offline pipeline; do not claim the iOS live fix chan
 Follow [the model acceptance checklist](speaker-identification.md). The original tester recording
 remains untested unless retained audio is provided. The beta upload policy above still applies.
 
+## Public App Store preparation — October 26
+
+The maintainer requested public distribution of the iPhone/iPad update. The working team API key
+created App Store draft **1.18.1** (`c60352d3-eb78-479b-970c-d6ed6faa3242`), selected accepted build **36**
+and updated/read back the en-CA description, full What's New since production 1.15.0, support links
+and reviewer instructions. Existing review contacts were preserved. Release is set to after approval,
+as in the preceding production version. No review submission has been created or sent.
+
+All 24 fresh source-matched screenshots are COMPLETE in `APP_IPHONE_61`, `APP_IPHONE_67`,
+`APP_IPAD_PRO_3GEN_11` and `APP_IPAD_PRO_3GEN_129`, six per set, including native landscape views.
+Their source checksums, native dimensions, order and downloaded RGB pixels were verified. The five
+inherited draft images were backed up and removed only after replacement verification; paginated
+before/after reads proved the production 1.15.0 listing unchanged. The only locale is en-CA. Watch
+is not embedded and has no screenshot claim; macOS draft/build distribution is separate.
+
+The external `listentome-appstore-publication` evidence directory contains the selected version/build,
+immutable inherited-image snapshot/allowlist, upload IDs, processed-image checks, metadata readback,
+production preservation and independent review. Resume that same draft and build. Basic attended microphone transcription, Stop and retained Play/Pause controls passed on physical
+iPhone 12 Pro Max/iOS 27.0 and iPad Pro 12.9-inch (4th generation)/iPadOS 27.0.1: one test each,
+zero failures/skips. The app was a development-signed Release build with product inputs identical to
+accepted source `7643b20`, not the installed App Store/TestFlight artifact; audible playback quality
+was not separately attested. Speakers, Auto and correction were off. Human speaker and other
+remaining affected-device acceptance still hold production submission.
+
+Keep the earlier failures: old transcript text after an interrupted New tap, a human-phrase timeout,
+and the iPad runner's on-device XCTest authentication requirement. The updated physical-only harness
+requires the empty transcript and no old phrases before Start; it bounds New retries and returns
+without opening the microphone on freshness failure. The controlled synthetic phrase played only
+after native Listening confirmation. Do not turn either these basic passes or the screenshot/API
+checks into a claim that the human speaker gate passed.
+
 ## Screenshot capture and App Store handoff (#255)
 
 Capture screenshots during UI acceptance and refresh the complete release set on every iOS train,
