@@ -4,6 +4,118 @@ A snapshot for an agent picking up ListenToMe cold. [AGENTS.md](../AGENTS.md) an
 [CLAUDE.md](../CLAUDE.md) stay the rules; this note is only the state of things on the date above.
 Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags) before acting on it.
 
+## Current consolidation and validation — maintainer away
+
+PR #308 now includes the completed #134 implementation from `45e015f`, alongside all 18 original
+PR heads. The other 17 PRs were closed as superseded after their exact live heads were verified in
+ancestry; this remains the only open PR. No additional feature PR was opened. #134 is implemented
+and independently reviewed, but is not done until full validation, native acceptance, CI and merge.
+No issue is closed from local code alone.
+
+The full `make validate-local` run **passed** on clean frozen product source `45e015f` in
+`codex/134-finish-thin-views`: 1,232 Core tests (seven skips, 98.25909% line coverage), 513 iOS
+passes (12 intentional skips, zero failures), 26 native Mac passes, four Watch passes, all 91 BDD
+contracts, helper/lint/build checks and real Ollama/OpenAI-compatible contracts. Both dedicated
+simulators were deleted and all input hashes/working-tree state remained unchanged. Exact logs and
+three preserved native result bundles are in external `listentome-features/orchestration-134/
+full-validation-45e015f`. The first docs-only integration head `185bcff` passed all three required
+hosted checks; this final handoff/changelog-only follow-up refreshes CI again without product changes.
+The earlier `b763ac3` full pass and 24 inspected screenshots remain historical evidence. Fresh
+screenshots for this updated candidate are being captured before the authorized TestFlight train.
+
+#134 now has 14 ORCH contracts: conversation-owned Calendar/reference tasks; accepted-close
+invalidation; model-refresh privacy/choice policy; New/import transactions; synchronous pane/prompt
+command registration; current background-result ownership; native buffer/graph wiring; and iOS
+save dirty-state/ordering with native protection/backup/UI effects. The Mac root view is 274 lines
+and all files extending MeetingView have no explicit Task bodies. Seven real-filesystem iOS save
+tests passed before and after extraction. Existing formatting/selection/save policies are baseline
+adoption without invented historical red; actual cancellation and immediate-Stop regressions retain
+red/green logs. Independent review caught rejected-close invalidation, remaining pane-button wrappers
+and the last persistence extraction gap; all were corrected. A failed intermediate full Core run
+(51 assertions across two Summary continuation tests) is preserved as failed; its wait is restored.
+See [ORCHESTRATION.md](ORCHESTRATION.md) for ownership and evidence.
+
+Installed Mac GUI and real OTHERS transcription remain pending. TestFlight upload itself uses the
+configured API key and does not require an unlocked Mac or connected phone; do not confuse the
+platform acceptance requirement with Apple authentication or an upload-tool blocker. The Mac locked again and the
+maintainer explicitly requested code work while away; do not repeatedly ask for unlock or reset
+permissions. Restore original Dev settings and complete targeted cleanup after acceptance finishes.
+Keep source/signing evidence for the exact app tested. This integration is not merged or published.
+Latest accepted TestFlight remains 1.17.0 (34); 1.18.0 (35) has no accepted upload yet. Watch remains
+unembedded pending its physical paired-device gates. Mac DMG publication remains paused.
+
+## Combined PR train — October 25
+
+The maintainer explicitly requested consolidation of all 18 open PRs into one release and TestFlight
+publication. Existing PR #308 (`codex/306-ipad-start`) is the integration PR; no new feature PR was
+opened. It preserves the heads of #264, #280, #281, #283, #285–#296 and #303, including the older
+refactor stack. The later #134 continuation above completes its implementation; required gates and
+merge still determine done. Preserve all earlier history and evidence.
+The combined candidate is **iOS 1.18.0 (35)**; the unpublished 1.17.1 candidate is folded into it.
+Latest accepted TestFlight remains **1.17.0 (34)** from `cbd2e454dbf502df5832dc3654ee2d284f147380`.
+Build 35 must be checked for reuse before uploading. Nothing in this integration is published yet.
+
+Integration found real regressions: shared file re-transcription lost older-device dictation fallback;
+summary/title/language copies lost incomplete-import provenance; the old capture adapter bypassed
+readiness/start-error state; and cancelled normal OS errors could reappear after Stop. Native/Core
+red and green evidence is preserved in the external `listentome-features/combined-train` folder.
+Existing branch tests are baseline adoption, with no invented historical red. Independent review
+found the cancelled-error and removed-title-task references and required direct native Mac capture
+and checkpoint adapter bindings. Final frozen full validation, review, CI, merge, fresh screenshots,
+archive/upload receipt and Apple tester/metadata readback are still required.
+
+The first combined freeze `3f4d1e2` passed all 20 native Mac tests and the signed Mac app build.
+Both connected physical iPad/iPhone passed real new microphone speech, Stop and opt-in Play/Pause
+on that source, with one synthetic phrase played only after both confirmed Listening. Native
+screenshots were inspected and preserved. Independent review cleared the integration. Hosted CI's
+Core BDD run then aborted in the default naming initializer with "freed pointer was not the last
+allocation"; its async public-default closure matches the trigger described in
+[Swift #92017](https://github.com/swiftlang/swift/issues/92017). The partial full validation was
+interrupted and preserved, not reported passed. The default closure now lives in a non-inline
+convenience initializer inside Core; an additional native client file exercises linkage. A local
+pre-workaround run passed, so the genuine red is the hosted crash, not a fabricated local failure.
+Corrected source `215d818` passed all three hosted checks. Both physical devices repeated recording,
+Stop and retained Play/Pause successfully on that exact source; 24 fresh native-resolution release
+screenshots were captured, inspected, hashed and backed up. Its full local run passed 1,186 Core
+tests (seven skips, 98.22% line coverage), then completed 522 iOS tests: 508 passed, 12 skipped and
+two failed. The failures were a settings scrolling helper dismissing the sheet when returning to
+the first row and stale release-note expectations for the unpublished 1.17.1 version. This is a
+failed full run, not a candidate pass. The helper now uses actual navigation-bar bounds, and the
+release contract and test identify 1.18.0 (35); focused and full validation must establish green.
+
+The Mac was unlocked. Installed Dev acceptance then reproduced Start waiting for an OS microphone
+callback and Stop/Quit remaining in Finalizing. TCC logged a delayed consent prompt. Native UI
+automation cannot access the system consent surface; a specific request to bring Dev forward and
+answer any prompt is pending, with no reset requested. The empty owned stalled test process was
+terminated only after preserving screenshots, stack sample, signing and OS evidence, then reopened
+from Finder. No synthetic audio has been played during this stalled Mac acceptance. Native Mac
+regressions reproduced both the pending permission and pending capability cancellation failures.
+The Mac preflight now races only resource-free metadata/consent waiting against cancellation using
+a single-completion reply; real capture drain ownership is unchanged. Late results remain fenced.
+All 24 native Mac tests passed, including late-grant and pre-execution cancellation cases, and
+independent review found no blockers. All three focused cloud-settings/release-note UI tests passed,
+including the large-text history check and the current 1.18.0 (35) announcement.
+New frozen validation, CI, Mac GUI/OTHERS acceptance, merge and actual upload remain outstanding.
+
+The earlier feedback-only `40d8e9a` full validation and 24 inspected images are historical evidence,
+not acceptance of this combined source. Earlier physical iPad/iPhone recording and opt-in Play/Pause
+checks passed at `e0e5062`; the connected iPad Pro4 has local dictation support but cannot use advanced
+speech or Apple Intelligence. Those physical checks must be identified by their source, never
+silently attributed to this release. Prior Dev cleanup was completed; the new installed Dev session
+is still active. Restore its original settings and perform the authorized app-scoped cleanup only
+after acceptance finishes, preserving other sessions, conversation data and keys.
+
+**Watch remains excluded from distribution** until the physical paired-device spike/recording-sync
+acceptance in #181/#193. Simulator native tests do not waive this gate. No physical Watch was found;
+the maintainer's model/watchOS question is pending. Once included, install the iPhone beta in
+TestFlight, then use its App Details → Information Watch install action on the paired iPhone, or
+Watch → My Watch → Available Apps → Install. Current published builds have no Watch companion.
+Mac DMG releases remain paused. This request authorizes a single TestFlight beta, not a public
+App Store submission or store screenshot upload.
+
+The sections below preserve older checkpoints; the current combined-train state above supersedes
+older per-PR candidate and "next train" planning. Update this block after verified merge/publication.
+
 ## Repository-wide BDD adoption (October 25)
 
 All behavior changes, including older branches when integrated, now follow [BDD](BDD.md): write
@@ -130,7 +242,7 @@ full-resolution assets and manifest, and verify uploaded listing sets before App
   gets a GitHub **pre-release** on its `ios-v…` tag (not Latest; notes from CHANGELOG, no binary);
   these exist for every iOS tag. From the next build on, each page must be complete: version/build,
   source commit, full notes, What to Test, privacy changes, and App Store "What's New" text since
-  the last App Store production release (iOS 1.10.5).
+  the last App Store production release (ASC reported iOS 1.15.0 on October 25; recheck each train).
 - **Release archives** for recent builds are in the gitignored `dist/`:
   `ListenToMe-ios-1.13.0-build30.xcarchive`, `…-1.14.0-build31.xcarchive`,
   `…-1.15.0-build32.xcarchive`, and `ListenToMe-ios-1.16.0-build33.xcarchive`. Earlier archives were moved there from temporary worktrees after upload, so the
@@ -243,6 +355,15 @@ is the tracking issue.
 - `Tests/ListenToMeCoreTests/SharedQuickLoopTests.swift` has a timing flake; re-run before suspecting
   your change.
 
+## Speaker-summary request candidate (#167) — October 25
+
+Local work on `codex/167-speaker-summary-refresh` prevents speaker edits from creating a first
+Listener summary with Auto off. It invalidates the old stream and ledger even when no replacement
+request starts, while retaining explicit Refresh and rebuilding completed summaries. Focused Core
+coverage passed (1,064 tests, seven skips, zero failures; 98.11% line coverage). Lint and independent
+review passed, including fixes for repeated edits during rebuilding and rejected resets. Full
+validation, rendered Mac acceptance and hosted CI remain pending. This work is not merged or published.
+
 ## Waiting on the maintainer
 
 - **App Store listing URLs** (privacy policy and support) point at the `codex/app-store-release`
@@ -286,6 +407,20 @@ all 403 iOS unit tests (397 passed, six skipped), 1,061 Core tests (seven skippe
 lint and the signed Mac build. Independent integration review found no blockers. Hosted checks for
 the final documentation commit subsequently passed and the integration merged. iOS changes are published in TestFlight 1.17.0 (34); physical-device acceptance remains pending and Mac publication remains paused.
 
+
+## Automatic review contract candidate (#148) — October 25
+
+`codex/148-automatic-review-contract` caps the assembled request rather than only normalized
+conversation text, composes the shared language rule once, and adds direct coverage for directive-only
+changes and a speaker rename during a Quick read. The rename test preserves #180 behavior: already
+acknowledged speech is relabeled without being sent again; unread stale work is rejected and retried
+with the new label. Core validation passed (1,060 tests, seven skips, zero failures; 98.1079% coverage), along with lint
+and independent review. The app/test targets compile for both simulator architectures. A simulator
+UI scenario passed and its two native screenshots were inspected: the limit notice is readable, and
+shortening input produces Summary successfully. Full `make validate-local` passed at `209a1f8`,
+including simulator unit/UI tests, Core coverage, release helpers, real provider contracts, lint and
+the signed Mac build. Current-main integration checks and Mac installed-app acceptance remain pending.
+Not merged or published.
 
 ## In progress: speaker lifecycle follow-ups (#188)
 
@@ -350,3 +485,22 @@ upload remain pending. No production App Store submission was made.
 ## Mac Auto compatibility acceptance (#209) — October 25
 
 The final installed-Mac settings interaction passed at `c3746b5`: saved 4K persists, an oversized probe sends nothing, an unsaved 8K edit disables probing, Cancel restores 4K, and a valid synthetic response succeeds with server-managed context. Original provider/model settings were restored. Screenshots, the one synthetic request, source/signing provenance and successful Dev-only cleanup are preserved in the October 25 external `auto-compatibility-209/native-final` evidence. Current-main integration includes only the already-merged iOS endpoint validation and documentation; Mac application source is unchanged from this acceptance. Final integration at `8e9e612` passed 1,065 Core tests (seven skips, 98.1098% coverage), lint, the signed Mac build and all 403 iOS unit tests (397 passed, six skipped). Independent integration review found no blockers. All three final-head checks passed and PR #275 merged at `3d32345`; #209 is closed. Mac publication remains paused.
+
+## iPad tester feedback: startup diagnostics (#306) and AI eligibility (#307)
+
+The tester reports Start listening staying/returning to idle after microphone approval. Model,
+iPadOS and installed build are not yet known, so no physical cause or recording fix is claimed.
+The local #306 change adds a prominent full-error alert and recording-settings recovery. The initial
+iPad simulator UI regression failed before implementation and passed afterwards; four model-level
+checks cover retry, cancellation and recording without summary AI. Independent review cleared startup and cancellation changes. Full validation,
+CI and merge remain required. #307 tracks unavailable Apple Intelligence
+selection and explicit alternate-provider setup; it is not implemented by the startup alert.
+
+The connected iPhone 12 Pro Max on iOS 27.0 completed an attended physical test with the real
+microphone and synthetic speech: Listening, current transcript, Stop and retained audio Play/Pause
+controls passed (one test, zero failures/skips). Native-resolution screenshots were inspected and
+source/signing evidence preserved. This was a development build with Auto/correction off and saved
+audio enabled for the test launch; it is not a new TestFlight release. Audible playback and network
+traffic were not measured. The reporter's iPad still needs its own acceptance. The physical test
+was then hardened to require an empty new conversation before phrase matching; that test-only
+change needs its next native run.

@@ -8,7 +8,7 @@ import UIKit
 
 @MainActor @Observable
 final class MobileSession {
-    enum State { case idle, preparing, recording, stopping }
+    typealias State = CaptureCoordinator.Phase
     /// Why capture last ended. `.interruption` is the only reason the system may resume from.
     enum StopReason: Equatable { case user, interruption, routeLost, background }
     var state = State.idle {
@@ -19,8 +19,9 @@ final class MobileSession {
             publishWatchStatus()
         }
     }
-    private(set) var stopReason: StopReason? { didSet { if stopReason != oldValue { publishWatchStatus() } } }
+    var stopReason: StopReason? { didSet { if stopReason != oldValue { publishWatchStatus() } } }
     private(set) var isForeground = true
+    @ObservationIgnored private var sceneGeneration = 0
     /// When the current recording run started, for the Apple Watch remote's elapsed time (issue #181).
     private(set) var recordingStartedAt: Date?
     /// Receives the recorder status for the Apple Watch; `nil` until the app attaches its link.
@@ -32,9 +33,10 @@ final class MobileSession {
     }
     var title = ConversationTitle.mobileDefault
     var titleState = ConversationTitleState.placeholder   // where the title came from (#221)
-    @ObservationIgnored var autoTitleTasks: [String: Task<Void, Never>] = [:]
+    @ObservationIgnored let titleCoordinator = ConversationTitleCoordinator()
     var summaryInstructions = "" { didSet { handleSummaryEvent(.notesChanged) } }
     var notes = "" { didSet { handleSummaryEvent(.notesChanged) } }
+    var restoredSituation: SituationGrid?
     var summary = ""
     var quickSummary = ""
     /// Deep analysis an older version saved here; kept read-only, never generated on iOS (#235).
@@ -72,9 +74,10 @@ final class MobileSession {
     var onDeviceProviderOverride: (any LLMProvider)?
     let correctionProvider: (any LLMProvider)?
     let speechCorrection = MobileTranscriptCorrector()
+    @ObservationIgnored var savedAudioRecognizer: SavedAudioRetranscription.Recognize = LocalAudioFileTranscriber.recognize
     let vocabulary = SessionVocabulary()   // domain vocabularies and My terms (issue #222)
     var acceptsSpeechCorrection = false
-    private let makeRecorder: () -> any MobileRecording
+    let makeRecorder: () -> any MobileRecording
     @ObservationIgnored var watchSpeakerContexts: [UUID: WatchSpeakerLabels] = [:]
     var watchLanguageSamples: ([WatchAudioChunk]) async throws -> [Float] = WatchLanguageAudio.samples
     let makeWatchTranscriber: () -> any WatchAudioTranscribing
@@ -91,6 +94,7 @@ final class MobileSession {
     var manualQuickError: String?
     var quickSummaryError: String? { manualQuickError ?? quickReader.error }
     private(set) var sourceImportID: String?
+    private(set) var hasIncompleteImport = false
     var segments: [TranscriptSegment] = [] { didSet { liveRevision += 1; scheduleAutoQuick() } }
     var liveRevision = 0
     @ObservationIgnored var liveCacheKey: LiveKey?
@@ -99,13 +103,18 @@ final class MobileSession {
     var partial: TranscriptSegment?
     var history: [SessionRecord] = []
     var message: String?
+    /// A failed start needs explicit acknowledgement; unrelated status updates must not hide it.
+    var recordingStartFailure: String?
+    var recordingAvailability: FeatureAvailability = .temporarilyUnavailable(reason: "Checking recording support…")
+    @ObservationIgnored var recordingSupport: (Locale) async -> FeatureAvailability
+    @ObservationIgnored var recordingSupportGeneration = 0
     /// A damaged history file that the archive set aside. Kept apart from `message`, which every
     /// save, restore and delete overwrites — the user must still see this when History opens.
     var archiveWarning: String?
     var isSummarizing = false {
         didSet { synchronizeAutomaticReviews(); if isSummarizing != oldValue { publishWatchStatus() } }
     }
-    let ai = MobileAISettings()
+    let ai: MobileAISettings
     var summaryDraft = ""
     var answerNotices = MobileAnswerNotices()   // Grounding and cut-off lines (issues #114, #215)
     private var summaryTask: Task<Void, Never>?
@@ -117,8 +126,8 @@ final class MobileSession {
     }
     private(set) var id = UUID().uuidString
     private var date = Date()
-    private(set) var recorder: (any MobileRecording)?
-    private var startTask: Task<Void, Never>?
+    var recorder: (any MobileRecording)?
+    let captureCoordinator = CaptureCoordinator()
     /// On-device speaker identification (issues #180, #195) and its periodic pass while recording.
     let speakers: MobileSpeakers
     let languageDetection: MobileLanguageDetection   // Automatic transcription language (issue #197)
@@ -131,8 +140,8 @@ final class MobileSession {
     var speakerFinalPass: Task<Void, Never>?
     let archive: SessionArchive
     let activeURL: URL
-    /// The bytes last written for this conversation. Identical bytes are not written again.
-    var lastSavedData: Data?
+    /// Core owns unchanged-save suppression and acknowledges only a complete save transaction.
+    let persistence = ConversationPersistenceCoordinator()
     private let saveDebounce: Duration
     var pendingSave: Task<Void, Never>?
     /// Capture rebuilds are coalesced: several notifications describe one physical device change.
@@ -160,10 +169,17 @@ final class MobileSession {
          summaryProvider: (any LLMProvider)? = nil, autoInterval: Duration = .seconds(5),
          correctionProvider: (any LLMProvider)? = nil, saveDebounce: Duration = .seconds(1),
          sharedInbox: URL? = nil, watchInbox: WatchInbox? = nil,
-         makeRecorder: @escaping () -> any MobileRecording = { MobileRecorder() },
+         makeRecorder: (() -> any MobileRecording)? = nil,
          makeWatchTranscriber: @escaping () -> any WatchAudioTranscribing = { MobileFileTranscriber() },
          makeDiarizer: @escaping () -> any MobileSpeakerDiarizing = MobileSpeakers.deviceDiarizer,
-         makeLanguageModel: (() -> any MobileLanguageIdentifying)? = nil, savedAudio: MobileSavedAudio? = nil) {
+         makeLanguageModel: (() -> any MobileLanguageIdentifying)? = nil, savedAudio: MobileSavedAudio? = nil,
+         ai: MobileAISettings = MobileAISettings(),
+         recordingSupport: ((Locale) async -> FeatureAvailability)? = nil) {
+        self.recordingSupport = recordingSupport ?? (makeRecorder == nil
+            ? { await MobileSpeechModel.availability(locale: $0) } : { _ in .ready })
+        // A supplied recorder is a simulated capture implementation; its support can be supplied too.
+        if makeRecorder != nil, recordingSupport == nil { recordingAvailability = .ready }
+        self.ai = ai
         speakers = MobileSpeakers(makeDiarizer: makeDiarizer)
         self.savedAudio = savedAudio ?? MobileSavedAudio(root: storageDirectory.appendingPathComponent("SavedAudio"))
         languageDetection = MobileLanguageDetection(makeIdentifier: makeLanguageModel)
@@ -174,7 +190,7 @@ final class MobileSession {
         self.saveDebounce = saveDebounce
         self.correctionProvider = correctionProvider
         quickScheduler = MobileSummaryScheduler(interval: autoInterval)
-        self.makeRecorder = makeRecorder
+        self.makeRecorder = makeRecorder ?? { MobileRecorder() }
         self.makeWatchTranscriber = makeWatchTranscriber
         activeURL = storageDirectory.appendingPathComponent("ActiveConversation.json")
         attachmentRoot = storageDirectory.appendingPathComponent("Attachments", isDirectory: true)
@@ -201,16 +217,7 @@ final class MobileSession {
             || !quickSummary.isEmpty || !earlierDeepAnalysis.isEmpty || !attachments.isEmpty
     }
     var allSegments: [TranscriptSegment] { segments + (partial.map { [$0] } ?? []) }
-    /// The open conversation as it is saved, and as every export formats it (#130), in its languages (#206).
-    var currentRecord: SessionRecord {
-        withConversationLanguages(SessionRecord(id: id, title: title, date: date,
-            transcript: Self.transcriptText(for: allSegments), summary: summary, segments: allSegments, notes: notes,
-            quickSuggestion: quickSummary, deepAnswer: earlierDeepAnalysis, isComplete: state == .idle
-                && allSegments.allSatisfy(\.isFinal), attachments: attachments, sourceImportID: sourceImportID,
-            titleState: titleState, selectionSummaries: selectionSummaries.isEmpty ? nil : selectionSummaries,
-            summaryInstructions: summaryInstructions.isEmpty ? nil : summaryInstructions,
-            vocabularyDomainIDs: vocabulary.domainIDs(for: id).sorted()))
-    }
+
     var summaryAvailability: String? { summaryAvailability(for: .summary) }
     var automaticQuickAvailability: String? {
         if summaryProvider != nil { return nil }
@@ -220,17 +227,8 @@ final class MobileSession {
     func summaryAvailability(for mode: MobileSummaryMode) -> String? {
         if summaryProvider != nil || onDeviceProviderOverride != nil { return nil }
         if ai.provider != .apple { return ai.availability(for: mode) }
-        switch SystemLanguageModel.default.availability {
-        case .available:
-            // The *conversation's* language, not the device's: an unsupported one fails only at
-            // generation time, so it is reported here instead of as a raw FoundationModels error.
-            return AppleIntelligenceProvider.unsupportedLocaleReason(for: Locale(identifier: conversationLanguage))
-        case .unavailable(.deviceNotEligible): return "On-device summaries require an Apple Intelligence capable device."
-        case .unavailable(.appleIntelligenceNotEnabled): return "Turn on Apple Intelligence in Settings to use on-device summaries."
-        case .unavailable(.modelNotReady):
-            return "Apple Intelligence’s on-device model is not ready. Check setup in Settings → Apple Intelligence & Siri."
-        default: return "On-device summaries are unavailable on this device."
-        }
+        if let reason = ai.appleUnavailableReason { return reason }
+        return AppleIntelligenceProvider.unsupportedLocaleReason(for: Locale(identifier: conversationLanguage))
     }
 
     /// "Microphone" (and "Apple Watch" on a watch recording's lines) names a device, not a participant,
@@ -263,81 +261,8 @@ final class MobileSession {
     }
 
     func recheckSummary(for mode: MobileSummaryMode) {
+        ai.refreshAppleAvailability()
         message = summaryBlockReason(for: mode) ?? "Ready to generate \(mode.title)."
-    }
-
-    func start() {
-        guard state == .idle, !isSummarizing else { return }
-        message = nil
-        stopReason = nil
-        speechCorrection.cancel()
-        acceptsSpeechCorrection = true
-        // Keep any unfinished hypothesis from an interrupted earlier run.
-        if let partial { segments.append(partial); self.partial = nil }
-        state = .preparing
-        let recorder = makeRecorder(); self.recorder = recorder
-        let offset = segments.map(\.end).max() ?? 0
-        attachRunAudio(to: recorder, offset: offset)   // speakers, language and saved audio share one timeline
-        // An Apple Watch drain stops before the microphone is prepared, and resumes after.
-        let drain = watchDrainTask
-        drain?.cancel()
-        startTask = Task {
-            await drain?.value; await recorder.setContextualStrings(self.vocabularyRecognitionTerms)
-            do {
-                try await recorder.start(locale: Locale(identifier: recordingLanguage)) { [weak self] segment in
-                    guard let self else { return }
-                    self.speechEventCount += 1
-                    if segment.isFinal { self.finalizedSpeechEventCount += 1 }
-                    self.lastSpeechEvent = Date()
-                    if self.stageLanguageSegment(segment, offset: offset) { return }
-                    let timed = TranscriptSegment(source: .you, text: segment.text, isFinal: segment.isFinal,
-                                                  start: offset + segment.start, end: offset + segment.end,
-                                                  speakerName: Self.microphoneLabel, language: self.recordingLanguage)
-                    if timed.isFinal {
-                        self.segments.append(timed)
-                        self.partial = nil
-                        self.save(announce: false)
-                        self.checkSpeech(timed)
-                    } else {
-                        self.partial = timed.text.isEmpty ? nil : timed
-                    }
-                    self.scheduleAutoQuick()
-                } onFailure: { [weak self] error in
-                    guard let self, self.state == .recording || self.state == .preparing else { return }
-                    self.message = error
-                    Task { await self.stop() }
-                }
-                try Task.checkCancellation()
-                state = .recording
-                UIApplication.shared.isIdleTimerDisabled = true
-                startRecognitionLoops()
-            } catch {
-                try? await recorder.stop()
-                speakers.endRun(); endLanguageRun(); endSavedAudioRun()
-                self.recorder = nil
-                state = .idle
-                if !(error is CancellationError) { message = error.localizedDescription }
-                save(announce: false)
-            }
-            startTask = nil
-        }
-    }
-
-    func stop() async {
-        guard state == .recording else {
-            if state == .preparing { startTask?.cancel(); await startTask?.value }
-            return
-        }
-        state = .stopping
-        languageDetection.activityLoop?.cancel(); languageDetection.activityLoop = nil
-        if stopReason == nil { stopReason = .user }
-        do { try await recorder?.stop() } catch { message = "Could not finalize transcript: \(error.localizedDescription)" }
-        recorder = nil
-        UIApplication.shared.isIdleTimerDisabled = false
-        state = .idle
-        save(announce: false); nameConversationIfNeeded()   // in the background (#221)
-        finishSpeakerIdentification()
-        endLanguageRun(); endSavedAudioRun()
     }
 
     func background() async {
@@ -363,9 +288,10 @@ final class MobileSession {
         handleSummaryEvent(.conversationChanged)
         id = UUID().uuidString; date = Date()
         vocabulary.restore(domainIDs: nil, for: id)
+        restoredSituation = nil
         title = ConversationTitle.mobileDefault; titleState = .placeholder; notes = ""; summaryInstructions = ""; summary = ""
         quickSummary = ""; earlierDeepAnalysis = ""; selectionSummaries = []
-        segments = []; partial = nil; message = nil; attachments = []; sourceImportID = nil
+        segments = []; partial = nil; message = nil; attachments = []; sourceImportID = nil; hasIncompleteImport = false
         save(announce: false)
     }
 
@@ -376,8 +302,9 @@ final class MobileSession {
     }
 
     func restore(_ record: SessionRecord) {
+        restoredSituation = record.situationGrid
         pendingSave?.cancel(); pendingSave = nil
-        lastSavedData = nil
+        persistence.invalidate()
         speechCorrection.cancel()
         acceptsSpeechCorrection = false
         manualQuickError = nil; resetSuggestions(); answerNotices = MobileAnswerNotices()
@@ -387,7 +314,7 @@ final class MobileSession {
         notes = record.notes ?? ""; summaryInstructions = record.summaryInstructions ?? ""; summary = record.summary
         quickSummary = record.quickSuggestion ?? ""; earlierDeepAnalysis = record.deepAnswer ?? ""
         selectionSummaries = record.selectionSummaries ?? []
-        attachments = record.attachments ?? []; sourceImportID = record.sourceImportID
+        attachments = record.attachments ?? []; sourceImportID = record.sourceImportID; hasIncompleteImport = record.hasIncompleteImport == true
         segments = record.segments ?? []; partial = nil; message = nil
     }
 
@@ -616,18 +543,14 @@ extension MobileSession {
         let record = currentRecord
         do {
             let data = try Self.stableEncoder.encode(record)
-            guard data != lastSavedData else {
-                if announce { message = "Conversation saved on this device." }
-                return true
-            }
-            if hasContent || history.contains(where: { $0.id == id }) {
-                try archive.save(record)
+            try persistence.save(data, hasContent: hasContent, wasArchived: history.contains(where: { $0.id == id }),
+                                 archive: { _ = try archive.save(record) }, archived: {
                 remember(record); exportToVault(record)
-            }
-            try PrivateStorage.createDirectory(at: activeURL.deletingLastPathComponent())
-            try data.write(to: activeURL, options: PrivateStorage.writingOptions)
-            try? PrivateStorage.setExcludedFromBackup(excludeFromBackup, at: activeURL)
-            lastSavedData = data
+            }, activeSnapshot: {
+                try PrivateStorage.createDirectory(at: activeURL.deletingLastPathComponent())
+                try data.write(to: activeURL, options: PrivateStorage.writingOptions)
+                try? PrivateStorage.setExcludedFromBackup(excludeFromBackup, at: activeURL)
+            })
             if announce { message = "Conversation saved on this device." }
             return true
         } catch {
@@ -876,12 +799,17 @@ extension MobileSession {
     }
 
     func handleScenePhase(_ phase: ScenePhase) async {
+        sceneGeneration += 1
+        let generation = sceneGeneration
         isForeground = phase != .background
         // Suspension can follow .inactive without another chance to run, so pending typing is
         // written here as well as from the App body's synchronous forwarder.
         flushPendingSave()
         switch phase {
         case .active:
+            ai.refreshAppleAvailability()
+            await refreshRecordingSupport(publish: false)
+            guard !Task.isCancelled, generation == sceneGeneration, isForeground, applicationIsActive() else { return }
             importSharedInbox(); importWatchInbox(); nameConversationIfNeeded()
             prepareSpeakerModelsIfNeeded()   // speaker models load in the foreground only (#195)
             // The watch may still show "Open ListenToMe…" from a Start sent while this was closed.
@@ -909,4 +837,40 @@ extension MobileSession {
         stopReason = reason
         if message == before { message = text }
     }
+}
+
+extension MobileSession {
+    /// The open conversation as it is saved, and as every export formats it (#130), in its languages (#206).
+    var currentRecord: SessionRecord {
+        withConversationLanguages(SessionRecord(id: id, title: title, date: date,
+            transcript: Self.transcriptText(for: allSegments), summary: summary, segments: allSegments, notes: notes,
+            quickSuggestion: quickSummary, deepAnswer: earlierDeepAnalysis, isComplete: !hasIncompleteImport && state == .idle
+                && allSegments.allSatisfy(\.isFinal), attachments: attachments, sourceImportID: sourceImportID,
+            titleState: titleState, selectionSummaries: selectionSummaries.isEmpty ? nil : selectionSummaries,
+            summaryInstructions: summaryInstructions.isEmpty ? nil : summaryInstructions,
+            vocabularyDomainIDs: vocabulary.domainIDs(for: id).sorted(),
+            hasIncompleteImport: hasIncompleteImport ? true : nil,
+            situationGrid: restoredSituation.flatMap { $0.markdown == summary && $0.isValid(segments: allSegments) ? $0 : nil }))
+    }
+}
+
+// Native capture callbacks retain platform speech counters.
+extension MobileSession {
+    func receiveCaptureSegment(_ segment: TranscriptSegment, offset: TimeInterval) {
+        speechEventCount += 1
+        if segment.isFinal { finalizedSpeechEventCount += 1 }
+        lastSpeechEvent = Date()
+        if stageLanguageSegment(segment, offset: offset) { return }
+        let timed = TranscriptSegment(source: .you, text: segment.text, isFinal: segment.isFinal,
+                                      start: offset + segment.start, end: offset + segment.end,
+                                      speakerName: Self.microphoneLabel, language: recordingLanguage)
+        if timed.isFinal {
+            segments.append(timed); partial = nil
+            save(announce: false); checkSpeech(timed)
+        } else {
+            partial = timed.text.isEmpty ? nil : timed
+        }
+        scheduleAutoQuick()
+    }
+
 }

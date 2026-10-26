@@ -13,19 +13,24 @@ extension MeetingView {
 
     func statusRail(session: MeetingSession) -> some View {
         @Bindable var session = session
+        let runningEngine = session.isTranscribingFile ? "speechAnalyzer" : activeEngine
         return ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 RailRecStatus(isRunning: session.isRunning, isPreparing: session.isPreparing,
                               elapsed: elapsedLabel)
+                AudioLevelMeters(session: session)
 
                 railSection("Engine") {
-                    Text(CommandCenterLabels.engine(active: activeEngine,
+                    Text(CommandCenterLabels.engine(active: runningEngine,
                                                     saved: ProviderSettings.transcriptionEngine))
                         .font(.system(size: 12.5)).foregroundStyle(Theme.ink)
-                        .help(activeEngine == nil
+                        .help(runningEngine == nil
                               ? "The engine the next Start listening will use"
-                              : "The engine this recording is using — an engine change applies at the next Start")
+                              : "The engine this transcription is using — an engine change applies at the next Start")
                     TranscriptionLanguagePicker(selection: languageBinding(session: session))
+                    TranscriptionComputeInfo(engine: runningEngine ?? ProviderSettings.transcriptionEngine,
+                                             isRunning: runningEngine != nil,
+                                             isPreparing: session.isPreparing)
                 }
 
                 railSection("Automatic AI") {
@@ -171,41 +176,56 @@ extension MeetingView {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 14).padding(.vertical, 12)
             }
-            // Follow the newest line only while the user is at the bottom; if they scroll up to read
-            // history, stop auto-scrolling until they return to the bottom.
-            .onScrollGeometryChange(for: Bool.self) { geo in
-                geo.contentOffset.y + geo.containerSize.height >= geo.contentSize.height - 24
-            } action: { _, atBottom in transcriptAtBottom = atBottom }
-            .onChange(of: store.utterances.count) { _, _ in
-                if transcriptAtBottom { proxy.scrollTo(Self.scrollBottomID, anchor: .bottom) }
+            .task(id: TranscriptScrollKey(revision: store.revision, you: store.partials[.you],
+                                          others: store.partials[.others])) {
+                do { try await Task.sleep(for: .milliseconds(100)) } catch { return }
+                if transcriptFollow.shouldScroll { proxy.scrollTo(Self.scrollBottomID, anchor: .bottom) }
             }
-            .onChange(of: store.partial?.text) { _, _ in
-                if transcriptAtBottom { proxy.scrollTo(Self.scrollBottomID, anchor: .bottom) }
+            .onScrollGeometryChange(for: Bool.self) { geometry in
+                geometry.contentOffset.y + geometry.containerSize.height >= geometry.contentSize.height - 24
+            } action: { _, atEnd in transcriptFollow.geometryChanged(atEnd: atEnd) }
+            .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                let target = max(0, geometry.contentSize.height - geometry.containerSize.height
+                                 + geometry.contentInsets.bottom)
+                return abs(geometry.contentOffset.y - target) > 2 ? geometry.contentSize.height.rounded() : 0
+            } action: { _, displaced in
+                guard displaced > 0, transcriptFollow.shouldScroll else { return }
+                transcriptScrollWork.start(load: { await Task.yield() }, apply: { _ in
+                    if transcriptFollow.shouldScroll { proxy.scrollTo(Self.scrollBottomID, anchor: .bottom) }
+                })
+            }
+            .onScrollPhaseChange { _, phase, context in
+                if phase == .tracking || phase == .interacting || phase == .decelerating {
+                    transcriptFollow.beginUserScroll()
+                } else if phase == .idle && transcriptFollow.userScrolling {
+                    let geometry = context.geometry
+                    transcriptFollow.endUserScroll(atEnd:
+                        geometry.contentOffset.y + geometry.containerSize.height >= geometry.contentSize.height - 24)
+                }
+            }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                if !transcriptFollow.following {
+                    Button("Latest", systemImage: "arrow.down") {
+                        transcriptFollow.latest()
+                        proxy.scrollTo(Self.scrollBottomID, anchor: .bottom)
+                    }.buttonStyle(.bordered).padding(4)
+                        .accessibilityLabel("Jump to latest transcript")
+                }
             }
         }
         .frame(maxHeight: .infinity)
     }
 
     private func transcriptRow(for seg: TranscriptSegment) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text(CommandCenterLabels.stamp(seg.start))
-                .font(.system(size: 10.5, design: .monospaced))
-                .foregroundStyle(Theme.ink3)
-                .frame(width: 40, alignment: .leading)
-            Text(speakerRowLabel(for: seg))
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(seg.source == .you ? Theme.you : Theme.others)
-                .frame(width: 100, alignment: .leading)
-                .lineLimit(2)
-                .help(seg.speakerLabel)
-            Text(seg.text)
-                .font(.system(size: 12.5)).foregroundStyle(Theme.ink)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .padding(.vertical, 3)
-        .contextMenu {
-            if seg.isFinal { Button("Add to My terms…") { vocabulary.termSourceLine = seg.text } }
-        }
+        EditableTranscriptRow(segment: seg, speakerLabel: speakerRowLabel(for: seg),
+            copyTranscript: {
+                let lines = store.utterances + [SpeakerSource.you, .others].compactMap { store.partials[$0] }
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(lines.map { "\($0.speakerLabel): \($0.text)" }
+                    .joined(separator: "\n"), forType: .string)
+            }, edit: { editTranscriptLine(seg, text: $0) },
+            delete: { deleteTranscriptLine(seg) },
+            addTerm: { vocabulary.termSourceLine = seg.text })
     }
 
     /// Channel/speaker label for a transcript row: "YOU" for the mic; for the Others channel the
@@ -227,8 +247,9 @@ extension MeetingView {
             ConversationPromptEditor(instructions: Binding(get: { session.summaryInstructions },
                 set: { session.summaryInstructions = $0 }), suggestions: session.suggestedPrompts,
                 domain: vocabulary.banner(for: currentSessionID)?.domain,
-                blockReason: session.aiEnabled ? nil : "Turn AI on to ask.", allowsDeep: true,
-                ask: { prompt, deep in Task { await session.askSuggested(prompt, deep: deep) } },
+                blockReason: session.aiEnabled ? nil : (modelStatus.isEmpty ? "Turn AI on to ask." : modelStatus),
+                allowsDeep: true,
+                ask: { prompt, deep in session.requestSuggested(prompt, deep: deep) },
                 save: { _ = checkpoint(force: true) })
                 .id(currentSessionID)
             referenceFilesRow(session: session)
@@ -274,9 +295,9 @@ extension MeetingView {
                 // Refreshing with nothing new re-summarizes an empty evidence block and can reword
                 // or drop items from the record already on screen, so it is disabled until new
                 // speech arrives (issue #137).
-                Button("Refresh") { Task { await session.refreshListener() } }
+                Button("Refresh") { session.requestListenerRefresh() }
                     .controlSize(.small)
-                    .disabled(!session.hasUnsummarizedSpeech)
+                    .disabled(!session.aiEnabled || !session.hasUnsummarizedSpeech)
                     .help(session.hasUnsummarizedSpeech
                           ? "Summarize the speech that has not been summarized yet"
                           : "Everything said so far is already summarized.")
@@ -310,15 +331,15 @@ extension MeetingView {
                 SuggestedPromptChips(session: session)
                 FlowLayout(spacing: 7) {
                     Button("What should I answer?") {
-                        Task { await session.respondQuick(.answerQuestion) }
+                        session.requestQuick(.answerQuestion)
                     }
-                    Button("Recap so far") { Task { await session.respondQuick(.recap) } }
-                    Button("Follow-up") { Task { await session.respondQuick(.followUp) } }
-                    Button("Action items") { Task { await session.respondQuick(.actionItems) } }
-                    Button("Clarify simply") { Task { await session.respondQuick(.clarify) } }
-                    Button("Counterpoint") { Task { await session.respondQuick(.counterpoint) } }
-                    Button("Key terms") { Task { await session.respondQuick(.keyTerms) } }
-                    Button("Draft reply") { Task { await session.respondQuick(.draftReply) } }
+                    Button("Recap so far") { session.requestQuick(.recap) }
+                    Button("Follow-up") { session.requestQuick(.followUp) }
+                    Button("Action items") { session.requestQuick(.actionItems) }
+                    Button("Clarify simply") { session.requestQuick(.clarify) }
+                    Button("Counterpoint") { session.requestQuick(.counterpoint) }
+                    Button("Key terms") { session.requestQuick(.keyTerms) }
+                    Button("Draft reply") { session.requestQuick(.draftReply) }
                 }
                 .controlSize(.small)
             })
@@ -332,7 +353,7 @@ extension MeetingView {
             headerExtra: { EmptyView() },
             actions: {
                 reviewSuggestion("deep", session: session)
-                Button("Deep answer") { Task { await session.respondDeep(.answerQuestion) } }
+                Button("Deep answer") { session.requestDeep(.answerQuestion) }
                     .controlSize(.small)
             })
     }
@@ -369,7 +390,9 @@ extension MeetingView {
             }
         )) {
             ForEach(modelOptions(role: role, session: session), id: \.self) { model in
-                Text("\(label) · \(model)").tag(model)
+                let modelLabel = ProviderSettings.aiMode == .local
+                    ? localOllamaReadiness?.label(for: model) ?? "\(model) (not verified)" : model
+                Text("\(label) · \(modelLabel)").tag(model)
             }
         }
         .labelsHidden().controlSize(.small)
@@ -408,4 +431,10 @@ extension MeetingView {
                 }
             })
     }
+}
+
+private struct TranscriptScrollKey: Equatable {
+    let revision: Int
+    let you: TranscriptSegment?
+    let others: TranscriptSegment?
 }

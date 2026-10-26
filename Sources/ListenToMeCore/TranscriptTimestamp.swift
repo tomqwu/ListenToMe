@@ -4,9 +4,8 @@ import Foundation
 /// and every export format (`SessionExporter`), so a note and an export never disagree.
 ///
 /// Only some engines report where a line sits in the recording: the iOS live recorder and Apple Watch
-/// files (the recognizer's audio range, cumulative across resumed recordings) and WhisperKit on macOS.
-/// Apple's engines on macOS report `0…0` until issue #68 lands; such lines carry no time at all, and no
-/// time is ever estimated for them.
+/// files (the recognizer's audio range, cumulative across resumed recordings), SpeechAnalyzer and
+/// WhisperKit on macOS. Legacy SpeechRecognizer lines remain untimed; no time is estimated for them.
 public enum TranscriptTimestamp {
     /// True when the line carries a time from its engine.
     public static func isTimed(_ segment: TranscriptSegment) -> Bool {

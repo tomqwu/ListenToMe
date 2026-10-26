@@ -7,6 +7,8 @@ final class MobileTranscriptUITests: XCTestCase {
         // A preceding correction test must not add a setup banner to this geometry fixture.
         app.launchArguments = ["--transcript-scroll-fixture", "-mobileCorrectTranscript", "NO"]
         app.launchPastReleaseNotes()
+        XCTAssertTrue(app.buttons["Start listening"].isEnabled, "Transcript geometry uses an explicit supported profile")
+        XCTAssertFalse(app.staticTexts["recordingSupportReason"].exists)
         let scroll = app.scrollViews["transcriptScroll"]
         XCTAssertTrue(scroll.waitForExistence(timeout: 5))
         let transcript = app.otherElements["transcriptPanel"]

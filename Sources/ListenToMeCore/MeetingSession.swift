@@ -32,12 +32,13 @@ public final class MeetingSession {
     /// system-audio stream. The UI shows this as a visible alert instead of a grey caption, because
     /// the rail keeps saying Recording and the elapsed timer keeps counting (issue #107).
     public var captureDegraded: Bool { !degradedSources.isEmpty }
-    public private(set) var transcriptionStatus = "Transcription: idle"
+    public func captureUnavailable(_ source: SpeakerSource) -> Bool { degradedSources.contains(source) }
+    public internal(set) var transcriptionStatus = "Transcription: idle"
     public var captureStatus: String {
         "Mic: \(captureMessages[.you] ?? "idle") · System: \(captureMessages[.others] ?? "idle")"
     }
     private var captureStatusTask: Task<Void, Never>?
-    private var transcriptionStatusTask: Task<Void, Never>?
+    var transcriptionStatusTask: Task<Void, Never>?
 
     /// Forces all AI replies (Listener/Quick/Deep) into this language, e.g. "Simplified Chinese";
     /// nil/empty leaves the model free to match the conversation. Set from the UI's Settings.
@@ -63,6 +64,9 @@ public final class MeetingSession {
     public let store: ConversationStore
 
     /// Per-role output properties
+    public var structuredListenerEnabled = false
+    var listenerSituation: SituationGrid?
+    @ObservationIgnored var situationCache: SituationGridCache?
     public private(set) var listenerSummary = ""
     public internal(set) var quickSuggestion = ""
     public private(set) var deepAnswer = ""
@@ -95,12 +99,14 @@ public final class MeetingSession {
     /// separate from `listenerSummary` (the live display value, which is cleared to "" while a new
     /// refresh streams) so a proactive Quick can't read an empty/partial in-flight summary.
     var lastCompletedListenerSummary = ""
+    /// A completed summary still needs replacement if another label change interrupts its rebuild.
+    var speakerSummaryNeedsRebuild = false
     var summarizedSegmentIDs = Set<UUID>()
     private var pendingSummaryIDs: [Int: Set<UUID>] = [:]
     /// The provisional (non-final) lines the last completed refresh actually sent. Unfinalized
     /// speech has no ledger entry — it is never final — so this is what keeps a second Refresh with
     /// the same unconfirmed wording a no-op (issues #113, #137).
-    private var summarizedProvisionalText: String?
+    var summarizedProvisionalText: String?
     private var pendingProvisionalText: [Int: String] = [:]
     /// Transcript characters one listener refresh asks for; also the window the Refresh button's
     /// provisional comparison measures, so the two always describe the same lines.
@@ -136,7 +142,9 @@ public final class MeetingSession {
     public func roleStatus(_ role: CopilotRole) -> String? { roleActivity[role] }
 
     /// True while an imported audio file is being transcribed into the store.
-    public private(set) var isTranscribingFile = false
+    public internal(set) var isTranscribingFile = false
+    /// A decode failure or cancellation left only part of an imported file in this conversation.
+    public internal(set) var hasIncompleteImport = false
 
     /// Where the current recording starts on the conversation's timeline (review of #233): each
     /// capture's engine times restart at zero, so its timed lines are moved past the end of the
@@ -159,19 +167,21 @@ public final class MeetingSession {
     #endif
 
     public let quickReader = QuickSummaryReader()
+    public let audioLevels = LiveAudioLevels()
+    public let responseTimings = ResponseTimings()
     public let automaticReviews = AutomaticReviewCoordinator()
     var liveScheduler = LiveSummaryScheduler()
     var liveWake: Task<Void, Never>?
 
     private var context: ContextEngine
     private let makeCapture: @Sendable () -> any AudioCapturing
-    private let makeTranscriber: @Sendable () -> any Transcribing
+    let makeTranscriber: @Sendable () -> any Transcribing
     let providerAvailability: @Sendable (String) -> String?
     private let makeProvider: @Sendable (String) -> any LLMProvider
     var providers: [CopilotRole: any LLMProvider]
     private var capture: (any AudioCapturing)?
     private var transcriber: (any Transcribing)?
-    private let clock: @Sendable () -> TimeInterval
+    let clock: @Sendable () -> TimeInterval
     /// See `drain(_:grace:)`. Injectable so a test's own per-chunk feed cost can't race the
     /// default deadline (issue #147).
     private let capturePumpDrainGrace: Duration
@@ -190,7 +200,7 @@ public final class MeetingSession {
     private var segmentPump: Task<Void, Never>?
     /// In-flight transcriber teardown from the last stop. `start()` awaits it before creating a new
     /// transcriber so a quick restart can't run two transcribers at once (SFSpeechRecognizer 1100).
-    private var stopDrain: Task<Void, Never>?
+    var stopDrain: Task<Void, Never>?
     /// In-flight automatic (proactive) Quick fire started from `ingest`.
     private var proactiveTask: Task<Void, Never>?
     private var responseTasks: [CopilotRole: Task<Void, Never>] = [:]
@@ -230,6 +240,8 @@ public final class MeetingSession {
     /// Changes the model for a role and rebuilds its provider.
     public func setModel(_ role: CopilotRole, _ model: String) {
         cancelResponse(role)
+        stoppedResponseText[role] = nil
+        responseTimings.clear(role)
         models[role] = model
         providers[role] = makeProvider(model)
         // The new provider may have a different context window (or none), so the old notice no
@@ -240,6 +252,22 @@ public final class MeetingSession {
         roleActivity[role] = nil
         if role == .quick { quickReader.clearError() }
         handleLiveEvent(.providerChanged)
+    }
+
+    /// Explicit user cancellation keeps the partial answer without marking its source as reviewed.
+    private var stoppedResponseText: [CopilotRole: String] = [:]
+    public var stoppedResponseRoles: Set<CopilotRole> {
+        Set(stoppedResponseText.compactMap { role, text in output(role) == text ? role : nil })
+    }
+
+    public func stopResponse(_ role: CopilotRole) {
+        guard streamingRoles.contains(role) else { return }
+        cancelResponse(role)
+        stoppedResponseText[role] = output(role)
+        if role == .quick {
+            if !quickSuggestion.isEmpty { manualQuickAnswer.completed(at: clock()) }
+            handleLiveEvent(.manualQuickFinished)
+        }
     }
 
     public func cancelResponse(_ role: CopilotRole) {
@@ -257,8 +285,10 @@ public final class MeetingSession {
         guard !isRunning, !isTranscribingFile, record.segments != nil || record.transcript.isEmpty else { return false }
         resetConversation()
         store.restore(record.segments ?? [])
+        hasIncompleteImport = record.hasIncompleteImport == true
         notes = record.notes ?? ""
         summaryInstructions = record.summaryInstructions ?? ""
+        listenerSituation = record.situationGrid
         listenerSummary = record.summary
         lastCompletedListenerSummary = record.summary
         quickSuggestion = record.quickSuggestion ?? ""
@@ -268,14 +298,18 @@ public final class MeetingSession {
 
     public func resetConversation() {
         guard !isRunning, !isTranscribingFile else { return }
+        speakerSummaryNeedsRebuild = false
+        audioLevels.reset(); responseTimings.reset()
         for role in CopilotRole.allCases { cancelResponse(role) }
         // No proactive task needs cancelling here: `ingest` only fires while running, and `stop()`
         // (which must precede a reset) already cancelled it.
         quickReader.reset(); handleLiveEvent(.conversationChanged)
-        store.reset(); recordingOffset = 0
+        store.reset(); recordingOffset = 0; hasIncompleteImport = false
         notes = ""; summaryInstructions = ""; referenceContext = nil
+        listenerSituation = nil
         listenerSummary = ""; quickSuggestion = ""; quickRecap = ""; deepAnswer = ""
         roleErrors = [:]; roleActivity = [:]; roleNoticeRecords = [:]; pendingGrounding = [:]
+        stoppedResponseText.removeAll()
         manualQuickAnswer.dismiss()
         lastCompletedListenerSummary = ""; listenerSummaryCutOff = false
         summarizedSegmentIDs = []
@@ -310,6 +344,7 @@ public final class MeetingSession {
         self.capture = capture
         self.transcriber = transcriber
         captureMessages = [.you: "starting…", .others: "starting…"]
+        audioLevels.reset()
         degradedSources = []
         transcriptionStatus = "Transcription: waiting for audio"
         captureStatusTask?.cancel(); transcriptionStatusTask?.cancel()
@@ -372,12 +407,15 @@ public final class MeetingSession {
         guard isRunning, runID == myRun else { capture.stop(); return }
 
         let captureStream = capture.chunks
-        capturePump = Task {
+        capturePump = Task { [weak self] in
             // `drain` cancels this pump if it hasn't finished feeding the stream's remaining chunks
             // within the grace period (i.e. a `feed` parked in a model download); the cancellation
             // reaches `feed` and ends the iteration, so no explicit cancellation check is wanted
             // here — that would drop the chunk already in hand.
             for await chunk in captureStream {
+                if let self, self.runID == myRun, self.isRunning {
+                    self.audioLevels.ingest(chunk, now: ProcessInfo.processInfo.systemUptime)
+                }
                 await transcriber.feed(chunk)
             }
         }
@@ -428,7 +466,7 @@ public final class MeetingSession {
     /// has no documented cancellation guarantee), and the import path's caller cancels the task and
     /// then awaits it — so a plain `await prepare()` could still block for the whole download.
     /// The abandoned child task is cancelled and left to unwind on its own (issue #99).
-    private static func prepareRacingCancellation(_ transcriber: any Transcribing) async {
+    static func prepareRacingCancellation(_ transcriber: any Transcribing) async {
         let done = DoneFlag()
         let task = Task { await transcriber.prepare(); done.set() }
         while !done.value {
@@ -507,73 +545,12 @@ public final class MeetingSession {
 }
 
 extension MeetingSession {
-    // MARK: - Audio file transcription
-
-    /// Transcribes audio pulled from `nextChunk` (e.g. an imported file) into the store, independent
-    /// of live capture. `nextChunk` is called one chunk at a time and returns nil at end of input,
-    /// so the transcriber's feed rate paces reading (no unbounded buffering). Creates its own
-    /// transcriber, drains its segments into the store live, and finishes when input ends. Re-entry
-    /// is ignored, and it waits for any prior transcriber to finish draining so two transcribers
-    /// never run at once (avoids SFSpeechRecognizer's 1100 overlap error).
-    ///
-    /// `transcriber` lets the caller force a batch-friendly engine for imports (SpeechAnalyzer
-    /// finalizes all fed audio, so fast-feeding is lossless); when nil the session's live factory
-    /// is used.
-    public func transcribeAudio(
-        nextChunk: @escaping @Sendable () async -> AudioChunk?,
-        transcriber makeTranscriber: (@Sendable () -> any Transcribing)? = nil
-    ) async {
-        guard !isTranscribingFile, !isRunning else { return }
-        isTranscribingFile = true
-        defer { isTranscribingFile = false }
-        await stopDrain?.value
-        stopDrain = nil
-        startRecordingTimeline()
-        let transcriber = (makeTranscriber ?? self.makeTranscriber)()
-        await transcriber.setContextualStrings(contextualStrings)
-        transcriptionStatusTask?.cancel()
-        transcriptionStatusTask = Task {
-            for await status in transcriber.statusUpdates { self.transcriptionStatus = status }
-        }
-        defer { transcriptionStatusTask?.cancel() }
-        let segmentStream = transcriber.segments
-        let drain = Task { [weak self] in
-            for await segment in segmentStream {
-                self?.applyTranscribedSegment(segment)
-            }
-        }
-        // Warm the pipeline before reading the file so the first chunks don't sit behind one-time
-        // model setup, and so a cancelled import isn't stuck inside `feed`. Waited for through
-        // `prepareRacingCancellation` because the caller (window close) cancels the import task and
-        // then awaits it: we must return as soon as we're cancelled even if the platform's download
-        // call ignores cancellation.
-        await Self.prepareRacingCancellation(transcriber)
-        // Pace by audio duration so a long file can't be read into the transcriber's queue far
-        // faster than it's processed: cap how far (in audio seconds) reading runs ahead of an
-        // 8x-realtime budget. The clock starts AFTER the first feed so one-time SpeechAnalyzer
-        // model setup/download isn't credited as throughput. Stops promptly on cancellation.
-        var startWall = clock()
-        var audioSecondsFed = 0.0
-        var pacing = false
-        while !Task.isCancelled, let chunk = await nextChunk() {
-            await transcriber.feed(chunk)
-            if !pacing { startWall = clock(); pacing = true; continue }   // exclude setup time
-            audioSecondsFed += Double(chunk.samples.count) / max(chunk.sampleRate, 1)
-            let lead = audioSecondsFed - (clock() - startWall) * 8.0
-            if lead > 8.0 {
-                try? await Task.sleep(nanoseconds: UInt64(min(lead, 5.0) * 1_000_000_000))
-            }
-        }
-        await transcriber.finish()
-        await drain.value
-    }
-
-    private func applyTranscribedSegment(_ segment: TranscriptSegment) {
+    func applyTranscribedSegment(_ segment: TranscriptSegment) {
         store.apply(segment.shifted(by: recordingOffset))
     }
 
     /// A new recording continues after the conversation's last timed line.
-    private func startRecordingTimeline() {
+    func startRecordingTimeline() {
         recordingOffset = store.utterances.filter(TranscriptTimestamp.isTimed).map(\.end).max() ?? 0
     }
 
@@ -692,57 +669,61 @@ extension MeetingSession {
             personaGuidance: conversationPersona, transcriptNote: selection.promptNote)
     }
 
-    /// Streams a Quick response for the given action. Awaits completion.
-    public func respondQuick(_ action: ResponseAction) async {
-        await startRoleTask(.quick) {
+    /// Register ownership synchronously so an immediate Stop can cancel this exact command.
+    @discardableResult
+    public func requestQuick(_ action: ResponseAction) -> Task<Void, Never> {
+        startRoleTask(.quick) {
             PromptBuilder.build(context: self.clampedContext(for: action, role: .quick, kind: .quick),
                                 action: action)
-        }.value
+        }
     }
 
-    /// Streams a Deep response for the given action. Awaits completion.
-    public func respondDeep(_ action: ResponseAction) async {
-        await startRoleTask(.deep) {
+    @discardableResult
+    public func requestDeep(_ action: ResponseAction) -> Task<Void, Never> {
+        startRoleTask(.deep) {
             PromptBuilder.buildDeep(context: self.clampedContext(for: action, role: .deep, kind: .deep),
                                     action: action)
-        }.value
+        }
     }
 
-    /// True when the store holds speech the Listener has not summarized yet: finalized utterances
-    /// outside its ledger, or unfinalized speech whose wording differs from what the last refresh
-    /// already sent as provisional context (issue #113) — a caught-up refresh carries that instead.
-    /// A refresh with nothing new is a no-op, so the UI disables Refresh on `!hasUnsummarizedSpeech`
-    /// (issue #137).
-    public var hasUnsummarizedSpeech: Bool {
-        if store.utterances.contains(where: { !summarizedSegmentIDs.contains($0.id) }) { return true }
-        guard store.hasProvisionalSpeech else { return false }
-        return Self.signature(of: store.provisionalContext(maxChars: Self.listenerTranscriptBudget))
-            != summarizedProvisionalText
-    }
+    /// Registers the first batch; refreshListener also waits for automatic continuation batches.
+    @discardableResult
+    public func requestListenerRefresh() -> Task<Void, Never> { startListenerRefresh() }
 
-    /// The provisional lines a refresh sends, as one comparable string.
-    static func signature(of segments: [TranscriptSegment]) -> String {
-        segments.map { "\($0.speakerLabel): \($0.text)" }.joined(separator: "\n")
-    }
+    /// Streams a Quick response for the given action. Awaits completion.
+    public func respondQuick(_ action: ResponseAction) async { await requestQuick(action).value }
+
+    /// Streams a Deep response for the given action. Awaits completion.
+    public func respondDeep(_ action: ResponseAction) async { await requestDeep(action).value }
 
     /// Streams a Listener refresh (rolling summary + open items). Awaits completion.
     public func refreshListener() async {
         guard hasUnsummarizedSpeech else { return }
-        startListenerRefresh()
+        requestListenerRefresh()
         await waitForResponse(.listener)
     }
 
     /// New attribution should ground the next answer in the labeled transcript, not an older recap.
     ///
-    /// This still re-summarizes the whole meeting, even with Auto off — tracked as #167 (part of
-    /// #98) and deliberately out of scope for #137, which only stopped the *no-op* refresh.
+    /// Editing speakers alone must not create a first summary while Auto is off. Existing summaries
+    /// still need rebuilding: substituting names in generated prose cannot reliably repair attribution.
     public func speakerAttributionsChanged() {
+        speakerSummaryNeedsRebuild = speakerSummaryNeedsRebuild || !lastCompletedListenerSummary
+            .trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let shouldRefresh = autoSummaryEnabled || speakerSummaryNeedsRebuild
+        // The direct diarization path does not go through speakerNamesChanged. Invalidate its old
+        // stream even when no replacement request will be started.
+        cancelResponse(.listener)
+        pendingSummaryIDs = [:]
+        pendingProvisionalText = [:]
+        pendingGrounding[.listener] = nil
+        roleNoticeRecords[.listener] = nil
         // Replay raw transcript when labels change so old names cannot survive only in generated prose.
         summarizedSegmentIDs = []
         summarizedProvisionalText = nil
         lastCompletedListenerSummary = ""; listenerSummaryCutOff = false
         listenerSummary = ""
-        startListenerRefresh()
+        if shouldRefresh { startListenerRefresh() }
     }
 
     /// Renaming invalidates prose produced with old names; rebuild the listener from the transcript.
@@ -855,6 +836,7 @@ extension MeetingSession {
         guard aiEnabled else { return Task {} }
         if role == .quick { handleLiveEvent(.manualQuickStarted) }
         streamingRoles.insert(role)
+        stoppedResponseText[role] = nil
         responseTasks[role]?.cancel()
         let generation = (responseGenerations[role] ?? 0) + 1
         responseGenerations[role] = generation
@@ -893,8 +875,9 @@ extension MeetingSession {
             }
         }
         guard let provider = providers[role] else { return }
+        let measuredProvider = responseTimings.instrument(provider, role: role)
         do {
-            for try await event in provider.streamEvents(request) {
+            for try await event in measuredProvider.streamEvents(request) {
                 if Task.isCancelled { return }
                 if generation != responseGenerations[role] { return }
                 switch event {
@@ -913,6 +896,7 @@ extension MeetingSession {
             // Only a completed answer gets this request's notices; a failure keeps the previous
             // answer's record, which then describes the text restored below (or nothing).
             if generation == responseGenerations[role], !Task.isCancelled {
+                normalizeCompletedSituation(role)
                 roleNoticeRecords[role] = RoleNoticeRecord(text: output(role), grounding: grounding, cutOff: cutOff)
             }
             // Quick has no automatic review mode; a completed manual answer instead holds the pane
@@ -936,6 +920,7 @@ extension MeetingSession {
             // later refresh clearing the live value can't strip context from a proactive prompt.
             if role == .listener, generation == responseGenerations[role], !Task.isCancelled {
                 lastCompletedListenerSummary = listenerSummary
+                speakerSummaryNeedsRebuild = false
                 listenerSummaryCutOff = cutOff
                 summarizedSegmentIDs.formUnion(pendingSummaryIDs[generation] ?? [])
                 pendingSummaryIDs = [:]
@@ -969,14 +954,6 @@ extension MeetingSession {
         quickRecap = output
         guard !manualQuickAnswer.isFresh(at: clock()) else { return }
         quickSuggestion = output
-    }
-
-    func output(_ role: CopilotRole) -> String {
-        switch role {
-        case .listener: return listenerSummary
-        case .quick:    return quickSuggestion
-        case .deep:     return deepAnswer
-        }
     }
 
     func setOutput(_ role: CopilotRole, _ value: String) {

@@ -1,0 +1,93 @@
+{
+  "feature": "Native capability refresh and executable platform contracts",
+  "scenarios": [
+    {
+      "id": "DEVICE-009",
+      "name": "Keep native Mac engine choices current while language checks overlap",
+      "given": "the engine menu has verified choices for an earlier language and a newer native capability check is pending",
+      "when": "the language changes before or during a check, a previous check completes late, or a retained menu action is selected",
+      "then": "old choices are removed while checking, cancelled or superseded results cannot restore them, and a stale action preserves the current saved engine",
+      "covers": [
+        "App/MacEngineAvailability.swift",
+        "App/MacCapabilityChoices.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacEngineAvailabilityTests.swift",
+          "test": "MacEngineAvailabilityTests/testLateLanguageCheckCannotRestoreAnUnsupportedMenuChoice"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacEngineAvailabilityTests.swift",
+          "test": "MacEngineAvailabilityTests/testCheckingClearsChoicesAndRefusesAnOldOpenMenuAction"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacEngineAvailabilityTests.swift",
+          "test": "MacEngineAvailabilityTests/testCancelledCheckCannotReplaceNewChoices"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacEngineAvailabilityTests.swift",
+          "test": "MacEngineAvailabilityTests/testLanguageChangeRefusesOldActionsBeforeTheNextCheckStarts"
+        }
+      ]
+    },
+    {
+      "id": "DEV-007",
+      "name": "Run native Mac and Watch contracts against their own targets",
+      "given": "the catalog binds native Mac and Watch unit or UI methods",
+      "when": "a developer runs their BDD suite or full local validation",
+      "then": "the matching native platform target executes exact selectors on an explicit dedicated Watch simulator ID; missing/wrong Watch destinations, zero tests, skipped tests or unrelated passing methods cannot satisfy the contract",
+      "covers": [
+        "scripts/bdd.py",
+        "Makefile",
+        "project.yml",
+        ".swiftlint.yml"
+      ],
+      "bindings": [
+        {
+          "suite": "tooling",
+          "file": "scripts/test-bdd.py",
+          "test": "BDDTests/testNativeMacAndWatchUseTheirOwnTargetsAndRequireObservedPasses"
+        }
+      ]
+    },
+    {
+      "id": "DEVICE-010",
+      "name": "Explain denied local capture and offline remote before recording",
+      "given": "the Watch microphone is denied or local battery/storage is insufficient, or the paired phone is offline or cannot transcribe",
+      "when": "native recording controls refresh and a local or remote Start action is attempted",
+      "then": "local recording refuses permission/capture work with recovery, remote Start sends no message until the phone is ready, and reachable Stop remains usable without queued commands",
+      "covers": [
+        "Watch/ListenToMeWatchApp.swift",
+        "Watch/WatchRecorder.swift",
+        "Watch/WatchLinkClient.swift",
+        "Watch/WatchRootView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "watch-ui",
+          "file": "WatchUITests/WatchCapabilityUITests.swift",
+          "test": "WatchCapabilityUITests/testDeniedLocalMicrophoneAndOfflineRemoteExplainRecoveryBeforeRecording"
+        },
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchNativeCapabilityTests.swift",
+          "test": "WatchNativeCapabilityTests/testOfflineNativeClientRefusesRemoteStart"
+        },
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchNativeCapabilityTests.swift",
+          "test": "WatchNativeCapabilityTests/testLocalUnavailableProfilesRefuseBeforePermissionOrCapture"
+        },
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchNativeCapabilityTests.swift",
+          "test": "WatchNativeCapabilityTests/testRemoteReadinessRefusesStartButKeepsStopAvailable"
+        }
+      ]
+    }
+  ]
+}

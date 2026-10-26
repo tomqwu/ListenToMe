@@ -40,7 +40,8 @@ estimated for the others.
 | iPhone recording (live) | Yes — the recognizer's audio range, cumulative across resumed recordings |
 | Apple Watch recording, transcribed on the iPhone (not shipped yet, [#181](https://github.com/tomqwu/ListenToMe/issues/181)) | Yes — relative to the watch recording |
 | macOS WhisperKit | Yes — each Listen (and a language change that restarts capture) continues after the conversation's last timed line |
-| macOS SpeechAnalyzer / SpeechRecognizer (default engines) | No, until [#68](https://github.com/tomqwu/ListenToMe/issues/68) |
+| macOS SpeechAnalyzer | Yes — recognition audio ranges mapped to capture time, continuous across resumed recordings |
+| macOS legacy SpeechRecognizer | No — lines remain untimed |
 | Imported notes, typed text, records saved before segments were kept | No |
 
 A line without a time is exported without a `[mm:ss]` prefix (Markdown, plain text) and without
@@ -141,3 +142,11 @@ Exports are built on the device. On macOS the file goes where you save it. On iP
 to the app's own temporary folder, with the same data protection as History, only when you pick a share
 destination. It is removed at the next export, at the next launch, and when you delete any conversation
 or use Delete all conversations; where a copy goes after you share it is up to the destination you chose.
+
+
+Markdown exports escape literal transcript text, speaker names, correction text, titles and attachment
+names so speech cannot introduce links or markup. Embedded newlines in a transcript segment or speaker
+name become spaces. Context notes and generated AI sections retain their intentional Markdown (#141).
+### Structured Mac summaries
+
+Structured Summary cards keep their readable Markdown, including literal source excerpts, in the usual `summary` field for all exports. The app's Codable conversation archive also keeps an optional `situationGrid` (summary plus open/todo/decided items, quotes, optional owner/deadline). Old archives remain readable. Mac revalidates excerpts against finalized transcript lines before displaying cards; iPhone preserves unchanged metadata on restore/save and Watch appends. A replaced summary or changed supporting evidence invalidates the cards.

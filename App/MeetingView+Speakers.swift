@@ -8,28 +8,29 @@ extension MeetingView {
         speakerLoading = true
         // An explicit press is the retry gesture for a latched model-load failure (issue #109).
         let retryModels = showSheet
-        speakerTask = Task {
-            if retryModels {
-                await diarizer.retryModelLoad()
-                speakerStatus = nil
-            }
-            await analyzeSpeakers()
-        }
+        let token = diarizationRunToken
+        speakerWork.start(prepare: {
+            if retryModels { await diarizer.retryModelLoad() }
+        }, operation: {
+            guard token == diarizationRunToken else { return }
+            if retryModels { speakerStatus = nil }
+            await analyzeSpeakers(token: token)
+        })
     }
 
     /// Drain a periodic pass before a final pass, so Stop includes the transcriber's last utterance.
-    func finishSpeakerAnalysis() async {
-        let token = diarizationRunToken
-        await speakerTask?.value
+    func finishSpeakerAnalysis(expectedRun: Int? = nil) async {
+        let token = expectedRun ?? diarizationRunToken
+        guard token == diarizationRunToken else { return }
+        await speakerWork.wait()
         guard token == diarizationRunToken, diarizationSinkAttached else { return }
         identifySpeakers(showSheet: false)
-        await speakerTask?.value
+        await speakerWork.wait()
     }
 
     /// One pass over every attached channel. Returns nothing; all results land in `MeetingView`
     /// state. Cancelled/superseded runs bail through the run-token guards.
-    private func analyzeSpeakers() async {
-        let token = diarizationRunToken
+    private func analyzeSpeakers(token: Int) async {
         let started = Date()
         speakerError = nil
         var outcome = SpeakerAnalysisOutcome.completed
@@ -84,7 +85,7 @@ extension MeetingView {
         // Re-analyze only a trailing window since the previous pass (issue #109) instead of the whole
         // growing session; voices and the overlap let SpeakerIdentityTracker carry identities over.
         let from = SpeakerAnalysisPolicy.windowStartSample(totalSamples: captured, analyzedSamples: analyzed)
-        let snapshot = await Task.detached { sink.snapshot(fromSample: from) }.value
+        let snapshot = await sink.snapshotOffMain(fromSample: from)
         guard token == diarizationRunToken, !Task.isCancelled else { return .cancelled }
         guard snapshot.samples.count >= SpeakerAnalysisPolicy.minimumSamples else { return nil }
         do {
@@ -164,9 +165,67 @@ extension MeetingView {
         speakerIdentities[source]?[id]?.name = normalized
         store.renameSpeaker(id: id, name: normalized)
         session.speakerNamesChanged()
-        Task {
-            await session.waitForResponse(.listener)
+        speakerCheckpoint.start(load: { await session.waitForResponse(.listener) }, apply: { _ in
             saveSessionIfEnabled(session: session, force: true)
-        }
+        })
     }
+    /// Pre-start half of a diarization-run reset: clear stale inline labels and bump the run token so
+    /// any in-flight `identifySpeakers` drops its (now stale) results. Call this BEFORE `session.start()`
+    /// — the run anchor is set only AFTER start returns (see `anchorDiarizationRun`), because
+    /// `start()` awaits the prior Stop's drain, which can still append old final utterances first.
+    ///
+    /// Also release the breakdown UI: bumping the token makes a superseded `identifySpeakers` task
+    /// bail via its token guard WITHOUT clearing `speakerLoading`, so we clear the spinner/error state
+    /// here. This guarantees that starting/restarting always frees the "Identify speakers" button.
+    func beginDiarizationRunReset() {
+        speakerWork.cancel()
+        speakerCheckpoint.cancel()
+        let run = diarizationRunToken + 1
+        let remotePrefix = run == 1 ? "Speaker" : "Run \(run) speaker"
+        let micPrefix = run == 1 ? "Mic speaker" : "Run \(run) mic speaker"
+        speakerTrackers = [.others: SpeakerIdentityTracker(prefix: remotePrefix),
+                           .you: SpeakerIdentityTracker(prefix: micPrefix)]
+        speakerParticipants = []
+        speakerSegments = [:]
+        speakerIdentities = [:]
+        speakerAnalyzedSamples = [:]
+        speakerStatus = nil
+        // A new recording is also a retry: the model download may well succeed now (#109).
+        speakerModelReset.start(load: { await diarizer.retryModelLoad() }, apply: { _ in })
+        nextSpeakerAnalysis = .distantFuture
+        speakerLoading = false
+        speakerError = nil
+        diarizationRunToken &+= 1
+        // Every capture start passes here first: the next capture saves its audio into this conversation.
+        // Audio only for a conversation History will keep (#55 review): none while autosaving is off.
+        MacSavedAudio.shared.prepareRun(conversationID: ProviderSettings.saveSessionsForSearch && sessionSaveable
+                                        ? currentSessionID : nil)
+        // Disable Identify for the whole transition window: `session.start()` first awaits the prior
+        // Stop's drain, then `makeCapture` calls `othersSink.reset()`. Until that reset+attach happens
+        // the buffer still holds the PREVIOUS run's audio under the new token, so an Identify here
+        // would slip a stale result past the token guard. We re-enable in `anchorDiarizationRun()`,
+        // once start() has returned and the new run is fully live. The run snapshots are also taken
+        // there (not here), so they reflect what the new capture/transcriber actually used.
+        diarizationSinkAttached = false
+        microphoneSinkAttached = false
+    }
+
+    /// Post-start half: anchor diarization to the current run and snapshot what it actually used. By
+    /// the time `session.start()` returns, the previous run's drain is complete (its finals are in the
+    /// store) and the new capture has reset+attached the sink, so `store.utterances.count` marks where
+    /// this run's lines begin and the live settings match the capture/transcriber just built.
+    func anchorDiarizationRun() {
+        diarizationRunStartIndex = store.utterances.count
+        MacSavedAudio.shared.anchorRun(firstSegment: store.utterances.count)
+        // Snapshot the settings the new run's capture/transcriber were built from. `makeCapture` read
+        // `speakerDiarizationEnabled` to decide sink attachment and `makeTranscriber` read the engine,
+        // both during the `start()` that just returned — so reading them now matches this run, and
+        // re-enables Identify only when the sink is actually attached and live.
+        diarizationSinkAttached = ProviderSettings.speakerDiarizationEnabled
+        diarizationRunUsesTimestamps = ProviderSettings.transcriptionEngine != "speechRecognizer"
+        microphoneSinkAttached = diarizationSinkAttached && ProviderSettings.microphoneDiarizationEnabled
+        nextSpeakerAnalysis = Date().addingTimeInterval(SpeakerAnalysisPolicy.minimumRest)
+    }
+
+
 }

@@ -333,11 +333,12 @@ extension MobileSession {
                                     segments: lines, notes: note.map { Self.appendingLine($0, to: record.notes ?? "") }
                                         ?? record.notes,
                                     quickSuggestion: record.quickSuggestion, deepAnswer: record.deepAnswer,
-                                    isComplete: complete, attachments: record.attachments,
+                                    isComplete: complete && record.hasIncompleteImport != true, attachments: record.attachments,
                                     sourceImportID: record.sourceImportID, titleState: record.titleState,
                                     language: record.language, languages: record.languages,
                                     selectionSummaries: record.selectionSummaries, summaryInstructions: record.summaryInstructions,
-                      vocabularyDomainIDs: record.vocabularyDomainIDs)
+                      vocabularyDomainIDs: record.vocabularyDomainIDs, hasIncompleteImport: record.hasIncompleteImport,
+                      situationGrid: record.situationGrid)
         let languaged = added.compactMap(\.language).reduce(updated) { $0.recording(language: $1) }
         try archive.save(languaged)
         remember(languaged)

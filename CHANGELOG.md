@@ -32,6 +32,23 @@ does not show it again, and a fresh install does not see it at all; see
 - iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
 - Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
 
+## iOS 1.18.0 (35) — candidate
+
+Combined TestFlight train requested October 25. Not uploaded or published yet.
+
+- Maintenance: active/history save ordering, unchanged-save suppression and retry acknowledgement now use a tested Core owner. Native file protection, backup options, storage format and user-facing save behavior are unchanged. (#134)
+
+- Compatible older iPhones/iPads use Apple's on-device dictation when advanced transcription is unavailable. Fixed and Automatic language choices use supported local modules. (#306)
+- Check recording support before enabling Start, with clear device/language and microphone recovery. Genuine preparation failures remain actionable; cancelling preparation or leaving the app suppresses obsolete callbacks. Recording remains independent of summary AI. (#306)
+- Explain unavailable Apple Intelligence and require an explicit supported alternate provider; preserve saved choices and keys. Live/Summary help stays compact and supports large text and landscape. (#307)
+- Re-transcribe retained audio in a chosen language, review the result and replace or cancel. Recognition stays on-device; notes, attachments, summaries and Watch device attribution remain. Replaced evidence invalidates stale speaker corrections and summary cards. (#224)
+- Automatic reviews enforce their full assembled request limit, including directives and references, before sending. Directive edits alone keep the existing review. (#148)
+- Shared recording, naming and speaker-work coordinators preserve Stop finalization, cancellation, conversation identity and old-callback isolation. (#134)
+- Harden literal Markdown export, incomplete-import provenance, reference-file handling, model discovery and cold local Ollama requests. Existing provider privacy choices remain unchanged. (#141)
+- Integration regression coverage preserves dictation fallback during file re-transcription and incomplete-import status through summary/save/title/language copies.
+
+Privacy: speech and re-transcription remain on-device; saved audio is opt-in. Optional AI providers receive only the text/context already explicitly configured. Apple Watch is not embedded in this build; paired-device acceptance remains pending (#181, #193).
+
 ## iOS 1.17.0 (34) — 2026-10-25 (TestFlight)
 
 Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple accepted the upload on October 25; processing is VALID, internal state is IN_BETA_TESTING, and Dev access plus en-CA metadata were read back. Physical-device acceptance and App Store listing screenshot upload remain pending.
@@ -72,12 +89,69 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 
 ## macOS (unreleased since 1.4.4)
 
+- Mac pane buttons, prompts, chips, menus and hotkeys register their cancellable response immediately, preventing an immediate Stop from letting an answer begin later. New and import task ownership now live in Core; cancelling before an import starts opens no media. Pending device/Calendar/speaker follow-ups cannot publish after cancellation or supersession. Root-view construction and layout are separated from these tested owners. (#134)
+
+- AI-off no longer queries model catalogs or changes saved model choices. Model refreshes are cancelled when editing Settings or closing the window; replies from an obsolete route cannot update the current route. Explicit cloud/custom choices and verified-local Ollama defaults remain unchanged. (#134, partial)
+
+- Calendar and attachment loads now belong to the current conversation. Late Calendar results cannot overwrite edited notes or a newer conversation, and cancelled attachment reads cannot restore cleared grounding. Cancelling a close keeps pending context available; accepted close invalidates it. Context/title formatting, local file limits and privacy settings are unchanged. (#134, partial)
+
+- Check the selected speech engine/language and permissions before Start, with explanatory settings/permissions recovery and supported engine alternatives. Unavailable Apple Intelligence is not offered as a working AI choice; saved preferences remain intact and capture stays independent of AI. Language changes clear stale engine choices; late checks and retained menu actions cannot restore an unsupported selection.
+- Stop, New and window close cancel pending capability/permission checks without waiting for an unanswered OS callback. Late grants cannot start capture and late denials cannot show an error in a newer conversation. Cancelling does not dismiss an OS consent prompt.
+
 - Delete one saved conversation from its History row menu or detail view, with confirmation. Its saved audio, search entry and pending folder-save work are removed while other conversations stay intact; deleting the open conversation prevents it from being saved again. Exported copies remain where you saved them. (#131)
 - Custom-server Settings can check the Quick model's Auto compatibility with a synthetic exchange. A format failure pauses Auto for that server/model until a successful recheck; network errors and cancellation preserve prior results. (#209)
+- Failed model discovery preserves pinned choices and reports uncertainty. MiniMax is no longer ranked as a “mini” model. Verified local Ollama requests allow cold loads up to five minutes. (#141)
+- Audio imports report read failures and keep partial transcripts marked incomplete across reopening. Legacy speech waits for final callbacks with a 30-second deadline; system capture rejects failed PCM copies and minimizes unused video work. (#141)
+- Calendar context selects the most recently started overlapping meeting. Reference attachments reject symbolic links, heading whitespace renders correctly, and Markdown exports keep speech literal. Release discovery/signing and real-contract test gates now fail safely. (#141)
+- The global ⌘⇧Space shortcut registers only that key combination and no longer asks for Accessibility access. Conflicts show a notice while the in-app shortcut remains available. (#124)
+
+- Capture failures and file/Calendar failures have separate dismissible messages. Retrying export, import or Calendar work clears only that operation’s message; microphone and Calendar privacy actions stay attached to the relevant error. (#173)
+- Summary can render Open / To-do / Decided cards when the model returns validated structured output. Expand Sources for verbatim evidence and speaker labels; times appear only when the engine supplied them. Explicit owner/deadline fields require matching source text. Unsupported or invalid output remains readable as freeform text. Structured records retain readable exports and reopen on Mac. (#62)
+
+- Automatic reviews count the complete request toward their 60,000-character limit, including instructions and any attached references. Oversized requests stop before sending and explain what to shorten. Changing directives alone keeps the existing review; new context or manual generation uses the new settings. (#148)
+- The rail shows measured microphone and system-audio RMS levels, distinguishing silence, missing audio and unavailable channels. AI panes show first-answer-content and total request timing, including automatic reviews, with separate completion, cancellation and failure states. Metrics stay on-device and are not saved. (#56)
+
+- SpeechAnalyzer lines use recognition audio ranges on the capture timeline, enabling timestamped exports, saved-audio seeking and speaker labels. Delayed callbacks preserve capture time. Transcript follow-latest survives text growth and resizing, pauses for user scrolling, and resumes with Latest. (#68)
+
+- Select and copy transcript text, double-click a finalized line to edit it, or delete it with confirmation. Manual edits preserve the recognized original in exports and refresh existing summaries; stale AI answers are cleared. Saved audio and exported copies are unchanged. (#126)
+
+- Changing speaker labels or names no longer generates a first Listener summary when Auto is off. Existing summaries are rebuilt with the updated labels; interrupted summaries cannot restore old names. Explicit Refresh remains available. (#167)
+- Import MP4/MOV meeting recordings directly, reading their first audio track on-device. Choose You or Others for imported speech; video without audio shows a clear error. Audio/video imports share progress and cancellation controls. (#128)
+
+- Stop a streaming pane answer while keeping its partial text. File imports show the filename, source-reading progress and a Cancel button; cancelling keeps recognized lines and marks the import incomplete. (#127)
+
+- Failed model discovery preserves pinned choices and reports uncertainty. MiniMax is no longer ranked as a “mini” model. Verified local Ollama requests allow cold loads up to five minutes. (#141)
+- Audio imports report read failures and keep partial transcripts marked incomplete across reopening. Legacy speech waits for final callbacks with a 30-second deadline; system capture rejects failed PCM copies and minimizes unused video work. (#141)
+- Calendar context selects the most recently started overlapping meeting. Reference attachments reject symbolic links, heading whitespace renders correctly, and Markdown exports keep speech literal. Release discovery/signing and real-contract test gates now fail safely. (#141)
+- Custom-server Settings can check the Quick model's Auto compatibility with a synthetic exchange. A format failure pauses Auto for that server/model until a successful recheck; network errors and cancellation preserve prior results. (#209)
+- WhisperKit offers explicit multilingual Tiny, Base and Small models. Base remains the default; saved choices apply on the next capture, with the selected model named during loading and on failure. Loaded model identity is checked before use. (#58)
+
+- Engine → Compute details separates configured compute units from runtime accelerator information. WhisperKit displays the exact policy passed to the model; Apple Speech manages its own policy. Hardware activity is shown as Not exposed rather than inferred from configuration. (#60)
+- Maintenance: checkpoint saves now use a tested Core coordinator. Failed writes remain retryable, unchanged timer ticks avoid rebuilding transcripts, and reopened conversations retain their original date. Saving and privacy controls are unchanged. (#134, partial)
+
+- Speaker identification retries stay bound to their recording. A cancelled model retry cannot resume into a newer recording or clear its speaker status. (#134, partial)
+
+- Maintenance: the Markdown renderer now lives in the shared platform target, with unchanged rendering. (#134, partial)
+
+- Automatic conversation naming now shares one task coordinator across Mac and iOS. Repeated requests for the same conversation join the existing task; a cancelled older task cannot clear or apply over a replacement. Typed/calendar names and on-device/local-provider privacy rules are preserved. (#134, partial)
+
+- Recording Start, Stop and language restarts now use the shared capture coordinator. Stop interrupts pending model preparation, superseded language restarts cannot resume capture, and the final checkpoint completes before a new recording can start. Optional speaker analysis stays bound to the stopped run. (#134, partial)
+
+- Validation: add headless Mac file-loading and audio-buffer tests. Archive save/read/clear orchestration now uses a shared tested repository while retaining existing error messages and secondary-data cleanup ordering. No new UI or permission behavior. (#134, partial)
 
 - History search keeps its records when SwiftUI recreates a view, instead of replacing matching rows with an empty asynchronous result. (#223 acceptance fix)
 
 - History search reuses unchanged passage vectors when a conversation is saved, including after summary insertion. Changed text or transcription language is re-indexed on-device; duplicate passages share one embedding attempt per save, including unsupported text. Existing indexes rebuild once. Semantic language coverage is unchanged. (#223, partial)
+- Re-transcribe saved audio in a chosen language, preview the result, then replace the transcript or keep the original. Notes, attachments and summaries stay; speaker names and corrections reset while Apple Watch device labels remain. Recognition stays on-device. (#224)
+- History search keeps its records when SwiftUI recreates a view, instead of replacing matching rows with an empty asynchronous result. (#223 acceptance fix)
+
+- History search reuses unchanged passage vectors when a conversation is saved, including after summary insertion. Changed text or transcription language is re-indexed on-device; duplicate passages share one embedding attempt per save, including unsupported text. Existing indexes rebuild once. Semantic language coverage is unchanged. (#223, partial)
+- Local Ollama setup distinguishes an unreachable server, an empty installation and unverified model capabilities. Onboarding and the status rail offer Retry, installation guidance and a copyable model-download command; pickers identify unavailable choices without discarding pinned models after failed checks. (#129)
+- Optional current-calendar meeting suggestions offer **Use context and Start** in a new, empty conversation. Recording requires that click; passive checks never request Calendar permission. Dismissal persists for that event occurrence. Disabled by default. (#54)
+
+- Failed model discovery preserves pinned choices and reports uncertainty. MiniMax is no longer ranked as a “mini” model. Verified local Ollama requests allow cold loads up to five minutes. (#141)
+- Audio imports report read failures and keep partial transcripts marked incomplete across reopening. Legacy speech waits for final callbacks with a 30-second deadline; system capture rejects failed PCM copies and minimizes unused video work. (#141)
+- Calendar context selects the most recently started overlapping meeting. Reference attachments reject symbolic links, heading whitespace renders correctly, and Markdown exports keep speech literal. Release discovery/signing and real-contract test gates now fail safely. (#141)
 
 - OpenAI-compatible servers can use an optional per-server context limit. Answer space is reserved and oversized requests stop before sending; Mac prompt trimming includes a visible notice. Unknown capacity preserves server-managed behavior. (#210)
 

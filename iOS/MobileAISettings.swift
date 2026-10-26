@@ -56,6 +56,16 @@ final class MobileAISettings {
             }
         }
     }
+    private(set) var appleUnavailableReason: String?
+    @ObservationIgnored private let appleAvailability: () -> String?
+
+    func refreshAppleAvailability() {
+        let reason = appleAvailability()
+        guard reason != appleUnavailableReason else { return }
+        appleUnavailableReason = reason
+        if provider == .apple { quickSettingsChanged?() }
+    }
+
     var status: String?
     var refreshing = false
     var testing = false
@@ -74,13 +84,16 @@ final class MobileAISettings {
     /// the user has not chosen a provider. Never shown once the user picks one.
     var fallbackExplanation: String? {
         guard !hasSavedProviderChoice, provider == .ollama else { return nil }
-        return Self.defaultProviderReason
+        return appleUnavailableReason
     }
 
-    init() {
+    init(appleAvailability: @escaping () -> String? = { AppleIntelligenceProvider.unavailableReason }) {
+        self.appleAvailability = appleAvailability
+        let reason = appleAvailability()
+        appleUnavailableReason = reason
         // A previously saved choice always wins; only an absent/unknown value takes the default.
         let saved = Provider(rawValue: UserDefaults.standard.string(forKey: "mobileAIProvider") ?? "")
-        provider = saved ?? Self.defaultProvider
+        provider = saved ?? Self.defaultProvider(unavailableReason: reason)
         hasSavedProviderChoice = saved != nil
         ollamaBaseURL = UserDefaults.standard.string(forKey: "mobileOllamaBaseURL") ?? ""
         let savedModel = UserDefaults.standard.string(forKey: "mobileOllamaModel") ?? ""
@@ -96,7 +109,7 @@ final class MobileAISettings {
         resolveRoleModels()
         openAI.changed = { [weak self] in self?.quickSettingsChanged?() }
         cloud.changed = { [weak self] in self?.quickSettingsChanged?() }
-        if provider == .cloud && cloud.vendor == nil { provider = Self.defaultProvider }   // no service left to use
+        if provider == .cloud && cloud.vendor == nil { provider = Self.defaultProvider(unavailableReason: reason) }   // no service left to use
     }
 
     @discardableResult
@@ -252,6 +265,7 @@ final class MobileAISettings {
     var availability: String? { availability(for: .summary) }
 
     func availability(for mode: MobileSummaryMode) -> String? {
+        if provider == .apple { return appleUnavailableReason }
         if provider == .openAI { return openAI.availability(for: mode) }
         if provider == .cloud { return cloud.availability(for: mode) }
         let model = selectedModel(for: mode)
@@ -264,6 +278,11 @@ final class MobileAISettings {
     }
 
     func client(for mode: MobileSummaryMode = .summary) throws -> any LLMProvider {
+        if provider == .apple {
+            refreshAppleAvailability()
+            if let reason = appleUnavailableReason { throw RecordingError.message(reason) }
+            return AppleIntelligenceProvider()
+        }
         if provider == .openAI { return try openAI.client(for: mode, transports: transports) }
         if provider == .cloud { return try cloud.client(for: mode, transports: transports) }
         let model = selectedModel(for: mode)

@@ -5,4 +5,4 @@ _Recorded 2026-10-23 14:35 · Language: en-US_
 ## Transcript
 
 - **You:** Hello there.
-- **Others:** Hi!
+- **Others:** Hi\!

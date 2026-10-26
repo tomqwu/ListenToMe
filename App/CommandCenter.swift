@@ -129,12 +129,16 @@ struct RoleBox<Header: View, Actions: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
+            ResponseTimingBadge(timings: session.responseTimings, role: role)
             HStack(spacing: 8) {
                 Text(title.uppercased())
                     .font(.system(size: 12, weight: .bold)).tracking(0.5)
                     .foregroundStyle(accent)
                 if session.streamingRoles.contains(role) {
                     ProgressView().controlSize(.small)
+                    Button("Stop") { session.stopResponse(role) }
+                        .controlSize(.small).help("Stop this answer and keep its partial text")
+                        .accessibilityLabel("Stop \(title)")
                 }
                 // A reasoning model streams its thinking before any answer token; showing it as a
                 // status keeps a long think phase from looking like a hung request (issue #137).
@@ -153,6 +157,10 @@ struct RoleBox<Header: View, Actions: View>: View {
                         .accessibilityLabel("Copy \(title) text")
                 }
                 headerExtra()
+            }
+            if session.stoppedResponseRoles.contains(role) {
+                Text(outputText.isEmpty ? "Stopped before answer text arrived." : "Stopped — partial answer kept.")
+                    .font(.caption).foregroundStyle(Theme.ink2)
             }
             // The failure is shown beside the pane's text, never instead of it: a transient
             // provider error must not take away the summary the user was reading (issue #137).
@@ -176,7 +184,10 @@ struct RoleBox<Header: View, Actions: View>: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         Group {
-                            if !outputText.isEmpty {
+                            if role == .listener, !session.streamingRoles.contains(role),
+                               let grid = session.visibleSituation {
+                                SituationGridView(grid: grid, segments: session.store.utterances)
+                            } else if !outputText.isEmpty {
                                 MarkdownText(text: outputText).foregroundStyle(Theme.ink)
                             } else if session.streamingRoles.contains(role) {
                                 Text("💭 Thinking…").foregroundStyle(Theme.ink2)
@@ -197,7 +208,13 @@ struct RoleBox<Header: View, Actions: View>: View {
                     if atBottom { proxy.scrollTo(MeetingView.scrollBottomID, anchor: .bottom) }
                 }
             }
-            actions()
+            actions().disabled(!session.aiEnabled)
+        }
+        .focusable()
+        .onKeyPress(.escape) {
+            guard session.streamingRoles.contains(role) else { return .ignored }
+            session.stopResponse(role)
+            return .handled
         }
         .padding(11)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)

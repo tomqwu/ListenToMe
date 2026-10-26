@@ -71,7 +71,8 @@ public extension SessionRecord {
                       deepAnswer: deepAnswer, isComplete: isComplete, attachments: attachments,
                       sourceImportID: sourceImportID, titleState: titleState, language: value.current,
                       languages: value.isEmpty ? nil : value.all, selectionSummaries: selectionSummaries, summaryInstructions: summaryInstructions,
-                      vocabularyDomainIDs: vocabularyDomainIDs)
+                      vocabularyDomainIDs: vocabularyDomainIDs,
+                      hasIncompleteImport: hasIncompleteImport, situationGrid: situationGrid)
     }
 
     /// The same record, noting that new lines were transcribed in `identifier` (an Apple Watch file).

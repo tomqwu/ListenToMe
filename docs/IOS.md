@@ -89,7 +89,7 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 | Saved audio (#55) | Off by default (Settings); one `.m4a` per source per run — microphone and system audio as separate labelled files — under Application Support, following Time Machine; saved only while Save sessions locally keeps the conversation, deleted by Discard and Close without saving; placed at #233's `recordingOffset`; History → a conversation plays it, and only WhisperKit lines (real times) can jump into it | Off by default (**Settings → Audio recordings**); the microphone audio the transcriber accepted, one `.m4a` per run, always excluded from backups; the expanded transcript plays it and every line can jump to its time |
 | Storage protection | Plain atomic writes | Data protection (`completeUntilFirstUserAuthentication`) plus an optional backup exclusion (`PrivateStorage`) |
 | Export | Markdown, plain text, SRT, WebVTT and JSON files (subtitles only with WhisperKit timestamps; SpeechAnalyzer reports none until #68), PDF and recap, from the Export menu and the History detail sheet, named after the conversation (#130); **Save to folder** chosen with an open panel, written when a checkpoint is complete (capture stopped) and only while autosaving is on | Readable text and Markdown through the share sheet, and **Export as** Markdown, plain text, SRT, WebVTT or JSON files from More and a History row, named after the conversation, with timestamps (#130); **Save to folder** chosen in the Files picker (security-scoped bookmark), written at Stop/Save and on later changes while not recording |
-| Audio-file import | Yes (`App/AudioFileReader.swift`) | No |
+| Audio-file import | Yes (`SharedPlatform/AudioFileReader.swift`) | No |
 | Languages | Transcription language **and** AI response language, from every on-device language the OS lists (#172); the opt-in WhisperKit engine transcribes mixed languages | Transcription language only, from the same OS list (#172): **Automatic** (the default) detects the spoken language on the device from the first seconds of speech, re-checks it about once a minute and switches when it changes (#197, #199), or a fixed language. Words of two languages mixed within one sentence are not transcribed (#205) |
 | Input | Global ⌘⇧Space hotkey and a Session menu | Touch UI; no hotkeys or menu bar |
 
@@ -128,6 +128,39 @@ has published TestFlight 1.17.0 (34).
 The archive, upload, tagging and verification steps themselves are not repeated here: follow
 [IOS-RELEASING.md](IOS-RELEASING.md) for iOS, [RELEASING.md](RELEASING.md) for macOS, and
 [AGENTS.md](../AGENTS.md) for the release workflow that governs both.
+
+## iOS 1.18.0 (35) — combined candidate
+
+This unpublished candidate consolidates the open PR batch, including on-device saved-audio re-transcription (#224), full automatic-review budgets (#148), conversation/capture ownership (#134, partial), reliability follow-ups (#141) and the compatibility fixes below. Mac-only features remain unreleased; Watch remains excluded pending physical acceptance.
+
+The reported iPad Pro 12.9-inch (4th generation), iPadOS 27.0.1, supports on-device dictation but
+reports advanced SpeechTranscriber unavailable and Apple Intelligence device-not-eligible. These
+are independent capabilities. The candidate prefers supported advanced speech and otherwise uses
+Apple's on-device DictationTranscriber for both microphone and received Watch audio. Language
+choices and Automatic use the same supported-module catalog; reading it downloads no detector.
+
+Live recording checks compatibility before enabling Start. Unsupported speech, denied microphone
+access and simulator capture show a compact cause with applicable recovery. Live and Summary offer
+Info for the full instructions; VoiceOver keeps the complete reason, and short landscape layouts
+allow scrolling to model controls. A subsequent failed model or
+microphone preparation presents “Couldn’t start listening” with its full error and recording settings;
+cancellation does not create a false alert. A transient inactive permission prompt preserves the
+pending start. A delayed foreground capability check cannot import a queued share after backgrounding.
+
+Unavailable Apple Intelligence is omitted from enabled provider choices, with its current reason
+and explicit alternatives. A saved unavailable Apple choice remains saved, and generation is blocked;
+no cloud/provider/key is selected automatically. Foreground/settings refresh changes readiness,
+not user choices. Speech capture never requires a configured summary provider.
+
+The physical iPad's prior installed build reproduced the failure; a development candidate with the
+fallback produced new microphone words and retained opt-in audio with Play/Pause controls. This does
+not establish every model/language, audible playback quality, or TestFlight publication. See the
+[platform compatibility table](device-compatibility.md), BDD contracts and source-matched evidence.
+
+For playback, enable More → Settings → Audio recordings → Save audio recordings before recording.
+After Stop, open the conversation (from History when needed) and tap the play icon in Live transcript.
+In compact Duo, open Transcript actions → Play recording. The expanded transcript contains Play/Pause
+and playback controls. Unsaved earlier audio cannot be recovered by enabling the setting later.
 
 ## iOS 1.17.0 (34) — TestFlight, October 25
 
@@ -397,8 +430,8 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   download on first use. Unsupported device/language and permission errors are shown in the app.
   **Settings → Transcription → Language** is remembered across launches, so a language chosen for
   daily meetings is still selected after a relaunch instead of reverting to the device's. Below
-  **Automatic** and **System**, the picker lists every language `SpeechTranscriber.supportedLocales`
-  reports for this device, read at launch, as **Installed** (speech model already on the device, per
+  **Automatic** and **System**, the picker lists the union of languages supported by the available advanced speech and on-device
+  dictation modules for this device, read at launch, as **Installed** (speech model already on the device, per
   `AssetInventory`) and **Downloadable** (downloads from Apple on first recording), with the common
   languages first (#172; rules in Core's `TranscriptionLanguageCatalog`). Where that list is
   unavailable, such as the simulator, it offers the common languages. A fixed language the OS no
@@ -1467,7 +1500,23 @@ Mac History can reopen modern saved conversations after capture/import stops; th
 must first be saved. Older records without structured transcript lines remain readable/exportable.
 Settings Transcription and Speakers descriptions explicitly explain opt-in saved audio; audio is never sent for transcription or speaker identification (#251).
 
-### Custom Ollama context windows (#230)
+## Re-transcribe saved audio (#224)
+
+After stopping, open a conversation with saved audio and choose **More → Re-transcribe saved audio**.
+Choose its language and tap **Re-transcribe**. Apple speech recognition processes each saved track
+on-device; a language model may need a first-use download. Preview the result, then choose
+**Replace transcript** or **Keep original**. Cancel, an unreadable file, or a failed recognition pass
+leaves the original transcript untouched. A transcript changed during recognition cannot be replaced
+by the stale preview.
+
+Replacement removes every original transcript line, including lines without saved audio. It resets
+speaker identities and corrections, updates transcript/audio timing, and preserves the title, notes,
+attachments, instructions and summaries. Review those summaries against the new text. Saved audio
+files are not rewritten. Retained Watch audio keeps its Apple Watch playback label and device provenance
+on replacement lines, while previously inferred speaker identities are cleared. Mac offers the same
+flow with Apple or WhisperKit recognition.
+
+## Custom Ollama context windows (#230)
 
 For a custom Ollama endpoint, the app reads model metadata before a request. Locally hosted models
 receive a context sized to the complete assembled prompt, with answer space reserved and a 64K
@@ -1509,3 +1558,26 @@ characters before using unfinished speech. They mark it as provisional and instr
 to record it as a decision, owner, deadline or action item. The marker and instruction count toward
 the prompt budget; a shortened hypothesis keeps its marker. Saved transcripts and exports retain
 the recognizer's original text.
+
+### Capture task ownership (#134)
+
+`MobileSession+Capture` adapts the platform recorder to Core `CaptureCoordinator`. The coordinator
+owns preparation, start, cancellation and joined Stop tasks, with a token for each run. It accepts
+final utterances while Stop drains and rejects callbacks after that run finishes. The adapter retains
+foreground/interruption policy, speaker/language buffers, saved-audio cleanup and final checkpoints.
+No recording permission, background capability, model or audio destination changes. Core tests cover
+transition races; simulator adapter tests must also pass before this candidate is merged. This partial
+extraction does not complete the remaining Mac view and shared lifecycle work in #134.
+
+Automatic naming task ownership now lives in Core `ConversationTitleCoordinator`, shared with Mac.
+It tracks each conversation independently and ignores cancelled generations. The iOS adapter still
+selects eligible on-device/local providers and checks the captured title/state before persisting a
+result. Watch-import naming and Save to folder use the same path; no new data destination is added.
+
+### Save transaction ownership
+
+ConversationPersistenceCoordinator in Core owns unchanged-byte suppression, deciding whether empty
+content updates an existing History entry, archive/export/active-snapshot ordering and retry eligibility
+after partial failure. MobileSession supplies stable encoding, private file writes, backup attributes,
+paths and existing UI messages. Native tests use real archive and active-snapshot failures before
+and after extraction. See [orchestration and validation boundaries](ORCHESTRATION.md).

@@ -63,6 +63,12 @@ Settings stays on while capture returns nothing. The split (set in `project.yml`
 `targets.ListenToMe.settings.configs.Debug`) gives each its own row, so a maintainer can keep the
 released app installed while developing.
 
+For local Mac validation in a new worktree, reuse the primary checkout's ignored
+`signing.local.mk` before `make build`/`make e2e`. Inspect the resulting app with
+`codesign -dvv`: an ad-hoc signature or a different team is not the configured development
+identity. Fix the build identity first when capture fails despite checked permissions; do not
+repeatedly toggle or reset TCC to compensate for unsigned worktree builds.
+
 Consequences worth knowing:
 
 - The dev build has its own `UserDefaults` domain, so model choices, presets, and appearance do
@@ -249,3 +255,20 @@ shasum -a 256 dist/ListenToMe-<version>.dmg "$DL/ListenToMe-<version>.dmg"   # m
 gh release view v<version> --json tagName,targetCommitish,isDraft,isPrerelease
 git ls-remote --tags origin 'v<version>' 'v<version>^{}'   # must resolve to the artifact source commit
 ```
+
+## Compatibility acceptance
+
+[Device readiness](device-compatibility.md) is part of BDD and installed-app acceptance. Inspect
+unavailable and ready AI/engine controls and cancellation across capability/permission awaits, then
+verify actual system-audio OTHERS transcription on the supported route. Preserve screenshots and
+source/signing provenance before the existing app-scoped Dev cleanup; do not reset production or
+interrupt another active session. Mac releases remain paused unless the maintainer calls a train.
+
+### Build product and signing guards (#141)
+
+The release helper requires the app at the selected DerivedData configuration's exact build-product
+path. A Debug or unrelated app is never a fallback for a missing Release app. Nested frameworks and
+dynamic libraries are signed depth-first before their enclosing bundle; traversal/signing failure
+stops the release. `scripts/test-release-paths.py` exercises these guards without real signing.
+`make e2e` additionally requires at least one passing XCTest case from each requested real-contract
+suite; empty discovery and all-skipped runs fail even if the test process exits successfully.

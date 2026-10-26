@@ -14,7 +14,18 @@ struct ListenToMeWatchApp: App {
         let link = WatchLinkClient()
         // Recovers chunks a killed launch left in Recording/ before anything can record.
         let outbox = WatchOutbox()
-        let recorder = WatchRecorder()
+        let recorder: WatchRecorder
+        #if DEBUG && targetEnvironment(simulator)
+        if ProcessInfo.processInfo.arguments.contains("--compatibility-denied-fixture") {
+            recorder = WatchRecorder(capabilitySnapshot: {
+                .init(microphoneDenied: true, battery: 1, freeBytes: Int64.max)
+            })
+        } else {
+            recorder = WatchRecorder()
+        }
+        #else
+        recorder = WatchRecorder()
+        #endif
         recorder.onChunkFinalized = { [weak outbox] url, metadata in
             do { try outbox?.add(url, metadata) } catch {
                 // Left in Recording/: the next launch recovers and sends it.

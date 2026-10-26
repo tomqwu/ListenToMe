@@ -24,12 +24,17 @@ public struct PhoneRecorderStatus: Equatable, Sendable {
     public var startedAt: Date?
     public var title: String
     public var lastStopReason: PhoneStopReason?
+    public var recordingReady: Bool?
+    public var recordingUnavailableReason: String?
 
-    public init(state: PhoneRecorderState, startedAt: Date?, title: String, lastStopReason: PhoneStopReason?) {
+    public init(state: PhoneRecorderState, startedAt: Date?, title: String, lastStopReason: PhoneStopReason?,
+                recordingReady: Bool? = nil, recordingUnavailableReason: String? = nil) {
         self.state = state
         self.startedAt = startedAt
         self.title = title
         self.lastStopReason = lastStopReason
+        self.recordingReady = recordingReady
+        self.recordingUnavailableReason = recordingUnavailableReason
     }
 }
 
@@ -55,6 +60,7 @@ public enum WatchLink {
         static let version = "v", command = "cmd", reply = "reply", status = "status", busy = "busy"
         static let phone = "phone", state = "state", startedAt = "startedAt", title = "title"
         static let stopReason = "stopReason", stamp = "at", watch = "watch", waiting = "waiting"
+        static let recordingReady = "recordingReady", recordingReason = "recordingReason"
     }
 
     private enum ReplyKind: String {
@@ -178,6 +184,8 @@ public enum WatchLink {
         var fields: [String: Any] = [Key.state: status.state.rawValue, Key.title: status.title]
         if let startedAt = status.startedAt { fields[Key.startedAt] = startedAt.timeIntervalSince1970 }
         if let reason = status.lastStopReason { fields[Key.stopReason] = reason.rawValue }
+        if let ready = status.recordingReady { fields[Key.recordingReady] = ready }
+        if let reason = status.recordingUnavailableReason { fields[Key.recordingReason] = reason }
         return fields
     }
 
@@ -186,7 +194,9 @@ public enum WatchLink {
         return PhoneRecorderStatus(state: state,
                                    startedAt: (fields[Key.startedAt] as? Double).map(Date.init(timeIntervalSince1970:)),
                                    title: fields[Key.title] as? String ?? "",
-                                   lastStopReason: (fields[Key.stopReason] as? String).flatMap(PhoneStopReason.init))
+                                   lastStopReason: (fields[Key.stopReason] as? String).flatMap(PhoneStopReason.init),
+                                   recordingReady: fields[Key.recordingReady] as? Bool,
+                                   recordingUnavailableReason: fields[Key.recordingReason] as? String)
     }
 }
 

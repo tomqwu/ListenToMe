@@ -90,7 +90,7 @@ public enum SessionExporter {
                                  legacyTranscript: String?, notes: String, listenerSummary: String,
                                  quickSuggestion: String, deepAnswer: String, attachments: [String],
                                  timestamps: Bool, selectionSummaries: [SelectionSummary] = [], summaryInstructions: String = "") -> String {
-        var out = "# \(title)\n"
+        var out = "# \(literalMarkdown(title))\n"
         if let header { out += "\n_\(header)_\n" }
 
         func section(_ heading: String, _ body: String) {
@@ -103,15 +103,17 @@ public enum SessionExporter {
         section("Summary instructions", summaryInstructions)
 
         let lines = transcript.map { seg in
-            "- \(stamp(seg, timestamps))**\(seg.speakerLabel):** \(seg.text)"
+            "- \(stamp(seg, timestamps))**\(literalMarkdown(seg.speakerLabel)):** \(literalMarkdown(seg.text))"
         }
-        let legacy = legacyTranscript?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let legacy = legacyTranscript?.split(separator: "\n", omittingEmptySubsequences: false)
+            .map { literalMarkdown(String($0)) }.joined(separator: "\n")
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let transcriptBody = !lines.isEmpty ? lines.joined(separator: "\n")
             : legacy.isEmpty ? "_(no transcript captured)_" : legacy
         out += "\n## Transcript\n\n\(transcriptBody)\n"
         let corrections = transcript.compactMap { segment -> String? in
             guard let original = segment.originalText else { return nil }
-            return "- Original: \(original)\n  AI correction: \(segment.text)"
+            return "- Original: \(literalMarkdown(original))\n  AI correction: \(literalMarkdown(segment.text))"
         }
         section("Speech corrections (original wording)", corrections.joined(separator: "\n"))
 
@@ -119,8 +121,15 @@ public enum SessionExporter {
         section("Quick suggestion", quickSuggestion)
         section("Deep answer", deepAnswer)
         section("Selection summaries", SelectionSummary.markdown(selectionSummaries) ?? "")
-        section("Attachments", attachments.map { "- \($0)" }.joined(separator: "\n"))
+        section("Attachments", attachments.map { "- \(literalMarkdown($0))" }.joined(separator: "\n"))
         return out
+    }
+
+    /// Transcript words and names are literal text, unlike the AI outputs that intentionally carry
+    /// Markdown. Collapse embedded newlines so a phrase cannot introduce a new document section.
+    private static func literalMarkdown(_ text: String) -> String {
+        let special = "\\`*_[]<>#+-!&|"
+        return MarkdownVault.singleLine(text).map { special.contains($0) ? "\\" + String($0) : String($0) }.joined()
     }
 
     /// The conversation as plain text: a title line, the date and language, the summaries and notes,
@@ -163,7 +172,7 @@ public enum SessionExporter {
         quickSuggestion: String = "",
         deepAnswer: String = ""
     ) -> String {
-        var out = "# \(title)\n"
+        var out = "# \(literalMarkdown(title))\n"
         func section(_ heading: String, _ body: String) {
             let trimmed = body.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !trimmed.isEmpty else { return }

@@ -7,6 +7,19 @@ final class SessionExporterTests: XCTestCase {
         TranscriptSegment(source: .you, text: "Yes, with the hotfix.", isFinal: true, start: 0, end: 0)
     ]
 
+    func testTranscriptNamesAndCorrectionTextCannotInjectMarkdown() {
+        let segment = TranscriptSegment(source: .others, text: "Please **ship**\n# Notes\n- now",
+                                        isFinal: true, start: 0, end: 1, speakerID: "ann",
+                                        speakerName: "Ann**\n# Owner",
+                                        originalText: "Original [link](https://example.com)\n> quoted")
+        let markdown = SessionExporter.markdown(title: "Meeting", transcript: [segment], listenerSummary: "**Keep bold**")
+        XCTAssertTrue(markdown.contains(##"Ann\*\* \# Owner"##), markdown)
+        XCTAssertTrue(markdown.contains(##"Please \*\*ship\*\* \# Notes \- now"##), markdown)
+        XCTAssertTrue(markdown.contains(##"Original \[link\](https://example.com) \> quoted"##), markdown)
+        XCTAssertFalse(markdown.contains("\n# Notes"))
+        XCTAssertTrue(markdown.contains("**Keep bold**"), "AI Markdown must retain formatting")
+    }
+
     func testIncludesTitleAndSpeakerLabeledTranscript() {
         let md = SessionExporter.markdown(title: "Session A", transcript: transcript)
         XCTAssertTrue(md.hasPrefix("# Session A"))

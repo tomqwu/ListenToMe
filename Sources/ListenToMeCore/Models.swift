@@ -12,12 +12,16 @@ public struct AudioChunk: Sendable, Equatable {
     public let sampleRate: Double
     public let source: SpeakerSource
     public let timestamp: TimeInterval
+    /// Monotonic capture time for live meter freshness. File imports need no wall-clock stamp.
+    public let capturedAtUptime: TimeInterval?
 
-    public init(samples: [Float], sampleRate: Double, source: SpeakerSource, timestamp: TimeInterval) {
+    public init(samples: [Float], sampleRate: Double, source: SpeakerSource, timestamp: TimeInterval,
+                capturedAtUptime: TimeInterval? = nil) {
         self.samples = samples
         self.sampleRate = sampleRate
         self.source = source
         self.timestamp = timestamp
+        self.capturedAtUptime = capturedAtUptime
     }
 }
 
@@ -32,7 +36,7 @@ public struct TranscriptSegment: Identifiable, Sendable, Equatable, Codable {
     public let end: TimeInterval
     public var speakerID: String?
     public var speakerName: String?
-    /// Present only after an opt-in speech correction; the recognizer's wording remains recoverable.
+    /// Present after an AI or manual speech correction; the recognizer's wording remains recoverable.
     public let originalText: String?
     public let correctionModel: String?
     /// The transcription language this line was recognized in (BCP-47 or a locale identifier), when

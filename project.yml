@@ -64,7 +64,6 @@ targets:
     sources:
       - iOS
       - SharedPlatform
-      - App/MarkdownText.swift
       - iOSShared
       # Licenses of every resolved SwiftPM package, shown in Settings → About → Acknowledgements (#202).
       - path: App/ThirdPartyNotices.txt
@@ -83,8 +82,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMe.ios
         PRODUCT_NAME: ListenToMeIOS
-        MARKETING_VERSION: "1.17.0"
-        CURRENT_PROJECT_VERSION: "34"
+        MARKETING_VERSION: "1.18.0"
+        CURRENT_PROJECT_VERSION: "35"
         DEVELOPMENT_TEAM: T32FW7PZ3S
         TARGETED_DEVICE_FAMILY: "1,2"
         GENERATE_INFOPLIST_FILE: NO
@@ -105,8 +104,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMe.ios.share
         PRODUCT_NAME: ListenToMeShare
-        MARKETING_VERSION: "1.17.0"
-        CURRENT_PROJECT_VERSION: "34"
+        MARKETING_VERSION: "1.18.0"
+        CURRENT_PROJECT_VERSION: "35"
         INFOPLIST_FILE: ShareExtension/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_ENTITLEMENTS: ShareExtension/ListenToMeShare.entitlements
@@ -125,19 +124,80 @@ targets:
       # Compiled straight into the watch app (Foundation only); the watch does not link ListenToMeCore.
       - path: Sources/ListenToMeCore/WatchLink.swift
       - path: Sources/ListenToMeCore/WatchCapturePolicy.swift
+      - path: Sources/ListenToMeCore/FeatureAvailability.swift
+      - path: Sources/ListenToMeCore/WatchReadiness.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMe.ios.watchkitapp
         PRODUCT_NAME: ListenToMeWatch
         # Same version and build as ListenToMeIOS and ListenToMeShare; every iOS bump changes all three.
-        MARKETING_VERSION: "1.17.0"
-        CURRENT_PROJECT_VERSION: "34"
+        MARKETING_VERSION: "1.18.0"
+        CURRENT_PROJECT_VERSION: "35"
         INFOPLIST_FILE: Watch/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         DEVELOPMENT_TEAM: T32FW7PZ3S
         CODE_SIGN_STYLE: Automatic
         SWIFT_VERSION: "6.0"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+  ListenToMeWatchUnitTests:
+    type: bundle.unit-test
+    platform: watchOS
+    deploymentTarget: "26.0"
+    sources:
+      - WatchUnitTests
+    dependencies:
+      - target: ListenToMeWatch
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: "6.0"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/ListenToMeWatch.app/ListenToMeWatch"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+        DEVELOPMENT_TEAM: T32FW7PZ3S
+  ListenToMeWatchUITests:
+    type: bundle.ui-testing
+    platform: watchOS
+    deploymentTarget: "26.0"
+    sources:
+      - WatchUITests
+    dependencies:
+      - target: ListenToMeWatch
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: "6.0"
+        DEVELOPMENT_TEAM: T32FW7PZ3S
+  ListenToMeMacUnitTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "26.0"
+    # Compile the actual native adapters and menu state without launching the app or user data.
+    sources:
+      - macOSTests
+      - SharedPlatform/SpeakerAudioBuffer.swift
+      - App/HotkeyMonitor.swift
+      - App/MacOperationErrors.swift
+      - App/MacCapturePreflight.swift
+      - App/MacCheckpointController.swift
+      - App/MacMeetingEnvironment.swift
+      - App/TranscriptionComputeInfo.swift
+      - SharedPlatform/WhisperComputePolicy.swift
+      - App/MacDeviceCapabilities.swift
+      - App/MacEngineAvailability.swift
+      - App/MacAIAvailability.swift
+      - App/PermissionsModel.swift
+      - App/ApplicationLifecycle.swift
+      - SharedPlatform/AppleIntelligenceProvider.swift
+    dependencies:
+      - package: ListenToMeCore
+        product: ListenToMeCore
+      - package: WhisperKit
+        product: WhisperKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMeMacUnitTests
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: "6.0"
   ListenToMeIOSUITests:
     type: bundle.ui-testing
     platform: iOS
@@ -169,6 +229,23 @@ targets:
         BUNDLE_LOADER: "$(TEST_HOST)"
         DEVELOPMENT_TEAM: T32FW7PZ3S
 schemes:
+  ListenToMeWatchTests:
+    build:
+      targets:
+        ListenToMeWatch: all
+        ListenToMeWatchUnitTests: [test]
+        ListenToMeWatchUITests: [test]
+    test:
+      targets:
+        - ListenToMeWatchUnitTests
+        - ListenToMeWatchUITests
+  ListenToMeMacTests:
+    build:
+      targets:
+        ListenToMeMacUnitTests: all
+    test:
+      targets:
+        - ListenToMeMacUnitTests
   ListenToMeIOS:
     build:
       targets:

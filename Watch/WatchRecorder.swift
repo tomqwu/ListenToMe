@@ -43,6 +43,23 @@ final class WatchRecorder {
             + "What was recorded is being sent to iPhone."
     }
 
+    private(set) var availability: FeatureAvailability = .temporarilyUnavailable(reason: "Checking recording support…")
+
+    struct CapabilitySnapshot {
+        let microphoneDenied: Bool
+        let battery: Float
+        let freeBytes: Int64?
+    }
+
+    @ObservationIgnored private let capabilitySnapshot: () -> CapabilitySnapshot
+    @ObservationIgnored private let requestPermission: () async throws -> Void
+
+    func refreshAvailability() {
+        let current = capabilitySnapshot()
+        availability = WatchReadiness.local(microphoneDenied: current.microphoneDenied,
+                                           battery: current.battery, freeBytes: current.freeBytes)
+    }
+
     private(set) var phase = Phase.idle {
         didSet { if phase != oldValue { onStatusChange?() } }
     }
@@ -73,10 +90,18 @@ final class WatchRecorder {
         [.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication]
     }
 
-    init(makeCapture: @escaping () -> any WatchChunkCapturing = { WatchEngineCapture() }) {
+    init(makeCapture: @escaping () -> any WatchChunkCapturing = { WatchEngineCapture() },
+         capabilitySnapshot: (() -> CapabilitySnapshot)? = nil,
+         requestPermission: (() async throws -> Void)? = nil) {
         self.makeCapture = makeCapture
+        self.capabilitySnapshot = capabilitySnapshot ?? {
+            CapabilitySnapshot(microphoneDenied: AVAudioApplication.shared.recordPermission == .denied,
+                               battery: Self.batteryLevel(), freeBytes: Self.freeBytes())
+        }
+        self.requestPermission = requestPermission ?? { try await Self.requestMicrophone() }
         // Once, so every battery read below is current.
         WKInterfaceDevice.current().isBatteryMonitoringEnabled = true
+        refreshAvailability()
     }
 
     var isRecording: Bool {
@@ -102,10 +127,12 @@ final class WatchRecorder {
     /// A new recording. Throws, without touching the microphone, when a limit blocks it.
     func start() async throws {
         guard !isRecording else { return }
+        refreshAvailability()
+        guard availability.canRun else { throw WatchRecorderError.blocked(availability.reason ?? "Recording unavailable") }
         // A new recording ends one left stopped after an interruption.
         if case .stopped = phase { stop() }
         try checkStart(elapsed: nil)
-        try await requestMicrophone()
+        try await requestPermission()
         let id = UUID(), started = Date()
         recordingID = id
         startedAt = started
@@ -117,11 +144,13 @@ final class WatchRecorder {
     /// since it started.
     func continueRecording() async throws {
         guard canContinue, let startedAt else { return }
+        refreshAvailability()
+        guard availability.canRun else { throw WatchRecorderError.blocked(availability.reason ?? "Recording unavailable") }
         guard nextIndex <= WatchChunkMetadata.maximumIndex else {
             throw WatchRecorderError.blocked("This recording has too many parts. Start a new recording.")
         }
         try checkStart(elapsed: Date().timeIntervalSince(startedAt))
-        try await requestMicrophone()
+        try await requestPermission()
         try beginRun(firstIndex: nextIndex, startOffset: Date().timeIntervalSince(startedAt))
     }
 
@@ -262,7 +291,7 @@ final class WatchRecorder {
 
     // MARK: Microphone and interruptions
 
-    private func requestMicrophone() async throws {
+    private static func requestMicrophone() async throws {
         switch AVAudioApplication.shared.recordPermission {
         case .granted: return
         case .denied: throw WatchRecorderError.microphoneDenied

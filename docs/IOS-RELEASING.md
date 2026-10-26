@@ -201,7 +201,9 @@ clean checkout/worktree if needed. Inspect the new PR's code, test evidence, and
 valid evidence for the exact source rather than rerunning tests solely because the agent changed.
 Check the changed [BDD scenarios](BDD.md), their actual red/green evidence and any listed manual
 acceptance. `make bdd-check` enforces changed behavior/test bindings; `make ios-test` also verifies
-that all bound iOS unit/UI tests actually passed in the full run. Neither substitutes for device
+that all bound iOS unit/UI tests actually passed in the full run. Native Mac adapter/control and
+Watch unit/UI contracts also run locally through `make mac-test` and `make watch-test`; supply a
+dedicated `WATCH_DESTINATION=platform=watchOS Simulator,id=<UUID>` for full validation. Neither substitutes for device
 acceptance or an Apple upload receipt.
 Run missing relevant checks: lint, core coverage, iOS build/UI tests and macOS build. Exercise the
 changed user flow locally and inspect its rendered UI; GitHub Actions builds both apps and runs the
@@ -418,12 +420,15 @@ This completed the automated path without native Organizer control or another ma
 - Workflow implementation: [PR #85](https://github.com/tomqwu/ListenToMe/pull/85), merged with all CI
   green; 12 helper tests passed and a real API-key upload proved the route.
 
-The same route has carried every build since. The most recent accepted upload is **1.16.0 (33)**,
-accepted on 2026-10-24 from `980c471` and tagged `ios-v1.16.0-build33`, then verified
-`VALID`, `IN_BETA_TESTING` and in Dev with matching en-CA metadata. Its upload receipt,
-`PUBLISH-STATUS.md`, `asc-verify.json`, artifact checks and native screenshot manifest are in
-`dist/ios-1.16.0-build33-evidence/`. Physical-device acceptance and App Store listing image upload
-remain pending; the existing 1.15.0 review submission was preserved.
+The same route has carried every build since. The most recent accepted upload is **1.17.0 (34)**,
+accepted on 2026-10-25 from `cbd2e454dbf502df5832dc3654ee2d284f147380`, tagged
+`ios-v1.17.0-build34`, and verified `VALID`, `IN_BETA_TESTING` and in Dev with matching en-CA
+metadata. Evidence remains in `dist/ios-1.17.0-build34-evidence/` of the release worktree and the
+external October 25 release evidence. This receipt does not cover newer compatibility changes.
+The feedback candidate is 1.18.0 (35); it is not uploaded until a new acceptance receipt exists.
+App Store Connect reported production 1.15.0 READY_FOR_SALE at the October 25 preflight; recheck
+before the next train. Physical candidate checks and App Store screenshot listing uploads remain
+separate from TestFlight processing/access evidence.
 
 Use this evidence to distinguish the working path from historical Xcode-session failures. Recheck
 live state for a new release; do not treat this historical build number as the next build to upload.

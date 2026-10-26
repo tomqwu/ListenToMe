@@ -6,7 +6,11 @@ import ListenToMeCore
 extension MobileSession {
     var phoneRecorderStatus: PhoneRecorderStatus {
         PhoneRecorderStatus(state: Self.phoneState(state), startedAt: recordingStartedAt, title: title,
-                            lastStopReason: stopReason.map(Self.phoneStopReason))
+                            lastStopReason: stopReason.map(Self.phoneStopReason),
+                            recordingReady: recordingAvailability.canRun && isForeground && applicationIsActive() && !isSummarizing,
+                            recordingUnavailableReason: !isForeground || !applicationIsActive()
+                                ? "Open ListenToMe on your iPhone to record"
+                                : (isSummarizing ? "Generating a summary on iPhone" : recordingAvailability.reason))
     }
 
     func handleWatchCommand(_ command: WatchCommand) async -> WatchReply {
@@ -14,7 +18,16 @@ extension MobileSession {
         // background, before any scene reports a phase.
         switch RemoteRecorderPolicy.decide(command, state: Self.phoneState(state), isActive: applicationIsActive(),
                                            isSummarizing: isSummarizing) {
-        case .start: start()
+        case .start:
+            await refreshRecordingSupport()
+            // Capability metadata can suspend; recheck foreground, state and busy status afterward.
+            guard applicationIsActive(), isForeground else { return .openPhoneApp }
+            guard state == .idle else { return .accepted(phoneRecorderStatus) }
+            guard !isSummarizing else { return .busy("Generating a summary on iPhone") }
+            guard recordingAvailability.canRun else {
+                return .busy(recordingAvailability.reason ?? "Check recording settings on iPhone")
+            }
+            start()
         case .stop:
             // Answered at once: finalizing a long transcript can outlast the watch's reply timeout.
             // The idle status follows as the application context.

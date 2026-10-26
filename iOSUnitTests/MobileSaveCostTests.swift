@@ -55,6 +55,62 @@ final class MobileSaveCostTests: XCTestCase {
         XCTAssertNotEqual(try String(contentsOf: url, encoding: .utf8), "sentinel")
     }
 
+    func testAnAlreadySavedConversationCanPersistAnEmptyEdit() throws {
+        let root = makeRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let session = MobileSession(storageDirectory: root)
+        session.notes = "Text to clear"
+        XCTAssertTrue(session.save(announce: false))
+        let id = try XCTUnwrap(session.history.first?.id)
+        session.notes = ""
+        XCTAssertFalse(session.hasContent)
+        XCTAssertTrue(session.save(announce: false))
+        let archived = try JSONDecoder().decode(SessionRecord.self, from: Data(contentsOf: conversation(root, id)))
+        XCTAssertEqual(archived.notes ?? "", "")
+        XCTAssertEqual(session.history.first?.id, id)
+        XCTAssertEqual(session.history.first?.notes ?? "", "")
+    }
+
+    func testArchiveFailureKeepsCurrentTextAndCanRetry() throws {
+        let root = makeRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let session = MobileSession(storageDirectory: root)
+        let archive = root.appendingPathComponent("Conversations")
+        try? FileManager.default.removeItem(at: archive)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        try Data("Not a directory".utf8).write(to: archive)
+        session.notes = "Keep this unsaved text"
+        XCTAssertFalse(session.save())
+        XCTAssertEqual(session.notes, "Keep this unsaved text")
+        XCTAssertTrue(session.history.isEmpty)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: session.activeURL.path))
+        XCTAssertTrue(session.message?.contains("Could not save conversation") == true)
+        try FileManager.default.removeItem(at: archive)
+        XCTAssertTrue(session.save())
+        XCTAssertEqual(session.history.first?.notes, "Keep this unsaved text")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: session.activeURL.path))
+    }
+
+    func testActiveSnapshotFailureStaysRetryableAfterArchiveWasSaved() throws {
+        let root = makeRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let session = MobileSession(storageDirectory: root)
+        try FileManager.default.createDirectory(at: session.activeURL, withIntermediateDirectories: true)
+        session.notes = "Retry the same bytes"
+        XCTAssertFalse(session.save())
+        let id = try XCTUnwrap(session.history.first?.id)
+        XCTAssertEqual(session.history.first?.notes, "Retry the same bytes", "Archive succeeded before active snapshot failed")
+        XCTAssertEqual(session.notes, "Retry the same bytes")
+        let archivedURL = conversation(root, id)
+        try Data("sentinel".utf8).write(to: archivedURL)
+        try FileManager.default.removeItem(at: session.activeURL)
+        XCTAssertTrue(session.save(), "A partial failure cannot acknowledge unchanged bytes as saved")
+        let archived = try JSONDecoder().decode(SessionRecord.self, from: Data(contentsOf: archivedURL))
+        let active = try JSONDecoder().decode(SessionRecord.self, from: Data(contentsOf: session.activeURL))
+        XCTAssertEqual(archived.notes, "Retry the same bytes")
+        XCTAssertEqual(active.notes, "Retry the same bytes")
+    }
+
     func testTypingIsDebouncedAndFlushedBeforeSuspension() async throws {
         let root = makeRoot()
         defer { try? FileManager.default.removeItem(at: root) }

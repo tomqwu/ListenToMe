@@ -17,6 +17,7 @@ struct WatchRootView: View {
     @State private var confirmDelete = false
     @State private var isStarting = false
     @State private var startProblem: String?
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         ScrollView {
@@ -26,7 +27,10 @@ struct WatchRootView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .tint(.red)
-                .disabled(isStarting)
+                .disabled(isStarting || !recorder.availability.canRun)
+                if let reason = recorder.availability.reason {
+                    Text(reason).font(.footnote).multilineTextAlignment(.center)
+                }
                 if let startProblem {
                     Text(startProblem)
                         .font(.footnote)
@@ -43,6 +47,13 @@ struct WatchRootView: View {
                     .font(.headline)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 RemoteControlView(link: link)
+            }
+        }
+        .task(id: scenePhase) {
+            guard scenePhase == .active else { return }
+            while !Task.isCancelled {
+                recorder.refreshAvailability()
+                do { try await Task.sleep(for: .seconds(10)) } catch { return }
             }
         }
         .fullScreenCover(isPresented: recordingScreenShown) {

@@ -30,6 +30,7 @@ final class MobileCloudAISettingsUITests: XCTestCase {
         revealSettingsControl(quick, in: form)
         XCTAssertTrue(quick.label.contains("Choose model"), quick.label)
         revealSettingsControl(app.buttons["summaryProvider"], in: form, towardTop: true)
+        XCTAssertTrue(form.exists, "Returning to the first row must keep Settings open")
         XCTAssertTrue(app.buttons["summaryProvider"].label.contains("Anthropic Claude"), app.buttons["summaryProvider"].label)
 
         // #218 review: a key typed for one service is cleared when another service is chosen.
@@ -39,6 +40,7 @@ final class MobileCloudAISettingsUITests: XCTestCase {
         keyField.typeText("sk-ant-synthetic-ui")
         XCTAssertTrue(app.buttons["saveCloudAIKey"].isEnabled)
         revealSettingsControl(app.buttons["summaryProvider"], in: form, towardTop: true)
+        XCTAssertTrue(form.exists, "Returning above the keyboard must keep Settings open")
         app.buttons["summaryProvider"].tap()
         app.buttons["OpenRouter"].tap()
         XCTAssertTrue(app.staticTexts["cloudAIDisclosure"].waitForExistence(timeout: 3))
@@ -48,7 +50,7 @@ final class MobileCloudAISettingsUITests: XCTestCase {
         XCTAssertFalse(save.isEnabled, "The Anthropic key was cleared, so nothing can be saved for OpenRouter")
         revealSettingsControl(app.buttons["summaryProvider"], in: form, towardTop: true)
         app.buttons["summaryProvider"].tap()
-        app.buttons["Apple Intelligence · on-device"].tap()
+        app.buttons["Ollama Cloud"].tap()
         XCTAssertFalse(app.staticTexts["cloudAIDisclosure"].exists)
     }
 }

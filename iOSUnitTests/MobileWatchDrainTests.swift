@@ -504,7 +504,7 @@ extension MobileWatchDrainTests {
         try deliver(session, 0, isLast: true)
         await drain(session)
         let record = try XCTUnwrap(watchRecords(session).first)
-        await session.autoTitleTasks[record.id]?.value
+        await session.titleCoordinator.wait(for: record.id)
         let named = try XCTUnwrap(watchRecords(session).first)
         XCTAssertFalse(named.title.hasPrefix("Apple Watch · "), named.title)
         XCTAssertTrue(named.title.lowercased().contains("budget"), named.title)

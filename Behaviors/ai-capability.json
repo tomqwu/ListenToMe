@@ -1,0 +1,77 @@
+{
+  "feature": "iPhone and iPad summary AI capability and explicit routing",
+  "scenarios": [
+    {
+      "id": "CAPABILITY-001",
+      "name": "Refuse an unavailable Apple summary choice without silently routing elsewhere",
+      "given": "Apple Intelligence is unavailable and the user has an explicit summary provider and server choice",
+      "when": "the user tries to select Apple Intelligence",
+      "then": "Apple is not offered as an enabled action, attempted selection is refused with the runtime recovery reason, and previous provider, server and model choices remain unchanged; no cloud service is selected",
+      "covers": [
+        "iOS/MobileAISettings.swift",
+        "iOS/MobileAISettings+Cloud.swift",
+        "iOS/MobileAISettingsView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileAICapabilityTests.swift",
+          "test": "MobileAICapabilityTests/testUnavailableAppleSelectionKeepsExplicitProviderAndServerChoices"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileAICapabilityUITests.swift",
+          "test": "MobileAICapabilityUITests/testSettingsMarksUnavailableAppleChoiceAndExplainsRecovery"
+        }
+      ]
+    },
+    {
+      "id": "CAPABILITY-002",
+      "name": "Preserve a saved unavailable Apple choice with clear recovery",
+      "given": "a previously saved Apple summary provider is unavailable on the current device",
+      "when": "its availability or client is requested",
+      "then": "the runtime recovery reason blocks use while preserving the saved choice and requiring an explicit alternate provider selection",
+      "covers": [
+        "iOS/MobileAISettings.swift",
+        "iOS/MobileAISettingsView.swift",
+        "iOS/MobileSession.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileAICapabilityTests.swift",
+          "test": "MobileAICapabilityTests/testSavedUnavailableAppleChoiceStaysSavedAndClientFailsWithRecoveryReason"
+        }
+      ]
+    },
+    {
+      "id": "CAPABILITY-003",
+      "name": "Refresh summary eligibility when returning to the foreground",
+      "given": "Apple Intelligence readiness changes while the app is away",
+      "when": "the app returns to the foreground, settings refresh availability or the user taps Check again",
+      "then": "the current reason and selectable choice update without automatically selecting another provider or requiring summary AI for microphone capture",
+      "covers": [
+        "iOS/MobileAISettings.swift",
+        "iOS/MobileAISettingsView.swift",
+        "iOS/MobileSession.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileAICapabilityTests.swift",
+          "test": "MobileAICapabilityTests/testRefreshedAvailabilityEnablesAppleAndBlocksItAgainWithoutChangingChoice"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileAICapabilityTests.swift",
+          "test": "MobileAICapabilityTests/testForegroundRefreshesCapabilityWithoutSelectingAProvider"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileAICapabilityTests.swift",
+          "test": "MobileAICapabilityTests/testCheckAgainRefreshesAppleReadinessWithoutChangingTheSavedProvider"
+        }
+      ]
+    }
+  ]
+}

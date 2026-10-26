@@ -1,0 +1,329 @@
+{
+  "feature": "Cross-platform feature compatibility and readiness",
+  "scenarios": [
+    {
+      "id": "DEVICE-001",
+      "name": "Unsupported features have no usable action",
+      "given": "a platform reports a feature unsupported by its OS or hardware",
+      "when": "its controls are presented",
+      "then": "the unsupported feature has no selectable/configurable or execute action, its compatibility reason stays visible, and settings may still offer supported alternatives",
+      "covers": [
+        "Sources/ListenToMeCore/FeatureAvailability.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/FeatureAvailabilityTests.swift",
+          "test": "FeatureAvailabilityTests/testUnsupportedFeaturesHaveNoSelectableOrRunnableAction"
+        }
+      ],
+      "manual": {
+        "reason": "The shared readiness policy alone does not prove that native iOS/iPadOS, watchOS and macOS adapters or controls apply it.",
+        "steps": [
+          "For each affected platform, verify its native capability adapter against actual OS/hardware, permission and model readiness.",
+          "Inspect rendered controls and verify supported alternatives; Watch remote controls also require connectivity and matching protocol capability.",
+          "Refresh after foreground/settings/connectivity changes and preserve provider choices; keep simulator and physical acceptance separate."
+        ]
+      }
+    },
+    {
+      "id": "DEVICE-002",
+      "name": "Setup remains explicit before execution",
+      "given": "a supported feature has denied microphone access or requires summary model/provider setup",
+      "when": "the user sees its controls",
+      "then": "configuration remains available with an actionable reason but execution stays blocked",
+      "covers": [
+        "Sources/ListenToMeCore/FeatureAvailability.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/FeatureAvailabilityTests.swift",
+          "test": "FeatureAvailabilityTests/testSetupRequiredFeaturesExplainConfigurationButCannotExecute"
+        }
+      ],
+      "manual": {
+        "reason": "The shared readiness policy alone does not prove that native iOS/iPadOS, watchOS and macOS adapters or controls apply it.",
+        "steps": [
+          "For each affected platform, verify its native capability adapter against actual OS/hardware, permission and model readiness.",
+          "Inspect rendered controls and verify supported alternatives; Watch remote controls also require connectivity and matching protocol capability.",
+          "Refresh after foreground/settings/connectivity changes and preserve provider choices; keep simulator and physical acceptance separate."
+        ]
+      }
+    },
+    {
+      "id": "DEVICE-003",
+      "name": "Temporary capability loss blocks execution",
+      "given": "a required paired device or runtime service is temporarily unavailable",
+      "when": "the user sees the affected feature",
+      "then": "the recovery reason is shown and execution stays blocked",
+      "covers": [
+        "Sources/ListenToMeCore/FeatureAvailability.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/FeatureAvailabilityTests.swift",
+          "test": "FeatureAvailabilityTests/testTemporaryUnavailabilityDoesNotAdvertiseWorkingExecution"
+        }
+      ],
+      "manual": {
+        "reason": "The shared readiness policy alone does not prove that native iOS/iPadOS, watchOS and macOS adapters or controls apply it.",
+        "steps": [
+          "For each affected platform, verify its native capability adapter against actual OS/hardware, permission and model readiness.",
+          "Inspect rendered controls and verify supported alternatives; Watch remote controls also require connectivity and matching protocol capability.",
+          "Refresh after foreground/settings/connectivity changes and preserve provider choices; keep simulator and physical acceptance separate."
+        ]
+      }
+    },
+    {
+      "id": "DEVICE-004",
+      "name": "Readiness refresh does not change user choices",
+      "given": "a feature becomes ready after setup",
+      "when": "runtime capability is refreshed",
+      "then": "execution becomes available without selecting a different provider",
+      "covers": [
+        "Sources/ListenToMeCore/FeatureAvailability.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/FeatureAvailabilityTests.swift",
+          "test": "FeatureAvailabilityTests/testReadinessTransitionEnablesExecutionAndClearsSetupReason"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileAICapabilityTests.swift",
+          "test": "MobileAICapabilityTests/testForegroundRefreshesCapabilityWithoutSelectingAProvider"
+        }
+      ],
+      "manual": {
+        "reason": "The shared readiness policy alone does not prove that native iOS/iPadOS, watchOS and macOS adapters or controls apply it.",
+        "steps": [
+          "For each affected platform, verify its native capability adapter against actual OS/hardware, permission and model readiness.",
+          "Inspect rendered controls and verify supported alternatives; Watch remote controls also require connectivity and matching protocol capability.",
+          "Refresh after foreground/settings/connectivity changes and preserve provider choices; keep simulator and physical acceptance separate."
+        ]
+      }
+    },
+    {
+      "id": "DEVICE-005",
+      "name": "Gate Watch local and remote recording independently",
+      "given": "the paired phone is unreachable, incompatible, unchecked or cannot transcribe, or Watch microphone/resources are unavailable",
+      "when": "recording controls appear or their runtime status changes",
+      "then": "remote Start is blocked with the actual recovery reason, reachable Stop remains usable, and independent local Watch recording depends only on its microphone and resources while offline audio remains queued",
+      "covers": [
+        "Sources/ListenToMeCore/WatchReadiness.swift",
+        "Sources/ListenToMeCore/WatchLink.swift",
+        "Watch/RemoteControlView.swift",
+        "Watch/WatchLinkClient.swift",
+        "Watch/WatchRecorder.swift",
+        "Watch/WatchRootView.swift",
+        "project.yml",
+        "iOS/MobileSession+Watch.swift",
+        "Watch/WatchRecordingView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/WatchReadinessTests.swift",
+          "test": "WatchReadinessTests/testUnreachableOrIncompatiblePhoneCannotOfferRemoteStart"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/WatchReadinessTests.swift",
+          "test": "WatchReadinessTests/testUnknownOrUnsupportedPhoneSpeechIsExplainedAndDoesNotBlockStop"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/WatchReadinessTests.swift",
+          "test": "WatchReadinessTests/testPhoneCapabilityRoundTripsWithoutTranscriptOrRemoteRoutingInformation"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/WatchReadinessTests.swift",
+          "test": "WatchReadinessTests/testWatchLocalRecordingNeedsPermissionAndResourcesButNotPhoneConnectivity"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileWatchRemoteTests.swift",
+          "test": "MobileWatchRemoteTests/testUnsupportedPhoneSpeechRefusesWatchStartWithReasonAndNoRecorder"
+        }
+      ],
+      "manual": {
+        "reason": "Core tests execute the policy compiled into Watch; simulator rendering and paired physical delivery remain separate.",
+        "steps": [
+          "Build and inspect Watch simulator controls offline and with a denied microphone profile.",
+          "Verify real paired-device capability refresh and Stop, disconnected local recording and later audio sync before embedding Watch for distribution."
+        ]
+      }
+    },
+    {
+      "id": "DEVICE-006",
+      "name": "Offer compatible Mac AI and transcription choices before capture",
+      "given": "Mac runtime reports unavailable Apple Intelligence, a denied microphone or unsupported selected speech engine/language",
+      "when": "settings and listening controls are displayed or refreshed",
+      "then": "unavailable Apple selection is refused without changing the saved provider, AI execution and listening are gated independently, and blocked recording explains permissions or compatible engine/language alternatives before microphone activation; native microphone and legacy speech authorization map to distinct recovery states",
+      "covers": [
+        "Sources/ListenToMeCore/MacFeatureReadiness.swift",
+        "App/MacDeviceCapabilities.swift",
+        "App/SettingsView.swift",
+        "App/MeetingView.swift",
+        "App/CommandCenter.swift",
+        "App/CommandCenterPanes.swift",
+        "App/MeetingView+Capabilities.swift",
+        "App/MacCapabilityChoices.swift",
+        "App/MacAIAvailability.swift",
+        "App/PermissionsModel.swift",
+        "App/PermissionsView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/MacFeatureReadinessTests.swift",
+          "test": "MacFeatureReadinessTests/testUnavailableAppleCannotBeSelectedOrRunAndExplicitAlternativesRemain"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/MacFeatureReadinessTests.swift",
+          "test": "MacFeatureReadinessTests/testUnsupportedSelectedSpeechEngineIsBlockedWithAnAlternativeBeforeCapture"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/MacFeatureReadinessTests.swift",
+          "test": "MacFeatureReadinessTests/testDeniedPermissionsBlockCaptureButUndeterminedPermissionCanBeRequestedByTap"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacCapabilityNativeBaselineTests.swift",
+          "test": "MacCapabilityNativeBaselineTests/testUnsupportedNativeLocaleExplainsRecoveryBeforeCapture"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacCapabilityNativeBaselineTests.swift",
+          "test": "MacCapabilityNativeBaselineTests/testNativeAppleSummaryChecksHardwareOrConversationLanguage"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacCapabilityAdapterTests.swift",
+          "test": "MacCapabilityAdapterTests/testDeniedMicrophoneBlocksCaptureButStillAllowsEngineConfiguration"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacCapabilityAdapterTests.swift",
+          "test": "MacCapabilityAdapterTests/testUnavailableAdvancedFrameworkDoesNotClaimItsLanguageWorks"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacCapabilityAdapterTests.swift",
+          "test": "MacCapabilityAdapterTests/testActualSelectedLocaleReachesTheNativeAdapterAndLegacyPermissionIsIndependent"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacAIAvailabilityTests.swift",
+          "test": "MacAIAvailabilityTests/testUnavailableNativeAppleChoicePreservesEveryExplicitProvider"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacAIAvailabilityTests.swift",
+          "test": "MacAIAvailabilityTests/testRetainedAppleMenuActionRechecksReadinessAndForegroundCanRecover"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacAIAvailabilityTests.swift",
+          "test": "MacAIAvailabilityTests/testSavedUnavailableAppleChoiceRemainsSavedUntilExplicitAlternativeSelection"
+        }
+      ],
+      "manual": {
+        "reason": "Native Mac tests execute production framework mapping and menu state/actions; rendered UI and actual audio remain separate installed-app acceptance.",
+        "steps": [
+          "Inspect Settings AI and transcription options against actual framework availability; preserve stored choices and keys.",
+          "Verify disabled Start and recovery for an unavailable profile, enabled Start on supported hardware and usable Stop after a capability change.",
+          "Verify real microphone and system-audio OTHERS transcript on a supported Mac and preserve source-matched screenshots; clean only the completed Dev session."
+        ]
+      }
+    },
+    {
+      "id": "DEVICE-007",
+      "name": "Cancel pending Mac Start across readiness and permission waits",
+      "given": "Start is waiting for device capabilities or microphone permission",
+      "when": "the window closes, Stop or New cancels it, or its task is cancelled",
+      "then": "late success cannot request more permissions or create capture, duplicate Start is refused, and an obsolete completion cannot cancel a newer conversation start; a delayed permission denial never publishes an error into a new conversation",
+      "covers": [
+        "Sources/ListenToMeCore/CaptureStartGate.swift",
+        "App/MeetingView.swift",
+        "App/MeetingView+Conversations.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CaptureStartGateTests.swift",
+          "test": "CaptureStartGateTests/testClosingDuringCapabilityCheckNeverRequestsPermissionOrStartsCapture"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CaptureStartGateTests.swift",
+          "test": "CaptureStartGateTests/testCancelledPermissionGrantCannotStartAnOldConversation"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CaptureStartGateTests.swift",
+          "test": "CaptureStartGateTests/testStopBeforeTheTaskBeginsAndTaskCancellationPreventCapture"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CaptureStartGateTests.swift",
+          "test": "CaptureStartGateTests/testOnePendingStartAndExplicitReopen"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CaptureStartGateTests.swift",
+          "test": "CaptureStartGateTests/testLateDeniedPermissionDoesNotPublishAnErrorInANewConversation"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CaptureStartGateTests.swift",
+          "test": "CaptureStartGateTests/testCancelledStartNeverRequestsPermissionEvenBeforeCallbackWorkBegins"
+        }
+      ]
+    },
+    {
+      "id": "DEVICE-008",
+      "name": "Keep synthetic workspace profiles explicit about supported hardware",
+      "given": "release or transcript/Duo UI fixtures use synthetic conversations with supported recording profiles on a simulator",
+      "when": "the fixtures open the real workspace views",
+      "then": "Start is enabled from each explicit fixture profile without requesting microphone permission, transcript following and Duo geometry remain testable, and the normal simulator app still explains unsupported live recording",
+      "covers": [
+        "iOS/MobileDesignFixture.swift",
+        "iOS/MobileTranscriptFixture.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileDesignUITests.swift",
+          "test": "MobileDesignUITests/testReleaseFixtureRepresentsSupportedRecordingWithoutRequestingMicrophone"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileAppTests.swift",
+          "test": "MobileAppTests/testSimulatorExplainsUnavailableSpeechWithoutRequestingMicrophone"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileWorkspaceUITests.swift",
+          "test": "MobileWorkspaceUITests/testDuoPaneWidthsAndCompactTranscriptActions"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileWorkspaceUITests.swift",
+          "test": "MobileWorkspaceUITests/testPhoneTwoPaneLayoutAndPageSelectionSurviveRotation"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileTranscriptUITests.swift",
+          "test": "MobileTranscriptUITests/testCompactTranscriptFollowsPartialAndFinalTextButRespectsReadingHistory"
+        }
+      ]
+    }
+  ]
+}

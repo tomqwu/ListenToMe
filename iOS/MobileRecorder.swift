@@ -121,7 +121,7 @@ final class MobileRecorder: MobileRecording {
         let session = AVAudioSession.sharedInstance()
         try session.setCategory(.record, mode: .measurement, options: [.allowBluetoothHFP])
         try session.setActive(true)
-        let analyzer = SpeechAnalyzer(modules: [transcriber])
+        let analyzer = SpeechAnalyzer(modules: [transcriber.module])
         // Installed before the context is set, so a vocabulary change during these awaits reaches it.
         self.analyzer = analyzer
         let applied = contextualStrings
@@ -146,19 +146,20 @@ final class MobileRecorder: MobileRecording {
     }
 
     /// Delivers one transcriber's results until it is replaced or stopped.
-    private func consumeResults(of transcriber: SpeechTranscriber) -> Task<Void, Never> {
+    private func consumeResults(of transcriber: MobilePreparedTranscriber) -> Task<Void, Never> {
         let generation = resultsGeneration
         return Task {
             do {
-                for try await result in transcriber.results {
-                    guard generation >= acceptedGeneration else { return }
+                let exhausted = try await transcriber.consume { result in
+                    guard generation >= acceptedGeneration else { return false }
                     let text = String(result.text.characters)
-                    guard !result.isFinal || !text.isEmpty else { continue }
+                    guard !result.isFinal || !text.isEmpty else { return true }
                     deliver?(TranscriptSegment(source: .you, text: text, isFinal: result.isFinal,
                                                start: result.range.start.seconds, end: result.range.end.seconds,
                                                speakerName: "Microphone"))
+                    return true
                 }
-                if generation == resultsGeneration, engine.isRunning {
+                if exhausted, generation == resultsGeneration, engine.isRunning {
                     report?("Transcription ended. Recording stopped; captured text is kept.")
                 }
             } catch {
@@ -175,7 +176,7 @@ final class MobileRecorder: MobileRecording {
         isSwitching = true
         defer { isSwitching = false }
         let (transcriber, format) = try await MobileSpeechModel.prepare(locale: locale, volatileResults: true)
-        let analyzer = SpeechAnalyzer(modules: [transcriber])
+        let analyzer = SpeechAnalyzer(modules: [transcriber.module])
         // The new language's analyzer hears the same vocabulary as the one it replaces.
         let applied = contextualStrings
         if !applied.isEmpty { await SpeechVocabularyContext.apply(applied, to: analyzer) }

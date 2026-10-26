@@ -53,6 +53,7 @@ final class MeetingSessionTests: XCTestCase {
     func testRenamingClearsOldAnswersAndRebuildsListener() async {
         let (session, store) = makeSession()
         speak(store)
+        await session.refreshListener()
         await session.respondQuick(.answerQuestion)
         await session.respondDeep(.answerQuestion)
         XCTAssertFalse(session.quickSuggestion.isEmpty)
@@ -80,11 +81,33 @@ final class MeetingSessionTests: XCTestCase {
         XCTAssertEqual(session.models[.deep], "D")
     }
 
+    func testImmediateStopCannotStartAnUnregisteredButtonResponse() async {
+        let requests: [(CopilotRole, (MeetingSession) -> Task<Void, Never>?)] = [
+            (.quick, { $0.requestQuick(.answerQuestion) }),
+            (.deep, { $0.requestDeep(.answerQuestion) }),
+            (.listener, { $0.requestListenerRefresh() }),
+            (.quick, { $0.requestSuggested("Question from prompt editor") }),
+            (.deep, { $0.requestSuggested("Question from suggested chip", deep: true) })
+        ]
+        for (role, request) in requests {
+            let (session, store) = makeSession()
+            speak(store)
+            guard let work = request(session) else { XCTFail("Enabled command was ignored"); continue }
+            XCTAssertTrue(session.streamingRoles.contains(role), "Stop must already target this command")
+            session.cancelResponse(role)
+            await work.value
+            XCTAssertEqual(session.quickSuggestion, "")
+            XCTAssertEqual(session.deepAnswer, "")
+            XCTAssertEqual(session.listenerSummary, "")
+            XCTAssertFalse(session.streamingRoles.contains(role))
+        }
+    }
+
     // MARK: - respondQuick
 
     func testRespondQuickStreamsIntoQuickSuggestion() async {
         let (session, _) = makeSession()
-        await session.respondQuick(.answerQuestion)
+        await session.requestQuick(.answerQuestion).value
         XCTAssertEqual(session.quickSuggestion, "[Q]")
     }
 
@@ -110,7 +133,7 @@ final class MeetingSessionTests: XCTestCase {
 
     func testRespondDeepStreamsIntoDeepAnswer() async {
         let (session, _) = makeSession()
-        await session.respondDeep(.answerQuestion)
+        await session.requestDeep(.answerQuestion).value
         XCTAssertEqual(session.deepAnswer, "[D]")
     }
 
@@ -131,7 +154,7 @@ final class MeetingSessionTests: XCTestCase {
     func testRefreshListenerStreamsIntoListenerSummary() async {
         let (session, store) = makeSession()
         speak(store)
-        await session.refreshListener()
+        await session.requestListenerRefresh().value
         XCTAssertEqual(session.listenerSummary, "[L]")
     }
 

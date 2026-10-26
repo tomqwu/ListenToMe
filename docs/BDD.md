@@ -20,8 +20,8 @@ multiple drafts for the same issue without deleting their source or acceptance e
    erasure, cancellation and off-device consent as the behavior requires.
 2. Add/update a scenario in the appropriate feature. Narrow `covers` to the affected files or
    domain; baseline platform globs route ownership and do not prove exhaustive behavior coverage.
-   Bind it to a specific `Class/testMethod` and source file in `core`, `ios-unit`, `ios-ui` or
-   `tooling`. A scenario may need multiple bindings across platforms.
+   Bind it to a specific `Class/testMethod` and source file in `core`, `ios-unit`, `ios-ui`,
+   `mac-unit`, `watch-unit`, `watch-ui` or `tooling`. A scenario may need multiple bindings across platforms.
 3. Write the reproducing native test and run it **before** implementation. Record the expected
    failure, implement the behavior and record the passing run. Refactor under the same tests.
    A failing compile caused by a typo is not evidence that a regression was reproduced.
@@ -52,6 +52,32 @@ Example from the retained-Watch-audio contract (`WATCH-001`):
 The real catalog also records paired-device acceptance steps. Simulator tests cannot prove
 disconnected Watch transfer, real microphone/system capture or physical-device readiness.
 
+## Device compatibility is behavior
+
+For each affected feature, specify its supported and unavailable states before implementation.
+Do not infer support from the OS version or Apple Intelligence eligibility alone: local speech,
+summary AI, model readiness, microphone access and paired-device connectivity are separate capabilities.
+This applies to iPhone/iPad (including Duo), Apple Watch and Mac.
+
+Use the shared `DEVICE-001`–`DEVICE-004` readiness contract together with concrete platform scenarios:
+
+- Given supported hardware and language, when listening starts, then current microphone speech is
+  transcribed even if summary AI is unavailable. An available local dictation engine is a valid fallback.
+- Given an unsupported engine/language, when the screen opens, then Start is disabled and the reason
+  and supported alternatives are visible before a tap; no microphone request or download starts.
+- Given denied permission or missing setup, when the feature is shown, then execution is blocked
+  with an applicable recovery action. Unknown permission may still be requested by an explicit tap.
+- Given unavailable Apple Intelligence, when choosing AI, then it cannot be selected as a working
+  provider; saved choices remain intact, with explicit alternatives and no automatic cloud routing.
+- Given changed language, permissions, model readiness or connectivity, when availability refreshes,
+  then obsolete asynchronous checks cannot re-enable an unavailable action. Stop remains usable.
+- Given an unreachable or incompatible paired iPhone, when the Watch remote appears, then Start is
+  unavailable with a recovery reason; the Watch's independent offline recording remains separate.
+
+Bind platform adapters and control behavior to native tests. Generic readiness booleans alone do
+not establish native integration. Record coverage gaps explicitly and retain physical-device,
+rendered UI and real Mac OTHERS acceptance where applicable; a simulator pass cannot replace them.
+
 ## Commands and enforcement
 
 ```sh
@@ -61,15 +87,23 @@ make bdd-test BDD_SUITE=core
 make bdd-test BDD_SUITE=tooling
 make bdd-test BDD_SUITE=ios-unit IOS_DESTINATION='platform=iOS Simulator,id=<dedicated-UUID>'
 make bdd-test BDD_SUITE=ios-ui IOS_DESTINATION='platform=iOS Simulator,id=<dedicated-UUID>'
+make bdd-test BDD_SUITE=mac-unit
+make bdd-test BDD_SUITE=watch-unit WATCH_DESTINATION='platform=watchOS Simulator,id=<dedicated-UUID>'
+make bdd-test BDD_SUITE=watch-ui WATCH_DESTINATION='platform=watchOS Simulator,id=<dedicated-UUID>'
 make bdd-manual                        # lists required acceptance; does not mark it passed
 python3 scripts/test-bdd.py            # offline gate regression tests
 ```
 
 Create a fresh dedicated simulator for iOS tests and delete it after preserving evidence. These
 commands never reset a shared simulator, alter macOS permissions or authorize a production release.
-The iOS BDD commands select exact methods; the full iOS suite still runs in `make validate-local`.
-`make ios-test` preserves its native output and verifies every bound iOS unit/UI selector passed,
-so a skipped or filtered-out bound scenario cannot satisfy the full local gate.
+Native BDD commands select exact methods. Full local validation runs the iOS unit/UI, headless
+native Mac adapter/control and Watch unit/UI suites. Supply dedicated `IOS_DESTINATION` and
+`WATCH_DESTINATION` simulator IDs; Watch commands refuse a missing ID or wrong platform.
+`make ios-test`, `make mac-test` and `make watch-test` preserve native output and verify every bound
+selector passed, so a skipped or filtered-out scenario cannot satisfy the gate. Mac native tests
+compile production framework adapters and menu controllers without opening the app or user data.
+Watch tests run the actual app/client/recorder on watchOS Simulator; they do not establish real
+paired transfer or microphone acceptance.
 
 The checker rejects missing/duplicate IDs, empty Given/When/Then steps, unscoped patterns, missing
 test files/methods, mismatched suites and behavior files without a scenario. Its change-aware gate
@@ -87,7 +121,7 @@ date before merge, so older drafts must incorporate the current BDD workflow. Th
 check names are unchanged; the live Main ruleset's strict up-to-date requirement was enabled and
 read back on October 25, 2026.
 Local `pre-push` and `make validate-local` include the structural/change-aware check. The latter also
-tests the gate, checks observed iOS binding results and retains all native, helper and real model
+tests the gate, checks observed iOS, Mac and Watch binding results and retains all native, helper and real model
 contracts. Python execution checks exact verbose selectors rather than accepting aggregate counts.
 
 BDD runs save source, working-tree state, input hashes, commands, selectors, logs and results in

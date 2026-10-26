@@ -60,6 +60,6 @@ final class MobileOpenAISettingsUITests: XCTestCase {
         app.buttons["Remove server"].tap()
         revealSettingsControl(app.buttons["summaryProvider"], in: form, towardTop: true)
         app.buttons["summaryProvider"].tap()
-        app.buttons["Apple Intelligence · on-device"].tap()
+        app.buttons["Ollama Cloud"].tap()
     }
 }

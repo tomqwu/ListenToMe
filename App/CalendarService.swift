@@ -15,11 +15,13 @@ enum CalendarService {
 
     /// Requests calendar access and returns the most relevant meeting, or the specific reason there
     /// isn't one (denied / no event / EventKit failure).
-    static func currentOrNextMeeting(now: Date = Date()) async -> CalendarLookup {
+    static func currentOrNextMeeting(now: Date = Date(), requestAccess: Bool = true) async -> CalendarLookup {
+        // Passive suggestions never trigger an OS permission prompt.
+        guard requestAccess || EKEventStore.authorizationStatus(for: .event) == .fullAccess else { return .denied }
         let store = EKEventStore()
         let granted: Bool
         do {
-            granted = try await store.requestFullAccessToEvents()
+            granted = requestAccess ? try await store.requestFullAccessToEvents() : true
         } catch {
             log.error("Calendar access request failed: \(error.localizedDescription, privacy: .public)")
             return .failed(error.localizedDescription)
@@ -42,7 +44,7 @@ enum CalendarService {
         return .meeting(meetingInfo(from: event))
     }
 
-    /// Picks an event happening now (start ≤ now ≤ end) if any, otherwise the soonest-starting
+    /// Picks the most recently started event happening now (start ≤ now < end), otherwise the soonest-starting
     /// upcoming event. Pure given the inputs, so it's straightforward to reason about.
     static func chooseEvent(from events: [EKEvent], now: Date) -> EKEvent? {
         // Skip all-day items (holidays, birthdays, OOO), canceled/free events, and meetings the
@@ -57,23 +59,17 @@ enum CalendarService {
             }
             return true
         }
-        let inProgress = meetings
-            .filter { event in
-                guard let start = event.startDate, let end = event.endDate else { return false }
-                return start <= now && now <= end
-            }
-            .min { ($0.startDate ?? .distantPast) < ($1.startDate ?? .distantPast) }
-        if let inProgress { return inProgress }
-
-        return meetings
-            .filter { ($0.startDate ?? .distantPast) > now }
-            .min { ($0.startDate ?? .distantFuture) < ($1.startDate ?? .distantFuture) }
+        guard let index = MeetingSelection.currentOrNextIndex(
+            in: meetings.map { (start: $0.startDate, end: $0.endDate) }, now: now
+        ) else { return nil }
+        return meetings[index]
     }
 
     /// Maps an `EKEvent` to the EventKit-free `MeetingInfo`.
     static func meetingInfo(from event: EKEvent) -> MeetingInfo {
         MeetingInfo(
             title: event.title ?? "(untitled meeting)",
+            calendarID: event.eventIdentifier,
             start: event.startDate,
             end: event.endDate,
             location: event.location,

@@ -32,11 +32,31 @@ final class MobileWorkspaceUITests: XCTestCase {
     }
 
     func testReviewModesAndRecordingControlsStayAccessible() {
+        XCUIDevice.shared.orientation = .landscapeLeft
+        defer { XCUIDevice.shared.orientation = .portrait }
         let app = XCUIApplication(); app.launchPastReleaseNotes()
+        XCTAssertTrue(app.staticTexts["recordingSupportReason"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["Start listening"].isEnabled)
+        XCTAssertTrue(app.buttons["recordingSupportDetails"].isHittable)
         if app.segmentedControls["workspaceTabs"].exists {
             for (tab, role) in [("Live", "quick"), ("Summary", "summary")] {
                 app.segmentedControls["workspaceTabs"].buttons[tab].tap()
-                XCTAssertTrue(app.buttons["panel-model-\(role)"].isHittable)
+                let model = app.buttons["panel-model-\(role)"]
+                let fallback = app.scrollViews["dashboardScroll"]
+                // Unavailable recording adds recovery above the workspace. In a short viewport,
+                // the supported fallback has one outer scroll rather than unreadably short panes.
+                if fallback.exists {
+                    // XCTest performs the native scroll-to-visible gesture before this tap.
+                    // Exercise the real configuration action, then verify its restored viewport.
+                    model.tap()
+                    XCTAssertTrue(app.buttons["Done"].waitForExistence(timeout: 5))
+                    app.buttons["Done"].tap()
+                }
+                XCTAssertTrue(model.isHittable)
+                if fallback.exists {
+                    XCTAssertGreaterThanOrEqual(model.frame.minY, fallback.frame.minY)
+                    XCTAssertLessThanOrEqual(model.frame.maxY, fallback.frame.maxY)
+                }
                 XCTAssertTrue(app.buttons["Start listening"].isHittable)
                 XCTAssertTrue(app.buttons["Notes"].isHittable)
                 capture(app, "Phone \(tab)")
@@ -61,6 +81,8 @@ final class MobileWorkspaceUITests: XCTestCase {
         XCUIDevice.shared.orientation = .portrait
         defer { XCUIDevice.shared.orientation = .portrait }
         app.launchPastReleaseNotes()
+        XCTAssertTrue(app.buttons["Start listening"].isEnabled, "The synthetic supported profile must not inherit simulator incompatibility")
+        XCTAssertFalse(app.staticTexts["recordingSupportReason"].exists)
         XCTAssertTrue(app.otherElements["transcriptPanel"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.otherElements["twoPaneMeetingWorkspace"].exists)
         let title = app.textFields["conversationTitle"].value as? String
@@ -112,6 +134,8 @@ final class MobileWorkspaceUITests: XCTestCase {
         XCUIDevice.shared.orientation = .landscapeLeft
         defer { XCUIDevice.shared.orientation = .portrait }
         app.launchPastReleaseNotes()
+        XCTAssertTrue(app.buttons["Start listening"].isEnabled, "The synthetic supported profile must not inherit simulator incompatibility")
+        XCTAssertFalse(app.staticTexts["recordingSupportReason"].exists)
         let transcript = app.otherElements["transcriptPanel"]
         let quick = app.otherElements["summary-panel-quick"]
         XCTAssertTrue(app.buttons["duoPaneWidths"].waitForExistence(timeout: 10))

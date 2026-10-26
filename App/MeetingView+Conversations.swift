@@ -5,44 +5,30 @@ import ListenToMeCore
 
 extension MeetingView {
     var hasConversation: Bool {
-        !session.summaryInstructions.isEmpty || !store.utterances.isEmpty
+        lastSavedKey != nil || restoredRecord != nil
+            || !session.summaryInstructions.isEmpty || !store.utterances.isEmpty
             || !session.notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     @discardableResult
     func checkpoint(complete: Bool = false, force: Bool = false) -> Bool {
-        guard ProviderSettings.saveSessionsForSearch, sessionSaveable else { return false }
-        guard hasConversation else { return true }
-        // Compare a cheap dirty key BEFORE building anything: the timer fires once a second for the
-        // whole meeting, and rebuilding the joined transcript first made every idle tick
-        // O(transcript) on the main actor (issue #116). `store.revision` stands in for the
-        // transcript; Date is intentionally excluded so ticks do not rewrite unchanged content.
-        let key = SessionCheckpointKey(
-            revision: store.revision, title: conversationTitle, summary: session.listenerSummary,
-            notes: session.notes, quickSuggestion: session.quickSuggestion,
-            deepAnswer: session.deepAnswer, complete: complete, summaryInstructions: session.summaryInstructions,
-            vocabularyDomainIDs: vocabulary.domainIDs(for: currentSessionID).sorted())
-        guard force || key != lastSavedKey else { return true }
-        // The record keeps the conversation's start (its first checkpoint), so History, its exports
-        // and the Save to folder note all carry the same date and file name as the live export.
-        let started = conversationStartedAt ?? Date()
-        let record = currentRecord(date: started, complete: complete)
-        guard sessionStore.add(record) else {
-            saveMessage = sessionStore.errorText ?? "Save failed. Retry or Export to keep this conversation."
-            saveFailed = true
-            return false
-        }
-        lastSavedKey = key
-        conversationStartedAt = started
-        // Save to folder (issue #53): written once capture has stopped, then on each later change.
-        let vault = MarkdownVaultSync.shared
-        vault.activeRecordingID = complete ? nil : currentSessionID
-        if complete {
-            vault.save(record, startedAt: started)
-        }
-        saveMessage = "Saved at " + Date().formatted(date: .omitted, time: .standard)
-        saveFailed = false
-        return true
+        return checkpointController.checkpoint(
+            allowed: ProviderSettings.saveSessionsForSearch && sessionSaveable,
+            hasContent: hasConversation, force: force,
+            makeKey: {
+                SessionCheckpointKey(
+                    revision: store.revision, title: conversationTitle, summary: session.listenerSummary,
+                    notes: session.notes, quickSuggestion: session.quickSuggestion,
+                    deepAnswer: session.deepAnswer, complete: complete, summaryInstructions: session.summaryInstructions,
+                    vocabularyDomainIDs: vocabulary.domainIDs(for: currentSessionID).sorted())
+            },
+            makeRecord: { currentRecord(date: $0, complete: complete) },
+            persist: { sessionStore.add($0) }, errorText: { sessionStore.errorText }, didSave: { record in
+                // Queue folder output only after the durable history write.
+                let vault = MarkdownVaultSync.shared
+                vault.activeRecordingID = complete ? nil : currentSessionID
+                if complete { vault.save(record, startedAt: record.date) }
+            })
     }
 
     func saveConversation() {
@@ -71,55 +57,60 @@ extension MeetingView {
     }
 
     func newConversation() {
-        guard !lifecycleBusy, !session.isTranscribingFile else { return }
-        lifecycleBusy = true
-        Task {
-            defer { lifecycleBusy = false }
-            wantsCapture = false
-            recordingStartedAt = nil
-            restartTask?.cancel()
-            // A checkpoint is independent of transcription/model completion.
-            _ = checkpoint()
-            await session.stopAndWait()
-            let persisted = !hasConversation || (ProviderSettings.saveSessionsForSearch && sessionSaveable
-                                                 && checkpoint(complete: true, force: true))
-            if !persisted {
-                let alert = NSAlert()
-                alert.messageText = saveFailed ? "Keep this conversation before starting a new one" : "Save this conversation?"
-                alert.informativeText = "Save As keeps a Markdown copy. Cancel keeps this conversation open."
-                alert.addButton(withTitle: "Save As…")
-                alert.addButton(withTitle: "Cancel")
-                alert.addButton(withTitle: "Discard and start new")
-                switch alert.runModal() {
-                case .alertFirstButtonReturn: guard saveConversationAs() else { return }
-                case .alertThirdButtonReturn: MacSavedAudio.shared.discard(conversationID: currentSessionID)
-                default: return
-                }
-            }
-            discardAudioIfNotInHistory()
-            if persisted { nameConversationIfNeeded() }   // the saved one, in the background (#221)
-            autoTitleTask = nil   // it renames the saved record; typing the new title must not cancel it
-            beginDiarizationRunReset()
-            restoredRecord = nil
-            session.resetConversation()
-            currentSessionID = UUID().uuidString; conversationStartedAt = nil
-            vocabulary.restore(domainIDs: nil, for: currentSessionID)
-            applyVocabulary()
-            conversationLanguages = ConversationLanguages()
-            conversationTitle = ConversationTitle.generated(Date().formatted(date: .abbreviated, time: .shortened))
-            conversationTitleState = .placeholder
-            sessionSaveable = ProviderSettings.saveSessionsForSearch
-            othersAudioSink.reset(); microphoneAudioSink.reset()
-            lastSavedKey = nil
-            saveMessage = "New conversation"; saveFailed = false
-            clearReferences(session: session)
-            transcriptAtBottom = true
+        guard !lifecycleBusy, !isImporting else { return }
+        captureStartGate.cancel()
+        recordingStartedAt = nil
+        newCoordinator.begin(checkpoint: { _ = checkpoint() }, stop: {
+            await captureCoordinator.stop()
+        }, persist: {
+            !hasConversation || (ProviderSettings.saveSessionsForSearch && sessionSaveable
+                                 && checkpoint(complete: true, force: true))
+        }, resolveUnsaved: { resolveUnsavedBeforeNew() }, reset: { persisted in
+            resetAfterNewDecision(persisted: persisted)
+        })
+    }
+
+    private func resolveUnsavedBeforeNew() -> Bool {
+        let alert = NSAlert()
+        alert.messageText = saveFailed ? "Keep this conversation before starting a new one" : "Save this conversation?"
+        alert.informativeText = "Save As keeps a Markdown copy. Cancel keeps this conversation open."
+        alert.addButton(withTitle: "Save As…")
+        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: "Discard and start new")
+        switch alert.runModal() {
+        case .alertFirstButtonReturn: return saveConversationAs()
+        case .alertThirdButtonReturn:
+            MacSavedAudio.shared.discard(conversationID: currentSessionID)
+            return true
+        default: return false
         }
+    }
+
+    private func resetAfterNewDecision(persisted: Bool) {
+        discardAudioIfNotInHistory()
+        if persisted { nameConversationIfNeeded() }   // the saved one, in the background (#221)
+        calendarContext.cancel()
+        beginDiarizationRunReset()
+        restoredRecord = nil
+        session.resetConversation()
+        startError = nil; exportError = nil
+        currentSessionID = UUID().uuidString; checkpointCoordinator.reset()
+        vocabulary.restore(domainIDs: nil, for: currentSessionID)
+        applyVocabulary()
+        conversationLanguages = ConversationLanguages()
+        conversationTitle = ConversationTitle.generated(Date().formatted(date: .abbreviated, time: .shortened))
+        conversationTitleState = .placeholder
+        sessionSaveable = ProviderSettings.saveSessionsForSearch
+        othersAudioSink.reset(); microphoneAudioSink.reset()
+        saveMessage = "New conversation"; saveFailed = false
+        clearReferences(session: session)
+        transcriptScrollWork.cancel()
+        transcriptFollow = TranscriptFollowState()
     }
 
     func openConversation(_ record: SessionRecord) {
         guard record.id != currentSessionID else { return }
-        guard !lifecycleBusy, !session.isRunning, !session.isTranscribingFile else {
+        guard !lifecycleBusy, !session.isRunning, !isImporting else {
             saveMessage = "Stop recording or importing before opening another conversation."
             saveFailed = true
             return
@@ -137,19 +128,20 @@ extension MeetingView {
                 return
             }
         }
-        autoTitleTask?.cancel(); autoTitleTask = nil
+        calendarContext.cancel()
+        titleCoordinator.cancel(currentSessionID)
         beginDiarizationRunReset()
         clearReferences(session: session)
         othersAudioSink.reset(); microphoneAudioSink.reset()
         restoredRecord = record
         guard session.restoreConversation(record) else { return }
-        currentSessionID = record.id; conversationStartedAt = record.date
+        currentSessionID = record.id; checkpointCoordinator.reset(startedAt: record.date)
         conversationTitle = record.title; conversationTitleState = record.resolvedTitleState
         conversationLanguages = record.conversationLanguages
         vocabulary.restore(domainIDs: record.vocabularyDomainIDs, for: currentSessionID,
                            transcriptLineCount: store.utterances.count)
         applyVocabulary()
-        lastSavedKey = nil; sessionSaveable = ProviderSettings.saveSessionsForSearch
+        sessionSaveable = ProviderSettings.saveSessionsForSearch
         saveMessage = "Opened conversation"; saveFailed = false
     }
 
@@ -164,7 +156,7 @@ extension MeetingView {
                 Text(lifecycleBusy ? "Finalizing…" : (wantsCapture
                     ? (session.isPreparing ? "Preparing…"
                        : (recordingStartedAt == nil ? "Starting…" : "Recording \(elapsedLabel)"))
-                    : "Ready"))
+                    : (isImporting ? "Transcribing file…" : "Ready")))
                 Text(ProviderSettings.aiModeLabel)
             }
             HStack(alignment: .top, spacing: 16) {
@@ -197,6 +189,19 @@ extension MeetingView {
                     }
                 }.frame(maxWidth: .infinity, alignment: .trailing)
             }
+            if isImporting {
+                HStack {
+                    Text(importStatus.fileName).lineLimit(1).truncationMode(.middle)
+                    ProgressView(value: importStatus.fraction).frame(width: 100)
+                    Text(importStatus.cancelling ? "Stopping…" : importStatus.progressLabel)
+                    Button("Cancel import") {
+                        importStatus.cancelling = true
+                        importWork.cancel()
+                    }.disabled(importStatus.cancelling)
+                }
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel("Audio import progress")
+            }
             if store.partial != nil {
                 Text("Saving keeps finalized text; the current spoken phrase is still being transcribed.")
                     .foregroundStyle(.secondary)
@@ -213,29 +218,39 @@ extension MeetingView {
     }
 
     var conversationCommands: ConversationCommands {
-        ConversationCommands(canSave: hasConversation, canStartNew: !lifecycleBusy && !session.isTranscribingFile,
+        ConversationCommands(canSave: hasConversation, canStartNew: !lifecycleBusy && !isImporting,
             isCapturing: wantsCapture,
-            canToggleCapture: !lifecycleBusy && !session.isTranscribingFile,
+            canToggleCapture: !lifecycleBusy && !isImporting,
             canUseAI: session.aiEnabled,
             save: saveConversation, new: newConversation, history: { showSearch = true },
             export: exportSession, settings: { openSettings($showSettings) },
             toggleCapture: { toggleCapture(session: session) },
-            deepAnswer: { Task { await session.respondDeep(.answerQuestion) } },
-            recap: { Task { await session.respondQuick(.recap) } },
-            refreshSummary: { Task { await session.refreshListener() } })
+            deepAnswer: { session.requestDeep(.answerQuestion) },
+            recap: { session.requestQuick(.recap) },
+            refreshSummary: { session.requestListenerRefresh() })
     }
 
     /// App/window close waits for final text, but never for optional AI or speaker analysis.
     func prepareToClose() async -> Bool {
+        await closeCoordinator.request(canBegin: !lifecycleBusy, prepare: {
+            await prepareCurrentConversationToClose()
+        }, accepted: {
+            calendarContext.cancel()
+            referenceContext.cancel()
+        })
+    }
+
+    private func prepareCurrentConversationToClose() async -> Bool {
         guard !lifecycleBusy else { return false }
+        captureStartGate.cancel()
         lifecycleBusy = true
         defer { lifecycleBusy = false }
-        wantsCapture = false; recordingStartedAt = nil; activeEngine = nil
-        restartTask?.cancel(); importTask?.cancel()
+        recordingStartedAt = nil; activeEngine = nil
+        importWork.cancel()
         _ = checkpoint()
-        await session.stopAndWait()
+        await captureCoordinator.stop()
         await MacSavedAudio.shared.waitForWrites()
-        await importTask?.value
+        await importWork.wait()
         if !hasConversation { discardAudioIfNotInHistory(); return true }
         if ProviderSettings.saveSessionsForSearch && sessionSaveable && checkpoint(complete: true, force: true) {
             // The final Save to folder note is queued by that checkpoint; let it land before quitting.

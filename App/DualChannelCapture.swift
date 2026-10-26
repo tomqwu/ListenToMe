@@ -27,8 +27,7 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
     /// re-arms a channel that worked (and never re-prompts a user who declined Screen Recording).
     private var systemAudioWasActive = false           // guarded by `lock`
     private var systemAudioTask: Task<Void, Never>?
-    private let startTime = Date()
-    /// The host clock at `startTime`: capture times from the audio's own timestamps (the tap's host time,
+    /// The host clock at capture initialization: capture times from the audio's own timestamps (the tap's host time,
     /// the stream's presentation time) are measured from here, so late delivery is not a gap (#55).
     private let startHostSeconds = CMClockGetTime(CMClockGetHostTimeClock()).seconds
     /// Optional sink that accumulates the `.others` channel (resampled to 16 kHz) for speaker
@@ -240,6 +239,10 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
         }
         let filter = SCContentFilter(display: display, excludingWindows: [])
         let config = SCStreamConfiguration()
+        // Audio-only output still creates a screen stream: keep its unused video work minimal.
+        config.width = 2
+        config.height = 2
+        config.minimumFrameInterval = CMTime(seconds: 1, preferredTimescale: 600)
         config.capturesAudio = true
         config.excludesCurrentProcessAudio = true
         config.sampleRate = 48000
@@ -270,7 +273,8 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
         let count = Int(mono.frameLength)
         guard count > 0 else { return }
         let samples = Array(UnsafeBufferPointer(start: channel, count: count))
-        let timestamp = Date().timeIntervalSince(startTime)
+        let timestamp = CaptureTimeline.timestamp(capturedAt: capturedAt, runStart: startHostSeconds,
+            deliveredAt: CMClockGetTime(CMClockGetHostTimeClock()).seconds)
         // Feed the same mono samples to the diarization sink (it handles the 16 kHz resample). The
         // chunk's capture-time `timestamp` is passed through so the buffer can record its sample-0
         // offset for later alignment against the transcript's capture-time stamps.
@@ -288,17 +292,12 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
             let generation = source == .others ? sinkGeneration : microphoneGeneration
             sink?.append(samples: samples, sampleRate: mono.format.sampleRate,
                          timestamp: timestamp, generation: generation)
-            // The capture-time stamp keeps the file on WhisperKit's timeline across gaps (issue #55).
-            // Placed by capture time, not delivery time: a late callback is not a gap to fill with silence.
-            // A clock that does not match the host clock (more than 2 s from delivery) is not trusted.
-            let captureTime = capturedAt.map { $0 - startHostSeconds }.flatMap { abs($0 - timestamp) < 2 ? $0 : nil }
-                ?? timestamp
-            savedAudio[source]?.append(samples: samples, sampleRate: mono.format.sampleRate, timestamp: captureTime)
+            savedAudio[source]?.append(samples: samples, sampleRate: mono.format.sampleRate, timestamp: timestamp)
         }
         let chunk = AudioChunk(samples: samples,
                                sampleRate: mono.format.sampleRate,
                                source: source,
-                               timestamp: timestamp)
+                               timestamp: timestamp, capturedAtUptime: startHostSeconds + timestamp)
         if case .dropped(let lost) = continuation.yield(chunk),
            lock.withLock({ reportedDrops.insert(lost.source).inserted }) {
             statusContinuation.yield(CaptureStatus(source: lost.source,
@@ -357,8 +356,9 @@ private extension CMSampleBuffer {
         guard frames > 0, let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frames)
         else { return nil }
         buffer.frameLength = frames
-        CMSampleBufferCopyPCMDataIntoAudioBufferList(
-            self, at: 0, frameCount: Int32(frames), into: buffer.mutableAudioBufferList)
+        guard CMSampleBufferCopyPCMDataIntoAudioBufferList(
+            self, at: 0, frameCount: Int32(frames), into: buffer.mutableAudioBufferList) == noErr
+        else { return nil }
         // If not already mono Float32, return as-is; the recognizer adapts to buffer.format.
         return buffer
     }

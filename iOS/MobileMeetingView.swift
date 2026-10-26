@@ -18,6 +18,8 @@ struct MobileMeetingView: View {
     @State private var showNotes = false
     @State private var showCalendar = false
     @State private var showFullSummary = false
+    @State private var showRecordingSupport = false
+    @State private var showRetranscription = false
     @State private var summaryMode = MobileSummaryMode.summary
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.verticalSizeClass) private var verticalSizeClass
@@ -73,6 +75,9 @@ struct MobileMeetingView: View {
                             if session.canPlaySavedAudio {
                                 ShareLink(items: session.savedAudioFiles) { Label("Share audio", systemImage: "waveform") }
                             }
+                            Button("Re-transcribe saved audio…", systemImage: "waveform.badge.magnifyingglass") {
+                                showRetranscription = true
+                            }.disabled(!session.canRetranscribe).accessibilityIdentifier("retranscribeSavedAudio")
                             Button("Import from Calendar", systemImage: "calendar") { showCalendar = true }
                             Button("Full summary") { showFullSummary = true }
                             Button("Settings", systemImage: "gearshape") { showSettings = true }
@@ -92,6 +97,7 @@ struct MobileMeetingView: View {
                     controls
                 }.background(MobileStyle.canvas)
             }
+            .task(id: session.languageChoice) { await session.refreshRecordingSupport() }
             .task(id: saveFeedbackID) {
                 guard saveSucceeded else { return }
                 do { try await Task.sleep(for: .seconds(4)) } catch { return }
@@ -102,6 +108,21 @@ struct MobileMeetingView: View {
             }
             .sheet(isPresented: $showHistory) { MobileHistoryView(session: session) }
             .sheet(isPresented: $showSettings) { settings }
+            .alert("Couldn’t start listening", isPresented: Binding(
+                get: { session.recordingStartFailure != nil },
+                set: { if !$0 { session.recordingStartFailure = nil } }
+            )) {
+                Button("OK", role: .cancel) { session.recordingStartFailure = nil }
+                Button("Recording settings") { showSettings = true }
+            } message: {
+                Text(session.recordingStartFailure ?? "")
+            }
+            .alert("Recording support", isPresented: $showRecordingSupport) {
+                Button("OK", role: .cancel) {}
+                Button("Recording settings") { showSettings = true }
+            } message: {
+                Text(session.recordingAvailability.reason ?? "Recording is supported.")
+            }
             .sheet(item: $modelRole) { role in
                 NavigationStack {
                     MobileRoleModelView(ai: session.ai, role: role)
@@ -109,6 +130,12 @@ struct MobileMeetingView: View {
                 }
             }
             .sheet(isPresented: $showCalendar) { MobileCalendarView(session: session) }
+            .sheet(isPresented: $showRetranscription) {
+                RetranscriptionView(original: session.currentRecord, library: session.savedAudio.library,
+                    recognizers: ["Apple on-device": session.savedAudioRecognizer],
+                    terms: { session.vocabulary.recognitionTerms(for: session.id, localeIdentifier: $0) },
+                    apply: session.applyRetranscription)
+            }
             .sheet(isPresented: $showNotes) { MobileNotesView(session: session) }
             .sheet(isPresented: $showFullSummary) {
                 NavigationStack { summary.navigationTitle("Full summary").toolbar { Button("Done") { showFullSummary = false } } }
@@ -128,6 +155,9 @@ struct MobileMeetingView: View {
                 titleEditor
                 captureStatusLabel
             }
+            if session.state == .idle, let reason = session.recordingAvailability.reason {
+                recordingSupport(reason)
+            }
             MobileSpeakerStatus(session: session)
             MobileLanguageStatus(session: session)
             MobileWatchRecordingLine(status: session.watchCaptureStatus)
@@ -139,6 +169,43 @@ struct MobileMeetingView: View {
             }
         }.frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 20).padding(.vertical, verticalSizeClass == .compact ? 6 : 14)
+    }
+
+    /// Keep the cause and recovery visible without crowding the workspace in a short viewport.
+    /// Full instructions remain available before Start, including for VoiceOver.
+    private func recordingSupportText(_ reason: String) -> String {
+        guard let sentence = reason.range(of: ". ") else { return reason }
+        return String(reason[..<sentence.upperBound]).trimmingCharacters(in: .whitespaces)
+    }
+
+    private func recordingSupport(_ reason: String) -> some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 12) {
+                recordingSupportCause(reason).fixedSize(horizontal: true, vertical: false)
+                recordingSupportActions.fixedSize(horizontal: true, vertical: false)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                recordingSupportCause(reason)
+                recordingSupportActions
+            }
+        }.font(.callout)
+    }
+
+    private func recordingSupportCause(_ reason: String) -> some View {
+        Text(recordingSupportText(reason)).accessibilityLabel(reason)
+            .accessibilityIdentifier("recordingSupportReason")
+    }
+
+    private var recordingSupportActions: some View {
+        HStack(spacing: 12) {
+            if let action = session.recordingAvailability.setupAction {
+                Button(action) { UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!) }
+            } else if !session.recordingAvailability.canRun {
+                Button("Recording settings") { showSettings = true }
+            }
+            Button("Recording support details", systemImage: "info.circle") { showRecordingSupport = true }
+                .labelStyle(.iconOnly).accessibilityIdentifier("recordingSupportDetails")
+        }
     }
 
     private var titleEditor: some View {
@@ -161,6 +228,7 @@ struct MobileMeetingView: View {
     private var statusText: String {
         switch session.state {
         case .idle:
+            guard session.recordingAvailability.canRun else { return "Microphone · Unavailable" }
             return session.speakers.modelsReady && session.speakers.enabled
                 ? "Microphone · Ready · Speaker labels on" : "Microphone · Ready to listen"
         case .preparing: return "Preparing speech model… First use may download a model."
@@ -239,7 +307,8 @@ struct MobileMeetingView: View {
                     .font(.headline).frame(maxWidth: .infinity, minHeight: 24)
             }.buttonStyle(MobileRecordStyle(recording: session.state != .idle))
                 .accessibilityLabel(session.state == .idle ? "Start listening" : "Stop listening")
-                .disabled(session.state == .stopping || (session.isSummarizing && session.state == .idle))
+                .disabled(session.state == .stopping || (session.state == .idle &&
+                    (session.isSummarizing || !session.recordingAvailability.canRun)))
             if !dynamicTypeSize.isAccessibilitySize {
                 Button { showNotes = true } label: {
                     VStack(spacing: 3) {
@@ -255,6 +324,9 @@ struct MobileMeetingView: View {
             .background(MobileStyle.canvas.opacity(0.96))
     }
 
+}
+
+extension MobileMeetingView {
     private var settings: some View {
         NavigationStack {
             Form {

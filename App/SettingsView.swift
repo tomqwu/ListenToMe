@@ -16,6 +16,10 @@ enum ProviderSettings {
         get { UserDefaults.standard.string(forKey: "transcriptionEngine") ?? "speechAnalyzer" }
         set { UserDefaults.standard.set(newValue, forKey: "transcriptionEngine") }
     }
+    static var whisperModel: WhisperModelChoice {
+        get { WhisperModelChoice.load(from: .standard) }
+        set { newValue.save(to: .standard) }
+    }
     /// BCP-47 locale id for transcription; empty means follow the system language ("Auto").
     static var transcriptionLocaleID: String {
         get { UserDefaults.standard.string(forKey: "transcriptionLocale") ?? "" }
@@ -154,7 +158,9 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var aiMode: AIProcessingMode
     @State private var saveError: String?
+    @State private var suggestMeetings = UserDefaults.standard.bool(forKey: "suggestCalendarMeetings")
     @State private var engine: String
+    @State private var whisperModel = ProviderSettings.whisperModel
     private let originalKey: String
     @State private var ollamaKey: String
     @State private var responseLanguageID: String
@@ -189,9 +195,7 @@ struct SettingsView: View {
             Text("Settings").font(.title2).bold()
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
-            Picker("AI processing", selection: $aiMode) {
-                ForEach(AIProcessingMode.allCases, id: \.self) { Text($0.label).tag($0) }
-            }
+            MacAIChoice(selection: $aiMode)
             Text("Cloud mode sends meeting text and attached context to Ollama Cloud. Local mode verifies " +
                  "the model before each request. Cloud AI service sends it to the service you choose below with " +
                  "your own key; OpenAI-compatible sends it to the server you enter below. " +
@@ -228,10 +232,15 @@ struct SettingsView: View {
                  "Names can be edited in Speakers; overlapping speech may be misattributed.")
                 .font(.caption).foregroundStyle(.secondary)
 
-            Picker("Transcription engine", selection: $engine) {
-                Text("SpeechAnalyzer (macOS 26, dual-channel)").tag("speechAnalyzer")
-                Text("SpeechRecognizer (legacy)").tag("speechRecognizer")
-                Text("WhisperKit (multilingual, downloads model)").tag("whisperKit")
+            MacEngineChoice(selection: $engine)
+            if engine == "whisperKit" {
+                Picker("Whisper model", selection: $whisperModel) {
+                    ForEach(WhisperModelChoice.allCases) { Text($0.title).tag($0) }
+                }
+                Text(whisperModel.tradeoff + " All choices support multiple languages. "
+                     + "Speed and accuracy depend on your Mac, language and audio. "
+                     + "Applies at the next Start; uncached models download then.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
             Text(
                 "SpeechAnalyzer transcribes both channels concurrently and downloads its model on first use; " +
@@ -254,6 +263,8 @@ struct SettingsView: View {
 
             Divider()
 
+            CalendarSuggestionSettings(enabled: $suggestMeetings)
+            Divider()
             Picker("Response language", selection: $responseLanguageID) {
                 ForEach(ProviderSettings.responseLanguageOptions, id: \.id) {
                     Text($0.label).tag($0.id)
@@ -319,6 +330,11 @@ struct SettingsView: View {
     }
 
     private func save() {
+        if aiMode == .apple, ProviderSettings.aiMode != .apple,
+           let reason = AppleIntelligenceProvider.unavailableReason {
+            saveError = reason + " Settings have not been applied."
+            return
+        }
         // Validate everything before writing anything. The OpenAI-compatible fields are only
         // touched when edited, so a stale stored value can never block unrelated settings.
         var openAIChange: OpenAICompatibleSettingsChange?
@@ -363,8 +379,10 @@ struct SettingsView: View {
             return
         }
         ProviderSettings.saveOpenAIContextTokens(openAIContextTokens)
+        UserDefaults.standard.set(suggestMeetings, forKey: "suggestCalendarMeetings")
         ProviderSettings.aiMode = aiMode
         ProviderSettings.transcriptionEngine = engine
+        ProviderSettings.whisperModel = whisperModel
         ProviderSettings.responseLanguageID = responseLanguageID
         ProviderSettings.referenceBudget = referenceBudget
         ProviderSettings.saveSessionsForSearch = saveSessions

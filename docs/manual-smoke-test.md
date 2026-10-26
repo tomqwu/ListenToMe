@@ -19,8 +19,8 @@ Prereq: Ollama running with at least one chat-capable model installed (local or 
    installed release: it appears as **ListenToMe (Dev)** (bundle id `com.tomwu.ListenToMe.dev`)
    and holds its own permission grants. Grant permissions to that row, not the release's.
 2. On first launch, the app shows an **onboarding** sheet, not a Permissions panel. Grant
-   Microphone, Speech Recognition, Screen Recording (system audio), and Accessibility (global
-   hotkey) in System Settings → Privacy & Security. Reopen the in-app Permissions sheet anytime via
+   Microphone, Speech Recognition and Screen Recording (system audio) in System Settings →
+   Privacy & Security. The global hotkey needs no Accessibility grant. Reopen the in-app Permissions sheet anytime via
    **More → Permissions…**. Re-click **Listen** after granting if needed.
 3. In the **left status rail**, under **Models**, confirm a **model picker** per pane is populated
    with your installed Ollama models (the pane header only shows the current selection as text).
@@ -105,7 +105,7 @@ fresh language in Settings; WhisperKit: a fresh profile).
    preparing on-device speech model…"**.
 2. While the download is still running, press **Stop**. Teardown must complete within a second or
    two: the header returns to **Transcription: stopped**, and **Listen/Stop**, **New conversation**
-   and **More → Import audio file…** are all enabled again (no lingering "Finalizing…").
+   and **More → Import audio or video…** are all enabled again (no lingering "Finalizing…").
 3. Repeat, and this time close the window with the red button, then try **Cmd-Q**, while the
    download is in flight — both must work immediately instead of being silently refused.
 4. Press **Listen** again after the model finishes installing: the pipeline is already warm, so
@@ -209,6 +209,16 @@ iPhone (phone width and an accessibility text size):
     line must never be replaced by stale text from the previous utterance (issue #108).
 
 ## Capture recovery and microphone denial
+
+### Speaker edits and summary requests (#167)
+
+With Auto off and a transcript but no Listener summary, edit a speaker name and run another speaker
+attribution pass. Neither action should start a Listener model request. Press Refresh explicitly:
+the summary request must contain the updated speaker labels. Rename again after that summary has
+completed: the existing summary should rebuild from the newly labeled transcript. With AI off,
+editing names must not send a replacement request. If a first summary is still streaming when labels
+change with Auto off, it must stop and late output must not restore the old names; Refresh stays
+available. Preserve the rendered views and sanitized request evidence with the candidate.
 
 These two paths are AVFoundation/ScreenCaptureKit glue that unit tests cannot reach; the decision
 tables behind them are covered by `CaptureRecoveryTests`.
@@ -707,8 +717,8 @@ Mac (`make run`; macOS releases are paused, so this is for the build only):
 1. In **Settings**, turn on "Save audio recordings (microphone and system audio)". Listen with system
    audio playing, Stop. **History** → the conversation shows **Saved audio** with Microphone and System
    audio parts that play.
-2. With the WhisperKit engine, **Play from a line** lists the lines and plays each from its time; with
-   SpeechAnalyzer, the note says those lines cannot jump into the audio.
+2. With SpeechAnalyzer or WhisperKit, **Play from a line** lists the lines and plays each from its time;
+   legacy SpeechRecognizer lines remain untimed.
 3. **Clear history** deletes the audio too; **Delete all saved audio** in Settings keeps history.
 4. Record two runs in one conversation with WhisperKit (Stop, Listen again): a line from the second run
    plays its own words, not the first run's.
@@ -758,6 +768,25 @@ clear them. Clear and save to remove them. Export Markdown/plain text/JSON and v
 Check Mac reopening does not overwrite the currently open record or drop attachments/languages.
 Capture native-resolution phone portrait/landscape, iPad and Mac images; inspect large text and
 keyboard reachability. Follow the release screenshot checklist.
+
+## Saved-audio re-transcription (#224)
+
+1. Save a recording, stop, reopen it from History, and choose **More → Re-transcribe saved audio**.
+   Confirm it is unavailable without saved audio or while recording.
+2. Choose the recorded language, re-transcribe and inspect the preview. On Mac test both Apple
+   and WhisperKit with real saved system audio: final text must carry **OTHERS** and include the tail.
+   On iPhone/iPad use a physical device for real Apple recognition; simulator fixtures check UI only.
+3. Choose **Keep original** and confirm transcript, notes and summaries are unchanged. Repeat, then
+   **Replace transcript**; verify the new text, language, playback timing and History after relaunch.
+   Notes, attachments and instructions remain; old summaries remain for review.
+4. Try a multi-run conversation and both Mac tracks. Confirm subsequent runs follow earlier audio
+   and both tracks retain their source. Cancel during recognition and test a missing/unreadable file:
+   neither may replace the original. Changing the transcript invalidates a pending preview.
+5. In a Watch development build with saved audio, replace the transcript and reopen History. The
+   player and replacement lines must still say Apple Watch; inferred names must reset. Continue
+   recording on the phone and confirm its speaker/language analysis leaves Watch lines alone.
+6. Capture native-resolution preview screenshots on standard/large iPhone, small/large iPad and Mac,
+   retaining source, device, runtime and version provenance with the test evidence.
 
 ## Local Ollama context capacity (#230)
 
@@ -831,18 +860,6 @@ notice and that requests still too large (including large instructions or Unicod
 “No text was sent” before the server receives them. Choose Unknown to restore server-managed behavior.
 Capture the settings UI at native resolution and restore original preferences after testing.
 
-
-### Delete one Mac conversation (#131)
-
-Use disposable Dev conversations A and B, with Save audio recordings enabled for A. Open History,
-right-click A and choose Delete conversation. Cancel once and confirm both records and A's playback
-remain. Confirm the second attempt: A disappears from keyword and semantic search, A's saved audio
-is gone, and B remains readable. Repeat through the detail view's Delete button and capture the
-confirmation and resulting list. Exported copies must remain untouched.
-Delete the currently open saved conversation while capture is stopped, then Save/Stop: it must not
-reappear. Start New and verify the new conversation can save normally. A failed archive delete must
-keep the row and audio, with a visible error. If an owned-data cleanup fails after text deletion,
-show the partial-erasure warning. Do not modify production conversations or permissions.
 ### iOS Ollama endpoint feedback (#149)
 
 In Settings, select Ollama and save `http://your-mac.local:11434`. Try saving
@@ -855,3 +872,286 @@ visible error and normalization status at native resolution. Restore the origina
 Opening a model list on Apple Intelligence must not automatically fetch the Ollama catalog;
 explicit Refresh remains available. Unchosen provider defaults are recomputed on launch, while an
 explicit provider choice persists.
+
+### Delete one Mac conversation (#131)
+
+Use disposable Dev conversations A and B, with Save audio recordings enabled for A. Open History,
+right-click A and choose Delete conversation. Cancel once and confirm both records and A's playback
+remain. Confirm the second attempt: A disappears from keyword and semantic search, A's saved audio
+is gone, and B remains readable. Repeat through the detail view's Delete button and capture the
+confirmation and resulting list. Exported copies must remain untouched.
+Delete the currently open saved conversation while capture is stopped, then Save/Stop: it must not
+reappear. Start New and verify the new conversation can save normally. A failed archive delete must
+keep the row and audio, with a visible error. If an owned-data cleanup fails after text deletion,
+show the partial-erasure warning. Do not modify production conversations or permissions.
+## Review follow-ups (#141)
+
+- With a pinned local model, make discovery or one capability probe fail. The active pinned choice
+  must remain selected with a visible verification warning; an unverified request must still obey
+  the existing local-only privacy check. Restore the server and retry discovery.
+- Cold-load a verified local model: allow up to five minutes for a manual answer. Cancellation stays
+  responsive; Auto review retains its shorter coordinator deadline. Cloud requests retain 90 seconds.
+- Import a damaged/truncated audio file. A read failure must show an incomplete-transcript warning,
+  preserve already recognized lines, and leave the saved record incomplete after reopening/renaming.
+  New conversation clears this state. Stop legacy speech and verify final words are retained; a
+  finalization deadline must show a warning instead of silently pretending the tail completed.
+- Verify real system audio produces OTHERS transcription after the minimal video configuration;
+  microphone-only pickup is not acceptance. Preserve recording, logs, screenshots and provenance.
+- Attach a direct file or folder symlink: it must be skipped. A regular file over 200 KB must also
+  be skipped. Render a heading with trailing spaces and export transcript containing Markdown links,
+  angle brackets and multiline speaker names; speech stays literal while AI Markdown still formats.
+- With an all-day busy block and a shorter current meeting, Calendar chooses the latest-starting
+  active timed meeting. At its end boundary it chooses an ongoing or next meeting correctly.
+## Permission-free global shortcut (#124)
+
+With Accessibility ungranted, press ⌘⇧Space in ListenToMe and with another app focused: each press
+requests one Quick answer. Holding the shortcut must not repeat; release and press again for another
+answer. Other keys and extra-modifier variants must not trigger it. Permissions shows no Accessibility
+request or toggle advice. If another app owns the combination, ListenToMe shows an unavailable notice
+and its in-app shortcut/buttons remain usable. Close/reopen the conversation window and repeat to
+check registration cleanup. Do not reset production permissions to run this check; use the Dev test
+identity and preserve evidence before its authorized scoped cleanup.
+
+### Independent Mac error banners (#173)
+
+1. Produce a microphone-denied capture failure using the existing denied-permission test setup;
+   do not reset production permissions. Confirm the capture message offers Open Settings.
+2. While that message is visible, attempt an export to an unwritable destination. Both messages
+   must remain visible. Dismiss file or calendar message: the capture message and its Settings
+   action remain. Repeat, then dismiss capture message: the export error remains.
+3. Retry an export to a writable destination. The file error clears without clearing a capture
+   failure. Starting capture clears only the capture message, not an unrelated file error.
+4. Trigger Calendar denial using an existing denied test profile. Its separate message must offer
+   Open Calendar privacy settings; dismissing capture must not remove that action. An import failure
+   uses the file/Calendar banner and must not replace a capture failure.
+5. Start a new conversation and confirm errors from the previous one are cleared. Capture native
+   screenshots with both banners, each independently dismissed, and the Calendar action. Preserve
+   source/signing provenance and complete Dev-app cleanup after acceptance.
+
+## Cancel an answer or import (#127)
+
+1. Start a slow streamed Quick, Summary or Deep answer. Stop only that pane, retaining its partial
+   text and showing a stopped notice. Late tokens/errors must not alter it; other streaming panes
+   continue. Request a fresh answer and check the notice clears. Focus a pane and press Escape:
+   only its stream stops. Stop during reasoning before text arrives must show that no answer arrived.
+2. Import a long file. The status row shows its filename and increasing **% read**, then
+   **Finalizing transcript…**; percentage measures file input, not completed recognition. Cancel
+   midway or during finalization. Show **Stopping…**, disable repeat cancellation, keep recognized
+   lines and show incomplete status. After cleanup, Start/New/Import are usable without closing the
+   window. Reopen the saved conversation and verify the incomplete flag persists.
+3. Cancel while speech assets prepare, then start another import after cleanup. Old tasks must not
+   overwrite its progress or transcript. New conversation clears stopped-answer/import notices.
+### iOS Ollama endpoint feedback (#149)
+
+In Settings, select Ollama and save `http://your-mac.local:11434`. Try saving
+`http://100.64.0.1:11434`, a public IPv4 literal, and a non-link-local IPv6 literal: each must
+explain HTTPS/local-address alternatives and keep the previous server. HTTPS addresses and
+loopback/link-local HTTP remain accepted. Loopback points to the phone itself.
+Paste `https://your-mac.local:11434/ollama?token=test-value`: confirm the saved destination is the
+origin and the status says URL parts were omitted without echoing the query value. Capture the
+visible error and normalization status at native resolution. Restore the original settings.
+Opening a model list on Apple Intelligence must not automatically fetch the Ollama catalog;
+explicit Refresh remains available. Unchosen provider defaults are recomputed on launch, while an
+explicit provider choice persists.
+
+## Device capability and recording recovery (#306, #307)
+
+Use the [compatibility matrix](device-compatibility.md) and bound BDD scenarios; policy tests alone
+are not native acceptance. Preserve source, OS, device, native screenshots and actual outcomes.
+
+- On iPhone/iPad, inspect Start before tapping: unsupported device/language, simulator or denied
+  microphone must show its reason and applicable recovery, with Start disabled and no permission
+  prompt/download from the check. A supported advanced or dictation profile enables Start.
+- If later model preparation fails, inspect the full startup alert; dismiss, retry and open its
+  recording settings. Cancel preparation without a false failure. Temporary inactivity for the
+  permission prompt must preserve a pending start; backgrounding must not consume queued shares.
+- On the connected older iPad, verify actual new microphone words using dictation, then Stop. Check
+  fixed language and the default Automatic mode separately, and the advanced path on iPhone. Play
+  synthetic speech only after the test confirms Listening; stop sound immediately if capture stops.
+- With saving on, use the Live transcript Play icon after Stop (Transcript actions → Play recording
+  in compact Duo), verify Play/Pause and audible playback. With saving off, retain no new audio.
+  Enabling saving later cannot recover earlier audio. Preserve existing conversations and keys.
+- On unsupported Apple hardware or while its model is not ready, inspect Settings: Apple must not be
+  offered as working. Preserve an old saved Apple choice with its reason. Explicitly configure an
+  alternate provider, destination, model and key; never auto-route. Refresh after setup/foreground.
+- On Mac, inspect engine choices and Start for the selected language and permissions. Unsupported
+  engines are not selectable; a saved unavailable engine remains explanatory with alternatives.
+  AI gating must not disable supported capture. Verify actual microphone and system-audio OTHERS
+  text on the supported route. Leave an OS permission request unanswered, then Stop, New or close:
+  the app must finish cancellation without waiting for that callback. A system consent prompt may
+  remain open. Begin a new conversation, then answer the old request: no late capture or denial may
+  affect the new conversation. Cancel a close dialog and verify explicit retry.
+- On Watch simulator, inspect independent local Record and iPhone remote. Unreachable/incompatible
+  or unchecked phone capability blocks remote Start; reachable Stop remains usable after losing
+  Start capability. Local denied microphone/low battery/storage shows its reason. Record offline
+  with later reconnect sync still requires paired physical acceptance before embedding Watch.
+
+The prior physical iPad failure and local fallback microphone pass are preserved in the #306 evidence.
+Simulator results do not establish physical recording, model accuracy, audibility or Watch pairing.
+### Automatic review request limits and directives (#148)
+
+With Auto enabled, combine a transcript below 60,000 characters with a large attached reference on
+Mac. A Deep request whose complete prompt exceeds 60,000 characters must show a review-limit notice
+and never reach the selected provider. Shorten the reference and add meaningful speech: the next
+eligible review should succeed. Instructions, speaker labels, notes and data fences also count.
+Change response language or persona without adding speech: the completed automatic review stays
+visible and no new request starts. Manual generation uses the new setting immediately; a review
+triggered by new speech uses it too. Rename a speaker during a Quick read: old-label output must
+not apply, unread speech must still be processed, and already acknowledged speech should not be
+resent solely because of the label change.
+
+
+## First-run local Ollama readiness (#129)
+
+Use a disposable local server fixture or a separate test machine; do not stop the shared Ollama server
+while contract tests or another recording are active. In onboarding, choose Local Ollama and verify:
+
+- Unreachable/malformed catalog: a reachability/catalog warning and Install link, with Retry.
+- A successful empty catalog: no installed models, a copyable `ollama pull llama3.2` command and Retry.
+- Installed embedding-only/cloud-only models: no verified local chat model; never silently route to cloud.
+- Failed capability probe: not verified, with existing pinned model retained and no false missing-model label.
+- Ready local chat model: green readiness row; status-rail picker shows its normal name. A mixed ready/
+  unverified catalog keeps the good model usable and reports the uncertain count.
+
+Switch modes or leave the Ollama step during a check, then return and retry. Stale results must not
+replace the new check or leave the spinner stuck. The rail reports the same states after Refresh
+models. Copy the download command into an inspection field and verify the exact text; do not run it
+as part of this UI check. Capture onboarding, warning and ready-state screenshots with source provenance.
+
+
+## Movie import and source choice (#128)
+
+- Import a normal M4A/WAV as Others, then an MP4 and MOV containing speech. In the picker select You
+  for one video and Others for the other. Confirm resulting transcript labels/statistics match the
+  selected source, and movie imports read their first audio track without playing video.
+- Import a silent video: report no audio track and restore Start/New/Import controls. Try a damaged
+  container and an unsupported file; show a readable error without replacing the existing transcript.
+- Cancel during movie preparation, reading and finalization. Keep recognized text marked incomplete,
+  preserve prior conversation content, and allow another import after cleanup. Capture the source
+  picker, labelled transcript, progress and no-audio error with source/version provenance.
+- Automated fixtures are synthetic one-second tone/black-frame MP4/MOV files under iOSUnitTests/Fixtures;
+  their generation commands are in that folder's README. The native reader check is decoding evidence,
+  not a speech-recognition or physical-device acceptance pass.
+## Transcript editing (#126)
+
+With Auto off, record or reopen several finalized lines. Select and copy a phrase; use Copy line and Copy transcript. Double-click a line, change a name, Cancel, and verify no change; repeat with Save. Empty edits must be disabled. Confirm timestamps, speaker and language survive, and export lists original and corrected wording. Edit an existing summary and verify its replacement uses the corrected text. Edit before any summary and verify no AI request starts. Delete a line, first cancelling then confirming; verify other lines remain and the reopened History/export/search reflect deletion. Delete the final line of a saved conversation with empty notes, reopen it, and verify the empty transcript stays empty. During a later capture run, delete an earlier-run line and verify speaker labels still cover the current run. Saved audio and previously exported files remain unchanged. Capture native screenshots of editing and confirmation.
+
+## Capture timeline and follow-latest (#68)
+
+With SpeechAnalyzer, record known alternating microphone and system audio separated by silence. Verify OTHERS transcription and line timestamps against saved audio, including delayed finalization, Stop/Listen again, and line playback in the second run. Cancel during preparation and confirm no late line enters the next conversation. While partials grow on both channels, resize the window and confirm Latest remains followed. Scroll up during bursts; the view must not jump to the bottom. Use Latest and confirm following resumes. Preserve screenshots and actual-audio evidence; Core timing tests and a signed build are not substitutes for this acceptance.
+## Compute transparency (#60)
+
+Expand Engine → Compute details for each transcription engine. Before recording, runtime says Not running. During preparation and capture, it says Preparing/Not exposed rather than claiming GPU/Neural Engine activity. WhisperKit displays the policy passed to its constructor; Apple engines say managed by Apple Speech. Change the selected engine while recording and confirm the rail keeps the active engine’s policy until the next capture. While Stop drains transcription, runtime must remain Not exposed. Import a file with WhisperKit selected for live capture: the rail must identify SpeechAnalyzer and its Apple-managed policy. Capture the expanded details as release evidence.
+
+## Live audio and response timing (#56)
+
+Play known system audio with the microphone quiet; confirm the system RMS meter moves, microphone reads Silence, and actual system transcription is labeled OTHERS. Reverse the inputs. Stop must show Stopped; denied or failed channels show Unavailable, and a channel with no fresh samples shows No recent audio. Request Quick/Summary/Deep with a thinking model: elapsed time starts before content, thinking does not count as first content, and completion preserves timings. Stop a response (or change its model) and verify Cancelled; fail a request and verify Failed; a newer request must retain its own measurement when old work finishes. Check Auto Quick and automatic reviews too. New conversation clears measurements. Capture native screenshots with provenance; helper tests do not establish real audio acceptance.
+## Whisper model selection (#58)
+
+Start from no saved preference and verify Base. Select Tiny, Cancel Settings, reopen and confirm Base; then select Tiny and Save, relaunch and confirm Tiny. Start capture and verify the status names Tiny and loaded variant validation succeeds. Repeat with Base and Small using the same microphone/system test audio, recording observed quality and latency without generalizing to other Macs. Change the selection during a capture: that capture keeps its model; the next uses the saved choice. Simulate a download/load failure and confirm the selected model is named with retry guidance. Confirm no model download occurs merely by opening Settings. Preserve screenshots, logs, exact source, selected/loaded variants and actual OTHERS transcription evidence.
+
+## Optional calendar suggestions (#54)
+
+1. With Calendar access absent and the feature off, wait 35 seconds: no permission prompt or recording. Enable the setting and Save; passive checks still must not prompt. Use **Allow Calendar access** explicitly to grant or deny. Denial must leave capture stopped and show guidance. Canceling Settings must not persist the opt-in.
+2. In an empty, idle conversation with an event happening now, wait up to 30 seconds. Inspect the banner and capture a native screenshot. Future, ended, all-day, canceled, free and declined events must not trigger it.
+3. Dismiss the suggestion, restart the app and verify the same occurrence stays suppressed; a later recurrence may be suggested. Start/import/open a conversation and verify no suggestion overwrites its content.
+4. Click **Use context and Start**: the title and Context use the event, normal capture preflight runs, and recording starts only after this explicit action. Check the selected AI provider privacy behavior. Stop, preserve evidence, and complete the app-scoped Dev cleanup procedure.
+
+These are acceptance steps, not a record of a completed native run.
+## Structured Summary cards (#62)
+
+Use a new test conversation with an unresolved question, explicit action/owner/deadline and decision. Generate Summary with the chosen provider; inspect the three categories and expand each source. Confirm speaker labels match and untimed lines show no invented clock. Copy/export must be readable. Add more speech, refresh, and verify prior unresolved items remain; explicitly resolve an item and check the new state. Reopen from History, rename the conversation and verify cards survive. With a model returning freeform, malformed JSON or unsupported quotes, inspect the normal fallback text. Cancel or fail a refresh: never label partial output as a validated grid. Capture native screenshots and preserve candidate provenance. Actual model interpretation and rendered UI acceptance remain separate from schema/unit checks.
+## Automated adapter coverage (#134)
+
+`make mac-test` runs the selected native Mac adapter bundle, including actual FileContextLoader and SpeakerAudioBuffer code, native RTF decoding, AVAudioConverter resampling, cap and prior-generation rejection. It launches no ListenToMe Dev app and requests no capture permissions. It is not a whole-App coverage measurement. Core ConversationRepository tests cover archive-first cleanup, failed/unavailable storage, sticky damaged-file warnings, and durable snapshot publication. Neither suite substitutes for installed-app GUI/audio acceptance.
+
+### iOS capture coordinator regression (#134)
+
+Start and immediately Stop while preparation is active; no recording should begin later. Start again,
+speak, then Stop twice through phone/Watch controls. Both callers must finish after the same drain;
+final words must appear in History as a complete record. Start a second recording and confirm old
+recorder callbacks cannot append text or report a failure in it. Repeat background/interruption,
+language switching, speaker identification and Save audio recordings on/off. Simulator fakes exercise
+late callbacks and held finalization; they do not prove physical microphone or paired-Watch behavior.
+
+### Mac capture coordinator regression (#134)
+
+During first-run preparation, press Stop and confirm it does not wait for the model download or
+start recording later. While recording, change language twice, then Stop before restart completes:
+no superseded restart may resume capture. Start again after Stop and verify the previous final
+checkpoint is complete, the new live record is incomplete, and old speaker work cannot label the
+new run. New and window close must drain final text/audio before their existing save decision.
+Verify actual system-audio transcription labeled OTHERS and preserve native screenshots and
+source/signing provenance. Core state-machine tests do not replace installed-app audio acceptance.
+
+### Shared naming coordinator regression (#134)
+
+Save or stop the same eligible conversation repeatedly while naming is pending; only one naming task
+should run. Type a title before completion and confirm it remains unchanged. Start a new conversation
+while the old one is being named: only the saved older record may change. Repeat with Watch imports
+and Save to folder on iOS. Cloud/provider restrictions remain unchanged; these tests do not authorize
+a model download or cloud naming. Core tests also force a cancellation-ignoring old result to arrive
+after its replacement starts and verify the replacement remains registered and is the only one applied.
+
+### Speaker retry across a recording change (#134)
+
+With speaker models delayed, request Identify speakers, then start a new recording before preparation
+finishes. The old request must not clear the new run's status or analyze its audio. Complete a current
+pass, Stop, and confirm the final pass includes final transcript lines. Verify actual system-audio
+transcription remains labeled OTHERS. Capture the relevant status UI and preserve source/signing
+provenance; complete the authorized Dev-app cleanup after the testing session.
+
+### Checkpoint persistence after coordinator extraction (#134)
+
+In an isolated Dev conversation, capture finalized OTHERS speech, Stop, and confirm History and the
+optional Save to folder note retain the original date across subsequent recording cycles. Reopen a
+record and save an edit; then start New and save identical text as a distinct conversation. Use the
+existing isolated archive-failure setup to trigger a failed write, restore writable storage and Retry
+save; the failed content must persist. Clear History during an active conversation and confirm later
+Stop does not restore it. Preserve screenshots and signing/source evidence, then clean up the completed
+Dev session as documented. Core tests supplement these installed-app checks, not replace them.
+
+### Conversation-owned Calendar and references (#134, ORCH-001–005)
+
+Load Calendar while its permission/lookup reply is pending. Type new Context text, or accept New or
+open another saved conversation: the old event or denial must not overwrite current Context, title
+or messages. A title typed during lookup stays typed. In the unchanged conversation, a successful
+lookup still includes event time, attendees and notes; denial and no-event recovery stay distinct.
+
+Attach a local folder, then Clear before its read completes: no late content or skipped-file message
+may return. Select newer files while an older read waits: only the latest selection becomes grounding.
+Close while context is loading and Cancel the save/close decision: the window stays open and its
+selected references and Calendar request still finish. Repeat with accepted close: late results
+cannot update the closed conversation. A busy close refusal must not cancel pending context.
+Already-running synchronous local I/O may finish after cancellation; its result cannot publish.
+Preserve native screenshots and source provenance. Core held-continuation tests supplement this
+rendered/OS-permission acceptance and never mark it passed.
+
+### Model catalog ownership (#134, ORCH-006/007)
+
+Delay a configured server’s catalog reply, open Settings and change AI mode or the custom server URL.
+The old reply must not replace current model choices, status or local-readiness guidance. Repeat
+with a newer Refresh finishing before the older request. AI off must request no catalog and keep
+saved model choices for re-enabling AI. Apple Intelligence uses its on-device entry without catalog
+access. Failed discovery keeps pinned choices; custom/cloud-service catalogs never choose a model
+for an unset pane. Close with discovery pending and verify no late UI update. Already-started
+network I/O may complete; these checks concern publication and no new request while AI is off.
+Use only an explicitly configured test destination and preserve native screenshots/source evidence.
+
+### Pane commands and New/import ownership (#134, ORCH-008–013)
+
+Use the menu or Quick hotkey, then immediately Stop the requested pane: its running state must be
+registered at the click and no answer may start afterward. Repeat Quick, Deep and Summary. Generate
+a long Summary spanning several batches and wait for completion: early actions and all later batches
+must remain, including provisional-budget handling. Stop during a later batch and retain partial text.
+
+While final speech drains, request New twice. Only one save decision may appear; final speech must
+be saved before reset. With saving unavailable, Cancel or a cancelled Save As keeps the conversation.
+Choose Save As or explicit discard and verify reset only follows that accepted decision. Import a
+recording then immediately Cancel before media opens: no transcript appears. Cancel during active
+transcription: keep recognized lines/incomplete provenance and block another import until drain.
+Close with capability or Calendar-suggestion work pending; no late result changes current controls.
+Repeat speaker rename followed by New or a new recording: the old follow-up must not checkpoint
+the new run. Retained settings, prompts, title editing, pane sizes and all sheets must render as before.
+Capture fresh native Mac screenshots; verify actual OTHERS transcription separately. Native graph
+tests prove shared-store/buffer wiring, not SwiftUI rendering or physical capture acceptance.

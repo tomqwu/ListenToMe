@@ -1097,3 +1097,12 @@ AGENTS.md ladder (candidate → verified → published) and downloaded-asset ver
   (still "no data collected").
 - [ ] **Step 6: Commit and PR** with "Closes #181", listing every command above and its outcome.
   Publishing follows AGENTS.md; do not call it released until the train publishes it.
+
+## Compatibility follow-up candidate, October 25
+
+The [BDD compatibility contract](../../device-compatibility.md) now covers local Watch microphone
+and resource readiness separately from iPhone remote reachability/protocol/capture capability.
+Unknown legacy-phone capability does not advertise remote Start; an active reachable recording
+can still be stopped after Start capability is lost. The phone publishes readiness and a recovery
+reason without transcript/audio content. These controls do not waive the Task 15/20 physical
+gates, change offline queue/opt-in retention policy or embed Watch in TestFlight.

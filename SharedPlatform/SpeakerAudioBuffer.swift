@@ -162,6 +162,11 @@ final class SpeakerAudioBuffer: @unchecked Sendable {
         return Snapshot(samples: out, startSample: window.startSample, startOffset: window.startOffset)
     }
 
+    /// Keep concatenating a long audio window off the UI actor.
+    func snapshotOffMain(fromSample requested: Int = 0) async -> Snapshot {
+        await Task.detached { self.snapshot(fromSample: requested) }.value
+    }
+
     /// Releases whole blocks that lie entirely before `sample`, keeping indexes absolute (a later
     /// `snapshot` simply starts no earlier than what is retained). The block being filled is never
     /// released. iOS calls this after each trailing-window pass, so a phone holds only the audio the

@@ -6,7 +6,7 @@ import ListenToMeCore
 struct MobileTranscriptFixture: View {
     @State private var session: MobileSession = {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("TranscriptUI-\(UUID())")
-        let session = MobileSession(storageDirectory: root)
+        let session = MobileSession(storageDirectory: root, recordingSupport: { _ in .ready })
         session.title = "Transcript scroll check"
         session.prepareSpeakerModelsIfNeeded()   // as the app does at a foreground launch (#195)
         let count = ProcessInfo.processInfo.arguments.contains("--long-transcript-fixture") ? 1_000 : 40

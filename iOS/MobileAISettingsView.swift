@@ -11,22 +11,33 @@ struct MobileAISettingsView: View {
 
     var body: some View {
         Section("AI summaries") {
-            Picker("Summary provider", selection: Binding(get: { ai.summaryRoute }, set: { ai.selectSummaryRoute($0) })) {
-                Text("Apple Intelligence · on-device").tag(MobileAISettings.SummaryRoute.apple)
-                Text(ai.usesCustomEndpoint ? "Ollama · your server" : "Ollama Cloud")
-                    .tag(MobileAISettings.SummaryRoute.ollama)
+            Menu {
+                if ai.appleUnavailableReason == nil {
+                    providerChoice("Apple Intelligence · on-device", route: .apple)
+                }
+                providerChoice(ai.usesCustomEndpoint ? "Ollama · your server" : "Ollama Cloud", route: .ollama)
                 Section("Cloud AI · sends your transcript to the service") {
                     ForEach(CloudAIPreset.all) { preset in
-                        Text(preset.name).tag(MobileAISettings.SummaryRoute.cloud(preset.id))
+                        providerChoice(preset.name, route: .cloud(preset.id))
                     }
                 }
-                Text(ai.openAI.isConfigured ? ai.openAI.providerLabel : "Custom server (OpenAI-compatible)")
-                    .tag(MobileAISettings.SummaryRoute.openAI)
-            }.accessibilityIdentifier("summaryProvider")
-                // A running test or refresh reports on the service it started with.
-                .disabled(ai.testing || ai.refreshing)
-            if let reason = ai.fallbackExplanation {
-                Text("Apple Intelligence cannot run on this device, so summaries default to Ollama: \(reason)")
+                providerChoice(ai.openAI.isConfigured ? ai.openAI.providerLabel : "Custom server (OpenAI-compatible)",
+                               route: .openAI)
+            } label: {
+                HStack {
+                    Text("Summary provider").foregroundStyle(.primary)
+                    Spacer()
+                    Text(providerTitle).foregroundStyle(.secondary)
+                    Image(systemName: "chevron.up.chevron.down").font(.caption).foregroundStyle(.secondary)
+                }
+            }
+            .accessibilityLabel("Summary provider, \(providerTitle)")
+            .accessibilityIdentifier("summaryProvider")
+            .disabled(ai.testing || ai.refreshing)
+            if let reason = ai.appleUnavailableReason {
+                Text("\(reason) Choose a supported provider below and configure its server, model and credentials. "
+                     + "Cloud and custom providers send text only when you choose and configure them. "
+                     + "Microphone recording uses a separate on-device speech engine and does not require summary AI.")
                     .font(.caption).accessibilityIdentifier("appleIntelligenceUnavailable")
             }
             if ai.provider == .cloud {
@@ -81,8 +92,23 @@ struct MobileAISettingsView: View {
                 }
             }
         }
+        .onAppear { ai.refreshAppleAvailability() }
         .onDisappear { operation?.cancel(); key = ""; server = "" }
         if includeSpeechCorrection { MobileSpeechCorrectionSettings(ai: ai) }
+    }
+
+    private var providerTitle: String {
+        switch ai.provider {
+        case .apple: return ai.appleUnavailableReason == nil ? "Apple Intelligence · on-device" : "Apple Intelligence · unavailable"
+        case .ollama: return ai.usesCustomEndpoint ? "Ollama · your server" : "Ollama Cloud"
+        case .openAI: return ai.openAI.isConfigured ? ai.openAI.providerLabel : "Custom server (OpenAI-compatible)"
+        case .cloud: return ai.cloud.providerLabel
+        }
+    }
+
+    private func providerChoice(_ title: String, route: MobileAISettings.SummaryRoute) -> some View {
+        Button(title) { ai.selectSummaryRoute(route) }
+            .disabled(route == .apple && ai.appleUnavailableReason != nil)
     }
 
     /// Role models and the connection test for Ollama summaries. Hidden when summaries use an

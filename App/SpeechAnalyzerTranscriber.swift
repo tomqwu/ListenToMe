@@ -63,15 +63,28 @@ actor SpeechAnalyzerTranscriber: Transcribing {
         // stream ended mid-session.
         guard let pipeline = await ensurePipeline(for: chunk.source) else { return }
         guard let buffer = pipeline.convert(chunk) else { return }
-        pipeline.inputContinuation.yield(AnalyzerInput(buffer: buffer))
+        guard !stopped, !Task.isCancelled, pipelines[chunk.source]?.id == pipeline.id else { return }
+        let start = chunk.timestamp.isFinite && chunk.timestamp >= 0 ? chunk.timestamp : 0
+        pipeline.inputContinuation.yield(AnalyzerInput(buffer: buffer,
+            bufferStartTime: CMTime(seconds: start, preferredTimescale: 1_000_000)))
     }
 
     func finish() async {
         stopped = true
         for pipeline in pipelines.values {
             pipeline.inputContinuation.finish()
-            do { try await pipeline.analyzer.finalizeAndFinishThroughEndOfInput() } catch {
-                statusContinuation.yield("Transcript finalization failed: \(error.localizedDescription)")
+            let analyzer = pipeline.analyzer
+            do {
+                try await withTaskCancellationHandler {
+                    try Task.checkCancellation()
+                    try await analyzer.finalizeAndFinishThroughEndOfInput()
+                } onCancel: {
+                    Task { await analyzer.cancelAndFinishNow() }
+                }
+            } catch {
+                if !Task.isCancelled {
+                    statusContinuation.yield("Transcript finalization failed: \(error.localizedDescription)")
+                }
             }
             await pipeline.resultsTask.value   // drain finalized results; the stream ends after finalize
         }
@@ -116,7 +129,7 @@ actor SpeechAnalyzerTranscriber: Transcribing {
             locale: resolvedLocale,
             transcriptionOptions: [],
             reportingOptions: [.volatileResults],
-            attributeOptions: []
+            attributeOptions: [.audioTimeRange]
         )
         do {
             if let req = try await AssetInventory.assetInstallationRequest(supporting: [transcriber]) {
@@ -221,12 +234,13 @@ actor SpeechAnalyzerTranscriber: Transcribing {
     ) {
         let text = String(result.text.characters)
         if result.isFinal, text.isEmpty { return }
+        let range = CaptureTimeline.range(start: result.range.start.seconds, end: CMTimeRangeGetEnd(result.range).seconds)
         cont.yield(TranscriptSegment(
             source: source,
             text: text,
             isFinal: result.isFinal,
-            start: 0,
-            end: 0
+            start: range.start,
+            end: range.end
         ))
     }
 }
@@ -277,7 +291,10 @@ private final class Pipeline: @unchecked Sendable {
             srcBuf.floatChannelData![0][index] = sample
         }
         if srcFormat == format { return srcBuf }
-        if converter == nil { converter = AVAudioConverter(from: srcFormat, to: format) }
+        if converter?.inputFormat != srcFormat {
+            converter = AVAudioConverter(from: srcFormat, to: format)
+            converter?.primeMethod = .none
+        }
         guard let converter else { return nil }
         let ratio = format.sampleRate / srcFormat.sampleRate
         let capacity = AVAudioFrameCount(Double(chunk.samples.count) * ratio) + 1_024

@@ -29,6 +29,13 @@ feature PR. Keep future work in GitHub Issues instead of accumulating speculativ
 down the existing draft queue sequentially; consolidate drafts for the same issue while preserving
 their commits and evidence.
 
+Device compatibility is part of BDD, across Mac, iPhone/iPad (including Duo) and Watch. Specify
+supported, unsupported and setup-required outcomes separately for recording and AI; check actual
+hardware/language/permission/model/connectivity state before enabling an action, preserve explicit
+provider choices, and cover capability refresh/cancellation. Bind native adapters and control
+behavior as well as shared policy; generic readiness tests alone are insufficient. See
+[the compatibility contract](docs/device-compatibility.md).
+
 The BDD gate runs inside the existing required core CI check and `make validate-local`. It never
 replaces full test coverage, rendered UI inspection, real OTHERS audio acceptance or physical-device
 gates. Documentation-only work needs content/link checks, not an unrelated binary test or release.

@@ -32,6 +32,20 @@ final class MobileWatchRemoteTests: XCTestCase {
         XCTAssertEqual(session.state, .idle)
     }
 
+    func testUnsupportedPhoneSpeechRefusesWatchStartWithReasonAndNoRecorder() async {
+        var made = 0
+        let session = MobileSession(storageDirectory: root, makeRecorder: {
+            made += 1; return LifecycleTestRecorder()
+        }, recordingSupport: { _ in .unsupported(reason: "Choose a supported language on iPhone.") })
+        session.applicationIsActive = { true }
+        let reply = await session.handleWatchCommand(.start)
+        XCTAssertEqual(reply, .busy("Choose a supported language on iPhone."))
+        XCTAssertEqual(made, 0)
+        XCTAssertEqual(session.state, .idle)
+        XCTAssertEqual(session.phoneRecorderStatus.recordingReady, false)
+        XCTAssertEqual(session.phoneRecorderStatus.recordingUnavailableReason, "Choose a supported language on iPhone.")
+    }
+
     func testStartFromWatchWhileActiveStartsAndPublishesRecording() async throws {
         let recorder = LifecycleTestRecorder()
         let session = MobileSession(storageDirectory: root, makeRecorder: { recorder })
@@ -64,11 +78,11 @@ final class MobileWatchRemoteTests: XCTestCase {
         let reply = await session.handleWatchCommand(.stop)
         // Answered as stopping; the idle status follows as the application context.
         XCTAssertEqual(reply, .accepted(PhoneRecorderStatus(state: .stopping, startedAt: startedAt,
-                                                            title: session.title, lastStopReason: nil)))
+                                                            title: session.title, lastStopReason: nil, recordingReady: true)))
         try await waitForState(session, .idle)
         XCTAssertEqual(recorder.stopCount, 1)
         XCTAssertNil(session.recordingStartedAt)
-        let idle = PhoneRecorderStatus(state: .idle, startedAt: nil, title: session.title, lastStopReason: .user)
+        let idle = PhoneRecorderStatus(state: .idle, startedAt: nil, title: session.title, lastStopReason: .user, recordingReady: true)
         XCTAssertEqual(link.published.last, idle)
     }
 
@@ -130,7 +144,9 @@ final class MobileWatchRemoteTests: XCTestCase {
             session.applicationIsActive = { active }
             let reply = await session.handleWatchCommand(.status)
             XCTAssertEqual(reply, .accepted(PhoneRecorderStatus(state: .idle, startedAt: nil, title: session.title,
-                                                                lastStopReason: nil)))
+                                                                lastStopReason: nil, recordingReady: active,
+                                                                recordingUnavailableReason: active ? nil
+                                                                    : "Open ListenToMe on your iPhone to record")))
         }
         XCTAssertEqual(made, 0)
         XCTAssertEqual(session.state, .idle)

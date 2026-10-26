@@ -3,6 +3,7 @@ import Foundation
 /// What a macOS pane should use after its route's model list changes (a refresh, an AI-mode switch).
 ///
 /// - A model the user picked (`pinned`) that is still listed is kept.
+/// - An inconclusive probe keeps a pinned choice active; request-time locality checks still apply.
 /// - A picked model that is *not* listed is never overwritten in storage: the pane runs on the
 ///   fallback for now and the pick comes back when the model does.
 /// - With `autoAssign` off — an OpenAI-compatible server, whose `/v1/models` may list hundreds of
@@ -19,10 +20,12 @@ public enum PaneModelHealing {
     }
 
     public static func decide(current: String, pinned: Bool, available: [String], fallback: String?,
-                              autoAssign: Bool) -> Decision {
+                              autoAssign: Bool, verificationUncertain: Bool = false) -> Decision {
         let listed = available.contains(current)
         guard autoAssign else { return Decision(model: listed ? current : "", persist: false) }
-        if pinned { return Decision(model: listed ? current : (fallback ?? current), persist: false) }
+        if pinned {
+            return Decision(model: listed || verificationUncertain ? current : (fallback ?? current), persist: false)
+        }
         let target = fallback ?? current
         return Decision(model: target, persist: target != current)
     }

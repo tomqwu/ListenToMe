@@ -125,6 +125,7 @@ final class MobileVocabularyTests: XCTestCase {
         let session = makeSession(recorder, provider: provider)
         session.languageChoice = "zh-CN"
         session.vocabulary.settings = VocabularySettings(defaultDomainIDs: ["medical"], myTerms: ["张伟"])
+        await session.refreshRecordingSupport()
         session.start()
         try await wait { session.state == .recording }
         XCTAssertTrue(recorder.contexts.first?.contains("心房颤动") == true)

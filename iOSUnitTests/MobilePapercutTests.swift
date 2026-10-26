@@ -77,6 +77,7 @@ final class MobilePapercutTests: XCTestCase {
 
     func testEveryRequestForOneEndpointSharesTheSameURLSession() throws {
         let settings = MobileAISettings()
+        settings.provider = .ollama // Exercise the configured HTTP transport, independently of Apple eligibility.
         settings.models = [OllamaCloudModel(name: "glm-4.6-flash"), OllamaCloudModel(name: "glm-4.6")]
         settings.saveBaseURL("http://papercut-test.local:11434")
         settings.model = "glm-4.6"; settings.quickModel = "glm-4.6-flash"; settings.correctionModel = "glm-4.6-flash"

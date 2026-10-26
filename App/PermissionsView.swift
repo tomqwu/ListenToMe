@@ -5,13 +5,6 @@ struct PermissionsView: View {
     let permissions: PermissionsModel
     @Environment(\.dismiss) private var dismiss
 
-    /// The name of this build's row in System Settings — "ListenToMe (Dev)" for Debug builds,
-    /// "ListenToMe" for the release (see project.yml). Hints must point at the right row: the two
-    /// builds hold separate TCC grants, and steering the user to the wrong row wastes the toggle.
-    private var appDisplayName: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? "ListenToMe"
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
@@ -61,33 +54,12 @@ struct PermissionsView: View {
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                PermissionRow(
-                    name: "Accessibility",
-                    purpose: "Enables the global \u{2318}\u{21E7}Space hotkey while other apps are focused.",
-                    status: permissions.accessibility,
-                    isOptional: true,
-                    onGrant: { permissions.requestAccessibility() },
-                    onOpenSettings: { permissions.openSettings("Privacy_Accessibility") }
-                )
             }
 
-            // Optional note
-            Text("Accessibility is optional — the in-app buttons still work without it.")
+            Text("The global ⌘⇧Space shortcut works without Accessibility permission.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .padding(.top, 14)
-
-            if permissions.accessibility != .granted {
-                Text(
-                    "If Accessibility already looks enabled in System Settings, toggle " +
-                    "\(appDisplayName) off and back on there — rebuilding the app invalidates the " +
-                    "previous grant, so macOS reports it as not trusted until you re-enable it."
-                )
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 8)
-            }
 
             // Also shown when the grant is live but this process predates it (needsRelaunchHint):
             // the badge already reads Granted, yet capture may not work until a relaunch.

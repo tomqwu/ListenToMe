@@ -70,7 +70,7 @@ extension MeetingSession {
         AutomaticReviewDirectives(responseLanguage: responseLanguage,
             personaGuidance: VocabularyPrompt.combined(persona: personaGuidance,
                                                       guidance: ConversationPrompt.guidance(summaryInstructions)),
-                                  references: referenceContext, summaryGuidance: summaryGuidance)
+                                  references: referenceContext, summaryGuidance: structuredSummaryGuidance)
     }
 
     /// The Listener's persona line: the preset persona plus the summary-only guidance.
@@ -80,7 +80,7 @@ extension MeetingSession {
 
     var listenerPersona: String? {
         VocabularyPrompt.combined(persona: personaGuidance,
-            guidance: VocabularyPrompt.combined(persona: summaryGuidance,
+            guidance: VocabularyPrompt.combined(persona: structuredSummaryGuidance,
                                                 guidance: ConversationPrompt.guidance(summaryInstructions)))
     }
 
@@ -107,14 +107,16 @@ extension MeetingSession {
                 let role: CopilotRole = mode == .summary ? .listener : .deep
                 if let reason = self.providerAvailability(self.models[role] ?? "") { throw QuickSummaryError.message(reason) }
                 guard let provider = self.providers[role] else { throw QuickSummaryError.message("Choose a review model.") }
-                return provider
+                return self.responseTimings.instrument(provider, role: role)
             }, apply: { [weak self] mode, output, reviewed in
                 guard let self else { return }
                 let role: CopilotRole = mode == .summary ? .listener : .deep
+                let output = mode == .summary ? self.finishSituationGrid(output) : output
                 self.setOutput(role, output)
                 self.recordAutomaticReview(role, cutOff: self.automaticReviews.cutOffModes.contains(mode))
                 if mode == .summary {
                     self.lastCompletedListenerSummary = output
+                    self.speakerSummaryNeedsRebuild = false
                     self.listenerSummaryCutOff = self.automaticReviews.cutOffModes.contains(mode)
                 }
                 // The review still answers the current input when that input merely continued the
@@ -186,7 +188,7 @@ extension MeetingSession {
             let personaAtStart = personaGuidance
             let run = runID
             let previousReads = quickReader.completedReads
-            await quickReader.read(batch, provider: provider, isCurrent: { [weak self] in
+            await quickReader.read(batch, provider: responseTimings.instrument(provider, role: .quick), isCurrent: { [weak self] in
                 guard let self, self.runID == run, self.summaryInstructions == instructionsAtStart,
                       self.personaGuidance == personaAtStart, self.isRunning, !self.isPreparing,
                       self.autoSummaryEnabled, self.aiEnabled else { return false }

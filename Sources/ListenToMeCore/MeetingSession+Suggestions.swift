@@ -11,6 +11,13 @@ extension MeetingSession {
         aiEnabled && autoSummaryEnabled ? quickReader.suggestions.prompts : []
     }
 
+    @discardableResult
+    public func requestSuggested(_ prompt: String, deep: Bool = false) -> Task<Void, Never>? {
+        guard aiEnabled else { return nil }
+        quickReader.useSuggestion(prompt)
+        return deep ? requestDeep(.ask(prompt)) : requestQuick(.ask(prompt))
+    }
+
     /// Sends a tapped chip's literal text through the normal Quick path (or Deep when `deep`), with
     /// the same grounding, budget and manual-answer rules as the fixed actions: on macOS a Deep chip
     /// behaves exactly like the **Deep answer** button, replacing the Deep pane and counting as a
@@ -18,8 +25,6 @@ extension MeetingSession {
     /// The chip leaves the row and is not suggested again in this conversation. Nothing happens while
     /// AI is off.
     public func askSuggested(_ prompt: String, deep: Bool = false) async {
-        guard aiEnabled else { return }
-        quickReader.useSuggestion(prompt)
-        if deep { await respondDeep(.ask(prompt)) } else { await respondQuick(.ask(prompt)) }
+        await requestSuggested(prompt, deep: deep)?.value
     }
 }

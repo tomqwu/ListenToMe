@@ -15,12 +15,12 @@ struct SuggestedPromptChips: View {
                     .font(.caption).foregroundStyle(Theme.ink2)
                 FlowLayout(spacing: 7) {
                     ForEach(prompts, id: \.self) { prompt in
-                        Button(prompt) { Task { await session.askSuggested(prompt) } }
+                        Button(prompt) { session.requestSuggested(prompt) }
                             .buttonStyle(.bordered).tint(Theme.accent)
                             .help("Ask Quick: \(prompt)")
                             .contextMenu {
-                                Button("Ask in Quick") { Task { await session.askSuggested(prompt) } }
-                                Button("Ask in Deep") { Task { await session.askSuggested(prompt, deep: true) } }
+                                Button("Ask in Quick") { session.requestSuggested(prompt) }
+                                Button("Ask in Deep") { session.requestSuggested(prompt, deep: true) }
                             }
                     }
                 }

@@ -69,6 +69,9 @@ final class MobileAppTests: XCTestCase {
         let window = app.windows.firstMatch
         XCTAssertGreaterThan(window.frame.width, window.frame.height)
         let scroll = app.scrollViews["dashboardScroll"]
+        let recordingReason = app.staticTexts["recordingSupportReason"]
+        XCTAssertTrue(recordingReason.exists, "Unavailable recording still needs an explanation on Summary")
+        XCTAssertFalse(app.buttons["Start listening"].isEnabled)
         let model = app.buttons["panel-model-summary"]
         // Large text can put the model above or below the viewport. Avoid swiping past it to the end.
         for _ in 0..<20 {
@@ -270,7 +273,7 @@ final class MobileAppTests: XCTestCase {
         removal.lifetime = .keepAlways
         add(removal)
         app.buttons["summaryProvider"].tap()
-        app.buttons["Apple Intelligence · on-device"].tap()
+        app.buttons["Ollama Cloud"].tap()
     }
 
     func testDeleteConversationAndSummaryModes() {
@@ -315,20 +318,25 @@ final class MobileAppTests: XCTestCase {
         let app = XCUIApplication()
         app.resetAuthorizationStatus(for: .microphone)
         app.launchPastReleaseNotes()
-        app.buttons["Start listening"].tap()
-        let message = app.staticTexts["sessionMessage"]
-        XCTAssertTrue(message.waitForExistence(timeout: 5))
-        XCTAssertTrue(message.label.contains("Live transcription is unavailable in the iPhone simulator"))
-        XCTAssertTrue(message.label.contains("physical iPhone or iPad"))
-        XCTAssertTrue(message.label.contains("Microphone permission will not fix this"))
-        XCTAssertTrue(app.buttons["Start listening"].isEnabled)
+        let reason = app.staticTexts["recordingSupportReason"]
+        XCTAssertTrue(reason.waitForExistence(timeout: 5))
+        XCTAssertTrue(reason.label.lowercased().contains("simulator"))
+        let details = app.buttons["recordingSupportDetails"]
+        XCTAssertTrue(details.isHittable, "Full support guidance remains reachable before Start")
+        guard details.exists else { return }
+        details.tap()
+        let support = app.alerts["Recording support"]
+        XCTAssertTrue(support.waitForExistence(timeout: 5))
+        XCTAssertTrue(support.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "physical iPhone or iPad")).firstMatch.exists)
+        XCTAssertTrue(support.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "Microphone permission will not fix this")).firstMatch.exists)
+        support.buttons["OK"].tap()
+        XCTAssertFalse(app.buttons["Start listening"].isEnabled)
         XCTAssertFalse(app.buttons["Stop listening"].exists)
-        let alert = XCUIApplication(bundleIdentifier: "com.apple.springboard").alerts.firstMatch
-        XCTAssertFalse(alert.exists)
-        app.buttons["Start listening"].tap()
-        XCTAssertTrue(message.waitForExistence(timeout: 5))
-        XCTAssertFalse(alert.exists)
-        XCTAssertFalse(app.buttons["Stop listening"].exists)
+        XCTAssertFalse(XCUIApplication(bundleIdentifier: "com.apple.springboard").alerts.firstMatch.exists)
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Unsupported recording explained before Start"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
     }
 
     func testNotesSurviveNewConversationAndRelaunch() {

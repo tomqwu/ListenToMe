@@ -7,7 +7,7 @@ struct RemoteControlView: View {
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
             VStack(spacing: 12) {
-                Text(WatchRemoteText.line(status: link.phoneStatus, reachable: link.isReachable,
+                Text(link.remoteAvailability.reason ?? WatchRemoteText.line(status: link.phoneStatus, reachable: link.isReachable,
                                           lastReply: link.lastReply, now: context.date))
                     .font(.footnote)
                     .multilineTextAlignment(.center)
@@ -17,7 +17,7 @@ struct RemoteControlView: View {
                     Task { await link.send(command) }
                 }
                 .tint(isRecording ? .red : nil)
-                .disabled(link.isSending || link.phoneStatus?.state == .stopping)
+                .disabled(link.isSending || !link.remoteAvailability.canRun)
             }
         }
     }

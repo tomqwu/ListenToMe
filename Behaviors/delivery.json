@@ -62,6 +62,42 @@
           "test": "UploadTests/test_embedded_watch_app_is_rejected_until_watch_release"
         }
       ]
+    },
+    {
+      "id": "RELEASE-004",
+      "name": "Identify the feedback beta and bundled changes accurately",
+      "given": "a user updates to the consolidated recording and review beta",
+      "when": "What\u2019s New appears or is reopened",
+      "then": "the app identifies version 1.18.0 build 35 with its recording, review and recovery notes, acknowledges the update once and keeps prior notes readable",
+      "covers": [
+        "project.yml",
+        "iOS/MobileReleaseNotes.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileReleaseNotesUITests.swift",
+          "test": "MobileReleaseNotesUITests/testUpdateShowsVersionOnceAndChangelogCanBeReopened"
+        }
+      ]
+    },
+    {
+      "id": "RELEASE-005",
+      "name": "Reach settings controls without dismissing the form",
+      "given": "a user has scrolled a long cloud AI settings form",
+      "when": "the test returns to the provider control and then the key and model controls",
+      "then": "Settings remains open, the visible controls can be used, and switching vendors clears the unsaved key without fetching models",
+      "covers": [
+        "iOSTests/SettingsScrolling.swift",
+        "iOSTests/MobileCloudAISettingsUITests.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileCloudAISettingsUITests.swift",
+          "test": "MobileCloudAISettingsUITests/testCloudServiceIsExplicitDisclosedAndPicksNoModel"
+        }
+      ]
     }
   ]
 }

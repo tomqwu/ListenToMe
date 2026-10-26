@@ -7,7 +7,7 @@
 **The free, open-source, fully on-device meeting copilot for macOS — with a private capture-and-recall companion for iPhone and iPad. Bring your own model, stay private, shape it to any conversation.**
 
 [![CI](https://github.com/tomqwu/ListenToMe/actions/workflows/ci.yml/badge.svg)](https://github.com/tomqwu/ListenToMe/actions/workflows/ci.yml)
-![Coverage](https://img.shields.io/badge/Core_coverage-96%25-brightgreen)
+![Coverage](https://img.shields.io/badge/Core_floor-95%25-brightgreen)
 ![Platform](https://img.shields.io/badge/macOS-26%2B-black?logo=apple)
 ![Swift](https://img.shields.io/badge/Swift-6.0-orange?logo=swift)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -64,7 +64,10 @@ Editable domain prompt presets are available on both platforms.
 The iPhone and iPad app is distributed through TestFlight; the latest build is **1.17.0 (34)**
 ([2026-10-25 TestFlight release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.17.0-build34)). An Apple Watch companion is built behind a build flag but not shipped yet
 ([#181](https://github.com/tomqwu/ListenToMe/issues/181)).
-See [iOS setup, validation and distribution](docs/IOS.md).
+See [iOS setup, validation and distribution](docs/IOS.md). Device and language support are checked
+per feature; Apple Intelligence is independent of recording. The [compatibility candidate](docs/device-compatibility.md)
+adds local dictation fallback for compatible older iPads and explicit unavailable-feature recovery;
+these changes are not part of the published 1.17.0 beta.
 
 ```sh
 make ios-build
@@ -204,7 +207,7 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 - **File & folder reference context** with a configurable token budget.
 - **Export** as Markdown, plain text, SRT or WebVTT subtitles, or versioned JSON, plus recap and PDF,
   in files named after the conversation (`Weekly sync 2026-10-23 1435.srt`). Lines carry `[mm:ss]`
-  timestamps where the engine reports them (WhisperKit and iPhone recordings; Apple Watch recordings
+  timestamps where the engine reports them (SpeechAnalyzer, WhisperKit and iPhone recordings; Apple Watch recordings
   too once the Watch app ships); see
   [Export formats](docs/export-formats.md).
 - **Save to folder** (off by default, Settings): after each conversation stops, writes one
@@ -215,6 +218,11 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
   Saved only for conversations History keeps; Clear history, Discard, Close without saving and
   **Delete all saved audio** remove them; optional automatic deletion after 7, 30 or
   90 days.
+- **Re-transcribe saved audio**: open a saved conversation, choose **More → Re-transcribe saved audio**,
+  select a language and preview a new on-device recognition pass. Mac offers Apple or WhisperKit;
+  iPhone and iPad use Apple. **Replace transcript** keeps notes, attachments and summaries, while
+  replacing all transcript lines and resetting speaker names and corrections. **Keep original**
+  leaves the conversation unchanged.
 - **First-run onboarding**, a global **⌘⇧Space** hotkey for instant suggestions, and keyboard
   equivalents for every frequent action (see [Keyboard shortcuts](#keyboard-shortcuts)).
 
@@ -257,11 +265,11 @@ make pre-push # lint + tests + build (the CI-equivalent gate)
 ```
 
 Optional: copy `signing.local.mk.example` to `signing.local.mk` (gitignored) and set your
-code-signing identity so granted macOS permissions (mic/screen/accessibility) persist across
+code-signing identity so granted macOS permissions (mic/screen) persist across
 rebuilds (otherwise each rebuild re-asks). Find it via `security find-identity -v -p codesigning`.
 
-On first run, grant Microphone, Speech Recognition, Screen Recording (for system audio), and
-Accessibility (for the global hotkey) in System Settings → Privacy & Security. The app shows an
+On first run, grant Microphone, Speech Recognition and Screen Recording (for system audio) in
+System Settings → Privacy & Security. The global hotkey needs no Accessibility permission. The app shows an
 onboarding sheet on first launch; grant these permissions from **More → Permissions…** at any time
 after that. **Quit & Reopen** (offered after granting Screen Recording) finalizes and saves the
 current conversation first — if you cancel that save, nothing is relaunched, so you never end up
@@ -320,14 +328,13 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   spoken by another participant or embedded in an attached file; it cannot fully prevent it, so
   treat pane output — including any links it contains — with the same care as the source material.
 - **Presets.** Pick a use-case preset to tailor how the copilot responds.
-- **Languages.** Independent **transcription-language** and **AI response-language** pickers. The
-  transcription list is not hard-coded: at launch the app asks the OS which languages on-device
-  transcription supports (`SpeechTranscriber.supportedLocales`) and which of their speech models are
-  already installed (`AssetInventory`), and lists them as **Installed** and **Downloadable**, common
-  languages first (`TranscriptionLanguageCatalog` in Core, shared by macOS and iOS). A downloadable
-  language's model downloads from Apple the first time you record in it. If the language you pick (or
-  your system language under "Auto") still isn't supported, the status line says so by name and
-  names the language it is transcribing in instead — it never silently substitutes English.
+- **Languages.** Independent **transcription-language** and **AI response-language** pickers.
+  The app queries native language support and installed Apple speech assets instead of hard-coding
+  a device list. Mac advanced speech uses `SpeechTranscriber`; iPhone/iPad use the union of supported
+  advanced and on-device dictation modules. The shared `TranscriptionLanguageCatalog` orders common
+  languages and labels **Installed** and **Downloadable** assets. Downloads begin only when requested
+  for transcription. Unsupported device/language combinations explain recovery before Start;
+  recording support is independent of Apple Intelligence summary eligibility.
 - <a id="vocabularies"></a>**Vocabularies** (#222). **Settings → Vocabularies** turns each preset on
   for every conversation ("Use by default") and edits **My terms** (add, remove, import and export one
   term per line; any language). The presets use project-authored Simplified Chinese terms for
@@ -378,16 +385,18 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   Cloud AI or an OpenAI-compatible server the sheet says the excerpts are sent there first (#57).
 - **Export (⌘E).** Export the current conversation as Markdown; the Export menu also offers plain
   text, SRT and WebVTT subtitles, JSON, recap and PDF. Files are named after the conversation's title
-  and date. Timestamps and subtitles need an engine that reports times: WhisperKit does; the default
-  SpeechAnalyzer does not yet ([#68](https://github.com/tomqwu/ListenToMe/issues/68)), so its exports
-  have no `[mm:ss]` and the subtitle formats are unavailable. Formats, cue rules and the JSON schema:
+  and date. Timestamps and subtitles need an engine that reports times: SpeechAnalyzer and WhisperKit
+  do; legacy SpeechRecognizer exports remain untimed and cannot use subtitle formats.
+  Formats, cue rules and the JSON schema:
   [docs/export-formats.md](docs/export-formats.md).
   With autosaving off, Save opens Save As and New/Close offers Save As, Cancel or explicit discard.
+- **Meeting suggestions (optional).** Enable **Suggest current calendar meetings** in Settings and explicitly allow Calendar access. While a new conversation is empty and idle, the app checks every 30 seconds for an event happening now. **Use context and Start** adds event context and starts listening using your current AI settings; **Dismiss** suppresses that occurrence across restarts. Suggestions never start capture automatically or infer a call from an open Zoom/Teams process.
 - **Load from Calendar.** Fills Context notes from your current or next meeting *and* titles the
   conversation after the event (only while the title is still the generated "Conversation — <date>",
   so a title you typed is kept). If Calendar access is denied the banner says so and offers **Open
   Calendar privacy settings**; "no meeting right now" is a separate, distinct message. Every banner
-  message can be dismissed with its ✕.
+  message can be dismissed with its ✕. A pending lookup cannot overwrite notes edited while it
+  waits, or update a different conversation. Cancelling a close keeps the open conversation’s lookup active.
 - **Automatic titles (#221).** After Stop, Save or New conversation, a saved conversation still titled
   "Conversation — <date>" with about 30 words of transcript is named in the background, in a few words.
   - The title comes from the finished Summary when there is one (no extra request, never a
@@ -407,7 +416,7 @@ once. macOS asks each binary for keychain access the first time it reads the ite
 | Shortcut | Action |
 | --- | --- |
 | ⌘⇧L | Start / Stop listening |
-| ⌘⇧Space | Quick answer (global — works while another app is front, needs Accessibility) |
+| ⌘⇧Space | Quick answer (global — works while another app is front, no Accessibility permission) |
 | ⌘⇧D | Deep answer |
 | ⌘⇧R | Recap so far |
 | ⌘⇧U | Refresh summary |
@@ -465,8 +474,8 @@ older transcript labels but does not recognize people from past runs.
 
 Enable **Identify people sharing my microphone** to also separate voices on the microphone channel.
 The two audio channels are analyzed independently; the same person heard on both is not automatically
-merged. Without this option, microphone speech remains **You**. SpeechAnalyzer and SpeechRecognizer
-support the voice breakdown only; per-line attribution requires WhisperKit timestamps.
+merged. Without this option, microphone speech remains **You**. SpeechAnalyzer and WhisperKit support per-line attribution. Legacy SpeechRecognizer
+supports the voice breakdown only because its lines remain untimed.
 
 This is delayed, periodic identification, with one speaker assigned per transcript line. Overlapping
 speech can be misattributed. Analysis covers the first approximately two hours of each enabled channel.
@@ -512,7 +521,7 @@ saying so. Press **Speakers / edit names** to retry once the network is availabl
   unrestricted user-level file and network access rather than the narrower access a sandboxed app
   would be limited to. This is so file/folder reference context can read arbitrary paths you attach
   without security-scoped bookmarks. It still asks macOS for the Microphone, Speech Recognition,
-  Screen Recording, and Accessibility permissions listed above, and only uses them for the features
+  and Screen Recording permissions listed above, and only uses them for the features
   described in this README.
 - **Vocabularies stay on the device.** Presets, My terms and the suggestion check (term counts plus
   Apple's on-device NaturalLanguage sentence embedding) never leave the device and make no network
@@ -524,7 +533,8 @@ saying so. Press **Speakers / edit names** to retry once the network is availabl
   iOS data protection (readable only after the device has been unlocked once since a restart). They
   are included in the device's normal iCloud/Finder backup by default, so a restored phone keeps
   them; **Settings → Privacy → Exclude conversations from iCloud backup** keeps them off any backup.
-  Model catalogs are fetched only from a destination you configured — never anonymously.
+  Model catalogs are fetched only from a destination you configured — never anonymously. AI off
+  requests no catalog. A reply from an obsolete route cannot change current pane choices.
 - **History search index (both apps).** The semantic index holds only vectors, passage numbers and fingerprints,
   never transcript text, lives beside the conversations in `Search Index/`, is always excluded from
   backups, and is removed with a deleted conversation or Clear history. Unchanged passages reuse their
@@ -543,8 +553,10 @@ saying so. Press **Speakers / edit names** to retry once the network is availabl
 
 ## Architecture
 
-- **`ListenToMeCore`** (Swift package): all testable logic — conversation state, VAD, question
-  detection, prompt building, Ollama provider, model router, context engine, `MeetingSession`.
+- **`ListenToMeCore`** (Swift package): shared conversation policy and tested task owners — capture,
+  persistence, naming, context, model selection, prompt building, providers and `MeetingSession`.
+  Native effects and some platform-specific orchestration remain in the app targets; Core coverage
+  is not a whole-product measurement. See [orchestration ownership](docs/ORCHESTRATION.md).
 - **`iOS/`**: iPhone/iPad SwiftUI app, foreground microphone capture with SpeechAnalyzer, Apple Intelligence
   (Foundation Models) summaries by default on capable devices.
 - **`Watch/`**: Apple Watch companion, embedded only with the `WATCH_EMBED` build flag (off; not shipped).
@@ -563,7 +575,12 @@ GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs che
 `macos-26` runners: both app targets compile with the checked-in dependency lock, and the full
 `ListenToMeCore` test suite (unit + headless integration/e2e) runs with a **coverage floor of 95%**
 enforced by `scripts/check-coverage.sh`. The core check also enforces [BDD contracts](docs/BDD.md),
-tests their failure paths, and executes bound core/tooling scenarios. SwiftLint, iOS simulator UI tests, GUI/audio acceptance, and
+tests their failure paths, and executes bound core/tooling scenarios. This percentage covers Core
+only, not the whole product. `make mac-test` exercises selected native macOS adapters, including
+file-loading, audio-buffer resampling, capability/preflight and checkpoint behavior; it does not
+measure all App code or replace SwiftUI, real capture or permission acceptance. Native Mac and Watch
+suites run locally through `make validate-local`, alongside SwiftLint, iOS simulator unit/UI tests,
+GUI/audio acceptance, and
 distribution checks require local validation via [`docs/manual-smoke-test.md`](docs/manual-smoke-test.md).
 
 `make e2e` runs the checks CI can't (it needs a real Mac + Ollama): it builds the app target,
@@ -706,3 +723,55 @@ The app does not silently remove the opening. This can reject some prompts a spe
 could fit. Larger contexts require more memory. Default local answers are bounded to 4,096 tokens (at most a quarter of a small model window);
 Quick and correction keep their smaller limits, and output-limit notices still apply.
 Ollama Cloud models and other cloud providers keep their server-managed context.
+
+
+On Mac, each streaming answer has a **Stop** button. Escape stops the answer when that pane has
+keyboard focus. Partial text stays visible with a stopped notice; a new request clears it. File
+imports show the filename and percentage of source audio read, then **Finalizing transcript…** while
+recognition finishes. **Cancel import** stops pending recognition and keeps text already received,
+marked incomplete; the window stays open and normal controls return after cleanup (#127).
+Local Ollama setup checks readiness in onboarding and the model status rail. **Could not reach** means
+the server or its catalog could not be read; **no models installed** means the server replied with an
+empty catalog. Capability checks that fail are labelled **not verified**, preserving pinned choices.
+A missing model is labelled **not installed** only after a successful catalog read. Use **Retry local
+check** after opening/installing Ollama or downloading a model. **Copy model download command** copies
+`ollama pull llama3.2` for you to run in Terminal; ListenToMe does not execute it or download a model
+on your behalf. See [Ollama for Mac](https://ollama.com/download/mac) and the
+[Llama 3.2 model page](https://ollama.com/library/llama3.2). Transcription and saving remain available
+with AI off (#129).
+
+
+**More → Import audio or video…** accepts supported audio files and movie containers such as MP4 and
+MOV. Choose **Others** (the default) or **You** in the file picker to label the imported speech. Movie
+imports decode only their first audio track on-device; video frames are not transcribed and a movie
+with no audio produces a clear error. These imports use the selected transcription language and the
+same progress/Cancel controls as audio files. Importing does not upload the recording (#128).
+On Mac, select transcript text or use its row menu to copy a line or the transcript. Double-click a finalized line (or choose **Edit line…**) to correct it, then Save or Cancel. **Delete line…** asks for confirmation. Corrections retain the recognized original in exports. Existing summaries rebuild from edited text; Auto off does not create a first summary. Audio recordings and previously exported files are unchanged.
+
+The Mac transcript follows incoming speech and wrapped/resized rows until you scroll back to read. Choose **Latest** to resume following. SpeechAnalyzer timestamps come from recognition audio ranges on each capture timeline, not from result delivery time.
+On Mac, expand **Engine → Compute details** to inspect the selected/active transcription engine’s configured compute policy. WhisperKit shows allowed units for audio features, encoder, decoder and prefill; Apple Speech manages its own policy. **Runtime accelerator** says Not running, Preparing or Not exposed. Allowing GPU/Neural Engine does not establish that a request used it.
+
+The Mac rail meters use captured PCM audio (RMS in dBFS); they do not infer sound from transcript activity. Silence, no recent audio, preparation, stopped and unavailable channels are distinct. Each AI pane shows timing for its latest request, including automatic evaluations: first answer content (excluding thinking), total elapsed time and completion/cancellation/failure. These measurements stay in memory and are not exported or sent to a provider.
+In Mac Settings, choose WhisperKit and a multilingual **Tiny**, **Base** or **Small** model. Base remains the default. Tiny favors a smaller download and less processing; Small uses more resources and may improve recognition. Actual speed and accuracy vary by Mac, language and audio; these are qualitative tradeoffs, not device benchmarks ([Whisper model documentation](https://github.com/openai/whisper#available-models-and-languages)). Save applies the choice at the next capture. Uncached models download then; loading and failure messages name your selection. The app checks the loaded variant and fails visibly if it differs from the requested multilingual model.
+### Structured Summary on Mac
+
+Summary requests ask the selected model for Open / To-do / Decided items with verbatim transcript evidence. Valid output becomes cards with expandable Sources; copied text, History and exports retain readable Markdown. Owners and deadlines are optional and require matching words in the cited speech. Source checks verify quoted wording, not the model's interpretation: review decisions and commitments before relying on them. Unfinalized speech is not accepted as card evidence. A model that returns freeform or invalid structured output falls back to the normal text pane. No additional model request is made. Earlier items and their source excerpts are included in the rolling record for later batches. iPhone keeps the readable summary and preserves unchanged structured metadata when saving an imported record.
+Capture lifecycle task ownership is shared in `CaptureCoordinator`: iOS and Mac adapters supply
+recorders, permission policy and persistence effects. Core tests cover start/stop/restart races;
+platform GUI/audio acceptance remains a separate requirement. Mac New/close/import, Calendar,
+reference, model-refresh and background-result task owners also live in Core. Native adapters
+supply device APIs, settings, rendering and save/export decisions. The Mac root view is under 300
+lines with no explicit Task bodies in its view extensions; that does not measure all native code.
+See [the ownership and validation boundaries](docs/ORCHESTRATION.md).
+
+Manual whole-conversation summary instructions, transcript fencing and input-budget checks live in
+Core's `PromptBuilder.buildSummary`; iOS supplies its provider allocation and vocabulary/provisional
+guidance. The shared Markdown renderer lives in `SharedPlatform`, included directly by both apps.
+
+`SpeakerPassCoordinator` owns Mac speaker-pass task cancellation and the model-preparation barrier;
+platform run IDs still protect results produced during analysis. Its Core regressions cover late
+preparation and replacement-task completion, separately from native audio acceptance.
+
+`ConversationCheckpointCoordinator` owns the Mac checkpoint dirty marker and original start date.
+Core tests exercise failed archive writes and retry, unchanged-content skips, completion/forced saves
+and resets; platform adapters retain consent eligibility, record assembly and Save to folder effects.

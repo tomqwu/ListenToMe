@@ -6,6 +6,9 @@ not a claim that the released app is broken. Do not duplicate the candidate list
 
 ## Product constraints
 
+[Device compatibility](device-compatibility.md) is a BDD contract across Mac, iPhone/iPad and Watch:
+unavailable features need proactive gating, a visible reason and applicable explicit alternatives.
+
 Transcription stays on-device. AI uses explicit Local only / Apple Intelligence / Cloud /
 Cloud AI service / OpenAI-compatible / AI off modes; adding a key must not silently change routing.
 OpenAI-compatible servers (#52) are never treated as local — a loopback or LAN address is "your server",
@@ -27,7 +30,10 @@ What each release contains is in [CHANGELOG.md](../CHANGELOG.md); this is only t
   since 1.4.4 (Cloud AI service and OpenAI-compatible modes, semantic History search and Ask your
   history, more export formats, Save to folder, saved audio, vocabularies, automatic titles,
   suggested prompts) is **unreleased** — see "macOS (unreleased since 1.4.4)" in the changelog.
-- **iPhone/iPad 1.15.0 (32)** (TestFlight, 2026-10-24): on-device recording and transcription with
+- **iPhone/iPad 1.17.0 (34)** (TestFlight, 2026-10-25): the earlier capture/recall features below plus
+  conversation prompts, iPhone Duo pane balance, persisted conversation vocabularies and improved
+  language/speaker lifecycle checks. The 1.17.1 compatibility feedback candidate is not yet published.
+  Previously shipped: on-device recording and transcription with
   Automatic language, speaker labels, Apple Intelligence by default or Ollama, an OpenAI-compatible
   server or an opt-in Cloud AI service, Quick Summary and Summary (Deep is macOS-only), Save to
   folder, export formats, semantic History search and Ask your history, vocabularies, opt-in saved

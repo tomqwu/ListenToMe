@@ -16,6 +16,6 @@ extension MeetingView {
         let label = mode == .cloud ? "Ollama Cloud" : ProviderSettings.aiModeLabel
         return HistoryAskRoute(unavailable: nil, destination: HistoryQuestion.destination(for: mode, label: label),
                                responseLanguage: ProviderSettings.responseLanguageDirective(),
-                               makeProvider: { provider(model: model) })
+                               makeProvider: { MacMeetingEnvironment.provider(model: model) })
     }
 }

@@ -2,14 +2,16 @@ import Foundation
 
 /// Plain meeting metadata (from a calendar event), independent of EventKit so it's testable.
 public struct MeetingInfo: Sendable, Equatable {
+    public let calendarID: String?
     public let title: String
     public let start: Date?
     public let end: Date?
     public let location: String?
     public let attendees: [String]
     public let notes: String?
-    public init(title: String, start: Date? = nil, end: Date? = nil,
+    public init(title: String, calendarID: String? = nil, start: Date? = nil, end: Date? = nil,
                 location: String? = nil, attendees: [String] = [], notes: String? = nil) {
+        self.calendarID = calendarID
         self.title = title; self.start = start; self.end = end
         self.location = location; self.attendees = attendees; self.notes = notes
     }

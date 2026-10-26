@@ -20,6 +20,9 @@ SUITES = {
     "core": "Tests/ListenToMeCoreTests/",
     "ios-unit": "iOSUnitTests/",
     "ios-ui": "iOSTests/",
+    "mac-unit": "macOSTests/",
+    "watch-unit": "WatchUnitTests/",
+    "watch-ui": "WatchUITests/",
     "tooling": "scripts/",
 }
 # Include resources, build/distribution settings and automation, not just Swift.
@@ -27,7 +30,7 @@ BEHAVIOR_ROOTS = ("App/", "Sources/", "SharedPlatform/", "iOS/", "iOSShared/",
                   "Watch/", "ShareExtension/", "Config/", "scripts/", ".github/workflows/")
 BEHAVIOR_FILES = {"Makefile", "Package.swift", "project.yml", "watch-embed.yml",
                   "signing.local.mk.example", ".swiftlint.yml", ".gitignore"}
-TEST_ROOTS = ("Tests/", "iOSUnitTests/", "iOSTests/")
+TEST_ROOTS = ("Tests/", "iOSUnitTests/", "iOSTests/", "macOSTests/", "WatchUnitTests/", "WatchUITests/")
 
 
 class ContractError(ValueError):
@@ -242,11 +245,25 @@ def commands(scenarios, suite, destination):
         for file, test in sorted(bindings):
             by_file.setdefault(file, []).append(test.replace("/", "."))
         return [[sys.executable, file, "-v", *tests] for file, tests in by_file.items()]
-    if not destination:
-        raise ContractError("iOS BDD execution requires IOS_DESTINATION for a dedicated simulator")
-    target = "ListenToMeIOSUnitTests" if suite == "ios-unit" else "ListenToMeIOSUITests"
-    return [["make", "gen"], ["xcodebuild", "-project", "ListenToMe.xcodeproj", "-scheme", "ListenToMeIOS",
-             "-destination", destination, "-derivedDataPath", ".build/ios", "-configuration", "Debug",
+    profiles = {
+        "ios-unit": ("ListenToMeIOS", "ListenToMeIOSUnitTests", ".build/ios"),
+        "ios-ui": ("ListenToMeIOS", "ListenToMeIOSUITests", ".build/ios"),
+        "mac-unit": ("ListenToMeMacTests", "ListenToMeMacUnitTests", ".build/mac-native-tests"),
+        "watch-unit": ("ListenToMeWatchTests", "ListenToMeWatchUnitTests", ".build/watch-native-tests"),
+        "watch-ui": ("ListenToMeWatchTests", "ListenToMeWatchUITests", ".build/watch-native-tests"),
+    }
+    if suite == "mac-unit":
+        destination = destination or "platform=macOS"
+    elif not destination:
+        variable = "WATCH_DESTINATION" if suite.startswith("watch-") else "IOS_DESTINATION"
+        raise ContractError(f"Native BDD execution requires {variable} for a dedicated simulator")
+    if suite.startswith("watch-") and not re.fullmatch(r"platform=watchOS Simulator,id=[^,\s]+", destination):
+        raise ContractError("Watch BDD execution requires a dedicated watchOS Simulator")
+    if suite == "mac-unit" and "platform=macOS" not in destination:
+        raise ContractError("Mac BDD execution requires a macOS destination")
+    scheme, target, derived_data = profiles[suite]
+    return [["make", "gen"], ["xcodebuild", "-project", "ListenToMe.xcodeproj", "-scheme", scheme,
+             "-destination", destination, "-derivedDataPath", derived_data, "-configuration", "Debug",
              "-onlyUsePackageVersionsFromResolvedFile", "CODE_SIGNING_ALLOWED=YES", "CODE_SIGN_IDENTITY=-",
              "-parallel-testing-enabled", "NO", *[f"-only-testing:{target}/{test}" for _, test in sorted(bindings)], "test"]]
 

@@ -6,6 +6,7 @@ public struct SessionRecord: Sendable, Equatable, Identifiable, Codable {
     public let title: String
     public let date: Date
     public let transcript: String   // joined "You: …\nOthers: …" lines
+    public let situationGrid: SituationGrid?
     public let summary: String
     public let segments: [TranscriptSegment]?
     public let notes: String?
@@ -15,6 +16,8 @@ public struct SessionRecord: Sendable, Equatable, Identifiable, Codable {
     public let quickSuggestion: String?
     public let deepAnswer: String?
     public let isComplete: Bool?
+    /// A file import ended before EOF; preserved across reopening and edits.
+    public let hasIncompleteImport: Bool?
     public let attachments: [SessionAttachment]?
     public let sourceImportID: String?
     /// Where the title came from (#221); nil in records saved before it (see `ConversationTitleState.resolved`).
@@ -32,7 +35,10 @@ public struct SessionRecord: Sendable, Equatable, Identifiable, Codable {
                 quickSuggestion: String? = nil, deepAnswer: String? = nil, isComplete: Bool? = nil,
                 attachments: [SessionAttachment]? = nil, sourceImportID: String? = nil,
                 titleState: ConversationTitleState? = nil, language: String? = nil, languages: [String]? = nil,
-                selectionSummaries: [SelectionSummary]? = nil, summaryInstructions: String? = nil, vocabularyDomainIDs: [String]? = nil) {
+                selectionSummaries: [SelectionSummary]? = nil, summaryInstructions: String? = nil,
+                vocabularyDomainIDs: [String]? = nil, hasIncompleteImport: Bool? = nil,
+                situationGrid: SituationGrid? = nil) {
+        self.situationGrid = situationGrid
         self.id = id; self.title = title; self.date = date
         self.transcript = transcript; self.summary = summary
         self.segments = segments; self.notes = notes
@@ -43,6 +49,7 @@ public struct SessionRecord: Sendable, Equatable, Identifiable, Codable {
         self.selectionSummaries = selectionSummaries
         self.summaryInstructions = summaryInstructions
         self.vocabularyDomainIDs = vocabularyDomainIDs
+        self.hasIncompleteImport = hasIncompleteImport
     }
 }
 
