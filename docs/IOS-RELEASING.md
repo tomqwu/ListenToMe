@@ -24,19 +24,26 @@ honestly documented device limitations are sufficient to distribute an authorize
 testing. Physical-device acceptance is still required before calling the app production-ready or
 submitting a production App Store release. Missing hardware must not be reported as an upload blocker.
 
-## Fresh US capture package pending submission choice — October 26
+## Fresh US screenshots resubmitted — October 26, 21:13 UTC
 
-The [fresh 1.18.1 capture catalog](images/ios/release-1.18.1-en-US-refresh.json) records 24 native
-English (US), US-region images from the exact build-36 artifact source, with four passing native
-screenshot tests and complete visual review. These new images are **saved, not uploaded**; no
-withdrawal/replacement/resubmission was performed while awaiting the maintainer choice between
-resubmitting build 36 and holding for a Watch-enabled build. The existing US review
-`89b4c261-b37d-4b24-aaee-20f8238d1663` remains WAITING_FOR_REVIEW at 20:43 UTC.
+The [1.18.1 capture/upload catalog](images/ios/release-1.18.1-en-US-refresh.json) records 24 fresh
+native English (US), US-region images from the exact build-36 source, four passing native capture
+tests, complete visual review, and current Apple asset/set IDs. All 24 uploads are COMPLETE;
+processed RGB pixels, native dimensions, source checksums and order match. Canadian draft and live
+production screenshots were preserved. Apple accepted review
+`4e63cda8-70db-4d67-9928-63409df4dbda` at 2026-10-26T21:13:50Z; it is **WAITING_FOR_REVIEW**, not
+approved or publicly available. The prior `89b4c261-b37d-4b24-aaee-20f8238d1663` review was canceled
+and reached COMPLETE before replacement. No new binary was uploaded.
 
-[Watch preview images](images/watch/1.18.1-preview/README.md) are saved separately. Build 36 has no
-embedded Watch app, so these prospective review images must not be added as customer screenshots
-for that binary. They establish rendered simulator UI only, not microphone or paired-device
-acceptance. See [HANDOFF](HANDOFF.md) for the preserved evidence and exact current state.
+The US listing uses **Listen To Me - Real Time AI**. Actual app-wide primary locale remains en-CA:
+Apple still returned `MISSING_SCREENSHOTS_PRIMARY_LOCALE` after all fresh US images completed.
+Preserve that exact rejection; do not equate the submitted en-US localization with a completed
+primary-language change.
+
+The maintainer explicitly chose resubmission of build 36 with [Watch previews](images/watch/1.18.1-preview/README.md)
+saved separately. Build 36 has no embedded Watch app, so these images are prospective review assets
+and were not uploaded as customer screenshots. They establish rendered simulator UI, not microphone
+or paired-device acceptance. [HANDOFF](HANDOFF.md) identifies canonical receipts and remaining limits.
 
 ## Delivery language — English (US)
 
@@ -68,7 +75,7 @@ capture retain the existing offline pipeline; do not claim the iOS live fix chan
 Follow [the model acceptance checklist](speaker-identification.md). The original tester recording
 remains untested unless retained audio is provided. The beta upload policy above still applies.
 
-## Current English (US) App Review receipt — October 26
+## Earlier US App Review receipt — superseded October 26
 
 Apple accepted the corrected **en-US** submission at **2026-10-26T20:07:35.298432+00:00** under the
 maintainer-selected name **Listen To Me - Real Time AI**. Review submission
@@ -91,7 +98,8 @@ claim US primary status or edit the approved production version to bypass Apple'
 The [Apple localization rules](https://developer.apple.com/help/app-store-connect/manage-app-information/localize-app-information)
 explain the distinction and primary-language prerequisites.
 
-Corrected receipts/scripts are in the external `listentome-appstore-publication/locale-us/` directory.
+Historical receipts/scripts are in the external `listentome-appstore-publication/locale-us/` directory.
+That review was canceled for the fresh US image set; use current `refresh-us/` receipts above.
 Use the new review ID for status readback; parent-directory receipts describe the canceled first
 submission. Maintainer-reported working TestFlight acceptance applies; further local tests and
 participant requests remain stopped for this submission. The earlier receipt below is historical.
@@ -114,8 +122,8 @@ ladder remains applicable to future releases.
 All 24 processed screenshots, source checksums/native dimensions/order, current en-CA description
 and What's New, selected build and preserved reviewer contact details were rechecked before the
 single submission was sent. External evidence is `listentome-appstore-publication/app-review-accepted.json`
-and the matching review/version readbacks. That Canadian review was later canceled. Read current US review
-`89b4c261-b37d-4b24-aaee-20f8238d1663` in `locale-us/`; do not resume the canceled review.
+and the matching review/version readbacks. That Canadian review was later canceled. Read current refreshed US review
+`4e63cda8-70db-4d67-9928-63409df4dbda` in `refresh-us/`; do not resume a canceled review.
 The preparation section below preserves its earlier incomplete acceptance state.
 
 ## Public App Store preparation — October 26

@@ -6,8 +6,8 @@
   "region": "US",
   "runtime": "iOS 26.5",
   "captureFinished": "2026-10-26T20:42:46.543669+00:00",
-  "listingUpload": "pending maintainer choice: resubmit build36 or hold for Watch-enabled build",
-  "currentReview": "89b4c261-b37d-4b24-aaee-20f8238d1663; not withdrawn",
+  "listingUpload": "24 COMPLETE; native dimensions/checksums/order and processed RGB pixels verified",
+  "currentReview": "4e63cda8-70db-4d67-9928-63409df4dbda",
   "screenshots": 24,
   "suitesPassed": 4,
   "physicalAcceptance": "No physical testing performed for screenshot refresh",
@@ -308,6 +308,441 @@
           "sha256": "89335f86735325261ed596a8c4b2eb4912dad8ad0c8479cbb0aa44573116cfab"
         }
       ]
+    }
+  ],
+  "submission": {
+    "submittedAt": "2026-10-26T21:13:50.231393+00:00",
+    "status": "accepted_for_app_review",
+    "reviewSubmissionId": "4e63cda8-70db-4d67-9928-63409df4dbda",
+    "reviewState": "WAITING_FOR_REVIEW",
+    "versionId": "c60352d3-eb78-479b-970c-d6ed6faa3242",
+    "version": "1.18.1",
+    "build": "36",
+    "buildId": "2fd8477d-504e-44d2-ac7f-6c7e9236d01f",
+    "locale": "en-US",
+    "localizationId": "b5e13b58-07ea-40a4-adbb-d013adbb362b",
+    "localizedName": "Listen To Me - Real Time AI",
+    "actualPrimaryLocale": "en-CA",
+    "canadianLocalizationRetained": true,
+    "source": "7643b204def6acea0b616a2c2de2bade2fc4c7c9",
+    "releaseType": "AFTER_APPROVAL",
+    "USscreenshots": 24,
+    "originalCaptureLocale": "en-US",
+    "captureRegion": "US",
+    "sameEnglishUIReuse": false,
+    "watchIncluded": false,
+    "watchScreenshotsSubmitted": 0,
+    "publiclyAvailable": false,
+    "canceledPriorSubmission": "89b4c261-b37d-4b24-aaee-20f8238d1663"
+  },
+  "uploadedAssets": [
+    {
+      "id": "4a000019-5f9f-8d14-803e-5b5103541bd2",
+      "name": "ltm-1.18.1-36-us-refresh-20261026-iphone-pro-03-conversation-prompt.png",
+      "setId": "aadf3887-525f-4dde-9520-aa15834cf283",
+      "slot": "APP_IPHONE_61",
+      "sha256": "864d4976cac2670829ead6f34d0947a1f98916f124a9f260ca7cd453ebaf88f2",
+      "md5": "55ca1910aaf01bb7f6f24cbeb1ec17a9",
+      "pixels": [
+        1206,
+        2622
+      ],
+      "downloadSHA256": "f67c5fee8f77443a3fff9e0f208f7c0c52c4d62a0cad07ba2da5c2a397ff8430",
+      "pixelsIdentical": true,
+      "deliveryState": "COMPLETE",
+      "listingLocale": "en-US",
+      "originalCaptureLocale": "en-US"
+    },
+    {
+      "id": "f5400019-5f9f-8d14-800a-91177a591aaf",
+      "name": "ltm-1.18.1-36-us-refresh-20261026-iphone-pro-02-live-landscape.png",
+      "setId": "aadf3887-525f-4dde-9520-aa15834cf283",
+      "slot": "APP_IPHONE_61",
+      "sha256": "89e6de7d61b938737e2abf5e92c5ca59f902a6fbc444f560e4cbd29e6cb9e8ef",
+      "md5": "97b7e96694ce796b74102c84de0163dd",
+      "pixels": [
+        2622,
+        1206
+      ],
+      "downloadSHA256": "abc24f9c09d0fb7d5e8dddd80ba5f7b062e01cb829f5bdecee4dad71cda2fa96",
+      "pixelsIdentical": true,
+      "deliveryState": "COMPLETE",
+      "listingLocale": "en-US",
+      "originalCaptureLocale": "en-US"
+    },
+    {
+      "id": "da400019-5f9f-8d14-800e-1a7a9c0527a3",
+      "name": "ltm-1.18.1-36-us-refresh-20261026-iphone-pro-01-live-portrait.png",
+      "setId": "aadf3887-525f-4dde-9520-aa15834cf283",
+      "slot": "APP_IPHONE_61",
+      "sha256": "2253fda07fcb44d5370d14aabbb1ea2a26aa4db3893dc234e7cff74baee69666",
+      "md5": "53e9aeb2077d97a09f4cbf834ab8c875",
+      "pixels": [
+        1206,
+        2622
+      ],
+      "downloadSHA256": "7c852d85f0f667c34e7d2b937aa454be155e048e3bbdf72e90681e65b4077f01",
+      "pixelsIdentical": true,
+      "deliveryState": "COMPLETE",
+      "listingLocale": "en-US",
+      "originalCaptureLocale": "en-US"
+    },
+    {
+      "id": "a5800019-5f9f-8d14-803d-f733716c7040",
+      "name": "ltm-1.18.1-36-us-refresh-20261026-iphone-pro-05-conversation-history.png",
+      "setId": "aadf3887-525f-4dde-9520-aa15834cf283",
+      "slot": "APP_IPHONE_61",
+      "sha256": "d030b60e5396ce0d04000f4b8efd690e79f5032b200d1a6e4d0a992d8a2dc40e",
+      "md5": "d0f42c4ed09f867d5318edaeb8c6fd25",
+      "pixels": [
+        1206,
+        2622
+      ],
+      "downloadSHA256": "0c479ecace432c042690d5491a8a185784f2440f5d94fd60df9990cc2ff47924",
+      "pixelsIdentical": true,
+      "deliveryState": "COMPLETE",
+      "listingLocale": "en-US",
+      "originalCaptureLocale": "en-US"
+    },
+    {
+      "id": "f6800019-5f9f-8d14-800b-f630bab1fab8",
+      "name": "ltm-1.18.1-36-us-refresh-20261026-iphone-pro-04-summary-portrait.png",
+      "setId": "aadf3887-525f-4dde-9520-aa15834cf283",
+      "slot": "APP_IPHONE_61",
+      "sha256": "de1f30dbfa2eb7486fc568d141de98ba78f63deb7f6bfc2965eb63a9159fae91",
+      "md5": "da874b12f9dc45b8d0f69f0c88fec2f1",
+      "pixels": [
+        1206,
+        2622
+      ],
+      "downloadSHA256": "2f135735001ac155b6fa5a5d8f2a2e83501ecc2abac1de7dcbd6c9dfe7bbcdf6",
+      "pixelsIdentical": true,
+      "deliveryState": "COMPLETE",
+      "listingLocale": "en-US",
+      "originalCaptureLocale": "en-US"
+    },
+    {
+      "id": "a8000019-5f9f-8d14-8012-909805b2326e",
+      "name": "ltm-1.18.1-36-us-refresh-20261026-iphone-pro-06-settings.png",
+      "setId": "aadf3887-525f-4dde-9520-aa15834cf283",
+      "slot": "APP_IPHONE_61",
+      "sha256": "6627eb13b4b4be3fb539ce3c2aae7273e6827e19b0deb5d99615c68c67e65365",
+      "md5": "43e7c5a78ebb491678a9ea5a5a50c4ab",
+      "pixels": [
+        1206,
+        2622
+      ],
+      "downloadSHA256": "3e30b663223bc21cc2757b4bd65fc9da5003014fb419828215c0d7779002c8ba",
+      "pixelsIdentical": true,
+      "deliveryState": "COMPLETE",
+      "listingLocale": "en-US",
+      "originalCaptureLocale": "en-US"
+    },
+    {
+      "id": "40c00019-5f9f-8d14-8028-fb114119b1e9",
+      "name": "ltm-1.18.1-36-us-refresh-20261026-iphone-pro-max-01-live-portrait.png",
+      "setId": "7dd47a3c-e7ea-4766-92d2-97b97a01c7e9",
+      "slot": "APP_IPHONE_67",
+      "sha256": "ef1a7f641184653d868cd97af8098439649689c0e25f6297f9805042c3b13877",
+      "md5": "4a2a6fd924057a80d39a8f13affb2409",
+      "pixels": [
+        1320,
+        2868
+      ],
+      "downloadSHA256": "b5eed0d50e1e791909c75ecb9f7b4f2069ecc84e7e2056ffba5384241d8bcdb5",
+      "pixelsIdentical": true,
+      "deliveryState": "COMPLETE",
+      "listingLocale": "en-US",
+      "originalCaptureLocale": "en-US"
+    },
+    {
+      "id": "ec800019-5f9f-8d14-8003-919965845a62",
+      "name": "ltm-1.18.1-36-us-refresh-20261026-iphone-pro-max-02-live-landscape.png",
+      "setId": "7dd47a3c-e7ea-4766-92d2-97b97a01c7e9",
+      "slot": "APP_IPHONE_67",
+      "sha256": "9d8518c1ca750be6d0426203448a05e2e35d0309ba644530f07b150b3b8c4fd4",
+      "md5": "a23b55dff31fa0139c7cc7c6de2c4edc",
+      "pixels": [
+        2868,
+        1320
+      ],
+      "downloadSHA256": "37f2885fec66837181239e9421e1a6955908ee1bd5eff679cf641a48f2d851fb",
+      "pixelsIdentical": true,
+      "deliveryState": "COMPLETE",
+      "listingLocale": "en-US",
+      "originalCaptureLocale": "en-US"
+    },
+    {
+      "id": "54800019-5f9f-8d14-8024-909bf8766a99",
+      "name": "ltm-1.18.1-36-us-refresh-20261026-iphone-pro-max-03-conversation-prompt.png",
+      "setId": "7dd47a3c-e7ea-4766-92d2-97b97a01c7e9",
+      "slot": "APP_IPHONE_67",
+      "sha256": "f5cd2b3d157b03572dafe44d3fc82c35f890bdd54e4970b082b7afd1f5405309",
+      "md5": "caca2f0586966341466c7a040a04ebe3",
+      "pixels": [
+        1320,
+        2868
+      ],
+      "downloadSHA256": "2999c8e6207ecc705a7878f51c2aa4e88445d944f605c9221af53b3b2ac4c816",
+      "pixelsIdentical": true,
+      "deliveryState": "COMPLETE",
+      "listingLocale": "en-US",
+      "originalCaptureLocale": "en-US"
+    },
+    {
+      "id": "86400019-5f9f-8d14-8008-1519ec04b1dc",
+      "name": "ltm-1.18.1-36-us-refresh-20261026-iphone-pro-max-05-conversation-history.png",
+      "setId": "7dd47a3c-e7ea-4766-92d2-97b97a01c7e9",
+      "slot": "APP_IPHONE_67",
+      "sha256": "1f7be6eb4d1c06160c112e897e0f676b34fafa23f460dca2d48c981b4d3f2148",
+      "md5": "978bc22bb3e1efdac68eca0ed029a88c",
+      "pixels": [
+        1320,
+        2868
+      ],
+      "downloadSHA256": "a60c49935e0b7c32c2bd7a2bea0c8dd54484f545e35e4737f52e424e8782f603",
+      "pixelsIdentical": true,
+      "deliveryState": "COMPLETE",
+      "listingLocale": "en-US",
+      "originalCaptureLocale": "en-US"
+    },
+    {
+      "id": "bfc00019-5f9f-8d14-801c-6c8e530f8afe",
+      "name": "ltm-1.18.1-36-us-refresh-20261026-iphone-pro-max-06-settings.png",
+      "setId": "7dd47a3c-e7ea-4766-92d2-97b97a01c7e9",
+      "slot": "APP_IPHONE_67",
+      "sha256": "76cd0bf31cda2ede4839793cd3556978c88c841b8c2ba529b8d0958e8c7db09c",
+      "md5": "1227ada7ade6c9c56f2847f26d7b565f",
+      "pixels": [
+        1320,
+        2868
+      ],
+      "downloadSHA256": "a78c1ca9f8f6eafba9bb9b0f6240b2bd274559337eb70977baad726054743bcc",
+      "pixelsIdentical": true,
+      "deliveryState": "COMPLETE",
+      "listingLocale": "en-US",
+      "originalCaptureLocale": "en-US"
+    },
+    {
+      "id": "6f800019-5f9f-8d14-8039-32a3b75517b5",
+      "name": "ltm-1.18.1-36-us-refresh-20261026-iphone-pro-max-04-summary-portrait.png",
+      "setId": "7dd47a3c-e7ea-4766-92d2-97b97a01c7e9",
+      "slot": "APP_IPHONE_67",
+      "sha256": "2a2e6b56b02217fe5247193cef52595d463a98e36950b9fc130339391181229e",
+      "md5": "c56514e7b67e9fad7fc5c52d8bd041bc",
+      "pixels": [
+        1320,
+        2868
+      ],
+      "downloadSHA256": "f07c5b0ad80d7d21d4e7c852f682bebd606e146b715499a9599cb3e41523db4d",
+      "pixelsIdentical": true,
+      "deliveryState": "COMPLETE",
+      "listingLocale": "en-US",
+      "originalCaptureLocale": "en-US"
+    },
+    {
+      "id": "9d000019-5f9f-8d14-8027-3db6729415e2",
+      "name": "ltm-1.18.1-36-us-refresh-20261026-ipad-mini-02-live-landscape.png",
+      "setId": "263df371-52ae-4bee-9cac-ef33b2ba8e62",
+      "slot": "APP_IPAD_PRO_3GEN_11",
+      "sha256": "b7891840043b6f7467060942d16d0c69cd8dc46ff254c17b6679945a4cd5c960",
+      "md5": "6e9e9e25d086aa84db985c3da6e22291",
+      "pixels": [
+        2266,
+        1488
+      ],
+      "downloadSHA256": "92957cd98981f7a1720a0a7b2c19688a8ac1616aaa7f74bfec0851f5d7e2c810",
+      "pixelsIdentical": true,
+      "deliveryState": "COMPLETE",
+      "listingLocale": "en-US",
+      "originalCaptureLocale": "en-US"
+    },
+    {
+      "id": "57000019-5f9f-8d14-800b-7bb7ba7bf72f",
+      "name": "ltm-1.18.1-36-us-refresh-20261026-ipad-mini-01-live-portrait.png",
+      "setId": "263df371-52ae-4bee-9cac-ef33b2ba8e62",
+      "slot": "APP_IPAD_PRO_3GEN_11",
+      "sha256": "1669347362d795c12ea97d4a877d260d9197f9b531e27847130050e0e9771a4f",
+      "md5": "184395b5574beb83e48624cc42d092e7",
+      "pixels": [
+        1488,
+        2266
+      ],
+      "downloadSHA256": "16af31050812b79d033d6a4f72c117ccf56dd13f08cc4b953dee281e09f46229",
+      "pixelsIdentical": true,
+      "deliveryState": "COMPLETE",
+      "listingLocale": "en-US",
+      "originalCaptureLocale": "en-US"
+    },
+    {
+      "id": "96800019-5f9f-8d14-8019-8098a729f351",
+      "name": "ltm-1.18.1-36-us-refresh-20261026-ipad-mini-03-conversation-prompt.png",
+      "setId": "263df371-52ae-4bee-9cac-ef33b2ba8e62",
+      "slot": "APP_IPAD_PRO_3GEN_11",
+      "sha256": "93f7867eff4824bbac394ed0a8d5e0fc283cbb02216586ebba81b3fbab4dc018",
+      "md5": "be46bcb3e68fa7f82ad069d48b93d8f7",
+      "pixels": [
+        1488,
+        2266
+      ],
+      "downloadSHA256": "54a5733912ec159e7abedb5e803df8c04ca3b7f0c8cc6c3f3dd74e86f289c22a",
+      "pixelsIdentical": true,
+      "deliveryState": "COMPLETE",
+      "listingLocale": "en-US",
+      "originalCaptureLocale": "en-US"
+    },
+    {
+      "id": "bdc00019-5f9f-8d14-8018-e6480b402639",
+      "name": "ltm-1.18.1-36-us-refresh-20261026-ipad-mini-04-summary-portrait.png",
+      "setId": "263df371-52ae-4bee-9cac-ef33b2ba8e62",
+      "slot": "APP_IPAD_PRO_3GEN_11",
+      "sha256": "e23b4d3b25495b8e5b140c257151dd02779adfd97788f3f9078501f38363dee8",
+      "md5": "dcca7f39115d21bc181b224c224a61ae",
+      "pixels": [
+        1488,
+        2266
+      ],
+      "downloadSHA256": "b4112765dee00aa17b54938923c717e2509ff934174bdb987f4b9ec33e692b19",
+      "pixelsIdentical": true,
+      "deliveryState": "COMPLETE",
+      "listingLocale": "en-US",
+      "originalCaptureLocale": "en-US"
+    },
+    {
+      "id": "90800019-5f9f-8d14-8036-495156a3afab",
+      "name": "ltm-1.18.1-36-us-refresh-20261026-ipad-mini-05-conversation-history.png",
+      "setId": "263df371-52ae-4bee-9cac-ef33b2ba8e62",
+      "slot": "APP_IPAD_PRO_3GEN_11",
+      "sha256": "9ee25dec24de8fb9ec0fcddc58c3bec356fcbd815c50f62de21f6948dbdd9211",
+      "md5": "d31f87eb63890e933579566e9613a152",
+      "pixels": [
+        1488,
+        2266
+      ],
+      "downloadSHA256": "7dbc364473f47d1947e2dcfafb09e6224e09d7ae038d7a7269e7bcc3daf9bc6b",
+      "pixelsIdentical": true,
+      "deliveryState": "COMPLETE",
+      "listingLocale": "en-US",
+      "originalCaptureLocale": "en-US"
+    },
+    {
+      "id": "88800019-5f9f-8d14-8021-f176efe99905",
+      "name": "ltm-1.18.1-36-us-refresh-20261026-ipad-mini-06-settings.png",
+      "setId": "263df371-52ae-4bee-9cac-ef33b2ba8e62",
+      "slot": "APP_IPAD_PRO_3GEN_11",
+      "sha256": "8eef3eb9d95fafc875e11d529d974d030a8638e86b938da212d433f452213d42",
+      "md5": "261d69e0b382118c352674f04944555f",
+      "pixels": [
+        1488,
+        2266
+      ],
+      "downloadSHA256": "6822770ac549305bc1a1a87a2f04cdcb21344eb3ec24d8ade21be859c6eaa751",
+      "pixelsIdentical": true,
+      "deliveryState": "COMPLETE",
+      "listingLocale": "en-US",
+      "originalCaptureLocale": "en-US"
+    },
+    {
+      "id": "d5800019-5f9f-8d14-8015-d9a73bc33e61",
+      "name": "ltm-1.18.1-36-us-refresh-20261026-ipad-pro-13-02-live-landscape.png",
+      "setId": "cbf06ef7-9994-4385-90c2-1fe76a3c8f7c",
+      "slot": "APP_IPAD_PRO_3GEN_129",
+      "sha256": "ef3ce32d9e7990ab912fc90637462bd73843e01de6388f1b30e8060624de6903",
+      "md5": "52c779d667373dde9aedc0273f8170d8",
+      "pixels": [
+        2752,
+        2064
+      ],
+      "downloadSHA256": "917e0a3414d8c01e269ba97c7c6a9ad534074c80e5a25003f79bf8f4d0a8bb63",
+      "pixelsIdentical": true,
+      "deliveryState": "COMPLETE",
+      "listingLocale": "en-US",
+      "originalCaptureLocale": "en-US"
+    },
+    {
+      "id": "37400019-5f9f-8d14-8004-9c91c2bfa28c",
+      "name": "ltm-1.18.1-36-us-refresh-20261026-ipad-pro-13-03-conversation-prompt.png",
+      "setId": "cbf06ef7-9994-4385-90c2-1fe76a3c8f7c",
+      "slot": "APP_IPAD_PRO_3GEN_129",
+      "sha256": "23643c83a444934dd09a03ae4e0160712a353d6ee9dfc5b555c78d12571a206a",
+      "md5": "e90298afc7cc4eb90515ddd8fec9054b",
+      "pixels": [
+        2064,
+        2752
+      ],
+      "downloadSHA256": "43acdf7bd4d7c5f1f92cf1c5eb378a88230856195de6e063cc8065d19b047b25",
+      "pixelsIdentical": true,
+      "deliveryState": "COMPLETE",
+      "listingLocale": "en-US",
+      "originalCaptureLocale": "en-US"
+    },
+    {
+      "id": "64000019-5f9f-8d14-802a-8d7df0e8f676",
+      "name": "ltm-1.18.1-36-us-refresh-20261026-ipad-pro-13-01-live-portrait.png",
+      "setId": "cbf06ef7-9994-4385-90c2-1fe76a3c8f7c",
+      "slot": "APP_IPAD_PRO_3GEN_129",
+      "sha256": "89335f86735325261ed596a8c4b2eb4912dad8ad0c8479cbb0aa44573116cfab",
+      "md5": "f69d55f28d4bc68a86e2e85d3c662c14",
+      "pixels": [
+        2064,
+        2752
+      ],
+      "downloadSHA256": "148e6f814bb54b82ff8f5f6cb738b4fd205fb7b9878c954f03cdfcd01629728e",
+      "pixelsIdentical": true,
+      "deliveryState": "COMPLETE",
+      "listingLocale": "en-US",
+      "originalCaptureLocale": "en-US"
+    },
+    {
+      "id": "e1400019-5f9f-8d14-8016-84d8da0314b9",
+      "name": "ltm-1.18.1-36-us-refresh-20261026-ipad-pro-13-05-conversation-history.png",
+      "setId": "cbf06ef7-9994-4385-90c2-1fe76a3c8f7c",
+      "slot": "APP_IPAD_PRO_3GEN_129",
+      "sha256": "2a36d85b78e5b4662aeebed30b67a7cbbf6aea6394e4bab5436914d45ed3d2fb",
+      "md5": "fb74b1e111ab6e1035fc64efeda60f49",
+      "pixels": [
+        2064,
+        2752
+      ],
+      "downloadSHA256": "edecfe990a95febc515119adbb7ee2599c16d271259064d28a3254cbc39b0c9e",
+      "pixelsIdentical": true,
+      "deliveryState": "COMPLETE",
+      "listingLocale": "en-US",
+      "originalCaptureLocale": "en-US"
+    },
+    {
+      "id": "70c00019-5f9f-8d14-8028-bdb36a64bd1b",
+      "name": "ltm-1.18.1-36-us-refresh-20261026-ipad-pro-13-04-summary-portrait.png",
+      "setId": "cbf06ef7-9994-4385-90c2-1fe76a3c8f7c",
+      "slot": "APP_IPAD_PRO_3GEN_129",
+      "sha256": "89335f86735325261ed596a8c4b2eb4912dad8ad0c8479cbb0aa44573116cfab",
+      "md5": "f69d55f28d4bc68a86e2e85d3c662c14",
+      "pixels": [
+        2064,
+        2752
+      ],
+      "downloadSHA256": "83e4f503d01e099c97c9ff8c18c15345a1c31d32c1c05f1542217e20fe660605",
+      "pixelsIdentical": true,
+      "deliveryState": "COMPLETE",
+      "listingLocale": "en-US",
+      "originalCaptureLocale": "en-US"
+    },
+    {
+      "id": "ec800019-5f9f-8d14-800a-7f9e8763283c",
+      "name": "ltm-1.18.1-36-us-refresh-20261026-ipad-pro-13-06-settings.png",
+      "setId": "cbf06ef7-9994-4385-90c2-1fe76a3c8f7c",
+      "slot": "APP_IPAD_PRO_3GEN_129",
+      "sha256": "59ef286a6e79b383b47c0b9fa232cfa332c35d862d7e07c1a4af4fc3a14f98db",
+      "md5": "05368ddcab5061288d8f8a6631eb44cb",
+      "pixels": [
+        2064,
+        2752
+      ],
+      "downloadSHA256": "14d23edf3e352056110c78071cd6db8f8fb62f2e8d9fa38eb4c1591f70989ad4",
+      "pixelsIdentical": true,
+      "deliveryState": "COMPLETE",
+      "listingLocale": "en-US",
+      "originalCaptureLocale": "en-US"
     }
   ]
 }
