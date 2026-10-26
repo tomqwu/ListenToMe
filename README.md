@@ -202,7 +202,7 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 - **Use-case presets** (Meeting, Interview, etc.) tune the copilot's behavior.
 - **Domain vocabularies and My terms** (Settings): Medical, Legal, Software & Cloud, Engineering,
   Finance, Sales and Education & Research presets plus your own list of names, products and jargon.
-  They bias on-device recognition, steer summaries and answers, and lay summaries out by domain; a
+  They supply on-device recognition hints, steer summaries and answers, and lay summaries out by domain; a
   banner offers one when a conversation sounds like it, and right-clicking a transcript line adds a
   word to My terms. See [Vocabularies](#vocabularies).
 - **File & folder reference context** with a configurable token budget.
@@ -346,7 +346,8 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   Apple's limit — My terms first, up to 60 when a preset is on, those already said in the conversation
   and the newest ahead of older ones — handed to SpeechAnalyzer's `AnalysisContext` and updated live
   while you listen; the legacy SpeechRecognizer engine applies them from the next utterance; WhisperKit
-  ignores them), **prompts** (the domain's description and a glossary, at most 1,500 characters — 400
+  ignores them; hints do not guarantee correct spelling, and the [controlled SpeechTranscriber evaluation](docs/vocabulary-biasing-evaluation.md)
+  found no off/on improvement in its fixed synthetic dataset), **prompts** (the domain's description and a glossary, at most 1,500 characters — 400
   on Apple Intelligence, where the glossary keeps at least half and the domain is named in a word —
   ride in the same "Context for this session" line as the use-case preset, so the prompt budget
   measures them), and **summaries** (with **Organize summaries by domain** on, only the Listener

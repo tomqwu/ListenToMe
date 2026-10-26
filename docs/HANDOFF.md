@@ -189,6 +189,24 @@ measurements; #223 additional semantic-search languages; #236 physical vocabular
 and tracker #98. The dated sections below preserve earlier checkpoints and do not supersede this
 publication record. No public App Store submission was made.
 
+## Vocabulary biasing — #236 controlled measurements
+
+The [evaluation report](vocabulary-biasing-evaluation.md) and [recorded observations](evaluations/vocabulary-236-2026-10-26.json)
+preserve the existing physical-iPhone/Mac file-inference experiment. Five production adapter hashes
+still match main `0901588`; four synthetic Medical/Cloud waveforms use the exact smoke-test scripts.
+Every off/on baseline transcript was identical (36/64 targets). The explicit SDK diagnostic also
+scored 36/64 with 100 accepted context terms. Contextual Dictation scored 41/64 on both platforms;
+custom models scored 42/64 on phone and 41/64 on Mac, with no added pronunciation benefit by this
+metric. This does not justify integrating a custom engine. Preparation/cache measurements and
+ordinary/silence controls are recorded with their limited scope.
+
+Only documentation and recorded evidence changed. No production model/engine, dependency, provider
+choice or privacy setting changed; no binary train is called. The actual app read-aloud, mid-recording
+changes, language switches and personalization acceptance remain incomplete, so #236 stays open.
+The maintainer stopped further local device-testing/participant requests for the current release;
+none were restarted. Original sources/native results remain under the external
+`2026-10-26/listentome-vocabulary236` directory. Native build/harness failures are not product BDD red.
+
 ## Additional semantic-search languages — #223, October 26 follow-up
 
 The new [evaluation record](semantic-search-evaluation.md) preserves isolated MiniLM, E5-base and
@@ -198,8 +216,8 @@ review confirmed the no-go. Four-language integration is not accepted, #223 rema
 production still uses existing Apple embeddings/keyword fallback. No app dependency/model was
 changed. Original plans, corpus/model/source hashes and raw scores are outside the worktree under
 `2026-10-26/listentome-semantic223`; do not retune and relabel these observed sets held-out.
-Connected physical iPhone/iPad currently report Developer Mode enabled and no passcode required;
-this enables the next vocabulary measurements (#236), not a claim those checks passed. No physical
+The earlier connected-device inventory enabled the controlled vocabulary measurements recorded above;
+it is historical device state, not a claim of current unlock status or completed live vocabulary acceptance. No physical
 paired Watch was found; same-machine simulator Watch inventory is not hardware acceptance.
 
 ## Historical combined publication — October 26, iOS 1.18.0 (35)

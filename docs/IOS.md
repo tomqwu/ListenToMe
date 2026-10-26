@@ -847,7 +847,10 @@ that conversation, and My terms. It is used in three places:
   `AnalysisContext.contextualStrings: [ContextualStringsTag: [String]]` in the iOS 27.0 / macOS SDK's
   `Speech.framework/Modules/Speech.swiftmodule/arm64e-apple-ios.swiftinterface`; Apple's documentation
   describes the bias for `DictationTranscriber`, so how much it helps `SpeechTranscriber` is checked on
-  a device (see the manual smoke test), not assumed.
+  a device (see the manual smoke test), not assumed. The [October 26 controlled evaluation](vocabulary-biasing-evaluation.md)
+  found identical 36/64 target-presence results with vocabulary off/on through the production adapter
+  on iPhone and Mac. Custom Dictation models added at most one target over contextual Dictation in
+  this fixed dataset, so no engine switch was integrated. The live app checks remain pending (#236).
 - **AI speech correction.** The correction request gains a `glossary` field — My terms (at most half)
   and then preset terms, each ranked by how closely something in the phrase spells it, at most 40 —
   and one instruction: use the glossary spelling for a near-miss and never insert a term nobody said.
