@@ -109,6 +109,17 @@ Bind platform adapters and control behavior to native tests. Generic readiness b
 not establish native integration. Record coverage gaps explicitly and retain physical-device,
 rendered UI and real Mac OTHERS acceptance where applicable; a simulator pass cannot replace them.
 
+## Physical capture freshness
+
+The attended capture helper must prove that New reached an empty transcript before Start. Match
+actual text elements, require the empty-transcript placeholder and reject phrases from a prior run.
+A notification can intercept New: bound retries, capture the stall and return before opening the
+microphone if freshness still fails. An old transcript must never satisfy a live-audio assertion.
+The October 26 acceptance caught that guard failing; the repaired helper then passed on physical
+iPhone/iPad with a synthetic phrase played only after native Listening confirmation. This is a
+harness repair, not an invented product-regression red. Retain the earlier failures and distinguish
+Play/Pause-control acceptance from audible playback quality, and basic capture from speaker accuracy.
+
 ## Commands and enforcement
 
 ```sh

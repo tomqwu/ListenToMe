@@ -129,6 +129,17 @@ The archive, upload, tagging and verification steps themselves are not repeated 
 [IOS-RELEASING.md](IOS-RELEASING.md) for iOS, [RELEASING.md](RELEASING.md) for macOS, and
 [AGENTS.md](../AGENTS.md) for the release workflow that governs both.
 
+## Public App Store draft — October 26, 2026
+
+Public distribution has been requested. App Store Connect holds **1.18.1 (36)** as a prepared iOS
+draft with current en-CA metadata and all 24 fresh screenshots uploaded, processed and verified.
+Production remains **1.15.0 (32)**; no review submission or new public release has occurred.
+Basic physical microphone transcription, Stop and Play/Pause controls passed on both connected
+iPhone/iPad using a source-equivalent development-signed Release build. Audible playback quality
+and human speaker acceptance remain outstanding before submission. See
+[the release runbook](IOS-RELEASING.md#public-app-store-preparation--october-26) and
+[the current handoff](HANDOFF.md).
+
 ## App Store Connect platform mapping
 
 The iOS platform covers this universal iPhone/iPad app (`TARGETED_DEVICE_FAMILY=1,2`); no separate iPadOS platform is added. The Watch companion belongs to the same iOS app record and must actually be embedded in an uploaded build before it can be installed. It is excluded from the current beta pending #181 acceptance. macOS requires its own compatible archive and distribution; the current native Mac app is distributed as a signed/notarized DMG, and Mac publication remains paused. Adding a platform does not convert a DMG or include an unembedded Watch target. See [Apple’s platform guide](https://developer.apple.com/help/app-store-connect/create-an-app-record/add-platforms/).

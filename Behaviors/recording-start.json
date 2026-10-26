@@ -79,7 +79,7 @@
       "manual": {
         "reason": "A stand-in recorder cannot establish microphone, on-device speech compatibility or retained audio on physical hardware.",
         "steps": [
-          "Run MobilePhysicalCaptureUITests/testPhysicalMicrophoneTranscriptionAndSavedAudioPlayback on an attended physical iPhone/iPad with LISTENTOME_PHYSICAL_AUDIO_ACCEPTANCE=1 and audible synthetic speech.",
+          "Run MobilePhysicalCaptureUITests/testPhysicalMicrophoneTranscriptionAndSavedAudioPlayback on an attended physical iPhone/iPad with LISTENTOME_PHYSICAL_AUDIO_ACCEPTANCE=1 and attended human or public synthetic speech; require the empty transcript before Start and reject earlier test phrases.",
           "Verify Listening, current microphone transcript text, Stop, retained Play/Pause and source-matched native screenshots; preserve any real startup error.",
           "Confirm no remote summary is invoked when Auto and speech correction are off; keep this separate from summary AI eligibility."
         ]
