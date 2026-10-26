@@ -35,6 +35,27 @@ capture retain the existing offline pipeline; do not claim the iOS live fix chan
 Follow [the model acceptance checklist](speaker-identification.md). The original tester recording
 remains untested unless retained audio is provided. The beta upload policy above still applies.
 
+## Public App Review receipt — October 26
+
+Apple accepted public submission of **iOS 1.18.1 (36)** at **2026-10-26T19:45:08.361828+00:00**.
+Review submission `25ae4878-c462-4528-a48e-01b12b028f39` and version
+`c60352d3-eb78-479b-970c-d6ed6faa3242` read back WAITING_FOR_REVIEW. The selected build remains
+`2fd8477d-504e-44d2-ac7f-6c7e9236d01f`, accepted from source `7643b20`; no replacement binary or
+new TestFlight upload was made. Release is AFTER_APPROVAL. App Review acceptance of the request
+does not establish Apple approval or public availability.
+
+For this release, the maintainer reported completed, working TestFlight testing and requested that
+further local testing stop. Record that as maintainer-reported acceptance; do not convert it into
+agent-verified speaker accuracy, audible playback quality or battery measurements. Do not restart
+local device checks or request more test participation for this submission. The general verification
+ladder remains applicable to future releases.
+
+All 24 processed screenshots, source checksums/native dimensions/order, current en-CA description
+and What's New, selected build and preserved reviewer contact details were rechecked before the
+single submission was sent. External evidence is `listentome-appstore-publication/app-review-accepted.json`
+and the matching review/version readbacks. Resume that submission's status instead of creating another.
+The preparation section below preserves its earlier incomplete acceptance state.
+
 ## Public App Store preparation — October 26
 
 The maintainer requested public distribution of the iPhone/iPad update. The working team API key

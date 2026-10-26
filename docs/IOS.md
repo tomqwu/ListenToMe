@@ -129,15 +129,15 @@ The archive, upload, tagging and verification steps themselves are not repeated 
 [IOS-RELEASING.md](IOS-RELEASING.md) for iOS, [RELEASING.md](RELEASING.md) for macOS, and
 [AGENTS.md](../AGENTS.md) for the release workflow that governs both.
 
-## Public App Store draft — October 26, 2026
+## Public App Store submission — October 26, 2026
 
-Public distribution has been requested. App Store Connect holds **1.18.1 (36)** as a prepared iOS
-draft with current en-CA metadata and all 24 fresh screenshots uploaded, processed and verified.
-Production remains **1.15.0 (32)**; no review submission or new public release has occurred.
-Basic physical microphone transcription, Stop and Play/Pause controls passed on both connected
-iPhone/iPad using a source-equivalent development-signed Release build. Audible playback quality
-and human speaker acceptance remain outstanding before submission. See
-[the release runbook](IOS-RELEASING.md#public-app-store-preparation--october-26) and
+Apple accepted **1.18.1 (36)** for public App Review at **19:45:08 UTC**. It is **WAITING_FOR_REVIEW**
+and set to release automatically after approval; production remains **1.15.0 (32)** until that
+happens. All 24 current en-CA screenshots are uploaded, processed and verified. The maintainer
+reported completed, working TestFlight testing and requested no further local testing for this
+submission. That confirmation is separate from agent-measured voice accuracy or battery results.
+No new binary was uploaded; Watch stays excluded and macOS distribution is separate. See
+[the receipt and runbook](IOS-RELEASING.md#public-app-review-receipt--october-26) and
 [the current handoff](HANDOFF.md).
 
 ## App Store Connect platform mapping

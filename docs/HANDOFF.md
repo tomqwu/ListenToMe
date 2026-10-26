@@ -4,7 +4,35 @@ A snapshot for an agent picking up ListenToMe cold. [AGENTS.md](../AGENTS.md) an
 [CLAUDE.md](../CLAUDE.md) stay the rules; this note is only the state of things on the date above.
 Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags) before acting on it.
 
-## Public App Store preparation — October 26, iOS 1.18.1 (36)
+## Public App Store submission — October 26, iOS 1.18.1 (36)
+
+**Apple accepted the public App Review submission at 2026-10-26T19:45:08.361828+00:00.** Review
+submission `25ae4878-c462-4528-a48e-01b12b028f39` and iOS version
+`c60352d3-eb78-479b-970c-d6ed6faa3242` both read back **WAITING_FOR_REVIEW**. Accepted build **36**
+(`2fd8477d-504e-44d2-ac7f-6c7e9236d01f`) is selected, from artifact source
+`7643b204def6acea0b616a2c2de2bade2fc4c7c9`. Release is **AFTER_APPROVAL**; this is a successful
+submission, not an approved or publicly available update. The preceding public version remains
+1.15.0 (32) until Apple finishes review/release.
+
+The maintainer reported that TestFlight testing was already completed and working, and instructed
+that further local testing stop. That is maintainer-reported acceptance for this release; it is not
+an agent measurement of human speaker accuracy, audible playback quality or battery performance.
+No more local device checks or participant requests should be started for this submission. The
+basic source-equivalent development-signed capture passes below retain their original scope.
+
+The API rechecked the exact build, en-CA metadata/reviewer contacts and all **24 COMPLETE screenshots**
+with their native dimensions, checksums and order before creating one review submission, adding
+only this version and sending it. No new binary was uploaded. Watch stays excluded; the macOS draft
+and macOS publication were untouched. PR [#314](https://github.com/tomqwu/ListenToMe/pull/314) merged
+as `493894d` after independent review and all three required checks passed.
+
+Receipt, request/readback evidence and the maintainer's acceptance are preserved in
+`/Users/tomwu/Documents/Codex/2026-10-26/listentome-appstore-publication/`, particularly
+`app-review-accepted.json`, `review-submission-readback.json` and `public-version-after-submit.json`.
+Resume by reading that same submission; do not create a duplicate, resubmit, re-upload build 36 or
+claim Apple approval from submission acceptance. The preparation section below is historical.
+
+## Historical public App Store preparation — October 26, iOS 1.18.1 (36)
 
 The maintainer requested public App Store distribution. The configured API key can manage the
 public listing as well as TestFlight; no manual upload or new credential was needed. Apple readback
