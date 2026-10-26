@@ -1,5 +1,20 @@
 # Publish an iOS build to TestFlight
 
+## Locale correction — October 26, 22:41 UTC
+
+The App Store en-US localization and its 24 processed screenshots did not change TestFlight's
+separate metadata. A live audit found build 36 had only en-CA beta records. The en-US What to Test
+record `bdb57918-4408-4912-8457-142e9271cccd` and beta description record
+`d6a94767-2be2-4fd1-a9f5-87e58b598f9e` were created and read back against the checked-in US copy.
+Other locales remain unchanged; no binary was uploaded. Evidence:
+`listentome-appstore-publication/locale-mac-correction/beta-en-US-corrected.json`.
+
+App-wide primary language still reads en-CA. Apple's [change-primary-language requirements](https://developer.apple.com/help/app-store-connect/manage-app-information/localize-app-information)
+require prior approval of the new localization and screenshots for all supported platforms, not
+just successful processing. The iOS en-US submission is waiting for review, and the Mac platform
+still needs its own build, screenshots and acceptance. Do not withdraw a correct pending US iOS
+review merely to repeat a primary-locale PATCH before eligibility changes.
+
 This is the release runbook for ListenToMe on iPhone/iPad. Follow it when an iOS **release train** is
 due — not after every merged fix. Merging a PR, building an archive, or exporting an IPA does **not**
 publish the app; equally, a merged iOS change does not by itself call for an upload.

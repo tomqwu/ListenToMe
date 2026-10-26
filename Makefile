@@ -61,6 +61,15 @@ e2e: build
 release:
 	bash scripts/release.sh
 
+# A separate sandboxed archive for the shared App Store Connect listing. No upload is implicit.
+MAC_STORE_ARCHIVE ?= dist/ListenToMe-Mac-AppStore.xcarchive
+.PHONY: mac-appstore-archive
+mac-appstore-archive: gen
+	xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMe -configuration AppStore \
+		-destination 'generic/platform=macOS' -archivePath '$(MAC_STORE_ARCHIVE)' \
+		-derivedDataPath .build/mac-appstore -onlyUsePackageVersionsFromResolvedFile \
+		-allowProvisioningUpdates $(MAC_STORE_SIGN_FLAGS) archive
+
 # iPhone/iPad target (iOS 26+). Override IOS_DESTINATION with a connected device/simulator.
 IOS_DESTINATION ?= platform=iOS Simulator,name=iPhone 17 Pro
 IOS_SIGN_FLAGS ?= CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=-
@@ -129,6 +138,7 @@ validate-local:
 	python3 scripts/test-contract-gate.py
 	bash -n scripts/release.sh scripts/release-paths.sh
 	python3 scripts/test-release-paths.py
+	python3 scripts/test-mac-appstore.py
 	bash scripts/test-hotkey.sh
 	$(MAKE) lint
 	./scripts/check-coverage.sh 95

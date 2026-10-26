@@ -94,7 +94,8 @@ make ios-test
 
 Live transcript with Quick Summary · Summary · conversation prompts · iPad workspace · two-pane iPhone.
 Native simulator captures use synthetic content; [capture provenance](docs/images/ios/release-1.18.1.json).
-The complete four-device release set is preserved locally for the next authorized App Store submission.
+The refreshed [24-image US-region set](docs/images/ios/release-1.18.1-en-US-refresh.json) is uploaded
+and COMPLETE for the iOS 1.18.1 App Review submission. Watch previews remain separate.
 
 ## Why ListenToMe
 
@@ -249,6 +250,10 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
   History search by meaning — are listed under
   [macOS (unreleased since 1.4.4)](CHANGELOG.md#macos-unreleased-since-144) and are available only
   when you build from source until the next release.
+
+- A sandboxed Mac App Store build is being prepared under the same listing as iPhone/iPad.
+  It has not been submitted. Its separate storage and permissions do not automatically migrate
+  an existing DMG installation. See [Mac App Store preparation](docs/RELEASING.md#mac-app-store-distribution).
 
 **Build from source**
 ```bash

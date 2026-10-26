@@ -1,5 +1,24 @@
 # ListenToMe — Manual Smoke Test
 
+## Mac App Store sandbox acceptance
+
+The `AppStore` configuration uses the shared store bundle ID, sandboxed storage and separate OS
+permissions. Its generated settings and native temporary-folder scope tests do not replace this
+installed-app check. Preserve source/signing evidence and fresh native-resolution Mac screenshots.
+
+1. In the signed sandboxed candidate, verify actual microphone and system-audio transcription
+   labeled OTHERS, Stop/cancellation, the explicit local/remote provider, Calendar and file imports/exports.
+2. Choose an external vault, save a conversation, quit/relaunch and save it again. No duplicate note
+   is created. Delete/revoke the folder and verify reselection guidance.
+3. Attach an external file and folder; verify their contents, quit/relaunch and verify both again.
+   Delete/revoke one and verify the missing-access warning and same-path reselection. Clear and cancel
+   while a read is in progress: no late context returns and saved reference grants are removed.
+4. Confirm the existing DMG/Dev installations' bundle identities, data and permissions are intact.
+   Do not reset them as a shortcut for the new Store identity.
+
+These checks and Mac screenshot capture are pending while the Mac is locked. No Mac App Store
+upload or review submission is established by the preliminary archive.
+
 For changed behavior, start from its [BDD scenario](BDD.md) and record source-matched acceptance
 against the stated Given/When/Then outcome. Run `make bdd-check` before the existing local gates;
 `make bdd-manual` lists hardware acceptance obligations without marking them passed. The catalog

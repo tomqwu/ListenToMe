@@ -9,7 +9,7 @@ iOS entries are drawn from [`iOS/MobileReleaseNotes.swift`](iOS/MobileReleaseNot
 in-app "What's New" copy shown once per set of bundled release notes — a build that changes no notes
 does not show it again, and a fresh install does not see it at all; see
 [`docs/IOS.md`](docs/IOS.md) for the fuller per-build technical notes and
-[`metadata/ios/en-CA/`](metadata/ios/en-CA/) for TestFlight "What to Test" text.
+[`metadata/ios/en-US/`](metadata/ios/en-US/) for current TestFlight "What to Test" text.
 
 ## Repository tooling (unreleased)
 
@@ -34,6 +34,12 @@ does not show it again, and a fresh install does not see it at all; see
 - Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
 
 ## iOS 1.18.1 (36) — 2026-10-26 (TestFlight)
+
+October 26 correction: the en-US TestFlight description and What to Test were created and read back
+for build 36, without a binary re-upload. All 24 fresh en-US App Store screenshots are COMPLETE and
+the iOS version is waiting for review. The app-wide primary locale remains en-CA until Apple approves
+the new US localization/screenshots; submitted localization and primary language are separate.
+The original upload checkpoint below retains its historical locale and then-pending screenshot state.
 
 Published from `7643b204def6acea0b616a2c2de2bade2fc4c7c9`; Apple accepted the upload at 2026-10-26T17:29:24.328646+00:00. Processing is VALID, internal state is IN_BETA_TESTING, both existing Dev testers have group access, and en-CA metadata was read back. [Full release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.1-build36). Physical-device accuracy/performance and original tester audio remain unverified; three-person separation is not established. App Store listing screenshot upload remains pending. Watch is excluded and Mac publication remains paused.
 
@@ -95,6 +101,13 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 - Settings → Privacy now explains that optional Ollama, Cloud AI and OpenAI-compatible requests send text and included context to the provider you choose; Apple Intelligence stays on-device. (#247)
 
 ## macOS (unreleased since 1.4.4)
+
+- Prepare a separate sandboxed Mac App Store configuration, sharing the iOS listing's bundle ID
+  while preserving the existing DMG and Dev identities. The preliminary 1.5.0 (15) archive builds
+  for Intel and Apple silicon with US English. This is not an App Store upload or submission.
+- Persist native security-scoped grants for the selected Markdown vault and reference files/folders,
+  retain access throughout reads, and show reselection guidance for broken saved reference grants.
+  Sandboxed picker/relaunch, recording and fresh Mac screenshot acceptance remain required.
 
 - Mac pane buttons, prompts, chips, menus and hotkeys register their cancellable response immediately, preventing an immediate Stop from letting an answer begin later. New and import task ownership now live in Core; cancelling before an import starts opens no media. Pending device/Calendar/speaker follow-ups cannot publish after cancellation or supersession. Root-view construction and layout are separated from these tested owners. (#134)
 

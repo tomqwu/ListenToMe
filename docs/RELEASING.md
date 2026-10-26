@@ -4,6 +4,58 @@ This document describes how the maintainer builds and publishes an official, sig
 **notarized** `.dmg` for ListenToMe on macOS. For the separate iPhone/iPad target, follow
 [iOS validation and distribution](IOS.md#validation-and-release).
 
+## Mac App Store distribution
+
+The maintainer requested Mac App Store submission on October 26, 2026. The same App Store Connect
+record as iOS (`6811155732`) has a Mac platform draft, now prepared as **1.5.0** with en-US copy
+under [`metadata/macos/en-US`](../metadata/macos/en-US). It has **no selected build or submitted review**.
+The `AppStore` Xcode configuration uses the listing's shared bundle ID `com.tomwu.ListenToMe.ios`,
+native App Sandbox and its own entitlements. The DMG's `Release` identity and the `Debug` Dev identity
+remain unchanged. The different Store identity means separate container data, preferences and OS
+permissions; do not reset or overwrite existing installations to transfer them.
+
+```sh
+make mac-appstore-archive
+xcodebuild -exportArchive -archivePath dist/ListenToMe-Mac-AppStore.xcarchive \
+  -exportOptionsPlist Config/macOS/AppStoreExportOptions.plist -exportPath dist/mac-appstore-export
+```
+
+Use the configured App Store Connect key from the iOS credential runbook for automatic provisioning,
+with Xcode's authentication-key arguments. Keep the key contents out of logs. The export settings
+produce local artifacts and preserve the version; they do not upload. Require App Store distribution
+signatures/profiles and a valid installer signature before an actual upload. Export explicitly uses
+the local Apple Distribution and the named `3rd Party Mac Developer Installer` identity and the profile named
+`ListenToMe Mac App Store`; it does not require cloud-managed-certificate permission. An Apple Development
+archive signature alone is not an App Store export or accepted upload.
+The generic `Mac Installer Distribution` selector failed against the issued installer identity in
+this Xcode version; the checked-in full certificate name and exact team avoid that failed route.
+
+The missing Mac profile and installer certificate were created through the configured API key during
+this preparation. The installer identity is recoverable from the private, ignored directory
+`~/.config/listentome/mac-appstore-signing/`. Its dedicated keychain contains only this new identity;
+never change the login keychain's ACL or reset existing permissions to repair signing. The keychain
+must be unlocked and temporarily included in the user's search list for export; preserve the prior
+list and restore it afterwards, retaining concurrent changes. Credentials and passwords never belong
+in repository files, logs or PRs. The Mac App Store profile is installed in Xcode's user profile cache.
+
+Before uploading/submitting, record exact committed source and dependency lock hashes, full local
+validation, independent review and the three required checks. Inspect the actual archived Info.plist,
+code signature, profile, sandbox entitlements, category, en-US development region and both Intel and
+Apple silicon architectures. Use source-matched fresh Mac screenshots and verify Apple processing.
+Never select the older preliminary working-tree archive after persistence fixes changed the source.
+
+Installed sandboxed acceptance must include microphone and actual system-audio transcription labeled
+OTHERS, provider requests, Calendar, imports/exports, and selecting an external vault and reference
+file/folder followed by quit/relaunch and another write/read. Revoke/delete a selection and verify
+reselection guidance; cancel reads/clear references and check no late context is applied. Native
+temporary-folder scope tests establish bookmark format and adapter behavior, not sandbox picker
+grants across app relaunch. These gates remain pending while the Mac is locked. No Mac public
+submission or production-ready acceptance is claimed.
+
+App-wide primary language is separate from localized copy. Apple's [primary-language rules](https://developer.apple.com/help/app-store-connect/manage-app-information/localize-app-information)
+require prior approval of the locale and screenshots for all supported platforms, including matching
+sizes. Uploading fresh US images or selecting en-US copy cannot alone change the current en-CA primary.
+
 > **Build and validate the distributable locally.** CI compiles the app on a `macos-26` runner.
 > Signing, notarization, GUI, permissions and real-audio acceptance still require a local Mac.
 > Use the mandatory gates in [the production roadmap](reviews/2026-09-10/production-roadmap.md).

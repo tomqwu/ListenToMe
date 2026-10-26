@@ -5,6 +5,13 @@ Current-source physical acceptance remains pending. Mac changes are merged but u
 installed GUI/OTHERS acceptance explicitly deferred by the maintainer; see [HANDOFF](HANDOFF.md).
 Apple Watch is not embedded for distribution.
 
+The native Mac App Store configuration is being prepared separately. It uses
+`com.tomwu.ListenToMe.ios` with App Sandbox; the existing DMG and Dev identities are unchanged.
+Its microphone, system-audio and Calendar grants, container data and selected-file access must be
+checked for that identity. Do not infer them from checked permissions on the DMG or Dev app. Vault
+and reference file/folder access use persisted security-scoped bookmarks. Actual sandbox
+picker/relaunch and GUI/OTHERS acceptance remain pending; see [the Store procedure](RELEASING.md#mac-app-store-distribution).
+
 An OS version alone does not establish feature support. The apps require version 26 or later of
 their platform OS, then query the actual framework, selected language, permission and model state.
 Apple Intelligence eligibility is separate from speech recording. No compatibility check selects a

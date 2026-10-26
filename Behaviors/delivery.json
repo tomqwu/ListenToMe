@@ -104,6 +104,126 @@
           "test": "MobileCloudAISettingsUITests/testCloudServiceIsExplicitDisclosedAndPicksNoModel"
         }
       ]
+    },
+    {
+      "id": "RELEASE-006",
+      "name": "Generate a distinct sandboxed Mac App Store distribution",
+      "given": "the Mac platform shares the existing iPhone App Store listing",
+      "when": "the native project is generated for App Store distribution",
+      "then": "the Mac AppStore configuration matches the listing bundle identifier, uses US English and declares sandbox access for microphone, outgoing model requests, Calendar and user-selected imports and exports; export preserves the version without implicitly uploading; export selects local distribution identities and the exact Mac profile without cloud-managed signing",
+      "covers": [
+        "project.yml",
+        "App/ListenToMeAppStore.entitlements",
+        "App/Info.plist",
+        "Config/macOS/*",
+        "Makefile",
+        ".github/workflows/ci.yml",
+        "scripts/test-mac-appstore.py"
+      ],
+      "bindings": [
+        {
+          "suite": "tooling",
+          "file": "scripts/test-mac-appstore.py",
+          "test": "MacAppStoreConfigurationTests/test_store_configuration_matches_listing_and_declares_sandbox_access"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-mac-appstore.py",
+          "test": "MacAppStoreConfigurationTests/test_export_preserves_version_and_exports_without_implicit_upload"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-mac-appstore.py",
+          "test": "MacAppStoreConfigurationTests/test_export_uses_local_signing_without_cloud_certificate_access"
+        }
+      ]
+    },
+    {
+      "id": "RELEASE-007",
+      "name": "Preserve existing Mac installation identities",
+      "given": "a user already has the DMG or a Dev installation with its own permissions and data",
+      "when": "a Mac App Store distribution configuration is added",
+      "then": "the generated DMG and Dev configurations retain their original bundle identifiers and the DMG retains its existing entitlements",
+      "covers": [
+        "project.yml",
+        "App/ListenToMeAppStore.entitlements",
+        "Makefile",
+        "scripts/test-mac-appstore.py"
+      ],
+      "bindings": [
+        {
+          "suite": "tooling",
+          "file": "scripts/test-mac-appstore.py",
+          "test": "MacAppStoreConfigurationTests/test_store_configuration_preserves_dmg_and_development_identities"
+        }
+      ]
+    },
+    {
+      "id": "RELEASE-008",
+      "name": "Restore a Mac vault security scope",
+      "given": "a Mac user has chosen a folder for conversation Markdown notes",
+      "when": "its persisted bookmark is restored and a writer is recreated",
+      "then": "the bookmark restores a native security scope and the new writer saves a note in the chosen folder; existing legacy unsandboxed bookmarks remain usable where the OS permits access",
+      "covers": [
+        "Sources/ListenToMeCore/MarkdownVaultWriter.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/MarkdownVaultWriterTests.swift",
+          "test": "MarkdownVaultWriterTests/testMacBookmarkRestoresSecurityScopeForARecreatedWriter"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/MarkdownVaultWriterTests.swift",
+          "test": "MarkdownVaultWriterTests/testLegacyMacBookmarkWritesWhereTheOSStillAllowsAccess"
+        }
+      ],
+      "manual": {
+        "reason": "A Core temporary-folder bookmark test cannot establish actual sandbox picker grants across app relaunch.",
+        "steps": [
+          "In the sandboxed Mac app pick an external vault, save, quit/relaunch and save again. Verify deleted or revoked folders request reselection. Core temporary-folder scope checks are not a sandbox relaunch acceptance pass."
+        ]
+      }
+    },
+    {
+      "id": "RELEASE-009",
+      "name": "Restore scoped Mac file and folder references",
+      "given": "a Mac user selects a text file and a reference folder",
+      "when": "the selection is saved and restored by a new persistence adapter",
+      "then": "both native security scopes and both reference contents are available; a corrupt saved grant is excluded with reselection guidance, and Clear removes saved paths and bookmarks; actual picker grants across sandbox app relaunch remain separate acceptance",
+      "covers": [
+        "App/ReferenceSelectionStore.swift",
+        "App/MeetingView+References.swift",
+        "App/MeetingView.swift",
+        "Sources/ListenToMeCore/FileContextLoader.swift",
+        "project.yml"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/ReferenceSelectionStoreTests.swift",
+          "test": "ReferenceSelectionStoreTests/testFileAndDirectoryReferencesRestoreNativeScopesAndContent"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/ReferenceSelectionStoreTests.swift",
+          "test": "ReferenceSelectionStoreTests/testBrokenReferenceGrantRequiresReselectionInsteadOfReadingThePath"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/ReferenceSelectionStoreTests.swift",
+          "test": "ReferenceSelectionStoreTests/testReadableLegacyReferenceStillLoadsWithoutCreatingAGrant"
+        }
+      ],
+      "manual": {
+        "reason": "Native temporary-folder scopes do not prove sandbox picker grants after a full application relaunch.",
+        "steps": [
+          "In the sandboxed app pick an external file and external folder, quit/relaunch and verify both contents remain available.",
+          "Revoke or delete a reference and verify readable reselection guidance.",
+          "Cancel a read and clear references; verify no late context is applied and no grants remain in saved preferences."
+        ]
+      }
     }
   ]
 }

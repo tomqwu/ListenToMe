@@ -12,11 +12,13 @@ extension MeetingView {
             if !referencePaths.isEmpty {
                 Text(referenceSummary)
                     .font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                if !referenceSkipped.isEmpty {
-                    Label(referenceSkippedSummary, systemImage: "exclamationmark.triangle")
-                        .font(.caption).foregroundStyle(.orange).lineLimit(1)
-                        .help(referenceSkippedDetail)
-                }
+            }
+            if !referenceSkipped.isEmpty {
+                Label(referenceSkippedSummary, systemImage: "exclamationmark.triangle")
+                    .font(.caption).foregroundStyle(.orange).lineLimit(1)
+                    .help(referenceSkippedDetail)
+            }
+            if !referencePaths.isEmpty || !referenceSkipped.isEmpty {
                 Button("Clear") { clearReferences(session: session) }
                     .controlSize(.small)
             }
@@ -51,9 +53,10 @@ extension MeetingView {
         panel.message = "Choose files or folders to use as reference context"
         guard panel.runModal() == .OK else { return }
         // De-duplicate by standardized path while preserving order.
-        var seen = Set(referencePaths.map { $0.standardizedFileURL.path })
-        for url in panel.urls where seen.insert(url.standardizedFileURL.path).inserted {
-            referencePaths.append(url)
+        for url in panel.urls {
+            if let index = referencePaths.firstIndex(where: { $0.standardizedFileURL.path == url.standardizedFileURL.path }) {
+                referencePaths[index] = url  // Reselection replaces an expired grant without duplicating the row.
+            } else { referencePaths.append(url) }
         }
         persistReferencePaths()
         loadReferences(into: session)
@@ -68,13 +71,14 @@ extension MeetingView {
     }
 
     private func persistReferencePaths() {
-        UserDefaults.standard.set(referencePaths.map(\.path), forKey: "referencePaths")
+        referenceAccessWarnings = ReferenceSelectionStore().save(referencePaths)
+        referenceSkipped = referenceAccessWarnings
     }
 
     /// Reads the attached files/folders off the main actor and updates the session's grounding.
     func loadReferences(into session: MeetingSession) {
         referenceContext.load(referencePaths, maxChars: ProviderSettings.referenceBudget) { update in
-            referenceSkipped = update.skipped
+            referenceSkipped = referenceAccessWarnings + update.skipped
             session.referenceContext = update.context
         }
     }

@@ -29,10 +29,16 @@
     <string>$(CURRENT_PROJECT_VERSION)</string>
     <key>LSMinimumSystemVersion</key>
     <string>26.0</string>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.productivity</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>ListenToMe transcribes meeting audio you choose to capture.</string>
     <key>NSSpeechRecognitionUsageDescription</key>
     <string>ListenToMe converts captured speech to text on your device.</string>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>ListenToMe connects to the local AI server you choose in Settings, such as Ollama running on your Mac or network.</string>
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
     <!-- Plain http only to .local names and link-local/loopback addresses, as on iOS, so an
          OpenAI-compatible server on your own network (http://your-mac.local:1234/v1) is reachable.
          Every other host still requires https (issue #52). -->

@@ -22,6 +22,11 @@ jobs:
         run: make build SIGN_FLAGS='CODE_SIGNING_ALLOWED=NO'
       - name: Verify dependency resolution stayed locked
         run: diff -u Config/Package.resolved ListenToMe.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+      - name: Compile sandboxed Mac App Store configuration
+        run: |
+          xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMe -configuration AppStore \
+            -destination 'generic/platform=macOS' -onlyUsePackageVersionsFromResolvedFile \
+            CODE_SIGNING_ALLOWED=NO build
   ios:
     name: iOS 26 app build
     runs-on: macos-26
@@ -55,7 +60,10 @@ jobs:
       - name: Execute headless behavior scenarios
         run: python3 scripts/bdd.py --run core
       - name: Execute delivery and workflow behavior scenarios
-        run: python3 scripts/bdd.py --run tooling
+        # The Mac Store contract inspects XcodeGen's generated build configurations.
+        run: |
+          brew install xcodegen
+          python3 scripts/bdd.py --run tooling
       - name: Run ListenToMeCore test suite with a 95% coverage floor
         run: ./scripts/check-coverage.sh 95
   # GUI, audio, device and Ollama-e2e acceptance run on the maintainer's Mac (see AGENTS.md).

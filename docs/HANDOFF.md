@@ -6,6 +6,20 @@ Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags)
 
 ## Current US screenshot refresh and App Review — October 26, 21:13 UTC
 
+**Later correction, 22:41 UTC:** TestFlight had retained only Canadian beta metadata even though
+the App Store draft had a US localization. The en-US What to Test and beta description are now
+created/read back for build 36; IDs/receipt are in
+`listentome-appstore-publication/locale-mac-correction/beta-en-US-corrected.json`.
+The actual app-wide primary remains en-CA: Apple's documented eligibility requires prior approval
+of the US localization/screenshots on all supported platforms. It is not a successful primary switch.
+The maintainer also requested the missing Mac submission. Branch `codex/mac-app-store` prepares
+a separate sandboxed 1.5.0 (15) configuration and US Mac draft metadata. The first universal archive
+compiled/signed with Apple Development, before later vault/reference persistence fixes; it must not
+be submitted or reused as the final source. Native generated-configuration and scope regressions
+have red/green evidence; final local validation/review and CI remain to complete. The Mac is locked;
+installed sandbox picker/relaunch, GUI/OTHERS-audio acceptance and fresh Mac screenshots remain
+pending. No Mac build upload or review submission has occurred. See [the Mac Store runbook](RELEASING.md#mac-app-store-distribution).
+
 Apple accepted the refreshed **English (US), en-US** submission at
 **2026-10-26T21:13:50.231393+00:00**. Current review
 `4e63cda8-70db-4d67-9928-63409df4dbda` and version `c60352d3-eb78-479b-970c-d6ed6faa3242` read back

@@ -131,6 +131,11 @@ The archive, upload, tagging and verification steps themselves are not repeated 
 
 ## Public App Store submission — October 26, 2026
 
+Later locale audit: build 36's separate TestFlight records initially still had only en-CA. The en-US
+What to Test and beta description are now created and read back, with no binary upload. The app-wide
+primary remains en-CA pending Apple approval of the new US localization and platform screenshots.
+See [the correction receipt and requirements](IOS-RELEASING.md#locale-correction--october-26-2241-utc).
+
 The **English (US)** listing **Listen To Me - Real Time AI**, **1.18.1 (36)**, was resubmitted with
 24 fresh US-region screenshots and accepted for App Review at **21:13:50 UTC**. Review
 `4e63cda8-70db-4d67-9928-63409df4dbda` is WAITING_FOR_REVIEW and set to release after approval;
@@ -147,6 +152,12 @@ saved separately for maintainer review. macOS distribution is separate. See
 
 ## App Store Connect platform mapping
 
+The native Mac App Store platform is now being prepared as a separate sandboxed **1.5.0 (15)**
+archive under the shared listing and bundle ID. US Mac draft metadata is saved/read back, but no
+build is selected and no Mac review is submitted. A preliminary universal archive/export establishes
+signing feasibility only; it predates later persistence fixes. See [Mac Store distribution](RELEASING.md#mac-app-store-distribution).
+The following description of DMG distribution remains the current public Mac availability.
+
 The iOS platform covers this universal iPhone/iPad app (`TARGETED_DEVICE_FAMILY=1,2`); no separate iPadOS platform is added. The Watch companion belongs to the same iOS app record and must actually be embedded in an uploaded build before it can be installed. It is excluded from the current beta pending #181 acceptance. macOS requires its own compatible archive and distribution; the current native Mac app is distributed as a signed/notarized DMG, and Mac publication remains paused. Adding a platform does not convert a DMG or include an unembedded Watch target. See [Apple’s platform guide](https://developer.apple.com/help/app-store-connect/create-an-app-record/add-platforms/).
 
 ## iOS 1.18.1 (36) — published TestFlight beta
@@ -156,7 +167,7 @@ with stable recording-scoped identities, bounded prediction history and final ta
 The Settings switch can turn identification off while listening, releasing its audio and blocking
 late labels; re-enabling waits until Stop. Mac capture and Watch/file
 imports retain the existing offline pipeline. The [model contract and evidence limits](speaker-identification.md)
-and [What to Test](../metadata/ios/en-CA/what-to-test-1.18.1.txt) describe real-model gates and pending
+and [What to Test](../metadata/ios/en-US/what-to-test-1.18.1.txt) describe real-model gates and pending
 original-recording / physical-device acceptance. Apple accepted the upload at 2026-10-26T17:29:24.328646+00:00; processing is VALID, internal state is IN_BETA_TESTING, existing Dev access and en-CA metadata were read back. [Release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.1-build36). All 24 source-matched native screenshots were inspected; App Store listing upload remains pending.
 
 ## iOS 1.18.0 (35) — published TestFlight beta
