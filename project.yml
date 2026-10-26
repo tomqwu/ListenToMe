@@ -1,4 +1,8 @@
 name: ListenToMe
+configs:
+  Debug: debug
+  Release: release
+  AppStore: release
 # The Apple Watch app is embedded in ListenToMeIOS only when the project is generated with
 # WATCH_EMBED=YES (issue #181, decision 4), so an unrelated iOS release cannot ship it early.
 # scripts/ios-testflight.sh refuses an archive that contains it. Task 21 of
@@ -57,6 +61,21 @@ targets:
         Debug:
           PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMe.dev
           BUNDLE_DISPLAY_NAME: "ListenToMe (Dev)"
+        # The Mac platform in App Store Connect shares the iOS app record and bundle id.
+        # Keep the existing DMG and Dev identities independent, including their TCC grants.
+        AppStore:
+          PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMe.ios
+          DEVELOPMENT_TEAM: T32FW7PZ3S
+          DEVELOPMENT_LANGUAGE: en-US
+          MARKETING_VERSION: "1.5.0"
+          CURRENT_PROJECT_VERSION: "15"
+          CODE_SIGN_ENTITLEMENTS: App/ListenToMeAppStore.entitlements
+          ENABLE_APP_SANDBOX: YES
+          ENABLE_HARDENED_RUNTIME: YES
+          ENABLE_OUTGOING_NETWORK_CONNECTIONS: YES
+          ENABLE_RESOURCE_ACCESS_AUDIO_INPUT: YES
+          ENABLE_RESOURCE_ACCESS_CALENDARS: YES
+          ENABLE_USER_SELECTED_FILES: readwrite
   ListenToMeIOS:
     type: application
     platform: iOS
@@ -182,6 +201,7 @@ targets:
       - SharedPlatform/SpeakerAudioBuffer.swift
       - App/HotkeyMonitor.swift
       - App/MacOperationErrors.swift
+      - App/ReferenceSelectionStore.swift
       - App/MacCapturePreflight.swift
       - App/MacCheckpointController.swift
       - App/MacMeetingEnvironment.swift
