@@ -527,6 +527,18 @@ Confluence."
 Record the off/on examples here when the device pass is run (date, device, script, terms fixed, terms
 still missed).
 
+**Controlled SDK results — October 26, #236:** [The evaluation](vocabulary-biasing-evaluation.md)
+records file inference on a physical iPhone 12 Pro Max and Mac with these exact scripts synthesized
+in two stock voices. The production SpeechTranscriber adapter recovered 36/64 scored targets with
+vocabulary off and on; every paired transcript was identical. Explicit SDK diagnostics accepted
+100 contextual terms but reproduced that score. Contextual Dictation scored 41/64; custom models
+scored 42/64 on iPhone and 41/64 on Mac, with no added target-presence benefit from pronunciations.
+These are fixed-waveform measurements, not the live app acceptance above. Expected live spelling
+improvements, mid-recording changes and language switches remain unverified; #236 stays open.
+No production engine, settings or privacy behavior changed. See the report for exact supplied-term
+denominators, ordinary/silence controls, model preparation/cache costs and execution limits.
+
+
 ## Save to folder — Markdown vault (#53)
 
 iPhone (simulator is enough for 1–5; 6 needs a physical device signed in to iCloud):
