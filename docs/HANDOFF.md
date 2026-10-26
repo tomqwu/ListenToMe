@@ -54,13 +54,19 @@ collapsed brief voices; fake-ID simulator tests had not exercised acoustic separ
 now selects recording-scoped LS-EEND DIHARD II streaming, while Mac and prepared Watch/file
 imports keep their offline pipeline. See [model design and acceptance](speaker-identification.md).
 
-Twelve real-model native tests pass, including overlap/final flush, returning names after silence,
+Thirteen real-model native tests pass, including balanced/unequal dialogue, overlap/final flush, returning names after silence,
 more than ten minutes of bounded prediction state, gaps/cancellation and file-preparation isolation.
 Two iOS Stop/opt-out control regressions and 44 focused Core tests passed before the latest review
 refinement. Independent review caught a positive-gap callback reopening a finalized run and required
 per-voice identity assertions after long silence; both changes pass the expanded native run.
-Full validation, final review, CI, merge and the authorized tester-feedback TestFlight train remain
-pending. Current private tester audio and physical iPhone/iPad accuracy/performance are unverified.
+A first full gate on `0033fd4` passed 1,239 Core tests (seven skips, 98.2493% coverage) and
+was intentionally stopped during iOS UI tests when a control audit found the opt-out switch disabled
+while recording. Its source stayed unchanged and both dedicated simulators were deleted; it is not
+a full-validation pass. A rendered switch regression and balanced two-voice contract are being
+added and passing. All 39 native Mac tests, the actual Settings-switch UI regression and the
+stronger moving-overlap test pass. A separate three-person sample still merges two voices under both old and new models; this
+known limitation is disclosed in What to Test. Full validation, final review, CI, merge and the
+authorized tester-feedback TestFlight train remain pending. Current private tester audio and physical iPhone/iPad accuracy/performance are unverified.
 No Mac publication or Watch embedding is authorized by this fix. App Store Connect read-only
 preflight on October 26 found build 36 unused and production baseline 1.15.0 unchanged.
 

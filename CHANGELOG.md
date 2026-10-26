@@ -20,7 +20,7 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased since 1.18.0 (35))
 
-- Fix live speaker identification merging brief alternating voices into Speaker 1. A recording-scoped streaming model carries voice identities and edited names through overlapping windows and silence. Stop flushes delayed words; disabling identification releases its audio and voice state. Real-model native regression tests supplement simulator controls. Original tester audio and physical-device accuracy/performance acceptance remain pending. (#310)
+- Fix live speaker identification merging brief alternating voices into Speaker 1. A recording-scoped streaming model carries voice identities and edited names through overlapping windows and silence. Stop flushes delayed words; the Settings switch can disable labels while listening, releasing its audio and voice state. Re-enabling waits until Stop. Similar voices can still merge in group conversations. Real-model native regression tests supplement simulator controls. Original tester audio and physical-device accuracy/performance acceptance remain pending. (#310)
 
 - Documentation: the Watch speaker-privacy section now agrees with the existing opt-in saved-audio retention policy. No app behavior changes. (#225)
 

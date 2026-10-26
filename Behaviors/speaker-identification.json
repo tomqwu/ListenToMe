@@ -182,15 +182,21 @@
       "name": "Turning speaker identification off releases the active voice state",
       "given": "speaker inference is pending during a microphone recording",
       "when": "the user disables Identify speakers",
-      "then": "the speaker buffer and run are released immediately and late model results cannot label the transcript while recording remains independently stoppable",
+      "then": "the setting remains reachable to withdraw consent, the speaker buffer and run are released immediately, late model results cannot label the transcript, transcription stays stoppable and re-enabling waits until Stop",
       "covers": [
-        "iOS/MobileSpeakers.swift"
+        "iOS/MobileSpeakers.swift",
+        "iOS/MobileSpeakersView.swift"
       ],
       "bindings": [
         {
           "suite": "ios-unit",
           "file": "iOSUnitTests/MobileStreamingSpeakerTests.swift",
           "test": "MobileStreamingSpeakerTests/testDisablingSpeakerIdentificationReleasesItsRunAndRejectsLateResults"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileSpeakerControlsUITests.swift",
+          "test": "MobileSpeakerControlsUITests/testSpeakerOptOutIsReachableWhileListeningAndOptInWaitsForStop"
         }
       ]
     },
@@ -310,6 +316,23 @@
           "suite": "mac-unit",
           "file": "macOSTests/SpeakerStreamingModelTests.swift",
           "test": "SpeakerStreamingModelTests/testCancellationDuringPreparationCannotFeedAnEndedRun"
+        }
+      ]
+    },
+    {
+      "id": "SPEAKER-016",
+      "name": "Keep balanced two-person dialogue distinct",
+      "given": "two known voices have equal total speech time over eight alternating sentences",
+      "when": "the actual production model labels every timed turn",
+      "then": "each voice keeps one identity and every turn belongs to that voice, with two different identities",
+      "covers": [
+        "iOS/MobileConversationDiarizer.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/SpeakerModelQualityTests.swift",
+          "test": "SpeakerModelQualityTests/testBalancedDialogueKeepsBothVoicesAcrossEveryTurn"
         }
       ]
     }

@@ -133,7 +133,8 @@ The archive, upload, tagging and verification steps themselves are not repeated 
 
 The tester-feedback speaker fix uses per-recording LS-EEND streaming for the live microphone,
 with stable recording-scoped identities, bounded prediction history and final tail flushing.
-Turning identification off releases its audio and blocks late labels. Mac capture and Watch/file
+The Settings switch can turn identification off while listening, releasing its audio and blocking
+late labels; re-enabling waits until Stop. Mac capture and Watch/file
 imports retain the existing offline pipeline. The [model contract and evidence limits](speaker-identification.md)
 and [What to Test](../metadata/ios/en-CA/what-to-test-1.18.1.txt) describe real-model gates and pending
 original-recording / physical-device acceptance. Published TestFlight remains 1.18.0 (35).
@@ -595,8 +596,9 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   host), identification pauses with the reason in the status area and no further passes run until
   you tap **Retry** or start a new recording. Limits: overlapping speech and short utterances are
   often left as **Microphone** or attributed to whoever spoke longest; the live model has ten
-  speaker slots and its synthetic regression fixtures do not establish every language, voice or
-  noisy room. Physical-device speed/battery and original tester audio remain pending. A voice is not recognized
+  speaker slots. An observed three-person synthetic sample still merges two voices under both
+  the earlier model and this fix; reliable group-conversation separation is not established.
+  Its synthetic regression fixtures do not establish every language, voice or noisy room. Physical-device speed/battery and original tester audio remain pending. A voice is not recognized
   across recordings, so after Stop/Listen (or an interruption) new voices continue the numbering
   (Speaker 3, 4…) and can be renamed to merge them; backgrounding ends the labeling run without awaiting model work;
   more than two hours of one recording is not analyzed further.

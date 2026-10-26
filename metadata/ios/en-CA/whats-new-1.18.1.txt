@@ -1,6 +1,6 @@
 Your conversation, your workspace—and recording that fits your device.
 
-• Improved live speaker identification for brief alternating voices. Returning people keep labels and edited names through quiet intervals; Stop finishes delayed labels, and disabling identification rejects late results. Speaker analysis remains on-device.
+• Improved live speaker identification for brief alternating voices. Returning people keep labels and edited names through quiet intervals; Stop finishes delayed labels, and disabling identification rejects late results. Turn labels off while listening and back on after Stop; similar voices may still merge in group conversations. Speaker analysis remains on-device.
 • Prompt below Notes: ask a question once or save instructions for future summaries in that conversation. Choose an optional domain preset and edit it before use.
 • iPhone Duo puts Transcript and Quick side by side in landscape. Choose equal, Transcript-first or Quick-first widths; your choice is remembered. Narrow windows and larger text keep a readable stacked layout.
 • Conversation vocabularies return with History and guide automatic Quick updates. Chinese transcription has Simplified Chinese vocabulary terms.

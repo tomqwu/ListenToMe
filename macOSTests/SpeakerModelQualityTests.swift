@@ -38,6 +38,10 @@ final class SpeakerModelQualityTests: XCTestCase {
         try await assertAlternatingVoices(in: "heldout-two-voices", expectedTurns: 4)
     }
 
+    func testBalancedDialogueKeepsBothVoicesAcrossEveryTurn() async throws {
+        try await assertAlternatingVoices(in: "balanced-two-voices", expectedTurns: 8)
+    }
+
     func testReturningVoicesKeepTheirLabelsInLongerDialogue() async throws {
         try await assertAlternatingVoices(in: "returning-two-voices", expectedTurns: 8)
     }

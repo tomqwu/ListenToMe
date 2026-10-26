@@ -15,6 +15,23 @@ final class SpeakerStreamingModelTests: XCTestCase {
         let duplicate = try await model.diarizeLive(samples: prefix, startingAtSample: 0, runToken: 1, final: false)
         XCTAssertEqual(first, duplicate, "Repeating a window cannot advance the model clock")
         let growing = try await model.diarizeLive(samples: audio, startingAtSample: 0, runToken: 1, final: false)
+        let shifted = try await model.diarizeLive(samples: Array(audio.dropFirst(10 * 16_000)),
+                                                  startingAtSample: 10 * 16_000, runToken: 1, final: false)
+        XCTAssertEqual(shifted.stableSpeakerIDScope, growing.stableSpeakerIDScope)
+        XCTAssertEqual(try XCTUnwrap(shifted.analyzedThrough), try XCTUnwrap(growing.analyzedThrough) - 10,
+                       accuracy: 0.001, "A moving overlap must not feed or advance already-seen audio")
+        let cropped = growing.segments.compactMap { segment -> DiarizedSegment? in
+            let lower = max(10, segment.start)
+            let upper = segment.start + segment.duration
+            guard upper > lower else { return nil }
+            return DiarizedSegment(speakerId: segment.speakerId, start: lower - 10, duration: upper - lower)
+        }
+        XCTAssertEqual(shifted.segments.count, cropped.count)
+        for (actual, expected) in zip(shifted.segments, cropped) {
+            XCTAssertEqual(actual.speakerId, expected.speakerId)
+            XCTAssertEqual(actual.start, expected.start, accuracy: 0.001)
+            XCTAssertEqual(actual.duration, expected.duration, accuracy: 0.001)
+        }
         let final = try await model.diarizeLive(samples: audio, startingAtSample: 0, runToken: 1, final: true)
         let again = try await model.diarizeLive(samples: audio, startingAtSample: 0, runToken: 1, final: true)
         XCTAssertEqual(final, again, "Stop may drain the decoder only once")

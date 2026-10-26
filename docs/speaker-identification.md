@@ -38,7 +38,9 @@ Repeated final requests are idempotent, and late additional audio cannot reopen 
 
 The raw speaker buffer remains bounded by the existing ten-minute policy. The model retains at
 most 6,000 probability frames (ten minutes at 10 Hz), without rewinding its absolute clock or
-resetting voice identities. Turning identification off releases its raw buffer immediately and
+resetting voice identities. The Settings switch permits opt-out while recording; re-enabling waits
+until Stop so a fresh run starts with its own capture buffer. Turning identification off releases
+its raw buffer immediately and
 rejects late results. Ending/backgrounding a run fences queued work; model voice/prediction state
 is reset when outstanding inference drains. Cleanup from an old run cannot reset a new one.
 
@@ -64,10 +66,11 @@ from simulator host tests, which substitute models and must not download them.
 
 ## Executable acceptance and its limits
 
-`SPEAKER-001`–`SPEAKER-015` in [the BDD catalog](../Behaviors/speaker-identification.json) bind:
+`SPEAKER-001`–`SPEAKER-016` in [the BDD catalog](../Behaviors/speaker-identification.json) bind:
 
 - Real CoreML inference through the actual production iOS factory: brief unequal turns, one voice
-  with pauses, a second stock-voice pair, full eight-turn dialogue, returning voices and edited names.
+  with pauses, a second stock-voice pair, balanced eight-turn dialogue, full unequal-turn dialogue,
+  returning voices and edited names.
 - Successive overlapping windows, duplicate requests, final flush and padding bounds, rejected late
   audio, gaps/new recordings, old cleanup, preparation cancellation and separate file readiness.
 - A recording longer than ten minutes: actual retained probability bounds, monotonic time, each
@@ -78,7 +81,10 @@ Run `make bdd-check`, `make mac-test`, the relevant iOS/Core suites, then `make 
 Preserve actual red/green evidence. Initial old-model quality runs failed; the expanded streaming
 tests additionally caught a finalized-run reset and insufficient brief-turn coverage after long
 silence. Independent review found the positive-gap reopening case and strengthened the long-run
-assertions to reject exchanged identities. Do not call compilation failures a model regression.
+assertions to reject exchanged identities. A later control audit caught that the actual Settings
+switch was disabled while recording even though the native test could assign its property; a new
+rendered UI test reproduced that failure before changing the control. Do not call compilation
+failures a model regression.
 
 Synthetic stock voices are repeatable regression fixtures, not universal accuracy certification.
 The original private recording has **not** been tested. Physical iPhone/iPad speech alignment,
@@ -88,3 +94,13 @@ speaker with greatest covered duration once coverage reaches 30%. The model cann
 two people inside one combined recognition line. Simulator screenshots do not establish voice
 accuracy. Record these limits on the beta release and use the
 [physical smoke checklist](manual-smoke-test.md#iphoneipad-live-speaker-regression-310).
+
+### Observed group-conversation limitation
+
+An additional 26.53-second synthetic three-person sample (Daniel, Samantha and Karen, with roughly
+equal speech time) merges Samantha and Karen into one group under both the earlier offline model
+and the selected DIHARD II streaming model. DIHARD III also merges them; Sortformer emits three
+IDs but exchanges Samantha's identity partway through. This is a preserved no-go diagnostic, not a
+passing three-speaker contract. The balanced two-person sample passes. Ten slots describe model
+capacity; reliable three-person separation has not been established. Keep this observed limitation
+in What to Test and do not claim the original private recording is fixed without testing it.

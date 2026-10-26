@@ -56,7 +56,7 @@ disconnected Watch transfer, real microphone/system capture or physical-device r
 
 The #310 regression exposed a missing boundary: fake diarizer IDs proved label mapping, not that
 actual voices were separated. `SHARED-001` now explicitly describes already-diarized groups.
-`SPEAKER-001`–`SPEAKER-015` bind actual model inference, streaming lifecycle, timeline authority and
+`SPEAKER-001`–`SPEAKER-016` bind actual model inference, streaming lifecycle, timeline authority and
 native controls separately. The Mac native suites call the same `productionDiarizer()` selected on
 physical iPhone/iPad; the unit/UI host substitutions cannot satisfy these quality contracts.
 
@@ -68,6 +68,9 @@ controls, a second voice pair, successive overlapping windows, returning voices 
 through silence, bounded long-run state, final flush, cancellation and cleanup. Merely finding two
 raw speaker IDs is insufficient: swapped identities must fail. These fixtures are regression gates,
 not proof of the original private recording, physical-device performance or universal accuracy.
+The separate three-person diagnostic still merges two voices and is documented as a known limitation.
+Native property tests also need reachable user controls: the opt-out contract includes a rendered
+Settings-switch test while recording, rather than treating a direct property assignment as UI proof.
 See [speaker evidence and acceptance](speaker-identification.md).
 
 ## Device compatibility is behavior

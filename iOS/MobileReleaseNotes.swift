@@ -52,6 +52,7 @@ enum MobileReleaseNotes {
             "Live speaker identification uses a recording-scoped streaming model to improve brief alternating turns.",
             "Returning voices keep their labels and edited names through overlapping audio windows and quiet intervals.",
             "Stop finishes delayed speaker labels. Turning identification off clears its audio buffer and rejects late results.",
+            "You can turn speaker labels off while listening and enable them again after Stop. Similar voices may still merge in group conversations.",
             "Speaker analysis stays on-device. Saved audio remains optional; enable Save audio recordings before listening for playback."
         ]),
         .init(version: "1.18.0", title: "Recording, review and recovery", details: [
