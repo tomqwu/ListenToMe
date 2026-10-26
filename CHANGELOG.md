@@ -20,7 +20,6 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased since 1.18.0 (35))
 
-- Fix live speaker identification merging brief alternating voices into Speaker 1. A recording-scoped streaming model carries voice identities and edited names through overlapping windows and silence. Stop flushes delayed words; the Settings switch can disable labels while listening, releasing its audio and voice state. Re-enabling waits until Stop. Similar voices can still merge in group conversations. Real-model native regression tests supplement simulator controls. Original tester audio and physical-device accuracy/performance acceptance remain pending. (#310)
 
 - Documentation: the Watch speaker-privacy section now agrees with the existing opt-in saved-audio retention policy. No app behavior changes. (#225)
 
@@ -33,6 +32,13 @@ does not show it again, and a fresh install does not see it at all; see
 - Apple Watch companion, remote Start/Stop for the iPhone recorder (not yet shipped; ships with watch recording on the #181 train). (#181)
 - iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
 - Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
+
+## iOS 1.18.1 (36) — TestFlight candidate
+
+Prepared for the speaker-identification feedback train. Upload acceptance and physical-device
+accuracy/performance remain pending; this section does not claim publication.
+
+- Fix live speaker identification merging brief alternating voices into Speaker 1. A recording-scoped streaming model carries voice identities and edited names through overlapping windows and silence. Stop flushes delayed words; the Settings switch can disable labels while listening, releasing its audio and voice state. Re-enabling waits until Stop. Similar voices can still merge in group conversations. Real-model native regression tests supplement simulator controls. Original tester audio and physical-device accuracy/performance acceptance remain pending. (#310)
 
 ## iOS 1.18.0 (35) — 2026-10-26 (TestFlight)
 

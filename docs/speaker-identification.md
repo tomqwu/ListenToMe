@@ -1,6 +1,6 @@
 # Live speaker identification — #310
 
-The fix described here is in development for the next iPhone/iPad beta, **not published**.
+The fix described here is a locally validated iPhone/iPad release candidate, **not published**.
 TestFlight 1.18.0 (35) uses the earlier offline/clustering pipeline. Mac capture and Watch/file
 imports retain that pipeline; this change does not claim to improve their model accuracy.
 

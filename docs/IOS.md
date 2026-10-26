@@ -129,9 +129,9 @@ The archive, upload, tagging and verification steps themselves are not repeated 
 [IOS-RELEASING.md](IOS-RELEASING.md) for iOS, [RELEASING.md](RELEASING.md) for macOS, and
 [AGENTS.md](../AGENTS.md) for the release workflow that governs both.
 
-## iOS 1.18.1 (36) — in development, not published
+## iOS 1.18.1 (36) — TestFlight candidate, not published
 
-The tester-feedback speaker fix uses per-recording LS-EEND streaming for the live microphone,
+The locally validated tester-feedback speaker fix uses per-recording LS-EEND streaming for the live microphone,
 with stable recording-scoped identities, bounded prediction history and final tail flushing.
 The Settings switch can turn identification off while listening, releasing its audio and blocking
 late labels; re-enabling waits until Stop. Mac capture and Watch/file

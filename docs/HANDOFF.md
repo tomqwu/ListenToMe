@@ -8,7 +8,7 @@ Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags)
 
 **PR #308 is merged; iOS 1.18.0 (35) is published to TestFlight.** All 18 prior PR heads and the
 completed #134 implementation are preserved in ancestry. Nineteen implemented issues closed with
-the merge, and no PR remains open. The source is `b1570ad567a43a093294974871d7f0abf1872708`;
+the merge. The current tester-feedback PR is described below. The source is `b1570ad567a43a093294974871d7f0abf1872708`;
 merge `8c8023f12b0c324540614adc1a1f6906e8915eaf` has the exact same tree. The maintainer explicitly
 approved “Defer Mac acceptance; merge and publish TestFlight.” Mac GUI/real OTHERS acceptance
 remains pending and Mac DMG publication stays paused.
@@ -46,42 +46,40 @@ physical-device accuracy/performance/battery spike; #223 additional semantic-sea
 embedding experiments are no-go research, not an implemented or published language expansion.
 The dated checkpoints below are historical and do not supersede this publication record.
 
-## Active tester-feedback fix — #310
+## Speaker-identification release candidate — #310
 
-Branch `codex/310-speaker-separation` is implementing the reported all-Speaker-1 regression for
-planned iOS 1.18.1 (36). It is **not merged or published**. Actual old-model inference reproduced
-collapsed brief voices; fake-ID simulator tests had not exercised acoustic separation. Live iOS
-now selects recording-scoped LS-EEND DIHARD II streaming, while Mac and prepared Watch/file
-imports keep their offline pipeline. See [model design and acceptance](speaker-identification.md).
+PR [#311](https://github.com/tomqwu/ListenToMe/pull/311) contains the reported all-Speaker-1 fix for
+**iOS 1.18.1 (36)**. Merge and upload remain pending; accepted TestFlight is still 1.18.0 (35).
+Live iOS uses recording-scoped LS-EEND DIHARD II streaming. Mac capture and prepared Watch/file
+imports retain their offline pipeline. See [model behavior and limits](speaker-identification.md).
 
-Thirteen real-model native tests pass, including balanced/unequal dialogue, overlap/final flush, returning names after silence,
-more than ten minutes of bounded prediction state, gaps/cancellation and file-preparation isolation.
-Two iOS Stop/opt-out control regressions and 44 focused Core tests passed before the latest review
-refinement. Independent review caught a positive-gap callback reopening a finalized run and required
-per-voice identity assertions after long silence; both changes pass the expanded native run.
-A first full gate on `0033fd4` passed 1,239 Core tests (seven skips, 98.2493% coverage) and
-was intentionally stopped during iOS UI tests when a control audit found the opt-out switch disabled
-while recording. Its source stayed unchanged and both dedicated simulators were deleted; it is not
-a full-validation pass. A rendered switch regression and balanced two-voice contract are being
-added and passing. All 39 native Mac tests, the actual Settings-switch UI regression and the
-stronger moving-overlap test pass. A separate three-person sample still merges two voices under both old and new models; this
-known limitation is disclosed in What to Test. Full validation, final review, CI, merge and the
-authorized tester-feedback TestFlight train remain pending.
+Full `make validate-local` passed on clean frozen source **`164c54a`** at **2026-10-26 17:08 UTC**:
+1,239 Core tests (seven skips, 98.249328% coverage); 516 iOS passes and 12 intentional skips;
+39 Mac passes including 13 actual-model cases; four Watch passes; the 107-scenario BDD gate and
+all bound automated native checks, helper/lint/signed-build checks, and real Ollama/OpenAI-compatible
+contracts. Manual/device acceptance remains separate as described below.
+Source hashes stayed unchanged and both dedicated simulators were deleted. The three required
+hosted checks passed on that source. This release preparation changes documentation only; preserve
+its product-source equivalence and require fresh CI on the final head before merging.
 
-A second full run on `124ecbc` passed 59 UI tests with five intentional skips before stopping after
-one genuine largest-text release-history assertion and one cancellation. The failure capture shows
-readable 1.10.2 notes still above the oldest 1.10.0 heading after the test's fixed 70 swipes; Continue
-worked. The repaired harness uses observed heading position, an unobscured viewport, native far flings,
-precise near/overshoot recovery and progress diagnostics. Both focused release-note UI cases now
-pass with the oldest heading fully visible above Continue. All 454 iOS unit tests also pass with
-seven intentional skips and no failures; a clean full retry remains pending. This is not
-a full-validation pass. Its source stayed unchanged, both dedicated simulators were deleted, and
-its logs/xcresult/capture are preserved. A signed 1.18.1 (36) archive/export from `124ecbc` passed
-package checks but remains local and unpublished. It will be superseded by an exact-source candidate
-after the test repair and clean full validation. PR [#311](https://github.com/tomqwu/ListenToMe/pull/311)
-is open; its three required CI checks passed on `124ecbc`. Current private tester audio and physical iPhone/iPad accuracy/performance are unverified.
-No Mac publication or Watch embedding is authorized by this fix. App Store Connect read-only
-preflight on October 26 found build 36 unused and production baseline 1.15.0 unchanged.
+Independent correctness review passed. Real-model tests cover brief, balanced and unequal turns,
+a second voice pair, returning names after silence, moving/duplicate windows, bounded long-run
+prediction state, final flushing, cancellation, file readiness and old-run cleanup. Native controls
+and rendered Settings tests prove opt-out is reachable while listening and re-enabling waits for Stop.
+The largest-text release-history test now reaches the oldest heading through observed geometry;
+its earlier fixed-gesture failure and other genuine red/green records remain in the dated external
+evidence ledger. The interrupted/failed full runs are not counted as passes.
+
+Fresh four-category release screenshots, final-head archive selection, merge, accepted upload,
+Apple processing/Dev access, exact-source tag and GitHub pre-release remain pending. Earlier local
+archives are preserved; none was uploaded. Only use the selected exact-source candidate after the
+release-documentation commit and fresh checks. App Store Connect preflight found build 36 unused
+and the production baseline still 1.15.0.
+
+The original private recording and physical iPhone/iPad accuracy, latency and battery remain
+unverified. An observed three-person synthetic sample still merges two voices under both old and
+new models; this is explicitly disclosed in What to Test. Do not claim reliable three-person
+separation or production readiness. Mac publication remains paused and Watch stays unembedded.
 
 ## Historical combined PR train — October 25
 
