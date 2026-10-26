@@ -88,6 +88,7 @@ New during finalization, immediate pane Stop, multi-batch Summary and import can
 fresh native Mac screenshots and verify real system-audio transcription labeled OTHERS. Automated
 native graph tests and Core coverage do not establish rendered UI or physical capture acceptance.
 
-The consolidated PR #308 candidate is frozen separately at b763ac3. This local #134 continuation
-does not change its artifact, screenshots or validation provenance. No extra feature PR was opened.
+The earlier PR #308 candidate at b763ac3 remains preserved with its own artifacts and evidence.
+The reviewed #134 continuation at 45e015f is now included in that same integration PR; full validation
+runs on that exact product source. Current-head CI/screenshots still need refresh. No extra feature PR was opened.
 Do not call this work merged or published until the repository's corresponding gates are complete.

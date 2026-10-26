@@ -4,48 +4,48 @@ A snapshot for an agent picking up ListenToMe cold. [AGENTS.md](../AGENTS.md) an
 [CLAUDE.md](../CLAUDE.md) stay the rules; this note is only the state of things on the date above.
 Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags) before acting on it.
 
-## Local continuation while maintainer is away
+## Current consolidation and validation — maintainer away
 
-PR #308 remains frozen at `b763ac3`: full local validation and all three required hosted checks
-passed, with 24 fresh inspected iPhone/iPad screenshots. The 17 other PRs were closed as superseded
-after verifying their live heads are ancestors. Installed Mac GUI/actual OTHERS acceptance remains
-pending; the maintainer requested code work while away. Do not call the combined candidate merged
-or published. TestFlight 1.17.0 (34) remains the last accepted upload.
+PR #308 now includes the completed #134 implementation from `45e015f`, alongside all 18 original
+PR heads. The other 17 PRs were closed as superseded after their exact live heads were verified in
+ancestry; this remains the only open PR. No additional feature PR was opened. #134 is implemented
+and independently reviewed, but is not done until full validation, native acceptance, CI and merge.
+No issue is closed from local code alone.
 
-Independent #134 work is in `codex/134-finish-thin-views`, based on that frozen source. Calendar and
-reference task ownership now live in Core. ORCH-001/003 are baseline extraction contracts without
-invented historical red. Held-reply tests reproduced late Calendar overwrites, cancelled reference
-publication and premature context invalidation on a rejected close (ORCH-002/004/005), then passed
-after ownership/cancellation fixes. Independent review caught the rejected-close edge and the async
-default-argument closure; both are corrected. Evidence is in the external `listentome-features/
-orchestration-134` directory. This remains unmerged #134 work, with no new PR or release claim.
-Full validation and rendered context/close acceptance remain required before integration.
-The next local slice moves model-catalog task ownership and pane-healing policy into Core
-(ORCH-006/007): four baseline tests adopted existing privacy/choice behavior, then eight assertions
-reproduced AI-off discovery, pre-execution cancellation and stale-route publication before the fix.
-All nine focused tests passed and independent review found no blockers. Native credentials stay in
-the adapter; this does not claim to abort network I/O already in progress.
+The full `make validate-local` run is frozen at `45e015f` in the separate
+`codex/134-finish-thin-views` checkout. Its complete Core gate passed 1,232 tests (seven skips,
+98.26% line coverage); simulator/native suites and real model contracts are still running. Source
+hashes and exact results live in the external `listentome-features/orchestration-134/
+full-validation-45e015f` folder. This handoff-only integration follow-up changes no product source.
+The earlier `b763ac3` full pass, three green hosted checks and 24 inspected screenshots remain
+preserved historical evidence; current-head CI and fresh release screenshots must be refreshed.
 
-The local continuation now also extracts New/import and background-result ownership, and registers
-menu/hotkey response tasks synchronously. Actual immediate-Stop and cancelled-before-open regressions
-were reproduced before fixes. The root MeetingView is 274 lines; its extensions contain no explicit
-Task bodies. Twenty-six native Mac tests and the signed build passed. A full Core run exposed a
-refactor regression that waited only for Summary’s first batch (51 assertions across two tests);
-the original continuation-aware wait is restored and all 50 focused tests pass. Keep that failed
-run as evidence, not a candidate pass. The complete frozen validation and installed rendering/audio
-acceptance still have to pass. See [ORCHESTRATION.md](ORCHESTRATION.md) for ownership and evidence.
-The final #134 scope review identified portable save policy still in MobileSession. It now lives in
-Core ConversationPersistenceCoordinator, with encoding/private writes/backup/UI messages native.
-Seven real-filesystem iOS tests passed before extraction; the same native tests and six Core policy
-tests check parity afterward. Independent review cleared the implementation scope. #134 is not done
-until frozen validation, native acceptance, hosted CI and merge; no issue is closed on local code alone.
+#134 now has 14 ORCH contracts: conversation-owned Calendar/reference tasks; accepted-close
+invalidation; model-refresh privacy/choice policy; New/import transactions; synchronous pane/prompt
+command registration; current background-result ownership; native buffer/graph wiring; and iOS
+save dirty-state/ordering with native protection/backup/UI effects. The Mac root view is 274 lines
+and all files extending MeetingView have no explicit Task bodies. Seven real-filesystem iOS save
+tests passed before and after extraction. Existing formatting/selection/save policies are baseline
+adoption without invented historical red; actual cancellation and immediate-Stop regressions retain
+red/green logs. Independent review caught rejected-close invalidation, remaining pane-button wrappers
+and the last persistence extraction gap; all were corrected. A failed intermediate full Core run
+(51 assertions across two Summary continuation tests) is preserved as failed; its wait is restored.
+See [ORCHESTRATION.md](ORCHESTRATION.md) for ownership and evidence.
+
+Installed Mac GUI and real OTHERS transcription remain pending. The Mac locked again and the
+maintainer explicitly requested code work while away; do not repeatedly ask for unlock or reset
+permissions. Restore original Dev settings and complete targeted cleanup after acceptance finishes.
+Keep source/signing evidence for the exact app tested. This integration is not merged or published.
+Latest accepted TestFlight remains 1.17.0 (34); 1.18.0 (35) has no accepted upload yet. Watch remains
+unembedded pending its physical paired-device gates. Mac DMG publication remains paused.
 
 ## Combined PR train — October 25
 
 The maintainer explicitly requested consolidation of all 18 open PRs into one release and TestFlight
 publication. Existing PR #308 (`codex/306-ipad-start`) is the integration PR; no new feature PR was
 opened. It preserves the heads of #264, #280, #281, #283, #285–#296 and #303, including the older
-refactor stack. Do not delete their history or describe #134's partial refactor as the whole issue done.
+refactor stack. The later #134 continuation above completes its implementation; required gates and
+merge still determine done. Preserve all earlier history and evidence.
 The combined candidate is **iOS 1.18.0 (35)**; the unpublished 1.17.1 candidate is folded into it.
 Latest accepted TestFlight remains **1.17.0 (34)** from `cbd2e454dbf502df5832dc3654ee2d284f147380`.
 Build 35 must be checked for reuse before uploading. Nothing in this integration is published yet.
