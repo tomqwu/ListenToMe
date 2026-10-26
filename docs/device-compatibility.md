@@ -44,7 +44,7 @@ Core policy tests alone do not establish native UI or physical readiness. Keep s
 microphone/OTHERS capture, Watch pairing, accuracy and publication evidence separate. See
 [manual acceptance](manual-smoke-test.md) and [iOS distribution](IOS-RELEASING.md).
 
-The unreleased #310 live speaker fix prepares its optional on-device models separately from speech
+The #310 live speaker fix, published in TestFlight 1.18.1 (36), prepares its optional on-device models separately from speech
 and AI readiness. Model failure cannot disable microphone recording or select a cloud service.
 Native real-model tests establish bounded fixture outcomes; simulator substitutes only establish
 controls. See [speaker model compatibility and limits](speaker-identification.md).

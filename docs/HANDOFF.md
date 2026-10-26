@@ -4,11 +4,45 @@ A snapshot for an agent picking up ListenToMe cold. [AGENTS.md](../AGENTS.md) an
 [CLAUDE.md](../CLAUDE.md) stay the rules; this note is only the state of things on the date above.
 Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags) before acting on it.
 
-## Current publication — October 26
+## Current TestFlight publication — October 26, iOS 1.18.1 (36)
+
+PR [#311](https://github.com/tomqwu/ListenToMe/pull/311) merged as `51cc890` and closed #310.
+Apple accepted the API-key upload from exact artifact source `7643b204def6acea0b616a2c2de2bade2fc4c7c9` at
+**2026-10-26T17:29:24.328646+00:00**. Apple build `2fd8477d-504e-44d2-ac7f-6c7e9236d01f` is VALID and
+IN_BETA_TESTING; both existing Dev testers retain accepted group access. en-CA What to Test and
+beta description were applied/read back. The exact-source tag and [non-Latest pre-release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.1-build36)
+were verified. No installation of this new beta or production-ready acceptance is claimed.
+
+Full local validation passed on `164c54a`: 1,239 Core tests (seven skips, 98.249328% coverage),
+528 iOS tests (516 passes, 12 skips), 39 Mac tests including 13 real-model cases, four Watch tests,
+107 BDD scenarios, helper/lint/signed-build checks and both real server contracts. Only four
+release-documentation files changed before artifact source `7643b20`, whose three required CI
+checks passed. All 24 fresh native screenshots across four iPhone/iPad categories were inspected,
+hashed and preserved. [Image provenance](images/ios/release-1.18.1.json). Listing upload is pending.
+
+Live iPhone/iPad speaker analysis now keeps recording-scoped streaming state. Actual-model
+single/two-person regressions, overlap, returning names, final flush, bounds, cancellation and
+reachable opt-out controls passed. Original tester audio and physical-device accuracy, latency
+and battery remain unverified. Three-person synthetic speech still merges two voices; ten slots
+are capacity, not established accuracy. Mac/Watch file analysis retains its existing pipeline.
+Watch stays unembedded pending paired-device acceptance; Mac publication remains paused.
+
+Evidence is preserved externally under `2026-10-26/listentome-speakers`, including exact archive,
+IPA, upload receipt/log, Apple readback, tag/merge proof, full validation and 24 screenshots.
+Completed Mac Dev-session cleanup preserved signing/test evidence, found no running Dev session,
+moved only its inactive exact Dev bundle to Trash and successfully reset only
+`com.tomwu.ListenToMe.dev` permissions. Production, other worktrees, data and keys were untouched.
+
+Remaining issues: #181 Watch paired recording/sync acceptance; #205 physical multilingual Whisper
+measurements; #223 additional semantic-search languages; #236 physical vocabulary-bias measurements;
+and tracker #98. The dated sections below preserve earlier checkpoints and do not supersede this
+publication record. No public App Store submission was made.
+
+## Historical combined publication — October 26, iOS 1.18.0 (35)
 
 **PR #308 is merged; iOS 1.18.0 (35) is published to TestFlight.** All 18 prior PR heads and the
 completed #134 implementation are preserved in ancestry. Nineteen implemented issues closed with
-the merge. The current tester-feedback PR is described below. The source is `b1570ad567a43a093294974871d7f0abf1872708`;
+the merge. Subsequent speaker feedback is recorded in the current publication above. The source is `b1570ad567a43a093294974871d7f0abf1872708`;
 merge `8c8023f12b0c324540614adc1a1f6906e8915eaf` has the exact same tree. The maintainer explicitly
 approved “Defer Mac acceptance; merge and publish TestFlight.” Mac GUI/real OTHERS acceptance
 remains pending and Mac DMG publication stays paused.
@@ -46,7 +80,7 @@ physical-device accuracy/performance/battery spike; #223 additional semantic-sea
 embedding experiments are no-go research, not an implemented or published language expansion.
 The dated checkpoints below are historical and do not supersede this publication record.
 
-## Speaker-identification release candidate — #310
+## Historical speaker-identification candidate — #310
 
 PR [#311](https://github.com/tomqwu/ListenToMe/pull/311) contains the reported all-Speaker-1 fix for
 **iOS 1.18.1 (36)**. Merge and upload remain pending; accepted TestFlight is still 1.18.0 (35).
@@ -186,7 +220,7 @@ The #127 full run at `0464e9d` exposed a shared iOS test synchronization race: t
 
 | Surface | Latest published | State of `main` |
 | --- | --- | --- |
-| iPhone/iPad (TestFlight) | **1.18.0 (35)**, published 2026-10-26, tag `ios-v1.18.0-build35` at `b1570ad` | Combined batch published to Dev; Watch excluded. Current physical acceptance pending; Mac acceptance explicitly deferred. |
+| iPhone/iPad (TestFlight) | **1.18.1 (36)**, published 2026-10-26, tag `ios-v1.18.1-build36` at `7643b20` | Speaker fix published to Dev; Watch excluded. Current physical accuracy/performance and original audio pending; three-person separation unproven. |
 | macOS | **1.4.4 (14)**, 2026-09-14, tag `v1.4.4` | **Releases paused on the maintainer's decision.** About 50 commits of Mac work are merged but unreleased; see [CHANGELOG → macOS (unreleased since 1.4.4)](../CHANGELOG.md#macos-unreleased-since-144). Do not start a macOS train yourself; the maintainer calls it. |
 | Apple Watch | Not shipped | Built on `main` behind the `WATCH_EMBED` build flag (off; `scripts/ios-testflight.sh` refuses an archive that embeds it). Waits on the maintainer running `SPIKE.md` on a real watch (branch `spike/181-watch-audio`, [#181](https://github.com/tomqwu/ListenToMe/issues/181)), then the Task 20 physical-device acceptance from #193. Status table in the [watch plan](superpowers/plans/2026-10-22-apple-watch-recording.md). |
 

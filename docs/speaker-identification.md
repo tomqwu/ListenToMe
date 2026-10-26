@@ -1,7 +1,7 @@
 # Live speaker identification — #310
 
-The fix described here is a locally validated iPhone/iPad release candidate, **not published**.
-TestFlight 1.18.0 (35) uses the earlier offline/clustering pipeline. Mac capture and Watch/file
+The fix described here is published in [iPhone/iPad TestFlight 1.18.1 (36)](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.1-build36).
+The earlier 1.18.0 (35) used the offline/clustering pipeline. Current physical-device and original-recording acceptance remain pending. Mac capture and Watch/file
 imports retain that pipeline; this change does not claim to improve their model accuracy.
 
 ## What failed and why the former tests missed it
