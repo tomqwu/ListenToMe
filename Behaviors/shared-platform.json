@@ -4,7 +4,7 @@
     {
       "id": "SHARED-001",
       "name": "Preserve speaker order",
-      "given": "two voices appear in a transcript",
+      "given": "two already-diarized speaker groups and timed transcript lines",
       "when": "speaker labels are assigned",
       "then": "labels follow appearance order",
       "covers": [

@@ -48,6 +48,13 @@ enum MobileReleaseNotes {
         var id: String { version }
     }
     static let releases: [Release] = [
+        .init(version: "1.18.1", title: "Keep each voice distinct", details: [
+            "Live speaker identification uses a recording-scoped streaming model to improve brief alternating turns.",
+            "Returning voices keep their labels and edited names through overlapping audio windows and quiet intervals.",
+            "Stop finishes delayed speaker labels. Turning identification off clears its audio buffer and rejects late results.",
+            "You can turn speaker labels off while listening and enable them again after Stop. Similar voices may still merge in group conversations.",
+            "Speaker analysis stays on-device. Saved audio remains optional; enable Save audio recordings before listening for playback."
+        ]),
         .init(version: "1.18.0", title: "Recording, review and recovery", details: [
             "Re-transcribe saved audio in a chosen language, review it and choose whether to replace the transcript. Notes and summaries are kept.",
             "Automatic reviews include instructions and references in their size limits. Stop and cancelled work stay bound to the right recording.",

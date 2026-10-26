@@ -3,14 +3,24 @@ import Foundation
 /// One diarization pass over a window of audio: its segments, plus one voice embedding per diarized
 /// cluster (keyed by the segments' `speakerId`). The embeddings are what lets `SpeakerIdentityTracker`
 /// recognize a voice that was silent through the windows' shared audio (issue #171). A diarizer that
-/// exposes no embeddings leaves `embeddings` empty, and identities are carried by shared time alone.
+/// exposes recording-scoped stable slots uses `stableSpeakerIDScope` instead. Legacy results with
+/// neither embeddings nor a stable scope carry identities by shared time alone.
 public struct DiarizedWindow: Sendable, Equatable {
     public let segments: [DiarizedSegment]
     public let embeddings: [String: [Float]]
+    /// End-to-end streaming slots remain stable only within this model epoch. A reset must use a
+    /// new scope so reused slot numbers cannot inherit another person's identity or edited name.
+    public let stableSpeakerIDScope: String?
+    /// Confirmed model time, relative to the supplied window. Nil retains the legacy whole-window
+    /// splice policy; streaming consumers must preserve labels beyond their delayed output horizon.
+    public let analyzedThrough: TimeInterval?
 
-    public init(segments: [DiarizedSegment], embeddings: [String: [Float]] = [:]) {
+    public init(segments: [DiarizedSegment], embeddings: [String: [Float]] = [:],
+                stableSpeakerIDScope: String? = nil, analyzedThrough: TimeInterval? = nil) {
         self.segments = segments
         self.embeddings = embeddings
+        self.stableSpeakerIDScope = stableSpeakerIDScope
+        self.analyzedThrough = analyzedThrough
     }
 }
 

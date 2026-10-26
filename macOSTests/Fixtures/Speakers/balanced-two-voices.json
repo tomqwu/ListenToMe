@@ -1,0 +1,48 @@
+{
+  "kind": "Synthetic local stock voices; authored planning dialogue; no audible playback or private recording",
+  "sampleRate": 16000,
+  "durationSeconds": 23.4540625,
+  "turns": [
+    {
+      "voice": "Daniel",
+      "start": 0.0,
+      "end": 2.6214375
+    },
+    {
+      "voice": "Samantha",
+      "start": 2.9714375,
+      "end": 5.117375
+    },
+    {
+      "voice": "Daniel",
+      "start": 5.467375,
+      "end": 8.2444375
+    },
+    {
+      "voice": "Samantha",
+      "start": 8.5944375,
+      "end": 11.0519375
+    },
+    {
+      "voice": "Daniel",
+      "start": 11.4019375,
+      "end": 13.9189375
+    },
+    {
+      "voice": "Samantha",
+      "start": 14.2689375,
+      "end": 17.141
+    },
+    {
+      "voice": "Daniel",
+      "start": 17.491,
+      "end": 19.9661875
+    },
+    {
+      "voice": "Samantha",
+      "start": 20.3161875,
+      "end": 23.1040625
+    }
+  ],
+  "audioSHA256": "071e97e519f98a985faab9b8c33dce1df06cea6ca672558945fd67f26f1390a1"
+}

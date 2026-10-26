@@ -1,0 +1,340 @@
+{
+  "feature": "Speaker identification quality",
+  "scenarios": [
+    {
+      "id": "SPEAKER-001",
+      "name": "Separate brief alternating voices from actual audio",
+      "given": "a 20-second on-device recording contains two known distinct synthetic voices with short and long alternating turns",
+      "when": "the production diarizer analyzes the audio and its timeline is applied to the transcript",
+      "then": "each known voice retains one label, the two voices have different labels, and no expected turn is merged into the other person",
+      "covers": [
+        "SharedPlatform/SpeakerDiarizer.swift",
+        "project.yml",
+        "iOS/MobileSpeakers.swift",
+        "iOS/MobileConversationDiarizer.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/SpeakerModelQualityTests.swift",
+          "test": "SpeakerModelQualityTests/testBriefAlternatingVoicesReceiveDifferentLabels"
+        }
+      ],
+      "manual": {
+        "reason": "Native Mac CoreML inference establishes model behavior on these fixtures; it does not establish the original private recording or physical iPhone speed and accuracy.",
+        "steps": [
+          "Compare the reported recording locally if the maintainer shares its retained audio.",
+          "Exercise speaker labels on physical iPhone with different people and record source, accuracy and performance separately."
+        ]
+      }
+    },
+    {
+      "id": "SPEAKER-002",
+      "name": "Keep one voice together across pauses",
+      "given": "a recording contains one known voice speaking sentences of different lengths with pauses",
+      "when": "the actual on-device diarizer labels the timed transcript",
+      "then": "the known turns retain one speaker identity rather than becoming invented extra speakers",
+      "covers": [
+        "SharedPlatform/SpeakerDiarizer.swift",
+        "iOS/MobileSpeakers.swift",
+        "iOS/MobileConversationDiarizer.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/SpeakerModelQualityTests.swift",
+          "test": "SpeakerModelQualityTests/testOneVoiceIsNotSplitWhenPausesAndSentenceLengthsChange"
+        }
+      ]
+    },
+    {
+      "id": "SPEAKER-003",
+      "name": "Separate held-out voices without tuning to one pair",
+      "given": "a second pair of known stock voices alternates in a short imbalanced recording not used in the initial diagnosis",
+      "when": "the production model labels the timed turns",
+      "then": "the two people have different labels and each returning voice retains its label",
+      "covers": [
+        "SharedPlatform/SpeakerDiarizer.swift",
+        "iOS/MobileSpeakers.swift",
+        "iOS/MobileConversationDiarizer.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/SpeakerModelQualityTests.swift",
+          "test": "SpeakerModelQualityTests/testHeldOutVoicesDoNotMerge"
+        }
+      ]
+    },
+    {
+      "id": "SPEAKER-004",
+      "name": "Keep returning voices distinct through the full dialogue",
+      "given": "two known voices alternate eight times with unequal sentence lengths and brief replies",
+      "when": "the complete recording is analyzed by the actual production model",
+      "then": "every known turn maps to its own person with one stable identity per voice",
+      "covers": [
+        "SharedPlatform/SpeakerDiarizer.swift",
+        "iOS/MobileSpeakers.swift",
+        "iOS/MobileConversationDiarizer.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/SpeakerModelQualityTests.swift",
+          "test": "SpeakerModelQualityTests/testReturningVoicesKeepTheirLabelsInLongerDialogue"
+        }
+      ]
+    },
+    {
+      "id": "SPEAKER-005",
+      "name": "Construct the device speaker model without downloading or backing up its assets",
+      "given": "speaker identification has not been prepared and the model cache is present or missing",
+      "when": "the production device diarizer is constructed",
+      "then": "its actual cache is excluded from backups and no model asset is downloaded until preparation is explicitly requested",
+      "covers": [
+        "iOS/MobileSpeakers.swift",
+        "iOS/MobileConversationDiarizer.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSpeakerBackupTests.swift",
+          "test": "MobileSpeakerBackupTests/testDiarizerFactoryExcludesTheActualDefaultModelDirectoryWithoutDownloading"
+        }
+      ]
+    },
+    {
+      "id": "SPEAKER-006",
+      "name": "Keep returning voices through silence in the same recording",
+      "given": "two real known voices are labeled and one renamed in an active recording",
+      "when": "streaming analysis continues through silence and a later window with no earlier shared audio",
+      "then": "the same recording retains both voice identities and the edited name; a different stream epoch cannot inherit them",
+      "covers": [
+        "iOS/MobileConversationDiarizer.swift",
+        "Sources/ListenToMeCore/SpeakerIdentityTracker.swift",
+        "Sources/ListenToMeCore/SpeakerVoiceMatching.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/SpeakerModelQualityTests.swift",
+          "test": "SpeakerModelQualityTests/testVoiceEvidenceKeepsNamesWhenSharedAudioIsAbsent"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/StreamingSpeakerIdentityTests.swift",
+          "test": "StreamingSpeakerIdentityTests/testStableSlotsKeepEditedNamesWithoutSharedAudio"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/StreamingSpeakerIdentityTests.swift",
+          "test": "StreamingSpeakerIdentityTests/testAResetScopeCannotInheritAnOldNameThroughIdenticalTimestamps"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/StreamingSpeakerIdentityTests.swift",
+          "test": "StreamingSpeakerIdentityTests/testStableScopeBypassesConflictingTimeAndEmbeddingMatches"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/StreamingSpeakerIdentityTests.swift",
+          "test": "StreamingSpeakerIdentityTests/testAnotherRecordingHasIndependentIdentityEvenWhenRawSlotsMatch"
+        }
+      ]
+    },
+    {
+      "id": "SPEAKER-007",
+      "name": "Release prediction state when the recording ends",
+      "given": "an active recording owns real model prediction state",
+      "when": "that recording ends or is cancelled and model work drains",
+      "then": "the worker retains no probability history or voice state from the ended recording, and a late cleanup cannot reset a newer recording",
+      "covers": [
+        "iOS/MobileConversationDiarizer.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/SpeakerModelQualityTests.swift",
+          "test": "SpeakerModelQualityTests/testModelPredictionStateIsReleasedWhenTheRecordingEnds"
+        }
+      ]
+    },
+    {
+      "id": "SPEAKER-008",
+      "name": "Stop flushes the delayed speaker tail",
+      "given": "the streaming model has delayed words and no new microphone samples have arrived since its last pass",
+      "when": "the user stops listening",
+      "then": "one final live flush labels the last words and closes that run without routing through file analysis",
+      "covers": [
+        "iOS/MobileSpeakers.swift",
+        "iOS/MobileSession+Speakers.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileStreamingSpeakerTests.swift",
+          "test": "MobileStreamingSpeakerTests/testStopFlushesDelayedWordsEvenWhenNoNewSamplesArrive"
+        }
+      ]
+    },
+    {
+      "id": "SPEAKER-009",
+      "name": "Turning speaker identification off releases the active voice state",
+      "given": "speaker inference is pending during a microphone recording",
+      "when": "the user disables Identify speakers",
+      "then": "the setting remains reachable to withdraw consent, the speaker buffer and run are released immediately, late model results cannot label the transcript, transcription stays stoppable and re-enabling waits until Stop",
+      "covers": [
+        "iOS/MobileSpeakers.swift",
+        "iOS/MobileSpeakersView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileStreamingSpeakerTests.swift",
+          "test": "MobileStreamingSpeakerTests/testDisablingSpeakerIdentificationReleasesItsRunAndRejectsLateResults"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileSpeakerControlsUITests.swift",
+          "test": "MobileSpeakerControlsUITests/testSpeakerOptOutIsReachableWhileListeningAndOptInWaitsForStop"
+        }
+      ]
+    },
+    {
+      "id": "SPEAKER-010",
+      "name": "Delayed model output replaces only confirmed audio",
+      "given": "the transcript already has speaker labels beyond the streaming models confirmed time",
+      "when": "a partial result or confirmed silence updates an earlier interval",
+      "then": "labels beyond the confirmed horizon survive, only confirmed silence clears prior labels, and no segment claims unseen or flush-padding audio",
+      "covers": [
+        "Sources/ListenToMeCore/SpeakerStats.swift",
+        "Sources/ListenToMeCore/SpeakerVoiceMatching.swift",
+        "iOS/MobileSpeakers.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SpeakerTimelineAuthorityTests.swift",
+          "test": "SpeakerTimelineAuthorityTests/testDelayedModelOutputPreservesLabelsBeyondItsConfirmedTime"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SpeakerTimelineAuthorityTests.swift",
+          "test": "SpeakerTimelineAuthorityTests/testConfirmedSilenceClearsOnlyItsOwnInterval"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SpeakerTimelineAuthorityTests.swift",
+          "test": "SpeakerTimelineAuthorityTests/testNoPredictionCanClaimAudioOutsideItsAuthority"
+        }
+      ]
+    },
+    {
+      "id": "SPEAKER-011",
+      "name": "Overlapping live windows and Stop preserve voice identities",
+      "given": "one recording contains known alternating voices and several live windows share the same audio",
+      "when": "periodic analysis repeats and grows those windows before Stop flushes the decoder",
+      "then": "audio is fed once, every known turn keeps its speaker, flush padding claims no captured time and repeated Stop preserves the completed result",
+      "covers": [
+        "iOS/MobileConversationDiarizer.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/SpeakerStreamingModelTests.swift",
+          "test": "SpeakerStreamingModelTests/testOverlappingWindowsAndFinalFlushDoNotFeedAudioTwice"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/SpeakerStreamingModelTests.swift",
+          "test": "SpeakerStreamingModelTests/testRejectedAudioAfterFinalFlushDoesNotEraseTheCompletedResult"
+        }
+      ]
+    },
+    {
+      "id": "SPEAKER-012",
+      "name": "A lost audio gap or new recording cannot inherit an old voice identity",
+      "given": "a live recording has identified two voices",
+      "when": "unheard audio creates a gap or a new recording starts and old cleanup arrives late",
+      "then": "a new epoch separates the identities, stale recording requests are rejected, and old cleanup does not reset the new recording",
+      "covers": [
+        "iOS/MobileConversationDiarizer.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/SpeakerStreamingModelTests.swift",
+          "test": "SpeakerStreamingModelTests/testGapAndNewRecordingCreateFreshEpochsAndOldCleanupCannotResetThem"
+        }
+      ]
+    },
+    {
+      "id": "SPEAKER-013",
+      "name": "Long recordings bound prediction history while retaining voice identity",
+      "given": "a real model has heard two known voices in one recording",
+      "when": "the recording continues beyond ten minutes and those voices return",
+      "then": "at most ten minutes of prediction probabilities remain, absolute time and identities remain stable, and ending the run releases its prediction history",
+      "covers": [
+        "iOS/MobileConversationDiarizer.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/SpeakerStreamingModelTests.swift",
+          "test": "SpeakerStreamingModelTests/testLongRecordingBoundsPredictionHistoryWithoutResettingItsIdentityOrClock"
+        }
+      ]
+    },
+    {
+      "id": "SPEAKER-014",
+      "name": "File imports require foreground preparation and remain separate from live analysis",
+      "given": "live and file speaker models require preparation and the file assets fail to load",
+      "when": "an import arrives before preparation, the user retries preparation and then imports during a live recording",
+      "then": "the import starts no preparation, partial failure remains unavailable until Retry, and prepared file analysis cannot change the live voice state",
+      "covers": [
+        "iOS/MobileConversationDiarizer.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/SpeakerStreamingModelTests.swift",
+          "test": "SpeakerStreamingModelTests/testFileReadinessFailureRequiresRetryAndFileAnalysisCannotMutateLiveState"
+        }
+      ]
+    },
+    {
+      "id": "SPEAKER-015",
+      "name": "Cancelled preparation cannot publish labels or poison the next recording",
+      "given": "speaker preparation is pending for a live recording",
+      "when": "that work is cancelled and the recording ends before another recording starts",
+      "then": "the ended run retains no predictions or labels and the new recording identifies the known voices despite late old cleanup",
+      "covers": [
+        "iOS/MobileConversationDiarizer.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/SpeakerStreamingModelTests.swift",
+          "test": "SpeakerStreamingModelTests/testCancellationDuringPreparationCannotFeedAnEndedRun"
+        }
+      ]
+    },
+    {
+      "id": "SPEAKER-016",
+      "name": "Keep balanced two-person dialogue distinct",
+      "given": "two known voices have equal total speech time over eight alternating sentences",
+      "when": "the actual production model labels every timed turn",
+      "then": "each voice keeps one identity and every turn belongs to that voice, with two different identities",
+      "covers": [
+        "iOS/MobileConversationDiarizer.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/SpeakerModelQualityTests.swift",
+          "test": "SpeakerModelQualityTests/testBalancedDialogueKeepsBothVoicesAcrossEveryTurn"
+        }
+      ]
+    }
+  ]
+}

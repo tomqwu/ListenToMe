@@ -1,0 +1,48 @@
+{
+  "kind": "Synthetic local stock voices; no private recording",
+  "sampleRate": 16000,
+  "durationSeconds": 38.96825,
+  "turns": [
+    {
+      "voice": "Daniel",
+      "start": 0.0,
+      "end": 2.00425
+    },
+    {
+      "voice": "Samantha",
+      "start": 2.35425,
+      "end": 16.33725
+    },
+    {
+      "voice": "Daniel",
+      "start": 16.68725,
+      "end": 18.2926875
+    },
+    {
+      "voice": "Samantha",
+      "start": 18.6426875,
+      "end": 23.9468125
+    },
+    {
+      "voice": "Daniel",
+      "start": 24.2968125,
+      "end": 25.7386875
+    },
+    {
+      "voice": "Samantha",
+      "start": 26.0886875,
+      "end": 33.0105
+    },
+    {
+      "voice": "Daniel",
+      "start": 33.3605,
+      "end": 34.7426875
+    },
+    {
+      "voice": "Samantha",
+      "start": 35.0926875,
+      "end": 38.61825
+    }
+  ],
+  "audioSHA256": "08ea2a5adfb3fbb12cb9149e2ad83641f3f5887fbf7ba2c517354bd8c7daf334"
+}

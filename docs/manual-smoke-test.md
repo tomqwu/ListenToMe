@@ -172,6 +172,18 @@ iPhone (phone width and an accessibility text size):
 3. **New** conversation or a provider/model change clears the chips (change the model while a Quick
    refresh is running: no chips from the old model appear); Stop keeps them.
 
+## iPhone/iPad live speaker regression (#310)
+
+Run the automated real-model and native-control gates in [speaker identification](speaker-identification.md)
+first. For physical acceptance, record two people alternating brief replies and longer turns, repeat
+after silence, rename one and confirm its later turns keep that name. Stop immediately after the
+last words and confirm the tail is labeled. Repeat with one person and ensure pauses do not invent
+a second person. Disable identification while a pass is active: recording remains stoppable and
+late results add no labels. Start a new recording and confirm it cannot inherit an old person's name.
+Record device/OS, source/build, selected language, timings and observed errors; synthetic native Mac
+inference and screenshots do not substitute for these physical checks. Do not play test audio before
+Listening is confirmed, and do not send private audio off-device.
+
 ## Automatic speakers (1.3.0)
 
 1. Before Listen, choose WhisperKit and enable Automatic speaker identification. For a room sharing

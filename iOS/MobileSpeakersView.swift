@@ -15,7 +15,7 @@ struct MobileSpeakerSettings: View {
     var body: some View {
         Section {
             Toggle("Identify speakers", isOn: $speakers.enabled)
-                .disabled(session.state != .idle)
+                .disabled(session.state != .idle && !speakers.enabled)
                 .accessibilityIdentifier("identifySpeakersToggle")
             Text("Labels transcript lines Speaker 1, Speaker 2… so you can rename them in Notes. Runs on this "
                  + "device; audio is never sent and is kept only when Save audio recordings is on. "
@@ -25,8 +25,9 @@ struct MobileSpeakerSettings: View {
                 .accessibilityIdentifier("identifySpeakersExplanation")
             if speakers.enabled { MobileSpeakerModelRow(session: session) }
         } header: { Text("Speakers") } footer: {
-            Text("Labels are estimates: overlapping speech and very short phrases are often left as Microphone, "
-                 + "and a voice is not recognized again after you stop and start listening.")
+            Text("You can turn labels off while listening; turn them on again after Stop. "
+                 + "Labels are estimates: similar voices can merge in group conversations, and overlapping speech "
+                 + "or very short phrases may stay Microphone. Voices are not recognized across recordings.")
         }
     }
 }

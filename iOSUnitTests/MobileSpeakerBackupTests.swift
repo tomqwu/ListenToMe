@@ -8,7 +8,7 @@ final class MobileSpeakerBackupTests: XCTestCase {
         let directory = OfflineDiarizerModels.defaultModelsDirectory()
         let manager = FileManager.default
         let before = (try? manager.contentsOfDirectory(atPath: directory.path)) ?? []
-        _ = SpeakerDiarizer.excludingModelsFromBackup()
+        _ = MobileSpeakers.productionDiarizer()
         XCTAssertTrue(manager.fileExists(atPath: directory.path))
         XCTAssertTrue(PrivateStorage.isExcludedFromBackup(directory))
         XCTAssertEqual(try manager.contentsOfDirectory(atPath: directory.path).sorted(), before.sorted(),

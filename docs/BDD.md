@@ -52,6 +52,37 @@ Example from the retained-Watch-audio contract (`WATCH-001`):
 The real catalog also records paired-device acceptance steps. Simulator tests cannot prove
 disconnected Watch transfer, real microphone/system capture or physical-device readiness.
 
+## Speaker model accuracy is behavior
+
+The #310 regression exposed a missing boundary: fake diarizer IDs proved label mapping, not that
+actual voices were separated. `SHARED-001` now explicitly describes already-diarized groups.
+`SPEAKER-001`–`SPEAKER-016` bind actual model inference, streaming lifecycle, timeline authority and
+native controls separately. The Mac native suites call the same `productionDiarizer()` selected on
+physical iPhone/iPad; the unit/UI host substitutions cannot satisfy these quality contracts.
+
+`make mac-test` and `make validate-local` run the checked-in synthetic stock-voice WAV fixtures
+through real CoreML inference. First preparation may download public model weights from Hugging Face;
+subsequent runs use the excluded-from-backup cache. No microphone, private conversation, audible
+playback or cloud inference is used. Assert each known turn's correct voice identity, single-voice
+controls, a second voice pair, successive overlapping windows, returning voices and edited names
+through silence, bounded long-run state, final flush, cancellation and cleanup. Merely finding two
+raw speaker IDs is insufficient: swapped identities must fail. These fixtures are regression gates,
+not proof of the original private recording, physical-device performance or universal accuracy.
+The separate three-person diagnostic still merges two voices and is documented as a known limitation.
+Native property tests also need reachable user controls: the opt-out contract includes a rendered
+Settings-switch test while recording, rather than treating a direct property assignment as UI proof.
+See [speaker evidence and acceptance](speaker-identification.md).
+
+## Release-history accessibility acceptance
+
+`RELEASE-004` includes the actual oldest release heading and fixed Continue control at the largest
+text size. Scroll toward the observed heading through the unobscured viewport, recover from
+overshoot, and retain geometry/screenshots on stalls. A fixed gesture count cannot establish
+reachability as release history grows. The #310 train exposed the former 70-swipe test stopping
+above the oldest entry; its failed capture is evidence of an incomplete test journey, not proof
+that the app truncated history. Both the heading and Continue must remain usable in the corrected
+native test; never remove the old-heading assertion just to pass a release.
+
 ## Device compatibility is behavior
 
 For each affected feature, specify its supported and unavailable states before implementation.

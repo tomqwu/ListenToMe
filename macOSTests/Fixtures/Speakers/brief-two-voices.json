@@ -1,0 +1,28 @@
+{
+  "kind": "Synthetic local macOS stock TTS; authored planning dialogue; no private conversation",
+  "sampleRate": 16000,
+  "durationSeconds": 20.0,
+  "turns": [
+    {
+      "voice": "Daniel",
+      "start": 0.0,
+      "end": 2.00425
+    },
+    {
+      "voice": "Samantha",
+      "start": 2.35425,
+      "end": 16.33725
+    },
+    {
+      "voice": "Daniel",
+      "start": 16.68725,
+      "end": 18.2926875
+    },
+    {
+      "voice": "Samantha",
+      "start": 18.6426875,
+      "end": 20
+    }
+  ],
+  "audioSHA256": "a48f703fa3c1e5af2233e2db23fa88fa78a0558729ef1b74dfb978ccef44f853"
+}

@@ -69,7 +69,13 @@ public enum SpeakerStats {
     /// part of the window beyond it is appended.
     public static func splice(history: [DiarizedSegment],
                               window: [DiarizedSegment],
-                              windowStart: TimeInterval) -> [DiarizedSegment] {
+                              windowStart: TimeInterval, windowEnd: TimeInterval? = nil) -> [DiarizedSegment] {
+        if let end = windowEnd {
+            guard windowStart.isFinite, end.isFinite, end > windowStart else { return history }
+            return clip(history, endingAt: windowStart)
+                + intersect(window, from: windowStart, through: end)
+                + intersect(history, from: end, through: .greatestFiniteMagnitude)
+        }
         guard !window.isEmpty else { return history }
         let historyEnd = history.map { $0.start + $0.duration }.max() ?? 0
         let coveredOverlap = window.contains {
@@ -81,6 +87,17 @@ public enum SpeakerStats {
             let duration = segment.start + segment.duration - start
             guard duration > 0 else { return nil }
             return DiarizedSegment(speakerId: segment.speakerId, start: start, duration: duration)
+        }
+    }
+
+    private static func intersect(_ segments: [DiarizedSegment], from lower: Double, through upper: Double)
+    -> [DiarizedSegment] {
+        segments.compactMap { segment in
+            let end = segment.start + segment.duration
+            guard segment.start.isFinite, segment.duration.isFinite, segment.duration > 0, end.isFinite else { return nil }
+            let start = max(lower, segment.start)
+            let duration = min(upper, end) - start
+            return duration > 0 ? DiarizedSegment(speakerId: segment.speakerId, start: start, duration: duration) : nil
         }
     }
 

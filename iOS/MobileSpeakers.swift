@@ -3,9 +3,10 @@ import Foundation
 import ListenToMeCore
 import Observation
 
-/// The diarizer seam. The real one is FluidAudio's on-device pipeline (`SpeakerDiarizer`); tests
-/// substitute a fake because the simulator cannot run the speaker models meaningfully.
+/// Live iPhone/iPad analysis uses the stateful on-device MobileConversationDiarizer. File/Watch
+/// imports retain SpeakerDiarizer. Simulator probes test controls; native Mac tests run real models.
 protocol MobileSpeakerDiarizing: Sendable {
+    var requiresFinalFlush: Bool { get }
     /// Speaker segments for 16 kHz mono `samples`, in times relative to `samples[0]`, with one voice
     /// embedding per diarized speaker when the diarizer has them (issue #171).
     func diarize(samples: [Float]) async throws -> DiarizedWindow
@@ -13,6 +14,16 @@ protocol MobileSpeakerDiarizing: Sendable {
     func retryModelLoad() async
     /// Downloads (first use) and loads the speaker models without analyzing audio.
     func prepareModels() async throws
+    func diarizeLive(samples: [Float], startingAtSample: Int, runToken: Int, final: Bool) async throws -> DiarizedWindow
+    func endRun(token: Int) async
+}
+
+extension MobileSpeakerDiarizing {
+    var requiresFinalFlush: Bool { false }
+    func diarizeLive(samples: [Float], startingAtSample: Int, runToken: Int, final: Bool) async throws -> DiarizedWindow {
+        try await diarize(samples: samples)
+    }
+    func endRun(token: Int) async {}
 }
 
 extension SpeakerDiarizer: MobileSpeakerDiarizing {
@@ -56,8 +67,7 @@ private struct UITestFixtureDiarizer: MobileSpeakerDiarizing {
 ///
 /// One `Run` per recording: the recorder copies the audio it transcribes into `Run.buffer`, and
 /// each pass diarizes a trailing window of it (`SpeakerAnalysisPolicy`), reconciles the window's
-/// speakers with earlier passes by voice, then by shared audio time (`SpeakerIdentityTracker`; the
-/// voiceprints live in the run's tracker and go with it, never saved) and keeps the
+/// speakers by the live model's recording-scoped stable slots (`SpeakerIdentityTracker`), and keeps the
 /// cumulative timeline the session maps onto transcript lines. A model-load failure is latched:
 /// no further passes run until the user retries.
 @MainActor @Observable
@@ -102,6 +112,7 @@ final class MobileSpeakers {
     var enabled: Bool {
         didSet {
             UserDefaults.standard.set(enabled, forKey: Self.enabledKey)
+            if !enabled { endRun() }
             if enabled, !oldValue { startPreparing() }
         }
     }
@@ -141,7 +152,13 @@ final class MobileSpeakers {
         #if DEBUG && targetEnvironment(simulator)
         if environment["LISTENTOME_SPEAKER_MODELS_FIXTURE"] == "1" { return UITestFixtureDiarizer() }
         #endif
-        return SpeakerDiarizer.excludingModelsFromBackup()
+        return productionDiarizer()
+    }
+
+    /// The device implementation, shared with the native real-model acceptance tests. Host/unit
+    /// substitutions stay in deviceDiarizer(), so this path cannot quietly become a fake model.
+    nonisolated static func productionDiarizer() -> any MobileSpeakerDiarizing {
+        MobileConversationDiarizer.excludingModelsFromBackup()
     }
 
     var isRunning: Bool { run != nil }
@@ -223,6 +240,9 @@ final class MobileSpeakers {
 
     /// Ends the run and releases its audio. A pass still in flight is discarded.
     func endRun() {
+        if let run, let diarizer {
+            Task { await diarizer.endRun(token: run.token) }
+        }
         run?.buffer.reset()
         run = nil
         runToken &+= 1
@@ -266,24 +286,25 @@ final class MobileSpeakers {
     private(set) var scheduledPassCount = 0
     #endif
 
-    func analyze(token: Int? = nil) async -> Pass? {
+    func analyze(token: Int? = nil, final: Bool = false) async -> Pass? {
         #if DEBUG
         scheduledPassCount += 1
         #endif
         let previous = passChain
         let pass = Task { @MainActor () -> Pass? in
             await previous?.value
-            return await self.analyzeNow(token: token)
+            return await self.analyzeNow(token: token, final: final)
         }
         passChain = Task { _ = await pass.value }
         return await pass.value
     }
 
-    private func analyzeNow(token: Int?) async -> Pass? {
-        guard let current = run, token == nil || token == current.token, !isUnavailable else { return nil }
+    private func analyzeNow(token: Int?, final: Bool) async -> Pass? {
+        guard enabled, let current = run, token == nil || token == current.token, !isUnavailable else { return nil }
         let buffer = current.buffer
         let captured = buffer.sampleCount
-        guard SpeakerAnalysisPolicy.hasNewAudio(totalSamples: captured, analyzedSamples: current.analyzedSamples) else {
+        let flush = final && diarizer?.requiresFinalFlush == true
+        guard flush || SpeakerAnalysisPolicy.hasNewAudio(totalSamples: captured, analyzedSamples: current.analyzedSamples) else {
             return nil
         }
         let from = SpeakerAnalysisPolicy.windowStartSample(totalSamples: captured,
@@ -296,7 +317,8 @@ final class MobileSpeakers {
         let diarizer = diarizer ?? makeDiarizer()
         self.diarizer = diarizer
         do {
-            let window = try await diarizer.diarize(samples: snapshot.samples)
+            let window = try await diarizer.diarizeLive(samples: snapshot.samples, startingAtSample: snapshot.startSample,
+                                                       runToken: current.token, final: final)
             guard var updated = run, updated.token == current.token else { return nil }
             status = .idle
             lastError = nil
@@ -321,19 +343,23 @@ final class MobileSpeakers {
     }
 
     /// Folds one window's speakers into the run: window-relative times are shifted into buffer time,
-    /// reconciled with earlier passes (by voice first, issue #171), and spliced onto the cumulative timeline.
+    /// reconciled by recording-scoped slots (legacy adapters use shared time/voice), and spliced only
+    /// through confirmed model time onto the cumulative timeline.
     private func fold(_ diarized: DiarizedWindow, windowStart: TimeInterval, into run: inout Run) {
+        if let through = diarized.analyzedThrough, !through.isFinite || through <= 0 { return }
         let window = diarized.segments.map {
             DiarizedSegment(speakerId: $0.speakerId, start: $0.start + windowStart, duration: $0.duration)
         }
-        let mapping = run.tracker.reconcile(window, since: windowStart, embeddings: diarized.embeddings)
+        let mapping = run.tracker.reconcile(window, since: windowStart, embeddings: diarized.embeddings,
+                                            stableSpeakerIDScope: diarized.stableSpeakerIDScope)
         for identity in mapping.values { run.identities[identity.id] = identity }
         let identified = window.compactMap { segment in
             mapping[segment.speakerId].map {
                 DiarizedSegment(speakerId: $0.id, start: segment.start, duration: segment.duration)
             }
         }
-        run.timeline = SpeakerStats.splice(history: run.timeline, window: identified, windowStart: windowStart)
+        run.timeline = SpeakerStats.splice(history: run.timeline, window: identified, windowStart: windowStart,
+                                           windowEnd: diarized.analyzedThrough.map { windowStart + $0 })
     }
 
     /// The recording screen's one line about speaker labels while Identify speakers is on; `nil` when

@@ -8,8 +8,8 @@ final class MobileReleaseNotesUITests: XCTestCase {
         app.launchArguments = ["-lastAcknowledgedReleaseBuild", "1.14.0-3h77l5d3ivkk8"]
         app.launch()
         XCTAssertTrue(app.buttons["releaseNotesContinue"].waitForExistence(timeout: 5))
-        XCTAssertEqual(app.staticTexts["releaseVersion"].label, "Version 1.18.0 · Build 35")
-        XCTAssertTrue(app.staticTexts["Recording, review and recovery"].exists)
+        XCTAssertEqual(app.staticTexts["releaseVersion"].label, "Version 1.18.1 · Build 36")
+        XCTAssertTrue(app.staticTexts["Keep each voice distinct"].exists)
         capture(app, "What’s New on update")
         app.buttons["releaseNotesContinue"].tap()
         XCTAssertTrue(app.buttons["More"].waitForExistence(timeout: 5))
@@ -36,8 +36,10 @@ final class MobileReleaseNotesUITests: XCTestCase {
         XCTAssertTrue(button.waitForExistence(timeout: 5))
         XCTAssertTrue(button.isHittable)
         let scroll = app.scrollViews["releaseNotesScroll"]
-        for _ in 0..<70 where !app.staticTexts["Automatic reviews"].isHittable { scroll.swipeUp() }
-        XCTAssertTrue(app.staticTexts["Automatic reviews"].isHittable)
+        let oldest = app.staticTexts["Automatic reviews"]
+        revealReleaseHeading(oldest, in: scroll, above: button, app: app)
+        XCTAssertTrue(oldest.isHittable)
+        XCTAssertTrue(button.isHittable)
         capture(app, "Large text release history with reachable Continue")
         button.tap()
         XCTAssertTrue(app.buttons["More"].waitForExistence(timeout: 5))

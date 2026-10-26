@@ -1,0 +1,14 @@
+ListenToMe 1.18.1 (36) — live speaker identification feedback beta
+
+1. With Identify speakers on and its models ready, record two people alternating short replies and longer turns. After about 20 seconds, verify each person has a different label and keeps it when returning. Speak naturally; similar voices, noise, overlapping speech and very short turns can still be uncertain.
+2. Rename a person in Notes → Speakers, continue recording, wait through a quiet interval and speak again. Their name should remain attached to their own voice. Repeat with one person and pauses: the app should not invent extra people.
+3. Stop immediately after a final phrase. Stop remains responsive while the last speaker labels finish, even when no new samples arrived since the previous pass. Confirm the final words are included and repeated Stop does not create new people.
+4. Turn Identify speakers off in Settings while recording or analysis is pending. The switch must be reachable; turn it on again after Stop. Recording stays independently stoppable; late speaker results add no labels. Start a new recording and confirm it cannot inherit an earlier person's edited name.
+5. First use requires public model downloads while the app is in the foreground. Check Settings → Speakers readiness and Retry after a failed download. Recording must work independently of optional speaker preparation. The new live model has ten speaker slots; this does not guarantee ten accurately identified people.
+Known limitation: a three-person synthetic sample still merges two voices under both the earlier pipeline and this fix. Reliable three-person separation has not been established; ten model slots are capacity, not demonstrated accuracy.
+
+6. Regression: check iPhone Duo, iPad wide layout, saved conversations, Summary/Quick and your explicit AI provider. Enable Save audio recordings before listening if you want playback/export after Stop; earlier unsaved audio cannot be recovered later.
+
+Privacy: speaker audio, recurrent voice state and predictions remain in memory on-device for the recording and are never uploaded or saved as a reusable voice profile. Model downloads carry no conversation content. Saved names/labels remain in the transcript. Saved audio remains opt-in with existing retention/deletion controls.
+
+Real-model synthetic regression tests run on Mac CoreML through the production iOS adapter; they do not prove physical-device speed, battery, every voice/language or the original tester recording. Those checks remain pending. Mac live capture and Watch/file imports retain their existing offline speaker pipeline. Watch remains excluded from distribution. This beta does not submit a public App Store release.

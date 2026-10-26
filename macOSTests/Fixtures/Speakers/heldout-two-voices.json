@@ -1,0 +1,28 @@
+{
+  "kind": "Synthetic local stock voices; no private recording",
+  "sampleRate": 16000,
+  "durationSeconds": 20.0,
+  "turns": [
+    {
+      "voice": "Karen",
+      "start": 0.0,
+      "end": 1.88975
+    },
+    {
+      "voice": "Moira",
+      "start": 2.23975,
+      "end": 16.8971875
+    },
+    {
+      "voice": "Karen",
+      "start": 17.2471875,
+      "end": 18.849
+    },
+    {
+      "voice": "Moira",
+      "start": 19.199,
+      "end": 20
+    }
+  ],
+  "audioSHA256": "5ffb476e4edec8cd9f7af3937b12175dde9389cdfa19d54a53c060180d3b0636"
+}
