@@ -1,7 +1,7 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, latest TestFlight version 1.17.0 (34).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, latest TestFlight version 1.18.0 (35).
 
 ## What this app is for
 
@@ -108,7 +108,7 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 **The two apps keep independent version lines.** They are separate products in separate distribution
 channels, and an iOS build number already accepted by App Store Connect can never be reused. A higher
 iOS version does *not* mean the iPhone app is ahead of the Mac app; today macOS is 1.4.4 (14) and iOS
-has published TestFlight 1.17.0 (34).
+has published TestFlight 1.18.0 (35).
 
 - **`MARKETING_VERSION`** (iOS, in `project.yml`): a **minor** bump for user-visible features, a
   **patch** bump for fixes.
@@ -128,6 +128,15 @@ has published TestFlight 1.17.0 (34).
 The archive, upload, tagging and verification steps themselves are not repeated here: follow
 [IOS-RELEASING.md](IOS-RELEASING.md) for iOS, [RELEASING.md](RELEASING.md) for macOS, and
 [AGENTS.md](../AGENTS.md) for the release workflow that governs both.
+
+## iOS 1.18.1 (36) — in development, not published
+
+The tester-feedback speaker fix uses per-recording LS-EEND streaming for the live microphone,
+with stable recording-scoped identities, bounded prediction history and final tail flushing.
+Turning identification off releases its audio and blocks late labels. Mac capture and Watch/file
+imports retain the existing offline pipeline. The [model contract and evidence limits](speaker-identification.md)
+and [What to Test](../metadata/ios/en-CA/what-to-test-1.18.1.txt) describe real-model gates and pending
+original-recording / physical-device acceptance. Published TestFlight remains 1.18.0 (35).
 
 ## iOS 1.18.0 (35) — published TestFlight beta
 
@@ -538,7 +547,9 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   unless speaker identification is on. Unfinalized text is retained and labeled accordingly.
 - Speaker identification (#180), on by default since #195 (a stored choice to turn it off is kept):
   **Settings → Speakers → Identify speakers**. It runs on this device with FluidAudio, the same
-  diarizer the Mac uses, and uses more battery while listening. Its speaker models download once
+  runtime library as the Mac, and uses more battery while listening. The unreleased #310 fix uses
+  LS-EEND DIHARD II stateful streaming for the live microphone; Mac and Watch/file imports keep
+  the offline pipeline. See [model behavior and acceptance](speaker-identification.md). Its models download once
   from `huggingface.co` (model weights only — no audio or text is sent; the model folder is excluded
   from iCloud and Finder backups because it can be downloaded again) and are loaded before the first
   recording needs them: when the setting is turned on, when the app comes to the foreground with it
@@ -552,16 +563,20 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   setting, whether the models are ready, the passes run and the last speaker error. UI-test launches
   substitute models that load at once and hear no voices (`LISTENTOME_SPEAKER_MODELS_FIXTURE`, DEBUG
   simulator builds only), and the unit-test host substitutes models that never load, so no test
-  downloads them. While recording, the audio the transcriber
+  downloads them. These simulator substitutes establish control behavior only: `make mac-test`
+  additionally runs real CoreML voice fixtures through the actual production iOS factory. While recording, the audio the transcriber
   accepted is copied into a 16 kHz buffer; about every 20 seconds (never sooner than the previous
   pass took) a pass re-analyzes only the audio since the last one plus a one-minute overlap
-  (`SpeakerAnalysisPolicy`). Each pass carries speakers over by shared audio time first; the
-  voices left over (at least 2 s of speech) are matched by voice embedding to the speakers left over
-  (FluidAudio's per-cluster embedding against each speaker's running centroid, cosine similarity of
-  at least 0.82, one voice per speaker; `SpeakerVoiceMatching`), so someone quiet for minutes keeps
-  their label and name (#171). A centroid learns only from speech no earlier pass heard. The embeddings
-  live in memory for the recording only and are never saved. Stop returns at once; a final pass then labels the last words while the
-  app stays open, queued behind any pass still running, and its result is dropped if a
+  (`SpeakerAnalysisPolicy`). In the unreleased #310 fix, only unseen samples enter LS-EEND; the
+  overlap is returned for transcript alignment. A model slot is stable inside one recording epoch,
+  including when a person stays quiet. The tracker keeps an edited name attached to that slot.
+  A lost audio gap or reset starts a fresh epoch rather than guessing an old name from a reused slot.
+  Recurrent voice state and at most ten minutes of prediction probabilities stay in memory, never
+  persisted, and are reset after the run ends. Published 1.18.0 instead re-clusters each window and
+  matches shared time and unmatched voice embeddings; short turns can incorrectly merge (#310).
+  Stop returns at once; a final pass then labels the last words while the
+  app stays open, queued behind any pass still running. The streaming final flush also runs when
+  no new samples have arrived since the last pass; padding is clipped to captured time. Its result is dropped if a
   new recording or another conversation has started. Backgrounding also cancels an already-started
   final pass and clears the recording buffer without waiting. Model work already in flight may finish
   with its temporary input copy, but its result is discarded; queued passes retain their original
@@ -579,7 +594,9 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   named speakers through unchanged. If the models cannot be loaded (offline first use, a blocked
   host), identification pauses with the reason in the status area and no further passes run until
   you tap **Retry** or start a new recording. Limits: overlapping speech and short utterances are
-  often left as **Microphone** or attributed to whoever spoke longest; a voice is not recognized
+  often left as **Microphone** or attributed to whoever spoke longest; the live model has ten
+  speaker slots and its synthetic regression fixtures do not establish every language, voice or
+  noisy room. Physical-device speed/battery and original tester audio remain pending. A voice is not recognized
   across recordings, so after Stop/Listen (or an interruption) new voices continue the numbering
   (Speaker 3, 4…) and can be renamed to merge them; backgrounding ends the labeling run without awaiting model work;
   more than two hours of one recording is not analyzed further.

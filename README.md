@@ -46,7 +46,8 @@ timestamps, and an opt-in **Save to folder** that writes each conversation as a
 Markdown note into a folder you pick in Files, such as an Obsidian vault, and an opt-in **Save audio recordings** that keeps
 each recording's microphone audio on the device for playback from its transcript lines. On-device speaker identification (on by default; turn it off in
 Settings) labels transcript lines Speaker 1, Speaker 2… for the people one phone hears, and you can
-rename them; its models download once from `huggingface.co`. The transcription language defaults to
+rename them; its models download once from `huggingface.co`. The unreleased [speaker fix](docs/speaker-identification.md)
+uses a recording-scoped streaming model; the published 1.18.0 beta still uses the earlier pipeline. The transcription language defaults to
 Automatic: the phone detects the spoken language on-device from the first seconds of speech and, if it
 differs from the device language, switches and transcribes the recording again; it re-checks about once
 a minute while people talk, so a meeting that changes language part-way switches too (its small Whisper

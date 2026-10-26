@@ -24,6 +24,17 @@ honestly documented device limitations are sufficient to distribute an authorize
 testing. Physical-device acceptance is still required before calling the app production-ready or
 submitting a production App Store release. Missing hardware must not be reported as an upload blocker.
 
+## Speaker-model candidate gate (#310)
+
+A speaker-identification train must include the real-model `SpeakerModelQualityTests` and
+`SpeakerStreamingModelTests` in `make mac-test` / `make validate-local`, not only simulator tests
+with predefined IDs. Preserve the actual red/green logs and source hashes. The synthetic fixtures
+run the production iOS streaming factory on Mac CoreML; physical iPhone/iPad accuracy, latency and
+battery acceptance are separate and must be reported when outstanding. Watch imports and Mac live
+capture retain the existing offline pipeline; do not claim the iOS live fix changes either one.
+Follow [the model acceptance checklist](speaker-identification.md). The original tester recording
+remains untested unless retained audio is provided. The beta upload policy above still applies.
+
 ## Screenshot capture and App Store handoff (#255)
 
 Capture screenshots during UI acceptance and refresh the complete release set on every iOS train,

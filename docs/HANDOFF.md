@@ -46,6 +46,24 @@ physical-device accuracy/performance/battery spike; #223 additional semantic-sea
 embedding experiments are no-go research, not an implemented or published language expansion.
 The dated checkpoints below are historical and do not supersede this publication record.
 
+## Active tester-feedback fix — #310
+
+Branch `codex/310-speaker-separation` is implementing the reported all-Speaker-1 regression for
+planned iOS 1.18.1 (36). It is **not merged or published**. Actual old-model inference reproduced
+collapsed brief voices; fake-ID simulator tests had not exercised acoustic separation. Live iOS
+now selects recording-scoped LS-EEND DIHARD II streaming, while Mac and prepared Watch/file
+imports keep their offline pipeline. See [model design and acceptance](speaker-identification.md).
+
+Twelve real-model native tests pass, including overlap/final flush, returning names after silence,
+more than ten minutes of bounded prediction state, gaps/cancellation and file-preparation isolation.
+Two iOS Stop/opt-out control regressions and 44 focused Core tests passed before the latest review
+refinement. Independent review caught a positive-gap callback reopening a finalized run and required
+per-voice identity assertions after long silence; both changes pass the expanded native run.
+Full validation, final review, CI, merge and the authorized tester-feedback TestFlight train remain
+pending. Current private tester audio and physical iPhone/iPad accuracy/performance are unverified.
+No Mac publication or Watch embedding is authorized by this fix. App Store Connect read-only
+preflight on October 26 found build 36 unused and production baseline 1.15.0 unchanged.
+
 ## Historical combined PR train — October 25
 
 The maintainer explicitly requested consolidation of all 18 open PRs into one release and TestFlight

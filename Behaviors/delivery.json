@@ -66,9 +66,9 @@
     {
       "id": "RELEASE-004",
       "name": "Identify the feedback beta and bundled changes accurately",
-      "given": "a user updates to the consolidated recording and review beta",
+      "given": "a user updates to the speaker-identification feedback beta",
       "when": "What\u2019s New appears or is reopened",
-      "then": "the app identifies version 1.18.0 build 35 with its recording, review and recovery notes, acknowledges the update once and keeps prior notes readable",
+      "then": "the app identifies version 1.18.1 build 36 with its Keep each voice distinct notes, acknowledges the update once and keeps prior notes readable",
       "covers": [
         "project.yml",
         "iOS/MobileReleaseNotes.swift"

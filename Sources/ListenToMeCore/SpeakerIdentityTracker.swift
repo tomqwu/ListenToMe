@@ -6,14 +6,15 @@ public struct SpeakerIdentity: Sendable, Equatable {
     public init(id: String, name: String) { self.id = id; self.name = name }
 }
 
-/// Reconciles diarization passes into stable identities, never by unstable model IDs: by voice first
-/// (each identity's running embedding, issue #171), then by shared audio time. Ambiguous splits and
-/// merges receive new identities rather than inheriting someone's edited name.
+/// Reconciles diarization passes into recording identities. Explicit streaming epochs use stable
+/// model slots; legacy clustering matches shared audio time, then unmatched voice embeddings.
+/// A fresh epoch cannot inherit a prior identity or edited name through matching timestamps.
 public struct SpeakerIdentityTracker: Sendable {
     private var previous: [DiarizedSegment] = []
     private var identities: [String: SpeakerIdentity] = [:]
     /// Identity id → running voice embedding, for this recording only (issue #171). Never persisted.
     private var voiceprints: [String: SpeakerVoiceprint] = [:]
+    private var stableIdentities: [String: [String: String]] = [:]
     private var nextNumber = 1
     private let namespace: String
     private let prefix: String
@@ -74,18 +75,23 @@ public struct SpeakerIdentityTracker: Sendable {
     /// `speakerId`, issue #171) then pair the clusters and identities shared time left open, against
     /// each identity's running voiceprint (`SpeakerVoiceMatching.match`, one to one), so a person who
     /// was silent through the shared audio keeps their identity and edited name. Without embeddings,
-    /// shared time is all there is.
+    /// shared time is all there is. A nonempty `stableSpeakerIDScope` bypasses both heuristics:
+    /// slots remain authoritative inside that epoch and a new epoch creates independent identities.
     public mutating func reconcile(_ segments: [DiarizedSegment],
                                    since windowStart: TimeInterval = 0,
-                                   embeddings: [String: [Float]] = [:]) -> [String: SpeakerIdentity] {
+                                   embeddings: [String: [Float]] = [:],
+                                   stableSpeakerIDScope: String? = nil) -> [String: SpeakerIdentity] {
         let valid = segments.filter { $0.start.isFinite && $0.duration.isFinite && $0.duration > 0 }
         let groups = Dictionary(grouping: valid, by: \.speakerId)
-        let timed = timedMatches(valid: valid, groups: groups, windowStart: windowStart)
         let ordered = groups.keys.sorted {
             let left = groups[$0]!.map(\.start).min()!
             let right = groups[$1]!.map(\.start).min()!
             return left == right ? $0 < $1 : left < right
         }
+        if let scope = stableSpeakerIDScope, !scope.isEmpty {
+            return stableMatches(ordered: ordered, scope: scope)
+        }
+        let timed = timedMatches(valid: valid, groups: groups, windowStart: windowStart)
         var mapping: [String: SpeakerIdentity] = [:]
         var used = Set<String>()
         for raw in ordered {
@@ -119,6 +125,26 @@ public struct SpeakerIdentityTracker: Sendable {
         previous = windowStart > 0
             ? SpeakerStats.splice(history: previous, window: mapped, windowStart: windowStart)
             : mapped
+        return mapping
+    }
+
+    /// Streaming slots are authoritative only inside their explicit model epoch. In particular,
+    /// a reset must not fall through to the old time/voice matches and inherit somebody's name.
+    private mutating func stableMatches(ordered: [String], scope: String) -> [String: SpeakerIdentity] {
+        var known = stableIdentities[scope] ?? [:]
+        var mapping: [String: SpeakerIdentity] = [:]
+        for raw in ordered {
+            if let id = known[raw], let identity = identities[id] {
+                mapping[raw] = identity
+            } else {
+                let identity = SpeakerIdentity(id: "\(namespace)-\(nextNumber)", name: "\(prefix) \(nextNumber)")
+                nextNumber += 1
+                identities[identity.id] = identity
+                known[raw] = identity.id
+                mapping[raw] = identity
+            }
+        }
+        stableIdentities[scope] = known
         return mapping
     }
 

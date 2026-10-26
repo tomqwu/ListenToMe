@@ -73,10 +73,10 @@ extension MobileSession {
     /// One pass over the audio not yet analyzed, applied to this conversation's lines. `token`
     /// restricts it to one recording's run; the result is dropped if the open conversation changed.
     @discardableResult
-    func runSpeakerPass(token: Int? = nil) async -> SpeakerAnalysisOutcome {
+    func runSpeakerPass(token: Int? = nil, final: Bool = false) async -> SpeakerAnalysisOutcome {
         let conversation = id
         let run = token ?? speakers.runToken
-        if let pass = await speakers.analyze(token: run), id == conversation, speakers.runToken == run {
+        if let pass = await speakers.analyze(token: run, final: final), id == conversation, speakers.runToken == run {
             applySpeakerLabels(pass)
         }
         return speakers.isUnavailable ? .modelsUnavailable : .completed
@@ -97,7 +97,7 @@ extension MobileSession {
         let token = speakers.runToken
         speakerFinalPass = Task { [weak self] in
             guard let self else { return }
-            await self.runSpeakerPass(token: token)
+            await self.runSpeakerPass(token: token, final: true)
             if self.speakers.runToken == token { self.speakers.endRun() }
         }
     }

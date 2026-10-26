@@ -3,7 +3,8 @@ import FluidAudio
 import ListenToMeCore
 
 /// On-device speaker diarization via FluidAudio's CoreML Pyannote pipeline — of the Mac's `.others`
-/// (system-audio) and optionally microphone channels, and of the iPhone/iPad microphone (#180).
+/// (system-audio) and optionally microphone channels, plus prepared iPhone Watch/file imports.
+/// Live iPhone/iPad microphones use MobileConversationDiarizer's separate streaming model.
 /// Shared by both app targets from `SharedPlatform/`. Lazily prepares the models once (auto-downloaded
 /// on first use), runs the offline diarizer over 16 kHz mono samples, maps its segments to Core's pure
 /// `DiarizedSegment` with one voice embedding per cluster, and returns a `SpeakerSummary`. An `actor` so the (non-Sendable, mutable) manager is isolated.

@@ -82,8 +82,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMe.ios
         PRODUCT_NAME: ListenToMeIOS
-        MARKETING_VERSION: "1.18.0"
-        CURRENT_PROJECT_VERSION: "35"
+        MARKETING_VERSION: "1.18.1"
+        CURRENT_PROJECT_VERSION: "36"
         DEVELOPMENT_TEAM: T32FW7PZ3S
         TARGETED_DEVICE_FAMILY: "1,2"
         GENERATE_INFOPLIST_FILE: NO
@@ -104,8 +104,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMe.ios.share
         PRODUCT_NAME: ListenToMeShare
-        MARKETING_VERSION: "1.18.0"
-        CURRENT_PROJECT_VERSION: "35"
+        MARKETING_VERSION: "1.18.1"
+        CURRENT_PROJECT_VERSION: "36"
         INFOPLIST_FILE: ShareExtension/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_ENTITLEMENTS: ShareExtension/ListenToMeShare.entitlements
@@ -131,8 +131,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMe.ios.watchkitapp
         PRODUCT_NAME: ListenToMeWatch
         # Same version and build as ListenToMeIOS and ListenToMeShare; every iOS bump changes all three.
-        MARKETING_VERSION: "1.18.0"
-        CURRENT_PROJECT_VERSION: "35"
+        MARKETING_VERSION: "1.18.1"
+        CURRENT_PROJECT_VERSION: "36"
         INFOPLIST_FILE: Watch/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         DEVELOPMENT_TEAM: T32FW7PZ3S
@@ -173,7 +173,12 @@ targets:
     deploymentTarget: "26.0"
     # Compile the actual native adapters and menu state without launching the app or user data.
     sources:
-      - macOSTests
+      - path: macOSTests
+        excludes: [Fixtures]
+      - SharedPlatform/SpeakerDiarizer.swift
+      - iOS/MobileSpeakers.swift
+      - iOS/MobileSpeakerFileWait.swift
+      - iOS/MobileConversationDiarizer.swift
       - SharedPlatform/SpeakerAudioBuffer.swift
       - App/HotkeyMonitor.swift
       - App/MacOperationErrors.swift
@@ -193,6 +198,8 @@ targets:
         product: ListenToMeCore
       - package: WhisperKit
         product: WhisperKit
+      - package: FluidAudio
+        product: FluidAudio
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMeMacUnitTests

@@ -18,7 +18,9 @@ does not show it again, and a fresh install does not see it at all; see
   executable native-test adapter, local/CI gates and PR evidence template. This changes development
   workflow only; it does not require a binary release or claim exhaustive legacy acceptance.
 
-## iOS (unreleased since 1.17.0 (34))
+## iOS (unreleased since 1.18.0 (35))
+
+- Fix live speaker identification merging brief alternating voices into Speaker 1. A recording-scoped streaming model carries voice identities and edited names through overlapping windows and silence. Stop flushes delayed words; disabling identification releases its audio and voice state. Real-model native regression tests supplement simulator controls. Original tester audio and physical-device accuracy/performance acceptance remain pending. (#310)
 
 - Documentation: the Watch speaker-privacy section now agrees with the existing opt-in saved-audio retention policy. No app behavior changes. (#225)
 
