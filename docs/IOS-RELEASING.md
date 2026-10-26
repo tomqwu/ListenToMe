@@ -24,6 +24,20 @@ honestly documented device limitations are sufficient to distribute an authorize
 testing. Physical-device acceptance is still required before calling the app production-ready or
 submitting a production App Store release. Missing hardware must not be reported as an upload blocker.
 
+## Fresh US capture package pending submission choice — October 26
+
+The [fresh 1.18.1 capture catalog](images/ios/release-1.18.1-en-US-refresh.json) records 24 native
+English (US), US-region images from the exact build-36 artifact source, with four passing native
+screenshot tests and complete visual review. These new images are **saved, not uploaded**; no
+withdrawal/replacement/resubmission was performed while awaiting the maintainer choice between
+resubmitting build 36 and holding for a Watch-enabled build. The existing US review
+`89b4c261-b37d-4b24-aaee-20f8238d1663` remains WAITING_FOR_REVIEW at 20:43 UTC.
+
+[Watch preview images](images/watch/1.18.1-preview/README.md) are saved separately. Build 36 has no
+embedded Watch app, so these prospective review images must not be added as customer screenshots
+for that binary. They establish rendered simulator UI only, not microphone or paired-device
+acceptance. See [HANDOFF](HANDOFF.md) for the preserved evidence and exact current state.
+
 ## Delivery language — English (US)
 
 Use **English (US), `en-US`**, for new TestFlight and App Store metadata, from

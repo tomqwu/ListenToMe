@@ -4,6 +4,38 @@ A snapshot for an agent picking up ListenToMe cold. [AGENTS.md](../AGENTS.md) an
 [CLAUDE.md](../CLAUDE.md) stay the rules; this note is only the state of things on the date above.
 Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags) before acting on it.
 
+## Fresh US screenshots and saved Watch previews — October 26, 20:43 UTC
+
+The maintainer requested fresh English (US) screenshots and Watch review images. All **24 new
+US-region captures** are finished: six each on iPhone 17 Pro, iPhone 17 Pro Max, iPad mini (A17 Pro),
+and 13-inch iPad Pro (M5). Each native screenshot test passed (1 pass, 0 failures, 0 skips per device);
+every final image was visually inspected. App/test binaries were freshly built from exact artifact
+source `7643b204def6acea0b616a2c2de2bade2fc4c7c9`; archived source, generated project and product
+hashes were verified before/after every device. See the [capture catalog](images/ios/release-1.18.1-en-US-refresh.json).
+
+**These new captures have not been uploaded.** The agent asked whether to resubmit build 36 or hold
+1.18.1 for a Watch-enabled build; that choice is pending. No withdrawal, screenshot deletion or new
+submission was performed. API readback at **2026-10-26T20:43:31.215574+00:00** still shows review
+`89b4c261-b37d-4b24-aaee-20f8238d1663` and version `c60352d3-eb78-479b-970c-d6ed6faa3242`
+WAITING_FOR_REVIEW. Its existing 24 uploaded US assets below remain the earlier en-CA captures.
+The US localized name remains **Listen To Me - Real Time AI**; actual primary locale remains en-CA.
+
+[Watch previews](images/watch/1.18.1-preview/README.md) are saved at native resolution for Series 11
+46 mm and Ultra 3 49 mm, with source/dimensions/hashes. The installed watchOS 26.5 runtime refused
+Series 12/Ultra 4 as incompatible; no model names were substituted. Existing denied-microphone/offline
+native UI tests passed on both simulators. Home captures use the normal app, without microphone
+recording or physical transfer. **Build 36 excludes Watch**; these are prospective maintainer-review
+images, not Watch customer-listing uploads or a physical Watch acceptance claim.
+
+Full evidence and the combined review ZIP are preserved under
+`/Users/tomwu/Documents/Codex/2026-10-26/listentome-appstore-publication/refresh-us/`.
+Use only `screenshots-final/` and `workspace-build-provenance.json` for the fresh images. Earlier
+cache-reuse and Documents-path launch attempts were superseded and retained; no permission changes
+were made. Independent review approved the guarded replacement/upload/submission scripts, but those
+mutations await the maintainer's choice. All dedicated simulators were deleted; no macOS Dev app
+session was created and no Dev permission reset applies. PR #315 merged as `597d70a` after its three
+required checks passed at `49572b1`.
+
 ## Current English (US) App Review submission — October 26
 
 Apple accepted the corrected **English (US), `en-US`** submission at

@@ -1,0 +1,313 @@
+{
+  "source": "7643b204def6acea0b616a2c2de2bade2fc4c7c9",
+  "version": "1.18.1",
+  "build": "36",
+  "locale": "en-US",
+  "region": "US",
+  "runtime": "iOS 26.5",
+  "captureFinished": "2026-10-26T20:42:46.543669+00:00",
+  "listingUpload": "pending maintainer choice: resubmit build36 or hold for Watch-enabled build",
+  "currentReview": "89b4c261-b37d-4b24-aaee-20f8238d1663; not withdrawn",
+  "screenshots": 24,
+  "suitesPassed": 4,
+  "physicalAcceptance": "No physical testing performed for screenshot refresh",
+  "evidenceDirectory": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-appstore-publication/refresh-us",
+  "categories": [
+    {
+      "device": "iPhone-17-Pro",
+      "category": "iphone-pro",
+      "testCommand": [
+        "xcodebuild",
+        "-xctestrun",
+        "/Users/tomwu/.codex/worktrees/checkpoint-work-134/ListenToMe/.build/ios-us-exact-36/Build/Products/ListenToMeIOS_iphonesimulator27.1-arm64-x86_64.xctestrun",
+        "-destination",
+        "platform=iOS Simulator,id=02511D1D-493E-465C-856B-3C99D8D41A73",
+        "-parallel-testing-enabled",
+        "NO",
+        "-collect-test-diagnostics",
+        "never",
+        "-testLanguage",
+        "en",
+        "-testRegion",
+        "US",
+        "-only-testing:ListenToMeIOSUITests/MobileReleaseScreenshotTests",
+        "-resultBundlePath",
+        "/Users/tomwu/Documents/Codex/2026-10-26/listentome-appstore-publication/refresh-us/screenshots-final/iphone-pro/tests.xcresult",
+        "test-without-building"
+      ],
+      "testResult": "1 passed, 0 failed, 0 skipped",
+      "assets": [
+        {
+          "file": "iphone-pro/06 Settings.png",
+          "pixels": [
+            1206,
+            2622
+          ],
+          "sha256": "6627eb13b4b4be3fb539ce3c2aae7273e6827e19b0deb5d99615c68c67e65365"
+        },
+        {
+          "file": "iphone-pro/05 Conversation history.png",
+          "pixels": [
+            1206,
+            2622
+          ],
+          "sha256": "d030b60e5396ce0d04000f4b8efd690e79f5032b200d1a6e4d0a992d8a2dc40e"
+        },
+        {
+          "file": "iphone-pro/04 Summary portrait.png",
+          "pixels": [
+            1206,
+            2622
+          ],
+          "sha256": "de1f30dbfa2eb7486fc568d141de98ba78f63deb7f6bfc2965eb63a9159fae91"
+        },
+        {
+          "file": "iphone-pro/03 Conversation prompt.png",
+          "pixels": [
+            1206,
+            2622
+          ],
+          "sha256": "864d4976cac2670829ead6f34d0947a1f98916f124a9f260ca7cd453ebaf88f2"
+        },
+        {
+          "file": "iphone-pro/02 Live landscape.png",
+          "pixels": [
+            2622,
+            1206
+          ],
+          "sha256": "89e6de7d61b938737e2abf5e92c5ca59f902a6fbc444f560e4cbd29e6cb9e8ef"
+        },
+        {
+          "file": "iphone-pro/01 Live portrait.png",
+          "pixels": [
+            1206,
+            2622
+          ],
+          "sha256": "2253fda07fcb44d5370d14aabbb1ea2a26aa4db3893dc234e7cff74baee69666"
+        }
+      ]
+    },
+    {
+      "device": "iPhone-17-Pro-Max",
+      "category": "iphone-pro-max",
+      "testCommand": [
+        "xcodebuild",
+        "-xctestrun",
+        "/Users/tomwu/.codex/worktrees/checkpoint-work-134/ListenToMe/.build/ios-us-exact-36/Build/Products/ListenToMeIOS_iphonesimulator27.1-arm64-x86_64.xctestrun",
+        "-destination",
+        "platform=iOS Simulator,id=B50F547D-7697-4CC7-B97D-5E96B97D4883",
+        "-parallel-testing-enabled",
+        "NO",
+        "-collect-test-diagnostics",
+        "never",
+        "-testLanguage",
+        "en",
+        "-testRegion",
+        "US",
+        "-only-testing:ListenToMeIOSUITests/MobileReleaseScreenshotTests",
+        "-resultBundlePath",
+        "/Users/tomwu/Documents/Codex/2026-10-26/listentome-appstore-publication/refresh-us/screenshots-final/iphone-pro-max/tests.xcresult",
+        "test-without-building"
+      ],
+      "testResult": "1 passed, 0 failed, 0 skipped",
+      "assets": [
+        {
+          "file": "iphone-pro-max/06 Settings.png",
+          "pixels": [
+            1320,
+            2868
+          ],
+          "sha256": "76cd0bf31cda2ede4839793cd3556978c88c841b8c2ba529b8d0958e8c7db09c"
+        },
+        {
+          "file": "iphone-pro-max/05 Conversation history.png",
+          "pixels": [
+            1320,
+            2868
+          ],
+          "sha256": "1f7be6eb4d1c06160c112e897e0f676b34fafa23f460dca2d48c981b4d3f2148"
+        },
+        {
+          "file": "iphone-pro-max/04 Summary portrait.png",
+          "pixels": [
+            1320,
+            2868
+          ],
+          "sha256": "2a2e6b56b02217fe5247193cef52595d463a98e36950b9fc130339391181229e"
+        },
+        {
+          "file": "iphone-pro-max/03 Conversation prompt.png",
+          "pixels": [
+            1320,
+            2868
+          ],
+          "sha256": "f5cd2b3d157b03572dafe44d3fc82c35f890bdd54e4970b082b7afd1f5405309"
+        },
+        {
+          "file": "iphone-pro-max/02 Live landscape.png",
+          "pixels": [
+            2868,
+            1320
+          ],
+          "sha256": "9d8518c1ca750be6d0426203448a05e2e35d0309ba644530f07b150b3b8c4fd4"
+        },
+        {
+          "file": "iphone-pro-max/01 Live portrait.png",
+          "pixels": [
+            1320,
+            2868
+          ],
+          "sha256": "ef1a7f641184653d868cd97af8098439649689c0e25f6297f9805042c3b13877"
+        }
+      ]
+    },
+    {
+      "device": "iPad-mini-A17-Pro",
+      "category": "ipad-mini",
+      "testCommand": [
+        "xcodebuild",
+        "-xctestrun",
+        "/Users/tomwu/.codex/worktrees/checkpoint-work-134/ListenToMe/.build/ios-us-exact-36/Build/Products/ListenToMeIOS_iphonesimulator27.1-arm64-x86_64.xctestrun",
+        "-destination",
+        "platform=iOS Simulator,id=6F8285F7-E27A-48D1-B981-A69C40378362",
+        "-parallel-testing-enabled",
+        "NO",
+        "-collect-test-diagnostics",
+        "never",
+        "-testLanguage",
+        "en",
+        "-testRegion",
+        "US",
+        "-only-testing:ListenToMeIOSUITests/MobileReleaseScreenshotTests",
+        "-resultBundlePath",
+        "/Users/tomwu/Documents/Codex/2026-10-26/listentome-appstore-publication/refresh-us/screenshots-final/ipad-mini/tests.xcresult",
+        "test-without-building"
+      ],
+      "testResult": "1 passed, 0 failed, 0 skipped",
+      "assets": [
+        {
+          "file": "ipad-mini/06 Settings.png",
+          "pixels": [
+            1488,
+            2266
+          ],
+          "sha256": "8eef3eb9d95fafc875e11d529d974d030a8638e86b938da212d433f452213d42"
+        },
+        {
+          "file": "ipad-mini/05 Conversation history.png",
+          "pixels": [
+            1488,
+            2266
+          ],
+          "sha256": "9ee25dec24de8fb9ec0fcddc58c3bec356fcbd815c50f62de21f6948dbdd9211"
+        },
+        {
+          "file": "ipad-mini/04 Summary portrait.png",
+          "pixels": [
+            1488,
+            2266
+          ],
+          "sha256": "e23b4d3b25495b8e5b140c257151dd02779adfd97788f3f9078501f38363dee8"
+        },
+        {
+          "file": "ipad-mini/03 Conversation prompt.png",
+          "pixels": [
+            1488,
+            2266
+          ],
+          "sha256": "93f7867eff4824bbac394ed0a8d5e0fc283cbb02216586ebba81b3fbab4dc018"
+        },
+        {
+          "file": "ipad-mini/02 Live landscape.png",
+          "pixels": [
+            2266,
+            1488
+          ],
+          "sha256": "b7891840043b6f7467060942d16d0c69cd8dc46ff254c17b6679945a4cd5c960"
+        },
+        {
+          "file": "ipad-mini/01 Live portrait.png",
+          "pixels": [
+            1488,
+            2266
+          ],
+          "sha256": "1669347362d795c12ea97d4a877d260d9197f9b531e27847130050e0e9771a4f"
+        }
+      ]
+    },
+    {
+      "device": "iPad-Pro-13-inch-M5-12GB",
+      "category": "ipad-pro-13",
+      "testCommand": [
+        "xcodebuild",
+        "-xctestrun",
+        "/Users/tomwu/.codex/worktrees/checkpoint-work-134/ListenToMe/.build/ios-us-exact-36/Build/Products/ListenToMeIOS_iphonesimulator27.1-arm64-x86_64.xctestrun",
+        "-destination",
+        "platform=iOS Simulator,id=63149D6F-A74C-49B2-A3A0-63F9DA3E9554",
+        "-parallel-testing-enabled",
+        "NO",
+        "-collect-test-diagnostics",
+        "never",
+        "-testLanguage",
+        "en",
+        "-testRegion",
+        "US",
+        "-only-testing:ListenToMeIOSUITests/MobileReleaseScreenshotTests",
+        "-resultBundlePath",
+        "/Users/tomwu/Documents/Codex/2026-10-26/listentome-appstore-publication/refresh-us/screenshots-final/ipad-pro-13/tests.xcresult",
+        "test-without-building"
+      ],
+      "testResult": "1 passed, 0 failed, 0 skipped",
+      "assets": [
+        {
+          "file": "ipad-pro-13/06 Settings.png",
+          "pixels": [
+            2064,
+            2752
+          ],
+          "sha256": "59ef286a6e79b383b47c0b9fa232cfa332c35d862d7e07c1a4af4fc3a14f98db"
+        },
+        {
+          "file": "ipad-pro-13/05 Conversation history.png",
+          "pixels": [
+            2064,
+            2752
+          ],
+          "sha256": "2a36d85b78e5b4662aeebed30b67a7cbbf6aea6394e4bab5436914d45ed3d2fb"
+        },
+        {
+          "file": "ipad-pro-13/04 Summary portrait.png",
+          "pixels": [
+            2064,
+            2752
+          ],
+          "sha256": "89335f86735325261ed596a8c4b2eb4912dad8ad0c8479cbb0aa44573116cfab"
+        },
+        {
+          "file": "ipad-pro-13/03 Conversation prompt.png",
+          "pixels": [
+            2064,
+            2752
+          ],
+          "sha256": "23643c83a444934dd09a03ae4e0160712a353d6ee9dfc5b555c78d12571a206a"
+        },
+        {
+          "file": "ipad-pro-13/02 Live landscape.png",
+          "pixels": [
+            2752,
+            2064
+          ],
+          "sha256": "ef3ce32d9e7990ab912fc90637462bd73843e01de6388f1b30e8060624de6903"
+        },
+        {
+          "file": "ipad-pro-13/01 Live portrait.png",
+          "pixels": [
+            2064,
+            2752
+          ],
+          "sha256": "89335f86735325261ed596a8c4b2eb4912dad8ad0c8479cbb0aa44573116cfab"
+        }
+      ]
+    }
+  ]
+}
