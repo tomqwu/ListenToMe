@@ -32,9 +32,9 @@ does not show it again, and a fresh install does not see it at all; see
 - iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
 - Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
 
-## iOS 1.18.0 (35) — candidate
+## iOS 1.18.0 (35) — 2026-10-26 (TestFlight)
 
-Combined TestFlight train requested October 25. Not uploaded or published yet.
+Published to TestFlight from `b1570ad567a43a093294974871d7f0abf1872708`; Apple accepted the upload at 12:51:44 UTC on October 26. Processing is VALID, internal state is IN_BETA_TESTING, and both existing Dev testers have group access. en-CA What to Test and beta description were read back. [Full release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.0-build35). Current-source physical acceptance and App Store listing screenshot upload remain pending. The maintainer explicitly deferred Mac GUI/OTHERS acceptance for the combined merge and iOS beta; Mac publication remains paused.
 
 - Maintenance: active/history save ordering, unchanged-save suppression and retry acknowledgement now use a tested Core owner. Native file protection, backup options, storage format and user-facing save behavior are unchanged. (#134)
 

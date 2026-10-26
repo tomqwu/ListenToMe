@@ -61,13 +61,13 @@ Education & Research) and your own **My terms** list help recognition, AI speech
 summaries on both platforms; after about a minute of speech the phone may suggest one, decided on the
 device. Meeting use-case presets, reference files, audio-file import and WhisperKit transcription are macOS-only.
 Editable domain prompt presets are available on both platforms.
-The iPhone and iPad app is distributed through TestFlight; the latest build is **1.17.0 (34)**
-([2026-10-25 TestFlight release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.17.0-build34)). An Apple Watch companion is built behind a build flag but not shipped yet
+The iPhone and iPad app is distributed through TestFlight; the latest build is **1.18.0 (35)**
+([2026-10-26 TestFlight release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.0-build35)). An Apple Watch companion is built behind a build flag but not shipped yet
 ([#181](https://github.com/tomqwu/ListenToMe/issues/181)).
 See [iOS setup, validation and distribution](docs/IOS.md). Device and language support are checked
-per feature; Apple Intelligence is independent of recording. The [compatibility candidate](docs/device-compatibility.md)
-adds local dictation fallback for compatible older iPads and explicit unavailable-feature recovery;
-these changes are not part of the published 1.17.0 beta.
+per feature; Apple Intelligence is independent of recording. The [compatibility support](docs/device-compatibility.md)
+includes local dictation fallback for compatible older iPads and explicit unavailable-feature recovery
+in the 1.18.0 beta. Current-source physical-device acceptance remains pending.
 
 ```sh
 make ios-build
@@ -80,19 +80,19 @@ make ios-test
 
 ![ListenToMe — four-pane meeting copilot](docs/images/screenshot.png)
 
-**iPhone and iPad** (1.17.0)
+**iPhone and iPad** (1.18.0)
 
 <p>
-<img src="docs/images/ios/iphone-01-live.png" width="200" alt="Live transcript and Quick Summary">
-<img src="docs/images/ios/iphone-02-summary.png" width="200" alt="Summary with decisions and next steps">
-<img src="docs/images/ios/iphone-03-prompt.png" width="200" alt="Ask once or save summary instructions below Notes">
-<img src="docs/images/ios/ipad-01-workspace.png" width="300" alt="iPad transcript, Quick Summary and Summary workspace">
+<img src="docs/images/ios/1.18.0/iphone-01-live.png" width="200" alt="Live transcript and Quick Summary">
+<img src="docs/images/ios/1.18.0/iphone-02-summary.png" width="200" alt="Summary with decisions and next steps">
+<img src="docs/images/ios/1.18.0/iphone-03-prompt.png" width="200" alt="Ask once or save summary instructions below Notes">
+<img src="docs/images/ios/1.18.0/ipad-01-workspace.png" width="300" alt="iPad transcript, Quick Summary and Summary workspace">
 </p>
 
-<img src="docs/images/ios/iphone-04-two-pane.png" width="600" alt="iPhone landscape with independent transcript and Quick Summary panes">
+<img src="docs/images/ios/1.18.0/iphone-04-two-pane.png" width="600" alt="iPhone landscape with independent transcript and Quick Summary panes">
 
 Live transcript with Quick Summary · Summary · conversation prompts · iPad workspace · two-pane iPhone.
-Native simulator captures use synthetic content; [capture provenance](docs/images/ios/release-1.17.0.json).
+Native simulator captures use synthetic content; [capture provenance](docs/images/ios/release-1.18.0.json).
 The complete four-device release set is preserved locally for the next authorized App Store submission.
 
 ## Why ListenToMe
