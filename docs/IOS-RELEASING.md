@@ -100,7 +100,8 @@ ladder remains applicable to future releases.
 All 24 processed screenshots, source checksums/native dimensions/order, current en-CA description
 and What's New, selected build and preserved reviewer contact details were rechecked before the
 single submission was sent. External evidence is `listentome-appstore-publication/app-review-accepted.json`
-and the matching review/version readbacks. Resume that submission's status instead of creating another.
+and the matching review/version readbacks. That Canadian review was later canceled. Read current US review
+`89b4c261-b37d-4b24-aaee-20f8238d1663` in `locale-us/`; do not resume the canceled review.
 The preparation section below preserves its earlier incomplete acceptance state.
 
 ## Public App Store preparation — October 26

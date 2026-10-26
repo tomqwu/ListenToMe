@@ -66,8 +66,9 @@ as `493894d` after independent review and all three required checks passed.
 Receipt, request/readback evidence and the maintainer's acceptance are preserved in
 `/Users/tomwu/Documents/Codex/2026-10-26/listentome-appstore-publication/`, particularly
 `app-review-accepted.json`, `review-submission-readback.json` and `public-version-after-submit.json`.
-Resume by reading that same submission; do not create a duplicate, resubmit, re-upload build 36 or
-claim Apple approval from submission acceptance. The preparation section below is historical.
+This Canadian submission was subsequently canceled. For current status, read US review
+`89b4c261-b37d-4b24-aaee-20f8238d1663` in `locale-us/`; never resume or resubmit the canceled review.
+The preparation section below is historical.
 
 ## Historical public App Store preparation — October 26, iOS 1.18.1 (36)
 
