@@ -39,15 +39,7 @@ enum OllamaModels {
     }
 
     /// The models a route offers, with the subset whose `/api/show` metadata verifies them as local.
-    struct Discovery {
-        var names: [String] = []
-        var verifiedLocal: Set<String> = []
-        var unverified: Set<String> = []
-        var catalogFailed = false
-        var localReadiness: LocalOllamaReadiness?
-        /// Why the list is empty, when the route can say (OpenAI-compatible servers, issue #52).
-        var problem: String?
-    }
+    typealias Discovery = ModelCatalogCoordinator.Discovery
 
     /// Installed models that can chat (capabilities include "completion").
     /// Probes capabilities concurrently for fast cloud responses.

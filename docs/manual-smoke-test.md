@@ -1126,3 +1126,14 @@ cannot update the closed conversation. A busy close refusal must not cancel pend
 Already-running synchronous local I/O may finish after cancellation; its result cannot publish.
 Preserve native screenshots and source provenance. Core held-continuation tests supplement this
 rendered/OS-permission acceptance and never mark it passed.
+
+### Model catalog ownership (#134, ORCH-006/007)
+
+Delay a configured server’s catalog reply, open Settings and change AI mode or the custom server URL.
+The old reply must not replace current model choices, status or local-readiness guidance. Repeat
+with a newer Refresh finishing before the older request. AI off must request no catalog and keep
+saved model choices for re-enabling AI. Apple Intelligence uses its on-device entry without catalog
+access. Failed discovery keeps pinned choices; custom/cloud-service catalogs never choose a model
+for an unset pane. Close with discovery pending and verify no late UI update. Already-started
+network I/O may complete; these checks concern publication and no new request while AI is off.
+Use only an explicitly configured test destination and preserve native screenshots/source evidence.

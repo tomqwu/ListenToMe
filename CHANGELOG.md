@@ -87,6 +87,8 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 
 ## macOS (unreleased since 1.4.4)
 
+- AI-off no longer queries model catalogs or changes saved model choices. Model refreshes are cancelled when editing Settings or closing the window; replies from an obsolete route cannot update the current route. Explicit cloud/custom choices and verified-local Ollama defaults remain unchanged. (#134, partial)
+
 - Calendar and attachment loads now belong to the current conversation. Late Calendar results cannot overwrite edited notes or a newer conversation, and cancelled attachment reads cannot restore cleared grounding. Cancelling a close keeps pending context available; accepted close invalidates it. Context/title formatting, local file limits and privacy settings are unchanged. (#134, partial)
 
 - Check the selected speech engine/language and permissions before Start, with explanatory settings/permissions recovery and supported engine alternatives. Unavailable Apple Intelligence is not offered as a working AI choice; saved preferences remain intact and capture stays independent of AI. Language changes clear stale engine choices; late checks and retained menu actions cannot restore an unsupported selection.

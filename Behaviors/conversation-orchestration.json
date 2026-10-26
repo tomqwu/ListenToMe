@@ -172,6 +172,80 @@
           "test": "ConversationCloseCoordinatorTests/testOverlappingCloseCannotPromptOrInvalidateTwice"
         }
       ]
+    },
+    {
+      "id": "ORCH-006",
+      "name": "Model refresh preserves explicit choices and verified-local defaults",
+      "given": "the user selected an AI route and per-pane model choices",
+      "when": "the route model catalog is refreshed",
+      "then": "verified local defaults are preferred on Ollama, pinned choices survive inconclusive discovery, custom/cloud-service catalogs never auto-select a model, and Apple Intelligence uses its on-device model without catalog access",
+      "covers": [
+        "Sources/ListenToMeCore/ModelCatalogCoordinator.swift",
+        "App/OllamaModels.swift",
+        "App/MeetingView+Models.swift",
+        "App/MeetingView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ModelCatalogCoordinatorTests.swift",
+          "test": "ModelCatalogCoordinatorTests/testVerifiedLocalDefaultsExcludeCloudModels"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ModelCatalogCoordinatorTests.swift",
+          "test": "ModelCatalogCoordinatorTests/testPinnedChoiceSurvivesInconclusiveCatalog"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ModelCatalogCoordinatorTests.swift",
+          "test": "ModelCatalogCoordinatorTests/testCloudAndCustomCatalogsKeepModelChoiceExplicit"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ModelCatalogCoordinatorTests.swift",
+          "test": "ModelCatalogCoordinatorTests/testAppleIntelligenceNeverRequestsACatalog"
+        }
+      ]
+    },
+    {
+      "id": "ORCH-007",
+      "name": "AI-off and obsolete model refreshes cannot query or change the current route",
+      "given": "model discovery is pending or an AI route is being changed",
+      "when": "AI is off, the refresh is cancelled, or the configured destination changes before a reply",
+      "then": "AI-off and pre-execution cancellation request no catalog; cancelled or obsolete replies cannot replace model choices, readiness or status for the current route",
+      "covers": [
+        "Sources/ListenToMeCore/ModelCatalogCoordinator.swift",
+        "App/MeetingView+Models.swift",
+        "App/MeetingView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ModelCatalogCoordinatorTests.swift",
+          "test": "ModelCatalogCoordinatorTests/testAIOffNeverQueriesACatalogOrChangesModelChoices"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ModelCatalogCoordinatorTests.swift",
+          "test": "ModelCatalogCoordinatorTests/testChangedRouteRejectsOldCatalogWithoutWaitingForAnotherRefresh"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ModelCatalogCoordinatorTests.swift",
+          "test": "ModelCatalogCoordinatorTests/testCancelledRefreshCannotPublishItsLateCatalog"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ModelCatalogCoordinatorTests.swift",
+          "test": "ModelCatalogCoordinatorTests/testCancellationBeforeExecutionNeverQueriesCatalog"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ModelCatalogCoordinatorTests.swift",
+          "test": "ModelCatalogCoordinatorTests/testNewerRefreshKeepsItsModelChoicesWhenAnOlderReplyArrives"
+        }
+      ]
     }
   ]
 }

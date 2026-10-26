@@ -533,7 +533,8 @@ saying so. Press **Speakers / edit names** to retry once the network is availabl
   iOS data protection (readable only after the device has been unlocked once since a restart). They
   are included in the device's normal iCloud/Finder backup by default, so a restored phone keeps
   them; **Settings → Privacy → Exclude conversations from iCloud backup** keeps them off any backup.
-  Model catalogs are fetched only from a destination you configured — never anonymously.
+  Model catalogs are fetched only from a destination you configured — never anonymously. AI off
+  requests no catalog. A reply from an obsolete route cannot change current pane choices.
 - **History search index (both apps).** The semantic index holds only vectors, passage numbers and fingerprints,
   never transcript text, lives beside the conversations in `Search Index/`, is always excluded from
   backups, and is removed with a deleted conversation or Clear history. Unchanged passages reuse their

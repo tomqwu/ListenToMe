@@ -20,6 +20,11 @@ after ownership/cancellation fixes. Independent review caught the rejected-close
 default-argument closure; both are corrected. Evidence is in the external `listentome-features/
 orchestration-134` directory. This is partial work for #134, with no new PR, merge or release claim.
 Full validation and rendered context/close acceptance remain required before integration.
+The next local slice moves model-catalog task ownership and pane-healing policy into Core
+(ORCH-006/007): four baseline tests adopted existing privacy/choice behavior, then eight assertions
+reproduced AI-off discovery, pre-execution cancellation and stale-route publication before the fix.
+All nine focused tests passed and independent review found no blockers. Native credentials stay in
+the adapter; this does not claim to abort network I/O already in progress.
 
 ## Combined PR train — October 25
 
