@@ -12,13 +12,16 @@ ancestry; this remains the only open PR. No additional feature PR was opened. #1
 and independently reviewed, but is not done until full validation, native acceptance, CI and merge.
 No issue is closed from local code alone.
 
-The full `make validate-local` run is frozen at `45e015f` in the separate
-`codex/134-finish-thin-views` checkout. Its complete Core gate passed 1,232 tests (seven skips,
-98.26% line coverage); simulator/native suites and real model contracts are still running. Source
-hashes and exact results live in the external `listentome-features/orchestration-134/
-full-validation-45e015f` folder. This handoff-only integration follow-up changes no product source.
-The earlier `b763ac3` full pass, three green hosted checks and 24 inspected screenshots remain
-preserved historical evidence; current-head CI and fresh release screenshots must be refreshed.
+The full `make validate-local` run **passed** on clean frozen product source `45e015f` in
+`codex/134-finish-thin-views`: 1,232 Core tests (seven skips, 98.25909% line coverage), 513 iOS
+passes (12 intentional skips, zero failures), 26 native Mac passes, four Watch passes, all 91 BDD
+contracts, helper/lint/build checks and real Ollama/OpenAI-compatible contracts. Both dedicated
+simulators were deleted and all input hashes/working-tree state remained unchanged. Exact logs and
+three preserved native result bundles are in external `listentome-features/orchestration-134/
+full-validation-45e015f`. The first docs-only integration head `185bcff` passed all three required
+hosted checks; this final handoff/changelog-only follow-up refreshes CI again without product changes.
+The earlier `b763ac3` full pass and 24 inspected screenshots remain historical evidence. Fresh
+screenshots for this updated candidate are being captured before the authorized TestFlight train.
 
 #134 now has 14 ORCH contracts: conversation-owned Calendar/reference tasks; accepted-close
 invalidation; model-refresh privacy/choice policy; New/import transactions; synchronous pane/prompt
@@ -32,7 +35,9 @@ and the last persistence extraction gap; all were corrected. A failed intermedia
 (51 assertions across two Summary continuation tests) is preserved as failed; its wait is restored.
 See [ORCHESTRATION.md](ORCHESTRATION.md) for ownership and evidence.
 
-Installed Mac GUI and real OTHERS transcription remain pending. The Mac locked again and the
+Installed Mac GUI and real OTHERS transcription remain pending. TestFlight upload itself uses the
+configured API key and does not require an unlocked Mac or connected phone; do not confuse the
+platform acceptance requirement with Apple authentication or an upload-tool blocker. The Mac locked again and the
 maintainer explicitly requested code work while away; do not repeatedly ask for unlock or reset
 permissions. Restore original Dev settings and complete targeted cleanup after acceptance finishes.
 Keep source/signing evidence for the exact app tested. This integration is not merged or published.

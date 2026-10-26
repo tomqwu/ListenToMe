@@ -72,7 +72,10 @@ logs preserve actual failing assertions before their fixes, followed by passing 
 The full thin-view-core-coverage.log run exposed a refactor regression: waiting for Summary's first
 task omitted its continuation batches (51 failed assertions across two existing tests). The original
 continuation-aware wait is restored; summary-chain-corrected-green.log passes all 50 focused tests.
-That failed full run remains failed. A subsequent complete frozen validation must establish green.
+That failed full run remains failed. The subsequent complete frozen run at 45e015f passed: 1,232
+Core tests (seven skips, 98.25909% coverage), 513 iOS passes (12 skips), 26 Mac passes, four Watch
+passes, all 91 contracts, lint/build/helper checks and real Ollama/OpenAI-compatible contracts.
+Source hashes and clean working-tree state were preserved; both dedicated simulators were deleted.
 The initial Calendar fixture used a non-default title with placeholder state; correcting that test
 fixture was not a product fix and is not counted as regression red evidence.
 
@@ -90,5 +93,6 @@ native graph tests and Core coverage do not establish rendered UI or physical ca
 
 The earlier PR #308 candidate at b763ac3 remains preserved with its own artifacts and evidence.
 The reviewed #134 continuation at 45e015f is now included in that same integration PR; full validation
-runs on that exact product source. Current-head CI/screenshots still need refresh. No extra feature PR was opened.
+passed on that exact product source. Required CI passed on the first docs-only integration head;
+current-head CI and screenshots are refreshing. No extra feature PR was opened.
 Do not call this work merged or published until the repository's corresponding gates are complete.

@@ -20,8 +20,6 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased since 1.17.0 (34))
 
-- Maintenance: active/history save ordering, unchanged-save suppression and retry acknowledgement now use a tested Core owner. Native file protection, backup options, storage format and user-facing save behavior are unchanged. (#134)
-
 - Documentation: the Watch speaker-privacy section now agrees with the existing opt-in saved-audio retention policy. No app behavior changes. (#225)
 
 - Watch imports retain playable audio only when Save audio recordings is on, with reconnect queueing, retry-safe storage, consistent playback timing and existing deletion/expiry controls (#225). Watch remains excluded from distribution.
@@ -38,12 +36,14 @@ does not show it again, and a fresh install does not see it at all; see
 
 Combined TestFlight train requested October 25. Not uploaded or published yet.
 
+- Maintenance: active/history save ordering, unchanged-save suppression and retry acknowledgement now use a tested Core owner. Native file protection, backup options, storage format and user-facing save behavior are unchanged. (#134)
+
 - Compatible older iPhones/iPads use Apple's on-device dictation when advanced transcription is unavailable. Fixed and Automatic language choices use supported local modules. (#306)
 - Check recording support before enabling Start, with clear device/language and microphone recovery. Genuine preparation failures remain actionable; cancelling preparation or leaving the app suppresses obsolete callbacks. Recording remains independent of summary AI. (#306)
 - Explain unavailable Apple Intelligence and require an explicit supported alternate provider; preserve saved choices and keys. Live/Summary help stays compact and supports large text and landscape. (#307)
 - Re-transcribe retained audio in a chosen language, review the result and replace or cancel. Recognition stays on-device; notes, attachments, summaries and Watch device attribution remain. Replaced evidence invalidates stale speaker corrections and summary cards. (#224)
 - Automatic reviews enforce their full assembled request limit, including directives and references, before sending. Directive edits alone keep the existing review. (#148)
-- Shared recording, naming and speaker-work coordinators preserve Stop finalization, cancellation, conversation identity and old-callback isolation. (#134, partial)
+- Shared recording, naming and speaker-work coordinators preserve Stop finalization, cancellation, conversation identity and old-callback isolation. (#134)
 - Harden literal Markdown export, incomplete-import provenance, reference-file handling, model discovery and cold local Ollama requests. Existing provider privacy choices remain unchanged. (#141)
 - Integration regression coverage preserves dictation fallback during file re-transcription and incomplete-import status through summary/save/title/language copies.
 
