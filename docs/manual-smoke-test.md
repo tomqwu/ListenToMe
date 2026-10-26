@@ -977,8 +977,10 @@ are not native acceptance. Preserve source, OS, device, native screenshots and a
 - On Mac, inspect engine choices and Start for the selected language and permissions. Unsupported
   engines are not selectable; a saved unavailable engine remains explanatory with alternatives.
   AI gating must not disable supported capture. Verify actual microphone and system-audio OTHERS
-  text on the supported route. Stop, New and close while readiness/permission is pending: no late
-  capture or denial may affect the next conversation. Cancel a close dialog and verify explicit retry.
+  text on the supported route. Leave an OS permission request unanswered, then Stop, New or close:
+  the app must finish cancellation without waiting for that callback. A system consent prompt may
+  remain open. Begin a new conversation, then answer the old request: no late capture or denial may
+  affect the new conversation. Cancel a close dialog and verify explicit retry.
 - On Watch simulator, inspect independent local Record and iPhone remote. Unreachable/incompatible
   or unchecked phone capability blocks remote Start; reachable Stop remains usable after losing
   Start capability. Local denied microphone/low battery/storage shows its reason. Record offline

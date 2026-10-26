@@ -33,15 +33,36 @@ allocation"; its async public-default closure matches the trigger described in
 interrupted and preserved, not reported passed. The default closure now lives in a non-inline
 convenience initializer inside Core; an additional native client file exercises linkage. A local
 pre-workaround run passed, so the genuine red is the hosted crash, not a fabricated local failure.
-Restart final frozen validation and CI on the corrected source before publication.
+Corrected source `215d818` passed all three hosted checks. Both physical devices repeated recording,
+Stop and retained Play/Pause successfully on that exact source; 24 fresh native-resolution release
+screenshots were captured, inspected, hashed and backed up. Its full local run passed 1,186 Core
+tests (seven skips, 98.22% line coverage), then completed 522 iOS tests: 508 passed, 12 skipped and
+two failed. The failures were a settings scrolling helper dismissing the sheet when returning to
+the first row and stale release-note expectations for the unpublished 1.17.1 version. This is a
+failed full run, not a candidate pass. The helper now uses actual navigation-bar bounds, and the
+release contract and test identify 1.18.0 (35); focused and full validation must establish green.
+
+The Mac was unlocked. Installed Dev acceptance then reproduced Start waiting for an OS microphone
+callback and Stop/Quit remaining in Finalizing. TCC logged a delayed consent prompt. Native UI
+automation cannot access the system consent surface; a specific request to bring Dev forward and
+answer any prompt is pending, with no reset requested. The empty owned stalled test process was
+terminated only after preserving screenshots, stack sample, signing and OS evidence, then reopened
+from Finder. No synthetic audio has been played during this stalled Mac acceptance. Native Mac
+regressions reproduced both the pending permission and pending capability cancellation failures.
+The Mac preflight now races only resource-free metadata/consent waiting against cancellation using
+a single-completion reply; real capture drain ownership is unchanged. Late results remain fenced.
+All 24 native Mac tests passed, including late-grant and pre-execution cancellation cases, and
+independent review found no blockers. All three focused cloud-settings/release-note UI tests passed,
+including the large-text history check and the current 1.18.0 (35) announcement.
+New frozen validation, CI, Mac GUI/OTHERS acceptance, merge and actual upload remain outstanding.
 
 The earlier feedback-only `40d8e9a` full validation and 24 inspected images are historical evidence,
 not acceptance of this combined source. Earlier physical iPad/iPhone recording and opt-in Play/Pause
 checks passed at `e0e5062`; the connected iPad Pro4 has local dictation support but cannot use advanced
 speech or Apple Intelligence. Those physical checks must be identified by their source, never
-silently attributed to this release. The Mac GUI remains locked at the latest UI check; an unlock
-request is already pending. Do not ask for permission resets to solve a lock. Existing Dev cleanup
-was completed; new native headless tests do not open a Dev app or user conversations.
+silently attributed to this release. Prior Dev cleanup was completed; the new installed Dev session
+is still active. Restore its original settings and perform the authorized app-scoped cleanup only
+after acceptance finishes, preserving other sessions, conversation data and keys.
 
 **Watch remains excluded from distribution** until the physical paired-device spike/recording-sync
 acceptance in #181/#193. Simulator native tests do not waive this gate. No physical Watch was found;
