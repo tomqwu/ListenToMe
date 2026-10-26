@@ -1063,7 +1063,7 @@ These are acceptance steps, not a record of a completed native run.
 Use a new test conversation with an unresolved question, explicit action/owner/deadline and decision. Generate Summary with the chosen provider; inspect the three categories and expand each source. Confirm speaker labels match and untimed lines show no invented clock. Copy/export must be readable. Add more speech, refresh, and verify prior unresolved items remain; explicitly resolve an item and check the new state. Reopen from History, rename the conversation and verify cards survive. With a model returning freeform, malformed JSON or unsupported quotes, inspect the normal fallback text. Cancel or fail a refresh: never label partial output as a validated grid. Capture native screenshots and preserve candidate provenance. Actual model interpretation and rendered UI acceptance remain separate from schema/unit checks.
 ## Automated adapter coverage (#134)
 
-`make app-test` runs a hostless macOS XCTest bundle: the actual FileContextLoader and SpeakerAudioBuffer sources, native RTF decoding, AVAudioConverter resampling, cap and prior-generation rejection. It launches no ListenToMe Dev app and requests no capture permissions. Its `.xcresult` coverage describes only the compiled adapter sources and test code. Core ConversationRepository tests cover archive-first cleanup, failed/unavailable storage, sticky damaged-file warnings, and durable snapshot publication. Neither suite substitutes for installed-app GUI/audio acceptance.
+`make mac-test` runs the selected native Mac adapter bundle, including actual FileContextLoader and SpeakerAudioBuffer code, native RTF decoding, AVAudioConverter resampling, cap and prior-generation rejection. It launches no ListenToMe Dev app and requests no capture permissions. It is not a whole-App coverage measurement. Core ConversationRepository tests cover archive-first cleanup, failed/unavailable storage, sticky damaged-file warnings, and durable snapshot publication. Neither suite substitutes for installed-app GUI/audio acceptance.
 
 ### iOS capture coordinator regression (#134)
 
@@ -1110,3 +1110,19 @@ existing isolated archive-failure setup to trigger a failed write, restore writa
 save; the failed content must persist. Clear History during an active conversation and confirm later
 Stop does not restore it. Preserve screenshots and signing/source evidence, then clean up the completed
 Dev session as documented. Core tests supplement these installed-app checks, not replace them.
+
+### Conversation-owned Calendar and references (#134, ORCH-001–005)
+
+Load Calendar while its permission/lookup reply is pending. Type new Context text, or accept New or
+open another saved conversation: the old event or denial must not overwrite current Context, title
+or messages. A title typed during lookup stays typed. In the unchanged conversation, a successful
+lookup still includes event time, attendees and notes; denial and no-event recovery stay distinct.
+
+Attach a local folder, then Clear before its read completes: no late content or skipped-file message
+may return. Select newer files while an older read waits: only the latest selection becomes grounding.
+Close while context is loading and Cancel the save/close decision: the window stays open and its
+selected references and Calendar request still finish. Repeat with accepted close: late results
+cannot update the closed conversation. A busy close refusal must not cancel pending context.
+Already-running synchronous local I/O may finish after cancellation; its result cannot publish.
+Preserve native screenshots and source provenance. Core held-continuation tests supplement this
+rendered/OS-permission acceptance and never mark it passed.

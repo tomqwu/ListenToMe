@@ -11,6 +11,8 @@ struct MeetingView: View {
     static let proactiveDefaultsKey = "proactiveQuickAnswers"
 
     @State var suggestedMeeting: MeetingInfo?
+    @State var calendarContext = CalendarContextCoordinator()
+    @State var closeCoordinator = ConversationCloseCoordinator()
     @State var meetingSuggestionPolicy = MeetingSuggestionPolicy()
     @State var nextMeetingPoll = Date.distantPast
     @State var session: MeetingSession
@@ -57,7 +59,7 @@ struct MeetingView: View {
     @State var presetID: String
     @State var vocabulary = SessionVocabulary()   // domain vocabularies and My terms (issue #222)
     @State var referencePaths: [URL]
-    @State private var referenceLoadToken = 0
+    @State var referenceContext = ReferenceContextCoordinator()
     @State var referenceSkipped: [TextFileReader.Skipped] = []
     @State var captureCoordinator = CaptureCoordinator()
     @State var importTask: Task<Void, Never>?
@@ -508,89 +510,6 @@ extension MeetingView {
     }
 
     /// Attach/clear files & folders whose text is fed into Quick/Deep prompts as grounding.
-    func referenceFilesRow(session: MeetingSession) -> some View {
-        HStack(spacing: 8) {
-            Button { addReferenceFiles(session: session) } label: {
-                Label("Add files / folders", systemImage: "paperclip")
-            }
-            .help("Attach local files or folders as reference context for Quick & Deep answers")
-            if !referencePaths.isEmpty {
-                Text(referenceSummary)
-                    .font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                if !referenceSkipped.isEmpty {
-                    Label(referenceSkippedSummary, systemImage: "exclamationmark.triangle")
-                        .font(.caption).foregroundStyle(.orange).lineLimit(1)
-                        .help(referenceSkippedDetail)
-                }
-                Button("Clear") { clearReferences(session: session) }
-                    .controlSize(.small)
-            }
-            Spacer()
-        }
-    }
-
-    var referenceSummary: String {
-        let names = referencePaths.map { $0.lastPathComponent }
-        let shown = names.prefix(2).joined(separator: ", ")
-        return referencePaths.count > 2 ? "\(shown) +\(referencePaths.count - 2) more" : shown
-    }
-
-    /// One-line "not included" status so a file the model never saw is never invisible.
-    var referenceSkippedSummary: String {
-        guard let first = referenceSkipped.first else { return "" }
-        return referenceSkipped.count == 1
-            ? "Not included: \(first.name) (\(first.reason))"
-            : "\(referenceSkipped.count) files not included"
-    }
-
-    var referenceSkippedDetail: String {
-        "Not included in reference context:\n"
-            + referenceSkipped.map { "• \($0.name) — \($0.reason)" }.joined(separator: "\n")
-    }
-
-    func addReferenceFiles(session: MeetingSession) {
-        let panel = NSOpenPanel()
-        panel.canChooseFiles = true
-        panel.canChooseDirectories = true
-        panel.allowsMultipleSelection = true
-        panel.message = "Choose files or folders to use as reference context"
-        guard panel.runModal() == .OK else { return }
-        // De-duplicate by standardized path while preserving order.
-        var seen = Set(referencePaths.map { $0.standardizedFileURL.path })
-        for url in panel.urls where seen.insert(url.standardizedFileURL.path).inserted {
-            referencePaths.append(url)
-        }
-        persistReferencePaths()
-        loadReferences(into: session)
-    }
-
-    func clearReferences(session: MeetingSession) {
-        referencePaths = []
-        referenceSkipped = []
-        referenceLoadToken += 1   // supersede any in-flight load so it can't reapply old files
-        persistReferencePaths()
-        session.referenceContext = nil
-    }
-
-    private func persistReferencePaths() {
-        UserDefaults.standard.set(referencePaths.map(\.path), forKey: "referencePaths")
-    }
-
-    /// Reads the attached files/folders off the main actor and updates the session's grounding.
-    private func loadReferences(into session: MeetingSession) {
-        referenceLoadToken += 1
-        let token = referenceLoadToken
-        let urls = referencePaths
-        Task {
-            let loaded = await Task.detached { FileContextLoader.load(urls) }.value
-            guard token == referenceLoadToken else { return }   // superseded by a newer add/clear
-            referenceSkipped = loaded.skipped
-            session.referenceContext = ReferenceBuilder.build(
-                documents: loaded.documents,
-                maxChars: ProviderSettings.referenceBudget
-            )
-        }
-    }
 
 }
 
@@ -641,36 +560,13 @@ extension MeetingView {
         }
     }
 
-    /// Pre-fills the Context-notes field from the user's current or next calendar meeting.
-    /// Calendar access is async, so this runs on a Task; failures degrade to an inline message.
-    func loadFromCalendar(session: MeetingSession) {
-        exportError = nil
-        Task {
-            let lookup = await CalendarService.currentOrNextMeeting()
-            guard case .meeting(let info) = lookup else {
-                exportError = lookup.message
-                return
-            }
-            session.notes = MeetingContext.notes(
-                for: info,
-                timeFormat: { $0.formatted(date: .omitted, time: .shortened) })
-            // Title the conversation after the meeting — History, exports and the window all showed
-            // "Conversation — <date>" even though the app knew the real name (issue #136). Only the
-            // generated title is replaced, so a title the user typed is never clobbered.
-            // An automatic name (#221) is replaced too: the meeting's own name is better.
-            if ConversationAutoTitle.calendarMayReplace(state: conversationTitleState, title: conversationTitle),
-               !info.title.isEmpty {
-                conversationTitle = info.title
-                conversationTitleState = .calendar   // never renamed automatically (#221)
-            }
-        }
-    }
-
     /// Window close/teardown: stop the hotkey and any pending restart/import. If recording, mirror
     /// the Stop-button flow so a meeting ended by closing the window is still saved for search
     /// (best-effort: the Task may not finish on a full app quit).
     func tearDownOnDisappear(session: MeetingSession) {
         captureStartGate.close()
+        calendarContext.cancel()
+        referenceContext.cancel()
         hotkey.stop()
         for role in CopilotRole.allCases { session.cancelResponse(role) }
         speakerWork.cancel()
@@ -711,6 +607,7 @@ extension MeetingView {
     /// just-deleted transcript can't be re-persisted. A fresh id starts a new (still untainted)
     /// upsert key once this session is sealed.
     func dropCurrentSessionFromSaving() {
+        calendarContext.cancel()
         // Only taint when the current window-session has content that was just cleared — clearing
         // old records on a fresh/empty window must not silently disable future saving.
         if hasConversation { sessionSaveable = false }

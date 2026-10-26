@@ -395,7 +395,8 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   conversation after the event (only while the title is still the generated "Conversation — <date>",
   so a title you typed is kept). If Calendar access is denied the banner says so and offers **Open
   Calendar privacy settings**; "no meeting right now" is a separate, distinct message. Every banner
-  message can be dismissed with its ✕.
+  message can be dismissed with its ✕. A pending lookup cannot overwrite notes edited while it
+  waits, or update a different conversation. Cancelling a close keeps the open conversation’s lookup active.
 - **Automatic titles (#221).** After Stop, Save or New conversation, a saved conversation still titled
   "Conversation — <date>" with about 30 words of transcript is named in the background, in a few words.
   - The title comes from the finished Summary when there is one (no extra request, never a
@@ -571,12 +572,12 @@ GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs che
 `macos-26` runners: both app targets compile with the checked-in dependency lock, and the full
 `ListenToMeCore` test suite (unit + headless integration/e2e) runs with a **coverage floor of 95%**
 enforced by `scripts/check-coverage.sh`. The core check also enforces [BDD contracts](docs/BDD.md),
-tests their failure paths, and executes bound core/tooling scenarios. SwiftLint, iOS simulator UI tests, GUI/audio acceptance, and
-enforced by `scripts/check-coverage.sh`. This percentage covers Core only, not the whole product.
-A separate headless `make app-test` target exercises production macOS file-loading and shared audio-buffer
-adapters with native framework execution and collects its own coverage; it does not claim coverage of
-SwiftUI, real capture, permissions or every App file. It runs in CI and `make validate-local`.
-SwiftLint, iOS simulator unit/UI tests, GUI/audio acceptance, and
+tests their failure paths, and executes bound core/tooling scenarios. This percentage covers Core
+only, not the whole product. `make mac-test` exercises selected native macOS adapters, including
+file-loading, audio-buffer resampling, capability/preflight and checkpoint behavior; it does not
+measure all App code or replace SwiftUI, real capture or permission acceptance. Native Mac and Watch
+suites run locally through `make validate-local`, alongside SwiftLint, iOS simulator unit/UI tests,
+GUI/audio acceptance, and
 distribution checks require local validation via [`docs/manual-smoke-test.md`](docs/manual-smoke-test.md).
 
 `make e2e` runs the checks CI can't (it needs a real Mac + Ollama): it builds the app target,

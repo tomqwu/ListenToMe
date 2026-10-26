@@ -83,6 +83,7 @@ extension MeetingView {
             }
             discardAudioIfNotInHistory()
             if persisted { nameConversationIfNeeded() }   // the saved one, in the background (#221)
+            calendarContext.cancel()
             beginDiarizationRunReset()
             restoredRecord = nil
             session.resetConversation()
@@ -121,6 +122,7 @@ extension MeetingView {
                 return
             }
         }
+        calendarContext.cancel()
         titleCoordinator.cancel(currentSessionID)
         beginDiarizationRunReset()
         clearReferences(session: session)
@@ -224,6 +226,15 @@ extension MeetingView {
 
     /// App/window close waits for final text, but never for optional AI or speaker analysis.
     func prepareToClose() async -> Bool {
+        await closeCoordinator.request(canBegin: !lifecycleBusy, prepare: {
+            await prepareCurrentConversationToClose()
+        }, accepted: {
+            calendarContext.cancel()
+            referenceContext.cancel()
+        })
+    }
+
+    private func prepareCurrentConversationToClose() async -> Bool {
         guard !lifecycleBusy else { return false }
         captureStartGate.cancel()
         lifecycleBusy = true

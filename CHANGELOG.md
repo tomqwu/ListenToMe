@@ -87,6 +87,8 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 
 ## macOS (unreleased since 1.4.4)
 
+- Calendar and attachment loads now belong to the current conversation. Late Calendar results cannot overwrite edited notes or a newer conversation, and cancelled attachment reads cannot restore cleared grounding. Cancelling a close keeps pending context available; accepted close invalidates it. Context/title formatting, local file limits and privacy settings are unchanged. (#134, partial)
+
 - Check the selected speech engine/language and permissions before Start, with explanatory settings/permissions recovery and supported engine alternatives. Unavailable Apple Intelligence is not offered as a working AI choice; saved preferences remain intact and capture stays independent of AI. Language changes clear stale engine choices; late checks and retained menu actions cannot restore an unsupported selection.
 - Stop, New and window close cancel pending capability/permission checks without waiting for an unanswered OS callback. Late grants cannot start capture and late denials cannot show an error in a newer conversation. Cancelling does not dismiss an OS consent prompt.
 

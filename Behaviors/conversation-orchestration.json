@@ -1,0 +1,177 @@
+{
+  "feature": "Conversation-owned asynchronous context and platform actions",
+  "scenarios": [
+    {
+      "id": "ORCH-001",
+      "name": "Load Calendar context without replacing a typed title",
+      "given": "a current conversation and a calendar event with time, attendees and notes",
+      "when": "the user loads that event as context",
+      "then": "Context contains the event details, a generated title may become the event title, and an explicitly typed title is preserved",
+      "covers": [
+        "Sources/ListenToMeCore/CalendarContextCoordinator.swift",
+        "App/MeetingView+Calendar.swift",
+        "App/MeetingView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/MeetingContextTests.swift",
+          "test": "MeetingContextTests/testIncludesAttendeesAndNotes"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationAutoTitleTests.swift",
+          "test": "ConversationAutoTitleTests/testCalendarReplacesDefaultAndAutomaticNamesButNeverTypedOnes"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CalendarContextCoordinatorTests.swift",
+          "test": "CalendarContextCoordinatorTests/testCurrentEventFillsContextAndPreservesAnExplicitTitle"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CalendarContextCoordinatorTests.swift",
+          "test": "CalendarContextCoordinatorTests/testFailureKeepsContextAndReturnsTheApplicableRecoveryMessage"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CalendarContextCoordinatorTests.swift",
+          "test": "CalendarContextCoordinatorTests/testATitleTypedWhileCalendarIsPendingIsNotReplaced"
+        }
+      ]
+    },
+    {
+      "id": "ORCH-002",
+      "name": "Obsolete Calendar work cannot replace a newer conversation or edit",
+      "given": "a Calendar lookup is waiting for an OS callback",
+      "when": "the user starts a newer lookup, edits Context, starts a new conversation or closes the window",
+      "then": "the obsolete result or denial cannot change current notes, title or recovery messages; cancelling before execution requests no Calendar access; an old completion cannot clear a newer loading state",
+      "covers": [
+        "Sources/ListenToMeCore/CalendarContextCoordinator.swift",
+        "App/MeetingView+Calendar.swift",
+        "App/MeetingView+Conversations.swift",
+        "App/MeetingView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CalendarContextCoordinatorTests.swift",
+          "test": "CalendarContextCoordinatorTests/testSwitchingConversationsCannotRestoreOldCalendarContextOrDenial"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CalendarContextCoordinatorTests.swift",
+          "test": "CalendarContextCoordinatorTests/testEditingNotesWhileCalendarIsPendingKeepsTheNewText"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CalendarContextCoordinatorTests.swift",
+          "test": "CalendarContextCoordinatorTests/testOlderCalendarReplyCannotReplaceANewerRequestOrClearItsLoadingState"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CalendarContextCoordinatorTests.swift",
+          "test": "CalendarContextCoordinatorTests/testCancelBeforeExecutionNeverRequestsCalendarAccess"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/CalendarContextCoordinatorTests.swift",
+          "test": "CalendarContextCoordinatorTests/testCancelClearsLoadingAndIgnoresAnUncooperativeLateFailure"
+        }
+      ]
+    },
+    {
+      "id": "ORCH-003",
+      "name": "Selected local reference files become bounded grounding",
+      "given": "the user selects local text files including unreadable entries",
+      "when": "the attachment read completes for the current selection",
+      "then": "only readable selected content becomes bounded reference context and skipped files have visible reasons; an unreadable selection does not invent grounding",
+      "covers": [
+        "Sources/ListenToMeCore/ReferenceContextCoordinator.swift",
+        "App/MeetingView+References.swift",
+        "App/MeetingView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ReferenceContextCoordinatorTests.swift",
+          "test": "ReferenceContextCoordinatorTests/testSelectedLocalTextBecomesBoundedGroundingAndReportsSkippedFiles"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ReferenceContextCoordinatorTests.swift",
+          "test": "ReferenceContextCoordinatorTests/testUnreadableSelectionDoesNotInventGrounding"
+        }
+      ]
+    },
+    {
+      "id": "ORCH-004",
+      "name": "Cancelled attachment loading cannot restore cleared reference context",
+      "given": "a local attachment read is pending",
+      "when": "the user clears attachments, closes the window, cancels the request or selects newer files",
+      "then": "only the latest active selection may become grounding; a cancelled request cannot publish content or skipped-file messages and cancelling before execution reads no files",
+      "covers": [
+        "Sources/ListenToMeCore/ReferenceContextCoordinator.swift",
+        "App/MeetingView+References.swift",
+        "App/MeetingView.swift",
+        "App/MeetingView+Conversations.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ReferenceContextCoordinatorTests.swift",
+          "test": "ReferenceContextCoordinatorTests/testCancelBeforeExecutionReadsNoFiles"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ReferenceContextCoordinatorTests.swift",
+          "test": "ReferenceContextCoordinatorTests/testCancelledRequestCannotPublishALateLocalRead"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ReferenceContextCoordinatorTests.swift",
+          "test": "ReferenceContextCoordinatorTests/testClearOrCloseDiscardsLateContentAndSkippedMessages"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ReferenceContextCoordinatorTests.swift",
+          "test": "ReferenceContextCoordinatorTests/testNewerSelectionOwnsGroundingEvenWhenOlderReadFinishesLast"
+        }
+      ]
+    },
+    {
+      "id": "ORCH-005",
+      "name": "Cancel closing keeps the open conversation and its pending context",
+      "given": "a conversation has pending Calendar or selected-reference work",
+      "when": "closing is refused while busy or the user cancels Save As or the close confirmation",
+      "then": "the window stays open and its pending context can still finish; only an accepted close invalidates that work and overlapping close requests do not run a second decision",
+      "covers": [
+        "Sources/ListenToMeCore/ConversationCloseCoordinator.swift",
+        "App/MeetingView+Conversations.swift",
+        "App/MeetingView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationCloseCoordinatorTests.swift",
+          "test": "ConversationCloseCoordinatorTests/testCancelledCloseKeepsPendingCalendarAndReferenceContext"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationCloseCoordinatorTests.swift",
+          "test": "ConversationCloseCoordinatorTests/testBusyRefusalDoesNotCancelPendingContextOrAskToSave"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationCloseCoordinatorTests.swift",
+          "test": "ConversationCloseCoordinatorTests/testAcceptedCloseInvalidatesBothPendingContextSources"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationCloseCoordinatorTests.swift",
+          "test": "ConversationCloseCoordinatorTests/testOverlappingCloseCannotPromptOrInvalidateTwice"
+        }
+      ]
+    }
+  ]
+}

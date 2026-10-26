@@ -4,6 +4,23 @@ A snapshot for an agent picking up ListenToMe cold. [AGENTS.md](../AGENTS.md) an
 [CLAUDE.md](../CLAUDE.md) stay the rules; this note is only the state of things on the date above.
 Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags) before acting on it.
 
+## Local continuation while maintainer is away
+
+PR #308 remains frozen at `b763ac3`: full local validation and all three required hosted checks
+passed, with 24 fresh inspected iPhone/iPad screenshots. The 17 other PRs were closed as superseded
+after verifying their live heads are ancestors. Installed Mac GUI/actual OTHERS acceptance remains
+pending; the maintainer requested code work while away. Do not call the combined candidate merged
+or published. TestFlight 1.17.0 (34) remains the last accepted upload.
+
+Independent #134 work is in `codex/134-finish-thin-views`, based on that frozen source. Calendar and
+reference task ownership now live in Core. ORCH-001/003 are baseline extraction contracts without
+invented historical red. Held-reply tests reproduced late Calendar overwrites, cancelled reference
+publication and premature context invalidation on a rejected close (ORCH-002/004/005), then passed
+after ownership/cancellation fixes. Independent review caught the rejected-close edge and the async
+default-argument closure; both are corrected. Evidence is in the external `listentome-features/
+orchestration-134` directory. This is partial work for #134, with no new PR, merge or release claim.
+Full validation and rendered context/close acceptance remain required before integration.
+
 ## Combined PR train — October 25
 
 The maintainer explicitly requested consolidation of all 18 open PRs into one release and TestFlight
