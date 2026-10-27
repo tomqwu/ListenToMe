@@ -2,6 +2,10 @@
 
 ## Mac App Store sandbox acceptance
 
+For [#333](speech-input-timing.md), require both active channels and no transcription failure before
+playing a known synthetic fixture. Verify finalized OTHERS text, Stop and a second recording. Keep
+the initial timestamp failure and all incomplete runs; a functioning RMS meter alone is not a pass.
+
 First run `make mac-sandbox-build` with existing stable Dev signing and verify the exact `.dev`
 identity, signature and actual sandbox entitlements before launch; follow
 [the local runbook](RELEASING.md#local-sandbox-acceptance). The release-optimized local configuration

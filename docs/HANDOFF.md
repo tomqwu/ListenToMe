@@ -1,3 +1,21 @@
+# Mac SpeechAnalyzer regression during acceptance — October 27, 2026
+
+Installed SandboxAcceptance source `7f8e00f` opened with the existing stable Dev signature and
+verified sandbox entitlements. Real external folder selection plus a local-model request read its
+unique synthetic token; a recreated vault writer updated the same note after app relaunch, with no
+duplicate. No complete sandbox acceptance is claimed: recording exposed
+[#333](https://github.com/tomqwu/ListenToMe/issues/333), a native SpeechAnalyzer timestamp-overlap
+failure while both channels were active. Stop worked; no audio fixture had been played.
+
+The [timing correction](speech-input-timing.md) now uses separate raw and exact converted clocks,
+with bound native conversion/frame/gap/cancellation tests. The valid native regression produced
+eleven failures; tiny valid input separately reproduced conversionFailed; a separate replay of the earlier cancelled-converter guard produced two. Harness
+format/isolation/pointer-lifetime failures remain separately preserved. The `7f8e00f` aggregate was
+stopped/reaped before the necessary source fix, unchanged/clean with all 917 file hashes matching;
+it remains incomplete. Fresh corrected-source full validation and installed audio acceptance are
+still required. PR #318 remains the single feature draft; #333 will close through that PR only
+when its gates pass. No new upload/review, production-ready claim or permission reset.
+
 # Mac Store sandbox acceptance — October 27, 2026
 
 Existing draft [PR #318](https://github.com/tomqwu/ListenToMe/pull/318) now integrates current main,

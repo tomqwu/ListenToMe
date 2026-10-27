@@ -136,6 +136,9 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 ## Features
 
 **Live capture & transcription**
+- Current Mac source fixes a live Apple-transcription timestamp error during resampling and small
+  clock jitter, while preserving source offsets and real pauses. See the
+  [timing contract and acceptance limits](docs/speech-input-timing.md) (#333, unreleased).
 - Dual-channel capture: your mic + the other participants' system audio, source-labeled.
 - On-device transcription via **Apple SpeechAnalyzer** (default) or the legacy **SpeechRecognizer**.
 - **Transcription-language** picker listing every language your Mac can transcribe on-device, and

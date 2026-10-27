@@ -23,6 +23,10 @@ permissions; do not reset or overwrite existing installations to transfer them.
 
 ### Local sandbox acceptance
 
+The [live input timing fix](speech-input-timing.md) needs fresh installed OTHERS evidence after its
+native buffer regressions pass. The earlier signed sandbox build's active meters plus timestamp
+failure do not satisfy this gate. Rebuild from the corrected source; preserve the failed attempt.
+
 Use `make mac-sandbox-build` with the existing stable `SIGN_FLAGS` in `signing.local.mk` for local
 Mac sandbox checks. `SandboxAcceptance` uses release optimization and the Store configuration's
 public sandbox entitlements under **`com.tomwu.ListenToMe.dev`**, named **ListenToMe (Dev)**.

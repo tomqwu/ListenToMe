@@ -127,6 +127,9 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 
 ## macOS (unreleased since 1.4.4)
 
+- Prevent live SpeechAnalyzer input from stopping on overlapping buffer timestamps caused by
+  resampling and small capture-clock jitter. Preserve source offsets, real gaps and converted frames;
+  reject stale input explicitly and discard converters cancelled during conversion. (#333)
 - Prepare a separate sandboxed Mac App Store configuration, sharing the iOS listing's bundle ID
   while preserving the existing DMG and Dev identities. The preliminary 1.5.0 (15) archive builds
   for Intel and Apple silicon with US English. This is not an App Store upload or submission.
