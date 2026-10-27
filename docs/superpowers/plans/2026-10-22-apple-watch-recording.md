@@ -2,7 +2,7 @@
 > temporary inbox. Save audio recordings now opts Watch imports into the shared playback library.
 > Consent V2 explains reconnect sync and optional retention. Device distribution still waits on #181.
 
-> **October 27 beta-preparation update:** Current source permanently embeds Watch and the helper requires explicit `--include-watch-beta` eligibility. [Current Watch status](../../watch-beta.md) supersedes older conditional-embedding and blanket beta-blocking instructions below. Task 15/20 physical acceptance remains pending for production; current top-level AGENTS.md allows an authorized validated TestFlight beta with those limits stated. Earlier task recipes/receipts below are historical implementation evidence, not commands for the new train.
+> **October 27 TestFlight publication:** 1.19.0 (38) includes Watch; upload acceptance, processed nested Watch identity, exact-source tag, en-US metadata and existing Dev access are verified. [Current Watch status](../../watch-beta.md) supersedes historical unshipped/embedding checkpoints below. Task 15/20 physical recording/paired transfer/wrist-down/battery/storage and production acceptance remain pending.
 
 # Apple Watch Recording Implementation Plan
 

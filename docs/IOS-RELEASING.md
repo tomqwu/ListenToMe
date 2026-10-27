@@ -24,11 +24,17 @@ honestly documented device limitations are sufficient to distribute an authorize
 testing. Physical-device acceptance is still required before calling the app production-ready or
 submitting a production App Store release. Missing hardware must not be reported as an upload blocker.
 
-## Next Watch beta candidate — 1.19.0 (38)
+## Latest Watch-enabled beta — 1.19.0 (38)
 
-Current source embeds Watch by default and has explicit beta-upload eligibility. [Watch preparation](watch-beta.md) records native lifecycle/durability coverage, intended installation, privacy and outstanding physical acceptance. Build 38 was unused at preflight; check again before upload. Full local validation passed on `016d61c`, including 122 BDD scenarios, 33 native Watch tests and the real model contracts. All 43 fresh iPhone/iPad and Watch images are individually inspected with source/binary/hash/RGB proof; [catalog](images/ios/release-1.19.0-en-US.json). QA-only Watch captures are excluded from listing assets. Final documentation-head/merged-source CI, merge, distribution package checks and actual upload/tester receipt remain pending. No Watch publication is claimed. Current accepted TestFlight remains 1.18.2 (37).
+Apple accepted **1.19.0 (38)** at **2026-10-27T08:31:46.551678+00:00**, from `e43244f752712ac80e179e35c893e967aea38753`. Processing is **VALID**, internal state **IN_BETA_TESTING**, and the existing Dev group includes this build with two accepted testers. Primary locale, localized name, beta description and What to Test were read back in **en-US**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.0-build38).
 
-## Latest beta and public state — October 27, 2026
+The exact uploaded IPA checksum matches ContentDelivery’s file checksum. Its phone, Share and Watch signatures/profiles, versions and debug flags passed verification; Apple’s processed nested entitlements independently confirm the Watch executable and distribution identity. The public buildBundles API lists one APP container and nests the Watch evidence inside it, rather than returning a separate WATCH_APP resource.
+
+[Publication receipt](releases/ios-1.19.0-build38.json), [fresh 43-image catalog](images/ios/release-1.19.0-en-US.json) and [Watch installation/evidence](watch-beta.md). Full local validation passed on app-candidate head `016d61c`; only documentation/media differ in merged app source `e43244f`, where all three required checks passed. A second full run passed on helper head `a6bb34c`; its identical-tree merge `ea2c05f` also passed all three required checks. That delivery-only helper enabled manual distribution signing without rebuilding the original archive. The accepted manual settings are retained at `~/.config/listentome/manual-testflight-export.plist`; pass that explicit local path through `IOS_EXPORT_OPTIONS`. The configured API key remains unchanged.
+
+Physical Watch installation, microphone capture, paired transfer, wrist-down and battery/storage acceptance remain unverified. This is an authorized beta, not a production-ready claim. Public iOS remains 1.18.1; no new public App Store submission or screenshot listing upload was performed by this train. Mac Store draft #318 stays separate.
+
+## Previous beta — 1.18.2 (37), October 27
 
 Apple accepted **1.18.2 (37)** at **2026-10-27T03:39:12.147449+00:00**, from `9494d024b9eee577b40695292aaf5e7dab9434eb`. Processing is **VALID**, internal state **IN_BETA_TESTING**, and both existing Dev testers have accepted group access. Primary locale, localized name, beta description and What to Test were read back in **en-US**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.2-build37).
 
@@ -217,7 +223,7 @@ worktree. Screenshots do not replace physical-device acceptance.
 | App Store Connect app | Listen To Me, Apple ID `6811155732` |
 | App bundle | `com.tomwu.ListenToMe.ios` |
 | Share extension | `com.tomwu.ListenToMe.ios.share` |
-| Apple Watch app | `com.tomwu.ListenToMe.ios.watchkitapp` — embedded by current source; [beta candidate checks](watch-beta.md) still pending |
+| Apple Watch app | `com.tomwu.ListenToMe.ios.watchkitapp` — included in TestFlight 1.19.0 (38); [physical production acceptance](watch-beta.md) remains pending |
 | Team | `T32FW7PZ3S` |
 | App Group | `group.com.tomwu.ListenToMe.ios` |
 | Existing internal testing group | `Dev` |

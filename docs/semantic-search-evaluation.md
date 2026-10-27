@@ -12,6 +12,10 @@ This continues the October 25 Apple contextual-embedding and multilingual E5 exp
 those variants is not additional acceptance. The new work tests a different sentence-model family,
 validates tokenizer compatibility and uses a new held-out corpus after calibration.
 
+## October 27 calibration follow-up
+
+The [live #223 evaluation log](https://github.com/tomqwu/ListenToMe/issues/223) records subsequent author-reference rerankers, query/language confidence calibration, translation and a bounded contextual-whitening screen. Every previously observed corpus is calibration for these later methods; earlier frozen holdout outcomes above remain historical evidence. No later method passed the unchanged four-language gate, and no additional app language, dependency, provider or privacy behavior changed. The whitening screen rejects only five frozen methods on stored 16-anchor/three-topic vectors per language, not whitening generally or current Apple model quality. Its eight evaluator/guard checks, immutable plans, scores/transforms and independent review are external evidence; they are not native integration or physical resource acceptance. The language expansion remains open.
+
 ## Reproduction and privacy
 
 App source inspected: `b9cf9ce1accfccc69b0fd2a8a994d629e9df33e2`. The isolated Swift package pins
