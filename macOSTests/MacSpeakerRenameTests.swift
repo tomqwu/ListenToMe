@@ -1,5 +1,6 @@
 import AppKit
 import XCTest
+import ListenToMeCore
 
 @MainActor
 final class MacSpeakerRenameTests: XCTestCase {
@@ -35,4 +36,30 @@ final class MacSpeakerRenameTests: XCTestCase {
         XCTAssertEqual(SpeakerRenameEditor.normalized("  Dana \n Lee  "), "Dana Lee")
         XCTAssertEqual(SpeakerRenameEditor.normalized(String(repeating: "a", count: 90))?.count, 80)
     }
+    func testRenameLiveParticipantBeforeTranscriptAttribution() {
+        var people = [SpeakerParticipant(id: "live", name: "Speaker 1", source: .others, seconds: 3)]
+        let store = ConversationStore()
+        store.apply(TranscriptSegment(source: .others, text: "Unattributed speech", isFinal: true, start: 0, end: 3))
+        XCTAssertEqual(SpeakerParticipant.rename(id: "live", to: "Dana", participants: &people, store: store), .others)
+        XCTAssertEqual(people.first?.name, "Dana", "Naming a live breakdown participant must not require attributed text")
+        XCTAssertNil(store.utterances.first?.speakerID, "Naming must not assign unrecognized speech to that voice")
+    }
+
+    func testRenameRestoredSpeakerAndIgnoreUnknownIdentity() {
+        var people: [SpeakerParticipant] = []
+        let store = ConversationStore()
+        for text in ["One", "Two"] {
+            store.apply(TranscriptSegment(source: .others, text: text, isFinal: true, start: 0, end: 3,
+                                          speakerID: "restored", speakerName: "Speaker 1"))
+        }
+        store.apply(TranscriptSegment(source: .you, text: "Other speaker", isFinal: true, start: 4, end: 5,
+                                      speakerID: "other", speakerName: "Speaker 2"))
+        XCTAssertEqual(SpeakerParticipant.rename(id: "restored", to: "Dana", participants: &people, store: store), .others)
+        XCTAssertEqual(store.utterances.map(\.speakerName), ["Dana", "Dana", "Speaker 2"])
+        let revision = store.revision
+        XCTAssertNil(SpeakerParticipant.rename(id: "missing", to: "Wrong", participants: &people, store: store))
+        XCTAssertEqual(store.revision, revision, "Unknown identities must not mutate the conversation")
+        XCTAssertEqual(store.utterances.map(\.speakerName), ["Dana", "Dana", "Speaker 2"])
+    }
+
 }

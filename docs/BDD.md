@@ -229,3 +229,8 @@ Duo then reproduced a real editor-dismissal failure when the keyboard changed th
 the sheet now belongs to a stable parent and retains the original conversation/line identity.
 Large-text screenshot inspection found clipping despite passing hittability checks; those earlier
 passes are not evidence of acceptable rendering. Preserve before/after captures with release evidence.
+
+Mac review also reproduced a live-breakdown regression: a known participant without attributed
+transcript lines could no longer be named. `testRenameLiveParticipantBeforeTranscriptAttribution`
+failed two native assertions before restoring participant-first lookup. The same adapter test group
+checks all restored lines change together and unknown IDs leave both labels and revision unchanged.

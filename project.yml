@@ -172,6 +172,7 @@ targets:
     sources:
       - SharedPlatform/SpeakerRenameEditor.swift
       - App/MacSpeakerNameButton.swift
+      - App/SpeakerParticipant.swift
       - path: macOSTests
         excludes: [Fixtures]
       - SharedPlatform/SpeakerDiarizer.swift
