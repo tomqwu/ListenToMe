@@ -7,8 +7,16 @@ coverage is `SPEAKER-017`/`SPEAKER-018`; iPad portrait, rotation and largest-tex
 and Mac callback/name validation tests and app build passed. The saved/reopened iOS name regression
 also passed. Independent source review cleared the final presentation and stale-identity guards.
 
-Full validation, final rendered screenshot inspection and installed Mac sheet/save acceptance are
-separate pending gates. The Mac is currently locked; no additional unlock/permission prompt was sent.
+Full `make validate-local` passed on app/test source `8d335e4` (exit 0, child reaped,
+2,333 seconds, all 907 frozen tracked-file hashes unchanged). Core: 1,254 tests/7 skips and
+98.2217656% line coverage; iOS: 542 total, 530 passed/12 skips; Mac: 47; Watch: 29 unit/5 UI;
+141 BDD scenarios and all four real-server contracts passed. Independent outcome review verified
+the counts and all seven bound rename methods. Exact-source portrait, large-text and Duo captures
+were inspected and preserved with native results; these are QA evidence, not Store screenshot uploads.
+
+Installed Mac sheet/save/reopen and VoiceOver acceptance remain pending. The Mac is locked;
+no additional unlock/permission prompt was sent. The original review tracker #98 is now closed after
+all 43 original child issues were independently verified completed; newer backlog issues stay open.
 No new feature PR is opened while #318 remains in validation/acceptance. No merge or publication is
 claimed for #334. Release copy is under both platform unreleased changelog headings and the en-US
 speaker-rename metadata files. Exact native logs/screenshots remain in the external
