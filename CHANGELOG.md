@@ -25,12 +25,16 @@ does not show it again, and a fresh install does not see it at all; see
   local BDD-verification failure; it does not change an app feature or count a failed aggregate run
   as passing.
 
-## iOS (unreleased since 1.19.0 (38))
+## iOS (unreleased since 1.19.1 (39))
 
-## iOS 1.19.1 (39) — candidate, not yet published
+## iOS 1.19.1 (39) — 2026-10-27 (TestFlight)
 
 - Fix an iPhone crash while opening received Watch audio with automatic language detection. Language and speaker analysis decode raw PCM without passing Float32 samples to Apple's integer-only Speech input initializer. Queued/retained audio and on-device privacy remain unchanged. (#326)
 - Keep established Watch capture running when its recording presentation is dismissed; Stop remains explicit, while actual audio interruptions still show a reason and wait for Continue. (#326)
+
+Apple accepted **1.19.1 (39)** from `f1728150e3e66664e36d2506022c2918fa60a53c`: Xcode upload success at **2026-10-27 15:39:29.401 UTC**, Apple uploaded date **2026-10-27 15:40:24 UTC**. Processing is **VALID**, internal state **IN_BETA_TESTING**, and the existing internal Dev group includes build 39 with two existing active/installed tester members. This does not prove physical installation of build 39. Primary locale, localized name, beta description and What to Test were read back in **en-US**, with name **Listen To Me - Real Time AI**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.1-build39).
+
+**Distribution procedure correction:** an existing private plist with `destination=upload` was passed to direct Xcode export, which uploaded this build. Actual upload was **not** performed by the helper; the later helper dry run is not upload evidence. No duplicate upload was sent. Package verification was completed after acceptance, and the receipt preserves that order. Future local export must use a private copy with `destination=export`; use the official make target for actual upload.
 
 ## iOS 1.19.0 (38) — 2026-10-27 (TestFlight)
 

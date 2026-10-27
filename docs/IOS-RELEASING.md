@@ -24,7 +24,17 @@ honestly documented device limitations are sufficient to distribute an authorize
 testing. Physical-device acceptance is still required before calling the app production-ready or
 submitting a production App Store release. Missing hardware must not be reported as an upload blocker.
 
-## Latest Watch-enabled beta — 1.19.0 (38)
+## Latest Watch-enabled beta — 1.19.1 (39)
+
+Apple accepted **1.19.1 (39)** from `f1728150e3e66664e36d2506022c2918fa60a53c`: Xcode upload success at **2026-10-27 15:39:29.401 UTC**, Apple uploaded date **2026-10-27 15:40:24 UTC**. Processing is **VALID**, internal state **IN_BETA_TESTING**, and the existing internal Dev group includes build 39 with two existing active/installed tester members. This does not prove physical installation of build 39. Primary locale, localized name, beta description and What to Test were read back in **en-US**, with name **Listen To Me - Real Time AI**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.1-build39).
+
+Full local validation and independent review passed on unchanged app/test inputs: 125 BDD scenarios; Core 1,239 tests (7 optional skips, 98.249328% coverage); iOS 531 (519 passes, 12 skips); Mac 39; Watch 34; 29 helper tests and four real-server contracts, zero failures. All three required checks passed on exact merged source before upload. The exact transferred IPA was recovered, its full-file transport MD5 matched, its preserved copy SHA-256 matched, and all three distribution signatures/profiles, versions, disabled debugging and no-test-payload checks passed. Complete physical phone/Watch acceptance remains unverified; this is an authorized beta, not a production-ready claim.
+
+**Distribution procedure correction:** an existing private plist with `destination=upload` was passed to direct Xcode export, which uploaded this build. Actual upload was **not** performed by the helper; the later helper dry run is not upload evidence. No duplicate upload was sent. Package verification was completed after acceptance, and the receipt preserves that order. Future local export must use a private copy with `destination=export`; use the official make target for actual upload.
+
+[Publication receipt](releases/ios-1.19.1-build39.json), [fresh capture catalog](images/ios/release-1.19.1-en-US.json), [Watch installation and limits](watch-beta.md). No public production submission or new listing screenshot upload occurred.
+
+## Historical first Watch beta — 1.19.0 (38)
 
 Apple accepted **1.19.0 (38)** at **2026-10-27T08:31:46.551678+00:00**, from `e43244f752712ac80e179e35c893e967aea38753`. Processing is **VALID**, internal state **IN_BETA_TESTING**, and the existing Dev group includes this build with two accepted testers. Primary locale, localized name, beta description and What to Test were read back in **en-US**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.0-build38).
 
@@ -223,7 +233,7 @@ worktree. Screenshots do not replace physical-device acceptance.
 | App Store Connect app | Listen To Me, Apple ID `6811155732` |
 | App bundle | `com.tomwu.ListenToMe.ios` |
 | Share extension | `com.tomwu.ListenToMe.ios.share` |
-| Apple Watch app | `com.tomwu.ListenToMe.ios.watchkitapp` — included in TestFlight 1.19.0 (38); [physical production acceptance](watch-beta.md) remains pending |
+| Apple Watch app | `com.tomwu.ListenToMe.ios.watchkitapp` — included in TestFlight 1.19.1 (39); [physical production acceptance](watch-beta.md) remains pending |
 | Team | `T32FW7PZ3S` |
 | App Group | `group.com.tomwu.ListenToMe.ios` |
 | Existing internal testing group | `Dev` |
@@ -242,6 +252,8 @@ version/build rewriting. They contain no credentials. Do not depend on plists le
 folders by a previous session.
 
 ### Local manual signing when automatic export cannot select profiles
+
+**Keep local export and upload distinct.** The configured `manual-testflight-export.plist` is an upload input and contains `destination=upload`. Passing it directly to `xcodebuild -exportArchive` uploads immediately; it does not leave a local verification IPA. For a local export, create a separate private copy with `destination=export`, verify that field before invoking Xcode, and verify the resulting IPA. Preserve the original upload config. Actual distribution uses `make ios-testflight` with the original upload input and explicit Watch flag. If an upload already succeeded outside the helper, verify Apple and recover its exact package/logs; record the real route and never re-upload the accepted version to manufacture a helper receipt.
 
 Automatic signing can report both a missing Watch Store profile and denied cloud-signing access,
 even with a valid local Apple Distribution identity. Preserve the successful archive and failed

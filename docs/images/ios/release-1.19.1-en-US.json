@@ -991,5 +991,8 @@
         }
       ]
     }
-  ]
+  ],
+  "publishedArtifactSource": "f1728150e3e66664e36d2506022c2918fa60a53c",
+  "releaseURL": "https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.1-build39",
+  "publicationReceipt": "../../releases/ios-1.19.1-build39.json"
 }
