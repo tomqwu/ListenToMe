@@ -4,7 +4,21 @@ A snapshot for an agent picking up ListenToMe cold. [AGENTS.md](../AGENTS.md) an
 [CLAUDE.md](../CLAUDE.md) stay the rules; this note is only the state of things on the date above.
 Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags) before acting on it.
 
-## Current US screenshot refresh and App Review — October 26, 21:13 UTC
+## Tester fix in progress — October 27, 02:11 UTC
+
+Issue [#319](https://github.com/tomqwu/ListenToMe/issues/319) reproduces a missing Full summary menu icon.
+The focused iOS branch adds the existing Summary symbol and a native rendered-menu regression
+(`IOS-008`), with retained zero-pixel red and passing light/dark captures. The first failed test’s
+post-test diagnostic collector stalled and was terminated after its assertion completed; a repeat
+with verbose diagnostics disabled exited 65, then the fixed run exited 0. Full validation, review,
+CI, merge and TestFlight **1.18.2 (37)** remain pending. This tester-priority fix is separate from
+the existing Mac Store draft #318; no Mac acceptance is claimed.
+
+Apple now reports public iOS **1.18.1 (36) READY_FOR_SALE**, review COMPLETE, and primary locale
+**en-US** after a successful post-approval PATCH and subsequent readbacks. Both beta records are
+en-US. Mac 1.5.0 still has no selected build or submitted review. Earlier states below are historical.
+
+## Earlier US screenshot refresh and App Review — October 26, 21:13 UTC
 
 Apple accepted the refreshed **English (US), en-US** submission at
 **2026-10-26T21:13:50.231393+00:00**. Current review

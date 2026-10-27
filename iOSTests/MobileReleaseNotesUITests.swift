@@ -8,8 +8,8 @@ final class MobileReleaseNotesUITests: XCTestCase {
         app.launchArguments = ["-lastAcknowledgedReleaseBuild", "1.14.0-3h77l5d3ivkk8"]
         app.launch()
         XCTAssertTrue(app.buttons["releaseNotesContinue"].waitForExistence(timeout: 5))
-        XCTAssertEqual(app.staticTexts["releaseVersion"].label, "Version 1.18.1 · Build 36")
-        XCTAssertTrue(app.staticTexts["Keep each voice distinct"].exists)
+        XCTAssertEqual(app.staticTexts["releaseVersion"].label, "Version 1.18.2 · Build 37")
+        XCTAssertTrue(app.staticTexts["A clearer Summary menu"].exists)
         capture(app, "What’s New on update")
         app.buttons["releaseNotesContinue"].tap()
         XCTAssertTrue(app.buttons["More"].waitForExistence(timeout: 5))

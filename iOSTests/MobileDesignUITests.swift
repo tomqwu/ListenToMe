@@ -1,4 +1,5 @@
 import XCTest
+import UIKit
 
 @MainActor
 final class MobileDesignUITests: XCTestCase {
@@ -61,6 +62,50 @@ final class MobileDesignUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
         XCTAssertTrue(brand.exists)
         capture(app, "Branded settings")
+    }
+
+    func testFullSummaryMenuRendersIconAndOpensSheet() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--design-review-fixture", "-autoQuickSummary", "NO", "-mobileAIProvider", "apple"]
+        app.launchPastReleaseNotes()
+        app.buttons["More"].tap()
+        let summary = app.buttons["Full summary"]
+        XCTAssertTrue(summary.waitForExistence(timeout: 5))
+        capture(app, "More menu with Full summary icon")
+        // The system menu does not expose decorative action images as AX children. Inspect the
+        // rendered leading symbol column; title text is neutral and cannot satisfy this check.
+        XCTAssertGreaterThan(purpleSymbolPixels(in: summary.screenshot().image), 10,
+                             "Full summary must render an icon in the menu's leading symbol column")
+        summary.tap()
+        XCTAssertTrue(app.navigationBars["Full summary"].waitForExistence(timeout: 5))
+        app.buttons["Done"].tap()
+        XCTAssertTrue(app.buttons["Start listening"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["Stop listening"].exists)
+    }
+
+    private func purpleSymbolPixels(in image: UIImage) -> Int {
+        guard let cg = image.cgImage else { XCTFail("Missing menu-row raster"); return 0 }
+        let width = cg.width, height = cg.height
+        var pixels = [UInt8](repeating: 0, count: width * height * 4)
+        let rendered = pixels.withUnsafeMutableBytes { bytes -> Bool in
+            guard let context = CGContext(data: bytes.baseAddress, width: width, height: height,
+                                          bitsPerComponent: 8, bytesPerRow: width * 4,
+                                          space: CGColorSpaceCreateDeviceRGB(),
+                                          bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue |
+                                              CGBitmapInfo.byteOrder32Big.rawValue) else { return false }
+            context.draw(cg, in: CGRect(x: 0, y: 0, width: width, height: height))
+            return true
+        }
+        guard rendered else { XCTFail("Could not decode menu-row raster"); return 0 }
+        var count = 0
+        for y in 0..<height {
+            for x in 0..<max(1, width / 5) {
+                let offset = (y * width + x) * 4
+                let r = Int(pixels[offset]), g = Int(pixels[offset + 1]), b = Int(pixels[offset + 2])
+                if r >= 100 && b >= 150 && b * 10 > r * 11 && b * 10 > g * 12 { count += 1 }
+            }
+        }
+        return count
     }
 
     private func capture(_ app: XCUIApplication, _ name: String) {

@@ -21,6 +21,7 @@ does not show it again, and a fresh install does not see it at all; see
 ## iOS (unreleased since 1.18.1 (36))
 
 
+
 - Documentation: the Watch speaker-privacy section now agrees with the existing opt-in saved-audio retention policy. No app behavior changes. (#225)
 
 - Watch imports retain playable audio only when Save audio recordings is on, with reconnect queueing, retry-safe storage, consistent playback timing and existing deletion/expiry controls (#225). Watch remains excluded from distribution.
@@ -32,6 +33,10 @@ does not show it again, and a fresh install does not see it at all; see
 - Apple Watch companion, remote Start/Stop for the iPhone recorder (not yet shipped; ships with watch recording on the #181 train). (#181)
 - iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
 - Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
+
+## iOS 1.18.2 (37) — candidate
+
+- Restore the missing Summary icon beside Full summary in the iPhone/iPad More menu. Opening and dismissing the summary are unchanged. (#319)
 
 ## iOS 1.18.1 (36) — 2026-10-26 (TestFlight)
 

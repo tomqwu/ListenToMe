@@ -125,6 +125,23 @@
           "test": "MobileVaultTests/testOffByDefaultAndNothingIsWritten"
         }
       ]
+    },
+    {
+      "id": "IOS-008",
+      "name": "Show the Full summary menu icon and open its sheet",
+      "given": "an iPhone or iPad conversation workspace is open",
+      "when": "the user opens More, chooses Full summary, and dismisses the sheet",
+      "then": "Full summary renders a visible purple icon beside its title, the summary sheet opens, and Done returns to the workspace without starting recording",
+      "covers": [
+        "iOS/MobileMeetingView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileDesignUITests.swift",
+          "test": "MobileDesignUITests/testFullSummaryMenuRendersIconAndOpensSheet"
+        }
+      ]
     }
   ]
 }

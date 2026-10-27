@@ -1,0 +1,10 @@
+ListenToMe 1.18.2 (37)
+
+Fix: Full summary now shows the Summary icon in the conversation’s More menu on iPhone and iPad.
+
+What to test:
+1. Open More in light and dark appearance. Confirm Full summary has a visible icon aligned with the neighboring actions.
+2. Select Full summary, inspect the existing summary, and use Done to return to the conversation.
+3. Confirm the menu action does not start recording.
+
+No privacy or audio-retention change. Saved audio remains opt-in. Apple Watch remains excluded from this build. Simulator checks do not establish physical-device acceptance; this beta is for testing, not a new production App Store submission.

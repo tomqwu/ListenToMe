@@ -66,9 +66,9 @@
     {
       "id": "RELEASE-004",
       "name": "Identify the feedback beta and bundled changes accurately",
-      "given": "a user updates to the speaker-identification feedback beta using standard or the largest accessibility text",
+      "given": "a user updates to the Full summary menu feedback beta using standard or the largest accessibility text",
       "when": "What\u2019s New appears or is reopened",
-      "then": "the app identifies version 1.18.1 build 36 with its Keep each voice distinct notes, acknowledges the update once, and keeps the oldest release heading and Continue usable at the largest text size",
+      "then": "the app identifies version 1.18.2 build 37 with its A clearer Summary menu notes, acknowledges the update once, and keeps the oldest release heading and Continue usable at the largest text size",
       "covers": [
         "project.yml",
         "iOS/MobileReleaseNotes.swift",
