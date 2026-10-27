@@ -787,7 +787,9 @@ with AI off (#129).
 MOV. Choose **Others** (the default) or **You** in the file picker to label the imported speech. Movie
 imports decode only their first audio track on-device; video frames are not transcribed and a movie
 with no audio produces a clear error. These imports use the selected transcription language and the
-same progress/Cancel controls as audio files. Importing does not upload the recording (#128).
+same progress/Cancel controls as audio files. Prepared channels without audio are closed promptly at
+EOF or Cancel; used channels drain their final words before import completes. Importing does not
+upload the recording (#128, #335).
 On Mac, select transcript text or use its row menu to copy a line or the transcript. Double-click a finalized line (or choose **Edit line…**) to correct it, then Save or Cancel. **Delete line…** asks for confirmation. Corrections retain the recognized original in exports. Existing summaries rebuild from edited text; Auto off does not create a first summary. Audio recordings and previously exported files are unchanged.
 
 The Mac transcript follows incoming speech and wrapped/resized rows until you scroll back to read. Choose **Latest** to resume following. SpeechAnalyzer timestamps come from recognition audio ranges on each capture timeline, not from result delivery time.

@@ -147,6 +147,11 @@ iPhone/iPad with a synthetic phrase played only after native Listening confirmat
 harness repair, not an invented product-regression red. Retain the earlier failures and distinguish
 Play/Pause-control acceptance from audible playback quality, and basic capture from speaker accuracy.
 
+`MACAUDIO-002` runs the actual native SpeechAnalyzer through prepared-but-empty, single-source,
+cancelled and real speech-file completion. It asserts bounded completion and result-stream closure,
+with first/final words and native audio times retained. Installed Start/New recovery remains a separate
+manual check; a missing installed English model skips the test and cannot satisfy BDD acceptance.
+
 ## Native log evidence
 
 `MACAUDIO-001` covers the actual native PCM-to-`AnalyzerInput` boundary exposed by #333, beyond the

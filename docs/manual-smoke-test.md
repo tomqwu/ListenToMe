@@ -1223,3 +1223,14 @@ and preserved originals. On Summary, opening the option alone must not translate
 on the completed summary and Close returns to original reading. Change source/target during work,
 background/return on phone and close/reopen the Mac window. No stale result or background backlog
 may publish. This text-only acceptance is separate from existing real OTHERS-audio gates.
+
+
+### Prepared speech channel import completion (#335)
+
+Use the synthetic `macOSTests/Fixtures/Imports/orion.aiff` through More → Import audio or video.
+Import once as Others and once as You, starting a fresh conversation for each. Wait for finalization:
+progress must disappear, Start/New/Import must be enabled, and the transcript must include both
+Project Orion and the final project-folder sentence with the chosen source and original time range.
+Cancel a separate import and verify it releases the controls with incomplete-import guidance; no
+unused-channel recognition failure should appear. Also Start then Stop before any speech and verify
+a later recording can start. Native `MACAUDIO-002` tests complement this installed-control check.

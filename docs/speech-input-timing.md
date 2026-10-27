@@ -57,3 +57,23 @@ Local evidence is under
 Native buffer tests do not run recognition or establish physical recording quality. Fresh full local
 validation, corrected installed microphone/OTHERS acceptance and production-distributed installation
 remain separate gates; no new upload or public availability is established by this record.
+
+## Prepared-channel finalization (#335, unreleased)
+
+The next installed sandbox import exposed a separate lifecycle defect: a 12.47-second synthetic
+file stayed at Finalizing transcript, then Stopping after Cancel, with Start/New disabled. Imports
+prepare two native speech channels but feed only the selected source. Normal finalization of the
+unused channel can leave its result stream open.
+
+The transcriber now records actual successful native input delivery, closes all input streams
+before awaiting any channel, cancels unused analyzers and result consumers, and finalizes/drains
+channels with audio. Cancellation covers both finalization and the result drain. A pipeline created
+after Stop is also cancelled before accepting audio. No timeout is treated as successful completion.
+
+`MACAUDIO-002` binds actual native analyzer tests for empty prepared channels, single-source silence,
+cancelled preparation and authored speech imported as both sources. The first three methods failed
+four completion deadlines on the unchanged implementation; the real speech case failed two deadlines
+and one final-word assertion. After the fix all four methods passed, including the recording's
+first/final words, selected source and final audio time. The fixture and its provenance are checked
+in under `macOSTests/Fixtures/Imports`. Installed Start/New recovery, full validation and merge remain
+separate gates. Evidence is in the same external acceptance directory under `speech-fixed/import-*`.

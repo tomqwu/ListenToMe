@@ -127,6 +127,9 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 
 ## macOS (unreleased since 1.4.4)
 
+- Fix audio imports remaining at Finalizing or Stopping when a prepared speech channel received
+  no audio. Close unused channels promptly while preserving final words and timestamps. (#335)
+
 - Prevent live SpeechAnalyzer input from stopping on overlapping buffer timestamps caused by
   resampling and small capture-clock jitter. Preserve source offsets, real gaps and converted frames;
   reject stale input explicitly and discard converters cancelled during conversion. (#333)

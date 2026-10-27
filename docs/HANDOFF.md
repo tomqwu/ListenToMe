@@ -1,3 +1,20 @@
+# Mac import finalization regression — October 27, 2026
+
+Installed sandbox acceptance on validated source `44d8765` passed native export and Calendar lookup,
+and actual French live translation retained the English original. Import exposed [#335](https://github.com/tomqwu/ListenToMe/issues/335):
+unused prepared SpeechAnalyzer channels left Finalizing/Stopping active. The native BDD regression
+reproduces the timeout, and the corrected lifecycle passes real first/final words, source/time and
+zero-input/cancellation cases. See [native speech lifecycle evidence](speech-input-timing.md).
+A success-status assertion also passed before the defensive cancellation-error suppression; it is
+additional coverage, not a fabricated red. Required review, fresh full validation and corrected
+installed control/audio acceptance remain; no new merge/upload/publication is claimed.
+
+Speaker rename [#334](https://github.com/tomqwu/ListenToMe/issues/334) is preserved on
+`codex/speaker-rename-gestures` at `df2b24f`, app/test source `8d335e4`. Its complete local validation
+passed (1,254 Core tests, 542 iOS tests including 12 skips, 47 Mac tests, 34 Watch tests and four
+real-server contracts). Installed Mac editor/accessibility acceptance, CI/merge and release remain.
+Finish current PR #318 before opening that feature PR; do not rebuild the feature from scratch.
+
 # Mac SpeechAnalyzer regression during acceptance — October 27, 2026
 
 Installed SandboxAcceptance source `7f8e00f` opened with the existing stable Dev signature and

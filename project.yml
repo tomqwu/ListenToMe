@@ -216,6 +216,8 @@ targets:
       - App/MacOperationErrors.swift
       - App/ReferenceSelectionStore.swift
       - App/MacAnalyzerInputAdapter.swift
+      - App/SpeechAnalyzerTranscriber.swift
+      - SharedPlatform/SpeechVocabularyContext.swift
       - App/MacCapturePreflight.swift
       - App/MacCheckpointController.swift
       - App/MacMeetingEnvironment.swift

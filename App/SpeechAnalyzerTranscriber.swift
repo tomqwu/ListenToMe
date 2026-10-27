@@ -64,7 +64,9 @@ actor SpeechAnalyzerTranscriber: Transcribing {
         guard let pipeline = await ensurePipeline(for: chunk.source) else { return }
         guard !stopped, !Task.isCancelled, pipelines[chunk.source]?.id == pipeline.id else { return }
         do {
-            try pipeline.inputAdapter.send(chunk, to: pipeline.inputContinuation)
+            if try pipeline.inputAdapter.send(chunk, to: pipeline.inputContinuation) {
+                pipeline.hasInput = true
+            }
         } catch {
             pipeline.inputAdapter.stop()
             pipeline.inputContinuation.finish()
@@ -75,27 +77,45 @@ actor SpeechAnalyzerTranscriber: Transcribing {
 
     func finish() async {
         stopped = true
-        for pipeline in pipelines.values {
+        let finishing = Array(pipelines.values)
+        // Close every source before awaiting one; another warmed channel may never receive audio.
+        for pipeline in finishing {
             pipeline.inputAdapter.stop()
             pipeline.inputContinuation.finish()
-            let analyzer = pipeline.analyzer
-            do {
-                try await withTaskCancellationHandler {
-                    try Task.checkCancellation()
-                    try await analyzer.finalizeAndFinishThroughEndOfInput()
-                } onCancel: {
-                    Task { await analyzer.cancelAndFinishNow() }
-                }
-            } catch {
-                if !Task.isCancelled {
-                    statusContinuation.yield("Transcript finalization failed: \(error.localizedDescription)")
-                }
-            }
-            await pipeline.resultsTask.value   // drain finalized results; the stream ends after finalize
         }
+        for pipeline in finishing { await finish(pipeline) }
         pipelines.removeAll()
         continuation.finish()
         statusContinuation.finish()
+    }
+
+    private func finish(_ pipeline: Pipeline) async {
+        let analyzer = pipeline.analyzer
+        // An analyzer that received no input has no final words to flush. Its results sequence
+        // can remain open after normal finalization, including after a prepared import is cancelled.
+        guard pipeline.hasInput, !Task.isCancelled else {
+            pipeline.resultsTask.cancel()
+            await analyzer.cancelAndFinishNow()
+            await pipeline.resultsTask.value
+            return
+        }
+        do {
+            try await withTaskCancellationHandler {
+                try Task.checkCancellation()
+                try await analyzer.finalizeAndFinishThroughEndOfInput()
+                await pipeline.resultsTask.value // Preserve final words from channels that had audio.
+            } onCancel: {
+                pipeline.resultsTask.cancel()
+                Task { await analyzer.cancelAndFinishNow() }
+            }
+        } catch {
+            pipeline.resultsTask.cancel()
+            await analyzer.cancelAndFinishNow()
+            await pipeline.resultsTask.value
+            if !Task.isCancelled {
+                statusContinuation.yield("Transcript finalization failed: \(error.localizedDescription)")
+            }
+        }
     }
 
     /// Returns the live pipeline for a source, building it on first use. Returns nil when setup
@@ -109,8 +129,9 @@ actor SpeechAnalyzerTranscriber: Transcribing {
             // stop() ran during async setup — tear down the just-created pipeline.
             created.inputAdapter.stop()
             created.inputContinuation.finish()
-            try? await created.analyzer.finalizeAndFinishThroughEndOfInput()
             created.resultsTask.cancel()
+            await created.analyzer.cancelAndFinishNow()
+            await created.resultsTask.value
             return nil
         }
         pipelines[source] = created
@@ -166,8 +187,10 @@ actor SpeechAnalyzerTranscriber: Transcribing {
                     Self.emit(result, from: source, to: cont)
                 }
             } catch {
-                self?.statusContinuation.yield("Transcription failed: \(error.localizedDescription). Stop and restart.")
-                await self?.markFailed(source)
+                if !Task.isCancelled {
+                    self?.statusContinuation.yield("Transcription failed: \(error.localizedDescription). Stop and restart.")
+                    await self?.markFailed(source)
+                }
             }
             // Stream ended (error or completion): drop this pipeline so the next feed recreates it.
             await self?.resultsEnded(source: source, id: id)
@@ -263,6 +286,8 @@ private final class Pipeline: @unchecked Sendable {
     let format: AVAudioFormat
     let resultsTask: Task<Void, Never>
     let inputAdapter: MacAnalyzerInputAdapter
+    /// Mutated only by the owning transcriber actor after an actual native input was enqueued.
+    var hasInput = false
 
     init(
         id: UUID,

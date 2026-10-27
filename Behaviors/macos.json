@@ -48,6 +48,47 @@
           "test": "MeetingPaneBalanceTests/testNarrowPaneNeverSacrificesOtherPanesMinimum"
         }
       ]
+    },
+    {
+      "id": "MACAUDIO-002",
+      "name": "Finish or cancel a prepared import even when one speech channel received no audio",
+      "given": "native on-device speech channels are prepared with installed English assets and either one or neither channel receives audio",
+      "when": "the file ends or the user cancels the prepared import",
+      "then": "finalization returns promptly, closes result streams, retains the first and final spoken words with source and audio time, and creates no speech or failure status from intentionally unused channels",
+      "covers": [
+        "App/SpeechAnalyzerTranscriber.swift",
+        "project.yml"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacSpeechFinalizationTests.swift",
+          "test": "MacSpeechFinalizationTests/testPreparedChannelsWithoutAudioFinishAndCloseResults"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacSpeechFinalizationTests.swift",
+          "test": "MacSpeechFinalizationTests/testOneUsedChannelDoesNotLeaveTheOtherPreparedChannelOpen"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacSpeechFinalizationTests.swift",
+          "test": "MacSpeechFinalizationTests/testCancelledPreparedImportClosesResultsAndReturns"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacSpeechFinalizationTests.swift",
+          "test": "MacSpeechFinalizationTests/testSingleChannelImportRetainsFinalWordsAndTimestampsAtEOF"
+        }
+      ],
+      "manual": {
+        "reason": "Native transcriber tests do not inspect installed Start/New controls.",
+        "steps": [
+          "Import the synthetic Orion file once as Others and once as You; inspect final words and source labels.",
+          "Verify the import progress disappears and Start/New/Import controls become available.",
+          "Cancel a separate import and confirm controls return with incomplete-import guidance."
+        ]
+      }
     }
   ]
 }
