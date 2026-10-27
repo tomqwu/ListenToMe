@@ -1,0 +1,4 @@
+Unreleased #330; not included in build 39.
+Enable Live translation from More or Notes. Verify original and translated finalized lines in phone portrait, Duo landscape and wide iPad. Partial words, speaker labels and audio timing must remain original.
+Open Summary, choose Translate summary, select a target and press Translate. Verify original remains readable and Close returns to original-only view; no AI generation or microphone starts.
+Missing packs must offer Prepare languages without automatic download. Test unsupported pairs, preparation cancellation, target/source changes, New/reopen, background/return and long summaries. Confirm actual meaning with an installed real pair separately from synthetic UI fixtures.

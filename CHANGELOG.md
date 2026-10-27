@@ -27,6 +27,11 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased since 1.19.1 (39))
 
+- Add opt-in on-device translation beneath finalized transcript lines, plus **Translate summary**
+  on the Summary page with its own target language and original summary retained. Check exact
+  installed language pairs, offer explicit preparation and preserve original speech, speakers,
+  audio timing and AI-provider choices. Derived text is not archived as the original. (#330)
+
 ## iOS 1.19.1 (39) — 2026-10-27 (TestFlight)
 
 - Fix an iPhone crash while opening received Watch audio with automatic language detection. Language and speaker analysis decode raw PCM without passing Float32 samples to Apple's integer-only Speech input initializer. Queued/retained audio and on-device privacy remain unchanged. (#326)
@@ -115,6 +120,11 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 - Settings → Privacy now explains that optional Ollama, Cloud AI and OpenAI-compatible requests send text and included context to the provider you choose; Apple Intelligence stays on-device. (#247)
 
 ## macOS (unreleased since 1.4.4)
+
+- Add opt-in on-device translation beneath finalized transcript lines, plus **Translate summary**
+  on the Summary page with its own target language and original summary retained. Check exact
+  installed language pairs, offer explicit preparation and preserve original speech, speakers,
+  audio timing and AI-provider choices. Derived text is not archived as the original. (#330)
 
 - Mac pane buttons, prompts, chips, menus and hotkeys register their cancellable response immediately, preventing an immediate Stop from letting an answer begin later. New and import task ownership now live in Core; cancelling before an import starts opens no media. Pending device/Calendar/speaker follow-ups cannot publish after cancellation or supersession. Root-view construction and layout are separated from these tested owners. (#134)
 

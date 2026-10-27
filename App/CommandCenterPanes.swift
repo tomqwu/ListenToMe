@@ -33,6 +33,12 @@ extension MeetingView {
                                              isPreparing: session.isPreparing)
                 }
 
+                railSection("Languages") {
+                    ConversationLanguageControls(options: $session.languageOptions,
+                        translation: session.liveTranslation, conversationID: currentSessionID,
+                        save: { _ = checkpoint() })
+                }
+
                 railSection("Automatic AI") {
                     Toggle("Auto summaries", isOn: Binding(get: { session.autoSummaryEnabled }, set: {
                         session.autoSummaryEnabled = $0
@@ -225,7 +231,7 @@ extension MeetingView {
                     .joined(separator: "\n"), forType: .string)
             }, edit: { editTranscriptLine(seg, text: $0) },
             delete: { deleteTranscriptLine(seg) },
-            addTerm: { vocabulary.termSourceLine = seg.text })
+            addTerm: { vocabulary.termSourceLine = seg.text }, translatedText: session.liveTranslation.text(for: seg))
     }
 
     /// Channel/speaker label for a transcript row: "YOU" for the mic; for the Others channel the

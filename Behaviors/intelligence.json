@@ -121,6 +121,344 @@
           "test": "SelectionSummaryTests/testThePromptCarriesOnlyTheSelectionWithTimesAndSpeakers"
         }
       ]
+    },
+    {
+      "id": "TRANSLATE-001",
+      "name": "Keep independent live and summary translation targets without replacing originals",
+      "given": "a conversation has original English speech, opt-in French live translation and a Traditional Chinese target for the Summary page",
+      "when": "the conversation is archived and reopened, renamed or re-transcribed",
+      "then": "both translation choices survive while original speech, AI provider settings and previous summaries remain authoritative",
+      "covers": [
+        "Sources/ListenToMeCore/SessionSearch.swift",
+        "Sources/ListenToMeCore/ConversationLanguages.swift",
+        "Sources/ListenToMeCore/ConversationTitleState.swift",
+        "Sources/ListenToMeCore/ConversationRetranscription.swift",
+        "Sources/ListenToMeCore/ConversationLanguageOptions.swift",
+        "Sources/ListenToMeCore/SessionCheckpointKey.swift",
+        "App/MeetingView+Conversations.swift",
+        "App/MeetingView+Export.swift",
+        "iOS/MobileSession+WatchInbox.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationLanguageOptionsTests.swift",
+          "test": "ConversationLanguageOptionsTests/testLanguageChoicesSurviveArchiveWithoutChangingOriginalSpeech"
+        }
+      ]
+    },
+    {
+      "id": "TRANSLATE-002",
+      "name": "Translate finalized speech only after opt-in",
+      "given": "original speech includes a completed line and partial words, with translation off",
+      "when": "the user enables French translation and more speech arrives",
+      "then": "only finalized lines are translated once, original wording and speaker identity remain intact, and disabled translation never processes content",
+      "covers": [
+        "Sources/ListenToMeCore/LiveTranslationCoordinator.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/LiveTranslationCoordinatorTests.swift",
+          "test": "LiveTranslationCoordinatorTests/testOptInTranslatesFinalSpeechOnceAndPreservesOriginalAndSpeaker"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/LiveTranslationCoordinatorTests.swift",
+          "test": "LiveTranslationCoordinatorTests/testEditedBlockedLineRetriesAndSameLanguageNeedsNoTranslation"
+        }
+      ]
+    },
+    {
+      "id": "TRANSLATE-003",
+      "name": "Explain missing or unsupported translation packs without processing text",
+      "given": "the selected on-device language pair needs preparation or is unsupported",
+      "when": "live translation is enabled",
+      "then": "the user sees the pair-specific recovery reason and no translation or automatic model download starts",
+      "covers": [
+        "Sources/ListenToMeCore/LiveTranslationCoordinator.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/LiveTranslationCoordinatorTests.swift",
+          "test": "LiveTranslationCoordinatorTests/testMissingAndUnsupportedPacksNeverTranslateOrDownload"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/LiveTranslationCoordinatorTests.swift",
+          "test": "LiveTranslationCoordinatorTests/testInvalidUnknownEmptyAndFailedResultsKeepOriginalAndOfferRetry"
+        }
+      ]
+    },
+    {
+      "id": "TRANSLATE-004",
+      "name": "Keep late translations out of changed conversations",
+      "given": "a native translation is held while original speech remains visible",
+      "when": "translation is disabled, its target changes, a line is edited/deleted or another conversation opens",
+      "then": "the held result cannot overwrite current content or recreate a deleted line and at most one native job remains active",
+      "covers": [
+        "Sources/ListenToMeCore/LiveTranslationCoordinator.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/LiveTranslationCoordinatorTests.swift",
+          "test": "LiveTranslationCoordinatorTests/testLateResultsCannotReturnAfterDisableTargetChangeEditDeleteOrNew"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/LiveTranslationCoordinatorTests.swift",
+          "test": "LiveTranslationCoordinatorTests/testAppendingLongConversationCoalescesOneWorkerAndResetDropsItsOutput"
+        }
+      ]
+    },
+    {
+      "id": "TRANSLATE-005",
+      "name": "Native translation checks exact installed pair before sending text to the local model",
+      "given": "the Apple language adapter reports installed, download-required or unsupported pairs",
+      "when": "translation is requested for an original English line with an explicit French target",
+      "then": "only the installed pair receives original text; the other states explain recovery and cannot construct a translation request or substitute languages",
+      "covers": [
+        "SharedPlatform/AppleTranscriptTranslator.swift",
+        "project.yml"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/NativeAppleTranslationTests.swift",
+          "test": "NativeAppleTranslationTests/testNativePairReadinessPreventsUnpreparedTranslationAndNeverSubstitutesLanguages"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/NativeAppleTranslationTests.swift",
+          "test": "NativeAppleTranslationTests/testInstalledNativePairUsesExactOriginalTextAndExplicitTarget"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/NativeAppleTranslationTests.swift",
+          "test": "NativeAppleTranslationTests/testNativePairReadinessPreventsUnpreparedTranslationAndNeverSubstitutesLanguages"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/NativeAppleTranslationTests.swift",
+          "test": "NativeAppleTranslationTests/testInstalledNativePairUsesExactOriginalTextAndExplicitTarget"
+        }
+      ]
+    },
+    {
+      "id": "TRANSLATE-006",
+      "name": "Native phone and tablet controls preserve original text in portrait and Duo",
+      "given": "an original synthetic conversation and installed or setup-required translation pairs",
+      "when": "the user opens live translation controls, chooses French and rotates the device",
+      "then": "original and translated final lines remain visible in portrait and wide layouts, controls remain reachable and missing packs show Prepare without automatic download or microphone start",
+      "covers": [
+        "SharedPlatform/ConversationLanguageControls.swift",
+        "SharedPlatform/TranslationPreviewTranslator.swift",
+        "iOS/MobileMeetingView.swift",
+        "iOS/MobileTranscriptReader.swift",
+        "iOS/MobileSelectableTranscript.swift",
+        "iOS/MobileDesignFixture.swift",
+        "iOS/MobileNotesView.swift",
+        "iOS/MobileLanguageOptions.swift",
+        "iOS/MobileTranscriptReader.swift",
+        "iOS/MobileSelectableTranscript.swift",
+        "iOS/MobileDesignFixture.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileTranslationUITests.swift",
+          "test": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileTranslationUITests.swift",
+          "test": "MobileTranslationUITests/testMissingPacksExplainSetupWithoutStartingDownloadOrRecording"
+        }
+      ]
+    },
+    {
+      "id": "TRANSLATE-007",
+      "name": "Suspend translation when the phone backgrounds",
+      "given": "a phone translation is held and more finalized speech is waiting",
+      "when": "the app backgrounds and later becomes active",
+      "then": "no late result publishes and no queued native work starts in the background; foreground resumption uses the current conversation choices",
+      "covers": [
+        "Sources/ListenToMeCore/LiveTranslationCoordinator.swift",
+        "iOS/MobileSession.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/LiveTranslationCoordinatorTests.swift",
+          "test": "LiveTranslationCoordinatorTests/testSuspendedConversationStopsBacklogAndResumesOnlyOnForeground"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileTranslationLanguageTests.swift",
+          "test": "MobileTranslationLanguageTests/testBackgroundSuspendsPhoneTranslationAndForegroundResumesCurrentConversation"
+        }
+      ]
+    },
+    {
+      "id": "TRANSLATE-008",
+      "name": "Mac language controls bind to the real conversation without starting audio or AI",
+      "given": "a narrow native Mac language panel and original English speech",
+      "when": "the native shared control binding enables French transcript translation with Japanese summary-translation target selected",
+      "then": "the actual session translates the original line locally without capture or AI, keeps the independent summary-translation target and original speech, and renders narrow controls; installed Mac interaction remains separate acceptance",
+      "covers": [
+        "App/CommandCenterPanes.swift",
+        "App/CommandCenter.swift",
+        "App/EditableTranscriptRow.swift",
+        "App/MacMeetingEnvironment+Production.swift",
+        "SharedPlatform/ConversationLanguageControls.swift",
+        "App/MeetingView.swift",
+        "Sources/ListenToMeCore/MeetingSession.swift",
+        "Sources/ListenToMeCore/MeetingSession+Languages.swift",
+        "Sources/ListenToMeCore/MeetingSession+AutomaticReviews.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacLanguageControlsTests.swift",
+          "test": "MacLanguageControlsTests/testNativeControlsBindingTranslatesOriginalAndRendersNarrowOptions"
+        }
+      ]
+    },
+    {
+      "id": "TRANSLATE-009",
+      "name": "Translate the existing summary only from an explicit Summary page option",
+      "given": "an existing original summary with headings, bullets and a code block",
+      "when": "the user opens Summary, chooses French and requests translation",
+      "then": "opening alone sends no text, requested prose is translated locally while formatting/code and original text remain intact, and closing translation restores the original-only view",
+      "covers": [
+        "Sources/ListenToMeCore/SummaryTranslationCoordinator.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SummaryTranslationTests.swift",
+          "test": "SummaryTranslationTests/testSummaryPageTranslationIsExplicitAndPreservesOriginalFormattingAndCode"
+        }
+      ]
+    },
+    {
+      "id": "TRANSLATE-010",
+      "name": "Refuse stale or unprepared summary translations",
+      "given": "translation is held or its on-device packs are missing",
+      "when": "the source, target or conversation changes, the summary is being generated, or packs are prepared and retried",
+      "then": "stale results never replace current summary text, streaming drafts are not translated, missing packs send no content and explicit retry can resume installed-pair translation",
+      "covers": [
+        "Sources/ListenToMeCore/SummaryTranslationCoordinator.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SummaryTranslationTests.swift",
+          "test": "SummaryTranslationTests/testLateSummaryCannotReplaceChangedSourceTargetOrConversationAndDraftsAreNotTranslated"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SummaryTranslationTests.swift",
+          "test": "SummaryTranslationTests/testMissingSummaryPacksShowSetupAndNeverSendContentUntilExplicitRetry"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SummaryTranslationTests.swift",
+          "test": "SummaryTranslationTests/testSummaryLimitsSameLanguageAndLongProseKeepOriginalSafe"
+        }
+      ]
+    },
+    {
+      "id": "TRANSLATE-011",
+      "name": "Translate from the native Summary page without replacing the original",
+      "given": "a completed original summary on iPhone or iPad",
+      "when": "the user opens Translate summary, chooses French, requests translation and closes it",
+      "then": "translation is explicit, both texts are readable and closing restores original-only viewing without capture or AI generation; at largest text missing packs explain setup without automatic downloads and Close returns to a reachable original",
+      "covers": [
+        "SharedPlatform/SummaryTranslationPanel.swift",
+        "iOS/MobileWorkspaceView.swift",
+        "iOS/MobileMeetingView.swift",
+        "App/CommandCenter.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileTranslationUITests.swift",
+          "test": "MobileTranslationUITests/testSummaryPageOffersExplicitTranslationAndKeepsOriginal"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileTranslationUITests.swift",
+          "test": "MobileTranslationUITests/testSummaryMissingPacksAndLargestTextKeepOriginalReachable"
+        }
+      ]
+    },
+    {
+      "id": "TRANSLATE-012",
+      "name": "Keep native summary translation separate from generation and save its choices",
+      "given": "a saved phone summary and independent translation choices",
+      "when": "the user translates then reopens or starts New, or changes only a target before autosave",
+      "then": "the original summary is saved unchanged, translated text is not archived, choices survive reopening and target-only changes make the checkpoint dirty",
+      "covers": [
+        "iOS/MobileSession.swift",
+        "iOS/MobileLanguageOptions.swift",
+        "Sources/ListenToMeCore/SessionCheckpointKey.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileTranslationLanguageTests.swift",
+          "test": "MobileTranslationLanguageTests/testSummaryTranslationIsSeparateFromGenerationAndSavedChoicesReopen"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationLanguageOptionsTests.swift",
+          "test": "ConversationLanguageOptionsTests/testChangingOnlyTranslationChoicesMakesCheckpointDirty"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ConversationLanguageOptionsTests.swift",
+          "test": "ConversationLanguageOptionsTests/testMacRestorationRefreshesTranslationInputsAndNewClearsDerivedText"
+        }
+      ]
+    },
+    {
+      "id": "TRANSLATE-013",
+      "name": "Closing the Mac window suspends both translation workers",
+      "given": "held live and summary translations with queued original text",
+      "when": "the window closes and later returns",
+      "then": "held results and backlog cannot publish while closed, reopening resumes current choices and originals stay intact",
+      "covers": [
+        "App/MeetingView+Lifecycle.swift",
+        "App/MeetingView.swift",
+        "Sources/ListenToMeCore/MeetingSession+Languages.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacLanguageControlsTests.swift",
+          "test": "MacLanguageControlsTests/testWindowTranslationSuspensionFencesBothWorkersAndResumesOnReturn"
+        }
+      ]
+    },
+    {
+      "id": "TRANSLATE-014",
+      "name": "Keep code inside longer Markdown fences verbatim",
+      "given": "a completed summary with four-character code fences, shorter embedded fences and invalid closing text",
+      "when": "the summary is translated",
+      "then": "only prose outside a valid matching fence reaches translation and all code stays verbatim",
+      "covers": [
+        "Sources/ListenToMeCore/SummaryTranslationCoordinator.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/SummaryTranslationTests.swift",
+          "test": "SummaryTranslationTests/testLongerMarkdownFencesNeverSendTheirCodeForTranslation"
+        }
+      ]
     }
   ]
 }

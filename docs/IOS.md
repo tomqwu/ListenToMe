@@ -1656,3 +1656,11 @@ The Watch recording presentation no longer interprets incidental dismissal as St
 preparation and actual audio interruption behavior remain explicit. `WATCH-015`/`WATCH-016` retain
 native red/green evidence; physical paired transfer/wrist-down acceptance remains separate.
 See [Watch beta status](watch-beta.md). [Published to TestFlight](releases/ios-1.19.1-build39.json); complete physical/production acceptance remains unverified.
+
+## Live and Summary translation (#330, unreleased)
+
+**More → Live translation** and **Notes → Live translation** control opt-in finalized-line translation
+on phone/iPad/Duo. **Summary → Translate summary** translates an existing completed summary into an
+independent target; it does not change summary generation language/provider. Originals stay available.
+Installed Apple Translation packs are required; setup is explicit and unsupported pairs are explained.
+No translation engine is added to Watch. See [usage, privacy and acceptance](translation.md).

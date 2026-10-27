@@ -67,3 +67,9 @@ capture, background recording, a local Ollama daemon, WhisperKit transcription â
 only to detect the spoken language â€” and Mac sync). Do not restate it here.
 
 Exploratory work must preserve explicit consent, local storage and truthful privacy/accuracy claims.
+
+## Current translation work
+
+[Issue #330](https://github.com/tomqwu/ListenToMe/issues/330) covers opt-in live translation and a
+Translate option on the existing Summary page. [The feature guide](translation.md) records scope
+and verification boundaries; it is unreleased and does not add summary length/format controls.

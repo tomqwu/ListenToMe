@@ -48,3 +48,12 @@ The #310 live speaker fix, published in TestFlight 1.18.1 (36), prepares its opt
 and AI readiness. Model failure cannot disable microphone recording or select a cloud service.
 Native real-model tests establish bounded fixture outcomes; simulator substitutes only establish
 controls. See [speaker model compatibility and limits](speaker-identification.md).
+
+## Translation (#330, unreleased)
+
+Mac and iPhone/iPad (including Duo) check Apple Translation's exact source/target installed-pair
+status separately from speech and Apple Intelligence. Installed pairs run locally; missing packs
+require explicit **Prepare languages**; unsupported pairs show a reason without sending text. The
+Summary page can translate a saved summary even if its original AI provider is unavailable. Neither
+translation path enables capture or changes providers. Watch offers no translation engine; imported
+text can translate on phone. See [translation](translation.md) and `TRANSLATE-001`–`TRANSLATE-014`.

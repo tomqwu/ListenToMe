@@ -35,6 +35,8 @@ struct MobileSelectableTranscript: View {
     var body: some View {
         VStack(spacing: 0) {
             MobileTranscriptReader(segments: session.allSegments, scrollIdentifier: scrollIdentifier,
+                                   translation: session.liveTranslation.text,
+                                   translationProblem: { session.liveTranslation.problems[$0] },
                                    restoreOriginal: session.restoreSpeech, showsSpeakers: session.hasSpeakerLabels,
                                    selection: $selection, selecting: selectable && selecting,
                                    lineActions: MobileTranscriptLineActions(summarizeFrom: { id in

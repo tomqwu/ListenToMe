@@ -1,3 +1,12 @@
+# Translation work in progress — October 27, 2026
+
+Issue #330 / `codex/live-translation-summary-options`: opt-in on-device live translation and an
+explicit **Translate summary** option on the existing Summary page, with separate targets and
+originals retained. No summary-generation language override, new binary or production submission.
+See [translation](translation.md). Core/native/UI checks are being completed; installed-pair quality
+and installed Mac interaction are not established by synthetic fixtures. The release snapshot below
+still identifies published builds. Evidence is under the October 27 `listentome-translation` folder.
+
 # Handoff — 2026-10-27
 
 A snapshot for an agent picking up ListenToMe cold. [AGENTS.md](../AGENTS.md) and

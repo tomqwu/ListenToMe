@@ -39,6 +39,9 @@ struct MobileNotesView: View {
                         .id(session.id)
                     MobileAskCard(ask: session.suggestedAsk)
                 }
+                Section {
+                    NavigationLink("Live translation") { MobileLanguageOptionsView(session: session) }
+                }
                 Section("Add to this conversation") {
                     Button("Take photo", systemImage: "camera") { requestCamera() }
                     PhotosPicker(selection: $photo, matching: .images) { Label("Photo library", systemImage: "photo") }

@@ -17,7 +17,7 @@ extension MeetingView {
             titleState: conversationTitleState, selectionSummaries: restoredRecord?.selectionSummaries,
             summaryInstructions: session.summaryInstructions,
             vocabularyDomainIDs: vocabulary.domainIDs(for: currentSessionID).sorted(),
-            hasIncompleteImport: session.hasIncompleteImport ? true : nil, situationGrid: session.visibleSituation
+            hasIncompleteImport: session.hasIncompleteImport ? true : nil, situationGrid: session.visibleSituation, languageOptions: session.languageOptions
         ).with(languages: conversationLanguages)
     }
 

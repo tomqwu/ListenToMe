@@ -43,6 +43,10 @@ public final class MeetingSession {
     /// Forces all AI replies (Listener/Quick/Deep) into this language, e.g. "Simplified Chinese";
     /// nil/empty leaves the model free to match the conversation. Set from the UI's Settings.
     public var responseLanguage: String?
+    public var languageOptions = ConversationLanguageOptions() { didSet { updateLiveTranslations(); updateSummaryTranslation() } }
+    public private(set) var translationContextID = UUID().uuidString
+    public let liveTranslation = LiveTranslationCoordinator()
+    public let summaryTranslation = SummaryTranslationCoordinator()
     /// Attached reference material (file/folder contents) fed into Quick/Deep prompts as grounding;
     /// nil/empty = none. Set from the UI when the user attaches files.
     public var referenceContext: String?
@@ -67,7 +71,7 @@ public final class MeetingSession {
     public var structuredListenerEnabled = false
     var listenerSituation: SituationGrid?
     @ObservationIgnored var situationCache: SituationGridCache?
-    public private(set) var listenerSummary = ""
+    public private(set) var listenerSummary = "" { didSet { updateSummaryTranslation() } }
     public internal(set) var quickSuggestion = ""
     public private(set) var deepAnswer = ""
 
@@ -152,7 +156,7 @@ public final class MeetingSession {
     public private(set) var recordingOffset: TimeInterval = 0
 
     /// The set of roles currently streaming a response.
-    public private(set) var streamingRoles: Set<CopilotRole> = [] { didSet { synchronizeAutomaticReviews() } }
+    public private(set) var streamingRoles: Set<CopilotRole> = [] { didSet { synchronizeAutomaticReviews(); updateSummaryTranslation() } }
 
     /// The model ID assigned to each role.
     public private(set) var models: [CopilotRole: String]
@@ -288,6 +292,7 @@ public final class MeetingSession {
         hasIncompleteImport = record.hasIncompleteImport == true
         notes = record.notes ?? ""
         summaryInstructions = record.summaryInstructions ?? ""
+        languageOptions = record.languageOptions ?? .init()
         listenerSituation = record.situationGrid
         listenerSummary = record.summary
         lastCompletedListenerSummary = record.summary
@@ -298,12 +303,14 @@ public final class MeetingSession {
 
     public func resetConversation() {
         guard !isRunning, !isTranscribingFile else { return }
+        translationContextID = UUID().uuidString
         speakerSummaryNeedsRebuild = false
         audioLevels.reset(); responseTimings.reset()
         for role in CopilotRole.allCases { cancelResponse(role) }
         // No proactive task needs cancelling here: `ingest` only fires while running, and `stop()`
         // (which must precede a reset) already cancelled it.
         quickReader.reset(); handleLiveEvent(.conversationChanged)
+        liveTranslation.reset(); summaryTranslation.reset(); languageOptions = .init()
         store.reset(); recordingOffset = 0; hasIncompleteImport = false
         notes = ""; summaryInstructions = ""; referenceContext = nil
         listenerSituation = nil

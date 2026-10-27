@@ -781,3 +781,12 @@ preparation and replacement-task completion, separately from native audio accept
 `ConversationCheckpointCoordinator` owns the Mac checkpoint dirty marker and original start date.
 Core tests exercise failed archive writes and retry, unchanged-content skips, completion/forced saves
 and resets; platform adapters retain consent eligibility, record assembly and Save to folder effects.
+
+## Translation (unreleased, #330)
+
+Enable **Live translation** from More/Notes on iPhone/iPad or the Mac Languages rail to read finalized
+speech in another language beneath the original. On **Summary**, choose **Translate summary** for
+a separate target and explicit translation of the existing summary. Apple Translation uses installed
+on-device packs; missing pairs offer explicit Prepare languages and unsupported pairs explain why.
+Originals, audio timing, AI providers and normal exports stay authoritative. Watch text can translate
+after import on the phone. See [translation and its verification limits](docs/translation.md).

@@ -6,6 +6,7 @@ extension MeetingView {
     /// the Stop-button flow so a meeting ended by closing the window is still saved for search
     /// (best-effort: the Task may not finish on a full app quit).
     func tearDownOnDisappear(session: MeetingSession) {
+        session.setTranslationSuspended(true)
         captureStartGate.close()
         calendarContext.cancel()
         referenceContext.cancel()
