@@ -25,7 +25,12 @@ does not show it again, and a fresh install does not see it at all; see
   local BDD-verification failure; it does not change an app feature or count a failed aggregate run
   as passing.
 
-## iOS (unreleased since 1.19.0 (38))
+## iOS (unreleased since 1.19.1 (39))
+
+## iOS 1.19.1 (39) — candidate, not yet published
+
+- Fix an iPhone crash while opening received Watch audio with automatic language detection. Language and speaker analysis decode raw PCM without passing Float32 samples to Apple's integer-only Speech input initializer. Queued/retained audio and on-device privacy remain unchanged. (#326)
+- Keep established Watch capture running when its recording presentation is dismissed; Stop remains explicit, while actual audio interruptions still show a reason and wait for Continue. (#326)
 
 ## iOS 1.19.0 (38) — 2026-10-27 (TestFlight)
 

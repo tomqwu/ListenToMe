@@ -40,6 +40,63 @@ final class MobileWatchLanguageTests: XCTestCase {
         XCTAssertEqual(session.watchInbox.accept(fileAt: file, metadata: metadata.transferMetadata, now: Date()), .stored)
     }
 
+    func testReceivedAACDecodesForLanguageAndSpeakersWithoutConsumingSource() async throws {
+        let url = try XCTUnwrap(Bundle(for: Self.self).url(forResource: "watch-chunk-0", withExtension: "m4a"))
+        let original = try Data(contentsOf: url)
+        let file = try AVAudioFile(forReading: url)
+        let seconds = Double(file.length) / file.processingFormat.sampleRate
+        // Speaker inference deliberately ignores windows shorter than five seconds.
+        let chunks = (0..<4).map { index in
+            WatchAudioChunk(index: index, url: url, startOffset: 42 + Double(index) * seconds, duration: seconds)
+        }
+        let samples = try await WatchLanguageAudio.samples(chunks)
+        XCTAssertGreaterThan(samples.count, 1_000)
+        XCTAssertLessThanOrEqual(samples.count, 480_000)
+        XCTAssertTrue(samples.allSatisfy { $0.isFinite })
+        XCTAssertTrue(samples.contains { abs($0) > 0.01 }, "Actual decoded speech, not empty padding")
+        let reader = WatchSpeakerAudio(chunks: chunks)
+        let window = try await reader.next()
+        XCTAssertEqual(try XCTUnwrap(window).start, 42, accuracy: 0.001)
+        XCTAssertGreaterThan(try XCTUnwrap(window).samples.count, 16_000)
+        let end = try await reader.next()
+        XCTAssertNil(end)
+        XCTAssertEqual(try Data(contentsOf: url), original)
+    }
+
+    func testUnreadableAndCancelledAudioAnalysisPreservesSource() async throws {
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let url = root.appendingPathComponent("bad.m4a")
+        let original = Data("not audio".utf8)
+        try original.write(to: url)
+        let chunks = [WatchAudioChunk(index: 0, url: url, startOffset: 0, duration: 5)]
+        do {
+            _ = try await WatchLanguageAudio.samples(chunks)
+            XCTFail("Unreadable audio must report a failure")
+        } catch { XCTAssertFalse(error is CancellationError) }
+        let brokenReader = WatchSpeakerAudio(chunks: chunks)
+        do { _ = try await brokenReader.next(); XCTFail("Unreadable speaker audio must fail") }
+        catch { XCTAssertFalse(error is CancellationError) }
+        let valid = try XCTUnwrap(Bundle(for: Self.self).url(forResource: "watch-chunk-0", withExtension: "m4a"))
+        let validBytes = try Data(contentsOf: valid)
+        let task = Task {
+            withUnsafeCurrentTask { $0?.cancel() }
+            return try await WatchLanguageAudio.samples([
+                WatchAudioChunk(index: 0, url: valid, startOffset: 0, duration: 2),
+            ])
+        }
+        do { _ = try await task.value; XCTFail("Expected cancellation") } catch is CancellationError {}
+        let reader = WatchSpeakerAudio(chunks: [
+            WatchAudioChunk(index: 0, url: valid, startOffset: 0, duration: 2),
+        ])
+        let speakerTask = Task {
+            withUnsafeCurrentTask { $0?.cancel() }
+            return try await reader.next()
+        }
+        do { _ = try await speakerTask.value; XCTFail("Expected speaker cancellation") } catch is CancellationError {}
+        XCTAssertEqual(try Data(contentsOf: url), original)
+        XCTAssertEqual(try Data(contentsOf: valid), validBytes)
+    }
+
     func testAudioSamplingSkipsLeadingSilenceAndCapsSpeech() async throws {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         let url = root.appendingPathComponent("speech.wav")

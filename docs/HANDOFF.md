@@ -4,6 +4,27 @@ A snapshot for an agent picking up ListenToMe cold. [AGENTS.md](../AGENTS.md) an
 [CLAUDE.md](../CLAUDE.md) stay the rules; this note is only the state of things on the date above.
 Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags) before acting on it.
 
+## Watch import crash investigation — October 27, candidate 1.19.1 (39)
+
+Issue #326 has three real build-38 crashes from the connected iPhone 17 Pro Max/iOS 27.0.1.
+The archived dSYM matches all reports and identifies `WatchLanguageAudio.samples`/`ChunkFeed`.
+An isolated signed host reproduced the same trap with stock AAC: Speech requires signed 16-bit
+samples, but optional waveform analysis constructed `AnalyzerInput` from Float32. Raw decoding
+now returns PCM/timestamps; only negotiated file transcription constructs Speech inputs.
+
+`WATCH-015` adds AAC, bad-input/cancellation and source-preservation regressions. `WATCH-016`
+reproduces and fixes a separate presentation-binding Stop, with explicit Stop finalization and
+rendered dismissal/background/return coverage. Focused simulator tests and all 34 Watch tests pass;
+independent code review cleared. The first physical corrected run no longer crashed and six tests,
+including real Speech transcription, passed; one new assertion used a clip shorter than speaker
+analysis permits, and its fixture was corrected. The latest physical rerun is waiting on device
+availability; do not call it passed. Existing safety limits and real OS interruption behavior remain.
+
+Full validation, final screenshots, CI/merge and the tester-feedback TestFlight train are pending.
+No new beta is published yet. Mac draft #318 is preserved separately. Evidence, exact raw reports,
+red/green logs and isolated-host setup are under the external `listentome-watch-recording-regressions/`
+directory. Personal audio was not copied; the production/TestFlight installation was not replaced.
+
 ## Latest Watch-enabled TestFlight — October 27, 08:43 UTC
 
 Apple accepted **1.19.0 (38)** at **2026-10-27T08:31:46.551678+00:00**, from `e43244f752712ac80e179e35c893e967aea38753`. Processing is **VALID**, internal state **IN_BETA_TESTING**, and the existing Dev group includes this build with two accepted testers. Primary locale, localized name, beta description and What to Test were read back in **en-US**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.0-build38).

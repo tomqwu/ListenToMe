@@ -81,6 +81,12 @@ See [speaker evidence and acceptance](speaker-identification.md).
 
 `RELEASE-003`, `RELEASE-006` and `RELEASE-007` separately cover default embedding, explicit Watch beta selection and refusal of unintended or malformed companions. A generated PBX configuration, a built embedded app and a distribution-signed exported IPA are separate checks. Current AGENTS.md permits authorized beta distribution with physical acceptance recorded as pending; it does not authorize a public App Store submission.
 
+`WATCH-015` preserves a physical-only regression that simulator tests missed: the simulator accepted
+Float32 `AnalyzerInput` buffers while iOS 27.0.1 trapped with a signed-integer precondition. Native AAC
+language/speaker decoding now stays outside Speech; transcription alone uses the negotiated Speech
+format. `WATCH-016` tests the actual recording presentation binding and rendered background/return
+controls. Neither a passed binding test nor a preview capture establishes physical wrist-down audio.
+
 ## Release-history accessibility acceptance
 
 `RELEASE-004` includes the actual oldest release heading and fixed Continue control at the largest

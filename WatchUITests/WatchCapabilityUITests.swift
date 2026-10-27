@@ -26,10 +26,15 @@ final class WatchCapabilityUITests: XCTestCase {
         XCTAssertTrue(stop.waitForExistence(timeout: 10))
         XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Recording")).firstMatch.exists)
         capture("Watch recording and Stop")
+        // Attempting to dismiss an active presentation must not act as Stop.
+        app.swipeDown()
+        XCTAssertTrue(stop.exists)
+        capture("Watch recording survives dismissal gesture")
         // An established recording keeps running when the app leaves the foreground.
         XCUIApplication(bundleIdentifier: "com.apple.NanoSettings").launch()
         app.activate()
         XCTAssertTrue(stop.waitForExistence(timeout: 5))
+        capture("Watch recording restored after background")
         stop.tap()
         XCTAssertTrue(app.buttons["Record"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["Stop"].exists)

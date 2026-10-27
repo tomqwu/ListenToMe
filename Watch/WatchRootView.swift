@@ -64,6 +64,7 @@ struct WatchRootView: View {
         }
         .fullScreenCover(isPresented: recordingScreenShown) {
             WatchRecordingView(recorder: recorder, preparation: continuationPreparation)
+                .interactiveDismissDisabled(recorder.isRecording)
         }
         .alert("Before you record", isPresented: $showConsent) {
             Button("Record") {
@@ -80,10 +81,10 @@ struct WatchRootView: View {
     }
 
     /// Shown for as long as there is a recording: the red indicator while it records, and the reason
-    /// (with Continue after an interruption) once it stops. Dismissing it ends the recording.
-    private var recordingScreenShown: Binding<Bool> {
+    /// (with Continue after an interruption) once it stops. Presentation changes are not Stop.
+    var recordingScreenShown: Binding<Bool> {
         Binding(get: { recorder.phase != .idle }, set: { shown in
-            if !shown {
+            if !shown, !recorder.isRecording {
                 continuationPreparation.cancel { recorder.stop() }
                 if recorder.phase != .idle { recorder.stop() }
             }

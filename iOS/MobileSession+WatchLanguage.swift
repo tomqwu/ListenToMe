@@ -56,7 +56,9 @@ enum WatchLanguageAudio {
             // A five-minute scan handles a quiet start without scanning an hours-long recording.
             let scanLimit = LanguageDetectionPolicy.sampleRate * 300
             let detector = EnergyVAD()
-            while samples.count < limit, inspected < scanLimit, let input = feed.next() {
+            while samples.count < limit, inspected < scanLimit {
+                try Task.checkCancellation()
+                guard let input = feed.nextPCM() else { break }
                 try Task.checkCancellation()
                 let buffer = input.buffer
                 guard let channel = buffer.floatChannelData?[0] else { continue }
@@ -69,6 +71,7 @@ enum WatchLanguageAudio {
                     if end > start { samples.append(contentsOf: audio[start..<end]) }
                 }
             }
+            try Task.checkCancellation()
             if let error = feed.failure { throw error }
             return samples
         }
