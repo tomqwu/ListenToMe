@@ -106,5 +106,7 @@ interruptions require Continue. The simulator controller/return test is separate
 wrist-down acceptance. Existing battery/storage start checks and recording safety limits remain;
 this fix does not claim indefinite microphone access or uninterrupted OS execution.
 
-The changes are under validation, not yet merged or distributed. No production app was reinstalled,
+Full validation passed on `0020345752a1ace9c28647bf9d45da310f862b18`: 125 BDD scenarios, Core 1,239/7 skips/98.249328%, iOS 531/12 skips, Mac 39, Watch 34 and four real-server contracts, zero failures. Independent source/outcome/media review cleared; [49 fresh images](images/ios/release-1.19.1-en-US.json) include four approved [Watch previews](images/watch/1.19.1/README.md). The remaining Watch frames are QA-only; offline clock overlap excludes those frames from listing use. iOS26.5 simulator and physical 27.0.1 results differ in runtime as well as device.
+
+The candidate is not yet merged or distributed. No production app was reinstalled,
 no personal audio was copied, and no microphone/OS permission was reset to investigate.

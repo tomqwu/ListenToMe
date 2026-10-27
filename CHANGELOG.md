@@ -25,7 +25,7 @@ does not show it again, and a fresh install does not see it at all; see
   local BDD-verification failure; it does not change an app feature or count a failed aggregate run
   as passing.
 
-## iOS (unreleased since 1.19.1 (39))
+## iOS (unreleased since 1.19.0 (38))
 
 ## iOS 1.19.1 (39) — candidate, not yet published
 
