@@ -27,6 +27,8 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased since 1.19.1 (39))
 
+- Long-press an identified transcript line and choose **Rename speaker**. Save updates every line for that speaker in the conversation and Notes; Cancel leaves the name unchanged. Available in portrait, expanded transcript and Duo. (#334)
+
 - Add opt-in on-device translation beneath finalized transcript lines, plus **Translate summary**
   on the Summary page with its own target language and original summary retained. Check exact
   installed language pairs, offer explicit preparation and preserve original speech, speakers,
@@ -120,6 +122,8 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 - Settings → Privacy now explains that optional Ollama, Cloud AI and OpenAI-compatible requests send text and included context to the provider you choose; Apple Intelligence stays on-device. (#247)
 
 ## macOS (unreleased since 1.4.4)
+
+- Double-click an identified transcript speaker label, or choose **Rename speaker** from its context menu. Save updates that speaker across the conversation, including reopened conversations; Cancel leaves the name unchanged. (#334)
 
 - Add opt-in on-device translation beneath finalized transcript lines, plus **Translate summary**
   on the Summary page with its own target language and original summary retained. Check exact

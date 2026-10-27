@@ -493,7 +493,9 @@ Automatic mode, have no `language` field.
 In Settings, enable **Automatic speaker identification** and choose **WhisperKit** before
 pressing Listen. The app analyzes captured system audio on-device about every 20 seconds
 (longer when analysis takes more time), and runs a final pass after Stop. The first use downloads
-speaker models. Open **Speakers / edit names** to name voices, for example Speaker 1 → Alice.
+speaker models. Open **Speakers / edit names** to name voices, for example Speaker 1 → Alice. You can also
+double-click an identified speaker label in the Mac transcript, or long-press its line on iPhone/iPad
+and choose **Rename speaker**. Save applies the name throughout this conversation; Cancel discards the edit.
 
 Names appear in transcript lines and flow into subsequent AI prompts, refreshed listener summaries,
 saved-session search, and Markdown/PDF exports. Saving a name clears older Quick/Deep answers;

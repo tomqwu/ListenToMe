@@ -9,6 +9,8 @@ struct EditableTranscriptRow: View {
     let delete: () -> Void
     let addTerm: () -> Void
     var translatedText: String?
+    var renameSpeaker: ((String) -> Void)?
+    @State private var renamingSpeaker = false
     @State private var editing = false
     @State private var draft = ""
     @State private var confirmingDelete = false
@@ -18,9 +20,14 @@ struct EditableTranscriptRow: View {
             Text(CommandCenterLabels.stamp(segment.start))
                 .font(.system(size: 10.5, design: .monospaced)).foregroundStyle(Theme.ink3)
                 .frame(width: 40, alignment: .leading)
-            Text(speakerLabel).font(.system(size: 11, weight: .bold))
-                .foregroundStyle(segment.source == .you ? Theme.you : Theme.others)
-                .frame(width: 100, alignment: .leading).lineLimit(2).help(segment.speakerLabel)
+            if segment.speakerID != nil, renameSpeaker != nil {
+                MacSpeakerRenameLabel(text: speakerLabel) { renamingSpeaker = true }
+                    .frame(width: 100, height: 28, alignment: .leading)
+            } else {
+                Text(speakerLabel).font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(segment.source == .you ? Theme.you : Theme.others)
+                    .frame(width: 100, alignment: .leading).lineLimit(2).help(segment.speakerLabel)
+            }
             if editing {
                 VStack(alignment: .leading) {
                     TextField("Transcript text", text: $draft, axis: .vertical)
@@ -41,7 +48,13 @@ struct EditableTranscriptRow: View {
             }
         }
         .padding(.vertical, 3)
+        .sheet(isPresented: $renamingSpeaker) {
+            SpeakerRenameEditor(name: segment.speakerLabel) { renameSpeaker?($0) }
+        }
         .contextMenu {
+            if segment.speakerID != nil, renameSpeaker != nil {
+                Button("Rename speaker…") { renamingSpeaker = true }
+            }
             Button("Copy line") {
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(segment.text, forType: .string)

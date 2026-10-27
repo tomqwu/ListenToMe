@@ -170,6 +170,8 @@ targets:
     deploymentTarget: "26.0"
     # Compile the actual native adapters and menu state without launching the app or user data.
     sources:
+      - SharedPlatform/SpeakerRenameEditor.swift
+      - App/MacSpeakerNameButton.swift
       - path: macOSTests
         excludes: [Fixtures]
       - SharedPlatform/SpeakerDiarizer.swift

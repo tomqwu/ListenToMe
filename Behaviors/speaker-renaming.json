@@ -1,0 +1,77 @@
+{
+  "feature": "Rename identified speakers from transcript gestures",
+  "scenarios": [
+    {
+      "id": "SPEAKER-017",
+      "name": "Long press an identified speaker to rename",
+      "given": "an iPhone or iPad transcript contains identified participants",
+      "when": "the reader long presses a speaker, saves a new name, or cancels the editor",
+      "then": "the existing identity is renamed throughout the conversation and in Notes; other speakers remain unchanged and cancellation has no effect; Save and Cancel remain reachable at accessibility text sizes, and a saved name survives rotation",
+      "covers": [
+        "iOS/MobileTranscriptReader.swift",
+        "iOS/MobileSelectableTranscript.swift",
+        "SharedPlatform/SpeakerRenameEditor.swift",
+        "iOS/MobileWatchSpeakerFixture.swift",
+        "iOS/MobileWorkspaceView.swift",
+        "iOS/MobileSavedAudioViews.swift",
+        "iOS/MobileSpeakerRenameSheet.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileSpeakerControlsUITests.swift",
+          "test": "MobileSpeakerControlsUITests/testLongPressRenamesSpeakerAndCancelPreservesLabels"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileSpeakerControlsUITests.swift",
+          "test": "MobileSpeakerControlsUITests/testRenameInDuoSurvivesRotation"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileSpeakerControlsUITests.swift",
+          "test": "MobileSpeakerControlsUITests/testRenameEditorActionsAtLargestTextSize"
+        }
+      ],
+      "manual": {
+        "reason": "Device layout and gesture usability require rendered inspection",
+        "steps": [
+          "Inspect compact, expanded and Duo transcript rename controls with VoiceOver and large text."
+        ]
+      }
+    },
+    {
+      "id": "SPEAKER-018",
+      "name": "Double click an identified Mac speaker",
+      "given": "a Mac transcript has an identified speaker label",
+      "when": "the user double clicks that label or opens Rename speaker from its menu",
+      "then": "the speaker editor opens for that identity; ordinary single clicks and disabled labels cannot request a rename",
+      "covers": [
+        "App/MacSpeakerNameButton.swift",
+        "App/EditableTranscriptRow.swift",
+        "App/CommandCenterPanes.swift",
+        "App/MeetingView+Speakers.swift",
+        "project.yml"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacSpeakerRenameTests.swift",
+          "test": "MacSpeakerRenameTests/testDoubleClickRenamesButSingleClickAndDisabledLabelDoNot"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacSpeakerRenameTests.swift",
+          "test": "MacSpeakerRenameTests/testAccessibilityRenameAndNameValidation"
+        }
+      ],
+      "manual": {
+        "reason": "Native control tests do not prove the complete installed SwiftUI sheet binding",
+        "steps": [
+          "Double click an identified speaker label in the installed Mac transcript, save a new name, and verify all matching lines and a reopened conversation use it.",
+          "Cancel a rename and verify no change; changing conversation while editing must not rename another conversation."
+        ]
+      }
+    }
+  ]
+}

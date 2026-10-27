@@ -1191,3 +1191,14 @@ and preserved originals. On Summary, opening the option alone must not translate
 on the completed summary and Close returns to original reading. Change source/target during work,
 background/return on phone and close/reopen the Mac window. No stale result or background backlog
 may publish. This text-only acceptance is separate from existing real OTHERS-audio gates.
+
+## Transcript speaker rename shortcuts
+
+- On iPhone/iPad, long-press an identified line, choose Rename speaker, edit and Save. Verify all
+  lines for that identity, Notes, reopened History and exports use the name; other speakers stay unchanged.
+- Repeat in portrait, expanded transcript and landscape Duo. At the largest text size with the
+  keyboard open, inspect the entire field and Save/Cancel controls; use VoiceOver's Rename speaker action.
+- On Mac, double-click a speaker label and verify the editor appears; a single click must not open it.
+  Repeat through the context menu and on a reopened conversation. Check long names via the full-name tooltip.
+- Cancel an edited name and verify no change. Blank/device names must disable Save. Switch conversation
+  while an editor is pending and verify a stale save cannot rename another conversation.

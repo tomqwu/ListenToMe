@@ -629,7 +629,7 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   while the models are unavailable.
   Speaker identification saves no audio. Lines are matched to speakers by SpeechAnalyzer's audio time ranges and become
   **Speaker 1**, **Speaker 2**…; a line no speaker covers for at least 30% of its length keeps
-  **Microphone**. **Notes → Speakers** renames a speaker everywhere: the saved conversation, the
+  **Microphone**. **Notes → Speakers**, or long-press an identified transcript line → **Rename speaker**, renames a speaker everywhere: the saved conversation, the
   transcript in History, search and exports all use the name. Renaming or relabeling starts no AI
   work, and Auto summaries do not re-read lines whose only change is the label; summaries pick the
   names up the next time they are generated. Prompts keep **Microphone** lines as `You` and pass

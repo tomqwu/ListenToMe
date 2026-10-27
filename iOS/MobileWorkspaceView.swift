@@ -21,6 +21,7 @@ struct MobileWorkspaceView<Header: View>: View {
     /// presented from a view that survives layout changes (the panel itself is rebuilt on rotation).
     @State private var panelRequest: MobileSelectionRequest?
     @State private var expandedRequest: MobileSelectionRequest?
+    @State private var speakerRenameRequest: MobileSpeakerRenameRequest?
     @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
@@ -88,11 +89,16 @@ struct MobileWorkspaceView<Header: View>: View {
                 MobileSelectionSummarySheet(session: session, request: request).presentationDetents([.medium, .large])
             }
         }
+        .sheet(item: $speakerRenameRequest) { request in
+            MobileSpeakerRenameSheet(session: session, request: request)
+        }
         .sheet(item: $panelRequest) { request in
             MobileSelectionSummarySheet(session: session, request: request).presentationDetents([.medium, .large])
         }
         .onChange(of: showTranscript) { _, shown in if !shown { selectingTranscript = false; transcriptSelection.clear() } }
-        .onChange(of: session.id) { selectingTranscript = false; transcriptSelection.clear() }
+        .onChange(of: session.id) {
+            selectingTranscript = false; transcriptSelection.clear(); speakerRenameRequest = nil
+        }
         .sheet(isPresented: $showSpeechSettings) {
             NavigationStack {
                 Form {
@@ -186,7 +192,10 @@ struct MobileWorkspaceView<Header: View>: View {
                     .accessibilityIdentifier("latestTranscriptPreview")
             } else {
                 MobileSelectableTranscript(session: session, selection: $transcriptSelection,
-                                           selecting: $selectingTranscript, request: $panelRequest, selectable: false,
+                                           selecting: $selectingTranscript, request: $panelRequest,
+                                           requestSpeakerRename: { line in
+                                               speakerRenameRequest = .init(line: line, conversationID: session.id)
+                                           }, selectable: false,
                                            startSelecting: { showTranscript = true }).id(session.id)
             }
         }.frame(maxWidth: .infinity, maxHeight: scrolling ? nil : .infinity, alignment: .topLeading)

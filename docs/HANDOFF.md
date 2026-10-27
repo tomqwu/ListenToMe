@@ -1,3 +1,19 @@
+# Speaker rename shortcuts #334 — October 27, 2026 (local implementation)
+
+The maintainer requested direct speaker-name editing. Branch `codex/speaker-rename-gestures`
+implements iPhone/iPad transcript long-press → Rename speaker and Mac label double-click/context menu,
+with Save/Cancel, identity-wide changes and stable keyboard/rotation presentation. Native red/green
+coverage is `SPEAKER-017`/`SPEAKER-018`; iPad portrait, rotation and largest-text checks passed,
+and Mac callback/name validation tests and app build passed. The saved/reopened iOS name regression
+also passed. Independent source review cleared the final presentation and stale-identity guards.
+
+Full validation, final rendered screenshot inspection and installed Mac sheet/save acceptance are
+separate pending gates. The Mac is currently locked; no additional unlock/permission prompt was sent.
+No new feature PR is opened while #318 remains in validation/acceptance. No merge or publication is
+claimed for #334. Release copy is under both platform unreleased changelog headings and the en-US
+speaker-rename metadata files. Exact native logs/screenshots remain in the external
+`2026-10-27/listentome-speaker-gestures` evidence directory.
+
 # Translation #330 implementation — October 27, 2026
 
 [PR #331](https://github.com/tomqwu/ListenToMe/pull/331) adds opt-in on-device live translation and

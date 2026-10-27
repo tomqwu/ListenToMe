@@ -1,0 +1,1 @@
+Long-press an identified transcript line and choose Rename speaker. Save a name, check every matching line and Notes, then reopen the conversation and export it. Other speakers must remain unchanged. Cancel an edited name; try a blank name. Repeat in portrait, expanded transcript, landscape Duo and with large text/VoiceOver.

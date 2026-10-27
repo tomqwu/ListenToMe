@@ -231,7 +231,12 @@ extension MeetingView {
                     .joined(separator: "\n"), forType: .string)
             }, edit: { editTranscriptLine(seg, text: $0) },
             delete: { deleteTranscriptLine(seg) },
-            addTerm: { vocabulary.termSourceLine = seg.text }, translatedText: session.liveTranslation.text(for: seg))
+            addTerm: { vocabulary.termSourceLine = seg.text }, translatedText: session.liveTranslation.text(for: seg),
+            renameSpeaker: { name in
+                guard let id = seg.speakerID,
+                      store.utterances.contains(where: { $0.id == seg.id && $0.speakerID == id }) else { return }
+                renameSpeaker(id: id, name: name)
+            })
     }
 
     /// Channel/speaker label for a transcript row: "YOU" for the mic; for the Others channel the

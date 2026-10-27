@@ -216,3 +216,16 @@ Native UI fixtures prove placement and control behavior; installed-model quality
 real-model acceptance. The [validation record](translation-validation.md) distinguishes genuine
 regression reds from test-harness failures and records the complete unchanged-source component
 matrix after a torn native stdout event prevented the aggregate verifier from completing.
+
+## Transcript speaker rename shortcuts (#334)
+
+`SPEAKER-017` binds native iPhone/iPad long-press, Save/Cancel, repeated identities, blank names,
+Notes synchronization, keyboard visibility, Duo and rotation. `SPEAKER-018` binds native Mac
+double-click versus single-click/disabled controls, accessibility activation and name validation.
+Mac installed sheet/save/reopen and VoiceOver remain explicit acceptance steps.
+
+The initial native reds were a missing Rename speaker menu on iOS and no callback on Mac double-click.
+Duo then reproduced a real editor-dismissal failure when the keyboard changed the workspace layout;
+the sheet now belongs to a stable parent and retains the original conversation/line identity.
+Large-text screenshot inspection found clipping despite passing hittability checks; those earlier
+passes are not evidence of acceptable rendering. Preserve before/after captures with release evidence.

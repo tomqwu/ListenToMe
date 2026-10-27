@@ -72,6 +72,7 @@ struct MobileSavedAudioTranscript: View {
     @Binding var selection: TranscriptSelection
     @Binding var selecting: Bool
     @Binding var request: MobileSelectionRequest?
+    @State private var speakerRenameRequest: MobileSpeakerRenameRequest?
 
     var body: some View {
         let playback = session.savedAudio.playback
@@ -82,6 +83,9 @@ struct MobileSavedAudioTranscript: View {
             }
             MobileSelectableTranscript(session: session, selection: $selection, selecting: $selecting,
                                        request: $request, scrollIdentifier: "expandedTranscriptScroll",
+                                       requestSpeakerRename: { line in
+                                           speakerRenameRequest = .init(line: line, conversationID: session.id)
+                                       },
                                        audioTarget: session.canPlaySavedAudio ? { segment in
                                            let index = session.allSegments.firstIndex { $0.id == segment.id } ?? 0
                                            return playback.target(for: segment, index: index)
@@ -92,6 +96,10 @@ struct MobileSavedAudioTranscript: View {
         .task(id: "\(session.id)-\(session.savedAudio.revision)-\(session.state == .idle)") {
             playback.load(conversationID: session.state == .idle ? session.id : nil)
         }
+        .sheet(item: $speakerRenameRequest) { request in
+            MobileSpeakerRenameSheet(session: session, request: request)
+        }
+        .onChange(of: session.id) { speakerRenameRequest = nil }
         .onDisappear { playback.stop() }
     }
 }

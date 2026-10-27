@@ -25,6 +25,7 @@ struct MobileSelectableTranscript: View {
     @Binding var selecting: Bool
     @Binding var request: MobileSelectionRequest?
     var scrollIdentifier = "transcriptScroll"
+    var requestSpeakerRename: ((TranscriptSegment) -> Void)?
     /// Select mode and its bar are shown here; otherwise `startSelecting` opens the view that has them.
     var selectable = true
     var startSelecting: () -> Void = {}
@@ -38,6 +39,7 @@ struct MobileSelectableTranscript: View {
                                    translation: session.liveTranslation.text,
                                    translationProblem: { session.liveTranslation.problems[$0] },
                                    restoreOriginal: session.restoreSpeech, showsSpeakers: session.hasSpeakerLabels,
+                                   renameSpeaker: requestSpeakerRename,
                                    selection: $selection, selecting: selectable && selecting,
                                    lineActions: MobileTranscriptLineActions(summarizeFrom: { id in
                                        request = MobileSelectionRequest(lines: Self.fromHere(id, in: session.allSegments))
