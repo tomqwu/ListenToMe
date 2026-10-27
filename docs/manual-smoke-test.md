@@ -842,8 +842,7 @@ search and export. Repeat with identification off and unavailable models: keep A
 initiate no model download from the import. Interrupt with backgrounding and an iPhone recording;
 retry safely without changing the live microphone's speaker run. After relaunch, new identities may
 receive new numbers because voiceprints are never saved. Verify that raw audio is deleted after text
-and labels are saved, and that relabeling does not request another AI summary. Watch remains excluded
-from distribution until #181 acceptance passes.
+and labels are saved, and that relabeling does not request another AI summary. Published build 37 excludes Watch. The next Watch beta has separate candidate checks; physical #181 acceptance remains pending for production.
 
 ### Watch audio retention (#225; development only)
 
@@ -1008,7 +1007,7 @@ are not native acceptance. Preserve source, OS, device, native screenshots and a
 - On Watch simulator, inspect independent local Record and iPhone remote. Unreachable/incompatible
   or unchecked phone capability blocks remote Start; reachable Stop remains usable after losing
   Start capability. Local denied microphone/low battery/storage shows its reason. Record offline
-  with later reconnect sync still requires paired physical acceptance before embedding Watch.
+  with later reconnect sync still requires paired physical acceptance for production readiness. The authorized Watch beta may distribute after its candidate gates with those checks explicitly pending; see [Watch beta preparation](watch-beta.md).
 
 The prior physical iPad failure and local fallback microphone pass are preserved in the #306 evidence.
 Simulator results do not establish physical recording, model accuracy, audibility or Watch pairing.

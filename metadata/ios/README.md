@@ -38,3 +38,5 @@ is `AppIcon`, then check the processed build and the installed Home Screen icon.
 
 Apple instructions: [app icons](https://developer.apple.com/help/app-store-connect/manage-app-information/add-an-app-icon)
 and [TestFlight descriptions](https://developer.apple.com/help/app-store-connect/test-a-beta-version/provide-test-information).
+
+Watch beta copy for 1.19.0 (38) is prepared in `en-US/what-to-test-1.19.0.txt` and `en-US/whats-new-1.19.0.txt`. It has not been applied to Apple at this source checkpoint; upload acceptance, en-US readback and pending physical acceptance are separate. [Watch candidate](../../docs/watch-beta.md).

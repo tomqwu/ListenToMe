@@ -1,0 +1,7 @@
+Record from Apple Watch and sync finished audio to your paired iPhone for on-device transcription, including after reconnecting. Keep recording with your wrist down and use Continue after an interruption. Phone playback is available when Save audio recordings is enabled during import.
+
+Pending Watch recordings now preserve audio and recovery metadata through interrupted handoffs and relaunch. Duplicate transfers cannot overwrite pending audio, and Delete after Stop clears waiting recordings and recovery state.
+
+Watch imports support on-device speaker identification with prepared models and automatic language detection with an already-downloaded model, without starting model downloads during import. Recording capability and permission checks keep unavailable actions from starting capture.
+
+Also restores the Summary icon beside Full summary in the iPhone/iPad More menu.

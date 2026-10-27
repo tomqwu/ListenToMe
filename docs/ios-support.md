@@ -62,7 +62,11 @@ To summarize just some lines, tap the checklist button on the Live transcript (o
 
 Read the [privacy policy](ios-privacy.md) for storage, optional cloud processing and deletion information.
 
-## Apple Watch language detection (not yet distributed)
+## Apple Watch beta preparation (not yet distributed)
+
+Published TestFlight 1.18.2 (37) has no Watch companion. Current source embeds the next beta by default; [installation, candidate checks and physical limits](watch-beta.md) explain its status. Failed handoffs and recording-end metadata are kept for relaunch/retry, and waiting includes unqueued recovery audio. Stop before Delete; Delete clears recovery state as well as queued audio. No upload or physical acceptance is claimed by those source changes.
+
+### Apple Watch language detection
 
 When the Watch companion becomes available, Automatic will check the first stretch of speech using
 an already-downloaded language model on your iPhone. It never downloads that model while importing.

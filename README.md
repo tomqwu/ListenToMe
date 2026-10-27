@@ -63,8 +63,8 @@ summaries on both platforms; after about a minute of speech the phone may sugges
 device. Meeting use-case presets, reference files, audio-file import and WhisperKit transcription are macOS-only.
 Editable domain prompt presets are available on both platforms.
 The public iPhone/iPad app is 1.18.1. The latest TestFlight beta is **1.18.2 (37)**
-([2026-10-27 TestFlight release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.2-build37)). An Apple Watch companion is built behind a build flag but not shipped yet
-([#181](https://github.com/tomqwu/ListenToMe/issues/181)).
+([2026-10-27 TestFlight release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.2-build37)). Current source permanently embeds an Apple Watch companion; its Watch-enabled beta is still in preparation and is not included in published build 37
+([#181](https://github.com/tomqwu/ListenToMe/issues/181)). Its full local validation and fresh 43-image matrix passed; [native Watch previews](docs/images/watch/1.19.0/README.md) are candidate evidence. Merge, distribution checks and accepted upload remain pending.
 See [iOS setup, validation and distribution](docs/IOS.md). Device and language support are checked
 per feature; Apple Intelligence is independent of recording. The [compatibility support](docs/device-compatibility.md)
 includes local dictation fallback for compatible older iPads and explicit unavailable-feature recovery
@@ -563,7 +563,7 @@ saying so. Press **Speakers / edit names** to retry once the network is availabl
   is not a whole-product measurement. See [orchestration ownership](docs/ORCHESTRATION.md).
 - **`iOS/`**: iPhone/iPad SwiftUI app, foreground microphone capture with SpeechAnalyzer, Apple Intelligence
   (Foundation Models) summaries by default on capable devices.
-- **`Watch/`**: Apple Watch companion, embedded only with the `WATCH_EMBED` build flag (off; not shipped).
+- **`Watch/`**: Apple Watch companion, embedded in the default iOS project; [beta preparation and pending device acceptance](docs/watch-beta.md). Published build 37 still excludes it.
 - **`App/`**: macOS glue — `DualChannelCapture`, `SpeechRecognizerTranscriber`, SwiftUI UI, hotkey.
 
 See [`docs/reviews/2026-09-10/design-and-gap-review.md`](docs/reviews/2026-09-10/design-and-gap-review.md)

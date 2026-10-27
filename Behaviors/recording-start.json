@@ -130,7 +130,7 @@
         "steps": [
           "On the connected iPad Pro4, preserve the failed installed-build recording test and actual unavailable-transcription screen before installing the changed app.",
           "Run the physical capability report, then verify actual new microphone words, Stop and opt-in playback on the dictation fallback; only play synthetic speech after Listening is confirmed.",
-          "Recheck the supported iPhone advanced speech path; Watch remains excluded and paired-device acceptance remains required."
+          "Recheck the supported iPhone advanced speech path; Watch beta distribution requires its separate candidate checks; paired-device acceptance remains required for production readiness."
         ]
       }
     },

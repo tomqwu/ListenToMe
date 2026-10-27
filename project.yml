@@ -1,11 +1,6 @@
 name: ListenToMe
-# The Apple Watch app is embedded in ListenToMeIOS only when the project is generated with
-# WATCH_EMBED=YES (issue #181, decision 4), so an unrelated iOS release cannot ship it early.
-# scripts/ios-testflight.sh refuses an archive that contains it. Task 21 of
-# docs/superpowers/plans/2026-10-22-apple-watch-recording.md makes the embed permanent.
-include:
-  - path: watch-embed.yml
-    enable: ${WATCH_EMBED}
+# Every iOS build includes its Watch companion. TestFlight upload requires the explicit
+# --include-watch-beta mode until physical production acceptance is complete (#181).
 options:
   bundleIdPrefix: com.tomwu
   deploymentTarget:
@@ -71,6 +66,8 @@ targets:
     dependencies:
       - target: ListenToMeShare
         embed: true
+      - target: ListenToMeWatch
+        embed: true
       - package: ListenToMeCore
         product: ListenToMeCore
       - package: FluidAudio
@@ -82,8 +79,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMe.ios
         PRODUCT_NAME: ListenToMeIOS
-        MARKETING_VERSION: "1.18.2"
-        CURRENT_PROJECT_VERSION: "37"
+        MARKETING_VERSION: "1.19.0"
+        CURRENT_PROJECT_VERSION: "38"
         DEVELOPMENT_TEAM: T32FW7PZ3S
         TARGETED_DEVICE_FAMILY: "1,2"
         GENERATE_INFOPLIST_FILE: NO
@@ -104,8 +101,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMe.ios.share
         PRODUCT_NAME: ListenToMeShare
-        MARKETING_VERSION: "1.18.2"
-        CURRENT_PROJECT_VERSION: "37"
+        MARKETING_VERSION: "1.19.0"
+        CURRENT_PROJECT_VERSION: "38"
         INFOPLIST_FILE: ShareExtension/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_ENTITLEMENTS: ShareExtension/ListenToMeShare.entitlements
@@ -131,8 +128,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMe.ios.watchkitapp
         PRODUCT_NAME: ListenToMeWatch
         # Same version and build as ListenToMeIOS and ListenToMeShare; every iOS bump changes all three.
-        MARKETING_VERSION: "1.18.2"
-        CURRENT_PROJECT_VERSION: "37"
+        MARKETING_VERSION: "1.19.0"
+        CURRENT_PROJECT_VERSION: "38"
         INFOPLIST_FILE: Watch/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         DEVELOPMENT_TEAM: T32FW7PZ3S
