@@ -1646,3 +1646,13 @@ content updates an existing History entry, archive/export/active-snapshot orderi
 after partial failure. MobileSession supplies stable encoding, private file writes, backup attributes,
 paths and existing UI messages. Native tests use real archive and active-snapshot failures before
 and after extraction. See [orchestration and validation boundaries](ORCHESTRATION.md).
+
+### Watch import regression candidate — 1.19.1 (39)
+
+Fix #326's iPhone opening crash: raw Float32 language/speaker analysis no longer constructs
+Speech `AnalyzerInput`, whose physical integer-only precondition was reproduced with stock AAC.
+File transcription still negotiates the Speech format and keeps recording-relative timestamps.
+The Watch recording presentation no longer interprets incidental dismissal as Stop. Pending
+preparation and actual audio interruption behavior remain explicit. `WATCH-015`/`WATCH-016` retain
+native red/green evidence; physical paired transfer/wrist-down acceptance remains separate.
+See [Watch beta status](watch-beta.md). This candidate is not yet published.

@@ -4,6 +4,18 @@ A snapshot for an agent picking up ListenToMe cold. [AGENTS.md](../AGENTS.md) an
 [CLAUDE.md](../CLAUDE.md) stay the rules; this note is only the state of things on the date above.
 Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags) before acting on it.
 
+## Watch import crash fix — 1.19.1 (39) candidate, October 27
+
+PR #327 fixes #326 on reviewed source `0020345752a1ace9c28647bf9d45da310f862b18`. Three actual build-38 reports from the connected iPhone 17 Pro Max/iOS 27.0.1 and a matching archived dSYM identify `WatchLanguageAudio.samples`/`ChunkFeed`. An isolated signed host reproduced Speech's signed-16-bit precondition with stock AAC. Optional language/speaker analysis now receives PCM directly; only negotiated transcription constructs Speech inputs. No production app was replaced and no private audio was copied.
+
+`WATCH-015`/`WATCH-016` and `RELEASE-004` preserve real red/green evidence, source preservation/cancellation, exactly-once Stop, actual system Close/elapsed progression and current notes. Full `make validate-local` passed on this exact source: 125 BDD scenarios, Core 1,239 tests (7 skips, 98.249328% coverage), iOS 531 (519 passes, 12 skips), Mac 39, Watch 34, 29 helper tests and four real-server contracts, zero failures. Independent source/outcome review cleared and all three required CI checks passed ([run40522116583](https://github.com/tomqwu/ListenToMe/actions/runs/40522116583)). Earlier Busy, interrupted, selector and short-fixture attempts remain failed/incomplete.
+
+[Fresh en-US catalog](images/ios/release-1.19.1-en-US.json): 49 inspected active images across four iPhone/iPad and three Watch categories, with source/native resolution/hash provenance. Four [Watch previews](images/watch/1.19.1/README.md) are approved candidates; 17 Watch diagnostics are QA-only. A banner-obscured Pro Max menu image was rejected and replaced by a clean same-source retake; the original remains preserved. No new listing upload occurred.
+
+The first corrected physical run no longer crashed and six tests, including real Speech transcription, passed; one new AAC assertion used a clip shorter than speaker analysis permits. The fixture was corrected, but subsequent physical reruns waited on device lock and were stopped: no complete physical green is claimed. Simulator 26.5 versus phone 27.0.1 differs in both runtime and device; do not generalize this as universally physical-only. Physical Watch wrist-down/paired transfer/battery/storage acceptance remains separate in #181. Existing safety limits remain.
+
+CI for the documentation/media follow-up, merge and accepted TestFlight distribution are pending. Current published beta remains 1.19.0 (38). Mac draft #318 stays separate. Complete raw native results, reports, screenshots, source/signing inputs and review evidence are preserved under external `listentome-watch-recording-regressions/`.
+
 ## Latest Watch-enabled TestFlight — October 27, 08:43 UTC
 
 Apple accepted **1.19.0 (38)** at **2026-10-27T08:31:46.551678+00:00**, from `e43244f752712ac80e179e35c893e967aea38753`. Processing is **VALID**, internal state **IN_BETA_TESTING**, and the existing Dev group includes this build with two accepted testers. Primary locale, localized name, beta description and What to Test were read back in **en-US**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.0-build38).

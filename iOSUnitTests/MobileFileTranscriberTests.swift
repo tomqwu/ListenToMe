@@ -105,7 +105,7 @@ final class MobileFileTranscriberTests: XCTestCase {
         ], format: format)
         var stamps: [TimeInterval] = []
         var buffers = 0
-        while let input = feed.next() {
+        while let input = feed.nextPCM() {
             buffers += 1
             if let start = input.bufferStartTime { stamps.append(start.seconds) }
         }

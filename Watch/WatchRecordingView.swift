@@ -23,6 +23,7 @@ struct WatchRecordingView: View {
                     .accessibilityElement(children: .combine)
                     Text(WatchLink.elapsedText(context.date.timeIntervalSince(startedAt)))
                         .font(.title2.monospacedDigit())
+                        .accessibilityIdentifier("watchRecordingElapsed")
                     Button("Stop", action: stop)
                         .tint(.red)
                 case .stopped(let reason, let canContinue):

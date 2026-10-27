@@ -88,3 +88,25 @@ known long-wait/gap behavior for a recording killed mid-chunk described in the
 [design](superpowers/specs/2026-10-22-apple-watch-recording-design.md).
 
 [Current native Watch previews](images/watch/1.19.0/README.md) are captured and inspected beta images; earlier build-36 previews remain historical. Store screenshot publication requires a separately authorized production submission, complete upload processing and readback.
+
+## Build 38 tester regression — October 27
+
+Issue #326 reproduces the opening crash on a physical iPhone 17 Pro Max/iOS 27.0.1.
+Three matching production reports and the exact archived dSYM identify `WatchLanguageAudio.samples`
+calling `ChunkFeed`, which created `AnalyzerInput` for Float32 waveform analysis. An isolated signed
+host with stock AAC reproduced Apple's precondition: audio sample data must be 16-bit signed integers.
+The decoder now exposes PCM buffers/timestamps directly for language and speaker analysis; only
+file transcription creates Speech inputs in its negotiated format. Source audio is never consumed
+by optional analysis. `WATCH-015` covers AAC, bounded windows, bad input and cancellation.
+
+`WATCH-016` reproduces a separate control defect: a false presentation binding finalized capture
+without explicit Stop. Active capture now ignores that dismissal and disables interactive dismissal;
+Stop remains available on return. Pending Continue can still be cancelled with Done, and actual OS
+interruptions require Continue. The simulator controller/return test is separate from physical
+wrist-down acceptance. Existing battery/storage start checks and recording safety limits remain;
+this fix does not claim indefinite microphone access or uninterrupted OS execution.
+
+Full validation passed on `0020345752a1ace9c28647bf9d45da310f862b18`: 125 BDD scenarios, Core 1,239/7 skips/98.249328%, iOS 531/12 skips, Mac 39, Watch 34 and four real-server contracts, zero failures. Independent source/outcome/media review cleared; [49 fresh images](images/ios/release-1.19.1-en-US.json) include four approved [Watch previews](images/watch/1.19.1/README.md). The remaining Watch frames are QA-only; offline clock overlap excludes those frames from listing use. iOS26.5 simulator and physical 27.0.1 results differ in runtime as well as device.
+
+The candidate is not yet merged or distributed. No production app was reinstalled,
+no personal audio was copied, and no microphone/OS permission was reset to investigate.
