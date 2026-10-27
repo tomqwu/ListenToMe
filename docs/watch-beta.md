@@ -1,5 +1,16 @@
 # Apple Watch beta (#181)
 
+The latest Watch companion is in **TestFlight 1.19.1 (39)**. Apple accepted **1.19.1 (39)** from `f1728150e3e66664e36d2506022c2918fa60a53c`: Xcode upload success at **2026-10-27 15:39:29.401 UTC**, Apple uploaded date **2026-10-27 15:40:24 UTC**. Processing is **VALID**, internal state **IN_BETA_TESTING**, and the existing internal Dev group includes build 39 with two existing active/installed tester members. This does not prove physical installation of build 39. Primary locale, localized name, beta description and What to Test were read back in **en-US**, with name **Listen To Me - Real Time AI**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.1-build39).
+
+Full local validation and independent review passed on unchanged app/test inputs: 125 BDD scenarios; Core 1,239 tests (7 optional skips, 98.249328% coverage); iOS 531 (519 passes, 12 skips); Mac 39; Watch 34; 29 helper tests and four real-server contracts, zero failures. All three required checks passed on exact merged source before upload. The exact transferred IPA was recovered, its full-file transport MD5 matched, its preserved copy SHA-256 matched, and all three distribution signatures/profiles, versions, disabled debugging and no-test-payload checks passed. Complete physical phone/Watch acceptance remains unverified; this is an authorized beta, not a production-ready claim.
+
+**Distribution procedure correction:** an existing private plist with `destination=upload` was passed to direct Xcode export, which uploaded this build. Actual upload was **not** performed by the helper; the later helper dry run is not upload evidence. No duplicate upload was sent. Package verification was completed after acceptance, and the receipt preserves that order. Future local export must use a private copy with `destination=export`; use the official make target for actual upload.
+
+[Current receipt](releases/ios-1.19.1-build39.json) and [fresh native previews](images/watch/1.19.1/README.md). Public iOS 1.18.1 excludes Watch; no new production submission was made.
+
+## Historical first Watch beta — 1.19.0 (38)
+
+
 The Watch companion is included in **TestFlight 1.19.0 (38)** for the existing Dev group. Apple accepted **1.19.0 (38)** at **2026-10-27T08:31:46.551678+00:00**, from `e43244f752712ac80e179e35c893e967aea38753`. Processing is **VALID**, internal state **IN_BETA_TESTING**, and the existing Dev group includes this build with two accepted testers. Primary locale, localized name, beta description and What to Test were read back in **en-US**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.0-build38). Public iOS 1.18.1 and previous beta 1.18.2 (37) do not include it.
 
 The exact uploaded IPA checksum matches ContentDelivery’s file checksum. Its phone, Share and Watch signatures/profiles, versions and debug flags passed verification; Apple’s processed nested entitlements independently confirm the Watch executable and distribution identity. The public buildBundles API lists one APP container and nests the Watch evidence inside it, rather than returning a separate WATCH_APP resource.
@@ -87,7 +98,7 @@ timestamps, supported language fallback, summaries and playback with saving on/o
 known long-wait/gap behavior for a recording killed mid-chunk described in the
 [design](superpowers/specs/2026-10-22-apple-watch-recording-design.md).
 
-[Current native Watch previews](images/watch/1.19.0/README.md) are captured and inspected beta images; earlier build-36 previews remain historical. Store screenshot publication requires a separately authorized production submission, complete upload processing and readback.
+[Current native Watch previews](images/watch/1.19.1/README.md) are captured and inspected beta images; earlier build-36 previews remain historical. Store screenshot publication requires a separately authorized production submission, complete upload processing and readback.
 
 ## Build 38 tester regression — October 27
 
@@ -108,5 +119,5 @@ this fix does not claim indefinite microphone access or uninterrupted OS executi
 
 Full validation passed on `0020345752a1ace9c28647bf9d45da310f862b18`: 125 BDD scenarios, Core 1,239/7 skips/98.249328%, iOS 531/12 skips, Mac 39, Watch 34 and four real-server contracts, zero failures. Independent source/outcome/media review cleared; [49 fresh images](images/ios/release-1.19.1-en-US.json) include four approved [Watch previews](images/watch/1.19.1/README.md). The remaining Watch frames are QA-only; offline clock overlap excludes those frames from listing use. iOS26.5 simulator and physical 27.0.1 results differ in runtime as well as device.
 
-The candidate is not yet merged or distributed. No production app was reinstalled,
+The candidate merged in #327 and is published as TestFlight 1.19.1 (39); see the receipt above. No production app was reinstalled,
 no personal audio was copied, and no microphone/OS permission was reset to investigate.

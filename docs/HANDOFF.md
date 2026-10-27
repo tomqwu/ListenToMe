@@ -4,7 +4,21 @@ A snapshot for an agent picking up ListenToMe cold. [AGENTS.md](../AGENTS.md) an
 [CLAUDE.md](../CLAUDE.md) stay the rules; this note is only the state of things on the date above.
 Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags) before acting on it.
 
-## Watch import crash fix — 1.19.1 (39) candidate, October 27
+## Published Watch regression beta — 1.19.1 (39), October 27
+
+Apple accepted **1.19.1 (39)** from `f1728150e3e66664e36d2506022c2918fa60a53c`: Xcode upload success at **2026-10-27 15:39:29.401 UTC**, Apple uploaded date **2026-10-27 15:40:24 UTC**. Processing is **VALID**, internal state **IN_BETA_TESTING**, and the existing internal Dev group includes build 39 with two existing active/installed tester members. This does not prove physical installation of build 39. Primary locale, localized name, beta description and What to Test were read back in **en-US**, with name **Listen To Me - Real Time AI**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.1-build39).
+
+Full local validation and independent review passed on unchanged app/test inputs: 125 BDD scenarios; Core 1,239 tests (7 optional skips, 98.249328% coverage); iOS 531 (519 passes, 12 skips); Mac 39; Watch 34; 29 helper tests and four real-server contracts, zero failures. All three required checks passed on exact merged source before upload. The exact transferred IPA was recovered, its full-file transport MD5 matched, its preserved copy SHA-256 matched, and all three distribution signatures/profiles, versions, disabled debugging and no-test-payload checks passed. Complete physical phone/Watch acceptance remains unverified; this is an authorized beta, not a production-ready claim.
+
+**Distribution procedure correction:** an existing private plist with `destination=upload` was passed to direct Xcode export, which uploaded this build. Actual upload was **not** performed by the helper; the later helper dry run is not upload evidence. No duplicate upload was sent. Package verification was completed after acceptance, and the receipt preserves that order. Future local export must use a private copy with `destination=export`; use the official make target for actual upload.
+
+[Receipt](releases/ios-1.19.1-build39.json), [49-image catalog](images/ios/release-1.19.1-en-US.json), and four [approved Watch previews](images/watch/1.19.1/README.md). All active images were inspected, with 32 approved and 17 Watch QA-only; a banner-obscured ProMax menu original was rejected, retained and replaced by a clean same-source retake. No new store screenshot upload or production submission occurred. Public iOS remains 1.18.1; Mac draft #318 is separate.
+
+PR #327 merged and #326 closed. Physical Watch wrist-down/paired transfer/battery/storage acceptance remains #181. The first corrected phone run no longer crashed and six tests passed, but a short speaker fixture assertion failed; the corrected full physical repeat was not completed. Simulator 26.5 and phone 27.0.1 differ in runtime and device. Original reports, all failed/interrupted attempts, all three raw native results, exact IPA and logs are preserved externally in `listentome-watch-recording-regressions/`.
+
+Cleanup is complete: exact inactive `.dev` bundle archived/hash-verified then moved to Trash; only `.dev` TCC reset. Isolated iPhone probe uninstalled; seven owned simulators removed, 38 other IDs preserved. Production apps, conversations/settings/keys and login keychain were untouched.
+
+## Historical candidate — 1.19.1 (39) candidate, October 27
 
 PR #327 fixes #326 on reviewed source `0020345752a1ace9c28647bf9d45da310f862b18`. Three actual build-38 reports from the connected iPhone 17 Pro Max/iOS 27.0.1 and a matching archived dSYM identify `WatchLanguageAudio.samples`/`ChunkFeed`. An isolated signed host reproduced Speech's signed-16-bit precondition with stock AAC. Optional language/speaker analysis now receives PCM directly; only negotiated transcription constructs Speech inputs. No production app was replaced and no private audio was copied.
 
