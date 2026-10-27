@@ -9,6 +9,12 @@ struct MobileDesignFixture: View {
         // Synthetic release visuals explicitly represent a compatible recording device.
         // The ordinary simulator app keeps its actual unavailable capture status.
         let session = MobileSession(storageDirectory: root, recordingSupport: { _ in .ready })
+        if ProcessInfo.processInfo.arguments.contains("--translation-fixture") {
+            let translator = TranslationPreviewTranslator(
+                needsPacks: ProcessInfo.processInfo.arguments.contains("--translation-needs-packs"))
+            session.liveTranslation.translator = translator
+            session.summaryTranslation.worker.translator = translator
+        }
         session.title = "Product planning"
         session.prepareSpeakerModelsIfNeeded()   // as the app does at a foreground launch (#195)
         session.segments = [

@@ -272,3 +272,10 @@ dynamic libraries are signed depth-first before their enclosing bundle; traversa
 stops the release. `scripts/test-release-paths.py` exercises these guards without real signing.
 `make e2e` additionally requires at least one passing XCTest case from each requested real-contract
 suite; empty discovery and all-skipped runs fail even if the test process exits successfully.
+
+## Translation candidate acceptance (#330)
+
+A Mac train containing [translation](translation.md) also verifies the Languages rail, original and
+translated transcript, Summary Translate/Close, native pack preparation/cancellation and window
+teardown. Preserve fresh Mac screenshots with candidate provenance. ImageRenderer/unit snapshots
+are UI evidence only; they do not establish installed-app interaction or actual model quality.

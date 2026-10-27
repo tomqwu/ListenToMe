@@ -207,3 +207,12 @@ behavior changes. Do not silently exempt old branches from the change-aware gate
 Automation checks structure and observed execution, not intent, causality or test quality. An
 independent reviewer must compare each scenario with its assertions and verify red/green evidence.
 Do not satisfy a behavior change with an unrelated test or weaken coverage/manual acceptance gates.
+
+## Translation boundaries
+
+`TRANSLATE-001`–`TRANSLATE-014` cover opt-in final-line translation, independent Summary-page
+translation, original preservation, native pair readiness, saved choices and lifecycle fencing.
+Native UI fixtures prove placement and control behavior; installed-model quality needs separate
+real-model acceptance. The [validation record](translation-validation.md) distinguishes genuine
+regression reds from test-harness failures and records the complete unchanged-source component
+matrix after a torn native stdout event prevented the aggregate verifier from completing.

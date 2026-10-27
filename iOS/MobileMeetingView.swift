@@ -16,6 +16,7 @@ struct MobileMeetingView: View {
     @State private var showSettings = false
     @State private var showReleaseNotes = MobileReleaseNotes.shouldPresent()
     @State private var showNotes = false
+    @State private var showLanguages = false
     @State private var showCalendar = false
     @State private var showFullSummary = false
     @State private var showRecordingSupport = false
@@ -79,6 +80,7 @@ struct MobileMeetingView: View {
                                 showRetranscription = true
                             }.disabled(!session.canRetranscribe).accessibilityIdentifier("retranscribeSavedAudio")
                             Button("Import from Calendar", systemImage: "calendar") { showCalendar = true }
+                            Button("Live translation", systemImage: "translate") { showLanguages = true }
                             Button("Full summary", systemImage: MobileStyle.symbol(for: .summary)) { showFullSummary = true }
                             Button("Settings", systemImage: "gearshape") { showSettings = true }
                             Button("What’s New", systemImage: "sparkles") { showReleaseNotes = true }
@@ -135,6 +137,12 @@ struct MobileMeetingView: View {
                     recognizers: ["Apple on-device": session.savedAudioRecognizer],
                     terms: { session.vocabulary.recognitionTerms(for: session.id, localeIdentifier: $0) },
                     apply: session.applyRetranscription)
+            }
+            .sheet(isPresented: $showLanguages) {
+                NavigationStack {
+                    MobileLanguageOptionsView(session: session)
+                        .toolbar { Button("Done") { showLanguages = false } }
+                }
             }
             .sheet(isPresented: $showNotes) { MobileNotesView(session: session) }
             .sheet(isPresented: $showFullSummary) {
@@ -269,6 +277,11 @@ struct MobileMeetingView: View {
                     MarkdownText(text: session.summaryDraft).textSelection(.enabled)
                 }
                 if !session.isSummarizing { MobileAnswerNoticeLines(session: session, mode: summaryMode) }
+                if summaryMode == .summary {
+                    SummaryTranslationPanel(translation: session.summaryTranslation,
+                        target: $session.languageOptions.summaryTranslationTarget, source: session.summary,
+                        conversationID: session.id, isGenerating: session.generatingMode == .summary)
+                }
                 if !session.output(for: summaryMode).isEmpty {
                     MarkdownText(text: session.output(for: summaryMode))
                         .accessibilityElement(children: .combine).accessibilityIdentifier("savedSummary")

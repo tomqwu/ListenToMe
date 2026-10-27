@@ -1,3 +1,17 @@
+# Translation #330 implementation — October 27, 2026
+
+[PR #331](https://github.com/tomqwu/ListenToMe/pull/331) adds opt-in on-device live translation and
+an explicit **Translate summary** option on the existing Summary page, with independent targets and
+originals retained. No summary-generation language override, version bump, upload or production
+submission. The feature is absent from published TestFlight 1.19.1 (39).
+
+[Validation evidence](translation-validation.md) records the frozen source, complete passing local
+component matrix and three green hosted checks. The aggregate command exited at a torn Mac log
+record; a complete Mac rerun and the remaining stages passed without source changes. Installed Mac
+interaction, physical acceptance and real installed-pair translation quality remain unverified.
+The [feature guide](translation.md) covers usage, privacy and compatibility. The dated release
+snapshot below still identifies published builds; see the PR for current merge status.
+
 # Handoff — 2026-10-27
 
 A snapshot for an agent picking up ListenToMe cold. [AGENTS.md](../AGENTS.md) and

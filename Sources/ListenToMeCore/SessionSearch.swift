@@ -11,6 +11,7 @@ public struct SessionRecord: Sendable, Equatable, Identifiable, Codable {
     public let segments: [TranscriptSegment]?
     public let notes: String?
     public let summaryInstructions: String?
+    public let languageOptions: ConversationLanguageOptions?
     /// Presets added to this conversation; global defaults and My terms remain device settings.
     public let vocabularyDomainIDs: [String]?
     public let quickSuggestion: String?
@@ -37,7 +38,8 @@ public struct SessionRecord: Sendable, Equatable, Identifiable, Codable {
                 titleState: ConversationTitleState? = nil, language: String? = nil, languages: [String]? = nil,
                 selectionSummaries: [SelectionSummary]? = nil, summaryInstructions: String? = nil,
                 vocabularyDomainIDs: [String]? = nil, hasIncompleteImport: Bool? = nil,
-                situationGrid: SituationGrid? = nil) {
+                situationGrid: SituationGrid? = nil, languageOptions: ConversationLanguageOptions? = nil) {
+        self.languageOptions = languageOptions
         self.situationGrid = situationGrid
         self.id = id; self.title = title; self.date = date
         self.transcript = transcript; self.summary = summary

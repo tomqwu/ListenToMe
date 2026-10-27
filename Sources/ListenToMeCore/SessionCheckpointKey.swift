@@ -14,12 +14,15 @@ public struct SessionCheckpointKey: Hashable, Sendable {
     public let notes: String
     public let summaryInstructions: String
     public let vocabularyDomainIDs: [String]
+    public let languageOptions: ConversationLanguageOptions
     public let quickSuggestion: String
     public let deepAnswer: String
     public let complete: Bool
 
     public init(revision: Int, title: String, summary: String, notes: String,
-                quickSuggestion: String, deepAnswer: String, complete: Bool, summaryInstructions: String = "", vocabularyDomainIDs: [String] = []) {
+                quickSuggestion: String, deepAnswer: String, complete: Bool, summaryInstructions: String = "", vocabularyDomainIDs: [String] = [],
+                languageOptions: ConversationLanguageOptions = .init()) {
+        self.languageOptions = languageOptions
         self.revision = revision
         self.title = title
         self.summary = summary

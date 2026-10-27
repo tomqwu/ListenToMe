@@ -729,3 +729,12 @@ Apple references: [upload builds](https://developer.apple.com/help/app-store-con
 [distribution workflow](https://developer.apple.com/documentation/xcode/distributing-your-app-for-beta-testing-and-releases),
 [build statuses](https://developer.apple.com/help/app-store-connect/reference/app-uploads/app-build-statuses),
 [add testers to builds](https://developer.apple.com/help/app-store-connect/test-a-beta-version/add-testers-to-builds).
+
+## Translation release evidence (#330)
+
+For a train containing [translation](translation.md), capture both the original-plus-translated
+transcript and the Summary page's Translate option, with fresh portrait/Duo/iPad evidence and
+accessibility inspection. Preserve source/version/device provenance; synthetic DEBUG previews must
+be identified as UI-only, never actual model-quality acceptance or an installed physical-device pass.
+Verify an installed real language pair separately and record any missing-pack/physical acceptance.
+Watch continues to show its own real recording/sync screens, since it has no translation UI.

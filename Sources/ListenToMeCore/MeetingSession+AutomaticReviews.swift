@@ -139,6 +139,7 @@ extension MeetingSession {
     }
 
     func handleLiveEvent(_ event: LiveSummaryScheduler.Event) {
+        updateLiveTranslations()
         if event == .conversationChanged || event == .providerChanged { automaticReviews.reset() }
         // A model, route or AI on/off change makes the chips describe a pass the current settings
         // would not make, and on macOS only Auto makes them, so Auto off clears them too (#61).

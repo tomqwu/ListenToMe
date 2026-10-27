@@ -121,3 +121,10 @@ Full validation passed on `0020345752a1ace9c28647bf9d45da310f862b18`: 125 BDD sc
 
 The candidate merged in #327 and is published as TestFlight 1.19.1 (39); see the receipt above. No production app was reinstalled,
 no personal audio was copied, and no microphone/OS permission was reset to investigate.
+
+## Translation after phone import (#330, unreleased)
+
+The Watch does not run translation. After on-device transcription on iPhone, the original imported
+text can use the phone's optional live translation. A completed Summary has a separate Translate
+summary action. These use installed phone language packs; transfer, recording and retained-audio
+consent are unchanged. See [translation](translation.md).

@@ -8,6 +8,7 @@ struct EditableTranscriptRow: View {
     let edit: (String) -> Void
     let delete: () -> Void
     let addTerm: () -> Void
+    var translatedText: String?
     @State private var editing = false
     @State private var draft = ""
     @State private var confirmingDelete = false
@@ -31,9 +32,12 @@ struct EditableTranscriptRow: View {
                     }.controlSize(.small)
                 }
             } else {
-                Text(segment.text).font(.system(size: 12.5)).foregroundStyle(Theme.ink)
-                    .textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
-                    .onTapGesture(count: 2) { beginEditing() }
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(segment.text).font(.system(size: 12.5)).foregroundStyle(Theme.ink)
+                        .textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
+                        .onTapGesture(count: 2) { beginEditing() }
+                    if let translatedText { TranslatedTranscriptText(text: translatedText) }
+                }
             }
         }
         .padding(.vertical, 3)
@@ -43,6 +47,12 @@ struct EditableTranscriptRow: View {
                 NSPasteboard.general.setString(segment.text, forType: .string)
             }
             Button("Copy transcript", action: copyTranscript)
+            if let translatedText {
+                Button("Copy translation") {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(translatedText, forType: .string)
+                }
+            }
             if segment.isFinal {
                 Divider()
                 Button("Edit line…", action: beginEditing)

@@ -190,6 +190,8 @@ targets:
       - App/PermissionsModel.swift
       - App/ApplicationLifecycle.swift
       - SharedPlatform/AppleIntelligenceProvider.swift
+      - SharedPlatform/AppleTranscriptTranslator.swift
+      - SharedPlatform/ConversationLanguageControls.swift
     dependencies:
       - package: ListenToMeCore
         product: ListenToMeCore

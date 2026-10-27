@@ -1,0 +1,3 @@
+Translate completed speech on your device while keeping the original transcript and speaker labels.
+On the Summary page, choose Translate summary and a separate target language to translate an existing summary. The original remains available.
+Translation uses installed on-device languages, with explicit preparation when needed. It does not change your AI provider or save translated text as the original.

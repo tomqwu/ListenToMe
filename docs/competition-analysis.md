@@ -124,3 +124,10 @@ The [device compatibility work](device-compatibility.md) adds supported local di
 older iPads and proactive per-feature recording/AI gates across native platforms. It remains a
 candidate for iOS 1.17.1 and unreleased Mac work; Watch remains excluded. Do not count this candidate
 as published competitive capability before the accepted train is recorded.
+
+### On-device reading translation (#330, unreleased)
+
+The current source adds opt-in translation beneath finalized original lines and an explicit
+Summary-page translation option, using installed Apple Translation packs. It retains original
+summary/transcript and provider choices, with explicit pack preparation and no cloud fallback.
+This is not included in TestFlight 1.19.1 (39); see [behavior and acceptance limits](translation.md).

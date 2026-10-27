@@ -107,3 +107,12 @@ Re-transcribe saved audio processes recordings on this device with Apple speech 
 A speech model may download on first use; audio is not uploaded. You preview the result before
 replacing the transcript. Keeping the original or cancelling leaves it unchanged. Replacement
 keeps notes, attachments, instructions and summaries, and leaves the saved audio files unchanged.
+
+## Optional on-device translation (unreleased, #330)
+
+Live transcript and Summary-page translation use Apple Translation on this device with installed
+language packs, independent of the chosen summary AI. Missing packs are prepared only after an
+explicit Prepare languages action; there is no cloud fallback. Original text is retained; derived
+translations stay in memory and are not archived as originals. Language preferences are saved with
+the conversation under the existing backup policy. Sharing a translated summary is explicit.
+See [translation](translation.md) for lifecycle and compatibility limits.

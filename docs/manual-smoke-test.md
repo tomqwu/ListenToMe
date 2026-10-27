@@ -1178,3 +1178,16 @@ Repeat speaker rename followed by New or a new recording: the old follow-up must
 the new run. Retained settings, prompts, title editing, pane sizes and all sheets must render as before.
 Capture fresh native Mac screenshots; verify actual OTHERS transcription separately. Native graph
 tests prove shared-store/buffer wiring, not SwiftUI rendering or physical capture acceptance.
+
+## Translation (#330, unreleased)
+
+On the candidate, keep translation off and confirm capture/original text still works. On Mac and
+iPhone/iPad, enable French live translation for completed English lines, edit/delete a line, change
+target, then New/reopen: original text/speakers/timing stay intact and obsolete translations do not
+return. Check portrait, landscape Duo, wide iPad and accessibility text. Missing packs must show
+Prepare without initiating a download; cancel the native preparation and verify originals remain.
+With an installed supported pair, verify actual translated meaning, explicit Copy/Share translation
+and preserved originals. On Summary, opening the option alone must not translate; Translate acts
+on the completed summary and Close returns to original reading. Change source/target during work,
+background/return on phone and close/reopen the Mac window. No stale result or background backlog
+may publish. This text-only acceptance is separate from existing real OTHERS-audio gates.

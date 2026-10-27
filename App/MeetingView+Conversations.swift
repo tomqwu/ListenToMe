@@ -20,7 +20,7 @@ extension MeetingView {
                     revision: store.revision, title: conversationTitle, summary: session.listenerSummary,
                     notes: session.notes, quickSuggestion: session.quickSuggestion,
                     deepAnswer: session.deepAnswer, complete: complete, summaryInstructions: session.summaryInstructions,
-                    vocabularyDomainIDs: vocabulary.domainIDs(for: currentSessionID).sorted())
+                    vocabularyDomainIDs: vocabulary.domainIDs(for: currentSessionID).sorted(), languageOptions: session.languageOptions)
             },
             makeRecord: { currentRecord(date: $0, complete: complete) },
             persist: { sessionStore.add($0) }, errorText: { sessionStore.errorText }, didSave: { record in

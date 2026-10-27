@@ -64,6 +64,8 @@ extension MacMeetingEnvironment {
                 ],
                 providerAvailability: { ProviderSettings.automaticReviewUnavailableReason(quickModel: $0) }
             )
+            session.liveTranslation.translator = AppleTranscriptTranslator()
+            session.summaryTranslation.worker.translator = AppleTranscriptTranslator()
             // Saved audio starts where the starting recording's lines start (#55; #233's recordingOffset).
             savedAudioRuns.timelineOffset = { [weak session] in session?.recordingOffset ?? 0 }
             return session
