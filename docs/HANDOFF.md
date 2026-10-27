@@ -1,3 +1,23 @@
+# Mac Store sandbox acceptance — October 27, 2026
+
+Existing draft [PR #318](https://github.com/tomqwu/ListenToMe/pull/318) now integrates current main,
+including translation and the canonical distribution instructions. Source `8067048` archived and
+exported a universal, strictly signed 1.5.0 (15) Store package; profile, entitlements and en-US
+checks passed. Direct local launch failed with taskgated/amfid **No matching profile found**.
+That is a preserved provisioning failure, not a permission failure or an installed acceptance pass.
+
+A separate `SandboxAcceptance` configuration retains release optimization and the Store's public
+sandbox entitlements under the existing `.dev` identity. `RELEASE-014` reproduced missing settings/
+build guidance before implementation; generated settings and the no-signing early-exit tests now
+pass. Native Mac UI is accessible again, but actual sandbox picker/relaunch/audio acceptance is
+still pending. The first new aggregate was deliberately stopped/reaped on unchanged `8067048`
+before this necessary configuration change; it remains incomplete, not a pass.
+
+Evidence: `/Users/tomwu/Documents/Codex/2026-10-27/listentome-mac318-acceptance/`. A fresh full
+validation, installed Dev sandbox checks, required CI and merge remain. Rebuild the distribution
+artifact from the exact final merged source before upload. No new Mac upload/review submission,
+production-ready claim or permission reset occurred. See [local sandbox acceptance](RELEASING.md#local-sandbox-acceptance).
+
 # Translation #330 implementation — October 27, 2026
 
 [PR #331](https://github.com/tomqwu/ListenToMe/pull/331) adds opt-in on-device live translation and

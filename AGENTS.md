@@ -149,6 +149,12 @@ missing or rejected, and which steps only the maintainer can perform.
 
 ## Native Mac App Store submissions
 
+For local sandbox acceptance, use `make mac-sandbox-build` with the existing stable Dev signing
+override and verify its exact `.dev` identifier, signature and sandbox entitlements before launch.
+This release-optimized configuration preserves the Store artifact and production permissions;
+keep development sandbox results separate from Apple-distributed installation acceptance.
+A Store-profile launch failure is not a TCC failure. Follow normal Dev cleanup after the session.
+
 The maintainer requested native Mac App Store distribution on October 26, 2026. Follow
 [the Mac App Store procedure](docs/RELEASING.md#mac-app-store-distribution) for its separate sandboxed
 configuration, shared App Store bundle ID, local installer signing, package verification and en-US

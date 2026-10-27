@@ -130,6 +130,9 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 - Prepare a separate sandboxed Mac App Store configuration, sharing the iOS listing's bundle ID
   while preserving the existing DMG and Dev identities. The preliminary 1.5.0 (15) archive builds
   for Intel and Apple silicon with US English. This is not an App Store upload or submission.
+- Add a release-optimized local sandbox acceptance build under the existing Dev identity, with
+  explicit signing setup, separate output and normal app-scoped cleanup. Store distribution
+  artifacts and their provisioning remain untouched; local checks do not establish Store installation.
 - Persist native security-scoped grants for the selected Markdown vault and reference files/folders,
   retain access throughout reads, and show reselection guidance for broken saved reference grants.
   Sandboxed picker/relaunch, recording and fresh Mac screenshot acceptance remain required.

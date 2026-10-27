@@ -6,6 +6,9 @@ plus real-time AI via Ollama (local + cloud), with per-pane model selection and 
 - **Engine** logic lives in `Sources/ListenToMeCore` (SwiftPM library, **has tests** in `Tests/ListenToMeCoreTests`).
 - **UI** lives in `App/` (SwiftUI; **no UI tests** — headless adapter tests run through `make mac-test`; verify UI changes with `make build` plus a manual `make run`).
 - Build: `make build`. Run: `make run`. Full check (build + bundle path + `OllamaProvider` contract test): `make e2e`.
+- Store sandbox acceptance: `make mac-sandbox-build` with stable Dev signing; follow
+  [the local sandbox runbook](docs/RELEASING.md#local-sandbox-acceptance). This uses the existing
+  `.dev` identity and requires normal Dev cleanup; it is not a Store installation/upload pass.
 
 ## Canonical release workflow
 

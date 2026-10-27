@@ -70,6 +70,18 @@ mac-appstore-archive: gen
 		-derivedDataPath .build/mac-appstore -onlyUsePackageVersionsFromResolvedFile \
 		-allowProvisioningUpdates $(MAC_STORE_SIGN_FLAGS) archive
 
+# Exercise the Store's sandbox with the existing Dev identity; never upload this build.
+MAC_SANDBOX_DERIVED ?= .build/mac-sandbox
+.PHONY: mac-sandbox-build
+mac-sandbox-build:
+	@if [ -z "$(strip $(SIGN_FLAGS))" ]; then \
+		echo "mac-sandbox-build: configure stable Dev signing in signing.local.mk first"; exit 1; \
+	fi
+	$(MAKE) gen
+	xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMe -configuration SandboxAcceptance \
+		-destination 'platform=macOS' -derivedDataPath '$(MAC_SANDBOX_DERIVED)' \
+		-onlyUsePackageVersionsFromResolvedFile $(SIGN_FLAGS) build
+
 # iPhone/iPad target (iOS 26+). Override IOS_DESTINATION with a connected device/simulator.
 IOS_DESTINATION ?= platform=iOS Simulator,name=iPhone 17 Pro
 IOS_SIGN_FLAGS ?= CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=-

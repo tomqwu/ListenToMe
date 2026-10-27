@@ -290,6 +290,11 @@ does not itself publish or submit a build.
 
 ## Build & run
 
+For Mac App Store sandbox testing, use `make mac-sandbox-build` with your existing stable Dev
+signing configuration. This creates a separate development-signed sandbox acceptance build;
+[verify its identity and cleanup requirements](docs/RELEASING.md#local-sandbox-acceptance).
+It does not upload an app or prove Store/TestFlight installation.
+
 ```bash
 make test     # run the ListenToMeCore test suite (unit + integration)
 make build    # generate the Xcode project and build the app

@@ -21,6 +21,26 @@ native App Sandbox and its own entitlements. The DMG's `Release` identity and th
 remain unchanged. The different Store identity means separate container data, preferences and OS
 permissions; do not reset or overwrite existing installations to transfer them.
 
+### Local sandbox acceptance
+
+Use `make mac-sandbox-build` with the existing stable `SIGN_FLAGS` in `signing.local.mk` for local
+Mac sandbox checks. `SandboxAcceptance` uses release optimization and the Store configuration's
+public sandbox entitlements under **`com.tomwu.ListenToMe.dev`**, named **ListenToMe (Dev)**.
+It has no Store profile or production-team override. A missing signing override stops before
+generation/build; CI explicitly compiles unsigned and cannot establish installed acceptance.
+Inspect the built bundle's exact Dev identifier, stable development signature and sandbox
+entitlements before opening `.build/mac-sandbox/Build/Products/SandboxAcceptance/ListenToMe.app`.
+
+The October 27 exported Store package passed strict signature/profile checks but direct local
+launch was refused by taskgated/amfid with **No matching profile found**. Do not strip its profile,
+re-sign the Store artifact, reset permissions or bypass OS security to make that package launch.
+The separate Dev build exercises sandbox picker/relaunch, provider and capture behavior while
+preserving the original distribution artifact. It does **not** prove Store/TestFlight installation;
+record the development identity and keep production-distributed installation acceptance separate.
+After a completed Dev session, preserve evidence and perform the app-scoped cleanup below.
+
+### Store archive and export
+
 ```sh
 make mac-appstore-archive
 xcodebuild -exportArchive -archivePath dist/ListenToMe-Mac-AppStore.xcarchive \
@@ -56,8 +76,9 @@ OTHERS, provider requests, Calendar, imports/exports, and selecting an external 
 file/folder followed by quit/relaunch and another write/read. Revoke/delete a selection and verify
 reselection guidance; cancel reads/clear references and check no late context is applied. Native
 temporary-folder scope tests establish bookmark format and adapter behavior, not sandbox picker
-grants across app relaunch. These gates remain pending while the Mac is locked. No Mac public
-submission or production-ready acceptance is claimed.
+grants across app relaunch. Native Mac UI became available again on October 27; the new sandbox
+acceptance build still needs these checks. No Mac public submission or production-ready acceptance
+is claimed.
 
 App-wide primary language is separate from localized copy. Apple's [primary-language rules](https://developer.apple.com/help/app-store-connect/manage-app-information/localize-app-information)
 require prior approval of the locale and screenshots for all supported platforms, including matching

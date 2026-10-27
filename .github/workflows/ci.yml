@@ -27,6 +27,9 @@ jobs:
           xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMe -configuration AppStore \
             -destination 'generic/platform=macOS' -onlyUsePackageVersionsFromResolvedFile \
             CODE_SIGNING_ALLOWED=NO build
+      - name: Compile local sandbox acceptance configuration
+        # An unsigned CI compile is not installed sandbox/permission acceptance.
+        run: make mac-sandbox-build SIGN_FLAGS='CODE_SIGNING_ALLOWED=NO' MAC_SANDBOX_DERIVED=.build/mac-sandbox-ci
   ios:
     name: iOS 26 app build
     runs-on: macos-26

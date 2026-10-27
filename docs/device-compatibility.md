@@ -1,5 +1,11 @@
 # Device and feature compatibility
 
+For Mac Store acceptance, distinguish a locally runnable development-signed sandbox build from a
+production Store package whose profile may be ineligible for direct local launch. Use
+[SandboxAcceptance](RELEASING.md#local-sandbox-acceptance) with the existing Dev identity and retain
+the OS provisioning failure separately from microphone/system-audio capability. Never infer a
+permission problem or change permissions from a profile-launch failure.
+
 The iPhone/iPad compatibility changes below are published in [TestFlight 1.18.0 (35)](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.0-build35).
 Current-source physical acceptance remains pending. Mac changes are merged but unreleased, with
 installed GUI/OTHERS acceptance explicitly deferred by the maintainer; see [HANDOFF](HANDOFF.md).

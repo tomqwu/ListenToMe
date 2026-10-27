@@ -65,7 +65,7 @@
       "id": "RELEASE-004",
       "name": "Identify the feedback beta and bundled changes accurately",
       "given": "a user updates to the Watch-enabled beta using standard or the largest accessibility text",
-      "when": "What\u2019s New appears or is reopened",
+      "when": "What’s New appears or is reopened",
       "then": "the app identifies version 1.19.1 build 39 with its Reliable Watch audio imports notes, acknowledges the update once, and keeps the oldest release heading and Continue usable at the largest text size",
       "covers": [
         "project.yml",
@@ -367,6 +367,39 @@
           "In the sandboxed app pick an external file and external folder, quit/relaunch and verify both contents remain available.",
           "Revoke or delete a reference and verify readable reselection guidance.",
           "Cancel a read and clear references; verify no late context is applied and no grants remain in saved preferences."
+        ]
+      }
+    },
+    {
+      "id": "RELEASE-014",
+      "name": "Run Mac sandbox acceptance with the existing Dev identity",
+      "given": "a maintainer needs to exercise the Mac sandbox locally before Store review, while the Store-signed package requires eligible distribution provisioning",
+      "when": "the SandboxAcceptance configuration is generated or its local build is requested without a signing override",
+      "then": "the local configuration keeps the Store file, audio, Calendar and network sandbox boundaries and release optimization under the existing Dev identity without a Store profile; an absent signing override stops before build or upload, and Store and DMG identities remain unchanged; an explicitly unsigned CI compile is not installed acceptance",
+      "covers": [
+        "project.yml",
+        "Makefile",
+        "scripts/test-mac-appstore.py",
+        ".github/workflows/ci.yml"
+      ],
+      "bindings": [
+        {
+          "suite": "tooling",
+          "file": "scripts/test-mac-appstore.py",
+          "test": "MacAppStoreConfigurationTests/test_sandbox_acceptance_uses_dev_identity_without_store_profile"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-mac-appstore.py",
+          "test": "MacAppStoreConfigurationTests/test_sandbox_acceptance_missing_signing_stops_before_build_or_upload"
+        }
+      ],
+      "manual": {
+        "reason": "Generated settings do not prove an installed sandbox app or production-distributed package runs.",
+        "steps": [
+          "Build with the configured stable development identity; verify exact com.tomwu.ListenToMe.dev signature and actual App Sandbox entitlements before launching.",
+          "Exercise external reference/vault picker grants across relaunch and actual microphone/OTHERS capture; preserve native screenshots and signing/source provenance.",
+          "Keep Store/TestFlight installation acceptance separate. After the completed Dev session, perform only the authorized app-scoped cleanup."
         ]
       }
     }

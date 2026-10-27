@@ -80,6 +80,36 @@ class MacAppStoreConfigurationTests(unittest.TestCase):
         self.assertEqual(settings["provisioningProfiles"],
                          {"com.tomwu.ListenToMe.ios": "ListenToMe Mac App Store"})
 
+    def test_sandbox_acceptance_uses_dev_identity_without_store_profile(self):
+        settings = self.configurations("ListenToMe")
+        self.assertIn("SandboxAcceptance", settings, "Local sandbox acceptance needs a development build, not a Store profile")
+        local = settings["SandboxAcceptance"]
+        self.assertEqual(local["PRODUCT_BUNDLE_IDENTIFIER"], "com.tomwu.ListenToMe.dev")
+        self.assertEqual(local["BUNDLE_DISPLAY_NAME"], "ListenToMe (Dev)")
+        for key in ("CODE_SIGN_ENTITLEMENTS", "ENABLE_APP_SANDBOX", "ENABLE_HARDENED_RUNTIME",
+                    "ENABLE_OUTGOING_NETWORK_CONNECTIONS", "ENABLE_RESOURCE_ACCESS_AUDIO_INPUT",
+                    "ENABLE_RESOURCE_ACCESS_CALENDARS", "ENABLE_USER_SELECTED_FILES"):
+            self.assertEqual(local[key], settings["AppStore"][key], key)
+        self.assertNotIn("PROVISIONING_PROFILE_SPECIFIER", local)
+        self.assertNotIn("DEVELOPMENT_TEAM", local, "Use the maintainer's existing Dev signing override")
+        self.assertEqual(settings["AppStore"]["PRODUCT_BUNDLE_IDENTIFIER"], "com.tomwu.ListenToMe.ios")
+        objects = self.project["objects"]
+        project = objects[self.project["rootObject"]]
+        builds = objects[project["buildConfigurationList"]]["buildConfigurations"]
+        configs = {objects[key]["name"]: objects[key]["buildSettings"] for key in builds}
+        for key in ("SWIFT_OPTIMIZATION_LEVEL", "SWIFT_COMPILATION_MODE", "DEBUG_INFORMATION_FORMAT"):
+            self.assertEqual(configs["SandboxAcceptance"][key], configs["AppStore"][key], key)
+        self.assertEqual(configs["SandboxAcceptance"]["SWIFT_OPTIMIZATION_LEVEL"], "-O")
+        self.assertNotIn("DEBUG", configs["SandboxAcceptance"].get("SWIFT_ACTIVE_COMPILATION_CONDITIONS", "").split())
+
+    def test_sandbox_acceptance_missing_signing_stops_before_build_or_upload(self):
+        result = subprocess.run(["make", "--no-print-directory", "mac-sandbox-build", "SIGN_FLAGS="],
+                                cwd=ROOT, capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("stable Dev signing", result.stdout + result.stderr)
+        self.assertNotIn("xcodebuild", result.stdout)
+        self.assertNotIn("xcodegen", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

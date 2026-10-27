@@ -3,6 +3,7 @@ configs:
   Debug: debug
   Release: release
   AppStore: release
+  SandboxAcceptance: release
 # Every iOS build includes its Watch companion. TestFlight upload requires the explicit
 # --include-watch-beta mode until physical production acceptance is complete (#181).
 options:
@@ -61,6 +62,21 @@ targets:
         AppStore:
           PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMe.ios
           DEVELOPMENT_TEAM: T32FW7PZ3S
+          DEVELOPMENT_LANGUAGE: en-US
+          MARKETING_VERSION: "1.5.0"
+          CURRENT_PROJECT_VERSION: "15"
+          CODE_SIGN_ENTITLEMENTS: App/ListenToMeAppStore.entitlements
+          ENABLE_APP_SANDBOX: YES
+          ENABLE_HARDENED_RUNTIME: YES
+          ENABLE_OUTGOING_NETWORK_CONNECTIONS: YES
+          ENABLE_RESOURCE_ACCESS_AUDIO_INPUT: YES
+          ENABLE_RESOURCE_ACCESS_CALENDARS: YES
+          ENABLE_USER_SELECTED_FILES: readwrite
+        # Local sandbox acceptance uses the existing stable Dev identity/signing override.
+        # Release optimization and the Store's public sandbox boundaries remain identical.
+        SandboxAcceptance:
+          PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMe.dev
+          BUNDLE_DISPLAY_NAME: "ListenToMe (Dev)"
           DEVELOPMENT_LANGUAGE: en-US
           MARKETING_VERSION: "1.5.0"
           CURRENT_PROJECT_VERSION: "15"

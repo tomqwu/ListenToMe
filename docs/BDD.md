@@ -20,6 +20,12 @@ installed sandbox picker grants across relaunch, which remain manual acceptance.
 
 ## Working an issue
 
+`RELEASE-014` binds the locally testable Store sandbox configuration, unchanged production/Dev
+identities, release optimization and fail-before-build missing-signing outcome to generated native
+settings and an actual make invocation. CI's explicit unsigned build proves compilation only.
+Installed Dev sandbox picker/relaunch/audio checks and Apple-distributed installation remain
+separate outcomes; the recorded Store-profile launch failure is not a permission failure.
+
 Finish the current change through validation, review, CI and merge before opening another feature
 PR. Future work stays in GitHub Issues. Work down existing drafts sequentially and consolidate
 multiple drafts for the same issue without deleting their source or acceptance evidence.

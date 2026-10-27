@@ -2,6 +2,14 @@
 
 ## Mac App Store sandbox acceptance
 
+First run `make mac-sandbox-build` with existing stable Dev signing and verify the exact `.dev`
+identity, signature and actual sandbox entitlements before launch; follow
+[the local runbook](RELEASING.md#local-sandbox-acceptance). The release-optimized local configuration
+retains the Store's public sandbox boundaries. A Store package rejected for an ineligible profile
+is not a TCC failure: preserve it without permission resets or re-signing. Dev sandbox results
+do not establish Apple-distributed installation. Preserve native screenshots and complete the
+normal app-scoped Dev cleanup at the end of the session.
+
 The `AppStore` configuration uses the shared store bundle ID, sandboxed storage and separate OS
 permissions. Its generated settings and native temporary-folder scope tests do not replace this
 installed-app check. Preserve source/signing evidence and fresh native-resolution Mac screenshots.
@@ -16,7 +24,8 @@ installed-app check. Preserve source/signing evidence and fresh native-resolutio
 4. Confirm the existing DMG/Dev installations' bundle identities, data and permissions are intact.
    Do not reset them as a shortcut for the new Store identity.
 
-These checks and Mac screenshot capture are pending while the Mac is locked. No Mac App Store
+Native Mac UI is available again on October 27; these checks and fresh Mac captures remain pending.
+No Mac App Store
 upload or review submission is established by the preliminary archive.
 
 For changed behavior, start from its [BDD scenario](BDD.md) and record source-matched acceptance
