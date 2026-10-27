@@ -24,6 +24,12 @@ honestly documented device limitations are sufficient to distribute an authorize
 testing. Physical-device acceptance is still required before calling the app production-ready or
 submitting a production App Store release. Missing hardware must not be reported as an upload blocker.
 
+## Watch and Duo listing media correction — October 27
+
+All **60 current screenshots** have been committed to App Store draft **1.19.1 (39)**: 30 each in en-US and the preserved en-CA localization. Each locale has seven images in each of four iPhone/iPad size slots, including landscape two-pane Duo and iPad wide views, plus two consistent 422 × 514 Watch Ultra home/recording images. At `2026-10-27T16:43:35.527150+00:00`, Apple reported **57 COMPLETE / 3 UPLOAD_COMPLETE**; 43 completed images had already been downloaded and proved RGB-identical. Final processing/order verification remains pending. See the [media receipt](releases/ios-1.19.1-build39-media.json).
+
+Inherited draft copies were backed up and removed only after draft ownership and disjoint production-ID checks; the public 1.18.1 listing was preserved. The new draft remains **PREPARE_FOR_SUBMISSION**, selects build 39 and uses manual release. Both English descriptions and What's New were read back; they now describe the embedded Watch app. No new review submission occurred. Six [Watch/Duo/iPad release previews](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.1-build39) are publicly visible, with downloaded SHA-256 matches. Physical phone/Watch acceptance remains pending; source and accepted beta are unchanged.
+
 ## Latest Watch-enabled beta — 1.19.1 (39)
 
 Apple accepted **1.19.1 (39)** from `f1728150e3e66664e36d2506022c2918fa60a53c`: Xcode upload success at **2026-10-27 15:39:29.401 UTC**, Apple uploaded date **2026-10-27 15:40:24 UTC**. Processing is **VALID**, internal state **IN_BETA_TESTING**, and the existing internal Dev group includes build 39 with two existing active/installed tester members. This does not prove physical installation of build 39. Primary locale, localized name, beta description and What to Test were read back in **en-US**, with name **Listen To Me - Real Time AI**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.1-build39).
