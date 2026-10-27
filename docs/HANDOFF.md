@@ -6,6 +6,17 @@ Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags)
 
 ## Current US screenshot refresh and App Review — October 26, 21:13 UTC
 
+**Later Watch preview checkpoint, October 27, 00:38 UTC:** the matching watchOS 27.0 (24R362)
+runtime is now installed. Series 12 (42/46 mm) and Ultra 4 (49 mm) each passed three native unit
+tests plus one UI test, zero failures/skips, with Watch bindings verified. Six readable native en-US
+[home/recovery previews](images/watch/1.18.1-preview/README.md) are saved with source/hash provenance
+from `f608b58`; Watch app/test sources match main `a594077`. Three scrolled offline captures have
+system-clock overlap and remain external diagnostics, not store screenshots. Independent review
+verified this bounded evidence; all three owned simulators were deleted. These are existing-test
+executions and prospective previews, not physical recording/sync acceptance or Apple listing
+uploads. Build 36 still excludes Watch. PR #318 remains the only distribution change and still
+requires installed Mac sandbox/OTHERS acceptance and fresh Mac screenshots before merge/submission.
+
 **Later correction, 22:41 UTC:** TestFlight had retained only Canadian beta metadata even though
 the App Store draft had a US localization. The en-US What to Test and beta description are now
 created/read back for build 36; IDs/receipt are in

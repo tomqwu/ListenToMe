@@ -186,7 +186,11 @@ worktree. Screenshots do not replace physical-device acceptance.
    display-size slot. Also inspect compact/large iPhones and compact/large iPads during layout tests;
    this coverage is broader than the store's minimum upload slots. Do not assume a single iPhone
    screenshot covers tablets or every required size. When Watch is embedded in a distributed build,
-   add every applicable Watch screenshot category. Do not advertise the unshipped Watch feature.
+   add every applicable Watch screenshot category. Series 12 and Ultra 4 simulator profiles require
+   watchOS 27 or later; the 26.5 runtime cannot run them. Inspect the actual device/runtime profile
+   instead of substituting an older model name. The saved [native model previews](images/watch/1.18.1-preview/README.md)
+   remain prospective until a Watch-enabled build passes its separate distribution gates. Do not
+   advertise the unshipped Watch feature.
 2. Capture a coherent set: Live transcript/Quick, Summary, Notes/context and prompts when present,
    History, and relevant settings. Include the iPhone landscape two-pane layout and iPad wide layout
    in acceptance evidence; use orientations accepted by each store slot for listing assets. Exercise
