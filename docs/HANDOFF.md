@@ -13,12 +13,28 @@ created/read back for build 36; IDs/receipt are in
 The actual app-wide primary remains en-CA: Apple's documented eligibility requires prior approval
 of the US localization/screenshots on all supported platforms. It is not a successful primary switch.
 The maintainer also requested the missing Mac submission. Branch `codex/mac-app-store` prepares
-a separate sandboxed 1.5.0 (15) configuration and US Mac draft metadata. The first universal archive
-compiled/signed with Apple Development, before later vault/reference persistence fixes; it must not
-be submitted or reused as the final source. Native generated-configuration and scope regressions
-have red/green evidence; final local validation/review and CI remain to complete. The Mac is locked;
-installed sandbox picker/relaunch, GUI/OTHERS-audio acceptance and fresh Mac screenshots remain
-pending. No Mac build upload or review submission has occurred. See [the Mac Store runbook](RELEASING.md#mac-app-store-distribution).
+a separate sandboxed 1.5.0 (15) configuration and US Mac draft metadata in **PR #318**.
+At **October 27, 00:04 UTC**, Apple still reports iOS WAITING_FOR_REVIEW, the primary locale en-CA,
+both corrected beta records en-US, and Mac PREPARE_FOR_SUBMISSION with no build selected.
+The universal candidate from `c05c6335c182cdff3ec8e6ca6f5bb8829f35a1be` has Apple Distribution
+and Mac installer signatures, the Mac Store profile, en-US development region and sandbox enabled.
+Apple's `altool --validate-app` accepted its package with no errors; this is **validation, not upload**.
+The package SHA-256 is `b16b66ab4c7ca370fd867e98f180d3ad2969d86e4345511d59d4c06cc88b7f47`.
+All three required checks passed on that source. Independent source/privacy review found no remaining
+code blocker. Local validation passed Core (1,241 tests, 7 skips, 98.2504679% coverage), iOS unit/UI
+(454 + 74 tests, 12 skips), Mac (42), and tooling. The original `make validate-local` exited 2 when
+the Watch unit host failed to launch; that failure is retained. A subsequent `make watch-test` passed
+all three unit bindings and one UI binding, and resumed `make e2e` passed both real Ollama and both
+OpenAI-compatible contracts. Do not describe the original full command as exiting successfully.
+Evidence is under `listentome-appstore-publication/locale-mac-correction/`, with the committed-source
+archive/package in `final-candidate/`; older preliminary archives predate persistence fixes and must
+not be uploaded. Rebuild from the exact merged source before publication. Owned test simulators
+were removed; the inactive temporary Dev bundle was moved to Trash after identifier/signature checks,
+and only `com.tomwu.ListenToMe.dev` permissions were reset. Existing production permissions/data
+were preserved. A fresh native observation still reports the Mac locked: installed sandbox
+picker/relaunch, GUI/OTHERS-audio acceptance and fresh Mac screenshots remain pending and prevent
+merge/public submission. No Mac build upload or review submission has occurred. See
+[the Mac Store runbook](RELEASING.md#mac-app-store-distribution).
 
 Apple accepted the refreshed **English (US), en-US** submission at
 **2026-10-26T21:13:50.231393+00:00**. Current review
