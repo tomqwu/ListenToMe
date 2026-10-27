@@ -189,6 +189,66 @@
           "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone"
         }
       ]
+    },
+    {
+      "id": "RELEASE-009",
+      "name": "Upload with explicit validated manual distribution signing",
+      "given": "a validated iPhone/Share archive, optionally including its Watch companion, and explicitly selected manual App Store upload options or the unchanged automatic default",
+      "when": "the release helper or make target is invoked with those options",
+      "then": "only the stable team, upload destination, App Store method, fixed versions, exact bundle/profile map and certificate selector reach Xcode; dry runs never upload, invalid options fail before Xcode, and actual acceptance retains source and signing provenance while duplicate/active uploads stay blocked; changing the original file after validation cannot change the private options snapshot used for upload",
+      "covers": [
+        "scripts/ios-testflight.sh",
+        "Makefile",
+        "Config/iOS/*",
+        "scripts/test-ios-testflight.py"
+      ],
+      "bindings": [
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_manual_watch_options_reach_upload_and_receipt"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_manual_options_without_watch_keep_exact_phone_map"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_unsafe_manual_options_never_invoke_xcode"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_missing_or_malformed_manual_options_never_invoke_xcode"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_manual_dry_run_and_failure_never_claim_acceptance"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_manual_options_preserve_duplicate_and_active_upload_guards"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_make_forwards_explicit_manual_export_options"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_acceptance_receipt_and_duplicate_guard"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_original_options_change_cannot_change_validated_upload"
+        }
+      ]
     }
   ]
 }

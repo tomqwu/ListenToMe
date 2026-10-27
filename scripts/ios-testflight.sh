@@ -61,6 +61,73 @@ else:
 print(f'ios-{version}-build{build}')
 PY
 )
+options_temp=$(mktemp -d "${TMPDIR:-/tmp}/listentome-export-options.XXXXXX")
+owned_upload_lock=''
+cleanup_upload() {
+  if [[ -n "$owned_upload_lock" ]]; then rmdir "$owned_upload_lock"; fi
+  rm -rf -- "$options_temp"
+}
+trap cleanup_upload EXIT
+python3 - "$watch_beta" "$options_temp" <<'PY'
+import hashlib, json, os, pathlib, plistlib, re, sys
+
+def require(condition, message):
+    if not condition:
+        raise ValueError(message)
+
+try:
+    default = pathlib.Path('Config/iOS/TestFlightExportOptions.plist')
+    selected = os.environ.get('IOS_EXPORT_OPTIONS', '')
+    path = pathlib.Path(selected) if selected else default
+    require(not any(c in str(path) for c in '\r\n\t\0'), 'Invalid options path')
+    raw = path.read_bytes()
+    options = plistlib.loads(raw)
+    require(isinstance(options, dict), 'Options must be a dictionary')
+    require(options.get('destination') == 'upload', 'Destination must be upload')
+    require(options.get('method') == 'app-store-connect', 'Method must be app-store-connect')
+    require(options.get('manageAppVersionAndBuildNumber') is False, 'Version management must be disabled')
+    require(options.get('uploadSymbols') is True, 'Symbol upload must stay enabled')
+    expected_team = 'T32FW7PZ3S'
+    require(options.get('teamID') == expected_team, 'Team must match the checked-in production team')
+    if selected:
+        allowed = {'destination', 'method', 'manageAppVersionAndBuildNumber', 'uploadSymbols',
+                   'teamID', 'signingStyle', 'signingCertificate', 'provisioningProfiles'}
+        require(set(options) == allowed, 'Manual options must contain exactly the supported fields')
+        require(options.get('signingStyle') == 'manual', 'Explicit options must use manual signing')
+        certificate = options.get('signingCertificate')
+        require(isinstance(certificate, str) and re.fullmatch(r'[0-9a-fA-F]{40}', certificate),
+                'Manual signing requires the existing certificate SHA-1 selector')
+        expected = {'com.tomwu.ListenToMe.ios', 'com.tomwu.ListenToMe.ios.share'}
+        if sys.argv[1] == '1':
+            expected.add('com.tomwu.ListenToMe.ios.watchkitapp')
+        profiles = options.get('provisioningProfiles')
+        require(isinstance(profiles, dict) and set(profiles) == expected,
+                'Manual profiles must match exactly the archived bundle IDs')
+        pattern = r'[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}'
+        require(all(isinstance(value, str) and re.fullmatch(pattern, value) for value in profiles.values()),
+                'Manual profiles require UUID selectors')
+    else:
+        require(options.get('signingStyle') == 'automatic', 'Default signing must remain automatic')
+    directory = pathlib.Path(sys.argv[2])
+    with (directory / 'ExportOptions.plist').open('xb') as stream:
+        os.chmod(stream.name, 0o600)
+        stream.write(raw)
+    metadata = {'original': str(path.resolve()), 'sha256': hashlib.sha256(raw).hexdigest(),
+                'signingStyle': options['signingStyle']}
+    with (directory / 'metadata.json').open('x') as stream:
+        os.chmod(stream.name, 0o600)
+        json.dump(metadata, stream)
+except (OSError, ValueError, TypeError, KeyError, plistlib.InvalidFileException):
+    # Never echo malformed plist contents, credentials or arbitrary input values.
+    print('Invalid TestFlight export options; check the documented upload/signing fields.', file=sys.stderr)
+    sys.exit(2)
+PY
+IFS=$'\t' read -r export_options_original export_options_sha256 signing_style <<< "$(python3 - "$options_temp/metadata.json" <<'PY'
+import json, pathlib, sys
+metadata = json.loads(pathlib.Path(sys.argv[1]).read_text())
+print(metadata['original'], metadata['sha256'], metadata['signingStyle'], sep='\t')
+PY
+)"
 evidence="dist/$release-evidence"
 marker="$evidence/upload-accepted.json"
 if [[ -f "$marker" ]]; then
@@ -101,20 +168,15 @@ except (OSError, ValueError, AttributeError):
     sys.exit(2)
 PY
 )
-upload_command=(xcodebuild -exportArchive -archivePath "$archive" -exportPath "dist/$release-upload"
-  -exportOptionsPlist Config/iOS/TestFlightExportOptions.plist -allowProvisioningUpdates)
 authentication=xcode_session
-if [[ -n "$auth_arguments" ]]; then
-  authentication=app_store_connect_api_key
-  while IFS= read -r argument; do upload_command+=("$argument"); done <<< "$auth_arguments"
-fi
+if [[ -n "$auth_arguments" ]]; then authentication=app_store_connect_api_key; fi
 if [[ $dry_run == 1 ]]; then
   echo "Validated archive identity: $release; declared source: $source_commit"
   echo "Authentication route: $authentication (not authenticated by this dry run)."
   if [[ $watch_beta == 1 ]]; then
     echo 'Watch-enabled beta identity checked; physical-device acceptance unverified. Signing/export checks remain separate.'
   fi
-  echo 'Upload settings: Config/iOS/TestFlightExportOptions.plist; no upload performed.'
+  echo "Upload settings: $export_options_original ($signing_style signing); no upload performed."
   exit 0
 fi
 mkdir -p "$evidence"
@@ -123,11 +185,35 @@ if ! mkdir "$lock" 2>/dev/null; then
   echo "Another upload may be active ($lock). Inspect it before retrying." >&2
   exit 3
 fi
-trap 'rmdir "$lock"' EXIT
+owned_upload_lock=$lock
 # Recheck after acquiring the lock in case another session just completed.
 if [[ -f "$marker" ]]; then
   echo "Upload already recorded in $marker; check TestFlight instead." >&2
   exit 3
+fi
+# Preserve the validated bytes, not a later read of the caller's mutable options file.
+export_options=$(python3 - "$options_temp" "$evidence" <<'PY'
+import hashlib, json, os, pathlib, sys, tempfile
+source = pathlib.Path(sys.argv[1])
+raw = (source / 'ExportOptions.plist').read_bytes()
+metadata = json.loads((source / 'metadata.json').read_text())
+if hashlib.sha256(raw).hexdigest() != metadata['sha256']:
+    raise SystemExit('Validated export-options snapshot changed')
+directory = pathlib.Path(tempfile.mkdtemp(prefix='export-options-', dir=sys.argv[2]))
+path = directory / 'ExportOptions.plist'
+with path.open('xb') as stream:
+    os.chmod(stream.name, 0o600)
+    stream.write(raw)
+with (directory / 'metadata.json').open('x') as stream:
+    os.chmod(stream.name, 0o600)
+    json.dump(metadata, stream, indent=2)
+print(path.resolve())
+PY
+)
+upload_command=(xcodebuild -exportArchive -archivePath "$archive" -exportPath "dist/$release-upload"
+  -exportOptionsPlist "$export_options" -allowProvisioningUpdates)
+if [[ -n "$auth_arguments" ]]; then
+  while IFS= read -r argument; do upload_command+=("$argument"); done <<< "$auth_arguments"
 fi
 log="$evidence/upload-$(date -u +%Y%m%dT%H%M%SZ)-$$.log"
 if ! "${upload_command[@]}" > "$log" 2>&1; then
@@ -138,12 +224,14 @@ if ! grep -Eq 'Upload succeeded\.|Uploaded ListenToMeIOS' "$log"; then
   echo "No upload acceptance in $log. Local export success alone is insufficient." >&2
   exit 1
 fi
-python3 - "$marker" "$archive" "$source_commit" "$log" "$authentication" "$watch_beta" <<'PY'
+python3 - "$marker" "$archive" "$source_commit" "$log" "$authentication" "$watch_beta" "$export_options" "$export_options_sha256" "$signing_style" "$export_options_original" <<'PY'
 import datetime, json, pathlib, sys
 pathlib.Path(sys.argv[1]).write_text(json.dumps({
     'status': 'upload_accepted', 'archive': str(pathlib.Path(sys.argv[2]).resolve()),
     'source_commit': sys.argv[3], 'log': sys.argv[4],
     'authentication': sys.argv[5],
+    'export_options': sys.argv[7], 'export_options_sha256': sys.argv[8],
+    'signing_style': sys.argv[9], 'export_options_original': sys.argv[10],
     'recorded_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
     'tester_availability': 'unverified',
     'watch_beta_requested': sys.argv[6] == '1',

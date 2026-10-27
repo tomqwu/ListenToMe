@@ -4,6 +4,12 @@ A snapshot for an agent picking up ListenToMe cold. [AGENTS.md](../AGENTS.md) an
 [CLAUDE.md](../CLAUDE.md) stay the rules; this note is only the state of things on the date above.
 Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags) before acting on it.
 
+## Watch distribution recovery — October 27, 07:35 UTC
+
+PR #322 merged at `e43244f752712ac80e179e35c893e967aea38753`, with all three required checks green on the exact merged source. The 1.19.0 (38) archive succeeded. Automatic export failed on the missing Watch Store profile and cloud-signing access; a mixed manual/Xcode-managed export also failed. Separate manually managed Store profiles for all three exact bundle IDs use the existing local Apple Distribution certificate; no certificate rotation, revocation or account/keychain/OS permission change occurred. Manual export of the same archive then succeeded, and all three bundle signatures/profiles, versions, debug flags, phone/Share App Group, Watch embedding and no-test-payload checks passed.
+
+Upload is still pending: the configured helper hardcoded automatic signing. Issue #323 and branch `codex/testflight-manual-signing` add a narrow validated local options input with BDD regression coverage, retaining the automatic default and existing upload safeguards. The archive source stays `e43244f`; later delivery-only helper source and checks are recorded separately. No Watch publication, Apple processing or tester availability is claimed yet. Evidence remains under the Watch181 beta directory and `dist/ios-1.19.0-build38-evidence/`.
+
 ## Watch beta implementation in progress — October 27
 
 Branch `codex/watch-beta-distribution` implements explicit Watch beta safeguards and default companion embedding, plus native cancellation/readiness, durable AAC handoff/recovery, end markers, Continue boundaries and pending Delete protection. Focused native Watch tests pass (33 tests, no failures/skips), including the corrected lifecycle review cases with isolated audio/WatchConnectivity adapters and real AAC filesystem operations; helper/generated-project checks pass. Reproduced failures and review-driven fixes are retained externally in `/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch181-beta/`. Independent review found view-owned preparation and pre-execution cancellation gaps after the initial helper/outbox pass. Their genuine native failures and fixes are retained; the final corrected 33-case Watch run passed and the reviewer cleared this delta for commit/full validation.

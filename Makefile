@@ -109,6 +109,7 @@ ios-archive: gen
 		-derivedDataPath .build/ios-release -onlyUsePackageVersionsFromResolvedFile -allowProvisioningUpdates archive
 
 # Upload a validated archive; source/CI checks and tester verification are in docs/IOS-RELEASING.md.
+export IOS_EXPORT_OPTIONS
 .PHONY: ios-testflight
 ios-testflight:
 	@test -n "$(IOS_ARCHIVE)" -a -n "$(IOS_RELEASE_SOURCE)" || { echo 'Set IOS_ARCHIVE and IOS_RELEASE_SOURCE'; exit 2; }

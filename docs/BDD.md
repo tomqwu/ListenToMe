@@ -9,6 +9,8 @@ scoped repository-relative `covers` patterns and `bindings`. This is a native-te
 XCTest and Python unittest execute the assertions. JSON carries the behavior contract and exact
 test selector, so there is no duplicate Cucumber implementation or dependency to keep in sync.
 
+`RELEASE-009` binds explicit manual TestFlight signing to offline upload decisions, invalid-file/field refusal, dry runs, exact phone/Share/Watch profile maps, unchanged automatic defaults, private options snapshots that survive changes to the original file, and accepted-receipt provenance. Exported native signatures/profiles and Apple upload/processing/tester readback remain separate release gates.
+
 ## Working an issue
 
 Finish the current change through validation, review, CI and merge before opening another feature
