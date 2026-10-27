@@ -20,7 +20,7 @@ stays macOS-only. This is a platform boundary, not a backlog item: there is no p
 that captures system or call audio. Recording is foreground-only (`iOS/Info.plist` declares no
 `UIBackgroundModes`); backgrounding stops recording and saves the conversation.
 
-Apple Watch recording ([#181](https://github.com/tomqwu/ListenToMe/issues/181)) is a source candidate, not yet distributed. The default iOS project now embeds `Watch/`; the next beta uses explicit Watch upload eligibility, matching versions, native durability tests and exported-package checks. Published TestFlight 1.18.2 (37) still excludes Watch. Physical recording, paired transfer, wrist-down and battery/storage acceptance remain pending for production. See [Watch beta preparation and installation](watch-beta.md).
+Apple Watch recording ([#181](https://github.com/tomqwu/ListenToMe/issues/181)) is a source candidate, not yet distributed. The default iOS project now embeds `Watch/`; the next beta uses explicit Watch upload eligibility, matching versions, native durability tests and exported-package checks. Published TestFlight 1.18.2 (37) still excludes Watch. Physical recording, paired transfer, wrist-down and battery/storage acceptance remain pending for production. Full local validation and all 43 fresh simulator screenshots passed on frozen source `016d61c`; final merge/distribution verification and accepted upload are still pending. See [Watch beta preparation and installation](watch-beta.md).
 
 ## Parity with macOS
 

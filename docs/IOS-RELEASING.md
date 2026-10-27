@@ -26,7 +26,7 @@ submitting a production App Store release. Missing hardware must not be reported
 
 ## Next Watch beta candidate — 1.19.0 (38)
 
-Current source embeds Watch by default and has explicit beta-upload eligibility. [Watch preparation](watch-beta.md) records native lifecycle/durability coverage, intended installation, privacy and outstanding physical acceptance. Build 38 was unused at preflight; check again before upload. Full validation, fresh images for all iPhone/iPad categories and Watch Series 12/Ultra 4 sizes, distribution package checks, CI/merge and actual upload/tester receipt remain pending. No Watch publication is claimed. Current accepted TestFlight remains 1.18.2 (37).
+Current source embeds Watch by default and has explicit beta-upload eligibility. [Watch preparation](watch-beta.md) records native lifecycle/durability coverage, intended installation, privacy and outstanding physical acceptance. Build 38 was unused at preflight; check again before upload. Full local validation passed on `016d61c`, including 122 BDD scenarios, 33 native Watch tests and the real model contracts. All 43 fresh iPhone/iPad and Watch images are individually inspected with source/binary/hash/RGB proof; [catalog](images/ios/release-1.19.0-en-US.json). QA-only Watch captures are excluded from listing assets. Final documentation-head/merged-source CI, merge, distribution package checks and actual upload/tester receipt remain pending. No Watch publication is claimed. Current accepted TestFlight remains 1.18.2 (37).
 
 ## Latest beta and public state — October 27, 2026
 

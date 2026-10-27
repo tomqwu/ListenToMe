@@ -13,9 +13,13 @@ The first aggregate attempt on `b1f35b4` failed in the native BDD log verifier a
 XCTest pass line, so the old line-start parser missed the selector. `DEV-008` retains the reproducing
 failure and exact-selector fix; the original failed run, raw result bundles and no-capture outcome
 are preserved under `validation-attempt1/`. All three hosted checks passed on that earlier head;
-they must be rechecked on the corrected source. Watch/e2e were not reached by that aggregate run.
+the corrected-source pass is recorded below. Watch/e2e were not reached by that first aggregate run.
 
-The next source candidate is **1.19.0 (38)**. Its release UI reproduced old 1.18.2 metadata, then passed after the version/notes update. Full `make validate-local`, fresh iPhone/iPad and Watch images, final documentation review, required CI/merge, distribution signing/export verification and upload/tester receipt are still pending. No Watch beta is published yet. Current TestFlight remains 1.18.2 (37); public iOS remains 1.18.1. [Watch preparation and production gates](watch-beta.md) replaces earlier blanket beta blockers without claiming physical microphone, paired transfer, wrist-down or battery/storage acceptance. Mac draft #318 stays separate.
+The next source candidate is **1.19.0 (38)**. Its release UI reproduced old 1.18.2 metadata, then passed after the version/notes update. Full `make validate-local` passed on frozen source `016d61c`: 122 BDD scenarios, 1,239 core tests (7 optional skips, 98.2493% coverage), 529 iOS tests (517 passed, 12 optional skips), 39 Mac tests, 33 Watch tests and four real Ollama/OpenAI-compatible contracts; no failures. All three required hosted checks passed on that source. A documentation/media-only follow-up preserves every application and test input; its final CI and merged-source CI remain required.
+
+[Fresh en-US capture catalog](images/ios/release-1.19.0-en-US.json) contains 43 individually inspected native-resolution images: 28 across four iPhone/iPad categories and 15 across Watch Series 12 42/46 mm and Ultra 4 49 mm. Original checksums, RGB equivalence, simulator/test identities and binary/source provenance are preserved externally. Only the approved 46 mm or Ultra Home/Recording images are Watch listing candidates; use one accepted size consistently across locales. The compact 42 mm set and all consent/recovery/offline images are QA only. Offline captures show clock/text overlap and are excluded from listing use. Simulator fixtures do not establish physical microphone or paired transfer acceptance. Store screenshot uploads are pending a separately authorized production submission.
+
+Final documentation review, required CI/merge, distribution signing/export verification and upload/tester receipt remain pending. No Watch beta is published yet. Current TestFlight remains 1.18.2 (37); public iOS remains 1.18.1. [Watch preparation and production gates](watch-beta.md) records physical microphone, paired transfer, wrist-down and battery/storage acceptance as pending. Mac draft #318 stays separate.
 
 ## Latest tester fix — October 27, 2026
 

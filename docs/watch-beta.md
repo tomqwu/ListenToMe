@@ -71,9 +71,11 @@ and transport adapters. Passing baseline adoption is labelled separately from re
 These tests cannot prove a real Watch microphone, WatchConnectivity delivery or battery performance.
 
 Focused evidence is preserved at
-`/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch181-beta/`. Full platform validation, fresh
-source-matched iPhone/iPad and Watch images, archive/export and accepted-upload receipts are still
-pending at this checkpoint.
+`/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch181-beta/`. Full `make validate-local` passed on frozen source `016d61c`: 122 BDD scenarios, 1,239 core tests (7 optional skips, 98.2493% coverage), 529 iOS tests (517 passed, 12 optional skips), 39 Mac tests, 33 Watch tests and four real Ollama/OpenAI-compatible contracts; no failures. All three required hosted checks passed on that source. A documentation/media-only follow-up preserves every application and test input; its final CI and merged-source CI remain required.
+
+[Fresh en-US capture catalog](images/ios/release-1.19.0-en-US.json) contains 43 individually inspected native-resolution images: 28 across four iPhone/iPad categories and 15 across Watch Series 12 42/46 mm and Ultra 4 49 mm. Original checksums, RGB equivalence, simulator/test identities and binary/source provenance are preserved externally. Only the approved 46 mm or Ultra Home/Recording images are Watch listing candidates; use one accepted size consistently across locales. The compact 42 mm set and all consent/recovery/offline images are QA only. Offline captures show clock/text overlap and are excluded from listing use. Simulator fixtures do not establish physical microphone or paired transfer acceptance. Store screenshot uploads are pending a separately authorized production submission.
+
+Final CI/merge, archive/export, signature/profile checks and accepted-upload/tester receipts remain pending.
 
 ## Physical beta feedback and production acceptance still pending
 
@@ -84,6 +86,4 @@ timestamps, supported language fallback, summaries and playback with saving on/o
 known long-wait/gap behavior for a recording killed mid-chunk described in the
 [design](superpowers/specs/2026-10-22-apple-watch-recording-design.md).
 
-Fresh Watch screenshots belong to this candidate's evidence only once captured and inspected.
-Earlier build-36 preview images remain prospective historical assets. Store screenshot publication
-requires a separately authorized production submission, complete upload processing and readback.
+[Current native Watch previews](images/watch/1.19.0/README.md) are captured and inspected candidate images; earlier build-36 previews remain historical. Store screenshot publication requires a separately authorized production submission, complete upload processing and readback.
