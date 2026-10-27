@@ -1,12 +1,12 @@
 # iOS listing metadata
 
-App: **Listen To Me** · App Store Connect ID `6811155732` · bundle `com.tomwu.ListenToMe.ios`.
-The primary locale is English (Canada), `en-CA`.
+US listing: **Listen To Me - Real Time AI** · App Store Connect ID `6811155732` · bundle `com.tomwu.ListenToMe.ios`.
+The primary locale is English (US), **`en-US`**, confirmed through Apple’s API after 1.18.1 approval on October 27, 2026. Use `en-US/` for new metadata; `en-CA/` preserves historical Canadian copy.
 
 These files are source-controlled copy, not an automatic upload. Saving them in Git does not update
 App Store Connect. Apply and verify the online fields during the iOS release workflow:
 
-| File in `en-CA/` | App Store Connect destination |
+| File in `en-US/` | App Store Connect destination |
 | --- | --- |
 | `name.txt`, `subtitle.txt` | Distribution → App Information |
 | `description.txt`, `keywords.txt` | Distribution → current iOS App Store version |

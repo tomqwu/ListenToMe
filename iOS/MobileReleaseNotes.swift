@@ -48,6 +48,9 @@ enum MobileReleaseNotes {
         var id: String { version }
     }
     static let releases: [Release] = [
+        .init(version: "1.18.2", title: "A clearer Summary menu", details: [
+            "Full summary now has its Summary icon in the More menu on iPhone and iPad."
+        ]),
         .init(version: "1.18.1", title: "Keep each voice distinct", details: [
             "Live speaker identification uses a recording-scoped streaming model to improve brief alternating turns.",
             "Returning voices keep their labels and edited names through overlapping audio windows and quiet intervals.",

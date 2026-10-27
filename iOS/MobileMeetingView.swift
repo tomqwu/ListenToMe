@@ -79,7 +79,7 @@ struct MobileMeetingView: View {
                                 showRetranscription = true
                             }.disabled(!session.canRetranscribe).accessibilityIdentifier("retranscribeSavedAudio")
                             Button("Import from Calendar", systemImage: "calendar") { showCalendar = true }
-                            Button("Full summary") { showFullSummary = true }
+                            Button("Full summary", systemImage: MobileStyle.symbol(for: .summary)) { showFullSummary = true }
                             Button("Settings", systemImage: "gearshape") { showSettings = true }
                             Button("What’s New", systemImage: "sparkles") { showReleaseNotes = true }
                         }

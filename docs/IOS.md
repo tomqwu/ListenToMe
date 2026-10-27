@@ -1,7 +1,7 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, latest TestFlight version 1.18.1 (36).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, latest TestFlight version 1.18.1 (36); 1.18.2 (37) is the next candidate.
 
 ## What this app is for
 
@@ -129,15 +129,21 @@ The archive, upload, tagging and verification steps themselves are not repeated 
 [IOS-RELEASING.md](IOS-RELEASING.md) for iOS, [RELEASING.md](RELEASING.md) for macOS, and
 [AGENTS.md](../AGENTS.md) for the release workflow that governs both.
 
-## Public App Store submission — October 26, 2026
+## Public App Store approval and US primary — October 27, 2026
+
+Apple now reports **1.18.1 (36) READY_FOR_SALE** and its review **COMPLETE**. After approval, the
+primary-language PATCH succeeded; subsequent app readbacks confirmed **en-US**. The submission-time
+waiting/Canadian-primary states below are historical. Both beta localization records are also en-US.
+
+### Submission checkpoint — October 26, 21:13 UTC (historical)
 
 The **English (US)** listing **Listen To Me - Real Time AI**, **1.18.1 (36)**, was resubmitted with
 24 fresh US-region screenshots and accepted for App Review at **21:13:50 UTC**. Review
-`4e63cda8-70db-4d67-9928-63409df4dbda` is WAITING_FOR_REVIEW and set to release after approval;
-production remains 1.15.0 (32). Earlier Canadian and US reviews were canceled. All 24 new US uploads
+`4e63cda8-70db-4d67-9928-63409df4dbda` was WAITING_FOR_REVIEW and set to release after approval;
+production was 1.15.0 (32). Earlier Canadian and US reviews were canceled. All 24 new US uploads
 are COMPLETE, with native dimensions, MD5s, display order and downloaded RGB pixels verified. These
-are fresh en-US captures, not reused en-CA images. Apple's separate primary-locale change still
-returns HTTP 409, so the app-wide primary/fallback remains en-CA even though en-US is submitted.
+are fresh en-US captures, not reused en-CA images. At that checkpoint, Apple's primary-locale
+change returned HTTP 409 and the app-wide primary/fallback remained en-CA despite the US submission.
 
 The maintainer reports working TestFlight testing and requested no further local device testing or
 participant requests for this submission. The requested screenshot refresh used synthetic simulator
@@ -148,6 +154,13 @@ saved separately for maintainer review. macOS distribution is separate. See
 ## App Store Connect platform mapping
 
 The iOS platform covers this universal iPhone/iPad app (`TARGETED_DEVICE_FAMILY=1,2`); no separate iPadOS platform is added. The Watch companion belongs to the same iOS app record and must actually be embedded in an uploaded build before it can be installed. It is excluded from the current beta pending #181 acceptance. macOS requires its own compatible archive and distribution; the current native Mac app is distributed as a signed/notarized DMG, and Mac publication remains paused. Adding a platform does not convert a DMG or include an unembedded Watch target. See [Apple’s platform guide](https://developer.apple.com/help/app-store-connect/create-an-app-record/add-platforms/).
+
+## Full summary menu icon (#319, candidate)
+
+The More menu uses the existing Summary symbol beside **Full summary**, matching the Summary
+workspace. The action still opens the same sheet; Done returns to the conversation without starting
+recording. `IOS-008` binds the native rendered-menu regression, with the original zero-pixel failure
+retained separately from subsequent validation. Merge and TestFlight publication remain pending.
 
 ## iOS 1.18.1 (36) — published TestFlight beta
 
