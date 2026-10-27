@@ -384,7 +384,7 @@
       "name": "Presentation dismissal does not act as Stop",
       "given": "Watch microphone capture has started and the recording screen is presented",
       "when": "the system dismisses the presentation while capture is active and the user later explicitly stops",
-      "then": "capture stays running with no finalized audio or end event at presentation dismissal; explicit Stop finalizes readable audio once and returns to idle",
+      "then": "capture stays running with no finalized audio or end event at presentation dismissal; explicit Stop finalizes readable audio once and returns to idle; tapping the actual system close control leaves Recording and a hittable Stop visible while elapsed time advances",
       "covers": [
         "Watch/WatchRootView.swift",
         "Watch/WatchRecordingView.swift"
