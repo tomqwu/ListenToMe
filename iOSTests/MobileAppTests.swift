@@ -127,7 +127,10 @@ final class MobileAppTests: XCTestCase {
         let app = XCUIApplication()
         app.launchPastReleaseNotes()
         app.buttons["Notes"].tap()
-        app.buttons["Take photo"].tap()
+        let camera = app.buttons["Take photo"]
+        for _ in 0..<6 where !camera.isHittable { app.swipeUp() }
+        XCTAssertTrue(camera.isHittable, "Attachment tools remain reachable beneath conversation options")
+        camera.tap()
         let explanation = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Camera capture requires")).firstMatch
         for _ in 0..<4 where !explanation.isHittable { app.swipeUp() }
         XCTAssertTrue(explanation.exists)
