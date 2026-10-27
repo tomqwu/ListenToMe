@@ -4,6 +4,12 @@ This is the release runbook for ListenToMe on iPhone/iPad. Follow it when an iOS
 due — not after every merged fix. Merging a PR, building an archive, or exporting an IPA does **not**
 publish the app; equally, a merged iOS change does not by itself call for an upload.
 
+For the separate official production review, use the canonical
+[App Store submission checklist](../AGENTS.md#official-app-store-review-and-public-release).
+It requires explicit version/platform authorization, production acceptance, en-US readback, fresh
+processed screenshots including Duo and embedded Watch, and an actual Apple review receipt.
+TestFlight availability does not prove submission, approval or public release.
+
 **Cadence.** Publish when a batch of merged iOS work is complete, or when a single user-visible fix
 warrants its own build. **At most one TestFlight build per day for trains an agent starts on its own
 initiative**, never one per merged pull request. A train the maintainer calls ("publish", "release

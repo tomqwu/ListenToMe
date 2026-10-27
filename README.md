@@ -260,6 +260,30 @@ brew install xcodegen
 make run
 ```
 
+## TestFlight and official App Store review
+
+Maintainers and agents follow [AGENTS.md](AGENTS.md#release-trains-when-to-publish) and
+[CLAUDE.md](CLAUDE.md#testflight-and-official-app-store-review). Changes merge with validation and
+the required CI checks; publication is a separate, batched release train.
+
+- **TestFlight:** use the [repository skill](.agents/skills/listentome-testflight/SKILL.md) and
+  [iOS release runbook](docs/IOS-RELEASING.md). Complete the accepted upload, processing and existing
+  tester-group verification, retain source/artifact receipts and report physical acceptance still
+  pending. A beta upload does not require a connected phone or an unlocked Mac for the CLI/API route.
+- **Official App Store review:** follow the
+  [production submission checklist](AGENTS.md#official-app-store-review-and-public-release) when
+  explicitly authorized. Complete production acceptance, **English (US), `en-US`**, metadata and
+  localized-name readback, full release notes, privacy/reviewer details and fresh screenshot uploads.
+  Include applicable iPhone/iPad sizes, iPhone Duo, iPad wide layouts and the embedded Watch companion;
+  handle Mac as a separate authorized platform. Verify Apple's image processing/order and downloaded
+  assets before submitting, preserve the intended release mode and retain the review receipt.
+
+The agent completes an authorized upload/submission using existing configured credentials; the
+maintainer handles OS authentication when required. Report beta availability, review submission,
+Apple approval and actual public release separately. A saved draft, local screenshots or a notarized
+[Mac DMG](docs/RELEASING.md) does not establish an App Store submission. Updating these instructions
+does not itself publish or submit a build.
+
 ## Build & run
 
 ```bash

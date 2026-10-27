@@ -186,6 +186,50 @@ iPhone is required for an authorized TestFlight beta upload. Do not call simulat
 physical-device pass or publish an unvalidated build as production. A successful archive/export is
 not a successful upload.
 
+## Official App Store review and public release
+
+TestFlight distribution, official App Store review submission, Apple approval and public availability
+are separate steps. The release-train authorization above covers TestFlight; it does not grant
+standing production submission or public-release authority. When the maintainer explicitly requests
+an official App Store submission, carry that authorized submission through Apple acceptance and
+status readback without asking them to upload or click Submit manually. Reuse authorization already
+given for that version and platform; OS authentication still belongs to the maintainer. A request to
+document this workflow alone does not call a release or submit an app.
+
+Before submitting an authorized production version:
+
+1. Recheck the live app, platform, version, selected processed build and exact merged source. Require
+   green CI, local validation and the affected installed-app/physical-device acceptance; the
+   TestFlight physical-device exception does not waive production acceptance. Preserve actual
+   maintainer-reported acceptance for that build without repeatedly requesting the same test.
+2. Use **English (US), `en-US`**, and preserve the existing US localized name unless explicitly
+   changed. Prepare complete What's New from the current public production baseline, plus accurate
+   description, privacy/data-handling answers, review notes, contact details and any required access.
+   Read back the actual locale, localized name and selected build from Apple; saved repo copy alone
+   is not evidence that Apple has it.
+3. Capture and inspect fresh candidate screenshots for all supported device categories and upload
+   the current set to every applicable size and localization slot. Include iPhone Duo/landscape,
+   iPad wide layouts and Watch when embedded, using the screenshot checklist below and in
+   [the iOS runbook](docs/IOS-RELEASING.md#screenshot-capture-and-app-store-handoff-255).
+   Verify asset processing, order and downloaded images; resolve stale or missing images before
+   submission. A TestFlight upload does not update the public listing.
+4. Verify the intended release mode, preserving its existing setting unless the maintainer directs
+   otherwise. Submit the authorized version for review, then retain sanitized submission/version/
+   build IDs, source, locale, screenshot manifest, timestamp and Apple's readback state. A saved
+   draft or prepared submission is not a submitted review.
+5. Report **submitted for review**, **approved**, **pending manual release** and **publicly available**
+   only when each state is actually observed. Submission acceptance does not prove approval or
+   public release; verify the public listing separately before claiming availability.
+
+iPhone and iPad share the iOS app submission; the embedded Watch companion belongs to that build
+and needs its applicable screenshots and acceptance. A macOS App Store submission is a separate
+platform/version/build with its own validation, metadata, screenshots and review receipt; neither
+an iOS submission nor a notarized GitHub DMG submits the Mac app to Apple. Scope the work to the
+platforms the maintainer authorized and report each platform independently. Follow
+[the iOS runbook](docs/IOS-RELEASING.md) for upload/metadata/media procedures and
+[the Mac runbook](docs/RELEASING.md) for the separate DMG path. Name a genuine missing entitlement,
+credential, required acceptance or Apple rejection precisely and preserve the prepared result.
+
 ## Release screenshots
 
 During UI testing and every release train, capture fresh screenshots from the candidate source for
