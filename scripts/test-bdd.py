@@ -89,6 +89,34 @@ class BDDTests(unittest.TestCase):
         with self.assertRaises(bdd.ContractError):
             bdd.require_executed("testOther (__main__.OtherTests.testOther) ... ok\nRan 1 test in 0.1s\nOK", "tooling", selectors)
 
+    def test_native_pass_after_framework_diagnostic_is_observed(self):
+        # Given stderr joined a real XCTest pass, then every native adapter sees that exact event.
+        prefix = ('2026-10-27 02:07:24.592178-0400 xctest[80230:123139347] [Application] '
+                  'Error registering app with intents framework: Error Domain=NSCocoaErrorDomain '
+                  'Code=4097 "connection to service named com.apple.linkd.autoShortcut" ')
+        for suite in ("core", "mac-unit", "ios-unit", "ios-ui", "watch-unit", "watch-ui"):
+            for record in ("Test Case '-[Module.ExampleTests testKeepsData]' passed (0.000 seconds).",
+                           "Test Case 'Module.ExampleTests.testKeepsData' passed (0.001 seconds)."):
+                with self.subTest(suite=suite, record=record):
+                    bdd.require_executed(prefix + record, suite, ["ExampleTests/testKeepsData"])
+
+    def test_diagnostic_mentions_cannot_supply_a_different_native_selector(self):
+        # Given a mention or unsuccessful result, only a complete exact XCTest pass is evidence.
+        selector = ["ExampleTests/testKeepsData"]
+        outputs = (
+            "Diagnostic: Test Case '-[Module.ExampleTests testKeepsData]' passed (0.001 seconds).",
+            "Test Case '-[Module.OtherTests testKeepsData]' passed (0.001 seconds). ExampleTests",
+            "Test Case '-[Module.ExampleTests testOther]' passed (0.001 seconds). testKeepsData",
+            "Test Case '-[Module.ExampleTests testKeepsData]' skipped (0.001 seconds).",
+            "Test Case '-[Module.ExampleTests testKeepsData]' failed (0.001 seconds).",
+            "Test Case '-[Module.ExampleTests testKeepsData]' passed",
+            "2026-10-27 02:07:24.592178-0400 xctest[1:2] [Application] ExampleTests "
+            "Test Case '-[Module.OtherTests testKeepsData]' passed (0.001 seconds).",
+        )
+        for output in outputs:
+            with self.subTest(output=output), self.assertRaises(bdd.ContractError):
+                bdd.require_executed(output, "mac-unit", selector)
+
     def test_python_versions_report_both_supported_verbose_selector_formats(self):
         selector = ["ExampleTests/testKeepsData"]
         for output in ("testKeepsData (__main__.ExampleTests) ... ok",

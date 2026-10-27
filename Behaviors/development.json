@@ -124,6 +124,29 @@
           "test": "BDDTests/test_generated_python_cache_does_not_dirty_candidate_but_source_changes_do"
         }
       ]
+    },
+    {
+      "id": "DEV-008",
+      "name": "Recognize exact native passes joined to framework diagnostics",
+      "given": "a native XCTest pass record is joined to a timestamped framework diagnostic while other output may only mention a selector",
+      "when": "the BDD runner verifies the bound native tests",
+      "then": "the complete exact passing test record is recognized for every native adapter, while mentions, other selectors, skips, failures and incomplete records do not count",
+      "covers": [
+        "scripts/bdd.py",
+        "scripts/test-bdd.py"
+      ],
+      "bindings": [
+        {
+          "suite": "tooling",
+          "file": "scripts/test-bdd.py",
+          "test": "BDDTests/test_native_pass_after_framework_diagnostic_is_observed"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-bdd.py",
+          "test": "BDDTests/test_diagnostic_mentions_cannot_supply_a_different_native_selector"
+        }
+      ]
     }
   ]
 }

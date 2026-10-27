@@ -277,12 +277,30 @@ def require_executed(output, suite, selectors):
             if not re.search(pattern, output, re.M):
                 raise ContractError(f"No observed passing execution for {selector}")
         return
-    passed = [line for line in output.splitlines() if line.startswith("Test Case ") and " passed " in line]
+    # macOS can join a framework stderr diagnostic and an XCTest stdout event on one line.
+    # Parse only the complete pass record; diagnostic mentions cannot supply its selector.
+    record = re.compile(
+        r"Test Case '(?:-\[(?:[\w]+\.)*(?P<objc_class>\w+) (?P<objc_method>\w+)\]"
+        r"|(?:[\w]+\.)*(?P<swift_class>\w+)\.(?P<swift_method>\w+)(?:\(\))?)'"
+        r" passed \([0-9]+(?:\.[0-9]+)? seconds\)\.\s*$")
+    diagnostic = re.compile(
+        r"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+"
+        r"(?:[+-][0-9]{4})? \S+\[[0-9]+:[0-9]+\] \[[^\]]+\] ")
+    passed = set()
+    for line in output.splitlines():
+        match = record.search(line)
+        if not match:
+            continue
+        prefix = line[:match.start()]
+        if prefix.strip() and not diagnostic.match(prefix):
+            continue
+        cls = match.group("objc_class") or match.group("swift_class")
+        method = match.group("objc_method") or match.group("swift_method")
+        passed.add(f"{cls}/{method}")
     for selector in selectors:
-        cls, method = selector.split("/")
-        if not any(re.search(r"\b" + re.escape(cls) + r"\b", line)
-                   and re.search(r"\b" + re.escape(method) + r"\b", line) for line in passed):
+        if selector not in passed:
             raise ContractError(f"No observed passing execution for {selector}")
+
 
 
 def run(root, scenarios, suite, destination):

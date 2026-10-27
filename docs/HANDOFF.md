@@ -8,6 +8,13 @@ Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags)
 
 Branch `codex/watch-beta-distribution` implements explicit Watch beta safeguards and default companion embedding, plus native cancellation/readiness, durable AAC handoff/recovery, end markers, Continue boundaries and pending Delete protection. Focused native Watch tests pass (33 tests, no failures/skips), including the corrected lifecycle review cases with isolated audio/WatchConnectivity adapters and real AAC filesystem operations; helper/generated-project checks pass. Reproduced failures and review-driven fixes are retained externally in `/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch181-beta/`. Independent review found view-owned preparation and pre-execution cancellation gaps after the initial helper/outbox pass. Their genuine native failures and fixes are retained; the final corrected 33-case Watch run passed and the reviewer cleared this delta for commit/full validation.
 
+The first aggregate attempt on `b1f35b4` failed in the native BDD log verifier after 529 iOS tests
+(517 passed, 12 optional skips) and all 39 Mac tests passed. A framework stderr message joined one
+XCTest pass line, so the old line-start parser missed the selector. `DEV-008` retains the reproducing
+failure and exact-selector fix; the original failed run, raw result bundles and no-capture outcome
+are preserved under `validation-attempt1/`. All three hosted checks passed on that earlier head;
+they must be rechecked on the corrected source. Watch/e2e were not reached by that aggregate run.
+
 The next source candidate is **1.19.0 (38)**. Its release UI reproduced old 1.18.2 metadata, then passed after the version/notes update. Full `make validate-local`, fresh iPhone/iPad and Watch images, final documentation review, required CI/merge, distribution signing/export verification and upload/tester receipt are still pending. No Watch beta is published yet. Current TestFlight remains 1.18.2 (37); public iOS remains 1.18.1. [Watch preparation and production gates](watch-beta.md) replaces earlier blanket beta blockers without claiming physical microphone, paired transfer, wrist-down or battery/storage acceptance. Mac draft #318 stays separate.
 
 ## Latest tester fix — October 27, 2026

@@ -18,6 +18,11 @@ does not show it again, and a fresh install does not see it at all; see
   executable native-test adapter, local/CI gates and PR evidence template. This changes development
   workflow only; it does not require a binary release or claim exhaustive legacy acceptance.
 
+- Recognize complete native XCTest pass records joined to timestamped framework diagnostics while
+  rejecting mentions, mismatched selectors and unsuccessful/incomplete records. This repairs a
+  local BDD-verification failure; it does not change an app feature or count a failed aggregate run
+  as passing.
+
 ## iOS (unreleased since 1.18.2 (37))
 
 ## iOS 1.19.0 (38) — candidate, not yet published

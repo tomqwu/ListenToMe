@@ -126,6 +126,16 @@ iPhone/iPad with a synthetic phrase played only after native Listening confirmat
 harness repair, not an invented product-regression red. Retain the earlier failures and distinguish
 Play/Pause-control acceptance from audible playback quality, and basic capture from speaker accuracy.
 
+## Native log evidence
+
+`DEV-008` covers a real aggregate-validation failure: macOS joined a timestamped framework diagnostic
+to a complete XCTest pass record. The native result bundle reported all 39 Mac tests passing, but
+the line-start-only verifier missed one bound selector and stopped validation before Watch/e2e.
+The verifier now extracts the exact class/method from a complete passing XCTest event, allowing
+that framework prefix without accepting diagnostic mentions, other selectors, skipped/failed tests
+or incomplete records. The original run remains failed; new offline regression cases and the saved
+native log verify the parser fix before the full candidate validation is repeated.
+
 ## Commands and enforcement
 
 ```sh
