@@ -51,8 +51,25 @@ final class WatchRecorder {
         let freeBytes: Int64?
     }
 
+    struct AudioSession {
+        let activate: () throws -> Void
+        let deactivate: () -> Void
+
+        static var live: Self {
+            Self(activate: {
+                let session = AVAudioSession.sharedInstance()
+                try session.setCategory(.record, mode: .default)
+                try session.setActive(true)
+            }, deactivate: {
+                try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+            })
+        }
+    }
+
     @ObservationIgnored private let capabilitySnapshot: () -> CapabilitySnapshot
     @ObservationIgnored private let requestPermission: () async throws -> Void
+    @ObservationIgnored private let audioSession: AudioSession
+    @ObservationIgnored private let recordingsDirectory: URL
 
     func refreshAvailability() {
         let current = capabilitySnapshot()
@@ -78,6 +95,7 @@ final class WatchRecorder {
     @ObservationIgnored private var nextIndex = 0
     @ObservationIgnored private var limitTask: Task<Void, Never>?
     @ObservationIgnored private var sessionObservers: [any NSObjectProtocol] = []
+    @ObservationIgnored private var preparationGeneration: UInt64 = 0
 
     /// Chunks being written. Anything still here at launch was never finished (see `WatchOutbox`).
     static var recordingRoot: URL {
@@ -92,8 +110,12 @@ final class WatchRecorder {
 
     init(makeCapture: @escaping () -> any WatchChunkCapturing = { WatchEngineCapture() },
          capabilitySnapshot: (() -> CapabilitySnapshot)? = nil,
-         requestPermission: (() async throws -> Void)? = nil) {
+         requestPermission: (() async throws -> Void)? = nil,
+         audioSession: AudioSession = .live,
+         recordingsDirectory: URL = WatchRecorder.recordingRoot) {
         self.makeCapture = makeCapture
+        self.audioSession = audioSession
+        self.recordingsDirectory = recordingsDirectory
         self.capabilitySnapshot = capabilitySnapshot ?? {
             CapabilitySnapshot(microphoneDenied: AVAudioApplication.shared.recordPermission == .denied,
                                battery: Self.batteryLevel(), freeBytes: Self.freeBytes())
@@ -131,8 +153,11 @@ final class WatchRecorder {
         guard availability.canRun else { throw WatchRecorderError.blocked(availability.reason ?? "Recording unavailable") }
         // A new recording ends one left stopped after an interruption.
         if case .stopped = phase { stop() }
+        preparationGeneration &+= 1
+        let generation = preparationGeneration
         try checkStart(elapsed: nil)
         try await requestPermission()
+        try finishPreparation(generation)
         let id = UUID(), started = Date()
         recordingID = id
         startedAt = started
@@ -149,13 +174,17 @@ final class WatchRecorder {
         guard nextIndex <= WatchChunkMetadata.maximumIndex else {
             throw WatchRecorderError.blocked("This recording has too many parts. Start a new recording.")
         }
+        preparationGeneration &+= 1
+        let generation = preparationGeneration
         try checkStart(elapsed: Date().timeIntervalSince(startedAt))
         try await requestPermission()
+        try finishPreparation(generation)
         try beginRun(firstIndex: nextIndex, startOffset: Date().timeIntervalSince(startedAt))
     }
 
     /// Stop while recording; Done after a stop. Either way the recording is over.
     func stop() {
+        preparationGeneration &+= 1
         if isRecording { endRun(unexpected: false) }
         phase = .idle
         removeEmptyFolder()
@@ -165,13 +194,21 @@ final class WatchRecorder {
 
     // MARK: Runs
 
+    /// Permission can return after Stop, cancellation or a readiness change. None may open audio.
+    private func finishPreparation(_ generation: UInt64) throws {
+        try Task.checkCancellation()
+        guard generation == preparationGeneration else { throw CancellationError() }
+        refreshAvailability()
+        guard availability.canRun else {
+            throw WatchRecorderError.blocked(availability.reason ?? "Recording unavailable")
+        }
+    }
+
     private func beginRun(firstIndex: Int, startOffset: TimeInterval) throws {
         guard let recordingID, let startedAt else { return }
-        let session = AVAudioSession.sharedInstance()
         do {
-            try session.setCategory(.record, mode: .default)
-            try session.setActive(true)
-            let folder = Self.recordingRoot.appendingPathComponent(recordingID.uuidString, isDirectory: true)
+            try audioSession.activate()
+            let folder = recordingsDirectory.appendingPathComponent(recordingID.uuidString, isDirectory: true)
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true,
                                                     attributes: Self.protection)
             let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "unknown"
@@ -187,7 +224,7 @@ final class WatchRecorder {
             })
             self.capture = capture
         } catch {
-            try? session.setActive(false, options: .notifyOthersOnDeactivation)
+            audioSession.deactivate()
             throw WatchRecorderError.unavailable("Could not start recording: \(error.localizedDescription)")
         }
         phase = .recording(startedAt: startedAt)
@@ -212,7 +249,7 @@ final class WatchRecorder {
                                                     lastIndex: lastIndex, unexpected: unexpected))
             }
         }
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        audioSession.deactivate()
     }
 
     /// A stop the user did not ask for: a limit, a failed write, or the audio system. The reason is on
@@ -233,7 +270,7 @@ final class WatchRecorder {
 
     private func removeEmptyFolder() {
         guard let recordingID else { return }
-        let folder = Self.recordingRoot.appendingPathComponent(recordingID.uuidString, isDirectory: true)
+        let folder = recordingsDirectory.appendingPathComponent(recordingID.uuidString, isDirectory: true)
         if (try? FileManager.default.contentsOfDirectory(atPath: folder.path))?.isEmpty == true {
             try? FileManager.default.removeItem(at: folder)
         }

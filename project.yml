@@ -1,11 +1,6 @@
 name: ListenToMe
-# The Apple Watch app is embedded in ListenToMeIOS only when the project is generated with
-# WATCH_EMBED=YES (issue #181, decision 4), so an unrelated iOS release cannot ship it early.
-# scripts/ios-testflight.sh refuses an archive that contains it. Task 21 of
-# docs/superpowers/plans/2026-10-22-apple-watch-recording.md makes the embed permanent.
-include:
-  - path: watch-embed.yml
-    enable: ${WATCH_EMBED}
+# Every iOS build includes its Watch companion. TestFlight upload requires the explicit
+# --include-watch-beta mode until physical production acceptance is complete (#181).
 options:
   bundleIdPrefix: com.tomwu
   deploymentTarget:
@@ -70,6 +65,8 @@ targets:
         buildPhase: resources
     dependencies:
       - target: ListenToMeShare
+        embed: true
+      - target: ListenToMeWatch
         embed: true
       - package: ListenToMeCore
         product: ListenToMeCore

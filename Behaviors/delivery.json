@@ -45,10 +45,10 @@
     },
     {
       "id": "RELEASE-003",
-      "name": "Keep unreleased Watch out of the beta",
-      "given": "the Watch physical-device release gate is still open",
-      "when": "a candidate embeds a Watch app",
-      "then": "the helper refuses distribution",
+      "name": "Reject unintended Watch distribution",
+      "given": "a phone-only beta upload is selected without the explicit Watch beta option",
+      "when": "its archive unexpectedly embeds a Watch app",
+      "then": "the helper refuses before upload and explains the explicit Watch beta option",
       "covers": [
         "Watch/*",
         "watch-embed.yml",
@@ -59,7 +59,7 @@
         {
           "suite": "tooling",
           "file": "scripts/test-ios-testflight.py",
-          "test": "UploadTests/test_embedded_watch_app_is_rejected_until_watch_release"
+          "test": "UploadTests/test_embedded_watch_app_requires_explicit_watch_beta_mode"
         }
       ]
     },
@@ -102,6 +102,77 @@
           "suite": "ios-ui",
           "file": "iOSTests/MobileCloudAISettingsUITests.swift",
           "test": "MobileCloudAISettingsUITests/testCloudServiceIsExplicitDisclosedAndPicksNoModel"
+        }
+      ]
+    },
+    {
+      "id": "RELEASE-006",
+      "name": "Validate an explicitly selected Watch beta",
+      "given": "a Watch-enabled beta is explicitly selected with a matching device-platform companion",
+      "when": "the helper checks the candidate in dry-run or upload mode",
+      "then": "dry-run never uploads, upload acceptance records requested and observed Watch inclusion with physical acceptance unverified, and missing or malformed companions and invalid options are refused before upload",
+      "covers": [
+        "scripts/ios-testflight.sh",
+        "scripts/test-ios-testflight.py",
+        "Makefile",
+        "project.yml",
+        "watch-embed.yml"
+      ],
+      "bindings": [
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_explicit_watch_beta_records_pending_physical_acceptance"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_watch_beta_dry_run_checks_but_never_uploads"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_watch_beta_requires_a_watch_bundle"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_watch_beta_rejects_malformed_companion_before_upload"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_watch_beta_rejects_unexpected_extra_bundle"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_unknown_and_duplicate_flags_never_upload"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_make_forwards_watch_beta_and_dry_run_flags"
+        }
+      ]
+    },
+    {
+      "id": "RELEASE-007",
+      "name": "Keep Watch in the default companion installation configuration",
+      "given": "the repository is generated without any Watch opt-in environment variable or with the old switch disabled",
+      "when": "a fresh iPhone project is generated",
+      "then": "the app depends on the Watch target and copies its product into the Watch installation directory, keeping future app builds from silently dropping the companion",
+      "covers": [
+        "project.yml",
+        "watch-embed.yml",
+        "Makefile",
+        ".github/workflows/ci.yml"
+      ],
+      "bindings": [
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_default_generated_project_embeds_the_watch_companion"
         }
       ]
     }

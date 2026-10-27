@@ -1,8 +1,7 @@
 import os
 import SwiftUI
 
-/// The Apple Watch companion (issue #181). The iOS app embeds it only when the project is generated
-/// with `WATCH_EMBED=YES`, until the release train that ships watch recording.
+/// The Apple Watch companion (issue #181), embedded by the default iOS project.
 @main
 struct ListenToMeWatchApp: App {
     private static let log = Logger(subsystem: "com.tomwu.ListenToMe.ios.watchkitapp", category: "App")
@@ -12,8 +11,6 @@ struct ListenToMeWatchApp: App {
 
     init() {
         let link = WatchLinkClient()
-        // Recovers chunks a killed launch left in Recording/ before anything can record.
-        let outbox = WatchOutbox()
         let recorder: WatchRecorder
         #if DEBUG && targetEnvironment(simulator)
         if ProcessInfo.processInfo.arguments.contains("--compatibility-denied-fixture") {
@@ -26,6 +23,8 @@ struct ListenToMeWatchApp: App {
         #else
         recorder = WatchRecorder()
         #endif
+        // Construction does not record. Recovery still completes before the UI can start capture.
+        let outbox = WatchOutbox(recordingIsActive: { [weak recorder] in recorder?.isRecording == true })
         recorder.onChunkFinalized = { [weak outbox] url, metadata in
             do { try outbox?.add(url, metadata) } catch {
                 // Left in Recording/: the next launch recovers and sends it.

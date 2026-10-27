@@ -83,17 +83,146 @@ class UploadTests(unittest.TestCase):
         self.assertNotEqual(self.run_upload().returncode, 0)
         self.assertFalse(self.evidence.exists())
 
-    def test_embedded_watch_app_is_rejected_until_watch_release(self):
+    def watch_fixture(self):
         watch = self.root / 'fixture.xcarchive/Products/Applications/ListenToMeIOS.app/Watch/ListenToMeWatch.app'
         watch.mkdir(parents=True)
         (watch / 'Info.plist').write_bytes(plistlib.dumps({
             'CFBundleIdentifier': 'com.tomwu.ListenToMe.ios.watchkitapp',
             'CFBundleShortVersionString': '1.0.0', 'CFBundleVersion': '1',
-            'WKCompanionAppBundleIdentifier': 'com.tomwu.ListenToMe.ios'}))
+            'WKCompanionAppBundleIdentifier': 'com.tomwu.ListenToMe.ios',
+            'WKApplication': True, 'WKRunsIndependentlyOfCompanionApp': False,
+            'CFBundleSupportedPlatforms': ['WatchOS'], 'DTPlatformName': 'watchos',
+            'MinimumOSVersion': '26.0', 'UIDeviceFamily': [4],
+            'CFBundleExecutable': 'ListenToMeWatch',
+            'CFBundleIcons': {'CFBundlePrimaryIcon': {'CFBundleIconName': 'AppIcon'}}}))
+        (watch / 'ListenToMeWatch').write_bytes(b'fixture executable; signing is a separate candidate gate')
+        (watch / 'Assets.car').write_bytes(b'fixture icons')
+        return watch
+
+    def test_embedded_watch_app_requires_explicit_watch_beta_mode(self):
+        self.watch_fixture()
         result = self.run_upload(flags=['--dry-run'])
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn('Watch app', result.stderr + result.stdout)
+        self.assertIn('--include-watch-beta', result.stderr + result.stdout)
         self.assertFalse(self.evidence.exists())
+
+    def test_explicit_watch_beta_records_pending_physical_acceptance(self):
+        self.watch_fixture()
+        result = self.run_upload(flags=['--include-watch-beta'])
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        receipt = json.loads(self.marker.read_text())
+        self.assertEqual(receipt['status'], 'upload_accepted')
+        self.assertTrue(receipt['watch_beta_requested'])
+        self.assertTrue(receipt['watch_embedded'])
+        self.assertEqual(receipt['physical_device_acceptance'], 'unverified')
+        self.assertEqual(receipt['tester_availability'], 'unverified')
+        self.assertEqual(self.run_upload(flags=['--include-watch-beta']).returncode, 3)
+
+    def test_watch_beta_dry_run_checks_but_never_uploads(self):
+        self.watch_fixture()
+        for flags in [('--include-watch-beta', '--dry-run'), ('--dry-run', '--include-watch-beta')]:
+            result = self.run_upload(flags=flags)
+            self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+            self.assertIn('Watch-enabled beta', result.stdout)
+            self.assertIn('physical-device acceptance unverified', result.stdout)
+            self.assertFalse(self.arguments.exists())
+            self.assertFalse(self.evidence.exists())
+
+    def test_watch_beta_requires_a_watch_bundle(self):
+        result = self.run_upload(flags=['--include-watch-beta'])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('Missing Watch app', result.stderr + result.stdout)
+        self.assertFalse(self.arguments.exists())
+
+    def test_watch_beta_rejects_malformed_companion_before_upload(self):
+        watch = self.watch_fixture()
+        original = plistlib.loads((watch / 'Info.plist').read_bytes())
+        for field, bad in [('CFBundleIdentifier', 'wrong.watch'),
+                           ('WKCompanionAppBundleIdentifier', 'wrong.phone'),
+                           ('WKApplication', False),
+                           ('WKRunsIndependentlyOfCompanionApp', True),
+                           ('CFBundleShortVersionString', '2.0.0'), ('CFBundleVersion', '2'),
+                           ('CFBundleSupportedPlatforms', ['WatchSimulator']),
+                           ('DTPlatformName', 'watchsimulator'), ('MinimumOSVersion', '25.0'),
+                           ('MinimumOSVersion', '27.0'), ('UIDeviceFamily', [1]),
+                           ('CFBundleExecutable', '../escape'), ('CFBundleIcons', {})]:
+            with self.subTest(field=field, value=bad):
+                (watch / 'Info.plist').write_bytes(plistlib.dumps(dict(original, **{field: bad})))
+                result = self.run_upload(flags=['--include-watch-beta'])
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn('Watch', result.stderr + result.stdout)
+                self.assertFalse(self.arguments.exists())
+                self.assertFalse(self.marker.exists())
+        (watch / 'Info.plist').write_bytes(plistlib.dumps(original))
+        for required in ['ListenToMeWatch', 'Assets.car']:
+            with self.subTest(missing=required):
+                file = watch / required
+                file.unlink()
+                self.assertNotEqual(self.run_upload(flags=['--include-watch-beta']).returncode, 0)
+                self.assertFalse(self.arguments.exists())
+                file.write_bytes(b'fixture')
+
+    def test_watch_beta_rejects_unexpected_extra_bundle(self):
+        watch = self.watch_fixture()
+        extra = watch.parent / 'Unexpected.app'
+        extra.mkdir()
+        result = self.run_upload(flags=['--include-watch-beta'])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('Unexpected Watch', result.stderr + result.stdout)
+        self.assertFalse(self.arguments.exists())
+
+    def test_unknown_and_duplicate_flags_never_upload(self):
+        for flags in [('--unknown',), ('--dry-run', '--dry-run'),
+                      ('--include-watch-beta', '--include-watch-beta')]:
+            with self.subTest(flags=flags):
+                self.assertNotEqual(self.run_upload(flags=flags).returncode, 0)
+                self.assertFalse(self.arguments.exists())
+                self.assertFalse(self.marker.exists())
+
+    def test_make_forwards_watch_beta_and_dry_run_flags(self):
+        self.watch_fixture()
+        source_makefile = SCRIPT.parent.parent / 'Makefile'
+        (self.root / 'Makefile').write_text(source_makefile.read_text())
+        result = subprocess.run(['make', 'ios-testflight', 'IOS_ARCHIVE=fixture.xcarchive',
+                                 'IOS_RELEASE_SOURCE=HEAD',
+                                 'IOS_RELEASE_FLAGS=--include-watch-beta --dry-run'],
+                                cwd=self.root, capture_output=True, text=True,
+                                env=dict(os.environ, LISTENTOME_CONFIG_DIR=str(self.config.parent)))
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        self.assertIn('Watch-enabled beta', result.stdout)
+        self.assertFalse(self.marker.exists())
+
+    def test_default_generated_project_embeds_the_watch_companion(self):
+        # Inspect a fresh generated project, with both old opt-in values removed/disabled.
+        # The actual built and exported app is also inspected in the release acceptance run.
+        repository = SCRIPT.parent.parent
+        for legacy in [None, 'NO']:
+            with self.subTest(legacy_embed=legacy):
+                env = dict(os.environ)
+                env.pop('WATCH_EMBED', None)
+                if legacy is not None:
+                    env['WATCH_EMBED'] = legacy
+                destination = self.root / ('generated-' + str(legacy))
+                destination.mkdir()
+                result = subprocess.run(['xcodegen', 'generate', '--quiet', '--spec',
+                                         str(repository / 'project.yml'), '--project', str(destination),
+                                         '--project-root', str(repository)], env=env,
+                                        capture_output=True, text=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                project = json.loads(subprocess.check_output([
+                    'plutil', '-convert', 'json', '-o', '-',
+                    str(destination / 'ListenToMe.xcodeproj/project.pbxproj')]))
+                objects = project['objects']
+                phone = next(v for v in objects.values()
+                             if v.get('isa') == 'PBXNativeTarget' and v['name'] == 'ListenToMeIOS')
+                watch_id, watch = next((k, v) for k, v in objects.items()
+                                      if v.get('isa') == 'PBXNativeTarget' and v['name'] == 'ListenToMeWatch')
+                self.assertIn(watch_id, [objects[k].get('target') for k in phone['dependencies']])
+                copy_phases = [objects[k] for k in phone['buildPhases']
+                               if objects[k]['isa'] == 'PBXCopyFilesBuildPhase']
+                copies = [(phase, objects[build]['fileRef']) for phase in copy_phases for build in phase['files']]
+                self.assertTrue(any(product == watch['productReference'] and 'Watch' in phase.get('dstPath', '')
+                                    for phase, product in copies), 'Default app must copy the Watch companion')
 
     def credentials(self):
         key_dir = tempfile.TemporaryDirectory(prefix='upload key ')
