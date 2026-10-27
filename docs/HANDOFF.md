@@ -4,7 +4,23 @@ A snapshot for an agent picking up ListenToMe cold. [AGENTS.md](../AGENTS.md) an
 [CLAUDE.md](../CLAUDE.md) stay the rules; this note is only the state of things on the date above.
 Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags) before acting on it.
 
-## Current US screenshot refresh and App Review — October 26, 21:13 UTC
+## Current publication checkpoint — October 27, 01:42 UTC
+
+Apple now reports iOS **1.18.1 (36) READY_FOR_SALE** and review
+`4e63cda8-70db-4d67-9928-63409df4dbda` **COMPLETE**. After approval, the primary-language
+PATCH succeeded; two subsequent app readbacks confirmed **en-US**. The first immediate GET
+still returned en-CA, so use the later full/field-filtered verification receipts rather than that
+transient response. The US name remains **Listen To Me - Real Time AI**, and both beta records
+are en-US. No binary was re-uploaded. Evidence: external
+`listentome-appstore-publication/locale-mac-correction/post-approval-primary-*.json` and
+`latest-apple-status.json` (combined status reconfirmed at 01:43 UTC).
+
+Mac **1.5.0** remains **PREPARE_FOR_SUBMISSION**, with no selected build or submitted review.
+Native automation still reports the Mac locked. PR #318, installed sandbox/OTHERS acceptance,
+fresh Mac screenshots and the eventual submission remain pending. Earlier locale/review snapshots
+below are historical; their en-CA and WAITING_FOR_REVIEW states are superseded here.
+
+## Earlier US screenshot refresh and App Review — October 26, 21:13 UTC
 
 **Later Watch preview checkpoint, October 27, 00:38 UTC:** the matching watchOS 27.0 (24R362)
 runtime is now installed. Series 12 (42/46 mm) and Ultra 4 (49 mm) each passed three native unit

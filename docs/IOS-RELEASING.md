@@ -1,6 +1,16 @@
 # Publish an iOS build to TestFlight
 
-## Locale correction — October 26, 22:41 UTC
+## Current publication checkpoint — October 27, 01:42 UTC
+
+iOS **1.18.1 (36)** now reads **READY_FOR_SALE**, and its US review is **COMPLETE**. Following
+approval, Apple's primary-locale PATCH succeeded. Two subsequent GETs confirmed **en-US**;
+the immediate GET had briefly retained en-CA. The US listing and both beta records are en-US.
+No replacement binary was uploaded. Preserve the `post-approval-primary-*.json` receipts in the
+external `listentome-appstore-publication/locale-mac-correction/` evidence folder.
+Mac 1.5.0 still has no selected build or submitted review; its installed acceptance and fresh
+screenshots remain pending. The older locale/review states below are historical.
+
+## Earlier locale correction — October 26, 22:41 UTC
 
 The App Store en-US localization and its 24 processed screenshots did not change TestFlight's
 separate metadata. A live audit found build 36 had only en-CA beta records. The en-US What to Test
@@ -9,9 +19,9 @@ record `bdb57918-4408-4912-8457-142e9271cccd` and beta description record
 Other locales remain unchanged; no binary was uploaded. Evidence:
 `listentome-appstore-publication/locale-mac-correction/beta-en-US-corrected.json`.
 
-App-wide primary language still reads en-CA. Apple's [change-primary-language requirements](https://developer.apple.com/help/app-store-connect/manage-app-information/localize-app-information)
+At that checkpoint, app-wide primary language still read en-CA. Apple's [change-primary-language requirements](https://developer.apple.com/help/app-store-connect/manage-app-information/localize-app-information)
 require prior approval of the new localization and screenshots for all supported platforms, not
-just successful processing. The iOS en-US submission is waiting for review, and the Mac platform
+just successful processing. The iOS en-US submission was waiting for review, and the Mac platform
 still needs its own build, screenshots and acceptance. Do not withdraw a correct pending US iOS
 review merely to repeat a primary-locale PATCH before eligibility changes.
 

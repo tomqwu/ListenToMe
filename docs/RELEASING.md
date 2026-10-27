@@ -54,7 +54,10 @@ submission or production-ready acceptance is claimed.
 
 App-wide primary language is separate from localized copy. Apple's [primary-language rules](https://developer.apple.com/help/app-store-connect/manage-app-information/localize-app-information)
 require prior approval of the locale and screenshots for all supported platforms, including matching
-sizes. Uploading fresh US images or selecting en-US copy cannot alone change the current en-CA primary.
+sizes. Uploading fresh US images or selecting en-US copy alone does not establish a primary-language
+change. After iOS 1.18.1 was approved, the primary-language PATCH succeeded and subsequent full and
+field-filtered app readbacks confirmed **en-US** on October 27 at 01:42 UTC. Mac submission remains
+pending independently; the primary-language change is not Mac upload or acceptance evidence.
 
 > **Build and validate the distributable locally.** CI compiles the app on a `macos-26` runner.
 > Signing, notarization, GUI, permissions and real-audio acceptance still require a local Mac.
