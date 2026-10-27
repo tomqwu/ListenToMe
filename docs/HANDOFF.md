@@ -14,6 +14,13 @@ with verbose diagnostics disabled exited 65, then the fixed run exited 0. Full v
 CI, merge and TestFlight **1.18.2 (37)** remain pending. This tester-priority fix is separate from
 the existing Mac Store draft #318; no Mac acceptance is claimed.
 
+The first full validation attempt failed in the existing role-model Settings UI journey, then was
+explicitly stopped; its missing remaining native executions were correctly rejected by BDD. The
+retained video shows the presentation displaced during center-column scrolling. The isolated
+unchanged case subsequently passed, so this is not a deterministic product-regression claim. The
+helper now drags the form margin, preserves all model/persistence assertions, and explicitly checks
+that Settings stays open; its focused run passes. A fresh full validation is still required.
+
 Apple now reports public iOS **1.18.1 (36) READY_FOR_SALE**, review COMPLETE, and primary locale
 **en-US** after a successful post-approval PATCH and subsequent readbacks. Both beta records are
 en-US. Mac 1.5.0 still has no selected build or submitted review. Earlier states below are historical.

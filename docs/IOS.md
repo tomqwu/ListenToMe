@@ -129,15 +129,21 @@ The archive, upload, tagging and verification steps themselves are not repeated 
 [IOS-RELEASING.md](IOS-RELEASING.md) for iOS, [RELEASING.md](RELEASING.md) for macOS, and
 [AGENTS.md](../AGENTS.md) for the release workflow that governs both.
 
-## Public App Store submission — October 26, 2026
+## Public App Store approval and US primary — October 27, 2026
+
+Apple now reports **1.18.1 (36) READY_FOR_SALE** and its review **COMPLETE**. After approval, the
+primary-language PATCH succeeded; subsequent app readbacks confirmed **en-US**. The submission-time
+waiting/Canadian-primary states below are historical. Both beta localization records are also en-US.
+
+### Submission checkpoint — October 26, 21:13 UTC (historical)
 
 The **English (US)** listing **Listen To Me - Real Time AI**, **1.18.1 (36)**, was resubmitted with
 24 fresh US-region screenshots and accepted for App Review at **21:13:50 UTC**. Review
-`4e63cda8-70db-4d67-9928-63409df4dbda` is WAITING_FOR_REVIEW and set to release after approval;
-production remains 1.15.0 (32). Earlier Canadian and US reviews were canceled. All 24 new US uploads
+`4e63cda8-70db-4d67-9928-63409df4dbda` was WAITING_FOR_REVIEW and set to release after approval;
+production was 1.15.0 (32). Earlier Canadian and US reviews were canceled. All 24 new US uploads
 are COMPLETE, with native dimensions, MD5s, display order and downloaded RGB pixels verified. These
-are fresh en-US captures, not reused en-CA images. Apple's separate primary-locale change still
-returns HTTP 409, so the app-wide primary/fallback remains en-CA even though en-US is submitted.
+are fresh en-US captures, not reused en-CA images. At that checkpoint, Apple's primary-locale
+change returned HTTP 409 and the app-wide primary/fallback remained en-CA despite the US submission.
 
 The maintainer reports working TestFlight testing and requested no further local device testing or
 participant requests for this submission. The requested screenshot refresh used synthetic simulator

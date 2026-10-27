@@ -35,7 +35,9 @@ extension XCTestCase {
             let lower = exists ? 0.4 : 0.3
             let upper = exists ? 0.65 : 0.8
             let origin = container.coordinate(withNormalizedOffset: .zero)
-            let xOffset = bounds.midX - container.frame.minX
+            // Drag the form's inset margin, outside interactive rows and text fields. A center
+            // drag can be consumed by a field or pull the presentation instead of its content.
+            let xOffset = bounds.maxX - min(10, bounds.width * 0.025) - container.frame.minX
             let yOffset = bounds.minY - container.frame.minY
             let start = origin.withOffset(CGVector(dx: xOffset, dy: yOffset + bounds.height * (moveDown ? lower : upper)))
             let end = origin.withOffset(CGVector(dx: xOffset, dy: yOffset + bounds.height * (moveDown ? upper : lower)))
