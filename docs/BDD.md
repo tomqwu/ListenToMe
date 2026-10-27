@@ -150,7 +150,7 @@ Play/Pause-control acceptance from audible playback quality, and basic capture f
 ## Native log evidence
 
 `MACAUDIO-001` covers the actual native PCM-to-`AnalyzerInput` boundary exposed by #333, beyond the
-older scalar `BATCH-291` timeline tests. Seven methods exercise real conversion, separate raw/sample
+older scalar `BATCH-291` timeline tests. Nine methods exercise real conversion, separate raw/sample
 clocks, exact frame accounting, gaps after accumulated drift, invalid input and cancellation/queue
 ownership. See [the timing evidence](speech-input-timing.md); native buffer construction is not
 recognition quality or installed OTHERS acceptance.
