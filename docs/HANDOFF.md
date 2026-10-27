@@ -1,16 +1,32 @@
-# Handoff — 2026-10-26
+# Handoff — 2026-10-27
 
 A snapshot for an agent picking up ListenToMe cold. [AGENTS.md](../AGENTS.md) and
 [CLAUDE.md](../CLAUDE.md) stay the rules; this note is only the state of things on the date above.
 Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags) before acting on it.
 
-## Watch distribution recovery — October 27, 07:35 UTC
+## Latest Watch-enabled TestFlight — October 27, 08:43 UTC
+
+Apple accepted **1.19.0 (38)** at **2026-10-27T08:31:46.551678+00:00**, from `e43244f752712ac80e179e35c893e967aea38753`. Processing is **VALID**, internal state **IN_BETA_TESTING**, and the existing Dev group includes this build with two accepted testers. Primary locale, localized name, beta description and What to Test were read back in **en-US**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.0-build38).
+
+The exact uploaded IPA checksum matches ContentDelivery’s file checksum. Its phone, Share and Watch signatures/profiles, versions and debug flags passed verification; Apple’s processed nested entitlements independently confirm the Watch executable and distribution identity. The public buildBundles API lists one APP container and nests the Watch evidence inside it, rather than returning a separate WATCH_APP resource.
+
+App source/tag: `e43244f752712ac80e179e35c893e967aea38753`, `ios-v1.19.0-build38`. The manual-signing helper merged separately as `ea2c05febf858065efd611db32dc57d81d523d10` (#324, closes #323); its tree matches validated head `a6bb34c`. All three required checks passed on both exact merged sources. Full local validation passed twice: 122 app-candidate / 123 helper BDD scenarios, 1,239 Core tests (7 optional skips, 98.2493% coverage), iOS 529 total (517 passed, 12 optional skips), 39 Mac tests, 33 Watch tests and four real-server contracts, with no failures. The helper has 29 offline tests. The original archive was reused unchanged; no binary was rebuilt to fix signing.
+
+[Publication receipt](releases/ios-1.19.0-build38.json) and [43-image capture catalog](images/ios/release-1.19.0-en-US.json) preserve source/status/hash evidence. Four approved native [Watch previews](images/watch/1.19.0/README.md) are committed; compact/consent/recovery/offline images remain QA only. Use one accepted Watch size consistently for a future authorized listing. All originals and raw native results remain under the external Watch181 beta directory.
+
+Known working upload route: configured API key plus explicit `IOS_EXPORT_OPTIONS` using `~/.config/listentome/manual-testflight-export.plist` (private local copy of the accepted settings). All three Store profiles are manually managed and use the existing distribution certificate; credentials, keychain and OS permissions were not reset. [Runbook](IOS-RELEASING.md#local-manual-signing-when-automatic-export-cannot-select-profiles).
+
+Physical Watch installation, microphone capture, paired transfer, wrist-down and battery/storage acceptance remain unverified. This is an authorized beta, not a production-ready claim. Public iOS remains 1.18.1; no new public App Store submission or screenshot listing upload was performed by this train. Mac Store draft #318 stays separate.
+
+Completed test-session cleanup: no inactive owned `.dev` bundles remained to move; app-scoped Dev permissions reset successfully after confirming no active Dev session/build. Seven owned simulators were deleted and verified absent, with every other simulator ID preserved. Raw results, all original captures, captured runtime/source inputs and the exact uploaded IPA remain preserved; conversation data, settings and keys were retained.
+
+## Historical signing recovery — October 27, 07:35 UTC
 
 PR #322 merged at `e43244f752712ac80e179e35c893e967aea38753`, with all three required checks green on the exact merged source. The 1.19.0 (38) archive succeeded. Automatic export failed on the missing Watch Store profile and cloud-signing access; a mixed manual/Xcode-managed export also failed. Separate manually managed Store profiles for all three exact bundle IDs use the existing local Apple Distribution certificate; no certificate rotation, revocation or account/keychain/OS permission change occurred. Manual export of the same archive then succeeded, and all three bundle signatures/profiles, versions, debug flags, phone/Share App Group, Watch embedding and no-test-payload checks passed.
 
 Upload is still pending: the configured helper hardcoded automatic signing. Issue #323 and branch `codex/testflight-manual-signing` add a narrow validated local options input with BDD regression coverage, retaining the automatic default and existing upload safeguards. The archive source stays `e43244f`; later delivery-only helper source and checks are recorded separately. No Watch publication, Apple processing or tester availability is claimed yet. Evidence remains under the Watch181 beta directory and `dist/ios-1.19.0-build38-evidence/`.
 
-## Watch beta implementation in progress — October 27
+## Historical Watch implementation checkpoint — October 27
 
 Branch `codex/watch-beta-distribution` implements explicit Watch beta safeguards and default companion embedding, plus native cancellation/readiness, durable AAC handoff/recovery, end markers, Continue boundaries and pending Delete protection. Focused native Watch tests pass (33 tests, no failures/skips), including the corrected lifecycle review cases with isolated audio/WatchConnectivity adapters and real AAC filesystem operations; helper/generated-project checks pass. Reproduced failures and review-driven fixes are retained externally in `/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch181-beta/`. Independent review found view-owned preparation and pre-execution cancellation gaps after the initial helper/outbox pass. Their genuine native failures and fixes are retained; the final corrected 33-case Watch run passed and the reviewer cleared this delta for commit/full validation.
 
@@ -27,7 +43,7 @@ The next source candidate is **1.19.0 (38)**. Its release UI reproduced old 1.18
 
 Final documentation review, required CI/merge, distribution signing/export verification and upload/tester receipt remain pending. No Watch beta is published yet. Current TestFlight remains 1.18.2 (37); public iOS remains 1.18.1. [Watch preparation and production gates](watch-beta.md) records physical microphone, paired transfer, wrist-down and battery/storage acceptance as pending. Mac draft #318 stays separate.
 
-## Latest tester fix — October 27, 2026
+## Previous beta — 1.18.2 (37), October 27
 
 Apple accepted **1.18.2 (37)** at **2026-10-27T03:39:12.147449+00:00**, from `9494d024b9eee577b40695292aaf5e7dab9434eb`. Processing is **VALID**, internal state **IN_BETA_TESTING**, and both existing Dev testers have accepted group access. Primary locale, localized name, beta description and What to Test were read back in **en-US**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.2-build37).
 
@@ -440,9 +456,9 @@ The #127 full run at `0464e9d` exposed a shared iOS test synchronization race: t
 
 | Surface | Latest published | State of `main` |
 | --- | --- | --- |
-| iPhone/iPad (TestFlight) | **1.18.2 (37)**, published 2026-10-27 UTC, tag `ios-v1.18.2-build37` at `9494d02` | Summary-icon fix available to Dev; this published build excludes Watch. Physical accuracy/performance and original speaker audio remain pending. |
+| iPhone/iPad (TestFlight) | **1.19.0 (38)**, published 2026-10-27 UTC, tag `ios-v1.19.0-build38` at `e43244f` | Watch-enabled beta and Summary-icon fix available to Dev in en-US. Physical acceptance remains pending. |
 | macOS | **1.4.4 (14)**, 2026-09-14, tag `v1.4.4` | **Releases paused on the maintainer's decision.** About 50 commits of Mac work are merged but unreleased; see [CHANGELOG → macOS (unreleased since 1.4.4)](../CHANGELOG.md#macos-unreleased-since-144). Do not start a macOS train yourself; the maintainer calls it. |
-| Apple Watch | Not shipped | Current source prepares 1.19.0 (38), permanently embeds its companion and requires explicit Watch-beta eligibility. [Candidate checks](watch-beta.md) and publication remain pending; Task 15/20 physical spike/paired acceptance remains a production gate. |
+| Apple Watch | Included in **TestFlight 1.19.0 (38)** | Accepted/VALID package and processed Watch identity verified; [installation](watch-beta.md). Physical installation/recording/paired transfer/wrist-down/battery/storage remain pending; no public Watch App Store release. |
 
 Recent iOS trains (full text in [CHANGELOG.md](../CHANGELOG.md)):
 

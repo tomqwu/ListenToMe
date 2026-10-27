@@ -1,7 +1,7 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, latest TestFlight version 1.18.2 (37).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, latest TestFlight version 1.19.0 (38).
 
 ## What this app is for
 
@@ -20,7 +20,7 @@ stays macOS-only. This is a platform boundary, not a backlog item: there is no p
 that captures system or call audio. Recording is foreground-only (`iOS/Info.plist` declares no
 `UIBackgroundModes`); backgrounding stops recording and saves the conversation.
 
-Apple Watch recording ([#181](https://github.com/tomqwu/ListenToMe/issues/181)) is a source candidate, not yet distributed. The default iOS project now embeds `Watch/`; the next beta uses explicit Watch upload eligibility, matching versions, native durability tests and exported-package checks. Published TestFlight 1.18.2 (37) still excludes Watch. Physical recording, paired transfer, wrist-down and battery/storage acceptance remain pending for production. Full local validation and all 43 fresh simulator screenshots passed on frozen source `016d61c`; final merge/distribution verification and accepted upload are still pending. See [Watch beta preparation and installation](watch-beta.md).
+Apple Watch recording ([#181](https://github.com/tomqwu/ListenToMe/issues/181)) is included in TestFlight **1.19.0 (38)**. Apple accepted **1.19.0 (38)** at **2026-10-27T08:31:46.551678+00:00**, from `e43244f752712ac80e179e35c893e967aea38753`. Processing is **VALID**, internal state **IN_BETA_TESTING**, and the existing Dev group includes this build with two accepted testers. Primary locale, localized name, beta description and What to Test were read back in **en-US**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.0-build38). The original archive and exact uploaded Watch package passed signing/profile/version checks; processed Watch entitlements and existing Dev access were verified. Physical recording, paired transfer, wrist-down and battery/storage acceptance remain pending for production. See [Watch beta installation and evidence](watch-beta.md).
 
 ## Parity with macOS
 
@@ -153,7 +153,7 @@ saved separately for maintainer review. macOS distribution is separate. See
 
 ## App Store Connect platform mapping
 
-The iOS platform covers this universal iPhone/iPad app (`TARGETED_DEVICE_FAMILY=1,2`); no separate iPadOS platform is added. The Watch companion belongs to the same iOS app record and must actually be embedded in an uploaded build before it can be installed. Published 1.18.2 (37) excludes it. Current source embeds it for the separately validated Watch beta; physical acceptance remains a production gate, not an authorized beta-upload blocker. macOS requires its own compatible archive and distribution; the current native Mac app is distributed as a signed/notarized DMG, and Mac publication remains paused. Adding a platform does not convert a DMG or include an unembedded Watch target. See [Apple’s platform guide](https://developer.apple.com/help/app-store-connect/create-an-app-record/add-platforms/).
+The iOS platform covers this universal iPhone/iPad app (`TARGETED_DEVICE_FAMILY=1,2`); no separate iPadOS platform is added. The Watch companion belongs to the same iOS app record and must actually be embedded in an uploaded build before it can be installed. TestFlight 1.19.0 (38) includes it; public 1.18.1 excludes it. The accepted Watch beta has verified package/processed-identity evidence; physical acceptance remains a production gate, not an authorized beta-upload blocker. macOS requires its own compatible archive and distribution; the current native Mac app is distributed as a signed/notarized DMG, and Mac publication remains paused. Adding a platform does not convert a DMG or include an unembedded Watch target. See [Apple’s platform guide](https://developer.apple.com/help/app-store-connect/create-an-app-record/add-platforms/).
 
 ## Full summary menu icon (#319, published TestFlight 1.18.2)
 
@@ -182,7 +182,7 @@ original-recording / physical-device acceptance. Apple accepted the upload at 20
 
 ## iOS 1.18.0 (35) — published TestFlight beta
 
-[Published October 26](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.0-build35) from `b1570ad567a43a093294974871d7f0abf1872708` after PR #308 merged. Apple accepted the upload; processing is VALID, internal testing is IN_BETA_TESTING, and the existing Dev group and en-CA metadata were verified. The combined batch includes on-device saved-audio re-transcription (#224), full automatic-review budgets (#148), completed orchestration extraction (#134), reliability follow-ups (#141) and the compatibility fixes below. Current-source physical acceptance remains pending. Mac-only features remain unreleased; the maintainer deferred their installed acceptance for this beta merge. Watch remains excluded pending paired-device acceptance.
+[Published October 26](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.0-build35) from `b1570ad567a43a093294974871d7f0abf1872708` after PR #308 merged. Apple accepted the upload; processing is VALID, internal testing is IN_BETA_TESTING, and the existing Dev group and en-CA metadata were verified. The combined batch includes on-device saved-audio re-transcription (#224), full automatic-review budgets (#148), completed orchestration extraction (#134), reliability follow-ups (#141) and the compatibility fixes below. Current-source physical acceptance remains pending. Mac-only features remain unreleased; the maintainer deferred their installed acceptance for this beta merge. That build excluded Watch. TestFlight 1.19.0 (38) later included it with physical acceptance explicitly pending.
 
 The reported iPad Pro 12.9-inch (4th generation), iPadOS 27.0.1, supports on-device dictation but
 reports advanced SpeechTranscriber unavailable and Apple Intelligence device-not-eligible. These
@@ -1076,7 +1076,7 @@ share sheet). Each line shows its time; tapping the line or its time plays the p
 from that moment (`SavedAudioSeek`). History marks conversations with saved audio and offers **Share
 audio** in the touch-and-hold menu. Starting a recording stops playback.
 
-Apple Watch (#225, unreleased) uses the same opt-in library: before a batch is transcribed,
+Apple Watch (#225, TestFlight 1.19.0 (38)) uses the same opt-in library: before a batch is transcribed,
 `retainWatchAudio` copies each part with a stable recording/chunk filename and an atomic manifest.
 A failed copy or manifest write leaves inbox audio for retry. The inbox records committed copies and
 effective timeline offsets/durations, so retries neither duplicate files nor undo a later Delete all
@@ -1084,7 +1084,7 @@ saved audio, and overlapping parts retain their playback/transcription alignment
 The setting is read per import batch; off keeps the temporary delete-after-transcription path.
 Retention uses the recording date; old imports are immediately subject to the chosen expiry.
 WatchConnectivity already queues disconnected transfers and deletes Watch files only after success.
-No cloud audio transport is added. Watch beta eligibility and pending physical/production acceptance are separate; see [the Watch candidate](watch-beta.md).
+No cloud audio transport is added. Watch beta eligibility and pending physical/production acceptance are separate; see [the Watch beta](watch-beta.md).
 UI tests use `--saved-audio-fixture`, a
 synthetic tone written by the real writer; no test records the microphone.
 
@@ -1341,7 +1341,7 @@ asks for a wait of 20 seconds or less, and a 400
 `invalid_request_error` shows Anthropic's message with the key masked. Model lists come from
 `GET /v1/models`.
 
-### Watch file speaker identification (#192; not distributed)
+### Watch file speaker identification (#192; TestFlight beta)
 
 When Identify speakers is on and the models are already loaded, Watch imports analyze all available
 file audio in 60-second windows with 10-second overlap before transcribing that batch. Decoding runs

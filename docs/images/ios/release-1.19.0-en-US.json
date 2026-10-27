@@ -2,7 +2,7 @@
   "version": "1.19.0",
   "build": "38",
   "captureSource": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
-  "releaseSource": null,
+  "releaseSource": "e43244f752712ac80e179e35c893e967aea38753",
   "locale": "en-US",
   "region": "US",
   "screenshotCount": 43,
@@ -1190,5 +1190,11 @@
         }
       ]
     }
-  ]
+  ],
+  "uploaderSource": "ea2c05febf858065efd611db32dc57d81d523d10",
+  "uploadedAt": "2026-10-27T08:31:46.551678+00:00",
+  "applicationAndXcodeInputsUnchangedFromCapture": true,
+  "publication": "https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.0-build38",
+  "AppleBuild": "150a17c4-461b-49af-8736-90ff5d625d4d",
+  "processedWatchIdentityVerified": true
 }

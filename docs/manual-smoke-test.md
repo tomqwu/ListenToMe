@@ -829,7 +829,7 @@ conversation. Resume listening and confirm its terms reach recognition. With Aut
 check that the chosen provider receives the domain and bounded glossary without Summary headings.
 Delete that conversation and confirm it is gone after relaunch; device defaults and My terms remain.
 
-### Watch file speaker labels (#192, candidate only)
+### Watch file speaker labels (#192, TestFlight beta)
 
 Simulator coverage uses `MobileWatchSpeakerTests` (real decoded WAV windows and a fake diarizer) and
 `MobileWatchSpeakerUITests` (synthetic labeled Watch conversation in the actual transcript/Notes views).
@@ -842,9 +842,9 @@ search and export. Repeat with identification off and unavailable models: keep A
 initiate no model download from the import. Interrupt with backgrounding and an iPhone recording;
 retry safely without changing the live microphone's speaker run. After relaunch, new identities may
 receive new numbers because voiceprints are never saved. Verify that raw audio is deleted after text
-and labels are saved, and that relabeling does not request another AI summary. Published build 37 excludes Watch. The next Watch beta has separate candidate checks; physical #181 acceptance remains pending for production.
+and labels are saved, and that relabeling does not request another AI summary. TestFlight 1.19.0 (38) includes Watch with accepted/processed package evidence; the physical #181 checks above remain pending for production.
 
-### Watch audio retention (#225; development only)
+### Watch audio retention (#225; TestFlight beta, physical acceptance pending)
 
 On a paired Watch/iPhone, record while disconnected and confirm pending audio stays on Watch.
 Reconnect and open the iPhone app: confirm one conversation appears, and Watch waiting count clears

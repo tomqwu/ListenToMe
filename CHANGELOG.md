@@ -25,9 +25,9 @@ does not show it again, and a fresh install does not see it at all; see
   local BDD-verification failure; it does not change an app feature or count a failed aggregate run
   as passing.
 
-## iOS (unreleased since 1.18.2 (37))
+## iOS (unreleased since 1.19.0 (38))
 
-## iOS 1.19.0 (38) — candidate, not yet published
+## iOS 1.19.0 (38) — 2026-10-27 (TestFlight)
 
 - Include the Apple Watch companion in the default iOS build. Record on Watch, keep recording with wrist down, and sync finished audio to the paired iPhone for on-device transcription when connected. Phone remote Start/Stop requires a reachable, compatible, ready foreground app. (#181)
 - Retain Watch playback audio only when **Save audio recordings** is on during iPhone import; otherwise remove temporary audio after its text is saved. Existing Retry, Delete, playback and expiry controls remain. (#225)
@@ -35,6 +35,8 @@ does not show it again, and a fresh install does not see it at all; see
 - Preserve pending Watch audio/metadata through failed handoffs and relaunch. Duplicate/conflicting callbacks cannot overwrite unacknowledged audio; recording end markers survive storage failure and continued chunks advance old boundaries. Waiting includes failed recovery audio; after Stop, Delete removes audio and recovery state without resurrection. (#181)
 - Cancelled/Stopped microphone preparation and readiness changes cannot activate capture after permission returns. An interruption waits for explicit Continue. (#181)
 - Explicit Watch-beta upload mode validates companion identity, platform, icons/executable and matching versions. Physical microphone/paired-transfer, wrist-down, battery/storage and production acceptance remain pending. Simulator tests are separate from those gates. (#181)
+
+Apple accepted **1.19.0 (38)** at **2026-10-27T08:31:46.551678+00:00**, from `e43244f752712ac80e179e35c893e967aea38753`. Processing is **VALID**, internal state **IN_BETA_TESTING**, and the existing Dev group includes this build with two accepted testers. Primary locale, localized name, beta description and What to Test were read back in **en-US**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.0-build38). Watch inclusion is confirmed in the exact uploaded IPA and Apple’s processed nested entitlements. All three required checks and full local gates passed; the tag points to the exact app source. The delivery-only helper is recorded separately as `ea2c05febf858065efd611db32dc57d81d523d10`. Physical Watch installation, microphone capture, paired transfer, wrist-down and battery/storage acceptance remain unverified. This is an authorized beta, not a production-ready claim. Public iOS remains 1.18.1; no new public App Store submission or screenshot listing upload was performed by this train. Mac Store draft #318 stays separate.
 
 ## iOS 1.18.2 (37) — 2026-10-27 (TestFlight)
 

@@ -62,9 +62,11 @@ Education & Research) and your own **My terms** list help recognition, AI speech
 summaries on both platforms; after about a minute of speech the phone may suggest one, decided on the
 device. Meeting use-case presets, reference files, audio-file import and WhisperKit transcription are macOS-only.
 Editable domain prompt presets are available on both platforms.
-The public iPhone/iPad app is 1.18.1. The latest TestFlight beta is **1.18.2 (37)**
-([2026-10-27 TestFlight release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.2-build37)). Current source permanently embeds an Apple Watch companion; its Watch-enabled beta is still in preparation and is not included in published build 37
-([#181](https://github.com/tomqwu/ListenToMe/issues/181)). Its full local validation and fresh 43-image matrix passed; [native Watch previews](docs/images/watch/1.19.0/README.md) are candidate evidence. Merge, distribution checks and accepted upload remain pending.
+The public iPhone/iPad app is 1.18.1. The latest TestFlight beta is **1.19.0 (38)**
+([October 27 release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.0-build38)), including the Apple Watch companion.
+[Watch installation and limits](docs/watch-beta.md) and [native previews](docs/images/watch/1.19.0/README.md)
+are available; physical Watch acceptance remains pending. All 43 fresh release images are inspected;
+App Store listing uploads await a separately authorized production submission.
 See [iOS setup, validation and distribution](docs/IOS.md). Device and language support are checked
 per feature; Apple Intelligence is independent of recording. The [compatibility support](docs/device-compatibility.md)
 includes local dictation fallback for compatible older iPads and explicit unavailable-feature recovery
@@ -211,7 +213,7 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 - **Export** as Markdown, plain text, SRT or WebVTT subtitles, or versioned JSON, plus recap and PDF,
   in files named after the conversation (`Weekly sync 2026-10-23 1435.srt`). Lines carry `[mm:ss]`
   timestamps where the engine reports them (SpeechAnalyzer, WhisperKit and iPhone recordings; Apple Watch recordings
-  too once the Watch app ships); see
+  in the Watch beta); see
   [Export formats](docs/export-formats.md).
 - **Save to folder** (off by default, Settings): after each conversation stops, writes one
   Obsidian-friendly Markdown note (YAML front matter, summary, notes, timestamped transcript) into a
@@ -413,7 +415,7 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   - A naming that finds nothing is not retried until the transcript doubles or grows by 100 words.
   - An automatic title may be refined once after the conversation grows several times over.
   - Turn it off with Settings → **Name conversations automatically**. The iPhone does the same for
-    "New conversation" (and Apple Watch recordings, once the Watch app ships).
+    "New conversation" (and Apple Watch beta recordings).
 
 ### Keyboard shortcuts
 
@@ -549,7 +551,7 @@ saying so. Press **Speakers / edit names** to retry once the network is availabl
   platforms. Turned on, it writes 16 kHz AAC `.m4a` files (about 12 MB per hour per source) beside
   the conversations; they are never uploaded or sent to an AI service, are deleted with their
   conversation (Clear history on the Mac), and on iPhone/iPad are always kept out of iCloud and
-  Finder backups. The unreleased Watch feature also retains imported audio when this setting is on;
+  Finder backups. The Watch beta also retains imported audio when this setting is on;
   otherwise it deletes temporary transfer audio after transcription.
 - **iOS privacy policy and support.** The App Store pages are checked in and linked from the app in
   **More → Settings → Privacy**: [privacy policy](docs/ios-privacy.md) and
@@ -563,7 +565,7 @@ saying so. Press **Speakers / edit names** to retry once the network is availabl
   is not a whole-product measurement. See [orchestration ownership](docs/ORCHESTRATION.md).
 - **`iOS/`**: iPhone/iPad SwiftUI app, foreground microphone capture with SpeechAnalyzer, Apple Intelligence
   (Foundation Models) summaries by default on capable devices.
-- **`Watch/`**: Apple Watch companion, embedded in the default iOS project; [beta preparation and pending device acceptance](docs/watch-beta.md). Published build 37 still excludes it.
+- **`Watch/`**: Apple Watch companion, embedded in the default iOS project; [beta installation and pending device acceptance](docs/watch-beta.md). Included in TestFlight 1.19.0 (38); public iOS 1.18.1 excludes it.
 - **`App/`**: macOS glue — `DualChannelCapture`, `SpeechRecognizerTranscriber`, SwiftUI UI, hotkey.
 
 See [`docs/reviews/2026-09-10/design-and-gap-review.md`](docs/reviews/2026-09-10/design-and-gap-review.md)
