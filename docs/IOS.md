@@ -1,7 +1,7 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, latest TestFlight version 1.18.1 (36); 1.18.2 (37) is the next candidate.
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, latest TestFlight version 1.18.2 (37).
 
 ## What this app is for
 
@@ -155,12 +155,20 @@ saved separately for maintainer review. macOS distribution is separate. See
 
 The iOS platform covers this universal iPhone/iPad app (`TARGETED_DEVICE_FAMILY=1,2`); no separate iPadOS platform is added. The Watch companion belongs to the same iOS app record and must actually be embedded in an uploaded build before it can be installed. It is excluded from the current beta pending #181 acceptance. macOS requires its own compatible archive and distribution; the current native Mac app is distributed as a signed/notarized DMG, and Mac publication remains paused. Adding a platform does not convert a DMG or include an unembedded Watch target. See [Apple’s platform guide](https://developer.apple.com/help/app-store-connect/create-an-app-record/add-platforms/).
 
-## Full summary menu icon (#319, candidate)
+## Full summary menu icon (#319, published TestFlight 1.18.2)
 
 The More menu uses the existing Summary symbol beside **Full summary**, matching the Summary
 workspace. The action still opens the same sheet; Done returns to the conversation without starting
 recording. `IOS-008` binds the native rendered-menu regression, with the original zero-pixel failure
-retained separately from subsequent validation. Merge and TestFlight publication remain pending.
+retained separately from subsequent validation.
+
+Apple accepted **1.18.2 (37)** at **2026-10-27T03:39:12.147449+00:00**, from `9494d024b9eee577b40695292aaf5e7dab9434eb`. Processing is **VALID**, internal state **IN_BETA_TESTING**, and both existing Dev testers have accepted group access. Primary locale, localized name, beta description and What to Test were read back in **en-US**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.2-build37).
+
+Full local validation passed: 108 BDD scenarios, 1,239 core tests with 98.2493% coverage, 75 iOS UI tests, 454 iOS unit tests, 39 native Mac tests, four Watch tests and four real Ollama/OpenAI-compatible contract tests. Existing optional skips remain documented; all required selectors passed. All three hosted checks passed on the exact merged source ([CI](https://github.com/tomqwu/ListenToMe/actions/runs/40444715802)). The tested source `9425611` and release source `9494d02` have identical trees.
+
+[Fresh capture catalog](images/ios/release-1.18.2-en-US.json): 28 inspected native en-US images across four iPhone/iPad categories, including four fixed-menu captures. Originals, hashes and source/binary provenance are preserved. These are synthetic simulator captures; 1.18.2 App Store listing uploads remain pending.
+
+Physical-device acceptance was not performed for this beta; it is not a production-ready claim. Public iOS 1.18.1 remains READY_FOR_SALE; 1.18.2 has not been submitted to the public App Store. Watch is excluded and the separate Mac Store draft #318 remains unsubmitted.
 
 ## iOS 1.18.1 (36) — published TestFlight beta
 

@@ -4,26 +4,21 @@ A snapshot for an agent picking up ListenToMe cold. [AGENTS.md](../AGENTS.md) an
 [CLAUDE.md](../CLAUDE.md) stay the rules; this note is only the state of things on the date above.
 Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags) before acting on it.
 
-## Tester fix in progress — October 27, 02:11 UTC
+## Latest tester fix — October 27, 2026
 
-Issue [#319](https://github.com/tomqwu/ListenToMe/issues/319) reproduces a missing Full summary menu icon.
-The focused iOS branch adds the existing Summary symbol and a native rendered-menu regression
-(`IOS-008`), with retained zero-pixel red and passing light/dark captures. The first failed test’s
-post-test diagnostic collector stalled and was terminated after its assertion completed; a repeat
-with verbose diagnostics disabled exited 65, then the fixed run exited 0. Full validation, review,
-CI, merge and TestFlight **1.18.2 (37)** remain pending. This tester-priority fix is separate from
-the existing Mac Store draft #318; no Mac acceptance is claimed.
+Apple accepted **1.18.2 (37)** at **2026-10-27T03:39:12.147449+00:00**, from `9494d024b9eee577b40695292aaf5e7dab9434eb`. Processing is **VALID**, internal state **IN_BETA_TESTING**, and both existing Dev testers have accepted group access. Primary locale, localized name, beta description and What to Test were read back in **en-US**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.2-build37).
 
-The first full validation attempt failed in the existing role-model Settings UI journey, then was
-explicitly stopped; its missing remaining native executions were correctly rejected by BDD. The
-retained video shows the presentation displaced during center-column scrolling. The isolated
-unchanged case subsequently passed, so this is not a deterministic product-regression claim. The
-helper now drags the form margin, preserves all model/persistence assertions, and explicitly checks
-that Settings stays open; its focused run passes. A fresh full validation is still required.
+Issue #319 is closed by merged PR #320: Full summary now renders the existing Summary icon. Native `IOS-008` retains its zero-pixel failure and passing light/dark runs; opening/dismissing the sheet still does not start recording.
 
-Apple now reports public iOS **1.18.1 (36) READY_FOR_SALE**, review COMPLETE, and primary locale
-**en-US** after a successful post-approval PATCH and subsequent readbacks. Both beta records are
-en-US. Mac 1.5.0 still has no selected build or submitted review. Earlier states below are historical.
+Full local validation passed: 108 BDD scenarios, 1,239 core tests with 98.2493% coverage, 75 iOS UI tests, 454 iOS unit tests, 39 native Mac tests, four Watch tests and four real Ollama/OpenAI-compatible contract tests. Existing optional skips remain documented; all required selectors passed. All three hosted checks passed on the exact merged source ([CI](https://github.com/tomqwu/ListenToMe/actions/runs/40444715802)). The tested source `9425611` and release source `9494d02` have identical trees.
+
+The first aggregate attempt failed in the existing Settings journey and was stopped; it remains a failed/incomplete run. Its unchanged isolated baseline later passed. The reviewed form-margin drag helper preserves all selection/persistence assertions, and the complete fresh retry passed. No deterministic product-regression red is invented.
+
+[Fresh capture catalog](images/ios/release-1.18.2-en-US.json): 28 inspected native en-US images across four iPhone/iPad categories, including four fixed-menu captures. Originals, hashes and source/binary provenance are preserved. These are synthetic simulator captures; 1.18.2 App Store listing uploads remain pending.
+
+Physical-device acceptance was not performed for this beta; it is not a production-ready claim. Public iOS 1.18.1 remains READY_FOR_SALE; 1.18.2 has not been submitted to the public App Store. Watch is excluded and the separate Mac Store draft #318 remains unsubmitted.
+
+Release evidence: `dist/ios-1.18.2-build37-evidence/`, backed up under `/Users/tomwu/Documents/Codex/2026-10-26/listentome-summary-menu-icon/`. The exact-source tag is `ios-v1.18.2-build37`; GitHub pre-release is non-Latest with no binary. The completed Dev-app session was cleaned up: exact `.dev` bundle moved to Trash, only `.dev` permissions reset, conversation data/settings/keys preserved; five owned simulators deleted.
 
 ## Earlier US screenshot refresh and App Review — October 26, 21:13 UTC
 

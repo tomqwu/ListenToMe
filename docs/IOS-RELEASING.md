@@ -24,21 +24,32 @@ honestly documented device limitations are sufficient to distribute an authorize
 testing. Physical-device acceptance is still required before calling the app production-ready or
 submitting a production App Store release. Missing hardware must not be reported as an upload blocker.
 
-## Fresh US screenshots resubmitted — October 26, 21:13 UTC
+## Latest beta and public state — October 27, 2026
+
+Apple accepted **1.18.2 (37)** at **2026-10-27T03:39:12.147449+00:00**, from `9494d024b9eee577b40695292aaf5e7dab9434eb`. Processing is **VALID**, internal state **IN_BETA_TESTING**, and both existing Dev testers have accepted group access. Primary locale, localized name, beta description and What to Test were read back in **en-US**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.2-build37).
+
+Full local validation passed: 108 BDD scenarios, 1,239 core tests with 98.2493% coverage, 75 iOS UI tests, 454 iOS unit tests, 39 native Mac tests, four Watch tests and four real Ollama/OpenAI-compatible contract tests. Existing optional skips remain documented; all required selectors passed. All three hosted checks passed on the exact merged source ([CI](https://github.com/tomqwu/ListenToMe/actions/runs/40444715802)). The tested source `9425611` and release source `9494d02` have identical trees.
+
+[Fresh capture catalog](images/ios/release-1.18.2-en-US.json): 28 inspected native en-US images across four iPhone/iPad categories, including four fixed-menu captures. Originals, hashes and source/binary provenance are preserved. These are synthetic simulator captures; 1.18.2 App Store listing uploads remain pending.
+
+Physical-device acceptance was not performed for this beta; it is not a production-ready claim. Public iOS 1.18.1 remains READY_FOR_SALE; 1.18.2 has not been submitted to the public App Store. Watch is excluded and the separate Mac Store draft #318 remains unsubmitted.
+
+Apple build ID: `f18732aa-ddf5-4b79-b939-d160792ed4d1`. Canonical acceptance/status evidence is `dist/ios-1.18.2-build37-evidence/upload-accepted.json` and `asc-verify.json`, backed up externally in the summary-menu-icon evidence directory. The source tag is exact; GitHub is a non-Latest pre-release with no binary.
+
+## Historical US screenshot submission — October 26, 21:13 UTC
 
 The [1.18.1 capture/upload catalog](images/ios/release-1.18.1-en-US-refresh.json) records 24 fresh
 native English (US), US-region images from the exact build-36 source, four passing native capture
 tests, complete visual review, and current Apple asset/set IDs. All 24 uploads are COMPLETE;
 processed RGB pixels, native dimensions, source checksums and order match. Canadian draft and live
 production screenshots were preserved. Apple accepted review
-`4e63cda8-70db-4d67-9928-63409df4dbda` at 2026-10-26T21:13:50Z; it is **WAITING_FOR_REVIEW**, not
-approved or publicly available. The prior `89b4c261-b37d-4b24-aaee-20f8238d1663` review was canceled
+`4e63cda8-70db-4d67-9928-63409df4dbda` at 2026-10-26T21:13:50Z; it was **WAITING_FOR_REVIEW** at that checkpoint. Apple later approved 1.18.1; see the current state above. The prior `89b4c261-b37d-4b24-aaee-20f8238d1663` review was canceled
 and reached COMPLETE before replacement. No new binary was uploaded.
 
-The US listing uses **Listen To Me - Real Time AI**. Actual app-wide primary locale remains en-CA:
-Apple still returned `MISSING_SCREENSHOTS_PRIMARY_LOCALE` after all fresh US images completed.
+The US listing uses **Listen To Me - Real Time AI**. At that checkpoint, app-wide primary locale remained en-CA:
+Apple returned `MISSING_SCREENSHOTS_PRIMARY_LOCALE` after all fresh US images completed.
 Preserve that exact rejection; do not equate the submitted en-US localization with a completed
-primary-language change.
+primary-language change. After approval, the primary-locale PATCH succeeded and en-US was read back.
 
 The maintainer explicitly chose resubmission of build 36 with [Watch previews](images/watch/1.18.1-preview/README.md)
 saved separately. Build 36 has no embedded Watch app, so these images are prospective review assets
@@ -91,10 +102,10 @@ Each US screenshot is COMPLETE with native dimensions, checksum, order and downl
 verified. The original source-matched captures were en-CA and are reused for identical English UI;
 retain that provenance rather than claiming a fresh US capture.
 
-The app's primary locale remains **en-CA**: Apple's primary-locale PATCH returned HTTP 409
+At this superseded checkpoint the app's primary locale remained **en-CA**: Apple's PATCH returned HTTP 409
 `MISSING_SCREENSHOTS_PRIMARY_LOCALE` even after US image processing completed. The US localization
-is submitted, while the Canadian primary/fallback is retained. Do not retry an unchanged rejection,
-claim US primary status or edit the approved production version to bypass Apple's requirements.
+was submitted while the Canadian primary/fallback was retained. That unchanged rejection was not
+bypassed; after approval the primary-language change succeeded, as recorded above.
 The [Apple localization rules](https://developer.apple.com/help/app-store-connect/manage-app-information/localize-app-information)
 explain the distinction and primary-language prerequisites.
 
@@ -555,7 +566,7 @@ This completed the automated path without native Organizer control or another ma
 - Workflow implementation: [PR #85](https://github.com/tomqwu/ListenToMe/pull/85), merged with all CI
   green; 12 helper tests passed and a real API-key upload proved the route.
 
-The same route has carried every build since. The most recent accepted upload is **1.18.1 (36)**,
+The same route has carried every build since. The preceding accepted upload was **1.18.1 (36)**,
 accepted on 2026-10-26 at 17:29:24 UTC from `7643b204def6acea0b616a2c2de2bade2fc4c7c9`, tagged
 `ios-v1.18.1-build36`. Apple build `2fd8477d-504e-44d2-ac7f-6c7e9236d01f` is `VALID` and
 `IN_BETA_TESTING`; Dev access for both existing testers and en-CA metadata were read back.
