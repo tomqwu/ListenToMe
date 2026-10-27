@@ -75,12 +75,11 @@ IOS_DESTINATION ?= platform=iOS Simulator,name=iPhone 17 Pro
 IOS_SIGN_FLAGS ?= CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=-
 
 .PHONY: ios-build ios-test ios-archive watch-build
-# Also compiles the Apple Watch app (#181). It is embedded in ListenToMeIOS only with WATCH_EMBED=YES.
+# The iOS scheme builds and embeds its Apple Watch companion (#181).
 ios-build: gen
 	xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMeIOS -configuration Debug \
 		-destination 'generic/platform=iOS Simulator' -derivedDataPath .build/ios \
 		-onlyUsePackageVersionsFromResolvedFile $(IOS_SIGN_FLAGS) build
-	$(MAKE) watch-build
 
 watch-build: gen
 	xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMeWatch -configuration Debug \
@@ -119,6 +118,7 @@ ios-archive: gen
 		-derivedDataPath .build/ios-release -onlyUsePackageVersionsFromResolvedFile -allowProvisioningUpdates archive
 
 # Upload a validated archive; source/CI checks and tester verification are in docs/IOS-RELEASING.md.
+export IOS_EXPORT_OPTIONS
 .PHONY: ios-testflight
 ios-testflight:
 	@test -n "$(IOS_ARCHIVE)" -a -n "$(IOS_RELEASE_SOURCE)" || { echo 'Set IOS_ARCHIVE and IOS_RELEASE_SOURCE'; exit 2; }

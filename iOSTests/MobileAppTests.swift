@@ -11,9 +11,12 @@ final class MobileAppTests: XCTestCase {
         for role in ["quick", "summary"] {
             app.buttons["More"].tap()
             app.buttons["Settings"].tap()
+            XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5),
+                          "Reopening Settings must finish before revealing either model role")
             let link = app.buttons["choose-model-\(role)"]
             revealSettingsControl(link, in: app.collectionViews["aiSettingsForm"])
             XCTAssertTrue(link.isHittable)
+            XCTAssertTrue(app.navigationBars["Settings"].exists, "Revealing the model must keep Settings open")
             link.tap()
             let model = app.buttons["model-\(role)-fixture"]
             revealSettingsControl(model, in: app.collectionViews["roleModelList"])

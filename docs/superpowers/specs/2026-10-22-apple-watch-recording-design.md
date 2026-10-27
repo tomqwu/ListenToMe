@@ -1,3 +1,5 @@
+> **October 27 TestFlight publication:** 1.19.0 (38) includes Watch; upload acceptance, processed nested Watch identity, exact-source tag, en-US metadata and existing Dev access are verified. [Current Watch status](../../watch-beta.md) supersedes historical unshipped/embedding checkpoints below. Task 15/20 physical recording/paired transfer/wrist-down/battery/storage and production acceptance remain pending.
+
 # Apple Watch recording — design
 
 **Issue:** [#181](https://github.com/tomqwu/ListenToMe/issues/181), part of

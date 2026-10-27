@@ -1,0 +1,494 @@
+{
+  "version": "1.18.2",
+  "build": "37",
+  "captureSource": "9425611597fa3663c854e33b067162465c491e5f",
+  "releaseSource": "9494d024b9eee577b40695292aaf5e7dab9434eb",
+  "sourceTree": "67904a54efce5855947df4f00b3fbb58fdd3ec85",
+  "sourceTreeMatches": true,
+  "locale": "en-US",
+  "region": "US",
+  "runtime": "iOS 26.5",
+  "screenshotCount": 28,
+  "nativeTestsPassed": 8,
+  "visualReview": "28/28 pass; independent phone review and author tablet review",
+  "physicalAcceptance": "Not performed for this beta; no production-ready claim",
+  "listingUpload": "Pending; preserved for a future separately authorized App Store version",
+  "evidenceDirectory": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-summary-menu-icon/release-screenshots",
+  "categories": [
+    {
+      "category": "iphone-pro",
+      "assets": [
+        {
+          "original": "iphone-pro/originals/C69F6EE6-1197-487E-BC9A-4F3AAF62F7FF.png",
+          "originalSHA256": "36b412b3d06a324f2825bcfcf3cf32ac93984423ba506d60f2a5c7ca32b9d129",
+          "normalized": "iphone-pro/More menu with Full summary icon.png",
+          "normalizedSHA256": "39d91902aaf5d0c9b819fffbf40113f37c0f68f4b1800cc6ef06b4ca2a71c4f5",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "pixels": [
+            1206,
+            2622
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        },
+        {
+          "original": "iphone-pro/originals/4BE9FB75-8B7E-408D-A2C4-458602F51B56.png",
+          "originalSHA256": "32fd949a40117e1615253bf3417dca0fce8b877a87a1cd88ed2dce0535c22cc2",
+          "normalized": "iphone-pro/06 Settings.png",
+          "normalizedSHA256": "a308db916b20360220b1a6826d4f48737fcfb2a4d430889973243781ecaf9b99",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "pixels": [
+            1206,
+            2622
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        },
+        {
+          "original": "iphone-pro/originals/430CB49A-CE6F-4479-9BA8-701CD8971686.png",
+          "originalSHA256": "9bd7370e4a097176932ff30b64a3919a1533e95c71ac2770283e586054cb84c1",
+          "normalized": "iphone-pro/05 Conversation history.png",
+          "normalizedSHA256": "3644b237332d2af99d092b5a5ddb0f1fa05a6bd99f4eb9be1b994aa3c80023d6",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "pixels": [
+            1206,
+            2622
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        },
+        {
+          "original": "iphone-pro/originals/E4546E86-4209-4E82-8FEF-A18D5B7FE4C0.png",
+          "originalSHA256": "924ed636c9f02daa922cb374520974c6ad67395acc50154e76b1201dd961db68",
+          "normalized": "iphone-pro/04 Summary portrait.png",
+          "normalizedSHA256": "cfd30062f0fc4c160d866e50e41d73210a8b5296573b606f899083e8593806eb",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "pixels": [
+            1206,
+            2622
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        },
+        {
+          "original": "iphone-pro/originals/D5F80147-987A-4396-8242-9B04AE81C5C0.png",
+          "originalSHA256": "6949c7ad3614f2b1003b2c0cabff43a3eeba384d80e9a6e942ed57cc1a3efd2c",
+          "normalized": "iphone-pro/03 Conversation prompt.png",
+          "normalizedSHA256": "77bd9dba06573d4cd1a21ad0d073983cc07c023a49abbc2b602f92fd5aa2c35d",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "pixels": [
+            1206,
+            2622
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        },
+        {
+          "original": "iphone-pro/originals/6AF75109-ABDF-4489-A4E4-6FF7564051F2.png",
+          "originalSHA256": "c4e9e39074606b6efb933a7f5ccce54e9a501547781115cf08852c17221e089d",
+          "normalized": "iphone-pro/02 Live landscape.png",
+          "normalizedSHA256": "89e6de7d61b938737e2abf5e92c5ca59f902a6fbc444f560e4cbd29e6cb9e8ef",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "pixels": [
+            2622,
+            1206
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        },
+        {
+          "original": "iphone-pro/originals/0D7EE8E4-43E8-4055-ACB6-38B8E98F2495.png",
+          "originalSHA256": "e8a2fcf1a9653da920e2a3d831569102ff89bbeace0ab90b8b2b4a6d8a4fc1c2",
+          "normalized": "iphone-pro/01 Live portrait.png",
+          "normalizedSHA256": "54e1161aa276143d97d93231f2a78f789b904944458c00aa806517ad8f0be7ed",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "pixels": [
+            1206,
+            2622
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        }
+      ]
+    },
+    {
+      "category": "iphone-max",
+      "assets": [
+        {
+          "original": "iphone-max/originals/101CD383-6827-4029-9DFF-D3255FE9DE79.png",
+          "originalSHA256": "3633627be9f795edc7f01046b8b9882cf61a669cb4502e9de2dcf9b843fbc7b7",
+          "normalized": "iphone-max/More menu with Full summary icon.png",
+          "normalizedSHA256": "366ceb995e1f9d23d81d5e27f18d1b1e9593f5ae857652581644716458686c44",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "pixels": [
+            1320,
+            2868
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        },
+        {
+          "original": "iphone-max/originals/32485209-B7B8-4482-A363-CE5E8D70C87A.png",
+          "originalSHA256": "1c52ddbb7bd92b9fa621121021173906bac5eee23e666cbdcd43a3f8218d41d1",
+          "normalized": "iphone-max/06 Settings.png",
+          "normalizedSHA256": "26f76606b1ad4126ff819faeff2ee28b839079f8be5c9e5b4c65e039d956e907",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "pixels": [
+            1320,
+            2868
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        },
+        {
+          "original": "iphone-max/originals/888B6695-6F89-402D-95B3-72A1D735E8EF.png",
+          "originalSHA256": "88d16ffcc56e6ee2d0d73d7d4e354fabd54657d00699213d8cdcac6db1434607",
+          "normalized": "iphone-max/05 Conversation history.png",
+          "normalizedSHA256": "786457777d093b77dac2d702343a33f1ce1cba164034fae12cfc4ec54e6e8ca9",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "pixels": [
+            1320,
+            2868
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        },
+        {
+          "original": "iphone-max/originals/A2A70693-5238-4AB6-8C8D-D5939CEA7246.png",
+          "originalSHA256": "9b7cbacd2299d5ce640e1492a3ab87460512b72cbd41c0bb32789594f1052f47",
+          "normalized": "iphone-max/04 Summary portrait.png",
+          "normalizedSHA256": "2678808ff80bf146d95beb792592ae2101a3e7cef700d2952c6f243bd022de80",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "pixels": [
+            1320,
+            2868
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        },
+        {
+          "original": "iphone-max/originals/C120436D-A7E6-4071-BEB9-3F26168BE75C.png",
+          "originalSHA256": "72134eeac919039a72d7f9244965e15f69c181d35f535e8d85ce06b47ebee8cd",
+          "normalized": "iphone-max/03 Conversation prompt.png",
+          "normalizedSHA256": "96c401f23259509fe564aff2ef7476854aed07d1fa861daedad2a48879a56732",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "pixels": [
+            1320,
+            2868
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        },
+        {
+          "original": "iphone-max/originals/6178229A-D42D-43EB-B625-959CE9393E01.png",
+          "originalSHA256": "c342d27bac54efabdce0c43475ff8af27bca9444eaa14a841eb181ebd97f72d2",
+          "normalized": "iphone-max/02 Live landscape.png",
+          "normalizedSHA256": "9d8518c1ca750be6d0426203448a05e2e35d0309ba644530f07b150b3b8c4fd4",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "pixels": [
+            2868,
+            1320
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        },
+        {
+          "original": "iphone-max/originals/44CF5C69-2795-4210-9704-61ABA8ACF7FA.png",
+          "originalSHA256": "ac881dd049de519f075bf8abbfb8b0e607ba72e0b9f2147df38ecd19f77ea566",
+          "normalized": "iphone-max/01 Live portrait.png",
+          "normalizedSHA256": "790639ffbcb50d8084d03fc3e4fc36032d6e2ead0a0ceadde1df68cedb7a2c93",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "pixels": [
+            1320,
+            2868
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        }
+      ]
+    },
+    {
+      "category": "ipad-mini",
+      "assets": [
+        {
+          "original": "ipad-mini/originals/079A08A3-06CE-40FD-87BD-02CC1C15D525.png",
+          "originalSHA256": "5898d0dc275cc1a2ac907698e93ef37c739b900e7bfaa770353135f712d23954",
+          "normalized": "ipad-mini/More menu with Full summary icon.png",
+          "normalizedSHA256": "4655c2732d65a083f6c37991bd476da5c954494a704e53a04653acbb661eeb7d",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "pixels": [
+            1488,
+            2266
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        },
+        {
+          "original": "ipad-mini/originals/1F44A790-3C51-43FE-8DAC-E676CF768547.png",
+          "originalSHA256": "8405c900bfae08c2fc7c261928975df2a582c5691fc1ce41cb220ae1052d6ca8",
+          "normalized": "ipad-mini/06 Settings.png",
+          "normalizedSHA256": "be75b0d6c52281049e742569d326baa645f69717848ca2b4b67ba9ed5e7fb1ed",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "pixels": [
+            1488,
+            2266
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        },
+        {
+          "original": "ipad-mini/originals/D4376AA4-4A8B-443D-BB72-CA5ECED71976.png",
+          "originalSHA256": "2d2922d8bcdbf86d59ec376a92708c82b4e904a6025e594f7c71c9c8ed1de229",
+          "normalized": "ipad-mini/05 Conversation history.png",
+          "normalizedSHA256": "387260ad5e8884d5ddc40f8fce2d708ab637bd0d7abca18e2b77ca7c7c964cb5",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "pixels": [
+            1488,
+            2266
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        },
+        {
+          "original": "ipad-mini/originals/1B1756A1-AAC9-4444-ABAC-4A1851C7CEBC.png",
+          "originalSHA256": "bba942efa14f9345e45827858f6f6a950ace9d87b0592cf6e1554d34825af41d",
+          "normalized": "ipad-mini/04 Summary portrait.png",
+          "normalizedSHA256": "0594a183752e82c2c14afddab973a34694941cf1c7897cbf879091b14034eacd",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "pixels": [
+            1488,
+            2266
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        },
+        {
+          "original": "ipad-mini/originals/B21FFE78-434C-428D-8530-048B29667AE9.png",
+          "originalSHA256": "8bfdd2a2d07580261451a3611b879590ce62764b39d66eb9da081629a2057f69",
+          "normalized": "ipad-mini/03 Conversation prompt.png",
+          "normalizedSHA256": "7819309b6166ea4f39d130f44a22c7d38f62ad29f6b015569c817bffccacdbdf",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "pixels": [
+            1488,
+            2266
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        },
+        {
+          "original": "ipad-mini/originals/5B4FF338-A85B-494F-98BC-33BDD6651160.png",
+          "originalSHA256": "bedef060d8720f2986916e839009ac625d2c8af780eb5f952ed02a0be40ed065",
+          "normalized": "ipad-mini/02 Live landscape.png",
+          "normalizedSHA256": "4eb64123ed45af475c298ba667ecb8dcd1c1b25af1a0ba96c99e059292975a25",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "pixels": [
+            2266,
+            1488
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        },
+        {
+          "original": "ipad-mini/originals/BF38304A-9354-44CE-B819-BD6234BFBADD.png",
+          "originalSHA256": "62bd3f2fbb0c3e6496704dc9613ab573d803839bb2a2d8589c611929c648fa30",
+          "normalized": "ipad-mini/01 Live portrait.png",
+          "normalizedSHA256": "0d60982cccd16f7517802583dbec7d53536a01ee4c6374b15fe54c9911e19aa1",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "pixels": [
+            1488,
+            2266
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        }
+      ]
+    },
+    {
+      "category": "ipad-pro",
+      "assets": [
+        {
+          "original": "ipad-pro/originals/FFD74A8C-89D0-4FB1-97F5-BFBA91B3F66C.png",
+          "originalSHA256": "87b6cd4c44a4e9090be7c19ee55098ee683cae4fc244d7b90163d89e0afbf41a",
+          "normalized": "ipad-pro/More menu with Full summary icon.png",
+          "normalizedSHA256": "7576a54144091aa4dd52dc00a94dd658cacde8ec9d0c88a678f4ddb4631b34a3",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "pixels": [
+            2064,
+            2752
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        },
+        {
+          "original": "ipad-pro/originals/91F059C6-671F-4F66-BF43-71D58C5EC168.png",
+          "originalSHA256": "f9dea02b092848a270a0e77a3fd13ea4e08cf142124bf3ccf21a4a9a71398e6e",
+          "normalized": "ipad-pro/06 Settings.png",
+          "normalizedSHA256": "d03bab8a0c08c786b60b5bc6ba8612fd19da3231706ec54ef3f6d96185298762",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "pixels": [
+            2064,
+            2752
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        },
+        {
+          "original": "ipad-pro/originals/50A82F85-DBB9-4D12-8C08-1303F1C66799.png",
+          "originalSHA256": "fd98ed297042c10a7443c5e625065228018092f12071e0e9dfc1fb2663bda158",
+          "normalized": "ipad-pro/05 Conversation history.png",
+          "normalizedSHA256": "645f34ac9ffddd84923247ea042deb28627d4dd837302304bdeeec3ddb6947d9",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "pixels": [
+            2064,
+            2752
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        },
+        {
+          "original": "ipad-pro/originals/8E83909C-D5F7-4EA6-9A8A-1528037C5CFF.png",
+          "originalSHA256": "3571bcb9ce15094de6becc1cb59d912d775668e81cfe2228f4edb99dc433ac31",
+          "normalized": "ipad-pro/04 Summary portrait.png",
+          "normalizedSHA256": "26453c4a13afa6e7623ab5d5f7354f17b95288ce5ab9eb6c6482b2aeecff6440",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "pixels": [
+            2064,
+            2752
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        },
+        {
+          "original": "ipad-pro/originals/89B69407-AFCB-4923-99AE-D9A7726C7BBE.png",
+          "originalSHA256": "fea2e0b523b3220150db1a7a64e3579b83f966825fd0375aad3eefc4f467ccff",
+          "normalized": "ipad-pro/03 Conversation prompt.png",
+          "normalizedSHA256": "9468e17ac0fca5360ff88696df489cf5d73f12ea344b2c3ed30aff1b4e17909e",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "pixels": [
+            2064,
+            2752
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        },
+        {
+          "original": "ipad-pro/originals/225EC5A2-2577-4DEB-B9B2-3C283641CC4C.png",
+          "originalSHA256": "87e88f45bebfda944e9a9a76d51d85373c7c0d21593fb5738c638c7e3cc4db65",
+          "normalized": "ipad-pro/02 Live landscape.png",
+          "normalizedSHA256": "2fc9e258f3fa1e33b4fe473b744a303bcd8fafeca50f861dd3bcc2d7adf0d21f",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "pixels": [
+            2752,
+            2064
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        },
+        {
+          "original": "ipad-pro/originals/C7A6C3E2-29BB-4D1F-88E2-AEC632850225.png",
+          "originalSHA256": "3571bcb9ce15094de6becc1cb59d912d775668e81cfe2228f4edb99dc433ac31",
+          "normalized": "ipad-pro/01 Live portrait.png",
+          "normalizedSHA256": "26453c4a13afa6e7623ab5d5f7354f17b95288ce5ab9eb6c6482b2aeecff6440",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "pixels": [
+            2064,
+            2752
+          ],
+          "transform": "EXIFtranspose+RGB; noresize"
+        }
+      ]
+    }
+  ],
+  "release": "https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.2-build37",
+  "appleBuildID": "f18732aa-ddf5-4b79-b939-d160792ed4d1",
+  "acceptedUpload": "2026-10-27T03:39:12.147449+00:00",
+  "publishedExamples": [
+    {
+      "file": "docs/images/ios/1.18.2/iphone-01-live.png",
+      "capture": "iphone-pro/01 Live portrait.png",
+      "sha256": "54e1161aa276143d97d93231f2a78f789b904944458c00aa806517ad8f0be7ed"
+    },
+    {
+      "file": "docs/images/ios/1.18.2/iphone-02-summary.png",
+      "capture": "iphone-pro/04 Summary portrait.png",
+      "sha256": "cfd30062f0fc4c160d866e50e41d73210a8b5296573b606f899083e8593806eb"
+    },
+    {
+      "file": "docs/images/ios/1.18.2/iphone-03-prompt.png",
+      "capture": "iphone-pro/03 Conversation prompt.png",
+      "sha256": "77bd9dba06573d4cd1a21ad0d073983cc07c023a49abbc2b602f92fd5aa2c35d"
+    },
+    {
+      "file": "docs/images/ios/1.18.2/iphone-04-two-pane.png",
+      "capture": "iphone-pro/02 Live landscape.png",
+      "sha256": "89e6de7d61b938737e2abf5e92c5ca59f902a6fbc444f560e4cbd29e6cb9e8ef"
+    },
+    {
+      "file": "docs/images/ios/1.18.2/ipad-01-workspace.png",
+      "capture": "ipad-pro/01 Live portrait.png",
+      "sha256": "26453c4a13afa6e7623ab5d5f7354f17b95288ce5ab9eb6c6482b2aeecff6440"
+    },
+    {
+      "file": "docs/images/ios/1.18.2/iphone-05-menu.png",
+      "capture": "iphone-max/More menu with Full summary icon.png",
+      "sha256": "366ceb995e1f9d23d81d5e27f18d1b1e9593f5ae857652581644716458686c44"
+    }
+  ]
+}

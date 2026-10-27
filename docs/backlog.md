@@ -38,8 +38,7 @@ What each release contains is in [CHANGELOG.md](../CHANGELOG.md); this is only t
   server or an opt-in Cloud AI service, Quick Summary and Summary (Deep is macOS-only), Save to
   folder, export formats, semantic History search and Ask your history, vocabularies, opt-in saved
   audio and Summarize selection.
-- **Apple Watch** recording is built on `main` behind the `WATCH_EMBED` build flag (off) and not
-  shipped ([#181](https://github.com/tomqwu/ListenToMe/issues/181)).
+- **Apple Watch** source now embeds the companion by default. Its [beta preparation](watch-beta.md) includes explicit upload eligibility and native recovery/cancellation fixes; it is not yet distributed ([#181](https://github.com/tomqwu/ListenToMe/issues/181)). Physical/production acceptance remains pending.
 
 The earlier cockpit redesign PR #51 is superseded by the shipped save/new/history layout and the
 [September design direction](reviews/2026-09-10/production-roadmap.md). It is not in progress.

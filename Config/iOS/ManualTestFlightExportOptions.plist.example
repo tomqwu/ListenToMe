@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>destination</key><string>upload</string>
+    <key>method</key><string>app-store-connect</string>
+    <key>manageAppVersionAndBuildNumber</key><false/>
+    <key>uploadSymbols</key><true/>
+    <key>teamID</key><string>T32FW7PZ3S</string>
+    <key>signingStyle</key><string>manual</string>
+    <key>signingCertificate</key><string>REPLACE_WITH_EXISTING_DISTRIBUTION_CERTIFICATE_SHA1</string>
+    <key>provisioningProfiles</key>
+    <dict>
+        <key>com.tomwu.ListenToMe.ios</key><string>REPLACE_WITH_MANUAL_PHONE_PROFILE_UUID</string>
+        <key>com.tomwu.ListenToMe.ios.share</key><string>REPLACE_WITH_MANUAL_SHARE_PROFILE_UUID</string>
+        <key>com.tomwu.ListenToMe.ios.watchkitapp</key><string>REPLACE_WITH_MANUAL_WATCH_PROFILE_UUID</string>
+    </dict>
+</dict>
+</plist>

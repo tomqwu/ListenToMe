@@ -2,6 +2,8 @@
 > temporary inbox. Save audio recordings now opts Watch imports into the shared playback library.
 > Consent V2 explains reconnect sync and optional retention. Device distribution still waits on #181.
 
+> **October 27 TestFlight publication:** 1.19.0 (38) includes Watch; upload acceptance, processed nested Watch identity, exact-source tag, en-US metadata and existing Dev access are verified. [Current Watch status](../../watch-beta.md) supersedes historical unshipped/embedding checkpoints below. Task 15/20 physical recording/paired transfer/wrist-down/battery/storage and production acceptance remain pending.
+
 # Apple Watch Recording Implementation Plan
 
 > **Status (2026-10-24): built on `main`, not shipped.** Slices 1–3 merged unreleased: Slice 1 in
@@ -1064,8 +1066,7 @@ recorded is being sent to iPhone."
 
 ### Task 21: Release prep for the train that ships the watch
 
-Only after Task 20's acceptance passed on `main`'s code. This is the train's candidate change; the
-AGENTS.md ladder (candidate → verified → published) and downloaded-asset verification apply.
+For production, Task 15/20 physical acceptance remains required. The current AGENTS.md beta exception allows an authorized, validated Watch TestFlight candidate with those checks explicitly pending. The ladder and actual-upload receipt apply. The original Task 21 steps below are historical; use [current beta preparation](../../watch-beta.md) and [the release runbook](../../IOS-RELEASING.md) for explicit eligibility and exported-package checks.
 
 **Files:**
 - Modify: `project.yml`, `Makefile`, `scripts/ios-testflight.sh`, `scripts/test-ios-testflight.py`,

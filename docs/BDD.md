@@ -9,6 +9,15 @@ scoped repository-relative `covers` patterns and `bindings`. This is a native-te
 XCTest and Python unittest execute the assertions. JSON carries the behavior contract and exact
 test selector, so there is no duplicate Cucumber implementation or dependency to keep in sync.
 
+`RELEASE-009` binds explicit manual TestFlight signing to offline upload decisions, invalid-file/field refusal, dry runs, exact phone/Share/Watch profile maps, unchanged automatic defaults, private options snapshots that survive changes to the original file, and accepted-receipt provenance. Exported native signatures/profiles and Apple upload/processing/tester readback remain separate release gates.
+
+The Mac Store draft uses `RELEASE-010`–`RELEASE-013` for its generated sandbox configuration,
+existing DMG/Dev identities, vault bookmarks and selected-file/folder reference scopes. These were
+`RELEASE-006`–`RELEASE-009` on the draft before the Watch train added its own scenarios to main.
+Integration preserves main's IDs and remaps only the unmerged Mac examples; their original red/green
+evidence remains valid under that explicit mapping. Temporary-directory bookmark tests do not prove
+installed sandbox picker grants across relaunch, which remain manual acceptance.
+
 ## Working an issue
 
 Finish the current change through validation, review, CI and merge before opening another feature
@@ -73,6 +82,12 @@ Native property tests also need reachable user controls: the opt-out contract in
 Settings-switch test while recording, rather than treating a direct property assignment as UI proof.
 See [speaker evidence and acceptance](speaker-identification.md).
 
+## Watch durability and beta eligibility
+
+`WATCH-005`–`WATCH-014` exercise native AAC encoding/reading, crash recovery, metadata-first handoff, duplicate/conflicting chunks, end-marker storage failure, continued recording boundaries, pending counts, active-recording protection and Delete/relaunch. Transport and audio-session adapters isolate tests from real WatchConnectivity and microphone capture. Red evidence is retained separately from passing baseline adoption and test-harness failures; simulator assertions never prove physical delivery or wrist-down/battery acceptance.
+
+`RELEASE-003`, `RELEASE-006` and `RELEASE-007` separately cover default embedding, explicit Watch beta selection and refusal of unintended or malformed companions. A generated PBX configuration, a built embedded app and a distribution-signed exported IPA are separate checks. Current AGENTS.md permits authorized beta distribution with physical acceptance recorded as pending; it does not authorize a public App Store submission.
+
 ## Release-history accessibility acceptance
 
 `RELEASE-004` includes the actual oldest release heading and fixed Continue control at the largest
@@ -119,6 +134,16 @@ The October 26 acceptance caught that guard failing; the repaired helper then pa
 iPhone/iPad with a synthetic phrase played only after native Listening confirmation. This is a
 harness repair, not an invented product-regression red. Retain the earlier failures and distinguish
 Play/Pause-control acceptance from audible playback quality, and basic capture from speaker accuracy.
+
+## Native log evidence
+
+`DEV-008` covers a real aggregate-validation failure: macOS joined a timestamped framework diagnostic
+to a complete XCTest pass record. The native result bundle reported all 39 Mac tests passing, but
+the line-start-only verifier missed one bound selector and stopped validation before Watch/e2e.
+The verifier now extracts the exact class/method from a complete passing XCTest event, allowing
+that framework prefix without accepting diagnostic mentions, other selectors, skipped/failed tests
+or incomplete records. The original run remains failed; new offline regression cases and the saved
+native log verify the parser fix before the full candidate validation is repeated.
 
 ## Commands and enforcement
 

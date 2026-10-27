@@ -1,7 +1,0 @@
-# Embeds the Apple Watch app in the iOS app. project.yml includes this file only when the project is
-# generated with WATCH_EMBED=YES (issue #181, decision 4); Task 21 of the watch plan makes it permanent.
-targets:
-  ListenToMeIOS:
-    dependencies:
-      - target: ListenToMeWatch
-        embed: true

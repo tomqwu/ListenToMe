@@ -6,8 +6,8 @@ import WatchKit
 /// shows why, with Continue after an interruption.
 struct WatchRecordingView: View {
     let recorder: WatchRecorder
-    @State private var problem: String?
-    @State private var isContinuing = false
+    let preparation: WatchPreparation
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
@@ -31,7 +31,7 @@ struct WatchRecordingView: View {
                             Text(reason ?? "Recording stopped.")
                                 .font(.footnote)
                                 .multilineTextAlignment(.center)
-                            if let problem {
+                            if let problem = preparation.problem {
                                 Text(problem)
                                     .font(.footnote)
                                     .multilineTextAlignment(.center)
@@ -42,15 +42,22 @@ struct WatchRecordingView: View {
                                 }
                                 Button("Continue", action: resume)
                                     .tint(.red)
-                                    .disabled(isContinuing || !recorder.availability.canRun)
+                                    .disabled(preparation.isPending || !recorder.availability.canRun)
                             }
-                            Button("Done") { recorder.stop() }
+                            Button("Done") { preparation.cancel(); recorder.stop() }
                         }
                     }
                 case .idle:
                     EmptyView()
                 }
             }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            preparation.sceneChanged(phase, isRecording: recorder.isRecording) { recorder.stop() }
+        }
+        .onDisappear {
+            // Explicit Done/dismissal cancels through the owning root; inactive consent is allowed.
+            preparation.sceneChanged(scenePhase, isRecording: recorder.isRecording) { recorder.stop() }
         }
     }
 
@@ -60,17 +67,9 @@ struct WatchRecordingView: View {
     }
 
     private func resume() {
-        isContinuing = true
-        problem = nil
-        Task {
-            defer { isContinuing = false }
-            do {
-                try await recorder.continueRecording()
-                WKInterfaceDevice.current().play(.start)
-            } catch {
-                problem = error.localizedDescription
-                WKInterfaceDevice.current().play(.failure)
-            }
-        }
+        let currentRecorder = recorder
+        preparation.run(operation: { try await currentRecorder.continueRecording() },
+                        onSuccess: { WKInterfaceDevice.current().play(.start) },
+                        onFailure: { WKInterfaceDevice.current().play(.failure) })
     }
 }

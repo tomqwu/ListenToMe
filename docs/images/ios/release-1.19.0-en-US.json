@@ -1,0 +1,1200 @@
+{
+  "version": "1.19.0",
+  "build": "38",
+  "captureSource": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+  "releaseSource": "e43244f752712ac80e179e35c893e967aea38753",
+  "locale": "en-US",
+  "region": "US",
+  "screenshotCount": 43,
+  "nativeCaptureTestsPassed": 14,
+  "visualReview": "43 individually inspected; per-asset approval and QA exclusions authoritative",
+  "physicalAcceptance": "Not performed; not production-ready",
+  "listingUpload": "Pending separately authorized production submission",
+  "watchListingRule": "Use one accepted size consistently across locales:416x496 or422x514.42mm and consent/recovery/offline are QA only. Offline clock/text overlap excludes those images.",
+  "categories": [
+    {
+      "category": "iphone-pro",
+      "runtime": "iOS26.5",
+      "evidenceDirectory": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch181-beta/release-screenshots",
+      "simulator": "6A0E457A-65F4-4967-BA36-760E93E7CBE0",
+      "assets": [
+        {
+          "name": "More menu with Full summary icon_0_33905830-4607-4941-9466-F58FA60EFE8E.png",
+          "test": "MobileDesignUITests/testFullSummaryMenuRendersIconAndOpensSheet()",
+          "deviceId": "6A0E457A-65F4-4967-BA36-760E93E7CBE0",
+          "original": "iphone-pro/originals/00A40F9C-C925-48B4-818B-271EA5F3D36A.png",
+          "originalSHA256": "c1c7ebe134a28130aed5a6e4d49549ae908b23eec2aa34b0e8e4fdd8d6cb6028",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "normalized": "iphone-pro/More menu with Full summary icon.png",
+          "normalizedSHA256": "b3fb03f1de347deff5425b29038b3abc4b71e27ca52078c580ca4c1de6d636a0",
+          "pixels": [
+            1206,
+            2622
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T06:56:33.640551+00:00",
+            "normalizedSHA256": "b3fb03f1de347deff5425b29038b3abc4b71e27ca52078c580ca4c1de6d636a0",
+            "notes": "Inspected at original native resolution; controls and synthetic content readable; no keyboard or unintended alert.",
+            "reviewer": "root"
+          }
+        },
+        {
+          "name": "06 Settings_0_9613036C-B56C-4FDC-990D-2E37C37D42F1.png",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "6A0E457A-65F4-4967-BA36-760E93E7CBE0",
+          "original": "iphone-pro/originals/BAFF854E-775D-42B0-AAF1-A48F59523DF7.png",
+          "originalSHA256": "eaa53a12e5b47532f054cc2a45821c2e1fe7e2626c951a988b2187641f1f0a41",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "normalized": "iphone-pro/06 Settings.png",
+          "normalizedSHA256": "1f84acba2310a0afcafe1ba40457f35cd133ab0394069f3e2cb629b14d1181e0",
+          "pixels": [
+            1206,
+            2622
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T06:56:33.640836+00:00",
+            "normalizedSHA256": "1f84acba2310a0afcafe1ba40457f35cd133ab0394069f3e2cb629b14d1181e0",
+            "notes": "Native scrollable Settings viewport; provider/correction disclosure readable, lower rows continue below viewport.",
+            "reviewer": "root"
+          }
+        },
+        {
+          "name": "05 Conversation history_0_4E729B05-93E8-4054-B2AE-37C81BDD9CAE.png",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "6A0E457A-65F4-4967-BA36-760E93E7CBE0",
+          "original": "iphone-pro/originals/D8E1B2E3-EF0A-4D97-91BE-91EE30756A25.png",
+          "originalSHA256": "b0d21ea810659e33d9d3d00b9395291f184ad6e67ce9a131d415885a0500b2a5",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "normalized": "iphone-pro/05 Conversation history.png",
+          "normalizedSHA256": "0301be8be6c70b99f495101af85254ef0448428f1636397796895723ef9eea76",
+          "pixels": [
+            1206,
+            2622
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T06:56:33.640921+00:00",
+            "normalizedSHA256": "0301be8be6c70b99f495101af85254ef0448428f1636397796895723ef9eea76",
+            "notes": "Native History preview intentionally truncates the excerpt with ellipsis; title, gestures, delete action and search remain readable.",
+            "reviewer": "root"
+          }
+        },
+        {
+          "name": "04 Summary portrait_0_2D0C3700-0630-479D-AEE8-DFC26EF0F25F.png",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "6A0E457A-65F4-4967-BA36-760E93E7CBE0",
+          "original": "iphone-pro/originals/FC4B8F5C-F6CE-4F71-BD0E-1F58866AF407.png",
+          "originalSHA256": "09732bf74036e1357af737d6c919c23768c09f3399394286ddc69a2dcaeacbd7",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "normalized": "iphone-pro/04 Summary portrait.png",
+          "normalizedSHA256": "5450d581f44c878b03cb0a77f0fe3addcb52da882495ceef66399a066b1ca31f",
+          "pixels": [
+            1206,
+            2622
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T06:56:33.641253+00:00",
+            "normalizedSHA256": "5450d581f44c878b03cb0a77f0fe3addcb52da882495ceef66399a066b1ca31f",
+            "notes": "Inspected at original native resolution; controls and synthetic content readable; no keyboard or unintended alert.",
+            "reviewer": "root"
+          }
+        },
+        {
+          "name": "03 Conversation prompt_0_6F8384D6-4D42-40A3-A761-C7A4275F0BBF.png",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "6A0E457A-65F4-4967-BA36-760E93E7CBE0",
+          "original": "iphone-pro/originals/2D951024-CC92-427A-9151-B4C0D72D9E81.png",
+          "originalSHA256": "732d52c1933a4ea5b35b24e559d1f31d84210af3ff84e765df831becb99d2cab",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "normalized": "iphone-pro/03 Conversation prompt.png",
+          "normalizedSHA256": "6c235cfc14c73f1887149b256af2ff25e86aacc84f2b4cad7f358957a6b78f45",
+          "pixels": [
+            1206,
+            2622
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T06:56:33.641374+00:00",
+            "normalizedSHA256": "6c235cfc14c73f1887149b256af2ff25e86aacc84f2b4cad7f358957a6b78f45",
+            "notes": "Inspected at original native resolution; controls and synthetic content readable; no keyboard or unintended alert.",
+            "reviewer": "root"
+          }
+        },
+        {
+          "name": "02 Live landscape_0_0E503B90-A621-4808-9C3A-5ECE8F9EB64A.png",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "6A0E457A-65F4-4967-BA36-760E93E7CBE0",
+          "original": "iphone-pro/originals/A57ED9AD-D1B5-48F2-8BF5-1ECEC3571798.png",
+          "originalSHA256": "c4e9e39074606b6efb933a7f5ccce54e9a501547781115cf08852c17221e089d",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "normalized": "iphone-pro/02 Live landscape.png",
+          "normalizedSHA256": "89e6de7d61b938737e2abf5e92c5ca59f902a6fbc444f560e4cbd29e6cb9e8ef",
+          "pixels": [
+            2622,
+            1206
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T06:56:33.641600+00:00",
+            "normalizedSHA256": "89e6de7d61b938737e2abf5e92c5ca59f902a6fbc444f560e4cbd29e6cb9e8ef",
+            "notes": "Inspected native viewport and intentional scroll/Latest overlay; recording controls and two-pane headings fit without clipped controls.",
+            "reviewer": "root"
+          }
+        },
+        {
+          "name": "01 Live portrait_0_E87187C3-674D-4760-B1AC-E8C793AAB086.png",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "6A0E457A-65F4-4967-BA36-760E93E7CBE0",
+          "original": "iphone-pro/originals/87AA215C-2917-4972-8AF0-F21D9D15384F.png",
+          "originalSHA256": "b3ca32e3ac76f6b7d741d7536694e15fb69975b834229748376a15642f4858e0",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "normalized": "iphone-pro/01 Live portrait.png",
+          "normalizedSHA256": "73d6affb63ab20c2d41a0ca8533bab17f68fc49a3361c9f11e8ede5a658217f8",
+          "pixels": [
+            1206,
+            2622
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T06:56:33.641918+00:00",
+            "normalizedSHA256": "73d6affb63ab20c2d41a0ca8533bab17f68fc49a3361c9f11e8ede5a658217f8",
+            "notes": "Inspected native viewport and intentional scroll/Latest overlay; recording controls and two-pane headings fit without clipped controls.",
+            "reviewer": "root"
+          }
+        }
+      ]
+    },
+    {
+      "category": "iphone-max",
+      "runtime": "iOS26.5",
+      "evidenceDirectory": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch181-beta/release-screenshots",
+      "simulator": "182489CC-16C7-4A7B-8FDF-20C570B67849",
+      "assets": [
+        {
+          "name": "More menu with Full summary icon_0_C7A8AB15-E140-4517-80DE-5E6CB750590B.png",
+          "test": "MobileDesignUITests/testFullSummaryMenuRendersIconAndOpensSheet()",
+          "deviceId": "182489CC-16C7-4A7B-8FDF-20C570B67849",
+          "original": "iphone-max/originals/65565E23-8589-45AB-9526-A2A24433826D.png",
+          "originalSHA256": "9521fa339fb6a5ce9d8f8e3ede535034774d06161f9e9f97381b2cf5042220e1",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "normalized": "iphone-max/More menu with Full summary icon.png",
+          "normalizedSHA256": "1afcb09af1c948db8a6f419ec9ab8c56d9162c0185870fff675fdd7a95c88f98",
+          "pixels": [
+            1320,
+            2868
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T06:57:11.936573+00:00",
+            "normalizedSHA256": "1afcb09af1c948db8a6f419ec9ab8c56d9162c0185870fff675fdd7a95c88f98",
+            "notes": "Inspected at original native resolution. Controls/readable synthetic content fit; scrollable transcript/Quick/Settings viewports and History excerpt truncation are intentional. Full summary icon visible; no keyboard or unintended alert.",
+            "reviewer": "root"
+          }
+        },
+        {
+          "name": "06 Settings_0_B4E0642C-2A7A-402C-9E2E-2EA6581D2C0C.png",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "182489CC-16C7-4A7B-8FDF-20C570B67849",
+          "original": "iphone-max/originals/8A99D666-BCFA-447D-8E20-BC7E427322AD.png",
+          "originalSHA256": "8042d1b9d8f67f6715efcd70ec56fdfee01ad1ab49a683c40206d896ab68c4fb",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "normalized": "iphone-max/06 Settings.png",
+          "normalizedSHA256": "cd338976ce3e23fb73926f0600494ea73193dcb44edc3bdc3868d19306b49089",
+          "pixels": [
+            1320,
+            2868
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T06:57:11.936990+00:00",
+            "normalizedSHA256": "cd338976ce3e23fb73926f0600494ea73193dcb44edc3bdc3868d19306b49089",
+            "notes": "Inspected at original native resolution. Controls/readable synthetic content fit; scrollable transcript/Quick/Settings viewports and History excerpt truncation are intentional. Full summary icon visible; no keyboard or unintended alert.",
+            "reviewer": "root"
+          }
+        },
+        {
+          "name": "05 Conversation history_0_73325783-C9B1-47C0-ADC5-FF2B80A63769.png",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "182489CC-16C7-4A7B-8FDF-20C570B67849",
+          "original": "iphone-max/originals/C7D178D3-3C72-452E-9687-139F58679AFE.png",
+          "originalSHA256": "1fd612fe2497c4e28ed06d035532a61a7039d0a62bd5fa28ad8a6401fe57e6c0",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "normalized": "iphone-max/05 Conversation history.png",
+          "normalizedSHA256": "1c6e4ba661014c162336382214f885bc429945399371216e45f4dc3c6e6dc659",
+          "pixels": [
+            1320,
+            2868
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T06:57:11.937093+00:00",
+            "normalizedSHA256": "1c6e4ba661014c162336382214f885bc429945399371216e45f4dc3c6e6dc659",
+            "notes": "Inspected at original native resolution. Controls/readable synthetic content fit; scrollable transcript/Quick/Settings viewports and History excerpt truncation are intentional. Full summary icon visible; no keyboard or unintended alert.",
+            "reviewer": "root"
+          }
+        },
+        {
+          "name": "04 Summary portrait_0_426C347F-B723-4F5E-BA09-676222E6BE01.png",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "182489CC-16C7-4A7B-8FDF-20C570B67849",
+          "original": "iphone-max/originals/EA335D05-4A87-4743-9607-7AF2129E0481.png",
+          "originalSHA256": "c41fed7d20c20a39a87b35dbc5f75096563a18b3c6444cc69a63d63befee9a5b",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "normalized": "iphone-max/04 Summary portrait.png",
+          "normalizedSHA256": "f704390404716fe04b09ddc9818a56c1759397f33025c54f91d267d400715069",
+          "pixels": [
+            1320,
+            2868
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T06:57:11.937521+00:00",
+            "normalizedSHA256": "f704390404716fe04b09ddc9818a56c1759397f33025c54f91d267d400715069",
+            "notes": "Inspected at original native resolution. Controls/readable synthetic content fit; scrollable transcript/Quick/Settings viewports and History excerpt truncation are intentional. Full summary icon visible; no keyboard or unintended alert.",
+            "reviewer": "root"
+          }
+        },
+        {
+          "name": "03 Conversation prompt_0_FCD0B2D1-8D1D-43AE-BE94-4EDBF121FD00.png",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "182489CC-16C7-4A7B-8FDF-20C570B67849",
+          "original": "iphone-max/originals/15ADFF20-CFAC-4870-95CB-49389F170470.png",
+          "originalSHA256": "4297018c8838eb9fc75cd33c3bc466336c924f856ac802cd3a236d87391d01cb",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "normalized": "iphone-max/03 Conversation prompt.png",
+          "normalizedSHA256": "bbf05bac6fe8885a45aef25caef23fee89bce086e4615ab69ff7c385c76eaee3",
+          "pixels": [
+            1320,
+            2868
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T06:57:11.937699+00:00",
+            "normalizedSHA256": "bbf05bac6fe8885a45aef25caef23fee89bce086e4615ab69ff7c385c76eaee3",
+            "notes": "Inspected at original native resolution. Controls/readable synthetic content fit; scrollable transcript/Quick/Settings viewports and History excerpt truncation are intentional. Full summary icon visible; no keyboard or unintended alert.",
+            "reviewer": "root"
+          }
+        },
+        {
+          "name": "02 Live landscape_0_501088EB-F758-4E93-AB35-4C4F7AD0EBC9.png",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "182489CC-16C7-4A7B-8FDF-20C570B67849",
+          "original": "iphone-max/originals/6E5C1221-20A9-4485-8B68-3E2835D83E7D.png",
+          "originalSHA256": "c342d27bac54efabdce0c43475ff8af27bca9444eaa14a841eb181ebd97f72d2",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "normalized": "iphone-max/02 Live landscape.png",
+          "normalizedSHA256": "9d8518c1ca750be6d0426203448a05e2e35d0309ba644530f07b150b3b8c4fd4",
+          "pixels": [
+            2868,
+            1320
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T06:57:11.938008+00:00",
+            "normalizedSHA256": "9d8518c1ca750be6d0426203448a05e2e35d0309ba644530f07b150b3b8c4fd4",
+            "notes": "Inspected at original native resolution. Controls/readable synthetic content fit; scrollable transcript/Quick/Settings viewports and History excerpt truncation are intentional. Full summary icon visible; no keyboard or unintended alert.",
+            "reviewer": "root"
+          }
+        },
+        {
+          "name": "01 Live portrait_0_D1BF330D-EB3A-4650-A08E-4F382702682D.png",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "182489CC-16C7-4A7B-8FDF-20C570B67849",
+          "original": "iphone-max/originals/06B073F1-7286-41EA-AA86-0DCD644DC0D4.png",
+          "originalSHA256": "920d6624b5b85b3c372eba9de9b367f5d42b2dc4ec59f69a7591f4397ec0acf6",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "normalized": "iphone-max/01 Live portrait.png",
+          "normalizedSHA256": "b73e80781e81e9423ecccb93ecd15d550096c6d3d069a5e6668104d9d5a69794",
+          "pixels": [
+            1320,
+            2868
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T06:57:11.938432+00:00",
+            "normalizedSHA256": "b73e80781e81e9423ecccb93ecd15d550096c6d3d069a5e6668104d9d5a69794",
+            "notes": "Inspected at original native resolution. Controls/readable synthetic content fit; scrollable transcript/Quick/Settings viewports and History excerpt truncation are intentional. Full summary icon visible; no keyboard or unintended alert.",
+            "reviewer": "root"
+          }
+        }
+      ]
+    },
+    {
+      "category": "ipad-mini",
+      "runtime": "iOS26.5",
+      "evidenceDirectory": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch181-beta/release-screenshots",
+      "simulator": "CD5AC4B0-C28B-4CCA-8F11-1F7624B49A5A",
+      "assets": [
+        {
+          "name": "More menu with Full summary icon_0_A4223EB4-8036-47CD-8C32-95121811BEE4.png",
+          "test": "MobileDesignUITests/testFullSummaryMenuRendersIconAndOpensSheet()",
+          "deviceId": "CD5AC4B0-C28B-4CCA-8F11-1F7624B49A5A",
+          "original": "ipad-mini/originals/AFF5092E-96EF-469E-9154-656A41D06DC1.png",
+          "originalSHA256": "bb14cd2cbc4b4f8a9c64db5147522048b168347ed5a89d77cbef95bdc3f399d5",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "normalized": "ipad-mini/More menu with Full summary icon.png",
+          "normalizedSHA256": "88d476619d77a9bb8bb0b9c1fdd501a24f80323124f1321b986e7b7a717ed640",
+          "pixels": [
+            1488,
+            2266
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T06:59:03.357205+00:00",
+            "normalizedSHA256": "88d476619d77a9bb8bb0b9c1fdd501a24f80323124f1321b986e7b7a717ed640",
+            "reviewer": "root",
+            "notes": "Inspected original native iPadMini resolution. Two-pane portrait/landscape and primary controls/readable synthetic content fit. Prompt form intentionally scrolled to instructions, Settings extends below viewport, History preview ellipsis is intentional. Full summary icon visible; no keyboard/unintended alert."
+          }
+        },
+        {
+          "name": "06 Settings_0_B6E541D6-6466-4A31-878A-44031F6E692F.png",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "CD5AC4B0-C28B-4CCA-8F11-1F7624B49A5A",
+          "original": "ipad-mini/originals/38F22E7D-888C-4786-A49D-FC1CD48915FB.png",
+          "originalSHA256": "24cf9e645d2df2e081bc1567d55d1c8ac66d93763fe23045d7d52c34194303ed",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "normalized": "ipad-mini/06 Settings.png",
+          "normalizedSHA256": "110841e62fdf30a5d6d01e2122f439b9afcb4e43789161a23fc5ce62c3c7e29b",
+          "pixels": [
+            1488,
+            2266
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T06:59:03.357585+00:00",
+            "normalizedSHA256": "110841e62fdf30a5d6d01e2122f439b9afcb4e43789161a23fc5ce62c3c7e29b",
+            "reviewer": "root",
+            "notes": "Inspected original native iPadMini resolution. Two-pane portrait/landscape and primary controls/readable synthetic content fit. Prompt form intentionally scrolled to instructions, Settings extends below viewport, History preview ellipsis is intentional. Full summary icon visible; no keyboard/unintended alert."
+          }
+        },
+        {
+          "name": "05 Conversation history_0_BC44B07E-ED30-454B-87A3-313C42C0C35D.png",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "CD5AC4B0-C28B-4CCA-8F11-1F7624B49A5A",
+          "original": "ipad-mini/originals/9F43EFE9-72CE-4298-A6B3-1459AEC10F80.png",
+          "originalSHA256": "685e007f89dfee073abb92c006e14a53811bab7e2027b3def486df37cc145183",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "normalized": "ipad-mini/05 Conversation history.png",
+          "normalizedSHA256": "d4b72cc37b5a1b440ff163656cb4b3c951c0fce7a99cbcb991c5217a66c5d7b1",
+          "pixels": [
+            1488,
+            2266
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T06:59:03.357762+00:00",
+            "normalizedSHA256": "d4b72cc37b5a1b440ff163656cb4b3c951c0fce7a99cbcb991c5217a66c5d7b1",
+            "reviewer": "root",
+            "notes": "Inspected original native iPadMini resolution. Two-pane portrait/landscape and primary controls/readable synthetic content fit. Prompt form intentionally scrolled to instructions, Settings extends below viewport, History preview ellipsis is intentional. Full summary icon visible; no keyboard/unintended alert."
+          }
+        },
+        {
+          "name": "04 Summary portrait_0_3ECC23C5-E416-41DE-8F13-2C1C3C82267F.png",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "CD5AC4B0-C28B-4CCA-8F11-1F7624B49A5A",
+          "original": "ipad-mini/originals/816632E1-8177-4FB3-AF66-0F476EB59F54.png",
+          "originalSHA256": "0d81d077a50f49b3684831921a9790f9e03c6cc9bc285c07d33b3777ec9a6fd7",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "normalized": "ipad-mini/04 Summary portrait.png",
+          "normalizedSHA256": "038d3e99f796cad1e87cda226676de5984b66f40b6f99ca02d464096136a02fd",
+          "pixels": [
+            1488,
+            2266
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T06:59:03.357925+00:00",
+            "normalizedSHA256": "038d3e99f796cad1e87cda226676de5984b66f40b6f99ca02d464096136a02fd",
+            "reviewer": "root",
+            "notes": "Inspected original native iPadMini resolution. Two-pane portrait/landscape and primary controls/readable synthetic content fit. Prompt form intentionally scrolled to instructions, Settings extends below viewport, History preview ellipsis is intentional. Full summary icon visible; no keyboard/unintended alert."
+          }
+        },
+        {
+          "name": "03 Conversation prompt_0_DB61C574-7B5D-4AA5-B5EF-D1CE71343483.png",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "CD5AC4B0-C28B-4CCA-8F11-1F7624B49A5A",
+          "original": "ipad-mini/originals/092553C9-DFCF-4C01-BA3B-854A5CA177A5.png",
+          "originalSHA256": "8dee0d2eceee5fbe29b4d10238ba79d9be688e8a7f65b9cf217eb6efa49f1c4c",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "normalized": "ipad-mini/03 Conversation prompt.png",
+          "normalizedSHA256": "8a944b46b9547fef16331d6dc4bda1c1aff951fb59514dc542a407a61c0fcd19",
+          "pixels": [
+            1488,
+            2266
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T06:59:03.358124+00:00",
+            "normalizedSHA256": "8a944b46b9547fef16331d6dc4bda1c1aff951fb59514dc542a407a61c0fcd19",
+            "reviewer": "root",
+            "notes": "Inspected original native iPadMini resolution. Two-pane portrait/landscape and primary controls/readable synthetic content fit. Prompt form intentionally scrolled to instructions, Settings extends below viewport, History preview ellipsis is intentional. Full summary icon visible; no keyboard/unintended alert."
+          }
+        },
+        {
+          "name": "02 Live landscape_0_F6B4A4B8-E5C9-4B99-BF34-A9245C52A151.png",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "CD5AC4B0-C28B-4CCA-8F11-1F7624B49A5A",
+          "original": "ipad-mini/originals/C0888871-1B2B-4260-973B-D4E1A1C5B4F8.png",
+          "originalSHA256": "0712a3c4037e7c29b1be1c29beb45fb48db26f625b111b7dbbc2cbb17c03c1f8",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "normalized": "ipad-mini/02 Live landscape.png",
+          "normalizedSHA256": "19e2a53be5620d85ea70596c00c8b46bd4d330dff35cc33e56977137d4047f41",
+          "pixels": [
+            2266,
+            1488
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T06:59:03.358282+00:00",
+            "normalizedSHA256": "19e2a53be5620d85ea70596c00c8b46bd4d330dff35cc33e56977137d4047f41",
+            "reviewer": "root",
+            "notes": "Inspected original native iPadMini resolution. Two-pane portrait/landscape and primary controls/readable synthetic content fit. Prompt form intentionally scrolled to instructions, Settings extends below viewport, History preview ellipsis is intentional. Full summary icon visible; no keyboard/unintended alert."
+          }
+        },
+        {
+          "name": "01 Live portrait_0_CBBCC4A4-51D6-4A97-8813-149A70D213BF.png",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "CD5AC4B0-C28B-4CCA-8F11-1F7624B49A5A",
+          "original": "ipad-mini/originals/4DC869DA-F4B8-40C6-AABB-84A0CF05F74D.png",
+          "originalSHA256": "b979f55c7b951f15de147584ee793f6c2430bfd0f25cec62459bee581c96dc3a",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "normalized": "ipad-mini/01 Live portrait.png",
+          "normalizedSHA256": "8f0e60494463716ecb1f1cd2f90dbe787a3c1b0a6f52e6a04f827451558672c9",
+          "pixels": [
+            1488,
+            2266
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T06:59:03.358448+00:00",
+            "normalizedSHA256": "8f0e60494463716ecb1f1cd2f90dbe787a3c1b0a6f52e6a04f827451558672c9",
+            "reviewer": "root",
+            "notes": "Inspected original native iPadMini resolution. Two-pane portrait/landscape and primary controls/readable synthetic content fit. Prompt form intentionally scrolled to instructions, Settings extends below viewport, History preview ellipsis is intentional. Full summary icon visible; no keyboard/unintended alert."
+          }
+        }
+      ]
+    },
+    {
+      "category": "ipad-pro",
+      "runtime": "iOS26.5",
+      "evidenceDirectory": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch181-beta/release-screenshots",
+      "simulator": "B7CF192B-72F8-4A5F-BED6-888B8AB05E32",
+      "assets": [
+        {
+          "name": "More menu with Full summary icon_0_D19B0E19-D9A6-42BC-976B-136D491C8C8F.png",
+          "test": "MobileDesignUITests/testFullSummaryMenuRendersIconAndOpensSheet()",
+          "deviceId": "B7CF192B-72F8-4A5F-BED6-888B8AB05E32",
+          "original": "ipad-pro/originals/F739B375-C97E-4DAB-B80E-C47CBF330D5B.png",
+          "originalSHA256": "82dad4b39bd52fc715b1d3b3801524bb97df508dc05c3a4e4607399dfa686b0c",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "normalized": "ipad-pro/More menu with Full summary icon.png",
+          "normalizedSHA256": "45f906599346f20bda67d2331391506bdef4f80b9d2052b8b6af4e195553c9c1",
+          "pixels": [
+            2064,
+            2752
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T07:03:13.281705+00:00",
+            "reviewer": "independent review_prompt_feature",
+            "normalizedSHA256": "45f906599346f20bda67d2331391506bdef4f80b9d2052b8b6af4e195553c9c1",
+            "notes": "Individually inspected at original native resolution. Controls/readable synthetic content fit. Wide portrait already shows Live, Quick and Summary together, so Live/Summary captures intentionally share a view; Notes/Settings scroll viewports and History ellipsis are expected."
+          }
+        },
+        {
+          "name": "06 Settings_0_27B88F05-8406-4042-900E-35A2853FACF4.png",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "B7CF192B-72F8-4A5F-BED6-888B8AB05E32",
+          "original": "ipad-pro/originals/E9AEA8AC-065C-4F50-B968-C5BCED2EA449.png",
+          "originalSHA256": "00e8878d2aecef9c093c573103939115a7ee323b5d9d862bb3d5c379ffddd420",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "normalized": "ipad-pro/06 Settings.png",
+          "normalizedSHA256": "ad7d2b0a06d716bc24a99f51ce441565fb306a881bb8494650d4ccad16a3e9fa",
+          "pixels": [
+            2064,
+            2752
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T07:03:13.281705+00:00",
+            "reviewer": "independent review_prompt_feature",
+            "normalizedSHA256": "ad7d2b0a06d716bc24a99f51ce441565fb306a881bb8494650d4ccad16a3e9fa",
+            "notes": "Individually inspected at original native resolution. Controls/readable synthetic content fit. Wide portrait already shows Live, Quick and Summary together, so Live/Summary captures intentionally share a view; Notes/Settings scroll viewports and History ellipsis are expected."
+          }
+        },
+        {
+          "name": "05 Conversation history_0_259FCEB5-9B1B-4870-836F-34F960334587.png",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "B7CF192B-72F8-4A5F-BED6-888B8AB05E32",
+          "original": "ipad-pro/originals/72DA9EFE-1C35-4B6A-8EFE-081BECC5AAFE.png",
+          "originalSHA256": "bf8ca066594766de2799d81c491603f93703bd7243fc3b947a117deea19cd216",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "normalized": "ipad-pro/05 Conversation history.png",
+          "normalizedSHA256": "b4f6c3a457e42d68bac6147ce56dba13664b5c4437cb6dbaeb261f4a7311a697",
+          "pixels": [
+            2064,
+            2752
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T07:03:13.281705+00:00",
+            "reviewer": "independent review_prompt_feature",
+            "normalizedSHA256": "b4f6c3a457e42d68bac6147ce56dba13664b5c4437cb6dbaeb261f4a7311a697",
+            "notes": "Individually inspected at original native resolution. Controls/readable synthetic content fit. Wide portrait already shows Live, Quick and Summary together, so Live/Summary captures intentionally share a view; Notes/Settings scroll viewports and History ellipsis are expected."
+          }
+        },
+        {
+          "name": "04 Summary portrait_0_62DF223D-DA32-472A-BA83-801FE0314E33.png",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "B7CF192B-72F8-4A5F-BED6-888B8AB05E32",
+          "original": "ipad-pro/originals/1E700F6A-F29F-4EB2-B574-2460D0E1CAA5.png",
+          "originalSHA256": "d61db8ad3cd542febca138fb7758fce1073671e96a1ecc0238d13d4235e30641",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "normalized": "ipad-pro/04 Summary portrait.png",
+          "normalizedSHA256": "aa9f5bf0c634916bdddbe68a7a7f896dd93029b231d5f0d067885ccded7d3c38",
+          "pixels": [
+            2064,
+            2752
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T07:03:13.281705+00:00",
+            "reviewer": "independent review_prompt_feature",
+            "normalizedSHA256": "aa9f5bf0c634916bdddbe68a7a7f896dd93029b231d5f0d067885ccded7d3c38",
+            "notes": "Individually inspected at original native resolution. Controls/readable synthetic content fit. Wide portrait already shows Live, Quick and Summary together, so Live/Summary captures intentionally share a view; Notes/Settings scroll viewports and History ellipsis are expected."
+          }
+        },
+        {
+          "name": "03 Conversation prompt_0_7131AE18-0EBD-402F-8D0B-45AA14EDD0A2.png",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "B7CF192B-72F8-4A5F-BED6-888B8AB05E32",
+          "original": "ipad-pro/originals/43169EDC-4E81-4E97-88F0-7DE134482F6B.png",
+          "originalSHA256": "4a4abf2df0d237ba65604a4a46d39b16e8454066b0506a41f746d00bf864795a",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "normalized": "ipad-pro/03 Conversation prompt.png",
+          "normalizedSHA256": "79e793ddf5fed81f8f92093d91ee9ada20d0073c42adf1cabc0a24f1b9a11e35",
+          "pixels": [
+            2064,
+            2752
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T07:03:13.281705+00:00",
+            "reviewer": "independent review_prompt_feature",
+            "normalizedSHA256": "79e793ddf5fed81f8f92093d91ee9ada20d0073c42adf1cabc0a24f1b9a11e35",
+            "notes": "Individually inspected at original native resolution. Controls/readable synthetic content fit. Wide portrait already shows Live, Quick and Summary together, so Live/Summary captures intentionally share a view; Notes/Settings scroll viewports and History ellipsis are expected."
+          }
+        },
+        {
+          "name": "02 Live landscape_0_F8ABDCBF-693F-40D1-B5D8-10B2FAD9D5FC.png",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "B7CF192B-72F8-4A5F-BED6-888B8AB05E32",
+          "original": "ipad-pro/originals/E2B2B4CD-EB06-4D59-99EA-8C1D95CB6797.png",
+          "originalSHA256": "d4c493cc0701e1b995448ac2a8fdbc0cb25497f460addef8a5a08bb090131793",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "normalized": "ipad-pro/02 Live landscape.png",
+          "normalizedSHA256": "604871cf7cbd44294557a6eb2f1c4c020e34698ba88f83dbeb956f1c95799e66",
+          "pixels": [
+            2752,
+            2064
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T07:03:13.281705+00:00",
+            "reviewer": "independent review_prompt_feature",
+            "normalizedSHA256": "604871cf7cbd44294557a6eb2f1c4c020e34698ba88f83dbeb956f1c95799e66",
+            "notes": "Individually inspected at original native resolution. Controls/readable synthetic content fit. Wide portrait already shows Live, Quick and Summary together, so Live/Summary captures intentionally share a view; Notes/Settings scroll viewports and History ellipsis are expected."
+          }
+        },
+        {
+          "name": "01 Live portrait_0_A9E173B0-DD12-47D9-96E1-81464F44BC7E.png",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "B7CF192B-72F8-4A5F-BED6-888B8AB05E32",
+          "original": "ipad-pro/originals/8D0A6467-F076-4700-B519-24D2CDE8E57A.png",
+          "originalSHA256": "d61db8ad3cd542febca138fb7758fce1073671e96a1ecc0238d13d4235e30641",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "normalized": "ipad-pro/01 Live portrait.png",
+          "normalizedSHA256": "aa9f5bf0c634916bdddbe68a7a7f896dd93029b231d5f0d067885ccded7d3c38",
+          "pixels": [
+            2064,
+            2752
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T07:03:13.281705+00:00",
+            "reviewer": "independent review_prompt_feature",
+            "normalizedSHA256": "aa9f5bf0c634916bdddbe68a7a7f896dd93029b231d5f0d067885ccded7d3c38",
+            "notes": "Individually inspected at original native resolution. Controls/readable synthetic content fit. Wide portrait already shows Live, Quick and Summary together, so Live/Summary captures intentionally share a view; Notes/Settings scroll viewports and History ellipsis are expected."
+          }
+        }
+      ]
+    },
+    {
+      "category": "watch-46",
+      "runtime": "watchOS-27-0",
+      "evidenceDirectory": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch181-beta/watch-release-screenshots",
+      "simulator": "F0355FBB-4F25-4649-9A72-3AFAFE108BBE",
+      "assets": [
+        {
+          "name": "Watch offline remote_0_605F2F62-5470-4779-90F4-A707706925FF.png",
+          "test": "WatchCapabilityUITests/testDeniedLocalMicrophoneAndOfflineRemoteExplainRecoveryBeforeRecording()",
+          "deviceId": "F0355FBB-4F25-4649-9A72-3AFAFE108BBE",
+          "original": "watch-46/originals/C9395AF1-E492-49D5-AC9F-DF4D4358AAA6.png",
+          "originalSHA256": "3db336031355df05afbf89c6692c93e6590f4d5d230fe08a5314cd477d7caf95",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "normalized": "watch-46/Watch offline remote.png",
+          "normalizedSHA256": "de22c998aed2bacef8e5ac79e6f569c0509e99edd898cde227f9ebe4742c00c0",
+          "pixels": [
+            416,
+            496
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "qa-only",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T07:03:13.281705+00:00",
+            "reviewer": "independent review_prompt_feature; root also inspected all six Home/Recording images",
+            "normalizedSHA256": "de22c998aed2bacef8e5ac79e6f569c0509e99edd898cde227f9ebe4742c00c0",
+            "notes": "Individually inspected at original native resolution; Home/Recording controls and clock unobstructed. Scrolled guidance overlaps system clock; diagnostic only, excluded from listing/hero media."
+          }
+        },
+        {
+          "name": "Watch local microphone recovery_0_779E07A8-6364-4C15-AA65-63777A909F0B.png",
+          "test": "WatchCapabilityUITests/testDeniedLocalMicrophoneAndOfflineRemoteExplainRecoveryBeforeRecording()",
+          "deviceId": "F0355FBB-4F25-4649-9A72-3AFAFE108BBE",
+          "original": "watch-46/originals/4C9A3E46-05E2-434B-B544-12522DDAD6F9.png",
+          "originalSHA256": "5b71e4cd48b6aca4f1f91ce0f044cc4e41a89f2717a38933bcccb23f6e9e83b6",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "normalized": "watch-46/Watch local microphone recovery.png",
+          "normalizedSHA256": "62f79569d51ff19b40aadf176b2bab9f2e16b76a21ffdc35142dd79433be155f",
+          "pixels": [
+            416,
+            496
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "qa-only",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T07:03:13.281705+00:00",
+            "reviewer": "independent review_prompt_feature; root also inspected all six Home/Recording images",
+            "normalizedSHA256": "62f79569d51ff19b40aadf176b2bab9f2e16b76a21ffdc35142dd79433be155f",
+            "notes": "Individually inspected at original native resolution; Home/Recording controls and clock unobstructed. Recovery guidance readable; permission-state QA, not listing hero."
+          }
+        },
+        {
+          "name": "Watch recording and Stop_0_56B75F08-E907-4EEE-A43E-BC93835837C5.png",
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceId": "F0355FBB-4F25-4649-9A72-3AFAFE108BBE",
+          "original": "watch-46/originals/1A924C6C-8F69-4FC9-B3A4-E18C88AD5BA3.png",
+          "originalSHA256": "006399c01da1d9f8bb53f6a372de2a1bf41dd370e3392ddcdd3ef76f6b871296",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "normalized": "watch-46/Watch recording and Stop.png",
+          "normalizedSHA256": "291239770978faaa3724c34c8f785e6d4824f67d7a7c237e373ad6522ecaad23",
+          "pixels": [
+            416,
+            496
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T07:03:13.281705+00:00",
+            "reviewer": "independent review_prompt_feature; root also inspected all six Home/Recording images",
+            "normalizedSHA256": "291239770978faaa3724c34c8f785e6d4824f67d7a7c237e373ad6522ecaad23",
+            "notes": "Individually inspected at original native resolution; Home/Recording controls and clock unobstructed."
+          },
+          "repositoryPreview": "docs/images/watch/1.19.0/watch-46-recording-and-stop.png"
+        },
+        {
+          "name": "Watch recording consent_0_5E4A8B69-7442-4B57-82E7-32AB30EAA9A8.png",
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceId": "F0355FBB-4F25-4649-9A72-3AFAFE108BBE",
+          "original": "watch-46/originals/AAD4E340-DFF2-4C07-9180-010828D6D653.png",
+          "originalSHA256": "13c937ca35da6d199c70fc64a6e739831844f4040399b30cfdb5539f1cfb2d8f",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "normalized": "watch-46/Watch recording consent.png",
+          "normalizedSHA256": "9598248f90aa174c810c3a0fc96d702f9dd1a15ceabebbca55c19c9d31ce3324",
+          "pixels": [
+            416,
+            496
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "qa-only",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T07:03:13.281705+00:00",
+            "reviewer": "independent review_prompt_feature; root also inspected all six Home/Recording images",
+            "normalizedSHA256": "9598248f90aa174c810c3a0fc96d702f9dd1a15ceabebbca55c19c9d31ce3324",
+            "notes": "Individually inspected at original native resolution; Home/Recording controls and clock unobstructed. Long consent table is a partial scrolling viewport with confirmation controls outside this image; QA only."
+          }
+        },
+        {
+          "name": "Watch ready home_0_C444AF1C-5CE3-4959-83FB-B62B5CD0F10A.png",
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceId": "F0355FBB-4F25-4649-9A72-3AFAFE108BBE",
+          "original": "watch-46/originals/5DB76D09-386B-48AF-8A5F-DF1D639E184D.png",
+          "originalSHA256": "8cbd895388dad815cbd43360ea6a6bddea512015c3ed5b987c5379ecf13c1fcd",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "normalized": "watch-46/Watch ready home.png",
+          "normalizedSHA256": "cd9b834e2847ccb3ed50f751902ff5dd9058e9dde7f319bbd4f40d99a4af02f9",
+          "pixels": [
+            416,
+            496
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T07:03:13.281705+00:00",
+            "reviewer": "independent review_prompt_feature; root also inspected all six Home/Recording images",
+            "normalizedSHA256": "cd9b834e2847ccb3ed50f751902ff5dd9058e9dde7f319bbd4f40d99a4af02f9",
+            "notes": "Individually inspected at original native resolution; Home/Recording controls and clock unobstructed."
+          },
+          "repositoryPreview": "docs/images/watch/1.19.0/watch-46-ready-home.png"
+        }
+      ]
+    },
+    {
+      "category": "watch-42",
+      "runtime": "watchOS-27-0",
+      "evidenceDirectory": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch181-beta/watch-release-screenshots",
+      "simulator": "09F5511B-FD37-4DA8-A78C-324611871523",
+      "assets": [
+        {
+          "name": "Watch offline remote_0_9CB60985-0A24-456F-866F-9256D2BCDB56.png",
+          "test": "WatchCapabilityUITests/testDeniedLocalMicrophoneAndOfflineRemoteExplainRecoveryBeforeRecording()",
+          "deviceId": "09F5511B-FD37-4DA8-A78C-324611871523",
+          "original": "watch-42/originals/13511AF0-FB90-435D-B434-DE4225A22CAC.png",
+          "originalSHA256": "217fae49fbf1465a9b67592097e89e9c52c5375ce3735c09fc16e21fc0efdc66",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "normalized": "watch-42/Watch offline remote.png",
+          "normalizedSHA256": "3013b016c6908277e9bb586e6dddc1c9472c171046e136ad3209da9d526c6489",
+          "pixels": [
+            374,
+            446
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "qa-only",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T07:03:13.281705+00:00",
+            "reviewer": "independent review_prompt_feature; root also inspected all six Home/Recording images",
+            "normalizedSHA256": "3013b016c6908277e9bb586e6dddc1c9472c171046e136ad3209da9d526c6489",
+            "notes": "Individually inspected at original native resolution; Home/Recording controls and clock unobstructed. Native374x446 is compact layout QA only; not an accepted Apple store size. Scrolled guidance overlaps system clock; diagnostic only, excluded from listing/hero media."
+          }
+        },
+        {
+          "name": "Watch local microphone recovery_0_990D7391-AC2D-49A9-9673-B0A9C8CEBE1D.png",
+          "test": "WatchCapabilityUITests/testDeniedLocalMicrophoneAndOfflineRemoteExplainRecoveryBeforeRecording()",
+          "deviceId": "09F5511B-FD37-4DA8-A78C-324611871523",
+          "original": "watch-42/originals/F6CFDFBC-5E9E-49CE-9B40-EE17BCD3475E.png",
+          "originalSHA256": "b605140f4bd987e4dea42d83d37a85a6c94508a863f5002aae96a1263bf91d3b",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "normalized": "watch-42/Watch local microphone recovery.png",
+          "normalizedSHA256": "2d4485da219a04e54a5b339e1922c616500606ed813546c04af1447fc85cd38c",
+          "pixels": [
+            374,
+            446
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "qa-only",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T07:03:13.281705+00:00",
+            "reviewer": "independent review_prompt_feature; root also inspected all six Home/Recording images",
+            "normalizedSHA256": "2d4485da219a04e54a5b339e1922c616500606ed813546c04af1447fc85cd38c",
+            "notes": "Individually inspected at original native resolution; Home/Recording controls and clock unobstructed. Native374x446 is compact layout QA only; not an accepted Apple store size. Recovery guidance readable; permission-state QA, not listing hero."
+          }
+        },
+        {
+          "name": "Watch recording and Stop_0_D99DDA9B-08BE-472F-9A61-F3A1204F7D79.png",
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceId": "09F5511B-FD37-4DA8-A78C-324611871523",
+          "original": "watch-42/originals/2875A3E1-4BFE-436A-89E1-619F73178E23.png",
+          "originalSHA256": "eb9ba51921ce5ab264882e4c1b5407f3e9a07e7b60df08c3932c86cf9205b46f",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "normalized": "watch-42/Watch recording and Stop.png",
+          "normalizedSHA256": "52f16528b3b64e7e988da6e4c3702c81a876274617e58323d7136a7ed1e1b8aa",
+          "pixels": [
+            374,
+            446
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "qa-only",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T07:03:13.281705+00:00",
+            "reviewer": "independent review_prompt_feature; root also inspected all six Home/Recording images",
+            "normalizedSHA256": "52f16528b3b64e7e988da6e4c3702c81a876274617e58323d7136a7ed1e1b8aa",
+            "notes": "Individually inspected at original native resolution; Home/Recording controls and clock unobstructed. Native374x446 is compact layout QA only; not an accepted Apple store size."
+          }
+        },
+        {
+          "name": "Watch recording consent_0_61089BD6-E784-48B6-8AF3-D2729E6512D4.png",
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceId": "09F5511B-FD37-4DA8-A78C-324611871523",
+          "original": "watch-42/originals/AAC4BB1F-C4A7-41F5-A5EF-68E6F4C8B9C7.png",
+          "originalSHA256": "10951e460c5a65f1b44720f852fb42eab5a4724d9c7c872424c5331f3c6f4ef8",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "normalized": "watch-42/Watch recording consent.png",
+          "normalizedSHA256": "be38336909b5b4e2d157359ca0fa7c604ce19c1ece4163d4ed1e36a66ebef435",
+          "pixels": [
+            374,
+            446
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "qa-only",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T07:03:13.281705+00:00",
+            "reviewer": "independent review_prompt_feature; root also inspected all six Home/Recording images",
+            "normalizedSHA256": "be38336909b5b4e2d157359ca0fa7c604ce19c1ece4163d4ed1e36a66ebef435",
+            "notes": "Individually inspected at original native resolution; Home/Recording controls and clock unobstructed. Native374x446 is compact layout QA only; not an accepted Apple store size. Long consent table is a partial scrolling viewport with confirmation controls outside this image; QA only."
+          }
+        },
+        {
+          "name": "Watch ready home_0_3E1D12B5-9D9A-4C7C-8E23-339B8E975EDF.png",
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceId": "09F5511B-FD37-4DA8-A78C-324611871523",
+          "original": "watch-42/originals/3DDEEEFF-F209-4469-B7C3-A86DCF94804A.png",
+          "originalSHA256": "9b3a0e59f1081aa710c44f1a5bd57404e9ae4fccf21d72acd7c30742510fe147",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "normalized": "watch-42/Watch ready home.png",
+          "normalizedSHA256": "0a271ced5ab280161c4842dde4691e743c46b850a3089e4b6b163a0d9611742a",
+          "pixels": [
+            374,
+            446
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "qa-only",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T07:03:13.281705+00:00",
+            "reviewer": "independent review_prompt_feature; root also inspected all six Home/Recording images",
+            "normalizedSHA256": "0a271ced5ab280161c4842dde4691e743c46b850a3089e4b6b163a0d9611742a",
+            "notes": "Individually inspected at original native resolution; Home/Recording controls and clock unobstructed. Native374x446 is compact layout QA only; not an accepted Apple store size."
+          }
+        }
+      ]
+    },
+    {
+      "category": "watch-ultra",
+      "runtime": "watchOS-27-0",
+      "evidenceDirectory": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch181-beta/watch-release-screenshots",
+      "simulator": "ADDB0851-52C1-45BD-8D4D-76B12878FD2A",
+      "assets": [
+        {
+          "name": "Watch offline remote_0_72627527-15E9-4A7C-B65E-19039A6A9E45.png",
+          "test": "WatchCapabilityUITests/testDeniedLocalMicrophoneAndOfflineRemoteExplainRecoveryBeforeRecording()",
+          "deviceId": "ADDB0851-52C1-45BD-8D4D-76B12878FD2A",
+          "original": "watch-ultra/originals/ADD7FD1C-49C0-4EFD-8B5F-77081CFF9238.png",
+          "originalSHA256": "4a1b3fbb02328a7e2cea825699cad567974d9e2f314858a211f134eb1d3ccf11",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "normalized": "watch-ultra/Watch offline remote.png",
+          "normalizedSHA256": "3a86a263063c1f17e27d23b7c30c8fddb4192fae19f73eb3f79423564fcc277f",
+          "pixels": [
+            422,
+            514
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "qa-only",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T07:03:13.281705+00:00",
+            "reviewer": "independent review_prompt_feature; root also inspected all six Home/Recording images",
+            "normalizedSHA256": "3a86a263063c1f17e27d23b7c30c8fddb4192fae19f73eb3f79423564fcc277f",
+            "notes": "Individually inspected at original native resolution; Home/Recording controls and clock unobstructed. Scrolled guidance overlaps system clock; diagnostic only, excluded from listing/hero media."
+          }
+        },
+        {
+          "name": "Watch local microphone recovery_0_9D91ED29-69B2-45C5-8E2D-C8B1A8CE3B73.png",
+          "test": "WatchCapabilityUITests/testDeniedLocalMicrophoneAndOfflineRemoteExplainRecoveryBeforeRecording()",
+          "deviceId": "ADDB0851-52C1-45BD-8D4D-76B12878FD2A",
+          "original": "watch-ultra/originals/01CB2AA2-628D-4E0F-A0F2-D4C0B1326655.png",
+          "originalSHA256": "b68bed89d79060d185d1257132eb07f5d140d53918f9b8c21528326bac6ef633",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "normalized": "watch-ultra/Watch local microphone recovery.png",
+          "normalizedSHA256": "70b2331d9c2149a28b1c9889721238bb440e0ff2b8e8391f6592e1927475796e",
+          "pixels": [
+            422,
+            514
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "qa-only",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T07:03:13.281705+00:00",
+            "reviewer": "independent review_prompt_feature; root also inspected all six Home/Recording images",
+            "normalizedSHA256": "70b2331d9c2149a28b1c9889721238bb440e0ff2b8e8391f6592e1927475796e",
+            "notes": "Individually inspected at original native resolution; Home/Recording controls and clock unobstructed. Recovery guidance readable; permission-state QA, not listing hero."
+          }
+        },
+        {
+          "name": "Watch recording and Stop_0_B48CB6FF-D5DF-4500-9222-6156B09C7F4D.png",
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceId": "ADDB0851-52C1-45BD-8D4D-76B12878FD2A",
+          "original": "watch-ultra/originals/AC9F0236-0EEA-4FBB-9D06-1E7407DD1E56.png",
+          "originalSHA256": "0507dfde4da5f43a8b87b96dd69886139f84bc3fa90c982823be64cafb9857a0",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "normalized": "watch-ultra/Watch recording and Stop.png",
+          "normalizedSHA256": "b2a0cfc3de3f544ff4cdf2a73dc9fb77c65a9f982bb3a35cacde41a629715c4e",
+          "pixels": [
+            422,
+            514
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T07:03:13.281705+00:00",
+            "reviewer": "independent review_prompt_feature; root also inspected all six Home/Recording images",
+            "normalizedSHA256": "b2a0cfc3de3f544ff4cdf2a73dc9fb77c65a9f982bb3a35cacde41a629715c4e",
+            "notes": "Individually inspected at original native resolution; Home/Recording controls and clock unobstructed."
+          },
+          "repositoryPreview": "docs/images/watch/1.19.0/watch-ultra-recording-and-stop.png"
+        },
+        {
+          "name": "Watch recording consent_0_577A41A1-4E3B-4E04-AC4F-50A645B0ED75.png",
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceId": "ADDB0851-52C1-45BD-8D4D-76B12878FD2A",
+          "original": "watch-ultra/originals/2EDDEEFE-05CC-4C89-A450-4B38688DCA2B.png",
+          "originalSHA256": "d904842c3b3513a22eb17b4d8381aab0ad79592304124ef8bfeb495de571b034",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "normalized": "watch-ultra/Watch recording consent.png",
+          "normalizedSHA256": "ea752f364fb3c30423c3f3bf7667462ddb7964ffd81aa2203765ca424318dd9f",
+          "pixels": [
+            422,
+            514
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "qa-only",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T07:03:13.281705+00:00",
+            "reviewer": "independent review_prompt_feature; root also inspected all six Home/Recording images",
+            "normalizedSHA256": "ea752f364fb3c30423c3f3bf7667462ddb7964ffd81aa2203765ca424318dd9f",
+            "notes": "Individually inspected at original native resolution; Home/Recording controls and clock unobstructed. Long consent table is a partial scrolling viewport with confirmation controls outside this image; QA only."
+          }
+        },
+        {
+          "name": "Watch ready home_0_3F21F916-6553-4437-A9A3-DD3B0A66C80B.png",
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceId": "ADDB0851-52C1-45BD-8D4D-76B12878FD2A",
+          "original": "watch-ultra/originals/E147891E-9566-402C-9075-D09165F7C16B.png",
+          "originalSHA256": "cf03151e6e2728f33c12be8a836fd183278fd8752115579f3884479b69328fb3",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "normalized": "watch-ultra/Watch ready home.png",
+          "normalizedSHA256": "dfb8d85e4fbb75a768205d78ab93c57850adaee9805c7d9b2b4133e11e191249",
+          "pixels": [
+            422,
+            514
+          ],
+          "transform": "EXIFtranspose+RGB; noresize",
+          "visualReview": {
+            "status": "approved",
+            "source": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+            "reviewedAt": "2026-10-27T07:03:13.281705+00:00",
+            "reviewer": "independent review_prompt_feature; root also inspected all six Home/Recording images",
+            "normalizedSHA256": "dfb8d85e4fbb75a768205d78ab93c57850adaee9805c7d9b2b4133e11e191249",
+            "notes": "Individually inspected at original native resolution; Home/Recording controls and clock unobstructed."
+          },
+          "repositoryPreview": "docs/images/watch/1.19.0/watch-ultra-ready-home.png"
+        }
+      ]
+    }
+  ],
+  "uploaderSource": "ea2c05febf858065efd611db32dc57d81d523d10",
+  "uploadedAt": "2026-10-27T08:31:46.551678+00:00",
+  "applicationAndXcodeInputsUnchangedFromCapture": true,
+  "publication": "https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.0-build38",
+  "AppleBuild": "150a17c4-461b-49af-8736-90ff5d625d4d",
+  "processedWatchIdentityVerified": true
+}

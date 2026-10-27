@@ -1,8 +1,8 @@
 # Publish an iOS build to TestFlight
 
-## Current publication checkpoint — October 27, 01:42 UTC
+## Production approval and locale checkpoint — October 27, 01:42 UTC (historical)
 
-iOS **1.18.1 (36)** now reads **READY_FOR_SALE**, and its US review is **COMPLETE**. Following
+At that checkpoint, iOS **1.18.1 (36)** read **READY_FOR_SALE**, and its US review was **COMPLETE**. Following
 approval, Apple's primary-locale PATCH succeeded. Two subsequent GETs confirmed **en-US**;
 the immediate GET had briefly retained en-CA. The US listing and both beta records are en-US.
 No replacement binary was uploaded. Preserve the `post-approval-primary-*.json` receipts in the
@@ -49,21 +49,42 @@ honestly documented device limitations are sufficient to distribute an authorize
 testing. Physical-device acceptance is still required before calling the app production-ready or
 submitting a production App Store release. Missing hardware must not be reported as an upload blocker.
 
-## Fresh US screenshots resubmitted — October 26, 21:13 UTC
+## Latest Watch-enabled beta — 1.19.0 (38)
+
+Apple accepted **1.19.0 (38)** at **2026-10-27T08:31:46.551678+00:00**, from `e43244f752712ac80e179e35c893e967aea38753`. Processing is **VALID**, internal state **IN_BETA_TESTING**, and the existing Dev group includes this build with two accepted testers. Primary locale, localized name, beta description and What to Test were read back in **en-US**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.0-build38).
+
+The exact uploaded IPA checksum matches ContentDelivery’s file checksum. Its phone, Share and Watch signatures/profiles, versions and debug flags passed verification; Apple’s processed nested entitlements independently confirm the Watch executable and distribution identity. The public buildBundles API lists one APP container and nests the Watch evidence inside it, rather than returning a separate WATCH_APP resource.
+
+[Publication receipt](releases/ios-1.19.0-build38.json), [fresh 43-image catalog](images/ios/release-1.19.0-en-US.json) and [Watch installation/evidence](watch-beta.md). Full local validation passed on app-candidate head `016d61c`; only documentation/media differ in merged app source `e43244f`, where all three required checks passed. A second full run passed on helper head `a6bb34c`; its identical-tree merge `ea2c05f` also passed all three required checks. That delivery-only helper enabled manual distribution signing without rebuilding the original archive. The accepted manual settings are retained at `~/.config/listentome/manual-testflight-export.plist`; pass that explicit local path through `IOS_EXPORT_OPTIONS`. The configured API key remains unchanged.
+
+Physical Watch installation, microphone capture, paired transfer, wrist-down and battery/storage acceptance remain unverified. This is an authorized beta, not a production-ready claim. Public iOS remains 1.18.1; no new public App Store submission or screenshot listing upload was performed by this train. Mac Store draft #318 stays separate.
+
+## Previous beta — 1.18.2 (37), October 27
+
+Apple accepted **1.18.2 (37)** at **2026-10-27T03:39:12.147449+00:00**, from `9494d024b9eee577b40695292aaf5e7dab9434eb`. Processing is **VALID**, internal state **IN_BETA_TESTING**, and both existing Dev testers have accepted group access. Primary locale, localized name, beta description and What to Test were read back in **en-US**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.2-build37).
+
+Full local validation passed: 108 BDD scenarios, 1,239 core tests with 98.2493% coverage, 75 iOS UI tests, 454 iOS unit tests, 39 native Mac tests, four Watch tests and four real Ollama/OpenAI-compatible contract tests. Existing optional skips remain documented; all required selectors passed. All three hosted checks passed on the exact merged source ([CI](https://github.com/tomqwu/ListenToMe/actions/runs/40444715802)). The tested source `9425611` and release source `9494d02` have identical trees.
+
+[Fresh capture catalog](images/ios/release-1.18.2-en-US.json): 28 inspected native en-US images across four iPhone/iPad categories, including four fixed-menu captures. Originals, hashes and source/binary provenance are preserved. These are synthetic simulator captures; 1.18.2 App Store listing uploads remain pending.
+
+Physical-device acceptance was not performed for this beta; it is not a production-ready claim. Public iOS 1.18.1 remains READY_FOR_SALE; 1.18.2 has not been submitted to the public App Store. Watch is excluded and the separate Mac Store draft #318 remains unsubmitted.
+
+Apple build ID: `f18732aa-ddf5-4b79-b939-d160792ed4d1`. Canonical acceptance/status evidence is `dist/ios-1.18.2-build37-evidence/upload-accepted.json` and `asc-verify.json`, backed up externally in the summary-menu-icon evidence directory. The source tag is exact; GitHub is a non-Latest pre-release with no binary.
+
+## Historical US screenshot submission — October 26, 21:13 UTC
 
 The [1.18.1 capture/upload catalog](images/ios/release-1.18.1-en-US-refresh.json) records 24 fresh
 native English (US), US-region images from the exact build-36 source, four passing native capture
 tests, complete visual review, and current Apple asset/set IDs. All 24 uploads are COMPLETE;
 processed RGB pixels, native dimensions, source checksums and order match. Canadian draft and live
 production screenshots were preserved. Apple accepted review
-`4e63cda8-70db-4d67-9928-63409df4dbda` at 2026-10-26T21:13:50Z; it is **WAITING_FOR_REVIEW**, not
-approved or publicly available. The prior `89b4c261-b37d-4b24-aaee-20f8238d1663` review was canceled
+`4e63cda8-70db-4d67-9928-63409df4dbda` at 2026-10-26T21:13:50Z; it was **WAITING_FOR_REVIEW** at that checkpoint. Apple later approved 1.18.1; see the current state above. The prior `89b4c261-b37d-4b24-aaee-20f8238d1663` review was canceled
 and reached COMPLETE before replacement. No new binary was uploaded.
 
-The US listing uses **Listen To Me - Real Time AI**. Actual app-wide primary locale remains en-CA:
-Apple still returned `MISSING_SCREENSHOTS_PRIMARY_LOCALE` after all fresh US images completed.
+The US listing uses **Listen To Me - Real Time AI**. At that checkpoint, app-wide primary locale remained en-CA:
+Apple returned `MISSING_SCREENSHOTS_PRIMARY_LOCALE` after all fresh US images completed.
 Preserve that exact rejection; do not equate the submitted en-US localization with a completed
-primary-language change.
+primary-language change. After approval, the primary-locale PATCH succeeded and en-US was read back.
 
 The maintainer explicitly chose resubmission of build 36 with [Watch previews](images/watch/1.18.1-preview/README.md)
 saved separately. Build 36 has no embedded Watch app, so these images are prospective review assets
@@ -116,10 +137,10 @@ Each US screenshot is COMPLETE with native dimensions, checksum, order and downl
 verified. The original source-matched captures were en-CA and are reused for identical English UI;
 retain that provenance rather than claiming a fresh US capture.
 
-The app's primary locale remains **en-CA**: Apple's primary-locale PATCH returned HTTP 409
+At this superseded checkpoint the app's primary locale remained **en-CA**: Apple's PATCH returned HTTP 409
 `MISSING_SCREENSHOTS_PRIMARY_LOCALE` even after US image processing completed. The US localization
-is submitted, while the Canadian primary/fallback is retained. Do not retry an unchanged rejection,
-claim US primary status or edit the approved production version to bypass Apple's requirements.
+was submitted while the Canadian primary/fallback was retained. That unchanged rejection was not
+bypassed; after approval the primary-language change succeeded, as recorded above.
 The [Apple localization rules](https://developer.apple.com/help/app-store-connect/manage-app-information/localize-app-information)
 explain the distinction and primary-language prerequisites.
 
@@ -199,8 +220,10 @@ worktree. Screenshots do not replace physical-device acceptance.
    add every applicable Watch screenshot category. Series 12 and Ultra 4 simulator profiles require
    watchOS 27 or later; the 26.5 runtime cannot run them. Inspect the actual device/runtime profile
    instead of substituting an older model name. The saved [native model previews](images/watch/1.18.1-preview/README.md)
-   remain prospective until a Watch-enabled build passes its separate distribution gates. Do not
-   advertise the unshipped Watch feature.
+   are historical build-36 previews, not current listing assets. Watch-enabled **1.19.0 (38)** is
+   published to TestFlight; use its [fresh capture catalog](images/ios/release-1.19.0-en-US.json)
+   and approved [Watch previews](images/watch/1.19.0/README.md) for the next authorized listing.
+   Physical Watch/production acceptance and Apple screenshot upload remain separate pending gates.
 2. Capture a coherent set: Live transcript/Quick, Summary, Notes/context and prompts when present,
    History, and relevant settings. Include the iPhone landscape two-pane layout and iPad wide layout
    in acceptance evidence; use orientations accepted by each store slot for listing assets. Exercise
@@ -231,7 +254,7 @@ worktree. Screenshots do not replace physical-device acceptance.
 | App Store Connect app | Listen To Me, Apple ID `6811155732` |
 | App bundle | `com.tomwu.ListenToMe.ios` |
 | Share extension | `com.tomwu.ListenToMe.ios.share` |
-| Apple Watch app | `com.tomwu.ListenToMe.ios.watchkitapp` — not shipped until the [#181](https://github.com/tomqwu/ListenToMe/issues/181) train |
+| Apple Watch app | `com.tomwu.ListenToMe.ios.watchkitapp` — included in TestFlight 1.19.0 (38); [physical production acceptance](watch-beta.md) remains pending |
 | Team | `T32FW7PZ3S` |
 | App Group | `group.com.tomwu.ListenToMe.ios` |
 | Existing internal testing group | `Dev` |
@@ -248,6 +271,43 @@ for a local distribution IPA and [TestFlightExportOptions.plist](../Config/iOS/T
 for upload. Both use automatic signing, `app-store-connect`, this team, and disable automatic
 version/build rewriting. They contain no credentials. Do not depend on plists left in ignored `dist/`
 folders by a previous session.
+
+### Local manual signing when automatic export cannot select profiles
+
+Automatic signing can report both a missing Watch Store profile and denied cloud-signing access,
+even with a valid local Apple Distribution identity. Preserve the successful archive and failed
+export logs. Check the configured API key, local identity and exact bundle/profile relationships;
+do not rotate certificates or reset accounts, keychains or OS permissions in response.
+
+An explicit manual upload file is supported through `IOS_EXPORT_OPTIONS`:
+
+```sh
+make ios-testflight IOS_ARCHIVE=<validated.xcarchive> IOS_RELEASE_SOURCE=<app-source-commit> \
+  IOS_RELEASE_FLAGS=--include-watch-beta IOS_EXPORT_OPTIONS=/absolute/local/manual-upload.plist
+```
+
+Start with [the manual template](../Config/iOS/ManualTestFlightExportOptions.plist.example), copied
+outside the repository. Replace its placeholders with the SHA-1 selector of the existing local
+Apple Distribution identity and UUIDs of active, **manually managed** App Store profiles for the
+phone, Share extension and embedded Watch. Existing Xcode-managed phone/Share profiles cannot be
+mixed into a manual export; create separate manual profiles using the same certificate and bundle
+IDs, preserving phone/Share App Group entitlements. No existing certificate/profile must be revoked.
+For an archive without Watch, omit its profile entry and the Watch flag.
+
+The helper rejects missing/malformed files, unknown fields, non-upload destinations, non-App Store
+methods, changed teams/version management, certificate labels instead of SHA-1, and missing/extra
+bundle IDs or invalid profile UUIDs **before invoking Xcode**. Default settings remain automatic.
+Dry run uses the same validation without uploading. The helper reads the selected file once, validates those bytes, and passes a private per-invocation
+snapshot to Xcode. It preserves that snapshot with release evidence; changing the original file
+after validation cannot change the upload settings. Actual accepted receipts include snapshot path,
+original path, SHA-256 and signing mode; neither a passing dry run nor a manual IPA export is upload acceptance.
+Verify signatures, profile identity/expiration/debugging and app-group entitlements in the exported
+IPA separately. The file contains local certificate/profile selectors, never private key contents.
+
+A delivery-only helper update can use an earlier validated archive: keep `IOS_RELEASE_SOURCE` and
+the release tag at the exact application commit that produced it, and separately record the helper
+commit/CI and proof that archived bytes, application sources and Xcode target configuration are unchanged. Do not rebuild only to repair an
+export/signing configuration. A new app source requires its own candidate validation.
 
 ### Persistent API-key authentication for automated uploads
 
@@ -376,9 +436,9 @@ or the app bundle. Do not label simulator tests as physical-device validation.
 
 In `project.yml`, keep the app and share extension's `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION`
 identical. The `ListenToMeWatch` target keeps the same version and build as the app and share
-extension, and every archive runs **without** `WATCH_EMBED` until the
-[#181](https://github.com/tomqwu/ListenToMe/issues/181) train: `scripts/ios-testflight.sh` refuses an
-archive that contains `ListenToMeIOS.app/Watch/`. Choose a build number not already accepted by App
+extension. The default generated iOS project now embeds Watch permanently; the obsolete
+`WATCH_EMBED` switch is removed. A Watch-enabled beta uses `--include-watch-beta`, while default
+helper mode refuses unintended Watch inclusion. Choose a build number not already accepted by App
 Store Connect. Update the matching `metadata/ios/en-US/what-to-test-<version>.txt` and `docs/IOS.md`.
 Merge source changes after CI passes.
 
@@ -397,10 +457,10 @@ Documentation-only follow-ups do not require a new binary. Do not bump the macOS
 
 ## 2. Archive the merged source
 
-Run from the repo root. Set the release values from `project.yml`, not an older chat reply. Check
-`echo "${WATCH_EMBED:-unset}"` first: `make gen` inherits an exported `WATCH_EMBED`, and a project
-generated with `WATCH_EMBED=YES` embeds the Apple Watch app (`unset WATCH_EMBED` before archiving
-until the [#181](https://github.com/tomqwu/ListenToMe/issues/181) train):
+Run from the repo root. Set release values from `project.yml`, not an older chat reply.
+`make gen` embeds the Watch companion by default; neither an unset nor an old `WATCH_EMBED=NO`
+can silently drop it. Select the explicit Watch beta upload mode after all candidate checks below.
+Physical acceptance stays separate from authorized beta eligibility.
 
 ```sh
 : "${IOS_VERSION:?Set the version from project.yml after checking App Store Connect}"
@@ -440,10 +500,15 @@ shasum -a 256 "$IOS_EXPORT/ListenToMeIOS.ipa" > "$IOS_EVIDENCE/SHA256SUMS"
 Require `EXPORT SUCCEEDED`. Extract the IPA into a fresh temporary directory with `unzip` or
 `ditto -x -k`. Inspect the app and `PlugIns/ListenToMeShare.appex` Info.plists: bundle identifiers,
 version/build, and the app's `CFBundleIcons` must be correct. Run `codesign --verify --deep --strict`
-on both bundles. Inspect `codesign -d --entitlements :- <bundle>`: both need the App Group above,
-and `get-task-allow` must be false. Until the [#181](https://github.com/tomqwu/ListenToMe/issues/181)
-train, confirm the IPA has no `Payload/ListenToMeIOS.app/Watch/` folder: the Apple Watch app must not
-ship yet. Ensure no test credential files or test-only payloads were bundled.
+on all three bundles, including `Watch/ListenToMeWatch.app`. Inspect `codesign -d --entitlements :-`:
+phone/Share need the App Group above; all bundles need the expected team/application identity and
+`get-task-allow=false`. Decode all embedded distribution profiles, verify expiration and absence
+of development device lists/debugging, and match each profile to its actual bundle identity.
+Require exactly the expected Watch app, matching app/Share/Watch versions, WatchOS device-platform
+metadata, supported minimum watchOS 26.0, valid executable/icons, `WKApplication=true`, matching
+companion ID and non-independent operation. Check actual exported embedding, not only a separate
+Watch build. No new Watch App Group or background modes are added; its existing audio mode remains.
+Ensure no test credentials, fixtures or test-only payloads were bundled.
 Keep the IPA checksum and verification results with the evidence.
 
 ## 4. Upload — this is the publishing step
@@ -451,11 +516,14 @@ Keep the IPA checksum and verification results with the evidence.
 After the preceding checks, the repeatable repository entry point is:
 
 ```sh
-make ios-testflight IOS_ARCHIVE="$IOS_ARCHIVE" IOS_RELEASE_SOURCE="$(cat "$IOS_EVIDENCE/source-commit.txt")"
+make ios-testflight IOS_ARCHIVE="$IOS_ARCHIVE" IOS_RELEASE_SOURCE="$(cat "$IOS_EVIDENCE/source-commit.txt")" \
+  IOS_RELEASE_FLAGS=--include-watch-beta
 ```
 
-Add `IOS_RELEASE_FLAGS=--dry-run` to check archive identity without uploading. The helper checks app/extension
-identity and matching versions, requires explicit upload acceptance, records a status receipt, and refuses
+Use `IOS_RELEASE_FLAGS="--include-watch-beta --dry-run"` to check Watch beta identity without uploading.
+Either flag order is supported; unknown or duplicate flags fail. Watch mode rejects a missing or malformed
+companion; default mode rejects embedded Watch. The helper records requested and observed inclusion
+separately from unverified physical acceptance and tester access. It requires explicit upload acceptance and refuses
 an upload already recorded by this helper. It cannot discover previous uploads made outside it: check App
 Store Connect and existing logs first. It does not prove archive/source provenance; verify that in step 2.
 The raw command below is the Xcode-session diagnostic path; it does **not** read the helper's JSON
@@ -584,7 +652,7 @@ This completed the automated path without native Organizer control or another ma
 - Workflow implementation: [PR #85](https://github.com/tomqwu/ListenToMe/pull/85), merged with all CI
   green; 12 helper tests passed and a real API-key upload proved the route.
 
-The same route has carried every build since. The most recent accepted upload is **1.18.1 (36)**,
+The same route has carried every build since. The preceding accepted upload was **1.18.1 (36)**,
 accepted on 2026-10-26 at 17:29:24 UTC from `7643b204def6acea0b616a2c2de2bade2fc4c7c9`, tagged
 `ios-v1.18.1-build36`. Apple build `2fd8477d-504e-44d2-ac7f-6c7e9236d01f` is `VALID` and
 `IN_BETA_TESTING`; Dev access for both existing testers and en-CA metadata were read back.

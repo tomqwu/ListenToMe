@@ -1,7 +1,7 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, latest TestFlight version 1.18.1 (36).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, latest TestFlight version 1.19.0 (38).
 
 ## What this app is for
 
@@ -20,7 +20,7 @@ stays macOS-only. This is a platform boundary, not a backlog item: there is no p
 that captures system or call audio. Recording is foreground-only (`iOS/Info.plist` declares no
 `UIBackgroundModes`); backgrounding stops recording and saves the conversation.
 
-Apple Watch recording ([#181](https://github.com/tomqwu/ListenToMe/issues/181)) is built but not shipped: the watch app (`Watch/`) compiles with the iOS app but is embedded only with `WATCH_EMBED=YES`, which no release has used, and it waits on an on-watch audio spike and device acceptance; see [the spec](superpowers/specs/2026-10-22-apple-watch-recording-design.md). The tiers below are unchanged until it ships.
+Apple Watch recording ([#181](https://github.com/tomqwu/ListenToMe/issues/181)) is included in TestFlight **1.19.0 (38)**. Apple accepted **1.19.0 (38)** at **2026-10-27T08:31:46.551678+00:00**, from `e43244f752712ac80e179e35c893e967aea38753`. Processing is **VALID**, internal state **IN_BETA_TESTING**, and the existing Dev group includes this build with two accepted testers. Primary locale, localized name, beta description and What to Test were read back in **en-US**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.0-build38). The original archive and exact uploaded Watch package passed signing/profile/version checks; processed Watch entitlements and existing Dev access were verified. Physical recording, paired transfer, wrist-down and battery/storage acceptance remain pending for production. See [Watch beta installation and evidence](watch-beta.md).
 
 ## Parity with macOS
 
@@ -129,20 +129,26 @@ The archive, upload, tagging and verification steps themselves are not repeated 
 [IOS-RELEASING.md](IOS-RELEASING.md) for iOS, [RELEASING.md](RELEASING.md) for macOS, and
 [AGENTS.md](../AGENTS.md) for the release workflow that governs both.
 
-## Public App Store submission — October 26, 2026
+## Public App Store approval and US primary — October 27, 2026
+
+Apple now reports **1.18.1 (36) READY_FOR_SALE** and its review **COMPLETE**. After approval, the
+primary-language PATCH succeeded; subsequent app readbacks confirmed **en-US**. The submission-time
+waiting/Canadian-primary states below are historical. Both beta localization records are also en-US.
+
+### Submission checkpoint — October 26, 21:13 UTC (historical)
 
 Later locale audit: build 36's separate TestFlight records initially still had only en-CA. The en-US
 What to Test and beta description are now created and read back, with no binary upload. The app-wide
-primary remains en-CA pending Apple approval of the new US localization and platform screenshots.
-See [the correction receipt and requirements](IOS-RELEASING.md#locale-correction--october-26-2241-utc).
+primary remained en-CA at that audit, pending Apple approval of the new US localization and platform screenshots.
+See [the correction receipt and requirements](IOS-RELEASING.md#earlier-locale-correction--october-26-2241-utc).
 
 The **English (US)** listing **Listen To Me - Real Time AI**, **1.18.1 (36)**, was resubmitted with
 24 fresh US-region screenshots and accepted for App Review at **21:13:50 UTC**. Review
-`4e63cda8-70db-4d67-9928-63409df4dbda` is WAITING_FOR_REVIEW and set to release after approval;
-production remains 1.15.0 (32). Earlier Canadian and US reviews were canceled. All 24 new US uploads
+`4e63cda8-70db-4d67-9928-63409df4dbda` was WAITING_FOR_REVIEW and set to release after approval;
+production was 1.15.0 (32). Earlier Canadian and US reviews were canceled. All 24 new US uploads
 are COMPLETE, with native dimensions, MD5s, display order and downloaded RGB pixels verified. These
-are fresh en-US captures, not reused en-CA images. Apple's separate primary-locale change still
-returns HTTP 409, so the app-wide primary/fallback remains en-CA even though en-US is submitted.
+are fresh en-US captures, not reused en-CA images. At that checkpoint, Apple's primary-locale
+change returned HTTP 409 and the app-wide primary/fallback remained en-CA despite the US submission.
 
 The maintainer reports working TestFlight testing and requested no further local device testing or
 participant requests for this submission. The requested screenshot refresh used synthetic simulator
@@ -152,13 +158,24 @@ saved separately for maintainer review. macOS distribution is separate. See
 
 ## App Store Connect platform mapping
 
-The native Mac App Store platform is now being prepared as a separate sandboxed **1.5.0 (15)**
-archive under the shared listing and bundle ID. US Mac draft metadata is saved/read back, but no
-build is selected and no Mac review is submitted. A preliminary universal archive/export establishes
-signing feasibility only; it predates later persistence fixes. See [Mac Store distribution](RELEASING.md#mac-app-store-distribution).
-The following description of DMG distribution remains the current public Mac availability.
+The native Mac App Store platform is prepared separately as a sandboxed **1.5.0 (15)** archive under the shared listing and bundle ID. The Mac draft has US metadata but no selected build or submitted review. The earlier signed candidate predates this main integration and is not eligible for upload; rebuild from the exact merged source after installed sandbox/OTHERS acceptance. See [Mac Store distribution](RELEASING.md#mac-app-store-distribution). The current public Mac distribution remains the signed/notarized DMG.
 
-The iOS platform covers this universal iPhone/iPad app (`TARGETED_DEVICE_FAMILY=1,2`); no separate iPadOS platform is added. The Watch companion belongs to the same iOS app record and must actually be embedded in an uploaded build before it can be installed. It is excluded from the current beta pending #181 acceptance. macOS requires its own compatible archive and distribution; the current native Mac app is distributed as a signed/notarized DMG, and Mac publication remains paused. Adding a platform does not convert a DMG or include an unembedded Watch target. See [Apple’s platform guide](https://developer.apple.com/help/app-store-connect/create-an-app-record/add-platforms/).
+The iOS platform covers this universal iPhone/iPad app (`TARGETED_DEVICE_FAMILY=1,2`); no separate iPadOS platform is added. The Watch companion belongs to the same iOS app record and must actually be embedded in an uploaded build before it can be installed. TestFlight 1.19.0 (38) includes it; public 1.18.1 excludes it. The accepted Watch beta has verified package/processed-identity evidence; physical acceptance remains a production gate, not an authorized beta-upload blocker. macOS requires its own compatible archive and distribution; the current native Mac app is distributed as a signed/notarized DMG, and Mac publication remains paused. Adding a platform does not convert a DMG or include an unembedded Watch target. See [Apple’s platform guide](https://developer.apple.com/help/app-store-connect/create-an-app-record/add-platforms/).
+
+## Full summary menu icon (#319, published TestFlight 1.18.2)
+
+The More menu uses the existing Summary symbol beside **Full summary**, matching the Summary
+workspace. The action still opens the same sheet; Done returns to the conversation without starting
+recording. `IOS-008` binds the native rendered-menu regression, with the original zero-pixel failure
+retained separately from subsequent validation.
+
+Apple accepted **1.18.2 (37)** at **2026-10-27T03:39:12.147449+00:00**, from `9494d024b9eee577b40695292aaf5e7dab9434eb`. Processing is **VALID**, internal state **IN_BETA_TESTING**, and both existing Dev testers have accepted group access. Primary locale, localized name, beta description and What to Test were read back in **en-US**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.2-build37).
+
+Full local validation passed: 108 BDD scenarios, 1,239 core tests with 98.2493% coverage, 75 iOS UI tests, 454 iOS unit tests, 39 native Mac tests, four Watch tests and four real Ollama/OpenAI-compatible contract tests. Existing optional skips remain documented; all required selectors passed. All three hosted checks passed on the exact merged source ([CI](https://github.com/tomqwu/ListenToMe/actions/runs/40444715802)). The tested source `9425611` and release source `9494d02` have identical trees.
+
+[Fresh capture catalog](images/ios/release-1.18.2-en-US.json): 28 inspected native en-US images across four iPhone/iPad categories, including four fixed-menu captures. Originals, hashes and source/binary provenance are preserved. These are synthetic simulator captures; 1.18.2 App Store listing uploads remain pending.
+
+Physical-device acceptance was not performed for this beta; it is not a production-ready claim. Public iOS 1.18.1 remains READY_FOR_SALE; 1.18.2 has not been submitted to the public App Store. Watch is excluded and the separate Mac Store draft #318 remains unsubmitted.
 
 ## iOS 1.18.1 (36) — published TestFlight beta
 
@@ -172,7 +189,7 @@ original-recording / physical-device acceptance. Apple accepted the upload at 20
 
 ## iOS 1.18.0 (35) — published TestFlight beta
 
-[Published October 26](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.0-build35) from `b1570ad567a43a093294974871d7f0abf1872708` after PR #308 merged. Apple accepted the upload; processing is VALID, internal testing is IN_BETA_TESTING, and the existing Dev group and en-CA metadata were verified. The combined batch includes on-device saved-audio re-transcription (#224), full automatic-review budgets (#148), completed orchestration extraction (#134), reliability follow-ups (#141) and the compatibility fixes below. Current-source physical acceptance remains pending. Mac-only features remain unreleased; the maintainer deferred their installed acceptance for this beta merge. Watch remains excluded pending paired-device acceptance.
+[Published October 26](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.0-build35) from `b1570ad567a43a093294974871d7f0abf1872708` after PR #308 merged. Apple accepted the upload; processing is VALID, internal testing is IN_BETA_TESTING, and the existing Dev group and en-CA metadata were verified. The combined batch includes on-device saved-audio re-transcription (#224), full automatic-review budgets (#148), completed orchestration extraction (#134), reliability follow-ups (#141) and the compatibility fixes below. Current-source physical acceptance remains pending. Mac-only features remain unreleased; the maintainer deferred their installed acceptance for this beta merge. That build excluded Watch. TestFlight 1.19.0 (38) later included it with physical acceptance explicitly pending.
 
 The reported iPad Pro 12.9-inch (4th generation), iPadOS 27.0.1, supports on-device dictation but
 reports advanced SpeechTranscriber unavailable and Apple Intelligence device-not-eligible. These
@@ -1066,7 +1083,7 @@ share sheet). Each line shows its time; tapping the line or its time plays the p
 from that moment (`SavedAudioSeek`). History marks conversations with saved audio and offers **Share
 audio** in the touch-and-hold menu. Starting a recording stops playback.
 
-Apple Watch (#225, unreleased) uses the same opt-in library: before a batch is transcribed,
+Apple Watch (#225, TestFlight 1.19.0 (38)) uses the same opt-in library: before a batch is transcribed,
 `retainWatchAudio` copies each part with a stable recording/chunk filename and an atomic manifest.
 A failed copy or manifest write leaves inbox audio for retry. The inbox records committed copies and
 effective timeline offsets/durations, so retries neither duplicate files nor undo a later Delete all
@@ -1074,7 +1091,7 @@ saved audio, and overlapping parts retain their playback/transcription alignment
 The setting is read per import batch; off keeps the temporary delete-after-transcription path.
 Retention uses the recording date; old imports are immediately subject to the chosen expiry.
 WatchConnectivity already queues disconnected transfers and deletes Watch files only after success.
-No cloud audio transport is added. Watch remains excluded from release until #181 acceptance.
+No cloud audio transport is added. Watch beta eligibility and pending physical/production acceptance are separate; see [the Watch beta](watch-beta.md).
 UI tests use `--saved-audio-fixture`, a
 synthetic tone written by the real writer; no test records the microphone.
 
@@ -1331,7 +1348,7 @@ asks for a wait of 20 seconds or less, and a 400
 `invalid_request_error` shows Anthropic's message with the key masked. Model lists come from
 `GET /v1/models`.
 
-### Watch file speaker identification (#192; not distributed)
+### Watch file speaker identification (#192; TestFlight beta)
 
 When Identify speakers is on and the models are already loaded, Watch imports analyze all available
 file audio in 60-second windows with 10-second overlap before transcribing that batch. Decoding runs

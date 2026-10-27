@@ -25,7 +25,7 @@
         "steps": [
           "With retention enabled, record while disconnected and reconnect; verify the recording transfers once and plays on iPhone.",
           "Repeat with retention disabled and verify transcription without retained playback audio.",
-          "Keep Watch excluded from distribution until the #181 physical-device gate passes."
+          "Keep physical Watch capture, reconnection, battery/storage and production App Store acceptance pending; an authorized, validated TestFlight beta may distribute with these limits stated under AGENTS.md."
         ]
       }
     },
@@ -34,7 +34,7 @@
       "name": "Queue finalized chunks once",
       "given": "a Watch recording contains finalized and active chunks",
       "when": "the outbox selects pending transfers",
-      "then": "only finalized chunks not already queued are selected",
+      "then": "only finalized chunks not already queued are selected, activation replay does not duplicate a pending transfer, and deleting waiting audio prevents a later retry",
       "covers": [
         "Watch/*",
         "Sources/ListenToMeCore/Watch*"
@@ -44,6 +44,11 @@
           "suite": "core",
           "file": "Tests/ListenToMeCoreTests/WatchCapturePolicyTests.swift",
           "test": "WatchCapturePolicyTests/testChunksToQueueAreTheFinalizedOnesNotAlreadyQueued"
+        },
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchOutboxDurabilityTests.swift",
+          "test": "WatchOutboxDurabilityTests/testOfflineActivationQueuesOnceAndDeleteCancelsItsTransport"
         }
       ]
     },
@@ -80,6 +85,266 @@
           "suite": "ios-unit",
           "file": "iOSUnitTests/MobileWatchRemoteTests.swift",
           "test": "MobileWatchRemoteTests/testStartFromWatchWhileNotActiveNeverCreatesARecorder"
+        }
+      ]
+    },
+    {
+      "id": "WATCH-005",
+      "name": "Preserve audio if crash recovery cannot queue it",
+      "given": "a Watch recording survived an interrupted launch and the outbox cannot be written",
+      "when": "the app tries recovery and later relaunches after storage is writable",
+      "then": "the original readable audio and metadata survive the failure, queue once after recovery, remain readable across relaunch, and are removed only by explicit Delete; multi-part recovery preserves later chunks and the original recording end boundary; if the end marker cannot be written, relaunch retries the original end even after audio moved",
+      "covers": [
+        "Watch/WatchOutbox.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchOutboxDurabilityTests.swift",
+          "test": "WatchOutboxDurabilityTests/testRecoveryFailureKeepsRecordedAudioForNextLaunch"
+        },
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchOutboxDurabilityTests.swift",
+          "test": "WatchOutboxDurabilityTests/testRecoveryFailureKeepsLaterChunksAndOriginalEndBoundary"
+        },
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchOutboxDurabilityTests.swift",
+          "test": "WatchOutboxDurabilityTests/testRecoveryRetainsEndBoundaryWhenEndMarkerCannotBeWritten"
+        }
+      ]
+    },
+    {
+      "id": "WATCH-006",
+      "name": "Retain unacknowledged audio across failed transfer and relaunch",
+      "given": "a completed Watch recording has been queued",
+      "when": "its transfer fails and the app relaunches before a success callback",
+      "then": "the audio remains byte-identical and pending until success, and a duplicate success callback has no effect",
+      "covers": [
+        "Watch/WatchOutbox.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchOutboxDurabilityTests.swift",
+          "test": "WatchOutboxDurabilityTests/testFailedTransferSurvivesRelaunchUntilSuccessAndDuplicateCallbackIsSafe"
+        }
+      ]
+    },
+    {
+      "id": "WATCH-007",
+      "name": "Cancel stale Watch microphone preparation",
+      "given": "a supported Watch recorder is about to request or is waiting for microphone permission",
+      "when": "the caller cancels, the user stops, or recording readiness becomes unavailable before permission returns",
+      "then": "no audio session or capture starts and no recording folder is created",
+      "covers": [
+        "Watch/WatchRecorder.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchRecorderLifecycleTests.swift",
+          "test": "WatchRecorderLifecycleTests/testCancelledPermissionWaitNeverActivatesCapture"
+        },
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchRecorderLifecycleTests.swift",
+          "test": "WatchRecorderLifecycleTests/testStopInvalidatesPendingPermissionAndCannotStartLater"
+        },
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchRecorderLifecycleTests.swift",
+          "test": "WatchRecorderLifecycleTests/testReadinessChangedDuringPermissionWaitRefusesCapture"
+        },
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchRecorderLifecycleTests.swift",
+          "test": "WatchRecorderLifecycleTests/testCancelledBeforeFirstTurnNeverRequestsStartOrContinuePermission"
+        }
+      ]
+    },
+    {
+      "id": "WATCH-008",
+      "name": "Finalize audio and resume only explicitly after interruption",
+      "given": "a supported Watch recorder has begun a recording",
+      "when": "audio is interrupted and the interruption ends, then the user continues and stops",
+      "then": "the first audio remains queued, capture waits for explicit Continue, the same recording advances its chunk index, and Stop finalizes readable AAC and returns to idle",
+      "covers": [
+        "Watch/WatchRecorder.swift",
+        "Watch/WatchOutbox.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchRecorderLifecycleTests.swift",
+          "test": "WatchRecorderLifecycleTests/testRecordingFinalizesAACAndInterruptionWaitsForExplicitContinue"
+        }
+      ]
+    },
+    {
+      "id": "WATCH-009",
+      "name": "Keep audio if its durable metadata cannot be written",
+      "given": "a completed Watch audio chunk is ready while its outbox metadata path is unwritable",
+      "when": "the recorder hands it over and later retries after storage is repaired",
+      "then": "the failed handoff leaves original audio intact, and a successful retry keeps matching durable metadata across relaunch",
+      "covers": [
+        "Watch/WatchOutbox.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchOutboxDurabilityTests.swift",
+          "test": "WatchOutboxDurabilityTests/testMetadataWriteFailureKeepsSourceAudioAndCanBeRetried"
+        }
+      ]
+    },
+    {
+      "id": "WATCH-010",
+      "name": "Do not overwrite unacknowledged Watch audio",
+      "given": "a chunk is already queued and has not been acknowledged",
+      "when": "its completed handoff repeats or a conflicting file uses the same identity",
+      "then": "an identical completed handoff has no effect and a conflict is rejected while both audio copies remain intact",
+      "covers": [
+        "Watch/WatchOutbox.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchOutboxDurabilityTests.swift",
+          "test": "WatchOutboxDurabilityTests/testRepeatedHandoffNeverReplacesUnacknowledgedAudio"
+        }
+      ]
+    },
+    {
+      "id": "WATCH-011",
+      "name": "Show and erase recovery audio that could not enter the outbox",
+      "given": "a previous Watch recording remains in recovery because its handoff failed",
+      "when": "waiting recordings are shown and the user chooses Delete",
+      "then": "the unqueued recording is counted as waiting and Delete removes its recovery audio and end intent so it cannot return after repair and relaunch",
+      "covers": [
+        "Watch/WatchOutbox.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchOutboxDurabilityTests.swift",
+          "test": "WatchOutboxDurabilityTests/testDeleteIncludesUnqueuedRecoveryAndPreventsResurrection"
+        }
+      ]
+    },
+    {
+      "id": "WATCH-012",
+      "name": "Keep the final recording boundary without a final audio chunk",
+      "given": "a Watch recording ends without a final audio chunk while transport is inactive and its outbox path is unwritable",
+      "when": "the end event is saved and the app later relaunches after storage repair",
+      "then": "the end remains visibly pending and its original final index and interruption state are recovered even without remaining source audio; successful activation queues the end once and clears an empty recovery intent without relaunch; later continued chunks advance a stale earlier end boundary and are marked unexpected after a crash; a completed continued handoff clears obsolete recovery intent after acknowledgement",
+      "covers": [
+        "Watch/WatchOutbox.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchOutboxDurabilityTests.swift",
+          "test": "WatchOutboxDurabilityTests/testLiveEndWithoutFinalChunkRemainsDurableAfterStorageFailure"
+        },
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchOutboxDurabilityTests.swift",
+          "test": "WatchOutboxDurabilityTests/testQueuedEndClearsEmptyRecoveryIntentAfterActivation"
+        },
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchOutboxDurabilityTests.swift",
+          "test": "WatchOutboxDurabilityTests/testLaterContinuedChunkAdvancesSavedEndIntentAfterRelaunch"
+        },
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchOutboxDurabilityTests.swift",
+          "test": "WatchOutboxDurabilityTests/testContinuedFinalHandoffClearsOldIntentAfterAcknowledgement"
+        }
+      ]
+    },
+    {
+      "id": "WATCH-013",
+      "name": "Keep failed live handoffs visible and protect active recording from Delete",
+      "given": "a Watch recording is active and a closed chunk cannot enter its outbox",
+      "when": "Delete is requested during capture and again after Stop",
+      "then": "the failed audio is visibly pending, active recording data is protected, and after Stop pending source audio is erased and cannot reappear after storage repair and relaunch",
+      "covers": [
+        "Watch/WatchOutbox.swift",
+        "Watch/ListenToMeWatchApp.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchRecorderLifecycleTests.swift",
+          "test": "WatchRecorderLifecycleTests/testFailedLiveHandoffStaysPendingAndDeleteWaitsForRecordingToStop"
+        }
+      ]
+    },
+    {
+      "id": "WATCH-014",
+      "name": "Own foreground preparation and ignore late view callbacks",
+      "given": "Start or Continue is waiting for permission in the foreground",
+      "when": "the app backgrounds or the preparing view is dismissed and the user returns or retries",
+      "then": "pending UI preparation is cancelled, late grants or denials cannot start audio or alter a newer attempt, transient inactive permission UI remains allowed, and established recording is preserved for wrist-down operation; cancellation, supersession or owner release before the first task turn must not invoke permission work",
+      "covers": [
+        "Watch/WatchRootView.swift",
+        "Watch/WatchRecordingView.swift",
+        "Watch/WatchPreparation.swift",
+        "Watch/ListenToMeWatchApp.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "watch-ui",
+          "file": "WatchUITests/WatchCapabilityUITests.swift",
+          "test": "WatchCapabilityUITests/testPendingStartDoesNotStartLaterAfterBackground"
+        },
+        {
+          "suite": "watch-ui",
+          "file": "WatchUITests/WatchCapabilityUITests.swift",
+          "test": "WatchCapabilityUITests/testPendingContinueDoesNotResumeLaterAfterBackground"
+        },
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchRecorderLifecycleTests.swift",
+          "test": "WatchRecorderLifecycleTests/testBackgroundCancelsPendingCompletionButPreservesStartedRecording"
+        },
+        {
+          "suite": "watch-ui",
+          "file": "WatchUITests/WatchCapabilityUITests.swift",
+          "test": "WatchCapabilityUITests/testPendingContinueDismissalCannotResumeLater"
+        },
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchPreparationTests.swift",
+          "test": "WatchPreparationTests/testInactivePermissionUIKeepsPreparationAndAllowsGrant"
+        },
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchPreparationTests.swift",
+          "test": "WatchPreparationTests/testLateGrantAfterBackgroundCannotFinishANewerAttempt"
+        },
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchPreparationTests.swift",
+          "test": "WatchPreparationTests/testLateDenialAfterDismissalCannotSetANewerErrorOrHaptic"
+        },
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchPreparationTests.swift",
+          "test": "WatchPreparationTests/testCancelBeforeFirstTaskTurnRunsNoOperation"
+        },
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchPreparationTests.swift",
+          "test": "WatchPreparationTests/testSupersededBeforeFirstTurnRunsOnlyTheNewOperation"
+        },
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchPreparationTests.swift",
+          "test": "WatchPreparationTests/testOwnerReleasedBeforeFirstTurnRunsNoOperation"
         }
       ]
     }

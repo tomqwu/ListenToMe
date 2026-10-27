@@ -12,7 +12,6 @@
         "scripts/test-ios-testflight.py",
         "Config/*",
         "project.yml",
-        "watch-embed.yml",
         "Makefile",
         "Package.swift",
         "signing.local.mk.example"
@@ -45,13 +44,12 @@
     },
     {
       "id": "RELEASE-003",
-      "name": "Keep unreleased Watch out of the beta",
-      "given": "the Watch physical-device release gate is still open",
-      "when": "a candidate embeds a Watch app",
-      "then": "the helper refuses distribution",
+      "name": "Reject unintended Watch distribution",
+      "given": "a phone-only beta upload is selected without the explicit Watch beta option",
+      "when": "its archive unexpectedly embeds a Watch app",
+      "then": "the helper refuses before upload and explains the explicit Watch beta option",
       "covers": [
         "Watch/*",
-        "watch-embed.yml",
         "project.yml",
         "scripts/ios-testflight.sh"
       ],
@@ -59,16 +57,16 @@
         {
           "suite": "tooling",
           "file": "scripts/test-ios-testflight.py",
-          "test": "UploadTests/test_embedded_watch_app_is_rejected_until_watch_release"
+          "test": "UploadTests/test_embedded_watch_app_requires_explicit_watch_beta_mode"
         }
       ]
     },
     {
       "id": "RELEASE-004",
       "name": "Identify the feedback beta and bundled changes accurately",
-      "given": "a user updates to the speaker-identification feedback beta using standard or the largest accessibility text",
+      "given": "a user updates to the Watch-enabled beta using standard or the largest accessibility text",
       "when": "What\u2019s New appears or is reopened",
-      "then": "the app identifies version 1.18.1 build 36 with its Keep each voice distinct notes, acknowledges the update once, and keeps the oldest release heading and Continue usable at the largest text size",
+      "then": "the app identifies version 1.19.0 build 38 with its Record from your Apple Watch notes, acknowledges the update once, and keeps the oldest release heading and Continue usable at the largest text size",
       "covers": [
         "project.yml",
         "iOS/MobileReleaseNotes.swift",
@@ -107,6 +105,153 @@
     },
     {
       "id": "RELEASE-006",
+      "name": "Validate an explicitly selected Watch beta",
+      "given": "a Watch-enabled beta is explicitly selected with a matching device-platform companion",
+      "when": "the helper checks the candidate in dry-run or upload mode",
+      "then": "dry-run never uploads, upload acceptance records requested and observed Watch inclusion with physical acceptance unverified, and missing or malformed companions and invalid options are refused before upload",
+      "covers": [
+        "scripts/ios-testflight.sh",
+        "scripts/test-ios-testflight.py",
+        "Makefile",
+        "project.yml"
+      ],
+      "bindings": [
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_explicit_watch_beta_records_pending_physical_acceptance"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_watch_beta_dry_run_checks_but_never_uploads"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_watch_beta_requires_a_watch_bundle"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_watch_beta_rejects_malformed_companion_before_upload"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_watch_beta_rejects_unexpected_extra_bundle"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_unknown_and_duplicate_flags_never_upload"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_make_forwards_watch_beta_and_dry_run_flags"
+        }
+      ]
+    },
+    {
+      "id": "RELEASE-007",
+      "name": "Keep Watch in the default companion installation configuration",
+      "given": "the repository is generated without any Watch opt-in environment variable or with the old switch disabled",
+      "when": "a fresh iPhone project is generated",
+      "then": "the app depends on the Watch target and copies its product into the Watch installation directory, keeping future app builds from silently dropping the companion",
+      "covers": [
+        "project.yml",
+        "Makefile",
+        ".github/workflows/ci.yml",
+        "watch-embed.yml"
+      ],
+      "bindings": [
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_default_generated_project_embeds_the_watch_companion"
+        }
+      ]
+    },
+    {
+      "id": "RELEASE-008",
+      "name": "Inspect Watch recording UI without capturing microphone audio",
+      "given": "the explicit simulator-only Watch preview is selected",
+      "when": "the user accepts recording consent, starts and stops the preview",
+      "then": "the real Recording indicator and Stop control render, Stop returns to Record, and release captures are preserved without microphone permission or live audio; an established preview recording survives an actual simulator app background/return",
+      "covers": [
+        "Watch/ListenToMeWatchApp.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "watch-ui",
+          "file": "WatchUITests/WatchCapabilityUITests.swift",
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone"
+        }
+      ]
+    },
+    {
+      "id": "RELEASE-009",
+      "name": "Upload with explicit validated manual distribution signing",
+      "given": "a validated iPhone/Share archive, optionally including its Watch companion, and explicitly selected manual App Store upload options or the unchanged automatic default",
+      "when": "the release helper or make target is invoked with those options",
+      "then": "only the stable team, upload destination, App Store method, fixed versions, exact bundle/profile map and certificate selector reach Xcode; dry runs never upload, invalid options fail before Xcode, and actual acceptance retains source and signing provenance while duplicate/active uploads stay blocked; changing the original file after validation cannot change the private options snapshot used for upload",
+      "covers": [
+        "scripts/ios-testflight.sh",
+        "Makefile",
+        "Config/iOS/*",
+        "scripts/test-ios-testflight.py"
+      ],
+      "bindings": [
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_manual_watch_options_reach_upload_and_receipt"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_manual_options_without_watch_keep_exact_phone_map"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_unsafe_manual_options_never_invoke_xcode"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_missing_or_malformed_manual_options_never_invoke_xcode"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_manual_dry_run_and_failure_never_claim_acceptance"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_manual_options_preserve_duplicate_and_active_upload_guards"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_make_forwards_explicit_manual_export_options"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_acceptance_receipt_and_duplicate_guard"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-ios-testflight.py",
+          "test": "UploadTests/test_original_options_change_cannot_change_validated_upload"
+        }
+      ]
+    },
+    {
+      "id": "RELEASE-010",
       "name": "Generate a distinct sandboxed Mac App Store distribution",
       "given": "the Mac platform shares the existing iPhone App Store listing",
       "when": "the native project is generated for App Store distribution",
@@ -139,7 +284,7 @@
       ]
     },
     {
-      "id": "RELEASE-007",
+      "id": "RELEASE-011",
       "name": "Preserve existing Mac installation identities",
       "given": "a user already has the DMG or a Dev installation with its own permissions and data",
       "when": "a Mac App Store distribution configuration is added",
@@ -159,7 +304,7 @@
       ]
     },
     {
-      "id": "RELEASE-008",
+      "id": "RELEASE-012",
       "name": "Restore a Mac vault security scope",
       "given": "a Mac user has chosen a folder for conversation Markdown notes",
       "when": "its persisted bookmark is restored and a writer is recreated",
@@ -187,7 +332,7 @@
       }
     },
     {
-      "id": "RELEASE-009",
+      "id": "RELEASE-013",
       "name": "Restore scoped Mac file and folder references",
       "given": "a Mac user selects a text file and a reference folder",
       "when": "the selection is saved and restored by a new persistence adapter",

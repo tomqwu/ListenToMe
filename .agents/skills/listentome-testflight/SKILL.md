@@ -81,6 +81,24 @@ the app's primary locale rather than silently falling back to Canada.
    helper tests alone are not publication. Preserve the source, receipt, verification and any genuine
    remaining blocker so another session can resume without repeating completed work.
 
+## Watch-enabled beta
+
+Current source embeds Watch by default. Use the helper with `IOS_RELEASE_FLAGS=--include-watch-beta`,
+or `IOS_RELEASE_FLAGS="--include-watch-beta --dry-run"` for local identity preflight only. Default mode
+refuses embedded Watch; Watch mode requires the expected device-platform companion, supported minimum
+OS, executable/icons and matching app/Share/Watch versions. Verify all three exported signatures,
+distribution profiles/expiration, entitlements, identifiers and actual embedding before upload.
+Capture fresh Watch category images as well as iPhone/iPad. The accepted receipt records requested
+and observed inclusion separately from unverified physical acceptance and tester access.
+
+Do not repeat older blanket exclusions as beta blockers. Current AGENTS.md permits an authorized
+beta with physical acceptance explicitly pending; microphone/paired transfer/wrist-down/battery and
+production App Store acceptance remain separate. See [Watch preparation](../../../docs/watch-beta.md).
+
+## Manual distribution signing
+
+When automatic export cannot choose profiles and cloud signing is unavailable, preserve the validated archive and use the [manual-signing runbook](../../../docs/IOS-RELEASING.md#local-manual-signing-when-automatic-export-cannot-select-profiles). Pass an explicit local `IOS_EXPORT_OPTIONS` upload plist through the existing make target. All phone/Share/Watch profiles must be manually managed and use the existing local distribution certificate; verify exact identities and entitlements. The helper validates the narrow input before Xcode and records its hash/mode without weakening eligibility, duplicate-upload or acceptance checks. Do not replace checked-in automatic settings, rotate certificates or reset account/OS permissions. Record the app-source commit separately from a later delivery-only helper commit.
+
 ## If authentication fails
 
 Inspect the actual error and selected route. `Failed to Use Accounts` was the old Xcode-session

@@ -3,7 +3,7 @@
 The iPhone/iPad compatibility changes below are published in [TestFlight 1.18.0 (35)](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.0-build35).
 Current-source physical acceptance remains pending. Mac changes are merged but unreleased, with
 installed GUI/OTHERS acceptance explicitly deferred by the maintainer; see [HANDOFF](HANDOFF.md).
-Apple Watch is not embedded for distribution.
+TestFlight 1.19.0 (38) includes the [Watch beta](watch-beta.md), with uploaded-package signatures and Apple’s processed identity verified; physical acceptance remains pending. Native lifecycle tests check cancellation/Stop and readiness again after permission returns, before audio activation.
 
 The native Mac App Store configuration is being prepared separately. It uses
 `com.tomwu.ListenToMe.ios` with App Sandbox; the existing DMG and Dev identities are unchanged.

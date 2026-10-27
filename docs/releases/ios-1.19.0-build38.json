@@ -1,0 +1,138 @@
+{
+  "version": "1.19.0",
+  "build": "38",
+  "distribution": "TestFlight",
+  "acceptedAt": "2026-10-27T08:31:46.551678+00:00",
+  "applicationSource": "e43244f752712ac80e179e35c893e967aea38753",
+  "captureSource": "016d61ca173a76886fe3fce48d2a3ea3f31f4e98",
+  "uploaderSource": "ea2c05febf858065efd611db32dc57d81d523d10",
+  "validatedUploaderHead": "a6bb34c9611bc601ccd0438c84db2757e507f27a",
+  "tag": "ios-v1.19.0-build38",
+  "exactRemoteTagVerified": true,
+  "GitHubRelease": {
+    "assets": [],
+    "isDraft": false,
+    "isPrerelease": true,
+    "publishedAt": "2026-10-27T08:44:23Z",
+    "tagName": "ios-v1.19.0-build38",
+    "targetCommitish": "e43244f752712ac80e179e35c893e967aea38753",
+    "url": "https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.0-build38"
+  },
+  "AppleBuild": {
+    "id": "150a17c4-461b-49af-8736-90ff5d625d4d",
+    "build": "38",
+    "marketing": "1.19.0",
+    "processing": "VALID",
+    "expired": false,
+    "internal": "IN_BETA_TESTING",
+    "uploaded": "2026-10-27T01:32:38-07:00"
+  },
+  "Watch": {
+    "bundleId": "com.tomwu.ListenToMe.ios.watchkitapp",
+    "processedContainerBundleId": "5e108f8b-3f97-48a3-8c75-472e7ba6b63a",
+    "processedExecutablePath": "ListenToMeIOS.app/Watch/ListenToMeWatch.app/ListenToMeWatch",
+    "processedEntitlements": {
+      "application-identifier": "T32FW7PZ3S.com.tomwu.ListenToMe.ios.watchkitapp",
+      "get-task-allow": "false",
+      "beta-reports-active": "true",
+      "com.apple.developer.team-identifier": "T32FW7PZ3S"
+    },
+    "uploadedIPA_SHA256": "7cf161c2fccdf4ff477857240c7aedca27bb673b7b9036ceeae2f6c39fd44855",
+    "acceptedUploadIncludesWatch": true,
+    "verifiedBy": "App Store Connect processed nested entitlements and exact uploaded IPA checksum/signature proof",
+    "physicalInstallation": "unverified"
+  },
+  "primaryLocale": "en-US",
+  "USName": "Listen To Me - Real Time AI",
+  "USWhatToTest": {
+    "id": "e09e2e17-327a-4da1-8938-b04b9a6121f8",
+    "locale": "en-US",
+    "length": 2631,
+    "matches": true
+  },
+  "USBetaDescription": {
+    "id": "d6a94767-2be2-4fd1-a9f5-87e58b598f9e",
+    "locale": "en-US",
+    "length": 3833,
+    "matches": true
+  },
+  "DevAccess": {
+    "containsBuild": true,
+    "existingTesters": 2,
+    "acceptedStates": [
+      "INSTALLED",
+      "INSTALLED"
+    ],
+    "newTestersAdded": false,
+    "physicalInstallOf38Observed": false
+  },
+  "actualUploadedIPA": {
+    "verifiedAt": "2026-10-27T08:40:09.143074+00:00",
+    "actualUploadedIPA": "/var/folders/t8/fjyjvs5j5xd8dl2xsl056yd40000gn/T/XcodeDistPipeline.~~~cznIpC/Packages/ListenToMeIOS.ipa",
+    "preserved": "/Users/tomwu/.codex/worktrees/checkpoint-work-134/ListenToMe/dist/ios-1.19.0-build38-evidence/ListenToMeIOS-uploaded.ipa",
+    "MD5": "1D2713348BC6078A253DAB8C6935A0F1",
+    "SHA256": "7cf161c2fccdf4ff477857240c7aedca27bb673b7b9036ceeae2f6c39fd44855",
+    "matchesContentDeliveryFileChecksum": true,
+    "acceptedReceipt": "upload-accepted.json"
+  },
+  "nativeValidation": {
+    "source": "a6bb34c9611bc601ccd0438c84db2757e507f27a",
+    "finished": "2026-10-27T08:25:47.919592+00:00",
+    "overallExit": 0,
+    "sourceUnchanged": true,
+    "trackedTreeClean": true,
+    "coreTests": 1239,
+    "coreSkips": 7,
+    "coveragePercent": 98.24932823060011,
+    "BDDScenarios": 123,
+    "helperTests": 29,
+    "native": [
+      {
+        "suite": "ios",
+        "preserved": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch181-beta/manual-signing323/Test-ListenToMeIOS-2026.10.27_03-50-26--0400.xcresult",
+        "passed": 517,
+        "skipped": 12,
+        "failed": 0,
+        "total": 529
+      },
+      {
+        "suite": "mac-native-tests",
+        "preserved": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch181-beta/manual-signing323/Test-ListenToMeMacTests-2026.10.27_04-23-05--0400.xcresult",
+        "passed": 39,
+        "skipped": 0,
+        "failed": 0,
+        "total": 39
+      },
+      {
+        "suite": "watch-native-tests",
+        "preserved": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch181-beta/manual-signing323/Test-ListenToMeWatchTests-2026.10.27_04-23-21--0400.xcresult",
+        "passed": 33,
+        "skipped": 0,
+        "failed": 0,
+        "total": 33
+      }
+    ],
+    "realServerContracts": 4,
+    "physicalAcceptance": "not performed; not production-ready",
+    "originalApplicationArchiveSource": "e43244f752712ac80e179e35c893e967aea38753"
+  },
+  "screenshots": {
+    "count": 43,
+    "individuallyInspected": true,
+    "listingUploads": "not performed; pending separate production authorization",
+    "catalog": "../images/ios/release-1.19.0-en-US.json"
+  },
+  "physicalAcceptance": "unverified; production gate remains",
+  "publicProductionBaseline": "1.18.1",
+  "newPublicSubmission": false,
+  "evidenceDirectory": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch181-beta",
+  "cleanup": {
+    "devBundlesFoundAndMoved": 0,
+    "activeDevSessionsAtCleanup": 0,
+    "permissionResetScope": "com.tomwu.ListenToMe.dev only",
+    "permissionResetExitCode": 0,
+    "ownedSimulatorsDeleted": 7,
+    "otherSimulatorIDsPreserved": true,
+    "dataSettingsKeysPreserved": true
+  }
+}

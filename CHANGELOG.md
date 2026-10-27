@@ -13,25 +13,36 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## Repository tooling (unreleased)
 
+- Support an explicit, validated manual TestFlight signing file when cloud-managed signing is unavailable. Preserve the automatic default, exact companion eligibility, stable versions/team, upload locks and acceptance receipts; upload from a private validated snapshot and record its hash, original path and signing mode. No app binary or privacy behavior changes. (#323)
+
 - Require Given/When/Then behavior contracts and changed native regression-test bindings for behavior
   changes across apps, shared services and delivery tooling. Add a baseline scenario catalog,
   executable native-test adapter, local/CI gates and PR evidence template. This changes development
   workflow only; it does not require a binary release or claim exhaustive legacy acceptance.
 
-## iOS (unreleased since 1.18.1 (36))
+- Recognize complete native XCTest pass records joined to timestamped framework diagnostics while
+  rejecting mentions, mismatched selectors and unsuccessful/incomplete records. This repairs a
+  local BDD-verification failure; it does not change an app feature or count a failed aggregate run
+  as passing.
 
+## iOS (unreleased since 1.19.0 (38))
 
-- Documentation: the Watch speaker-privacy section now agrees with the existing opt-in saved-audio retention policy. No app behavior changes. (#225)
+## iOS 1.19.0 (38) — 2026-10-27 (TestFlight)
 
-- Watch imports retain playable audio only when Save audio recordings is on, with reconnect queueing, retry-safe storage, consistent playback timing and existing deletion/expiry controls (#225). Watch remains excluded from distribution.
+- Include the Apple Watch companion in the default iOS build. Record on Watch, keep recording with wrist down, and sync finished audio to the paired iPhone for on-device transcription when connected. Phone remote Start/Stop requires a reachable, compatible, ready foreground app. (#181)
+- Retain Watch playback audio only when **Save audio recordings** is on during iPhone import; otherwise remove temporary audio after its text is saved. Existing Retry, Delete, playback and expiry controls remain. (#225)
+- Watch imports can identify speakers with already-loaded on-device models and detect language with an already-downloaded model in Automatic mode. Imports never initiate those model downloads; unsupported/uncertain language detection uses the device language. (#192, #200)
+- Preserve pending Watch audio/metadata through failed handoffs and relaunch. Duplicate/conflicting callbacks cannot overwrite unacknowledged audio; recording end markers survive storage failure and continued chunks advance old boundaries. Waiting includes failed recovery audio; after Stop, Delete removes audio and recovery state without resurrection. (#181)
+- Cancelled/Stopped microphone preparation and readiness changes cannot activate capture after permission returns. An interruption waits for explicit Continue. (#181)
+- Explicit Watch-beta upload mode validates companion identity, platform, icons/executable and matching versions. Physical microphone/paired-transfer, wrist-down, battery/storage and production acceptance remain pending. Simulator tests are separate from those gates. (#181)
 
-- Apple Watch imports can identify speakers on-device when Identify speakers is enabled and its models are already loaded. Every audio window is processed, including long recordings and gaps, without disturbing live iPhone speaker analysis. Labels are saved with the transcript before audio is deleted. Watch remains excluded from distribution pending device acceptance. (#192)
+Apple accepted **1.19.0 (38)** at **2026-10-27T08:31:46.551678+00:00**, from `e43244f752712ac80e179e35c893e967aea38753`. Processing is **VALID**, internal state **IN_BETA_TESTING**, and the existing Dev group includes this build with two accepted testers. Primary locale, localized name, beta description and What to Test were read back in **en-US**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.0-build38). Watch inclusion is confirmed in the exact uploaded IPA and Apple’s processed nested entitlements. All three required checks and full local gates passed; the tag points to the exact app source. The delivery-only helper is recorded separately as `ea2c05febf858065efd611db32dc57d81d523d10`. Physical Watch installation, microphone capture, paired transfer, wrist-down and battery/storage acceptance remain unverified. This is an authorized beta, not a production-ready claim. Public iOS remains 1.18.1; no new public App Store submission or screenshot listing upload was performed by this train. Mac Store draft #318 stays separate.
 
-- Apple Watch imports detect the spoken language with an already-downloaded on-device model in Automatic mode and keep that language across retries and later transfers. Unavailable or uncertain detection falls back to the device language without downloading a model. Watch remains excluded from distribution pending device acceptance. (#200)
+## iOS 1.18.2 (37) — 2026-10-27 (TestFlight)
 
-- Apple Watch companion, remote Start/Stop for the iPhone recorder (not yet shipped; ships with watch recording on the #181 train). (#181)
-- iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
-- Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
+- Restore the missing Summary icon beside Full summary in the iPhone/iPad More menu. Opening and dismissing the summary are unchanged. (#319)
+
+Apple accepted **1.18.2 (37)** at **2026-10-27T03:39:12.147449+00:00**, from `9494d024b9eee577b40695292aaf5e7dab9434eb`. Processing is **VALID**, internal state **IN_BETA_TESTING**, and both existing Dev testers have accepted group access. Primary locale, localized name, beta description and What to Test were read back in **en-US**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.2-build37). No privacy or audio-retention change. Fresh screenshots are captured; the public listing was not updated. Physical-device acceptance was not performed for this beta; it is not a production-ready claim. Public iOS 1.18.1 remains READY_FOR_SALE; 1.18.2 has not been submitted to the public App Store. Watch is excluded and the separate Mac Store draft #318 remains unsubmitted.
 
 ## iOS 1.18.1 (36) — 2026-10-26 (TestFlight)
 
