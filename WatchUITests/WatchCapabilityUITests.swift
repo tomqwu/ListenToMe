@@ -28,13 +28,13 @@ final class WatchCapabilityUITests: XCTestCase {
         capture("Watch recording and Stop")
         let elapsed = app.staticTexts["watchRecordingElapsed"]
         XCTAssertTrue(elapsed.exists)
-        let beforeClose = elapsed.label
         let close = app.buttons["close-sheet"].firstMatch
         XCTAssertTrue(close.exists, "Inspect and exercise the actual system close button")
         if close.exists { close.tap() }
         XCTAssertTrue(stop.waitForExistence(timeout: 5))
         XCTAssertTrue(stop.isHittable, "Closing the presentation must not hide Stop during capture")
-        let advancing = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label != %@", beforeClose),
+        let afterClose = elapsed.label
+        let advancing = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == true AND label != %@", afterClose),
                                                   object: elapsed)
         XCTAssertEqual(XCTWaiter.wait(for: [advancing], timeout: 3), .completed, "Recording time must keep advancing")
         // Attempting to dismiss an active presentation must not act as Stop.
