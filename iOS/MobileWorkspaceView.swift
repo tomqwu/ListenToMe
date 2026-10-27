@@ -350,7 +350,10 @@ struct MobileWorkspaceView<Header: View>: View {
         }
     }
 
-    private func modelButton(_ mode: MobileSummaryMode) -> some View {
+}
+
+private extension MobileWorkspaceView {
+    func modelButton(_ mode: MobileSummaryMode) -> some View {
         Button { chooseModel(mode) } label: {
             HStack(spacing: 4) {
                 Text(session.ai.provider == .apple ? "Apple Intelligence" :
@@ -364,7 +367,7 @@ struct MobileWorkspaceView<Header: View>: View {
         }.buttonStyle(.plain).accessibilityIdentifier("panel-model-\(mode.rawValue)")
     }
 
-    private var autoToggle: some View {
+    var autoToggle: some View {
         Toggle("Auto", isOn: $session.autoQuick).font(.caption)
             .accessibilityLabel("Auto summaries")
             .accessibilityHint(session.ai.provider != .apple
