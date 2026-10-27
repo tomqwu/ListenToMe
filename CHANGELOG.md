@@ -9,7 +9,7 @@ iOS entries are drawn from [`iOS/MobileReleaseNotes.swift`](iOS/MobileReleaseNot
 in-app "What's New" copy shown once per set of bundled release notes — a build that changes no notes
 does not show it again, and a fresh install does not see it at all; see
 [`docs/IOS.md`](docs/IOS.md) for the fuller per-build technical notes and
-[`metadata/ios/en-CA/`](metadata/ios/en-CA/) for TestFlight "What to Test" text.
+[`metadata/ios/en-US/`](metadata/ios/en-US/) for TestFlight "What to Test" text.
 
 ## Repository tooling (unreleased)
 
@@ -18,7 +18,7 @@ does not show it again, and a fresh install does not see it at all; see
   executable native-test adapter, local/CI gates and PR evidence template. This changes development
   workflow only; it does not require a binary release or claim exhaustive legacy acceptance.
 
-## iOS (unreleased since 1.18.1 (36))
+## iOS (unreleased since 1.18.2 (37))
 
 
 
@@ -34,9 +34,11 @@ does not show it again, and a fresh install does not see it at all; see
 - iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
 - Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
 
-## iOS 1.18.2 (37) — candidate
+## iOS 1.18.2 (37) — 2026-10-27 (TestFlight)
 
 - Restore the missing Summary icon beside Full summary in the iPhone/iPad More menu. Opening and dismissing the summary are unchanged. (#319)
+
+Apple accepted **1.18.2 (37)** at **2026-10-27T03:39:12.147449+00:00**, from `9494d024b9eee577b40695292aaf5e7dab9434eb`. Processing is **VALID**, internal state **IN_BETA_TESTING**, and both existing Dev testers have accepted group access. Primary locale, localized name, beta description and What to Test were read back in **en-US**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.2-build37). No privacy or audio-retention change. Fresh screenshots are captured; the public listing was not updated. Physical-device acceptance was not performed for this beta; it is not a production-ready claim. Public iOS 1.18.1 remains READY_FOR_SALE; 1.18.2 has not been submitted to the public App Store. Watch is excluded and the separate Mac Store draft #318 remains unsubmitted.
 
 ## iOS 1.18.1 (36) — 2026-10-26 (TestFlight)
 
