@@ -183,6 +183,14 @@ struct RoleBox<Header: View, Actions: View>: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
+                        if role == .listener {
+                            SummaryTranslationPanel(translation: session.summaryTranslation,
+                                target: Binding(get: { session.languageOptions.summaryTranslationTarget },
+                                                set: { session.languageOptions.summaryTranslationTarget = $0 }),
+                                source: outputText, conversationID: session.translationContextID,
+                                isGenerating: session.streamingRoles.contains(.listener))
+                                .padding(.bottom, 10)
+                        }
                         Group {
                             if role == .listener, !session.streamingRoles.contains(role),
                                let grid = session.visibleSituation {

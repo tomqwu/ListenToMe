@@ -183,7 +183,9 @@ struct MeetingView: View {
         }
         .sheet(isPresented: $showRetranscription) { retranscriptionSheet }
         .onChange(of: store.revision) { _, _ in _ = checkpoint(); considerVocabularySuggestion() }
+        .onChange(of: session.languageOptions) { _, _ in _ = checkpoint() }
         .onChange(of: currentSessionID) { _, _ in applyVocabulary() }
+        .onChange(of: store.revision) { _, _ in session.updateLiveTranslations() }
         .sheet(isPresented: $showSettings, onDismiss: {
             session.aiEnabled = MacFeatureReadiness.aiCanRun(mode: ProviderSettings.aiMode,
             appleReason: MacDeviceCapabilities.appleReason(locale: currentCapabilityLocale))
@@ -240,6 +242,7 @@ struct MeetingView: View {
             }
         }
         .onAppear {
+            session.setTranslationSuspended(false)
             captureStartGate.reopen()
             session.structuredListenerEnabled = true
             session.autoSummaryEnabled = UserDefaults.standard.bool(forKey: "autoQuickSummary")

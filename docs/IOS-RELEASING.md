@@ -29,6 +29,12 @@ This is the release runbook for ListenToMe on iPhone/iPad. Follow it when an iOS
 due — not after every merged fix. Merging a PR, building an archive, or exporting an IPA does **not**
 publish the app; equally, a merged iOS change does not by itself call for an upload.
 
+For the separate official production review, use the canonical
+[App Store submission checklist](../AGENTS.md#official-app-store-review-and-public-release).
+It requires explicit version/platform authorization, production acceptance, en-US readback, fresh
+processed screenshots including Duo and embedded Watch, and an actual Apple review receipt.
+TestFlight availability does not prove submission, approval or public release.
+
 **Cadence.** Publish when a batch of merged iOS work is complete, or when a single user-visible fix
 warrants its own build. **At most one TestFlight build per day for trains an agent starts on its own
 initiative**, never one per merged pull request. A train the maintainer calls ("publish", "release
@@ -49,7 +55,23 @@ honestly documented device limitations are sufficient to distribute an authorize
 testing. Physical-device acceptance is still required before calling the app production-ready or
 submitting a production App Store release. Missing hardware must not be reported as an upload blocker.
 
-## Latest Watch-enabled beta — 1.19.0 (38)
+## Watch and Duo listing media correction — October 27
+
+The [1.19.1 App Store draft media receipt](releases/ios-1.19.1-build39-media.json) records **60 COMPLETE screenshots**: 30 each in en-US and the preserved en-CA localization. Each locale has seven fresh images for each of four iPhone/iPad display sizes, including both iPhone landscape two-pane Duo views and iPad wide views, plus two consistent 422 × 514 Watch Ultra home/recording images. Apple source checksums, native dimensions, exact set membership/order and downloaded RGB identity all match. Old inherited draft copies were backed up and removed only after ownership/disjointness checks; public 1.18.1 screenshot sets remain unchanged.
+
+Draft **1.19.1** selects accepted build **39** and remains **PREPARE_FOR_SUBMISSION** with manual release. Description and What's New were read back in both English locales; the draft now describes its embedded Watch companion. No review submission occurred. Physical Watch/phone acceptance remains pending. Six native Watch/Duo/iPad previews are also visible on the [TestFlight GitHub release page](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.1-build39); all six uploaded PNGs were downloaded again and SHA-256 matched. App source and accepted beta build are unchanged.
+
+## Latest Watch-enabled beta — 1.19.1 (39)
+
+Apple accepted **1.19.1 (39)** from `f1728150e3e66664e36d2506022c2918fa60a53c`: Xcode upload success at **2026-10-27 15:39:29.401 UTC**, Apple uploaded date **2026-10-27 15:40:24 UTC**. Processing is **VALID**, internal state **IN_BETA_TESTING**, and the existing internal Dev group includes build 39 with two existing active/installed tester members. This does not prove physical installation of build 39. Primary locale, localized name, beta description and What to Test were read back in **en-US**, with name **Listen To Me - Real Time AI**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.1-build39).
+
+Full local validation and independent review passed on unchanged app/test inputs: 125 BDD scenarios; Core 1,239 tests (7 optional skips, 98.249328% coverage); iOS 531 (519 passes, 12 skips); Mac 39; Watch 34; 29 helper tests and four real-server contracts, zero failures. All three required checks passed on exact merged source before upload. The exact transferred IPA was recovered, its full-file transport MD5 matched, its preserved copy SHA-256 matched, and all three distribution signatures/profiles, versions, disabled debugging and no-test-payload checks passed. Complete physical phone/Watch acceptance remains unverified; this is an authorized beta, not a production-ready claim.
+
+**Distribution procedure correction:** an existing private plist with `destination=upload` was passed to direct Xcode export, which uploaded this build. Actual upload was **not** performed by the helper; the later helper dry run is not upload evidence. No duplicate upload was sent. Package verification was completed after acceptance, and the receipt preserves that order. Future local export must use a private copy with `destination=export`; use the official make target for actual upload.
+
+[Publication receipt](releases/ios-1.19.1-build39.json), [fresh capture catalog](images/ios/release-1.19.1-en-US.json), [Watch installation and limits](watch-beta.md). The beta upload did not update listing screenshots; the subsequent draft-media correction is recorded above. No public production submission occurred.
+
+## Historical first Watch beta — 1.19.0 (38)
 
 Apple accepted **1.19.0 (38)** at **2026-10-27T08:31:46.551678+00:00**, from `e43244f752712ac80e179e35c893e967aea38753`. Processing is **VALID**, internal state **IN_BETA_TESTING**, and the existing Dev group includes this build with two accepted testers. Primary locale, localized name, beta description and What to Test were read back in **en-US**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.0-build38).
 
@@ -254,7 +276,7 @@ worktree. Screenshots do not replace physical-device acceptance.
 | App Store Connect app | Listen To Me, Apple ID `6811155732` |
 | App bundle | `com.tomwu.ListenToMe.ios` |
 | Share extension | `com.tomwu.ListenToMe.ios.share` |
-| Apple Watch app | `com.tomwu.ListenToMe.ios.watchkitapp` — included in TestFlight 1.19.0 (38); [physical production acceptance](watch-beta.md) remains pending |
+| Apple Watch app | `com.tomwu.ListenToMe.ios.watchkitapp` — included in TestFlight 1.19.1 (39); [physical production acceptance](watch-beta.md) remains pending |
 | Team | `T32FW7PZ3S` |
 | App Group | `group.com.tomwu.ListenToMe.ios` |
 | Existing internal testing group | `Dev` |
@@ -273,6 +295,8 @@ version/build rewriting. They contain no credentials. Do not depend on plists le
 folders by a previous session.
 
 ### Local manual signing when automatic export cannot select profiles
+
+**Keep local export and upload distinct.** The configured `manual-testflight-export.plist` is an upload input and contains `destination=upload`. Passing it directly to `xcodebuild -exportArchive` uploads immediately; it does not leave a local verification IPA. For a local export, create a separate private copy with `destination=export`, verify that field before invoking Xcode, and verify the resulting IPA. Preserve the original upload config. Actual distribution uses `make ios-testflight` with the original upload input and explicit Watch flag. If an upload already succeeded outside the helper, verify Apple and recover its exact package/logs; record the real route and never re-upload the accepted version to manufacture a helper receipt.
 
 Automatic signing can report both a missing Watch Store profile and denied cloud-signing access,
 even with a valid local Apple Distribution identity. Preserve the successful archive and failed
@@ -742,3 +766,12 @@ Apple references: [upload builds](https://developer.apple.com/help/app-store-con
 [distribution workflow](https://developer.apple.com/documentation/xcode/distributing-your-app-for-beta-testing-and-releases),
 [build statuses](https://developer.apple.com/help/app-store-connect/reference/app-uploads/app-build-statuses),
 [add testers to builds](https://developer.apple.com/help/app-store-connect/test-a-beta-version/add-testers-to-builds).
+
+## Translation release evidence (#330)
+
+For a train containing [translation](translation.md), capture both the original-plus-translated
+transcript and the Summary page's Translate option, with fresh portrait/Duo/iPad evidence and
+accessibility inspection. Preserve source/version/device provenance; synthetic DEBUG previews must
+be identified as UI-only, never actual model-quality acceptance or an installed physical-device pass.
+Verify an installed real language pair separately and record any missing-pack/physical acceptance.
+Watch continues to show its own real recording/sync screens, since it has no translation UI.

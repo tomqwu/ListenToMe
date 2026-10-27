@@ -4,6 +4,13 @@ This document describes how the maintainer builds and publishes an official, sig
 **notarized** `.dmg` for ListenToMe on macOS. For the separate iPhone/iPad target, follow
 [iOS validation and distribution](IOS.md#validation-and-release).
 
+A GitHub DMG release does not submit the macOS app to the App Store. An explicitly authorized Mac
+App Store submission follows the separate
+[official review checklist](../AGENTS.md#official-app-store-review-and-public-release), with its own
+platform/build acceptance, en-US metadata, fresh Mac screenshots and Apple review receipt. An iOS
+submission does not submit Mac, and TestFlight/DMG authorization alone does not authorize production
+App Store submission.
+
 ## Mac App Store distribution
 
 The maintainer requested Mac App Store submission on October 26, 2026. The same App Store Connect
@@ -327,3 +334,10 @@ dynamic libraries are signed depth-first before their enclosing bundle; traversa
 stops the release. `scripts/test-release-paths.py` exercises these guards without real signing.
 `make e2e` additionally requires at least one passing XCTest case from each requested real-contract
 suite; empty discovery and all-skipped runs fail even if the test process exits successfully.
+
+## Translation candidate acceptance (#330)
+
+A Mac train containing [translation](translation.md) also verifies the Languages rail, original and
+translated transcript, Summary Translate/Close, native pack preparation/cancellation and window
+teardown. Preserve fresh Mac screenshots with candidate provenance. ImageRenderer/unit snapshots
+are UI evidence only; they do not establish installed-app interaction or actual model quality.

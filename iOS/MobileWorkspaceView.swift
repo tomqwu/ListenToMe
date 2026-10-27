@@ -221,6 +221,11 @@ struct MobileWorkspaceView<Header: View>: View {
                     }
                     if session.generatingMode != mode { MobileAnswerNoticeLines(session: session, mode: mode) }
                     let output = session.output(for: mode)
+                    if mode == .summary {
+                        SummaryTranslationPanel(translation: session.summaryTranslation,
+                            target: $session.languageOptions.summaryTranslationTarget, source: output,
+                            conversationID: session.id, isGenerating: session.generatingMode == .summary)
+                    }
                     if !output.isEmpty {
                         MarkdownText(text: output).font(.body).lineSpacing(3).textSelection(.enabled)
                             .accessibilityElement(children: .combine).accessibilityIdentifier("output-\(mode.rawValue)")

@@ -1,0 +1,9 @@
+Record conversations on Apple Watch and sync finished audio to your paired iPhone for on-device transcription when connected. Pending recordings survive interrupted transfers and relaunch, with Retry and Delete controls on iPhone.
+
+This update fixes an iPhone crash when opening Watch recordings with automatic language detection. It also prevents incidental dismissal of the Watch recording screen from stopping capture. Use Stop to finish; actual audio interruptions require Continue. Existing recording safety limits remain.
+
+Watch imports can use already-downloaded language models and already-prepared speaker models. They do not initiate those optional model downloads. Keep playback audio only when Save audio recordings is enabled during import.
+
+Full summary now has its Summary icon in the iPhone/iPad More menu.
+
+Audio analysis and transcription stay on-device. Watch audio transfers only to its paired iPhone. Optional summary providers retain your existing explicit setup and text-sharing disclosures.

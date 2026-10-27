@@ -72,6 +72,6 @@ public extension SessionRecord {
                       isComplete: isComplete, attachments: attachments, sourceImportID: sourceImportID,
                       titleState: state, language: language, languages: languages,
                       selectionSummaries: selectionSummaries, summaryInstructions: summaryInstructions, vocabularyDomainIDs: vocabularyDomainIDs,
-                      hasIncompleteImport: hasIncompleteImport, situationGrid: situationGrid)
+                      hasIncompleteImport: hasIncompleteImport, situationGrid: situationGrid, languageOptions: languageOptions)
     }
 }

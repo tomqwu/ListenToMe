@@ -4,6 +4,47 @@ import XCTest
 
 @MainActor
 final class WatchRecorderLifecycleTests: XCTestCase {
+    func testPresentationDismissalKeepsCaptureUntilExplicitStop() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let capture = LifecycleCaptureFixture()
+        let recorder = WatchRecorder(makeCapture: { capture }, capabilitySnapshot: {
+            .init(microphoneDenied: false, battery: 1, freeBytes: Int64.max)
+        }, requestPermission: {}, audioSession: .init(activate: {}, deactivate: {}),
+                                    recordingsDirectory: root.appendingPathComponent("Recording"))
+        let outbox = WatchOutbox(root: root.appendingPathComponent("Outbox"),
+                                recordingRoot: root.appendingPathComponent("unused"),
+                                transport: .init(isActive: { false }, outstandingURLs: { [] },
+                                                 sendFile: { _, _ in XCTFail("No live transfer") },
+                                                 sendUserInfo: { _ in XCTFail("No live user info") },
+                                                 cancelOutstanding: {}))
+        var finalized: [(URL, Bool)] = []
+        var ends = 0
+        recorder.onChunkFinalized = { url, metadata in finalized.append((url, metadata.isLast)) }
+        recorder.onRecordingEnded = { _ in ends += 1 }
+        defer { recorder.stop() }
+        let view = WatchRootView(link: WatchLinkClient(sendMessage: { _, _, _ in XCTFail("No remote control") }),
+                                 recorder: recorder, outbox: outbox)
+        try await recorder.start()
+        XCTAssertTrue(view.recordingScreenShown.wrappedValue)
+        view.recordingScreenShown.wrappedValue = false
+        XCTAssertTrue(recorder.isRecording, "A presentation callback is not an explicit Stop")
+        XCTAssertTrue(capture.isRunning)
+        XCTAssertTrue(finalized.isEmpty)
+        XCTAssertEqual(ends, 0)
+        recorder.stop()
+        XCTAssertFalse(view.recordingScreenShown.wrappedValue)
+        XCTAssertEqual(finalized.count, 1)
+        let last = try XCTUnwrap(finalized.first)
+        XCTAssertTrue(last.1)
+        XCTAssertGreaterThan(try AVAudioFile(forReading: last.0).length, 0)
+        recorder.stop()
+        view.recordingScreenShown.wrappedValue = false
+        XCTAssertEqual(finalized.count, 1, "Repeated Stop/dismissal must not finalize again")
+        XCTAssertEqual(ends, 0, "The last AAC carries the end, so no separate end marker is needed")
+        XCTAssertEqual(recorder.phase, .idle)
+    }
+
     func testCancelledBeforeFirstTurnNeverRequestsStartOrContinuePermission() async throws {
         for continuing in [false, true] {
             let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)

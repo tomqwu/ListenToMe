@@ -10,10 +10,20 @@ struct ChunkInputs: AsyncSequence, Sendable {
 
     struct AsyncIterator: AsyncIteratorProtocol {
         let feed: ChunkFeed
-        mutating func next() async -> AnalyzerInput? { feed.next() }
+        mutating func next() async -> AnalyzerInput? {
+            guard let pcm = feed.nextPCM() else { return nil }
+            return AnalyzerInput(buffer: pcm.buffer, bufferStartTime: pcm.bufferStartTime)
+        }
     }
 
     func makeAsyncIterator() -> AsyncIterator { AsyncIterator(feed: feed) }
+}
+
+/// A decoded buffer for local waveform analysis. Raw Float32 consumers must not construct
+/// AnalyzerInput: the physical Speech framework can trap on unsupported PCM representations.
+struct ChunkPCM {
+    let buffer: AVAudioPCMBuffer
+    let bufferStartTime: CMTime?
 }
 
 /// Reads the chunks in order, about a second at a time, converted to the analyzer's format. Each
@@ -49,7 +59,8 @@ final class ChunkFeed: @unchecked Sendable {
         }
     }
 
-    func next() -> AnalyzerInput? {
+    /// Raw audio analysis uses this path without entering the Speech framework.
+    func nextPCM() -> ChunkPCM? {
         lock.withLock {
             do {
                 while !stopped, position < chunks.count {
@@ -64,7 +75,7 @@ final class ChunkFeed: @unchecked Sendable {
     }
 
     /// The next converted buffer of the current chunk, or `nil` after moving on to the next chunk.
-    private func read() throws -> AnalyzerInput? {
+    private func read() throws -> ChunkPCM? {
         let chunk = chunks[position]
         if file == nil {
             let opened = try AVAudioFile(forReading: chunk.url)
@@ -99,7 +110,7 @@ final class ChunkFeed: @unchecked Sendable {
             startsChunk = false
         }
         fedThrough += Double(output.frameLength) / format.sampleRate
-        return AnalyzerInput(buffer: output, bufferStartTime: start)
+        return ChunkPCM(buffer: output, bufferStartTime: start)
     }
 
     private func convert(_ buffer: AVAudioPCMBuffer) throws -> AVAudioPCMBuffer {

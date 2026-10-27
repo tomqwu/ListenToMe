@@ -34,17 +34,20 @@ final class MobileSession {
     var title = ConversationTitle.mobileDefault
     var titleState = ConversationTitleState.placeholder   // where the title came from (#221)
     @ObservationIgnored let titleCoordinator = ConversationTitleCoordinator()
+    var languageOptions = ConversationLanguageOptions() { didSet { updateLiveTranslations(); updateSummaryTranslation(); scheduleSave() } }
+    let liveTranslation = LiveTranslationCoordinator(translator: AppleTranscriptTranslator())
+    let summaryTranslation = SummaryTranslationCoordinator(translator: AppleTranscriptTranslator())
     var summaryInstructions = "" { didSet { handleSummaryEvent(.notesChanged) } }
     var notes = "" { didSet { handleSummaryEvent(.notesChanged) } }
     var restoredSituation: SituationGrid?
-    var summary = ""
+    var summary = "" { didSet { updateSummaryTranslation() } }
     var quickSummary = ""
     /// Deep analysis an older version saved here; kept read-only, never generated on iOS (#235).
     var earlierDeepAnalysis = ""
     var selectionSummaries: [SelectionSummary] = []   // the last few summaries of selected lines (#234)
     let selectionRun = MobileSelectionRun()
     var attachments: [SessionAttachment] = []
-    var generatingMode: MobileSummaryMode?
+    var generatingMode: MobileSummaryMode? { didSet { updateSummaryTranslation() } }
     var autoQuick = UserDefaults.standard.bool(forKey: "autoQuickSummary") {
         didSet { UserDefaults.standard.set(autoQuick, forKey: "autoQuickSummary"); handleSummaryEvent(.automationChanged) }
     }
@@ -95,7 +98,7 @@ final class MobileSession {
     var quickSummaryError: String? { manualQuickError ?? quickReader.error }
     private(set) var sourceImportID: String?
     private(set) var hasIncompleteImport = false
-    var segments: [TranscriptSegment] = [] { didSet { liveRevision += 1; scheduleAutoQuick() } }
+    var segments: [TranscriptSegment] = [] { didSet { liveRevision += 1; updateLiveTranslations(); scheduleAutoQuick() } }
     var liveRevision = 0
     @ObservationIgnored var liveCacheKey: LiveKey?
     @ObservationIgnored var liveCache: LiveSnapshot?
@@ -266,6 +269,7 @@ final class MobileSession {
     }
 
     func background() async {
+        liveTranslation.setSuspended(true); summaryTranslation.worker.setSuspended(true)
         cancelSpeakerIdentification()
         acceptsSpeechCorrection = false
         flushPendingSave()
@@ -286,6 +290,7 @@ final class MobileSession {
         acceptsSpeechCorrection = false
         manualQuickError = nil; resetSuggestions(); answerNotices = MobileAnswerNotices()
         handleSummaryEvent(.conversationChanged)
+        liveTranslation.reset(); summaryTranslation.reset(); languageOptions = .init()
         id = UUID().uuidString; date = Date()
         vocabulary.restore(domainIDs: nil, for: id)
         restoredSituation = nil
@@ -311,6 +316,7 @@ final class MobileSession {
         handleSummaryEvent(.conversationChanged)
         id = record.id; date = record.date; title = record.title; titleState = record.resolvedTitleState
         vocabulary.restore(domainIDs: record.vocabularyDomainIDs, for: id)
+        liveTranslation.reset(); summaryTranslation.reset(); languageOptions = record.languageOptions ?? .init()
         notes = record.notes ?? ""; summaryInstructions = record.summaryInstructions ?? ""; summary = record.summary
         quickSummary = record.quickSuggestion ?? ""; earlierDeepAnalysis = record.deepAnswer ?? ""
         selectionSummaries = record.selectionSummaries ?? []
@@ -802,6 +808,7 @@ extension MobileSession {
         sceneGeneration += 1
         let generation = sceneGeneration
         isForeground = phase != .background
+        if phase != .active { liveTranslation.setSuspended(true); summaryTranslation.worker.setSuspended(true) }
         // Suspension can follow .inactive without another chance to run, so pending typing is
         // written here as well as from the App body's synchronous forwarder.
         flushPendingSave()
@@ -810,6 +817,7 @@ extension MobileSession {
             ai.refreshAppleAvailability()
             await refreshRecordingSupport(publish: false)
             guard !Task.isCancelled, generation == sceneGeneration, isForeground, applicationIsActive() else { return }
+            liveTranslation.setSuspended(false); summaryTranslation.worker.setSuspended(false)
             importSharedInbox(); importWatchInbox(); nameConversationIfNeeded()
             prepareSpeakerModelsIfNeeded()   // speaker models load in the foreground only (#195)
             // The watch may still show "Open ListenToMe…" from a Start sent while this was closed.
@@ -850,7 +858,8 @@ extension MobileSession {
             summaryInstructions: summaryInstructions.isEmpty ? nil : summaryInstructions,
             vocabularyDomainIDs: vocabulary.domainIDs(for: id).sorted(),
             hasIncompleteImport: hasIncompleteImport ? true : nil,
-            situationGrid: restoredSituation.flatMap { $0.markdown == summary && $0.isValid(segments: allSegments) ? $0 : nil }))
+            situationGrid: restoredSituation.flatMap { $0.markdown == summary && $0.isValid(segments: allSegments) ? $0 : nil },
+            languageOptions: languageOptions))
     }
 }
 

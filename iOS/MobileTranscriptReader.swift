@@ -5,6 +5,8 @@ import ListenToMeCore
 struct MobileTranscriptReader: View {
     let segments: [TranscriptSegment]
     var scrollIdentifier = "transcriptScroll"
+    var translation: ((TranscriptSegment) -> String?)?
+    var translationProblem: ((UUID) -> String?)?
     var restoreOriginal: ((UUID) -> Void)?
     /// Shows who said each line once speaker identification has labeled any of them (issue #180).
     var showsSpeakers = false
@@ -147,6 +149,9 @@ struct MobileTranscriptReader: View {
     /// when no provider can run.
     @ViewBuilder
     private func lineMenu(_ segment: TranscriptSegment) -> some View {
+        if let text = translation?(segment) {
+            Button("Copy translation", systemImage: "doc.on.doc") { UIPasteboard.general.string = text }
+        }
         if let lineActions {
             let reason = lineActions.summarizeBlockReason
             Button { lineActions.summarizeFrom(segment.id) } label: {
@@ -180,6 +185,11 @@ struct MobileTranscriptReader: View {
                     .accessibilityIdentifier("transcript-speaker-\(segment.id)")
             }
             lineText(segment, selectable: selectable)
+            if let text = translation?(segment) {
+                TranslatedTranscriptText(text: text).accessibilityIdentifier("translated-line-\(segment.id)")
+            } else if let problem = translationProblem?(segment.id) {
+                Text(problem).font(.caption).foregroundStyle(.secondary)
+            }
             if segment.originalText != nil, restoreOriginal != nil, !selecting {
                 Button("AI corrected", systemImage: "sparkles") { reviewing = segment }
                     .font(.caption).buttonStyle(.borderless)

@@ -1,0 +1,10 @@
+ListenToMe 1.19.1 (39) — Watch import recovery
+
+1. Install this beta and its matching Watch companion. Record on Watch, then open the paired iPhone with Automatic language detection enabled and its model already downloaded. Import should reach History without closing the app. Repeat with a fixed language and speaker labels on/off.
+2. Lower/raise your wrist and leave/return to the Watch app during capture. Recording and Stop should remain available. Use Stop to finish. Real audio interruptions still require Continue; existing battery/storage start checks and recording safety limits remain.
+3. Disconnect/reconnect and verify pending AAC transfers once. With Save audio recordings on during import, verify playback/share; with it off, verify only saved text remains after transcription. Retry/Delete and cancellation should preserve their existing behavior.
+4. Check iPhone/iPad portrait, landscape Duo, Notes/Prompt, Summary and release history.
+
+Privacy: analysis and transcription stay on-device. Watch audio transfers only to its paired iPhone. Saved playback audio remains opt-in; no additional model download or cloud routing is introduced.
+
+Physical iPhone synthetic AAC decoding/transcription tests and simulator controls are distinct from real paired Watch microphone, wrist-down, transfer and battery/storage acceptance. This beta does not submit a public App Store version or update listing screenshots.

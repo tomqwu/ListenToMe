@@ -32,7 +32,7 @@ public struct ConversationRetranscription: Sendable {
             isComplete: current.isComplete, attachments: current.attachments, sourceImportID: current.sourceImportID,
             titleState: current.titleState, language: language, languages: [language],
             selectionSummaries: current.selectionSummaries, summaryInstructions: current.summaryInstructions, vocabularyDomainIDs: current.vocabularyDomainIDs,
-            hasIncompleteImport: current.hasIncompleteImport)
+            hasIncompleteImport: current.hasIncompleteImport, languageOptions: current.languageOptions)
     }
 
     /// File recognition starts at zero. Place each track on the saved recording's timeline and

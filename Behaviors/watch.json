@@ -347,6 +347,67 @@
           "test": "WatchPreparationTests/testOwnerReleasedBeforeFirstTurnRunsNoOperation"
         }
       ]
+    },
+    {
+      "id": "WATCH-015",
+      "name": "Decode received AAC for optional analysis without crashing on phone",
+      "given": "a received Watch AAC recording is ready for local language detection and speaker analysis",
+      "when": "the foreground phone decodes it to mono floating point samples, or decoding is cancelled or the file is unreadable",
+      "then": "bounded nonempty samples and recording-relative speaker windows are returned without creating Speech analyzer inputs; unreadable input reports failure and cancellation stops analysis without consuming source audio",
+      "covers": [
+        "SharedPlatform/AudioChunkFileFeed.swift",
+        "iOS/MobileSession+WatchLanguage.swift",
+        "iOS/WatchSpeakerAudio.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileWatchLanguageTests.swift",
+          "test": "MobileWatchLanguageTests/testReceivedAACDecodesForLanguageAndSpeakersWithoutConsumingSource"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileWatchLanguageTests.swift",
+          "test": "MobileWatchLanguageTests/testUnreadableAndCancelledAudioAnalysisPreservesSource"
+        }
+      ],
+      "manual": {
+        "reason": "iOS simulator Speech input handling differs from physical iPhone; use isolated physical test host for this crash regression. Paired Watch transfer is a separate acceptance.",
+        "steps": [
+          "Decode checked-in synthetic AAC through production language and speaker readers on physical iPhone; preserve source and raw test results.",
+          "On beta, open the phone with a finished Watch recording pending and verify History import without a crash."
+        ]
+      }
+    },
+    {
+      "id": "WATCH-016",
+      "name": "Presentation dismissal does not act as Stop",
+      "given": "Watch microphone capture has started and the recording screen is presented",
+      "when": "the system dismisses the presentation while capture is active and the user later explicitly stops",
+      "then": "capture stays running with no finalized audio or end event at presentation dismissal; explicit Stop finalizes readable audio once and returns to idle; tapping the actual system close control leaves Recording and a hittable Stop visible while elapsed time advances",
+      "covers": [
+        "Watch/WatchRootView.swift",
+        "Watch/WatchRecordingView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchRecorderLifecycleTests.swift",
+          "test": "WatchRecorderLifecycleTests/testPresentationDismissalKeepsCaptureUntilExplicitStop"
+        },
+        {
+          "suite": "watch-ui",
+          "file": "WatchUITests/WatchCapabilityUITests.swift",
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone"
+        }
+      ],
+      "manual": {
+        "reason": "A simulator presentation callback cannot prove physical wrist-down audio execution.",
+        "steps": [
+          "On a physical Watch start recording, lower wrist, raise it and verify uninterrupted recording and usable Stop.",
+          "Verify an actual audio interruption still shows its reason and requires explicit Continue."
+        ]
+      }
     }
   ]
 }

@@ -127,7 +127,9 @@ final class MobileAppTests: XCTestCase {
         let app = XCUIApplication()
         app.launchPastReleaseNotes()
         app.buttons["Notes"].tap()
-        app.buttons["Take photo"].tap()
+        let camera = app.buttons["Take photo"]
+        revealAttachment(camera, in: app)
+        camera.tap()
         let explanation = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Camera capture requires")).firstMatch
         for _ in 0..<4 where !explanation.isHittable { app.swipeUp() }
         XCTAssertTrue(explanation.exists)
@@ -370,7 +372,14 @@ final class MobileAppTests: XCTestCase {
         app.buttons["More"].tap()
         app.buttons["Settings"].tap()
         let release = app.staticTexts["iPhone & iPad · iOS 26 or later"]
-        for _ in 0..<5 where !release.isHittable { app.swipeUp() }
+        for _ in 0..<30 where !release.isHittable { app.collectionViews["aiSettingsForm"].swipeUp() }
         XCTAssertTrue(release.isHittable)
+    }
+}
+
+private extension MobileAppTests {
+    func revealAttachment(_ control: XCUIElement, in app: XCUIApplication) {
+        for _ in 0..<6 where !control.isHittable { app.swipeUp() }
+        XCTAssertTrue(control.isHittable, "Attachment tools remain reachable beneath conversation options")
     }
 }

@@ -33,7 +33,8 @@ actor WatchSpeakerAudio {
             if let held = pending {
                 input = held
                 pending = nil
-            } else if let value = feed.next() {
+            } else if let value = feed.nextPCM() {
+                try Task.checkCancellation()
                 let buffer = value.buffer
                 guard let channel = buffer.floatChannelData?[0] else { continue }
                 let time = value.bufferStartTime?.seconds ?? clock

@@ -22,6 +22,26 @@ verification apply in full. The checklist below adds documentation and issue hyg
 replace that workflow. Documentation-only changes do not require an unrelated model request or
 binary release.
 
+### TestFlight and official App Store review
+
+[AGENTS.md](AGENTS.md#publishing-an-ios-release-train) owns TestFlight publication;
+[official App Store review](AGENTS.md#official-app-store-review-and-public-release) is a separate
+authorized workflow. For a due beta train, use the
+[TestFlight skill](.agents/skills/listentome-testflight/SKILL.md) and
+[iOS runbook](docs/IOS-RELEASING.md) through accepted upload, processing and existing tester-group
+verification. Check the configured credentials before requesting sign-in; an unlocked Mac or
+connected phone is not required for the CLI/API beta-upload route. Record missing physical acceptance.
+
+For an explicitly authorized official submission, complete production acceptance, **en-US** metadata
+and localized-name readback, complete release notes, current reviewer/privacy details, selected-build
+verification and fresh screenshot uploads before submitting. Cover iPhone/iPad, Duo and embedded
+Watch, and Mac separately when authorized. Verify processed screenshot sets and downloaded images;
+local captures do not update Apple's listing. Preserve the intended release mode, reuse existing
+authorization for the version/platform, and operate the submission instead of handing the clicks
+back to the maintainer. Retain Apple's submission receipt and distinguish review submission,
+approval, pending manual release and public availability. A TestFlight beta or Mac GitHub DMG is
+not an official App Store submission. Documentation-only requests do not authorize distribution.
+
 All behavior changes follow the repository-wide [BDD workflow](docs/BDD.md): scenario first,
 failing native test, implementation, passing test, then refactor. Bind Given/When/Then scenarios in
 `Behaviors/` to concrete test methods, run `make bdd-check`, and include scenario IDs plus actual

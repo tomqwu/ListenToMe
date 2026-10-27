@@ -48,6 +48,11 @@ enum MobileReleaseNotes {
         var id: String { version }
     }
     static let releases: [Release] = [
+        .init(version: "1.19.1", title: "Reliable Watch audio imports", details: [
+            "Fix an iPhone crash when opening received Watch audio for automatic language detection.",
+            "Keep Watch capture running through recording-screen dismissal; use Stop to finish, or Continue after an audio interruption.",
+            "Language detection, speaker analysis and transcription stay on-device. Saving playback audio remains optional."
+        ]),
         .init(version: "1.19.0", title: "Record from your Apple Watch", details: [
             "Record on Apple Watch and send finished audio to your paired iPhone for on-device transcription when connected.",
             "Recording can continue with your wrist down; interruptions wait for your explicit Continue.",

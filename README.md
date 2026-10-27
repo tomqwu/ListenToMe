@@ -62,11 +62,11 @@ Education & Research) and your own **My terms** list help recognition, AI speech
 summaries on both platforms; after about a minute of speech the phone may suggest one, decided on the
 device. Meeting use-case presets, reference files, audio-file import and WhisperKit transcription are macOS-only.
 Editable domain prompt presets are available on both platforms.
-The public iPhone/iPad app is 1.18.1. The latest TestFlight beta is **1.19.0 (38)**
-([October 27 release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.0-build38)), including the Apple Watch companion.
-[Watch installation and limits](docs/watch-beta.md) and [native previews](docs/images/watch/1.19.0/README.md)
-are available; physical Watch acceptance remains pending. All 43 fresh release images are inspected;
-App Store listing uploads await a separately authorized production submission.
+The public iPhone/iPad app is 1.18.1. The latest TestFlight beta is **1.19.1 (39)**
+([October 27 release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.1-build39)), including the Apple Watch companion.
+[Watch installation and limits](docs/watch-beta.md) and [native previews](docs/images/watch/1.19.1/README.md)
+are available; physical Watch acceptance remains pending. All 49 fresh release images are inspected;
+The [1.19.1 App Store draft](docs/releases/ios-1.19.1-build39-media.json) now has 60 processed screenshots across both English locales, including Watch and landscape Duo; their downloaded pixels and order are verified. The draft has not been submitted, so the public listing remains unchanged.
 See [iOS setup, validation and distribution](docs/IOS.md). Device and language support are checked
 per feature; Apple Intelligence is independent of recording. The [compatibility support](docs/device-compatibility.md)
 includes local dictation fallback for compatible older iPads and explicit unavailable-feature recovery
@@ -263,6 +263,30 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 brew install xcodegen
 make run
 ```
+
+## TestFlight and official App Store review
+
+Maintainers and agents follow [AGENTS.md](AGENTS.md#release-trains-when-to-publish) and
+[CLAUDE.md](CLAUDE.md#testflight-and-official-app-store-review). Changes merge with validation and
+the required CI checks; publication is a separate, batched release train.
+
+- **TestFlight:** use the [repository skill](.agents/skills/listentome-testflight/SKILL.md) and
+  [iOS release runbook](docs/IOS-RELEASING.md). Complete the accepted upload, processing and existing
+  tester-group verification, retain source/artifact receipts and report physical acceptance still
+  pending. A beta upload does not require a connected phone or an unlocked Mac for the CLI/API route.
+- **Official App Store review:** follow the
+  [production submission checklist](AGENTS.md#official-app-store-review-and-public-release) when
+  explicitly authorized. Complete production acceptance, **English (US), `en-US`**, metadata and
+  localized-name readback, full release notes, privacy/reviewer details and fresh screenshot uploads.
+  Include applicable iPhone/iPad sizes, iPhone Duo, iPad wide layouts and the embedded Watch companion;
+  handle Mac as a separate authorized platform. Verify Apple's image processing/order and downloaded
+  assets before submitting, preserve the intended release mode and retain the review receipt.
+
+The agent completes an authorized upload/submission using existing configured credentials; the
+maintainer handles OS authentication when required. Report beta availability, review submission,
+Apple approval and actual public release separately. A saved draft, local screenshots or a notarized
+[Mac DMG](docs/RELEASING.md) does not establish an App Store submission. Updating these instructions
+does not itself publish or submit a build.
 
 ## Build & run
 
@@ -569,7 +593,7 @@ saying so. Press **Speakers / edit names** to retry once the network is availabl
   is not a whole-product measurement. See [orchestration ownership](docs/ORCHESTRATION.md).
 - **`iOS/`**: iPhone/iPad SwiftUI app, foreground microphone capture with SpeechAnalyzer, Apple Intelligence
   (Foundation Models) summaries by default on capable devices.
-- **`Watch/`**: Apple Watch companion, embedded in the default iOS project; [beta installation and pending device acceptance](docs/watch-beta.md). Included in TestFlight 1.19.0 (38); public iOS 1.18.1 excludes it.
+- **`Watch/`**: Apple Watch companion, embedded in the default iOS project; [beta installation and pending device acceptance](docs/watch-beta.md). Included in TestFlight 1.19.1 (39); public iOS 1.18.1 excludes it.
 - **`App/`**: macOS glue — `DualChannelCapture`, `SpeechRecognizerTranscriber`, SwiftUI UI, hotkey.
 
 See [`docs/reviews/2026-09-10/design-and-gap-review.md`](docs/reviews/2026-09-10/design-and-gap-review.md)
@@ -785,3 +809,12 @@ preparation and replacement-task completion, separately from native audio accept
 `ConversationCheckpointCoordinator` owns the Mac checkpoint dirty marker and original start date.
 Core tests exercise failed archive writes and retry, unchanged-content skips, completion/forced saves
 and resets; platform adapters retain consent eligibility, record assembly and Save to folder effects.
+
+## Translation (unreleased, #330)
+
+Enable **Live translation** from More/Notes on iPhone/iPad or the Mac Languages rail to read finalized
+speech in another language beneath the original. On **Summary**, choose **Translate summary** for
+a separate target and explicit translation of the existing summary. Apple Translation uses installed
+on-device packs; missing pairs offer explicit Prepare languages and unsupported pairs explain why.
+Originals, audio timing, AI providers and normal exports stay authoritative. Watch text can translate
+after import on the phone. See [translation and its verification limits](docs/translation.md).

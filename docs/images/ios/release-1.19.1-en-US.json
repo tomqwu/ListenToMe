@@ -1,0 +1,998 @@
+{
+  "candidateSource": "0020345752a1ace9c28647bf9d45da310f862b18",
+  "version": "1.19.1",
+  "build": "39",
+  "locale": "en-US",
+  "captureConfiguration": "Debug native simulator UI, production views with synthetic fixtures; not signed-Release or physical-device acceptance",
+  "storeListingUpload": "60 COMPLETE assets in App Store 1.19.1 draft: 30 each en-US/en-CA; downloaded RGB/order verified; not submitted/public. See docs/releases/ios-1.19.1-build39-media.json",
+  "rejectedOriginalsRetained": 1,
+  "sets": [
+    {
+      "category": "iphone-pro",
+      "simulator": "CAA73344-2E84-46B3-951B-26FE5E0D8EE7",
+      "runtime": "iOS 26.5",
+      "assets": [
+        {
+          "name": "More menu with Full summary icon",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "pixels": [
+            1206,
+            2622
+          ],
+          "originalSHA256": "8de92efbd1d1769150ce91bb178fd7d1ae74b35e3ab233861524a4506aa8689d",
+          "normalizedSHA256": "592ee6070ee525f61aab5a26c551a07280f93d88ff965a21b749fc705751da45",
+          "test": "MobileDesignUITests/testFullSummaryMenuRendersIconAndOpensSheet()",
+          "deviceId": "CAA73344-2E84-46B3-951B-26FE5E0D8EE7",
+          "visualStatus": "approved",
+          "visualNote": "Full summary purple icon and menu labels visible.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-pro/originals/C27639B6-1981-456C-93F3-2EB67B0306DF.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-pro/More menu with Full summary icon.png"
+        },
+        {
+          "name": "06 Settings",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "pixels": [
+            1206,
+            2622
+          ],
+          "originalSHA256": "9958ef9d1b5c5bc77fe5942a173689b8abf1efcc17a598c597978c25628803d4",
+          "normalizedSHA256": "538be3a1720bb9957318d6928dbe38f8e028db312e748283a6859be7318f14d8",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "CAA73344-2E84-46B3-951B-26FE5E0D8EE7",
+          "visualStatus": "approved",
+          "visualNote": "Readable controls and content; no blocking overlap. Content at scroll viewport boundaries is intentionally partial.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-pro/originals/B6AF8EA6-F491-43ED-A247-803F123656DC.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-pro/06 Settings.png"
+        },
+        {
+          "name": "05 Conversation history",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "pixels": [
+            1206,
+            2622
+          ],
+          "originalSHA256": "fba418d8fc729f8ab6f9bb42ad940fd01a09093a6b23d57f4e5c9c8bd5b8419f",
+          "normalizedSHA256": "f6c2319fb53853dc5df43ff909aad6d43b31b9f0ffdbf4f4241287ca7c2aca7d",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "CAA73344-2E84-46B3-951B-26FE5E0D8EE7",
+          "visualStatus": "approved",
+          "visualNote": "Readable controls and content; no blocking overlap. Content at scroll viewport boundaries is intentionally partial.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-pro/originals/AF5E2855-6FFB-4406-985B-4DB58A1BCA27.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-pro/05 Conversation history.png"
+        },
+        {
+          "name": "04 Summary portrait",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "pixels": [
+            1206,
+            2622
+          ],
+          "originalSHA256": "cab1bca4febd1f86d02b4541df1f66092f01f2e4544653cc2b85c4838e4431c8",
+          "normalizedSHA256": "7020662967ec31c7247803918fc0c930b0869c1e1b545840a34de2826227a037",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "CAA73344-2E84-46B3-951B-26FE5E0D8EE7",
+          "visualStatus": "approved",
+          "visualNote": "Readable controls and content; no blocking overlap. Content at scroll viewport boundaries is intentionally partial.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-pro/originals/2BB16B70-185B-4C23-A300-71C8134EF9AD.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-pro/04 Summary portrait.png"
+        },
+        {
+          "name": "03 Conversation prompt",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "pixels": [
+            1206,
+            2622
+          ],
+          "originalSHA256": "df848572720c456884b7c257c4139f745290c2fbb15a172c9d39a107171193f6",
+          "normalizedSHA256": "3e5d29dc1eb683ea5fe267bcb602081b613f5a864f55d2fd0e544e6bdeae5a66",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "CAA73344-2E84-46B3-951B-26FE5E0D8EE7",
+          "visualStatus": "approved",
+          "visualNote": "Readable controls and content; no blocking overlap. Content at scroll viewport boundaries is intentionally partial.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-pro/originals/1E0B6C90-3E66-40AA-AF9C-C2A86CA80C50.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-pro/03 Conversation prompt.png"
+        },
+        {
+          "name": "02 Live landscape",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "pixels": [
+            2622,
+            1206
+          ],
+          "originalSHA256": "c4e9e39074606b6efb933a7f5ccce54e9a501547781115cf08852c17221e089d",
+          "normalizedSHA256": "89e6de7d61b938737e2abf5e92c5ca59f902a6fbc444f560e4cbd29e6cb9e8ef",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "CAA73344-2E84-46B3-951B-26FE5E0D8EE7",
+          "visualStatus": "approved",
+          "visualNote": "Readable controls and content; no blocking overlap. Content at scroll viewport boundaries is intentionally partial.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-pro/originals/D0A82226-3112-4803-AB2A-AF106A628EE5.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-pro/02 Live landscape.png"
+        },
+        {
+          "name": "01 Live portrait",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "pixels": [
+            1206,
+            2622
+          ],
+          "originalSHA256": "bda26958e581150e3c55281e6380f8847abf095b02d3a821c32e2b0b59a0e390",
+          "normalizedSHA256": "b1c45ac7e6bfa5af8311bb93f46b5fa13e8bfd23bbfef49b0c0bad8bb1fed76c",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "CAA73344-2E84-46B3-951B-26FE5E0D8EE7",
+          "visualStatus": "approved",
+          "visualNote": "Readable controls and content; no blocking overlap. Content at scroll viewport boundaries is intentionally partial.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-pro/originals/695648C0-0927-49C7-90F8-FECE93BDB452.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-pro/01 Live portrait.png"
+        }
+      ]
+    },
+    {
+      "category": "iphone-max",
+      "simulator": "9F3635CF-2581-4F86-AD78-420F4D238FC3",
+      "runtime": "iOS 26.5",
+      "assets": [
+        {
+          "name": "More menu with Full summary icon",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "pixels": [
+            1320,
+            2868
+          ],
+          "originalSHA256": "a0dc2e9c963af2e4cb6cfc604dc805f85da40bd2c64f28bc785797c57148398f",
+          "normalizedSHA256": "c8c45089f7985f2f3ac2afa37f05a40efbc0ef91e974e3a87fb673f93478ccd0",
+          "test": "MobileDesignUITests/testFullSummaryMenuRendersIconAndOpensSheet()",
+          "deviceId": "9F3635CF-2581-4F86-AD78-420F4D238FC3",
+          "visualStatus": "approved",
+          "visualNote": "Same-source retake: transient notification absent, all menu rows legible and Full summary purple icon visible. Original-detail requested; viewer downsized presentation. Replaces rejected original retained separately.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-max-menu-retake-1/originals/3299CB47-A942-4E34-B7C2-3DEACE620078.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-max-menu-retake-1/More menu with Full summary icon.png"
+        },
+        {
+          "name": "06 Settings",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "pixels": [
+            1320,
+            2868
+          ],
+          "originalSHA256": "ec58639ce963f07aaf353372b8aee6bc1f9f969860c553bdc7eca7720593eca0",
+          "normalizedSHA256": "49ae8aae4046ae517ba2ae20a44dc422b1746b6ed3121535313ae6cf0f35a6d6",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "9F3635CF-2581-4F86-AD78-420F4D238FC3",
+          "visualStatus": "approved",
+          "visualNote": "Readable controls and content; no blocking overlap. Content at scroll viewport boundaries is intentionally partial.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-max/originals/7074AD89-B814-4BC3-AD54-48C75AE52674.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-max/06 Settings.png"
+        },
+        {
+          "name": "05 Conversation history",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "pixels": [
+            1320,
+            2868
+          ],
+          "originalSHA256": "e97836f182180e1c43460b13dd51c0a2bd5293603e867acb1f53889fe29ec9ae",
+          "normalizedSHA256": "0fe8a5e09e2ea5f1a39396d0bd21c23b1798d02d6c993c8c51d1f97ab0cc3ad8",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "9F3635CF-2581-4F86-AD78-420F4D238FC3",
+          "visualStatus": "approved",
+          "visualNote": "Readable controls and content; no blocking overlap. Content at scroll viewport boundaries is intentionally partial.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-max/originals/5714B225-FB08-41F3-A502-F1CD1D9114D1.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-max/05 Conversation history.png"
+        },
+        {
+          "name": "04 Summary portrait",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "pixels": [
+            1320,
+            2868
+          ],
+          "originalSHA256": "d0f930553145a2176c2c193e33aade75d6551a34c42e593c9c94ff2ae5774266",
+          "normalizedSHA256": "11cb013a0345bc8675a833ebb8f7468afb0de4ade0d48c3d874a22caeed7f32b",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "9F3635CF-2581-4F86-AD78-420F4D238FC3",
+          "visualStatus": "approved",
+          "visualNote": "Readable controls and content; no blocking overlap. Content at scroll viewport boundaries is intentionally partial.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-max/originals/A9D601A9-D055-49B6-86EA-A3DC5729D35B.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-max/04 Summary portrait.png"
+        },
+        {
+          "name": "03 Conversation prompt",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "pixels": [
+            1320,
+            2868
+          ],
+          "originalSHA256": "4323a703b0592a7c5a52ed427166d181c391bb88642c0870734c667ce47a4ede",
+          "normalizedSHA256": "385cde7753fe85963373094d654226b12e5be08bb6a9d0fb41b4a25d729d272b",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "9F3635CF-2581-4F86-AD78-420F4D238FC3",
+          "visualStatus": "approved",
+          "visualNote": "Readable controls and content; no blocking overlap. Content at scroll viewport boundaries is intentionally partial.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-max/originals/4594F940-1C8C-45D4-9222-F24566CF9AF9.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-max/03 Conversation prompt.png"
+        },
+        {
+          "name": "02 Live landscape",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "pixels": [
+            2868,
+            1320
+          ],
+          "originalSHA256": "c342d27bac54efabdce0c43475ff8af27bca9444eaa14a841eb181ebd97f72d2",
+          "normalizedSHA256": "9d8518c1ca750be6d0426203448a05e2e35d0309ba644530f07b150b3b8c4fd4",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "9F3635CF-2581-4F86-AD78-420F4D238FC3",
+          "visualStatus": "approved",
+          "visualNote": "Readable controls and content; no blocking overlap. Content at scroll viewport boundaries is intentionally partial.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-max/originals/408236B2-DB88-4931-AB07-6A901100B4A9.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-max/02 Live landscape.png"
+        },
+        {
+          "name": "01 Live portrait",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "pixels": [
+            1320,
+            2868
+          ],
+          "originalSHA256": "ae443b63ec0fff28fc546656bcbfc6a03139d12229d7bebd13e04135c0f83ccb",
+          "normalizedSHA256": "2282089cc84a6b7745cee5d9e83184ac6b16c7af744a8fd518ad16c4c25ba95b",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "9F3635CF-2581-4F86-AD78-420F4D238FC3",
+          "visualStatus": "approved",
+          "visualNote": "Readable controls and content; no blocking overlap. Content at scroll viewport boundaries is intentionally partial.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-max/originals/3CA442A8-581D-44FA-A2BE-E82B09380FBC.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/iphone-max/01 Live portrait.png"
+        }
+      ]
+    },
+    {
+      "category": "ipad-mini",
+      "simulator": "6D120415-A183-40F9-AB81-43BF056FFC83",
+      "runtime": "iOS 26.5",
+      "assets": [
+        {
+          "name": "More menu with Full summary icon",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "pixels": [
+            1488,
+            2266
+          ],
+          "originalSHA256": "1a358308967566419a6f69568cecd59375b421e2b7cf62b7ecfbf5af2ab4f9ba",
+          "normalizedSHA256": "ffc5478eeef679573d9a54bce2a152e3e28324417d2dc25b729e8d802f12cf69",
+          "test": "MobileDesignUITests/testFullSummaryMenuRendersIconAndOpensSheet()",
+          "deviceId": "6D120415-A183-40F9-AB81-43BF056FFC83",
+          "visualStatus": "approved",
+          "visualNote": "Full summary purple icon and menu labels visible.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-mini/originals/53E01563-56F7-4C66-B35A-C18F3ACA18A7.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-mini/More menu with Full summary icon.png"
+        },
+        {
+          "name": "06 Settings",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "pixels": [
+            1488,
+            2266
+          ],
+          "originalSHA256": "f92696ec456d19b6d93730aa4414223d7e0a9447afa03dc2bd4fabaf36cc9bb5",
+          "normalizedSHA256": "072574fc9e2c1ad0c97a71017a48cc45e0139877f1a1c01d6a49f0c32f623aed",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "6D120415-A183-40F9-AB81-43BF056FFC83",
+          "visualStatus": "approved",
+          "visualNote": "Readable controls and content; no blocking overlap. Content at scroll viewport boundaries is intentionally partial.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-mini/originals/9EFFF606-5F21-41A4-BB4F-0B17819D16B5.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-mini/06 Settings.png"
+        },
+        {
+          "name": "05 Conversation history",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "pixels": [
+            1488,
+            2266
+          ],
+          "originalSHA256": "c2f5564fc9f539075fcaf5fe86f74da4030d40f20d60404b8860a4d0c4878de1",
+          "normalizedSHA256": "b01cde2eb54f2814970c2a0408e197d62e861669860919a275bc76c6370de823",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "6D120415-A183-40F9-AB81-43BF056FFC83",
+          "visualStatus": "approved",
+          "visualNote": "Readable controls and content; no blocking overlap. Content at scroll viewport boundaries is intentionally partial.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-mini/originals/0E4CDD15-1BED-49D3-B13B-1E9F9D345858.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-mini/05 Conversation history.png"
+        },
+        {
+          "name": "04 Summary portrait",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "pixels": [
+            1488,
+            2266
+          ],
+          "originalSHA256": "3eac6c9f2f283d80329bd8a67f4839040f05a65512e689b5cd7e2836a91bf6a1",
+          "normalizedSHA256": "212210ea8967f5c432b6900fbec19d782d67becb73aa5a02b6172f193a370268",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "6D120415-A183-40F9-AB81-43BF056FFC83",
+          "visualStatus": "approved",
+          "visualNote": "Readable controls and content; no blocking overlap. Content at scroll viewport boundaries is intentionally partial.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-mini/originals/74A28102-38F9-4360-9C61-1E1BED65E4E9.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-mini/04 Summary portrait.png"
+        },
+        {
+          "name": "03 Conversation prompt",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "pixels": [
+            1488,
+            2266
+          ],
+          "originalSHA256": "de9f2b9ea3e1dd290082ddca58f8ba3156eb8f79c07306855ff13701f9f35711",
+          "normalizedSHA256": "b8582461c3d8261b182469465306c4d07c433791a0840115e7e5bd751aeadf58",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "6D120415-A183-40F9-AB81-43BF056FFC83",
+          "visualStatus": "approved",
+          "visualNote": "Readable controls and content; no blocking overlap. Content at scroll viewport boundaries is intentionally partial.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-mini/originals/D499A181-0850-4297-BBDE-5F6CF28A41AE.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-mini/03 Conversation prompt.png"
+        },
+        {
+          "name": "02 Live landscape",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "pixels": [
+            2266,
+            1488
+          ],
+          "originalSHA256": "87d172514b734d13a13fea6b0f35f4f1d31a66dbe8eb6586801a82db0403c00d",
+          "normalizedSHA256": "e39c60bf7c3bf7a47c5fcb94561bc5e2542da2566c8186708d8499f2d5298f68",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "6D120415-A183-40F9-AB81-43BF056FFC83",
+          "visualStatus": "approved",
+          "visualNote": "Readable controls and content; no blocking overlap. Content at scroll viewport boundaries is intentionally partial.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-mini/originals/A0BACF1C-6E9A-4D16-86CE-836782E02B6E.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-mini/02 Live landscape.png"
+        },
+        {
+          "name": "01 Live portrait",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "pixels": [
+            1488,
+            2266
+          ],
+          "originalSHA256": "6bdd97379a723b6c5b47b55df0e9f8484f1219695a7cea72aa47590da5e13fb8",
+          "normalizedSHA256": "e1f819b6b6a23acad56b0b276c16b509bc820a925a2f580a0078db4b99f8eae5",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "6D120415-A183-40F9-AB81-43BF056FFC83",
+          "visualStatus": "approved",
+          "visualNote": "Readable controls and content; no blocking overlap. Content at scroll viewport boundaries is intentionally partial.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-mini/originals/DF68B6A5-4EB9-4621-8C87-4CBECAD70F9C.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-mini/01 Live portrait.png"
+        }
+      ]
+    },
+    {
+      "category": "ipad-pro",
+      "simulator": "720C1ACF-35D1-44E4-976A-E817830E1F93",
+      "runtime": "iOS 26.5",
+      "assets": [
+        {
+          "name": "More menu with Full summary icon",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "pixels": [
+            2064,
+            2752
+          ],
+          "originalSHA256": "eb8ec7112e10bcb59c41ca1879a48bcef8aa4a9baee3cf8363b7f50ad19329be",
+          "normalizedSHA256": "1fbe1c9f9b39c96f3bd21abf95db1db611dd028db47a49db9274667b2f620858",
+          "test": "MobileDesignUITests/testFullSummaryMenuRendersIconAndOpensSheet()",
+          "deviceId": "720C1ACF-35D1-44E4-976A-E817830E1F93",
+          "visualStatus": "approved",
+          "visualNote": "Full summary purple icon and menu labels visible.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-pro/originals/E415E0B3-9518-4486-8954-F5FE6473FCEE.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-pro/More menu with Full summary icon.png"
+        },
+        {
+          "name": "06 Settings",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "pixels": [
+            2064,
+            2752
+          ],
+          "originalSHA256": "22e923da92a78308292a6bfe33701bea284637e6f49cdd824dae72a08f84869e",
+          "normalizedSHA256": "0f705e6687a54e5d4933fb7f1658b24a2fba6a0861fc4fdba5cb87268ec91cb6",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "720C1ACF-35D1-44E4-976A-E817830E1F93",
+          "visualStatus": "approved",
+          "visualNote": "Readable controls and content; no blocking overlap. Content at scroll viewport boundaries is intentionally partial.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-pro/originals/5549B24F-22FA-46E1-9262-4F63A01E3F23.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-pro/06 Settings.png"
+        },
+        {
+          "name": "05 Conversation history",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "pixels": [
+            2064,
+            2752
+          ],
+          "originalSHA256": "5f2ba1f4f6f59abc690d7167ee52cf2094a2c23dbcef58bd7c3222eb6bfc737a",
+          "normalizedSHA256": "bc065c90408d63c2503d2f0c8c8c9b9fa7c811f99e56b196659f82b7759b0622",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "720C1ACF-35D1-44E4-976A-E817830E1F93",
+          "visualStatus": "approved",
+          "visualNote": "Readable controls and content; no blocking overlap. Content at scroll viewport boundaries is intentionally partial.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-pro/originals/09D03EA2-ED0E-497D-A576-F52D74FC50DB.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-pro/05 Conversation history.png"
+        },
+        {
+          "name": "04 Summary portrait",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "pixels": [
+            2064,
+            2752
+          ],
+          "originalSHA256": "b3c28f23b05825f91480e2adf53d0a7e27595aad23303d6fe920f8320eed0148",
+          "normalizedSHA256": "9adba5cc05fa9796b2332c5da9a73254e48c50baab075ca15da0df1d3d7fef95",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "720C1ACF-35D1-44E4-976A-E817830E1F93",
+          "visualStatus": "approved",
+          "visualNote": "Readable controls and content; no blocking overlap. Content at scroll viewport boundaries is intentionally partial.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-pro/originals/626C56D2-43EF-4470-BAAD-0522286E2113.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-pro/04 Summary portrait.png"
+        },
+        {
+          "name": "03 Conversation prompt",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "pixels": [
+            2064,
+            2752
+          ],
+          "originalSHA256": "108214550d7ffb6f34826e39936285c730ec4fd4aceb35c0acf38d02987b9128",
+          "normalizedSHA256": "e2cd373bc93ed2e238354f07d4fab8ffe01c6441c37d5b4ddbd8392fde191862",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "720C1ACF-35D1-44E4-976A-E817830E1F93",
+          "visualStatus": "approved",
+          "visualNote": "Readable controls and content; no blocking overlap. Content at scroll viewport boundaries is intentionally partial.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-pro/originals/D750D4FE-2354-4E9B-9FFA-CF902211A146.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-pro/03 Conversation prompt.png"
+        },
+        {
+          "name": "02 Live landscape",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "pixels": [
+            2752,
+            2064
+          ],
+          "originalSHA256": "5fc91bafe29fd0614f153b066fae6a3b0d2ac3c69e193a784e5dfae362978496",
+          "normalizedSHA256": "134f0dde2ef306b7c147cae3845a0173519d942f701f9b14ba2d2c4863b530f6",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "720C1ACF-35D1-44E4-976A-E817830E1F93",
+          "visualStatus": "approved",
+          "visualNote": "Readable controls and content; no blocking overlap. Content at scroll viewport boundaries is intentionally partial.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-pro/originals/3CA98FE7-517A-4411-9DCF-2365DC45335D.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-pro/02 Live landscape.png"
+        },
+        {
+          "name": "01 Live portrait",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "pixels": [
+            2064,
+            2752
+          ],
+          "originalSHA256": "b3c28f23b05825f91480e2adf53d0a7e27595aad23303d6fe920f8320eed0148",
+          "normalizedSHA256": "9adba5cc05fa9796b2332c5da9a73254e48c50baab075ca15da0df1d3d7fef95",
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceId": "720C1ACF-35D1-44E4-976A-E817830E1F93",
+          "visualStatus": "approved",
+          "visualNote": "Readable controls and content; no blocking overlap. Content at scroll viewport boundaries is intentionally partial.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-pro/originals/4A96DD6F-8D01-456D-8A0A-0149249E5FF5.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/release-screenshots/ipad-pro/01 Live portrait.png"
+        }
+      ]
+    },
+    {
+      "category": "watch-46",
+      "simulator": "AC8883C2-1CEE-4D41-B90E-822145495824",
+      "runtime": "watchOS 27.0",
+      "assets": [
+        {
+          "name": "Watch offline remote",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "pixels": [
+            416,
+            496
+          ],
+          "originalSHA256": "bc60c0a6abe5576d4cf2905d070e2d988ca09511da420b5f4bcd748530357339",
+          "normalizedSHA256": "c219f660839e17b117e49a2e4b6a6c92d5923be6c3665bd92c62bf1d5f642dab",
+          "test": "WatchCapabilityUITests/testDeniedLocalMicrophoneAndOfflineRemoteExplainRecoveryBeforeRecording()",
+          "deviceId": "AC8883C2-1CEE-4D41-B90E-822145495824",
+          "visualStatus": "qa-only",
+          "visualNote": "Offline state and disabled Start remain readable, but scrolled microphone guidance overlaps the system clock; exclude from listing.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-46/originals/70DAAF68-35FE-4209-903E-FE435963F41D.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-46/Watch offline remote.png"
+        },
+        {
+          "name": "Watch local microphone recovery",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "pixels": [
+            416,
+            496
+          ],
+          "originalSHA256": "6dc9849a4bfdd57755bed3886e6f79d00087bb8b7ebc428c242eeeb925f5de11",
+          "normalizedSHA256": "becb3ef7e488ba976edf7699b238f7d1c95de84c10d6a7d27a24de34bf64e09b",
+          "test": "WatchCapabilityUITests/testDeniedLocalMicrophoneAndOfflineRemoteExplainRecoveryBeforeRecording()",
+          "deviceId": "AC8883C2-1CEE-4D41-B90E-822145495824",
+          "visualStatus": "qa-only",
+          "visualNote": "Disabled Record and full microphone recovery guidance are readable. Lower remote section extends below viewport; QA only.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-46/originals/86155C18-6FA5-47D1-88A7-9C3EAB93FDB0.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-46/Watch local microphone recovery.png"
+        },
+        {
+          "name": "Watch recording restored after background",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "pixels": [
+            416,
+            496
+          ],
+          "originalSHA256": "84434f063c71010cb3207be0c0aac6ba07c57f5b3be87a9f21235e6d4027db47",
+          "normalizedSHA256": "996e20b518e2dd0f1ace76338ca7f3dc1f3a7114eea699fdff87b82b6e3d404c",
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceId": "AC8883C2-1CEE-4D41-B90E-822145495824",
+          "visualStatus": "qa-only",
+          "visualNote": "Recording, elapsed time and Stop visible after return; synthetic lifecycle diagnostic, not physical wrist-down proof.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-46/originals/AC6D1BD9-E282-4B35-A39D-13804EC61F89.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-46/Watch recording restored after background.png"
+        },
+        {
+          "name": "Watch recording survives dismissal gesture",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "pixels": [
+            416,
+            496
+          ],
+          "originalSHA256": "4dd5b50f69dacbedf2396f97efa93364164cb433081c778f7b1935eabd09bc80",
+          "normalizedSHA256": "23b6285847c32ab679282579dc760469abb6ea037a10c717778c513a2b0e571a",
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceId": "AC8883C2-1CEE-4D41-B90E-822145495824",
+          "visualStatus": "qa-only",
+          "visualNote": "Recording, elapsed time and Stop remain visible; synthetic lifecycle diagnostic only.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-46/originals/60B5BB4E-3C0E-43EA-A73B-4D3A0E049CDE.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-46/Watch recording survives dismissal gesture.png"
+        },
+        {
+          "name": "Watch recording and Stop",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "pixels": [
+            416,
+            496
+          ],
+          "originalSHA256": "5705076b3ccb7366326459e107bacc764ab064cb8354945de964ead731d5c0fa",
+          "normalizedSHA256": "8863927904c46fcb8f33eb9c0e1f337904b80c5f3b542c3d0af7479bb781018f",
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceId": "AC8883C2-1CEE-4D41-B90E-822145495824",
+          "visualStatus": "approved",
+          "visualNote": "Recording title, elapsed timer and Stop are fully visible; clock and Close do not overlap content.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-46/originals/6205A4EF-E39F-4BF0-A442-01480D3E6D64.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-46/Watch recording and Stop.png",
+          "reviewPreview": "../watch/1.19.1/watch-46-recording.png"
+        },
+        {
+          "name": "Watch recording consent",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "pixels": [
+            416,
+            496
+          ],
+          "originalSHA256": "2e3f753120aec32a7e7b1836612a677e20f78088fc288b271d85449944590bc5",
+          "normalizedSHA256": "26d9ac4f3dfdb81117ac3fba48782e878750ae5facc43c3ac4920345e79f830b",
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceId": "AC8883C2-1CEE-4D41-B90E-822145495824",
+          "visualStatus": "qa-only",
+          "visualNote": "Readable long scrollable consent table extends below captured viewport; QA only, not a complete listing presentation.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-46/originals/E8CF1E2D-3B6A-49B9-A055-E57CF37579C4.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-46/Watch recording consent.png"
+        },
+        {
+          "name": "Watch ready home",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "pixels": [
+            416,
+            496
+          ],
+          "originalSHA256": "ea4f87861d114260aac140dd0ffa8f2c80b971f44d138b218f493fa3a5760ee0",
+          "normalizedSHA256": "7e03ae81f99c880ceb5df1163000b70a37802916bd934909f59b89c9318293a5",
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceId": "AC8883C2-1CEE-4D41-B90E-822145495824",
+          "visualStatus": "approved",
+          "visualNote": "Record, remote reachability and disabled Start are readable; system clock does not overlap content.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-46/originals/5986FA96-9D78-4FEC-90AE-08AFBFF1D995.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-46/Watch ready home.png",
+          "reviewPreview": "../watch/1.19.1/watch-46-home.png"
+        }
+      ]
+    },
+    {
+      "category": "watch-42",
+      "simulator": "27430273-D55D-43C1-AE6F-175C7E864999",
+      "runtime": "watchOS 27.0",
+      "assets": [
+        {
+          "name": "Watch offline remote",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "pixels": [
+            374,
+            446
+          ],
+          "originalSHA256": "b021b67bbdf5050f9ee0d7ba1d442467442ba7a210382709a131c1f1499e2af0",
+          "normalizedSHA256": "9990ceeb87defa10963728e56c0dbf24105931ae7007a5eb07c0e17d49c7c911",
+          "test": "WatchCapabilityUITests/testDeniedLocalMicrophoneAndOfflineRemoteExplainRecoveryBeforeRecording()",
+          "deviceId": "27430273-D55D-43C1-AE6F-175C7E864999",
+          "visualStatus": "qa-only",
+          "visualNote": "Offline state and disabled Start remain readable, but scrolled microphone guidance overlaps the system clock; exclude from listing. Compact 374x446 layout QA only; not selected for listing.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-42/originals/9F9926D9-C0EE-44E1-8716-3A86693C5DE5.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-42/Watch offline remote.png"
+        },
+        {
+          "name": "Watch local microphone recovery",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "pixels": [
+            374,
+            446
+          ],
+          "originalSHA256": "d99663c33c0c24d0637ae740f13070068f264f27611faea18322fd4d07f62f8f",
+          "normalizedSHA256": "8c7b4a0c30805fed4e8fd5568a01acb7d93d25294909dddf0a0c570942c93740",
+          "test": "WatchCapabilityUITests/testDeniedLocalMicrophoneAndOfflineRemoteExplainRecoveryBeforeRecording()",
+          "deviceId": "27430273-D55D-43C1-AE6F-175C7E864999",
+          "visualStatus": "qa-only",
+          "visualNote": "Disabled Record and full microphone recovery guidance are readable. Lower remote section extends below viewport; QA only. Compact 374x446 layout QA only; not selected for listing.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-42/originals/AE445240-1FE1-4817-BA6E-5790B28295B4.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-42/Watch local microphone recovery.png"
+        },
+        {
+          "name": "Watch recording restored after background",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "pixels": [
+            374,
+            446
+          ],
+          "originalSHA256": "a60ff52bbc47269864887a9b50d7ea4cc757feec7cbf25501df1168f1fbfa9fc",
+          "normalizedSHA256": "07dca6de40c561710a2de1226d69339afb5a8ef462800465c0478581603d401e",
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceId": "27430273-D55D-43C1-AE6F-175C7E864999",
+          "visualStatus": "qa-only",
+          "visualNote": "Recording, elapsed time and Stop visible after return; synthetic lifecycle diagnostic, not physical wrist-down proof. Compact 374x446 layout QA only; not selected for listing.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-42/originals/11BDFA9D-1EDB-4E9A-9749-C9081254AF4E.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-42/Watch recording restored after background.png"
+        },
+        {
+          "name": "Watch recording survives dismissal gesture",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "pixels": [
+            374,
+            446
+          ],
+          "originalSHA256": "2fda058ebbe805a6ad53ebb4a256e874de0ecb341026a3cfdeee3774a0c99f50",
+          "normalizedSHA256": "307baaf28d07c8758fda0ceef21ccf8b4258d5da703ef183654f53951cf0c5b3",
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceId": "27430273-D55D-43C1-AE6F-175C7E864999",
+          "visualStatus": "qa-only",
+          "visualNote": "Recording, elapsed time and Stop remain visible; synthetic lifecycle diagnostic only. Compact 374x446 layout QA only; not selected for listing.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-42/originals/F4F23071-377E-46F4-BCA8-BDC3113218AC.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-42/Watch recording survives dismissal gesture.png"
+        },
+        {
+          "name": "Watch recording and Stop",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "pixels": [
+            374,
+            446
+          ],
+          "originalSHA256": "4c777479747bc59b1b33f4b5d55c34d49f7f91301cdc8b0eaca770e6a167b8df",
+          "normalizedSHA256": "e3e32012cda44c22ffa9f04fe2d60652983e5ffe30ec68fe93d3fdbdbcf20152",
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceId": "27430273-D55D-43C1-AE6F-175C7E864999",
+          "visualStatus": "qa-only",
+          "visualNote": "Recording title, elapsed timer and Stop are fully visible; clock and Close do not overlap content. Compact 374x446 layout QA only; not selected for listing.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-42/originals/9F013CE2-3757-48AC-A67F-1EFEDBB7B2CF.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-42/Watch recording and Stop.png"
+        },
+        {
+          "name": "Watch recording consent",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "pixels": [
+            374,
+            446
+          ],
+          "originalSHA256": "6c937d2a2b88e70b19dacaba17de08a8f3d71f15a73af903d566ec53466d71d4",
+          "normalizedSHA256": "c8feb2ff6e3dc248b568974eeafcbc519c61972ede601df6b8ca5f0deb3291fd",
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceId": "27430273-D55D-43C1-AE6F-175C7E864999",
+          "visualStatus": "qa-only",
+          "visualNote": "Readable long scrollable consent table extends below captured viewport; QA only, not a complete listing presentation. Compact 374x446 layout QA only; not selected for listing.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-42/originals/A822B6EB-80F8-43A2-A6E5-85C91675B837.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-42/Watch recording consent.png"
+        },
+        {
+          "name": "Watch ready home",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "pixels": [
+            374,
+            446
+          ],
+          "originalSHA256": "f91695b2a36830f1c990a42240770a50b85d4b1cec8fb146847adf8c0eb73080",
+          "normalizedSHA256": "04fe619e7d65e6a2c626b169610afe73ab805da7039840e76c6a7eff8cf0eb4a",
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceId": "27430273-D55D-43C1-AE6F-175C7E864999",
+          "visualStatus": "qa-only",
+          "visualNote": "Record, remote reachability and disabled Start are readable; system clock does not overlap content. Compact 374x446 layout QA only; not selected for listing.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-42/originals/246D12DC-9084-476D-8545-48CDB1B85F50.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-42/Watch ready home.png"
+        }
+      ]
+    },
+    {
+      "category": "watch-ultra",
+      "simulator": "4CDEB5EE-0826-4366-8756-BB24897F72E2",
+      "runtime": "watchOS 27.0",
+      "assets": [
+        {
+          "name": "Watch offline remote",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "pixels": [
+            422,
+            514
+          ],
+          "originalSHA256": "d39744952c65e697d64bf3da3b267395e7d61b94c73f688f3b6c303716ea69a4",
+          "normalizedSHA256": "76d1afd66b46d469b2db480ce9ca124e506a21bea9044149415f0553ddd72d1a",
+          "test": "WatchCapabilityUITests/testDeniedLocalMicrophoneAndOfflineRemoteExplainRecoveryBeforeRecording()",
+          "deviceId": "4CDEB5EE-0826-4366-8756-BB24897F72E2",
+          "visualStatus": "qa-only",
+          "visualNote": "Offline state and disabled Start remain readable, but scrolled microphone guidance overlaps the system clock; exclude from listing.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-ultra/originals/9C4B7AA5-7278-46EA-B524-57CE3EA0DBDC.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-ultra/Watch offline remote.png"
+        },
+        {
+          "name": "Watch local microphone recovery",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "pixels": [
+            422,
+            514
+          ],
+          "originalSHA256": "803b5efc6553288587c5eb4ff3d97cbcf19e999ecee3fd13f4313aa5b2bfe202",
+          "normalizedSHA256": "b19155c0fa55db26b4003385ebffedbc0ced7358efa2bdea04bd98ce3aa38108",
+          "test": "WatchCapabilityUITests/testDeniedLocalMicrophoneAndOfflineRemoteExplainRecoveryBeforeRecording()",
+          "deviceId": "4CDEB5EE-0826-4366-8756-BB24897F72E2",
+          "visualStatus": "qa-only",
+          "visualNote": "Disabled Record and full microphone recovery guidance are readable. Lower remote section extends below viewport; QA only.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-ultra/originals/C2671510-6990-4FB4-96FA-3693CDC70C7E.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-ultra/Watch local microphone recovery.png"
+        },
+        {
+          "name": "Watch recording restored after background",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "pixels": [
+            422,
+            514
+          ],
+          "originalSHA256": "600922e87f7f5db14f2f68e58238f422e6b128af6fee42520811a0cbcb443a9c",
+          "normalizedSHA256": "4ccbce12f6f56e64d8d89ab15060f55204b3970c4b39fff4a8c1e93343718f4a",
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceId": "4CDEB5EE-0826-4366-8756-BB24897F72E2",
+          "visualStatus": "qa-only",
+          "visualNote": "Recording, elapsed time and Stop visible after return; synthetic lifecycle diagnostic, not physical wrist-down proof.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-ultra/originals/0BE9267C-4CFC-4263-B3BA-B46A87EB4607.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-ultra/Watch recording restored after background.png"
+        },
+        {
+          "name": "Watch recording survives dismissal gesture",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "pixels": [
+            422,
+            514
+          ],
+          "originalSHA256": "265a5e0b8347b859403bff958b89fe3ea4ed23aa80d98fdeec384eceffde77ea",
+          "normalizedSHA256": "2373253db08b402d87a0f6fb6443632afe83c7af49bb69d58c1d8cc59fe59828",
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceId": "4CDEB5EE-0826-4366-8756-BB24897F72E2",
+          "visualStatus": "qa-only",
+          "visualNote": "Recording, elapsed time and Stop remain visible; synthetic lifecycle diagnostic only.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-ultra/originals/AD444A68-EFAB-4BB2-88E3-1809FDAA8955.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-ultra/Watch recording survives dismissal gesture.png"
+        },
+        {
+          "name": "Watch recording and Stop",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "pixels": [
+            422,
+            514
+          ],
+          "originalSHA256": "3484800e4c2f4c705a9090cf8980c7db473cde8240464f5218d7a35936626bc6",
+          "normalizedSHA256": "1856bf635d4aeca3cbd3afcacc825a40a057681076e1686309dc88181d064705",
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceId": "4CDEB5EE-0826-4366-8756-BB24897F72E2",
+          "visualStatus": "approved",
+          "visualNote": "Recording title, elapsed timer and Stop are fully visible; clock and Close do not overlap content.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-ultra/originals/5CB444B0-4A1F-4A56-89E1-B97750E7C40C.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-ultra/Watch recording and Stop.png",
+          "reviewPreview": "../watch/1.19.1/watch-ultra-recording.png"
+        },
+        {
+          "name": "Watch recording consent",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "pixels": [
+            422,
+            514
+          ],
+          "originalSHA256": "d684e1acd6b29059757cd7e9b75104ca13387b2572900b496f69d06645e4ac16",
+          "normalizedSHA256": "6fc1919c011a6e4e30dc82c2a08a555b621385b6eb0ebd04e45aa1b3aed9cf44",
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceId": "4CDEB5EE-0826-4366-8756-BB24897F72E2",
+          "visualStatus": "qa-only",
+          "visualNote": "Readable long scrollable consent table extends below captured viewport; QA only, not a complete listing presentation.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-ultra/originals/C811EC21-DA7F-4C5C-A2C1-91BEB39E5CA0.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-ultra/Watch recording consent.png"
+        },
+        {
+          "name": "Watch ready home",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "pixels": [
+            422,
+            514
+          ],
+          "originalSHA256": "67b9a8a78c8a20a9ad17b3c679e85db22564396c3acc4bbef7107f664dfb1421",
+          "normalizedSHA256": "67d63ad4e6b9b18065e5c2bd93b82fdde38ccfb9ddefd358657fa00564f8e9dc",
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceId": "4CDEB5EE-0826-4366-8756-BB24897F72E2",
+          "visualStatus": "approved",
+          "visualNote": "Record, remote reachability and disabled Start are readable; system clock does not overlap content.",
+          "preservedOriginal": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-ultra/originals/7510CC9C-DEB1-4635-B89C-BDC22FAF6315.png",
+          "preservedNormalized": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch-recording-regressions/watch-release-screenshots/watch-ultra/Watch ready home.png",
+          "reviewPreview": "../watch/1.19.1/watch-ultra-home.png"
+        }
+      ]
+    }
+  ],
+  "publishedArtifactSource": "f1728150e3e66664e36d2506022c2918fa60a53c",
+  "releaseURL": "https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.1-build39",
+  "publicationReceipt": "../../releases/ios-1.19.1-build39.json"
+}
