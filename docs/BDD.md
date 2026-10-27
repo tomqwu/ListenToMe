@@ -73,6 +73,12 @@ Native property tests also need reachable user controls: the opt-out contract in
 Settings-switch test while recording, rather than treating a direct property assignment as UI proof.
 See [speaker evidence and acceptance](speaker-identification.md).
 
+## Watch durability and beta eligibility
+
+`WATCH-005`–`WATCH-014` exercise native AAC encoding/reading, crash recovery, metadata-first handoff, duplicate/conflicting chunks, end-marker storage failure, continued recording boundaries, pending counts, active-recording protection and Delete/relaunch. Transport and audio-session adapters isolate tests from real WatchConnectivity and microphone capture. Red evidence is retained separately from passing baseline adoption and test-harness failures; simulator assertions never prove physical delivery or wrist-down/battery acceptance.
+
+`RELEASE-003`, `RELEASE-006` and `RELEASE-007` separately cover default embedding, explicit Watch beta selection and refusal of unintended or malformed companions. A generated PBX configuration, a built embedded app and a distribution-signed exported IPA are separate checks. Current AGENTS.md permits authorized beta distribution with physical acceptance recorded as pending; it does not authorize a public App Store submission.
+
 ## Release-history accessibility acceptance
 
 `RELEASE-004` includes the actual oldest release heading and fixed Continue control at the largest

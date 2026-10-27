@@ -14,7 +14,6 @@
         "Package.swift",
         "project.yml",
         "Config/*",
-        "watch-embed.yml",
         "signing.local.mk.example",
         ".gitignore",
         ".swiftlint.yml"

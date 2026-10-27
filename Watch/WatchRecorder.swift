@@ -148,6 +148,7 @@ final class WatchRecorder {
 
     /// A new recording. Throws, without touching the microphone, when a limit blocks it.
     func start() async throws {
+        try Task.checkCancellation()
         guard !isRecording else { return }
         refreshAvailability()
         guard availability.canRun else { throw WatchRecorderError.blocked(availability.reason ?? "Recording unavailable") }
@@ -156,6 +157,7 @@ final class WatchRecorder {
         preparationGeneration &+= 1
         let generation = preparationGeneration
         try checkStart(elapsed: nil)
+        try Task.checkCancellation()
         try await requestPermission()
         try finishPreparation(generation)
         let id = UUID(), started = Date()
@@ -168,6 +170,7 @@ final class WatchRecorder {
     /// After an interruption: the same recording, continuing the index, placed at the wall-clock time
     /// since it started.
     func continueRecording() async throws {
+        try Task.checkCancellation()
         guard canContinue, let startedAt else { return }
         refreshAvailability()
         guard availability.canRun else { throw WatchRecorderError.blocked(availability.reason ?? "Recording unavailable") }
@@ -177,6 +180,7 @@ final class WatchRecorder {
         preparationGeneration &+= 1
         let generation = preparationGeneration
         try checkStart(elapsed: Date().timeIntervalSince(startedAt))
+        try Task.checkCancellation()
         try await requestPermission()
         try finishPreparation(generation)
         try beginRun(firstIndex: nextIndex, startOffset: Date().timeIntervalSince(startedAt))

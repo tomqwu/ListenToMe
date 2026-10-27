@@ -24,6 +24,10 @@ honestly documented device limitations are sufficient to distribute an authorize
 testing. Physical-device acceptance is still required before calling the app production-ready or
 submitting a production App Store release. Missing hardware must not be reported as an upload blocker.
 
+## Next Watch beta candidate — 1.19.0 (38)
+
+Current source embeds Watch by default and has explicit beta-upload eligibility. [Watch preparation](watch-beta.md) records native lifecycle/durability coverage, intended installation, privacy and outstanding physical acceptance. Build 38 was unused at preflight; check again before upload. Full validation, fresh images for all iPhone/iPad categories and Watch Series 12/Ultra 4 sizes, distribution package checks, CI/merge and actual upload/tester receipt remain pending. No Watch publication is claimed. Current accepted TestFlight remains 1.18.2 (37).
+
 ## Latest beta and public state — October 27, 2026
 
 Apple accepted **1.18.2 (37)** at **2026-10-27T03:39:12.147449+00:00**, from `9494d024b9eee577b40695292aaf5e7dab9434eb`. Processing is **VALID**, internal state **IN_BETA_TESTING**, and both existing Dev testers have accepted group access. Primary locale, localized name, beta description and What to Test were read back in **en-US**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.2-build37).
@@ -213,7 +217,7 @@ worktree. Screenshots do not replace physical-device acceptance.
 | App Store Connect app | Listen To Me, Apple ID `6811155732` |
 | App bundle | `com.tomwu.ListenToMe.ios` |
 | Share extension | `com.tomwu.ListenToMe.ios.share` |
-| Apple Watch app | `com.tomwu.ListenToMe.ios.watchkitapp` — not shipped until the [#181](https://github.com/tomqwu/ListenToMe/issues/181) train |
+| Apple Watch app | `com.tomwu.ListenToMe.ios.watchkitapp` — embedded by current source; [beta candidate checks](watch-beta.md) still pending |
 | Team | `T32FW7PZ3S` |
 | App Group | `group.com.tomwu.ListenToMe.ios` |
 | Existing internal testing group | `Dev` |
@@ -358,9 +362,9 @@ or the app bundle. Do not label simulator tests as physical-device validation.
 
 In `project.yml`, keep the app and share extension's `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION`
 identical. The `ListenToMeWatch` target keeps the same version and build as the app and share
-extension, and every archive runs **without** `WATCH_EMBED` until the
-[#181](https://github.com/tomqwu/ListenToMe/issues/181) train: `scripts/ios-testflight.sh` refuses an
-archive that contains `ListenToMeIOS.app/Watch/`. Choose a build number not already accepted by App
+extension. The default generated iOS project now embeds Watch permanently; the obsolete
+`WATCH_EMBED` switch is removed. A Watch-enabled beta uses `--include-watch-beta`, while default
+helper mode refuses unintended Watch inclusion. Choose a build number not already accepted by App
 Store Connect. Update the matching `metadata/ios/en-US/what-to-test-<version>.txt` and `docs/IOS.md`.
 Merge source changes after CI passes.
 
@@ -379,10 +383,10 @@ Documentation-only follow-ups do not require a new binary. Do not bump the macOS
 
 ## 2. Archive the merged source
 
-Run from the repo root. Set the release values from `project.yml`, not an older chat reply. Check
-`echo "${WATCH_EMBED:-unset}"` first: `make gen` inherits an exported `WATCH_EMBED`, and a project
-generated with `WATCH_EMBED=YES` embeds the Apple Watch app (`unset WATCH_EMBED` before archiving
-until the [#181](https://github.com/tomqwu/ListenToMe/issues/181) train):
+Run from the repo root. Set release values from `project.yml`, not an older chat reply.
+`make gen` embeds the Watch companion by default; neither an unset nor an old `WATCH_EMBED=NO`
+can silently drop it. Select the explicit Watch beta upload mode after all candidate checks below.
+Physical acceptance stays separate from authorized beta eligibility.
 
 ```sh
 : "${IOS_VERSION:?Set the version from project.yml after checking App Store Connect}"
@@ -422,10 +426,15 @@ shasum -a 256 "$IOS_EXPORT/ListenToMeIOS.ipa" > "$IOS_EVIDENCE/SHA256SUMS"
 Require `EXPORT SUCCEEDED`. Extract the IPA into a fresh temporary directory with `unzip` or
 `ditto -x -k`. Inspect the app and `PlugIns/ListenToMeShare.appex` Info.plists: bundle identifiers,
 version/build, and the app's `CFBundleIcons` must be correct. Run `codesign --verify --deep --strict`
-on both bundles. Inspect `codesign -d --entitlements :- <bundle>`: both need the App Group above,
-and `get-task-allow` must be false. Until the [#181](https://github.com/tomqwu/ListenToMe/issues/181)
-train, confirm the IPA has no `Payload/ListenToMeIOS.app/Watch/` folder: the Apple Watch app must not
-ship yet. Ensure no test credential files or test-only payloads were bundled.
+on all three bundles, including `Watch/ListenToMeWatch.app`. Inspect `codesign -d --entitlements :-`:
+phone/Share need the App Group above; all bundles need the expected team/application identity and
+`get-task-allow=false`. Decode all embedded distribution profiles, verify expiration and absence
+of development device lists/debugging, and match each profile to its actual bundle identity.
+Require exactly the expected Watch app, matching app/Share/Watch versions, WatchOS device-platform
+metadata, supported minimum watchOS 26.0, valid executable/icons, `WKApplication=true`, matching
+companion ID and non-independent operation. Check actual exported embedding, not only a separate
+Watch build. No new Watch App Group or background modes are added; its existing audio mode remains.
+Ensure no test credentials, fixtures or test-only payloads were bundled.
 Keep the IPA checksum and verification results with the evidence.
 
 ## 4. Upload — this is the publishing step
@@ -433,11 +442,14 @@ Keep the IPA checksum and verification results with the evidence.
 After the preceding checks, the repeatable repository entry point is:
 
 ```sh
-make ios-testflight IOS_ARCHIVE="$IOS_ARCHIVE" IOS_RELEASE_SOURCE="$(cat "$IOS_EVIDENCE/source-commit.txt")"
+make ios-testflight IOS_ARCHIVE="$IOS_ARCHIVE" IOS_RELEASE_SOURCE="$(cat "$IOS_EVIDENCE/source-commit.txt")" \
+  IOS_RELEASE_FLAGS=--include-watch-beta
 ```
 
-Add `IOS_RELEASE_FLAGS=--dry-run` to check archive identity without uploading. The helper checks app/extension
-identity and matching versions, requires explicit upload acceptance, records a status receipt, and refuses
+Use `IOS_RELEASE_FLAGS="--include-watch-beta --dry-run"` to check Watch beta identity without uploading.
+Either flag order is supported; unknown or duplicate flags fail. Watch mode rejects a missing or malformed
+companion; default mode rejects embedded Watch. The helper records requested and observed inclusion
+separately from unverified physical acceptance and tester access. It requires explicit upload acceptance and refuses
 an upload already recorded by this helper. It cannot discover previous uploads made outside it: check App
 Store Connect and existing logs first. It does not prove archive/source provenance; verify that in step 2.
 The raw command below is the Xcode-session diagnostic path; it does **not** read the helper's JSON

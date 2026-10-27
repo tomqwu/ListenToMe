@@ -277,7 +277,71 @@ final class WatchOutbox {
         }
     }
 
-    // MARK: Launch
+    // MARK: Files
+
+    private func makeFolder(_ id: UUID) throws -> URL {
+        let folder = root.appendingPathComponent(id.uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true,
+                                                attributes: WatchRecorder.protection)
+        return folder
+    }
+
+    /// Found by its last two path parts, so a path the system rewrote still matches.
+    private func localURL(_ fileURL: URL) -> URL {
+        root.appendingPathComponent(fileURL.deletingLastPathComponent().lastPathComponent, isDirectory: true)
+            .appendingPathComponent(fileURL.lastPathComponent)
+    }
+
+    private func key(_ url: URL) -> String {
+        url.deletingLastPathComponent().lastPathComponent + "/" + url.lastPathComponent
+    }
+
+    private func recordingFolders() -> [URL] {
+        ((try? FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)) ?? [])
+            .filter { UUID(uuidString: $0.lastPathComponent) != nil }
+    }
+
+    /// Every chunk waiting, by recording and then by index.
+    private func chunkURLs() -> [URL] {
+        recordingFolders().sorted { $0.lastPathComponent < $1.lastPathComponent }.flatMap { folder in
+            ((try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? [])
+                .compactMap { $0.hasSuffix(".m4a") ? Int($0.dropLast(4)) : nil }.sorted()
+                .map { folder.appendingPathComponent("\($0).m4a") }
+        }
+    }
+
+    private func sidecar(for chunk: URL) -> URL {
+        chunk.deletingPathExtension().appendingPathExtension("json")
+    }
+
+    private func readSidecar(for chunk: URL) -> WatchChunkMetadata? {
+        guard let data = try? Data(contentsOf: sidecar(for: chunk)) else { return nil }
+        return try? JSONDecoder().decode(WatchChunkMetadata.self, from: data)
+    }
+
+    private func removeIfEmpty(_ folder: URL) {
+        if (try? FileManager.default.contentsOfDirectory(atPath: folder.path))?.isEmpty == true {
+            try? FileManager.default.removeItem(at: folder)
+        }
+    }
+
+    private func recount() {
+        var pending = Set(chunkURLs().map { $0.deletingLastPathComponent().lastPathComponent })
+        for folder in recordingFolders() where FileManager.default.fileExists(atPath: folder.appendingPathComponent(Self.endName).path) {
+            pending.insert(folder.lastPathComponent)
+        }
+        for folder in recoveryFolders where FileManager.default.fileExists(atPath: folder.path) {
+            pending.insert(folder.lastPathComponent)
+        }
+        let count = pending.count
+        guard count != waitingRecordings else { return }
+        waitingRecordings = count
+        onChange?()
+    }
+}
+
+extension WatchOutbox {
+    // MARK: Recovery
 
     /// A killed launch can leave chunks in `recordingRoot`. Only the highest index can be unfinished
     /// (a rotation closes a chunk before opening the next): it is sent if it can be read, otherwise
@@ -427,67 +491,5 @@ final class WatchOutbox {
     private func pendingMetadata(_ folder: URL, _ index: Int) -> WatchChunkMetadata? {
         guard let data = try? Data(contentsOf: folder.appendingPathComponent("\(index).json")) else { return nil }
         return try? JSONDecoder().decode(WatchChunkMetadata.self, from: data)
-    }
-
-    // MARK: Files
-
-    private func makeFolder(_ id: UUID) throws -> URL {
-        let folder = root.appendingPathComponent(id.uuidString, isDirectory: true)
-        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true,
-                                                attributes: WatchRecorder.protection)
-        return folder
-    }
-
-    /// Found by its last two path parts, so a path the system rewrote still matches.
-    private func localURL(_ fileURL: URL) -> URL {
-        root.appendingPathComponent(fileURL.deletingLastPathComponent().lastPathComponent, isDirectory: true)
-            .appendingPathComponent(fileURL.lastPathComponent)
-    }
-
-    private func key(_ url: URL) -> String {
-        url.deletingLastPathComponent().lastPathComponent + "/" + url.lastPathComponent
-    }
-
-    private func recordingFolders() -> [URL] {
-        ((try? FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)) ?? [])
-            .filter { UUID(uuidString: $0.lastPathComponent) != nil }
-    }
-
-    /// Every chunk waiting, by recording and then by index.
-    private func chunkURLs() -> [URL] {
-        recordingFolders().sorted { $0.lastPathComponent < $1.lastPathComponent }.flatMap { folder in
-            ((try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? [])
-                .compactMap { $0.hasSuffix(".m4a") ? Int($0.dropLast(4)) : nil }.sorted()
-                .map { folder.appendingPathComponent("\($0).m4a") }
-        }
-    }
-
-    private func sidecar(for chunk: URL) -> URL {
-        chunk.deletingPathExtension().appendingPathExtension("json")
-    }
-
-    private func readSidecar(for chunk: URL) -> WatchChunkMetadata? {
-        guard let data = try? Data(contentsOf: sidecar(for: chunk)) else { return nil }
-        return try? JSONDecoder().decode(WatchChunkMetadata.self, from: data)
-    }
-
-    private func removeIfEmpty(_ folder: URL) {
-        if (try? FileManager.default.contentsOfDirectory(atPath: folder.path))?.isEmpty == true {
-            try? FileManager.default.removeItem(at: folder)
-        }
-    }
-
-    private func recount() {
-        var pending = Set(chunkURLs().map { $0.deletingLastPathComponent().lastPathComponent })
-        for folder in recordingFolders() where FileManager.default.fileExists(atPath: folder.appendingPathComponent(Self.endName).path) {
-            pending.insert(folder.lastPathComponent)
-        }
-        for folder in recoveryFolders where FileManager.default.fileExists(atPath: folder.path) {
-            pending.insert(folder.lastPathComponent)
-        }
-        let count = pending.count
-        guard count != waitingRecordings else { return }
-        waitingRecordings = count
-        onChange?()
     }
 }

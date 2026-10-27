@@ -15,8 +15,8 @@ struct WatchRootView: View {
     @AppStorage(WatchRootView.consentKey) private var consentShown = false
     @State private var showConsent = false
     @State private var confirmDelete = false
-    @State private var isStarting = false
-    @State private var startProblem: String?
+    @State private var preparation = WatchPreparation()
+    @State private var continuationPreparation = WatchPreparation()
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -27,11 +27,11 @@ struct WatchRootView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .tint(.red)
-                .disabled(isStarting || !recorder.availability.canRun)
+                .disabled(preparation.isPending || !recorder.availability.canRun)
                 if let reason = recorder.availability.reason {
                     Text(reason).font(.footnote).multilineTextAlignment(.center)
                 }
-                if let startProblem {
+                if let startProblem = preparation.problem {
                     Text(startProblem)
                         .font(.footnote)
                         .multilineTextAlignment(.center)
@@ -56,8 +56,14 @@ struct WatchRootView: View {
                 do { try await Task.sleep(for: .seconds(10)) } catch { return }
             }
         }
+        .onChange(of: scenePhase) { _, phase in
+            preparation.sceneChanged(phase, isRecording: recorder.isRecording) { recorder.stop() }
+        }
+        .onDisappear {
+            preparation.sceneChanged(scenePhase, isRecording: recorder.isRecording) { recorder.stop() }
+        }
         .fullScreenCover(isPresented: recordingScreenShown) {
-            WatchRecordingView(recorder: recorder)
+            WatchRecordingView(recorder: recorder, preparation: continuationPreparation)
         }
         .alert("Before you record", isPresented: $showConsent) {
             Button("Record") {
@@ -77,7 +83,10 @@ struct WatchRootView: View {
     /// (with Continue after an interruption) once it stops. Dismissing it ends the recording.
     private var recordingScreenShown: Binding<Bool> {
         Binding(get: { recorder.phase != .idle }, set: { shown in
-            if !shown, recorder.phase != .idle { recorder.stop() }
+            if !shown {
+                continuationPreparation.cancel { recorder.stop() }
+                if recorder.phase != .idle { recorder.stop() }
+            }
         })
     }
 
@@ -87,17 +96,9 @@ struct WatchRootView: View {
     }
 
     private func start() {
-        isStarting = true
-        startProblem = nil
-        Task {
-            defer { isStarting = false }
-            do {
-                try await recorder.start()
-                WKInterfaceDevice.current().play(.start)
-            } catch {
-                startProblem = error.localizedDescription
-                WKInterfaceDevice.current().play(.failure)
-            }
-        }
+        let currentRecorder = recorder
+        preparation.run(operation: { try await currentRecorder.start() },
+                        onSuccess: { WKInterfaceDevice.current().play(.start) },
+                        onFailure: { WKInterfaceDevice.current().play(.failure) })
     }
 }

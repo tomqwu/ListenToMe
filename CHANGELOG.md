@@ -20,19 +20,14 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased since 1.18.2 (37))
 
+## iOS 1.19.0 (38) — candidate, not yet published
 
-
-- Documentation: the Watch speaker-privacy section now agrees with the existing opt-in saved-audio retention policy. No app behavior changes. (#225)
-
-- Watch imports retain playable audio only when Save audio recordings is on, with reconnect queueing, retry-safe storage, consistent playback timing and existing deletion/expiry controls (#225). Watch remains excluded from distribution.
-
-- Apple Watch imports can identify speakers on-device when Identify speakers is enabled and its models are already loaded. Every audio window is processed, including long recordings and gaps, without disturbing live iPhone speaker analysis. Labels are saved with the transcript before audio is deleted. Watch remains excluded from distribution pending device acceptance. (#192)
-
-- Apple Watch imports detect the spoken language with an already-downloaded on-device model in Automatic mode and keep that language across retries and later transfers. Unavailable or uncertain detection falls back to the device language without downloading a model. Watch remains excluded from distribution pending device acceptance. (#200)
-
-- Apple Watch companion, remote Start/Stop for the iPhone recorder (not yet shipped; ships with watch recording on the #181 train). (#181)
-- iPhone transcribes recordings received from Apple Watch on-device and deletes the audio afterwards (not yet shipped). (#181)
-- Record on Apple Watch with the iPhone elsewhere; the iPhone transcribes the audio on-device and deletes it (not yet shipped). (#181)
+- Include the Apple Watch companion in the default iOS build. Record on Watch, keep recording with wrist down, and sync finished audio to the paired iPhone for on-device transcription when connected. Phone remote Start/Stop requires a reachable, compatible, ready foreground app. (#181)
+- Retain Watch playback audio only when **Save audio recordings** is on during iPhone import; otherwise remove temporary audio after its text is saved. Existing Retry, Delete, playback and expiry controls remain. (#225)
+- Watch imports can identify speakers with already-loaded on-device models and detect language with an already-downloaded model in Automatic mode. Imports never initiate those model downloads; unsupported/uncertain language detection uses the device language. (#192, #200)
+- Preserve pending Watch audio/metadata through failed handoffs and relaunch. Duplicate/conflicting callbacks cannot overwrite unacknowledged audio; recording end markers survive storage failure and continued chunks advance old boundaries. Waiting includes failed recovery audio; after Stop, Delete removes audio and recovery state without resurrection. (#181)
+- Cancelled/Stopped microphone preparation and readiness changes cannot activate capture after permission returns. An interruption waits for explicit Continue. (#181)
+- Explicit Watch-beta upload mode validates companion identity, platform, icons/executable and matching versions. Physical microphone/paired-transfer, wrist-down, battery/storage and production acceptance remain pending. Simulator tests are separate from those gates. (#181)
 
 ## iOS 1.18.2 (37) — 2026-10-27 (TestFlight)
 

@@ -4,6 +4,12 @@ A snapshot for an agent picking up ListenToMe cold. [AGENTS.md](../AGENTS.md) an
 [CLAUDE.md](../CLAUDE.md) stay the rules; this note is only the state of things on the date above.
 Re-check anything time-sensitive (`gh issue list --state open`, `git log`, tags) before acting on it.
 
+## Watch beta implementation in progress — October 27
+
+Branch `codex/watch-beta-distribution` implements explicit Watch beta safeguards and default companion embedding, plus native cancellation/readiness, durable AAC handoff/recovery, end markers, Continue boundaries and pending Delete protection. Focused native Watch tests pass (33 tests, no failures/skips), including the corrected lifecycle review cases with isolated audio/WatchConnectivity adapters and real AAC filesystem operations; helper/generated-project checks pass. Reproduced failures and review-driven fixes are retained externally in `/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch181-beta/`. Independent review found view-owned preparation and pre-execution cancellation gaps after the initial helper/outbox pass. Their genuine native failures and fixes are retained; the final corrected 33-case Watch run passed and the reviewer cleared this delta for commit/full validation.
+
+The next source candidate is **1.19.0 (38)**. Its release UI reproduced old 1.18.2 metadata, then passed after the version/notes update. Full `make validate-local`, fresh iPhone/iPad and Watch images, final documentation review, required CI/merge, distribution signing/export verification and upload/tester receipt are still pending. No Watch beta is published yet. Current TestFlight remains 1.18.2 (37); public iOS remains 1.18.1. [Watch preparation and production gates](watch-beta.md) replaces earlier blanket beta blockers without claiming physical microphone, paired transfer, wrist-down or battery/storage acceptance. Mac draft #318 stays separate.
+
 ## Latest tester fix — October 27, 2026
 
 Apple accepted **1.18.2 (37)** at **2026-10-27T03:39:12.147449+00:00**, from `9494d024b9eee577b40695292aaf5e7dab9434eb`. Processing is **VALID**, internal state **IN_BETA_TESTING**, and both existing Dev testers have accepted group access. Primary locale, localized name, beta description and What to Test were read back in **en-US**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.2-build37).
@@ -374,8 +380,7 @@ silently attributed to this release. Prior Dev cleanup was completed; the new in
 is still active. Restore its original settings and perform the authorized app-scoped cleanup only
 after acceptance finishes, preserving other sessions, conversation data and keys.
 
-**Watch remains excluded from distribution** until the physical paired-device spike/recording-sync
-acceptance in #181/#193. Simulator native tests do not waive this gate. No physical Watch was found;
+**Historical pre-Watch-train checkpoint:** those builds excluded Watch. Current [Watch beta preparation](watch-beta.md) supersedes its blanket beta restriction under AGENTS.md; physical #181/#193 acceptance still gates production readiness. At this earlier checkpoint no physical Watch was found;
 the maintainer's model/watchOS question is pending. Once included, install the iPhone beta in
 TestFlight, then use its App Details → Information Watch install action on the paired iPhone, or
 Watch → My Watch → Available Apps → Install. Current published builds have no Watch companion.
@@ -418,9 +423,9 @@ The #127 full run at `0464e9d` exposed a shared iOS test synchronization race: t
 
 | Surface | Latest published | State of `main` |
 | --- | --- | --- |
-| iPhone/iPad (TestFlight) | **1.18.1 (36)**, published 2026-10-26, tag `ios-v1.18.1-build36` at `7643b20` | Speaker fix published to Dev; Watch excluded. Current physical accuracy/performance and original audio pending; three-person separation unproven. |
+| iPhone/iPad (TestFlight) | **1.18.2 (37)**, published 2026-10-27 UTC, tag `ios-v1.18.2-build37` at `9494d02` | Summary-icon fix available to Dev; this published build excludes Watch. Physical accuracy/performance and original speaker audio remain pending. |
 | macOS | **1.4.4 (14)**, 2026-09-14, tag `v1.4.4` | **Releases paused on the maintainer's decision.** About 50 commits of Mac work are merged but unreleased; see [CHANGELOG → macOS (unreleased since 1.4.4)](../CHANGELOG.md#macos-unreleased-since-144). Do not start a macOS train yourself; the maintainer calls it. |
-| Apple Watch | Not shipped | Built on `main` behind the `WATCH_EMBED` build flag (off; `scripts/ios-testflight.sh` refuses an archive that embeds it). Waits on the maintainer running `SPIKE.md` on a real watch (branch `spike/181-watch-audio`, [#181](https://github.com/tomqwu/ListenToMe/issues/181)), then the Task 20 physical-device acceptance from #193. Status table in the [watch plan](superpowers/plans/2026-10-22-apple-watch-recording.md). |
+| Apple Watch | Not shipped | Current source prepares 1.19.0 (38), permanently embeds its companion and requires explicit Watch-beta eligibility. [Candidate checks](watch-beta.md) and publication remain pending; Task 15/20 physical spike/paired acceptance remains a production gate. |
 
 Recent iOS trains (full text in [CHANGELOG.md](../CHANGELOG.md)):
 

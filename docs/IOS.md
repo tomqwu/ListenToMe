@@ -20,7 +20,7 @@ stays macOS-only. This is a platform boundary, not a backlog item: there is no p
 that captures system or call audio. Recording is foreground-only (`iOS/Info.plist` declares no
 `UIBackgroundModes`); backgrounding stops recording and saves the conversation.
 
-Apple Watch recording ([#181](https://github.com/tomqwu/ListenToMe/issues/181)) is built but not shipped: the watch app (`Watch/`) compiles with the iOS app but is embedded only with `WATCH_EMBED=YES`, which no release has used, and it waits on an on-watch audio spike and device acceptance; see [the spec](superpowers/specs/2026-10-22-apple-watch-recording-design.md). The tiers below are unchanged until it ships.
+Apple Watch recording ([#181](https://github.com/tomqwu/ListenToMe/issues/181)) is a source candidate, not yet distributed. The default iOS project now embeds `Watch/`; the next beta uses explicit Watch upload eligibility, matching versions, native durability tests and exported-package checks. Published TestFlight 1.18.2 (37) still excludes Watch. Physical recording, paired transfer, wrist-down and battery/storage acceptance remain pending for production. See [Watch beta preparation and installation](watch-beta.md).
 
 ## Parity with macOS
 
@@ -153,7 +153,7 @@ saved separately for maintainer review. macOS distribution is separate. See
 
 ## App Store Connect platform mapping
 
-The iOS platform covers this universal iPhone/iPad app (`TARGETED_DEVICE_FAMILY=1,2`); no separate iPadOS platform is added. The Watch companion belongs to the same iOS app record and must actually be embedded in an uploaded build before it can be installed. It is excluded from the current beta pending #181 acceptance. macOS requires its own compatible archive and distribution; the current native Mac app is distributed as a signed/notarized DMG, and Mac publication remains paused. Adding a platform does not convert a DMG or include an unembedded Watch target. See [Apple’s platform guide](https://developer.apple.com/help/app-store-connect/create-an-app-record/add-platforms/).
+The iOS platform covers this universal iPhone/iPad app (`TARGETED_DEVICE_FAMILY=1,2`); no separate iPadOS platform is added. The Watch companion belongs to the same iOS app record and must actually be embedded in an uploaded build before it can be installed. Published 1.18.2 (37) excludes it. Current source embeds it for the separately validated Watch beta; physical acceptance remains a production gate, not an authorized beta-upload blocker. macOS requires its own compatible archive and distribution; the current native Mac app is distributed as a signed/notarized DMG, and Mac publication remains paused. Adding a platform does not convert a DMG or include an unembedded Watch target. See [Apple’s platform guide](https://developer.apple.com/help/app-store-connect/create-an-app-record/add-platforms/).
 
 ## Full summary menu icon (#319, published TestFlight 1.18.2)
 
@@ -1084,7 +1084,7 @@ saved audio, and overlapping parts retain their playback/transcription alignment
 The setting is read per import batch; off keeps the temporary delete-after-transcription path.
 Retention uses the recording date; old imports are immediately subject to the chosen expiry.
 WatchConnectivity already queues disconnected transfers and deletes Watch files only after success.
-No cloud audio transport is added. Watch remains excluded from release until #181 acceptance.
+No cloud audio transport is added. Watch beta eligibility and pending physical/production acceptance are separate; see [the Watch candidate](watch-beta.md).
 UI tests use `--saved-audio-fixture`, a
 synthetic tone written by the real writer; no test records the microphone.
 

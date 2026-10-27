@@ -1,3 +1,5 @@
+> **October 27 beta-preparation update:** Current source permanently embeds Watch and the helper requires explicit `--include-watch-beta` eligibility. [Current Watch status](../../watch-beta.md) supersedes older conditional-embedding and blanket beta-blocking instructions below. Task 15/20 physical acceptance remains pending for production; current top-level AGENTS.md allows an authorized validated TestFlight beta with those limits stated. Earlier task recipes/receipts below are historical implementation evidence, not commands for the new train.
+
 # Apple Watch recording — design
 
 **Issue:** [#181](https://github.com/tomqwu/ListenToMe/issues/181), part of

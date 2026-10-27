@@ -3,7 +3,7 @@
 The iPhone/iPad compatibility changes below are published in [TestFlight 1.18.0 (35)](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.0-build35).
 Current-source physical acceptance remains pending. Mac changes are merged but unreleased, with
 installed GUI/OTHERS acceptance explicitly deferred by the maintainer; see [HANDOFF](HANDOFF.md).
-Apple Watch is not embedded for distribution.
+Published TestFlight 1.18.2 excludes Watch. Current source embeds its [Watch beta candidate](watch-beta.md); physical acceptance remains pending. Native lifecycle tests check cancellation/Stop and readiness again after permission returns, before audio activation.
 
 An OS version alone does not establish feature support. The apps require version 26 or later of
 their platform OS, then query the actual framework, selected language, permission and model state.

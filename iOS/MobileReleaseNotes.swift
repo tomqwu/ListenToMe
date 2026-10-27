@@ -48,6 +48,13 @@ enum MobileReleaseNotes {
         var id: String { version }
     }
     static let releases: [Release] = [
+        .init(version: "1.19.0", title: "Record from your Apple Watch", details: [
+            "Record on Apple Watch and send finished audio to your paired iPhone for on-device transcription when connected.",
+            "Recording can continue with your wrist down; interruptions wait for your explicit Continue.",
+            "Leaving during Start or Continue preparation cancels that attempt; a recording already underway keeps running.",
+            "Keep Watch audio for playback only when Save audio recordings is on during iPhone import.",
+            "Pending recordings survive interrupted handoffs and relaunch. After Stop, Delete removes waiting audio and its recovery state."
+        ]),
         .init(version: "1.18.2", title: "A clearer Summary menu", details: [
             "Full summary now has its Summary icon in the More menu on iPhone and iPad."
         ]),

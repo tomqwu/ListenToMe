@@ -12,7 +12,6 @@
         "scripts/test-ios-testflight.py",
         "Config/*",
         "project.yml",
-        "watch-embed.yml",
         "Makefile",
         "Package.swift",
         "signing.local.mk.example"
@@ -51,7 +50,6 @@
       "then": "the helper refuses before upload and explains the explicit Watch beta option",
       "covers": [
         "Watch/*",
-        "watch-embed.yml",
         "project.yml",
         "scripts/ios-testflight.sh"
       ],
@@ -66,9 +64,9 @@
     {
       "id": "RELEASE-004",
       "name": "Identify the feedback beta and bundled changes accurately",
-      "given": "a user updates to the Full summary menu feedback beta using standard or the largest accessibility text",
+      "given": "a user updates to the Watch-enabled beta using standard or the largest accessibility text",
       "when": "What\u2019s New appears or is reopened",
-      "then": "the app identifies version 1.18.2 build 37 with its A clearer Summary menu notes, acknowledges the update once, and keeps the oldest release heading and Continue usable at the largest text size",
+      "then": "the app identifies version 1.19.0 build 38 with its Record from your Apple Watch notes, acknowledges the update once, and keeps the oldest release heading and Continue usable at the largest text size",
       "covers": [
         "project.yml",
         "iOS/MobileReleaseNotes.swift",
@@ -115,8 +113,7 @@
         "scripts/ios-testflight.sh",
         "scripts/test-ios-testflight.py",
         "Makefile",
-        "project.yml",
-        "watch-embed.yml"
+        "project.yml"
       ],
       "bindings": [
         {
@@ -164,15 +161,32 @@
       "then": "the app depends on the Watch target and copies its product into the Watch installation directory, keeping future app builds from silently dropping the companion",
       "covers": [
         "project.yml",
-        "watch-embed.yml",
         "Makefile",
-        ".github/workflows/ci.yml"
+        ".github/workflows/ci.yml",
+        "watch-embed.yml"
       ],
       "bindings": [
         {
           "suite": "tooling",
           "file": "scripts/test-ios-testflight.py",
           "test": "UploadTests/test_default_generated_project_embeds_the_watch_companion"
+        }
+      ]
+    },
+    {
+      "id": "RELEASE-008",
+      "name": "Inspect Watch recording UI without capturing microphone audio",
+      "given": "the explicit simulator-only Watch preview is selected",
+      "when": "the user accepts recording consent, starts and stops the preview",
+      "then": "the real Recording indicator and Stop control render, Stop returns to Record, and release captures are preserved without microphone permission or live audio; an established preview recording survives an actual simulator app background/return",
+      "covers": [
+        "Watch/ListenToMeWatchApp.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "watch-ui",
+          "file": "WatchUITests/WatchCapabilityUITests.swift",
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone"
         }
       ]
     }

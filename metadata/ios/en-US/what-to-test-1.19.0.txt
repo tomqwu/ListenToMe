@@ -1,0 +1,15 @@
+ListenToMe 1.19.0 (38) — Watch beta
+
+Test the Watch-enabled build and its paired-iPhone flows below. Hardware results remain beta feedback; simulator evidence is separate.
+
+1. On the paired iPhone, install the iOS beta. In TestFlight app details → Information, install its compatible Apple Watch companion. Confirm the compatible Watch companion is offered for that build.
+2. On Watch, inspect Record and the separate iPhone remote. Unreachable/incompatible or unready phone capture must not enable remote Start; local recording has its own microphone, battery and storage checks.
+3. Record a short conversation on Watch, lower your wrist, then Stop. Check the visible indicator and elapsed time. During an interruption, verify recording waits for explicit Continue and preserves the same conversation.
+4. Repeat while disconnected. Reconnect and open the iPhone app: verify pending parts arrive once, transcribe in order, and remain one conversation. Test relaunch, interrupted transfer and a recording killed mid-chunk; the known missing-part/gap wait can last up to 24 hours.
+5. With Save audio recordings on during import, verify phone playback and sharing; with it off, verify transcription without retained playback audio. Imports never download speaker/language models. Test already-prepared models separately from unavailable/uncertain fallback.
+6. After Stop, Delete waiting Watch audio and relaunch: deleted recordings must not return. Storage failures should preserve pending audio and end metadata for recovery. Cancellation/Stop or a readiness change during permission preparation must not start audio later. Leave during pending Start/Continue, return and retry; old replies must not change the new attempt. A temporary permission overlay must still allow granting consent. Established recording must keep running after leaving the app.
+7. Check iPhone/iPad portrait, landscape Duo, Notes/Prompt, Summary, History and the Full summary menu icon.
+
+Privacy: Watch audio moves only to its paired iPhone through WatchConnectivity. Optional summary providers retain existing explicit setup and text disclosures; audio is not sent to them. Saved playback audio remains opt-in. Pending Watch audio/end metadata may stay local until successful handoff or explicit deletion.
+
+Simulator tests cover native controllers, real AAC files and isolated transport adapters. Physical Watch microphone/paired transfer, wrist-down, battery/storage and production acceptance remain pending; do not treat simulator or upload success as those results. This beta does not submit a new public App Store version or publish listing screenshots.

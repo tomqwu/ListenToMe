@@ -4,6 +4,33 @@ import XCTest
 
 @MainActor
 final class WatchRecorderLifecycleTests: XCTestCase {
+    func testCancelledBeforeFirstTurnNeverRequestsStartOrContinuePermission() async throws {
+        for continuing in [false, true] {
+            let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+            defer { try? FileManager.default.removeItem(at: root) }
+            let capture = LifecycleCaptureFixture()
+            var permissions = 0
+            let recorder = WatchRecorder(makeCapture: { capture }, capabilitySnapshot: {
+                .init(microphoneDenied: false, battery: 1, freeBytes: Int64.max)
+            }, requestPermission: { permissions += 1 },
+                                        audioSession: .init(activate: {}, deactivate: {}), recordingsDirectory: root)
+            defer { recorder.stop() }
+            if continuing {
+                try await recorder.start()
+                capture.event?(.interruptionBegan)
+                XCTAssertTrue(recorder.canContinue)
+            }
+            permissions = 0
+            let operation = Task { @MainActor in
+                if continuing { try? await recorder.continueRecording() } else { try? await recorder.start() }
+            }
+            operation.cancel()
+            await operation.value
+            XCTAssertEqual(permissions, 0, "A cancelled first turn must not begin system consent work")
+            XCTAssertFalse(recorder.isRecording)
+        }
+    }
+
     func testCancelledPermissionWaitNeverActivatesCapture() async throws {
         try await checkPendingStart(cancelTask: true, stop: false, makeUnavailable: false)
     }
@@ -139,6 +166,33 @@ final class WatchRecorderLifecycleTests: XCTestCase {
                                                      sendFile: { _, _ in XCTFail("No transfer") },
                                                      sendUserInfo: { _ in }, cancelOutstanding: {}))
         XCTAssertEqual(relaunched.waitingRecordings, 0)
+    }
+
+    func testBackgroundCancelsPendingCompletionButPreservesStartedRecording() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let capture = LifecycleCaptureFixture()
+        let recorder = WatchRecorder(makeCapture: { capture }, capabilitySnapshot: {
+            .init(microphoneDenied: false, battery: 1, freeBytes: Int64.max)
+        }, requestPermission: {}, audioSession: .init(activate: {}, deactivate: {}), recordingsDirectory: root)
+        let preparation = WatchPreparation()
+        var completion: CheckedContinuation<Void, Never>?, haptics = 0
+        defer { preparation.cancel(); recorder.stop(); completion?.resume() }
+        preparation.run(operation: {
+            try await recorder.start()
+            await withCheckedContinuation { completion = $0 }
+        }, onSuccess: { haptics += 1 })
+        let deadline = ContinuousClock.now.advanced(by: .seconds(2))
+        while completion == nil, ContinuousClock.now < deadline { await Task.yield() }
+        XCTAssertNotNil(completion)
+        XCTAssertTrue(recorder.isRecording)
+        preparation.sceneChanged(.background, isRecording: recorder.isRecording) { recorder.stop() }
+        XCTAssertFalse(preparation.isPending)
+        XCTAssertTrue(recorder.isRecording, "An established capture must survive departure even before UI completion")
+        completion?.resume()
+        completion = nil
+        for _ in 0..<20 { await Task.yield() }
+        XCTAssertEqual(haptics, 0, "No late start haptic after departure")
     }
 }
 

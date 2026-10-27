@@ -25,7 +25,7 @@
         "steps": [
           "With retention enabled, record while disconnected and reconnect; verify the recording transfers once and plays on iPhone.",
           "Repeat with retention disabled and verify transcription without retained playback audio.",
-          "Keep Watch excluded from distribution until the #181 physical-device gate passes."
+          "Keep physical Watch capture, reconnection, battery/storage and production App Store acceptance pending; an authorized, validated TestFlight beta may distribute with these limits stated under AGENTS.md."
         ]
       }
     },
@@ -135,7 +135,7 @@
     {
       "id": "WATCH-007",
       "name": "Cancel stale Watch microphone preparation",
-      "given": "a supported Watch recorder is waiting for microphone permission",
+      "given": "a supported Watch recorder is about to request or is waiting for microphone permission",
       "when": "the caller cancels, the user stops, or recording readiness becomes unavailable before permission returns",
       "then": "no audio session or capture starts and no recording folder is created",
       "covers": [
@@ -156,6 +156,11 @@
           "suite": "watch-unit",
           "file": "WatchUnitTests/WatchRecorderLifecycleTests.swift",
           "test": "WatchRecorderLifecycleTests/testReadinessChangedDuringPermissionWaitRefusesCapture"
+        },
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchRecorderLifecycleTests.swift",
+          "test": "WatchRecorderLifecycleTests/testCancelledBeforeFirstTurnNeverRequestsStartOrContinuePermission"
         }
       ]
     },
@@ -275,6 +280,71 @@
           "suite": "watch-unit",
           "file": "WatchUnitTests/WatchRecorderLifecycleTests.swift",
           "test": "WatchRecorderLifecycleTests/testFailedLiveHandoffStaysPendingAndDeleteWaitsForRecordingToStop"
+        }
+      ]
+    },
+    {
+      "id": "WATCH-014",
+      "name": "Own foreground preparation and ignore late view callbacks",
+      "given": "Start or Continue is waiting for permission in the foreground",
+      "when": "the app backgrounds or the preparing view is dismissed and the user returns or retries",
+      "then": "pending UI preparation is cancelled, late grants or denials cannot start audio or alter a newer attempt, transient inactive permission UI remains allowed, and established recording is preserved for wrist-down operation; cancellation, supersession or owner release before the first task turn must not invoke permission work",
+      "covers": [
+        "Watch/WatchRootView.swift",
+        "Watch/WatchRecordingView.swift",
+        "Watch/WatchPreparation.swift",
+        "Watch/ListenToMeWatchApp.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "watch-ui",
+          "file": "WatchUITests/WatchCapabilityUITests.swift",
+          "test": "WatchCapabilityUITests/testPendingStartDoesNotStartLaterAfterBackground"
+        },
+        {
+          "suite": "watch-ui",
+          "file": "WatchUITests/WatchCapabilityUITests.swift",
+          "test": "WatchCapabilityUITests/testPendingContinueDoesNotResumeLaterAfterBackground"
+        },
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchRecorderLifecycleTests.swift",
+          "test": "WatchRecorderLifecycleTests/testBackgroundCancelsPendingCompletionButPreservesStartedRecording"
+        },
+        {
+          "suite": "watch-ui",
+          "file": "WatchUITests/WatchCapabilityUITests.swift",
+          "test": "WatchCapabilityUITests/testPendingContinueDismissalCannotResumeLater"
+        },
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchPreparationTests.swift",
+          "test": "WatchPreparationTests/testInactivePermissionUIKeepsPreparationAndAllowsGrant"
+        },
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchPreparationTests.swift",
+          "test": "WatchPreparationTests/testLateGrantAfterBackgroundCannotFinishANewerAttempt"
+        },
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchPreparationTests.swift",
+          "test": "WatchPreparationTests/testLateDenialAfterDismissalCannotSetANewerErrorOrHaptic"
+        },
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchPreparationTests.swift",
+          "test": "WatchPreparationTests/testCancelBeforeFirstTaskTurnRunsNoOperation"
+        },
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchPreparationTests.swift",
+          "test": "WatchPreparationTests/testSupersededBeforeFirstTurnRunsOnlyTheNewOperation"
+        },
+        {
+          "suite": "watch-unit",
+          "file": "WatchUnitTests/WatchPreparationTests.swift",
+          "test": "WatchPreparationTests/testOwnerReleasedBeforeFirstTurnRunsNoOperation"
         }
       ]
     }
