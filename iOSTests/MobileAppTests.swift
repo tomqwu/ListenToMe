@@ -372,7 +372,7 @@ final class MobileAppTests: XCTestCase {
         app.buttons["More"].tap()
         app.buttons["Settings"].tap()
         let release = app.staticTexts["iPhone & iPad · iOS 26 or later"]
-        for _ in 0..<5 where !release.isHittable { app.swipeUp() }
+        for _ in 0..<30 where !release.isHittable { app.collectionViews["aiSettingsForm"].swipeUp() }
         XCTAssertTrue(release.isHittable)
     }
 }
