@@ -235,6 +235,43 @@ for upload. Both use automatic signing, `app-store-connect`, this team, and disa
 version/build rewriting. They contain no credentials. Do not depend on plists left in ignored `dist/`
 folders by a previous session.
 
+### Local manual signing when automatic export cannot select profiles
+
+Automatic signing can report both a missing Watch Store profile and denied cloud-signing access,
+even with a valid local Apple Distribution identity. Preserve the successful archive and failed
+export logs. Check the configured API key, local identity and exact bundle/profile relationships;
+do not rotate certificates or reset accounts, keychains or OS permissions in response.
+
+An explicit manual upload file is supported through `IOS_EXPORT_OPTIONS`:
+
+```sh
+make ios-testflight IOS_ARCHIVE=<validated.xcarchive> IOS_RELEASE_SOURCE=<app-source-commit> \
+  IOS_RELEASE_FLAGS=--include-watch-beta IOS_EXPORT_OPTIONS=/absolute/local/manual-upload.plist
+```
+
+Start with [the manual template](../Config/iOS/ManualTestFlightExportOptions.plist.example), copied
+outside the repository. Replace its placeholders with the SHA-1 selector of the existing local
+Apple Distribution identity and UUIDs of active, **manually managed** App Store profiles for the
+phone, Share extension and embedded Watch. Existing Xcode-managed phone/Share profiles cannot be
+mixed into a manual export; create separate manual profiles using the same certificate and bundle
+IDs, preserving phone/Share App Group entitlements. No existing certificate/profile must be revoked.
+For an archive without Watch, omit its profile entry and the Watch flag.
+
+The helper rejects missing/malformed files, unknown fields, non-upload destinations, non-App Store
+methods, changed teams/version management, certificate labels instead of SHA-1, and missing/extra
+bundle IDs or invalid profile UUIDs **before invoking Xcode**. Default settings remain automatic.
+Dry run uses the same validation without uploading. The helper reads the selected file once, validates those bytes, and passes a private per-invocation
+snapshot to Xcode. It preserves that snapshot with release evidence; changing the original file
+after validation cannot change the upload settings. Actual accepted receipts include snapshot path,
+original path, SHA-256 and signing mode; neither a passing dry run nor a manual IPA export is upload acceptance.
+Verify signatures, profile identity/expiration/debugging and app-group entitlements in the exported
+IPA separately. The file contains local certificate/profile selectors, never private key contents.
+
+A delivery-only helper update can use an earlier validated archive: keep `IOS_RELEASE_SOURCE` and
+the release tag at the exact application commit that produced it, and separately record the helper
+commit/CI and proof that archived bytes, application sources and Xcode target configuration are unchanged. Do not rebuild only to repair an
+export/signing configuration. A new app source requires its own candidate validation.
+
 ### Persistent API-key authentication for automated uploads
 
 Use the configured **App Store Connect team API key by default**. This route completed the agent's

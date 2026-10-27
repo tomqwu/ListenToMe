@@ -95,6 +95,10 @@ Do not repeat older blanket exclusions as beta blockers. Current AGENTS.md permi
 beta with physical acceptance explicitly pending; microphone/paired transfer/wrist-down/battery and
 production App Store acceptance remain separate. See [Watch preparation](../../../docs/watch-beta.md).
 
+## Manual distribution signing
+
+When automatic export cannot choose profiles and cloud signing is unavailable, preserve the validated archive and use the [manual-signing runbook](../../../docs/IOS-RELEASING.md#local-manual-signing-when-automatic-export-cannot-select-profiles). Pass an explicit local `IOS_EXPORT_OPTIONS` upload plist through the existing make target. All phone/Share/Watch profiles must be manually managed and use the existing local distribution certificate; verify exact identities and entitlements. The helper validates the narrow input before Xcode and records its hash/mode without weakening eligibility, duplicate-upload or acceptance checks. Do not replace checked-in automatic settings, rotate certificates or reset account/OS permissions. Record the app-source commit separately from a later delivery-only helper commit.
+
 ## If authentication fails
 
 Inspect the actual error and selected route. `Failed to Use Accounts` was the old Xcode-session

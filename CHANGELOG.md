@@ -13,6 +13,8 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## Repository tooling (unreleased)
 
+- Support an explicit, validated manual TestFlight signing file when cloud-managed signing is unavailable. Preserve the automatic default, exact companion eligibility, stable versions/team, upload locks and acceptance receipts; upload from a private validated snapshot and record its hash, original path and signing mode. No app binary or privacy behavior changes. (#323)
+
 - Require Given/When/Then behavior contracts and changed native regression-test bindings for behavior
   changes across apps, shared services and delivery tooling. Add a baseline scenario catalog,
   executable native-test adapter, local/CI gates and PR evidence template. This changes development
