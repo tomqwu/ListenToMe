@@ -22,7 +22,17 @@ final class MobileTranslationUITests: XCTestCase {
         let picker = app.descendants(matching: .any).matching(identifier: identifier).firstMatch
         for _ in 0..<5 where !picker.isHittable { app.swipeUp() }
         XCTAssertTrue(picker.isHittable); picker.tap()
-        app.buttons[language].tap()
+        let choice = app.buttons[language]
+        if !choice.isHittable {
+            capture(app, "Language picker before scrolling at accessibility size")
+            // The observed native picker menu is a CollectionView. Its virtualized rows may
+            // exist outside its clipped viewport; scroll the menu until the target is hittable.
+            let menus = app.collectionViews
+            XCTAssertGreaterThan(menus.count, 0)
+            let menu = menus.element(boundBy: max(0, menus.count - 1))
+            for _ in 0..<8 where !choice.isHittable { menu.swipeUp() }
+        }
+        XCTAssertTrue(choice.isHittable); choice.tap()
         // iOS may keep a picker menu presented after selection. Dismiss that menu before the
         // next control rather than treating the first background tap as a toggle/Done action.
         if app.buttons[language].exists {
