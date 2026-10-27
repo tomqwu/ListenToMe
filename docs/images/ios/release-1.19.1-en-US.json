@@ -4,7 +4,7 @@
   "build": "39",
   "locale": "en-US",
   "captureConfiguration": "Debug native simulator UI, production views with synthetic fixtures; not signed-Release or physical-device acceptance",
-  "storeListingUpload": "not performed; this feedback train is TestFlight only",
+  "storeListingUpload": "60 COMPLETE assets in App Store 1.19.1 draft: 30 each en-US/en-CA; downloaded RGB/order verified; not submitted/public. See docs/releases/ios-1.19.1-build39-media.json",
   "rejectedOriginalsRetained": 1,
   "sets": [
     {
