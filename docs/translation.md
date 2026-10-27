@@ -57,6 +57,10 @@ the paired phone after transcription; Watch recording and transfer compatibility
 `TRANSLATE-001`–`TRANSLATE-014` bind original preservation, archive/checkpoint behavior, native pair
 adapters, stale-result/cancellation/background handling and native controls to XCTest. UI previews
 use explicit DEBUG-only synthetic translations; they prove placement and controls, not model quality.
-Real Mac metadata checks for six pairs reported missing packs without requesting downloads.
+Real Mac metadata checks for all 12 offered non-English targets from English, plus three reverse
+pairs, reported missing packs without requesting downloads.
 Installed-pack output quality and installed Mac interaction require separate acceptance evidence;
 simulator runs are never physical-device acceptance.
+
+See the [source-matched validation record](translation-validation.md) for commands, outcomes, screenshots
+and the explicitly recorded aggregate-log failure/resumption.

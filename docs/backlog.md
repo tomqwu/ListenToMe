@@ -68,8 +68,8 @@ only to detect the spoken language — and Mac sync). Do not restate it here.
 
 Exploratory work must preserve explicit consent, local storage and truthful privacy/accuracy claims.
 
-## Current translation work
+## Translation implementation
 
-[Issue #330](https://github.com/tomqwu/ListenToMe/issues/330) covers opt-in live translation and a
+[Issue #330](https://github.com/tomqwu/ListenToMe/issues/330) implements opt-in live translation and a
 Translate option on the existing Summary page. [The feature guide](translation.md) records scope
 and verification boundaries; it is unreleased and does not add summary length/format controls.

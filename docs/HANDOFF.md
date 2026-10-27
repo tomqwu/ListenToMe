@@ -1,11 +1,16 @@
-# Translation work in progress — October 27, 2026
+# Translation #330 implementation — October 27, 2026
 
-Issue #330 / `codex/live-translation-summary-options`: opt-in on-device live translation and an
-explicit **Translate summary** option on the existing Summary page, with separate targets and
-originals retained. No summary-generation language override, new binary or production submission.
-See [translation](translation.md). Core/native/UI checks are being completed; installed-pair quality
-and installed Mac interaction are not established by synthetic fixtures. The release snapshot below
-still identifies published builds. Evidence is under the October 27 `listentome-translation` folder.
+[PR #331](https://github.com/tomqwu/ListenToMe/pull/331) adds opt-in on-device live translation and
+an explicit **Translate summary** option on the existing Summary page, with independent targets and
+originals retained. No summary-generation language override, version bump, upload or production
+submission. The feature is absent from published TestFlight 1.19.1 (39).
+
+[Validation evidence](translation-validation.md) records the frozen source, complete passing local
+component matrix and three green hosted checks. The aggregate command exited at a torn Mac log
+record; a complete Mac rerun and the remaining stages passed without source changes. Installed Mac
+interaction, physical acceptance and real installed-pair translation quality remain unverified.
+The [feature guide](translation.md) covers usage, privacy and compatibility. The dated release
+snapshot below still identifies published builds; see the PR for current merge status.
 
 # Handoff — 2026-10-27
 
