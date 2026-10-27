@@ -20,32 +20,52 @@ Physical Watch installation, microphone capture, paired transfer, wrist-down and
 
 Completed test-session cleanup: no inactive owned `.dev` bundles remained to move; app-scoped Dev permissions reset successfully after confirming no active Dev session/build. Seven owned simulators were deleted and verified absent, with every other simulator ID preserved. Raw results, all original captures, captured runtime/source inputs and the exact uploaded IPA remain preserved; conversation data, settings and keys were retained.
 
-## Mac Store draft main integration — October 27
+## Mac Store draft validation — October 27, 13:06 UTC
 
-The existing [PR #318](https://github.com/tomqwu/ListenToMe/pull/318) is being updated from
-`90d8c0774edf2910006cb46bb48632643ec3b24d` with main `67ec009a064e5868225a4491f7a684ee54d48872`.
-It preserves the latest Watch embedding, beta-signing safeguards and published en-US evidence while
-adding the separate sandboxed Mac configuration and scoped vault/reference persistence. Its four
-Mac delivery scenarios are now **RELEASE-010–RELEASE-013**, preserving main's established
-RELEASE-006–RELEASE-009 Watch and signing contracts. The original Mac red evidence remains under the
-former scenario numbers in the historical PR notes; renumbering is traceability maintenance, not a
-new regression reproduction. Focused Mac configuration tests (4) and vault tests (19) pass, the catalog
-contains 127 valid contracts, and independent source review is cleared. Fresh full local validation
-and hosted CI remain pending; this draft is not merged or published.
+The existing [PR #318](https://github.com/tomqwu/ListenToMe/pull/318) integrated main
+`67ec009a064e5868225a4491f7a684ee54d48872` as **`f8e8b723b2e851b9b480dcccbe0bf6e0e17636f4`**.
+It preserves permanent Watch embedding, manual beta-signing safeguards and published en-US evidence,
+while adding the separate sandboxed Mac configuration and scoped vault/reference persistence.
+Mac scenarios are **RELEASE-010–RELEASE-013**, preserving main's RELEASE-006–RELEASE-009.
+Original draft red/green evidence retains its former IDs with the explicit mapping in [BDD.md](BDD.md);
+integration/renumbering is not a new regression reproduction.
 
-The earlier universal **1.5.0 (15)** candidate from `c05c6335c182cdff3ec8e6ca6f5bb8829f35a1be`
-archived/exported with Apple Distribution and the exact Mac Store profile. Its package SHA-256 was
-`b16b66ab4c7ca370fd867e98f180d3ad2969d86e4345511d59d4c06cc88b7f47`; Apple's
-`altool --validate-app` returned no errors. This is historical signing/validation evidence, not an
-upload receipt, and that older source is ineligible for the updated submission. Preserve its ledger,
-original aggregate Watch-host launch failure and successful focused resumptions under
-`listentome-appstore-publication/locale-mac-correction/`.
+Fresh **`make validate-local` exited 0** on clean, unchanged `f8e8b723`: **127 BDD contracts**,
+Core **1,241 tests / 7 optional skips / 98.2504679% coverage**, iOS **529 total / 517 passes / 12
+optional skips**, Mac **42 passes**, Watch **33 passes**, 29 TestFlight-helper and four Mac Store
+configuration tests, plus four real Ollama/OpenAI-compatible contracts. Independent review matched
+every required native binding to passing records; none was satisfied by a skip. All three required
+checks passed on that exact source ([CI](https://github.com/tomqwu/ListenToMe/actions/runs/40502834155)).
+This documentation checkpoint changes no application/test input; its own hosted checks remain required.
+
+The current AppStore configuration also compiled for **Intel and Apple silicon**, with actual-product
+identity `com.tomwu.ListenToMe.ios`, **1.5.0 (15)** and **en-US** verified. This artifact is unsigned
+for distribution (automatic linker ad-hoc signature only), not distribution-signing or installed-app
+acceptance. Both compiled architectures, executable hash, unchanged project/dependency lock and
+terminal/reaped receipts were independently checked. Full logs, all three hash-verified raw native
+result bundles/screenshots, binary/source/runtime provenance and reviews remain under
+`/Users/tomwu/Documents/Codex/2026-10-26/listentome-mac318-main-integration/`.
+
+Completed session cleanup: no active Dev app/build was running; the exact `.dev` bundle and signing
+provenance were preserved, then that inactive bundle was moved to Trash. Only
+`com.tomwu.ListenToMe.dev` permissions were reset, with exit 0. Both owned simulators were deleted and
+verified absent, every other simulator ID remained present, and production/Store permissions,
+conversation data, settings and keys were preserved. The initial cleanup-helper syntax error ran no
+actions and remains external harness evidence; it does not change the successful aggregate result.
+
+The earlier universal signed **1.5.0 (15)** candidate from `c05c6335c182cdff3ec8e6ca6f5bb8829f35a1be`
+and package SHA-256 `b16b66ab4c7ca370fd867e98f180d3ad2969d86e4345511d59d4c06cc88b7f47`
+remain historical signing/Apple-validation evidence, not an upload receipt or eligible current-source
+package. Preserve its original failed aggregate and successful focused resumptions in
+`listentome-appstore-publication/locale-mac-correction/`; rebuild from the exact merged source.
 
 **Still pending:** installed sandbox microphone/actual OTHERS capture, external vault/reference
 picker grants across quit/relaunch, provider/Calendar/import/export acceptance, fresh Mac screenshots,
-source-matched archive, Apple upload/processing and review submission. Native automation freshly reports
-the Mac locked. No unlock/permission request or reset was made. The Mac draft has no selected build;
-this integration does not change public iOS 1.18.1 or the published Watch-enabled beta 1.19.0 (38).
+source-matched distribution archive and Apple upload/review. Native automation again reports the Mac
+locked; no new unlock or permission-repair request was made. Read-only Apple verification at
+**13:06 UTC** confirms Mac **1.5.0 PREPARE_FOR_SUBMISSION**, no selected build, iOS **1.18.1 (36)
+READY_FOR_SALE**, and primary **en-US**. This draft is not merged or published; Watch-enabled beta
+1.19.0 (38) remains separately published. No new public submission or binary release occurred.
 
 ## Historical signing recovery — October 27, 07:35 UTC
 
