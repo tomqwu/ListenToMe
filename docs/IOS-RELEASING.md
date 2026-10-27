@@ -38,7 +38,7 @@ Full local validation and independent review passed on unchanged app/test inputs
 
 **Distribution procedure correction:** an existing private plist with `destination=upload` was passed to direct Xcode export, which uploaded this build. Actual upload was **not** performed by the helper; the later helper dry run is not upload evidence. No duplicate upload was sent. Package verification was completed after acceptance, and the receipt preserves that order. Future local export must use a private copy with `destination=export`; use the official make target for actual upload.
 
-[Publication receipt](releases/ios-1.19.1-build39.json), [fresh capture catalog](images/ios/release-1.19.1-en-US.json), [Watch installation and limits](watch-beta.md). No public production submission or new listing screenshot upload occurred.
+[Publication receipt](releases/ios-1.19.1-build39.json), [fresh capture catalog](images/ios/release-1.19.1-en-US.json), [Watch installation and limits](watch-beta.md). The beta upload did not update listing screenshots; the subsequent draft-media correction is recorded above. No public production submission occurred.
 
 ## Historical first Watch beta — 1.19.0 (38)
 
