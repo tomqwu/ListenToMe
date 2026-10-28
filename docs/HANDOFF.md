@@ -1,51 +1,36 @@
 # Recording continuity #339 — 1.20.1 (41) candidate
 
-The maintainer confirmed that spontaneous speaker-language changes stall the iPhone/iPad transcript,
-without changing Settings, and that locking the phone stops listening. Branch
-`codex/ios-recording-continuity` implements continuous established capture through backgrounding,
-replay progress/recovery, and inactive/Stop cancellation of optional work. The latest published beta
-remains **1.20.0 (40)** below; public production remains **1.19.1 (39)**. Build 41 has not been uploaded.
+The recording/language follow-up implements continued user-started capture through backgrounding,
+replay progress/recovery, immediate cancellation of optional work and refreshed foreground controls.
+Full `make validate-local` passed on exact source `9b14ff2ea58919c1bf42a3482794ccd4877dbf1a` with all 921 tracked
+inputs unchanged. Core: 1254 tests, 7 optional skips,
+zero failures and 98.17549956559513% line coverage. iOS UI 82 tests / 5 skips / 0 failures; iOS unit 499 tests / 7 skips / 0 failures; Mac native 43 tests / 0 skips / 0 failures; Watch unit 29 tests / 0 skips / 0 failures; Watch UI 5 tests / 0 skips / 0 failures.
+All 153 BDD scenarios were structurally valid; every bound native selector was
+observed passing. Four helper suites and 4 real-server contracts passed.
+These are local automated results, separate from installed/physical acceptance.
 
-Meaningful native reds preceded the fixes: crossing replay/Undo, stalled recovery, inactive model
-preparation, queued/held optional work, false interruption-resume guidance, and Stop/Undo ownership.
-Final focused runs passed: **60 language methods** (18 new and 42 baseline; 249 inputs unchanged),
-**111 recording/privacy methods plus two UI methods** (604 inputs unchanged), lint and **149 BDD
-scenarios**. Independent review cleared the source for full validation. The earlier combined run
-failed on isolated-test storage leakage and a stale generated version; both were corrected and its
-failed receipt retained. The largest-text release-history journey passed in that earlier run and
-will run again in full validation. [Recording evidence](recording-continuity.md) and
-[language evidence](language-replay-progress.md) preserve exact red/green and harness-failure limits.
+Fresh candidate media is preserved across 7 profiles and 75 native-resolution images, with source/binary/payload hashes and explicit reviewed listing/QA classifications. Saved media does not update Apple's listing. [Capture catalog](images/ios/release-1.20.1-en-US.json).
 
-The first aggregate at `b84973e` failed during UI tests: an obsolete Quick scroll helper and an
-unconfirmed Summary-tab transition. The corrected six-method UI class passed. A new recording Duo
-journey also reproduced a real compact-header regression: the separate disclosure row consumed the
-height needed for two panes. Inline compact disclosure restores Duo; both Home/return and Duo/Stop
-tests passed, with native screenshots independently inspected. These focused results do not replace
-the fresh aggregate validation required on the next frozen source; all failed evidence is retained.
+[Validation receipt](releases/ios-1.20.1-build41-validation.json). All three hosted checks passed on the
+validated application source ([run 40737628646](https://github.com/tomqwu/ListenToMe/actions/runs/40737628646));
+this final evidence-only commit still requires its own checks before merge. The 75 images include
+two supplemental Duo captures from an unchanged existing layout test; 30 are suitable compositions
+and 45 are QA-only. Watch previews remain scoped to GitHub, not App Store approval.
 
-The second aggregate at `73c6188` completed iOS with **seven failed UI methods / 20 assertions**;
-all 494 unit methods passed with seven optional skips. Mac, Watch and real-server stages were not
-reached. An unchanged five-method UI reproduction confirmed stale foreground availability and
-missing fixture model preparation. Explicit initial/current scene delivery, immediate optional-work
-cancellation, fixture isolation and orientation cleanup address those failures. All seven original
-failed UI methods and both recording journeys passed in a 14-method follow-up; that run still failed
-one new title-selector assertion. After correcting only that selector, the affected cold-launch/Home
-method passed separately. Five native lifecycle/privacy methods also passed following four genuine
-red assertions. Superseded tests that wrongly allowed pre-inactive answers are explicitly excluded.
-These are focused results, not an aggregate pass. Independent review cleared the follow-up for a
-fresh full validation. The final catalog contains **153 BDD scenarios**; lint and doc checks pass.
-See [the follow-up evidence](recording-continuity.md#cold-launch-foreground-readiness-follow-up).
+Earlier failed aggregates, unchanged-source reproductions, superseded privacy expectations and the
+corrected title-query failure remain preserved. The focused 14-method UI attempt passed 13 methods
+and failed the new title query; only that selector changed before its isolated passing retry. The
+final aggregate above reran the complete final source. [Recording evidence](recording-continuity.md)
+and [language evidence](language-replay-progress.md) retain the earlier red/green boundaries.
 
-All phone/Share/Watch targets and bundled notes now identify **1.20.1 (41)**. New US metadata includes
-all changes since public 1.19.1, with opt-in audio preservation and current language-check limits.
-Current main's accepted build-40 publication receipt and branch-cleanup rules have been integrated;
-no unmerged Mac or speaker-rename feature was pulled in. Full `make validate-local`, fresh seven-profile
-captures, hosted checks/merge, distribution verification and accepted TestFlight upload remain pending.
-Physical screen-lock audio, native multilingual accuracy and Watch acceptance remain unverified;
-the tester-feedback beta authorization does not authorize public App Store submission.
+All phone/Share/Watch targets and bundled notes identify **1.20.1 (41)**. Physical screen-lock audio,
+native multilingual accuracy and Watch acceptance remain pending; this candidate is not a production
+acceptance claim. Build 41 upload, tester availability and GitHub release status require separate
+accepted receipts; no upload or public App Store submission is asserted by this validation snapshot.
+Hosted checks, merge and authorized distribution are recorded separately by the release owner.
 
-Release evidence and recovery state: `/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios1201-continuity/`.
-The other preserved Mac/Watch/research backlog remains independently gated; this change does not close it.
+Release evidence: `/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios1201-continuity`.
+The other preserved Mac/Watch/research backlog remains independently gated.
 
 # Published translation beta — 1.20.0 (40)
 

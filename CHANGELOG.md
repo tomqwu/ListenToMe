@@ -29,7 +29,7 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS 1.20.1 (41) — 2026-10-28 (candidate)
 
-Prepared for the tester-feedback TestFlight train; full validation, merge and accepted upload remain pending. Physical screen-lock recording, native multilingual recognition and Watch acceptance are not established by simulator tests. Public production remains 1.19.1 (39).
+Prepared for the tester-feedback TestFlight train; full local validation and fresh seven-profile screenshot review passed. Merge and accepted upload remain pending. Physical screen-lock recording, native multilingual recognition and Watch acceptance are not established by simulator tests. Public production remains 1.19.1 (39).
 
 - Keep an established iPhone/iPad microphone recording active when the screen locks or the app backgrounds. Preserve the same session, transcript and opted-in audio until Stop or an audio interruption. Cancel a pending Start before a delayed callback can open the microphone in the background. (#339)
 - Keep live words visible when an utterance crosses an automatic language-switch replay boundary, finalize it once and allow later language checks. After sustained audio activity without replay progress, attempt one recovery from live audio, preserve existing text and show a possible-gap notice. Stop, Undo and cancelled work stay bound to the correct recording. (#339)

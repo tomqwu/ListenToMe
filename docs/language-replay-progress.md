@@ -107,3 +107,26 @@ xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMeIOS -configuration De
 Full local validation and hosted CI remain pending. Physical continuous bilingual capture,
 background/foreground, Stop and Undo acceptance remain required for production; the authorized
 TestFlight beta may proceed with those checks explicitly recorded as pending.
+
+
+## Final automated candidate verification
+
+Full `make validate-local` passed on unchanged `9b14ff2ea58919c1bf42a3482794ccd4877dbf1a`,
+exit 0/reaped in 2,532 seconds, with all 921 tracked input hashes matching. Core 1,254 tests
+(seven optional skips), 98.1755% coverage; iOS 82 UI (five skips) and 499 unit (seven skips);
+Mac 43; Watch 29 unit and five UI; four real-server contracts; zero failures. All 153 BDD
+scenarios and every required native binding passed. The seven previously failing UI methods
+and all five lifecycle/privacy methods passed in this complete aggregate.
+
+The [validation receipt](releases/ios-1.20.1-build41-validation.json) and
+[75 reviewed native images across seven profiles](images/ios/release-1.20.1-en-US.json)
+retain exact source, test, binary and image provenance. Raw iOS/Mac/Watch results were copied
+to external `validation3-native-originals/` and every copied file hash matched. The additional
+Duo layout method passed unchanged and yielded two clean short-text previews; mid-scroll and
+probe-bearing originals remain QA-only. Earlier failed runs and superseded privacy expectations
+remain preserved and are not relabeled as passes. Independent review cleared the final source
+and outcomes; final evidence-only checks and merge remain separate.
+
+Physical screen-lock audio, multilingual accuracy and Watch transfer remain pending. This
+automated candidate does not establish production acceptance or an upload; authorized
+TestFlight distribution still requires signing, package verification and Apple's acceptance.
