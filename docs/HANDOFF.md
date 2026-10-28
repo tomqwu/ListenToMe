@@ -1,3 +1,18 @@
+# Translation-recovery candidate — #343, 1.20.2 (42)
+
+The tester-reported Summary translation stall is being addressed on `codex/translation-stall-recovery`.
+The candidate adds native cancellation ownership, bounded readiness/inference deadlines, disabled
+busy/draining controls, Cancel translation, late-result/timer fencing and real installed-pair Mac
+acceptance. [Evidence and limits](translation-recovery.md). The exact underlying iPhone framework
+stall is not yet identified; physical phone and installed Mac GUI acceptance remain unverified.
+
+Focused Core/native/UI red→green evidence is retained; full local validation now passed on unchanged `abe5218f61c193421178a2debab16ea2c2b1b2dc`. [Validation receipt](releases/ios-1.20.2-build42-validation.json) and [fresh screenshots](images/ios/release-1.20.2-en-US.json) cover seven profiles. Hosted CI, merge and the tester-feedback TestFlight train remain separate gates. All three iOS bundles and in-app notes
+are prepared for 1.20.2 (42), with en-US metadata. Apple's preflight at 19:54 UTC found no build42;
+public iOS remains1.19.1 (39) and latest accepted beta remains1.20.1 (41). No upload or public
+submission is claimed by this candidate. Preserve the unrelated unfinished Mac318/speaker334 work.
+
+Evidence: `/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/`.
+
 # Published recording-continuity beta — 1.20.1 (41)
 
 Apple accepted **1.20.1 (41)** through the official TestFlight helper (receipt recorded 2026-10-28T19:02:09.198475+00:00) from `dc6b2e39a99568fb4931e937c555fa0de0f2ff18`. Apple build `5c2339eb-5e17-4bd6-8eb1-ec1d212ef49f` is **VALID / IN_BETA_TESTING**. Existing Dev group access was verified at 2026-10-28T19:05:58.417288+00:00; its two accepted memberships are unchanged. Primary locale and metadata are **en-US**, with localized name **Listen To Me - Real Time AI**; beta description and What to Test match the intended copy. Group access does not establish physical installation of build 41.

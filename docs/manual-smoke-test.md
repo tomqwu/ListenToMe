@@ -1242,3 +1242,15 @@ and preserved originals. On Summary, opening the option alone must not translate
 on the completed summary and Close returns to original reading. Change source/target during work,
 background/return on phone and close/reopen the Mac window. No stale result or background backlog
 may publish. This text-only acceptance is separate from existing real OTHERS-audio gates.
+
+
+### Translation recovery (#343)
+
+With English→Simplified Chinese packs installed, translate a multi-paragraph summary, confirm
+Chinese output preserves concrete facts and original/code text, then repeat in portrait, Duo and
+wide iPad. Confirm Translate disables during work and Cancel remains usable. Cancel/Close/reopen,
+change target and switch conversations: old results must never appear. For a deliberately stalled
+service, progress must end after 45 seconds with recovery guidance; Translate/Retry remain disabled
+until the prior native request actually exits. A service that never exits requires app relaunch;
+no cloud fallback, automatic pack download or microphone action is permitted. Simulator held-service
+fixtures prove those controls; they do not establish actual physical translation success.

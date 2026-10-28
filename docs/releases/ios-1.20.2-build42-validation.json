@@ -1,0 +1,131 @@
+{
+  "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+  "version": "1.20.2",
+  "build": "42",
+  "status": "automated_pass",
+  "command": [
+    "make",
+    "-C",
+    "/Users/tomwu/.codex/worktrees/retranscription-integration-224/ListenToMe",
+    "validate-local",
+    "BDD_BASE=f772fa3563f9791931085f2f114354e48a277433",
+    "IOS_DESTINATION=platform=iOS Simulator,id=45FD914A-63DF-4BA6-A2A5-CF492828423F",
+    "WATCH_DESTINATION=platform=watchOS Simulator,id=B419941A-D263-48DF-B448-619722A941F2",
+    "IOS_SIGN_FLAGS=CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- -collect-test-diagnostics never"
+  ],
+  "runner": {
+    "parentPID": 93508,
+    "startedAt": "2026-10-28T19:58:43.747155+00:00",
+    "status": "terminal",
+    "hardWallSeconds": 7200,
+    "hardWallExceeded": false,
+    "reaped": true,
+    "pid": 94379,
+    "childReturncode": 0,
+    "returncode": 0,
+    "elapsedSeconds": 2471.5072820829228,
+    "finishedAt": "2026-10-28T20:39:55.275220+00:00"
+  },
+  "trackedInputs": 933,
+  "hashMismatches": [],
+  "logSHA256": "a378b9293b7fe3c57815e4aa7a3b4f0afa902b4f9c554b1ad23c666b871b14e5",
+  "bddScenarios": 162,
+  "core": {
+    "total": 1258,
+    "skipped": 7,
+    "failures": 0,
+    "lineCoveragePercent": 98.18424775978619,
+    "coverageFloor": 95.0
+  },
+  "iosUI": {
+    "total": 83,
+    "passed": 78,
+    "skipped": 5,
+    "failures": 0,
+    "expectedFailures": 0
+  },
+  "iosUnit": {
+    "total": 503,
+    "passed": 496,
+    "skipped": 7,
+    "failures": 0,
+    "expectedFailures": 0
+  },
+  "macNative": {
+    "total": 48,
+    "passed": 48,
+    "skipped": 0,
+    "failures": 0,
+    "expectedFailures": 0
+  },
+  "watchUnit": {
+    "total": 29,
+    "passed": 29,
+    "skipped": 0,
+    "failures": 0,
+    "expectedFailures": 0
+  },
+  "watchUI": {
+    "total": 5,
+    "passed": 5,
+    "skipped": 0,
+    "failures": 0,
+    "expectedFailures": 0
+  },
+  "realServerContracts": {
+    "OllamaContractE2ETests": 2,
+    "OpenAICompatibleContractE2ETests": 2
+  },
+  "physicalAcceptance": false,
+  "productionReady": false,
+  "uploaded": false,
+  "evidenceDirectory": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery",
+  "captureCount": 65,
+  "captureProfiles": 7,
+  "nativeBDDBindings": {
+    "ios-unit": 118,
+    "ios-ui": 33,
+    "mac-unit": 48,
+    "watch-unit": 29,
+    "watch-ui": 5,
+    "core": 219
+  },
+  "helperTests": {
+    "test-bdd.py": {
+      "total": 21,
+      "failures": 0,
+      "durationSeconds": 3.679
+    },
+    "test-ios-testflight.py": {
+      "total": 29,
+      "failures": 0,
+      "durationSeconds": 9.74
+    },
+    "test-contract-gate.py": {
+      "total": 5,
+      "failures": 0,
+      "durationSeconds": 0.603
+    },
+    "test-release-paths.py": {
+      "total": 4,
+      "failures": 0,
+      "durationSeconds": 0.166
+    }
+  },
+  "installedChineseModel": {
+    "observedBranch": "installed-real-model",
+    "inferencePassObserved": true,
+    "requestDurationSeconds": 1.260804583,
+    "attachment": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/validation42-native-originals/mac/attachments/DCE60855-7C90-40A5-B078-BADEE52D7B17.txt",
+    "attachmentSHA256": "5e778c8f0105d6245dd812c3d84f5166ca2a37f376ae23708537c577b70a8ca9",
+    "actualSyntheticOutput": "\u9884\u7b97\u662f120\u7f8e\u5143\u3002\n\n\u56e2\u961f\u5c06\u5728\u5468\u56db\u5ba1\u67e5\u9884\u7b97\u3002\n\n```swift\nlet budget = 120\n```",
+    "physicalPhonePass": false
+  },
+  "limitations": [
+    "Original phone stall native cause remains unconfirmed.",
+    "Real Mac inference does not establish physical iPhone/iPad acceptance or broad language quality.",
+    "Simulator fixtures establish controls and layout, not real inference.",
+    "Fresh captured media has not been uploaded to any App Store listing.",
+    "Earlier failed or collector-only attempts remain preserved separately."
+  ]
+}

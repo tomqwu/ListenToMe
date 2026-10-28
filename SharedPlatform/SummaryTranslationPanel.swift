@@ -31,9 +31,13 @@ import ListenToMeCore
                     Text(problem).font(.caption).foregroundStyle(.secondary)
                 }
                 Button("Translate", systemImage: "translate") { update(); translation.request() }
-                    .disabled(!translation.canTranslate)
+                    .disabled(!translation.canRequest)
                     .accessibilityIdentifier("translateSummary")
-                if translation.isRequested {
+                if translation.worker.isTranslating {
+                    Button("Cancel translation", systemImage: "stop.circle") { translation.cancel() }
+                        .accessibilityIdentifier("cancelSummaryTranslation")
+                }
+                if translation.isRequested || translation.worker.isDraining {
                     OnDeviceTranslationStatus(worker: translation.worker, target: target, context: conversationID)
                     if translation.matches(source: source, conversationID: conversationID, target: target), let text = translation.translatedText {
                         VStack(alignment: .leading, spacing: 8) {

@@ -17,7 +17,9 @@ import Observation
     }
     private var pieces: [Piece] = []
 
-    public init(translator: (any TranscriptTranslating)? = nil) { worker = .init(translator: translator) }
+    public init(translator: (any TranscriptTranslating)? = nil, requestTimeout: Duration = .seconds(45)) {
+        worker = .init(translator: translator, requestTimeout: requestTimeout)
+    }
 
     public func update(source: String, conversationID: String, target: String, isGenerating: Bool = false) {
         let newConversation = self.conversationID != conversationID
@@ -35,7 +37,7 @@ import Observation
     }
 
     public func request() {
-        guard canTranslate else { return }
+        guard canRequest else { return }
         isRequested = true; feed(); worker.retry()
     }
     public func cancel() { isRequested = false; feed() }
@@ -65,6 +67,7 @@ import Observation
         return nil
     }
     public var canTranslate: Bool { problem == nil }
+    public var canRequest: Bool { canTranslate && !worker.isTranslating && !worker.isDraining }
 
     private func feed() {
         let active = isRequested && canTranslate

@@ -21,7 +21,7 @@ Open **Summary → Translate summary**, choose a language and press **Translate*
 the completed summary already on screen. It does not regenerate it, change the AI provider or
 change the global AI response-language setting. The original remains below the translation; **Close**
 returns to original-only reading. **Share translation** explicitly shares the derived text.
-Empty or streaming summaries wait for a completed result. A changed completed summary or target
+In the #343 recovery candidate, Translate is disabled during an active request and **Cancel translation** stops its presentation. Cancelling, changing target or leaving the conversation also cancels the native session. Empty or streaming summaries wait for a completed result. A changed completed summary or target
 refreshes an already-requested translation; another conversation clears that request.
 
 Headings, list prefixes, blank lines and fenced code are kept. Prose inside formatting is translated
@@ -45,7 +45,9 @@ and is cleared by New/reopening. Local archives, ordinary exports, saved audio a
 retain their existing ownership. Sharing a translation is an explicit user action.
 
 Phone background/inactive and Mac window teardown fence pending results and stop queued work.
-Returning resumes the current choices. Ordinary Mac app background recording is unaffected. Only
+Returning resumes the current choices. Ordinary Mac app background recording is unaffected. A 45-second deadline covers each paragraph's readiness and translation work. If the service stops responding, progress ends with an explanation and the pending batch stops. Originals remain readable. While native cancellation is still draining, Translate/Retry remain disabled with stopping guidance; if the service never exits, close and reopen the app. Once it exits, Retry can use the current source and target. A late timer or translation result cannot cancel or replace newer work.
+
+Only
 one native request per worker runs at once; obsolete uncooperative work must return before newer
 work starts. Translation does not delay capture, start the microphone or select an AI provider.
 
@@ -59,8 +61,10 @@ adapters, stale-result/cancellation/background handling and native controls to X
 use explicit DEBUG-only synthetic translations; they prove placement and controls, not model quality.
 Real Mac metadata checks for all 12 offered non-English targets from English, plus three reverse
 pairs, reported missing packs without requesting downloads.
-Installed-pack output quality and installed Mac interaction require separate acceptance evidence;
+The #343 candidate adds a real Apple-engine Mac test: an installed English→Simplified Chinese pair must preserve two paragraphs, a budget number, Thursday and fenced code; unavailable pairs must instead show setup/support guidance. The observed installed-model branch passed on this Mac. That is bounded synthetic Mac evidence, not iPhone/TestFlight acceptance or universal translation accuracy. Installed Mac interaction and physical phone acceptance still require separate evidence;
 simulator runs are never physical-device acceptance.
 
 See the [source-matched validation record](translation-validation.md) for commands, outcomes, screenshots
 and the explicitly recorded aggregate-log failure/resumption.
+
+See [translation recovery evidence](translation-recovery.md) for #343 and the original testing gap.

@@ -1,10 +1,15 @@
 #if DEBUG
 import Foundation
+import Observation
 import ListenToMeCore
 
 /// Explicit UI-test/preview metadata and synthetic responses. Never compiled into release builds;
 /// production uses AppleTranscriptTranslator and separate real-model acceptance.
-@MainActor final class TranslationPreviewTranslator: TranscriptTranslating {
+@MainActor @Observable final class TranslationPreviewTranslator: TranscriptTranslating {
+    var holdSummary = false
+    private var held: CheckedContinuation<Void, Never>?
+    private(set) var heldReturned = false
+    func releaseHeld() { held?.resume(); held = nil }
     let needsPacks: Bool
     init(needsPacks: Bool = false) { self.needsPacks = needsPacks }
     func sourceLanguage(for text: String, hint: String?) -> String? { "en" }
@@ -13,6 +18,11 @@ import ListenToMeCore
                                    action: "Prepare languages") : .ready
     }
     func translate(_ text: String, source: String, target: String) async throws -> String {
+        if holdSummary {
+            holdSummary = false
+            await withCheckedContinuation { held = $0 }
+            heldReturned = true
+        }
         let summaries = [
             "Decisions": "Décisions", "Next steps": "Prochaines étapes",
             "The first release will focus on the essential experience. Extra features will wait for user feedback.":

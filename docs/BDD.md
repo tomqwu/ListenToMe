@@ -75,6 +75,20 @@ Native property tests also need reachable user controls: the opt-out contract in
 Settings-switch test while recording, rather than treating a direct property assignment as UI proof.
 See [speaker evidence and acceptance](speaker-identification.md).
 
+## Translation inference and stalled-service recovery
+
+#343 exposed the same distinction as speaker quality: injected translations and simulator screenshots
+proved placement, not Apple engine output. The installed native Mac journey now uses the actual
+`AppleTranscriptTranslator` and summary coordinator. Its installed-pair branch checks Chinese prose,
+budget/weekday facts, code and originals; setup/unsupported branches are explicitly recorded and
+are never called inference passes. Physical phone accuracy remains separate.
+
+`TRANSLATESTALLED-001`–`004`, `TRANSLATENATIVE-001`–`003`, `TRANSLATEUI-001` and
+`TRANSLATEINSTALLED-001` cover a held readiness/inference service, bounded timeout, cancellation
+forwarding, safe drainage, actual controls, late completion/timer races and the real installed pair.
+Held-service tests intentionally ignore cancellation; they prove bounded state without multiplying
+native work. See [evidence and acceptance limits](translation-recovery.md).
+
 ## Watch durability and beta eligibility
 
 `WATCH-005`–`WATCH-014` exercise native AAC encoding/reading, crash recovery, metadata-first handoff, duplicate/conflicting chunks, end-marker storage failure, continued recording boundaries, pending counts, active-recording protection and Delete/relaunch. Transport and audio-session adapters isolate tests from real WatchConnectivity and microphone capture. Red evidence is retained separately from passing baseline adoption and test-harness failures; simulator assertions never prove physical delivery or wrist-down/battery acceptance.

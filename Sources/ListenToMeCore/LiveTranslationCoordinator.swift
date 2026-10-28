@@ -12,10 +12,14 @@ import Observation
 @MainActor @Observable public final class LiveTranslationCoordinator {
     public private(set) var availability: FeatureAvailability = .temporarilyUnavailable(reason: "Record speech to translate.")
     public private(set) var isTranslating = false
+    public private(set) var isDraining = false
     public private(set) var preparationSource: String?
     public private(set) var problems: [UUID: String] = [:]
     public var translator: (any TranscriptTranslating)?
-    public init(translator: (any TranscriptTranslating)? = nil) { self.translator = translator }
+    private let requestTimeout: Duration
+    public init(translator: (any TranscriptTranslating)? = nil, requestTimeout: Duration = .seconds(45)) {
+        self.translator = translator; self.requestTimeout = requestTimeout
+    }
     private struct Input: Equatable {
         let id: UUID
         let text: String
@@ -32,8 +36,13 @@ import Observation
     private var results: [UUID: Result] = [:]
     private var blocked: [UUID: (source: String?, readiness: FeatureAvailability)] = [:]
     @ObservationIgnored private var task: Task<Void, Never>?
+    @ObservationIgnored private var deadline: Task<Void, Never>?
     @ObservationIgnored private var activeInput: Input?
     @ObservationIgnored private var generation = UUID()
+    @ObservationIgnored var deadlineWait: @MainActor (Duration) async throws -> Void = { duration in
+        try await Task.sleep(for: duration)
+    }
+    private var stoppingReason: String?
 
     public func update(conversationID: String, segments: [TranscriptSegment], fallbackLanguage: String?,
                        options: ConversationLanguageOptions) {
@@ -81,6 +90,7 @@ import Observation
     }
 
     public func retry() {
+        guard !isTranslating, !isDraining else { return }
         problems = [:]; blocked = [:]; refreshStatus(); startWorker()
     }
 
@@ -88,10 +98,15 @@ import Observation
         options.translateTranscript ? inputs.filter { results[$0.id] == nil && problems[$0.id] == nil }.count : 0
     }
 
-    private func invalidateWork() {
-        generation = UUID(); task?.cancel(); translator?.cancel()
+    private func invalidateWork(reason: String? = nil) {
+        generation = UUID(); deadline?.cancel(); deadline = nil
+        isTranslating = false; isDraining = task != nil
+        stoppingReason = isDraining ? (reason ?? "Stopping translation… Your original text is kept. "
+            + "If this does not finish, close and reopen the app.") : nil
+        task?.cancel(); translator?.cancel()
         // Keep the worker slot until even an uncooperative native call returns. Repeated changes
         // cannot create unlimited concurrent model jobs; its defer starts the latest work instead.
+        refreshStatus()
     }
 
     private func current(_ input: Input, generation: UUID) -> Bool {
@@ -104,14 +119,38 @@ import Observation
         isTranslating = true
         task = Task { [weak self] in
             guard let self else { return }
-            defer { self.task = nil; self.activeInput = nil; self.isTranslating = false; self.startWorker() }
+            defer {
+                self.deadline?.cancel(); self.deadline = nil
+                self.task = nil; self.activeInput = nil
+                self.isTranslating = false; self.isDraining = false; self.stoppingReason = nil
+                self.refreshStatus(); self.startWorker()
+            }
             while self.generation == generation, !Task.isCancelled,
                   let input = self.inputs.first(where: { self.results[$0.id] == nil && self.problems[$0.id] == nil }) {
                 self.activeInput = input
+                self.deadline = Task { [weak self, requestTimeout, deadlineWait] in
+                    do { try await deadlineWait(requestTimeout) } catch { return }
+                    guard !Task.isCancelled else { return }
+                    self?.timedOut(input, generation: generation)
+                }
                 await self.translate(input, generation: generation)
+                self.deadline?.cancel(); self.deadline = nil
                 await Task.yield()
             }
         }
+    }
+
+    private func timedOut(_ input: Input, generation: UUID) {
+        guard current(input, generation: generation), activeInput == input, results[input.id] == nil else { return }
+        let reason = "Translation stopped responding. Your original text is kept. Try again."
+        // Stop the whole pending batch instead of spending one deadline per remaining paragraph.
+        // The actual native slot stays occupied until cancellation completes; never abandon it
+        // and multiply model requests when the service ignores cancellation.
+        for pending in inputs where results[pending.id] == nil && problems[pending.id] == nil {
+            fail(pending, .temporarilyUnavailable(reason: reason))
+        }
+        invalidateWork(reason: "Translation stopped responding. Your original text is kept. "
+            + "Waiting for the on-device service to stop. If this does not finish, close and reopen the app.")
     }
 
     private func translate(_ input: Input, generation: UUID) async {
@@ -155,7 +194,9 @@ import Observation
 
     private func refreshStatus() {
         preparationSource = nil
-        if let problem = inputs.compactMap({ blocked[$0.id] }).first {
+        if let stoppingReason {
+            availability = .temporarilyUnavailable(reason: stoppingReason)
+        } else if let problem = inputs.compactMap({ blocked[$0.id] }).first {
             availability = problem.readiness; preparationSource = problem.source
         } else if inputs.isEmpty {
             availability = .temporarilyUnavailable(reason: "Record speech to translate.")

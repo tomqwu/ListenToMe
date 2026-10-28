@@ -1,29 +1,53 @@
 import Foundation
 import NaturalLanguage
-import Translation
+// TranslationSession exposes cancel during async translation but has no Sendable annotation.
+// Both request entry points below remain MainActor-isolated.
+@preconcurrency import Translation
 import ListenToMeCore
 
 /// Native installed-pack adapter. Only the explicit SwiftUI preparation control may request packs.
 @MainActor final class AppleTranscriptTranslator: TranscriptTranslating {
     enum PackStatus { case installed, downloadRequired, unsupported }
+    struct NativeSession {
+        var translate: @MainActor (String) async throws -> String
+        var cancel: @MainActor () -> Void
+    }
     struct Environment {
         var status: @MainActor (String, String) async -> PackStatus
-        var run: @MainActor (String, String, String) async throws -> String
+        var makeSession: @MainActor (String, String) -> NativeSession
+        init(status: @escaping @MainActor (String, String) async -> PackStatus,
+             makeSession: @escaping @MainActor (String, String) -> NativeSession) {
+            self.status = status; self.makeSession = makeSession
+        }
+        init(status: @escaping @MainActor (String, String) async -> PackStatus,
+             run: @escaping @MainActor (String, String, String) async throws -> String) {
+            self.init(status: status, makeSession: { source, target in
+                NativeSession(translate: { text in try await run(text, source, target) }, cancel: {})
+            })
+        }
         static var device: Self {
             Self(status: { source, target in
-                switch await LanguageAvailability().status(from: .init(identifier: source), to: .init(identifier: target)) {
+                let availability = LanguageAvailability()
+                switch await availability.status(from: .init(identifier: source), to: .init(identifier: target)) {
                 case .installed: return .installed
                 case .supported: return .downloadRequired
                 default: return .unsupported
                 }
-            }, run: { text, source, target in
-                let session = TranslationSession(installedSource: .init(identifier: source), target: .init(identifier: target))
-                let response = try await session.translate(text)
-                return response.targetText
+            }, makeSession: { source, target in
+                let session = TranslationSession(installedSource: .init(identifier: source),
+                                                 target: .init(identifier: target))
+                return NativeSession(translate: { text in try await session.translate(text).targetText },
+                                     cancel: { session.cancel() })
             })
         }
     }
     private let environment: Environment
+    private struct Request {
+        let id: UUID
+        var session: NativeSession?
+        var cancelled = false
+    }
+    private var request: Request?
     init(environment: Environment = .device) { self.environment = environment }
     func sourceLanguage(for text: String, hint: String?) -> String? {
         if let hint, !["", "auto", "automatic", "und"].contains(hint.lowercased()),
@@ -47,18 +71,47 @@ import ListenToMeCore
     }
     func translate(_ text: String, source: String, target: String) async throws -> String {
         try Task.checkCancellation()
-        // Packs may have been removed since the UI checked readiness. Never let the native session
-        // request assets: `installedSource` cannot request downloads or send content to a provider.
-        let readiness = await availability(source: source, target: target)
-        try Task.checkCancellation()
-        guard readiness.canRun else { throw Unavailable(reason: readiness.reason ?? "Translation is unavailable.") }
-        let text = try await environment.run(text, source, target)
-        try Task.checkCancellation()
-        return text
+        guard request == nil else {
+            throw Unavailable(reason: "The previous translation is still stopping. Retry when it finishes.")
+        }
+        let id = UUID()
+        request = Request(id: id)
+        // Cancellation fences the request but cannot free an operation still using native resources.
+        defer { if request?.id == id { request = nil } }
+        return try await withTaskCancellationHandler {
+            do {
+                // Packs may have been removed since UI readiness. This factory uses installedSource
+                // only, so translation itself cannot request downloads or send text to a provider.
+                let readiness = await availability(source: source, target: target)
+                try checkCurrent(id)
+                guard readiness.canRun else {
+                    throw Unavailable(reason: readiness.reason ?? "Translation is unavailable.")
+                }
+                let session = environment.makeSession(source, target)
+                request?.session = session
+                let result = try await session.translate(text)
+                try checkCurrent(id)
+                return result
+            } catch {
+                try checkCurrent(id)
+                throw error
+            }
+        } onCancel: { [weak self] in
+            Task { @MainActor in self?.cancel(requestID: id) }
+        }
     }
-    // Cancellation of the caller's Task propagates to the native request. Core also fences results
-    // and keeps its single worker slot until an uncooperative framework call actually returns.
-    func cancel() {}
+    func cancel() {
+        if let id = request?.id { cancel(requestID: id) }
+    }
+    private func cancel(requestID: UUID) {
+        guard request?.id == requestID, request?.cancelled == false else { return }
+        request?.cancelled = true
+        request?.session?.cancel()
+    }
+    private func checkCurrent(_ id: UUID) throws {
+        try Task.checkCancellation()
+        guard request?.id == id, request?.cancelled == false else { throw CancellationError() }
+    }
     private struct Unavailable: LocalizedError {
         let reason: String
         var errorDescription: String? { reason }

@@ -1,0 +1,76 @@
+{
+  "feature": "Bounded translation progress and cancellation",
+  "scenarios": [
+    {
+      "id": "TRANSLATESTALLED-001",
+      "name": "A stalled summary translation stops promising progress",
+      "given": "a completed English summary and a selected Chinese target with a nonresponding on-device readiness or translation service",
+      "when": "the translation deadline expires",
+      "then": "the original remains unchanged, a timeout explanation replaces progress, duplicate requests are refused, and retry becomes possible only after the old native work returns without publishing stale text",
+      "covers": [
+        "Sources/ListenToMeCore/LiveTranslationCoordinator.swift",
+        "Sources/ListenToMeCore/SummaryTranslationCoordinator.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/TranslationRecoveryTests.swift",
+          "test": "TranslationRecoveryTests/testStalledReadinessAndInferenceReachTimeoutWithoutMultiplyingWorkAndRetryAfterDrain"
+        }
+      ]
+    },
+    {
+      "id": "TRANSLATESTALLED-002",
+      "name": "Cancel ends visible progress before an uncooperative service returns",
+      "given": "summary translation is in progress and its on-device service ignores task cancellation",
+      "when": "the user cancels, changes the target, or opens another conversation",
+      "then": "old progress ends immediately, the original stays authoritative, a second native job cannot start until the old one exits, and late old text is never shown",
+      "covers": [
+        "Sources/ListenToMeCore/LiveTranslationCoordinator.swift",
+        "Sources/ListenToMeCore/SummaryTranslationCoordinator.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/TranslationRecoveryTests.swift",
+          "test": "TranslationRecoveryTests/testCancelTargetAndConversationChangesEndProgressAndFenceLateResults"
+        }
+      ]
+    },
+    {
+      "id": "TRANSLATESTALLED-003",
+      "name": "Successful translation is not invalidated by an old deadline",
+      "given": "an installed language pair returns before its deadline",
+      "when": "the summary finishes translating and the former deadline passes",
+      "then": "the translated summary and original remain available with no false timeout or additional request",
+      "covers": [
+        "Sources/ListenToMeCore/LiveTranslationCoordinator.swift",
+        "Sources/ListenToMeCore/SummaryTranslationCoordinator.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/TranslationRecoveryTests.swift",
+          "test": "TranslationRecoveryTests/testSuccessfulCompletionCancelsDeadlineAndRetainsTranslation"
+        }
+      ]
+    },
+    {
+      "id": "TRANSLATESTALLED-004",
+      "name": "An obsolete paragraph deadline cannot stop newer progress",
+      "given": "one translated paragraph has completed and its cancelled timer is already ready to resume while the next paragraph is still translating",
+      "when": "the old timer resumes late",
+      "then": "the current paragraph continues without a false timeout and the complete translation remains paired with the original",
+      "covers": [
+        "Sources/ListenToMeCore/LiveTranslationCoordinator.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/TranslationRecoveryTests.swift",
+          "test": "TranslationRecoveryTests/testCompletedParagraphDeadlineCannotCancelTheNextParagraph"
+        }
+      ]
+    }
+  ]
+}

@@ -27,6 +27,13 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased)
 
+## iOS 1.20.2 (42) — candidate
+
+Candidate only; validation, hosted CI, merge and accepted TestFlight upload remain separate gates. Physical phone and installed Mac acceptance remain pending. Public iOS remains 1.19.1 (39).
+
+- Stop indefinite translation progress after a stalled on-device request, add Cancel translation and disable duplicate Translate/Retry actions until native work safely exits. Cancel the actual Apple session and reject late results/timers while preserving originals, language-pack consent and AI-provider choices. (#343)
+
+
 ## iOS 1.20.1 (41) — 2026-10-28 (TestFlight)
 
 Apple accepted **1.20.1 (41)** through the official TestFlight helper at **2026-10-28T19:02:09.198475+00:00** from `dc6b2e39a99568fb4931e937c555fa0de0f2ff18`. Apple processing is **VALID / IN_BETA_TESTING**, with en-US metadata and unchanged existing Dev group access verified. [Publication receipt](docs/releases/ios-1.20.1-build41.json). Full local validation and fresh seven-profile screenshot review passed. Physical screen-lock recording, native multilingual recognition and Watch acceptance remain unverified. Public production remains 1.19.1 (39); this beta made no new public submission or listing update.
@@ -137,6 +144,9 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 - Settings → Privacy now explains that optional Ollama, Cloud AI and OpenAI-compatible requests send text and included context to the provider you choose; Apple Intelligence stays on-device. (#247)
 
 ## macOS (unreleased since 1.4.4)
+
+- Stop indefinite translation progress after a stalled on-device request, add Cancel translation and disable duplicate Translate/Retry actions until native work safely exits. Cancel the actual Apple session and reject late results/timers while preserving originals, language-pack consent and AI-provider choices. (#343)
+
 
 - Add opt-in on-device translation beneath finalized transcript lines, plus **Translate summary**
   on the Summary page with its own target language and original summary retained. Check exact
