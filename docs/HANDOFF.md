@@ -13,8 +13,14 @@ The release branch also adopts the already reviewed large-text translation scrol
 from `a1eb0fb`, without unmerged Mac behavior or speaker-renaming changes. That earlier regression
 and its evidence remain documented separately; no new historical red is invented for the backport.
 
-Full validation, fresh iPhone/iPad/Duo/Watch captures, required CI, merge, archive/export checks,
-helper upload and Apple tester-status readback remain. Existing manual export settings use
+Full `make validate-local` passed on unchanged `e43a7b5`: Core1,254 (7 optional skips,
+98.221766% coverage), iOS79 UI (5 skips) +460 unit (7 skips), Mac43, Watch29 unit +5 UI,
+139 BDD scenarios, all required native bindings observed passing, and four real-server contracts. All three hosted checks passed.
+[Validation receipt](releases/ios-1.20.0-build40-validation.json) and
+[55 reviewed captures](images/ios/release-1.20.0-en-US.json) preserve seven device profiles.
+Two Watch42 setup failures remain preserved; the unchanged prebooted run passed.
+Poorly scrolled captures are QA-only; no listing upload or physical acceptance is claimed.
+Merge, exact-source archive/export verification, helper upload and Apple tester readback remain. Existing manual export settings use
 `destination=upload`; local package verification must use a separate private `destination=export`
 copy. Evidence: `2026-10-28/listentome-ios120-train/`. Physical translation quality and Watch/phone
 acceptance remain unverified; this preparation does not publish a build or waive Mac acceptance.
