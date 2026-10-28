@@ -7,7 +7,7 @@ Apple engine. The original feature record retained that limitation, but it left 
 
 ## Behavior change
 
-The candidate owns the actual `TranslationSession` through completion and forwards Cancel to its
+TestFlight 1.20.2 (42) on iPhone/iPad, and the unreleased Mac source, own the actual `TranslationSession` through completion and forward Cancel to its
 native cancellation API. Task cancellation also reaches that same request. Late readiness or text
 cannot become a new result. A second native operation is refused until the prior operation exits.
 
@@ -64,4 +64,13 @@ Focused evidence is retained under
 result bundles/screenshots, and `device-probe/` source, binary, output and blocked-device records.
 Full local validation passed on unchanged `abe5218f61c193421178a2debab16ea2c2b1b2dc` (933 tracked inputs): Core 1,258 tests / 7 optional skips / 0 failures and 98.184% coverage; iOS 83 UI / 5 skips and 503 unit / 7 skips, Mac 48, Watch 29 unit + 5 UI, all with zero failures. All 162 BDD scenarios, four helper suites and four real-server contracts passed. The actual installed Chinese inference branch passed again in 1.26 seconds, separately from setup-required outcomes.
 
-[Validation receipt](releases/ios-1.20.2-build42-validation.json) and [fresh seven-profile media](images/ios/release-1.20.2-en-US.json) preserve source and hashes. Hosted CI, merge and accepted beta distribution remain separate gates; this validation is not a publication receipt. The completed Mac Dev bundle was moved to Trash and only `com.tomwu.ListenToMe.dev` permissions reset, with no active Dev session. Logs, source/signing evidence and native results were retained; production permissions and data were untouched.
+[Validation receipt](releases/ios-1.20.2-build42-validation.json) and [fresh seven-profile media](images/ios/release-1.20.2-en-US.json) preserve source and hashes. The fix then merged with required CI green; the accepted beta receipt below records publication separately. This validation is not a publication receipt. The completed Mac Dev bundle was moved to Trash and only `com.tomwu.ListenToMe.dev` permissions reset, with no active Dev session. Logs, source/signing evidence and native results were retained; production permissions and data were untouched.
+
+
+## Accepted beta — 1.20.2 (42)
+
+Apple accepted **1.20.2 (42)** through the official TestFlight helper at **2026-10-28T21:11:37.664213+00:00** from `a6b90e83f775cc9dc88df3c2805ecacedca044af`. Apple build `8967f095-470f-40c0-aba0-b1188bbb699c` is **VALID / IN_BETA_TESTING**. Readback at 2026-10-28T21:15:33.796221+00:00 confirms **en-US**, **Listen To Me - Real Time AI**, exact beta description/What to Test and unchanged access for the existing two-member Dev group. Access does not establish physical installation of build 42.
+
+[Publication receipt](releases/ios-1.20.2-build42.json) · [Release notes and native previews](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.2-build42).
+
+Physical phone translation/lock-screen/multilingual and Watch acceptance remain pending. Public production remains **1.19.1 (39)**; this beta made no new public submission or listing-media upload. Mac changes remain unreleased and keep separate installed-app acceptance gates.

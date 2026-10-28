@@ -32,12 +32,12 @@ macOS-only, and there is no Mac↔iOS sync. See
 [parity with macOS](docs/IOS.md#parity-with-macos) and
 [the version policy](docs/IOS.md#version-policy).
 
-**TestFlight 1.20.1 (41)** includes continued user-started microphone recording through screen lock,
+**TestFlight 1.20.2 (42)** includes continued user-started microphone recording through screen lock,
 while optional AI waits for active use. Stop and genuine audio interruptions still end capture;
 a background launch cannot start it. See [recording continuity](docs/recording-continuity.md)
 and [language replay/recovery](docs/language-replay-progress.md). Saving audio stays opt-in and data
 protection is unchanged. Physical lock-screen acceptance remains pending.
-[Accepted beta receipt](docs/releases/ios-1.20.1-build41.json).
+[Accepted beta receipt](docs/releases/ios-1.20.2-build42.json).
 
 The standalone iOS/iPadOS 26 app is the **ListenToMeIOS** target: microphone transcription, a live
 transcript with Quick Summary plus a Summary tab (Deep is macOS-only; a Deep analysis saved by an earlier
@@ -69,10 +69,10 @@ Education & Research) and your own **My terms** list help recognition, AI speech
 summaries on both platforms; after about a minute of speech the phone may suggest one, decided on the
 device. Meeting use-case presets, reference files, audio-file import and WhisperKit transcription are macOS-only.
 Editable domain prompt presets are available on both platforms.
-The public iPhone/iPad app is [1.19.1](docs/releases/ios-1.19.1-build39-public.json). The latest TestFlight beta is **1.20.1 (41)**, including translation, the Apple Watch companion and recording/language continuity fixes; see the [accepted publication receipt](docs/releases/ios-1.20.1-build41.json).
+The public iPhone/iPad app is [1.19.1](docs/releases/ios-1.19.1-build39-public.json). The latest TestFlight beta is **1.20.2 (42)**, including translation, the Apple Watch companion and recording/language continuity fixes; see the [accepted publication receipt](docs/releases/ios-1.20.2-build42.json).
 [Watch installation and limits](docs/watch-beta.md) and [historical Watch previews](docs/images/watch/1.19.1/README.md)
 are available; physical Watch acceptance remains pending. All 49 build-39 release images were inspected.
-The [1.19.1 media readback](docs/releases/ios-1.19.1-build39-media-readback.json) confirms 60 processed screenshots across both English locales, including Watch and landscape Duo; downloaded image identity was verified in the original upload receipt. Translation is included in the current TestFlight **1.20.1 (41)**. Physical acceptance and real translation quality remain pending; this beta does not update the public listing.
+The [1.19.1 media readback](docs/releases/ios-1.19.1-build39-media-readback.json) confirms 60 processed screenshots across both English locales, including Watch and landscape Duo; downloaded image identity was verified in the original upload receipt. Translation is included in the current TestFlight **1.20.2 (42)**. Physical acceptance and real translation quality remain pending; this beta does not update the public listing.
 See [iOS setup, validation and distribution](docs/IOS.md). Device and language support are checked
 per feature; Apple Intelligence is independent of recording. The [compatibility support](docs/device-compatibility.md)
 includes local dictation fallback for compatible older iPads and explicit unavailable-feature recovery
@@ -89,20 +89,18 @@ make ios-test
 
 ![ListenToMe — four-pane meeting copilot](docs/images/screenshot.png)
 
-**Current iPhone, iPad and Watch previews — TestFlight 1.20.1 (41)**
+**Current iPhone, iPad and Watch previews — TestFlight 1.20.2 (42)**
 
-These six native-resolution previews use synthetic conversations. Each uploaded GitHub image was
-downloaded again and its SHA-256 matched; this gallery does not update the App Store listing.
-[Release notes and What to Test](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.1-build41) ·
-[All 75 reviewed captures and QA classifications](docs/images/ios/release-1.20.1-en-US.json).
+These six native-resolution previews use synthetic content. Uploaded GitHub images were downloaded again and their SHA-256 matched; this gallery does not update the App Store listing.
+[Release notes and What to Test](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.2-build42) · [All 65 reviewed captures and QA classifications](docs/images/ios/release-1.20.2-en-US.json).
 
 <p>
-<img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.1-build41/ListenToMe-iOS-1.20.1-iphone-max-live-translation.png" width="220" alt="iPhone portrait: original speech and translation">
-<img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.1-build41/ListenToMe-iOS-1.20.1-iphone-duo.png" width="440" alt="iPhone Duo: native two-pane layout with sample content">
-<img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.1-build41/ListenToMe-iOS-1.20.1-ipad-pro-wide.png" width="440" alt="iPad Pro wide workspace">
-<img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.1-build41/ListenToMe-iOS-1.20.1-ipad-mini-wide.png" width="440" alt="iPad mini wide workspace">
-<img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.1-build41/ListenToMe-iOS-1.20.1-watch-46-recording.png" width="200" alt="Synthetic native Watch simulator preview — recording timer and Stop. Physical recording and paired transfer unverified.">
-<img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.1-build41/ListenToMe-iOS-1.20.1-watch-49-recording.png" width="200" alt="Synthetic native Watch simulator preview — recording timer and Stop. Physical recording and paired transfer unverified.">
+<img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/01-iphone-translation.png" width="220" alt="iPhone translation layout — synthetic demonstration text.">
+<img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/02-iphone-translation-options.png" width="220" alt="iPhone live translation options.">
+<img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/03-ipad-summary-translation.png" width="220" alt="iPad Summary translation and original — synthetic demonstration text.">
+<img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/04-ipad-wide.png" width="440" alt="iPad wide Live workspace — sample conversation.">
+<img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/05-watch-46-recording.png" width="200" alt="Apple Watch 46 mm recording controls — simulated recording.">
+<img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/06-watch-49-recording.png" width="200" alt="Apple Watch Ultra 49 mm recording controls — simulated recording.">
 </p>
 
 **Historical iPhone and iPad screenshots** (1.18.2)
@@ -612,7 +610,7 @@ saying so. Press **Speakers / edit names** to retry once the network is availabl
 - **`iOS/`**: iPhone/iPad SwiftUI app, active-started microphone capture with the supported on-device
   speech module, Apple Intelligence (Foundation Models) summaries by default on capable devices.
   TestFlight 1.20.1 (41) continues established capture through screen lock with optional AI paused.
-- **`Watch/`**: Apple Watch companion, embedded in the default iOS project; [beta installation and pending device acceptance](docs/watch-beta.md). Included in TestFlight 1.20.1 (41) and public iOS 1.19.1 (39); physical acceptance remains pending.
+- **`Watch/`**: Apple Watch companion, embedded in the default iOS project; [beta installation and pending device acceptance](docs/watch-beta.md). Included in TestFlight 1.20.2 (42) and public iOS 1.19.1 (39); physical acceptance remains pending.
 - **`App/`**: macOS glue — `DualChannelCapture`, `SpeechRecognizerTranscriber`, SwiftUI UI, hotkey.
 
 See [`docs/reviews/2026-09-10/design-and-gap-review.md`](docs/reviews/2026-09-10/design-and-gap-review.md)
@@ -829,11 +827,11 @@ preparation and replacement-task completion, separately from native audio accept
 Core tests exercise failed archive writes and retry, unchanged-content skips, completion/forced saves
 and resets; platform adapters retain consent eligibility, record assembly and Save to folder effects.
 
-## Translation (#330; recovery candidate #343)
+## Translation (#330; TestFlight recovery #343)
 
 Enable **Live translation** from More/Notes on iPhone/iPad or the Mac Languages rail to read finalized
 speech in another language beneath the original. On **Summary**, choose **Translate summary** for
 a separate target and explicit translation of the existing summary. Apple Translation uses installed
 on-device packs; missing pairs offer explicit Prepare languages and unsupported pairs explain why.
 Originals, audio timing, AI providers and normal exports stay authoritative. Watch text can translate
-after import on the phone. The #343 candidate adds Cancel, disables duplicate requests and explains stalled native work while preserving originals. See [translation and its verification limits](docs/translation.md).
+after import on the phone. TestFlight 1.20.2 (42) adds Cancel, disables duplicate requests and explains stalled native work while preserving originals. See [translation and its verification limits](docs/translation.md).
