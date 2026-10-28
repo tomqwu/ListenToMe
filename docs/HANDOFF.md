@@ -1,3 +1,30 @@
+# iOS translation train preparation — October 28, 2026
+
+The next-day authorized TestFlight train is being prepared from merged `main` (`6ecf9cb`), separately
+from unfinished Mac #318 and speaker rename #334. Apple readback confirms latest accepted build39,
+public iOS1.19.1, primary locale en-US, and no build40 among all35 returned builds. The planned beta
+is **1.20.0 (40)**, with matching phone/Share/Watch versions, bundled translation What's New and
+complete US tester/release copy. No new public App Store version or review submission is authorized.
+
+`RELEASE-004` first failed the native UI version/title expectations against build39 (two assertions,
+exit65). Version and bundled notes now match40; all six focused release-notes/translation UI tests passed
+(exit0), including largest-text history and translation controls. BDD139 and lint also pass.
+The release branch also adopts the already reviewed large-text translation scrolling-test correction
+from `a1eb0fb`, without unmerged Mac behavior or speaker-renaming changes. That earlier regression
+and its evidence remain documented separately; no new historical red is invented for the backport.
+
+Full `make validate-local` passed on unchanged `e43a7b5`: Core1,254 (7 optional skips,
+98.221766% coverage), iOS79 UI (5 skips) +460 unit (7 skips), Mac43, Watch29 unit +5 UI,
+139 BDD scenarios, all required native bindings observed passing, and four real-server contracts. All three hosted checks passed.
+[Validation receipt](releases/ios-1.20.0-build40-validation.json) and
+[55 reviewed captures](images/ios/release-1.20.0-en-US.json) preserve seven device profiles.
+Two Watch42 setup failures remain preserved; the unchanged prebooted run passed.
+Poorly scrolled captures are QA-only; no listing upload or physical acceptance is claimed.
+Merge, exact-source archive/export verification, helper upload and Apple tester readback remain. Existing manual export settings use
+`destination=upload`; local package verification must use a separate private `destination=export`
+copy. Evidence: `2026-10-28/listentome-ios120-train/`. Physical translation quality and Watch/phone
+acceptance remain unverified; this preparation does not publish a build or waive Mac acceptance.
+
 # Translation #330 implementation — October 27, 2026
 
 [PR #331](https://github.com/tomqwu/ListenToMe/pull/331) adds opt-in on-device live translation and
