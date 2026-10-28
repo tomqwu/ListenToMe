@@ -1,16 +1,14 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, latest TestFlight version 1.19.1 (39).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, latest TestFlight version 1.20.0 (40).
 
-## Translation train candidate — 1.20.0 (40)
+## Translation beta — 1.20.0 (40)
 
-The next TestFlight candidate contains the merged on-device live translation and explicit
-Summary-page translation feature. Phone, Share and embedded Watch versions are aligned; bundled
-What's New and en-US tester/App Store copy are updated. Public production is 1.19.1 (39).
-No build-40 upload, tester access, physical acceptance or public review submission is claimed yet.
-[Translation behavior and limits](translation.md). Validation, fresh screenshots and signing/upload
-receipts will be recorded before publication.
+Apple accepted **1.20.0 (40)** through the official TestFlight helper (receipt recorded 2026-10-28T13:56:43.061187+00:00) from `4a72489120fda713c6d117c3d6c3dc661cf1dd9e`. Apple build `93926f6c-0137-49fe-bc06-f73f04f831f5` is **VALID / IN_BETA_TESTING**, with existing Dev group access verified at 2026-10-28T14:06:21.847671+00:00. English (US) localized name, beta description and What to Test match the intended metadata. Group membership does not establish physical installation of build 40.
+
+Physical phone/Watch acceptance and installed real-language-pair translation quality remain pending. The Mac translation feature remains unreleased. Public production remains 1.19.1 (39); this beta did not submit a new public version or upload listing screenshots. QA-only captures are not approved store assets.
+[Publication receipt](releases/ios-1.20.0-build40.json) · [Translation behavior and limits](translation.md).
 
 ## Screen lock and language recovery (#339, candidate 1.20.1 / 41)
 
