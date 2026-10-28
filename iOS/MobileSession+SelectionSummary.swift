@@ -111,6 +111,9 @@ extension MobileSession {
     /// Why no selection summary can run right now, whatever is selected: another answer is being
     /// written, or no provider is usable. Computed once per transcript render for every line's menu.
     var selectionSummaryProviderBlockReason: String? {
+        if auxiliaryWorkSuspended || !isForeground || !applicationIsActive() {
+            return "Return to ListenToMe to summarize selected lines."
+        }
         if isSummarizing { return "Generating an AI response. Wait for it to finish or tap Cancel summary." }
         return summaryAvailability(for: .summary)
     }
@@ -171,6 +174,8 @@ extension MobileSession {
 
     private func runSelectionSummary(_ selected: [TranscriptSegment], built: SelectionSummaryPrompt.Built,
                                      token: Int) async {
+        guard !Task.isCancelled, selectionRun.isCurrent(token), !auxiliaryWorkSuspended,
+              isForeground, applicationIsActive() else { return }
         let conversation = id
         do {
             let client: any LLMProvider = try summaryProvider

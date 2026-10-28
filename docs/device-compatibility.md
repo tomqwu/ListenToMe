@@ -14,6 +14,7 @@ cloud provider, sends conversation text, requests microphone permission or downl
 | --- | --- | --- |
 | iPhone/iPad live speech and Watch-file transcription | Prefer supported SpeechTranscriber; otherwise use supported on-device DictationTranscriber. Install the chosen local language assets only when transcription is requested. | Disable live Start with its device/language or denied-microphone reason. Offer recording settings or the applicable microphone settings action. Unexpected preparation failures still show the full startup alert. |
 | iPhone/iPad language choices and Automatic | Use the union of languages supported by the available local speech modules, with installed/downloadable status. Automatic filters against the same catalog. | Keep unsupported choices explanatory; an unavailable detection model does not turn recording into cloud ASR. |
+| iPhone/iPad screen lock (#339 candidate, 1.20.1 / 41) | Start while active using the supported local speech module, then keep that established audio session through background/lock. Pause optional AI. | No new background Start or cancelled delayed preparation. Stop, interruption and capture/transcription failure remain boundaries. Physical lock-screen acceptance is pending. |
 | Apple Intelligence summaries | SystemLanguageModel runtime readiness and the conversation's language; refresh on foreground/settings. | Do not offer Apple as a working provider. Preserve saved choices, explain setup/eligibility and require an explicit alternate provider/server/model/key. Recording remains independent. |
 | Mac transcription | Check the selected engine/language and microphone access. Legacy SpeechRecognizer also needs local recognition support and its Speech permission. WhisperKit retains explicit first-use model preparation. | Hide unsupported engine choices, explain the saved unavailable choice, and block Start with settings/permissions recovery. Unknown microphone permission can be requested by an explicit Start. |
 | Mac AI | Offer Apple only when its runtime model is available; gate its execution for the conversation language too. | Preserve saved provider settings and show the reason. No automatic local/cloud switch; capture remains independent. |
@@ -57,3 +58,18 @@ require explicit **Prepare languages**; unsupported pairs show a reason without 
 Summary page can translate a saved summary even if its original AI provider is unavailable. Neither
 translation path enables capture or changes providers. Watch offers no translation engine; imported
 text can translate on phone. See [translation](translation.md) and `TRANSLATE-001`–`TRANSLATE-014`.
+
+## Screen lock and optional AI (#339, candidate)
+
+Audio background mode permits the candidate's established user-started capture; it is not general
+eligibility for background model work. Inactive/background transitions suspend summaries, titles,
+vocabulary classification, correction, translation, speaker passes and language-model preparation.
+An already executing local model may finish, with its old result fenced. Active return may retry
+under current choices without opening another microphone run. New capture still requires active
+use; an inactive interruption-end stays stopped with recovery guidance.
+
+The selected native speech module, explicit provider choices, audio-saving opt-in and existing data
+protection remain unchanged. Simulator scene/PCM/provider tests cannot establish physical locked
+SpeechAnalyzer/DictationTranscriber continuity. See [recording evidence and device checks](recording-continuity.md)
+and [language replay/recovery](language-replay-progress.md); publication and physical acceptance
+of 1.20.1 (41) remain pending.

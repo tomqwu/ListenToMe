@@ -48,6 +48,14 @@ enum MobileReleaseNotes {
         var id: String { version }
     }
     static let releases: [Release] = [
+        .init(version: "1.20.1", title: "Keep listening through language changes and screen lock", details: [
+            "Keep an established iPhone or iPad recording running when the screen locks or you leave the app. " +
+                "Use Stop to finish; audio interruptions can still interrupt capture.",
+            "Optional summaries, translation and language or speaker analysis pause while the app is inactive. Audio saving remains your choice.",
+            "Keep live words visible when a phrase crosses an automatic language switch, and finalize that phrase once.",
+            "Attempt recovery if a language switch stalls despite continued audio activity. " +
+                "Existing text is preserved, with a notice when some speech may be missing."
+        ]),
         .init(version: "1.20.0", title: "Translate conversations and summaries", details: [
             "Add on-device translations beneath completed transcript lines while keeping the original speech and speaker labels.",
             "On the Summary page, choose Translate summary and its own target language. The original summary stays available.",

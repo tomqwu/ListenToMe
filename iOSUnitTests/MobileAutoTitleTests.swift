@@ -67,6 +67,65 @@ final class MobileAutoTitleTests: XCTestCase {
         await session.nameConversationIfNeeded(id)?.value
     }
 
+    func testInactiveBlocksQueuedAndNewTitleRequestsUntilActive() async throws {
+        let provider = TitleProvider("Spring marketing budget")
+        let session = makeSession(provider)
+        var active = true
+        session.applicationIsActive = { active }
+        XCTAssertTrue(session.save())
+        let queued = try XCTUnwrap(session.nameConversationIfNeeded())
+        active = false
+        await session.handleScenePhase(.inactive)
+        await queued.value
+        XCTAssertEqual(provider.requests, 0, "A queued naming must cancel before calling the provider")
+        XCTAssertEqual(session.title, "New conversation")
+        XCTAssertNil(session.nameConversationIfNeeded(), "Inactive is not active use even if isForeground is true")
+        XCTAssertEqual(provider.requests, 0)
+        active = true
+        await session.handleScenePhase(.active)
+        await session.titleCoordinator.wait(for: session.id)
+        XCTAssertEqual(provider.requests, 1)
+        XCTAssertEqual(session.title, "Spring marketing budget")
+    }
+
+    func testInactiveCancelsHeldNamingAndLateOutputCannotRenameCurrentOrArchivedConversation() async throws {
+        for moveToNew in [false, true] {
+            let provider = TitleProvider("Spring marketing budget")
+            provider.gated = true
+            let session = makeSession(provider)
+            session.newConversation()
+            session.segments = Self.meeting.enumerated().map {
+                TranscriptSegment(source: .you, text: $0.element, isFinal: true,
+                                  start: Double($0.offset * 5), end: Double($0.offset * 5 + 4))
+            }
+            var active = true
+            session.applicationIsActive = { active }
+            XCTAssertTrue(session.save())
+            let original = session.id
+            let task = try XCTUnwrap(session.nameConversationIfNeeded())
+            for _ in 0..<200 where provider.gate == nil { await Task.yield() }
+            XCTAssertNotNil(provider.gate)
+            active = false
+            await session.handleScenePhase(.inactive)
+            XCTAssertFalse(session.titleCoordinator.isNaming(original))
+            XCTAssertTrue(task.isCancelled)
+            if moveToNew { session.newConversation() }
+            provider.gate?.resume(); provider.gate = nil
+            await task.value
+            XCTAssertEqual(session.title, "New conversation")
+            XCTAssertEqual(session.history.first { $0.id == original }?.title, "New conversation")
+            XCTAssertEqual(session.history.first { $0.id == original }?.resolvedTitleState.source, .placeholder)
+            provider.gated = false
+            active = true
+            await session.handleScenePhase(.active)
+            await session.nameConversationIfNeeded(original)?.value
+            await session.titleCoordinator.wait(for: original)
+            XCTAssertEqual(provider.requests, 2, "Cancelled attempts remain retryable under current settings")
+            if moveToNew { XCTAssertEqual(session.title, "New conversation") }
+            XCTAssertEqual(session.history.first { $0.id == original }?.title, "Spring marketing budget")
+        }
+    }
+
     func testASavedDefaultConversationIsNamedByTheChosenProviderAndKeepsIt() async throws {
         let provider = TitleProvider("\"Spring marketing budget.\" 🚀")
         let session = makeSession(provider)

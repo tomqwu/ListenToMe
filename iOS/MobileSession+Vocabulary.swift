@@ -51,6 +51,7 @@ extension MobileSession {
 
     /// Counts a finalized line toward the on-device suggestion check.
     func considerVocabularySuggestion(_ segment: TranscriptSegment) {
+        guard !auxiliaryWorkSuspended, isForeground, applicationIsActive() else { return }
         vocabulary.heard(segment.text, conversationID: id, localeIdentifier: segment.language ?? recordingLanguage,
                          recent: self.segments.suffix(200).map(\.text).joined(separator: " "))
     }

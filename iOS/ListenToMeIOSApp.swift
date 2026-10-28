@@ -68,7 +68,9 @@ struct ListenToMeIOSApp: App {
 
     @ViewBuilder private var meeting: some View {
         #if DEBUG && targetEnvironment(simulator)
-        if ProcessInfo.processInfo.arguments.contains("--start-failure-fixture") {
+        if ProcessInfo.processInfo.arguments.contains("--recording-continuity-fixture") {
+            MobileRecordingContinuityFixture()
+        } else if ProcessInfo.processInfo.arguments.contains("--start-failure-fixture") {
             MobileStartFailureFixture()
         } else if ProcessInfo.processInfo.arguments.contains("--incremental-summary-fixture") {
             MobileIncrementalSummaryFixture()

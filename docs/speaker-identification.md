@@ -41,8 +41,21 @@ most 6,000 probability frames (ten minutes at 10 Hz), without rewinding its abso
 resetting voice identities. The Settings switch permits opt-out while recording; re-enabling waits
 until Stop so a fresh run starts with its own capture buffer. Turning identification off releases
 its raw buffer immediately and
-rejects late results. Ending/backgrounding a run fences queued work; model voice/prediction state
+rejects late results. Ending a run fences queued work; model voice/prediction state
 is reset when outstanding inference drains. Cleanup from an old run cannot reset a new one.
+
+## Screen lock continuity (#339, candidate)
+
+The upcoming 1.20.1 (41) candidate keeps the established microphone recording and speaker run
+through screen lock/background. It pauses optional speaker preparation/passes and fences old
+completions without resetting speaker identities. Active return may continue labeling from the
+bounded last ten minutes; earlier background lines can remain Microphone. This does not promise to
+relabel an entire long background interval or establish voice quality, battery use or native speech
+continuity on physical devices. These changes are separate from the older published speaker fixes.
+
+Save audio recordings remains opt-in; this rolling memory buffer creates no hidden saved recording
+and changes no file protection. See [recording continuity and pending device acceptance](recording-continuity.md)
+and [language replay/recovery](language-replay-progress.md).
 
 Foreground preparation loads both the live model and the separate existing offline import models.
 An import cannot start their download or mutate the live stream. A partial preparation failure stays

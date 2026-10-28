@@ -106,15 +106,26 @@ final class SessionVocabulary {
         let classifier = classifier ?? VocabularyClassifier(catalog: catalog.localized(for: localeIdentifier))
         let text = recent()
         check = Task {
+            guard !Task.isCancelled else { return }
             // The first check loads Apple's sentence embedding; it must never stall the transcript.
-            let found = await Task.detached(priority: .utility) {
-                classifier.suggestion(for: text, excluding: excluded)
-            }.value
+            let classify = Task<String?, Never>.detached(priority: .utility) {
+                guard !Task.isCancelled else { return nil }
+                return classifier.suggestion(for: text, excluding: excluded)
+            }
+            let found = await withTaskCancellationHandler {
+                await classify.value
+            } onCancel: {
+                classify.cancel()
+            }
             guard !Task.isCancelled else { return }
             check = nil
             offer(found, conversationID: conversationID)
         }
     }
+
+    /// Pause optional classification without resetting the conversation's vocabulary choices.
+    /// A synchronous embedding already running may finish; its cancelled parent cannot offer it.
+    func suspendSuggestions() { check?.cancel(); check = nil }
 
     /// The whole finalized transcript, for a platform that observes it rather than each line (macOS).
     /// Only lines that arrive while `live` (recording) count toward a suggestion: a restored or imported

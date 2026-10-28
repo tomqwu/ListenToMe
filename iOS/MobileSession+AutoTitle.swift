@@ -50,7 +50,8 @@ extension MobileSession {
     /// recording: a return from Control Center mid-recording must not name half a transcript.
     @discardableResult
     func nameConversationIfNeeded(_ recordID: String? = nil, language: String? = nil) -> Task<Void, Never>? {
-        guard Self.namesConversationsAutomatically, isForeground, state == .idle else { return nil }
+        guard Self.namesConversationsAutomatically, isForeground, !auxiliaryWorkSuspended,
+              applicationIsActive(), state == .idle else { return nil }
         let target = recordID ?? id
         guard let snapshot = autoTitleSnapshot(target),
               ConversationAutoTitle.shouldName(state: snapshot.state, title: snapshot.title, words: snapshot.words)
@@ -79,6 +80,7 @@ extension MobileSession {
     /// on every Save or return to the app until the transcript has grown.
     private func applyAutoTitle(_ result: ConversationTitleCoordinator.Result, to target: String,
                                 from snapshot: AutoTitleSnapshot) {
+        guard !auxiliaryWorkSuspended, isForeground, applicationIsActive() else { return }
         let named = result.title, state = result.state
         if target == id {
             guard title == snapshot.title, titleState == snapshot.state else { return }

@@ -30,6 +30,9 @@ protocol MobileRecording: AnyObject {
     /// recording so far is being transcribed again, and the recording time at which the old one stopped.
     func switchLocale(to locale: Locale, replay: SpeakerAudioBuffer?, replayFrom: @MainActor () -> Int?,
                       willReplace: @escaping @MainActor (Bool, TimeInterval) -> Void) async throws
+    /// Replace a stalled replay without replaying it again. The superseded result generation is
+    /// cancelled/fenced while microphone capture and its recording timeline continue.
+    func recoverLanguageReplay(locale: Locale, willReplace: @escaping @MainActor (TimeInterval) -> Void) async throws
     /// The active vocabularies' recognition terms (issue #222). Called before `start` and again whenever
     /// they change while recording; the running analyzer, and any analyzer a language switch creates,
     /// gets them without restarting capture.
@@ -38,6 +41,9 @@ protocol MobileRecording: AnyObject {
 
 extension MobileRecording {
     func setContextualStrings(_ strings: [String]) async {}
+    func recoverLanguageReplay(locale: Locale, willReplace: @escaping @MainActor (TimeInterval) -> Void) async throws {
+        throw RecordingError.message("This recorder cannot restart stalled transcription.")
+    }
     func attachSpeakerAudio(_ buffer: SpeakerAudioBuffer?) {}
     func attachLanguageAudio(_ buffer: SpeakerAudioBuffer?) {}
     func attachSavedAudio(_ writer: (any SavedAudioWriting)?) { if let writer { Task { await writer.finish() } } }
@@ -172,19 +178,41 @@ final class MobileRecorder: MobileRecording {
 
     func switchLocale(to locale: Locale, replay: SpeakerAudioBuffer?, replayFrom: @MainActor () -> Int?,
                       willReplace: @escaping @MainActor (Bool, TimeInterval) -> Void) async throws {
+        try await replaceLocale(to: locale, replay: replay, replayFrom: replayFrom,
+                                discardPrevious: false, willReplace: willReplace)
+    }
+
+    func recoverLanguageReplay(locale: Locale, willReplace: @escaping @MainActor (TimeInterval) -> Void) async throws {
+        try await replaceLocale(to: locale, replay: nil, replayFrom: { nil }, discardPrevious: true) { _, cut in
+            willReplace(cut)
+        }
+    }
+
+    private func replaceLocale(to locale: Locale, replay: SpeakerAudioBuffer?, replayFrom: @MainActor () -> Int?,
+                               discardPrevious: Bool,
+                               willReplace: @escaping @MainActor (Bool, TimeInterval) -> Void) async throws {
         guard let sink, input != nil, !isSwitching else { throw RecordingError.message("Recording is not running.") }
         isSwitching = true
         defer { isSwitching = false }
         let (transcriber, format) = try await MobileSpeechModel.prepare(locale: locale, volatileResults: true)
+        try Task.checkCancellation()
         let analyzer = SpeechAnalyzer(modules: [transcriber.module])
         // The new language's analyzer hears the same vocabulary as the one it replaces.
         let applied = contextualStrings
         if !applied.isEmpty { await SpeechVocabularyContext.apply(applied, to: analyzer) }
+        guard !Task.isCancelled else {
+            await analyzer.cancelAndFinishNow()
+            throw CancellationError()
+        }
         try await analyzer.prepareToAnalyze(in: format)
+        guard !Task.isCancelled else {
+            await analyzer.cancelAndFinishNow()
+            throw CancellationError()
+        }
         // Replayed audio reaches the new analyzer much faster than real time; live audio queues behind it.
         let (inputs, input) = AsyncStream<AnalyzerInput>.makeStream(bufferingPolicy: .bufferingOldest(1_024))
         try await analyzer.start(inputSequence: inputs)
-        guard self.sink === sink, !isStopping, let previous = self.analyzer else {
+        guard !Task.isCancelled, self.sink === sink, !isStopping, let previous = self.analyzer else {
             await analyzer.cancelAndFinishNow()
             throw CancellationError()
         }
@@ -199,7 +227,7 @@ final class MobileRecorder: MobileRecording {
         let previousResults = resultsTask
         resultsGeneration &+= 1
         self.input?.finish()   // the old transcriber's input ends exactly at the cut
-        if replayed {
+        if replayed || discardPrevious {
             acceptedGeneration = resultsGeneration
             previousResults?.cancel()
             Task { await previous.cancelAndFinishNow() }

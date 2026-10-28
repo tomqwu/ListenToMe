@@ -27,6 +27,16 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased)
 
+## iOS 1.20.1 (41) — 2026-10-28 (candidate)
+
+Prepared for the tester-feedback TestFlight train; full validation, merge and accepted upload remain pending. Physical screen-lock recording, native multilingual recognition and Watch acceptance are not established by simulator tests. Public production remains 1.19.1 (39).
+
+- Keep an established iPhone/iPad microphone recording active when the screen locks or the app backgrounds. Preserve the same session, transcript and opted-in audio until Stop or an audio interruption. Cancel a pending Start before a delayed callback can open the microphone in the background. (#339)
+- Keep live words visible when an utterance crosses an automatic language-switch replay boundary, finalize it once and allow later language checks. After sustained audio activity without replay progress, attempt one recovery from live audio, preserve existing text and show a possible-gap notice. Stop, Undo and cancelled work stay bound to the correct recording. (#339)
+- Pause optional AI work while inactive, reject obsolete results and retain bounded speaker/language buffers for the continuing recording. Keep provider and audio-saving choices unchanged. A visible recording notice explains the behavior. (#339)
+
+Privacy: user-started microphone capture can now continue while locked; backgrounding never starts idle capture. Saved audio remains opt-in with unchanged file protection. Language detection stays on-device, and optional background summary/correction requests do not start. Already executing local work may finish, but obsolete output is rejected. Language recheck confidence, cadence and switch limits are unchanged; this is not seamless bilingual recognition while locked.
+
 ## iOS 1.20.0 (40) — 2026-10-28 (candidate)
 
 Prepared for the next authorized TestFlight train; not uploaded or available yet.

@@ -32,6 +32,12 @@ macOS-only, and there is no Mac↔iOS sync. See
 [parity with macOS](docs/IOS.md#parity-with-macos) and
 [the version policy](docs/IOS.md#version-policy).
 
+The upcoming **1.20.1 (41) candidate** keeps an established user-started microphone recording active
+through screen lock, while optional AI waits for active use. Stop and genuine audio interruptions
+still end capture; a background launch cannot start it. See [recording continuity](docs/recording-continuity.md)
+and [language replay/recovery](docs/language-replay-progress.md). Saving audio stays opt-in and data
+protection is unchanged. Physical lock-screen acceptance and publication of this candidate remain pending.
+
 The standalone iOS/iPadOS 26 app is the **ListenToMeIOS** target: microphone transcription, a live
 transcript with Quick Summary plus a Summary tab (Deep is macOS-only; a Deep analysis saved by an earlier
 build stays readable under **Earlier deep analysis**), an opt-in **Auto** (off by default; with Ollama, a
@@ -587,8 +593,9 @@ saying so. Press **Speakers / edit names** to retry once the network is availabl
   persistence, naming, context, model selection, prompt building, providers and `MeetingSession`.
   Native effects and some platform-specific orchestration remain in the app targets; Core coverage
   is not a whole-product measurement. See [orchestration ownership](docs/ORCHESTRATION.md).
-- **`iOS/`**: iPhone/iPad SwiftUI app, foreground microphone capture with SpeechAnalyzer, Apple Intelligence
-  (Foundation Models) summaries by default on capable devices.
+- **`iOS/`**: iPhone/iPad SwiftUI app, active-started microphone capture with the supported on-device
+  speech module, Apple Intelligence (Foundation Models) summaries by default on capable devices.
+  The #339 candidate continues established capture through screen lock with optional AI paused.
 - **`Watch/`**: Apple Watch companion, embedded in the default iOS project; [beta installation and pending device acceptance](docs/watch-beta.md). Included in TestFlight 1.19.1 (39); public iOS 1.18.1 excludes it.
 - **`App/`**: macOS glue — `DualChannelCapture`, `SpeechRecognizerTranscriber`, SwiftUI UI, hotkey.
 

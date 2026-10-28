@@ -5,7 +5,8 @@ import UIKit
 /// Platform adapter: Core owns task lifetime and transition ordering; this owns device policy.
 extension MobileSession {
     func start() {
-        guard state == .idle, !isSummarizing, recordingAvailability.canRun,
+        guard isForeground, !auxiliaryWorkSuspended, applicationIsActive(), state == .idle,
+              !isSummarizing, recordingAvailability.canRun,
               captureCoordinator.phase == .idle else { return }
         captureCoordinator.phaseChanged = { [weak self] in self?.state = $0 }
         captureCoordinator.start { token in
@@ -47,7 +48,7 @@ extension MobileSession {
 
     func stop() async {
         if state == .recording {
-            languageDetection.activityLoop?.cancel(); languageDetection.activityLoop = nil
+            languageDetection.suspendChecks(preserveUndoForStop: true)
             if stopReason == nil { stopReason = .user }
         }
         await captureCoordinator.stop()

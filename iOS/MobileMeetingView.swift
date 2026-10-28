@@ -163,6 +163,11 @@ struct MobileMeetingView: View {
                 titleEditor
                 captureStatusLabel
             }
+            if session.state == .recording {
+                Text("Recording continues with the screen locked. Optional AI updates resume when you return.")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .accessibilityIdentifier("backgroundRecordingNotice")
+            }
             if session.state == .idle, let reason = session.recordingAvailability.reason {
                 recordingSupport(reason)
             }

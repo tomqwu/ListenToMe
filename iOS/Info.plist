@@ -11,6 +11,7 @@
 <key>LSRequiresIPhoneOS</key><true/>
 <key>NSCameraUsageDescription</key><string>ListenToMe attaches photos you take to your conversation notes.</string>
 <key>NSMicrophoneUsageDescription</key><string>ListenToMe transcribes conversations from your microphone on this device.</string>
+<key>UIBackgroundModes</key><array><string>audio</string></array>
 <key>UIApplicationSceneManifest</key><dict><key>UIApplicationSupportsMultipleScenes</key><false/></dict>
 <key>UILaunchScreen</key><dict/>
 <key>UISupportedInterfaceOrientations</key><array><string>UIInterfaceOrientationPortrait</string><string>UIInterfaceOrientationLandscapeLeft</string><string>UIInterfaceOrientationLandscapeRight</string></array>

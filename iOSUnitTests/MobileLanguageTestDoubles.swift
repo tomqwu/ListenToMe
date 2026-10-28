@@ -11,11 +11,29 @@ final class LanguageTestRecorder: MobileRecording {
     struct Switch { let locale: String; let replayed: Bool; let from: Int }
     private(set) var switches: [Switch] = []
     var failSwitch: String?
+    private(set) var replayRecoveries: [String] = []
+    private(set) var replayRecoveryCommits = 0
+    var failReplayRecovery: String?
+    var holdReplayRecovery = false
+    private var heldReplayRecovery: CheckedContinuation<Void, Never>?
+    var isHoldingReplayRecovery: Bool { heldReplayRecovery != nil }
+    func releaseReplayRecovery() { heldReplayRecovery?.resume(); heldReplayRecovery = nil }
     /// False makes a switch continue the timeline without replay, as when its audio is no longer held.
     var replayAvailable = true
     /// Holds Stop (the recorder still finalizing) or a switch until the test releases it.
     var holdStop = false
     var holdSwitch = false
+    var holdContext = false
+    var holdPostCommit = false
+    private var heldContext: CheckedContinuation<Void, Never>?
+    private var heldPostCommit: CheckedContinuation<Void, Never>?
+    var isHoldingContext: Bool { heldContext != nil }
+    var isHoldingPostCommit: Bool { heldPostCommit != nil }
+    func releaseContext() { heldContext?.resume(); heldContext = nil }
+    func releasePostCommit() { heldPostCommit?.resume(); heldPostCommit = nil }
+    func setContextualStrings(_ strings: [String]) async {
+        if holdContext { await withCheckedContinuation { heldContext = $0 } }
+    }
     private var heldStop: CheckedContinuation<Void, Never>?
     private var heldSwitch: CheckedContinuation<(any Error)?, Never>?
     private var generation = 0
@@ -46,6 +64,7 @@ final class LanguageTestRecorder: MobileRecording {
     func switchLocale(to locale: Locale, replay: SpeakerAudioBuffer?, replayFrom: @MainActor () -> Int?,
                       willReplace: @escaping @MainActor (Bool, TimeInterval) -> Void) async throws {
         if holdSwitch, let error = await withCheckedContinuation({ heldSwitch = $0 }) { throw error }
+        try Task.checkCancellation()   // The production native adapter checks before replacement too.
         if let failSwitch { throw RecordingError.message(failSwitch) }
         // Asked at the switch, as `MobileRecorder` does; the audio from there to now must still be held.
         let from = replay == nil ? 0 : (replayFrom() ?? -1)
@@ -54,6 +73,17 @@ final class LanguageTestRecorder: MobileRecording {
         } ?? false)
         switches.append(Switch(locale: locale.identifier, replayed: replayed, from: from))
         willReplace(replayed, fed)
+        if holdPostCommit { await withCheckedContinuation { heldPostCommit = $0 } }
+    }
+
+    func recoverLanguageReplay(locale: Locale, willReplace: @escaping @MainActor (TimeInterval) -> Void) async throws {
+        replayRecoveries.append(locale.identifier)
+        if holdReplayRecovery { await withCheckedContinuation { heldReplayRecovery = $0 } }
+        try Task.checkCancellation()
+        guard receive != nil else { throw CancellationError() }
+        if let failReplayRecovery { throw RecordingError.message(failReplayRecovery) }
+        replayRecoveryCommits += 1
+        willReplace(fed)
     }
 
     /// Audio the transcriber accepted, copied for detection and trimmed to the trailing two minutes, as
@@ -84,6 +114,8 @@ actor FakeLanguageModel: MobileLanguageIdentifying {
     private var held: [CheckedContinuation<Void, Never>] = []
     private var prepareCount = 0
     private var detectCount = 0
+    private var holdDetection = false
+    private var heldDetections: [CheckedContinuation<Void, Never>] = []
     private var sampleCount = 0
 
     func answer(_ language: String, _ probability: Double) {
@@ -95,6 +127,11 @@ actor FakeLanguageModel: MobileLanguageIdentifying {
     func fail(_ reason: String) { failure = reason }
     func hold() { holdPrepare = true }
     func release() { holdPrepare = false; held.forEach { $0.resume() }; held = [] }
+    func holdDetections() { holdDetection = true }
+    func releaseDetections() {
+        holdDetection = false
+        heldDetections.forEach { $0.resume() }; heldDetections = []
+    }
     func prepares() -> Int { prepareCount }
     func detections() -> Int { detectCount }
     func lastSampleCount() -> Int { sampleCount }
@@ -107,6 +144,7 @@ actor FakeLanguageModel: MobileLanguageIdentifying {
 
     func detect(samples: [Float]) async throws -> LanguageGuess {
         detectCount += 1
+        if holdDetection { await withCheckedContinuation { heldDetections.append($0) } }
         sampleCount = samples.count
         guard listens, !samples.isEmpty else { return guess }
         var counts: [Float: Int] = [:]
