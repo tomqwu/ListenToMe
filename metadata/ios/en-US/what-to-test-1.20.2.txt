@@ -1,0 +1,12 @@
+ListenToMe 1.20.2 (42) — translation recovery
+
+1. Open a completed English summary, choose Translate summary → Simplified Chinese and tap Translate. Confirm Chinese text appears alongside the unchanged original. Check concrete names, dates and numbers before sharing.
+2. During translation, Translate should be unavailable and Cancel translation should remain usable. Cancel, Close and reopen: late output must not return.
+3. Change the target or conversation during work. Only current results may appear. A stalled request should stop showing progress after 45 seconds per paragraph and retain the original. Retry waits for the native service to stop; if it never stops, close and reopen the app.
+4. Missing languages must offer Prepare languages without automatically downloading. Unsupported pairs must explain why. Translation never switches your AI provider or sends content to cloud AI.
+5. Check portrait, landscape Duo, wide iPad and larger text. Start listening and originals remain independent of translation.
+6. Regression-check established microphone capture through screen lock and language changes, plus Watch recording/transfer/playback with Save audio recordings on or off.
+
+Privacy is unchanged: translation stays on-device, language-pack preparation is explicit, derived text is not saved as the original, and sharing a translation requires your action. Audio saving remains optional.
+
+Automated coverage includes hung-service/cancellation UI and native adapter tests. A real installed English→Simplified Chinese pair was exercised on Mac; that is not physical iPhone acceptance. Phone translation accuracy, screen-lock/multilingual capture, Watch transfer/wrist-down/battery and installed Mac acceptance remain pending. This beta is not a production-readiness claim.

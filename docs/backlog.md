@@ -72,4 +72,4 @@ Exploratory work must preserve explicit consent, local storage and truthful priv
 
 [Issue #330](https://github.com/tomqwu/ListenToMe/issues/330) implements opt-in live translation and a
 Translate option on the existing Summary page. [The feature guide](translation.md) records scope
-and verification boundaries; it is unreleased and does not add summary length/format controls.
+and verification boundaries; translation is in TestFlight 1.20.1 (41), remains unreleased on Mac, and does not add summary length/format controls. [Issue #343](https://github.com/tomqwu/ListenToMe/issues/343) tracks the tester-reported stuck Summary translation and its [recovery evidence](translation-recovery.md).

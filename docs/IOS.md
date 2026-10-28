@@ -1690,10 +1690,10 @@ preparation and actual audio interruption behavior remain explicit. `WATCH-015`/
 native red/green evidence; physical paired transfer/wrist-down acceptance remains separate.
 See [Watch beta status](watch-beta.md). [Published to TestFlight](releases/ios-1.19.1-build39.json); complete physical/production acceptance remains unverified.
 
-## Live and Summary translation (#330, unreleased)
+## Live and Summary translation (#330; recovery candidate #343)
 
 **More → Live translation** and **Notes → Live translation** control opt-in finalized-line translation
 on phone/iPad/Duo. **Summary → Translate summary** translates an existing completed summary into an
 independent target; it does not change summary generation language/provider. Originals stay available.
 Installed Apple Translation packs are required; setup is explicit and unsupported pairs are explained.
-No translation engine is added to Watch. See [usage, privacy and acceptance](translation.md).
+The #343 candidate disables Translate while busy, provides Cancel and stops indefinite progress after a per-paragraph deadline. Native cancellation retains one worker slot until it exits; originals remain visible and retry waits for safe recovery. No translation engine is added to Watch. See [usage, privacy and acceptance](translation.md) and [recovery evidence](translation-recovery.md).

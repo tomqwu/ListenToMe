@@ -23,6 +23,7 @@ struct MobileDesignFixture: View {
         if ProcessInfo.processInfo.arguments.contains("--translation-fixture") {
             let translator = TranslationPreviewTranslator(
                 needsPacks: ProcessInfo.processInfo.arguments.contains("--translation-needs-packs"))
+            translator.holdSummary = ProcessInfo.processInfo.arguments.contains("--translation-held-summary")
             session.liveTranslation.translator = translator
             session.summaryTranslation.worker.translator = translator
         }
@@ -64,6 +65,18 @@ struct MobileDesignFixture: View {
         return session
     }()
 
-    var body: some View { MobileMeetingView(session: session).mobileSessionLifecycle(session) }
+    var body: some View {
+        MobileMeetingView(session: session).mobileSessionLifecycle(session)
+            .overlay(alignment: .top) {
+                if ProcessInfo.processInfo.arguments.contains("--translation-held-summary"),
+                   let translator = session.summaryTranslation.worker.translator as? TranslationPreviewTranslator {
+                    VStack {
+                        Button("Release held translation") { translator.releaseHeld() }
+                            .accessibilityIdentifier("releaseHeldTranslation")
+                        if translator.heldReturned { Text("Held translation returned") }
+                    }.font(.caption).background(.regularMaterial)
+                }
+            }
+    }
 }
 #endif

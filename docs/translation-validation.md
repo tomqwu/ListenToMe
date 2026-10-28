@@ -102,3 +102,10 @@ on phone and iPad. Source-matched red/green evidence is preserved under
 `visibility-green.log` and `phone-ipad-green.log`.
 This is a test-only portability/reachability correction, not a new translation engine change or a
 new regression-red claim. The final release source still requires its own complete validation.
+
+## Tester follow-up — #343
+
+The original synthetic-control coverage did not catch a nonresponding native request. The
+[recovery record](translation-recovery.md) retains the new failure reproductions, cancellation and
+timer fixes, real installed-pair Mac inference and physical-device limits. Historical results above
+remain unchanged; they do not establish that the original phone translation path passed.

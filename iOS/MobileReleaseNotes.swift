@@ -48,6 +48,12 @@ enum MobileReleaseNotes {
         var id: String { version }
     }
     static let releases: [Release] = [
+        .init(version: "1.20.2", title: "Recover stalled translations", details: [
+            "Cancel a pending summary translation while keeping the original summary visible.",
+            "Translate stays unavailable while a request is running or stopping, so repeated taps cannot queue extra work.",
+            "A stalled on-device translation now ends its progress message with recovery guidance. Retry when the service is ready again.",
+            "Late translations and old timers cannot replace or interrupt newer work. Translation remains on-device with explicit language-pack preparation."
+        ]),
         .init(version: "1.20.1", title: "Keep listening through language changes and screen lock", details: [
             "Keep an established iPhone or iPad recording running when the screen locks or you leave the app. " +
                 "Use Stop to finish; audio interruptions can still interrupt capture.",

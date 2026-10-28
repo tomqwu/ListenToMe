@@ -1,0 +1,10 @@
+Updates since 1.19.1:
+
+• Translate completed speech and summaries on-device. Live translation appears below the original transcript. On the Summary page, choose Translate summary and its own target language while keeping the original available.
+• Prepare missing language packs only when you choose. Unsupported language pairs show guidance. Translation does not switch your AI provider or replace saved originals.
+• Cancel pending summary translation. Translate stays unavailable while native work is running or stopping. Stalled requests show recovery guidance, and late results cannot replace newer work.
+• Keep an established iPhone or iPad microphone recording active when the screen locks or you leave the app. Use Stop to finish; audio interruptions can still interrupt capture. Saving playback audio remains your choice.
+• Improve transcript continuity when speakers change languages, preserving live words through a language-switch replay. Attempt recovery after a stalled switch and show a notice if some speech may be missing.
+• Pause optional AI work while inactive and preserve existing provider, speaker and audio-saving choices.
+
+Review translated wording before sharing. Language support and accuracy depend on your device and installed packs.

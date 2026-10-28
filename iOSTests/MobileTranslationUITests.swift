@@ -131,6 +131,48 @@ final class MobileTranslationUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["translatedSummary"].exists)
         XCTAssertTrue(app.staticTexts["output-summary"].isHittable)
     }
+    func testPendingSummaryTranslationCanBeCancelledAndLateResultStaysHidden() {
+        let app = launch(["--translation-held-summary"])
+        if app.buttons["Summary"].firstMatch.exists { app.buttons["Summary"].firstMatch.tap() }
+        let option = app.buttons["summaryTranslationOptions"]
+        XCTAssertTrue(option.waitForExistence(timeout: 5)); option.tap()
+        choose("summaryTranslationTargetPicker", "Simplified Chinese", in: app)
+        let original = app.staticTexts["output-summary"]
+        XCTAssertTrue(original.exists)
+        let originalText = original.label
+        let translate = app.buttons["translateSummary"]
+        translate.tap()
+        XCTAssertTrue(app.staticTexts["Translating…"].waitForExistence(timeout: 5))
+        capture(app, "Summary translation in progress with explicit Cancel")
+        XCTAssertFalse(translate.isEnabled, "Do not offer another Translate while its native request is held")
+        let cancel = app.buttons["cancelSummaryTranslation"]
+        guard cancel.waitForExistence(timeout: 5) else {
+            XCTFail("A pending summary translation must offer explicit Cancel translation"); return
+        }
+        XCTAssertTrue(cancel.isHittable); cancel.tap()
+        XCTAssertFalse(translate.isEnabled, "Cancelled native work must drain before another request")
+        let draining = app.staticTexts["translationAvailability"]
+        XCTAssertTrue(draining.waitForExistence(timeout: 5), "Explain why another request cannot start yet")
+        XCTAssertTrue(draining.label.contains("original text is kept"))
+        XCTAssertTrue(draining.label.contains("reopen"))
+        app.buttons["closeSummaryTranslation"].tap()
+        option.tap()
+        XCTAssertFalse(translate.isEnabled)
+        XCTAssertTrue(draining.exists, "Reopening keeps the draining explanation")
+        XCTAssertTrue(draining.label.contains("original text is kept"))
+        XCTAssertTrue(draining.label.contains("reopen"))
+        capture(app, "Cancelled translation explains retained native work after reopening")
+        XCTAssertEqual(original.label, originalText)
+        XCTAssertFalse(app.staticTexts["translatedSummary"].exists)
+        app.buttons["releaseHeldTranslation"].tap()
+        XCTAssertTrue(app.staticTexts["Held translation returned"].waitForExistence(timeout: 5))
+        let drained = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: translate)
+        XCTAssertEqual(XCTWaiter.wait(for: [drained], timeout: 5), .completed)
+        XCTAssertFalse(app.staticTexts["translatedSummary"].exists, "A cancelled native reply cannot reappear")
+        XCTAssertEqual(original.label, originalText)
+        XCTAssertFalse(app.buttons["Stop listening"].exists)
+        capture(app, "Cancelled summary translation preserves original after late reply")
+    }
     func testSummaryMissingPacksAndLargestTextKeepOriginalReachable() {
         let app = launch(["--translation-needs-packs", "-UIPreferredContentSizeCategoryName",
                           "UICTContentSizeCategoryAccessibilityXXXL"])
