@@ -1,0 +1,55 @@
+{
+  "source": "95aaeaf20dca42d3b8eee1b2631a0f5c4633eba2",
+  "command": [
+    "make",
+    "validate-local",
+    "IOS_DESTINATION=platform=iOS Simulator,id=7AEDF8E2-98E6-47D0-AA56-7C168252FD36",
+    "WATCH_DESTINATION=platform=watchOS Simulator,id=ED3CF471-1E52-4E20-88F1-F5820A8D9218"
+  ],
+  "startedAt": "2026-10-28T01:58:10.636746+00:00",
+  "finishedAt": "2026-10-28T02:35:28.405608+00:00",
+  "exitCode": 0,
+  "reaped": true,
+  "elapsedSeconds": 2237.752321958076,
+  "trackedInputs": 929,
+  "hashMismatches": [],
+  "bddScenarios": 148,
+  "core": {
+    "tests": 1262,
+    "skips": 7,
+    "lineCoveragePercent": 98.23764392574607
+  },
+  "iosUI": {
+    "tests": 79,
+    "skips": 5
+  },
+  "iosUnit": {
+    "tests": 461,
+    "skips": 7
+  },
+  "macUnit": {
+    "tests": 65,
+    "skips": 0
+  },
+  "watchUnit": {
+    "tests": 29,
+    "skips": 0
+  },
+  "watchUI": {
+    "tests": 5,
+    "skips": 0
+  },
+  "failures": 0,
+  "realServerContracts": 4,
+  "nativeBindings": {
+    "iosUnit": 73,
+    "iosUI": 26,
+    "macUnit": 65,
+    "watchUnit": 29,
+    "watchUI": 5
+  },
+  "independentAudit": "review_distribution_docs checked counts, passing selectors and all929 hashes; no discrepancies",
+  "logSHA256": "e377e1df94c3a52506d2234605fcbb501ff35e4eebf4eaf2ac30c172b025cdd6",
+  "installedAcceptance": "Playback-only OTHERS passed earlier; independent near-end, overlap, repeated speech, headphones, route changes and rendered delayed-line edit/playback remain pending",
+  "published": false
+}

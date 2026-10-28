@@ -1,3 +1,24 @@
+# Full validation completed — October 28, 2026, 02:35 UTC
+
+PR #318 app/test source `95aaeaf` passed the complete `make validate-local` command: exit 0,
+child reaped, 2,237.75 seconds and all 929 tracked input hashes unchanged. Independent outcome
+review verified Core 1,262 tests/7 skips/98.2376439% coverage; iOS 79 UI/5 skips and 461 unit/7 skips;
+Mac 65; Watch 29 unit plus 5 UI; all native BDD bindings, helper checks and four real-server contracts.
+There were no failures. All three hosted checks passed on `95aaeaf`; documentation follow-ups do
+not change those tested application inputs. [Audited receipt](releases/mac-candidate-95aaeaf-validation.json).
+
+Remaining #336 installed near-end/overlap/repeated-speech/headphone/route and rendered edit/playback
+acceptance still prevents merge; the playback-only pass is insufficient. A later startup attempt
+had idle channels, no playback and working Stop; its permission readback and Dev cleanup exception
+are preserved in [the audio evidence](dual-channel-capture.md). No new release is claimed.
+
+The queued #223 8B reference screen then stopped before model inference because the slow tokenizer
+omitted the published fast tokenizer's terminal end-of-text token. Preserve its failed logs and
+frozen protocol; no language-quality result exists. Diagnose and review a separate corrected
+protocol before retrying. The #334 branch now includes `95aaeaf` at `e85733b`, with four focused
+native integration methods, BDD150 and lint passing plus independent review; fresh full integration
+validation and installed rename acceptance remain. No #334 PR is opened ahead of #318.
+
 # Validation follow-up — October 28, 2026
 
 The `086d89e` full validation ended with make exit 2 and unchanged input hashes: Core passed,

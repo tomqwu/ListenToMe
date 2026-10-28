@@ -26,7 +26,10 @@ Observed results: all four translation UI methods passed; after the phone-only s
 the largest-text method passed sequentially on iPhone and iPad Pro 13-inch (M5), iOS 26.5.
 Native-resolution Translate/setup/original screenshots were inspected for both devices. These are
 synthetic simulator QA images, not physical-device acceptance or new App Store listing media.
-Production app sources are unchanged by this harness correction. Full validation/CI remain pending.
+Production app sources are unchanged by this harness correction. The complete `95aaeaf` rerun
+passed with exit 0 and 929 unchanged inputs, including all four translation UI methods; all three
+hosted checks passed on that source. See [the audited full-run receipt](releases/mac-candidate-95aaeaf-validation.json).
+Installed/physical acceptance remains separate.
 
 Evidence: `/Users/tomwu/Documents/Codex/2026-10-28/listentome-dual-channel336/translation-ui-diagnostic/`.
 `diagnostic.log`, `visibility-red.log`, `visibility-green.log` and `phone-ipad-green.log` retain
