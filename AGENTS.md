@@ -147,6 +147,28 @@ Rules that hold at every rung:
 certificate and the `notarytool` keychain profile live, how to check each one, what to do when one is
 missing or rejected, and which steps only the maintainer can perform.
 
+## Native Mac App Store submissions
+
+For local sandbox acceptance, use `make mac-sandbox-build` with the existing stable Dev signing
+override and verify its exact `.dev` identifier, signature and sandbox entitlements before launch.
+This release-optimized configuration preserves the Store artifact and production permissions;
+keep development sandbox results separate from Apple-distributed installation acceptance.
+A Store-profile launch failure is not a TCC failure. Follow normal Dev cleanup after the session.
+
+The maintainer requested native Mac App Store distribution on October 26, 2026. Follow
+[the Mac App Store procedure](docs/RELEASING.md#mac-app-store-distribution) for its separate sandboxed
+configuration, shared App Store bundle ID, local installer signing, package verification and en-US
+listing. The existing Developer ID DMG is not an App Store artifact. This request does not call a
+new DMG train or authorize changing its stable production identity.
+
+Keep the same source/BDD/local-validation/review/three-CI and installed Mac GUI/actual OTHERS gates.
+Also accept sandboxed external vault and reference selection across app relaunch. Native scope
+tests, a successful archive/export or a valid installer signature cannot replace that acceptance.
+Preserve fresh source-matched Mac screenshots and verify their processing before review submission.
+An accepted upload, submitted review, Apple approval and public availability are separate states;
+report each from Apple readback and never call an unsubmitted draft published. Store signing uses
+separate local credentials; never reset existing keychains or production permissions to repair it.
+
 ## Publishing an iOS release train
 
 Use **English (US), `en-US`**, for TestFlight and App Store release metadata (maintainer instruction,

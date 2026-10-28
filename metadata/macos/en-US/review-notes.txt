@@ -1,0 +1,11 @@
+Native macOS app; first Mac App Store submission under the shared iPhone/iPad listing. Version 1.5.0 build 15. No login or demo account is required for local recording and history.
+
+Use Start listening with a supported transcription language and allow the microphone when macOS asks. System-audio capture requires Screen & System Audio Recording access for this installation. Stop remains available independently of AI. Speech language/model assets may need a first download; audio transcription remains on the Mac.
+
+Summary AI is optional and separate from recording. Apple Intelligence needs compatible hardware and system setup. Alternatively use a local Ollama/OpenAI-compatible server or explicitly configure a supported cloud service with your own key. No developer API key is bundled. Do not send private conversations during review.
+
+To test retained playback, enable Save audio recordings before listening, stop, then use the conversation's audio controls. To test selected files, attach a reference file/folder, or choose a Markdown vault in Save to folder. The sandbox preserves those selections using scoped bookmarks; quit/relaunch and verify continued read/write access. No existing standalone DMG data or OS permissions are automatically transferred.
+
+Privacy and support: https://github.com/tomqwu/ListenToMe/blob/main/docs/macos-privacy.md and https://github.com/tomqwu/ListenToMe/blob/main/docs/macos-support.md. Optional speaker labels can be inaccurate; similar voices and overlapping speech are known limitations. The Watch app is not part of this Mac binary.
+
+Audio-file import is available under More. Select Others or You, wait for finalization and verify the controls become available again; Cancel retains completed words with incomplete-import guidance. Unused prepared speech channels do not hold the import open.

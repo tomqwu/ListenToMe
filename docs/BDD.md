@@ -11,7 +11,20 @@ test selector, so there is no duplicate Cucumber implementation or dependency to
 
 `RELEASE-009` binds explicit manual TestFlight signing to offline upload decisions, invalid-file/field refusal, dry runs, exact phone/Share/Watch profile maps, unchanged automatic defaults, private options snapshots that survive changes to the original file, and accepted-receipt provenance. Exported native signatures/profiles and Apple upload/processing/tester readback remain separate release gates.
 
+The Mac Store draft uses `RELEASE-010`–`RELEASE-013` for its generated sandbox configuration,
+existing DMG/Dev identities, vault bookmarks and selected-file/folder reference scopes. These were
+`RELEASE-006`–`RELEASE-009` on the draft before the Watch train added its own scenarios to main.
+Integration preserves main's IDs and remaps only the unmerged Mac examples; their original red/green
+evidence remains valid under that explicit mapping. Temporary-directory bookmark tests do not prove
+installed sandbox picker grants across relaunch, which remain manual acceptance.
+
 ## Working an issue
+
+`RELEASE-014` binds the locally testable Store sandbox configuration, unchanged production/Dev
+identities, release optimization and fail-before-build missing-signing outcome to generated native
+settings and an actual make invocation. CI's explicit unsigned build proves compilation only.
+Installed Dev sandbox picker/relaunch/audio checks and Apple-distributed installation remain
+separate outcomes; the recorded Store-profile launch failure is not a permission failure.
 
 Finish the current change through validation, review, CI and merge before opening another feature
 PR. Future work stays in GitHub Issues. Work down existing drafts sequentially and consolidate
@@ -134,7 +147,18 @@ iPhone/iPad with a synthetic phrase played only after native Listening confirmat
 harness repair, not an invented product-regression red. Retain the earlier failures and distinguish
 Play/Pause-control acceptance from audible playback quality, and basic capture from speaker accuracy.
 
+`MACAUDIO-002` runs the actual native SpeechAnalyzer through prepared-but-empty, single-source,
+cancelled and real speech-file completion. It asserts bounded completion and result-stream closure,
+with first/final words and native audio times retained. Installed Start/New recovery remains a separate
+manual check; a missing installed English model skips the test and cannot satisfy BDD acceptance.
+
 ## Native log evidence
+
+`MACAUDIO-001` covers the actual native PCM-to-`AnalyzerInput` boundary exposed by #333, beyond the
+older scalar `BATCH-291` timeline tests. Nine methods exercise real conversion, separate raw/sample
+clocks, exact frame accounting, gaps after accumulated drift, invalid input and cancellation/queue
+ownership. See [the timing evidence](speech-input-timing.md); native buffer construction is not
+recognition quality or installed OTHERS acceptance.
 
 `DEV-008` covers a real aggregate-validation failure: macOS joined a timestamped framework diagnostic
 to a complete XCTest pass record. The native result bundle reported all 39 Mac tests passing, but
@@ -234,3 +258,14 @@ Mac review also reproduced a live-breakdown regression: a known participant with
 transcript lines could no longer be named. `testRenameLiveParticipantBeforeTranscriptAttribution`
 failed two native assertions before restoring participant-first lookup. The same adapter test group
 checks all restored lines change together and unknown IDs leave both labels and revision unchanged.
+## Dual-channel audio and presentation
+
+`MACAUDIO-003` and `MACAUDIO-004` distinguish chronological display/persistent line identity from
+microphone echo control. The native lifecycle tests cover setup failures and route/profile state changes through injected drivers,
+recovery cooldown and terminal Stop. Playback-only OTHERS success is insufficient: separately
+accept independent microphone speech and overlapping speech, without text-based duplicate removal.
+See [the #336 evidence and remaining acceptance](dual-channel-capture.md).
+
+The #334/#336 integration extends the restored-identity native test with delayed channel finals:
+renaming preserves chronological presentation and canonical line/run IDs, capture times and text.
+It passed on first execution and is recorded as integration coverage, not a new regression red.

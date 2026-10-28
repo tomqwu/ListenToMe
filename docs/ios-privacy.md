@@ -1,5 +1,7 @@
 # Listen To Me — iPhone and iPad privacy policy
 
+This page describes iPhone/iPad behavior. The shared App Store listing also has a native Mac version in preparation; its separate [Mac privacy policy](macos-privacy.md) covers system-audio capture, sandboxed file selections and Mac storage. No Mac App Store release is claimed here.
+
 Effective October 27, 2026 (includes the Watch companion published in TestFlight 1.19.0 (38); public iOS remains 1.18.1). Developer: Tom Wu. Contact: [tom@cloudnativity.io](mailto:tom@cloudnativity.io).
 
 ## Your conversations

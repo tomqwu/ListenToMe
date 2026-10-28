@@ -10,6 +10,17 @@ public final class ConversationStore {
     public private(set) var partials: [SpeakerSource: TranscriptSegment] = [:]
     public var partial: TranscriptSegment? { partials[.others] ?? partials[.you] }
     public private(set) var revision = 0
+    @ObservationIgnored private var presentationRevision = -1
+    @ObservationIgnored private var presentationCache: [TranscriptSegment] = []
+
+    /// Rebuild only when finalized content changes, not for each meter/elapsed-time render.
+    public var presentedUtterances: [TranscriptSegment] {
+        if presentationRevision != revision {
+            presentationCache = TranscriptPresentation.ordered(utterances)
+            presentationRevision = revision
+        }
+        return presentationCache
+    }
 
     /// Rail statistics, maintained as utterances arrive instead of rescanning the whole transcript
     /// on every render (issue #116): a multi-hour meeting re-filtered the full array once a second.
@@ -51,7 +62,7 @@ public final class ConversationStore {
         let old = utterances[index]
         let edited = TranscriptSegment(id: old.id, source: old.source, text: text, isFinal: true,
             start: old.start, end: old.end, speakerID: old.speakerID, speakerName: old.speakerName,
-            originalText: old.originalText ?? old.text, correctionModel: "Manual", language: old.language)
+            originalText: old.originalText ?? old.text, correctionModel: "Manual", language: old.language, recordingID: old.recordingID)
         count(old, by: -1); utterances[index] = edited; count(edited, by: 1)
         revision += 1
         return true

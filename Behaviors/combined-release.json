@@ -1252,6 +1252,72 @@
           "test": "MacOperationErrorsTests/testImportFailureAndDismissalPreserveCaptureRecovery"
         }
       ]
+    },
+    {
+      "id": "MACAUDIO-001",
+      "name": "Keep native SpeechAnalyzer live input nonoverlapping",
+      "given": "live Mac microphone and system-audio chunks have capture offsets, awkward resampling boundaries and small source-clock jitter",
+      "when": "the production native adapter converts and submits successive audio buffers to SpeechAnalyzer",
+      "then": "native AnalyzerInput retains every converted frame in order on a nonoverlapping sample timeline anchored at the first capture offset, with real raw-clock gaps preserved despite accumulated host/sample drift; independent sources and fresh pipelines reset separately, invalid/grossly backward input fails explicitly, and cancellation/terminated output cannot enqueue late audio; original capture/saved-audio stamps are unchanged (zero host-clock drift is not claimed). Tiny valid resampling inputs accumulate without failing; a gap before the first complete frame advances that pending anchor by the gap once, quantized to the output frame boundary.",
+      "covers": [
+        "App/MacAnalyzerInputAdapter.swift",
+        "App/SpeechAnalyzerTranscriber.swift",
+        "project.yml"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacAnalyzerInputTests.swift",
+          "test": "MacAnalyzerInputTests/testConvertedLiveBuffersCannotOverlapAtAnalyzerBoundary"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacAnalyzerInputTests.swift",
+          "test": "MacAnalyzerInputTests/testLongResamplingClockDriftPreservesFramesOrderAndLaterGap"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacAnalyzerInputTests.swift",
+          "test": "MacAnalyzerInputTests/testFirstOffsetsGapsAndSourcesAreIndependent"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacAnalyzerInputTests.swift",
+          "test": "MacAnalyzerInputTests/testInvalidOrBackwardInputCannotAdvanceTheCurrentPipeline"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacAnalyzerInputTests.swift",
+          "test": "MacAnalyzerInputTests/testCancellationTerminationAndFreshPipelineCannotEnqueueLateAudio"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacAnalyzerInputTests.swift",
+          "test": "MacAnalyzerInputTests/testUnsupportedNativeFormatAndBackpressureFailBeforeLateAudio"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacAnalyzerInputTests.swift",
+          "test": "MacAnalyzerInputTests/testCancellationDuringConversionDiscardsTheAdvancedConverter"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacAnalyzerInputTests.swift",
+          "test": "MacAnalyzerInputTests/testTinyResampledChunksPreserveFirstOffsetAndContinueWithoutFailure"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacAnalyzerInputTests.swift",
+          "test": "MacAnalyzerInputTests/testGapBeforeFirstCompleteFrameUsesQuantizedAnchorOnce"
+        }
+      ],
+      "manual": {
+        "reason": "Native buffer construction cannot establish real capture/SDK transcription on every Mac.",
+        "steps": [
+          "In the installed signed sandbox candidate confirm fresh empty recording state, then both active channels and no transcription failure before playing known synthetic system audio.",
+          "Confirm the resulting finalized transcript is labeled OTHERS; Stop and restart without a timestamp-overlap error. Preserve screenshots, source/signing and exact diagnostics; never use microphone pickup as system-audio proof."
+        ]
+      }
     }
   ]
 }

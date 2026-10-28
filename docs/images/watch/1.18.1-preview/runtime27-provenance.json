@@ -1,0 +1,75 @@
+{
+  "source": "f608b582499e7b26c4154be2ad1454d91df0eece",
+  "WatchAppAndNativeTestSourcesUnchangedFromMain": "a5940771a8d23ca3e1820bc1f25c788422f7ba93",
+  "version": "1.18.1",
+  "build": "36",
+  "locale": "en-US",
+  "runtime": "watchOS27.0(24R362)",
+  "status": "Prospective maintainer previews; uploaded iOSbuild36 excludesWatch; no Apple listing upload orphysical recording/sync acceptance",
+  "nativeTests": "3unit+1UI tests perrequested model,0failures/0skips; allbindingsverified; existingtests, no invented historicalred",
+  "files": [
+    {
+      "path": "series12-42-microphone-recovery.png",
+      "deviceType": "Apple-Watch-Series-12-42mm",
+      "pixels": [
+        374,
+        446
+      ],
+      "sha256": "b477ffc76e6bcd0ddf14198dce6ea6f11a006476db2498dbf4391b2e5e0fe0d7",
+      "nativeResolution": true
+    },
+    {
+      "path": "series12-42-home.png",
+      "deviceType": "Apple-Watch-Series-12-42mm",
+      "pixels": [
+        374,
+        446
+      ],
+      "sha256": "55146dea47898c9088dbd664d3f41a8ee46fa5e2ad8d687c9a69b6694daf88b0",
+      "nativeResolution": true
+    },
+    {
+      "path": "series12-46-microphone-recovery.png",
+      "deviceType": "Apple-Watch-Series-12-46mm",
+      "pixels": [
+        416,
+        496
+      ],
+      "sha256": "0c8b5650c6087f385699e016218ace0dbd1c560764b6170da34f7720850dad2f",
+      "nativeResolution": true
+    },
+    {
+      "path": "series12-46-home.png",
+      "deviceType": "Apple-Watch-Series-12-46mm",
+      "pixels": [
+        416,
+        496
+      ],
+      "sha256": "d2c817205484268bf3c2ab778826abf5f7d67e7300deaab13c0db189c42c35a7",
+      "nativeResolution": true
+    },
+    {
+      "path": "ultra4-49-microphone-recovery.png",
+      "deviceType": "Apple-Watch-Ultra-4-49mm",
+      "pixels": [
+        422,
+        514
+      ],
+      "sha256": "f23e4f3a29284de67a021af60ec1bcc593eb5327cc3b57dee7cd1cd3c14c26d1",
+      "nativeResolution": true
+    },
+    {
+      "path": "ultra4-49-home.png",
+      "deviceType": "Apple-Watch-Ultra-4-49mm",
+      "pixels": [
+        422,
+        514
+      ],
+      "sha256": "7ffc2b444afd7a677722b10fa9e0a523ee3c9f24ff9025d0407b3307ad0601af",
+      "nativeResolution": true
+    }
+  ],
+  "diagnostics": "Three scrolledoffline captures overlap systemclock; retained externally, excluded from these readablepreviewfiles",
+  "cleanup": "All3ownedsimulatorIDsdeletedandverifiedabsent; new27runtime retained",
+  "fullEvidence": "/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch181-runtime27"
+}

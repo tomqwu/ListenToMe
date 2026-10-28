@@ -23,6 +23,30 @@ final class MarkdownVaultWriterTests: XCTestCase {
         try FileManager.default.contentsOfDirectory(atPath: vault.path).sorted()
     }
 
+    #if os(macOS)
+    func testLegacyMacBookmarkWritesWhereTheOSStillAllowsAccess() async throws {
+        let legacy = try vault.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
+        let writer = MarkdownVaultWriter(bookmark: legacy)
+        let result = await writer.save(note("Legacy vault"))
+        XCTAssertEqual(result, .saved(fileName: "2026-10-23 1435 ListenToMe 1a2b3c4d.md"))
+        XCTAssertEqual(MarkdownVaultWriter.folderName(for: legacy), "My Vault")
+    }
+
+    func testMacBookmarkRestoresSecurityScopeForARecreatedWriter() async throws {
+        let persisted = try MarkdownVaultWriter.makeBookmark(for: vault)
+        var stale = false
+        let restored = try URL(resolvingBookmarkData: persisted, options: .withSecurityScope,
+                               relativeTo: nil, bookmarkDataIsStale: &stale)
+        let acquired = restored.startAccessingSecurityScopedResource()
+        defer { if acquired { restored.stopAccessingSecurityScopedResource() } }
+        XCTAssertTrue(acquired, "The saved bookmark must carry the selected folder's scope")
+        let writer = MarkdownVaultWriter(bookmark: persisted)
+        let result = await writer.save(note("Reopened scoped vault"))
+        XCTAssertEqual(result, .saved(fileName: "2026-10-23 1435 ListenToMe 1a2b3c4d.md"))
+        XCTAssertEqual(MarkdownVaultWriter.folderName(for: persisted), "My Vault")
+    }
+    #endif
+
     func testWritesOneNoteAndUpdatesItInPlaceAfterARename() async throws {
         let writer = MarkdownVaultWriter(bookmark: try MarkdownVaultWriter.makeBookmark(for: vault))
         let first = await writer.save(note("New conversation"))

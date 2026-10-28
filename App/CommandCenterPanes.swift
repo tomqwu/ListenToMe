@@ -173,7 +173,7 @@ extension MeetingView {
                             systemImage: "waveform",
                             text: "Press Start listening to start transcribing the conversation.")
                     }
-                    ForEach(store.utterances) { transcriptRow(for: $0) }
+                    ForEach(store.presentedUtterances) { transcriptRow(for: $0) }
                     ForEach([SpeakerSource.you, .others], id: \.self) { source in
                         if let partial = store.partials[source] { transcriptRow(for: partial).opacity(0.7) }
                     }
@@ -225,7 +225,7 @@ extension MeetingView {
     private func transcriptRow(for seg: TranscriptSegment) -> some View {
         EditableTranscriptRow(segment: seg, speakerLabel: speakerRowLabel(for: seg),
             copyTranscript: {
-                let lines = store.utterances + [SpeakerSource.you, .others].compactMap { store.partials[$0] }
+                let lines = store.presentedUtterances + [SpeakerSource.you, .others].compactMap { store.partials[$0] }
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(lines.map { "\($0.speakerLabel): \($0.text)" }
                     .joined(separator: "\n"), forType: .string)

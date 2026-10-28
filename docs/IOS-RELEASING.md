@@ -1,5 +1,41 @@
 # Publish an iOS build to TestFlight
 
+## Public iOS availability — October 28, 2026, 01:12 UTC
+
+Apple's live version readback and independent US public lookup now confirm **iOS 1.19.1 (39)** is
+publicly available, released at **2026-10-28T00:12:55Z**, with primary locale **en-US**. This is the
+previously accepted Watch-enabled build 39 from `f1728150e3e66664e36d2506022c2918fa60a53c`.
+The exact Apple build ID and peeled tag match the upload receipt. See the
+[public observation](releases/ios-1.19.1-build39-public.json). No new upload, submission or release
+operation was performed for this readback. Physical Watch/phone acceptance remains unverified;
+public availability does not retroactively establish it. Mac 1.5.0 remains an unsubmitted draft
+with no selected build. Older draft and beta checkpoints below are historical.
+
+## Production approval and locale checkpoint — October 27, 01:42 UTC (historical)
+
+At that checkpoint, iOS **1.18.1 (36)** read **READY_FOR_SALE**, and its US review was **COMPLETE**. Following
+approval, Apple's primary-locale PATCH succeeded. Two subsequent GETs confirmed **en-US**;
+the immediate GET had briefly retained en-CA. The US listing and both beta records are en-US.
+No replacement binary was uploaded. Preserve the `post-approval-primary-*.json` receipts in the
+external `listentome-appstore-publication/locale-mac-correction/` evidence folder.
+Mac 1.5.0 still has no selected build or submitted review; its installed acceptance and fresh
+screenshots remain pending. The older locale/review states below are historical.
+
+## Earlier locale correction — October 26, 22:41 UTC
+
+The App Store en-US localization and its 24 processed screenshots did not change TestFlight's
+separate metadata. A live audit found build 36 had only en-CA beta records. The en-US What to Test
+record `bdb57918-4408-4912-8457-142e9271cccd` and beta description record
+`d6a94767-2be2-4fd1-a9f5-87e58b598f9e` were created and read back against the checked-in US copy.
+Other locales remain unchanged; no binary was uploaded. Evidence:
+`listentome-appstore-publication/locale-mac-correction/beta-en-US-corrected.json`.
+
+At that checkpoint, app-wide primary language still read en-CA. Apple's [change-primary-language requirements](https://developer.apple.com/help/app-store-connect/manage-app-information/localize-app-information)
+require prior approval of the new localization and screenshots for all supported platforms, not
+just successful processing. The iOS en-US submission was waiting for review, and the Mac platform
+still needs its own build, screenshots and acceptance. Do not withdraw a correct pending US iOS
+review merely to repeat a primary-locale PATCH before eligibility changes.
+
 This is the release runbook for ListenToMe on iPhone/iPad. Follow it when an iOS **release train** is
 due — not after every merged fix. Merging a PR, building an archive, or exporting an IPA does **not**
 publish the app; equally, a merged iOS change does not by itself call for an upload.
@@ -214,7 +250,13 @@ worktree. Screenshots do not replace physical-device acceptance.
    display-size slot. Also inspect compact/large iPhones and compact/large iPads during layout tests;
    this coverage is broader than the store's minimum upload slots. Do not assume a single iPhone
    screenshot covers tablets or every required size. When Watch is embedded in a distributed build,
-   add every applicable Watch screenshot category. Do not advertise the unshipped Watch feature.
+   add every applicable Watch screenshot category. Series 12 and Ultra 4 simulator profiles require
+   watchOS 27 or later; the 26.5 runtime cannot run them. Inspect the actual device/runtime profile
+   instead of substituting an older model name. The saved [native model previews](images/watch/1.18.1-preview/README.md)
+   are historical build-36 previews, not current listing assets. Watch-enabled **1.19.0 (38)** is
+   published to TestFlight; use its [fresh capture catalog](images/ios/release-1.19.0-en-US.json)
+   and approved [Watch previews](images/watch/1.19.0/README.md) for the next authorized listing.
+   Physical Watch/production acceptance and Apple screenshot upload remain separate pending gates.
 2. Capture a coherent set: Live transcript/Quick, Summary, Notes/context and prompts when present,
    History, and relevant settings. Include the iPhone landscape two-pane layout and iPad wide layout
    in acceptance evidence; use orientations accepted by each store slot for listing assets. Exercise

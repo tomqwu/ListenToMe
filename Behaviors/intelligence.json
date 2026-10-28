@@ -375,7 +375,7 @@
       "name": "Translate from the native Summary page without replacing the original",
       "given": "a completed original summary on iPhone or iPad",
       "when": "the user opens Translate summary, chooses French, requests translation and closes it",
-      "then": "translation is explicit, both texts are readable and closing restores original-only viewing without capture or AI generation; at largest text missing packs explain setup without automatic downloads and Close returns to a reachable original",
+      "then": "translation is explicit, both texts are readable and closing restores original-only viewing without capture or AI generation; at largest text missing packs explain setup without automatic downloads and Close returns to a reachable original; scrolling at largest text reveals whole action buttons before tapping rather than relying on a clipped hit target",
       "covers": [
         "SharedPlatform/SummaryTranslationPanel.swift",
         "iOS/MobileWorkspaceView.swift",

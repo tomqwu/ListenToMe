@@ -9,7 +9,7 @@ iOS entries are drawn from [`iOS/MobileReleaseNotes.swift`](iOS/MobileReleaseNot
 in-app "What's New" copy shown once per set of bundled release notes — a build that changes no notes
 does not show it again, and a fresh install does not see it at all; see
 [`docs/IOS.md`](docs/IOS.md) for the fuller per-build technical notes and
-[`metadata/ios/en-US/`](metadata/ios/en-US/) for TestFlight "What to Test" text.
+[`metadata/ios/en-US/`](metadata/ios/en-US/) for current TestFlight "What to Test" text.
 
 ## Repository tooling (unreleased)
 
@@ -61,6 +61,12 @@ Apple accepted **1.19.0 (38)** at **2026-10-27T08:31:46.551678+00:00**, from `e4
 Apple accepted **1.18.2 (37)** at **2026-10-27T03:39:12.147449+00:00**, from `9494d024b9eee577b40695292aaf5e7dab9434eb`. Processing is **VALID**, internal state **IN_BETA_TESTING**, and both existing Dev testers have accepted group access. Primary locale, localized name, beta description and What to Test were read back in **en-US**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.2-build37). No privacy or audio-retention change. Fresh screenshots are captured; the public listing was not updated. Physical-device acceptance was not performed for this beta; it is not a production-ready claim. Public iOS 1.18.1 remains READY_FOR_SALE; 1.18.2 has not been submitted to the public App Store. Watch is excluded and the separate Mac Store draft #318 remains unsubmitted.
 
 ## iOS 1.18.1 (36) — 2026-10-26 (TestFlight)
+
+October 26 correction: the en-US TestFlight description and What to Test were created and read back
+for build 36, without a binary re-upload. All 24 fresh en-US App Store screenshots are COMPLETE and
+the iOS version is waiting for review. The app-wide primary locale remains en-CA until Apple approves
+the new US localization/screenshots; submitted localization and primary language are separate.
+The original upload checkpoint below retains its historical locale and then-pending screenshot state.
 
 Published from `7643b204def6acea0b616a2c2de2bade2fc4c7c9`; Apple accepted the upload at 2026-10-26T17:29:24.328646+00:00. Processing is VALID, internal state is IN_BETA_TESTING, both existing Dev testers have group access, and en-CA metadata was read back. [Full release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.1-build36). Physical-device accuracy/performance and original tester audio remain unverified; three-person separation is not established. App Store listing screenshot upload remains pending. Watch is excluded and Mac publication remains paused.
 
@@ -125,6 +131,27 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 
 - Double-click an identified transcript speaker label, or choose **Rename speaker** from its context menu. Save updates that speaker across the conversation, including reopened conversations; Cancel leaves the name unchanged. (#334)
 
+- Add native microphone echo control to reduce system playback appearing again as YOU. Refuse
+  unprotected input when setup fails, and keep Stop authoritative across route recovery. (#336)
+- Present delayed Mac channel results chronologically within explicit recording runs, preserving
+  line identity and canonical storage; keep readable exports and recorded duration consistent.
+  Preserve run metadata through prompt shortening and mobile correction/undo. (#336)
+
+- Fix audio imports remaining at Finalizing or Stopping when a prepared speech channel received
+  no audio. Close unused channels promptly while preserving final words and timestamps. (#335)
+
+- Prevent live SpeechAnalyzer input from stopping on overlapping buffer timestamps caused by
+  resampling and small capture-clock jitter. Preserve source offsets, real gaps and converted frames;
+  reject stale input explicitly and discard converters cancelled during conversion. (#333)
+- Prepare a separate sandboxed Mac App Store configuration, sharing the iOS listing's bundle ID
+  while preserving the existing DMG and Dev identities. The preliminary 1.5.0 (15) archive builds
+  for Intel and Apple silicon with US English. This is not an App Store upload or submission.
+- Add a release-optimized local sandbox acceptance build under the existing Dev identity, with
+  explicit signing setup, separate output and normal app-scoped cleanup. Store distribution
+  artifacts and their provisioning remain untouched; local checks do not establish Store installation.
+- Persist native security-scoped grants for the selected Markdown vault and reference files/folders,
+  retain access throughout reads, and show reselection guidance for broken saved reference grants.
+  Sandboxed picker/relaunch, recording and fresh Mac screenshot acceptance remain required.
 - Add opt-in on-device translation beneath finalized transcript lines, plus **Translate summary**
   on the Summary page with its own target language and original summary retained. Check exact
   installed language pairs, offer explicit preparation and preserve original speech, speakers,

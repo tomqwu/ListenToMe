@@ -15,7 +15,10 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
     let chunks: AsyncStream<AudioChunk>
     private let continuation: AsyncStream<AudioChunk>.Continuation
 
-    private let engine = AVAudioEngine()
+    private let microphoneEngine = MacMicrophoneEngine()
+    private var microphone: MacMicrophoneCapture!
+    private let microphoneEvents = DispatchQueue(label: "ListenToMe.microphone-events")
+    private var microphoneRecoveryPending = false // microphoneEvents queue only
     private let lock = NSLock()
     private var stream: SCStream?          // guarded by `lock`
     private var stopped = false            // guarded by `lock`
@@ -56,6 +59,10 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
         chunks = AsyncStream(bufferingPolicy: .bufferingNewest(64)) { cont = $0 }
         continuation = cont
         super.init()
+        microphone = MacMicrophoneCapture(driver: microphoneEngine) { [weak self] buffer, when in
+            let captured = when.isHostTimeValid ? AVAudioTime.seconds(forHostTime: when.hostTime) : nil
+            self?.emit(buffer: buffer, source: .you, capturedAt: captured)
+        }
     }
 
     func start() async throws {
@@ -65,15 +72,15 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
         // invalidates the installed tap: recover in place instead of only telling the user, who
         // would otherwise record the rest of the meeting with no "You" channel (issue #107).
         configurationObserver = NotificationCenter.default.addObserver(
-            forName: .AVAudioEngineConfigurationChange, object: engine, queue: nil) { [weak self] _ in
-                self?.restartMicrophone()
+            forName: .AVAudioEngineConfigurationChange, object: microphoneEngine.engine, queue: nil) { [weak self] _ in
+                self?.microphoneEvents.async { [weak self] in self?.restartMicrophone() }
             }
         // Sleep/wake doesn't always deliver a configuration change; re-arm whichever channel
         // actually died rather than disturbing healthy ones.
         wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didWakeNotification, object: nil, queue: nil) { [weak self] _ in
                 guard let self, !self.lock.withLock({ self.stopped }) else { return }
-                if !self.engine.isRunning { self.restartMicrophone() }
+                self.microphoneEvents.async { [weak self] in self?.restartMicrophone() }
                 let needsSystemAudio = self.lock.withLock { self.stream == nil && self.systemAudioWasActive }
                 if needsSystemAudio { self.restartSystemAudio(reason: "woke from sleep") }
             }
@@ -112,8 +119,7 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
         if let configurationObserver { NotificationCenter.default.removeObserver(configurationObserver) }
         if let wakeObserver { NSWorkspace.shared.notificationCenter.removeObserver(wakeObserver) }
         statusContinuation.finish()
-        engine.inputNode.removeTap(onBus: 0)
-        engine.stop()
+        microphone.stop()
         systemAudioTask?.cancel()
         let toStop: SCStream? = lock.withLock {
             let current = stream
@@ -143,54 +149,32 @@ final class DualChannelCapture: NSObject, AudioCapturing, @unchecked Sendable {
         case .start, .requestAccess:
             break   // .requestAccess: starting the engine raises the one-time system prompt
         }
-        let input = engine.inputNode
-        let format = input.outputFormat(forBus: 0)
-        guard format.channelCount > 0, format.sampleRate > 0 else {
-            throw NSError(domain: "ListenToMe.Capture", code: 1,
-                          userInfo: [NSLocalizedDescriptionKey: "No usable microphone. Connect an input and retry."])
-        }
-        input.installTap(onBus: 0, bufferSize: 4096, format: format) { [weak self] buffer, when in
-            let captured = when.isHostTimeValid ? AVAudioTime.seconds(forHostTime: when.hostTime) : nil
-            self?.emit(buffer: buffer, source: .you, capturedAt: captured)
-        }
-        engine.prepare()
-        try engine.start()
+        try microphone.start()
     }
 
-    /// Removes the stale tap, re-reads the (possibly new) input format, re-installs the tap and
-    /// restarts the engine. Yields "input changed — resumed" on success, and a degraded status the
-    /// UI shows as an alert when it fails.
+    /// Queued notifications cannot re-enter setup; only changed routes/profiles or a stopped engine
+    /// consume the recovery budget. The controller makes Stop terminal during a slow restart.
     private func restartMicrophone() {
-        if lock.withLock({ stopped }) { return }
-        let decision = lock.withLock { recovery.shouldAttemptRestart(for: .you) }
-        guard decision == .attempt else {
-            // Only an exhausted budget means the channel is down; a suppressed refusal (a second
-            // change moments after a successful restart, or a stopping session) stays silent.
-            if let status = CaptureRecovery.status(for: .microphoneInputChanged, refusal: decision) {
-                statusContinuation.yield(status)
-            }
-            return
-        }
-        engine.inputNode.removeTap(onBus: 0)
-        engine.stop()
+        guard !lock.withLock({ stopped }), microphone.needsRecovery else { return }
         do {
-            try startMic()   // re-reads inputNode.outputFormat(forBus: 0) for the new device
-            // stop() may have run while we were restarting (it tears the engine down BEFORE we
-            // re-installed the tap, so its teardown would be undone by ours): tear our own restart
-            // down again rather than leaving the microphone live after Stop.
-            let cancelled: Bool = lock.withLock {
+            guard try microphone.recoverIfNeeded() else { return }
+            let cancelled = lock.withLock {
                 if stopped { return true }
-                recovery.restartSucceeded(for: .you)
                 return false
             }
-            if cancelled {
-                engine.inputNode.removeTap(onBus: 0)
-                engine.stop()
-                return
+            guard !cancelled else { return }
+            statusContinuation.yield(CaptureRecovery.status(for: .microphoneInputChanged, outcome: .resumed))
+        } catch is MacMicrophoneRecoveryDeferred {
+            guard !lock.withLock({ stopped }), !microphoneRecoveryPending else { return }
+            microphoneRecoveryPending = true
+            statusContinuation.yield(CaptureStatus(source: .you, message: "input changed — reconnecting", severity: .degraded))
+            microphoneEvents.asyncAfter(deadline: .now() + CaptureRecovery.Policy.restartFloor) { [weak self] in
+                guard let self else { return }
+                self.microphoneRecoveryPending = false
+                self.restartMicrophone()
             }
-            statusContinuation.yield(CaptureRecovery.status(for: .microphoneInputChanged,
-                                                            outcome: .resumed))
         } catch {
+            guard !lock.withLock({ stopped }) else { return }
             statusContinuation.yield(CaptureRecovery.status(
                 for: .microphoneInputChanged, outcome: .failed(reason: error.localizedDescription)))
         }

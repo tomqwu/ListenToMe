@@ -62,11 +62,16 @@ Education & Research) and your own **My terms** list help recognition, AI speech
 summaries on both platforms; after about a minute of speech the phone may suggest one, decided on the
 device. Meeting use-case presets, reference files, audio-file import and WhisperKit transcription are macOS-only.
 Editable domain prompt presets are available on both platforms.
-The public iPhone/iPad app is 1.18.1. The latest TestFlight beta is **1.19.1 (39)**
-([October 27 release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.1-build39)), including the Apple Watch companion.
+The public iPhone/iPad app is **1.19.1 (39)**, including the Apple Watch companion.
+Apple's version readback and independent US public lookup confirm availability, with **en-US**
+as the primary locale. [Public App Store](https://apps.apple.com/us/app/listen-to-me-real-time-ai/id6811155732),
+[publication observation](docs/releases/ios-1.19.1-build39-public.json) and
+[release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.1-build39).
 [Watch installation and limits](docs/watch-beta.md) and [native previews](docs/images/watch/1.19.1/README.md)
-are available; physical Watch acceptance remains pending. All 49 fresh release images are inspected;
-The [1.19.1 App Store draft](docs/releases/ios-1.19.1-build39-media.json) now has 60 processed screenshots across both English locales, including Watch and landscape Duo; their downloaded pixels and order are verified. The draft has not been submitted, so the public listing remains unchanged.
+remain available. Physical Watch acceptance is still pending; public availability is not proof of
+installation, wrist-down capture or paired transfer. The existing
+[media receipt](docs/releases/ios-1.19.1-build39-media.json) records the 60 processed screenshots,
+including Watch and landscape Duo, uploaded before submission.
 See [iOS setup, validation and distribution](docs/IOS.md). Device and language support are checked
 per feature; Apple Intelligence is independent of recording. The [compatibility support](docs/device-compatibility.md)
 includes local dictation fallback for compatible older iPads and explicit unavailable-feature recovery
@@ -136,6 +141,9 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 ## Features
 
 **Live capture & transcription**
+- Current Mac source fixes a live Apple-transcription timestamp error during resampling and small
+  clock jitter, while preserving source offsets and real pauses. See the
+  [timing contract and acceptance limits](docs/speech-input-timing.md) (#333, unreleased).
 - Dual-channel capture: your mic + the other participants' system audio, source-labeled.
 - On-device transcription via **Apple SpeechAnalyzer** (default) or the legacy **SpeechRecognizer**.
 - **Transcription-language** picker listing every language your Mac can transcribe on-device, and
@@ -149,7 +157,10 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
   reporting "Mic: active" while recording silence.
 
 **Four-pane AI copilot**
-- **Transcript** — live, source-labeled, no model.
+- **Transcript** — live, source-labeled, no model. The next Mac candidate adds native microphone
+  echo control and stable chronological presentation for delayed channel results. YOU/OTHERS are
+  input channels; individual speaker identification is separate. See the
+  [dual-channel behavior and acceptance limits](docs/dual-channel-capture.md).
 - **Summary** (the Listener) — rolling summary plus open questions / action items.
 - **Quick** — fast suggestions on the global hotkey, buttons, or proactively when someone asks a
   question. **Proactive** (the checkbox in the Quick pane header, on by default) answers a finalized
@@ -254,6 +265,10 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
   [macOS (unreleased since 1.4.4)](CHANGELOG.md#macos-unreleased-since-144) and are available only
   when you build from source until the next release.
 
+- A sandboxed Mac App Store build is being prepared under the same listing as iPhone/iPad.
+  It has not been submitted. Its separate storage and permissions do not automatically migrate
+  an existing DMG installation. See [Mac App Store preparation](docs/RELEASING.md#mac-app-store-distribution).
+
 **Build from source**
 ```bash
 brew install xcodegen
@@ -285,6 +300,11 @@ Apple approval and actual public release separately. A saved draft, local screen
 does not itself publish or submit a build.
 
 ## Build & run
+
+For Mac App Store sandbox testing, use `make mac-sandbox-build` with your existing stable Dev
+signing configuration. This creates a separate development-signed sandbox acceptance build;
+[verify its identity and cleanup requirements](docs/RELEASING.md#local-sandbox-acceptance).
+It does not upload an app or prove Store/TestFlight installation.
 
 ```bash
 make test     # run the ListenToMeCore test suite (unit + integration)
@@ -591,7 +611,7 @@ saying so. Press **Speakers / edit names** to retry once the network is availabl
   is not a whole-product measurement. See [orchestration ownership](docs/ORCHESTRATION.md).
 - **`iOS/`**: iPhone/iPad SwiftUI app, foreground microphone capture with SpeechAnalyzer, Apple Intelligence
   (Foundation Models) summaries by default on capable devices.
-- **`Watch/`**: Apple Watch companion, embedded in the default iOS project; [beta installation and pending device acceptance](docs/watch-beta.md). Included in TestFlight 1.19.1 (39); public iOS 1.18.1 excludes it.
+- **`Watch/`**: Apple Watch companion, embedded in the default iOS project; [beta installation and pending device acceptance](docs/watch-beta.md). Included in public iOS 1.19.1 (39) and its TestFlight build; older public 1.18.1 excludes it.
 - **`App/`**: macOS glue — `DualChannelCapture`, `SpeechRecognizerTranscriber`, SwiftUI UI, hotkey.
 
 See [`docs/reviews/2026-09-10/design-and-gap-review.md`](docs/reviews/2026-09-10/design-and-gap-review.md)
@@ -777,7 +797,9 @@ with AI off (#129).
 MOV. Choose **Others** (the default) or **You** in the file picker to label the imported speech. Movie
 imports decode only their first audio track on-device; video frames are not transcribed and a movie
 with no audio produces a clear error. These imports use the selected transcription language and the
-same progress/Cancel controls as audio files. Importing does not upload the recording (#128).
+same progress/Cancel controls as audio files. Prepared channels without audio are closed promptly at
+EOF or Cancel; used channels drain their final words before import completes. Importing does not
+upload the recording (#128, #335).
 On Mac, select transcript text or use its row menu to copy a line or the transcript. Double-click a finalized line (or choose **Edit line…**) to correct it, then Save or Cancel. **Delete line…** asks for confirmation. Corrections retain the recognized original in exports. Existing summaries rebuild from edited text; Auto off does not create a first summary. Audio recordings and previously exported files are unchanged.
 
 The Mac transcript follows incoming speech and wrapped/resized rows until you scroll back to read. Choose **Latest** to resume following. SpeechAnalyzer timestamps come from recognition audio ranges on each capture timeline, not from result delivery time.

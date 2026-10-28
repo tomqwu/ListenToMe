@@ -1,6 +1,20 @@
-# Apple Watch beta (#181)
+# Apple Watch companion (#181)
 
-The latest Watch companion is in **TestFlight 1.19.1 (39)**. Apple accepted **1.19.1 (39)** from `f1728150e3e66664e36d2506022c2918fa60a53c`: Xcode upload success at **2026-10-27 15:39:29.401 UTC**, Apple uploaded date **2026-10-27 15:40:24 UTC**. Processing is **VALID**, internal state **IN_BETA_TESTING**, and the existing internal Dev group includes build 39 with two existing active/installed tester members. This does not prove physical installation of build 39. Primary locale, localized name, beta description and What to Test were read back in **en-US**, with name **Listen To Me - Real Time AI**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.1-build39).
+## Public availability — October 28, 2026, 01:12 UTC
+
+Public iOS **1.19.1 (39)** includes the Watch companion. Apple reports READY_FOR_SALE, and its
+independent US public lookup reports version 1.19.1 released at **2026-10-28T00:12:55Z**.
+The selected Apple build ID and peeled source tag match the previously accepted build 39.
+Primary locale remains **en-US**. [Public App Store](https://apps.apple.com/us/app/listen-to-me-real-time-ai/id6811155732)
+and [readback receipt](releases/ios-1.19.1-build39-public.json).
+
+Public availability does not prove installation or close the outstanding physical microphone,
+paired transfer/reconnection, wrist-down and battery/storage checks. No new upload or release
+operation was performed for this status observation. Mac 1.5.0 remains unsubmitted.
+
+## Historical latest Watch beta upload — 1.19.1 (39)
+
+At this upload checkpoint, the latest Watch companion was in **TestFlight 1.19.1 (39)**. Apple accepted **1.19.1 (39)** from `f1728150e3e66664e36d2506022c2918fa60a53c`: Xcode upload success at **2026-10-27 15:39:29.401 UTC**, Apple uploaded date **2026-10-27 15:40:24 UTC**. Processing is **VALID**, internal state **IN_BETA_TESTING**, and the existing internal Dev group includes build 39 with two existing active/installed tester members. This does not prove physical installation of build 39. Primary locale, localized name, beta description and What to Test were read back in **en-US**, with name **Listen To Me - Real Time AI**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.1-build39).
 
 Full local validation and independent review passed on unchanged app/test inputs: 125 BDD scenarios; Core 1,239 tests (7 optional skips, 98.249328% coverage); iOS 531 (519 passes, 12 skips); Mac 39; Watch 34; 29 helper tests and four real-server contracts, zero failures. All three required checks passed on exact merged source before upload. The exact transferred IPA was recovered, its full-file transport MD5 matched, its preserved copy SHA-256 matched, and all three distribution signatures/profiles, versions, disabled debugging and no-test-payload checks passed. Complete physical phone/Watch acceptance remains unverified; this is an authorized beta, not a production-ready claim.
 
@@ -45,7 +59,11 @@ tests and screenshots do not establish those results.
 - Delete is unavailable to the outbox while recording is active. After Stop, it removes waiting
   audio and recovery intent, so a deleted recording cannot reappear after relaunch.
 
-## Install the Watch beta
+## Install the Watch companion
+
+For the public version, update ListenToMe to **1.19.1 or later** from the App Store on the paired
+iPhone, then install the companion through the iPhone Watch app if it was not installed automatically.
+The TestFlight route below remains available for beta builds.
 
 Install the Watch-enabled iOS build from TestFlight on the paired iPhone. In TestFlight, open the
 app’s details and find its Watch entry in Information; a compatible companion has its own install
@@ -85,7 +103,7 @@ These tests cannot prove a real Watch microphone, WatchConnectivity delivery or 
 Focused evidence is preserved at
 `/Users/tomwu/Documents/Codex/2026-10-26/listentome-watch181-beta/`. Full `make validate-local` passed on frozen source `016d61c`: 122 BDD scenarios, 1,239 core tests (7 optional skips, 98.2493% coverage), 529 iOS tests (517 passed, 12 optional skips), 39 Mac tests, 33 Watch tests and four real Ollama/OpenAI-compatible contracts; no failures. All three required hosted checks passed on that source. A documentation/media-only follow-up preserves every application and test input; its final CI and merged-source CI remain required.
 
-[Fresh en-US capture catalog](images/ios/release-1.19.0-en-US.json) contains 43 individually inspected native-resolution images: 28 across four iPhone/iPad categories and 15 across Watch Series 12 42/46 mm and Ultra 4 49 mm. Original checksums, RGB equivalence, simulator/test identities and binary/source provenance are preserved externally. Only the approved 46 mm or Ultra Home/Recording images are Watch listing candidates; use one accepted size consistently across locales. The compact 42 mm set and all consent/recovery/offline images are QA only. Offline captures show clock/text overlap and are excluded from listing use. Simulator fixtures do not establish physical microphone or paired transfer acceptance. At the build-38 checkpoint, listing uploads remained pending. Current build-39 images are now processed in an unsubmitted App Store draft; see the current receipt above.
+[Fresh en-US capture catalog](images/ios/release-1.19.0-en-US.json) contains 43 individually inspected native-resolution images: 28 across four iPhone/iPad categories and 15 across Watch Series 12 42/46 mm and Ultra 4 49 mm. Original checksums, RGB equivalence, simulator/test identities and binary/source provenance are preserved externally. Only the approved 46 mm or Ultra Home/Recording images are Watch listing candidates; use one accepted size consistently across locales. The compact 42 mm set and all consent/recovery/offline images are QA only. Offline captures show clock/text overlap and are excluded from listing use. Simulator fixtures do not establish physical microphone or paired transfer acceptance. At the build-38 checkpoint, listing uploads remained pending. At the historical build-39 pre-submission checkpoint, its images had processed in the App Store draft. The version is now public; see the [public availability receipt](releases/ios-1.19.1-build39-public.json).
 
 CI/merge, archive/export, signature/profile checks and accepted-upload/tester readback are complete. [Publication receipt](releases/ios-1.19.0-build38.json) records app source `e43244f` and separately validated uploader source `ea2c05f`. The archive was reused unchanged after the signing-helper fix.
 

@@ -48,14 +48,25 @@ final class MacSpeakerRenameTests: XCTestCase {
     func testRenameRestoredSpeakerAndIgnoreUnknownIdentity() {
         var people: [SpeakerParticipant] = []
         let store = ConversationStore()
-        for text in ["One", "Two"] {
-            store.apply(TranscriptSegment(source: .others, text: text, isFinal: true, start: 0, end: 3,
-                                          speakerID: "restored", speakerName: "Speaker 1"))
-        }
-        store.apply(TranscriptSegment(source: .you, text: "Other speaker", isFinal: true, start: 4, end: 5,
-                                      speakerID: "other", speakerName: "Speaker 2"))
+        let run = UUID()
+        let late = TranscriptSegment(source: .others, text: "Late final", isFinal: true, start: 20, end: 23,
+                                     speakerID: "restored", speakerName: "Speaker 1", recordingID: run)
+        let other = TranscriptSegment(source: .you, text: "Other speaker", isFinal: true, start: 12, end: 15,
+                                      speakerID: "other", speakerName: "Speaker 2", recordingID: run)
+        let early = TranscriptSegment(source: .others, text: "Early final", isFinal: true, start: 10, end: 11,
+                                      speakerID: "restored", speakerName: "Speaker 1", recordingID: run)
+        for segment in [late, early, other] { store.apply(segment) }
+        let original = store.utterances
+        XCTAssertEqual(store.presentedUtterances.map(\.id), [early.id, other.id, late.id])
         XCTAssertEqual(SpeakerParticipant.rename(id: "restored", to: "Dana", participants: &people, store: store), .others)
         XCTAssertEqual(store.utterances.map(\.speakerName), ["Dana", "Dana", "Speaker 2"])
+        XCTAssertEqual(store.presentedUtterances.map(\.speakerName), ["Dana", "Speaker 2", "Dana"])
+        XCTAssertEqual(store.presentedUtterances.map(\.id), [early.id, other.id, late.id])
+        XCTAssertEqual(store.utterances.map(\.id), original.map(\.id), "Rename must preserve canonical editing targets")
+        XCTAssertEqual(store.utterances.map(\.recordingID), original.map(\.recordingID))
+        XCTAssertEqual(store.utterances.map(\.start), original.map(\.start))
+        XCTAssertEqual(store.utterances.map(\.end), original.map(\.end))
+        XCTAssertEqual(store.utterances.map(\.text), original.map(\.text))
         let revision = store.revision
         XCTAssertNil(SpeakerParticipant.rename(id: "missing", to: "Wrong", participants: &people, store: store))
         XCTAssertEqual(store.revision, revision, "Unknown identities must not mutate the conversation")

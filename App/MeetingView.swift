@@ -65,6 +65,7 @@ struct MeetingView: View {
     @State var referencePaths: [URL]
     @State var referenceContext = ReferenceContextCoordinator()
     @State var referenceSkipped: [TextFileReader.Skipped] = []
+    @State var referenceAccessWarnings: [TextFileReader.Skipped] = []
     @State var captureCoordinator = CaptureCoordinator()
     @State var importWork = FileImportCoordinator()
     @State var importStatus = AudioImportStatus()
@@ -152,8 +153,10 @@ struct MeetingView: View {
         ProviderSettings.migratePinningIfNeeded()
         _transcriptionLocaleID = State(initialValue: ProviderSettings.transcriptionLocaleID)
         _presetID = State(initialValue: PresetCatalog.preset(id: ProviderSettings.presetID).id)
-        let savedPaths = (UserDefaults.standard.array(forKey: "referencePaths") as? [String]) ?? []
-        _referencePaths = State(initialValue: savedPaths.map { URL(fileURLWithPath: $0) })
+        let references = ReferenceSelectionStore().restore()
+        _referencePaths = State(initialValue: references.urls)
+        _referenceSkipped = State(initialValue: references.skipped)
+        _referenceAccessWarnings = State(initialValue: references.skipped)
         let environment = MacMeetingEnvironment.configured()
         _store = State(initialValue: environment.store)
         _session = State(initialValue: environment.session)

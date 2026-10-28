@@ -2,7 +2,7 @@ import Foundation
 
 /// Reads attached files and folders into reference `Document`s for prompt grounding. Folders are
 /// enumerated recursively; only text/code files within size/count caps are included. Runs off the
-/// main actor (file I/O). The app is not sandboxed, so plain paths work without security bookmarks.
+/// main actor (file I/O). A restored scoped URL keeps its selected-file grant for the whole read.
 public enum FileContextLoader {
     /// File extensions treated as readable text/code.
     static let textExtensions: Set<String> = [
@@ -30,6 +30,8 @@ public enum FileContextLoader {
 
         for url in urls {
             if result.documents.count >= maxFiles { break }
+            let acquired = url.startAccessingSecurityScopedResource()
+            defer { if acquired { url.stopAccessingSecurityScopedResource() } }
             let attributes = try? fileManager.attributesOfItem(atPath: url.path)
             if attributes?[.type] as? FileAttributeType == .typeSymbolicLink {
                 result.skipped.append(.init(name: url.lastPathComponent, reason: "symbolic link"))

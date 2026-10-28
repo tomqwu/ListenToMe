@@ -1,0 +1,15 @@
+Listen To Me - Real Time AI helps you follow conversations on your Mac with live transcription, notes and AI assistance.
+
+Choose microphone and system audio capture for the conversation you want to record. Transcription runs on your Mac with Apple's available speech models or optional downloaded WhisperKit models. Device, language, model and permission requirements are checked before listening; recording and summary AI have separate availability.
+
+Keep a live transcript alongside Quick, Summary and Deep analysis. Ask your own questions, use editable domain presets, or save instructions for the current conversation. Review and edit transcript lines, name speakers, summarize a selection, and return to saved conversations from History. Speaker labels are optional and can be inaccurate, especially for similar voices and overlapping speech.
+
+Choose the AI provider and model for each output. Supported Macs can use Apple Intelligence. You can use your own local Ollama or OpenAI-compatible server, or explicitly configure a supported cloud AI service with your own API key. Local transcription does not upload microphone or system audio. If you choose a remote AI provider, transcript text, notes and included reference context are sent to that provider when you request an answer or enable automatic summaries. Your credentials are stored in Keychain.
+
+Attach local files and folders as reference context, or import audio and video files for transcription. Import a Calendar event only when you choose to add its meeting context. Original reference files stay local; included text can be sent to your selected AI provider. Export conversations as Markdown, text, JSON, SRT or WebVTT, or save Markdown notes to a folder you choose. Optional audio retention enables playback and audio export; recordings are retained only when Save audio recordings is enabled.
+
+Your history stays on this Mac. Search it by words or, in supported languages, by meaning, and ask a question with citations to saved conversations. Review, export or delete individual conversations, and control automatic saving and audio retention in Settings.
+
+Requires macOS 26 or later. Speech and AI support depend on hardware, language and model availability. Apple Intelligence requires compatible hardware and setup. Local AI servers and cloud services are configured separately and may have their own requirements or charges. Some models need an explicit download. System-audio capture requires macOS Screen & System Audio Recording access; microphone capture requires microphone access.
+
+The Mac App Store installation uses its own sandboxed storage and file selections. An existing standalone DMG installation's history, settings and permissions are not automatically transferred. You can choose files to import or a folder for exports. No cloud account is required for local transcription and local history.
