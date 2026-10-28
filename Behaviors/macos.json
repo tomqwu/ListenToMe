@@ -215,6 +215,50 @@
           "Check headphone and speaker routes, route changes, Stop and setup failure recovery in the installed signed candidate."
         ]
       }
+    },
+    {
+      "id": "MACEDIT-001",
+      "name": "Open a final transcript line editor with a native double click while retaining text selection",
+      "given": "two finalized transcript lines and an unfinished line are rendered in the Mac transcript with selectable text",
+      "when": "the user double clicks a finalized line, selects and copies text, or uses the accessible edit action",
+      "then": "the intended final line opens its editor without changing adjacent text or metadata, copying retains the selected phrase, and unfinished text cannot be edited; wrapped Latin and CJK lines remain fully visible across resize and a same-text refresh preserves the active selection",
+      "covers": [
+        "App/EditableTranscriptRow.swift",
+        "App/NativeTranscriptText.swift",
+        "App/CommandCenterLabels.swift",
+        "App/CommandCenter.swift",
+        "project.yml"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacTranscriptInteractionTests.swift",
+          "test": "MacTranscriptInteractionTests/testDoubleClickFinalRowOpensOnlyThatLineEditor"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacTranscriptInteractionTests.swift",
+          "test": "MacTranscriptInteractionTests/testPartialRowCannotOpenEditor"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacTranscriptInteractionTests.swift",
+          "test": "MacTranscriptInteractionTests/testNativeSelectionCopiesOnlySelectedPhraseAndAccessibleActionOpensEditor"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacTranscriptInteractionTests.swift",
+          "test": "MacTranscriptInteractionTests/testWrappedTextFitsAfterResizeAndSelectionSurvivesSameTextRefresh"
+        }
+      ],
+      "manual": {
+        "reason": "Native hosted event tests do not establish installed app pointer, keyboard, layout or saved-conversation acceptance.",
+        "steps": [
+          "Double-click actual selectable final text in the installed signed candidate; verify the editor contains only that line.",
+          "Select and copy a phrase, cancel and save a correction; inspect original timestamp/source and adjacent rows.",
+          "Verify partial text has no edit action and capture screenshots; preserve evidence and clean the completed Dev session."
+        ]
+      }
     }
   ]
 }

@@ -1,3 +1,15 @@
+# Transcript editing regression — October 28, 2026
+
+Installed #336 acceptance exposed [#337](https://github.com/tomqwu/ListenToMe/issues/337):
+double-clicking selectable transcript text selected a word instead of opening the editor. The
+candidate now gives selection and editing to one native text control. Four production-row tests
+pass, including actual glyph clicks, partial refusal, Copy/accessibility and multiline/CJK resize
+with selection preservation. Independent review cleared the code and inspected both captures.
+BDD149, lint and a strictly signed sandbox build passed; the new full validation and CI are pending.
+Native automation reported the Mac locked before installed candidate acceptance. No recording,
+permission changes, new installed pass, merge or release is claimed. Preserve the candidate and
+continue PR #318 before opening #334. [Evidence and remaining gates](transcript-interaction.md).
+
 # Full validation completed — October 28, 2026, 02:35 UTC
 
 PR #318 app/test source `95aaeaf` passed the complete `make validate-local` command: exit 0,

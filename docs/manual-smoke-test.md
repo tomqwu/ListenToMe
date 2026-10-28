@@ -1098,6 +1098,11 @@ as part of this UI check. Capture onboarding, warning and ready-state screenshot
 
 With Auto off, record or reopen several finalized lines. Select and copy a phrase; use Copy line and Copy transcript. Double-click a line, change a name, Cancel, and verify no change; repeat with Save. Empty edits must be disabled. Confirm timestamps, speaker and language survive, and export lists original and corrected wording. Edit an existing summary and verify its replacement uses the corrected text. Edit before any summary and verify no AI request starts. Delete a line, first cancelling then confirming; verify other lines remain and the reopened History/export/search reflect deletion. Delete the final line of a saved conversation with empty notes, reopen it, and verify the empty transcript stays empty. During a later capture run, delete an earlier-run line and verify speaker labels still cover the current run. Saved audio and previously exported files remain unchanged. Capture native screenshots of editing and confirmation.
 
+For #337, double-click an actual word, not row whitespace. Drag across a phrase and use Command-C;
+verify only that phrase is copied. Test the text's own context menu and accessible Edit line action,
+then resize a long multiline/CJK transcript and verify no clipping or overlap with the next row.
+An unchanged-text refresh must retain the selection; a partial line must never open an editor.
+
 ## Capture timeline and follow-latest (#68)
 
 With SpeechAnalyzer, record known alternating microphone and system audio separated by silence. Verify OTHERS transcription and line timestamps against saved audio, including delayed finalization, Stop/Listen again, and line playback in the second run. Cancel during preparation and confirm no late line enters the next conversation. While partials grow on both channels, resize the window and confirm Latest remains followed. Scroll up during bursts; the view must not jump to the bottom. Use Latest and confirm following resumes. Preserve screenshots and actual-audio evidence; Core timing tests and a signed build are not substitutes for this acceptance.

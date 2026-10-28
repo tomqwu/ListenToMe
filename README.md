@@ -800,6 +800,10 @@ EOF or Cancel; used channels drain their final words before import completes. Im
 upload the recording (#128, #335).
 On Mac, select transcript text or use its row menu to copy a line or the transcript. Double-click a finalized line (or choose **Edit line…**) to correct it, then Save or Cancel. **Delete line…** asks for confirmation. Corrections retain the recognized original in exports. Existing summaries rebuild from edited text; Auto off does not create a first summary. Audio recordings and previously exported files are unchanged.
 
+The pending Mac update restores double-click editing on the selectable text itself. Drag to select
+a phrase for Copy; finalized text also exposes an accessible **Edit line** action. Partial recognition
+cannot be edited. This correction is tracked in [#337](https://github.com/tomqwu/ListenToMe/issues/337).
+
 The Mac transcript follows incoming speech and wrapped/resized rows until you scroll back to read. Choose **Latest** to resume following. SpeechAnalyzer timestamps come from recognition audio ranges on each capture timeline, not from result delivery time.
 On Mac, expand **Engine → Compute details** to inspect the selected/active transcription engine’s configured compute policy. WhisperKit shows allowed units for audio features, encoder, decoder and prefill; Apple Speech manages its own policy. **Runtime accelerator** says Not running, Preparing or Not exposed. Allowing GPU/Neural Engine does not establish that a request used it.
 
