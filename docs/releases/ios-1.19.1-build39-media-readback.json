@@ -1,0 +1,26 @@
+{
+  "checkedAt": "2026-10-28T04:57:26.647330+00:00",
+  "readbackSHA256": "8906dc367f37d02db4f8b7456a57ff6fac2c3c77e3fbbd8be17cb94db6f15adb",
+  "version": "1.19.1",
+  "state": "READY_FOR_SALE",
+  "versionId": "c188472f-35f2-47e2-927a-16700b473a3f",
+  "selectedBuild": {
+    "type": "builds",
+    "id": "819aca75-a83d-4ca5-bffd-0d8ed69de92a"
+  },
+  "assetCount": 60,
+  "setCount": 10,
+  "allIDsOrderCompleteChecksumMatch": true,
+  "uploadPrefix": "ltm-1.19.1-39-",
+  "allUploadNamesMatch": true,
+  "usWatchImages": 2,
+  "usLandscapeImages": 4,
+  "allPreviouslyDownloadedRGBMatched": true,
+  "limitations": [
+    "App Store Connect association and processed source identity were verified; public storefront rendering was not rechecked.",
+    "Downloaded RGB identity comes from the prior upload receipt; the 60 downloads were not repeated.",
+    "Apple filenames include the verified ltm-1.19.1-39- prefix; the historical receipt records local source filenames."
+  ],
+  "mutations": false,
+  "independentAudit": "review_prompt_feature verified IDs, counts, dimensions, checksums, order, names and selected build against retained receipts"
+}

@@ -1,3 +1,19 @@
+# Full transcript candidate validation — October 28, 2026, 05:08 UTC
+
+PR #318 source `d525760` passed the complete `make validate-local` command: exit 0, reaped,
+2,851.15 seconds and all 934 tracked input hashes unchanged. All three required hosted checks
+passed on that source. Independent review verified Core 1,262 tests/7 skips/98.2376439% coverage;
+iOS 79 UI/5 skips and 461 unit/7 skips; Mac 69; Watch 29 unit/5 UI; all native bindings and four
+real-server contracts. Xcode's Watch diagnostic collection delayed completion but returned normally.
+[Audited receipt](releases/mac-candidate-d525760-validation.json). Installed #337 interaction and
+remaining #336 real-audio acceptance still prevent merge. No new release is claimed.
+
+A separate read-only Apple check confirms that public iOS 1.19.1 (39) retains all 60 processed
+screenshots in 10 sets with matching IDs, order and checksums, including US Watch and Duo images.
+[Media readback](releases/ios-1.19.1-build39-media-readback.json). This verifies App Store Connect
+association; downloaded image identity comes from the earlier upload receipt, and fresh public
+storefront rendering was not inspected. No upload or review mutation occurred.
+
 # Transcript editing regression — October 28, 2026
 
 Installed #336 acceptance exposed [#337](https://github.com/tomqwu/ListenToMe/issues/337):
@@ -5,7 +21,8 @@ double-clicking selectable transcript text selected a word instead of opening th
 candidate now gives selection and editing to one native text control. Four production-row tests
 pass, including actual glyph clicks, partial refusal, Copy/accessibility and multiline/CJK resize
 with selection preservation. Independent review cleared the code and inspected both captures.
-BDD149, lint and a strictly signed sandbox build passed; the new full validation and CI are pending.
+BDD149, lint and a strictly signed sandbox build passed; full validation and CI subsequently passed
+on `d525760`, as recorded above.
 Native automation reported the Mac locked before installed candidate acceptance. No recording,
 permission changes, new installed pass, merge or release is claimed. Preserve the candidate and
 continue PR #318 before opening #334. [Evidence and remaining gates](transcript-interaction.md).

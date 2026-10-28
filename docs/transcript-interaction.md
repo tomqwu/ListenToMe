@@ -32,4 +32,7 @@ helpers moved unchanged into `CommandCenterLabels.swift` so the native suite can
 binary SHA-256 is `552e70701b6c5d96372d1ef90a9d969e39a46f1a5b19f90d8e06ed0880063423`;
 `installed/provenance.json` retains the dirty-source input hashes. Native automation reported the
 Mac locked before it could open the app. No installed gesture/Copy/Save/Cancel acceptance is claimed.
-Full validation, exact-source CI and merge remain required; this change is not published.
+Full `make validate-local` passed on `d525760`: exit 0, reaped, all 934 tracked inputs unchanged,
+including all 69 Mac native tests and four real-server contracts. All three required hosted checks
+also passed on that source. [The independently audited receipt](releases/mac-candidate-d525760-validation.json)
+records the full matrix. Installed acceptance and merge remain required; this change is not published.
