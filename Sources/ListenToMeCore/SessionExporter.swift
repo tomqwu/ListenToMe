@@ -102,7 +102,7 @@ public enum SessionExporter {
         section("Context notes", notes)
         section("Summary instructions", summaryInstructions)
 
-        let lines = transcript.map { seg in
+        let lines = TranscriptPresentation.ordered(transcript).map { seg in
             "- \(stamp(seg, timestamps))**\(literalMarkdown(seg.speakerLabel)):** \(literalMarkdown(seg.text))"
         }
         let legacy = legacyTranscript?.split(separator: "\n", omittingEmptySubsequences: false)
@@ -150,7 +150,7 @@ public enum SessionExporter {
         section("Summary instructions", record.summaryInstructions)
         let transcript: String
         if let segments = record.segments {
-            transcript = segments.compactMap { segment -> String? in
+            transcript = TranscriptPresentation.ordered(segments).compactMap { segment -> String? in
                 let text = MarkdownVault.singleLine(segment.text)
                 guard !text.isEmpty else { return nil }
                 return stamp(segment, timestamps) + MarkdownVault.singleLine(segment.speakerLabel) + ": " + text

@@ -6,6 +6,13 @@ For [#333](speech-input-timing.md), require both active channels and no transcri
 playing a known synthetic fixture. Verify finalized OTHERS text, Stop and a second recording. Keep
 the initial timestamp failure and all incomplete runs; a functioning RMS meter alone is not a pass.
 
+For [#336](dual-channel-capture.md), playback-only synthetic speech must produce OTHERS without
+matching YOU lines. Then independently verify nearby microphone speech, simultaneous near-end and
+playback speech, genuine repeated words, headphones and input/output changes. Stop during recovery
+must leave capture stopped. Check delayed finalized timestamps in rendered order, edit the intended
+line and seek its saved audio; never use only the presence of OTHERS as a complete pass. Preserve
+separate evidence for each case and identify any untested physical route.
+
 First run `make mac-sandbox-build` with existing stable Dev signing and verify the exact `.dev`
 identity, signature and actual sandbox entitlements before launch; follow
 [the local runbook](RELEASING.md#local-sandbox-acceptance). The release-optimized local configuration

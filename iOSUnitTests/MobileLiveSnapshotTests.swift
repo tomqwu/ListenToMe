@@ -27,6 +27,24 @@ final class MobileLiveSnapshotTests: XCTestCase {
         TranscriptSegment(source: .you, text: text, isFinal: final, start: 0, end: 1)
     }
 
+    func testCorrectionsAndProvisionalSnapshotsPreserveRecordingIdentity() throws {
+        let original = TranscriptSegment(source: .others, text: "A long enough provisional statement", isFinal: false,
+                                         start: 1, end: 4, speakerID: "voice", language: "en-US", recordingID: UUID())
+        let corrected = original.withCorrection("A corrected provisional statement", model: "test")
+        XCTAssertEqual(corrected.recordingID, original.recordingID)
+        XCTAssertEqual(corrected.restoringOriginal.recordingID, original.recordingID)
+        XCTAssertEqual(corrected.restoringOriginal.text, original.text)
+        let session = session()
+        session.partial = original
+        let projected = try XCTUnwrap(session.liveSnapshot().manualSegments.first)
+        XCTAssertEqual(projected.recordingID, original.recordingID)
+        XCTAssertEqual(projected.id, original.id)
+        XCTAssertEqual(projected.start, original.start)
+        XCTAssertEqual(projected.source, original.source)
+        XCTAssertEqual(projected.language, original.language)
+        XCTAssertTrue(projected.text.hasPrefix(ConversationStore.provisionalTag))
+    }
+
     func testSnapshotReusesLongTranscriptAndInvalidatesCorrectionsLabelsPartialsAndNotes() {
         let session = session()
         session.segments = (0..<200).map { line("Line \($0) " + String(repeating: "detail ", count: 120)) }

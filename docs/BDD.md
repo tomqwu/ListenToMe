@@ -240,3 +240,11 @@ Native UI fixtures prove placement and control behavior; installed-model quality
 real-model acceptance. The [validation record](translation-validation.md) distinguishes genuine
 regression reds from test-harness failures and records the complete unchanged-source component
 matrix after a torn native stdout event prevented the aggregate verifier from completing.
+
+## Dual-channel audio and presentation
+
+`MACAUDIO-003` and `MACAUDIO-004` distinguish chronological display/persistent line identity from
+microphone echo control. The native lifecycle tests cover setup failures and route/profile state changes through injected drivers,
+recovery cooldown and terminal Stop. Playback-only OTHERS success is insufficient: separately
+accept independent microphone speech and overlapping speech, without text-based duplicate removal.
+See [the #336 evidence and remaining acceptance](dual-channel-capture.md).

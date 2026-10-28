@@ -152,7 +152,10 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
   reporting "Mic: active" while recording silence.
 
 **Four-pane AI copilot**
-- **Transcript** — live, source-labeled, no model.
+- **Transcript** — live, source-labeled, no model. The next Mac candidate adds native microphone
+  echo control and stable chronological presentation for delayed channel results. YOU/OTHERS are
+  input channels; individual speaker identification is separate. See the
+  [dual-channel behavior and acceptance limits](docs/dual-channel-capture.md).
 - **Summary** (the Listener) — rolling summary plus open questions / action items.
 - **Quick** — fast suggestions on the global hotkey, buttons, or proactively when someone asks a
   question. **Proactive** (the checkbox in the Quick pane header, on by default) answers a finalized

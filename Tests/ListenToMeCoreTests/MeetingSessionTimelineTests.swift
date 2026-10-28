@@ -70,6 +70,24 @@ final class MeetingSessionTimelineTests: XCTestCase {
         XCTAssertEqual(session.store.utterances.last?.end, 12)
     }
 
+    func testLiveRunsReceiveDistinctPersistentIdentityWithoutReorderingArrival() async throws {
+        let (session, made) = makeSession()
+        try await session.start()
+        made.all.last?.emit(say("Later", 20, 21, source: .you))
+        made.all.last?.emit(say("Delayed", 1, 2))
+        await waitUntil { session.store.utterances.count == 2 }
+        await session.stopAndWait()
+        let firstRun = try XCTUnwrap(session.store.utterances.first?.recordingID)
+        XCTAssertEqual(session.store.utterances[1].recordingID, firstRun)
+        XCTAssertEqual(session.store.utterances.map(\.text), ["Later", "Delayed"])
+        XCTAssertEqual(TranscriptPresentation.ordered(session.store.utterances).map(\.text), ["Delayed", "Later"])
+        try await session.start()
+        made.all.last?.emit(say("Next run", 0, 1))
+        await waitUntil { session.store.utterances.count == 3 }
+        await session.stopAndWait()
+        XCTAssertNotEqual(try XCTUnwrap(session.store.utterances.last?.recordingID), firstRun)
+    }
+
     func testSecondRecordingContinuesTheConversationTimeline() async throws {
         let (session, made) = makeSession()
         try await session.start()
@@ -89,8 +107,8 @@ final class MeetingSessionTimelineTests: XCTestCase {
         let lines = session.store.utterances
         XCTAssertEqual(lines.map(\.start), [1, 5, 31, 0])
         XCTAssertEqual(lines.map(\.end), [4, 30, 33, 0], "an untimed line is never given a time")
-        XCTAssertEqual(TranscriptTimestamp.recordings(lines).count, 1, "one continuous timeline")
-        XCTAssertEqual(TranscriptTimestamp.duration(of: lines), 32)
+        XCTAssertEqual(TranscriptTimestamp.recordings(lines).count, 2, "Known capture runs remain separate on the cumulative timeline")
+        XCTAssertEqual(TranscriptTimestamp.duration(of: lines), 31, "Sum known recording spans without the gap between runs")
         let record = SessionRecord(id: "r", title: "T", date: Date(), transcript: "", summary: "", segments: lines)
         let starts = SessionExporter.cues(for: lines).map(\.start)
         XCTAssertEqual(starts, starts.sorted(), "subtitles do not interleave the recordings")

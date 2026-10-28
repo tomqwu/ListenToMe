@@ -33,7 +33,8 @@ extension MobileSession {
             return TranscriptSegment(id: segment.id, source: segment.source,
                 text: ConversationStore.provisionalTag + text, isFinal: false, start: segment.start, end: segment.end,
                 speakerID: segment.speakerID, speakerName: segment.speakerName,
-                originalText: segment.originalText, correctionModel: segment.correctionModel, language: segment.language)
+                originalText: segment.originalText, correctionModel: segment.correctionModel, language: segment.language,
+                recordingID: segment.recordingID)
         }
         let snapshot = LiveSnapshot(
             pieces: MobileQuickContext.pieces(notes: notes, segments: finals, liveSegments: live.map { [$0] } ?? []),

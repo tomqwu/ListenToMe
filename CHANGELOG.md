@@ -127,6 +127,12 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 
 ## macOS (unreleased since 1.4.4)
 
+- Add native microphone echo control to reduce system playback appearing again as YOU. Refuse
+  unprotected input when setup fails, and keep Stop authoritative across route recovery. (#336)
+- Present delayed Mac channel results chronologically within explicit recording runs, preserving
+  line identity and canonical storage; keep readable exports and recorded duration consistent.
+  Preserve run metadata through prompt shortening and mobile correction/undo. (#336)
+
 - Fix audio imports remaining at Finalizing or Stopping when a prepared speech channel received
   no audio. Close unused channels promptly while preserving final words and timestamps. (#335)
 

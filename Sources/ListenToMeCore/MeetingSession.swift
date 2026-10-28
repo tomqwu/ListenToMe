@@ -154,6 +154,7 @@ public final class MeetingSession {
     /// capture's engine times restart at zero, so its timed lines are moved past the end of the
     /// lines already there, as iOS does. Untimed lines (SpeechAnalyzer until #68) stay untimed.
     public private(set) var recordingOffset: TimeInterval = 0
+    private var recordingID: UUID?
 
     /// The set of roles currently streaming a response.
     public private(set) var streamingRoles: Set<CopilotRole> = [] { didSet { synchronizeAutomaticReviews(); updateSummaryTranslation() } }
@@ -311,7 +312,7 @@ public final class MeetingSession {
         // (which must precede a reset) already cancelled it.
         quickReader.reset(); handleLiveEvent(.conversationChanged)
         liveTranslation.reset(); summaryTranslation.reset(); languageOptions = .init()
-        store.reset(); recordingOffset = 0; hasIncompleteImport = false
+        store.reset(); recordingOffset = 0; recordingID = nil; hasIncompleteImport = false
         notes = ""; summaryInstructions = ""; referenceContext = nil
         listenerSituation = nil
         listenerSummary = ""; quickSuggestion = ""; quickRecap = ""; deepAnswer = ""
@@ -553,11 +554,14 @@ public final class MeetingSession {
 
 extension MeetingSession {
     func applyTranscribedSegment(_ segment: TranscriptSegment) {
-        store.apply(segment.shifted(by: recordingOffset))
+        var captured = segment.shifted(by: recordingOffset)
+        captured.recordingID = recordingID
+        store.apply(captured)
     }
 
     /// A new recording continues after the conversation's last timed line.
     func startRecordingTimeline() {
+        recordingID = UUID()
         recordingOffset = store.utterances.filter(TranscriptTimestamp.isTimed).map(\.end).max() ?? 0
     }
 
@@ -566,7 +570,9 @@ extension MeetingSession {
     /// Applies a segment to the store, schedules a batched evaluation for eligible live or
     /// finalized speech, and fires a proactive Quick answer when the other party asks a question.
     public func ingest(_ segment: TranscriptSegment) async {
-        store.apply(segment.shifted(by: recordingOffset))
+        var captured = segment.shifted(by: recordingOffset)
+        captured.recordingID = recordingID
+        store.apply(captured)
 
         handleLiveEvent(.transcriptChanged)
         fireProactiveIfWarranted(for: segment)

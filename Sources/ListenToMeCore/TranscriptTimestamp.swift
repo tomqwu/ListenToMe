@@ -40,20 +40,23 @@ public enum TranscriptTimestamp {
     /// recording: the two channels finalize lines out of order by a few seconds.
     public static let regressionTolerance: TimeInterval = 10
 
-    /// The timed lines grouped into recordings, in the order they were saved. A line that starts well
-    /// before the recording so far has ended begins a new one: conversations saved before each Mac
-    /// capture continued the timeline restart at zero for every Listen.
+    /// Explicit capture IDs take precedence over the legacy clock-regression heuristic. A delayed
+    /// channel cannot create a new recording merely because it finishes more than ten seconds late.
     public static func recordings(_ segments: [TranscriptSegment]) -> [[TranscriptSegment]] {
-        var spans: [[TranscriptSegment]] = [], reachedEnd = -TimeInterval.infinity
-        for segment in segments where isTimed(segment) {
-            if spans.isEmpty || segment.start < reachedEnd - regressionTolerance {
-                spans.append([])
-                reachedEnd = -TimeInterval.infinity
+        TranscriptPresentation.runs(segments).flatMap { run in
+            let timed = run.filter(isTimed)
+            guard run.first?.recordingID == nil else { return timed.isEmpty ? [] : [timed] }
+            var spans: [[TranscriptSegment]] = [], reachedEnd = -TimeInterval.infinity
+            for segment in timed {
+                if spans.isEmpty || segment.start < reachedEnd - regressionTolerance {
+                    spans.append([])
+                    reachedEnd = -TimeInterval.infinity
+                }
+                spans[spans.count - 1].append(segment)
+                reachedEnd = max(reachedEnd, segment.end)
             }
-            spans[spans.count - 1].append(segment)
-            reachedEnd = max(reachedEnd, segment.end)
+            return spans
         }
-        return spans
     }
 
     /// The recorded time: each recording's span from its first start to its last end, added up, or

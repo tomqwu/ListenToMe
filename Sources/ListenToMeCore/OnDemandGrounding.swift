@@ -227,7 +227,9 @@ public enum OnDemandGrounding {
         let text = tag + String(segment.text.dropFirst(tag.count).suffix(allowance))
         return TranscriptSegment(id: segment.id, source: segment.source, text: text,
                                  isFinal: segment.isFinal, start: segment.start, end: segment.end,
-                                 speakerID: segment.speakerID, speakerName: segment.speakerName)
+                                 speakerID: segment.speakerID, speakerName: segment.speakerName,
+                                 originalText: segment.originalText, correctionModel: segment.correctionModel,
+                                 language: segment.language, recordingID: segment.recordingID)
     }
 
     /// Whole minutes the lines span, at least 1: from their timestamps when those describe a span,

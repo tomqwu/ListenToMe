@@ -89,6 +89,132 @@
           "Cancel a separate import and confirm controls return with incomplete-import guidance."
         ]
       }
+    },
+    {
+      "id": "MACAUDIO-003",
+      "name": "Present delayed channel results in recording order without changing capture identity",
+      "given": "a known recording has delayed finalized results from two channels, including identical times and lines with unavailable timestamps",
+      "when": "the user reads or exports the transcript and later reopens or edits a line",
+      "then": "timed lines within each explicit run display in stable chronological order, unknown boundaries remain intact, and capture IDs, times, source, saved arrival order and editing targets are preserved; duration sums known recording spans without mistaking a delayed channel for a new recording, while legacy records retain timestamp-based fallback",
+      "covers": [
+        "Sources/ListenToMeCore/TranscriptPresentation.swift",
+        "Sources/ListenToMeCore/Models.swift",
+        "Sources/ListenToMeCore/MeetingSession.swift",
+        "Sources/ListenToMeCore/ConversationStore.swift",
+        "Sources/ListenToMeCore/SessionExporter*",
+        "Sources/ListenToMeCore/MarkdownVault.swift",
+        "App/CommandCenterPanes.swift",
+        "Sources/ListenToMeCore/OnDemandGrounding.swift",
+        "Sources/ListenToMeCore/TranscriptTimestamp.swift",
+        "iOS/MobileTranscriptCorrection.swift",
+        "iOS/MobileSession+LiveSnapshot.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/TranscriptPresentationTests.swift",
+          "test": "TranscriptPresentationTests/testDelayedChannelsDisplayChronologicallyWithoutChangingCanonicalIdentity"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/TranscriptPresentationTests.swift",
+          "test": "TranscriptPresentationTests/testStableTiesAndExplicitRunsNeverCrossUntimedOrUnknownBoundaries"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/TranscriptPresentationTests.swift",
+          "test": "TranscriptPresentationTests/testRunSurvivesCodingShiftingAndLegacyDecoding"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/TranscriptPresentationTests.swift",
+          "test": "TranscriptPresentationTests/testReadableExportsOrderKnownRunsWhileJSONKeepsCanonicalOrder"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/MeetingSessionTimelineTests.swift",
+          "test": "MeetingSessionTimelineTests/testLiveRunsReceiveDistinctPersistentIdentityWithoutReorderingArrival"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/OnDemandGroundingTests.swift",
+          "test": "OnDemandGroundingTests/testShorteningProvisionalSpeechPreservesItsTagAndMinimumEvidence"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/TranscriptPresentationTests.swift",
+          "test": "TranscriptPresentationTests/testDurationUsesExplicitRunsAndLegacyFallbackWithoutSplittingLateChannels"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/MeetingSessionTimelineTests.swift",
+          "test": "MeetingSessionTimelineTests/testSecondRecordingContinuesTheConversationTimeline"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileLiveSnapshotTests.swift",
+          "test": "MobileLiveSnapshotTests/testCorrectionsAndProvisionalSnapshotsPreserveRecordingIdentity"
+        }
+      ],
+      "manual": {
+        "reason": "Core projection assertions do not prove rendered Mac rows or physical echo suppression.",
+        "steps": [
+          "Install the source-matched candidate; reproduce delayed two-channel finalization and inspect chronological rendered text.",
+          "Confirm edit, speaker rename and saved-audio selection still address the intended line after display order changes.",
+          "Keep playback echo acceptance separate; do not mark issue336 complete on ordering tests alone."
+        ]
+      }
+    },
+    {
+      "id": "MACAUDIO-004",
+      "name": "Protect microphone capture from device playback echo and clean up failed or stopped engines",
+      "given": "Mac listening uses microphone and system audio, or the input route changes or setup fails",
+      "when": "the microphone starts, recovers from a stopped engine, or the user presses Stop",
+      "then": "echo control is configured before the tap format is read; failure never silently starts raw input; only unchanged route, tap format and voice profile configuration notifications do not restart capture; failed setup cleans the tap and Stop prevents future recovery; a real route failure inside the recovery cooldown suspends unsafe input and retries after the cooldown unless Stop intervenes",
+      "covers": [
+        "App/MacMicrophoneCapture.swift",
+        "App/DualChannelCapture.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacMicrophoneCaptureTests.swift",
+          "test": "MacMicrophoneCaptureTests/testListeningEnablesEchoControlBeforeReadingFormatAndInstallingTap"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacMicrophoneCaptureTests.swift",
+          "test": "MacMicrophoneCaptureTests/testEchoFailureNeverStartsAnUnprotectedMicrophoneAndStartFailureCleansTap"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacMicrophoneCaptureTests.swift",
+          "test": "MacMicrophoneCaptureTests/testHealthyConfigurationNotificationDoesNotRestartAndStopCannotResurrectCapture"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacMicrophoneCaptureTests.swift",
+          "test": "MacMicrophoneCaptureTests/testRunningEngineWithChangedRouteOrVoiceProfileRebuildsItsTap"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacMicrophoneCaptureTests.swift",
+          "test": "MacMicrophoneCaptureTests/testStopDuringEngineStartCleansUpBeforeReturningAndQueuedRecoveryStaysStopped"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacMicrophoneCaptureTests.swift",
+          "test": "MacMicrophoneCaptureTests/testSecondRouteFailureDuringCooldownStopsUnsafeInputThenRecoversUnlessStopped"
+        }
+      ],
+      "manual": {
+        "reason": "Injected engine tests prove setup and lifecycle, not acoustic echo attenuation or native route compatibility.",
+        "steps": [
+          "Confirm Listening and both channels active before synthetic playback. Playback-only speech must appear as OTHERS without duplicate YOU.",
+          "Verify independent microphone speech and overlapping or genuinely repeated speech remain; do not remove transcripts by matching words.",
+          "Check headphone and speaker routes, route changes, Stop and setup failure recovery in the installed signed candidate."
+        ]
+      }
     }
   ]
 }

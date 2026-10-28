@@ -1,3 +1,16 @@
+# Mac dual-channel regression — October 27, 2026
+
+[#336](https://github.com/tomqwu/ListenToMe/issues/336) reproduced duplicate YOU/OTHERS playback and
+out-of-order timestamps during PR #318 acceptance. The current candidate adds chronological
+presentation with persistent run identity and native microphone echo control. Focused red/green
+coverage and independent review are recorded in [the evidence note](dual-channel-capture.md).
+A signed Studio Display playback check now yields all five Orion sentences as OTHERS with zero
+YOU finals and working Stop. Independent near-end/overlap/headphone/route-change acceptance,
+rendered delayed-line edit/playback and fresh full validation/CI/merge remain. This does not close
+#336 or establish a production-ready Mac build. Keep working in PR #318 before opening #334.
+The completed Dev sessions were archived and moved to Trash, only `.dev` permissions reset, and
+prior provider/engine/speaker/saving preferences restored. User history and API keys remain intact.
+
 # Mac import finalization regression — October 27, 2026
 
 Installed sandbox acceptance on validated source `44d8765` passed native export and Calendar lookup,
