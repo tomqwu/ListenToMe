@@ -69,16 +69,16 @@ assignment of issue #339):
 - `undo-red`: four native methods, ten assertion failures: late context/native-preparation Undo,
   stale Stop/New error pinning, and native post-commit metadata/pinning did not respect lifecycle.
 - `recovery-green`: exit 0/reaped in 48.60s, all 55 selected native language methods passed (13 new
-  methods plus 42baselines), with all recorded language/recorder input hashes unchanged. Includes
+  methods plus 42 baselines), with all recorded language/recorder input hashes unchanged. Includes
   held recovery cancelled by Stop or advancing recognition; those are added coverage, not claimed reds.
 - `stop-undo-red`: one native method, two failures: held Undo prevented a stopping-time Undo from
   being queued/applied while finalization waited.
 - `undo-green`: 60 methods completed with two failures in the existing
   `MobileLanguageUndoTests/testAnUndoCancelledByStopIsAppliedAfterStop`. This implementation
   regression caught loss of the already-requested Undo intent; it is not a historical product red.
-- `undo-green2`: exit 0/reaped in 32.26s, all 60 native methods passed (18 new plus 42baselines),
+- `undo-green2`: exit 0/reaped in 32.26s, all 60 native methods passed (18 new plus 42 baselines),
   including the unchanged Undo-on-Stop guarantee. All 249 recorded iOS/shared/test/project hashes
-  matched, including the generated 1.20.1(41) project. Five Undo lifecycle methods moved unchanged to
+  matched, including the generated 1.20.1 (41) project. Five Undo lifecycle methods moved unchanged to
   `MobileLanguageUndoContinuityTests` to satisfy lint; the stale Stop/New assertion checks that a
   fresh conversation's explicit language choice survives, while honoring the queued Undo on Stop.
 - `bdd-undo-final.log` and `lint-undo-final2.log`: both commands exited 0; BDD 147 passed. All 13
@@ -86,10 +86,24 @@ assignment of issue #339):
   `native-results.json` and `language-evidence-summary.json` retain provenance.
 
 Initial native runs use device `B5291F6B-B0B7-4A53-A8B2-3BC75536140B`; Undo follow-ups use
-`F2C51D15-D112-4385-83FA-5161B21BAFC7`. Their shared command is `xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMeIOS
--configuration Debug -destination 'platform=iOS Simulator,id=<the owned device listed above>'
--derivedDataPath .build/language-replay-tests -onlyUsePackageVersionsFromResolvedFile
-CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- -parallel-testing-enabled NO
--collect-test-diagnostics never` with `-only-testing:ListenToMeIOSUnitTests/` selectors recorded in its
-log and an owned bounded supervisor receipt. Final combined validation and physical continuous
-bilingual capture, background/foreground, Stop and Undo acceptance remain required before completion.
+`F2C51D15-D112-4385-83FA-5161B21BAFC7`. Each log retains exact selectors and its owned supervisor
+receipt. The final green command, from the shared worktree, was:
+
+```sh
+xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMeIOS -configuration Debug \
+  -destination 'platform=iOS Simulator,id=F2C51D15-D112-4385-83FA-5161B21BAFC7' \
+  -derivedDataPath .build/language-replay-tests -onlyUsePackageVersionsFromResolvedFile \
+  CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- -parallel-testing-enabled NO \
+  -collect-test-diagnostics never \
+  -only-testing:ListenToMeIOSUnitTests/MobileLanguageReplayProgressTests \
+  -only-testing:ListenToMeIOSUnitTests/MobileLanguageUndoContinuityTests \
+  -only-testing:ListenToMeIOSUnitTests/MobileLanguageTests \
+  -only-testing:ListenToMeIOSUnitTests/MobileLanguageUndoTests \
+  -only-testing:ListenToMeIOSUnitTests/MobileLanguageRecheckTests \
+  -only-testing:ListenToMeIOSUnitTests/MobileLanguageSwitchReviewTests \
+  -only-testing:ListenToMeIOSUnitTests/MobileLanguageActivityTests test
+```
+
+Full local validation and hosted CI remain pending. Physical continuous bilingual capture,
+background/foreground, Stop and Undo acceptance remain required for production; the authorized
+TestFlight beta may proceed with those checks explicitly recorded as pending.
