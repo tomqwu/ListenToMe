@@ -1,9 +1,17 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, latest TestFlight version 1.20.1 (41).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, latest TestFlight version 1.20.2 (42).
 
-## Current TestFlight beta — 1.20.1 (41)
+## Current TestFlight beta — 1.20.2 (42)
+
+Apple accepted **1.20.2 (42)** through the official TestFlight helper at **2026-10-28T21:11:37.664213+00:00** from `a6b90e83f775cc9dc88df3c2805ecacedca044af`. Apple build `8967f095-470f-40c0-aba0-b1188bbb699c` is **VALID / IN_BETA_TESTING**. Readback at 2026-10-28T21:15:33.796221+00:00 confirms **en-US**, **Listen To Me - Real Time AI**, exact beta description/What to Test and unchanged access for the existing two-member Dev group. Access does not establish physical installation of build 42.
+
+[Publication receipt](releases/ios-1.20.2-build42.json) · [Release notes and native previews](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.2-build42).
+
+Physical phone translation/lock-screen/multilingual and Watch acceptance remain pending. Public production remains **1.19.1 (39)**; this beta made no new public submission or listing-media upload. Mac changes remain unreleased and keep separate installed-app acceptance gates.
+
+## Historical TestFlight beta — 1.20.1 (41)
 
 Apple accepted **1.20.1 (41)** through the official TestFlight helper (receipt recorded 2026-10-28T19:02:09.198475+00:00) from `dc6b2e39a99568fb4931e937c555fa0de0f2ff18`. Apple build `5c2339eb-5e17-4bd6-8eb1-ec1d212ef49f` is **VALID / IN_BETA_TESTING**. Existing Dev group access was verified at 2026-10-28T19:05:58.417288+00:00; its two accepted memberships are unchanged. Primary locale and metadata are **en-US**, with localized name **Listen To Me - Real Time AI**; beta description and What to Test match the intended copy. Group access does not establish physical installation of build 41.
 
@@ -46,7 +54,7 @@ that captures system or call audio. The 1.20.1 (41) beta declares audio backgrou
 established user-started microphone recording continues through screen lock; new capture still
 requires active use. Optional AI pauses. See [continuity limits and acceptance](recording-continuity.md).
 
-Apple Watch recording ([#181](https://github.com/tomqwu/ListenToMe/issues/181)) is included in **TestFlight 1.20.1 (41)**. Its phone/Share/Watch distribution package and Apple beta access were verified; physical microphone, paired transfer, wrist-down and battery/storage acceptance remain pending. See [Watch installation and evidence](watch-beta.md) and the [accepted beta receipt](releases/ios-1.20.1-build41.json). Dated earlier-build publication evidence remains in the Watch guide.
+Apple Watch recording ([#181](https://github.com/tomqwu/ListenToMe/issues/181)) is included in **TestFlight 1.20.2 (42)**. Its phone/Share/Watch distribution package and Apple beta access were verified; physical microphone, paired transfer, wrist-down and battery/storage acceptance remain pending. See [Watch installation and evidence](watch-beta.md) and the [accepted beta receipt](releases/ios-1.20.2-build42.json). Dated earlier-build publication evidence remains in the Watch guide.
 
 ## Parity with macOS
 
@@ -1690,10 +1698,10 @@ preparation and actual audio interruption behavior remain explicit. `WATCH-015`/
 native red/green evidence; physical paired transfer/wrist-down acceptance remains separate.
 See [Watch beta status](watch-beta.md). [Published to TestFlight](releases/ios-1.19.1-build39.json); complete physical/production acceptance remains unverified.
 
-## Live and Summary translation (#330; recovery candidate #343)
+## Live and Summary translation (#330; TestFlight recovery #343)
 
 **More → Live translation** and **Notes → Live translation** control opt-in finalized-line translation
 on phone/iPad/Duo. **Summary → Translate summary** translates an existing completed summary into an
 independent target; it does not change summary generation language/provider. Originals stay available.
 Installed Apple Translation packs are required; setup is explicit and unsupported pairs are explained.
-The #343 candidate disables Translate while busy, provides Cancel and stops indefinite progress after a per-paragraph deadline. Native cancellation retains one worker slot until it exits; originals remain visible and retry waits for safe recovery. No translation engine is added to Watch. See [usage, privacy and acceptance](translation.md) and [recovery evidence](translation-recovery.md).
+TestFlight 1.20.2 (42) disables Translate while busy, provides Cancel and stops indefinite progress after a per-text-chunk deadline. Native cancellation retains one worker slot until it exits; originals remain visible and retry waits for safe recovery. No translation engine is added to Watch. See [usage, privacy and acceptance](translation.md) and [recovery evidence](translation-recovery.md).

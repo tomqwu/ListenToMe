@@ -27,9 +27,9 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased)
 
-## iOS 1.20.2 (42) — candidate
+## iOS 1.20.2 (42) — 2026-10-28 (TestFlight)
 
-Candidate only; validation, hosted CI, merge and accepted TestFlight upload remain separate gates. Physical phone and installed Mac acceptance remain pending. Public iOS remains 1.19.1 (39).
+Apple accepted **1.20.2 (42)** through the official TestFlight helper at **2026-10-28T21:11:37.664213+00:00** from `a6b90e83f775cc9dc88df3c2805ecacedca044af`. Apple build `8967f095-470f-40c0-aba0-b1188bbb699c` is **VALID / IN_BETA_TESTING**. Readback at 2026-10-28T21:15:33.796221+00:00 confirms **en-US**, **Listen To Me - Real Time AI**, exact beta description/What to Test and unchanged access for the existing two-member Dev group. Access does not establish physical installation of build 42. [Publication receipt](docs/releases/ios-1.20.2-build42.json). Physical phone translation/lock-screen/multilingual and Watch acceptance remain pending. Public production remains **1.19.1 (39)**; this beta made no new public submission or listing-media upload. Mac changes remain unreleased and keep separate installed-app acceptance gates.
 
 - Stop indefinite translation progress after a stalled on-device request, add Cancel translation and disable duplicate Translate/Retry actions until native work safely exits. Cancel the actual Apple session and reject late results/timers while preserving originals, language-pack consent and AI-provider choices. (#343)
 
