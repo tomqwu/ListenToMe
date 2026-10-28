@@ -1,0 +1,58 @@
+{
+  "source": "e85733b479e19f5a9e6482d71d5c3323a9664ee2",
+  "startedAt": "2026-10-28T02:51:43.516343+00:00",
+  "command": [
+    "make",
+    "validate-local",
+    "BDD_BASE=95aaeaf20dca42d3b8eee1b2631a0f5c4633eba2",
+    "IOS_DESTINATION=platform=iOS Simulator,id=7AEDF8E2-98E6-47D0-AA56-7C168252FD36",
+    "WATCH_DESTINATION=platform=watchOS Simulator,id=ED3CF471-1E52-4E20-88F1-F5820A8D9218"
+  ],
+  "status": "passed",
+  "exitCode": 0,
+  "reaped": true,
+  "elapsedSeconds": 2317.938947209157,
+  "finishedAt": "2026-10-28T03:30:21.474091+00:00",
+  "hashMismatches": [],
+  "trackedInputs": 936,
+  "bddScenarios": 150,
+  "core": {
+    "tests": 1262,
+    "skips": 7,
+    "lineCoveragePercent": 98.23764392574607
+  },
+  "iosUI": {
+    "tests": 82,
+    "skips": 5
+  },
+  "iosUnit": {
+    "tests": 461,
+    "skips": 7
+  },
+  "macUnit": {
+    "tests": 69,
+    "skips": 0
+  },
+  "watchUnit": {
+    "tests": 29,
+    "skips": 0
+  },
+  "watchUI": {
+    "tests": 5,
+    "skips": 0
+  },
+  "realServerContracts": 4,
+  "failures": 0,
+  "nativeBindings": {
+    "iosUnit": 73,
+    "iosUI": 29,
+    "macUnit": 69,
+    "watchUnit": 29,
+    "watchUI": 5
+  },
+  "independentAudit": "review_prompt_feature independently recounted suites/bindings and all936 tracked hashes; no discrepancy",
+  "logSHA256": "ea9e9474813be68ff3ee2c253b00a071c8f5504bc80164a5ff6f39bb6b03f4d9",
+  "installedAcceptance": "Pending installed Mac rename/editor accessibility acceptance; inherited dual-channel gates still pending inPR318",
+  "merged": false,
+  "published": false
+}

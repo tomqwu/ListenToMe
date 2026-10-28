@@ -1,3 +1,16 @@
+# Speaker rename full integration validation — October 28, 2026, 03:30 UTC
+
+The complete `make validate-local BDD_BASE=95aaeaf` passed on speaker-rename app/test source
+`e85733b479e19f5a9e6482d71d5c3323a9664ee2`: exit 0, child reaped, 2,317.94 seconds,
+all 936 tracked hashes unchanged. Independent review recounted Core 1,262/7 skips with
+98.2376439% coverage; iOS 82 UI/5 skips plus 461 unit/7 skips; Mac 69; Watch 29 unit + 5 UI;
+all native BDD bindings, five helper suites and four real-server contracts. Zero failures.
+All seven speaker-rename bindings passed. [Audited receipt](releases/speaker-rename-e85733b-validation.json).
+
+Installed Mac rename/editor accessibility acceptance, required CI and merge remain. Finish current
+PR #318 and its audio gates before opening this feature PR; no new PR, release or publication is
+established by the validation result. Earlier validation records below are historical.
+
 # Speaker rename integration — October 28, 2026
 
 The existing #334 branch now includes PR #318 candidate `95aaeaf`, preserving both chronological
