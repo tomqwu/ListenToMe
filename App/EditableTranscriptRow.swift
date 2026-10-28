@@ -40,9 +40,9 @@ struct EditableTranscriptRow: View {
                 }
             } else {
                 VStack(alignment: .leading, spacing: 5) {
-                    Text(segment.text).font(.system(size: 12.5)).foregroundStyle(Theme.ink)
-                        .textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
-                        .onTapGesture(count: 2) { beginEditing() }
+                    NativeTranscriptText(text: segment.text, canEdit: segment.isFinal, edit: beginEditing)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .alignmentGuide(.firstTextBaseline) { _ in NSFont.systemFont(ofSize: 12.5).ascender }
                     if let translatedText { TranslatedTranscriptText(text: translatedText) }
                 }
             }

@@ -57,11 +57,22 @@ pass on one route. It does not establish independent near-end voice, simultaneou
 or physical route-change quality. Screenshots are local QA evidence, not store media; the transcript
 also contains unrelated pre-playback system speech.
 
-Independent static review cleared the ordering and recovery corrections. Full final validation,
-rendered delayed-channel edit/playback checks, remaining physical audio acceptance, CI and merge
-are separate pending gates. No new release or production submission is established by this work.
+Independent static review cleared the ordering and recovery corrections. Full automated validation
+passed on `95aaeaf` (exit 0, 929 unchanged tracked inputs), and all three hosted checks passed on
+that source. [The audited receipt](releases/mac-candidate-95aaeaf-validation.json) records counts and
+limits. Rendered delayed-channel edit/playback, remaining physical audio acceptance and merge
+remain pending gates. No new release or production submission is established by this work.
 
 The first full `086d89e` aggregate failed in an unrelated largest-text translation UI scrolling
 harness after Core/iOS execution; Mac/Watch/server stages did not run. The separately reproduced
 and corrected [test-harness visibility issue](translation-validation.md) does not change audio
-implementation or supply any outstanding physical audio acceptance. A new full run is required.
+implementation or supply any outstanding physical audio acceptance. The complete `95aaeaf` rerun
+passed, including all four translation UI methods; the earlier failure remains preserved.
+
+A later route attempt remained at Starting with idle channels; no fixture was played. Stop returned
+Ready. The app reported microphone and speech access Not set after prior Dev cleanup, but the
+startup cause was not established. The completed Dev app was closed and moved to Trash and only
+its `.dev` permissions reset. Provider/engine/speaker preferences were restored; the former listener
+model was absent from the Cloud picker after refresh and could not be restored through the UI.
+That Dev-setting exception is recorded in the external `route-acceptance/cleanup.json`; user history,
+API keys and production permissions were preserved. This attempt is not an audio acceptance pass.

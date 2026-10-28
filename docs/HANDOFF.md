@@ -1,3 +1,69 @@
+# Speaker and transcript gesture integration — October 28, 2026
+
+The existing speaker-rename branch now integrates PR #318's validated transcript candidate
+`a1eb0fb` (app/test source `d525760`). Both unreleased feature histories are retained. Native
+integration checks distinguish a speaker-label double-click from a transcript-word double-click:
+only the intended name sheet or line editor opens, and Escape cancels naming without changing
+name or text. All nine focused Mac tests pass (exit 0); BDD151 and lint pass. These are additional
+integration checks, not invented historical reds. The first invocation used an invalid test-target
+selector; a second assumed SwiftUI's Cancel was an NSButton. Both harness failures are preserved.
+
+Evidence is under `2026-10-28/listentome-speaker334-edit337`. Native sheet bitmap capture omits button
+labels and is diagnostic only; it does not prove installed UI presentation. Fresh full combined
+validation, installed gesture/Copy/name-sheet acceptance and CI remain. Do not open the #334 PR
+before #318 completes its remaining installed audio/interaction gates. No feature release is claimed.
+
+# Full transcript candidate validation — October 28, 2026, 05:08 UTC
+
+PR #318 source `d525760` passed the complete `make validate-local` command: exit 0, reaped,
+2,851.15 seconds and all 934 tracked input hashes unchanged. All three required hosted checks
+passed on that source. Independent review verified Core 1,262 tests/7 skips/98.2376439% coverage;
+iOS 79 UI/5 skips and 461 unit/7 skips; Mac 69; Watch 29 unit/5 UI; all native bindings and four
+real-server contracts. Xcode's Watch diagnostic collection delayed completion but returned normally.
+[Audited receipt](releases/mac-candidate-d525760-validation.json). Installed #337 interaction and
+remaining #336 real-audio acceptance still prevent merge. No new release is claimed.
+
+A separate read-only Apple check confirms that public iOS 1.19.1 (39) retains all 60 processed
+screenshots in 10 sets with matching IDs, order and checksums, including US Watch and Duo images.
+[Media readback](releases/ios-1.19.1-build39-media-readback.json). This verifies App Store Connect
+association; downloaded image identity comes from the earlier upload receipt, and fresh public
+storefront rendering was not inspected. No upload or review mutation occurred.
+
+# Transcript editing regression — October 28, 2026
+
+Installed #336 acceptance exposed [#337](https://github.com/tomqwu/ListenToMe/issues/337):
+double-clicking selectable transcript text selected a word instead of opening the editor. The
+candidate now gives selection and editing to one native text control. Four production-row tests
+pass, including actual glyph clicks, partial refusal, Copy/accessibility and multiline/CJK resize
+with selection preservation. Independent review cleared the code and inspected both captures.
+BDD149, lint and a strictly signed sandbox build passed; full validation and CI subsequently passed
+on `d525760`, as recorded above.
+Native automation reported the Mac locked before installed candidate acceptance. No recording,
+permission changes, new installed pass, merge or release is claimed. Preserve the candidate and
+continue PR #318 before opening #334. [Evidence and remaining gates](transcript-interaction.md).
+
+# Full validation completed — October 28, 2026, 02:35 UTC
+
+PR #318 app/test source `95aaeaf` passed the complete `make validate-local` command: exit 0,
+child reaped, 2,237.75 seconds and all 929 tracked input hashes unchanged. Independent outcome
+review verified Core 1,262 tests/7 skips/98.2376439% coverage; iOS 79 UI/5 skips and 461 unit/7 skips;
+Mac 65; Watch 29 unit plus 5 UI; all native BDD bindings, helper checks and four real-server contracts.
+There were no failures. All three hosted checks passed on `95aaeaf`; documentation follow-ups do
+not change those tested application inputs. [Audited receipt](releases/mac-candidate-95aaeaf-validation.json).
+
+Remaining #336 installed near-end/overlap/repeated-speech/headphone/route and rendered edit/playback
+acceptance still prevents merge; the playback-only pass is insufficient. A later startup attempt
+had idle channels, no playback and working Stop; its permission readback and Dev cleanup exception
+are preserved in [the audio evidence](dual-channel-capture.md). No new release is claimed.
+
+The queued #223 8B reference screen then stopped before model inference because the slow tokenizer
+omitted the published fast tokenizer's terminal end-of-text token. Preserve its failed logs and
+frozen protocol; no language-quality result exists. Diagnose and review a separate corrected
+protocol before retrying. The #334 branch now includes `95aaeaf` at `e85733b`, with four focused
+native integration methods, BDD150 and lint passing plus independent review; fresh full integration
+validation and installed rename acceptance remain. No #334 PR is opened ahead of #318.
+
+
 # Speaker rename full integration validation — October 28, 2026, 03:30 UTC
 
 The complete `make validate-local BDD_BASE=95aaeaf` passed on speaker-rename app/test source

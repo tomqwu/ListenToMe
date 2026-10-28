@@ -1,0 +1,60 @@
+{
+  "source": "d525760677010c3c5890dff43894e635357f7165",
+  "command": [
+    "make",
+    "validate-local",
+    "IOS_DESTINATION=platform=iOS Simulator,id=9C01D410-5471-4862-9445-51922235F585",
+    "WATCH_DESTINATION=platform=watchOS Simulator,id=CA29C4DD-C130-4E20-B599-E6DCCE0FAEB7"
+  ],
+  "startedAt": "2026-10-28T04:20:49.058811+00:00",
+  "finishedAt": "2026-10-28T05:08:20.226180+00:00",
+  "exitCode": 0,
+  "reaped": true,
+  "elapsedSeconds": 2851.147992374841,
+  "trackedInputs": 934,
+  "hashMismatches": [],
+  "bddScenarios": 149,
+  "core": {
+    "tests": 1262,
+    "skips": 7,
+    "lineCoveragePercent": 98.23764392574607
+  },
+  "iosUI": {
+    "tests": 79,
+    "skips": 5
+  },
+  "iosUnit": {
+    "tests": 461,
+    "skips": 7
+  },
+  "macUnit": {
+    "tests": 69,
+    "skips": 0
+  },
+  "watchUnit": {
+    "tests": 29,
+    "skips": 0
+  },
+  "watchUI": {
+    "tests": 5,
+    "skips": 0
+  },
+  "failures": 0,
+  "realServerContracts": 4,
+  "nativeBindings": {
+    "iosUnit": 73,
+    "iosUI": 26,
+    "macUnit": 69,
+    "watchUnit": 29,
+    "watchUI": 5
+  },
+  "independentAudit": "review_247 independently verified counts, terminal exit, reaping, all bindings, four real-server contracts and 934 unchanged hashes",
+  "logSHA256": "12329e30954ba6756f629ba82ddee7ca48dbb84c4e451e9058706149afb47811",
+  "installedAcceptance": "Pending: signed-app transcript glyph double-click, pointer drag/Copy, context/accessibility Edit, Save/Cancel/empty Save; independent near-end, overlap, repeated speech, headphones, route changes and rendered delayed-line edit/playback",
+  "published": false,
+  "hostedCI": {
+    "source": "d525760677010c3c5890dff43894e635357f7165",
+    "run": 40631835123,
+    "checks": "All three required checks SUCCESS"
+  }
+}

@@ -45,7 +45,7 @@
       "name": "Double click an identified Mac speaker",
       "given": "a Mac transcript has an identified speaker label",
       "when": "the user double clicks that label or opens Rename speaker from its menu",
-      "then": "the speaker editor opens for that identity; ordinary single clicks and disabled labels cannot request a rename; live breakdown voices remain nameable before transcript attribution, restored identities update all matching lines, and unknown identities change nothing; delayed finalized lines retain chronological display order, recording identity, capture times and editing identity after renaming",
+      "then": "the speaker editor opens for that identity; ordinary single clicks and disabled labels cannot request a rename; live breakdown voices remain nameable before transcript attribution, restored identities update all matching lines, and unknown identities change nothing; delayed finalized lines retain chronological display order, recording identity, capture times and editing identity after renaming; double-clicking transcript words opens only the line editor while double-clicking the speaker label opens only the name sheet, and cancelling that sheet preserves both name and text",
       "covers": [
         "App/MacSpeakerNameButton.swift",
         "App/EditableTranscriptRow.swift",
@@ -74,6 +74,16 @@
           "suite": "mac-unit",
           "file": "macOSTests/MacSpeakerRenameTests.swift",
           "test": "MacSpeakerRenameTests/testRenameRestoredSpeakerAndIgnoreUnknownIdentity"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacTranscriptInteractionTests.swift",
+          "test": "MacTranscriptInteractionTests/testDoubleClickFinalRowOpensOnlyThatLineEditor"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacTranscriptInteractionTests.swift",
+          "test": "MacTranscriptInteractionTests/testSpeakerDoubleClickOpensNameSheetAndCancelKeepsTranscript"
         }
       ],
       "manual": {

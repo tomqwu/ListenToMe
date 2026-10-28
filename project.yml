@@ -215,6 +215,10 @@ targets:
       - iOS/MobileSpeakerFileWait.swift
       - iOS/MobileConversationDiarizer.swift
       - SharedPlatform/SpeakerAudioBuffer.swift
+      - App/EditableTranscriptRow.swift
+      - App/NativeTranscriptText.swift
+      - App/Theme.swift
+      - App/CommandCenterLabels.swift
       - App/HotkeyMonitor.swift
       - App/MacOperationErrors.swift
       - App/ReferenceSelectionStore.swift

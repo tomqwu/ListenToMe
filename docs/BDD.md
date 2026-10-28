@@ -260,6 +260,13 @@ failed two native assertions before restoring participant-first lookup. The same
 checks all restored lines change together and unknown IDs leave both labels and revision unchanged.
 ## Dual-channel audio and presentation
 
+`MACEDIT-001` hosts the production transcript row and sends native pointer events at actual glyphs.
+It checks the correct editor, partial-line refusal, selected-text Copy serialization, an accessible
+Edit action, and complete multiline/CJK layout after resizing while preserving selection on refresh.
+Programmatic selection in that native Copy test does not prove pointer-drag selection; installed
+signed-app drag/keyboard/menu and Save/Cancel acceptance remains separate. See
+[the regression evidence](transcript-interaction.md).
+
 `MACAUDIO-003` and `MACAUDIO-004` distinguish chronological display/persistent line identity from
 microphone echo control. The native lifecycle tests cover setup failures and route/profile state changes through injected drivers,
 recovery cooldown and terminal Stop. Playback-only OTHERS success is insufficient: separately
@@ -269,3 +276,12 @@ See [the #336 evidence and remaining acceptance](dual-channel-capture.md).
 The #334/#336 integration extends the restored-identity native test with delayed channel finals:
 renaming preserves chronological presentation and canonical line/run IDs, capture times and text.
 It passed on first execution and is recorded as integration coverage, not a new regression red.
+
+## Combined speaker and transcript gestures
+
+On the speaker-rename branch, `SPEAKER-018` also hosts the production row alongside `MACEDIT-001`.
+Native pointer events on transcript glyphs open only the line editor; speaker-label events open
+only the name sheet, and its Escape shortcut dismisses without changing the name or transcript.
+These additional integration assertions do not replace installed pointer, keyboard, menu, VoiceOver
+or persistence acceptance. The native sheet bitmap is diagnostic: missing button-label rendering
+prevents treating it as a complete visual pass.

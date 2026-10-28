@@ -130,6 +130,9 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 ## macOS (unreleased since 1.4.4)
 
 - Double-click an identified transcript speaker label, or choose **Rename speaker** from its context menu. Save updates that speaker across the conversation, including reopened conversations; Cancel leaves the name unchanged. (#334)
+- Restore double-click editing directly on finalized transcript text, with native phrase selection,
+  Copy and an accessible Edit line action. Keep wrapped text visible after resizing and retain
+  selections through unchanged-text refreshes. Partial recognition remains read-only. (#337)
 
 - Add native microphone echo control to reduce system playback appearing again as YOU. Refuse
   unprotected input when setup fails, and keep Stop authoritative across route recovery. (#336)
