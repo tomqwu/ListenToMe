@@ -1,0 +1,11 @@
+ListenToMe 1.20.1 (41) — recording continuity
+
+Start listening on iPhone or iPad, confirm Listening, then lock the screen or go Home. Speak known phrases, return, and check the same recording continues until Stop. With Save audio recordings enabled before Start, check playback across the locked interval. With it off, no playback audio should be retained. Calls, audio interruptions and route failures remain separate cases; Stop must prevent a late automatic restart.
+
+In Automatic transcription language, alternate longer passages between supported languages without changing Settings. A phrase that crosses a language-switch boundary should keep updating, finalize once and allow later language checks. Try Undo and Stop during preparation and replay. If replay stops producing progress despite sustained audio activity, one recovery attempt can continue from live audio and warn that some speech may be missing. Existing text must survive failure or cancellation.
+
+Automatic language detection uses a local model, not your summary provider. Its existing confidence, confirmation, 60-second recheck, 90-second dwell and four-switch limit remain. Optional language/speaker analysis, translation and AI summaries pause while the app is inactive or backgrounded. This is not seamless bilingual recognition while locked; the active speech recognizer continues in its current language.
+
+Check portrait, iPhone Duo landscape and wide iPad, the continued-recording notice, Settings and What's New. The Watch companion and on-device translation from 1.20.0 remain included. Physical lock, microphone, multilingual accuracy, Watch transfer and battery acceptance are still pending; automated simulator passes do not establish production readiness.
+
+Privacy: capture already started by you can now continue while locked. Starting an idle microphone from the background is blocked. Audio saving remains opt-in, files retain their existing protection, and no new background summary/correction request is started. An already executing local model may finish, but stale output is rejected. The selected AI provider and saved originals are preserved.

@@ -1,0 +1,101 @@
+{
+  "feature": "Native translation cancellation and installed-pair ownership",
+  "scenarios": [
+    {
+      "id": "TRANSLATENATIVE-001",
+      "name": "Cancel an owned native request without freeing its occupied worker",
+      "given": "an installed translation pair has an active request whose native completion is delayed",
+      "when": "the user cancels and tries another request before the old operation returns",
+      "then": "cancellation reaches the exact native request once, no replacement native operation starts until it exits, and its late text is rejected",
+      "covers": [
+        "SharedPlatform/AppleTranscriptTranslator.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/NativeAppleTranslationTests.swift",
+          "test": "NativeAppleTranslationTests/testCancelFencesLateTextAndKeepsRequestOwnedUntilItReturns"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/NativeAppleTranslationTests.swift",
+          "test": "NativeAppleTranslationTests/testCancelFencesLateTextAndKeepsRequestOwnedUntilItReturns"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/NativeAppleTranslationTests.swift",
+          "test": "NativeAppleTranslationTests/testConcurrentRequestCannotReplaceAnOwnedNativeRequest"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/NativeAppleTranslationTests.swift",
+          "test": "NativeAppleTranslationTests/testConcurrentRequestCannotReplaceAnOwnedNativeRequest"
+        }
+      ]
+    },
+    {
+      "id": "TRANSLATENATIVE-002",
+      "name": "Propagate caller cancellation and cancel delayed pair readiness",
+      "given": "a translation task is waiting for installed-pair readiness or native completion",
+      "when": "the caller task is cancelled or the user cancels before readiness returns",
+      "then": "an active native request is cancelled, a cancelled readiness check never starts native translation, and late text never returns as a successful result",
+      "covers": [
+        "SharedPlatform/AppleTranscriptTranslator.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/NativeAppleTranslationTests.swift",
+          "test": "NativeAppleTranslationTests/testCallerCancellationReachesNativeRequest"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/NativeAppleTranslationTests.swift",
+          "test": "NativeAppleTranslationTests/testCallerCancellationReachesNativeRequest"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/NativeAppleTranslationTests.swift",
+          "test": "NativeAppleTranslationTests/testCancelledReadinessNeverConstructsNativeRequest"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/NativeAppleTranslationTests.swift",
+          "test": "NativeAppleTranslationTests/testCancelledReadinessNeverConstructsNativeRequest"
+        }
+      ]
+    },
+    {
+      "id": "TRANSLATENATIVE-003",
+      "name": "Preserve exact installed language selection and original text",
+      "given": "the adapter reports an installed English to Simplified Chinese pair or a pair needing setup or unsupported",
+      "when": "translation is requested with the original text and explicit language identifiers",
+      "then": "only the installed pair constructs a native request using the exact original text and language identifiers; unavailable pairs cannot translate or download, with real installed-model output acceptance recorded separately",
+      "covers": [
+        "SharedPlatform/AppleTranscriptTranslator.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/NativeAppleTranslationTests.swift",
+          "test": "NativeAppleTranslationTests/testInstalledNativePairUsesExactOriginalTextAndExplicitTarget"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/NativeAppleTranslationTests.swift",
+          "test": "NativeAppleTranslationTests/testInstalledNativePairUsesExactOriginalTextAndExplicitTarget"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/NativeAppleTranslationTests.swift",
+          "test": "NativeAppleTranslationTests/testNativePairReadinessPreventsUnpreparedTranslationAndNeverSubstitutesLanguages"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/NativeAppleTranslationTests.swift",
+          "test": "NativeAppleTranslationTests/testNativePairReadinessPreventsUnpreparedTranslationAndNeverSubstitutesLanguages"
+        }
+      ]
+    }
+  ]
+}

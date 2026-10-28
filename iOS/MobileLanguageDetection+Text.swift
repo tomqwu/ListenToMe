@@ -65,11 +65,12 @@ extension MobileLanguageDetection {
     /// switched" when a re-check found the change part-way through. A switch that could not transcribe
     /// the recording so far again says that only new speech is in the new language.
     var noticeText: String? {
-        notice.map {
+        let base = notice.map {
             guard $0.replayed else { return "Detected \(Self.languageName($0.detected)) · switched for new speech" }
             let from = $0.fromRecordingStart ? "" : " from \(Self.clock($0.since))"
             return "Detected \(Self.languageName($0.detected))\(from) · switched"
         }
+        return base.map { $0 + (replayRecoveryMessage.map { " · " + $0 } ?? "") }
     }
 }
 

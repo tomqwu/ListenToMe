@@ -46,13 +46,13 @@ extension MobileSession {
     /// short recording costs one pass, at Stop.
     func startSpeakerLoop() {
         speakerLoop?.cancel()
-        guard speakers.isRunning else { speakerLoop = nil; return }
+        guard !auxiliaryWorkSuspended, speakers.isRunning else { speakerLoop = nil; return }
         let sleep = speakerSleep
         speakerLoop = Task { [weak self] in
             var delay = SpeakerAnalysisPolicy.minimumRest
             while !Task.isCancelled {
                 do { try await sleep(delay); try Task.checkCancellation() } catch { return }
-                guard let self, self.state == .recording else { return }
+                guard let self, !self.auxiliaryWorkSuspended, self.state == .recording else { return }
                 delay = await self.periodicSpeakerPass()
             }
         }
@@ -74,9 +74,12 @@ extension MobileSession {
     /// restricts it to one recording's run; the result is dropped if the open conversation changed.
     @discardableResult
     func runSpeakerPass(token: Int? = nil, final: Bool = false) async -> SpeakerAnalysisOutcome {
+        guard !auxiliaryWorkSuspended else { return .completed }
         let conversation = id
         let run = token ?? speakers.runToken
-        if let pass = await speakers.analyze(token: run, final: final), id == conversation, speakers.runToken == run {
+        let generation = speakers.processingGeneration
+        if let pass = await speakers.analyze(token: run, final: final), !auxiliaryWorkSuspended,
+           speakers.processingGeneration == generation, id == conversation, speakers.runToken == run {
             applySpeakerLabels(pass)
         }
         return speakers.isUnavailable ? .modelsUnavailable : .completed
@@ -93,7 +96,7 @@ extension MobileSession {
         speakerLoop?.cancel()
         speakerLoop = nil
         guard speakers.isRunning else { return }
-        guard isForeground, speakers.modelsReady else { speakers.endRun(); return }
+        guard isForeground, !auxiliaryWorkSuspended, speakers.modelsReady else { speakers.endRun(); return }
         let token = speakers.runToken
         speakerFinalPass = Task { [weak self] in
             guard let self else { return }
@@ -113,7 +116,7 @@ extension MobileSession {
     /// Prepares the speaker models at a foreground launch (or return) with Identify speakers on, so the
     /// first recording does not wait for a pass to download them (#195). Never in the background.
     func prepareSpeakerModelsIfNeeded() {
-        guard isForeground else { return }
+        guard isForeground, !auxiliaryWorkSuspended, applicationIsActive() else { return }
         speakers.startPreparing()
     }
 

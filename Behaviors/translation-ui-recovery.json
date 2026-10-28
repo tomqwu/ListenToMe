@@ -1,0 +1,25 @@
+{
+  "feature": "Summary translation progress and cancellation",
+  "scenarios": [
+    {
+      "id": "TRANSLATEUI-001",
+      "name": "Cancel a pending summary translation without losing the original",
+      "given": "a completed original summary and an installed local translation request whose completion is delayed",
+      "when": "the user starts translation and cancels it before the native result returns",
+      "then": "Translate is disabled while busy, Cancel translation is reachable, closing and reopening explains draining work, the original stays readable, and a late result cannot reappear or start recording",
+      "covers": [
+        "SharedPlatform/SummaryTranslationPanel.swift",
+        "SharedPlatform/ConversationLanguageControls.swift",
+        "SharedPlatform/TranslationPreviewTranslator.swift",
+        "iOS/MobileDesignFixture.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileTranslationUITests.swift",
+          "test": "MobileTranslationUITests/testPendingSummaryTranslationCanBeCancelledAndLateResultStaysHidden"
+        }
+      ]
+    }
+  ]
+}

@@ -38,7 +38,7 @@ What each release contains is in [CHANGELOG.md](../CHANGELOG.md); this is only t
   server or an opt-in Cloud AI service, Quick Summary and Summary (Deep is macOS-only), Save to
   folder, export formats, semantic History search and Ask your history, vocabularies, opt-in saved
   audio and Summarize selection.
-- **Apple Watch** source now embeds the companion by default. Its [beta preparation](watch-beta.md) includes explicit upload eligibility and native recovery/cancellation fixes; it is not yet distributed ([#181](https://github.com/tomqwu/ListenToMe/issues/181)). Physical/production acceptance remains pending.
+- **Apple Watch** is included in TestFlight **1.20.2 (42)** and public iOS **1.19.1 (39)** ([#181](https://github.com/tomqwu/ListenToMe/issues/181)). The [current beta receipt](releases/ios-1.20.2-build42.json), [public release receipt](releases/ios-1.19.1-build39-public.json) and [Watch guide](watch-beta.md) record distribution separately from physical microphone, paired-transfer, wrist-down and production acceptance, which remain pending.
 
 The earlier cockpit redesign PR #51 is superseded by the shipped save/new/history layout and the
 [September design direction](reviews/2026-09-10/production-roadmap.md). It is not in progress.
@@ -72,4 +72,4 @@ Exploratory work must preserve explicit consent, local storage and truthful priv
 
 [Issue #330](https://github.com/tomqwu/ListenToMe/issues/330) implements opt-in live translation and a
 Translate option on the existing Summary page. [The feature guide](translation.md) records scope
-and verification boundaries; it is unreleased and does not add summary length/format controls.
+and verification boundaries; translation is in TestFlight 1.20.2 (42), remains unreleased on Mac, and does not add summary length/format controls. [Issue #343](https://github.com/tomqwu/ListenToMe/issues/343) has its fix merged and published in TestFlight 1.20.2 (42); [publication receipt](releases/ios-1.20.2-build42.json) and [recovery evidence](translation-recovery.md) keep physical acceptance separate.

@@ -12,7 +12,8 @@ extension MobileSession {
     /// opt-in AI correction.
     func checkSpeech(_ segment: TranscriptSegment) {
         considerVocabularySuggestion(segment)
-        guard ai.correctTranscript, acceptsSpeechCorrection else { return }
+        guard ai.correctTranscript, acceptsSpeechCorrection, !auxiliaryWorkSuspended,
+              isForeground, applicationIsActive() else { return }
         let sessionID = id
         // Only nearby recognized speech is sent. Notes, attachments and audio are excluded.
         let context = segments.dropLast().suffix(4).map { $0.originalText ?? $0.text }.joined(separator: "\n")
@@ -24,6 +25,7 @@ extension MobileSession {
             speechCorrection.submit(segment, context: context, glossary: { lookup.glossary(for: phrase) },
                                     model: ai.correctionModel, provider: provider) { [weak self] result in
                 guard let self, self.id == sessionID, self.ai.correctTranscript,
+                      !self.auxiliaryWorkSuspended, self.isForeground, self.applicationIsActive(),
                       let index = self.segments.firstIndex(where: { $0.id == segment.id && $0.text == segment.text }) else { return }
                 // Speaker identification may have labeled or renamed the line while it was corrected.
                 var corrected = result

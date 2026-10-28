@@ -64,6 +64,7 @@ struct TranslationLanguageChoices: View {
             }
             if !worker.problems.isEmpty, !preparing {
                 Button("Retry translation", systemImage: "arrow.clockwise") { worker.retry() }
+                    .disabled(worker.isTranslating || worker.isDraining)
                     .accessibilityIdentifier("retryTranslation")
             }
             if let preparationError {

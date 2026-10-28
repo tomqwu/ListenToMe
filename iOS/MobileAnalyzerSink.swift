@@ -99,6 +99,12 @@ final class AnalyzerSink: @unchecked Sendable {
     private func copy(_ chunk: AudioChunk) {
         speakerAudio?.append(samples: chunk.samples, sampleRate: chunk.sampleRate, timestamp: 0,
                              generation: speakerGeneration)
+        if let speakerAudio {
+            // Periodic diarization pauses while locked. Keep its existing trailing-window bound
+            // at the native audio boundary rather than relying on a model-loop tick to release it.
+            let window = Int(SpeakerAnalysisPolicy.maximumWindow) * SpeakerAnalysisPolicy.sampleRate
+            speakerAudio.discardAudio(before: max(0, speakerAudio.sampleCount - window))
+        }
         languageAudio?.append(samples: chunk.samples, sampleRate: chunk.sampleRate, timestamp: 0,
                               generation: languageGeneration)
         languageAudio?.keepTrailingLanguageAudio()   // about two minutes, for re-checks and replays (#199)

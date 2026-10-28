@@ -2,11 +2,24 @@ import XCTest
 
 @MainActor
 final class MobileTranscriptUITests: XCTestCase {
+    override func setUp() async throws {
+        try await super.setUp()
+        XCUIDevice.shared.orientation = .portrait
+    }
+
+    override func tearDown() async throws {
+        XCUIDevice.shared.orientation = .portrait
+        try await super.tearDown()
+    }
+
     func testCompactTranscriptFollowsPartialAndFinalTextButRespectsReadingHistory() {
         let app = XCUIApplication()
         // A preceding correction test must not add a setup banner to this geometry fixture.
-        app.launchArguments = ["--transcript-scroll-fixture", "-mobileCorrectTranscript", "NO"]
+        app.launchArguments = ["--transcript-scroll-fixture", "-mobileCorrectTranscript", "NO", "-mobileIdentifySpeakers", "YES"]
         app.launchPastReleaseNotes()
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@", "Speaker labels on"),
+                                             object: app.staticTexts["captureStatus"])
+        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 5), .completed)
         XCTAssertTrue(app.buttons["Start listening"].isEnabled, "Transcript geometry uses an explicit supported profile")
         XCTAssertFalse(app.staticTexts["recordingSupportReason"].exists)
         let scroll = app.scrollViews["transcriptScroll"]
@@ -56,9 +69,13 @@ final class MobileTranscriptUITests: XCTestCase {
 
     func testLargeTextUsesLatestPreviewAndExpandedHistory() {
         let app = XCUIApplication()
-        app.launchArguments = ["--transcript-scroll-fixture", "-mobileCorrectTranscript", "NO", "-UIPreferredContentSizeCategoryName",
+        app.launchArguments = ["--transcript-scroll-fixture", "-mobileCorrectTranscript", "NO", "-mobileIdentifySpeakers", "YES",
+                               "-UIPreferredContentSizeCategoryName",
                                "UICTContentSizeCategoryAccessibilityXXXL"]
         app.launchPastReleaseNotes()
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@", "Speaker labels on"),
+                                             object: app.staticTexts["captureStatus"])
+        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 5), .completed)
         let outer = app.scrollViews["dashboardScroll"]
         XCTAssertTrue(outer.waitForExistence(timeout: 5))
         XCTAssertFalse(app.scrollViews["transcriptScroll"].exists, "The preview must not create nested scrolling")
@@ -79,8 +96,11 @@ final class MobileTranscriptUITests: XCTestCase {
 
     func testLongTranscriptRemainsResponsiveAndPreservesReadingPosition() {
         let app = XCUIApplication()
-        app.launchArguments = ["--transcript-scroll-fixture", "--long-transcript-fixture", "-mobileCorrectTranscript", "NO"]
+        app.launchArguments = ["--transcript-scroll-fixture", "--long-transcript-fixture", "-mobileCorrectTranscript", "NO", "-mobileIdentifySpeakers", "YES"]
         app.launchPastReleaseNotes()
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@", "Speaker labels on"),
+                                             object: app.staticTexts["captureStatus"])
+        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 5), .completed)
         let scroll = app.scrollViews["transcriptScroll"]
         XCTAssertTrue(scroll.waitForExistence(timeout: 10))
         expectLatestVisible(in: scroll)

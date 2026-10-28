@@ -25,7 +25,31 @@ does not show it again, and a fresh install does not see it at all; see
   local BDD-verification failure; it does not change an app feature or count a failed aggregate run
   as passing.
 
-## iOS (unreleased since 1.19.1 (39))
+## iOS (unreleased)
+
+## iOS 1.20.2 (42) — 2026-10-28 (TestFlight)
+
+Apple accepted **1.20.2 (42)** through the official TestFlight helper at **2026-10-28T21:11:37.664213+00:00** from `a6b90e83f775cc9dc88df3c2805ecacedca044af`. Apple build `8967f095-470f-40c0-aba0-b1188bbb699c` is **VALID / IN_BETA_TESTING**. Readback at 2026-10-28T21:15:33.796221+00:00 confirms **en-US**, **Listen To Me - Real Time AI**, exact beta description/What to Test and unchanged access for the existing two-member Dev group. Access does not establish physical installation of build 42. [Publication receipt](docs/releases/ios-1.20.2-build42.json). Physical phone translation/lock-screen/multilingual and Watch acceptance remain pending. Public production remains **1.19.1 (39)**; this beta made no new public submission or listing-media upload. Mac changes remain unreleased and keep separate installed-app acceptance gates.
+
+- Stop indefinite translation progress after a stalled on-device request, add Cancel translation and disable duplicate Translate/Retry actions until native work safely exits. Cancel the actual Apple session and reject late results/timers while preserving originals, language-pack consent and AI-provider choices. (#343)
+
+
+## iOS 1.20.1 (41) — 2026-10-28 (TestFlight)
+
+Apple accepted **1.20.1 (41)** through the official TestFlight helper at **2026-10-28T19:02:09.198475+00:00** from `dc6b2e39a99568fb4931e937c555fa0de0f2ff18`. Apple processing is **VALID / IN_BETA_TESTING**, with en-US metadata and unchanged existing Dev group access verified. [Publication receipt](docs/releases/ios-1.20.1-build41.json). Full local validation and fresh seven-profile screenshot review passed. Physical screen-lock recording, native multilingual recognition and Watch acceptance remain unverified. Public production remains 1.19.1 (39); this beta made no new public submission or listing update.
+
+- Keep an established iPhone/iPad microphone recording active when the screen locks or the app backgrounds. Preserve the same session, transcript and opted-in audio until Stop or an audio interruption. Cancel a pending Start before a delayed callback can open the microphone in the background. (#339)
+- Keep live words visible when an utterance crosses an automatic language-switch replay boundary, finalize it once and allow later language checks. After sustained audio activity without replay progress, attempt one recovery from live audio, preserve existing text and show a possible-gap notice. Stop, Undo and cancelled work stay bound to the correct recording. (#339)
+- Pause optional AI work while inactive, reject obsolete results and retain bounded speaker/language buffers for the continuing recording. Keep provider and audio-saving choices unchanged. A visible recording notice explains the behavior. (#339)
+
+Privacy: user-started microphone capture can now continue while locked; backgrounding never starts idle capture. Saved audio remains opt-in with unchanged file protection. Language detection stays on-device, and optional background summary/correction requests do not start. Already executing local work may finish, but obsolete output is rejected. Language recheck confidence, cadence and switch limits are unchanged; this is not seamless bilingual recognition while locked.
+
+## iOS 1.20.0 (40) — 2026-10-28 (TestFlight)
+
+Apple accepted **1.20.0 (40)** through the official TestFlight helper (receipt recorded 2026-10-28T13:56:43.061187+00:00) from `4a72489120fda713c6d117c3d6c3dc661cf1dd9e`. Apple build `93926f6c-0137-49fe-bc06-f73f04f831f5` is **VALID / IN_BETA_TESTING**, with existing Dev group access verified at 2026-10-28T14:06:21.847671+00:00. English (US) localized name, beta description and What to Test match the intended metadata. Group membership does not establish physical installation of build 40.
+[Publication receipt](docs/releases/ios-1.20.0-build40.json).
+Physical translation quality and Watch/phone acceptance remain unverified. The public production
+baseline is 1.19.1 (39). This beta did not submit a new public App Store version.
 
 - Add opt-in on-device translation beneath finalized transcript lines, plus **Translate summary**
   on the Summary page with its own target language and original summary retained. Check exact
@@ -126,6 +150,8 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 - Settings → Privacy now explains that optional Ollama, Cloud AI and OpenAI-compatible requests send text and included context to the provider you choose; Apple Intelligence stays on-device. (#247)
 
 ## macOS (unreleased since 1.4.4)
+
+- Stop indefinite translation progress after a stalled on-device request, add Cancel translation and disable duplicate Translate/Retry actions until native work safely exits. Cancel the actual Apple session and reject late results/timers while preserving originals, language-pack consent and AI-provider choices. (#343)
 
 - Restore double-click editing directly on finalized transcript text, with native phrase selection,
   Copy and an accessible Edit line action. Keep wrapped text visible after resizing and retain

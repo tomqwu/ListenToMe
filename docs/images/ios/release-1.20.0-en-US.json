@@ -1,0 +1,1297 @@
+{
+  "candidateSource": "e43a7b5c241e4a58d806f42651dc760d996951be",
+  "version": "1.20.0",
+  "build": "40",
+  "locale": "en-US",
+  "captureKind": "Debug simulator synthetic fixtures; not physical-device or model-quality acceptance",
+  "listingUploaded": false,
+  "sets": [
+    {
+      "category": "iphone-pro",
+      "device": "73A5BD90-16AF-430A-877B-94393498412D",
+      "deviceType": "iPhone-17-Pro",
+      "runtime": "iOS-26-5",
+      "assets": [
+        {
+          "name": "06 Settings_0_C30F25EA-281F-46FB-9AE9-DEE619FADCF9.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "device": "73A5BD90-16AF-430A-877B-94393498412D",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-pro/originals/7E53BF58-4FEE-4706-9CB2-4B325CDCAA8B.png",
+          "originalSHA256": "da3e092b9309ccff444c18439f9381de403ec3ec721cd50070849ec026f02caa",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-pro/normalized/7E53BF58-4FEE-4706-9CB2-4B325CDCAA8B.png",
+          "normalizedSHA256": "8681746c2f3d7d8ade36669fe0089a712ca2d2f63af74f5205ccc61cec8f0d9e",
+          "pixels": [
+            1206,
+            2622
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        },
+        {
+          "name": "05 Conversation history_0_C5DFAB89-BA0A-4109-BDB9-2E60FA271637.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "device": "73A5BD90-16AF-430A-877B-94393498412D",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-pro/originals/BEF55C36-75D5-4AB3-827A-D66C48157676.png",
+          "originalSHA256": "15f0c37fa09b1ebe1fc1042d90c81b2ceaaad3e83879fe05939810bfe7f1b807",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-pro/normalized/BEF55C36-75D5-4AB3-827A-D66C48157676.png",
+          "normalizedSHA256": "af5a53636c2a7a645ea900c8b80eaf90d18a7e345f55690b0b11c2ef9c2a4ba3",
+          "pixels": [
+            1206,
+            2622
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        },
+        {
+          "name": "04 Summary portrait_0_D5AAF775-C837-4166-8068-FD731CAA5F51.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "device": "73A5BD90-16AF-430A-877B-94393498412D",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-pro/originals/934BD2A8-03D5-4E17-956A-CA63A998B27E.png",
+          "originalSHA256": "70e13372f599944233043fd5afb5b09e6e9f934a0387df05fa031f2c4b1878b3",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-pro/normalized/934BD2A8-03D5-4E17-956A-CA63A998B27E.png",
+          "normalizedSHA256": "6f49615fc98a96f21e926917fc24046d93eb94c1aebd4f637a9892ea9a6be6d8",
+          "pixels": [
+            1206,
+            2622
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        },
+        {
+          "name": "03 Conversation prompt_0_951D3310-B560-4967-B082-D305556BB40A.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "device": "73A5BD90-16AF-430A-877B-94393498412D",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-pro/originals/D9B36D2A-B208-4333-A0C2-D0BDB867ED04.png",
+          "originalSHA256": "dc013ad93ae3fb43d0426237704fb5bafb10b2c0d7a72a7b9005f14426ad0676",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-pro/normalized/D9B36D2A-B208-4333-A0C2-D0BDB867ED04.png",
+          "normalizedSHA256": "f9b70b0db255232e1d8f30a1a744d9e8bb0259efc4a3319a056aad64b9a9739b",
+          "pixels": [
+            1206,
+            2622
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        },
+        {
+          "name": "02 Live landscape_0_83CFD6DA-E074-4FD7-A74E-632348336F01.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "device": "73A5BD90-16AF-430A-877B-94393498412D",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-pro/originals/48B67100-0DC6-411E-A2C0-A8BB013A30EF.png",
+          "originalSHA256": "c4e9e39074606b6efb933a7f5ccce54e9a501547781115cf08852c17221e089d",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "exifOrientation": 8,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-pro/normalized/48B67100-0DC6-411E-A2C0-A8BB013A30EF.png",
+          "normalizedSHA256": "89e6de7d61b938737e2abf5e92c5ca59f902a6fbc444f560e4cbd29e6cb9e8ef",
+          "pixels": [
+            2622,
+            1206
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "qa-only",
+          "listingSelected": false
+        },
+        {
+          "name": "01 Live portrait_0_D16DBA3E-7B3C-4FD8-B2E9-65D2697C6C6F.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "device": "73A5BD90-16AF-430A-877B-94393498412D",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-pro/originals/0FE65B67-F0DB-4B22-87D6-17DF45BADCC9.png",
+          "originalSHA256": "ed7766f5f20480ba296d5185063ee4fd706e6399b00d36b0795319b949056e5d",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-pro/normalized/0FE65B67-F0DB-4B22-87D6-17DF45BADCC9.png",
+          "normalizedSHA256": "930263764a51f1d82782653b05050695ec05afa3c73db0bda5e480449274b044",
+          "pixels": [
+            1206,
+            2622
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "qa-only",
+          "listingSelected": false
+        },
+        {
+          "name": "Original transcript and translation in Duo or iPad wide layout_0_EA7F2536-CD87-47F6-9FEF-AADED6BD0F0E.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal()",
+          "device": "73A5BD90-16AF-430A-877B-94393498412D",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-pro/originals/A510FD69-D16D-4007-87FF-4CC7864E0167.png",
+          "originalSHA256": "04cdf251bd2b361ffa2bc817d74c82346f382eb181821838d9da3633a45ce861",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "exifOrientation": 8,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-pro/normalized/A510FD69-D16D-4007-87FF-4CC7864E0167.png",
+          "normalizedSHA256": "61fc36b3528cf82aab5ed93e29087934a0dc9fb4600bc151ccb57de6d8d2820d",
+          "pixels": [
+            2622,
+            1206
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "qa-only",
+          "listingSelected": false
+        },
+        {
+          "name": "Original transcript and on-device translation portrait_0_74430E61-A832-40E3-8757-BD9E4B2A6C56.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal()",
+          "device": "73A5BD90-16AF-430A-877B-94393498412D",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-pro/originals/191C80F0-EEF4-4F83-BCDD-DFED9F7348C7.png",
+          "originalSHA256": "54274a0d70f3019439143ac82d8b0df6ae61463fd1cdec6464116b3fdf4d8e9c",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-pro/normalized/191C80F0-EEF4-4F83-BCDD-DFED9F7348C7.png",
+          "normalizedSHA256": "c329ca15aa8fce50ac5672948eb9feee2cc01f6914568c709360e9baa49a4f37",
+          "pixels": [
+            1206,
+            2622
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "qa-only",
+          "listingSelected": false
+        },
+        {
+          "name": "Live translation options_0_2F4357B7-3119-4D1C-989E-239E1F1D51CC.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal()",
+          "device": "73A5BD90-16AF-430A-877B-94393498412D",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-pro/originals/59397D51-1DED-4501-B420-E7B963D30A0F.png",
+          "originalSHA256": "a83b09a77507bc22efdef711b743e1d3d33a4ea2fe735cf8c3975766508079e9",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-pro/normalized/59397D51-1DED-4501-B420-E7B963D30A0F.png",
+          "normalizedSHA256": "535a5cb75a9659af4c0a3c4a15cb485e4ed5c51459d20c2cd38ab049c5735d4e",
+          "pixels": [
+            1206,
+            2622
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        },
+        {
+          "name": "Summary page French translation beside original_0_6385901D-CE55-42FB-A52E-096A6EB45B5F.png",
+          "testIdentifier": "MobileTranslationUITests/testSummaryPageOffersExplicitTranslationAndKeepsOriginal()",
+          "device": "73A5BD90-16AF-430A-877B-94393498412D",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-pro/originals/BB74DE92-A0C9-4A2F-ADAD-DCA38D591B15.png",
+          "originalSHA256": "2c72b328bba41cb1ca221577b58897329a4505bab94f8c12e819f3163c22de6d",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-pro/normalized/BB74DE92-A0C9-4A2F-ADAD-DCA38D591B15.png",
+          "normalizedSHA256": "4878dfa4d8d775666a4402de383f9cf4b59d064ae406906bbcd57eba2e020882",
+          "pixels": [
+            1206,
+            2622
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "qa-only",
+          "listingSelected": false
+        }
+      ],
+      "visualReviewer": "review_prompt_feature",
+      "reviewNotes": "Live portrait/base Duo have incomplete speech and Latest overlay; translated portrait/Duo show clipped original fragment; French summary captures only first paragraph with original offscreen. QA-only frames are not approved store media. No proven functional layout defect."
+    },
+    {
+      "category": "iphone-max",
+      "device": "96662902-12B9-4179-BB9A-B23BFC731FDD",
+      "deviceType": "iPhone-17-Pro-Max",
+      "runtime": "iOS-26-5",
+      "assets": [
+        {
+          "name": "06 Settings_0_0BD6D85D-477F-4585-A772-80F5EBF0E29B.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "device": "96662902-12B9-4179-BB9A-B23BFC731FDD",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-max/originals/0BDCA1DC-8A9B-452D-9B52-724B7D68ACA5.png",
+          "originalSHA256": "1150ecc1f4ac6c514c28c37d7dd0b9312a9f59f77fc1868c71221b557268d8eb",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-max/normalized/0BDCA1DC-8A9B-452D-9B52-724B7D68ACA5.png",
+          "normalizedSHA256": "6216c11694d4708e0a43461bbde416fe3126eb47c4dd143c30abaa67054bc4b1",
+          "pixels": [
+            1320,
+            2868
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        },
+        {
+          "name": "05 Conversation history_0_26DC0A5F-9591-484C-A1C2-30DB4973E57C.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "device": "96662902-12B9-4179-BB9A-B23BFC731FDD",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-max/originals/A5640337-E033-4218-B23F-3608E290F839.png",
+          "originalSHA256": "e49a8b8546a3fed3e8cb8d714526f2fb2da4a5a9e09d1601055b76b635b18630",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-max/normalized/A5640337-E033-4218-B23F-3608E290F839.png",
+          "normalizedSHA256": "cbe30486aa33d9e94a2f668f0b1b6c57253b55dd34d687f298998e7a925b4a6e",
+          "pixels": [
+            1320,
+            2868
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        },
+        {
+          "name": "04 Summary portrait_0_3E5A1D84-C56E-46A5-BD1D-970E8B6049D5.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "device": "96662902-12B9-4179-BB9A-B23BFC731FDD",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-max/originals/5A2DBAA5-2F22-4760-8367-72E3CF9E640D.png",
+          "originalSHA256": "0259c3096acfb096fa3d436d148a1a66d493fd0ddb3265762a395b3393e8cca6",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-max/normalized/5A2DBAA5-2F22-4760-8367-72E3CF9E640D.png",
+          "normalizedSHA256": "d3070ca0f2d202b94e1ec9d86fa689be4fcba9887c39eefca3303cf90ab8af62",
+          "pixels": [
+            1320,
+            2868
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        },
+        {
+          "name": "03 Conversation prompt_0_26B95121-7025-4993-9C7B-7900E1B43936.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "device": "96662902-12B9-4179-BB9A-B23BFC731FDD",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-max/originals/86443466-6303-4F38-AFD1-A21317F93FD1.png",
+          "originalSHA256": "0d660580318b13a57c6ff8c841a3c2285c605a350e817e13ea971010aafd70a0",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-max/normalized/86443466-6303-4F38-AFD1-A21317F93FD1.png",
+          "normalizedSHA256": "8bef3ec7bc33d2dd171bbb40be3711d7eb5911d1c4b24c75af8777663b118e03",
+          "pixels": [
+            1320,
+            2868
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        },
+        {
+          "name": "02 Live landscape_0_9CE8D1EB-5AB3-43FF-9D1C-34953CC7E0F2.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "device": "96662902-12B9-4179-BB9A-B23BFC731FDD",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-max/originals/782B3A31-BE85-45FF-B57B-0C0A261E58A8.png",
+          "originalSHA256": "c342d27bac54efabdce0c43475ff8af27bca9444eaa14a841eb181ebd97f72d2",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "exifOrientation": 8,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-max/normalized/782B3A31-BE85-45FF-B57B-0C0A261E58A8.png",
+          "normalizedSHA256": "9d8518c1ca750be6d0426203448a05e2e35d0309ba644530f07b150b3b8c4fd4",
+          "pixels": [
+            2868,
+            1320
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "qa-only",
+          "listingSelected": false
+        },
+        {
+          "name": "01 Live portrait_0_BB8E74C2-7A91-4FAD-B637-B792A186C258.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "device": "96662902-12B9-4179-BB9A-B23BFC731FDD",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-max/originals/63C6E068-817A-45ED-A4E8-3D3E005264E6.png",
+          "originalSHA256": "a2716f95f8a412f8576fe2844358e0fad1cb352fbe25de638bcb7dcabdd38b40",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-max/normalized/63C6E068-817A-45ED-A4E8-3D3E005264E6.png",
+          "normalizedSHA256": "92a48601184888c71f02ed2b06c0dd12e8e8dc45ea769c71e37db38c85495cc5",
+          "pixels": [
+            1320,
+            2868
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "qa-only",
+          "listingSelected": false
+        },
+        {
+          "name": "Original transcript and translation in Duo or iPad wide layout_0_95B62EC9-2B3A-4244-BCFB-15C20365E657.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal()",
+          "device": "96662902-12B9-4179-BB9A-B23BFC731FDD",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-max/originals/2581868D-3185-47F5-85A8-6457D0DEE3E7.png",
+          "originalSHA256": "203b116912cf51b021cd522cbe79cb30227fd2ad3b9ed4153e627f7d689fbcc8",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "exifOrientation": 8,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-max/normalized/2581868D-3185-47F5-85A8-6457D0DEE3E7.png",
+          "normalizedSHA256": "ca984e7c9bad45f5114510b1bbc6d06d48f45e885ecd7e1c8caa7aa04be371b8",
+          "pixels": [
+            2868,
+            1320
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "qa-only",
+          "listingSelected": false
+        },
+        {
+          "name": "Original transcript and on-device translation portrait_0_966CE94F-B6B8-4077-9A79-5D1AE70BDCA8.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal()",
+          "device": "96662902-12B9-4179-BB9A-B23BFC731FDD",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-max/originals/C0DD33F7-6200-4CC5-AD38-62173E48A4FC.png",
+          "originalSHA256": "e23a98feb5b8059f1f01e14506f60d5e052e99f86a783d74adcf80a493d72828",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-max/normalized/C0DD33F7-6200-4CC5-AD38-62173E48A4FC.png",
+          "normalizedSHA256": "040a5ce29d99881a324e224b44ebd35b71b855fbc4d3d1f5718f612c9bf2c735",
+          "pixels": [
+            1320,
+            2868
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        },
+        {
+          "name": "Live translation options_0_FC8A9662-8D73-4457-BE02-ACB93EF4EAB6.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal()",
+          "device": "96662902-12B9-4179-BB9A-B23BFC731FDD",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-max/originals/24CD3EF1-5DA6-4E4A-A87D-3DC6FB1B585D.png",
+          "originalSHA256": "6c3d44574567b64d4430c946f771aedc831e48647bb3c5ef2dfc1869a8f4023a",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-max/normalized/24CD3EF1-5DA6-4E4A-A87D-3DC6FB1B585D.png",
+          "normalizedSHA256": "2c08f8b09e146a2fed011a62b88ed0ececbb6674df3a08eff373f3022735caaf",
+          "pixels": [
+            1320,
+            2868
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        },
+        {
+          "name": "Summary page French translation beside original_0_1D35F7CD-6C35-4655-89D8-BCBE0F7297C2.png",
+          "testIdentifier": "MobileTranslationUITests/testSummaryPageOffersExplicitTranslationAndKeepsOriginal()",
+          "device": "96662902-12B9-4179-BB9A-B23BFC731FDD",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-max/originals/43CFB5E8-2E11-4527-8FDF-4F47E462842E.png",
+          "originalSHA256": "bbeb7095b128e2cc3f5667a352dbb111f5101be1abca3991c27c11b2ffc335f5",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-iphone-max/normalized/43CFB5E8-2E11-4527-8FDF-4F47E462842E.png",
+          "normalizedSHA256": "a8a72c03c4b10813306dccd5dac20c1040855609f45e8908afa1eb8922a00e6e",
+          "pixels": [
+            1320,
+            2868
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "qa-only",
+          "listingSelected": false
+        }
+      ],
+      "visualReviewer": "review_prompt_feature",
+      "reviewNotes": "Live portrait has Latest overlay; base landscape clips transcript/Quick; translated Duo clips final Quick bullet; translated summary clips last bullet and does not show original. Scrolling may improve composition; no product inaccessibility proven."
+    },
+    {
+      "category": "ipad-mini",
+      "device": "5A8163E7-64B5-4FE3-928E-0D2D67AD84CC",
+      "deviceType": "iPad-mini-A17-Pro",
+      "runtime": "iOS-26-5",
+      "assets": [
+        {
+          "name": "06 Settings_0_F24C3E3F-582B-40AB-9CB8-351B73FC42EA.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "device": "5A8163E7-64B5-4FE3-928E-0D2D67AD84CC",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-mini/originals/AD85AB0E-3CEA-45E2-90BF-0E99B847E69A.png",
+          "originalSHA256": "420b90ce252a0a5a4bc8010244166c24675191367cda9a1d5630780252bd2fd6",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-mini/normalized/AD85AB0E-3CEA-45E2-90BF-0E99B847E69A.png",
+          "normalizedSHA256": "fb377f7e92c82413a124df0e2e363c20a4b8780ec5fa711b092c3500eb35de98",
+          "pixels": [
+            1488,
+            2266
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "qa-only",
+          "listingSelected": false
+        },
+        {
+          "name": "05 Conversation history_0_3CBCA59F-48F2-43BC-9679-19A769B44970.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "device": "5A8163E7-64B5-4FE3-928E-0D2D67AD84CC",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-mini/originals/FAD6A215-911A-4DE5-81D5-05E5165541DF.png",
+          "originalSHA256": "a5e30618ba969ce961ed90a91f616ea35a0c98aa12419691e92fe0ed1c9eb75b",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-mini/normalized/FAD6A215-911A-4DE5-81D5-05E5165541DF.png",
+          "normalizedSHA256": "65855f6f289c7bc876d78c528d8654792f88714a953708967202cf3bf56fe0a0",
+          "pixels": [
+            1488,
+            2266
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        },
+        {
+          "name": "04 Summary portrait_0_1FC133BB-099D-4A79-8C88-0121508AD485.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "device": "5A8163E7-64B5-4FE3-928E-0D2D67AD84CC",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-mini/originals/DD55401E-9FF4-4F0B-98FA-8469C1A33724.png",
+          "originalSHA256": "25ffbf83c8605925635b013dbf80ba480738b1c849b1ffa5b2df9410e1c21a91",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-mini/normalized/DD55401E-9FF4-4F0B-98FA-8469C1A33724.png",
+          "normalizedSHA256": "bc3b7612d5c38af4cadb69a4d7b89b7f7c9218b9a76d6d9971cca8cf9ac9de69",
+          "pixels": [
+            1488,
+            2266
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        },
+        {
+          "name": "03 Conversation prompt_0_958BEA5D-358A-467D-A14F-34A69A4DFE4E.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "device": "5A8163E7-64B5-4FE3-928E-0D2D67AD84CC",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-mini/originals/831C5AC0-F443-4DF1-B5A6-E3E3E30F5A74.png",
+          "originalSHA256": "0bec2aa11858ee104bdbf8788fe39e00e9c531b37f7f260335f8de7c0fe626a7",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-mini/normalized/831C5AC0-F443-4DF1-B5A6-E3E3E30F5A74.png",
+          "normalizedSHA256": "e12a9c4dc247a7aed7426e9923321f90812d2c29470657de58504631a25cb993",
+          "pixels": [
+            1488,
+            2266
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "qa-only",
+          "listingSelected": false
+        },
+        {
+          "name": "02 Live landscape_0_A29A5146-290D-47BE-A0A5-7B7AAC7FFD5C.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "device": "5A8163E7-64B5-4FE3-928E-0D2D67AD84CC",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-mini/originals/AF802F6E-8F15-4563-8B0B-6CFBA8A3599D.png",
+          "originalSHA256": "3c3dd9c7fe45c1393761c16ac223cfc822107a5365abf1f7de472f7aa5610752",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "exifOrientation": 8,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-mini/normalized/AF802F6E-8F15-4563-8B0B-6CFBA8A3599D.png",
+          "normalizedSHA256": "d249fa9e26d9afaa32d839d5183c3c1453b71141cc2febc772489a452c8e3ec5",
+          "pixels": [
+            2266,
+            1488
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        },
+        {
+          "name": "01 Live portrait_0_B007FA25-E8D3-4F45-B229-A028B659AF4F.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "device": "5A8163E7-64B5-4FE3-928E-0D2D67AD84CC",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-mini/originals/953ED76F-82DB-4112-920A-2562E1473C64.png",
+          "originalSHA256": "7e01215db3dd5357beb16aca73c5436887c47d88e3fd58b0be98489d072f6ba2",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-mini/normalized/953ED76F-82DB-4112-920A-2562E1473C64.png",
+          "normalizedSHA256": "b16b91e626532fe8f5474913b631e3bc8d29b6871bd2777d5c2f2cfe0636f49f",
+          "pixels": [
+            1488,
+            2266
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        },
+        {
+          "name": "Original transcript and translation in Duo or iPad wide layout_0_2BD5B2C7-08E5-4220-ACB5-647259A22278.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal()",
+          "device": "5A8163E7-64B5-4FE3-928E-0D2D67AD84CC",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-mini/originals/DB27B99E-C0B2-4A0B-BC0C-07B6075251F2.png",
+          "originalSHA256": "ae89cd90e27710200bb4b538e56e9b3a4c282ae8d59acc8b2d8f2962dfe23a33",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "exifOrientation": 8,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-mini/normalized/DB27B99E-C0B2-4A0B-BC0C-07B6075251F2.png",
+          "normalizedSHA256": "0f21d5cf569da92bcd8988f055ecd73d1b9366acd2c81a3322864cf6e8c9ebb3",
+          "pixels": [
+            2266,
+            1488
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        },
+        {
+          "name": "Original transcript and on-device translation portrait_0_9AB69BCB-D2B2-4A3C-92E6-D49E7D48AF46.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal()",
+          "device": "5A8163E7-64B5-4FE3-928E-0D2D67AD84CC",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-mini/originals/D7CDFAB8-0FC7-4AA4-ADDB-3D35D11A9B13.png",
+          "originalSHA256": "175531eb287b87a4f29bb1bed40d0bbe0e94395087966361e24119352445a230",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-mini/normalized/D7CDFAB8-0FC7-4AA4-ADDB-3D35D11A9B13.png",
+          "normalizedSHA256": "cc13bd4dbce399f3cf3d9de9e68b31d2f62697ebe16739b764c5e885f9165643",
+          "pixels": [
+            1488,
+            2266
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        },
+        {
+          "name": "Live translation options_0_8AD2BA1F-2699-4D85-A239-8C59A4765F30.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal()",
+          "device": "5A8163E7-64B5-4FE3-928E-0D2D67AD84CC",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-mini/originals/C81E09F4-08D1-45BC-85CC-8FD8708BB3E0.png",
+          "originalSHA256": "5087e57b13cfb7f0eb898108b7899e0839b4c86a52f614492cdb25689c3f19bc",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-mini/normalized/C81E09F4-08D1-45BC-85CC-8FD8708BB3E0.png",
+          "normalizedSHA256": "f500e973b062591af67e428fa8f7092078fab6ad8932d85e4cc9198e3f831753",
+          "pixels": [
+            1488,
+            2266
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        },
+        {
+          "name": "Summary page French translation beside original_0_BC0721F9-CC44-4F61-B2CF-9A2E37877F1C.png",
+          "testIdentifier": "MobileTranslationUITests/testSummaryPageOffersExplicitTranslationAndKeepsOriginal()",
+          "device": "5A8163E7-64B5-4FE3-928E-0D2D67AD84CC",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-mini/originals/47B65F98-C28E-4BF9-80EC-3BE9CB7063C9.png",
+          "originalSHA256": "3ab0fef759759f13f0da011a7d65d97cb97e741e691418c13284252d1a4b7c0c",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-mini/normalized/47B65F98-C28E-4BF9-80EC-3BE9CB7063C9.png",
+          "normalizedSHA256": "975e0ac5a032a28d9c98c795a4ddda676494f106f44c23f8a1cb1644c565f424",
+          "pixels": [
+            1488,
+            2266
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        }
+      ],
+      "visualReviewer": "review_distribution_docs",
+      "reviewNotes": "Prompt sheet cuts preceding Context and bottom Photo library row; Settings cuts bottom explanatory text. These two remain QA-only; other images are listing-suitable composition. No proven functional layout defect."
+    },
+    {
+      "category": "ipad-pro",
+      "device": "A8FC1CCE-3874-40BB-8FA7-08EB74758138",
+      "deviceType": "iPad-Pro-13-inch-M5-12GB",
+      "runtime": "iOS-26-5",
+      "assets": [
+        {
+          "name": "06 Settings_0_6840EF34-52A5-4194-8046-7A19661ACD95.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "device": "A8FC1CCE-3874-40BB-8FA7-08EB74758138",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-pro/originals/5920EFDD-A81D-4F59-9B03-50F0CE838A3F.png",
+          "originalSHA256": "5f5807a4db06e600534fa08cdd0c401c3e7f61e8965e49df56c3f466b84e8945",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-pro/normalized/5920EFDD-A81D-4F59-9B03-50F0CE838A3F.png",
+          "normalizedSHA256": "4bc9ab95ed342da7c7eb079ebe60a0c6cb15c563fcd8eb31fedfc8965d545bf2",
+          "pixels": [
+            2064,
+            2752
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "qa-only",
+          "listingSelected": false
+        },
+        {
+          "name": "05 Conversation history_0_D5CDDF64-4DA3-4255-B4E4-EFC8E39440A1.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "device": "A8FC1CCE-3874-40BB-8FA7-08EB74758138",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-pro/originals/7477710B-B68D-4835-8D39-7191EE608F2A.png",
+          "originalSHA256": "d12a2b42cafc85713da73dad1686abbf35c8a19a921f9a2e6a4b2d1735dcfe14",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-pro/normalized/7477710B-B68D-4835-8D39-7191EE608F2A.png",
+          "normalizedSHA256": "8cbdf32f382cce6f4700f2dfe00e24636b33c86e1a26779a09da92fffe6c4d97",
+          "pixels": [
+            2064,
+            2752
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        },
+        {
+          "name": "04 Summary portrait_0_E46A3693-8831-4092-BEDB-10F1A433E92D.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "device": "A8FC1CCE-3874-40BB-8FA7-08EB74758138",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-pro/originals/7375D28F-062D-4587-8B21-450C4AA8D4AB.png",
+          "originalSHA256": "1373a4b48ade72cd67374cfb5791217c6c8a78c81f8f82cb69d5584532af0907",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-pro/normalized/7375D28F-062D-4587-8B21-450C4AA8D4AB.png",
+          "normalizedSHA256": "189b5fcba043c73230acebba1620197a02928c54c85c955209136c14eb9d8a8a",
+          "pixels": [
+            2064,
+            2752
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        },
+        {
+          "name": "03 Conversation prompt_0_D01693B4-8BDF-4A15-8556-1DA8A3ABB936.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "device": "A8FC1CCE-3874-40BB-8FA7-08EB74758138",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-pro/originals/5679BDE5-4A9F-4C2D-A98B-E2E31F3A9A10.png",
+          "originalSHA256": "6d4a2ba4687796e863ac856c1fd49cf9a37914c215f5101799e91e8b40e6d22c",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-pro/normalized/5679BDE5-4A9F-4C2D-A98B-E2E31F3A9A10.png",
+          "normalizedSHA256": "7fc74e36ed78adbbc4c80152bc1e18592870c33e78b255175dc9b14e0f06ca8a",
+          "pixels": [
+            2064,
+            2752
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "qa-only",
+          "listingSelected": false
+        },
+        {
+          "name": "02 Live landscape_0_509523E3-44FB-4FD4-99EF-160AB2AEECB9.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "device": "A8FC1CCE-3874-40BB-8FA7-08EB74758138",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-pro/originals/E767B1C1-1605-446F-A74A-CECC6DE03038.png",
+          "originalSHA256": "e7bb2abe158dd28ff07c6b8dd64b22beb16932e592eeb7d10d5bfed34477b316",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "exifOrientation": 8,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-pro/normalized/E767B1C1-1605-446F-A74A-CECC6DE03038.png",
+          "normalizedSHA256": "171bce71933215412a6bb5faf8247bc52771f496372c77135de6bc6477378a57",
+          "pixels": [
+            2752,
+            2064
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        },
+        {
+          "name": "01 Live portrait_0_CDE5BE7E-25E0-4CEF-B7C3-2603996B1A57.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "device": "A8FC1CCE-3874-40BB-8FA7-08EB74758138",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-pro/originals/E8C5B589-F8E7-4808-A59D-8F3BB61B716C.png",
+          "originalSHA256": "1373a4b48ade72cd67374cfb5791217c6c8a78c81f8f82cb69d5584532af0907",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-pro/normalized/E8C5B589-F8E7-4808-A59D-8F3BB61B716C.png",
+          "normalizedSHA256": "189b5fcba043c73230acebba1620197a02928c54c85c955209136c14eb9d8a8a",
+          "pixels": [
+            2064,
+            2752
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        },
+        {
+          "name": "Original transcript and translation in Duo or iPad wide layout_0_D15F6942-E981-4847-BD04-5CD3001AFE26.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal()",
+          "device": "A8FC1CCE-3874-40BB-8FA7-08EB74758138",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-pro/originals/51DE1C51-D968-4991-A848-2BBD77A22EEF.png",
+          "originalSHA256": "f60a8aab6187983273fbc61bb6a3e22c9b3285d63e8a56ca24d886772ed72f09",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "exifOrientation": 8,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-pro/normalized/51DE1C51-D968-4991-A848-2BBD77A22EEF.png",
+          "normalizedSHA256": "11f11dabe2f7592b894d3049861f15df91febd6fb17cd8c630a35a77149a4093",
+          "pixels": [
+            2752,
+            2064
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        },
+        {
+          "name": "Original transcript and on-device translation portrait_0_0473CD59-5CA0-4D54-B18F-A67FCF07A9D0.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal()",
+          "device": "A8FC1CCE-3874-40BB-8FA7-08EB74758138",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-pro/originals/5982F676-A14B-4E16-8391-D51F63FA56FA.png",
+          "originalSHA256": "4828789eca345787f85440e04abee07dff04710faa4ce1c7ff98fadac2df9cf8",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-pro/normalized/5982F676-A14B-4E16-8391-D51F63FA56FA.png",
+          "normalizedSHA256": "0d298a4ca447597353fc1c982f33e8fffa070b5999de8a3b46de16bb76b6a9a9",
+          "pixels": [
+            2064,
+            2752
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "qa-only",
+          "listingSelected": false
+        },
+        {
+          "name": "Live translation options_0_B4872873-756B-4546-84A4-73788A934B9B.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal()",
+          "device": "A8FC1CCE-3874-40BB-8FA7-08EB74758138",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-pro/originals/4E5D7229-2035-41E9-B323-BD170DB3D977.png",
+          "originalSHA256": "cba1666361a743332896cc8517a9f7f28a543fb6d4d83bc6f9a87342ac811109",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-pro/normalized/4E5D7229-2035-41E9-B323-BD170DB3D977.png",
+          "normalizedSHA256": "04922aab5f54b3b47e04a42224b9a21135c170aa77a7e805f66250fef56c6135",
+          "pixels": [
+            2064,
+            2752
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        },
+        {
+          "name": "Summary page French translation beside original_0_17EA648E-B370-4CF1-988F-EBA1F0723241.png",
+          "testIdentifier": "MobileTranslationUITests/testSummaryPageOffersExplicitTranslationAndKeepsOriginal()",
+          "device": "A8FC1CCE-3874-40BB-8FA7-08EB74758138",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-pro/originals/4DC190E8-504F-4B3A-8A42-78A1E9F80E95.png",
+          "originalSHA256": "9ceec5f31c5e3a194615522c3cc06afd6682b9ac9c9d99c9be2db3b947fea708",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-ipad-pro/normalized/4DC190E8-504F-4B3A-8A42-78A1E9F80E95.png",
+          "normalizedSHA256": "a021ecdbd477353f7910b17eea4b80e8dd8b5fec477569bf3c75532ef398371c",
+          "pixels": [
+            2064,
+            2752
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        }
+      ],
+      "visualReviewer": "review_distribution_docs",
+      "reviewNotes": "Prompt and Settings cut sheet-edge text; translated portrait starts mid-sentence. Summary portrait is pixel-identical to Live portrait, select one. No functional defect proven."
+    },
+    {
+      "category": "watch42",
+      "device": "18719269-23BD-4F04-96DF-22A3CE13AD85",
+      "deviceType": "Apple-Watch-Series-12-42mm",
+      "runtime": "watchOS-27-0",
+      "assets": [
+        {
+          "name": "Watch recording restored after background_0_366BA17A-13F8-4D0B-9243-E5FE2F25F368.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "device": "18719269-23BD-4F04-96DF-22A3CE13AD85",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch42-booted/originals/B1577EE9-4057-4701-ADA3-839145F5676F.png",
+          "originalSHA256": "f2b09939224ec5622bb42a25a4ee0166b9552ea21f524a6a62c4e46e8e4388e7",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch42-booted/normalized/B1577EE9-4057-4701-ADA3-839145F5676F.png",
+          "normalizedSHA256": "62260495764676ca82a974acbb86b96f60000efa9a24a9c452f9e819b160064d",
+          "pixels": [
+            374,
+            446
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "qa-only",
+          "listingSelected": false,
+          "reviewNote": "Recording controls are readable; compact 374x446 captures are QA only, not selected App Store size."
+        },
+        {
+          "name": "Watch recording survives dismissal gesture_0_1D44A8C0-FFFC-4359-8698-D49DDDC9B527.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "device": "18719269-23BD-4F04-96DF-22A3CE13AD85",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch42-booted/originals/8C83A108-8DE1-4A4A-965F-0C392C306215.png",
+          "originalSHA256": "d626da439e409d0a3f4afb3b87b77e43af9bdb79b6fea0b7ff7ef400ac9c332a",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch42-booted/normalized/8C83A108-8DE1-4A4A-965F-0C392C306215.png",
+          "normalizedSHA256": "68703dbde5ce2f6b20a65f2f24392ef9594db02b9ebd36be28be02575a8454f8",
+          "pixels": [
+            374,
+            446
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "qa-only",
+          "listingSelected": false,
+          "reviewNote": "Recording controls are readable; compact 374x446 captures are QA only, not selected App Store size."
+        },
+        {
+          "name": "Watch recording and Stop_0_EC7D7757-197F-411C-AA33-E712CC5835C9.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "device": "18719269-23BD-4F04-96DF-22A3CE13AD85",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch42-booted/originals/1112ACE2-6572-4EED-9137-E8A0DF27C941.png",
+          "originalSHA256": "cee75535671a1e127a437f79deba4116f3ff3a65daff8db4a3331d2ddacca3ba",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch42-booted/normalized/1112ACE2-6572-4EED-9137-E8A0DF27C941.png",
+          "normalizedSHA256": "9596abadc4196ade370bd912b018d332bea26cb38b73a78813e87426e117c8e4",
+          "pixels": [
+            374,
+            446
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "qa-only",
+          "listingSelected": false,
+          "reviewNote": "Recording controls are readable; compact 374x446 captures are QA only, not selected App Store size."
+        },
+        {
+          "name": "Watch recording consent_0_3BBAA23F-C127-4284-9B74-A8F746E1F5F9.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "device": "18719269-23BD-4F04-96DF-22A3CE13AD85",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch42-booted/originals/0CC2A969-5CE9-4F41-A6F3-0F9E1FE2FD31.png",
+          "originalSHA256": "f0cbdeaf8f36c2c7eec112ebbd43b18938d27729d4e713c82cb86cb562cecdd8",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch42-booted/normalized/0CC2A969-5CE9-4F41-A6F3-0F9E1FE2FD31.png",
+          "normalizedSHA256": "3ee54693d2888f656c88444d38e00670179a649f857e36fdd7f6163c6462bdae",
+          "pixels": [
+            374,
+            446
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "qa-only",
+          "listingSelected": false
+        },
+        {
+          "name": "Watch ready home_0_4B2F54F8-D59A-4B3F-A9E3-6692A5BCFA0B.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "device": "18719269-23BD-4F04-96DF-22A3CE13AD85",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch42-booted/originals/283EF0C9-8B07-4651-A8CD-E372A1ED9F66.png",
+          "originalSHA256": "ffa2ed97c0beb0e5c4ef538c968a8e0ee3e212cf1ffab01b911c7a0423b39b40",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch42-booted/normalized/283EF0C9-8B07-4651-A8CD-E372A1ED9F66.png",
+          "normalizedSHA256": "a145bd1b46778bc6b2338124937ceac7bf8d3f1846106c5df203c70b852986ff",
+          "pixels": [
+            374,
+            446
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "qa-only",
+          "listingSelected": false
+        }
+      ],
+      "visualReviewer": "review_247",
+      "reviewNotes": "Unchanged-source prebooted run passed after two missing-consent failures. Evidence supports setup-dependent simulator interaction failure, not confirmed product defect/fix or proof boot was sole cause. Recording/Stop images are clear but duplicates; choose one. Consent continues below viewport; home shows unreachable iPhone and disabled remote Start."
+    },
+    {
+      "category": "watch46",
+      "device": "566CBED7-A717-4B28-AB1A-F8A3AE8FE069",
+      "deviceType": "Apple-Watch-Series-12-46mm",
+      "runtime": "watchOS-27-0",
+      "assets": [
+        {
+          "name": "Watch recording restored after background_0_F8F4F45B-5E05-4BF1-9DB0-4284939ADA17.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "device": "566CBED7-A717-4B28-AB1A-F8A3AE8FE069",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch46/originals/5CD3D133-0CFA-4F02-850C-1AACE4AA0CFE.png",
+          "originalSHA256": "35d8c976f929adfb32e66bd8d06c367d1a515998a2bcae1ecacf69d0aa082b21",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch46/normalized/5CD3D133-0CFA-4F02-850C-1AACE4AA0CFE.png",
+          "normalizedSHA256": "aa9f98f3859c3f59a57f111b7df7ace91afc5d350a7af17ee37873423e32066a",
+          "pixels": [
+            416,
+            496
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "qa-only",
+          "listingSelected": false
+        },
+        {
+          "name": "Watch recording survives dismissal gesture_0_59B2AF93-3F3D-49B5-B028-735F6B824784.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "device": "566CBED7-A717-4B28-AB1A-F8A3AE8FE069",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch46/originals/AF536A2B-E9B4-4ECF-BE49-62A50B22B645.png",
+          "originalSHA256": "c721417b421c0af0479343a708302bc140b8aaab184a142f5f543d9b68bc62d0",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch46/normalized/AF536A2B-E9B4-4ECF-BE49-62A50B22B645.png",
+          "normalizedSHA256": "4c003eb7cbbdaa9435c700ee511c7dd19422845463692d2dcf082c1cea6f45ec",
+          "pixels": [
+            416,
+            496
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "qa-only",
+          "listingSelected": false
+        },
+        {
+          "name": "Watch recording and Stop_0_5BBA81D9-B0C3-458D-9E92-ADAACA9FEC6B.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "device": "566CBED7-A717-4B28-AB1A-F8A3AE8FE069",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch46/originals/38406964-298F-4398-9DA5-1E1F5A5206D1.png",
+          "originalSHA256": "bf90301b0962ce6157987b4b8b47f2f1458f9fb6bebc6fd7084124e28234c902",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch46/normalized/38406964-298F-4398-9DA5-1E1F5A5206D1.png",
+          "normalizedSHA256": "68ad2c23224fc622ee30edc00e56b9a0084853a98227f314045fc8a97e2ee244",
+          "pixels": [
+            416,
+            496
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        },
+        {
+          "name": "Watch recording consent_0_8D8C1A50-1CBD-4E73-92A2-A71B2ABD57F3.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "device": "566CBED7-A717-4B28-AB1A-F8A3AE8FE069",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch46/originals/14145B0D-DBAA-4D4C-A7AD-A18C563A6F03.png",
+          "originalSHA256": "2af1e373242cc63d95cd479d7b8ef55d9c75ef66f488bf9dba880b066515b77e",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch46/normalized/14145B0D-DBAA-4D4C-A7AD-A18C563A6F03.png",
+          "normalizedSHA256": "f972cec1235968e8d37eb544c3d17c27019cfadcfedadc952b8c934ed98501d6",
+          "pixels": [
+            416,
+            496
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "qa-only",
+          "listingSelected": false
+        },
+        {
+          "name": "Watch ready home_0_0D9300F2-4DFF-4165-8DD9-DC1520B147EA.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "device": "566CBED7-A717-4B28-AB1A-F8A3AE8FE069",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch46/originals/FF420529-1529-4F1B-9179-A1F4731405DC.png",
+          "originalSHA256": "bc7fad0188393ea219f5ac81dc26cf26672a6202626606522887811bd7c8f6e8",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch46/normalized/FF420529-1529-4F1B-9179-A1F4731405DC.png",
+          "normalizedSHA256": "1f824e76a364f2c32f10d07c86f45943f99fa44a4c1a81d603a881b8df225407",
+          "pixels": [
+            416,
+            496
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "qa-only",
+          "listingSelected": false
+        }
+      ],
+      "visualReviewer": "review_247",
+      "reviewNotes": "Recording and Stop is preferred listing candidate. Dismissal/background frames duplicate composition; consent scroll content continues; home has unreachable phone. All controls in recording frame readable. Physical recording/transfer unverified."
+    },
+    {
+      "category": "watch49",
+      "device": "B9E1B50A-5013-4839-8A85-0C80D8B53702",
+      "deviceType": "Apple-Watch-Ultra-4-49mm",
+      "runtime": "watchOS-27-0",
+      "assets": [
+        {
+          "name": "Watch recording restored after background_0_45559347-9650-4E0D-8AFE-886FE2B2EB20.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "device": "B9E1B50A-5013-4839-8A85-0C80D8B53702",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch49/originals/58A5B146-529F-4C00-8CF2-E535268B5BA5.png",
+          "originalSHA256": "9f4e0db3739521d43ce386c6a24080633a7e77babf18f3ed04b103354a5ac129",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch49/normalized/58A5B146-529F-4C00-8CF2-E535268B5BA5.png",
+          "normalizedSHA256": "f1701d9ab4ce0447b575c14bdc985f773bb5a807de7c64944e54a7d081e19d92",
+          "pixels": [
+            422,
+            514
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "qa-only",
+          "listingSelected": false
+        },
+        {
+          "name": "Watch recording survives dismissal gesture_0_A7359E25-74C9-4FB9-B0A1-4F14DB4F24EF.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "device": "B9E1B50A-5013-4839-8A85-0C80D8B53702",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch49/originals/D37D18F8-B5B1-4191-A611-69CA455D90A7.png",
+          "originalSHA256": "3fae8f4b17f418ae0372f14922fc5840be3516bd22047268dd2c27accb927f6a",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch49/normalized/D37D18F8-B5B1-4191-A611-69CA455D90A7.png",
+          "normalizedSHA256": "3e7db104ba066cf01753ad27bd6caf79d18980b85b738aa76b1b86f72d5ef8b6",
+          "pixels": [
+            422,
+            514
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "qa-only",
+          "listingSelected": false
+        },
+        {
+          "name": "Watch recording and Stop_0_553629D5-DA0F-4185-B3F3-9400132629FA.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "device": "B9E1B50A-5013-4839-8A85-0C80D8B53702",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch49/originals/734356B7-736B-4B70-9A79-573CB0AB2F12.png",
+          "originalSHA256": "af59665cba2ff8edeb290d3d1a9634e2de7833c6e6b24055c2be7be42efc2c9f",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch49/normalized/734356B7-736B-4B70-9A79-573CB0AB2F12.png",
+          "normalizedSHA256": "ac2a934bef3db0db00942e2265dfd7b9f88f160d5ce4955a9b67d722647d0920",
+          "pixels": [
+            422,
+            514
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "listing-suitable",
+          "listingSelected": false
+        },
+        {
+          "name": "Watch recording consent_0_7A234BD1-0840-4C61-8201-E26DD4B11D33.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "device": "B9E1B50A-5013-4839-8A85-0C80D8B53702",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch49/originals/D56AA696-207C-4366-BCDD-905485412A5F.png",
+          "originalSHA256": "79bb951771a3e7d5dcf860432fae47ca9b205066a53531c84088c5be5708acdd",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch49/normalized/D56AA696-207C-4366-BCDD-905485412A5F.png",
+          "normalizedSHA256": "b0c2e7eb22bcff25a1dbccaf36206025506cc600d2a658f5b9d30fa40c6da132",
+          "pixels": [
+            422,
+            514
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "qa-only",
+          "listingSelected": false
+        },
+        {
+          "name": "Watch ready home_0_5EF4AAFC-CEEF-47D5-B67B-E762351E6011.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "device": "B9E1B50A-5013-4839-8A85-0C80D8B53702",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch49/originals/598AFDAE-A5C2-4584-A666-5AD2B02CDD42.png",
+          "originalSHA256": "f089a57233cb5ce8e7558fcf7681eba90d5e06a4112b6bfdf6ce230c9de4584d",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "exifOrientation": 1,
+          "normalized": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train/capture-watch49/normalized/598AFDAE-A5C2-4584-A666-5AD2B02CDD42.png",
+          "normalizedSHA256": "01b426446bce48c0db0e7da91239bf1898b2ef555714e0f61fae52c719b1839f",
+          "pixels": [
+            422,
+            514
+          ],
+          "mode": "RGB",
+          "transform": "EXIF transpose then RGB; no resampling",
+          "visualStatus": "qa-only",
+          "listingSelected": false
+        }
+      ],
+      "visualReviewer": "review_247",
+      "reviewNotes": "Recording and Stop is preferred listing candidate. Dismissal/background frames duplicate composition; consent scroll content continues; home has unreachable phone. All controls in recording frame readable. Physical recording/transfer unverified."
+    }
+  ],
+  "visualReviewComplete": true,
+  "reviewedAssetCount": 55,
+  "listingSelectionPending": true,
+  "listingLimitations": "iPhone Duo/listening captures need better scroll composition before any public listing selection; no production submission authorized for this beta. QA-only images remain preserved."
+}

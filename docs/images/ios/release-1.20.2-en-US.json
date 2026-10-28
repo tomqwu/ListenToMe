@@ -1,0 +1,1434 @@
+{
+  "candidateSource": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+  "version": "1.20.2",
+  "build": "42",
+  "locale": "en-US",
+  "listingUploaded": false,
+  "allInspected": true,
+  "capturedAndReviewedAt": "2026-10-28T20:51:55.975903+00:00",
+  "sets": [
+    {
+      "category": "iphone-max",
+      "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+      "device": "20306736-DB66-4205-B212-C424FA84930F",
+      "deviceName": "ListenToMe42 fresh large capture iphone-max",
+      "deviceType": "iPhone-17-Pro-Max",
+      "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-26-5",
+      "status": "reviewed",
+      "directory": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/iphone-max",
+      "selectors": [
+        "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+        "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal",
+        "MobileTranslationUITests/testSummaryPageOffersExplicitTranslationAndKeepsOriginal",
+        "MobileWorkspaceUITests/testPhoneTwoPaneLayoutAndPageSelectionSurviveRotation"
+      ],
+      "binary": {
+        "executablePath": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/iphone-max/binary/ListenToMeIOS",
+        "sha256": "84001fff205eded92f4c3ce1fdd5e1f4c227ddec83f2c46bbe3e27745b25cc64",
+        "version": "1.20.2",
+        "build": "42",
+        "payloads": [
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/iphone-max/binary/ListenToMeIOS",
+            "sha256": "84001fff205eded92f4c3ce1fdd5e1f4c227ddec83f2c46bbe3e27745b25cc64",
+            "originalBuildPath": "/Users/tomwu/.codex/worktrees/retranscription-integration-224/ListenToMe/.build/translation-release-capture-large/Build/Products/Debug-iphonesimulator/ListenToMeIOS.app/ListenToMeIOS"
+          },
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/iphone-max/binary/ListenToMeIOS.debug.dylib",
+            "sha256": "98175208f81d3a96b1967c118d0774071a55aaf6933c7320cf6cf5b5ad44d301",
+            "originalBuildPath": "/Users/tomwu/.codex/worktrees/retranscription-integration-224/ListenToMe/.build/translation-release-capture-large/Build/Products/Debug-iphonesimulator/ListenToMeIOS.app/ListenToMeIOS.debug.dylib"
+          },
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/iphone-max/binary/__preview.dylib",
+            "sha256": "7f095fad58b0f77f26f97b3799d0aa602738c24f523c876989bf5f76dd186f25",
+            "originalBuildPath": "/Users/tomwu/.codex/worktrees/retranscription-integration-224/ListenToMe/.build/translation-release-capture-large/Build/Products/Debug-iphonesimulator/ListenToMeIOS.app/__preview.dylib"
+          },
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/iphone-max/binary/Info.plist",
+            "sha256": "400979043645fb8f8d000781672da2b5bd7233bb5a64df6c1a7a37328c066f9b",
+            "originalBuildPath": "/Users/tomwu/.codex/worktrees/retranscription-integration-224/ListenToMe/.build/translation-release-capture-large/Build/Products/Debug-iphonesimulator/ListenToMeIOS.app/Info.plist"
+          }
+        ],
+        "capturedPayloadNames": [
+          "Info.plist",
+          "ListenToMeIOS",
+          "ListenToMeIOS.debug.dylib",
+          "__preview.dylib"
+        ]
+      },
+      "assets": [
+        {
+          "name": "06 Settings_0_773D225E-F4B6-46B6-9A80-4A40E5A05F21.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/iphone-max/originals/CD673781-5994-496C-9E6F-EA4C8E37D659.png",
+          "originalSHA256": "61209d49f072c54afd49a8dbc0cde4bec0d555b68e65a223230af31c75b8a5a2",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "processing": "none",
+          "visualFinding": "Settings text continues below the screen; retained for QA, not listing composition."
+        },
+        {
+          "name": "05 Conversation history_0_49D02298-CF5C-4013-B49A-B8F3766A18D2.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/iphone-max/originals/823C31D8-E1DC-4014-920C-5BAE78193C92.png",
+          "originalSHA256": "2922335bec5751f00723ec336f25bb25595a8d9b84b5774cd66f4eb6a110903c",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "processing": "none",
+          "visualFinding": "History and search are legible with no unexpected overlay."
+        },
+        {
+          "name": "04 Summary portrait_0_339C6172-FE35-4B87-82B6-12FC353BCF05.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/iphone-max/originals/A28BE3A9-3385-4829-9D3B-3EC54DB99452.png",
+          "originalSHA256": "465917c996c07d36e0d35cb48702b607430b3e8c7df6f4d396e736c5fcdaff9f",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "processing": "none",
+          "visualFinding": "Summary decisions and next steps fit clearly in portrait."
+        },
+        {
+          "name": "03 Conversation prompt_0_3E477E93-D0CF-462F-97AE-9197AF199EA3.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/iphone-max/originals/878672F5-716B-4F39-84E7-BDBE6949E397.png",
+          "originalSHA256": "b26accd4a75d122889d5f37419d8cf2d5e3caa1d9b8abdf5ad5d5f72d7fdd393",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "processing": "none",
+          "visualFinding": "Notes and saved conversation prompt are legible; lower live translation row continues below."
+        },
+        {
+          "name": "02 Live landscape_0_F79BF87F-7CD8-4AD9-A4AA-C3B6AB2F32F6.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/iphone-max/originals/6658C8CA-D641-4B80-B51D-FDA374EB7082.png",
+          "originalSHA256": "48dea77a23a6dd623f60c3764608663e268bbd851e6d6a599afdf521130a45ba",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "processing": "none",
+          "visualFinding": "Duo layout is visible; transcript and Quick content are clipped by independent viewports, QA only."
+        },
+        {
+          "name": "01 Live portrait_0_782A1C01-A548-4E24-9AD1-B14715DCD684.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/iphone-max/originals/C9CD88E5-B1EF-4050-80FB-1AB6E3B32AF2.png",
+          "originalSHA256": "9405773f75fb5972be0bbcc247bf90f2d079e5c8c7b411bef37d150f0ddf52f4",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "processing": "none",
+          "visualFinding": "Transcript continuation clipped above Latest overlay; QA only."
+        },
+        {
+          "name": "Original transcript and translation in Duo or iPad wide layout_0_8CE897A5-B5DD-497C-9E04-5CC14616A7B7.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/iphone-max/originals/66DA7A2C-ABB0-4491-8726-9F769214D40A.png",
+          "originalSHA256": "0a19a254d88fcc08556150c4afd3061ed6208c975f851314bb5145d668114370",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "processing": "none",
+          "visualFinding": "Translated transcript is visible in Duo, but Quick answer continues below viewport; QA only."
+        },
+        {
+          "name": "Original transcript and on-device translation portrait_0_9EF40E46-CB94-4976-82B9-C7D68EEB1B78.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/iphone-max/originals/449CEC70-9F6A-4F97-8305-F6F1746B7EC8.png",
+          "originalSHA256": "75cfcd4d1acfca70e005cd706e7e33c756ad75ea6c764dc7893463b97b6faa3e",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "processing": "none",
+          "visualFinding": "Original and synthetic French translation are fully visible with Quick summary in portrait."
+        },
+        {
+          "name": "Live translation options_0_52150EF0-7205-4424-8CBA-F400922CA01D.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/iphone-max/originals/9C457010-D4E5-453A-8DE2-33823B69CB38.png",
+          "originalSHA256": "3c9cb640e56dd6a247d1d86ebd3b1bba0f15b6f0f7446285010753598eb2ca84",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "processing": "none",
+          "visualFinding": "Translation options and installed-language policy are fully visible; sparse settings composition retained for QA."
+        },
+        {
+          "name": "Summary page French translation beside original_0_68FC3BD8-FD08-426E-8B51-CEB08C3D4258.png",
+          "testIdentifier": "MobileTranslationUITests/testSummaryPageOffersExplicitTranslationAndKeepsOriginal()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/iphone-max/originals/E023CE72-F15B-46BB-A4BD-187B8FBB9EB7.png",
+          "originalSHA256": "f48b8bdb5fb45ce80f0b850591e9f366ae8ac27fbd8933f76e712dfaa2f9897d",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "processing": "none",
+          "visualFinding": "French summary result continues below the viewport and original is below scroll; QA only."
+        },
+        {
+          "name": "iPhone two-pane Live workspace_0_87972419-1533-4F65-926D-190CB69352E0.png",
+          "testIdentifier": "MobileWorkspaceUITests/testPhoneTwoPaneLayoutAndPageSelectionSurviveRotation()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/iphone-max/originals/13D07F5C-B4D9-428A-B279-5E8A8C9DDB96.png",
+          "originalSHA256": "8279a67659de80bba5c03cc5b9a5d274123eb138e76f19c6e60fc053366aff2c",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "processing": "none",
+          "visualFinding": "Scroll-check fixture and clipped content are diagnostic QA, not listing media."
+        }
+      ],
+      "reviewedAt": "2026-10-28T20:50:53.153731+00:00",
+      "nativeTestsPassed": 4
+    },
+    {
+      "category": "ipad-pro",
+      "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+      "device": "BAABDF98-270E-4BCE-B34F-42DFDC44CE02",
+      "deviceName": "ListenToMe42 fresh large capture ipad-pro",
+      "deviceType": "iPad-Pro-13-inch-M5-12GB",
+      "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-26-5",
+      "status": "reviewed",
+      "directory": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/ipad-pro",
+      "selectors": [
+        "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+        "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal",
+        "MobileTranslationUITests/testSummaryPageOffersExplicitTranslationAndKeepsOriginal"
+      ],
+      "binary": {
+        "executablePath": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/ipad-pro/binary/ListenToMeIOS",
+        "sha256": "72ebc05807f300b910fbce2c9db78dc1130b932fe1074a284eb2d2952c5d3f2c",
+        "version": "1.20.2",
+        "build": "42",
+        "payloads": [
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/ipad-pro/binary/ListenToMeIOS",
+            "sha256": "72ebc05807f300b910fbce2c9db78dc1130b932fe1074a284eb2d2952c5d3f2c",
+            "originalBuildPath": "/Users/tomwu/.codex/worktrees/retranscription-integration-224/ListenToMe/.build/translation-release-capture-large/Build/Products/Debug-iphonesimulator/ListenToMeIOS.app/ListenToMeIOS"
+          },
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/ipad-pro/binary/ListenToMeIOS.debug.dylib",
+            "sha256": "98175208f81d3a96b1967c118d0774071a55aaf6933c7320cf6cf5b5ad44d301",
+            "originalBuildPath": "/Users/tomwu/.codex/worktrees/retranscription-integration-224/ListenToMe/.build/translation-release-capture-large/Build/Products/Debug-iphonesimulator/ListenToMeIOS.app/ListenToMeIOS.debug.dylib"
+          },
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/ipad-pro/binary/__preview.dylib",
+            "sha256": "7f095fad58b0f77f26f97b3799d0aa602738c24f523c876989bf5f76dd186f25",
+            "originalBuildPath": "/Users/tomwu/.codex/worktrees/retranscription-integration-224/ListenToMe/.build/translation-release-capture-large/Build/Products/Debug-iphonesimulator/ListenToMeIOS.app/__preview.dylib"
+          },
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/ipad-pro/binary/Info.plist",
+            "sha256": "400979043645fb8f8d000781672da2b5bd7233bb5a64df6c1a7a37328c066f9b",
+            "originalBuildPath": "/Users/tomwu/.codex/worktrees/retranscription-integration-224/ListenToMe/.build/translation-release-capture-large/Build/Products/Debug-iphonesimulator/ListenToMeIOS.app/Info.plist"
+          }
+        ],
+        "capturedPayloadNames": [
+          "Info.plist",
+          "ListenToMeIOS",
+          "ListenToMeIOS.debug.dylib",
+          "__preview.dylib"
+        ]
+      },
+      "assets": [
+        {
+          "name": "06 Settings_0_B3780136-F485-4CA0-8011-40C8322D9167.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/ipad-pro/originals/8A94D655-67A7-4363-80B4-6B2F03842E31.png",
+          "originalSHA256": "d11634e126fa79673c76e87db29509565a8469aa1ca9d0ff3c0818f9d04c1420",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "processing": "none",
+          "visualFinding": "Settings sheet clips lower explanatory text; QA only."
+        },
+        {
+          "name": "05 Conversation history_0_15182C70-DBE2-4F9F-926A-A0D14C50BF13.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/ipad-pro/originals/3BA75985-96E1-4405-A233-525224D16E13.png",
+          "originalSHA256": "06eed2b3b31d56749b03a7dca81e941123b63b4db3706aea497112d3ea41c724",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "processing": "none",
+          "visualFinding": "History sheet visible and readable; sparse modal composition retained as QA."
+        },
+        {
+          "name": "04 Summary portrait_0_2D1CD4EC-D028-4B6C-B4C6-2CA90E645ED0.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/ipad-pro/originals/6EBB6BA3-700F-46DF-8835-65789F590479.png",
+          "originalSHA256": "50de7587765007c77934592c31a93b98ca0b46b6b5f3b010e08207cb59e4e711",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "processing": "none",
+          "visualFinding": "Transcript, Quick and Summary are fully legible in portrait wide layout."
+        },
+        {
+          "name": "03 Conversation prompt_0_842CEE9B-3DAA-4E40-9069-1B29519475B5.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/ipad-pro/originals/016F63A7-91FC-4337-8D00-2A470C0CA0E7.png",
+          "originalSHA256": "85692cf375b7449b7e7cee217d525fee751e961b7cc763b55a3c204eb6757b6a",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "processing": "none",
+          "visualFinding": "Notes sheet is scrolled with its upper content offscreen; QA only."
+        },
+        {
+          "name": "02 Live landscape_0_B5E87EF4-9D18-4537-96CA-A04E5A0C9704.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/ipad-pro/originals/8BA24DEE-A411-43F8-A8C6-35E71CD7641D.png",
+          "originalSHA256": "187cfec1a98ccf24507fcab04948c525cf1a3f171684d4cb5da309069b0ac4d3",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "processing": "none",
+          "visualFinding": "Wide landscape transcript, Quick and Summary all fit clearly."
+        },
+        {
+          "name": "01 Live portrait_0_96FF8F6A-C57F-48E0-A571-698A30C82FEF.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/ipad-pro/originals/47D165F2-9122-4EC8-AFBB-A25F760A6FC8.png",
+          "originalSHA256": "50de7587765007c77934592c31a93b98ca0b46b6b5f3b010e08207cb59e4e711",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "processing": "none",
+          "visualFinding": "Portrait wide workspace all three cards fit clearly."
+        },
+        {
+          "name": "Original transcript and translation in Duo or iPad wide layout_0_908AC806-00AB-45EA-A47B-D8507AA45B3C.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/ipad-pro/originals/6E388CE0-63A4-4672-A2AB-282AF191BB9C.png",
+          "originalSHA256": "e611fc9e50eb809e519e6eccf8e9a39b4b2f4be09fd55ff6e53c708f062c195f",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "processing": "none",
+          "visualFinding": "Wide landscape original plus synthetic translated transcript fit clearly beside Quick and Summary."
+        },
+        {
+          "name": "Original transcript and on-device translation portrait_0_6C8572D3-81D5-4892-82ED-02E1D2022553.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/ipad-pro/originals/EB37FB94-A646-400F-AE66-6F6F34B92390.png",
+          "originalSHA256": "f084aa1f40e98dbd52c0dd214ff48c59e7720a7f2470a8a3b8bff0d406a08a3c",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "processing": "none",
+          "visualFinding": "Portrait translated transcript begins above viewport; QA only."
+        },
+        {
+          "name": "Live translation options_0_3FC84859-8EB6-4AC6-A611-B06C8E41EE8C.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/ipad-pro/originals/2B957FC3-7B24-45B8-A92A-4A50A2389CA3.png",
+          "originalSHA256": "6ce9d701fee7d09ae244e8afd3db580feb678a94bb14353cffc99d6e15d4a755",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "processing": "none",
+          "visualFinding": "Translation controls and policy are legible; sparse modal composition retained as QA."
+        },
+        {
+          "name": "Summary page French translation beside original_0_9A279477-3ED2-4AF0-A1C6-7BA6E5B700ED.png",
+          "testIdentifier": "MobileTranslationUITests/testSummaryPageOffersExplicitTranslationAndKeepsOriginal()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/ipad-pro/originals/7415BE3F-B741-4417-B3B7-A5C2DD101666.png",
+          "originalSHA256": "3bc52ade068d84adc3e701094703e52580d2d1f9b3a70af635e83ad601e1ec48",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "processing": "none",
+          "visualFinding": "Full synthetic French summary and original summary visible together beside transcript and Quick."
+        }
+      ],
+      "finishedAt": "2026-10-28T20:50:14.142481+00:00",
+      "reviewedAt": "2026-10-28T20:50:53.179989+00:00",
+      "nativeTestsPassed": 3
+    },
+    {
+      "category": "iphone-pro",
+      "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+      "deviceType": "iPhone-17-Pro",
+      "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-26-5",
+      "device": "35A8D9A9-3C03-4CF7-98BE-CE69B88E23BC",
+      "binary": {
+        "executablePath": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-iphone-pro/binary/ListenToMeIOS",
+        "sha256": "b22c1a1b8244ef19a69f6f8d665ec285ce42d4ffcde4a6533d1ab67098bdbde4",
+        "version": "1.20.2",
+        "build": "42",
+        "payloads": [
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-iphone-pro/binary/Info.plist",
+            "sha256": "400979043645fb8f8d000781672da2b5bd7233bb5a64df6c1a7a37328c066f9b"
+          },
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-iphone-pro/binary/ListenToMeIOS",
+            "sha256": "b22c1a1b8244ef19a69f6f8d665ec285ce42d4ffcde4a6533d1ab67098bdbde4"
+          },
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-iphone-pro/binary/ListenToMeIOS.debug.dylib",
+            "sha256": "b3994b920d89976587105b8523e4ab85e9426eaa58f6bc53b43779105764c1f1"
+          },
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-iphone-pro/binary/__preview.dylib",
+            "sha256": "7f095fad58b0f77f26f97b3799d0aa602738c24f523c876989bf5f76dd186f25"
+          }
+        ],
+        "capturedPayloadNames": [
+          "Info.plist",
+          "ListenToMeIOS",
+          "ListenToMeIOS.debug.dylib",
+          "__preview.dylib"
+        ]
+      },
+      "assets": [
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-iphone-pro/originals/7A76134E-6F84-443D-A991-A4546609B11F.png",
+          "originalSHA256": "e1ee81c1f12b3cd8010ddd139fb272c3ce7a80d9219e4abc42c9a59d45259996",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "label": "Explicit Stop after simulator background_0_46B2EEC3-AD42-41DD-B7E9-91279467F097.png",
+          "testIdentifier": "MobileRecordingContinuityUITests/testHomeReturnKeepsOneVisibleRecordingAndExplicitStopEndsIt()",
+          "timestamp": 1793220243.673,
+          "device": "35A8D9A9-3C03-4CF7-98BE-CE69B88E23BC",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "name": "Explicit Stop after simulator background_0_46B2EEC3-AD42-41DD-B7E9-91279467F097.png",
+          "visualFinding": "Stopped state and Start readable; synthetic debug counter overlays header. QA only."
+        },
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-iphone-pro/originals/59950547-4D3C-4438-9657-F4912D269496.png",
+          "originalSHA256": "699a0297af2f682ef583410efb3bb7002066e91dc4d3b77cef8c35eaecae93c0",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "label": "Same recording after actual simulator background and return_0_3C023C2D-F1E4-4ACD-9324-6CF511CE869A.png",
+          "testIdentifier": "MobileRecordingContinuityUITests/testHomeReturnKeepsOneVisibleRecordingAndExplicitStopEndsIt()",
+          "timestamp": 1793220242.072,
+          "device": "35A8D9A9-3C03-4CF7-98BE-CE69B88E23BC",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "name": "Same recording after actual simulator background and return_0_3C023C2D-F1E4-4ACD-9324-6CF511CE869A.png",
+          "visualFinding": "Returned recording shows Stop and original samples; debug overlay and scroll-edge clipping. QA only."
+        },
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-iphone-pro/originals/1E9A2605-8AA2-4BEB-9456-D3E12EEDC60D.png",
+          "originalSHA256": "f5ee28c963ab2f863207fe41817a281595bc52f2f0d3ba5696c344f67f067229",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "label": "Recording before actual simulator background_0_7B22574B-E4C4-48A6-A0B7-A8F72AD1FC8C.png",
+          "testIdentifier": "MobileRecordingContinuityUITests/testHomeReturnKeepsOneVisibleRecordingAndExplicitStopEndsIt()",
+          "timestamp": 1793220239.634,
+          "device": "35A8D9A9-3C03-4CF7-98BE-CE69B88E23BC",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "name": "Recording before actual simulator background_0_7B22574B-E4C4-48A6-A0B7-A8F72AD1FC8C.png",
+          "visualFinding": "Active recording with full disclosure and Stop; debug overlay and scroll-edge clipping. QA only."
+        },
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-iphone-pro/originals/543EC6B2-8EB0-4A49-B80E-6EF2125BAAFB.png",
+          "originalSHA256": "cca3d75a2a47d527047447e422f9bbf86653f69bea98f09dc2e47181b369a00d",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "label": "Landscape explicit Stop remains usable_0_DFEEB3D0-8C16-4405-A8CA-AA65DF619524.png",
+          "testIdentifier": "MobileRecordingContinuityUITests/testRecordingLandscapeKeepsDuoPanelsNoticeAndExplicitStopUsable()",
+          "timestamp": 1793220257.559,
+          "device": "35A8D9A9-3C03-4CF7-98BE-CE69B88E23BC",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "name": "Landscape explicit Stop remains usable_0_DFEEB3D0-8C16-4405-A8CA-AA65DF619524.png",
+          "visualFinding": "Landscape stopped Duo keeps Start accessible; debug overlay and partial placeholder/line. QA only."
+        },
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-iphone-pro/originals/A41A03C2-4188-439A-8222-81EEE0236BDE.png",
+          "originalSHA256": "2d5a8fa2a43a8d0523d04af9daf3f168f66916bbcc87723a9cc8407606456168",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "label": "Landscape recording Duo panels and accessible screen lock disclosure_0_01937378-5927-4BB0-8C4C-2D8B4E0B21C0.png",
+          "testIdentifier": "MobileRecordingContinuityUITests/testRecordingLandscapeKeepsDuoPanelsNoticeAndExplicitStopUsable()",
+          "timestamp": 1793220255.909,
+          "device": "35A8D9A9-3C03-4CF7-98BE-CE69B88E23BC",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "name": "Landscape recording Duo panels and accessible screen lock disclosure_0_01937378-5927-4BB0-8C4C-2D8B4E0B21C0.png",
+          "visualFinding": "Landscape active Duo keeps Stop and concise disclosure readable; debug counter and partial scroll content. QA only."
+        },
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-iphone-pro/originals/6D9ED42D-81F4-4E35-8E13-648758CBA5FE.png",
+          "originalSHA256": "ea5025cd50461e62adbf4099f97227012ac6b9b06840325d69ae52b4099a9687",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "label": "Portrait recording with screen lock disclosure_0_975C6D57-994C-4091-A73E-3CD580B07B36.png",
+          "testIdentifier": "MobileRecordingContinuityUITests/testRecordingLandscapeKeepsDuoPanelsNoticeAndExplicitStopUsable()",
+          "timestamp": 1793220252.02,
+          "device": "35A8D9A9-3C03-4CF7-98BE-CE69B88E23BC",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "name": "Portrait recording with screen lock disclosure_0_975C6D57-994C-4091-A73E-3CD580B07B36.png",
+          "visualFinding": "Portrait active disclosure and Stop readable; diagnostic overlay makes this QA only."
+        },
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-iphone-pro/originals/769E0FB8-8235-4AB8-8691-46CA6772EA12.png",
+          "originalSHA256": "b07ec2fb8736aeda3fd13f346ca1b8c787bff7e85f996e4b4acc190778a74755",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "label": "06 Settings_0_1C1EB03C-973D-43DA-BB17-12F843210497.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "timestamp": 1793220288.739,
+          "device": "35A8D9A9-3C03-4CF7-98BE-CE69B88E23BC",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "name": "06 Settings_0_1C1EB03C-973D-43DA-BB17-12F843210497.png",
+          "visualFinding": "Settings controls and privacy explanation readable; lower content continues through normal scrolling."
+        },
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-iphone-pro/originals/7B80DD9B-B43E-4A19-A0D9-43D40AE4E449.png",
+          "originalSHA256": "47b9add578e5ebab0749abb39b24b2da947a1c347fb8c2735efe80eadbbb6fd2",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "label": "05 Conversation history_0_47B95A4E-11E6-4109-AB6E-1DA252BF1BBD.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "timestamp": 1793220283.591,
+          "device": "35A8D9A9-3C03-4CF7-98BE-CE69B88E23BC",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "name": "05 Conversation history_0_47B95A4E-11E6-4109-AB6E-1DA252BF1BBD.png",
+          "visualFinding": "History title, entry, search and Done clean; entry excerpt has intentional ellipsis."
+        },
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-iphone-pro/originals/D7EE8989-666D-4677-A2D6-B0026B455862.png",
+          "originalSHA256": "ee8c10f5763d53a4bc0dc4825e639a44cf21e1cd731b26953a48b12fa77291b7",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "label": "04 Summary portrait_0_BB40BE2B-F80A-4F27-A691-DC9B0EA72672.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "timestamp": 1793220281.223,
+          "device": "35A8D9A9-3C03-4CF7-98BE-CE69B88E23BC",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "name": "04 Summary portrait_0_BB40BE2B-F80A-4F27-A691-DC9B0EA72672.png",
+          "visualFinding": "Summary decisions/actions and Translate summary clear; lower saved-analysis row continues below viewport."
+        },
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-iphone-pro/originals/6FF5B5A2-0DD6-4C44-B2D3-22B034D87413.png",
+          "originalSHA256": "634b7d457374ea1628c73f2458e118d308d5690c4e1bfab2da65ddde1a08a633",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "label": "03 Conversation prompt_0_640B6083-B694-4177-8964-232CADD0DCEA.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "timestamp": 1793220277.265,
+          "device": "35A8D9A9-3C03-4CF7-98BE-CE69B88E23BC",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "name": "03 Conversation prompt_0_640B6083-B694-4177-8964-232CADD0DCEA.png",
+          "visualFinding": "Notes and full summary prompt readable with Save instructions and Done."
+        },
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-iphone-pro/originals/C08C1EAA-F181-4EF9-AC08-8C5A9494CE30.png",
+          "originalSHA256": "218c7e454c62a75929a9c2bbba0e71aa13e8ea0d22c55a5af09114d835d2d928",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "label": "02 Live landscape_0_D34DBA62-1578-4A4A-AD35-2A507C3B272F.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "timestamp": 1793220268.036,
+          "device": "35A8D9A9-3C03-4CF7-98BE-CE69B88E23BC",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "name": "02 Live landscape_0_D34DBA62-1578-4A4A-AD35-2A507C3B272F.png",
+          "visualFinding": "Landscape Duo panels usable but very short viewport, partial transcript and Latest overlay: QA only."
+        },
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-iphone-pro/originals/25B7E3C4-782E-4CA6-8623-02430C2A6517.png",
+          "originalSHA256": "ef101ad2489e3cade9c4c4b3325a0345ccc6d59b622864b0e6e54dea04df82c4",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "label": "01 Live portrait_0_2AD7B9CB-01DA-4F22-B88A-2AE0AA658E0E.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "timestamp": 1793220264.62,
+          "device": "35A8D9A9-3C03-4CF7-98BE-CE69B88E23BC",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "name": "01 Live portrait_0_2AD7B9CB-01DA-4F22-B88A-2AE0AA658E0E.png",
+          "visualFinding": "Portrait transcript is partially scrolled under Latest; Quick bullets readable: QA only."
+        },
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-iphone-pro/originals/90A6716D-6D73-4B07-9AEB-FF349D85A202.png",
+          "originalSHA256": "14327f27d55b928264c97dae2a477ca3951b14c889225ed9eb10ce37dc987245",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "label": "Original transcript and translation in Duo or iPad wide layout_0_434B36E3-CF1F-4CE2-BEB3-4F77DBF740D2.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal()",
+          "timestamp": 1793220314.4,
+          "device": "35A8D9A9-3C03-4CF7-98BE-CE69B88E23BC",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "name": "Original transcript and translation in Duo or iPad wide layout_0_434B36E3-CF1F-4CE2-BEB3-4F77DBF740D2.png",
+          "visualFinding": "Landscape translated line visible but original fragment clipped at top and Quick truncated by viewport: QA only."
+        },
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-iphone-pro/originals/315E8129-7916-481A-8138-FFD30BE68D3C.png",
+          "originalSHA256": "67a4d9fe395e163fc8f091ccabd3236e27df1d860977b2e43fe67bcb8586e8bd",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "label": "Original transcript and on-device translation portrait_0_33F9A3D1-958B-4FC2-B482-14DF0754094E.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal()",
+          "timestamp": 1793220310.012,
+          "device": "35A8D9A9-3C03-4CF7-98BE-CE69B88E23BC",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "name": "Original transcript and on-device translation portrait_0_33F9A3D1-958B-4FC2-B482-14DF0754094E.png",
+          "visualFinding": "Portrait translated line visible while original only trailing fragment remains: QA only."
+        },
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-iphone-pro/originals/CFD1FE79-1647-4277-AE9C-6C17429CA169.png",
+          "originalSHA256": "ff055280149c14493565538bd77d69d3cff6f963e2b3436fda6e064a632711dc",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "label": "Live translation options_0_13AFC824-00ED-4898-B3C7-F7FD80D11A1D.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal()",
+          "timestamp": 1793220306.476,
+          "device": "35A8D9A9-3C03-4CF7-98BE-CE69B88E23BC",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "name": "Live translation options_0_13AFC824-00ED-4898-B3C7-F7FD80D11A1D.png",
+          "visualFinding": "Translation options, target, on-device explanation and Done fully readable."
+        },
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-iphone-pro/originals/59075484-E341-4F1E-98B9-C0128A3488D8.png",
+          "originalSHA256": "d2b6e04bd977fe8b94b8e19c7bdab35052864188063d9b137f5c764e1c7a04f9",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "label": "Summary page French translation beside original_0_CB78F35B-0CCB-4C49-9B73-6B1E26F52190.png",
+          "testIdentifier": "MobileTranslationUITests/testSummaryPageOffersExplicitTranslationAndKeepsOriginal()",
+          "timestamp": 1793220329.511,
+          "device": "35A8D9A9-3C03-4CF7-98BE-CE69B88E23BC",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "name": "Summary page French translation beside original_0_CB78F35B-0CCB-4C49-9B73-6B1E26F52190.png",
+          "visualFinding": "Summary translation controls and French prose visible but original below fold and translation clipped by viewport: QA only."
+        }
+      ]
+    },
+    {
+      "category": "ipad-mini",
+      "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+      "deviceType": "iPad-mini-A17-Pro",
+      "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-26-5",
+      "device": "88163C8D-F789-48F8-8377-E4FC5C90BE9C",
+      "binary": {
+        "executablePath": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-ipad-mini/binary/ListenToMeIOS",
+        "sha256": "71caa3b4beac8457b028ccf360ce8806b4f9a71263490db2df175a73b9fd3c4a",
+        "version": "1.20.2",
+        "build": "42",
+        "payloads": [
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-ipad-mini/binary/Info.plist",
+            "sha256": "400979043645fb8f8d000781672da2b5bd7233bb5a64df6c1a7a37328c066f9b"
+          },
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-ipad-mini/binary/ListenToMeIOS",
+            "sha256": "71caa3b4beac8457b028ccf360ce8806b4f9a71263490db2df175a73b9fd3c4a"
+          },
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-ipad-mini/binary/ListenToMeIOS.debug.dylib",
+            "sha256": "b3994b920d89976587105b8523e4ab85e9426eaa58f6bc53b43779105764c1f1"
+          },
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-ipad-mini/binary/__preview.dylib",
+            "sha256": "7f095fad58b0f77f26f97b3799d0aa602738c24f523c876989bf5f76dd186f25"
+          }
+        ],
+        "capturedPayloadNames": [
+          "Info.plist",
+          "ListenToMeIOS",
+          "ListenToMeIOS.debug.dylib",
+          "__preview.dylib"
+        ]
+      },
+      "assets": [
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-ipad-mini/originals/0238B3E0-7084-464C-ACB4-FB2028D220CC.png",
+          "originalSHA256": "cf7b165c4faac9bd1a9fa05dab40a430b71140f50bf964e8994c22d527670a79",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "label": "Explicit Stop after simulator background_0_34240CBE-9469-424B-9598-2BB37D732C77.png",
+          "testIdentifier": "MobileRecordingContinuityUITests/testHomeReturnKeepsOneVisibleRecordingAndExplicitStopEndsIt()",
+          "timestamp": 1793220421.108,
+          "device": "88163C8D-F789-48F8-8377-E4FC5C90BE9C",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "name": "Explicit Stop after simulator background_0_34240CBE-9469-424B-9598-2BB37D732C77.png",
+          "visualFinding": "Stopped wide panels and Start readable; diagnostic counter overlay: QA only."
+        },
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-ipad-mini/originals/F950FE8B-3D5B-4B20-B066-26EF3A9671BD.png",
+          "originalSHA256": "fdcf442297dce4db331d5682326dd361553c78b1eb4dc9b660d9b1f80cb2be99",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "label": "Same recording after actual simulator background and return_0_B0272A37-054B-4BF1-A441-8BD05CA0F51F.png",
+          "testIdentifier": "MobileRecordingContinuityUITests/testHomeReturnKeepsOneVisibleRecordingAndExplicitStopEndsIt()",
+          "timestamp": 1793220419.516,
+          "device": "88163C8D-F789-48F8-8377-E4FC5C90BE9C",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "name": "Same recording after actual simulator background and return_0_B0272A37-054B-4BF1-A441-8BD05CA0F51F.png",
+          "visualFinding": "Returned active panels/Stop/disclosure readable; diagnostic counter overlay: QA only."
+        },
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-ipad-mini/originals/DA81E5B6-88FE-40D6-B6D2-ADAE8672B15C.png",
+          "originalSHA256": "150ca1fa4282a6087a0e8fa5bb379c5f79dad0aad2972ef488640b8ab2fb9d23",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "label": "Recording before actual simulator background_0_E12E3F04-5116-4557-AEF4-4F217CEF49D1.png",
+          "testIdentifier": "MobileRecordingContinuityUITests/testHomeReturnKeepsOneVisibleRecordingAndExplicitStopEndsIt()",
+          "timestamp": 1793220416.493,
+          "device": "88163C8D-F789-48F8-8377-E4FC5C90BE9C",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "name": "Recording before actual simulator background_0_E12E3F04-5116-4557-AEF4-4F217CEF49D1.png",
+          "visualFinding": "Active panels/Stop/disclosure readable; diagnostic counter overlay: QA only."
+        },
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-ipad-mini/originals/017AC1FA-0CCE-4A35-999F-1AA1719DE9EA.png",
+          "originalSHA256": "8f7d78887709028c9e1533bf07b99e067c16c3c650489b387e349fca16ec5edd",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "label": "06 Settings_0_CD9E8712-3D94-4F50-BAE0-1E8EB52C2B36.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "timestamp": 1793220455.869,
+          "device": "88163C8D-F789-48F8-8377-E4FC5C90BE9C",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "name": "06 Settings_0_CD9E8712-3D94-4F50-BAE0-1E8EB52C2B36.png",
+          "visualFinding": "Settings sheet readable but explanation clipped at lower scroll edge: QA only."
+        },
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-ipad-mini/originals/26AF4CFD-4BF1-425F-A56D-D4ECDD4AAC3D.png",
+          "originalSHA256": "a3dae68647a5af471704bd409e787506f9dc8b287eadd637f4a8c509c958eb44",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "label": "05 Conversation history_0_929CB13E-C877-4FF3-8E6A-9A1D18849919.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "timestamp": 1793220450.334,
+          "device": "88163C8D-F789-48F8-8377-E4FC5C90BE9C",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "name": "05 Conversation history_0_929CB13E-C877-4FF3-8E6A-9A1D18849919.png",
+          "visualFinding": "History sheet entry, search and Done readable; intentional excerpt ellipsis."
+        },
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-ipad-mini/originals/42AB8494-68F2-4DEC-A099-89BC61DD31A0.png",
+          "originalSHA256": "6fbdb4a4f07f177b70ccfa57aa09b5b6b3d2ccfe86413fa78cfd674e69243120",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "label": "04 Summary portrait_0_85D8798A-7458-48AD-8EB7-11FD2C4C9D87.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "timestamp": 1793220447.978,
+          "device": "88163C8D-F789-48F8-8377-E4FC5C90BE9C",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "name": "04 Summary portrait_0_85D8798A-7458-48AD-8EB7-11FD2C4C9D87.png",
+          "visualFinding": "Complete summary and actions with Translate summary readable."
+        },
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-ipad-mini/originals/38C51E8A-1690-48BA-BA49-5D8383812C9F.png",
+          "originalSHA256": "0fe0b9eaeb60c9c45ccffdbe7b6ec17d9e825389f04689e17fd08de5742638ba",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "label": "03 Conversation prompt_0_5DD8DEF1-99F8-4B4F-9EEB-552E3F305443.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "timestamp": 1793220444.028,
+          "device": "88163C8D-F789-48F8-8377-E4FC5C90BE9C",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "name": "03 Conversation prompt_0_5DD8DEF1-99F8-4B4F-9EEB-552E3F305443.png",
+          "visualFinding": "Prompt readable but sheet scrolled past Notes and clips photo-library row: QA only."
+        },
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-ipad-mini/originals/7ACEDDB6-3726-4354-A973-F1116A35F848.png",
+          "originalSHA256": "c985ea65c36973af285e5c2fcf33cf417197eede7e04231473abbb21fc5c155b",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "label": "02 Live landscape_0_8FDCA9BD-20CC-4082-B035-D0A5DAAA5F99.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "timestamp": 1793220431.965,
+          "device": "88163C8D-F789-48F8-8377-E4FC5C90BE9C",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "name": "02 Live landscape_0_8FDCA9BD-20CC-4082-B035-D0A5DAAA5F99.png",
+          "visualFinding": "Clean landscape wide transcript and Quick content, controls unobscured. Preferred compact iPad wide preview."
+        },
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-ipad-mini/originals/2B7D4643-1BE4-4CE4-AF38-FC889B78DCF2.png",
+          "originalSHA256": "9aaf039853e46b233d004fd1961cfdaab4d925ca92b4b3b8b673f10ffa531e18",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "label": "01 Live portrait_0_4114D210-4048-4B35-8EC1-ECCA225F6C99.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "timestamp": 1793220428.272,
+          "device": "88163C8D-F789-48F8-8377-E4FC5C90BE9C",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "name": "01 Live portrait_0_4114D210-4048-4B35-8EC1-ECCA225F6C99.png",
+          "visualFinding": "Clean portrait two-panel transcript and Quick content, controls unobscured."
+        },
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-ipad-mini/originals/7A4CA094-07DF-4E13-8673-E1A4F3A506FA.png",
+          "originalSHA256": "db95988941013f727ffd83ff2b686b57485c6ab3866b6b6511c351dd92b70fcf",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "label": "Original transcript and translation in Duo or iPad wide layout_0_779B7D98-D208-4E3D-AAF2-764CDEBCE341.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal()",
+          "timestamp": 1793220482.127,
+          "device": "88163C8D-F789-48F8-8377-E4FC5C90BE9C",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "name": "Original transcript and translation in Duo or iPad wide layout_0_779B7D98-D208-4E3D-AAF2-764CDEBCE341.png",
+          "visualFinding": "Clean landscape original/French lines plus Quick pane and controls; synthetic translation is illustrative, not model-quality proof."
+        },
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-ipad-mini/originals/5BAABBD6-B137-40AF-B7F5-1982132C912F.png",
+          "originalSHA256": "cc9aa7f269e81b5caf589db7951645712c115132f2ab04c4fb173c969e22a9b6",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "label": "Original transcript and on-device translation portrait_0_2A619D79-D93F-4715-972F-4376A50D10AC.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal()",
+          "timestamp": 1793220477.543,
+          "device": "88163C8D-F789-48F8-8377-E4FC5C90BE9C",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "name": "Original transcript and on-device translation portrait_0_2A619D79-D93F-4715-972F-4376A50D10AC.png",
+          "visualFinding": "Clean portrait original/French lines plus Quick pane and controls; synthetic translation is illustrative."
+        },
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-ipad-mini/originals/87352154-BBD8-4027-B843-734F997B39E4.png",
+          "originalSHA256": "f9b7589530846240b8d9d165b98073563f0074eb81e13d4705d392f6d5ade9ae",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "label": "Live translation options_0_DDB31341-1C69-411F-8CDC-52E97C8F452B.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal()",
+          "timestamp": 1793220474.007,
+          "device": "88163C8D-F789-48F8-8377-E4FC5C90BE9C",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "name": "Live translation options_0_DDB31341-1C69-411F-8CDC-52E97C8F452B.png",
+          "visualFinding": "Full translation options and on-device explanation readable in centered sheet."
+        },
+        {
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-ipad-mini/originals/562C2554-FA15-47BE-95D5-F3C5350A61B9.png",
+          "originalSHA256": "20afe60e182077c244942624cc6c6f5f0b1691cabac6ec7e9cf7fc6c92479873",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "label": "Summary page French translation beside original_0_BF58C64A-F5BD-4725-B569-8350E4ACDE3E.png",
+          "testIdentifier": "MobileTranslationUITests/testSummaryPageOffersExplicitTranslationAndKeepsOriginal()",
+          "timestamp": 1793220497.045,
+          "device": "88163C8D-F789-48F8-8377-E4FC5C90BE9C",
+          "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+          "locale": "en-US",
+          "syntheticContent": true,
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "name": "Summary page French translation beside original_0_BF58C64A-F5BD-4725-B569-8350E4ACDE3E.png",
+          "visualFinding": "French summary, complete original summary and controls visible together; synthetic translation illustrative only."
+        }
+      ]
+    },
+    {
+      "category": "watch-42",
+      "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+      "device": "8B6889F2-47FF-4622-8776-B7E92D4F55D9",
+      "deviceType": "Apple-Watch-Series-12-42mm",
+      "runtime": "com.apple.CoreSimulator.SimRuntime.watchOS-27-0",
+      "binary": {
+        "executablePath": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch42/binary/ListenToMeWatch",
+        "sha256": "c99a6228f697089e99107db26c006f1e0853327fa3cf726b86d8158650981402",
+        "version": "1.20.2",
+        "build": "42",
+        "infoPlistPath": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch42/binary/Info.plist",
+        "payloads": [
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch42/binary/ListenToMeWatch",
+            "sha256": "c99a6228f697089e99107db26c006f1e0853327fa3cf726b86d8158650981402",
+            "originalBuildPath": "/Users/tomwu/.codex/worktrees/retranscription-integration-224/ListenToMe/.build/translation42-watch-captures/Build/Products/Debug-watchsimulator/ListenToMeWatch.app/ListenToMeWatch"
+          },
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch42/binary/ListenToMeWatch.debug.dylib",
+            "sha256": "edfe84fcf155fd16778c5c5a89b761dd74b239b0327ce5eda47abc7c88199943",
+            "originalBuildPath": "/Users/tomwu/.codex/worktrees/retranscription-integration-224/ListenToMe/.build/translation42-watch-captures/Build/Products/Debug-watchsimulator/ListenToMeWatch.app/ListenToMeWatch.debug.dylib"
+          },
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch42/binary/__preview.dylib",
+            "sha256": "043538b135593aad4be72dc783e15d03524a8ad646a458e8fe12cfd312ed2184",
+            "originalBuildPath": "/Users/tomwu/.codex/worktrees/retranscription-integration-224/ListenToMe/.build/translation42-watch-captures/Build/Products/Debug-watchsimulator/ListenToMeWatch.app/__preview.dylib"
+          },
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch42/binary/Info.plist",
+            "sha256": "7dc326ff09a5555757c00b11710bde76438f68a11cc10a8c93ff729cfbb3abdb",
+            "originalBuildPath": "/Users/tomwu/.codex/worktrees/retranscription-integration-224/ListenToMe/.build/translation42-watch-captures/Build/Products/Debug-watchsimulator/ListenToMeWatch.app/Info.plist"
+          }
+        ],
+        "capturedPayloadNames": [
+          "Info.plist",
+          "ListenToMeWatch",
+          "ListenToMeWatch.debug.dylib",
+          "__preview.dylib"
+        ]
+      },
+      "assets": [
+        {
+          "name": "Watch recording restored after background_0_EE96EFB2-A064-4D1F-8E53-FA76588591E5.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch42/originals/9260A3F3-07C0-48F6-9F04-57BC33883F18.png",
+          "originalSHA256": "ea5791ef67c40ec7ff4d8306ad3d74732316b436624ec6d85b79565914ceccd0",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "device": "8B6889F2-47FF-4622-8776-B7E92D4F55D9",
+          "processing": "none",
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "composition": "Recording label, advancing timer, system close and full Stop control visible with clear margins.",
+          "reviewNotes": "Clean native synthetic recording composition; physical capture/transfer unverified. Compact42category is QA-only under release policy."
+        },
+        {
+          "name": "Watch recording survives dismissal gesture_0_D72CC349-14EA-4851-B445-AB660AC2D864.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch42/originals/C23B666F-3CE6-42EA-A32D-A585F4B0D5B0.png",
+          "originalSHA256": "0ec1b2587eef3606dc53351b086eb23314e0b77e07d1308c46d268b5f7853e20",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "device": "8B6889F2-47FF-4622-8776-B7E92D4F55D9",
+          "processing": "none",
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "composition": "Recording label, advancing timer, system close and full Stop control visible with clear margins.",
+          "reviewNotes": "Clean native synthetic recording composition; physical capture/transfer unverified. Compact42category is QA-only under release policy."
+        },
+        {
+          "name": "Watch recording and Stop_0_04266A38-44FC-46DC-A1CF-AC3961A3A591.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch42/originals/1B099B5B-91A7-4EC8-A34A-DA4CECB78048.png",
+          "originalSHA256": "c6c1fbcb9e7ab5f4e31961cd9b812dc5c4a59edfce36674966c49aec2ad2ca1f",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "device": "8B6889F2-47FF-4622-8776-B7E92D4F55D9",
+          "processing": "none",
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "composition": "Recording label, advancing timer, system close and full Stop control visible with clear margins.",
+          "reviewNotes": "Clean native synthetic recording composition; physical capture/transfer unverified. Compact42category is QA-only under release policy."
+        },
+        {
+          "name": "Watch recording consent_0_8B842E70-E573-4447-B7DE-488DDCDCB9EF.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch42/originals/E7419E11-7E74-4BD4-BB5E-283D78BF3079.png",
+          "originalSHA256": "bb00076a1c0993117217f7c09f4145cf6123e797476f7ce81393bcf54034e737",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "device": "8B6889F2-47FF-4622-8776-B7E92D4F55D9",
+          "processing": "none",
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "composition": "Native consent scroll excerpt; remaining consent text and confirmation action extend below captured viewport.",
+          "reviewNotes": "QA-only excerpt, unsuitable listing composition; passing journey scrolled to usable confirmation, so excerpt is not proof of inaccessible consent."
+        },
+        {
+          "name": "Watch ready home_0_F702795D-4151-44FD-B247-D7EC1C711CD8.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch42/originals/E2FCA5BF-35D2-4172-AAB8-D590493A6DA1.png",
+          "originalSHA256": "c17a551f1c426cb0085d339fb3f71fbc45f1c34ce6cbe6141f3810c5f85da0e1",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "device": "8B6889F2-47FF-4622-8776-B7E92D4F55D9",
+          "processing": "none",
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "composition": "Record plus unreachable-iPhone recovery state; Start is disabled.",
+          "reviewNotes": "QA-only offline/setup state rather than listing hero. Lower Start edge reaches compact screen boundary."
+        }
+      ]
+    },
+    {
+      "category": "watch-46",
+      "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+      "device": "9CF78177-DFD0-471E-8EB1-85100948A10B",
+      "deviceType": "Apple-Watch-Series-12-46mm",
+      "runtime": "com.apple.CoreSimulator.SimRuntime.watchOS-27-0",
+      "binary": {
+        "executablePath": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch46/binary/ListenToMeWatch",
+        "sha256": "c99a6228f697089e99107db26c006f1e0853327fa3cf726b86d8158650981402",
+        "version": "1.20.2",
+        "build": "42",
+        "infoPlistPath": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch46/binary/Info.plist",
+        "payloads": [
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch46/binary/ListenToMeWatch",
+            "sha256": "c99a6228f697089e99107db26c006f1e0853327fa3cf726b86d8158650981402",
+            "originalBuildPath": "/Users/tomwu/.codex/worktrees/retranscription-integration-224/ListenToMe/.build/translation42-watch-captures/Build/Products/Debug-watchsimulator/ListenToMeWatch.app/ListenToMeWatch"
+          },
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch46/binary/ListenToMeWatch.debug.dylib",
+            "sha256": "edfe84fcf155fd16778c5c5a89b761dd74b239b0327ce5eda47abc7c88199943",
+            "originalBuildPath": "/Users/tomwu/.codex/worktrees/retranscription-integration-224/ListenToMe/.build/translation42-watch-captures/Build/Products/Debug-watchsimulator/ListenToMeWatch.app/ListenToMeWatch.debug.dylib"
+          },
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch46/binary/__preview.dylib",
+            "sha256": "043538b135593aad4be72dc783e15d03524a8ad646a458e8fe12cfd312ed2184",
+            "originalBuildPath": "/Users/tomwu/.codex/worktrees/retranscription-integration-224/ListenToMe/.build/translation42-watch-captures/Build/Products/Debug-watchsimulator/ListenToMeWatch.app/__preview.dylib"
+          },
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch46/binary/Info.plist",
+            "sha256": "7dc326ff09a5555757c00b11710bde76438f68a11cc10a8c93ff729cfbb3abdb",
+            "originalBuildPath": "/Users/tomwu/.codex/worktrees/retranscription-integration-224/ListenToMe/.build/translation42-watch-captures/Build/Products/Debug-watchsimulator/ListenToMeWatch.app/Info.plist"
+          }
+        ],
+        "capturedPayloadNames": [
+          "Info.plist",
+          "ListenToMeWatch",
+          "ListenToMeWatch.debug.dylib",
+          "__preview.dylib"
+        ]
+      },
+      "assets": [
+        {
+          "name": "Watch recording restored after background_0_7AEDE46C-D5A6-4673-A4B3-2377DD8221E8.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch46/originals/FA2CD836-6A29-448E-B2EA-4B0DCCA67A97.png",
+          "originalSHA256": "c7533d998698af252387b994d1a62f604c3d3668c1b2597633cf8d78b1de5129",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "device": "9CF78177-DFD0-471E-8EB1-85100948A10B",
+          "processing": "none",
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "composition": "Recording label, advancing timer, system close and full Stop control visible with clear margins.",
+          "reviewNotes": "Clean native synthetic recording composition; physical capture/transfer unverified."
+        },
+        {
+          "name": "Watch recording survives dismissal gesture_0_F814F95A-98E7-4B98-AB4B-42C2387AA4AF.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch46/originals/3C664710-ECFC-4056-8011-3253AFCD5398.png",
+          "originalSHA256": "3391d4190732e52b6cb82f064f3b324c778285628955a56663979342cb728e56",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "device": "9CF78177-DFD0-471E-8EB1-85100948A10B",
+          "processing": "none",
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "composition": "Recording label, advancing timer, system close and full Stop control visible with clear margins.",
+          "reviewNotes": "Clean native synthetic recording composition; physical capture/transfer unverified."
+        },
+        {
+          "name": "Watch recording and Stop_0_27F70CAC-A424-446C-99BA-5D84E6E4A38E.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch46/originals/6AF7C9ED-A575-4861-8C0D-4CC095F4AC93.png",
+          "originalSHA256": "7d414b3f0fb92cdacc065353f7d27a0ec5e736a4a19cc32c09d7db18b17a706d",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "device": "9CF78177-DFD0-471E-8EB1-85100948A10B",
+          "processing": "none",
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "composition": "Recording label, advancing timer, system close and full Stop control visible with clear margins.",
+          "reviewNotes": "Clean native synthetic recording composition; physical capture/transfer unverified."
+        },
+        {
+          "name": "Watch recording consent_0_F9036CE4-2210-4E57-89F1-F07CF691E30E.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch46/originals/9D1725FE-2923-4663-8344-AF256A5AB2B2.png",
+          "originalSHA256": "5503672ac71fe0a8d987b473fe39e00b043567f6b63b94e93deca287e1806d52",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "device": "9CF78177-DFD0-471E-8EB1-85100948A10B",
+          "processing": "none",
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "composition": "Native consent scroll excerpt; remaining consent text and confirmation action extend below captured viewport.",
+          "reviewNotes": "QA-only excerpt, unsuitable listing composition; passing journey scrolled to usable confirmation, so excerpt is not proof of inaccessible consent."
+        },
+        {
+          "name": "Watch ready home_0_F9675FFC-12A9-4B98-B58D-1F359DBE668E.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch46/originals/B039685B-5BB8-4C79-8F1A-B4B04D16038B.png",
+          "originalSHA256": "b86dcba36fc4f722dce89fcacf037ebef462da759b0e7ff6e426b38f7bdded3c",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "device": "9CF78177-DFD0-471E-8EB1-85100948A10B",
+          "processing": "none",
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "composition": "Record plus unreachable-iPhone recovery state; Start is disabled.",
+          "reviewNotes": "QA-only offline/setup state rather than listing hero."
+        }
+      ]
+    },
+    {
+      "category": "watch-49",
+      "source": "abe5218f61c193421178a2debab16ea2c2b1b2dc",
+      "device": "87C6783D-53AB-4A2F-A8D1-990C9383D8F6",
+      "deviceType": "Apple-Watch-Ultra-4-49mm",
+      "runtime": "com.apple.CoreSimulator.SimRuntime.watchOS-27-0",
+      "binary": {
+        "executablePath": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch49/binary/ListenToMeWatch",
+        "sha256": "c99a6228f697089e99107db26c006f1e0853327fa3cf726b86d8158650981402",
+        "version": "1.20.2",
+        "build": "42",
+        "infoPlistPath": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch49/binary/Info.plist",
+        "payloads": [
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch49/binary/ListenToMeWatch",
+            "sha256": "c99a6228f697089e99107db26c006f1e0853327fa3cf726b86d8158650981402",
+            "originalBuildPath": "/Users/tomwu/.codex/worktrees/retranscription-integration-224/ListenToMe/.build/translation42-watch-captures/Build/Products/Debug-watchsimulator/ListenToMeWatch.app/ListenToMeWatch"
+          },
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch49/binary/ListenToMeWatch.debug.dylib",
+            "sha256": "edfe84fcf155fd16778c5c5a89b761dd74b239b0327ce5eda47abc7c88199943",
+            "originalBuildPath": "/Users/tomwu/.codex/worktrees/retranscription-integration-224/ListenToMe/.build/translation42-watch-captures/Build/Products/Debug-watchsimulator/ListenToMeWatch.app/ListenToMeWatch.debug.dylib"
+          },
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch49/binary/__preview.dylib",
+            "sha256": "043538b135593aad4be72dc783e15d03524a8ad646a458e8fe12cfd312ed2184",
+            "originalBuildPath": "/Users/tomwu/.codex/worktrees/retranscription-integration-224/ListenToMe/.build/translation42-watch-captures/Build/Products/Debug-watchsimulator/ListenToMeWatch.app/__preview.dylib"
+          },
+          {
+            "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch49/binary/Info.plist",
+            "sha256": "7dc326ff09a5555757c00b11710bde76438f68a11cc10a8c93ff729cfbb3abdb",
+            "originalBuildPath": "/Users/tomwu/.codex/worktrees/retranscription-integration-224/ListenToMe/.build/translation42-watch-captures/Build/Products/Debug-watchsimulator/ListenToMeWatch.app/Info.plist"
+          }
+        ],
+        "capturedPayloadNames": [
+          "Info.plist",
+          "ListenToMeWatch",
+          "ListenToMeWatch.debug.dylib",
+          "__preview.dylib"
+        ]
+      },
+      "assets": [
+        {
+          "name": "Watch recording restored after background_0_B976C4BA-BCB0-4CA6-B9FA-D13201A796A1.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch49/originals/D9A878CC-0AB0-4533-BDCC-BFE01DBA5F07.png",
+          "originalSHA256": "fba43897701ddc39e5315859a3ab4511107dd30761c6543b4ea045389c333a46",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "device": "87C6783D-53AB-4A2F-A8D1-990C9383D8F6",
+          "processing": "none",
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "composition": "Recording label, advancing timer, system close and full Stop control visible with clear margins.",
+          "reviewNotes": "Clean native synthetic recording composition; physical capture/transfer unverified."
+        },
+        {
+          "name": "Watch recording survives dismissal gesture_0_1A6574A6-96C1-41A3-ABA0-404BD0BE5F89.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch49/originals/D8E074EA-5D30-4B9A-815E-C41C0CAF63B4.png",
+          "originalSHA256": "9645f7b27992abd24f10ed39a6d828c14d857fef8513c24a3df72e9bb82c552c",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "device": "87C6783D-53AB-4A2F-A8D1-990C9383D8F6",
+          "processing": "none",
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "composition": "Recording label, advancing timer, system close and full Stop control visible with clear margins.",
+          "reviewNotes": "Clean native synthetic recording composition; physical capture/transfer unverified."
+        },
+        {
+          "name": "Watch recording and Stop_0_2D366DDF-5355-49AE-B1C4-D9DCBEE88944.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch49/originals/A716315B-3AB6-424E-8BB2-DC1D5D02CCD6.png",
+          "originalSHA256": "97042f4a29914a32d0a7523f69543e0546bdd6ec6e1bbd0240d6b38ab1d78567",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "device": "87C6783D-53AB-4A2F-A8D1-990C9383D8F6",
+          "processing": "none",
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "composition": "Recording label, advancing timer, system close and full Stop control visible with clear margins.",
+          "reviewNotes": "Clean native synthetic recording composition; physical capture/transfer unverified."
+        },
+        {
+          "name": "Watch recording consent_0_45B4E5F4-2862-4596-831B-E2476EE2FE96.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch49/originals/DF684B85-4A8B-4DE8-89ED-1A8CB52E2002.png",
+          "originalSHA256": "bbe82b8e6e7de1d4ea9dda57075a249452243b254a871f2b6c63520c9254ee08",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "device": "87C6783D-53AB-4A2F-A8D1-990C9383D8F6",
+          "processing": "none",
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "composition": "Native consent scroll excerpt; remaining consent text and confirmation action extend below captured viewport.",
+          "reviewNotes": "QA-only excerpt, unsuitable listing composition; passing journey scrolled to usable confirmation, so excerpt is not proof of inaccessible consent."
+        },
+        {
+          "name": "Watch ready home_0_D44A54C2-6AB6-4B29-94AC-3477BDCEDAF8.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-watch49/originals/CBD8126F-DC8C-4122-99F6-F1F18F2665E7.png",
+          "originalSHA256": "20de8ea41c831c172f0492721bc39ff712fc96e5c5dbfd63fd3ded4d35cb4211",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "device": "87C6783D-53AB-4A2F-A8D1-990C9383D8F6",
+          "processing": "none",
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "composition": "Record plus unreachable-iPhone recovery state; Start is disabled.",
+          "reviewNotes": "QA-only offline/setup state rather than listing hero."
+        }
+      ]
+    }
+  ],
+  "reviewedCatalogInputs": [
+    {
+      "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-large/catalog.json",
+      "sha256": "c5eff963f9f32b042b3978baed3a11e1fc6574ab34ee21f6286a40e34fdd7445"
+    },
+    {
+      "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-compact/capture-reviewed.json",
+      "sha256": "de6072f313883b9e0086b655e40764afe9b57549266b49c42c2e787b96bdeb7d"
+    },
+    {
+      "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/captures-watch/capture-catalog.json",
+      "sha256": "8051ae545561e30e511332a55d71d6a7cb69e44c97b2538a5e03f89f06732b16"
+    }
+  ],
+  "limitations": [
+    "Native simulator captures use synthetic demonstration content.",
+    "QA-only images are excluded from publishable preview selection.",
+    "No App Store listing upload or physical-device acceptance is claimed.",
+    "Exact pixel bytes and binary payloads are preserved; landscape EXIF orientation is not rewritten."
+  ]
+}

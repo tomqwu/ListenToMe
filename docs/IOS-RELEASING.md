@@ -1,5 +1,29 @@
 # Publish an iOS build to TestFlight
 
+## Current TestFlight checkpoint — 1.20.2 (42)
+
+Apple accepted **1.20.2 (42)** through the official TestFlight helper at **2026-10-28T21:11:37.664213+00:00** from `a6b90e83f775cc9dc88df3c2805ecacedca044af`. Apple build `8967f095-470f-40c0-aba0-b1188bbb699c` is **VALID / IN_BETA_TESTING**. Readback at 2026-10-28T21:15:33.796221+00:00 confirms **en-US**, **Listen To Me - Real Time AI**, exact beta description/What to Test and unchanged access for the existing two-member Dev group. Access does not establish physical installation of build 42.
+
+[Publication receipt](releases/ios-1.20.2-build42.json) · [Release notes and native previews](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.2-build42).
+
+Physical phone translation/lock-screen/multilingual and Watch acceptance remain pending. Public production remains **1.19.1 (39)**; this beta made no new public submission or listing-media upload. Mac changes remain unreleased and keep separate installed-app acceptance gates.
+
+## Historical TestFlight checkpoint — 1.20.1 (41)
+
+Apple accepted **1.20.1 (41)** through the official TestFlight helper (receipt recorded 2026-10-28T19:02:09.198475+00:00) from `dc6b2e39a99568fb4931e937c555fa0de0f2ff18`. Apple build `5c2339eb-5e17-4bd6-8eb1-ec1d212ef49f` is **VALID / IN_BETA_TESTING**. Existing Dev group access was verified at 2026-10-28T19:05:58.417288+00:00; its two accepted memberships are unchanged. Primary locale and metadata are **en-US**, with localized name **Listen To Me - Real Time AI**; beta description and What to Test match the intended copy. Group access does not establish physical installation of build 41.
+
+The exact transported IPA and phone/Share/Watch distribution bundles were verified. The remote tag
+points to the artifact source; GitHub is a non-Latest pre-release and all six preview downloads match.
+[Publication receipt](releases/ios-1.20.1-build41.json). Physical acceptance remains pending; public
+iOS remains 1.19.1 (39). No public submission or listing upload occurred.
+
+## Historical TestFlight checkpoint — 1.20.0 (40)
+
+Apple accepted **1.20.0 (40)** through the official TestFlight helper (receipt recorded 2026-10-28T13:56:43.061187+00:00) from `4a72489120fda713c6d117c3d6c3dc661cf1dd9e`. Apple build `93926f6c-0137-49fe-bc06-f73f04f831f5` is **VALID / IN_BETA_TESTING**, with existing Dev group access verified at 2026-10-28T14:06:21.847671+00:00. English (US) localized name, beta description and What to Test match the intended metadata. Group membership does not establish physical installation of build 40.
+
+Physical phone/Watch acceptance and installed real-language-pair translation quality remain pending. The Mac translation feature remains unreleased. Public production remains 1.19.1 (39); this beta did not submit a new public version or upload listing screenshots. QA-only captures are not approved store assets.
+[Publication receipt](releases/ios-1.20.0-build40.json). Earlier dated checkpoints below retain historical submission states.
+
 ## Public iOS availability — October 28, 2026, 01:12 UTC
 
 Apple's live version readback and independent US public lookup now confirm **iOS 1.19.1 (39)** is
@@ -72,7 +96,7 @@ The [1.19.1 App Store draft media receipt](releases/ios-1.19.1-build39-media.jso
 
 Draft **1.19.1** selects accepted build **39** and remains **PREPARE_FOR_SUBMISSION** with manual release. Description and What's New were read back in both English locales; the draft now describes its embedded Watch companion. No review submission occurred. Physical Watch/phone acceptance remains pending. Six native Watch/Duo/iPad previews are also visible on the [TestFlight GitHub release page](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.1-build39); all six uploaded PNGs were downloaded again and SHA-256 matched. App source and accepted beta build are unchanged.
 
-## Latest Watch-enabled beta — 1.19.1 (39)
+## Earlier Watch-enabled beta — 1.19.1 (39)
 
 Apple accepted **1.19.1 (39)** from `f1728150e3e66664e36d2506022c2918fa60a53c`: Xcode upload success at **2026-10-27 15:39:29.401 UTC**, Apple uploaded date **2026-10-27 15:40:24 UTC**. Processing is **VALID**, internal state **IN_BETA_TESTING**, and the existing internal Dev group includes build 39 with two existing active/installed tester members. This does not prove physical installation of build 39. Primary locale, localized name, beta description and What to Test were read back in **en-US**, with name **Listen To Me - Real Time AI**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.1-build39).
 
@@ -253,10 +277,11 @@ worktree. Screenshots do not replace physical-device acceptance.
    add every applicable Watch screenshot category. Series 12 and Ultra 4 simulator profiles require
    watchOS 27 or later; the 26.5 runtime cannot run them. Inspect the actual device/runtime profile
    instead of substituting an older model name. The saved [native model previews](images/watch/1.18.1-preview/README.md)
-   are historical build-36 previews, not current listing assets. Watch-enabled **1.19.0 (38)** is
-   published to TestFlight; use its [fresh capture catalog](images/ios/release-1.19.0-en-US.json)
-   and approved [Watch previews](images/watch/1.19.0/README.md) for the next authorized listing.
-   Physical Watch/production acceptance and Apple screenshot upload remain separate pending gates.
+   are historical build-36 previews, not current listing assets. The Watch companion is included in
+   public **1.19.1 (39)** and TestFlight **1.20.2 (42)**. Preserve the build-38
+   [capture catalog](images/ios/release-1.19.0-en-US.json) and [Watch previews](images/watch/1.19.0/README.md)
+   as historical evidence; capture fresh candidate-source media for the next authorized listing.
+   Physical Watch acceptance and Apple screenshot upload remain separate gates.
 2. Capture a coherent set: Live transcript/Quick, Summary, Notes/context and prompts when present,
    History, and relevant settings. Include the iPhone landscape two-pane layout and iPad wide layout
    in acceptance evidence; use orientations accepted by each store slot for listing assets. Exercise

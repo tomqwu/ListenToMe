@@ -77,12 +77,15 @@ final class MobileWorkspaceUITests: XCTestCase {
     func testPhoneTwoPaneLayoutAndPageSelectionSurviveRotation() {
         let app = XCUIApplication()
         app.launchArguments = ["--transcript-scroll-fixture", "--two-pane-layout-fixture",
-                               "-mobileCorrectTranscript", "NO", "-autoQuickSummary", "NO"]
+                               "-mobileCorrectTranscript", "NO", "-autoQuickSummary", "NO", "-mobileIdentifySpeakers", "YES"]
         XCUIDevice.shared.orientation = .portrait
         defer { XCUIDevice.shared.orientation = .portrait }
         app.launchPastReleaseNotes()
         XCTAssertTrue(app.buttons["Start listening"].isEnabled, "The synthetic supported profile must not inherit simulator incompatibility")
         XCTAssertFalse(app.staticTexts["recordingSupportReason"].exists)
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@", "Speaker labels on"),
+                                             object: app.staticTexts["captureStatus"])
+        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 5), .completed)
         XCTAssertTrue(app.otherElements["transcriptPanel"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.otherElements["twoPaneMeetingWorkspace"].exists)
         let title = app.textFields["conversationTitle"].value as? String
@@ -130,12 +133,15 @@ final class MobileWorkspaceUITests: XCTestCase {
     func testDuoPaneWidthsAndCompactTranscriptActions() {
         let app = XCUIApplication()
         app.launchArguments = ["--transcript-scroll-fixture", "--two-pane-layout-fixture",
-                               "-mobileCorrectTranscript", "NO", "-autoQuickSummary", "NO"]
+                               "-mobileCorrectTranscript", "NO", "-autoQuickSummary", "NO", "-mobileIdentifySpeakers", "YES"]
         XCUIDevice.shared.orientation = .landscapeLeft
         defer { XCUIDevice.shared.orientation = .portrait }
         app.launchPastReleaseNotes()
         XCTAssertTrue(app.buttons["Start listening"].isEnabled, "The synthetic supported profile must not inherit simulator incompatibility")
         XCTAssertFalse(app.staticTexts["recordingSupportReason"].exists)
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@", "Speaker labels on"),
+                                             object: app.staticTexts["captureStatus"])
+        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 5), .completed)
         let transcript = app.otherElements["transcriptPanel"]
         let quick = app.otherElements["summary-panel-quick"]
         XCTAssertTrue(app.buttons["duoPaneWidths"].waitForExistence(timeout: 10))

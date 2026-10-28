@@ -128,6 +128,8 @@ final class MobileSpeakers {
     /// True once the models are downloaded and loaded in this app run (by a preparation or a pass).
     /// Stop's final pass runs only then: Stop must never start or wait for the model download.
     private(set) var modelsReady = false
+    private(set) var processingGeneration = 0
+    private var suspended = false
     private var run: Run?
     /// Identifies the current run; bumped by every begin and end, so a late result can be discarded.
     private(set) var runToken = 0
@@ -194,30 +196,47 @@ final class MobileSpeakers {
     /// not yet retried. Callers make sure the app is in the foreground. Recording never waits for it;
     /// a pass queued behind it waits, so the two never overlap.
     func startPreparing() {
-        guard enabled, !modelsReady, preparation == nil, !isUnavailable else { return }
+        guard !suspended, enabled, !modelsReady, preparation == nil, !isUnavailable else { return }
         let previous = passChain
+        let generation = processingGeneration
         let work = Task { @MainActor in
             await previous?.value
-            await self.prepareNow()
-            self.preparation = nil
+            guard !Task.isCancelled, !self.suspended, self.processingGeneration == generation else { return }
+            await self.prepareNow(generation: generation)
+            if self.processingGeneration == generation { self.preparation = nil }
         }
         preparation = work
         passChain = work
     }
 
-    private func prepareNow() async {
-        guard enabled, !modelsReady, !isUnavailable else { return }
+    private func prepareNow(generation: Int) async {
+        guard !Task.isCancelled, !suspended, generation == processingGeneration,
+              enabled, !modelsReady, !isUnavailable else { return }
         status = .preparing
         let diarizer = diarizer ?? makeDiarizer()
         self.diarizer = diarizer
         do {
             try await diarizer.prepareModels()
+            guard !Task.isCancelled, !suspended, generation == processingGeneration else { return }
             modelsReady = true
             if status == .preparing { status = .idle }
         } catch {
+            guard !Task.isCancelled, !suspended, generation == processingGeneration else { return }
             let reason = (error as? SpeakerDiarizer.DiarizationError)?.modelFailureReason ?? error.localizedDescription
             status = .unavailable(reason)
             lastFailure = reason
+        }
+    }
+
+    /// Pause optional model work without ending the recording's identity/timeline or resetting the
+    /// buffer held by its live sink. A model already executing may finish; its result cannot publish.
+    func setSuspended(_ value: Bool) {
+        guard suspended != value else { return }
+        suspended = value
+        processingGeneration &+= 1
+        if value {
+            preparation?.cancel(); preparation = nil
+            if status == .preparing || status == .analyzing { status = .idle }
         }
     }
 
@@ -291,16 +310,19 @@ final class MobileSpeakers {
         scheduledPassCount += 1
         #endif
         let previous = passChain
+        let generation = processingGeneration
         let pass = Task { @MainActor () -> Pass? in
             await previous?.value
-            return await self.analyzeNow(token: token, final: final)
+            guard !Task.isCancelled, !self.suspended, self.processingGeneration == generation else { return nil }
+            return await self.analyzeNow(token: token, final: final, generation: generation)
         }
         passChain = Task { _ = await pass.value }
         return await pass.value
     }
 
-    private func analyzeNow(token: Int?, final: Bool) async -> Pass? {
-        guard enabled, let current = run, token == nil || token == current.token, !isUnavailable else { return nil }
+    private func analyzeNow(token: Int?, final: Bool, generation: Int) async -> Pass? {
+        guard !Task.isCancelled, !suspended, generation == processingGeneration,
+              enabled, let current = run, token == nil || token == current.token, !isUnavailable else { return nil }
         let buffer = current.buffer
         let captured = buffer.sampleCount
         let flush = final && diarizer?.requiresFinalFlush == true
@@ -310,7 +332,7 @@ final class MobileSpeakers {
         let from = SpeakerAnalysisPolicy.windowStartSample(totalSamples: captured,
                                                            analyzedSamples: current.analyzedSamples)
         let snapshot = await Task.detached { buffer.snapshot(fromSample: from) }.value
-        guard run?.token == current.token,
+        guard !Task.isCancelled, !suspended, generation == processingGeneration, run?.token == current.token,
               snapshot.samples.count >= SpeakerAnalysisPolicy.minimumSamples else { return nil }
         status = .analyzing
         passCount += 1
@@ -319,7 +341,8 @@ final class MobileSpeakers {
         do {
             let window = try await diarizer.diarizeLive(samples: snapshot.samples, startingAtSample: snapshot.startSample,
                                                        runToken: current.token, final: final)
-            guard var updated = run, updated.token == current.token else { return nil }
+            guard !Task.isCancelled, !suspended, generation == processingGeneration,
+                  var updated = run, updated.token == current.token else { return nil }
             status = .idle
             lastError = nil
             modelsReady = true
@@ -329,7 +352,8 @@ final class MobileSpeakers {
             return Pass(timeline: updated.timeline, identities: updated.identities,
                         offset: updated.offset + snapshot.startOffset, firstLine: updated.firstLine)
         } catch {
-            guard run?.token == current.token else { return nil }
+            guard !Task.isCancelled, !suspended, generation == processingGeneration,
+                  run?.token == current.token else { return nil }
             if let reason = (error as? SpeakerDiarizer.DiarizationError)?.modelFailureReason {
                 status = .unavailable(reason)
                 lastFailure = reason

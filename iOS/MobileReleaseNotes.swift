@@ -48,6 +48,26 @@ enum MobileReleaseNotes {
         var id: String { version }
     }
     static let releases: [Release] = [
+        .init(version: "1.20.2", title: "Recover stalled translations", details: [
+            "Cancel a pending summary translation while keeping the original summary visible.",
+            "Translate stays unavailable while a request is running or stopping, so repeated taps cannot queue extra work.",
+            "A stalled on-device translation now ends its progress message with recovery guidance. Retry when the service is ready again.",
+            "Late translations and old timers cannot replace or interrupt newer work. Translation remains on-device with explicit language-pack preparation."
+        ]),
+        .init(version: "1.20.1", title: "Keep listening through language changes and screen lock", details: [
+            "Keep an established iPhone or iPad recording running when the screen locks or you leave the app. " +
+                "Use Stop to finish; audio interruptions can still interrupt capture.",
+            "Optional summaries, translation and language or speaker analysis pause while the app is inactive. Audio saving remains your choice.",
+            "Keep live words visible when a phrase crosses an automatic language switch, and finalize that phrase once.",
+            "Attempt recovery if a language switch stalls despite continued audio activity. " +
+                "Existing text is preserved, with a notice when some speech may be missing."
+        ]),
+        .init(version: "1.20.0", title: "Translate conversations and summaries", details: [
+            "Add on-device translations beneath completed transcript lines while keeping the original speech and speaker labels.",
+            "On the Summary page, choose Translate summary and its own target language. The original summary stays available.",
+            "Prepare missing language packs only when you choose. Unsupported language pairs show recovery guidance.",
+            "Translation does not change your AI provider or replace saved originals. Share translated text only when you choose."
+        ]),
         .init(version: "1.19.1", title: "Reliable Watch audio imports", details: [
             "Fix an iPhone crash when opening received Watch audio for automatic language detection.",
             "Keep Watch capture running through recording-screen dismissal; use Stop to finish, or Continue after an audio interruption.",
