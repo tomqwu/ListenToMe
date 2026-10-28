@@ -23,6 +23,19 @@ height needed for two panes. Inline compact disclosure restores Duo; both Home/r
 tests passed, with native screenshots independently inspected. These focused results do not replace
 the fresh aggregate validation required on the next frozen source; all failed evidence is retained.
 
+The second aggregate at `73c6188` completed iOS with **seven failed UI methods / 20 assertions**;
+all 494 unit methods passed with seven optional skips. Mac, Watch and real-server stages were not
+reached. An unchanged five-method UI reproduction confirmed stale foreground availability and
+missing fixture model preparation. Explicit initial/current scene delivery, immediate optional-work
+cancellation, fixture isolation and orientation cleanup address those failures. All seven original
+failed UI methods and both recording journeys passed in a 14-method follow-up; that run still failed
+one new title-selector assertion. After correcting only that selector, the affected cold-launch/Home
+method passed separately. Five native lifecycle/privacy methods also passed following four genuine
+red assertions. Superseded tests that wrongly allowed pre-inactive answers are explicitly excluded.
+These are focused results, not an aggregate pass. Independent review cleared the follow-up for a
+fresh full validation. The final catalog contains **153 BDD scenarios**; lint and doc checks pass.
+See [the follow-up evidence](recording-continuity.md#cold-launch-foreground-readiness-follow-up).
+
 All phone/Share/Watch targets and bundled notes now identify **1.20.1 (41)**. New US metadata includes
 all changes since public 1.19.1, with opt-in audio preservation and current language-check limits.
 Current main's accepted build-40 publication receipt and branch-cleanup rules have been integrated;

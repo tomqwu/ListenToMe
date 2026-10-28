@@ -15,6 +15,8 @@ struct MobileRecordingContinuityFixture: View {
         let recorder = ContinuityPreviewRecorder()
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("ContinuityUI-\(UUID())")
         let session = MobileSession(storageDirectory: root, summaryProvider: ContinuityPreviewProvider(),
+                                    sharedInbox: root.appendingPathComponent("SharedInbox"),
+                                    watchInbox: WatchInbox(root: root.appendingPathComponent("WatchInbox")),
                                     makeRecorder: { recorder })
         session.title = "Screen lock recording check"
         session.autoQuick = false; session.ai.correctTranscript = false
@@ -32,11 +34,9 @@ struct MobileRecordingContinuityFixture: View {
                     .font(.caption2).padding(4).accessibilityIdentifier("continuityFixtureProbe")
                     .allowsHitTesting(false)
             }
-            .task { await session.handleScenePhase(scenePhase) }
+            .mobileSessionLifecycle(session)
             .onChange(of: scenePhase) { _, phase in
                 if phase == .background { backgrounds += 1 }
-                session.flushPendingSave()
-                Task { await session.handleScenePhase(phase) }
             }
     }
 }

@@ -35,7 +35,7 @@ Existing backup exclusions and complete-until-first-authentication protection re
 
 ## Executable evidence
 
-`CONTINUITY-001`–`CONTINUITY-006` in
+`CONTINUITY-001`–`CONTINUITY-010` in
 [the behavior catalog](../Behaviors/recording-continuity.json) bind native session, provider,
 speaker, actual PCM sink and installed-plist assertions plus a rendered simulator journey.
 Evidence is preserved outside the checkout under
@@ -164,3 +164,81 @@ can be partially scrolled/clipped inside its reader; these probe-bearing images 
 media. Physical recording, speech quality and locked-device acceptance remain pending. Full local
 validation must restart on the final committed source, and candidate release media must be recaptured
 from that source before distribution.
+
+
+## Cold-launch foreground readiness follow-up
+
+Full validation at `73c61889dffffdb18b622ca04b17b907aca07e13` failed seven UI methods with
+20 assertions; the 494 iOS unit methods completed with seven optional skips and no failures.
+Mac, Watch and real-server stages were not reached. The failed aggregate remains a failure.
+The unchanged five-method reproduction in
+`/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios1201-continuity/ui-selection-investigation/repro-five/`
+failed all five methods, native exit 65/reaped in 147.689 seconds, with all 918 source hashes
+unchanged. Its bounded, silent simulator video exited 0/reaped. Native failure AX and extracted
+frames are preserved with `visual-diagnosis.json`; these are QA diagnostics, not listing media.
+
+The actual selection menu was disabled while the app was visible, saying “Return to ListenToMe
+to summarize selected lines.” Tapping it left the same menu open; no selection summary sheet or
+provider response was reached. The fixture's separate session had not received actual scene
+updates, so its initial activity-based availability stayed stale. The transcript/design fixtures
+also attempted model preparation during initialization, before the app was active, without an
+active retry. The landscape capture and native AX show “Speaker labels: models not loaded” plus
+Retry and a 710-by-116-point dashboard in an 874-by-402-point window. This is separate from the
+earlier recording-notice height regression: these sessions were idle. The failed sheet-rotation
+journey then left landscape orientation for later portrait tests.
+
+`CONTINUITY-007` specifies observable cold-launch and Home-return readiness without changing the
+conversation or provider. The app and affected fixture owners explicitly forward their actual
+initial scene phase and later transitions to their own session. Simulator fixtures isolate shared
+and Watch inboxes and use synthetic recording/speaker adapters; production activity checks remain
+in force. Selection tests require an enabled action before tapping and retain selected-line answer
+and rotation assertions. The added Home-return case is new coverage, without an invented earlier
+red run. Initial portrait isolation and teardown prevent a failed rotation test from contaminating
+following journeys. Focused follow-up results are recorded below; complete validation remains pending.
+
+
+The scene bridge owns its pending asynchronous delivery. Every actually observed inactive/background
+phase synchronously suspends optional work before a later active phase can coalesce delivery;
+background also revokes an unfinished microphone Start. A later active phase cannot revive that
+cancelled preparation, while an established capture stays on its original run. Detaching an owner
+cancels obsolete pending activation, preserving the latest nonactive privacy suspension. Native
+cases use held real session/provider requests and injected capture preparation, rather than only
+counting bridge calls.
+
+The bridge evidence is explicitly scoped in `bridge-evidence-interpretation.json` beside the UI
+investigation. `bridge-red` was a compilation failure, not a product red. `bridge-red2` included an
+incorrect expectation that an answer begun before actual inactivity should survive; that expectation
+and its subsequent green attempts are superseded and are not accepted privacy evidence.
+`bridge-privacy-red3` is the corrected regression: five methods, four assertion failures for absent
+immediate provider cancellation and a pending Start incorrectly reaching recording.
+`bridge-privacy-green3` passed all five native methods with exit 0/reaped and all 923 input hashes
+unchanged. That run precedes the recording fixture's final switch from duplicate direct scene
+handlers to the same production bridge; the following rendered journeys exercise that integration.
+
+`lifecycle-ui-green` is a failed run despite its filename: 14 methods, 13 passed and one new method
+failed two assertions because it queried the editable conversation title as static text. The actual
+cold-launch/Home-return enabled-menu, selected-line answer, original text and on-device destination
+assertions passed. Both recording journeys and all seven originally failing methods passed. The
+run exited 65/reaped in 304.281 seconds with all 923 recorded inputs unchanged. The title query was
+then corrected to the actual `conversationTitle` text field and its value; no application code was
+changed. Only the affected new cold-launch/Home-return method was repeated in
+`lifecycle-cold-green`: one passed, TEST SUCCEEDED, exit 0/reaped in 37.614 seconds, with all 923
+recorded inputs unchanged. These are separate focused receipts, not a single successful aggregate.
+
+Native attachments from both runs are preserved. Inspected corrected-run images show the enabled
+menu and exact one-line answer before and after Home, with the same conversation title and selected
+text. The broader run also shows actual-bridge Home/return with one recording, recording Duo and
+Stop, translated Duo and the speaker-ready workspace without Retry. Probe-bearing and scrolled
+transcript images are QA-only, not release-listing approvals. The original full-validation failures,
+all superseded attempts and their exact source manifests remain intact. Full local validation on
+the final committed source, hosted checks, merge, fresh candidate release media and any authorized
+upload remain required; physical background/audio acceptance is still pending.
+
+
+The final catalog separates the UI readiness journey (`CONTINUITY-007`), immediate old-answer
+cancellation and new-answer fencing (`CONTINUITY-008`), detached-owner privacy (`CONTINUITY-009`)
+and pending-versus-established capture through rapid reactivation (`CONTINUITY-010`). The same
+five native and rendered assertions remain; this is a scenario clarification without application
+changes or an invented additional test run. The earlier 150-scenario checks remain historical;
+final `make bdd-check` validates 153 catalog scenarios. `make lint` completes with no errors, and
+local documentation links and `git diff --check` pass. Complete validation remains pending.

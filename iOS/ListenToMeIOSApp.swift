@@ -5,7 +5,6 @@ import AVFoundation
 struct ListenToMeIOSApp: App {
     /// The app is the only place the language model is created; tests get a stand-in that downloads nothing.
     @State private var session = MobileSession(makeLanguageModel: WhisperLanguageIdentifier.deviceModel)
-    @Environment(\.scenePhase) private var scenePhase
     /// Active before any scene exists, so a watch message that launches the app in the background is
     /// answered (with "open the iPhone app") instead of reaching the microphone (issue #181).
     private let watchLink: PhoneWatchLink?
@@ -24,8 +23,6 @@ struct ListenToMeIOSApp: App {
                     session.tidySavedAudio()   // killed runs repaired, orphaned audio deleted (#55)
                     attachWatchLink()
                     session.importWatchInbox()
-                    // Also from the .active phase change; this covers a launch already active by now.
-                    if scenePhase == .active { session.prepareSpeakerModelsIfNeeded() }
                 }
                 // The transcription languages this device supports, read once for Settings (issue #172).
                 .task { await SpeechLanguageCatalog.shared.load() }
@@ -34,13 +31,6 @@ struct ListenToMeIOSApp: App {
                     guard !busy else { return }
                     session.importSharedInbox()
                     session.importWatchInbox()
-                }
-                // The lifecycle rules live in MobileSession so unit tests can drive them.
-                .onChange(of: scenePhase) { _, phase in
-                    // Synchronously, before the hop: the app can be suspended before the Task runs.
-                    session.flushPendingSave()
-                    if phase == .active { session.savedAudio.applyRetention() }   // Keep audio: Delete after N days
-                    Task { await session.handleScenePhase(phase) }
                 }
                 .onReceive(NotificationCenter.default.publisher(for: AVAudioSession.interruptionNotification)) { note in
                     guard let event = MobileSession.interruption(from: note) else { return }
@@ -93,10 +83,10 @@ struct ListenToMeIOSApp: App {
         } else if ProcessInfo.processInfo.arguments.contains("--vocabulary-fixture") {
             MobileVocabularyFixture()
         } else {
-            MobileMeetingView(session: session)
+            MobileMeetingView(session: session).mobileSessionLifecycle(session)
         }
         #else
-        MobileMeetingView(session: session)
+        MobileMeetingView(session: session).mobileSessionLifecycle(session)
         #endif
     }
 }

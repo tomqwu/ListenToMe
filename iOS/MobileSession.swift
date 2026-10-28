@@ -284,6 +284,16 @@ final class MobileSession {
         save(announce: false)
     }
 
+    /// Called synchronously when the scene reports a real phase change, before async work coalesces.
+    /// Optional work must stop at inactivity; only background revokes a pending microphone Start.
+    func observeScenePhase(_ phase: ScenePhase) {
+        if phase != .active { pauseAuxiliaryWork() }
+        if phase == .background, state == .preparing {
+            stopReason = .background
+            captureCoordinator.requestStop()
+        }
+    }
+
     private func pauseAuxiliaryWork() {
         auxiliaryWorkSuspended = true
         liveTranslation.setSuspended(true); summaryTranslation.worker.setSuspended(true)
