@@ -26,9 +26,11 @@ struct MobileRecordingContinuityFixture: View {
 
     var body: some View {
         MobileMeetingView(session: session)
-            .safeAreaInset(edge: .top) {
+            .overlay(alignment: .top) {
+                // Diagnostic text must not reduce the production workspace or intercept its controls.
                 Text("Synthetic capture · starts=\(recorder.starts); stops=\(recorder.stops); backgrounds=\(backgrounds)")
                     .font(.caption2).padding(4).accessibilityIdentifier("continuityFixtureProbe")
+                    .allowsHitTesting(false)
             }
             .task { await session.handleScenePhase(scenePhase) }
             .onChange(of: scenePhase) { _, phase in

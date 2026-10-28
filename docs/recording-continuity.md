@@ -35,7 +35,7 @@ Existing backup exclusions and complete-until-first-authentication protection re
 
 ## Executable evidence
 
-`CONTINUITY-001`–`CONTINUITY-004` in
+`CONTINUITY-001`–`CONTINUITY-006` in
 [the behavior catalog](../Behaviors/recording-continuity.json) bind native session, provider,
 speaker, actual PCM sink and installed-plist assertions plus a rendered simulator journey.
 Evidence is preserved outside the checkout under
@@ -88,7 +88,7 @@ Evidence is preserved outside the checkout under
   recorder counters match the assertions. Continuity images retain the synthetic QA probe and are
   not listing media. `ui-final2-review.json` records image hashes and limits.
 
-`make lint` and `make bdd-check` passed after the final fixes (147 catalog scenarios). Full local validation, independent
+`make lint` and `make bdd-check` passed after the helper follow-up (149 catalog scenarios). Full local validation, independent
 review, hosted checks, merge and any authorized distribution remain separate requirements.
 
 The simulator-only `--recording-continuity-fixture` is compiled only for Debug simulator builds.
@@ -106,3 +106,61 @@ advanced and fallback speech modules, a call/route interruption and explicit Sto
 foreground return must not reopen capture. Preserve the exact build, device, OS, source, native
 screenshots and outcomes. Simulator lifecycle tests cannot establish actual background SpeechAnalyzer
 availability, hardware audio quality or battery performance; do not claim a physical pass from them.
+
+## Full-validation UI follow-up
+
+The first aggregate validation at `b84973e162c86fe1195e3e3a27971959a0abfa4d` was interrupted after
+two actual UI failures; iOS unit, Mac, Watch and real-server stages had not been reached. This is a
+failed aggregate, regardless of the earlier focused passes. Evidence under
+`/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios1201-continuity/ui-failure-investigation/`
+preserves the original 2,106-file result bundle with matching hashes, its failure AX attachments,
+bounded traces and subsequent exact-source reproductions.
+
+The long-conversation test deterministically tried to swipe `dashboardScroll` in a portrait layout
+that instead exposes the Quick panel's own reading scroll. With the new recording notice, the Quick
+output was below that viewport. The other failure occurred after a Summary tap, with AX still saying
+Live selected; its provisional-summary assertion was never reached. That unchanged manual test
+passed both alone and after the failing Quick test, with screenshots confirming provisional text
+then its removal. The intermittent missed transition is preserved as a failure, not explained away
+as a model defect or claimed as a reproduced product fix. The ordered pair's native exit was 65;
+its bounded screen recording exited 0/reaped, and all 918 source hashes matched. The actual Quick
+video frame is `repro-pair/quick-video-14.5.png`; earlier 14.8/15.5-second frame estimates show
+SpringBoard and are explicitly not Quick evidence.
+
+`CONTINUITY-005` updates only the UI test/navigation contract. The test scrolls the existing outer
+or Quick reading area with six bounded attempts, checks final output hittability, and verifies the
+requested Summary selection and visible generation control. It retains Monday/Sarah, Catching up,
+no-Refresh and provisional-to-final content assertions. Production UI and model behavior were not
+changed by this follow-up. The whole six-method incremental-summary UI class passed in 214.076
+seconds, TEST SUCCEEDED, exit 0/reaped, with all 918 recorded inputs unchanged during that run.
+Three inspected native screenshots in `helper-green/attachments/` confirm visible Quick content
+and both Summary states; the scrolled Quick image does not show the offscreen status, whose
+Catching up assertion passed separately. These are synthetic QA images. Full validation must run
+again on the final committed source before any merge or publication claim.
+
+## Recording in landscape Duo
+
+`CONTINUITY-006` adds an actual portrait-recording → landscape-Duo → Stop journey, including panel
+frames, usable transcript/model controls, Quick content, disclosure accessibility and one start/stop.
+Its first run (`duo-baseline`) failed four assertions. The debug simulator probe was then changed from
+a safe-area inset to a non-layout, non-hit-testing overlay, and screenshots switched to native
+`XCUIScreen` capture to avoid the application crop artifact after rotation. That harness repair did
+not fix Duo: `duo-overlay-green` is a failed attempt despite its name. Home/return passed, but the
+landscape method still failed the same four assertions, with identical AX workspace geometry.
+
+The separate recording-notice row left about 161.7 points of workspace, below the existing 180-point
+Duo threshold; the transcript stacked above Quick, which was below the fold. The compact,
+non-accessibility header now keeps concise visible disclosure inline with title/status, preserving
+the full explanation as its accessibility label. Portrait and accessibility text retain the full
+paragraph. The global layout thresholds are unchanged. This is an observed candidate regression
+and a small production header fix, distinct from the debug probe/screenshot harness repair.
+
+`duo-inline-green` passed both Home/return and landscape Duo/Stop, two UI methods, zero failures,
+24.538 seconds, TEST SUCCEEDED, exit 0/reaped; all 918 recorded inputs matched during the run.
+Inspected native portrait, landscape recording and landscape Stop screenshots show the full portrait
+notice, side-by-side panels with usable controls and inline notice, and enabled Start after Stop.
+The compact notice's full accessibility label passed its assertion. QA transcript/placeholder content
+can be partially scrolled/clipped inside its reader; these probe-bearing images are not listing
+media. Physical recording, speech quality and locked-device acceptance remain pending. Full local
+validation must restart on the final committed source, and candidate release media must be recaptured
+from that source before distribution.

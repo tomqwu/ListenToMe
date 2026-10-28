@@ -9,12 +9,19 @@ remains **1.20.0 (40)** below; public production remains **1.19.1 (39)**. Build 
 Meaningful native reds preceded the fixes: crossing replay/Undo, stalled recovery, inactive model
 preparation, queued/held optional work, false interruption-resume guidance, and Stop/Undo ownership.
 Final focused runs passed: **60 language methods** (18 new and 42 baseline; 249 inputs unchanged),
-**111 recording/privacy methods plus two UI methods** (604 inputs unchanged), lint and **147 BDD
+**111 recording/privacy methods plus two UI methods** (604 inputs unchanged), lint and **149 BDD
 scenarios**. Independent review cleared the source for full validation. The earlier combined run
 failed on isolated-test storage leakage and a stale generated version; both were corrected and its
 failed receipt retained. The largest-text release-history journey passed in that earlier run and
 will run again in full validation. [Recording evidence](recording-continuity.md) and
 [language evidence](language-replay-progress.md) preserve exact red/green and harness-failure limits.
+
+The first aggregate at `b84973e` failed during UI tests: an obsolete Quick scroll helper and an
+unconfirmed Summary-tab transition. The corrected six-method UI class passed. A new recording Duo
+journey also reproduced a real compact-header regression: the separate disclosure row consumed the
+height needed for two panes. Inline compact disclosure restores Duo; both Home/return and Duo/Stop
+tests passed, with native screenshots independently inspected. These focused results do not replace
+the fresh aggregate validation required on the next frozen source; all failed evidence is retained.
 
 All phone/Share/Watch targets and bundled notes now identify **1.20.1 (41)**. New US metadata includes
 all changes since public 1.19.1, with opt-in audio preservation and current language-check limits.

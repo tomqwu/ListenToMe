@@ -171,6 +171,48 @@
           "test": "MobileRecordingContinuityUITests/testHomeReturnKeepsOneVisibleRecordingAndExplicitStopEndsIt"
         }
       ]
+    },
+    {
+      "id": "CONTINUITY-005",
+      "name": "Reach current summaries while the recording disclosure uses portrait space",
+      "given": "an iPhone is recording in portrait with its screen-lock disclosure and a long conversation or provisional live speech",
+      "when": "the user scrolls the actual Quick reading area or selects Summary and generates an answer before and after final recognition",
+      "then": "Quick remains reachable without Refresh and publishes Monday and Sarah while the backlog still says Catching up; Summary is actually selected with its generation control visible, the first answer marks recognition provisional, and final recognition removes that marker without losing the answer",
+      "covers": [
+        "iOS/MobileMeetingView.swift",
+        "iOS/MobileWorkspaceView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileIncrementalSummaryUITests.swift",
+          "test": "MobileIncrementalSummaryUITests/testLongConversationShowsQuickBeforeBacklogFinishesWithoutRefresh"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileIncrementalSummaryUITests.swift",
+          "test": "MobileIncrementalSummaryUITests/testManualSummaryIncludesLiveRecognitionAndDropsMarkerAfterFinalization"
+        }
+      ]
+    },
+    {
+      "id": "CONTINUITY-006",
+      "name": "Keep the landscape Duo recording workspace and Stop usable with the screen-lock notice",
+      "given": "an iPhone has established recording in portrait and shows the continued-recording disclosure; the synthetic QA probe overlays the view without reserving production workspace or intercepting controls",
+      "when": "the device rotates to landscape and the user stops recording",
+      "then": "the actual transcript and Quick panels remain side by side in Duo with usable transcript/model controls, the disclosure remains accessible, and explicit Stop returns to enabled Start without a second recording",
+      "covers": [
+        "iOS/MobileMeetingView.swift",
+        "iOS/MobileWorkspaceView.swift",
+        "iOS/MobileRecordingContinuityFixture.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileRecordingContinuityUITests.swift",
+          "test": "MobileRecordingContinuityUITests/testRecordingLandscapeKeepsDuoPanelsNoticeAndExplicitStopUsable"
+        }
+      ]
     }
   ]
 }
