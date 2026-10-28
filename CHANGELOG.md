@@ -27,11 +27,12 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased)
 
-## iOS 1.20.0 (40) — 2026-10-28 (candidate)
+## iOS 1.20.0 (40) — 2026-10-28 (TestFlight)
 
-Prepared for the next authorized TestFlight train; not uploaded or available yet.
+Apple accepted **1.20.0 (40)** through the official TestFlight helper (receipt recorded 2026-10-28T13:56:43.061187+00:00) from `4a72489120fda713c6d117c3d6c3dc661cf1dd9e`. Apple build `93926f6c-0137-49fe-bc06-f73f04f831f5` is **VALID / IN_BETA_TESTING**, with existing Dev group access verified at 2026-10-28T14:06:21.847671+00:00. English (US) localized name, beta description and What to Test match the intended metadata. Group membership does not establish physical installation of build 40.
+[Publication receipt](docs/releases/ios-1.20.0-build40.json).
 Physical translation quality and Watch/phone acceptance remain unverified. The public production
-baseline is 1.19.1 (39). This beta preparation does not submit a new public App Store version.
+baseline is 1.19.1 (39). This beta did not submit a new public App Store version.
 
 - Add opt-in on-device translation beneath finalized transcript lines, plus **Translate summary**
   on the Summary page with its own target language and original summary retained. Check exact

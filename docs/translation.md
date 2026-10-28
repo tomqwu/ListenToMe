@@ -1,7 +1,7 @@
-# On-device translation (#330, iOS 1.20.0 candidate)
+# On-device translation (#330, iOS 1.20.0 TestFlight)
 
 Live translation and Summary translation are separate conversation choices on Mac and iPhone/iPad,
-including Duo. This work is not included in published TestFlight 1.19.1 (39). It is being prepared for iOS 1.20.0 (40); upload and device acceptance are not yet established. The Mac feature remains unreleased.
+including Duo. This work is included in TestFlight 1.20.0 (40); see the [accepted publication receipt](releases/ios-1.20.0-build40.json). Physical acceptance and real translation quality remain pending. Public production remains 1.19.1 (39); the Mac feature remains unreleased.
 
 ## Live transcript
 
