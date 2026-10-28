@@ -90,3 +90,15 @@ Completed-session cleanup preserved signing/source evidence, found no other runn
 moved only the temporary bundle with exact identifier `com.tomwu.ListenToMe.dev` to Trash and reset
 only that bundle's TCC permissions. All five dedicated simulators were removed. Conversation data,
 in-app settings, API keys, production app permissions and shared simulators were left intact.
+
+## iOS train test-harness backport — October 28, 2026
+
+The 1.20.0 preparation adopts the reviewed `MobileTranslationUITests` scrolling correction from
+PR #318 source `a1eb0fb`. The original full-run failure came from blind swipes overscrolling the
+Translate control at the largest accessibility size. Whole-button bounds assertions reproduced the
+harness failure; bounded direction-aware drags and an explicit phone overshoot/recovery check passed
+on phone and iPad. Source-matched red/green evidence is preserved under
+`2026-10-28/listentome-dual-channel336/translation-ui-diagnostic/`: `visibility-red.log`,
+`visibility-green.log` and `phone-ipad-green.log`.
+This is a test-only portability/reachability correction, not a new translation engine change or a
+new regression-red claim. The final release source still requires its own complete validation.

@@ -48,6 +48,12 @@ enum MobileReleaseNotes {
         var id: String { version }
     }
     static let releases: [Release] = [
+        .init(version: "1.20.0", title: "Translate conversations and summaries", details: [
+            "Add on-device translations beneath completed transcript lines while keeping the original speech and speaker labels.",
+            "On the Summary page, choose Translate summary and its own target language. The original summary stays available.",
+            "Prepare missing language packs only when you choose. Unsupported language pairs show recovery guidance.",
+            "Translation does not change your AI provider or replace saved originals. Share translated text only when you choose."
+        ]),
         .init(version: "1.19.1", title: "Reliable Watch audio imports", details: [
             "Fix an iPhone crash when opening received Watch audio for automatic language detection.",
             "Keep Watch capture running through recording-screen dismissal; use Stop to finish, or Continue after an audio interruption.",

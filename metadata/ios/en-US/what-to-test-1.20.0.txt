@@ -1,0 +1,7 @@
+ListenToMe 1.20.0 (40) — on-device translation
+
+Enable Live translation from More or Notes. Choose a target and verify original and translated finalized lines in phone portrait, Duo landscape and wide iPad. Partial words, speaker labels and audio timing must remain original.
+On the Summary page, choose Translate summary, select its target and press Translate. The original remains readable; Close returns to original-only reading. No AI regeneration or microphone should start. Share translation only when you choose.
+Missing packs must offer Prepare languages without automatic download. Check unsupported pairs, preparation cancellation, changing targets, New/reopen, background/return and long summaries. Verify meaning with an installed language pair; synthetic simulator captures do not establish translation quality.
+The existing Watch companion remains included. Its recording, paired transfer, wrist-down and battery/storage checks remain pending on physical devices. No new recording or retention behavior is introduced by this beta.
+Privacy: translation runs on device. Explicit language preparation downloads Apple assets; ordinary transcripts, summaries, audio saving and selected AI providers retain their existing behavior. Derived translations do not replace saved originals.

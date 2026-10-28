@@ -3,6 +3,15 @@
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
 26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, latest TestFlight version 1.19.1 (39).
 
+## Translation train candidate — 1.20.0 (40)
+
+The next TestFlight candidate contains the merged on-device live translation and explicit
+Summary-page translation feature. Phone, Share and embedded Watch versions are aligned; bundled
+What's New and en-US tester/App Store copy are updated. Public production is 1.19.1 (39).
+No build-40 upload, tester access, physical acceptance or public review submission is claimed yet.
+[Translation behavior and limits](translation.md). Validation, fresh screenshots and signing/upload
+receipts will be recorded before publication.
+
 ## What this app is for
 
 **ListenToMe for iPhone and iPad is a personal capture and recall companion — not a port of the macOS

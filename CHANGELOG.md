@@ -25,7 +25,13 @@ does not show it again, and a fresh install does not see it at all; see
   local BDD-verification failure; it does not change an app feature or count a failed aggregate run
   as passing.
 
-## iOS (unreleased since 1.19.1 (39))
+## iOS (unreleased)
+
+## iOS 1.20.0 (40) — 2026-10-28 (candidate)
+
+Prepared for the next authorized TestFlight train; not uploaded or available yet.
+Physical translation quality and Watch/phone acceptance remain unverified. The public production
+baseline is 1.19.1 (39). This beta preparation does not submit a new public App Store version.
 
 - Add opt-in on-device translation beneath finalized transcript lines, plus **Translate summary**
   on the Summary page with its own target language and original summary retained. Check exact

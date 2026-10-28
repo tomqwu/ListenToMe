@@ -62,11 +62,11 @@ Education & Research) and your own **My terms** list help recognition, AI speech
 summaries on both platforms; after about a minute of speech the phone may suggest one, decided on the
 device. Meeting use-case presets, reference files, audio-file import and WhisperKit transcription are macOS-only.
 Editable domain prompt presets are available on both platforms.
-The public iPhone/iPad app is 1.18.1. The latest TestFlight beta is **1.19.1 (39)**
+The public iPhone/iPad app is [1.19.1](docs/releases/ios-1.19.1-build39-public.json). The latest TestFlight beta is **1.19.1 (39)**
 ([October 27 release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.1-build39)), including the Apple Watch companion.
 [Watch installation and limits](docs/watch-beta.md) and [native previews](docs/images/watch/1.19.1/README.md)
-are available; physical Watch acceptance remains pending. All 49 fresh release images are inspected;
-The [1.19.1 App Store draft](docs/releases/ios-1.19.1-build39-media.json) now has 60 processed screenshots across both English locales, including Watch and landscape Duo; their downloaded pixels and order are verified. The draft has not been submitted, so the public listing remains unchanged.
+are available; physical Watch acceptance remains pending. All 49 build-39 release images were inspected.
+The [1.19.1 media readback](docs/releases/ios-1.19.1-build39-media-readback.json) confirms 60 processed screenshots across both English locales, including Watch and landscape Duo; downloaded image identity was verified in the original upload receipt. The next translation beta, **1.20.0 (40)**, is being prepared and is not published yet.
 See [iOS setup, validation and distribution](docs/IOS.md). Device and language support are checked
 per feature; Apple Intelligence is independent of recording. The [compatibility support](docs/device-compatibility.md)
 includes local dictation fallback for compatible older iPads and explicit unavailable-feature recovery
