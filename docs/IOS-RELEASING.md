@@ -1,5 +1,12 @@
 # Publish an iOS build to TestFlight
 
+## Current TestFlight checkpoint — 1.20.0 (40)
+
+Apple accepted **1.20.0 (40)** through the official TestFlight helper (receipt recorded 2026-10-28T13:56:43.061187+00:00) from `4a72489120fda713c6d117c3d6c3dc661cf1dd9e`. Apple build `93926f6c-0137-49fe-bc06-f73f04f831f5` is **VALID / IN_BETA_TESTING**, with existing Dev group access verified at 2026-10-28T14:06:21.847671+00:00. English (US) localized name, beta description and What to Test match the intended metadata. Group membership does not establish physical installation of build 40.
+
+Physical phone/Watch acceptance and installed real-language-pair translation quality remain pending. The Mac translation feature remains unreleased. Public production remains 1.19.1 (39); this beta did not submit a new public version or upload listing screenshots. QA-only captures are not approved store assets.
+[Publication receipt](releases/ios-1.20.0-build40.json). Earlier dated checkpoints below retain historical submission states.
+
 This is the release runbook for ListenToMe on iPhone/iPad. Follow it when an iOS **release train** is
 due — not after every merged fix. Merging a PR, building an archive, or exporting an IPA does **not**
 publish the app; equally, a merged iOS change does not by itself call for an upload.
@@ -36,7 +43,7 @@ The [1.19.1 App Store draft media receipt](releases/ios-1.19.1-build39-media.jso
 
 Draft **1.19.1** selects accepted build **39** and remains **PREPARE_FOR_SUBMISSION** with manual release. Description and What's New were read back in both English locales; the draft now describes its embedded Watch companion. No review submission occurred. Physical Watch/phone acceptance remains pending. Six native Watch/Duo/iPad previews are also visible on the [TestFlight GitHub release page](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.1-build39); all six uploaded PNGs were downloaded again and SHA-256 matched. App source and accepted beta build are unchanged.
 
-## Latest Watch-enabled beta — 1.19.1 (39)
+## Earlier Watch-enabled beta — 1.19.1 (39)
 
 Apple accepted **1.19.1 (39)** from `f1728150e3e66664e36d2506022c2918fa60a53c`: Xcode upload success at **2026-10-27 15:39:29.401 UTC**, Apple uploaded date **2026-10-27 15:40:24 UTC**. Processing is **VALID**, internal state **IN_BETA_TESTING**, and the existing internal Dev group includes build 39 with two existing active/installed tester members. This does not prove physical installation of build 39. Primary locale, localized name, beta description and What to Test were read back in **en-US**, with name **Listen To Me - Real Time AI**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.1-build39).
 
