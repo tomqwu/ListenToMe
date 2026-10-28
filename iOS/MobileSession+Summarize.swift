@@ -66,6 +66,7 @@ extension MobileSession {
     }
 
     func summarize(mode: MobileSummaryMode = .summary) async {
+        guard !Task.isCancelled, !auxiliaryWorkSuspended, isForeground, applicationIsActive() else { return }
         if let reason = summaryBlockReason(for: mode) { message = reason; return }
         // Capture a stable input snapshot; recording can continue while this request runs.
         let live = liveSnapshot()
@@ -166,6 +167,7 @@ extension MobileSession {
     /// flag is true when the model stopped at its output limit; the text so far is kept (#215).
     private func streamAnswer(_ request: LLMRequest, mode: MobileSummaryMode,
                               client: any LLMProvider) async throws -> (String, Bool) {
+        try Task.checkCancellation()
         var quickResponse = ""
         var cutOff = false
         for try await event in client.streamEvents(request) {

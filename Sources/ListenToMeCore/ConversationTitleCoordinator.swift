@@ -56,6 +56,7 @@ public final class ConversationTitleCoordinator {
         if let entry = entries[id] { return entry.task }
         let generation = UUID(), generate = generate
         let task = Task { [weak self] in
+            guard !Task.isCancelled else { return }
             let named = await generate(snapshot, language, provider)
             guard let self, self.entries[id]?.generation == generation else { return }
             self.entries[id] = nil
@@ -66,6 +67,14 @@ public final class ConversationTitleCoordinator {
         }
         entries[id] = Entry(generation: generation, task: task)
         return task
+    }
+
+    /// Stop optional naming when the adapter suspends model work. Cancelled generations cannot
+    /// apply output, even when their provider ignores cancellation; future active requests may retry.
+    public func cancelAll() {
+        let tasks = entries.values.map(\.task)
+        entries.removeAll()
+        for task in tasks { task.cancel() }
     }
 
     public func cancel(_ id: String) {

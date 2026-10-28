@@ -208,6 +208,35 @@ Automation checks structure and observed execution, not intent, causality or tes
 independent reviewer must compare each scenario with its assertions and verify red/green evidence.
 Do not satisfy a behavior change with an unrelated test or weaken coverage/manual acceptance gates.
 
+## iPhone and iPad recording continuity (#339)
+
+`CONTINUITY-001`–`CONTINUITY-003` distinguish an already user-started microphone from pending or
+idle capture. Native session tests keep one recording through inactive/background, preserve final
+speech and elapsed start, keep explicit Stop authoritative, and fence auxiliary AI/correction/speaker
+work. The native sink holds at most its bounded newest speaker audio. A simulator UI journey uses
+actual Home/activate and the production meeting view; its injected recorder does not prove physical
+screen-lock capture, audio-session routing, battery behavior or paired-Watch control.
+
+`LANGREPLAY-001`–`LANGREPLAY-004` bind actual session replay handling: a cumulative utterance crossing
+the replay cut must show progress without prematurely deleting originals, commit its final once,
+and release later checks. Inactive preparation and detection completions are generation-fenced;
+foreground can retry using recent retained audio. A replay without advancing results gets one
+same-locale restart after 30 seconds of accepted audio activity, with silence excluded and progress
+resetting that budget. The native adapter cancels/fences the superseded result generation. Failed
+recovery retains text/capture, permits future checks and reports possible missing speech instead of
+claiming a complete transcript. Stop or new progress cancels an obsolete in-flight recovery. Undo owns its task across context and
+native preparation: inactivity, Stop or New fence late switch/pin/error effects, and native locale
+and saved-language metadata commit together before post-commit context work can suspend. Stop
+preserves the user's already-requested Undo intent and applies it after drain; inactivity cancels an
+uncommitted Undo without applying it. Explicit stopping-time Undo remains queueable.
+
+The cheap activity detector is not a speech-quality oracle. These tests use injected audio/results,
+not real multilingual inference. The existing detection cadence, confidence, dwell and switch cap
+remain; detection pauses while inactive/background and the Apple recognizer remains single-language.
+Physical continuous bilingual speech, lock/background, route changes, Stop/Undo and saved-audio
+opt-in acceptance remain separate. See [language replay evidence](language-replay-progress.md),
+[recording continuity](recording-continuity.md) and the [manual script](manual-smoke-test.md#iphone-and-ipad-continuity-and-language-replay-339).
+
 ## Translation boundaries
 
 `TRANSLATE-001`–`TRANSLATE-014` cover opt-in final-line translation, independent Summary-page

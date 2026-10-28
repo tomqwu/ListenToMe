@@ -121,7 +121,7 @@ final class MobileWatchRemoteTests: XCTestCase {
         XCTAssertEqual(session.state, .idle)
     }
 
-    func testBackgroundStopPublishesTheBackgroundReason() async throws {
+    func testBackgroundKeepsWatchRecordingStatusAndElapsedStartUntilStop() async throws {
         let recorder = LifecycleTestRecorder()
         let session = MobileSession(storageDirectory: root, makeRecorder: { recorder })
         let link = FakeWatchLink()
@@ -132,9 +132,12 @@ final class MobileWatchRemoteTests: XCTestCase {
 
         await session.handleScenePhase(.background)
         let last = try XCTUnwrap(link.published.last)
-        XCTAssertEqual(last.state, .idle)
-        XCTAssertEqual(last.lastStopReason, .background)
-        XCTAssertNil(last.startedAt)
+        XCTAssertEqual(last.state, .recording)
+        XCTAssertNil(last.lastStopReason)
+        XCTAssertEqual(last.startedAt, session.recordingStartedAt)
+        XCTAssertNotNil(last.startedAt)
+        XCTAssertEqual(last.recordingReady, false, "Background cannot start another recording")
+        await session.stop()
     }
 
     func testStatusCommandReportsWithoutTouchingTheRecorder() async {

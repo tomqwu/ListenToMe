@@ -3,7 +3,13 @@ import UIKit
 
 @MainActor
 final class MobileTranslationUITests: XCTestCase {
+    override func tearDown() async throws {
+        XCUIDevice.shared.orientation = .portrait
+        try await super.tearDown()
+    }
+
     private func launch(_ extra: [String] = []) -> XCUIApplication {
+        XCUIDevice.shared.orientation = .portrait
         let app = XCUIApplication()
         app.launchArguments = ["--design-review-fixture", "--translation-fixture", "-autoQuickSummary", "NO"] + extra
         app.launchPastReleaseNotes()

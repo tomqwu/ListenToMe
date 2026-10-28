@@ -48,6 +48,34 @@ final class MobileVocabularyTests: XCTestCase {
         XCTAssertTrue(predicate())
     }
 
+    func testInactiveSpeechCannotScheduleVocabularyAndQueuedCheckCannotPublish() async throws {
+        let recorder = VocabularyTestRecorder()
+        let session = makeSession(recorder)
+        session.ai.correctTranscript = false
+        var active = true
+        session.applicationIsActive = { active }
+        session.start()
+        try await wait { session.state == .recording }
+        for line in Self.medicalSpeech { recorder.send(line) }
+        let queued = try XCTUnwrap(session.vocabulary.check)
+        active = false
+        await session.handleScenePhase(.inactive)
+        XCTAssertTrue(queued.isCancelled)
+        XCTAssertNil(session.vocabulary.check)
+        await queued.value
+        XCTAssertNil(session.vocabulary.banner(for: session.id), "Cancelled classification cannot publish a banner")
+        session.newConversation() // Busy recording cannot replace the conversation.
+        for line in Self.medicalSpeech { recorder.send(line) }
+        XCTAssertNil(session.vocabulary.check, "Background finalized speech must not schedule sentence embeddings")
+        XCTAssertEqual(session.state, .recording)
+        active = true
+        await session.handleScenePhase(.active)
+        for line in Self.medicalSpeech { recorder.send(line) }
+        try await wait { session.vocabulary.banner(for: session.id) != nil }
+        XCTAssertFalse(session.ai.correctTranscript, "Vocabulary remains independent of correction opt-in")
+        await session.stop()
+    }
+
     func testConversationAdditionsSurviveReopenAndRelaunchButNotDeletion() throws {
         let session = makeSession(VocabularyTestRecorder())
         session.vocabulary.settings = VocabularySettings(defaultDomainIDs: ["legal"], myTerms: ["Okafor"])

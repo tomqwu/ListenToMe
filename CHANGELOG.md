@@ -27,6 +27,16 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased)
 
+## iOS 1.20.1 (41) — 2026-10-28 (candidate)
+
+Prepared for the tester-feedback TestFlight train; full local validation and fresh seven-profile screenshot review passed. Merge and accepted upload remain pending. Physical screen-lock recording, native multilingual recognition and Watch acceptance are not established by simulator tests. Public production remains 1.19.1 (39).
+
+- Keep an established iPhone/iPad microphone recording active when the screen locks or the app backgrounds. Preserve the same session, transcript and opted-in audio until Stop or an audio interruption. Cancel a pending Start before a delayed callback can open the microphone in the background. (#339)
+- Keep live words visible when an utterance crosses an automatic language-switch replay boundary, finalize it once and allow later language checks. After sustained audio activity without replay progress, attempt one recovery from live audio, preserve existing text and show a possible-gap notice. Stop, Undo and cancelled work stay bound to the correct recording. (#339)
+- Pause optional AI work while inactive, reject obsolete results and retain bounded speaker/language buffers for the continuing recording. Keep provider and audio-saving choices unchanged. A visible recording notice explains the behavior. (#339)
+
+Privacy: user-started microphone capture can now continue while locked; backgrounding never starts idle capture. Saved audio remains opt-in with unchanged file protection. Language detection stays on-device, and optional background summary/correction requests do not start. Already executing local work may finish, but obsolete output is rejected. Language recheck confidence, cadence and switch limits are unchanged; this is not seamless bilingual recognition while locked.
+
 ## iOS 1.20.0 (40) — 2026-10-28 (TestFlight)
 
 Apple accepted **1.20.0 (40)** through the official TestFlight helper (receipt recorded 2026-10-28T13:56:43.061187+00:00) from `4a72489120fda713c6d117c3d6c3dc661cf1dd9e`. Apple build `93926f6c-0137-49fe-bc06-f73f04f831f5` is **VALID / IN_BETA_TESTING**, with existing Dev group access verified at 2026-10-28T14:06:21.847671+00:00. English (US) localized name, beta description and What to Test match the intended metadata. Group membership does not establish physical installation of build 40.

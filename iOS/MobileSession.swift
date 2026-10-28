@@ -21,6 +21,8 @@ final class MobileSession {
     }
     var stopReason: StopReason? { didSet { if stopReason != oldValue { publishWatchStatus() } } }
     private(set) var isForeground = true
+    /// Screen lock keeps established microphone capture alive, but model/provider work waits for active use.
+    private(set) var auxiliaryWorkSuspended = false
     @ObservationIgnored private var sceneGeneration = 0
     /// When the current recording run started, for the Apple Watch remote's elapsed time (issue #181).
     private(set) var recordingStartedAt: Date?
@@ -223,6 +225,7 @@ final class MobileSession {
 
     var summaryAvailability: String? { summaryAvailability(for: .summary) }
     var automaticQuickAvailability: String? {
+        if auxiliaryWorkSuspended || !isForeground || !applicationIsActive() { return "Return to ListenToMe to update summaries." }
         if summaryProvider != nil { return nil }
         if ai.provider == .apple { return AppleIntelligenceProvider.automaticQuickUnavailableReason }
         return summaryAvailability(for: .quick) ?? ai.automaticQuickReason
@@ -269,19 +272,43 @@ final class MobileSession {
     }
 
     func background() async {
-        liveTranslation.setSuspended(true); summaryTranslation.worker.setSuspended(true)
-        cancelSpeakerIdentification()
-        acceptsSpeechCorrection = false
+        pauseAuxiliaryWork()
         flushPendingSave()
-        speechCorrection.cancel()
-        cancelSummary()   // the manual request and any selection summary (#234)
-        quickReader.cancel()
         let token = UIApplication.shared.beginBackgroundTask(withName: "Save conversation")
         defer { if token != .invalid { UIApplication.shared.endBackgroundTask(token) } }
         watchDrainTask?.cancel()
         await watchDrainTask?.value
-        await stop()
+        // Only an established, user-started recording owns background audio. Preparation must not
+        // acquire a microphone later from a delayed permission/model callback after screen lock.
+        if state != .recording { await stop() }
         save(announce: false)
+    }
+
+    /// Called synchronously when the scene reports a real phase change, before async work coalesces.
+    /// Optional work must stop at inactivity; only background revokes a pending microphone Start.
+    func observeScenePhase(_ phase: ScenePhase) {
+        if phase != .active { pauseAuxiliaryWork() }
+        if phase == .background, state == .preparing {
+            stopReason = .background
+            captureCoordinator.requestStop()
+        }
+    }
+
+    private func pauseAuxiliaryWork() {
+        auxiliaryWorkSuspended = true
+        liveTranslation.setSuspended(true); summaryTranslation.worker.setSuspended(true)
+        acceptsSpeechCorrection = false
+        speechCorrection.cancel()
+        cancelSummary()
+        quickReader.cancel()
+        titleCoordinator.cancelAll()
+        vocabulary.suspendSuggestions()
+        handleSummaryEvent(.recordingChanged) // also cancels pending wakes and automatic full reviews
+        pauseLanguageForBackground()
+        speakerLoop?.cancel(); speakerLoop = nil
+        speakerFinalPass?.cancel(); speakerFinalPass = nil
+        speakers.setSuspended(true)
+        if state != .recording && state != .preparing { cancelSpeakerIdentification() }
     }
 
     func newConversation() {
@@ -451,6 +478,7 @@ extension MobileSession {
             let previousReads = quickReader.completedReads
             await quickReader.read(batch, provider: provider, isCurrent: { [weak self] in
                 guard let self, self.id == sessionID, self.summaryInstructions == instructionsAtStart, self.activeVocabulary == vocabularyAtStart,
+                      !self.auxiliaryWorkSuspended, self.isForeground, self.applicationIsActive(),
                       self.autoQuick, self.state == .recording else { return false }
                 return self.quickReader.context.isCurrent(batch, pieces: self.quickPieces)
             }, apply: { [weak self] output in
@@ -764,7 +792,7 @@ extension MobileSession {
                                        "Your transcript is saved; recording resumes when the interruption ends.")
         case .ended:
             guard stopReason == .interruption, state == .idle, !isSummarizing else { return }
-            guard options.contains(.shouldResume), isForeground else {
+            guard options.contains(.shouldResume), isForeground, !auxiliaryWorkSuspended, applicationIsActive() else {
                 message = "Recording stopped: audio was interrupted by a call or another app. " +
                           "Your transcript is saved; tap Listen to continue."
                 return
@@ -808,7 +836,7 @@ extension MobileSession {
         sceneGeneration += 1
         let generation = sceneGeneration
         isForeground = phase != .background
-        if phase != .active { liveTranslation.setSuspended(true); summaryTranslation.worker.setSuspended(true) }
+        if phase != .active { pauseAuxiliaryWork() }
         // Suspension can follow .inactive without another chance to run, so pending typing is
         // written here as well as from the App body's synchronous forwarder.
         flushPendingSave()
@@ -817,22 +845,31 @@ extension MobileSession {
             ai.refreshAppleAvailability()
             await refreshRecordingSupport(publish: false)
             guard !Task.isCancelled, generation == sceneGeneration, isForeground, applicationIsActive() else { return }
+            auxiliaryWorkSuspended = false
+            speakers.setSuspended(false)
+            acceptsSpeechCorrection = state == .recording
             liveTranslation.setSuspended(false); summaryTranslation.worker.setSuspended(false)
             importSharedInbox(); importWatchInbox(); nameConversationIfNeeded()
             prepareSpeakerModelsIfNeeded()   // speaker models load in the foreground only (#195)
+            if state == .recording {
+                startSpeakerLoop()
+                resumeLanguageAfterForeground()
+            }
+            handleSummaryEvent(.recordingChanged)
             // The watch may still show "Open ListenToMe…" from a Start sent while this was closed.
             publishWatchStatus()
         case .background:
-            let capturing = state == .recording || state == .preparing
+            let preparing = state == .preparing
             let before = message
             await background()
-            if capturing {
+            if preparing {
                 stopReason = .background
                 if message == before {
                     message = "Recording stopped: ListenToMe moved to the background. " +
                               "Your transcript is saved; tap Listen to continue."
                 }
             }
+            publishWatchStatus()
         default: return
         }
     }

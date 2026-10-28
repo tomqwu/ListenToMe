@@ -481,6 +481,57 @@ Physical iPhone or iPad only. The full check is step 12 of the physical-device l
 5. **Mixed sentences are a known limit.** A sentence mixing English words into Mandarin stays in the
    recording's current language (#205).
 
+## iPhone and iPad continuity and language replay (#339)
+
+Pending physical-device acceptance; simulator unit/UI passes do not complete this script. Use the
+exact candidate on physical iPhone and iPad, with an authored bilingual script from a second device
+or consenting speakers. Record source/build/device, settings, screenshots, transcript timings and
+observed outcome. Keep microphone capture, language detection, summary providers and saved audio
+as separate checks.
+
+1. **Established capture through lock.** Start in the foreground and confirm Listening before audio
+   begins. Lock the screen, then background to another app while the script continues for two or more
+   minutes. Return: elapsed time and one recording must continue, and finalized speech heard while
+   backgrounded must be present. Foreground return must not start another run. Press Stop and inspect
+   History/export and final words. Repeat with Save audio recordings off and on; off must create no
+   retained recording, and on must preserve the full accepted run. Repeat a headset/route change and
+   an interruption separately; supported recovery or a truthful terminal error must not revive a
+   recorder after explicit Stop.
+2. **No background start.** Background while idle, and separately while microphone/model preparation
+   is pending. No microphone may start from either case. Returning active must not resume the cancelled
+   preparation; Start requires another deliberate tap. Test denied permission/setup independently.
+3. **Auxiliary privacy.** While established capture continues, background with AI, correction,
+   speaker preparation and language preparation/detection pending. No new auxiliary inference or
+   provider request may start while inactive/background, and obsolete completions must not publish.
+   Captured speech still accumulates. Foreground resumes eligible work without replaying a backlog.
+   Already-dispatched remote work cannot be recalled; distinguish its cancellation/readback from a new
+   request. Automatic language identification uses local Whisper, not the configured summary provider.
+4. **Continuous language change.** With Automatic selected, read one language then continue in another
+   without changing Settings. When the switch replays prior speech, continue a long utterance across
+   its cut. New partial text must remain visible while old finalized lines remain until replacement
+   finals exist. Verify the crossing final appears once, earlier unrelated lines/times survive, later
+   checks still run, Undo returns to the prior fixed language, and Stop finalizes without duplication.
+   Repeat Undo followed immediately by lock/background and by Stop then New. A cancelled preparation
+   must not switch or pin the next conversation, restore old text into it or publish an old error.
+   Once native Undo has committed, its displayed language must already match the active recognizer.
+   An Undo already requested before Stop must still restore the stopped conversation after finalization;
+   an explicit Undo tapped while Stop drains must also apply once, without reviving native capture.
+5. **Recovery boundaries.** If a replay stops producing advancing results during sustained input,
+   retain diagnostics and check the one-attempt recovery after 30 seconds of accepted audio activity.
+   The notice must explain possible missing speech; it must not claim the stalled span was recovered.
+   Silence alone must not trigger restart. Check that resumed native output cancels an obsolete pending
+   restart, Stop wins during restart, and an unsuccessful restart preserves existing text/capture with
+   a warning and permits later checks. Injected native tests cover deterministic failure scheduling;
+   do not record a physical failure/recovery pass unless it was actually observed.
+6. **Declared limits.** Repeat foreground return after more than 120 seconds in the background; bounded
+   retained audio supports fresh checks, not unlimited replay. Language checks pause while inactive/
+   background, so background capture can remain in its existing locale. The 60-second cadence,
+   20-second confirmation, 90-second dwell and four-switch cap still limit fast mixed-language movies.
+   These limits must not be reported as resolved by the replay fix. Inspect the background-recording
+   notice and distinguish real speech accuracy from a successful control-flow journey.
+
+See [the language evidence](language-replay-progress.md) and [background recording scope](recording-continuity.md).
+
 ## Domain vocabularies and My terms (#222)
 
 Needs a physical iPhone (the simulator has no speech recognition) and the Mac app; read each script

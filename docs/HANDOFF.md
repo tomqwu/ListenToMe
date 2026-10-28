@@ -1,3 +1,37 @@
+# Recording continuity #339 — 1.20.1 (41) candidate
+
+The recording/language follow-up implements continued user-started capture through backgrounding,
+replay progress/recovery, immediate cancellation of optional work and refreshed foreground controls.
+Full `make validate-local` passed on exact source `9b14ff2ea58919c1bf42a3482794ccd4877dbf1a` with all 921 tracked
+inputs unchanged. Core: 1254 tests, 7 optional skips,
+zero failures and 98.17549956559513% line coverage. iOS UI 82 tests / 5 skips / 0 failures; iOS unit 499 tests / 7 skips / 0 failures; Mac native 43 tests / 0 skips / 0 failures; Watch unit 29 tests / 0 skips / 0 failures; Watch UI 5 tests / 0 skips / 0 failures.
+All 153 BDD scenarios were structurally valid; every bound native selector was
+observed passing. Four helper suites and 4 real-server contracts passed.
+These are local automated results, separate from installed/physical acceptance.
+
+Fresh candidate media is preserved across 7 profiles and 75 native-resolution images, with source/binary/payload hashes and explicit reviewed listing/QA classifications. Saved media does not update Apple's listing. [Capture catalog](images/ios/release-1.20.1-en-US.json).
+
+[Validation receipt](releases/ios-1.20.1-build41-validation.json). All three hosted checks passed on the
+validated application source ([run 40737628646](https://github.com/tomqwu/ListenToMe/actions/runs/40737628646));
+this final evidence-only commit still requires its own checks before merge. The 75 images include
+two supplemental Duo captures from an unchanged existing layout test; 30 are suitable compositions
+and 45 are QA-only. Watch previews remain scoped to GitHub, not App Store approval.
+
+Earlier failed aggregates, unchanged-source reproductions, superseded privacy expectations and the
+corrected title-query failure remain preserved. The focused 14-method UI attempt passed 13 methods
+and failed the new title query; only that selector changed before its isolated passing retry. The
+final aggregate above reran the complete final source. [Recording evidence](recording-continuity.md)
+and [language evidence](language-replay-progress.md) retain the earlier red/green boundaries.
+
+All phone/Share/Watch targets and bundled notes identify **1.20.1 (41)**. Physical screen-lock audio,
+native multilingual accuracy and Watch acceptance remain pending; this candidate is not a production
+acceptance claim. Build 41 upload, tester availability and GitHub release status require separate
+accepted receipts; no upload or public App Store submission is asserted by this validation snapshot.
+Hosted checks, merge and authorized distribution are recorded separately by the release owner.
+
+Release evidence: `/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios1201-continuity`.
+The other preserved Mac/Watch/research backlog remains independently gated.
+
 # Published translation beta — 1.20.0 (40)
 
 Apple accepted **1.20.0 (40)** through the official TestFlight helper (receipt recorded 2026-10-28T13:56:43.061187+00:00) from `4a72489120fda713c6d117c3d6c3dc661cf1dd9e`. Apple build `93926f6c-0137-49fe-bc06-f73f04f831f5` is **VALID / IN_BETA_TESTING**, with existing Dev group access verified at 2026-10-28T14:06:21.847671+00:00. English (US) localized name, beta description and What to Test match the intended metadata. Group membership does not establish physical installation of build 40.

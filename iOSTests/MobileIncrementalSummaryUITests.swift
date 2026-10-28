@@ -132,6 +132,8 @@ final class MobileIncrementalSummaryUITests: XCTestCase {
     func testLongConversationShowsQuickBeforeBacklogFinishesWithoutRefresh() {
         let app = launch(backlog: true)
         app.buttons["Start listening"].tap()
+        XCTAssertTrue(app.buttons["Stop listening"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["backgroundRecordingNotice"].exists)
         revealQuick(app)
         wait(app.staticTexts["output-quick"], contains: "Monday")
         XCTAssertTrue(app.staticTexts["output-quick"].label.contains("Sarah"))
@@ -147,12 +149,15 @@ final class MobileIncrementalSummaryUITests: XCTestCase {
                                "-mobileAIProvider", "apple", "-mobileCorrectTranscript", "NO"]
         app.launchPastReleaseNotes()
         app.buttons["Start listening"].tap()
+        XCTAssertTrue(app.buttons["Stop listening"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["backgroundRecordingNotice"].exists)
         speech("speechLiveDecision", app: app)
         reviewTab("Summary", app: app)
         app.buttons["Generate Summary"].tap()
         wait(app.staticTexts["output-summary"], contains: "Recognition is provisional.")
         capture(app, "Manual Summary includes tagged live recognition")
         speech("speechDecision", app: app)
+        reviewTab("Summary", app: app)
         app.buttons["Generate Summary"].tap()
         let finalized = XCTNSPredicateExpectation(
             predicate: NSPredicate(format: "label CONTAINS %@ AND NOT (label CONTAINS %@)",
@@ -175,8 +180,20 @@ final class MobileIncrementalSummaryUITests: XCTestCase {
 
     /// The phone shows Summary on its own page; a wide layout shows it beside Live.
     private func reviewTab(_ name: String, app: XCUIApplication) {
-        if app.segmentedControls["workspaceTabs"].exists {
-            app.segmentedControls["workspaceTabs"].buttons[name].tap()
+        let tabs = app.segmentedControls["workspaceTabs"]
+        if tabs.exists {
+            let target = tabs.buttons[name]
+            let ready = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in target.isHittable }, object: nil)
+            XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 3), .completed)
+            if !target.isSelected { target.tap() }
+            let selected = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in target.isSelected }, object: nil)
+            XCTAssertEqual(XCTWaiter.wait(for: [selected], timeout: 3), .completed,
+                           "The requested workspace must actually be selected before using its controls")
+        }
+        if name == "Summary" {
+            let generate = app.buttons["Generate Summary"]
+            let visible = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in generate.isHittable }, object: nil)
+            XCTAssertEqual(XCTWaiter.wait(for: [visible], timeout: 5), .completed)
         }
     }
 
@@ -208,8 +225,16 @@ final class MobileIncrementalSummaryUITests: XCTestCase {
 
     private func revealQuick(_ app: XCUIApplication) {
         let output = app.staticTexts["output-quick"]
+        XCTAssertTrue(output.waitForExistence(timeout: 3))
         for _ in 0..<6 where !output.isHittable {
-            app.scrollViews["dashboardScroll"].swipeUp()
+            let dashboard = app.scrollViews["dashboardScroll"]
+            if dashboard.exists { dashboard.swipeUp() }
+            else {
+                let readingArea = app.otherElements["summary-panel-quick"].scrollViews.firstMatch
+                XCTAssertTrue(readingArea.exists, "Scroll the Quick panel in fixed portrait/wide layouts")
+                guard readingArea.exists else { break }
+                readingArea.swipeUp()
+            }
         }
         XCTAssertTrue(output.isHittable)
     }

@@ -6,9 +6,14 @@ import ListenToMeCore
 struct MobileTranscriptFixture: View {
     @State private var session: MobileSession = {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("TranscriptUI-\(UUID())")
-        let session = MobileSession(storageDirectory: root, recordingSupport: { _ in .ready })
+        let answer = "## Next steps\n- Review the plan.\n- Confirm the owner.\n- Check progress tomorrow."
+        let session = MobileSession(storageDirectory: root,
+                                    summaryProvider: PreviewProvider(answer: answer),
+                                    sharedInbox: root.appendingPathComponent("SharedInbox"),
+                                    watchInbox: WatchInbox(root: root.appendingPathComponent("WatchInbox")),
+                                    makeRecorder: { PreviewRecorder() }, makeDiarizer: { PreviewDiarizer() },
+                                    recordingSupport: { _ in .ready })
         session.title = "Transcript scroll check"
-        session.prepareSpeakerModelsIfNeeded()   // as the app does at a foreground launch (#195)
         let count = ProcessInfo.processInfo.arguments.contains("--long-transcript-fixture") ? 1_000 : 40
         session.segments = (1...count).map { index in
             TranscriptSegment(source: .you, text: "Point \(index). We reviewed the plan and agreed on the next step.",
@@ -16,7 +21,7 @@ struct MobileTranscriptFixture: View {
         }
         session.partial = TranscriptSegment(source: .you, text: "The latest phrase.",
                                             isFinal: false, start: 41, end: 42)
-        session.quickSummary = "## Next steps\n- Review the plan.\n- Confirm the owner.\n- Check progress tomorrow."
+        session.quickSummary = answer
         return session
     }()
 
@@ -41,7 +46,7 @@ struct MobileTranscriptFixture: View {
                 }.font(.caption).buttonStyle(.bordered).dynamicTypeSize(.large)
             }
             MobileMeetingView(session: session)
-        }
+        }.mobileSessionLifecycle(session)
     }
 }
 #endif

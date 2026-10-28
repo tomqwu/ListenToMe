@@ -8,7 +8,18 @@ struct MobileDesignFixture: View {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("DesignUI-\(UUID())")
         // Synthetic release visuals explicitly represent a compatible recording device.
         // The ordinary simulator app keeps its actual unavailable capture status.
-        let session = MobileSession(storageDirectory: root, recordingSupport: { _ in .ready })
+        let answer = """
+        ## A focused first release
+        - Keep the scope small and useful.
+        - **Alex** owns onboarding.
+        - Review the prototype on **Thursday**.
+        """
+        let session = MobileSession(storageDirectory: root,
+                                    summaryProvider: PreviewProvider(answer: answer),
+                                    sharedInbox: root.appendingPathComponent("SharedInbox"),
+                                    watchInbox: WatchInbox(root: root.appendingPathComponent("WatchInbox")),
+                                    makeRecorder: { PreviewRecorder() }, makeDiarizer: { PreviewDiarizer() },
+                                    recordingSupport: { _ in .ready })
         if ProcessInfo.processInfo.arguments.contains("--translation-fixture") {
             let translator = TranslationPreviewTranslator(
                 needsPacks: ProcessInfo.processInfo.arguments.contains("--translation-needs-packs"))
@@ -16,7 +27,6 @@ struct MobileDesignFixture: View {
             session.summaryTranslation.worker.translator = translator
         }
         session.title = "Product planning"
-        session.prepareSpeakerModelsIfNeeded()   // as the app does at a foreground launch (#195)
         session.segments = [
             TranscriptSegment(source: .you,
                               text: "Let's keep the first release focused on the essentials. " +
@@ -27,12 +37,7 @@ struct MobileDesignFixture: View {
                                   "We'll collect feedback before adding more features.",
                               isFinal: true, start: 12, end: 25)
         ]
-        session.quickSummary = """
-        ## A focused first release
-        - Keep the scope small and useful.
-        - **Alex** owns onboarding.
-        - Review the prototype on **Thursday**.
-        """
+        session.quickSummary = answer
         session.summary = """
         ## Decisions
         The first release will focus on the essential experience. Extra features will wait for user feedback.
@@ -59,6 +64,6 @@ struct MobileDesignFixture: View {
         return session
     }()
 
-    var body: some View { MobileMeetingView(session: session) }
+    var body: some View { MobileMeetingView(session: session).mobileSessionLifecycle(session) }
 }
 #endif

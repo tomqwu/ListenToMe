@@ -76,10 +76,20 @@ extension MobileSession {
             return false
         }
         guard !replay.discarded else { return true }
-        if segment.isFinal {
-            languageDetection.replay?.lines.append(TranscriptSegment(
-                source: .you, text: segment.text, isFinal: true, start: offset + segment.start,
-                end: offset + segment.end, speakerName: Self.microphoneLabel, language: recordingLanguage))
+        languageDetection.noteReplayProgress(through: offset + segment.end)
+        let crossesCut = offset + segment.end > replay.cut
+        // A cumulative utterance may keep its pre-cut start while its end advances into live audio.
+        // Show that partial without removing finalized originals before replacements exist.
+        if !segment.isFinal { return !crossesCut }
+        let timed = TranscriptSegment(source: .you, text: segment.text, isFinal: true,
+                                      start: offset + segment.start, end: offset + segment.end,
+                                      speakerName: Self.microphoneLabel, language: recordingLanguage)
+        languageDetection.replay?.lines.append(timed)
+        if crossesCut {
+            partial = nil
+            commitReplay(complete: true)
+            checkSpeech(timed)
+            scheduleAutoQuick()
         }
         return true
     }
@@ -96,9 +106,38 @@ extension MobileSession {
         }
     }
 
+    func recoverLanguageReplay(_ request: MobileLanguageDetection.Request) async {
+        let detection = languageDetection
+        defer { detection.replayRecoveryEnded(request) }
+        guard !Task.isCancelled, state == .recording, isForeground, applicationIsActive(),
+              detection.accepts(request), let recorder, let run = detection.run else { return }
+        detection.beginSwitch(to: run.locale)
+        do {
+            try await recorder.recoverLanguageReplay(locale: Locale(identifier: run.locale)) { [weak self] _ in
+                guard let self, !Task.isCancelled, self.state == .recording, self.isForeground,
+                      self.applicationIsActive(), detection.accepts(request),
+                      detection.recoveryRequestID == request.id, detection.replay != nil else { return }
+                self.commitReplay(complete: false, cancelRecovery: false)
+                detection.replayRecoveryFinished(request)
+            }
+        } catch {
+            guard !Task.isCancelled, state == .recording, detection.accepts(request) else { return }
+            detection.replayRecoveryFinished(request, error: error.localizedDescription)
+        }
+    }
+
+    func pauseLanguageForBackground() { languageDetection.suspendChecks() }
+
+    func resumeLanguageAfterForeground() {
+        guard state == .recording, isForeground, applicationIsActive() else { return }
+        languageDetection.resumeChecks()
+        startLanguageActivityLoop()
+    }
+
     /// Called for every speech event of a recording, in the recorder's own time. Starts a check when one
     /// is due; it runs on its own task, so recording never waits for it.
     func noteLanguageSpeech(_ segment: TranscriptSegment) {
+        guard isForeground, applicationIsActive() else { return }
         guard let request = languageDetection.noteSpeech(start: segment.start, end: segment.end) else { return }
         languageDetection.check = Task { [weak self] in await self?.checkLanguage(request) }
     }
@@ -106,25 +145,29 @@ extension MobileSession {
     /// Runs Whisper over the requested window and acts on what the run's tracker makes of it.
     func checkLanguage(_ request: MobileLanguageDetection.Request) async {
         let detection = languageDetection
-        defer { detection.finishedCheck(request.token) }
-        guard let model = detection.model, detection.isCurrent(request.token) else { return }
+        defer { detection.finishedCheck(request) }
+        guard !Task.isCancelled, isForeground, applicationIsActive(),
+              detection.accepts(request), let model = detection.model else { return }
         guard let samples = await detection.audio([request.window], token: request.token).first ?? nil else {
             detection.missed("its audio is no longer held", request: request)
             return
         }
         let guess: LanguageGuess
         let supported: [String]
+        guard !Task.isCancelled, isForeground, applicationIsActive(), detection.accepts(request) else { return }
         do {
             try await model.prepare()   // joins the download or load the first speech started
-            guard detection.isCurrent(request.token) else { return }
+            guard !Task.isCancelled, isForeground, applicationIsActive(), detection.accepts(request) else { return }
             detection.beginChecking(request)
             guess = try await model.detect(samples: samples)
+            guard !Task.isCancelled, isForeground, applicationIsActive(), detection.accepts(request) else { return }
             supported = await model.supportedLocales()
         } catch {
             detection.missed(error.localizedDescription, request: request)
             return
         }
-        guard state == .recording, let outcome = detection.record(guess, for: request, supported: supported) else {
+        guard !Task.isCancelled, isForeground, applicationIsActive(), state == .recording,
+              let outcome = detection.record(guess, for: request, supported: supported) else {
             return
         }
         switch outcome {
@@ -150,7 +193,7 @@ extension MobileSession {
         let audio = await detection.audio(chunks, token: request.token)
         var scanned: [(chunk: Range<TimeInterval>, verdict: LanguageRecheckPolicy.Verdict)] = []
         for (chunk, samples) in zip(chunks, audio) {
-            guard !Task.isCancelled, detection.isCurrent(request.token) else { break }
+            guard !Task.isCancelled, isForeground, applicationIsActive(), detection.accepts(request) else { break }
             guard let samples, let guess = try? await model.detect(samples: samples) else { continue }
             let verdict = LanguageRecheckPolicy.verdict(detected: guess.language, probability: guess.probability,
                                                         current: run.locale, target: target)
@@ -168,38 +211,41 @@ extension MobileSession {
         let detection = languageDetection
         // Finding the change took a moment: an Undo or Stop since then wins.
         guard let recorder, let run = detection.run, run.token == request.token, state == .recording,
+              !Task.isCancelled, isForeground, applicationIsActive(), detection.accepts(request),
               detection.automatic, !detection.undoing else { return }
         detection.beginSwitch(to: target)
         let conversation = id, previous = run.locale, offset = run.offset, token = request.token
         let rate = TimeInterval(LanguageDetectionPolicy.sampleRate)
         var start = since
-        var change: MobileLanguageDetection.Switch?
-        var switchedAt: TimeInterval = 0
         do {
             // The start is chosen at the switch, once the new locale's assets are ready (a download can
             // take a while): from the audio still held then, so the replay is never lost to audio released
             // meanwhile (review of #212, finding 2).
             await recorder.setContextualStrings(vocabulary.recognitionTerms(for: id, localeIdentifier: target))
+            guard !Task.isCancelled, isForeground, applicationIsActive(), detection.accepts(request) else { return }
             try await recorder.switchLocale(to: Locale(identifier: target), replay: run.buffer, replayFrom: {
                 start = self.replayStart(since, run: run)
                 return Int((start * rate).rounded(.down))
             }, willReplace: { [weak self] replayed, cut in
-                guard let self else { return }
-                switchedAt = cut
+                guard let self, !Task.isCancelled, self.isForeground, self.applicationIsActive(),
+                      detection.accepts(request) else { return }
                 let replacing = replayed ? self.beginReplay(token: token, since: offset + start, cut: offset + cut)
                     : (firstLine: run.firstLine, lines: Array(self.segments.dropFirst(run.firstLine)))
-                change = MobileLanguageDetection.Switch(
+                let change = MobileLanguageDetection.Switch(
                     detected: guess.language, from: previous, to: target, conversation: conversation, runToken: token,
                     firstLine: replacing.firstLine, since: offset + start, cut: offset + cut,
                     replayFrom: Int((start * rate).rounded(.down)), originals: replacing.lines, replayed: replayed,
                     midRecording: !request.first, fromRecordingStart: start <= 0.001)
+                // The recorder commits its replacement synchronously with this callback. Publish
+                // matching locale/Undo state here, before its post-commit context await can suspend.
+                detection.switched(change, guess: guess, token: token, cut: cut)
             })
         } catch {
+            guard !Task.isCancelled, detection.accepts(request) else { return }
             await recorder.setContextualStrings(vocabulary.recognitionTerms(for: id, localeIdentifier: previous))
             detection.switchFailed(error.localizedDescription, guess: guess, to: target, request: request)
             return
         }
-        if let change { detection.switched(change, guess: guess, token: token, cut: switchedAt) }
     }
 
     /// Where transcribing again starts, in recording time: `since`, within the audio still held and at
@@ -226,18 +272,22 @@ extension MobileSession {
     @discardableResult
     func beginReplay(token: Int, since: TimeInterval,
                      cut: TimeInterval) -> (firstLine: Int, lines: [TranscriptSegment]) {
+        languageDetection.cancelRecovery()
         speechCorrection.cancel()
         if let partial { segments.append(partial); self.partial = nil }
         let lines = segments.filter { !Self.isWatchLine($0) && $0.start >= since - 0.001 }
         let ids = Set(lines.map(\.id))
-        languageDetection.replay = .init(token: token, since: since, cut: cut, replaced: ids)
+        languageDetection.replay = .init(token: token, since: since, cut: cut, replaced: ids,
+                                        progressThrough: since,
+                                        progressCaptured: cut - (languageDetection.run?.offset ?? 0))
         return (segments.firstIndex { ids.contains($0.id) } ?? segments.count, lines)
     }
 
     /// Puts the held replay lines in place of the lines the replay replaces, in one step, where the
     /// first of them was. Every other line stays where it is.
-    private func commitReplay(complete: Bool) {
+    private func commitReplay(complete: Bool, cancelRecovery: Bool = true) {
         guard let replay = languageDetection.replay else { return }
+        if cancelRecovery { languageDetection.cancelRecovery() }
         languageDetection.replay = nil
         let originals = segments.filter { replay.replaced.contains($0.id) }
         let merged = LanguageDetectionPolicy.mergingReplay(replay.lines, over: originals, complete: complete)

@@ -1,0 +1,164 @@
+{
+  "feature": "Language replay progress",
+  "scenarios": [
+    {
+      "id": "LANGREPLAY-001",
+      "name": "Continuous speech crosses a language replay boundary",
+      "given": "Automatic recording has switched language and is replaying earlier speech while original finalized text remains visible",
+      "when": "one growing utterance starts before the switch cut and continues beyond it, then finalizes or is replayed by Undo",
+      "then": "the continuing partial is visible, originals survive until replacement finals exist, the crossing final appears once, later language checks resume and Stop and Undo remain usable without cloud inference",
+      "covers": [
+        "iOS/MobileSession+Language.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileLanguageReplayProgressTests.swift",
+          "test": "MobileLanguageReplayProgressTests/testCrossingUtteranceShowsLivePartialThenCommitsOneFinalAndRechecks"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileLanguageReplayProgressTests.swift",
+          "test": "MobileLanguageReplayProgressTests/testUndoReplayAlsoPublishesCrossingFinalWithoutDuplicateOrNameChange"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileLanguageReplayProgressTests.swift",
+          "test": "MobileLanguageReplayProgressTests/testNoReplacementResultsKeepOriginalsAndStopRemainsAvailable"
+        }
+      ],
+      "manual": {
+        "reason": "Injected recorder/model results establish session behavior; physical SpeechAnalyzer timing and bilingual audio require separate acceptance",
+        "steps": [
+          "Record continuously across a spoken-language change on a physical iPhone; inspect partial/final progress, Stop and Undo."
+        ]
+      }
+    },
+    {
+      "id": "LANGREPLAY-002",
+      "name": "Language preparation cannot switch inactive recording",
+      "given": "an Automatic recording is waiting for on-device language model preparation",
+      "when": "the app becomes inactive before preparation returns and then becomes active again",
+      "then": "the inactive completion cannot start detection or change the recording language, its text and recording identity survive, foreground can retry and Stop remains usable; continued background audio stays bounded and foreground detection uses recent retained speech after a long suspension",
+      "covers": [
+        "iOS/MobileSession+Language.swift",
+        "iOS/MobileLanguageDetection.swift",
+        "iOS/MobileSession+LanguageActivity.swift",
+        "iOS/MobileRecorder.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileLanguageReplayProgressTests.swift",
+          "test": "MobileLanguageReplayProgressTests/testInactivePreparationCannotDetectOrSwitchAndForegroundCanRetry"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileLanguageReplayProgressTests.swift",
+          "test": "MobileLanguageReplayProgressTests/testLongSuspensionRetainsBoundedAudioAndForegroundChecksRecentSpeech"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileLanguageReplayProgressTests.swift",
+          "test": "MobileLanguageReplayProgressTests/testSuspendingBeforeQueuedPreparationNeverStartsModelWork"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileLanguageReplayProgressTests.swift",
+          "test": "MobileLanguageReplayProgressTests/testHeldDetectionCannotReplaceFreshForegroundRequest"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileLanguageReplayProgressTests.swift",
+          "test": "MobileLanguageReplayProgressTests/testStaleSwitchErrorAfterResumeCannotPublishFailure"
+        }
+      ]
+    },
+    {
+      "id": "LANGREPLAY-003",
+      "name": "Recover a language replay that makes no progress during sustained audio activity",
+      "given": "a live Automatic language switch is replaying old audio without advancing recognized results",
+      "when": "thirty seconds of accepted audio activity accumulate without progress or the same-locale restart fails",
+      "then": "one restart without replay fences the superseded results, preserves uncovered finalized text and saved-audio choice, keeps capture active, explains possible missing speech and allows later language checks; silence never triggers recovery and advancing results reset its activity budget; Stop cancels a held recovery without a late replacement or status",
+      "covers": [
+        "iOS/MobileSession+Language.swift",
+        "iOS/MobileSession+LanguageActivity.swift",
+        "iOS/MobileLanguageDetection.swift",
+        "iOS/MobileLanguageDetection+Text.swift",
+        "iOS/MobileRecorder.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileLanguageReplayProgressTests.swift",
+          "test": "MobileLanguageReplayProgressTests/testNoResultReplayRecoversOnceAfterActivityAndReleasesLaterChecks"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileLanguageReplayProgressTests.swift",
+          "test": "MobileLanguageReplayProgressTests/testSilenceCannotTriggerRecoveryAndAdvancingReplayResetsActivityBudget"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileLanguageReplayProgressTests.swift",
+          "test": "MobileLanguageReplayProgressTests/testRecoveryFailureKeepsCaptureAndOriginalsAndFutureChecksAreNotGated"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileLanguageReplayProgressTests.swift",
+          "test": "MobileLanguageReplayProgressTests/testStopCancelsHeldRecoveryWithoutReplacingTextOrPublishingStatus"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileLanguageReplayProgressTests.swift",
+          "test": "MobileLanguageReplayProgressTests/testRecoveredResultCancelsHeldRestartBeforeItCanReplaceHealthyAnalyzer"
+        }
+      ],
+      "manual": {
+        "reason": "Injected result scheduling proves session recovery and privacy policy, not physical native-recognizer accuracy or every platform timing interleaving",
+        "steps": [
+          "On physical iPhone/iPad, verify a long language switch continues microphone capture, truthful recovery notice, no duplicate old finals, later checks, Stop and Undo; retain saved audio only with opt-in."
+        ]
+      }
+    },
+    {
+      "id": "LANGREPLAY-004",
+      "name": "Undo owns its native replacement across scene and conversation changes",
+      "given": "a user taps Undo for a switched language while capture is active",
+      "when": "context or native preparation is held across inactivity, or native replacement commits before a later context await and Stop/New follows",
+      "then": "uncommitted Undo is cancelled without a late native switch, pin, restored text or error in another conversation; committed native locale and language metadata change together, foreground permits an explicit retry and Stop remains authoritative; Stop cancels uncommitted Undo before finalization so an explicit stopping-time Undo can be queued and applied after drain",
+      "covers": [
+        "iOS/MobileSession+LanguageUndo.swift",
+        "iOS/MobileLanguageDetection.swift",
+        "iOS/MobileSession+Capture.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileLanguageUndoContinuityTests.swift",
+          "test": "MobileLanguageUndoContinuityTests/testHeldUndoContextCannotSwitchInactiveAndForegroundCanRetry"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileLanguageUndoContinuityTests.swift",
+          "test": "MobileLanguageUndoContinuityTests/testHeldUndoNativePreparationCannotCommitAfterInactive"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileLanguageUndoContinuityTests.swift",
+          "test": "MobileLanguageUndoContinuityTests/testStoppedUndoFailureCannotPinOrMutateANewConversation"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileLanguageUndoContinuityTests.swift",
+          "test": "MobileLanguageUndoContinuityTests/testUndoPinsAtNativeCommitAndHasNoLateEffectAfterStopAndNew"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileLanguageUndoContinuityTests.swift",
+          "test": "MobileLanguageUndoContinuityTests/testStopCancelsHeldUndoBeforeDrainSoExplicitUndoCanQueue"
+        }
+      ]
+    }
+  ]
+}

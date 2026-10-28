@@ -1,0 +1,331 @@
+{
+  "feature": "User-started iPhone and iPad recording through screen lock",
+  "scenarios": [
+    {
+      "id": "CONTINUITY-001",
+      "name": "Keep established microphone capture through background and Stop explicitly",
+      "given": "the user has started listening on iPhone or iPad and capture is recording",
+      "when": "the screen locks or the app backgrounds, speech arrives, and the user later presses Stop",
+      "then": "the same capture and elapsed start remain active, finalized speech is saved, foreground return creates no second run, and Stop remains terminal; background alone never starts an idle microphone or completes a cancelled preparation; an inactive interruption-end stays stopped with recovery guidance and never falsely claims resumption",
+      "covers": [
+        "iOS/MobileSession.swift",
+        "iOS/MobileSession+Capture.swift",
+        "iOS/Info.plist"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileRecordingContinuityTests.swift",
+          "test": "MobileRecordingContinuityTests/testLockBackgroundKeepsTheSameRecordingAndAcceptsSpeechUntilExplicitStop"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileRecordingContinuityTests.swift",
+          "test": "MobileRecordingContinuityTests/testBackgroundCannotStartAnIdleRecorderAndWatchStopStillStopsTheExistingRun"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileRecordingContinuityTests.swift",
+          "test": "MobileRecordingContinuityTests/testBackgroundCancelsPendingStartAndLatePreparationCannotOpenTheMicrophone"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileRecordingContinuityTests.swift",
+          "test": "MobileRecordingContinuityTests/testInstalledAppDeclaresAudioBackgroundMode"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileAudioLifecycleTests.swift",
+          "test": "MobileAudioLifecycleTests/testBackgroundKeepsRecordingButExplicitStopRejectsAStaleInterruptionResume"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileWatchRemoteTests.swift",
+          "test": "MobileWatchRemoteTests/testBackgroundKeepsWatchRecordingStatusAndElapsedStartUntilStop"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileAudioLifecycleTests.swift",
+          "test": "MobileAudioLifecycleTests/testInactiveInterruptionEndKeepsStoppedGuidanceAndActiveStillResumes"
+        }
+      ],
+      "manual": {
+        "reason": "Simulator session transitions do not establish microphone and native speech continuity while a physical device is locked.",
+        "steps": [
+          "On supported iPhone and iPad, start in the foreground, confirm Listening, lock the screen beyond the normal suspension interval, provide known speech, unlock and verify all words and continuous saved-audio time when opted in.",
+          "Repeat with the on-device fallback speech module where available, interruption/route failure and explicit Stop; record device, OS, source and real outcomes."
+        ]
+      }
+    },
+    {
+      "id": "CONTINUITY-002",
+      "name": "Background speech preserves opt-in audio and suspends auxiliary AI",
+      "given": "an established microphone recording has optional audio saving and automatic summary choices",
+      "when": "the screen locks and capture continues without model passes",
+      "then": "only opted-in audio keeps writing, no new automatic provider request starts, and speaker audio stays bounded without dropping transcription input; active return can catch up under current choices",
+      "covers": [
+        "iOS/MobileSession.swift",
+        "iOS/MobileSession+Speakers.swift",
+        "iOS/MobileSpeakers.swift",
+        "iOS/MobileAnalyzerSink.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileRecordingContinuityTests.swift",
+          "test": "MobileRecordingContinuityTests/testLockedSpeechDoesNotStartAutomaticProviderRequestsAndForegroundCatchesUp"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileRecordingContinuityTests.swift",
+          "test": "MobileRecordingContinuityTests/testSavedAudioOptInContinuesAcrossLockAndOffNeverCreatesAWriter"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileRecordingContinuityTests.swift",
+          "test": "MobileRecordingContinuityTests/testNativeSinkBoundsRetainedSpeakerAudioWithoutPeriodicModelPasses"
+        }
+      ]
+    },
+    {
+      "id": "CONTINUITY-003",
+      "name": "Suspend auxiliary models and invalidate late output before the app leaves active use",
+      "given": "a user-started recording has automatic summaries, speech correction or speaker work queued or in flight",
+      "when": "the app becomes inactive or backgrounds, then returns active",
+      "then": "capture continues but no new auxiliary provider or speaker work starts, cancelled old output cannot publish, the current speaker run and identities survive, and only current foreground work resumes; queued manual/selection/title requests cannot start after suspension, held titles cannot rename any conversation, and vocabulary classification is cancelled and not scheduled by background speech",
+      "covers": [
+        "iOS/MobileSession.swift",
+        "iOS/MobileSession+Speakers.swift",
+        "iOS/MobileSpeakers.swift",
+        "iOS/MobileSessionCorrection.swift",
+        "iOS/MobileSession+AutoTitle.swift",
+        "iOS/MobileSession+Summarize.swift",
+        "iOS/MobileSession+SelectionSummary.swift",
+        "iOS/MobileSession+Vocabulary.swift",
+        "SharedPlatform/SessionVocabulary.swift",
+        "Sources/ListenToMeCore/ConversationTitleCoordinator.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileRecordingContinuityTests.swift",
+          "test": "MobileRecordingContinuityTests/testInactiveSceneBlocksNewQuickAndCorrectionRequestsWithoutStoppingCapture"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileRecordingContinuityTests.swift",
+          "test": "MobileRecordingContinuityTests/testInactiveCancelsHeldQuickAndCorrectionAndRejectsTheirLateResults"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileRecordingContinuityTests.swift",
+          "test": "MobileBackgroundSpeakerTests/testInactiveFencesHeldSpeakerPassWithoutEndingRecordingAndForegroundResumes"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileRecordingContinuityTests.swift",
+          "test": "MobileBackgroundSpeakerTests/testInactivePreparationCannotMarkModelsReadyAndForegroundCanRetry"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSpeakerLifecycleTests.swift",
+          "test": "MobileSpeakerLifecycleTests/testBackgroundingWithAPassInFlightDoesNotWait"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileAutoTitleTests.swift",
+          "test": "MobileAutoTitleTests/testInactiveBlocksQueuedAndNewTitleRequestsUntilActive"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileAutoTitleTests.swift",
+          "test": "MobileAutoTitleTests/testInactiveCancelsHeldNamingAndLateOutputCannotRenameCurrentOrArchivedConversation"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileRecordingContinuityTests.swift",
+          "test": "MobileRecordingContinuityTests/testInactiveCancelsQueuedManualAndSelectionBeforeAnyProviderRequest"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileVocabularyTests.swift",
+          "test": "MobileVocabularyTests/testInactiveSpeechCannotScheduleVocabularyAndQueuedCheckCannotPublish"
+        }
+      ]
+    },
+    {
+      "id": "CONTINUITY-004",
+      "name": "Explain continued recording and preserve the rendered Stop control across background return",
+      "given": "a user has started listening in the iPhone or iPad interface",
+      "when": "the app actually backgrounds and returns to the foreground, then the user taps Stop",
+      "then": "Listening and Stop still represent the same recording, a concise notice explains continued capture with optional AI paused, and explicit Stop returns to an enabled Start control; the simulator fixture does not capture real audio",
+      "covers": [
+        "iOS/MobileMeetingView.swift",
+        "iOS/ListenToMeIOSApp.swift",
+        "iOS/MobileRecordingContinuityFixture.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileRecordingContinuityUITests.swift",
+          "test": "MobileRecordingContinuityUITests/testHomeReturnKeepsOneVisibleRecordingAndExplicitStopEndsIt"
+        }
+      ]
+    },
+    {
+      "id": "CONTINUITY-005",
+      "name": "Reach current summaries while the recording disclosure uses portrait space",
+      "given": "an iPhone is recording in portrait with its screen-lock disclosure and a long conversation or provisional live speech",
+      "when": "the user scrolls the actual Quick reading area or selects Summary and generates an answer before and after final recognition",
+      "then": "Quick remains reachable without Refresh and publishes Monday and Sarah while the backlog still says Catching up; Summary is actually selected with its generation control visible, the first answer marks recognition provisional, and final recognition removes that marker without losing the answer",
+      "covers": [
+        "iOS/MobileMeetingView.swift",
+        "iOS/MobileWorkspaceView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileIncrementalSummaryUITests.swift",
+          "test": "MobileIncrementalSummaryUITests/testLongConversationShowsQuickBeforeBacklogFinishesWithoutRefresh"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileIncrementalSummaryUITests.swift",
+          "test": "MobileIncrementalSummaryUITests/testManualSummaryIncludesLiveRecognitionAndDropsMarkerAfterFinalization"
+        }
+      ]
+    },
+    {
+      "id": "CONTINUITY-006",
+      "name": "Keep the landscape Duo recording workspace and Stop usable with the screen-lock notice",
+      "given": "an iPhone has established recording in portrait and shows the continued-recording disclosure; the synthetic QA probe overlays the view without reserving production workspace or intercepting controls",
+      "when": "the device rotates to landscape and the user stops recording",
+      "then": "the actual transcript and Quick panels remain side by side in Duo with usable transcript/model controls, the disclosure remains accessible, and explicit Stop returns to enabled Start without a second recording",
+      "covers": [
+        "iOS/MobileMeetingView.swift",
+        "iOS/MobileWorkspaceView.swift",
+        "iOS/MobileRecordingContinuityFixture.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileRecordingContinuityUITests.swift",
+          "test": "MobileRecordingContinuityUITests/testRecordingLandscapeKeepsDuoPanelsNoticeAndExplicitStopUsable"
+        }
+      ]
+    },
+    {
+      "id": "CONTINUITY-007",
+      "name": "Refresh foreground controls after cold launch and real background return",
+      "given": "an iPhone conversation opens from a cold launch with its selected local summary support and speaker preparation available",
+      "when": "the app becomes active, the user summarizes a line, returns Home and reopens the same conversation without editing its text or provider, and rotates to Duo",
+      "then": "the available summary action is enabled and produces the selected-line answer both before and after Home, speaker readiness removes the stale Retry header, and transcript and Duo controls remain reachable",
+      "covers": [
+        "iOS/MobileSessionLifecycle.swift",
+        "iOS/MobilePreviewAdapters.swift",
+        "iOS/ListenToMeIOSApp.swift",
+        "iOS/MobileSelectionSummaryFixture.swift",
+        "iOS/MobileTranscriptFixture.swift",
+        "iOS/MobileDesignFixture.swift",
+        "iOS/MobileSession.swift",
+        "iOS/MobileRecordingContinuityFixture.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileSelectionSummaryUITests.swift",
+          "test": "MobileSelectionSummaryUITests/testColdLaunchAndHomeReturnEnableTheSameSummaryWithoutEditingConversation"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileSelectionSummaryUITests.swift",
+          "test": "MobileSelectionSummaryUITests/testLongPressSummarizesFromThatLine"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileSelectionSummaryUITests.swift",
+          "test": "MobileSelectionSummaryUITests/testThePanelSheetSurvivesRotation"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileTranscriptUITests.swift",
+          "test": "MobileTranscriptUITests/testCompactTranscriptFollowsPartialAndFinalTextButRespectsReadingHistory"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileWorkspaceUITests.swift",
+          "test": "MobileWorkspaceUITests/testDuoPaneWidthsAndCompactTranscriptActions"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileTranslationUITests.swift",
+          "test": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal"
+        }
+      ]
+    },
+    {
+      "id": "CONTINUITY-008",
+      "name": "Cancel old AI work immediately across inactive and active observations",
+      "given": "a foreground conversation has a held optional summary response",
+      "when": "actual inactivity is observed and active delivery follows in the same turn, then the user starts a new foreground answer",
+      "then": "the old response is cancelled immediately, its late output cannot publish, and the new active answer completes",
+      "covers": [
+        "iOS/MobileSessionLifecycle.swift",
+        "iOS/MobileSession.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSessionLifecycleTests.swift",
+          "test": "MobileSessionLifecycleTests/testInactiveObservationCancelsOldAnswerAndReactivationKeepsNewAnswer"
+        }
+      ]
+    },
+    {
+      "id": "CONTINUITY-009",
+      "name": "Preserve privacy when a scene owner detaches",
+      "given": "a session owner has queued activation or a current background transition with an established user-started recording and optional answer",
+      "when": "the owner disappears before the queued scene delivery completes",
+      "then": "obsolete activation cannot resume optional work, the latest background suspension still cancels and fences its answer, and the established recording continues",
+      "covers": [
+        "iOS/MobileSessionLifecycle.swift",
+        "iOS/MobileSession.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSessionLifecycleTests.swift",
+          "test": "MobileSessionLifecycleTests/testDetachedQueuedActiveDoesNotResumeOptionalWork"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSessionLifecycleTests.swift",
+          "test": "MobileSessionLifecycleTests/testDetachedBackgroundCancelsAnswerButKeepsEstablishedCapture"
+        }
+      ]
+    },
+    {
+      "id": "CONTINUITY-010",
+      "name": "Keep background capture authority through immediate reactivation",
+      "given": "the user has either an unfinished microphone Start or an already-established recording",
+      "when": "background is observed and active delivery follows in the same turn",
+      "then": "the pending Start is revoked before delayed preparation can open the microphone, while the established recording keeps its same run without an extra start or stop and its old optional answer is cancelled",
+      "covers": [
+        "iOS/MobileSessionLifecycle.swift",
+        "iOS/MobileSession.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSessionLifecycleTests.swift",
+          "test": "MobileSessionLifecycleTests/testBackgroundObservationRevokesPendingStartAcrossImmediateReactivation"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileSessionLifecycleTests.swift",
+          "test": "MobileSessionLifecycleTests/testBackgroundObservationKeepsEstablishedCaptureAcrossImmediateReactivation"
+        }
+      ]
+    }
+  ]
+}
