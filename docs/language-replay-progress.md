@@ -125,8 +125,11 @@ to external `validation3-native-originals/` and every copied file hash matched. 
 Duo layout method passed unchanged and yielded two clean short-text previews; mid-scroll and
 probe-bearing originals remain QA-only. Earlier failed runs and superseded privacy expectations
 remain preserved and are not relabeled as passes. Independent review cleared the final source
-and outcomes; final evidence-only checks and merge remain separate.
+and outcomes. PR #341 merged as `dc6b2e39a99568fb4931e937c555fa0de0f2ff18` with all three
+required checks green on that exact source; the accepted beta receipt keeps artifact and tested
+sources separate.
 
-Physical screen-lock audio, multilingual accuracy and Watch transfer remain pending. This
-automated candidate does not establish production acceptance or an upload; authorized
-TestFlight distribution still requires signing, package verification and Apple's acceptance.
+Physical screen-lock audio, multilingual accuracy and Watch transfer remain pending.
+[The TestFlight upload is accepted](releases/ios-1.20.1-build41.json), with the actual transported IPA,
+three distribution bundles, remote tag, pre-release and six preview downloads verified. That beta
+publication does not establish production acceptance or authorize a public App Store submission.
