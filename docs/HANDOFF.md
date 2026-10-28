@@ -1,3 +1,28 @@
+# Validation follow-up — October 28, 2026
+
+The `086d89e` full validation ended with make exit 2 and unchanged input hashes: Core passed,
+iOS unit tests passed (461 with seven skips), but one of 79 iOS UI tests failed after its blind
+swipes overscrolled the Translate button at the largest accessibility text size. Mac, Watch and
+real-server stages were not reached. A stronger whole-button visibility assertion reproduced the
+harness defect; bounded direction-aware scrolling now passes all four translation UI methods and
+the largest-text journey on both iPhone and iPad. Screenshots were inspected. This changes tests,
+not translation behavior; [the evidence record](translation-validation.md) preserves both failures.
+Fresh full validation and exact-source CI remain required. Mac #336 still needs its independent
+near-end/overlap/headphone/route and rendered delayed-line edit/playback acceptance before merge.
+The separate #223 model scheduler correctly refused to start after the failed aggregate; no
+inference or added-language support is claimed. Continue PR #318 before opening #334.
+
+# Public iOS availability — October 28, 2026, 01:12 UTC
+
+Apple's live version readback and independent US public lookup now confirm **iOS 1.19.1 (39)** is
+publicly available, released at **2026-10-28T00:12:55Z**, with primary locale **en-US**. This is the
+previously accepted Watch-enabled build 39 from `f1728150e3e66664e36d2506022c2918fa60a53c`.
+The exact Apple build ID and peeled tag match the upload receipt. See the
+[public observation](releases/ios-1.19.1-build39-public.json). No new upload, submission or release
+operation was performed for this readback. Physical Watch/phone acceptance remains unverified;
+public availability does not retroactively establish it. Mac 1.5.0 remains an unsubmitted draft
+with no selected build. Older draft and beta checkpoints below are historical.
+
 # Mac dual-channel regression — October 27, 2026
 
 [#336](https://github.com/tomqwu/ListenToMe/issues/336) reproduced duplicate YOU/OTHERS playback and

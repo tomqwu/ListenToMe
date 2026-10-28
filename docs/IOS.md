@@ -1,7 +1,8 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, latest TestFlight version 1.19.1 (39).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, public App Store and latest TestFlight version 1.19.1 (39).
+See the [public availability observation](releases/ios-1.19.1-build39-public.json).
 
 ## What this app is for
 
@@ -20,7 +21,7 @@ stays macOS-only. This is a platform boundary, not a backlog item: there is no p
 that captures system or call audio. Recording is foreground-only (`iOS/Info.plist` declares no
 `UIBackgroundModes`); backgrounding stops recording and saves the conversation.
 
-Apple Watch recording ([#181](https://github.com/tomqwu/ListenToMe/issues/181)) is included in TestFlight **1.19.1 (39)**. Apple accepted **1.19.1 (39)** from `f1728150e3e66664e36d2506022c2918fa60a53c`: Xcode upload success at **2026-10-27 15:39:29.401 UTC**, Apple uploaded date **2026-10-27 15:40:24 UTC**. Processing is **VALID**, internal state **IN_BETA_TESTING**, and the existing internal Dev group includes build 39 with two existing active/installed tester members. This does not prove physical installation of build 39. Primary locale, localized name, beta description and What to Test were read back in **en-US**, with name **Listen To Me - Real Time AI**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.1-build39). The exact uploaded phone/Share/Watch package passed identity, signature and profile verification; physical microphone, paired transfer, wrist-down and battery/storage acceptance remains pending for production. See [Watch beta installation/evidence](watch-beta.md) and the [receipt](releases/ios-1.19.1-build39.json).
+Apple Watch recording ([#181](https://github.com/tomqwu/ListenToMe/issues/181)) is included in public iOS **1.19.1 (39)** and its TestFlight build. The following upload evidence predates the public availability observation. Apple accepted **1.19.1 (39)** from `f1728150e3e66664e36d2506022c2918fa60a53c`: Xcode upload success at **2026-10-27 15:39:29.401 UTC**, Apple uploaded date **2026-10-27 15:40:24 UTC**. Processing is **VALID**, internal state **IN_BETA_TESTING**, and the existing internal Dev group includes build 39 with two existing active/installed tester members. This does not prove physical installation of build 39. Primary locale, localized name, beta description and What to Test were read back in **en-US**, with name **Listen To Me - Real Time AI**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.1-build39). The exact uploaded phone/Share/Watch package passed identity, signature and profile verification; physical microphone, paired transfer, wrist-down and battery/storage acceptance remains pending for production. See [Watch beta installation/evidence](watch-beta.md) and the [receipt](releases/ios-1.19.1-build39.json).
 
 ## Parity with macOS
 
@@ -160,7 +161,7 @@ saved separately for maintainer review. macOS distribution is separate. See
 
 The native Mac App Store platform is prepared separately as a sandboxed **1.5.0 (15)** archive under the shared listing and bundle ID. The Mac draft has US metadata but no selected build or submitted review. The earlier signed candidate predates this main integration and is not eligible for upload; rebuild from the exact merged source after installed sandbox/OTHERS acceptance. See [Mac Store distribution](RELEASING.md#mac-app-store-distribution). The current public Mac distribution remains the signed/notarized DMG.
 
-The iOS platform covers this universal iPhone/iPad app (`TARGETED_DEVICE_FAMILY=1,2`); no separate iPadOS platform is added. The Watch companion belongs to the same iOS app record and must actually be embedded in an uploaded build before it can be installed. TestFlight 1.19.1 (39) includes it; public 1.18.1 excludes it. The accepted Watch beta has verified package identity and existing-tester-access evidence; physical acceptance remains a production gate, not an authorized beta-upload blocker. macOS requires its own compatible archive and distribution; the current native Mac app is distributed as a signed/notarized DMG, and Mac publication remains paused. Adding a platform does not convert a DMG or include an unembedded Watch target. See [Apple’s platform guide](https://developer.apple.com/help/app-store-connect/create-an-app-record/add-platforms/).
+The iOS platform covers this universal iPhone/iPad app (`TARGETED_DEVICE_FAMILY=1,2`); no separate iPadOS platform is added. The Watch companion belongs to the same iOS app record and must actually be embedded in an uploaded build before it can be installed. Public iOS 1.19.1 (39) and its TestFlight build include it; older public 1.18.1 excludes it. The accepted Watch beta has verified package identity and existing-tester-access evidence; physical acceptance remains a production gate, not an authorized beta-upload blocker. macOS requires its own compatible archive and distribution; the current native Mac app is distributed as a signed/notarized DMG, and Mac publication remains paused. Adding a platform does not convert a DMG or include an unembedded Watch target. See [Apple’s platform guide](https://developer.apple.com/help/app-store-connect/create-an-app-record/add-platforms/).
 
 ## Full summary menu icon (#319, published TestFlight 1.18.2)
 

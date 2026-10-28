@@ -62,11 +62,16 @@ Education & Research) and your own **My terms** list help recognition, AI speech
 summaries on both platforms; after about a minute of speech the phone may suggest one, decided on the
 device. Meeting use-case presets, reference files, audio-file import and WhisperKit transcription are macOS-only.
 Editable domain prompt presets are available on both platforms.
-The public iPhone/iPad app is 1.18.1. The latest TestFlight beta is **1.19.1 (39)**
-([October 27 release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.1-build39)), including the Apple Watch companion.
+The public iPhone/iPad app is **1.19.1 (39)**, including the Apple Watch companion.
+Apple's version readback and independent US public lookup confirm availability, with **en-US**
+as the primary locale. [Public App Store](https://apps.apple.com/us/app/listen-to-me-real-time-ai/id6811155732),
+[publication observation](docs/releases/ios-1.19.1-build39-public.json) and
+[release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.1-build39).
 [Watch installation and limits](docs/watch-beta.md) and [native previews](docs/images/watch/1.19.1/README.md)
-are available; physical Watch acceptance remains pending. All 49 fresh release images are inspected;
-The [1.19.1 App Store draft](docs/releases/ios-1.19.1-build39-media.json) now has 60 processed screenshots across both English locales, including Watch and landscape Duo; their downloaded pixels and order are verified. The draft has not been submitted, so the public listing remains unchanged.
+remain available. Physical Watch acceptance is still pending; public availability is not proof of
+installation, wrist-down capture or paired transfer. The existing
+[media receipt](docs/releases/ios-1.19.1-build39-media.json) records the 60 processed screenshots,
+including Watch and landscape Duo, uploaded before submission.
 See [iOS setup, validation and distribution](docs/IOS.md). Device and language support are checked
 per feature; Apple Intelligence is independent of recording. The [compatibility support](docs/device-compatibility.md)
 includes local dictation fallback for compatible older iPads and explicit unavailable-feature recovery
@@ -604,7 +609,7 @@ saying so. Press **Speakers / edit names** to retry once the network is availabl
   is not a whole-product measurement. See [orchestration ownership](docs/ORCHESTRATION.md).
 - **`iOS/`**: iPhone/iPad SwiftUI app, foreground microphone capture with SpeechAnalyzer, Apple Intelligence
   (Foundation Models) summaries by default on capable devices.
-- **`Watch/`**: Apple Watch companion, embedded in the default iOS project; [beta installation and pending device acceptance](docs/watch-beta.md). Included in TestFlight 1.19.1 (39); public iOS 1.18.1 excludes it.
+- **`Watch/`**: Apple Watch companion, embedded in the default iOS project; [beta installation and pending device acceptance](docs/watch-beta.md). Included in public iOS 1.19.1 (39) and its TestFlight build; older public 1.18.1 excludes it.
 - **`App/`**: macOS glue — `DualChannelCapture`, `SpeechRecognizerTranscriber`, SwiftUI UI, hotkey.
 
 See [`docs/reviews/2026-09-10/design-and-gap-review.md`](docs/reviews/2026-09-10/design-and-gap-review.md)

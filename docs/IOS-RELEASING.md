@@ -1,5 +1,16 @@
 # Publish an iOS build to TestFlight
 
+## Public iOS availability — October 28, 2026, 01:12 UTC
+
+Apple's live version readback and independent US public lookup now confirm **iOS 1.19.1 (39)** is
+publicly available, released at **2026-10-28T00:12:55Z**, with primary locale **en-US**. This is the
+previously accepted Watch-enabled build 39 from `f1728150e3e66664e36d2506022c2918fa60a53c`.
+The exact Apple build ID and peeled tag match the upload receipt. See the
+[public observation](releases/ios-1.19.1-build39-public.json). No new upload, submission or release
+operation was performed for this readback. Physical Watch/phone acceptance remains unverified;
+public availability does not retroactively establish it. Mac 1.5.0 remains an unsubmitted draft
+with no selected build. Older draft and beta checkpoints below are historical.
+
 ## Production approval and locale checkpoint — October 27, 01:42 UTC (historical)
 
 At that checkpoint, iOS **1.18.1 (36)** read **READY_FOR_SALE**, and its US review was **COMPLETE**. Following

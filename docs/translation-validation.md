@@ -1,5 +1,40 @@
 # Translation validation — October 27, 2026
 
+## Largest-text scrolling harness — October 28, 2026
+
+Full validation of `086d89e` ended with make exit 2 after one UI failure in
+`MobileTranslationUITests/testSummaryMissingPacksAndLargestTextKeepOriginalReachable`.
+All tracked inputs still matched their frozen hashes. The 79-test UI suite had five skips and one
+failure; the 461-test unit suite had seven skips and no failures. Later Mac/Watch/server stages
+were not run. This failed aggregate is retained, not reclassified by a subsequent focused pass.
+
+Video inspection showed the test had scrolled to the bottom of Summary. A diagnostic-only retry
+passed `isHittable` with Translate at y=111.3...178 while the content viewport began at y=161:
+only a clipped sliver was tappable. Adding a whole-button bounds assertion before the tap then
+reproduced one assertion failure (native test exit 65). This is a test-harness visibility regression,
+not evidence of a new translation-engine defect.
+
+`TRANSLATE-011` now requires whole action controls visible before tapping. Its native test uses
+bounded, direction-aware drags inside `dashboardScroll`, checking current bounds and enabled/hittable
+state after each gesture. It deliberately overscrolls and returns on the phone fixture; the same
+whole-control, missing-pack, original-content and no-recording checks run on iPad without assuming
+that larger screens have enough trailing content for that extra overshoot setup. Long original
+text must occupy at least half the visible viewport, not fit its entire paragraph onscreen.
+No reachability assertion was removed; taps cannot supply the missing scroll-to-visible pass.
+
+Observed results: all four translation UI methods passed; after the phone-only setup refinement,
+the largest-text method passed sequentially on iPhone and iPad Pro 13-inch (M5), iOS 26.5.
+Native-resolution Translate/setup/original screenshots were inspected for both devices. These are
+synthetic simulator QA images, not physical-device acceptance or new App Store listing media.
+Production app sources are unchanged by this harness correction. Full validation/CI remain pending.
+
+Evidence: `/Users/tomwu/Documents/Codex/2026-10-28/listentome-dual-channel336/translation-ui-diagnostic/`.
+`diagnostic.log`, `visibility-red.log`, `visibility-green.log` and `phone-ipad-green.log` retain
+actual Xcode invocations and terminal outcomes; their `.xcresult` bundles retain screenshots/video.
+The focused commands use the existing ListenToMeIOS scheme and isolated simulators, with
+`-collect-test-diagnostics never` to omit verbose sysdiagnose collection, not XCTest assertions or
+attachments. The full validation command retains its normal diagnostics behavior.
+
 [PR #331](https://github.com/tomqwu/ListenToMe/pull/331) implements
 [translation #330](translation.md). The frozen tested source is
 `6c1542a6dd2f03135469db11ad0f103c6960dc3f`, based on

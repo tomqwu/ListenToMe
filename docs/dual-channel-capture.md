@@ -60,3 +60,8 @@ also contains unrelated pre-playback system speech.
 Independent static review cleared the ordering and recovery corrections. Full final validation,
 rendered delayed-channel edit/playback checks, remaining physical audio acceptance, CI and merge
 are separate pending gates. No new release or production submission is established by this work.
+
+The first full `086d89e` aggregate failed in an unrelated largest-text translation UI scrolling
+harness after Core/iOS execution; Mac/Watch/server stages did not run. The separately reproduced
+and corrected [test-harness visibility issue](translation-validation.md) does not change audio
+implementation or supply any outstanding physical audio acceptance. A new full run is required.

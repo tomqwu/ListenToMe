@@ -42,6 +42,39 @@ final class MobileTranslationUITests: XCTestCase {
         }
         XCTAssertTrue(picker.label.contains(language))
     }
+    /// App-wide swipes can fling a large-text control past the opposite edge. Reveal inside
+    /// the owning scroll view, rechecking direction and full bounds before any action tap.
+    private func revealSummary(_ target: XCUIElement, in app: XCUIApplication,
+                               entirely: Bool = true, file: StaticString = #filePath, line: UInt = #line) -> Bool {
+        let scroll = app.scrollViews["dashboardScroll"]
+        guard target.waitForExistence(timeout: 5), scroll.waitForExistence(timeout: 5) else {
+            XCTFail("Summary target and scroll view must exist", file: file, line: line); return false
+        }
+        for _ in 0..<20 {
+            let viewport = scroll.frame.intersection(app.windows.firstMatch.frame).insetBy(dx: 2, dy: 2)
+            let frame = target.frame
+            let visible = viewport.intersection(frame)
+            let enoughVisible = entirely ? viewport.contains(frame)
+                : !visible.isNull && visible.height >= min(frame.height, viewport.height * 0.5)
+            if target.isEnabled && target.isHittable && enoughVisible { return true }
+            guard viewport.height > 100, target.isEnabled else { break }
+            let below = frame.midY > viewport.midY
+            let distance = min(viewport.height * 0.4, max(44, abs(frame.midY - viewport.midY)))
+            let direction: CGFloat = below ? 1 : -1
+            let origin = app.windows.firstMatch.coordinate(withNormalizedOffset: .zero)
+            let window = app.windows.firstMatch.frame
+            let from = origin.withOffset(CGVector(dx: viewport.midX - window.minX,
+                                                  dy: viewport.midY - window.minY + direction * distance / 2))
+            let to = origin.withOffset(CGVector(dx: viewport.midX - window.minX,
+                                                dy: viewport.midY - window.minY - direction * distance / 2))
+            from.press(forDuration: 0.05, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.2)
+        }
+        let detail = XCTAttachment(string: "Target \(target.frame); scroll \(scroll.frame)\n" + app.debugDescription)
+        detail.name = "Summary reveal failed"; detail.lifetime = .keepAlways; add(detail)
+        capture(app, "Summary reveal failed")
+        XCTFail("Summary control must be visibly reachable before tapping", file: file, line: line)
+        return false
+    }
     private func capture(_ app: XCUIApplication, _ name: String) {
         let image = XCTAttachment(screenshot: XCUIScreen.main.screenshot()); image.name = name; image.lifetime = .keepAlways; add(image)
     }
@@ -97,24 +130,36 @@ final class MobileTranslationUITests: XCTestCase {
                           "UICTContentSizeCategoryAccessibilityXXXL"])
         if app.buttons["Summary"].firstMatch.exists { app.buttons["Summary"].firstMatch.tap() }
         let option = app.buttons["summaryTranslationOptions"]
-        for _ in 0..<8 where !option.isHittable { app.swipeUp() }
-        XCTAssertTrue(option.isHittable); option.tap()
+        guard revealSummary(option, in: app) else { return }
+        option.tap()
         choose("summaryTranslationTargetPicker", "French", in: app)
         let translate = app.buttons["translateSummary"]
-        for _ in 0..<8 where !translate.isHittable { app.swipeUp() }
-        XCTAssertTrue(translate.isHittable); translate.tap()
+        guard revealSummary(translate, in: app) else { return }
+        let scroll = app.scrollViews["dashboardScroll"]
+        XCTAssertTrue(scroll.frame.contains(translate.frame), "The whole Translate button must be visible before tapping")
+        capture(app, "Translate fully visible at largest accessibility text")
+        // Reproduce the original harness's overshoot deliberately, then prove the user can
+        // scroll back to the same whole control without relying on tap's auto-scroll behavior.
+        if UIDevice.current.userInterfaceIdiom == .phone {
+            for _ in 0..<8 where translate.frame.maxY >= scroll.frame.minY { scroll.swipeUp(velocity: .slow) }
+            XCTAssertLessThan(translate.frame.maxY, scroll.frame.minY, "Phone fixture must place Translate above the viewport")
+            guard revealSummary(translate, in: app) else { return }
+        }
+        XCTAssertTrue(translate.isHittable)
+        XCTAssertTrue(scroll.frame.contains(translate.frame))
+        translate.tap()
         let prepare = app.buttons["prepareTranslationLanguages"]
         XCTAssertTrue(prepare.waitForExistence(timeout: 5))
-        for _ in 0..<8 where !prepare.isHittable { app.swipeUp() }
+        guard revealSummary(prepare, in: app) else { return }
         XCTAssertTrue(prepare.isHittable)
         XCTAssertFalse(app.staticTexts["Preparing translation languages…"].exists)
         XCTAssertFalse(app.staticTexts["translatedSummary"].exists)
         capture(app, "Summary language setup at largest accessibility text")
         let close = app.buttons["closeSummaryTranslation"]
-        for _ in 0..<8 where !close.isHittable { app.swipeDown() }
+        guard revealSummary(close, in: app) else { return }
         XCTAssertTrue(close.isHittable); close.tap()
         let original = app.staticTexts["output-summary"]
-        for _ in 0..<8 where !original.isHittable { app.swipeUp() }
+        guard revealSummary(original, in: app, entirely: false) else { return }
         XCTAssertTrue(original.isHittable)
         XCTAssertTrue(app.buttons["Start listening"].isHittable)
         XCTAssertFalse(app.buttons["Stop listening"].exists)
