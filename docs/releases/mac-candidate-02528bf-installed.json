@@ -1,0 +1,128 @@
+{
+  "source": "02528bf9529291d86232aef5a31bdb49e84ada1a",
+  "recordedAt": "2026-10-28T22:38:45.695172+00:00",
+  "platform": "macOS",
+  "configuration": "SandboxAcceptance",
+  "version": "1.5.0",
+  "build": "15",
+  "identity": "com.tomwu.ListenToMe.dev",
+  "installedAcceptance": "partial",
+  "editor": {
+    "fixture": "Echo regression 336 — synthetic Orion",
+    "doubleClickFinalizedTextOpensCorrectEditor": true,
+    "blankDisablesSave": true,
+    "cancelPreservesOriginal": true,
+    "accessibleEditLine": true,
+    "contextMenuEditLine": true,
+    "saveOnlyChosenLine": {
+      "before": "The budget is $120.",
+      "temporary": "The budget is $125.",
+      "restored": "The budget is $120."
+    },
+    "pointerCopyReadback": "budget",
+    "keyboardAndEditMenuCopyReadback": "The",
+    "copyVerification": "Pasted into existing empty Ask once draft; exact words observed; draft cleared; no request sent",
+    "resize": "Window menu Move & Resize Left produced narrower wrapped last line; budget selection remained; returned to prior size",
+    "unverified": [
+      "live partial row gesture in installed app",
+      "VoiceOver speech interaction",
+      "saved-audio playback on delayed line"
+    ]
+  },
+  "translation": {
+    "fixture": "Mac cancel acceptance — synthetic padded Orion",
+    "sourceLanguage": "English",
+    "target": "Simplified Chinese",
+    "engine": "real installed Apple Translation in signed sandboxed app",
+    "result": "full Chinese output with original summary retained; Translate re-enabled and Cancel removed",
+    "factsObserved": [
+      "120 dollars",
+      "Maya",
+      "Friday",
+      "Monday at 10",
+      "project folder"
+    ],
+    "qualityLimits": [
+      "Open heading translated literally as 打开; no broad translation quality claim",
+      "physical iPhone/iPad original failure still unverified"
+    ],
+    "timing": "still busy at8.088s; complete at65.627s observation; this is an observation interval, not measured completion latency",
+    "previousTarget": "French",
+    "targetRestoration": "Chinese target retained on the owned synthetic conversation when Mac locked; this is a per-conversation option, not a global preference. No production conversation or provider choice was changed."
+  },
+  "audio": {
+    "started": false,
+    "fixturePlayback": false,
+    "readiness": "Mic Not set, Speech Not set, Screen Not verified",
+    "grantRequest": "Existing Dev microphone Grant invoked once; no dialog or status change observed. Read-only daemon diagnosis ongoing; no grant/deny claimed.",
+    "remaining": [
+      "near-end voice",
+      "overlap and repeated wording",
+      "headphones and physical routes",
+      "Stop during recovery"
+    ],
+    "diagnosis": "permissions-readonly-diagnosis.json: no missing identity/usage string/entitlement demonstrated; TCC did not show an authorization completion in the captured window"
+  },
+  "screenshots": [
+    {
+      "file": "edit-blank-disabled.jpg",
+      "sha256": "ea9768cf56ec1e2289d64416936ea364aea83538e6166014423a0039b38accdf",
+      "format": "JPEG",
+      "classification": "QA only"
+    },
+    {
+      "file": "edit-narrow-selection.jpg",
+      "sha256": "19cefecc6b9760091f95ac5f9d9949eebad66815430c5e2472f742f49b641bf8",
+      "format": "JPEG",
+      "classification": "QA only"
+    },
+    {
+      "file": "edit-pointer-phrase.jpg",
+      "sha256": "fd90d576506660e28e3ce585a8dc5837af913a140614ff6984f0ff452a9af38c",
+      "format": "JPEG",
+      "classification": "QA only"
+    },
+    {
+      "file": "edit-restored-wide.jpg",
+      "sha256": "f286e85ced108ca22da00595f752471960d9d06cf2c22a1797525098f7cd80c3",
+      "format": "JPEG",
+      "classification": "QA only"
+    },
+    {
+      "file": "edit-saved-correction.jpg",
+      "sha256": "7261c85ebec2d07a6bc517acb3d8eb8262ed87730e9fdb2d42ddf7b88114c0a7",
+      "format": "JPEG",
+      "classification": "QA only"
+    },
+    {
+      "file": "recording-readiness.jpg",
+      "sha256": "c4ef6db456dc7688b20abf558618308c41e69aa470c979f4d040f52fb44df4ba",
+      "format": "JPEG",
+      "classification": "QA only"
+    },
+    {
+      "file": "translation-busy.jpg",
+      "sha256": "6b62cd6212ffed3d76c1e0ae3e978a94daf3997fba3dd83962cc7c65439d7141",
+      "format": "JPEG",
+      "classification": "QA only"
+    },
+    {
+      "file": "translation-outcome.jpg",
+      "sha256": "622fda037c2a0a63042bcec59e4ec182cbecb6e069fb369f74f45df8ebb67b26",
+      "format": "JPEG",
+      "classification": "QA only"
+    }
+  ],
+  "productionAcceptance": false,
+  "published": false,
+  "independentReview": "Read-only visual and AX audit supports the bounded claims; action sequences rely on the retained operator record.",
+  "evidenceHashes": {
+    "installed-acceptance.json": "c0936c36a365831d426e5c7b6607682e93f3fdab07f129281fbcab62342d3fa4",
+    "installed-acceptance-independent-review.json": "9731dfdb6270ffffe08423dd2e70652cdee6aadb43a88b3772c5a0806be8f1f6",
+    "media-name-migration.json": "94bc879af233bc98a8be015bfe7650c1982a58be9fa2df3a1a8e20bb6e99b6b9",
+    "sandbox-provenance.json": "d9218fd03c40fb49c136dd2eb3f31ee89dac45a112d167ef7b28fa6836d26b43",
+    "dev-cleanup.json": "2bb290eb7d0fb051c2c61334917a66ec2af7e5ce580dc87a349674069dc59e74",
+    "edit-final-ax.txt": "11831b4c8719f100c835f35e46b61b8bcff326a85c0daf9125c9eefd891b507b",
+    "translation-outcome-ax.txt": "3fb602949551384f135b054c9e3413bd51c2c289c7e65d3f6760c520363ba9bb"
+  }
+}

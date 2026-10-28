@@ -13,6 +13,11 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## Repository tooling (unreleased)
 
+- Propagate failed native build/test pipelines through Apple's GNU make 3.81, preserve diagnostics
+  and stop later success checks. Add offline tests of the actual make recipes and bind the
+  Save-to-folder UI journey, with full control/disclosure visibility after picker Cancel.
+  This changes validation only and requires no app version bump. (#347)
+
 - Support an explicit, validated manual TestFlight signing file when cloud-managed signing is unavailable. Preserve the automatic default, exact companion eligibility, stable versions/team, upload locks and acceptance receipts; upload from a private validated snapshot and record its hash, original path and signing mode. No app binary or privacy behavior changes. (#323)
 
 - Require Given/When/Then behavior contracts and changed native regression-test bindings for behavior

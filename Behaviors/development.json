@@ -147,6 +147,50 @@
           "test": "BDDTests/test_diagnostic_mentions_cannot_supply_a_different_native_selector"
         }
       ]
+    },
+    {
+      "id": "DEV-009",
+      "name": "Fail validation when a logged native command fails",
+      "given": "local validation retains command output through tee and uses the system make implementation, including Apple GNU Make 3.81",
+      "when": "a producer fails or succeeds in the actual repository shell policy and native build/test recipes, including quoted paths with spaces",
+      "then": "a failed producer makes make fail before any following recipe or log verifier while preserving its output; successful producers retain their output and continue, and the same offline regression suite is run by local validation and CI tooling",
+      "covers": [
+        "Makefile",
+        "scripts/test-make-pipelines.py",
+        ".github/workflows/ci.yml"
+      ],
+      "bindings": [
+        {
+          "suite": "tooling",
+          "file": "scripts/test-make-pipelines.py",
+          "test": "MakePipelineTests/test_failed_pipeline_stops_following_recipe"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-make-pipelines.py",
+          "test": "MakePipelineTests/test_failed_pipeline_stops_with_space_paths"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-make-pipelines.py",
+          "test": "MakePipelineTests/test_successful_pipeline_continues"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-make-pipelines.py",
+          "test": "MakePipelineTests/test_successful_pipeline_continues_with_space_paths"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-make-pipelines.py",
+          "test": "MakePipelineTests/test_actual_native_recipes_stop_after_failed_producer"
+        },
+        {
+          "suite": "tooling",
+          "file": "scripts/test-make-pipelines.py",
+          "test": "MakePipelineTests/test_actual_native_recipes_continue_after_successful_producer"
+        }
+      ]
     }
   ]
 }

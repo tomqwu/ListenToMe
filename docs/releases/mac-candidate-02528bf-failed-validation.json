@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 1,
+  "source": "02528bf9529291d86232aef5a31bdb49e84ada1a",
+  "base": "63628537cc12dc049dafb2d6251f6b0769b31139",
+  "tree": "b980580d1827db32d084d99e6e918ca289a3845d",
+  "auditRecordedAt": "2026-10-28T23:18:45.939292+00:00",
+  "status": "failed",
+  "automatedPass": false,
+  "makeExitCode": 0,
+  "outerWrapperExitCode": 1,
+  "nativeIOSResult": "Failed",
+  "process": {
+    "startedAt": "2026-10-28T22:28:10.079148+00:00",
+    "finishedAt": "2026-10-28T23:10:08.421717+00:00",
+    "elapsedSeconds": 2518.325560541,
+    "reaped": true,
+    "hardWallExceeded": false,
+    "makeChildReturncode": 0
+  },
+  "integrity": {
+    "trackedInputs": 970,
+    "pinnedCommitManifestMismatches": [],
+    "preEditRecordedHashMismatches": [],
+    "preEditWorkingTreeClean": true,
+    "preEditAuditSHA256": "e9645646c735c2caccf908827a03d9d069630b6fb9e58f59f6050b07a1d9fb65",
+    "currentDirtyCheckoutCompared": false,
+    "note": "Independently compared all970retainedSHA256manifest entries to gitblob bytes at02528bf; currentpostrun edits are outside this historical validation."
+  },
+  "failure": {
+    "suite": "ListenToMeIOSUITests",
+    "method": "MobileVaultUITests/testSaveToFolderIsOffByDefaultAndAsksForAFolder",
+    "failedMethods": 1,
+    "assertionFailures": 3,
+    "locations": [
+      {
+        "file": "iOSTests/MobileVaultUITests.swift",
+        "line": 19,
+        "assertion": "Explanation containing Obsidian vault exists"
+      },
+      {
+        "file": "iOSTests/MobileVaultUITests.swift",
+        "line": 26,
+        "assertion": "Status containing Choose a folder exists after picker cancellation"
+      },
+      {
+        "file": "iOSTests/MobileVaultUITests.swift",
+        "line": 27,
+        "assertion": "chooseSaveFolder button exists after cancellation"
+      }
+    ],
+    "note": "Full raw log has exactlyoneTestCasefailed andthreeXCTAssertTrueerrors; nativeiOSresultsummaryFailed confirms1failed method. Cause/repair separate; newerfocusedgreen is not thisrun."
+  },
+  "core": {
+    "tests": 1266,
+    "passed": 1259,
+    "skipped": 7,
+    "failed": 0,
+    "lineCoveragePercent": 98.2003739482705,
+    "requiredCoverageFloor": 95
+  },
+  "iosUI": {
+    "tests": 83,
+    "passed": 77,
+    "skipped": 5,
+    "failedMethods": 1,
+    "assertionFailures": 3,
+    "device": "iPhone17Pro",
+    "runtime": "iOS26.5 Simulator"
+  },
+  "iosUnit": {
+    "tests": 504,
+    "passed": 497,
+    "skipped": 7,
+    "failed": 0
+  },
+  "iosXCResult": {
+    "total": 587,
+    "passed": 574,
+    "skipped": 12,
+    "failedMethods": 1,
+    "result": "Failed",
+    "path": "/Users/tomwu/.codex/worktrees/checkpoint-work-134/ListenToMe/.build/ios/Logs/Test/Test-ListenToMeIOS-2026.10.28_18-29-22--0400.xcresult"
+  },
+  "macUnit": {
+    "tests": 74,
+    "passed": 74,
+    "skipped": 0,
+    "failed": 0,
+    "runtime": "macOS27.0.1arm64",
+    "path": "/Users/tomwu/.codex/worktrees/checkpoint-work-134/ListenToMe/.build/mac-native-tests/Logs/Test/Test-ListenToMeMacTests-2026.10.28_19-07-00--0400.xcresult"
+  },
+  "watchUnit": {
+    "tests": 29,
+    "passed": 29,
+    "skipped": 0,
+    "failed": 0
+  },
+  "watchUI": {
+    "tests": 5,
+    "passed": 5,
+    "skipped": 0,
+    "failed": 0,
+    "device": "AppleWatchSeries12",
+    "runtime": "watchOS27.0Simulator",
+    "path": "/Users/tomwu/.codex/worktrees/checkpoint-work-134/ListenToMe/.build/watch-native-tests/Logs/Test/Test-ListenToMeWatchTests-2026.10.28_19-07-35--0400.xcresult",
+    "warning": "WatchRecorderLifecycleTests emits SwiftUI State accessed before installation warning; not counted as failure."
+  },
+  "bdd": {
+    "scenarios": 172,
+    "structuralGatePassed": true,
+    "passingBoundSelectors": {
+      "core": 228,
+      "ios-unit": 119,
+      "ios-ui": 33,
+      "mac-unit": 74,
+      "watch-unit": 29,
+      "watch-ui": 5
+    },
+    "missingBoundPasses": [],
+    "note": "Allboundselectorspassed, including33iOSUIbindings, but unboundVaultUIfailure stillfails fullsuite; BDD isnotanaggregateoverride."
+  },
+  "tooling": {
+    "bddHelperTests": 21,
+    "testflightHelperTests": 29,
+    "contractGateTests": 5,
+    "releasePathsTests": 4,
+    "macAppStoreHelperTests": 6,
+    "failures": 0,
+    "hotkeyHarness": "PASS",
+    "lint": "Completed withwarnings; noSwiftlint error inretainedlog"
+  },
+  "realServerContracts": {
+    "ollama": 2,
+    "openAICompatibleViaOllamaV1": 2,
+    "failures": 0,
+    "model": "qwen3:0.6b",
+    "note": "These4tests skip in ordinaryCore and laterrunexplicitly/pass againstactual localserver; not missingacceptance andnot partofearlierCorepasscount."
+  },
+  "realInstalledTranslation": {
+    "branch": "installed-real-model",
+    "target": "zh-Hans",
+    "elapsedSeconds": 1.171608875,
+    "translatingAtEnd": false,
+    "drainingAtEnd": false,
+    "actualSyntheticOutput": "预算是120美元。\n\n团队将在周四审查预算。\n\n```swift\nlet budget = 120\n```",
+    "attachment": "independent-validation-audit/native-installed-translation/710B9509-11F6-4124-869C-51633B4FADDB.txt",
+    "scope": "ActualproductionSummaryTranslationCoordinator+AppleTranscriptTranslator onMac; synthetictextnoinjectedtranslator. DoesnotprovephysicaliPhone/iPadstallfixorMacStoreinstallation/wholeappacceptance."
+  },
+  "optionalSkips": {
+    "totalMainSuiteSkips": 19,
+    "reasonsArtifact": "independent-validation-audit/optional-skips.json",
+    "core": "7opt-in/live tests;4were subsequentlyrunase2e",
+    "iosUI": "5stagedFiles/Calendar/cloud/Markdown/physicalcapturecases",
+    "iosUnit": "7cloud/Calendarsetup/physicalSpeechcases",
+    "macWatch": 0,
+    "note": "No bound requirednative selector was skipped."
+  },
+  "falsePass": {
+    "issue": 347,
+    "description": "SavedGNUmake3.81pipeline returned0afteriOS TESTFAILED andcontinuedMac/Watch/e2e. Outerwrapper correctlyrejectednativefailuremarkers andexited1. Treatrootcause/toolingrepairasnewwork; donotcallthisaggregatepassed."
+  },
+  "acceptance": {
+    "installedMac": "PartialseparateGUIreceipt only; actualOTHERS/remaininginstalledpathsnotestablishedbythismatrix",
+    "physicalPhoneWatch": "pending",
+    "productionReady": false,
+    "published": false
+  },
+  "artifacts": {
+    "referenceLogSHA256": "e104a7ae59f0b993a6fd32d1dade0fde47755a16fc49c79949c0051dc13dec16",
+    "nativeSummaries": {
+      "ios": "6e082f728df3d9f97d734c668330e5141afc1c57e97226912df729ce79d20a35",
+      "mac": "b83665b0adbbc355e4426c42a33cf008604a5f367729fb0e30178054e5625824",
+      "watch": "83c65853a9050d34ebdef7e1542fe0ca351999515ce96a1579325e7cbee426f1"
+    },
+    "retainedInputManifest": "validation-state.json#inputHashes",
+    "preEditAudit": "validation-outcome-integrity.json",
+    "nativeBindingRecount": "independent-validation-audit/binding-recount.json"
+  },
+  "reviewBoundary": "Independent read-only audit of original02528bf log, exact3native resultbundles andretainedpreedit integrity. No tests/builds/sourcechanges; laterVaultUIgreenexcluded. Correctedsourcewillneed freshfullvalidation.",
+  "evidenceRoot": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-mac318-integration"
+}

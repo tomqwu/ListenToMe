@@ -1,10 +1,30 @@
-# Mac PR #318 integration with published beta source — October 28, 2026
+# Mac PR #318 integration and validation recovery — October 28, 2026
 
-The existing Mac draft is being brought up to `main` at `6362853` from `a1eb0fb`.
-The source retains the published iOS 1.20.2 (42) translation recovery and recording-continuity
-changes alongside the unmerged Mac sandbox, audio and transcript fixes. Earlier full-validation
-receipts apply only to their recorded source; fresh combined validation and installed #336/#337
-acceptance remain required before merge. No new publication is claimed.
+The existing draft integrates `main` at `6362853` in `02528bf`, preserving published iOS 1.20.2 (42)
+translation recovery/recording continuity with the Mac sandbox/audio/transcript fixes. All three
+hosted checks passed on that source. Its full local run **failed**: one iOS Save-to-folder UI method
+had three assertions; the outer wrapper rejected the run even though GNU make 3.81 incorrectly
+returned zero after the piped native failure. All 970 frozen inputs match the source. The
+[independent failure receipt](releases/mac-candidate-02528bf-failed-validation.json) records each
+component result separately, including the later passing Mac, Watch and real-server stages.
+
+The current correction fixes make's failure propagation (#347) and the native Settings test's
+visibility/query defects. Genuine red/green evidence and independent review are retained; full
+validation must be repeated on the final correction. [Recovery evidence](validation-pipeline-recovery.md).
+No earlier passing run is promoted to acceptance for this source.
+
+Installed signed Dev-sandbox checks on `02528bf` now cover #337's double-click, Copy, accessibility/
+context editing, Save/Cancel and narrow/wide reflow, plus real English-to-Simplified-Chinese Summary
+translation. [Bounded receipt](releases/mac-candidate-02528bf-installed.json). Independent near-end,
+overlap/repeated speech, physical routes/headphones, Stop during recovery and delayed-line audio
+playback remain incomplete for #336. The completed Dev session was archived, stopped and cleaned
+with only the exact Dev permission scope. No merge, new Mac upload or publication is claimed.
+
+The preserved #334 branch is integrated with this source; independent review found its Watch-speaker
+fixture missing scene lifecycle and a rotation test that did not establish real Duo. Observable
+regressions are prepared; native red and the fixture correction are still pending behind #318.
+The requested Impeccable audit also recorded a scoped light-mode translation-caption legibility
+finding as #346, with native resolved-color acceptance still required before a fix is claimed.
 
 # Published translation-recovery beta — 1.20.2 (42)
 

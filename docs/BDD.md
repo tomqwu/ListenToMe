@@ -182,6 +182,21 @@ that framework prefix without accepting diagnostic mentions, other selectors, sk
 or incomplete records. The original run remains failed; new offline regression cases and the saved
 native log verify the parser fix before the full candidate validation is repeated.
 
+`DEV-009` covers an actual false-success boundary in Apple's GNU make 3.81: `.SHELLFLAGS` was
+ignored, so a failing native command piped into `tee` could return success and reach later stages.
+Six offline methods execute the repository Makefile and native recipes with harmless commands,
+checking failures, successful controls, preserved diagnostics, paths with spaces and refusal to
+run later verification. Bash flags now belong to `SHELL`, which the older make actually uses.
+The original native failure remains failed; these tooling tests do not accept any app behavior.
+
+`VAULTUI-001` adopts the existing Save-to-folder journey and its observed full-run failure. The
+native screenshot/AX showed the enabled toggle partly outside the viewport, while lower lazy rows
+had not appeared. The corrected test reveals complete controls/disclosure inside Settings and scopes
+text queries to that form; a first revised page-wide query incorrectly found the warning behind the
+sheet and is retained as a harness failure. Default-off, explicit picker, Cancel, enabled-but-needs-
+folder and reachable Choose folder assertions remain. No folder behavior changed. See
+[the combined evidence](validation-pipeline-recovery.md).
+
 ## Commands and enforcement
 
 ```sh

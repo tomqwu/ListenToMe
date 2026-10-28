@@ -76,3 +76,11 @@ its `.dev` permissions reset. Provider/engine/speaker preferences were restored;
 model was absent from the Cloud picker after refresh and could not be restored through the UI.
 That Dev-setting exception is recorded in the external `route-acceptance/cleanup.json`; user history,
 API keys and production permissions were preserved. This attempt is not an audio acceptance pass.
+
+The later `02528bf` signed sandbox session accepted the corrected transcript gestures, selection,
+Save/Cancel and narrow/wide reflow on an existing synthetic conversation. It started neither capture
+nor playback. [The bounded installed receipt](releases/mac-candidate-02528bf-installed.json) therefore
+does not close independent near-end, overlap/repeated speech, headphones/physical routes, Stop during
+recovery or delayed-row audio playback. Its full integrated validation failed in a separate Settings
+UI test; [the recovery record](validation-pipeline-recovery.md) preserves that outcome and the make
+failure-propagation correction. Earlier acoustic evidence is not promoted to the new source.

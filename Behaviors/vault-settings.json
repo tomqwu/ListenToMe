@@ -1,0 +1,20 @@
+{
+  "feature": "iPhone and iPad Save to folder controls",
+  "scenarios": [
+    {
+      "id": "VAULTUI-001",
+      "name": "Reveal folder consent and preserve recovery after cancelling the picker",
+      "given": "Save to folder is off in a scrollable Settings form and no folder has been selected",
+      "when": "the user reads the folder disclosure, turns saving on and cancels the native Files folder picker",
+      "then": "the disclosure and complete controls are reachable by scrolling, saving remains enabled but asks for a folder, and Choose folder remains visibly available without starting capture",
+      "covers": ["iOS/MobileVaultSettings.swift"],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileVaultUITests.swift",
+          "test": "MobileVaultUITests/testSaveToFolderIsOffByDefaultAndAsksForAFolder"
+        }
+      ]
+    }
+  ]
+}

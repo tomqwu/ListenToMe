@@ -646,8 +646,12 @@ only, not the whole product. `make mac-test` exercises selected native macOS ada
 file-loading, audio-buffer resampling, capability/preflight and checkpoint behavior; it does not
 measure all App code or replace SwiftUI, real capture or permission acceptance. Native Mac and Watch
 suites run locally through `make validate-local`, alongside SwiftLint, iOS simulator unit/UI tests,
-GUI/audio acceptance, and
-distribution checks require local validation via [`docs/manual-smoke-test.md`](docs/manual-smoke-test.md).
+release-helper tests and real-server contracts. Installed GUI/audio and physical-device acceptance
+remain separate gates in [`docs/manual-smoke-test.md`](docs/manual-smoke-test.md).
+The make shell policy preserves failed pipeline exits on Apple's GNU make 3.81; offline tests
+exercise the actual native recipes and their logging/verification boundaries. A passed bound-selector
+check does not excuse a failure elsewhere in a full native suite. See
+[the validation recovery evidence](docs/validation-pipeline-recovery.md).
 
 `make e2e` runs the checks CI can't (it needs a real Mac + Ollama): it builds the app target,
 verifies `make run`'s app-path resolution, and runs a real LLM contract test against your local

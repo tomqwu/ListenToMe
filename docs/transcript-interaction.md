@@ -36,3 +36,20 @@ Full `make validate-local` passed on `d525760`: exit 0, reaped, all 934 tracked 
 including all 69 Mac native tests and four real-server contracts. All three required hosted checks
 also passed on that source. [The independently audited receipt](releases/mac-candidate-d525760-validation.json)
 records the full matrix. Installed acceptance and merge remain required; this change is not published.
+
+## Installed integrated candidate — October 28, 2026
+
+On signed sandbox source `02528bf`, actual finalized-text double-click, blank Save refusal, Cancel,
+accessibility/context Edit, single-line Save/restoration, pointer and keyboard/menu Copy and narrow/
+wide reflow were exercised. Independent visual/AX review supports the recorded visible outcomes;
+action sequences rely on the retained operator record. Six visible synthetic rows kept their content
+except the temporary selected budget correction, which was restored. This does not establish disk
+persistence across relaunch, VoiceOver speech or delayed-row saved-audio playback.
+
+[The bounded installed receipt](releases/mac-candidate-02528bf-installed.json) retains screenshot
+hashes, source/signature provenance and limitations. The original CUA captures are JPEG bytes and
+were renamed without changing them; they are QA evidence, not App Store media. The completed Dev
+bundle was archived, stopped and moved to Trash; only `com.tomwu.ListenToMe.dev` permissions were
+reset. Full integrated validation separately failed in the Settings test and is being corrected
+with [explicit failure evidence](validation-pipeline-recovery.md). #336's remaining acoustic/route/
+playback acceptance and merge are still required; no publication is established.
