@@ -1,4 +1,14 @@
-# Speaker and transcript gesture integration — October 28, 2026
+# Speaker rename integration checkpoint — October 28, 2026
+
+The preserved `codex/speaker-rename-gestures` branch now integrates local PR #318 candidate
+`02528bf`, including current published iOS 1.20.2 (42) translation recovery, recording continuity
+and privacy/lifecycle fences. Rename gestures and stable speaker/segment identities are retained.
+Structural BDD passed all 174 scenarios against stacked base `02528bf`; lint and content/link checks
+also passed. Lint reports existing warnings. No new native, UI, audio or full-validation pass is claimed. Earlier source-specific evidence remains below.
+PR #318 keeps priority: no #334 feature PR, push, merge to main or publication is part of this step.
+Fresh combined native/full validation and installed rename acceptance remain required afterward.
+
+# Historical speaker and transcript gesture integration — October 28, 2026
 
 The existing speaker-rename branch now integrates PR #318's validated transcript candidate
 `a1eb0fb` (app/test source `d525760`). Both unreleased feature histories are retained. Native
@@ -13,7 +23,124 @@ labels and is diagnostic only; it does not prove installed UI presentation. Fres
 validation, installed gesture/Copy/name-sheet acceptance and CI remain. Do not open the #334 PR
 before #318 completes its remaining installed audio/interaction gates. No feature release is claimed.
 
-# Full transcript candidate validation — October 28, 2026, 05:08 UTC
+# Mac PR #318 integration with published beta source — October 28, 2026
+
+The existing Mac draft is being brought up to `main` at `6362853` from `a1eb0fb`.
+The source retains the published iOS 1.20.2 (42) translation recovery and recording-continuity
+changes alongside the unmerged Mac sandbox, audio and transcript fixes. Earlier full-validation
+receipts apply only to their recorded source; fresh combined validation and installed #336/#337
+acceptance remain required before merge. No new publication is claimed.
+
+# Published translation-recovery beta — 1.20.2 (42)
+
+Apple accepted **1.20.2 (42)** through the official TestFlight helper at **2026-10-28T21:11:37.664213+00:00** from `a6b90e83f775cc9dc88df3c2805ecacedca044af`. Apple build `8967f095-470f-40c0-aba0-b1188bbb699c` is **VALID / IN_BETA_TESTING**. Readback at 2026-10-28T21:15:33.796221+00:00 confirms **en-US**, **Listen To Me - Real Time AI**, exact beta description/What to Test and unchanged access for the existing two-member Dev group. Access does not establish physical installation of build 42.
+
+[Publication receipt](releases/ios-1.20.2-build42.json) · [Release notes and native previews](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.2-build42).
+
+Physical phone translation/lock-screen/multilingual and Watch acceptance remain pending. Public production remains **1.19.1 (39)**; this beta made no new public submission or listing-media upload. Mac changes remain unreleased and keep separate installed-app acceptance gates.
+
+# Historical candidate verification before publication — #343, 1.20.2 (42)
+
+The tester-reported Summary translation stall is being addressed on `codex/translation-stall-recovery`.
+The candidate adds native cancellation ownership, bounded readiness/inference deadlines, disabled
+busy/draining controls, Cancel translation, late-result/timer fencing and real installed-pair Mac
+acceptance. [Evidence and limits](translation-recovery.md). The exact underlying iPhone framework
+stall is not yet identified; physical phone and installed Mac GUI acceptance remain unverified.
+
+Focused Core/native/UI red→green evidence is retained; full local validation now passed on unchanged `abe5218f61c193421178a2debab16ea2c2b1b2dc`. [Validation receipt](releases/ios-1.20.2-build42-validation.json) and [fresh screenshots](images/ios/release-1.20.2-en-US.json) cover seven profiles. Hosted CI, merge and the tester-feedback TestFlight train remain separate gates. All three iOS bundles and in-app notes
+are prepared for 1.20.2 (42), with en-US metadata. Apple's preflight at 19:54 UTC found no build42;
+public iOS remains1.19.1 (39) and latest accepted beta remains1.20.1 (41). No upload or public
+submission is claimed by this candidate. Preserve the unrelated unfinished Mac318/speaker334 work.
+
+Evidence: `/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/`.
+
+# Published recording-continuity beta — 1.20.1 (41)
+
+Apple accepted **1.20.1 (41)** through the official TestFlight helper (receipt recorded 2026-10-28T19:02:09.198475+00:00) from `dc6b2e39a99568fb4931e937c555fa0de0f2ff18`. Apple build `5c2339eb-5e17-4bd6-8eb1-ec1d212ef49f` is **VALID / IN_BETA_TESTING**. Existing Dev group access was verified at 2026-10-28T19:05:58.417288+00:00; its two accepted memberships are unchanged. Primary locale and metadata are **en-US**, with localized name **Listen To Me - Real Time AI**; beta description and What to Test match the intended copy. Group access does not establish physical installation of build 41.
+
+The beta includes established microphone capture through screen lock, replay recovery and foreground
+readiness fixes. Full local validation used `9b14ff2ea58919c1bf42a3482794ccd4877dbf1a`;
+the merged artifact/tag source is `dc6b2e39a99568fb4931e937c555fa0de0f2ff18`. All three required checks
+passed on that exact merged source ([run 40748287376](https://github.com/tomqwu/ListenToMe/actions/runs/40748287376)).
+The actual transported IPA, all three distribution bundles and remote tag were verified. The GitHub
+pre-release leaves the Mac release Latest; all six preview downloads match their uploaded originals.
+[Publication receipt](releases/ios-1.20.1-build41.json), [validation receipt](releases/ios-1.20.1-build41-validation.json)
+and [75 reviewed captures](images/ios/release-1.20.1-en-US.json).
+
+Physical screen-lock capture, multilingual/translation quality and Watch acceptance remain pending.
+Public iOS remains 1.19.1 (39); no new public submission or listing upload was performed.
+The Mac release and remaining backlog keep their separate acceptance gates.
+
+# Historical candidate verification before publication — 1.20.1 (41)
+
+The recording/language follow-up implements continued user-started capture through backgrounding,
+replay progress/recovery, immediate cancellation of optional work and refreshed foreground controls.
+Full `make validate-local` passed on exact source `9b14ff2ea58919c1bf42a3482794ccd4877dbf1a` with all 921 tracked
+inputs unchanged. Core: 1254 tests, 7 optional skips,
+zero failures and 98.17549956559513% line coverage. iOS UI 82 tests / 5 skips / 0 failures; iOS unit 499 tests / 7 skips / 0 failures; Mac native 43 tests / 0 skips / 0 failures; Watch unit 29 tests / 0 skips / 0 failures; Watch UI 5 tests / 0 skips / 0 failures.
+All 153 BDD scenarios were structurally valid; every bound native selector was
+observed passing. Four helper suites and 4 real-server contracts passed.
+These are local automated results, separate from installed/physical acceptance.
+
+Fresh candidate media is preserved across 7 profiles and 75 native-resolution images, with source/binary/payload hashes and explicit reviewed listing/QA classifications. Saved media does not update Apple's listing. [Capture catalog](images/ios/release-1.20.1-en-US.json).
+
+[Validation receipt](releases/ios-1.20.1-build41-validation.json). All three hosted checks passed on the
+validated application source ([run 40737628646](https://github.com/tomqwu/ListenToMe/actions/runs/40737628646));
+this final evidence-only commit still requires its own checks before merge. The 75 images include
+two supplemental Duo captures from an unchanged existing layout test; 30 are suitable compositions
+and 45 are QA-only. Watch previews remain scoped to GitHub, not App Store approval.
+
+Earlier failed aggregates, unchanged-source reproductions, superseded privacy expectations and the
+corrected title-query failure remain preserved. The focused 14-method UI attempt passed 13 methods
+and failed the new title query; only that selector changed before its isolated passing retry. The
+final aggregate above reran the complete final source. [Recording evidence](recording-continuity.md)
+and [language evidence](language-replay-progress.md) retain the earlier red/green boundaries.
+
+All phone/Share/Watch targets and bundled notes identify **1.20.1 (41)**. Physical screen-lock audio,
+native multilingual accuracy and Watch acceptance remain pending; this candidate is not a production
+acceptance claim. Build 41 upload, tester availability and GitHub release status require separate
+accepted receipts; no upload or public App Store submission is asserted by this validation snapshot.
+Hosted checks, merge and authorized distribution are recorded separately by the release owner.
+
+Release evidence: `/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios1201-continuity`.
+The other preserved Mac/Watch/research backlog remains independently gated.
+
+# Published translation beta — 1.20.0 (40)
+
+Apple accepted **1.20.0 (40)** through the official TestFlight helper (receipt recorded 2026-10-28T13:56:43.061187+00:00) from `4a72489120fda713c6d117c3d6c3dc661cf1dd9e`. Apple build `93926f6c-0137-49fe-bc06-f73f04f831f5` is **VALID / IN_BETA_TESTING**, with existing Dev group access verified at 2026-10-28T14:06:21.847671+00:00. English (US) localized name, beta description and What to Test match the intended metadata. Group membership does not establish physical installation of build 40.
+
+Physical phone/Watch acceptance and installed real-language-pair translation quality remain pending. The Mac translation feature remains unreleased. Public production remains 1.19.1 (39); this beta did not submit a new public version or upload listing screenshots. QA-only captures are not approved store assets.
+
+Full local validation ran on unchanged `e43a7b5c241e4a58d806f42651dc760d996951be`; the merged artifact source is `4a72489120fda713c6d117c3d6c3dc661cf1dd9e`. [Publication receipt](releases/ios-1.20.0-build40.json), [validation receipt](releases/ios-1.20.0-build40-validation.json) and [reviewed capture catalog](images/ios/release-1.20.0-en-US.json). The preparation checkpoint below is historical, not current pending upload work.
+
+# Historical iOS translation train preparation — October 28, 2026
+
+The next-day authorized TestFlight train is being prepared from merged `main` (`6ecf9cb`), separately
+from unfinished Mac #318 and speaker rename #334. Apple readback confirms latest accepted build39,
+public iOS1.19.1, primary locale en-US, and no build40 among all35 returned builds. The planned beta
+is **1.20.0 (40)**, with matching phone/Share/Watch versions, bundled translation What's New and
+complete US tester/release copy. No new public App Store version or review submission is authorized.
+
+`RELEASE-004` first failed the native UI version/title expectations against build39 (two assertions,
+exit65). Version and bundled notes now match40; all six focused release-notes/translation UI tests passed
+(exit0), including largest-text history and translation controls. BDD139 and lint also pass.
+The release branch also adopts the already reviewed large-text translation scrolling-test correction
+from `a1eb0fb`, without unmerged Mac behavior or speaker-renaming changes. That earlier regression
+and its evidence remain documented separately; no new historical red is invented for the backport.
+
+Full `make validate-local` passed on unchanged `e43a7b5`: Core1,254 (7 optional skips,
+98.221766% coverage), iOS79 UI (5 skips) +460 unit (7 skips), Mac43, Watch29 unit +5 UI,
+139 BDD scenarios, all required native bindings observed passing, and four real-server contracts. All three hosted checks passed.
+[Validation receipt](releases/ios-1.20.0-build40-validation.json) and
+[55 reviewed captures](images/ios/release-1.20.0-en-US.json) preserve seven device profiles.
+Two Watch42 setup failures remain preserved; the unchanged prebooted run passed.
+Poorly scrolled captures are QA-only; no listing upload or physical acceptance is claimed.
+Merge, exact-source archive/export verification, helper upload and Apple tester readback remain. Existing manual export settings use
+`destination=upload`; local package verification must use a separate private `destination=export`
+copy. Evidence: `2026-10-28/listentome-ios120-train/`. Physical translation quality and Watch/phone
+acceptance remain unverified; this preparation does not publish a build or waive Mac acceptance.
+
+# Historical Mac transcript candidate validation — October 28, 2026, 05:08 UTC
 
 PR #318 source `d525760` passed the complete `make validate-local` command: exit 0, reaped,
 2,851.15 seconds and all 934 tracked input hashes unchanged. All three required hosted checks
@@ -63,59 +190,6 @@ protocol before retrying. The #334 branch now includes `95aaeaf` at `e85733b`, w
 native integration methods, BDD150 and lint passing plus independent review; fresh full integration
 validation and installed rename acceptance remain. No #334 PR is opened ahead of #318.
 
-
-# Speaker rename full integration validation — October 28, 2026, 03:30 UTC
-
-The complete `make validate-local BDD_BASE=95aaeaf` passed on speaker-rename app/test source
-`e85733b479e19f5a9e6482d71d5c3323a9664ee2`: exit 0, child reaped, 2,317.94 seconds,
-all 936 tracked hashes unchanged. Independent review recounted Core 1,262/7 skips with
-98.2376439% coverage; iOS 82 UI/5 skips plus 461 unit/7 skips; Mac 69; Watch 29 unit + 5 UI;
-all native BDD bindings, five helper suites and four real-server contracts. Zero failures.
-All seven speaker-rename bindings passed. [Audited receipt](releases/speaker-rename-e85733b-validation.json).
-
-Installed Mac rename/editor accessibility acceptance, required CI and merge remain. Finish current
-PR #318 and its audio gates before opening this feature PR; no new PR, release or publication is
-established by the validation result. Earlier validation records below are historical.
-
-# Speaker rename integration — October 28, 2026
-
-The existing #334 branch now includes PR #318 candidate `95aaeaf`, preserving both chronological
-transcript display and direct speaker renaming. Four documentation conflicts retained both feature
-histories; no earlier failure or acceptance limitation was discarded. `SPEAKER-018` now checks a
-restored identity across delayed lines: both displayed labels change, other speakers stay unchanged,
-and canonical IDs, run IDs, capture timestamps and text remain intact. This integration coverage
-passed initially; it is not a new historical regression red.
-
-All four native Mac rename methods passed (actual exit 0, reaped, tracked input hashes unchanged),
-BDD passes 150 scenarios relative to `95aaeaf`, and lint passes. Evidence is preserved under
-`2026-10-28/listentome-speaker334-integration`. Full validation reported below belongs to the earlier
-feature source and does not establish full validation of this integration. Installed Mac editor and
-accessibility acceptance, fresh full validation, CI and merge remain. Finish #318 before opening
-the #334 PR; no release or completion is claimed for either pending branch.
-
-# Speaker rename shortcuts #334 — October 27, 2026 (local implementation)
-
-The maintainer requested direct speaker-name editing. Branch `codex/speaker-rename-gestures`
-implements iPhone/iPad transcript long-press → Rename speaker and Mac label double-click/context menu,
-with Save/Cancel, identity-wide changes and stable keyboard/rotation presentation. Native red/green
-coverage is `SPEAKER-017`/`SPEAKER-018`; iPad portrait, rotation and largest-text checks passed,
-and Mac callback/name validation tests and app build passed. The saved/reopened iOS name regression
-also passed. Independent source review cleared the final presentation and stale-identity guards.
-
-Full `make validate-local` passed on app/test source `8d335e4` (exit 0, child reaped,
-2,333 seconds, all 907 frozen tracked-file hashes unchanged). Core: 1,254 tests/7 skips and
-98.2217656% line coverage; iOS: 542 total, 530 passed/12 skips; Mac: 47; Watch: 29 unit/5 UI;
-141 BDD scenarios and all four real-server contracts passed. Independent outcome review verified
-the counts and all seven bound rename methods. Exact-source portrait, large-text and Duo captures
-were inspected and preserved with native results; these are QA evidence, not Store screenshot uploads.
-
-Installed Mac sheet/save/reopen and VoiceOver acceptance remain pending. The Mac is locked;
-no additional unlock/permission prompt was sent. The original review tracker #98 is now closed after
-all 43 original child issues were independently verified completed; newer backlog issues stay open.
-No new feature PR is opened while #318 remains in validation/acceptance. No merge or publication is
-claimed for #334. Release copy is under both platform unreleased changelog headings and the en-US
-speaker-rename metadata files. Exact native logs/screenshots remain in the external
-`2026-10-27/listentome-speaker-gestures` evidence directory.
 # Validation follow-up — October 28, 2026
 
 The `086d89e` full validation ended with make exit 2 and unchanged input hashes: Core passed,

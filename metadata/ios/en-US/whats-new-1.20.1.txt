@@ -1,0 +1,7 @@
+Keep an established iPhone or iPad recording running when the screen locks or you leave the app. Use Stop to finish. A recording notice explains that optional AI work pauses while the app is inactive.
+
+Improve live transcript updates when speakers change languages. Phrases crossing a language-switch boundary stay visible and finalize once. A stalled switch can attempt recovery while preserving existing text and explaining when some speech may be missing.
+
+Translate completed speech on your device while keeping the original transcript and speaker labels. On the Summary page, choose Translate summary and its own target language; the original summary remains available. Missing language packs require explicit preparation.
+
+Recording and language detection stay on-device. Saved audio remains optional. Translation and recording changes preserve your selected AI provider and saved originals.

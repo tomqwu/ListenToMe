@@ -8,7 +8,7 @@ extension MobileSession {
     /// Undo is already switching back. While stopping, a tap is kept and applied once Stop finishes.
     var canUndoLanguageSwitch: Bool {
         languageDetection.notice?.conversation == id && !languageDetection.undoing && state != .preparing
-            && !languageDetection.isSwitching
+            && !languageDetection.isSwitching && (state != .recording || !languageDetection.checksSuspended)
     }
 
     /// Undo pins the language the recording was in before the switch, for this and later recordings.
@@ -19,6 +19,7 @@ extension MobileSession {
         // replace this one, so it is not offered until the switch settles (review of #212, finding 1).
         guard let change = languageDetection.notice, !languageDetection.undoing,
               !languageDetection.isSwitching else { return }
+        guard state != .recording || !languageDetection.checksSuspended else { return }
         guard change.conversation == id else { pin(change); return }
         switch state {
         case .preparing: return
@@ -30,7 +31,7 @@ extension MobileSession {
 
     private func undoWhileRecording(_ change: MobileLanguageDetection.Switch) {
         guard let recorder, let run = languageDetection.run else { return finishUndo(change) }
-        languageDetection.undoing = true
+        guard let request = languageDetection.beginUndoRequest() else { return }
         let token = run.token
         // What the switch changed is heard again: its own span in this recording, or all of a recording
         // that resumed the switched conversation. Without that audio, the replaced lines come back instead.
@@ -39,31 +40,34 @@ extension MobileSession {
         let since = sameRun ? change.since : run.offset
         let rate = TimeInterval(LanguageDetectionPolicy.sampleRate)
         let terms = vocabulary.recognitionTerms(for: id, localeIdentifier: change.from)
-        Task { [weak self] in
+        languageDetection.undoOperation = Task { [weak self] in
+            guard let self else { return }
+            defer { languageDetection.finishUndoRequest(request) }
+            guard !Task.isCancelled, state == .recording, isForeground, applicationIsActive(),
+                  id == change.conversation, languageDetection.acceptsUndo(request) else { return }
             do {
-                // Asked at the switch: the span is heard again only if its audio is still held then.
+                // Context and asset preparation may suspend. Undo owns and fences both boundaries.
                 await recorder.setContextualStrings(terms)
+                guard !Task.isCancelled, state == .recording, isForeground, applicationIsActive(),
+                      id == change.conversation, languageDetection.acceptsUndo(request) else { return }
                 try await recorder.switchLocale(to: Locale(identifier: change.from), replay: run.buffer, replayFrom: {
                     from >= Int(run.buffer.replayFloor * rate) ? from : nil
                 }, willReplace: { [weak self] replayed, cut in
-                    self?.switchedBack(change, replayed: replayed, run: run, since: since, cut: run.offset + cut)
+                    guard let self, !Task.isCancelled, self.state == .recording, self.isForeground,
+                          self.applicationIsActive(), self.id == change.conversation,
+                          self.languageDetection.acceptsUndo(request) else { return }
+                    self.switchedBack(change, replayed: replayed, run: run, since: since, cut: run.offset + cut)
+                    // Native replacement and its locale/pin must commit in the same actor turn.
+                    self.pin(change)
+                    self.languageDetection.undone(to: change.from, token: token, midRecording: change.midRecording)
                 })
-                guard let self else { return }
-                self.languageDetection.undoing = false
-                self.pin(change)
-                self.languageDetection.undone(to: change.from, token: token, midRecording: change.midRecording)
             } catch {
-                guard let self else { return }
-                self.languageDetection.undoing = false
-                self.applyVocabularyToRecording()
-                switch self.state {
-                case .recording:
-                    self.message = "Could not switch transcription back to " +
-                        "\(MobileLanguageDetection.displayName(change.from)): \(error.localizedDescription). " +
-                        "Tap Undo to try again."
-                case .stopping, .preparing: self.languageDetection.pendingUndo = true
-                case .idle: self.finishUndo(change)
-                }
+                guard !Task.isCancelled, state == .recording, isForeground, applicationIsActive(),
+                      id == change.conversation, languageDetection.acceptsUndo(request) else { return }
+                applyVocabularyToRecording()
+                message = "Could not switch transcription back to " +
+                    "\(MobileLanguageDetection.displayName(change.from)): \(error.localizedDescription). " +
+                    "Tap Undo to try again."
             }
         }
     }

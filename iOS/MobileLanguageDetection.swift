@@ -74,14 +74,25 @@ final class MobileLanguageDetection {
         var lines: [TranscriptSegment] = []
         /// A later switch without replay superseded this one: the rest of its lines are dropped.
         var discarded = false
+        var progressThrough: TimeInterval = 0
+        var progressCaptured: TimeInterval = 0
+        var recoveryAttempted = false
     }
 
     /// A check the run asked for: the recorded audio to read, and whether it is the first check.
     struct Request: Equatable {
+        let id = UUID()
         let token: Int
+        let generation: Int
         let window: Range<TimeInterval>
         /// The recording's first check (issue #197), rather than a re-check (issue #199).
         let first: Bool
+    }
+
+    struct UndoRequest {
+        let id = UUID()
+        let token: Int
+        let generation: Int
     }
 
     struct Run {
@@ -113,9 +124,13 @@ final class MobileLanguageDetection {
     var replay: Replay?
     /// An Undo is switching the live transcriber back; another tap waits for it.
     var undoing = false
+    @ObservationIgnored var undoOperation: Task<Void, Never>?
+    @ObservationIgnored private var undoRequestID: UUID?
     /// Undo was tapped while recording was stopping; it applies once the recording has ended.
     var pendingUndo = false
     private var runToken = 0
+    private var checkGeneration = 0
+    private(set) var checksSuspended = false
     /// Each conversation's language changes since it was opened (issue #206), applied at every save.
     @ObservationIgnored var languageChanges: [String: [String]] = [:]
     private var identifier: (any MobileLanguageIdentifying)?
@@ -125,6 +140,11 @@ final class MobileLanguageDetection {
     @ObservationIgnored private var preparation: Task<Void, Never>?
     @ObservationIgnored var check: Task<Void, Never>?
     @ObservationIgnored var activityLoop: Task<Void, Never>?
+    @ObservationIgnored var recovery: Task<Void, Never>?
+    @ObservationIgnored private(set) var recoveryRequestID: UUID?
+    private(set) var replayRecoveryMessage: String?
+    /// One full existing detection window of accepted activity, not silence or wall-clock time.
+    static let replayRecoveryActivity: TimeInterval = 30
     /// Low Power Mode, the app's state and the device's temperature, read before each re-check.
     @ObservationIgnored var conditions: @MainActor () -> LanguageRecheckPolicy.Conditions =
         MobileLanguageDetection.deviceConditions
@@ -151,6 +171,7 @@ final class MobileLanguageDetection {
     func beginRun(conversation: String, locale: String, offset: TimeInterval, firstLine: Int) -> SpeakerAudioBuffer? {
         endRun(recordingLines: nil)
         lastError = nil
+        replayRecoveryMessage = nil
         lastRecheck = nil
         let carried = automatic && notice?.conversation == conversation ? notice : nil
         notice = carried
@@ -168,13 +189,18 @@ final class MobileLanguageDetection {
     /// Downloads (first use) and loads the model in the background. Started by a recording's first
     /// speech, so a recording that never starts (the simulator, a denied microphone) downloads nothing.
     private func prepareModel(token: Int) {
-        guard !modelReady, preparation == nil, let model else { return }
+        guard !checksSuspended, !modelReady, preparation == nil, let model else { return }
         status = .preparing
+        let generation = checkGeneration
         preparation = Task { [weak self] in
             do {
+                guard !Task.isCancelled, self?.checkGeneration == generation,
+                      self?.checksSuspended == false, self?.isCurrent(token) == true else { return }
                 try await model.prepare()
+                guard !Task.isCancelled, self?.checkGeneration == generation else { return }
                 self?.modelLoaded(token: token)
             } catch {
+                guard !Task.isCancelled, self?.checkGeneration == generation else { return }
                 self?.modelFailed(error.localizedDescription, token: token)
             }
         }
@@ -184,6 +210,8 @@ final class MobileLanguageDetection {
     /// dropped. `recordingLines` are the run's own lines, kept for an Undo of its switch.
     func endRun(recordingLines: Set<UUID>?) {
         activityLoop?.cancel(); activityLoop = nil
+        cancelRecovery()
+        cancelUndo()
         if let current = run, notice?.runToken == current.token, notice?.recordingLines == nil {
             notice?.recordingLines = recordingLines
         }
@@ -206,7 +234,7 @@ final class MobileLanguageDetection {
     /// Notes a speech event in recording time and returns the check to run now, if one is due. The
     /// first speech starts the model download. A check waits while another, a replay or an Undo runs.
     func noteSpeech(start: TimeInterval, end: TimeInterval) -> Request? {
-        guard var current = run, !isUnavailable else { return nil }
+        guard !checksSuspended, var current = run, !isUnavailable else { return nil }
         if current.tracker.reportedSpeechStart == nil { prepareModel(token: current.token) }
         current.tracker.noteSpeech(start: start, end: end)
         run = current
@@ -217,7 +245,7 @@ final class MobileLanguageDetection {
     /// callbacks or completed model checks during the scan are never overwritten.
     func noteAudioActivity(_ ranges: [Range<TimeInterval>], through: Int, token: Int) -> Request? {
         guard var current = run, current.token == token, through > current.activityThrough,
-              automatic, !isUnavailable else { return nil }
+              automatic || replay != nil, !checksSuspended, !isUnavailable else { return nil }
         current.activityThrough = through
         current.tracker.noteAudioActivity(ranges)
         run = current
@@ -227,7 +255,8 @@ final class MobileLanguageDetection {
     }
 
     private func nextRequest() -> Request? {
-        guard var current = run, !current.checking, replay == nil, !undoing else { return nil }
+        guard !checksSuspended, var current = run, !current.checking,
+              replay == nil || replay?.discarded == true, !undoing else { return nil }
         defer { run = current }
         let captured = TimeInterval(current.buffer.sampleCount) / TimeInterval(LanguageDetectionPolicy.sampleRate)
         switch current.tracker.gate(now: captured, pinned: !automatic, conditions: conditions()) {
@@ -238,7 +267,13 @@ final class MobileLanguageDetection {
             return nil
         case .check(let window):
             current.checking = true
-            return Request(token: current.token, window: window, first: current.tracker.phase == .first)
+            // A suspended first check may outlive its opening audio. Read the newest bounded
+            // window instead of repeatedly requesting bytes already released from the ring.
+            let retainedWindow = window.lowerBound < current.buffer.replayFloor
+                ? max(current.buffer.replayFloor, captured - LanguageDetectionPolicy.maximumWindow)..<captured
+                : window
+            return Request(token: current.token, generation: checkGeneration,
+                           window: retainedWindow, first: current.tracker.phase == .first)
         }
     }
 
@@ -267,9 +302,77 @@ final class MobileLanguageDetection {
     func isCurrent(_ token: Int) -> Bool { run?.token == token }
 
     /// The run's check has finished, whatever its result; the next one can be scheduled.
-    func finishedCheck(_ token: Int) {
-        guard isCurrent(token) else { return }
+    func accepts(_ request: Request) -> Bool {
+        !checksSuspended && isCurrent(request.token) && request.generation == checkGeneration
+    }
+
+    func finishedCheck(_ request: Request) {
+        guard accepts(request) else { return }
         run?.checking = false
+    }
+
+    /// Pause auxiliary work without ending capture, erasing retained audio or changing Undo identity.
+    func suspendChecks(preserveUndoForStop: Bool = false) {
+        if preserveUndoForStop, undoing, notice != nil { pendingUndo = true }
+        checksSuspended = true
+        checkGeneration &+= 1
+        preparation?.cancel(); preparation = nil
+        check?.cancel(); check = nil
+        cancelUndo()
+        activityLoop?.cancel(); activityLoop = nil
+        if recovery != nil { replay?.recoveryAttempted = false }
+        cancelRecovery()
+        run?.checking = false
+        if !isUnavailable { status = .idle }
+    }
+
+    func resumeChecks() { checksSuspended = false }
+
+    func noteReplayProgress(through end: TimeInterval) {
+        guard end.isFinite, let current = run, let pending = replay, !pending.discarded,
+              end > pending.progressThrough else { return }
+        replay?.progressThrough = end
+        replay?.progressCaptured = Double(current.buffer.sampleCount) / Double(LanguageDetectionPolicy.sampleRate)
+    }
+
+    func stalledReplayRequest() -> Request? {
+        guard !checksSuspended, recovery == nil, let current = run, let pending = replay,
+              !pending.discarded, !pending.recoveryAttempted else { return nil }
+        let captured = Double(current.buffer.sampleCount) / Double(LanguageDetectionPolicy.sampleRate)
+        guard current.tracker.speech(in: pending.progressCaptured..<max(pending.progressCaptured, captured))
+                >= Self.replayRecoveryActivity else { return nil }
+        replay?.recoveryAttempted = true
+        let request = Request(token: current.token, generation: checkGeneration,
+                              window: pending.progressCaptured..<captured, first: false)
+        recoveryRequestID = request.id
+        return request
+    }
+
+    func cancelRecovery() {
+        if recoveryRequestID != nil, case .switching = status { status = .idle }
+        recoveryRequestID = nil
+        recovery?.cancel(); recovery = nil
+    }
+
+    func replayRecoveryEnded(_ request: Request) {
+        guard recoveryRequestID == request.id else { return }
+        recovery = nil
+        recoveryRequestID = nil
+        if case .switching = status { status = .idle }
+    }
+
+    func replayRecoveryFinished(_ request: Request, error: String? = nil) {
+        guard accepts(request), recoveryRequestID == request.id else { return }
+        if let error {
+            // Keep a timestamp barrier against late replay results, but never gate later checks.
+            replay?.discarded = true
+            replayRecoveryMessage = "Could not restart stalled transcription: \(error). Recording continues; "
+                + "some speech may be missing. Stop and Listen again if text does not resume."
+        } else {
+            replayRecoveryMessage = "Transcription restarted after stalled replay; some speech may be missing."
+        }
+        lastError = replayRecoveryMessage
+        lastRecheck = replayRecoveryMessage
     }
 
     /// Only the first check shows a status line; re-checks run quietly.
@@ -280,7 +383,7 @@ final class MobileLanguageDetection {
     /// Records a check's result in the run's tracker and says what to do. While an Undo is switching
     /// back, the language counts as fixed: Undo pins it.
     func record(_ guess: LanguageGuess, for request: Request, supported: [String]) -> LanguageTracker.Outcome? {
-        guard isCurrent(request.token) else { return nil }
+        guard accepts(request) else { return nil }
         return run?.tracker.record(detected: guess.language, probability: guess.probability, window: request.window,
                                    supported: supported, region: Locale.current.region?.identifier,
                                    pinned: !automatic || undoing)
@@ -288,7 +391,7 @@ final class MobileLanguageDetection {
 
     /// The check kept the language. The trailing audio stays for the next re-check.
     func kept(_ guess: LanguageGuess?, reason: String, request: Request) {
-        guard isCurrent(request.token) else { return }
+        guard accepts(request) else { return }
         let result = guess.map { "\(Self.describe($0)) → kept (\(reason))" } ?? "Not checked (\(reason))"
         if request.first { lastResult = result } else { lastRecheck = result }
         if status == .checking { status = .idle }
@@ -297,14 +400,14 @@ final class MobileLanguageDetection {
     /// The check could not run (its audio was gone, or Whisper failed). It counts as a check, so a
     /// failing model is not run again on every speech event.
     func missed(_ reason: String, request: Request) {
-        guard isCurrent(request.token) else { return }
+        guard accepts(request) else { return }
         run?.tracker.missed(at: request.window.upperBound)
         kept(nil, reason: reason, request: request)
     }
 
     /// A re-check heard another language once; the next one must agree before switching.
     func confirming(_ guess: LanguageGuess, locale: String, request: Request) {
-        guard isCurrent(request.token) else { return }
+        guard accepts(request) else { return }
         lastRecheck = "\(Self.describe(guess)) → checking again before switching to \(locale)"
     }
 
@@ -324,7 +427,7 @@ final class MobileLanguageDetection {
 
     /// The switch could not start. The recording keeps its language and does not try `locale` again.
     func switchFailed(_ reason: String, guess: LanguageGuess, to locale: String, request: Request) {
-        guard isCurrent(request.token) else { return }
+        guard accepts(request) else { return }
         run?.tracker.switchFailed(to: locale)
         let result = "\(Self.describe(guess)) → could not switch to \(locale)"
         if request.first { lastResult = result } else { lastRecheck = result }
@@ -358,4 +461,34 @@ final class MobileLanguageDetection {
         lastResult = "Not checked (model unavailable)"
         run?.buffer.reset()
     }
+}
+
+// Keep the owned Undo operation separate from audio-check scheduling.
+extension MobileLanguageDetection {
+    func beginUndoRequest() -> UndoRequest? {
+        guard !checksSuspended, !undoing, let current = run else { return nil }
+        let request = UndoRequest(token: current.token, generation: checkGeneration)
+        undoRequestID = request.id
+        undoing = true
+        return request
+    }
+
+    func acceptsUndo(_ request: UndoRequest) -> Bool {
+        !checksSuspended && isCurrent(request.token) && request.generation == checkGeneration
+            && undoRequestID == request.id
+    }
+
+    func finishUndoRequest(_ request: UndoRequest) {
+        guard undoRequestID == request.id else { return }
+        undoOperation = nil
+        undoRequestID = nil
+        undoing = false
+    }
+
+    private func cancelUndo() {
+        undoRequestID = nil
+        undoOperation?.cancel(); undoOperation = nil
+        undoing = false
+    }
+
 }

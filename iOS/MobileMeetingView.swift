@@ -158,10 +158,14 @@ struct MobileMeetingView: View {
                 HStack(alignment: .firstTextBaseline, spacing: 12) {
                     titleEditor.frame(maxWidth: .infinity, alignment: .leading)
                     captureStatusLabel.lineLimit(1).fixedSize(horizontal: true, vertical: false)
+                    if session.state == .recording {
+                        recordingNotice(compact: true).fixedSize(horizontal: true, vertical: false)
+                    }
                 }
             } else {
                 titleEditor
                 captureStatusLabel
+                if session.state == .recording { recordingNotice(compact: false) }
             }
             if session.state == .idle, let reason = session.recordingAvailability.reason {
                 recordingSupport(reason)
@@ -177,6 +181,13 @@ struct MobileMeetingView: View {
             }
         }.frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 20).padding(.vertical, verticalSizeClass == .compact ? 6 : 14)
+    }
+
+    private func recordingNotice(compact: Bool) -> some View {
+        let explanation = "Recording continues with the screen locked. Optional AI updates resume when you return."
+        return Text(compact ? "Records when locked · AI pauses" : explanation)
+            .font(.caption).foregroundStyle(.secondary)
+            .accessibilityLabel(explanation).accessibilityIdentifier("backgroundRecordingNotice")
     }
 
     /// Keep the cause and recovery visible without crowding the workspace in a short viewport.

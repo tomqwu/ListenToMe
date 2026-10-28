@@ -1,0 +1,102 @@
+{
+  "source": "9b14ff2ea58919c1bf42a3482794ccd4877dbf1a",
+  "version": "1.20.1",
+  "build": "41",
+  "status": "automated_pass",
+  "command": [
+    "make",
+    "-C",
+    "/Users/tomwu/.codex/worktrees/retranscription-integration-224/ListenToMe",
+    "validate-local",
+    "BDD_BASE=52932aa36812020fc80ccffa410cb190b8a4f562",
+    "IOS_DESTINATION=platform=iOS Simulator,id=51EB6E53-ED14-4623-8C9E-2865DCD3A857",
+    "WATCH_DESTINATION=platform=watchOS Simulator,id=01A99AB8-2DCB-4F43-ABDE-973F049FA8A4",
+    "IOS_SIGN_FLAGS=CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- -collect-test-diagnostics never"
+  ],
+  "runner": {
+    "parentPID": 4898,
+    "startedAt": "2026-10-28T17:39:40.856470+00:00",
+    "status": "terminal",
+    "hardWallSeconds": 7200,
+    "hardWallExceeded": false,
+    "reaped": true,
+    "pid": 6083,
+    "childReturncode": 0,
+    "returncode": 0,
+    "elapsedSeconds": 2532.099865833,
+    "finishedAt": "2026-10-28T18:21:52.976988+00:00"
+  },
+  "trackedInputs": 921,
+  "hashMismatches": [],
+  "logSHA256": "25b6212e75bf95d7aadf2c6067a6812dfb0a09b77367aafe57d6f5406a20a5eb",
+  "bddScenarios": 153,
+  "core": {
+    "total": 1254,
+    "skipped": 7,
+    "failures": 0,
+    "lineCoveragePercent": 98.17549956559513
+  },
+  "iosUI": {
+    "total": 82,
+    "skipped": 5,
+    "failures": 0
+  },
+  "iosUnit": {
+    "total": 499,
+    "skipped": 7,
+    "failures": 0
+  },
+  "macNative": {
+    "total": 43,
+    "skipped": 0,
+    "failures": 0
+  },
+  "watchUnit": {
+    "total": 29,
+    "skipped": 0,
+    "failures": 0
+  },
+  "watchUI": {
+    "total": 5,
+    "skipped": 0,
+    "failures": 0
+  },
+  "realServerContracts": 4,
+  "physicalAcceptance": false,
+  "productionReady": false,
+  "uploaded": false,
+  "evidenceDirectory": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios1201-continuity",
+  "captureCount": 75,
+  "captureProfiles": 7,
+  "nativeBDDBindings": {
+    "ios-unit": 114,
+    "ios-ui": 32,
+    "mac-unit": 43,
+    "watch-unit": 29,
+    "watch-ui": 5
+  },
+  "helperTests": {
+    "test-bdd.py": {
+      "total": 21,
+      "failures": 0
+    },
+    "test-ios-testflight.py": {
+      "total": 29,
+      "failures": 0
+    },
+    "test-contract-gate.py": {
+      "total": 5,
+      "failures": 0
+    },
+    "test-release-paths.py": {
+      "total": 4,
+      "failures": 0
+    }
+  },
+  "limitations": [
+    "Synthetic fixtures do not establish physical screen-lock audio, multilingual accuracy or model quality.",
+    "Physical iPhone/iPad and Watch acceptance remains pending for production.",
+    "QA-only images remain explicitly classified; reviewed media does not update an App Store listing.",
+    "Earlier failed aggregates and superseded native/UI/harness attempts remain preserved separately."
+  ]
+}

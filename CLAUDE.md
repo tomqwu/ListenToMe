@@ -25,6 +25,11 @@ verification apply in full. The checklist below adds documentation and issue hyg
 replace that workflow. Documentation-only changes do not require an unrelated model request or
 binary release.
 
+After each confirmed PR merge, follow AGENTS.md's branch-cleanup rule: verify deletion of the
+matching remote feature branch, delete its local branch when safe, and prune stale tracking
+refs. Preserve unfinished changes, later commits, active checkouts, release tags and evidence;
+record deferred cleanup instead of disrupting active work.
+
 ### TestFlight and official App Store review
 
 [AGENTS.md](AGENTS.md#publishing-an-ios-release-train) owns TestFlight publication;

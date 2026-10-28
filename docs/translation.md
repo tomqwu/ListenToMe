@@ -1,7 +1,7 @@
-# On-device translation (#330, unreleased)
+# On-device translation (#330, iOS 1.20.0 TestFlight)
 
 Live translation and Summary translation are separate conversation choices on Mac and iPhone/iPad,
-including Duo. This work is not included in TestFlight 1.19.1 (39).
+including Duo. This work is included in TestFlight 1.20.0 (40); see the [accepted publication receipt](releases/ios-1.20.0-build40.json). Physical acceptance and real translation quality remain pending. Public production remains 1.19.1 (39); the Mac feature remains unreleased.
 
 ## Live transcript
 
@@ -21,7 +21,7 @@ Open **Summary → Translate summary**, choose a language and press **Translate*
 the completed summary already on screen. It does not regenerate it, change the AI provider or
 change the global AI response-language setting. The original remains below the translation; **Close**
 returns to original-only reading. **Share translation** explicitly shares the derived text.
-Empty or streaming summaries wait for a completed result. A changed completed summary or target
+In TestFlight 1.20.2 (42) on iPhone/iPad, and in the unreleased Mac source, Translate is disabled during an active request and **Cancel translation** stops its presentation. Cancelling, changing target or leaving the conversation also cancels the native session. Empty or streaming summaries wait for a completed result. A changed completed summary or target
 refreshes an already-requested translation; another conversation clears that request.
 
 Headings, list prefixes, blank lines and fenced code are kept. Prose inside formatting is translated
@@ -45,7 +45,9 @@ and is cleared by New/reopening. Local archives, ordinary exports, saved audio a
 retain their existing ownership. Sharing a translation is an explicit user action.
 
 Phone background/inactive and Mac window teardown fence pending results and stop queued work.
-Returning resumes the current choices. Ordinary Mac app background recording is unaffected. Only
+Returning resumes the current choices. Ordinary Mac app background recording is unaffected. A 45-second deadline covers each text chunk's readiness and translation work; prose longer than 8,000 characters is split into multiple chunks. If the service stops responding, progress ends with an explanation and the pending batch stops. Originals remain readable. While native cancellation is still draining, Translate/Retry remain disabled with stopping guidance; if the service never exits, close and reopen the app. Once it exits, Retry can use the current source and target. A late timer or translation result cannot cancel or replace newer work.
+
+Only
 one native request per worker runs at once; obsolete uncooperative work must return before newer
 work starts. Translation does not delay capture, start the microphone or select an AI provider.
 
@@ -59,8 +61,19 @@ adapters, stale-result/cancellation/background handling and native controls to X
 use explicit DEBUG-only synthetic translations; they prove placement and controls, not model quality.
 Real Mac metadata checks for all 12 offered non-English targets from English, plus three reverse
 pairs, reported missing packs without requesting downloads.
-Installed-pack output quality and installed Mac interaction require separate acceptance evidence;
+The #343 change adds a real Apple-engine Mac test: an installed English→Simplified Chinese pair must preserve two paragraphs, a budget number, Thursday and fenced code; unavailable pairs must instead show setup/support guidance. The observed installed-model branch passed on this Mac. That is bounded synthetic Mac evidence, not iPhone/TestFlight acceptance or universal translation accuracy. Installed Mac interaction and physical phone acceptance still require separate evidence;
 simulator runs are never physical-device acceptance.
 
 See the [source-matched validation record](translation-validation.md) for commands, outcomes, screenshots
 and the explicitly recorded aggregate-log failure/resumption.
+
+See [translation recovery evidence](translation-recovery.md) for #343 and the original testing gap.
+
+
+## TestFlight publication — 1.20.2 (42)
+
+Apple accepted **1.20.2 (42)** through the official TestFlight helper at **2026-10-28T21:11:37.664213+00:00** from `a6b90e83f775cc9dc88df3c2805ecacedca044af`. Apple build `8967f095-470f-40c0-aba0-b1188bbb699c` is **VALID / IN_BETA_TESTING**. Readback at 2026-10-28T21:15:33.796221+00:00 confirms **en-US**, **Listen To Me - Real Time AI**, exact beta description/What to Test and unchanged access for the existing two-member Dev group. Access does not establish physical installation of build 42.
+
+[Publication receipt](releases/ios-1.20.2-build42.json) · [Release notes and native previews](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.2-build42).
+
+Physical phone translation/lock-screen/multilingual and Watch acceptance remain pending. Public production remains **1.19.1 (39)**; this beta made no new public submission or listing-media upload. Mac changes remain unreleased and keep separate installed-app acceptance gates.

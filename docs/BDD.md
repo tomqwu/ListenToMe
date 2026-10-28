@@ -88,6 +88,20 @@ Native property tests also need reachable user controls: the opt-out contract in
 Settings-switch test while recording, rather than treating a direct property assignment as UI proof.
 See [speaker evidence and acceptance](speaker-identification.md).
 
+## Translation inference and stalled-service recovery
+
+#343 exposed the same distinction as speaker quality: injected translations and simulator screenshots
+proved placement, not Apple engine output. The installed native Mac journey now uses the actual
+`AppleTranscriptTranslator` and summary coordinator. Its installed-pair branch checks Chinese prose,
+budget/weekday facts, code and originals; setup/unsupported branches are explicitly recorded and
+are never called inference passes. Physical phone accuracy remains separate.
+
+`TRANSLATESTALLED-001`–`004`, `TRANSLATENATIVE-001`–`003`, `TRANSLATEUI-001` and
+`TRANSLATEINSTALLED-001` cover a held readiness/inference service, bounded timeout, cancellation
+forwarding, safe drainage, actual controls, late completion/timer races and the real installed pair.
+Held-service tests intentionally ignore cancellation; they prove bounded state without multiplying
+native work. See [evidence and acceptance limits](translation-recovery.md).
+
 ## Watch durability and beta eligibility
 
 `WATCH-005`–`WATCH-014` exercise native AAC encoding/reading, crash recovery, metadata-first handoff, duplicate/conflicting chunks, end-marker storage failure, continued recording boundaries, pending counts, active-recording protection and Delete/relaunch. Transport and audio-session adapters isolate tests from real WatchConnectivity and microphone capture. Red evidence is retained separately from passing baseline adoption and test-harness failures; simulator assertions never prove physical delivery or wrist-down/battery acceptance.
@@ -231,6 +245,35 @@ behavior changes. Do not silently exempt old branches from the change-aware gate
 Automation checks structure and observed execution, not intent, causality or test quality. An
 independent reviewer must compare each scenario with its assertions and verify red/green evidence.
 Do not satisfy a behavior change with an unrelated test or weaken coverage/manual acceptance gates.
+
+## iPhone and iPad recording continuity (#339)
+
+`CONTINUITY-001`–`CONTINUITY-003` distinguish an already user-started microphone from pending or
+idle capture. Native session tests keep one recording through inactive/background, preserve final
+speech and elapsed start, keep explicit Stop authoritative, and fence auxiliary AI/correction/speaker
+work. The native sink holds at most its bounded newest speaker audio. A simulator UI journey uses
+actual Home/activate and the production meeting view; its injected recorder does not prove physical
+screen-lock capture, audio-session routing, battery behavior or paired-Watch control.
+
+`LANGREPLAY-001`–`LANGREPLAY-004` bind actual session replay handling: a cumulative utterance crossing
+the replay cut must show progress without prematurely deleting originals, commit its final once,
+and release later checks. Inactive preparation and detection completions are generation-fenced;
+foreground can retry using recent retained audio. A replay without advancing results gets one
+same-locale restart after 30 seconds of accepted audio activity, with silence excluded and progress
+resetting that budget. The native adapter cancels/fences the superseded result generation. Failed
+recovery retains text/capture, permits future checks and reports possible missing speech instead of
+claiming a complete transcript. Stop or new progress cancels an obsolete in-flight recovery. Undo owns its task across context and
+native preparation: inactivity, Stop or New fence late switch/pin/error effects, and native locale
+and saved-language metadata commit together before post-commit context work can suspend. Stop
+preserves the user's already-requested Undo intent and applies it after drain; inactivity cancels an
+uncommitted Undo without applying it. Explicit stopping-time Undo remains queueable.
+
+The cheap activity detector is not a speech-quality oracle. These tests use injected audio/results,
+not real multilingual inference. The existing detection cadence, confidence, dwell and switch cap
+remain; detection pauses while inactive/background and the Apple recognizer remains single-language.
+Physical continuous bilingual speech, lock/background, route changes, Stop/Undo and saved-audio
+opt-in acceptance remain separate. See [language replay evidence](language-replay-progress.md),
+[recording continuity](recording-continuity.md) and the [manual script](manual-smoke-test.md#iphone-and-ipad-continuity-and-language-replay-339).
 
 ## Translation boundaries
 

@@ -1,0 +1,73 @@
+{
+  "source": "e43a7b5c241e4a58d806f42651dc760d996951be",
+  "version": "1.20.0",
+  "build": "40",
+  "status": "automated_pass",
+  "command": [
+    "make",
+    "-C",
+    "/Users/tomwu/.codex/worktrees/ios-1-17-train/ListenToMe",
+    "validate-local",
+    "BDD_BASE=6ecf9cbe375c5d0a7d7bd8bad59055316821fad3",
+    "IOS_DESTINATION=platform=iOS Simulator,id=AC734658-6D17-4D94-86B9-6E6BE6C93C5B",
+    "WATCH_DESTINATION=platform=watchOS Simulator,id=CEAB549F-139C-4BAE-A15C-F08B147F2EFC"
+  ],
+  "runner": {
+    "parentPID": 98354,
+    "startedAt": "2026-10-28T06:48:34.490673+00:00",
+    "status": "terminal",
+    "hardWallSeconds": 7200,
+    "hardWallExceeded": false,
+    "reaped": true,
+    "pid": 7309,
+    "childReturncode": 0,
+    "returncode": 0,
+    "elapsedSeconds": 2908.1117032077163,
+    "finishedAt": "2026-10-28T07:37:02.624133+00:00"
+  },
+  "trackedInputs": 904,
+  "hashMismatches": [],
+  "logSHA256": "0822b56e534f1f5f1a700df1276d9e4a18aea33205c5bca9fdcd0d5175f99aec",
+  "bddScenarios": 139,
+  "core": {
+    "total": 1254,
+    "skipped": 7,
+    "failures": 0,
+    "lineCoveragePercent": 98.22176558918834
+  },
+  "iosUI": {
+    "total": 79,
+    "skipped": 5,
+    "failures": 0
+  },
+  "iosUnit": {
+    "total": 460,
+    "skipped": 7,
+    "failures": 0
+  },
+  "macNative": {
+    "total": 43,
+    "failures": 0
+  },
+  "watchUnit": {
+    "total": 29,
+    "failures": 0
+  },
+  "watchUI": {
+    "total": 5,
+    "failures": 0
+  },
+  "realServerContracts": 4,
+  "captureCount": 55,
+  "captureProfiles": 7,
+  "physicalAcceptance": false,
+  "productionReady": false,
+  "uploaded": false,
+  "evidenceDirectory": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios120-train",
+  "limitations": [
+    "Synthetic UI fixtures do not establish real translation quality.",
+    "Watch42 failed twice before unchanged-source prebooted run passed; failures preserved.",
+    "Some screenshots are QA-only due scroll composition; listing upload pending.",
+    "Physical phone and Watch acceptance pending."
+  ]
+}

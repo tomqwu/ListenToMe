@@ -189,12 +189,13 @@ final class MobileSpeakerLifecycleTests: MobileSpeakerTestCase {
         let stopping = Task { await session.handleScenePhase(.background); returned = true }
         for _ in 0..<100 where !returned { try await Task.sleep(for: .milliseconds(10)) }
         XCTAssertTrue(returned, "Stopping must return before the held session loop finishes")
-        XCTAssertEqual(session.state, .idle)
-        XCTAssertFalse(session.speakers.isRunning, "The run ends at once; its audio is released")
+        XCTAssertEqual(session.state, .recording)
+        XCTAssertTrue(session.speakers.isRunning, "Pause preserves this ongoing recording's identities")
         await diarizer.release()
         await stopping.value
         await periodic.value
         XCTAssertEqual(session.segments.last?.speakerName, "Microphone")
+        await session.stop()
     }
 
     func testBackgroundingInvalidatesAnAlreadyRunningFinalPassAndReleasesAudio() async throws {
@@ -240,6 +241,7 @@ final class MobileSpeakerLifecycleTests: MobileSpeakerTestCase {
         XCTAssertEqual(session.speakers.scheduledPassCount, queuedBefore + 1,
                        "The real loop must queue behind the held predecessor before backgrounding")
         await session.handleScenePhase(.background)
+        await session.stop() // Stop, rather than screen lock, ends this recording before the next one.
         await session.handleScenePhase(.active)
         try await record(session)
         recorder.feedAudio(seconds: 5)
@@ -259,6 +261,7 @@ final class MobileSpeakerLifecycleTests: MobileSpeakerTestCase {
         let session = makeSession()
         try await recordPastTheFirstPass(session)
         await session.handleScenePhase(.background)
+        await session.stop()
         XCTAssertNil(session.speakerFinalPass)
         let calls = await diarizer.calls()
         XCTAssertEqual(calls, 1, "Speaker models do not run while the app is in the background")

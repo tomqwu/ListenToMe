@@ -1,0 +1,23 @@
+{
+  "feature": "Actual installed Apple summary translation acceptance",
+  "scenarios": [
+    {
+      "id": "TRANSLATEINSTALLED-001",
+      "name": "Translate a saved summary with the actual installed Chinese pair or explain missing setup",
+      "given": "the native Mac has an English summary with two factual paragraphs and a fenced code block, and actual Apple language-pack readiness",
+      "when": "the user explicitly requests Simplified Chinese summary translation",
+      "then": "an installed pair completes within the bounded request budget with Chinese prose, the budget number and Thursday meaning intact, code and original unchanged; a missing or unsupported pair instead shows explicit setup or unsupported guidance with no derived output and never initiates a download; the observed branch is retained",
+      "covers": [
+        "SharedPlatform/AppleTranscriptTranslator.swift",
+        "Sources/ListenToMeCore/SummaryTranslationCoordinator.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/NativeInstalledTranslationTests.swift",
+          "test": "NativeInstalledTranslationTests/testActualInstalledChineseSummaryPreservesFactsCodeAndOriginalOrExplainsSetup"
+        }
+      ]
+    }
+  ]
+}

@@ -15,7 +15,10 @@ struct MobileSelectionSummaryFixture: View {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("SelectionUI-\(UUID())")
         let provider = SelectionFixtureProvider(slow: arguments.contains("--selection-slow"))
         let server = arguments.contains("--selection-server")
-        let session = MobileSession(storageDirectory: root, summaryProvider: server ? provider : nil)
+        let session = MobileSession(storageDirectory: root, summaryProvider: server ? provider : nil,
+                                    sharedInbox: root.appendingPathComponent("SharedInbox"),
+                                    watchInbox: WatchInbox(root: root.appendingPathComponent("WatchInbox")),
+                                    makeRecorder: { PreviewRecorder() }, makeDiarizer: { PreviewDiarizer() })
         session.ai.provider = arguments.contains("--selection-unavailable") || server ? .ollama : .apple
         if !server && !arguments.contains("--selection-unavailable") { session.onDeviceProviderOverride = provider }
         session.title = "Launch review"
@@ -33,7 +36,7 @@ struct MobileSelectionSummaryFixture: View {
         return session
     }()
 
-    var body: some View { MobileMeetingView(session: session) }
+    var body: some View { MobileMeetingView(session: session).mobileSessionLifecycle(session) }
 }
 
 /// Echoes which selected lines it was given, so a test can see exactly what was sent.

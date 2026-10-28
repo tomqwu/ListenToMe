@@ -1,5 +1,13 @@
 # Apple Watch companion (#181)
 
+## Current companion — TestFlight 1.20.2 (42)
+
+Apple accepted **1.20.2 (42)** through the official TestFlight helper at **2026-10-28T21:11:37.664213+00:00** from `a6b90e83f775cc9dc88df3c2805ecacedca044af`. Apple build `8967f095-470f-40c0-aba0-b1188bbb699c` is **VALID / IN_BETA_TESTING**. Readback at 2026-10-28T21:15:33.796221+00:00 confirms **en-US**, **Listen To Me - Real Time AI**, exact beta description/What to Test and unchanged access for the existing two-member Dev group. Access does not establish physical installation of build 42.
+
+[Publication receipt](releases/ios-1.20.2-build42.json) · [Release notes and native previews](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.2-build42).
+
+Physical phone translation/lock-screen/multilingual and Watch acceptance remain pending. Public production remains **1.19.1 (39)**; this beta made no new public submission or listing-media upload. Mac changes remain unreleased and keep separate installed-app acceptance gates.
+
 ## Public availability — October 28, 2026, 01:12 UTC
 
 Public iOS **1.19.1 (39)** includes the Watch companion. Apple reports READY_FOR_SALE, and its
@@ -12,9 +20,20 @@ Public availability does not prove installation or close the outstanding physica
 paired transfer/reconnection, wrist-down and battery/storage checks. No new upload or release
 operation was performed for this status observation. Mac 1.5.0 remains unsubmitted.
 
-## Historical latest Watch beta upload — 1.19.1 (39)
+## Historical companion — TestFlight 1.20.1 (41)
 
-At this upload checkpoint, the latest Watch companion was in **TestFlight 1.19.1 (39)**. Apple accepted **1.19.1 (39)** from `f1728150e3e66664e36d2506022c2918fa60a53c`: Xcode upload success at **2026-10-27 15:39:29.401 UTC**, Apple uploaded date **2026-10-27 15:40:24 UTC**. Processing is **VALID**, internal state **IN_BETA_TESTING**, and the existing internal Dev group includes build 39 with two existing active/installed tester members. This does not prove physical installation of build 39. Primary locale, localized name, beta description and What to Test were read back in **en-US**, with name **Listen To Me - Real Time AI**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.1-build39).
+Apple accepted **1.20.1 (41)** through the official TestFlight helper (receipt recorded 2026-10-28T19:02:09.198475+00:00) from `dc6b2e39a99568fb4931e937c555fa0de0f2ff18`. Apple build `5c2339eb-5e17-4bd6-8eb1-ec1d212ef49f` is **VALID / IN_BETA_TESTING**. Existing Dev group access was verified at 2026-10-28T19:05:58.417288+00:00; its two accepted memberships are unchanged. Primary locale and metadata are **en-US**, with localized name **Listen To Me - Real Time AI**; beta description and What to Test match the intended copy. Group access does not establish physical installation of build 41.
+
+The embedded Watch companion and all three distribution bundles were verified. Install through
+TestFlight on the paired iPhone, then use the Watch installation path below if needed. Physical
+Watch microphone, paired transfer, wrist-down, battery/storage and phone lock-screen acceptance
+remain pending; no production-ready claim follows from package or simulator checks.
+[Accepted beta receipt](releases/ios-1.20.1-build41.json) · [Release notes and native previews](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.1-build41).
+Public iOS remains 1.19.1 (39); this beta made no new public submission or listing update.
+
+## Historical Watch regression beta — 1.19.1 (39)
+
+At that checkpoint, the Watch companion was in **TestFlight 1.19.1 (39)**. Apple accepted **1.19.1 (39)** from `f1728150e3e66664e36d2506022c2918fa60a53c`: Xcode upload success at **2026-10-27 15:39:29.401 UTC**, Apple uploaded date **2026-10-27 15:40:24 UTC**. Processing is **VALID**, internal state **IN_BETA_TESTING**, and the existing internal Dev group includes build 39 with two existing active/installed tester members. This does not prove physical installation of build 39. Primary locale, localized name, beta description and What to Test were read back in **en-US**, with name **Listen To Me - Real Time AI**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.1-build39).
 
 Full local validation and independent review passed on unchanged app/test inputs: 125 BDD scenarios; Core 1,239 tests (7 optional skips, 98.249328% coverage); iOS 531 (519 passes, 12 skips); Mac 39; Watch 34; 29 helper tests and four real-server contracts, zero failures. All three required checks passed on exact merged source before upload. The exact transferred IPA was recovered, its full-file transport MD5 matched, its preserved copy SHA-256 matched, and all three distribution signatures/profiles, versions, disabled debugging and no-test-payload checks passed. Complete physical phone/Watch acceptance remains unverified; this is an authorized beta, not a production-ready claim.
 
@@ -40,8 +59,9 @@ tests and screenshots do not establish those results.
 ## Intended beta behavior
 
 - Record using the Watch microphone, including with the iPhone disconnected. Wrist-down recording
-  uses the declared Watch background-audio mode and visible recording indicator. The iPhone's own
-  recorder remains foreground-only.
+  uses the declared Watch background-audio mode and visible recording indicator. Phone Start still
+  requires active use; in TestFlight 1.20.2 (42), its established user-started recording can continue
+  through screen lock with optional AI paused. Physical continuity acceptance remains pending.
 - Finished AAC chunks remain local until WatchConnectivity reports successful transfer to the
   paired iPhone. No Watch audio is sent to an AI server. The phone transcribes supported speech
   on-device; optional summary providers retain their existing explicit choices and disclosures.

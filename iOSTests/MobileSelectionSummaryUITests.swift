@@ -3,7 +3,13 @@ import XCTest
 /// Issue #234: Select mode, long-press Summarize from here, and the selection summary sheet.
 @MainActor
 final class MobileSelectionSummaryUITests: XCTestCase {
+    override func tearDown() async throws {
+        XCUIDevice.shared.orientation = .portrait
+        try await super.tearDown()
+    }
+
     private func launch(_ extra: [String] = []) -> XCUIApplication {
+        XCUIDevice.shared.orientation = .portrait
         let app = XCUIApplication()
         app.launchArguments = ["--selection-summary-fixture", "-autoQuickSummary", "NO"] + extra
         app.launchPastReleaseNotes()
@@ -65,12 +71,48 @@ final class MobileSelectionSummaryUITests: XCTestCase {
         for _ in 0..<3 where !text.isHittable { app.scrollViews["transcriptScroll"].swipeUp() }
         text.press(forDuration: 1.2)
         XCTAssertTrue(app.buttons["Select from here"].waitForExistence(timeout: 5))
-        app.buttons["Summarize from here"].tap()
+        let summarize = app.buttons["Summarize from here"]
+        XCTAssertTrue(summarize.isEnabled, "A foreground local summary must not retain a launch-time inactive reason")
+        guard summarize.isEnabled else { capture(app, "Unexpected inactive summary action"); return }
+        summarize.tap()
         let summary = app.staticTexts["selectionSummaryText"]
         XCTAssertTrue(summary.waitForExistence(timeout: 10))
         wait(summary, contains: "Summary of 1 selected line.")
         XCTAssertTrue(summary.label.contains("Alex: Marketing waits"), summary.label)
         app.buttons["closeSelectionSummary"].tap()
+    }
+
+    /// Cold-launch controls must refresh from actual activity without a transcript/provider edit.
+    func testColdLaunchAndHomeReturnEnableTheSameSummaryWithoutEditingConversation() {
+        let app = launch()
+        for pass in 0..<2 {
+            if pass == 1 {
+                XCUIDevice.shared.press(.home)
+                app.activate()
+            }
+            let title = app.textFields["conversationTitle"]
+            XCTAssertTrue(title.waitForExistence(timeout: 5))
+            XCTAssertEqual(title.value as? String, "Launch review", "Foreground return must keep the same conversation")
+            let text = app.staticTexts.matching(NSPredicate(
+                format: "identifier BEGINSWITH %@ AND label CONTAINS %@", "transcript-text-", "Marketing waits")).firstMatch
+            XCTAssertTrue(text.waitForExistence(timeout: 5))
+            guard text.exists else { return }
+            text.press(forDuration: 1.2)
+            let summarize = app.buttons["Summarize from here"]
+            XCTAssertTrue(summarize.waitForExistence(timeout: 5))
+            XCTAssertTrue(summarize.isEnabled, "Cold launch and Home return must refresh actual foreground eligibility")
+            capture(app, pass == 0 ? "Cold-launch enabled selection menu" : "Home-return enabled selection menu")
+            guard summarize.exists && summarize.isEnabled else { return }
+            summarize.tap()
+            let summary = app.staticTexts["selectionSummaryText"]
+            XCTAssertTrue(summary.waitForExistence(timeout: 10))
+            guard summary.exists else { return }
+            wait(summary, contains: "Summary of 1 selected line.")
+            XCTAssertTrue(summary.label.contains("Alex: Marketing waits"), summary.label)
+            XCTAssertTrue(app.staticTexts["selectionSummaryDestination"].label.contains("this device"))
+            capture(app, pass == 0 ? "Cold-launch selected-line answer" : "Home-return selected-line answer")
+            app.buttons["closeSelectionSummary"].tap()
+        }
     }
 
     func testSelectFromHereAndTheServerDisclosure() {
@@ -153,8 +195,13 @@ final class MobileSelectionSummaryUITests: XCTestCase {
         XCTAssertTrue(text.waitForExistence(timeout: 5))
         text.press(forDuration: 1.2)
         XCTAssertTrue(app.buttons["Summarize from here"].waitForExistence(timeout: 5))
-        app.buttons["Summarize from here"].tap()
-        XCTAssertTrue(app.buttons["cancelSelectionSummary"].waitForExistence(timeout: 5))
+        let summarize = app.buttons["Summarize from here"]
+        XCTAssertTrue(summarize.isEnabled)
+        guard summarize.isEnabled else { capture(app, "Unexpected inactive summary action before rotation"); return }
+        summarize.tap()
+        let cancel = app.buttons["cancelSelectionSummary"]
+        XCTAssertTrue(cancel.waitForExistence(timeout: 5))
+        guard cancel.exists else { capture(app, "Missing selection sheet before rotation"); return }
         XCUIDevice.shared.orientation = .landscapeLeft
         wait(app.staticTexts["selectionSummaryText"], contains: "Summary of 1 selected line.", timeout: 15)
         XCTAssertTrue(app.buttons["closeSelectionSummary"].exists, "The sheet is still open after rotating")

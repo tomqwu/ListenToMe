@@ -68,6 +68,14 @@ and do not publish a release merely because a change merged.
 4. Commit and push the source, verify hosted CI, and merge the pull request.
 5. State in the pull request description what was verified: commands run and outcomes.
 
+After each confirmed PR merge, delete that PR's matching remote and local feature branches and
+prune stale remote-tracking refs. GitHub automatic branch deletion is enabled; verify the remote
+ref is actually gone rather than assuming it. Before deleting, confirm the exact PR head and
+check for later commits, unfinished changes and active checkouts/worktrees. Preserve unfinished
+work, active sessions, release tags and validation/release evidence; do not force-delete or
+switch another active checkout merely to complete cleanup. Record any deferred branch cleanup
+and finish it once safe. Branch cleanup does not authorize deleting worktrees or evidence.
+
 Merged work is merged. Until it has actually been published under the rules below, never describe it
 as released, shipped, available to users, or on the maintainer's phone. "Merged to `main`, riding the
 next release train" is a complete and accurate status report.
