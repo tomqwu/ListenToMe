@@ -11,7 +11,7 @@ The candidate owns the actual `TranslationSession` through completion and forwar
 native cancellation API. Task cancellation also reaches that same request. Late readiness or text
 cannot become a new result. A second native operation is refused until the prior operation exits.
 
-Each paragraph has a 45-second readiness/translation deadline. Expiry ends the progress indication,
+Each text chunk has a 45-second readiness/translation deadline. Prose paragraphs longer than 8,000 characters are split into multiple chunks. Expiry ends the progress indication,
 blocks the remaining batch and explains that originals are kept. Cancel immediately ends visible
 progress. An uncooperative native operation retains its slot while stopping; controls explain why
 retry is temporarily unavailable and advise reopening the app if the service never exits. This
@@ -52,7 +52,7 @@ using the unchanged published adapter. A separate revised full-Core CLI probe in
 setup required and did not translate. These process-context observations are preserved separately;
 they do not identify the cause of the phone's original stall. No packs were requested by any probe.
 
-The connected iPhone was locked before installation or test execution. The native desktop tool
+The connected iPhone was initially locked. A compiled, signed isolated probe was later preserved after a scoped signing repair (the original xcodebuild exited 65), but Apple’s device service could not confirm a usable connection; no phone installation or execution occurred. The native desktop tool
 also reported the Mac locked. No unlock, authentication or permission-change request was sent to
 the maintainer; their TestFlight app and private conversations were left intact. Installed Mac GUI
 and physical iPhone translation acceptance remain unverified. Simulator UI and real Mac model
@@ -62,5 +62,6 @@ Focused evidence is retained under
 `/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/`: Core red/green logs,
 `native/adapter-evidence.json`, `native/installed-evidence.json`, `ui/ui-review.json`, native
 result bundles/screenshots, and `device-probe/` source, binary, output and blocked-device records.
-Full local validation, hosted CI, merge and accepted beta distribution are separate later gates;
-this focused evidence is not a publication receipt.
+Full local validation passed on unchanged `abe5218f61c193421178a2debab16ea2c2b1b2dc` (933 tracked inputs): Core 1,258 tests / 7 optional skips / 0 failures and 98.184% coverage; iOS 83 UI / 5 skips and 503 unit / 7 skips, Mac 48, Watch 29 unit + 5 UI, all with zero failures. All 162 BDD scenarios, four helper suites and four real-server contracts passed. The actual installed Chinese inference branch passed again in 1.26 seconds, separately from setup-required outcomes.
+
+[Validation receipt](releases/ios-1.20.2-build42-validation.json) and [fresh seven-profile media](images/ios/release-1.20.2-en-US.json) preserve source and hashes. Hosted CI, merge and accepted beta distribution remain separate gates; this validation is not a publication receipt. The completed Mac Dev bundle was moved to Trash and only `com.tomwu.ListenToMe.dev` permissions reset, with no active Dev session. Logs, source/signing evidence and native results were retained; production permissions and data were untouched.

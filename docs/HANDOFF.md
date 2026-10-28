@@ -6,8 +6,7 @@ busy/draining controls, Cancel translation, late-result/timer fencing and real i
 acceptance. [Evidence and limits](translation-recovery.md). The exact underlying iPhone framework
 stall is not yet identified; physical phone and installed Mac GUI acceptance remain unverified.
 
-Focused Core/native/UI red→green evidence is retained; complete local validation, hosted CI, merge
-and the tester-feedback TestFlight train are still pending. All three iOS bundles and in-app notes
+Focused Core/native/UI red→green evidence is retained; full local validation now passed on unchanged `abe5218f61c193421178a2debab16ea2c2b1b2dc`. [Validation receipt](releases/ios-1.20.2-build42-validation.json) and [fresh screenshots](images/ios/release-1.20.2-en-US.json) cover seven profiles. Hosted CI, merge and the tester-feedback TestFlight train remain separate gates. All three iOS bundles and in-app notes
 are prepared for 1.20.2 (42), with en-US metadata. Apple's preflight at 19:54 UTC found no build42;
 public iOS remains1.19.1 (39) and latest accepted beta remains1.20.1 (41). No upload or public
 submission is claimed by this candidate. Preserve the unrelated unfinished Mac318/speaker334 work.
