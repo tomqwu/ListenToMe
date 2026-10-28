@@ -1,3 +1,32 @@
+# Recording continuity #339 — 1.20.1 (41) candidate
+
+The maintainer confirmed that spontaneous speaker-language changes stall the iPhone/iPad transcript,
+without changing Settings, and that locking the phone stops listening. Branch
+`codex/ios-recording-continuity` implements continuous established capture through backgrounding,
+replay progress/recovery, and inactive/Stop cancellation of optional work. The latest published beta
+remains **1.20.0 (40)** below; public production remains **1.19.1 (39)**. Build 41 has not been uploaded.
+
+Meaningful native reds preceded the fixes: crossing replay/Undo, stalled recovery, inactive model
+preparation, queued/held optional work, false interruption-resume guidance, and Stop/Undo ownership.
+Final focused runs passed: **60 language methods** (18 new and 42 baseline; 249 inputs unchanged),
+**111 recording/privacy methods plus two UI methods** (604 inputs unchanged), lint and **147 BDD
+scenarios**. Independent review cleared the source for full validation. The earlier combined run
+failed on isolated-test storage leakage and a stale generated version; both were corrected and its
+failed receipt retained. The largest-text release-history journey passed in that earlier run and
+will run again in full validation. [Recording evidence](recording-continuity.md) and
+[language evidence](language-replay-progress.md) preserve exact red/green and harness-failure limits.
+
+All phone/Share/Watch targets and bundled notes now identify **1.20.1 (41)**. New US metadata includes
+all changes since public 1.19.1, with opt-in audio preservation and current language-check limits.
+Current main's accepted build-40 publication receipt and branch-cleanup rules have been integrated;
+no unmerged Mac or speaker-rename feature was pulled in. Full `make validate-local`, fresh seven-profile
+captures, hosted checks/merge, distribution verification and accepted TestFlight upload remain pending.
+Physical screen-lock audio, native multilingual accuracy and Watch acceptance remain unverified;
+the tester-feedback beta authorization does not authorize public App Store submission.
+
+Release evidence and recovery state: `/Users/tomwu/Documents/Codex/2026-10-28/listentome-ios1201-continuity/`.
+The other preserved Mac/Watch/research backlog remains independently gated; this change does not close it.
+
 # Published translation beta — 1.20.0 (40)
 
 Apple accepted **1.20.0 (40)** through the official TestFlight helper (receipt recorded 2026-10-28T13:56:43.061187+00:00) from `4a72489120fda713c6d117c3d6c3dc661cf1dd9e`. Apple build `93926f6c-0137-49fe-bc06-f73f04f831f5` is **VALID / IN_BETA_TESTING**, with existing Dev group access verified at 2026-10-28T14:06:21.847671+00:00. English (US) localized name, beta description and What to Test match the intended metadata. Group membership does not establish physical installation of build 40.
