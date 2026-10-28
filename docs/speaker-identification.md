@@ -44,9 +44,9 @@ its raw buffer immediately and
 rejects late results. Ending a run fences queued work; model voice/prediction state
 is reset when outstanding inference drains. Cleanup from an old run cannot reset a new one.
 
-## Screen lock continuity (#339, candidate)
+## Screen lock continuity (#339)
 
-The upcoming 1.20.1 (41) candidate keeps the established microphone recording and speaker run
+[TestFlight 1.20.1 (41)](releases/ios-1.20.1-build41.json) keeps the established microphone recording and speaker run
 through screen lock/background. It pauses optional speaker preparation/passes and fences old
 completions without resetting speaker identities. Active return may continue labeling from the
 bounded last ten minutes; earlier background lines can remain Microphone. This does not promise to

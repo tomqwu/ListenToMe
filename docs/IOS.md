@@ -1,24 +1,32 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, latest TestFlight version 1.20.0 (40).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, latest TestFlight version 1.20.1 (41).
 
-## Translation beta — 1.20.0 (40)
+## Current TestFlight beta — 1.20.1 (41)
+
+Apple accepted **1.20.1 (41)** through the official TestFlight helper (receipt recorded 2026-10-28T19:02:09.198475+00:00) from `dc6b2e39a99568fb4931e937c555fa0de0f2ff18`. Apple build `5c2339eb-5e17-4bd6-8eb1-ec1d212ef49f` is **VALID / IN_BETA_TESTING**. Existing Dev group access was verified at 2026-10-28T19:05:58.417288+00:00; its two accepted memberships are unchanged. Primary locale and metadata are **en-US**, with localized name **Listen To Me - Real Time AI**; beta description and What to Test match the intended copy. Group access does not establish physical installation of build 41.
+
+[Publication receipt](releases/ios-1.20.1-build41.json) · [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.1-build41).
+Physical lock-screen, multilingual/translation and Watch acceptance remain pending. Public iOS
+remains 1.19.1 (39); this beta did not submit a public version or update listing media.
+
+## Historical translation beta — 1.20.0 (40)
 
 Apple accepted **1.20.0 (40)** through the official TestFlight helper (receipt recorded 2026-10-28T13:56:43.061187+00:00) from `4a72489120fda713c6d117c3d6c3dc661cf1dd9e`. Apple build `93926f6c-0137-49fe-bc06-f73f04f831f5` is **VALID / IN_BETA_TESTING**, with existing Dev group access verified at 2026-10-28T14:06:21.847671+00:00. English (US) localized name, beta description and What to Test match the intended metadata. Group membership does not establish physical installation of build 40.
 
 Physical phone/Watch acceptance and installed real-language-pair translation quality remain pending. The Mac translation feature remains unreleased. Public production remains 1.19.1 (39); this beta did not submit a new public version or upload listing screenshots. QA-only captures are not approved store assets.
 [Publication receipt](releases/ios-1.20.0-build40.json) · [Translation behavior and limits](translation.md).
 
-## Screen lock and language recovery (#339, candidate 1.20.1 / 41)
+## Screen lock and language recovery (#339, TestFlight 1.20.1 / 41)
 
 A recording started while the app is active continues through screen lock/background until Stop,
 interruption or capture/transcription failure. Optional AI work pauses while inactive, and active
 return keeps the same microphone run. Delayed preparation cannot start capture in the background.
 See [recording continuity and evidence](recording-continuity.md) and
 [language replay/recovery](language-replay-progress.md). Audio saving remains opt-in; data protection
-and provider choices are unchanged. Physical iPhone/iPad lock-screen acceptance and distribution of
-this candidate remain separate pending gates.
+and provider choices are unchanged. [TestFlight distribution is accepted](releases/ios-1.20.1-build41.json);
+physical iPhone/iPad lock-screen acceptance remains pending.
 
 ## What this app is for
 
@@ -34,11 +42,11 @@ Summary and Summary; Deep stays on the Mac.
 another app's audio, so the dual-channel "You / Others" experience — and everything built on knowing
 which voice is the remote participant, such as proactive answers to a question someone else asked —
 stays macOS-only. This is a platform boundary, not a backlog item: there is no planned iOS feature
-that captures system or call audio. The #339 candidate declares audio background mode so an
+that captures system or call audio. The 1.20.1 (41) beta declares audio background mode so an
 established user-started microphone recording continues through screen lock; new capture still
 requires active use. Optional AI pauses. See [continuity limits and acceptance](recording-continuity.md).
 
-Apple Watch recording ([#181](https://github.com/tomqwu/ListenToMe/issues/181)) is included in TestFlight **1.19.1 (39)**. Apple accepted **1.19.1 (39)** from `f1728150e3e66664e36d2506022c2918fa60a53c`: Xcode upload success at **2026-10-27 15:39:29.401 UTC**, Apple uploaded date **2026-10-27 15:40:24 UTC**. Processing is **VALID**, internal state **IN_BETA_TESTING**, and the existing internal Dev group includes build 39 with two existing active/installed tester members. This does not prove physical installation of build 39. Primary locale, localized name, beta description and What to Test were read back in **en-US**, with name **Listen To Me - Real Time AI**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.19.1-build39). The exact uploaded phone/Share/Watch package passed identity, signature and profile verification; physical microphone, paired transfer, wrist-down and battery/storage acceptance remains pending for production. See [Watch beta installation/evidence](watch-beta.md) and the [receipt](releases/ios-1.19.1-build39.json).
+Apple Watch recording ([#181](https://github.com/tomqwu/ListenToMe/issues/181)) is included in **TestFlight 1.20.1 (41)**. Its phone/Share/Watch distribution package and Apple beta access were verified; physical microphone, paired transfer, wrist-down and battery/storage acceptance remain pending. See [Watch installation and evidence](watch-beta.md) and the [accepted beta receipt](releases/ios-1.20.1-build41.json). Dated earlier-build publication evidence remains in the Watch guide.
 
 ## Parity with macOS
 
@@ -81,8 +89,8 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 
 | Capability | macOS | iOS |
 | --- | --- | --- |
-| Capture | Microphone **and** the other participants' system audio via ScreenCaptureKit (`App/DualChannelCapture.swift`), labeled You / Others | This device's microphone only; lines are labeled **Microphone** unless speaker identification names them; active Start, with established background capture in the #339 candidate |
-| Background recording (#339 candidate) | Existing Mac capture lifecycle | An established user-started microphone run continues through screen lock with optional AI paused; physical lock-screen acceptance remains pending |
+| Capture | Microphone **and** the other participants' system audio via ScreenCaptureKit (`App/DualChannelCapture.swift`), labeled You / Others | This device's microphone only; lines are labeled **Microphone** unless speaker identification names them; active Start, with established background capture in TestFlight 1.20.1 (41) |
+| Background recording (TestFlight 1.20.1 / 41) | Existing Mac capture lifecycle | An established user-started microphone run continues through screen lock with optional AI paused; physical lock-screen acceptance remains pending |
 | Default AI provider | Explicit AI mode — Local only, Apple Intelligence, Cloud, Cloud AI service, OpenAI-compatible, or AI off — defaulting to a local Ollama model | A fresh install uses **Apple Intelligence on-device** when it is available, otherwise falls back to Ollama and names the reason (`MobileAISettings.fallbackExplanation`) |
 | Ollama endpoint | The local daemon (`localhost:11434`) or Ollama Cloud | Ollama Cloud, or a server you run and address yourself (`.local`/loopback for plain `http`); a saved cloud key is never sent to another host |
 | Cloud AI services (#214) | AI mode **Cloud AI service**; service, key (**Check key** lists its models) and links in Settings; each pane's model picked in the status rail | Summary provider → **Cloud AI** → a service; key, models per role and **Test this model** in Settings (`MobileCloudAISettings`). Speech correction stays on Ollama |
@@ -659,10 +667,10 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   the earlier model and this fix; reliable group-conversation separation is not established.
   Its synthetic regression fixtures do not establish every language, voice or noisy room. Physical-device speed/battery and original tester audio remain pending. A voice is not recognized
   across recordings, so after Stop/Listen (or an interruption) new voices continue the numbering
-  (Speaker 3, 4…) and can be renamed to merge them. The #339 candidate pauses background labeling
+  (Speaker 3, 4…) and can be renamed to merge them. The 1.20.1 (41) beta pauses background labeling
   without ending the speaker run or identities. Foreground catch-up uses only the bounded last ten
   minutes; older background lines may remain Microphone. More than two hours of one recording is
-  not analyzed further. See [screen lock speaker limits](speaker-identification.md#screen-lock-continuity-339-candidate).
+  not analyzed further. See [screen lock speaker limits](speaker-identification.md#screen-lock-continuity-339).
 - Automatic titles (#221): after Stop, Save, a finished Apple Watch recording or a return to the
   foreground, a conversation still named "New conversation" or "Apple Watch · <date>" with about
   30 final words is named in the background. `MobileSession+AutoTitle.swift` takes the title from:
@@ -733,7 +741,7 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   [Parity with macOS](#parity-with-macos)); the shared notice still names all four tags.
   This hardens the app against instruction-like text spoken by another participant or embedded in a
   shared file; it cannot fully prevent it.
-- In the #339 candidate, established recording continues through screen lock/background while
+- In the 1.20.1 (41) beta, established recording continues through screen lock/background while
   optional AI pauses; a pending Start is cancelled. Audio interruptions (call, Siri, alarm) still
   stop and save with a reason. When active and permitted by the system, recording can resume after
   an interruption; otherwise the status says to tap Listen. Connecting or losing a microphone mid-recording
@@ -748,7 +756,7 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   text, read from the same `App/ThirdPartyNotices.txt` the macOS app ships (#202).
 
 System/call audio, Mac sync, audio-file import and WhisperKit transcription are not included.
-Background continuity is part of the #339 candidate with [physical acceptance pending](recording-continuity.md).
+Background continuity is included in TestFlight 1.20.1 (41), with [physical acceptance pending](recording-continuity.md).
 A local/LAN Ollama server is supported only when you
 enter its address yourself; the app performs no discovery and never switches servers on its own. Notes and saved
 transcripts remain usable when the speech model or Apple Intelligence is unavailable.
@@ -1071,7 +1079,7 @@ whatever **Exclude conversations from iCloud backup** says: raw audio is the mos
 app can hold, and its backup would grow by 12 MB an hour. Below 100 MB of free storage a recording
 does not start saving audio; a write error, a full disk or a writer that falls behind stops the file
 and shows an orange line under the title ("Saving audio stopped … Transcription continues"), and the
-recording goes on. In the #339 candidate, backgrounding keeps an opted-in writer open with capture;
+recording goes on. In the 1.20.1 (41) beta, backgrounding keeps an opted-in writer open with capture;
 with saving off no hidden audio writer starts. Stop waits for the file to close before it returns.
 Only finished runs are listed, played or shared, so a run still being
 written can never be shared half-written.

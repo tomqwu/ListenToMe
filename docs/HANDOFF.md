@@ -1,4 +1,21 @@
-# Recording continuity #339 — 1.20.1 (41) candidate
+# Published recording-continuity beta — 1.20.1 (41)
+
+Apple accepted **1.20.1 (41)** through the official TestFlight helper (receipt recorded 2026-10-28T19:02:09.198475+00:00) from `dc6b2e39a99568fb4931e937c555fa0de0f2ff18`. Apple build `5c2339eb-5e17-4bd6-8eb1-ec1d212ef49f` is **VALID / IN_BETA_TESTING**. Existing Dev group access was verified at 2026-10-28T19:05:58.417288+00:00; its two accepted memberships are unchanged. Primary locale and metadata are **en-US**, with localized name **Listen To Me - Real Time AI**; beta description and What to Test match the intended copy. Group access does not establish physical installation of build 41.
+
+The beta includes established microphone capture through screen lock, replay recovery and foreground
+readiness fixes. Full local validation used `9b14ff2ea58919c1bf42a3482794ccd4877dbf1a`;
+the merged artifact/tag source is `dc6b2e39a99568fb4931e937c555fa0de0f2ff18`. All three required checks
+passed on that exact merged source ([run 40748287376](https://github.com/tomqwu/ListenToMe/actions/runs/40748287376)).
+The actual transported IPA, all three distribution bundles and remote tag were verified. The GitHub
+pre-release leaves the Mac release Latest; all six preview downloads match their uploaded originals.
+[Publication receipt](releases/ios-1.20.1-build41.json), [validation receipt](releases/ios-1.20.1-build41-validation.json)
+and [75 reviewed captures](images/ios/release-1.20.1-en-US.json).
+
+Physical screen-lock capture, multilingual/translation quality and Watch acceptance remain pending.
+Public iOS remains 1.19.1 (39); no new public submission or listing upload was performed.
+The Mac release and remaining backlog keep their separate acceptance gates.
+
+# Historical candidate verification before publication — 1.20.1 (41)
 
 The recording/language follow-up implements continued user-started capture through backgrounding,
 replay progress/recovery, immediate cancellation of optional work and refreshed foreground controls.

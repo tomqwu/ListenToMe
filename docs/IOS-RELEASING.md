@@ -1,6 +1,15 @@
 # Publish an iOS build to TestFlight
 
-## Current TestFlight checkpoint — 1.20.0 (40)
+## Current TestFlight checkpoint — 1.20.1 (41)
+
+Apple accepted **1.20.1 (41)** through the official TestFlight helper (receipt recorded 2026-10-28T19:02:09.198475+00:00) from `dc6b2e39a99568fb4931e937c555fa0de0f2ff18`. Apple build `5c2339eb-5e17-4bd6-8eb1-ec1d212ef49f` is **VALID / IN_BETA_TESTING**. Existing Dev group access was verified at 2026-10-28T19:05:58.417288+00:00; its two accepted memberships are unchanged. Primary locale and metadata are **en-US**, with localized name **Listen To Me - Real Time AI**; beta description and What to Test match the intended copy. Group access does not establish physical installation of build 41.
+
+The exact transported IPA and phone/Share/Watch distribution bundles were verified. The remote tag
+points to the artifact source; GitHub is a non-Latest pre-release and all six preview downloads match.
+[Publication receipt](releases/ios-1.20.1-build41.json). Physical acceptance remains pending; public
+iOS remains 1.19.1 (39). No public submission or listing upload occurred.
+
+## Historical TestFlight checkpoint — 1.20.0 (40)
 
 Apple accepted **1.20.0 (40)** through the official TestFlight helper (receipt recorded 2026-10-28T13:56:43.061187+00:00) from `4a72489120fda713c6d117c3d6c3dc661cf1dd9e`. Apple build `93926f6c-0137-49fe-bc06-f73f04f831f5` is **VALID / IN_BETA_TESTING**, with existing Dev group access verified at 2026-10-28T14:06:21.847671+00:00. English (US) localized name, beta description and What to Test match the intended metadata. Group membership does not establish physical installation of build 40.
 
