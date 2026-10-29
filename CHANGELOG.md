@@ -36,6 +36,9 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased)
 
+- Keep saved Apple sentence search entries usable when word models become available; query each
+  stored model type and revision without rewriting conversations or search vectors. (#223)
+
 - Preserve case-sensitive words recognized by installed Apple History models and rebuild stale
   empty search vectors without changing saved conversations. Existing content minima, English
   normalization and relevance cutoffs stay unchanged. (#223)
@@ -183,6 +186,9 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 - Settings → Privacy now explains that optional Ollama, Cloud AI and OpenAI-compatible requests send text and included context to the provider you choose; Apple Intelligence stays on-device. (#247)
 
 ## macOS (unreleased since 1.4.4)
+
+- Keep saved Apple sentence search entries usable when word models become available; query each
+  stored model type and revision without rewriting conversations or search vectors. (#223)
 
 - Preserve case-sensitive words recognized by installed Apple History models and rebuild stale
   empty search vectors without changing saved conversations. Existing content minima, English

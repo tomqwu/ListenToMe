@@ -312,3 +312,43 @@ after all **248** native-result files were hashed and reverified; other simulato
 Independent source/terminal reviews cleared these bounded results, with all model-quality failures
 retained. The current source still requires hosted CI and cannot pass full validation while those
 quality contracts remain red.
+
+
+### Stored Apple query representations — October 29 follow-up
+
+An archive can retain genuine Apple sentence vectors after the same language's word model becomes
+available. The previous query adapter chose the current word model and then filtered it out against
+the stored sentence tag, leaving that archive without a compatible semantic query. `APPLEQUERY-001`
+reopens a persisted genuine German sentence vector under the existing signature and requires a
+Related result, exact query-vector agreement and unchanged persisted bytes. Keyword survival alone
+cannot pass. `APPLEQUERY-002` checks both real word/sentence representations, stable ordering and
+unchanged word-only behavior. Both methods failed before repair: **five assertions**.
+
+Queries now load each requested canonical type/language/revision and check the returned model's
+actual revision. Passage vectors, signature, content minima, language selection and relevance
+thresholds remain unchanged. `APPLEQUERY-003` preserves the two-word sentence-query minimum and
+rejects malformed tags and unsupported revisions. Review reproduced three empty-field parser
+failures; preserving empty fields fixes those failures. A fourth failure in that supplemental run
+was an incorrect test assumption: Apple's sentence loader returns revision 1 when asked for
+unsupported revision 2 rather than nil. The corrected test checks actual revision mismatch and
+requires no query vector under the unsupported tag; the production guard already rejected it.
+
+The three new methods pass with no skips. The wider run passed **32 functional methods** while the
+four unchanged MPNet quality methods failed **12 assertions**, so its aggregate exit remains 65.
+The full Core suite passes **1,298 tests / seven optional skips / zero failures**, with **97.6489%**
+coverage. Each completed run preserved all **1,045** tracked/new inputs. Evidence, original red,
+parser red, corrected green, full native results and independent reviews are retained under
+`/Users/tomwu/Documents/Codex/2026-10-29/listentome-history223-stored-model-query/`.
+This is a saved-model compatibility repair, not acceptance of additional-language relevance.
+No visible UI changed, so the README gallery retains its source-labelled images. Full validation,
+current-source device acceptance, exact commit CI and merge remain outstanding.
+
+
+All **261 Core BDD bindings**, **256 structural scenarios**, repository lint and diff checks pass.
+Nine iPhone simulator runtime methods pass without skips on an isolated iOS 26.5 simulator; Apple
+Spanish is unavailable there, so this verifies optional/missing-assets routing rather than German
+Apple-model or physical acceptance. Build-for-testing passed first; the initial install attempt
+failed because the new simulator was still shut down. After booting that owned device, the existing
+unchanged build completed the runtime suite. That harness failure remains recorded separately.
+No Mac Dev session or permission change was needed. Independent source, terminal and documentation
+reviews cleared the bounded fix; exact commit CI and full acceptance remain separate gates.

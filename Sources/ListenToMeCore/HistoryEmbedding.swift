@@ -52,8 +52,8 @@ public extension HistoryEmbedder {
 public final class NaturalLanguageEmbedder: HistoryEmbedder, @unchecked Sendable {
     public let signature = "nl-noun-case+sentence-v3"
     private let lock = NSLock()
-    private var words: [NLLanguage: NLEmbedding?] = [:]
-    private var sentences: [NLLanguage: NLEmbedding?] = [:]
+    private var words: [String: NLEmbedding?] = [:]
+    private var sentences: [String: NLEmbedding?] = [:]
     private static let contentClasses: Set<NLTag> = [.noun, .otherWord]
     /// A passage needs this many content words (or, for a sentence model, twice as many words).
     static let minimumPassageWords = 3
@@ -93,7 +93,14 @@ public final class NaturalLanguageEmbedder: HistoryEmbedder, @unchecked Sendable
     }
 
     public func embedQuery(_ query: String, models: Set<String>) -> [HistoryVector] {
-        let languages = Set(models.compactMap(Self.language(of:)))
+        let requested = models.sorted().compactMap { tag -> (tag: String, language: NLLanguage, revision: Int)? in
+            let parts = tag.split(separator: ":", omittingEmptySubsequences: false)
+            guard parts.count == 3, parts[0] == "w" || parts[0] == "s", !parts[1].isEmpty,
+                  let revision = Int(parts[2]), revision >= 0, String(revision) == parts[2],
+                  let language = Self.language(of: tag) else { return nil }
+            return (tag, language, revision)
+        }
+        let languages = Set(requested.map(\.language))
         guard !languages.isEmpty else { return [] }
         let chosen: [NLLanguage]
         if languages.count == 1 {
@@ -106,7 +113,19 @@ public final class NaturalLanguageEmbedder: HistoryEmbedder, @unchecked Sendable
             let top = hypotheses.max { $0.value < $1.value }?.key
             chosen = hypotheses.filter { $0.value >= 0.25 || $0.key == top }.map(\.key)
         }
-        return chosen.compactMap { embed(query, language: $0) }.filter { models.contains($0.model) }
+        return requested.compactMap { request in
+            guard chosen.contains(request.language) else { return nil }
+            if request.tag.hasPrefix("w:") {
+                guard let model = wordModel(request.language, revision: request.revision),
+                      model.revision == request.revision else { return nil }
+                return meanWordVector(query, language: request.language, model: model, minimumWords: 1)
+                    .map { HistoryVector(model: request.tag, values: $0) }
+            }
+            guard wordCount(query) >= 2,
+                  let model = sentenceModel(request.language, revision: request.revision),
+                  model.revision == request.revision, let values = model.vector(for: query) else { return nil }
+            return HistoryVector(model: request.tag, values: values.map(Float.init))
+        }
     }
 
     /// The vector for `text` in `language`, or nil when that language has no model or `text` has
@@ -164,19 +183,25 @@ public final class NaturalLanguageEmbedder: HistoryEmbedder, @unchecked Sendable
         return count < max(minimumWords, 1) ? nil : sum.map { Float($0 / Double(count)) }
     }
 
-    private func wordModel(_ language: NLLanguage) -> NLEmbedding? {
+    private func wordModel(_ language: NLLanguage, revision: Int? = nil) -> NLEmbedding? {
         lock.lock(); defer { lock.unlock() }
-        if let cached = words[language] { return cached }
-        let model = NLEmbedding.wordEmbedding(for: language)
-        words[language] = model
+        let key = "\(language.rawValue):\(revision.map(String.init) ?? "current")"
+        if let cached = words[key] { return cached }
+        let model: NLEmbedding?
+        if let revision { model = NLEmbedding.wordEmbedding(for: language, revision: revision) }
+        else { model = NLEmbedding.wordEmbedding(for: language) }
+        words[key] = model
         return model
     }
 
-    private func sentenceModel(_ language: NLLanguage) -> NLEmbedding? {
+    private func sentenceModel(_ language: NLLanguage, revision: Int? = nil) -> NLEmbedding? {
         lock.lock(); defer { lock.unlock() }
-        if let cached = sentences[language] { return cached }
-        let model = NLEmbedding.sentenceEmbedding(for: language)
-        sentences[language] = model
+        let key = "\(language.rawValue):\(revision.map(String.init) ?? "current")"
+        if let cached = sentences[key] { return cached }
+        let model: NLEmbedding?
+        if let revision { model = NLEmbedding.sentenceEmbedding(for: language, revision: revision) }
+        else { model = NLEmbedding.sentenceEmbedding(for: language) }
+        sentences[key] = model
         return model
     }
 }

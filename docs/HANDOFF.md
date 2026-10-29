@@ -1,3 +1,21 @@
+# Stored Apple query compatibility — October 29, 2026
+
+The current PR #318 follow-up preserves saved sentence-model History entries when word assets
+become available for the same language. Queries now respect each stored type and exact revision;
+passage recipes, stored bytes, minima and relevance cutoffs stay unchanged. `APPLEQUERY-001`–`003`
+include a real persisted-vector regression, mixed representations, malformed tags and unsupported
+revisions. Two methods/five assertions failed before repair; all three now pass. The wider run
+passes **32 functional methods** but still fails the same four MPNet quality methods/12 assertions.
+Core passes 1,298 tests with seven optional skips and 97.6489% coverage; all 261 Core BDD bindings
+and 256 structural scenarios pass. Nine iPhone simulator runtime methods pass without skips; lint
+and diff checks pass. Full validation, hosted CI, affected acceptance and merge remain open.
+No visible UI changed; the README gallery keeps its source-labelled captures.
+[Evidence and limits](history-search-implementation.md#stored-apple-query-representations--october-29-follow-up).
+
+The preceding `f82c60f` passed all three hosted checks in
+[run 40958000664](https://github.com/tomqwu/ListenToMe/actions/runs/40958000664).
+No merge, version bump, upload or review submission is claimed.
+
 # Apple word lookup and installed Copy acceptance — October 29, 2026
 
 The current PR #318 follow-up fixes a reproduced Apple History vocabulary defect. German models
