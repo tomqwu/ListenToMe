@@ -8,11 +8,13 @@ import XCTest
 final class MultilingualHistoryEmbedderTests: XCTestCase {
     func testInstalledRuntimeProducesPinnedLocalVectors() async throws {
         let adapter = MultilingualHistoryEmbedder(installedModelDirectory: try assets(), fallback: RuntimeFallback())
-        let examples = [("de", "Das undichte Dach muss vor dem nächsten Regen repariert werden."),
+        let examples = [("de", "Das undichte Dach und die Fassade müssen vor dem nächsten Regen repariert werden."),
                         ("es", "El tejado necesita una reparación antes de la próxima lluvia."),
                         ("ja", "次の雨が降る前に屋根の雨漏りを修理する必要があります。"),
                         ("ko", "다음 비가 오기 전에 지붕의 누수를 수리해야 합니다.")]
         for (language, text) in examples {
+            XCTAssertNotEqual(HistoryContentEligibility.evaluate(text, language: language, kind: .passage),
+                              .insufficientContent, "Runtime fixture must meet installed lexical eligibility")
             let result = await adapter.embed(text, transcribedIn: language)
             let vector = try XCTUnwrap(result, language)
             XCTAssertEqual(vector.model, MultilingualHistoryEmbedder.modelIdentifier)
@@ -126,7 +128,9 @@ final class MultilingualHistoryEmbedderTests: XCTestCase {
         }
         let original = [record("apple-target", "Apple target about archival roof repairs", "en")]
             + (0..<4).map { record("apple-noise-\($0)", "Apple unrelated note \($0)", "en") }
-        let query = "Das undichte Dach muss vor dem nächsten Regen repariert werden."
+        let query = "Das undichte Dach und die Fassade müssen vor dem nächsten Regen repariert werden."
+        XCTAssertNotEqual(HistoryContentEligibility.evaluate(query, language: "de", kind: .passage),
+                          .insufficientContent, "Composite fixture must meet installed lexical eligibility")
         try await index.sync(original)
         let before = await index.search(query, in: original).filter(\.isRelated).map(\.id)
         XCTAssertEqual(before, ["apple-target"])

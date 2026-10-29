@@ -234,9 +234,32 @@ iPhone branch is Apple-unavailable; it is not physical acceptance or proof of bo
 All 1,041 tracked inputs stayed unchanged in each native run. The owned simulator was deleted after
 268 native-result files were preserved; other simulators and production apps were untouched.
 Independent review confirms unchanged model-quality criteria and source-bound functional results.
-Current hosted CI is pending. No full-validation, merge or release claim is made.
+All three required checks passed on `f5edcc5` in [CI run 40951031804](https://github.com/tomqwu/ListenToMe/actions/runs/40951031804). The fixture-only follow-up below needs its own CI. No full-validation, merge or release claim is made.
 
 Evidence: `/Users/tomwu/Documents/Codex/2026-10-29/listentome-history223-apple-routing/` retains
 commands, complete native results, source hashes and separate harness failures. No model download,
 private conversation, provider change or UI change was involved. The current README gallery was
 reviewed; this routing correction does not alter its screens and requires no replacement image.
+
+### German Apple asset availability and fixture correction
+
+A bounded public `NLTagger.requestAssets` probe subsequently returned **available** for German.
+This Mac now provides German lexical tagging and sentence embeddings, while word embeddings remain
+unloadable. Japanese timed out; Korean was not requested after that timeout. The owned probe exited
+and was reaped. Apple's separate asset job may continue; no native-download cancellation or permanent
+unsupported status is claimed. No private text, application settings or permissions were involved.
+Evidence is in the sibling `listentome-history223-natural-language-capabilities/asset-request-run/`.
+
+The changed capability exposed a functional-test prerequisite error: the German smoke sample
+contained only two nouns, below the unchanged three-content-word passage minimum. Two methods
+failed three assertions. A separate native tagger probe confirmed the two nouns; the revised
+synthetic smoke sentence adds a third noun and the tests now explicitly check eligibility. This
+changes only the two runtime-test fixtures, not any quality corpus, threshold or production code.
+
+After that fixture repair, **24 Mac functional methods and nine iPhone simulator runtime methods
+pass without skips**. All 1,041 tracked inputs stayed unchanged per run. The actual MPNet quality
+suite still fails all four methods, now **12 assertions** rather than 15 because German tagging
+rejects previously unknown filler. Retrieval remains DE **2/8**, ES **1/8**, JA **4/8**, KO **2/8**;
+this is still no-go. The earlier 15-assertion outcome remains evidence of the earlier asset state.
+The second owned simulator was removed with absence verified and native result files preserved.
+The README gallery is unchanged because no visible app behavior or layout changed in this follow-up.

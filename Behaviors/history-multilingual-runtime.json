@@ -23,7 +23,7 @@
     {
       "id": "HISTORYMPNET-001",
       "name": "Installed multilingual runtime produces comparable local vectors",
-      "given": "explicit verified local MPNet assets and short German, Spanish, Japanese and Korean history text with no Apple coverage advertised by the fallback adapter",
+      "given": "explicit verified local MPNet assets and eligible German, Spanish, Japanese and Korean history text with no Apple coverage advertised by the fallback adapter",
       "when": "the native adapter embeds passages and matching queries",
       "then": "finite normalized 768-dimensional vectors share the pinned MPNet identity and queries never mix Apple model tags",
       "covers": [

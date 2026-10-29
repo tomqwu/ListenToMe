@@ -1,14 +1,21 @@
 # Preserve Apple History routing — October 29, 2026
 
-The current follow-up in draft PR #318 preserves installed Apple embeddings when the optional
-History model is enabled, and rebuilds stale derived vectors without altering conversations.
-Two new BDD/native regressions failed ten assertions before repair. All 24 selected functional
-Mac methods pass, and all nine iPhone simulator runtime methods pass with no skips. The simulator
-has no Apple Spanish model, so it verifies the optional route; the Mac verifies installed Apple
-Spanish. The four real MPNet quality methods still fail the same 15 assertions. Current CI is
-pending. Full validation and merge are still blocked by model
-quality and outstanding acceptance. [Evidence and limits](history-search-implementation.md#preserve-installed-apple-languages--october-29-follow-up).
-No UI changed; the README screenshots remain accurate for their explicitly labelled sources.
+Draft PR #318 preserves installed Apple embeddings when optional History languages are enabled and
+rebuilds stale derived vectors without altering conversations. Two new native regressions failed ten
+assertions before repair. All three hosted checks passed on application commit `f5edcc5` in
+[run 40951031804](https://github.com/tomqwu/ListenToMe/actions/runs/40951031804).
+
+A later official Apple asset request made German lexical tags and sentence embeddings available;
+Japanese timed out and Korean was not requested. This exposed an insufficient-content smoke sample,
+which was corrected without changing production code or the quality corpus. The final focused runs
+pass **24 Mac functional methods and nine iPhone simulator runtime methods**, no skips. Actual model
+quality still fails four methods / **12 assertions**, with unchanged DE 2/8, ES 1/8, JA 4/8, KO 2/8
+retrieval. The earlier 15-assertion outcome belongs to the prior asset state. This fixture/docs
+follow-up needs its own CI. Full validation, installed/physical acceptance and merge remain open.
+[Evidence and limits](history-search-implementation.md#preserve-installed-apple-languages--october-29-follow-up).
+
+No visible UI changed; the README screenshots remain accurate for their explicitly labelled sources.
+No new PR, version, upload, review submission or release was created.
 
 # README Duo preview and bounded installed Mac checks — October 29, 2026
 
