@@ -50,7 +50,7 @@ public extension HistoryEmbedder {
 /// has to keep finding and the unrelated set it must not. Languages with neither model get no
 /// vector, and their conversations stay reachable through keyword search.
 public final class NaturalLanguageEmbedder: HistoryEmbedder, @unchecked Sendable {
-    public let signature = "nl-noun-mean+sentence-v2"
+    public let signature = "nl-noun-case+sentence-v3"
     private let lock = NSLock()
     private var words: [NLLanguage: NLEmbedding?] = [:]
     private var sentences: [NLLanguage: NLEmbedding?] = [:]
@@ -150,9 +150,12 @@ public final class NaturalLanguageEmbedder: HistoryEmbedder, @unchecked Sendable
                              options: [.omitPunctuation, .omitWhitespace]) { tag, range in
             // Languages the tagger cannot classify yield nil tags: every word counts there.
             if let tag, !Self.contentClasses.contains(tag) { return true }
-            let word = text[range].lowercased()
+            let original = String(text[range])
+            let word = original.lowercased()
             if language == .english && Self.genericNouns.contains(word) { return true }
-            if let vector = model.vector(for: word) {
+            // German topic nouns can exist only with their original capitalization.
+            let lookup = language == .english ? word : original
+            if let vector = model.vector(for: lookup) ?? (lookup == word ? nil : model.vector(for: word)) {
                 for index in vector.indices { sum[index] += vector[index] }
                 count += 1
             }

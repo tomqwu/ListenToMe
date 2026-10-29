@@ -263,3 +263,52 @@ rejects previously unknown filler. Retrieval remains DE **2/8**, ES **1/8**, JA 
 this is still no-go. The earlier 15-assertion outcome remains evidence of the earlier asset state.
 The second owned simulator was removed with absence verified and native result files preserved.
 The README gallery is unchanged because no visible app behavior or layout changed in this follow-up.
+
+
+### Case-sensitive Apple vocabulary regression — October 29 follow-up
+
+German word embeddings became loadable after the earlier sentence-only snapshot. An unchanged
+synthetic travel passage then exposed a separate default-Apple defect: the adapter lowercased every
+noun before lookup. A frozen native probe found **five original-spelling vocabulary hits and zero
+lowercase hits**, both normally and with network access denied. Language detection was German and
+the sentence model returned a finite vector; the actual adapter nevertheless returned nil because
+its existing word-model branch takes precedence. No threshold or corpus change was involved.
+
+`APPLEWORD-001`–`005` cover the exact five-noun vector, compatible topic queries, unchanged content
+minimum/filler refusal, empty-cache migration with archive-byte preservation, English normalization
+and Spanish lowercase fallback. The native red reproduced **two failing methods / six assertions**;
+the other two original controls passed. The supplemental Spanish control passed on the old code
+and is baseline compatibility evidence, not a regression red.
+
+The repair keeps English lowercase lookup, tries original spelling for other languages, and retains
+lowercase fallback when that spelling is absent. Each token contributes once. Signature v3 rebuilds
+stale derived entries, including cached empty results; conversation files are unchanged. Sentence
+fallback, noun eligibility, model tags and relevance thresholds are unchanged.
+
+All **five new methods pass**; the wider native run passes **29 functional methods** with no skips.
+Its four unchanged MPNet quality methods still fail **12 assertions** (DE 2/8, ES 1/8, JA 4/8, KO 2/8),
+so that combined command correctly exits 65. All **1,043** tracked/new source inputs stayed unchanged
+in each run. A separate unchanged Apple German historical baseline now stores real `w:de:1` vectors,
+but finds **4/8** paraphrases and incorrectly admits hiring for “der Plan für nächste Woche”. It still
+fails two assertions. The preceding zero-vector baseline was incomplete coverage, not measured
+retrieval quality. Neither result establishes additional-language support or production readiness.
+
+Evidence folders under `/Users/tomwu/Documents/Codex/2026-10-29/`:
+`listentome-history223-apple-vocabulary/`,
+`listentome-semantic223-apple-german-word-diagnostic/`, and the original/`-case-fix`
+`listentome-semantic223-apple-german-baseline/` packages. Complete native results, frozen inputs,
+commands, terminal/reaping records and prior failures remain intact. No visible UI changed; the
+README gallery remains labelled with its actual capture sources and needs no new image for this
+lookup correction. Full validation, current-source physical acceptance and merge remain open.
+
+
+The full Core suite passes **1,298 tests / seven optional skips / zero failures**, with **97.6925%**
+coverage and all **261 Core BDD selectors** observed. All **253** scenarios pass structural checks.
+An overlong new test-string line initially failed lint; formatting preserved its exact text, the
+five native methods passed again, and lint now passes. Nine iPhone simulator runtime methods pass,
+zero skips; that simulator reports Apple Spanish unavailable and exercises the optional-runtime
+branch. This is not physical or Apple German iPhone acceptance. The owned simulator was deleted
+after all **248** native-result files were hashed and reverified; other simulators were preserved.
+Independent source/terminal reviews cleared these bounded results, with all model-quality failures
+retained. The current source still requires hosted CI and cannot pass full validation while those
+quality contracts remain red.

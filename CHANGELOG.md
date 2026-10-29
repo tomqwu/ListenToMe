@@ -36,6 +36,10 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased)
 
+- Preserve case-sensitive words recognized by installed Apple History models and rebuild stale
+  empty search vectors without changing saved conversations. Existing content minima, English
+  normalization and relevance cutoffs stay unchanged. (#223)
+
 - Identify manual transcript corrections accurately in Markdown; retain AI labels for named models
   and use neutral wording when legacy correction provenance is unknown. Original speech stays intact.
 - Preserve installed Apple language support when optional History languages are enabled; rebuild
@@ -179,6 +183,10 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 - Settings → Privacy now explains that optional Ollama, Cloud AI and OpenAI-compatible requests send text and included context to the provider you choose; Apple Intelligence stays on-device. (#247)
 
 ## macOS (unreleased since 1.4.4)
+
+- Preserve case-sensitive words recognized by installed Apple History models and rebuild stale
+  empty search vectors without changing saved conversations. Existing content minima, English
+  normalization and relevance cutoffs stay unchanged. (#223)
 
 - Identify manual transcript corrections accurately in Markdown; retain AI labels for named models
   and use neutral wording when legacy correction provenance is unknown. Original speech stays intact.

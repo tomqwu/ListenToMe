@@ -1,3 +1,29 @@
+# Apple word lookup and installed Copy acceptance — October 29, 2026
+
+The current PR #318 follow-up fixes a reproduced Apple History vocabulary defect. German models
+loaded successfully but lowercasing removed all five in-vocabulary nouns from the unchanged travel
+sample. The adapter now preserves non-English spelling with lowercase fallback and rebuilds stale
+empty caches. `APPLEWORD-001`–`005`: two methods/six assertions red, five methods green; **29 Mac
+functional methods pass**, while the four MPNet quality methods still fail 12 assertions. The
+separate Apple German baseline now has real vectors but remains **4/8** with one negative-query
+error. No quality criterion was relaxed. [Evidence and limits](history-search-implementation.md#case-sensitive-apple-vocabulary-regression--october-29-follow-up).
+
+All three hosted checks passed on the preceding `b8ebe86` in
+[run 40953710186](https://github.com/tomqwu/ListenToMe/actions/runs/40953710186). This new source needs
+its own CI. Core passes 1,298 tests (seven optional skips, zero failures), 97.6925% coverage;
+all 261 Core BDD bindings pass. Nine iPhone simulator runtime methods pass with no skips.
+All 253 BDD scenarios and lint pass. Full validation, affected acceptance, merge and release remain open.
+No visible UI changed; the README gallery keeps its existing source-labelled captures.
+
+Fresh signed sandbox source `b8ebe86` also passed installed transcript pointer selection, keyboard
+selection, Command-C and Edit-menu Copy with exact paste readback, accessibility Edit line and
+Cancel preserving the original rows. The existing synthetic conversation was used; no capture or
+provider request ran. Inline screenshots were inspected, but the native screenshot shortcut saved
+no Desktop image, so there is no saved-image claim. Actual VoiceOver and live-audio acceptance are
+separate. Source/signature and all 32 payload files verified; the completed Dev app was moved to
+Trash and only its app-scoped permissions reset. Independent review cleared the bounded receipt in
+`2026-10-29/listentome-mac337-copy-acceptance/`. No production permissions or data were changed.
+
 # Preserve Apple History routing — October 29, 2026
 
 Draft PR #318 preserves installed Apple embeddings when optional History languages are enabled and

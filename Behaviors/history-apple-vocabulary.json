@@ -1,0 +1,90 @@
+{
+  "feature": "Case-sensitive Apple word vocabulary",
+  "scenarios": [
+    {
+      "id": "APPLEWORD-001",
+      "name": "German vocabulary preserves case-sensitive topic nouns",
+      "given": "installed German Apple word vectors and the unchanged historical travel passage",
+      "when": "German passage and topic-query vectors are prepared for local History search",
+      "then": "the passage equals the normalized mean of five actual in-vocabulary topic nouns and Flughafen/Reisepass queries carry that Apple model",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryEmbedding.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacHistoryEmbeddingCaseTests.swift",
+          "test": "MacHistoryEmbeddingCaseTests/testGermanTravelUsesActualCaseSensitiveNounsAndCompatibleQueries"
+        }
+      ]
+    },
+    {
+      "id": "APPLEWORD-002",
+      "name": "German topic minimum and filler refusal remain intact",
+      "given": "installed German lexical tagging and word vectors",
+      "when": "History embeds two topic nouns or the unchanged small-talk controls",
+      "then": "insufficient topic content yields no vector without lowering the existing three-word passage minimum",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryEmbedding.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacHistoryEmbeddingCaseTests.swift",
+          "test": "MacHistoryEmbeddingCaseTests/testGermanMinimumAndOriginalFillerRemainRejected"
+        }
+      ]
+    },
+    {
+      "id": "APPLEWORD-003",
+      "name": "Earlier empty derived caches rebuild without changing saved conversations",
+      "given": "an unchanged saved German conversation has an empty derived index under the earlier noun recipe",
+      "when": "the current Apple embedder opens and synchronizes the index",
+      "then": "the stale entry is invalidated and rebuilt with a real German Apple vector while saved conversation bytes and metadata remain unchanged",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryEmbedding.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacHistoryEmbeddingCaseTests.swift",
+          "test": "MacHistoryEmbeddingCaseTests/testCaseRecipeUpgradeRebuildsEmptyVectorsAndPreservesArchive"
+        }
+      ]
+    },
+    {
+      "id": "APPLEWORD-004",
+      "name": "English normalization remains compatible",
+      "given": "installed English word vectors and differently cased spellings of the same topic word",
+      "when": "the existing English embedding route is queried",
+      "then": "both spellings retain the existing normalized lowercase word vector",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryEmbedding.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacHistoryEmbeddingCaseTests.swift",
+          "test": "MacHistoryEmbeddingCaseTests/testEnglishCaseNormalizationRemainsUnchanged"
+        }
+      ]
+    },
+    {
+      "id": "APPLEWORD-005",
+      "name": "Non-English queries retain lowercase vocabulary fallback",
+      "given": "the installed Spanish model recognizes pasaporte but not PASAPORTE",
+      "when": "an uppercase topic query is prepared for local History search",
+      "then": "it retains the existing lowercase topic vector when the original spelling is outside the vocabulary",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryEmbedding.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacHistoryEmbeddingCaseTests.swift",
+          "test": "MacHistoryEmbeddingCaseTests/testSpanishUppercaseQueryKeepsLowercaseVocabularyFallback"
+        }
+      ]
+    }
+  ]
+}
