@@ -23,6 +23,9 @@ public struct HistoryVector: Sendable, Equatable {
 public protocol HistoryEmbedder: Sendable {
     /// Names the embedding method. Changing it invalidates every stored vector.
     var signature: String { get }
+    /// Models whose relevance scores share one population. Independent backends must
+    /// not change each other's mean or top-score cutoff merely by adding conversations.
+    func relevanceGroup(for model: String) -> String
     /// The vector for a passage, or nil when no on-device model covers the passage's language.
     func embed(_ text: String) async -> HistoryVector?
     /// The same, for a passage whose transcription language is known (a BCP-47 or locale identifier).
@@ -33,6 +36,7 @@ public protocol HistoryEmbedder: Sendable {
 }
 
 public extension HistoryEmbedder {
+    func relevanceGroup(for model: String) -> String { "legacy" }
     func embed(_ text: String, transcribedIn language: String) async -> HistoryVector? { await embed(text) }
 }
 

@@ -26,6 +26,10 @@ actor MultilingualHistoryEmbedder: HistoryEmbedder {
             : Self.modelIdentifier + "+" + fallback.signature
     }
 
+    nonisolated func relevanceGroup(for model: String) -> String {
+        model == Self.modelIdentifier ? Self.modelIdentifier : fallback.relevanceGroup(for: model)
+    }
+
     func embed(_ text: String) async -> HistoryVector? {
         guard !Task.isCancelled else { return nil }
         if usesMultilingual(text) { return await multilingual(text) }

@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-import ListenToMeCore
+@testable import ListenToMeCore
 
 
 /// Synthetic runtime-contract checks; not multilingual retrieval-quality acceptance.
@@ -113,6 +113,62 @@ final class MacMultilingualHistoryEmbedderTests: XCTestCase {
         XCTAssertEqual(record.transcript, text, "Only derived index data changes")
     }
 
+    func testOptionalPassagesCannotEraseFallbackSearchOrAskResults() async throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("HistoryGroups-" + UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let fallback = GroupFallback()
+        let adapter = MultilingualHistoryEmbedder(installedModelDirectory: try assets(), fallback: fallback)
+        let index = HistoryIndex(directory: folder, embedder: adapter)
+        func record(_ id: String, _ text: String, _ language: String) -> SessionRecord {
+            SessionRecord(id: id, title: id, date: .distantPast, transcript: text, summary: "",
+                          segments: [TranscriptSegment(source: .others, text: text, isFinal: true,
+                                                       start: 0, end: 1, language: language)])
+        }
+        let original = [record("apple-target", "Apple target about archival roof repairs", "en")]
+            + (0..<4).map { record("apple-noise-\($0)", "Apple unrelated note \($0)", "en") }
+        let query = "Das undichte Dach muss vor dem nächsten Regen repariert werden."
+        try await index.sync(original)
+        let before = await index.search(query, in: original).filter(\.isRelated).map(\.id)
+        XCTAssertEqual(before, ["apple-target"])
+        let optional = (0..<40).map { record("mpnet-\($0)", query, "de") }
+        let combined = original + optional
+        try await index.sync(combined)
+        let fallbackData = try Data(contentsOf: folder.appendingPathComponent("apple-target.vectors"))
+        let storedFallback = try XCTUnwrap(HistoryIndexFile.decode(fallbackData))
+        XCTAssertEqual(Set(storedFallback.chunks.map(\.model)), [GroupFallback.model])
+        var storedModels = Set(storedFallback.chunks.map(\.model))
+        for record in optional {
+            let data = try Data(contentsOf: folder.appendingPathComponent(record.id + ".vectors"))
+            let stored = try XCTUnwrap(HistoryIndexFile.decode(data), record.id)
+            let chunks = HistoryChunker.chunks(for: record)
+            XCTAssertEqual(chunks.count, 1, record.id)
+            let sourceChunk = try XCTUnwrap(chunks.first, record.id)
+            XCTAssertEqual(stored.fingerprint, HistoryChunker.fingerprint(chunks, salt: adapter.signature), record.id)
+            XCTAssertEqual(stored.chunks.count, 1, record.id)
+            let vector = try XCTUnwrap(stored.chunks.first, record.id)
+            XCTAssertEqual(vector.ordinal, 0, record.id)
+            XCTAssertEqual(vector.fingerprint,
+                           HistoryChunker.fingerprint([sourceChunk], salt: adapter.signature), record.id)
+            XCTAssertEqual(vector.model, MultilingualHistoryEmbedder.modelIdentifier, record.id)
+            XCTAssertEqual(vector.values.count, 768, record.id)
+            XCTAssertTrue(vector.values.contains { $0 != 0 }, record.id)
+            XCTAssertTrue(vector.scale.isFinite && vector.scale > 0, record.id)
+            storedModels.insert(vector.model)
+        }
+        XCTAssertEqual(storedModels, [GroupFallback.model, MultilingualHistoryEmbedder.modelIdentifier])
+        let queryVectors = await adapter.embedQuery(query, models: storedModels)
+        XCTAssertEqual(Set(queryVectors.map(\.model)), storedModels)
+        XCTAssertEqual(queryVectors.count, 2, "One query vector for each actually persisted model")
+        let after = await index.search(query, in: combined).filter { $0.id.hasPrefix("apple-") && $0.isRelated }
+        let passages = await index.retrieve(query, in: combined, limit: 100).filter { $0.recordID.hasPrefix("apple-") }
+        XCTAssertEqual(after.map(\.id), before, "Actual optional runtime must not alter fallback admission statistics")
+        XCTAssertEqual(passages.map(\.recordID), ["apple-target"])
+        XCTAssertEqual(passages.first?.text, original[0].transcript)
+        XCTAssertEqual(adapter.relevanceGroup(for: GroupFallback.model), fallback.relevanceGroup(for: GroupFallback.model))
+        XCTAssertNotEqual(adapter.relevanceGroup(for: MultilingualHistoryEmbedder.modelIdentifier),
+                          adapter.relevanceGroup(for: GroupFallback.model))
+    }
+
     private func assets() throws -> URL {
         guard let path = ProcessInfo.processInfo.environment["LISTENTOME_MPNET_TEST_ASSETS"], !path.isEmpty else {
             throw XCTSkip("Optional actual MPNet runtime requires explicit local LISTENTOME_MPNET_TEST_ASSETS; never downloads")
@@ -141,4 +197,17 @@ private struct LegacyRuntime: HistoryEmbedder {
         HistoryVector(model: "mpnet-4328cf26390c98c5e3c738b4460a05b95f4911f5-mean128-v1", values: [1, 0])
     }
     func embedQuery(_ query: String, models: Set<String>) -> [HistoryVector] { [] }
+}
+
+/// Controlled fallback scores isolate composition; optional vectors still use the actual local model.
+private struct GroupFallback: HistoryEmbedder {
+    static let model = "group-test-fallback"
+    let signature = "group-test-fallback-v1"
+    func relevanceGroup(for model: String) -> String { "independent-fallback-group" }
+    func embed(_ text: String) -> HistoryVector? {
+        HistoryVector(model: Self.model, values: text.hasPrefix("Apple target") ? [1, 0] : [0, 1])
+    }
+    func embedQuery(_ query: String, models: Set<String>) -> [HistoryVector] {
+        models.contains(Self.model) ? [HistoryVector(model: Self.model, values: [1, 0])] : []
+    }
 }

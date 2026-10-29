@@ -1,0 +1,1 @@
+History search and Ask now preserve eligible results when independent local models are combined. Existing keyword search and relevance cutoffs stay unchanged.

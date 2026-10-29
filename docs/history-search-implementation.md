@@ -1,6 +1,7 @@
 # Optional History search model — #223 implementation checkpoint
 
-October 29, 2026. Unmerged implementation checkpoint based on `57ac48f`.
+October 29, 2026. Unmerged implementation checkpoint: the earlier `bb50e67` head has green
+required CI; the additional relevance-group changes below are still working-tree changes.
 This is not a merged feature, a language-support claim or a release. The latest combined
 validation and installed acceptance recorded in [HANDOFF](HANDOFF.md) concern earlier source;
 this implementation still needs full validation, current CI, completion of acceptance and merge.
@@ -55,7 +56,7 @@ The initial Core run reported **1,293 tests, seven optional skips, zero failures
 98.0316% coverage**, including the single-word helper repair. After relocating installed-language
 checks as described below, the complete Core rerun passed **1,290 tests, seven optional skips,
 zero failures and 97.7364% coverage**. Neither run validates the app UI.
-The final native Mac batch passed all **17 functional methods** (seven transitions, four controllers
+The earlier native Mac batch passed all **17 functional methods** (seven transitions, four controllers
 and six runtime checks). Its separate four language-quality methods still fail; the overall batch
 therefore correctly exits 65. The earlier short-query failure and repair remain preserved.
 The recipe-invalidation regression had four genuine red assertions before its identity fix.
@@ -84,9 +85,15 @@ screenshots were inspected for readable text and separate usable controls. They 
 not uploaded App Store media. The simulator Busy launch refusal and every earlier failed attempt
 remain preserved.
 
-- Final Mac runtime/control result: 17 passed. Quality: four methods failed, 15 assertions; DE 2/8, ES 1/8, JA 4/8 and KO 2/8 versus the unchanged minimum of six.
-- iOS UI: three journeys pass on iPhone; three pass together on iPad. Actual runtime: six passed, no skips.
-- Full combined validation, exact-head CI and merge have not completed for this checkpoint. The unsigned native Mac application also builds; it was never installed or launched.
+- Latest Mac functional result: 22 passed, including the composite-backend check. The same batch
+  has four quality methods failing 15 assertions: DE 2/8, ES 1/8, JA 4/8 and KO 2/8 versus the
+  unchanged minimum of six. The aggregate exits 65; it is not a full pass.
+- iOS UI: three journeys pass on iPhone; three pass together on iPad. The later actual-runtime
+  suite passes all seven methods without skips, including strengthened model-group persistence checks.
+- Full combined validation, current-change CI and merge have not completed for this checkpoint.
+  All three required checks passed on earlier `bb50e67` in run `40928129148`; that is not CI for
+  the current working-tree changes. The earlier unsigned native Mac application built but was
+  never installed or launched.
 - Actual app installation, optional-download operation, device resource behavior, physical acceptance
   and source-matched release media remain separate. No new TestFlight/App Store publication is claimed.
 
@@ -120,3 +127,76 @@ Evidence: `eligibility-native-placement.*`, `eligibility-placement-core-bdd.log`
 `independent-eligibility-ci-placement-review.json` under the external native evidence folder.
 There are now **235 BDD scenarios**. This repair changes no application behavior or quality rule;
 the four failing model-quality methods and all original acceptance gates remain open.
+
+
+## Independent relevance groups and composite-backend preservation
+
+The index now keeps each model's relevance population separate: its mean, sample count and top
+score are computed within its declared group. Existing floor, gap and margin admission rules are
+unchanged. Only admitted ranks are fused across groups; raw Apple and MPNet cosine scores are
+not compared as one distribution. The legacy/default group and single-group ordering retain their
+previous paths. Keyword results, global Related limits and Ask passage limits remain intact.
+This prevents optional-model passages from suppressing otherwise valid default-model results; it
+is not a calibration change or evidence that MPNet meets the language-quality gate.
+
+Five focused Core group tests cover this policy. A deterministic multi-group Ask tie test actually
+failed before the final tie-break repair: reversing input order reversed two equal-ranked results.
+The same tests then passed within **55 focused Core tests, zero failures and zero skips**. The
+single-group comparator was retained. Source review, exact commands and the one-assertion tie red
+are preserved in
+`/Users/tomwu/Documents/Codex/2026-10-29/listentome-history223-model-ranking/grouping-production-review-and-tie-outcome.json`.
+
+The actual native composite-backend regression failed **five assertions** before the runtime's
+relevance-group override. Its first attempt skipped because the model-assets environment variable
+was not forwarded; that attempt is retained separately and is not the behavioral red. The subsequent
+native batch passed **22 functional methods**, while the four unchanged quality methods failed
+15 assertions. Evidence is under
+`/Users/tomwu/Documents/Codex/2026-10-29/listentome-history223-native/`:
+`model-groups-native-red-real.log`, `model-groups-native-green.log`,
+`model-groups-final-native-quality.log` and their native result bundles.
+`native-composite-grouping-review.json` identified a test-coverage gap: a future missing optional
+vector could accidentally satisfy fallback-preservation checks. Additive checks now verify all 40
+persisted current-model vectors, their source fingerprints, dimensions and finite nonzero content,
+plus exactly both stored query-model tags. All **seven runtime methods passed with zero skips** on
+Mac and an isolated iOS 26.5 iPhone simulator, including those checks. These additions do not invent
+a new historical red. The initial iOS harness stopped before testing because system Python lacked
+`hashlib.file_digest`; streamed hashing repaired it, and all six copied model files matched.
+
+The current complete Core suite passed **1,298 tests, seven optional skips, zero failures and
+97.6913% coverage**; the BDD execution gate observed all **261 required Core selectors**.
+All **244 scenarios** pass structural checks and `make lint` passes. An extra noncanonical
+`swiftlint --strict` invocation failed on warnings; it is not reported as a passed repository gate.
+`independent-dirty-grouping-export-review.json` records no actionable code findings while preserving
+quality and acceptance limits. None of these focused passes is a full `make validate-local` pass.
+
+## Frozen sentence-window diagnostic — no application integration
+
+A separate external paired diagnostic completed under freeze
+`97422f2fcf5c28dd91a255404fa7c1db1f856e3fc8b93309ae3350dc9c8a43a4` at
+`/Users/tomwu/Documents/Codex/2026-10-29/listentome-semantic223-sentence-window/`.
+It reused the exact 32 positive documents, 32 positive queries, 40 negative queries and 12 fillers
+from the current quality tests, with the same model, thresholds and acceptance rules. These are
+historical calibration cases, not fresh holdout. The copied Core baseline is explicitly bound to
+`bb50e673cf7892d64872c8e8ac4645b29214d6da`; this is not a run of the newer relevance-group changes.
+
+Native sentence spans preserve complete source text. Child similarities are reduced to one maximum
+per original parent, retaining parent-level statistics and complete original Ask text. Oversized
+sentences are refused rather than prefix-truncated. The baseline adapter checks its outcomes against
+actual copied `HistoryIndex`. A completed diagnostic command means the comparison ran, not that
+language quality passed. `outputs/result.json`, `queries.json`, `parents.json`, `vectors.json` and
+`terminal.json` retain the actual results and execution boundary.
+
+| Language | Whole-parent positive recall | Sentence-window positive recall | Negative cases failing, whole → sentence |
+| --- | --- | --- | --- |
+| German | 2/8 | 4/8 | 1 → 1 |
+| Spanish | 1/8 | 3/8 | 0 → 0 |
+| Japanese | 4/8 | 4/8 | 2 → 2 |
+| Korean | 2/8 | 3/8 | 1 → 2 |
+
+Every language remains below six of eight. The negative-case count records a case failing either
+Related rejection or meaning-only Ask rejection, not a count of individual assertions. Standalone
+small-talk vectors still fail the unchanged gate in German, Japanese and Korean; Spanish passes
+that check. Maximum aggregation also gives longer parents more opportunities for a high score.
+The diagnostic therefore does not clear the original quality contract, justify threshold tuning,
+prove additional-language support or change the application. All earlier failed outcomes and
+original labels remain preserved; no sentence-window implementation has been integrated.

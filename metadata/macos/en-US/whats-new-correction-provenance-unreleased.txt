@@ -1,0 +1,1 @@
+Transcript exports now distinguish manual edits from AI corrections. Older corrections without known authorship use a neutral label, and the original speech remains available.

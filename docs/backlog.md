@@ -30,14 +30,14 @@ What each release contains is in [CHANGELOG.md](../CHANGELOG.md); this is only t
   since 1.4.4 (Cloud AI service and OpenAI-compatible modes, semantic History search and Ask your
   history, more export formats, Save to folder, saved audio, vocabularies, automatic titles,
   suggested prompts) is **unreleased** — see "macOS (unreleased since 1.4.4)" in the changelog.
-- **iPhone/iPad 1.17.0 (34)** (TestFlight, 2026-10-25): the earlier capture/recall features below plus
-  conversation prompts, iPhone Duo pane balance, persisted conversation vocabularies and improved
-  language/speaker lifecycle checks. The 1.17.1 compatibility feedback candidate is not yet published.
-  Previously shipped: on-device recording and transcription with
-  Automatic language, speaker labels, Apple Intelligence by default or Ollama, an OpenAI-compatible
-  server or an opt-in Cloud AI service, Quick Summary and Summary (Deep is macOS-only), Save to
-  folder, export formats, semantic History search and Ask your history, vocabularies, opt-in saved
-  audio and Summarize selection.
+- **iPhone/iPad:** [the iOS guide](IOS.md) records public App Store and TestFlight versions
+  separately, with their source-bound receipts. The October 28 receipts cover public
+  [1.19.1 (39)](releases/ios-1.19.1-build39-public.json) and TestFlight
+  [1.20.2 (42)](releases/ios-1.20.2-build42.json); beta availability does not establish production
+  acceptance. Capture/recall features include on-device transcription, speaker labels, explicit AI
+  routing, Quick Summary and Summary, conversation prompts, Duo, vocabularies, opt-in saved audio,
+  export and History search/Ask. Recent beta changes include screen-lock recording continuity,
+  translation and stalled-translation recovery; consult the linked release notes for version scope.
 - **Apple Watch** is included in TestFlight **1.20.2 (42)** and public iOS **1.19.1 (39)** ([#181](https://github.com/tomqwu/ListenToMe/issues/181)). The [current beta receipt](releases/ios-1.20.2-build42.json), [public release receipt](releases/ios-1.19.1-build39-public.json) and [Watch guide](watch-beta.md) record distribution separately from physical microphone, paired-transfer, wrist-down and production acceptance, which remain pending.
 
 The earlier cockpit redesign PR #51 is superseded by the shipped save/new/history layout and the
@@ -63,8 +63,10 @@ The standalone iPhone/iPad app is in scope at the maintainer's request. What it 
 deliberately leaves to macOS, is stated once in
 [iOS → What this app is for](IOS.md#what-this-app-is-for) and
 [iOS → Parity with macOS](IOS.md#parity-with-macos) — including the tier-3 list (system/call audio
-capture, background recording, a local Ollama daemon, WhisperKit transcription — iOS links WhisperKit
-only to detect the spoken language — and Mac sync). Do not restate it here.
+capture, a local Ollama daemon, WhisperKit transcription — iOS links WhisperKit
+only to detect the spoken language — and Mac sync). Established user-started microphone recording
+through screen lock is in scope; its beta implementation and physical acceptance limits are
+recorded in the iOS guide. Do not restate the full parity list here.
 
 Exploratory work must preserve explicit consent, local storage and truthful privacy/accuracy claims.
 

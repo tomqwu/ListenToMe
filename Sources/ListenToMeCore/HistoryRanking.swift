@@ -89,6 +89,23 @@ public enum HistoryRanking {
         }
     }
 
+    /// Independent model scores have different scales; combine their ranks, not raw cosines.
+    static func fuse(groups: [[String]], fusion: Double) -> [(id: String, score: Double)] {
+        var scores: [String: Double] = [:]
+        var bestRank: [String: Int] = [:]
+        for group in groups {
+            var seen: Set<String> = []
+            for (rank, id) in group.enumerated() where seen.insert(id).inserted {
+                scores[id, default: 0] += 1 / (fusion + Double(rank) + 1)
+                bestRank[id] = min(bestRank[id] ?? .max, rank)
+            }
+        }
+        return scores.map { (id: $0.key, score: $0.value) }.sorted {
+            if $0.score != $1.score { return $0.score > $1.score }
+            return (bestRank[$0.id] ?? .max, $0.id) < (bestRank[$1.id] ?? .max, $1.id)
+        }
+    }
+
     static let matching: String.CompareOptions = [.caseInsensitive, .diacriticInsensitive, .widthInsensitive]
 
     /// The keyword snippet: from the part of the conversation where most query words occur

@@ -9,6 +9,8 @@ public struct HistoryPassage: Sendable, Equatable, Identifiable {
     public let source: HistorySource
     public let ordinal: Int
     public let text: String
+    /// Ordering score, fused from ranks when multiple independent model populations are present.
+    /// This is not a confidence probability and is not comparable across different searches.
     public let score: Float
     public init(recordID: String, title: String, date: Date, source: HistorySource, ordinal: Int,
                 text: String, score: Float) {
@@ -339,22 +341,35 @@ extension HistoryIndex {
         let scan = await semanticScan(trimmed, ids: Set(byID.keys))
         guard !Task.isCancelled, revision == observed else { return [] }
 
-        // Best first; a passage is only trusted while its conversation still has the text it was
-        // computed from, so stale vectors are dropped *before* the best score is taken.
-        var current: [(id: String, score: Float)] = []
+        // Validate stored text before taking each population's top score. Incomparable model
+        // families retain their own admission statistics and combine only after admission.
+        var rankings: [[String]] = []
         var relatedChunks: [String: HistoryChunk] = [:]
-        for (id, hit) in scan.best.sorted(by: { $0.value.score > $1.value.score }) {
-            guard parameters.isRelevant(hit.score, typical: scan.typical, sample: scan.sample) else { break }
-            guard let record = byID[id] else { continue }
-            let chunks = HistoryChunker.chunks(for: record)
-            guard isCurrent(id, chunks), chunks.indices.contains(hit.ordinal) else { continue }
-            current.append((id, hit.score))
-            relatedChunks[id] = chunks[hit.ordinal]
+        var snippetRanks: [String: Int] = [:]
+        for key in scan.keys.sorted() {
+            guard let population = scan[key] else { continue }
+            var current: [(id: String, score: Float)] = []
+            var chunksByID: [String: HistoryChunk] = [:]
+            for (id, hit) in population.best.sorted(by: { $0.value.score > $1.value.score }) {
+                guard parameters.isRelevant(hit.score, typical: population.typical,
+                                            sample: population.sample) else { break }
+                guard let record = byID[id] else { continue }
+                let chunks = HistoryChunker.chunks(for: record)
+                guard isCurrent(id, chunks), chunks.indices.contains(hit.ordinal) else { continue }
+                current.append((id, hit.score))
+                chunksByID[id] = chunks[hit.ordinal]
+            }
+            let admitted = HistoryRanking.related(current, typical: population.typical,
+                                                  sample: population.sample, parameters: parameters)
+            rankings.append(admitted.map(\.id))
+            for (rank, candidate) in admitted.enumerated() where rank < snippetRanks[candidate.id] ?? .max {
+                snippetRanks[candidate.id] = rank
+                relatedChunks[candidate.id] = chunksByID[candidate.id]
+            }
         }
         let keywordIDs = Set(keyword.map(\.id))
         var semanticOnly = 0
-        let related = HistoryRanking.related(current, typical: scan.typical, sample: scan.sample,
-                                             parameters: parameters).filter { candidate in
+        let related = HistoryRanking.fuse(groups: rankings, fusion: parameters.fusion).filter { candidate in
             if keywordIDs.contains(candidate.id) { return true }
             semanticOnly += 1
             return semanticOnly <= parameters.maxRelated
@@ -376,7 +391,8 @@ extension HistoryIndex {
     /// conversation. A passage qualifies when it holds all of the question's words (or two and at
     /// least half of them), or
     /// when its meaning passes the same relevance test as a "Related" search result; nothing below
-    /// that is ever sent to a provider. Ranked by similarity plus the share of the words it holds.
+    /// that is ever sent to a provider. Within each model population, rank by similarity plus the
+    /// share of words it holds; independent populations combine by rank rather than raw cosine.
     public func retrieve(_ question: String, in records: [SessionRecord], limit: Int = 6,
                          perConversation: Int = 2) async -> [HistoryPassage] {
         guard !Task.isCancelled else { return [] }
@@ -385,7 +401,12 @@ extension HistoryIndex {
         let terms = HistoryQuestion.contentTerms(question)
         let queries = await queryVectors(question)
         guard !Task.isCancelled, revision == observed else { return [] }
-        struct Candidate { let passage: HistoryPassage; let words: Float; let meaning: Float? }
+        struct Candidate {
+            let passage: HistoryPassage
+            let words: Float
+            let meaning: Float?
+            let group: String?
+        }
         var candidates: [Candidate] = []
         for record in records {
             let chunks = HistoryChunker.chunks(for: record)
@@ -400,25 +421,51 @@ extension HistoryIndex {
                 let passage = HistoryPassage(recordID: record.id, title: record.title, date: record.date,
                                              source: chunk.source, ordinal: chunk.ordinal, text: chunk.text,
                                              score: (meaning ?? 0) + words / 2)
-                candidates.append(Candidate(passage: passage, words: words, meaning: meaning))
+                let group = meaning.flatMap { _ in vectors[chunk.ordinal].map { embedder.relevanceGroup(for: $0.model) } }
+                candidates.append(Candidate(passage: passage, words: words, meaning: meaning, group: group))
             }
         }
-        let meanings = candidates.compactMap(\.meaning)
-        let typical = meanings.isEmpty ? 0 : meanings.reduce(0, +) / Float(meanings.count)
-        let top = meanings.max() ?? 0
+        let populations = Dictionary(grouping: candidates.filter { $0.group != nil }, by: { $0.group! })
+            .mapValues { candidates in
+                let values = candidates.compactMap(\.meaning)
+                return (typical: values.reduce(0, +) / Float(values.count),
+                        top: values.max() ?? 0, sample: values.count)
+            }
         let relevant = candidates.filter { candidate in
             // Words: all of the question's, or at least two and half of them.
             let found = Int((candidate.words * Float(terms.count)).rounded())
             if candidate.words >= 1 || (found >= 2 && candidate.words >= 0.5) { return true }
-            guard let meaning = candidate.meaning else { return false }
-            return parameters.isRelevant(meaning, typical: typical, sample: meanings.count)
-                && meaning >= top - parameters.margin
-        }.map(\.passage)
+            guard let meaning = candidate.meaning, let group = candidate.group,
+                  let population = populations[group] else { return false }
+            return parameters.isRelevant(meaning, typical: population.typical, sample: population.sample)
+                && meaning >= population.top - parameters.margin
+        }
+        func precedes(_ lhs: HistoryPassage, _ rhs: HistoryPassage) -> Bool {
+            lhs.score == rhs.score ? (lhs.date, lhs.ordinal) > (rhs.date, rhs.ordinal) : lhs.score > rhs.score
+        }
+        let ordered: [HistoryPassage]
+        if populations.count <= 1 {
+            ordered = relevant.map(\.passage).sorted(by: precedes)
+        } else {
+            let groups = Dictionary(grouping: relevant) { $0.group.map { "model:" + $0 } ?? "words" }
+            let rankings = groups.keys.sorted().map { key in
+                (groups[key] ?? []).map(\.passage).sorted { lhs, rhs in
+                    if lhs.score == rhs.score, lhs.date == rhs.date, lhs.ordinal == rhs.ordinal {
+                        return lhs.id < rhs.id
+                    }
+                    return precedes(lhs, rhs)
+                }.map(\.id)
+            }
+            let byID = Dictionary(relevant.map { ($0.passage.id, $0.passage) }, uniquingKeysWith: { first, _ in first })
+            ordered = HistoryRanking.fuse(groups: rankings, fusion: parameters.fusion).compactMap { ranked in
+                guard let passage = byID[ranked.id] else { return nil }
+                return HistoryPassage(recordID: passage.recordID, title: passage.title, date: passage.date,
+                                      source: passage.source, ordinal: passage.ordinal, text: passage.text,
+                                      score: Float(ranked.score))
+            }
+        }
         var taken: [String: Int] = [:]
         var result: [HistoryPassage] = []
-        let ordered = relevant.sorted {
-            $0.score == $1.score ? ($0.date, $0.ordinal) > ($1.date, $1.ordinal) : $0.score > $1.score
-        }
         for passage in ordered where result.count < limit {
             guard taken[passage.recordID, default: 0] < perConversation else { continue }
             taken[passage.recordID, default: 0] += 1
@@ -432,31 +479,32 @@ extension HistoryIndex {
         catalog?[id]?.fingerprint == HistoryChunker.fingerprint(chunks, salt: embedder.signature)
     }
 
-    /// The best passage (similarity and ordinal) of every indexed conversation in `ids`, plus the mean
-    /// similarity of all their passages and how many there were.
+    /// Best passage per conversation and score population. The legacy population is unchanged.
     private struct Scan {
-        var best: [String: (score: Float, ordinal: Int)] = [:]
-        var typical: Float = 0
-        var sample = 0
-    }
-
-    private func semanticScan(_ query: String, ids: Set<String>) async -> Scan {
-        let queries = await queryVectors(query)
-        guard !queries.isEmpty, let catalog else { return Scan() }
         var best: [String: (score: Float, ordinal: Int)] = [:]
         var total: Float = 0
         var sample = 0
+        var typical: Float { sample == 0 ? 0 : total / Float(sample) }
+    }
+
+    private func semanticScan(_ query: String, ids: Set<String>) async -> [String: Scan] {
+        let queries = await queryVectors(query)
+        guard !queries.isEmpty, let catalog else { return [:] }
+        var scans: [String: Scan] = [:]
         for id in catalog.keys where ids.contains(id) {
             guard let stored = vectorsOf(id) else { continue }
             for chunk in stored.chunks {
                 guard let query = queries[chunk.model] else { continue }
                 let score = chunk.similarity(query)
-                total += score
-                sample += 1
-                if score > best[id]?.score ?? -.infinity { best[id] = (score, chunk.ordinal) }
+                let group = embedder.relevanceGroup(for: chunk.model)
+                scans[group, default: Scan()].total += score
+                scans[group, default: Scan()].sample += 1
+                if score > scans[group]?.best[id]?.score ?? -.infinity {
+                    scans[group, default: Scan()].best[id] = (score, chunk.ordinal)
+                }
             }
         }
-        return Scan(best: best, typical: sample == 0 ? 0 : total / Float(sample), sample: sample)
+        return scans
     }
 
     /// One query vector per stored model the query plausibly belongs to.

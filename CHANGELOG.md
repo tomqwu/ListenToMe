@@ -32,6 +32,11 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased)
 
+- Identify manual transcript corrections accurately in Markdown; retain AI labels for named models
+  and use neutral wording when legacy correction provenance is unknown. Original speech stays intact.
+- Keep eligible History search and Ask passages when an independent optional model is added;
+  compare each model within its own relevance population and combine admitted ranks. (#223)
+
 - Refresh active History results after saved text finishes indexing, and prevent older indexing
   batches from restoring cleared derived data. Model transitions keep exact-word search available
   and wait before sending an Ask request. (#223)
@@ -167,6 +172,11 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 - Settings → Privacy now explains that optional Ollama, Cloud AI and OpenAI-compatible requests send text and included context to the provider you choose; Apple Intelligence stays on-device. (#247)
 
 ## macOS (unreleased since 1.4.4)
+
+- Identify manual transcript corrections accurately in Markdown; retain AI labels for named models
+  and use neutral wording when legacy correction provenance is unknown. Original speech stays intact.
+- Keep eligible History search and Ask passages when an independent optional model is added;
+  compare each model within its own relevance population and combine admitted ranks. (#223)
 
 - Refresh active History results after saved text finishes indexing, and prevent older indexing
   batches from restoring cleared derived data. Model transitions keep exact-word search available

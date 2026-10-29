@@ -1,0 +1,120 @@
+{
+  "feature": "Independent backend relevance populations preserve legacy History results",
+  "scenarios": [
+    {
+      "id": "HISTORYGROUP-001",
+      "name": "A different backend's top score cannot demote eligible Apple passages",
+      "given": "Apple-only history already has an eligible Related conversation and Ask passage under unchanged default parameters and global Related/Ask output caps are nonbinding",
+      "when": "an unrelated conversation from an explicitly separate optional relevance group has a higher raw cosine",
+      "then": "the same Apple conversation and Ask passage remain eligible when output caps are nonbinding, without changing any cutoff or claiming the optional match is relevant",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryEmbedding.swift",
+        "Sources/ListenToMeCore/HistoryIndex.swift",
+        "Sources/ListenToMeCore/HistoryRanking.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryModelRankingTests.swift",
+          "test": "HistoryModelRankingTests/testOptionalTopScoreCannotDemoteEligibleLegacyResults"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYGROUP-002",
+      "name": "A different backend's score population cannot change Apple's relevance mean",
+      "given": "Apple-only history already has an eligible Related conversation and Ask passage under unchanged default parameters",
+      "when": "many unrelated conversations from an explicitly separate optional relevance group raise the other backend's average score without exceeding the Apple top score",
+      "then": "the original Apple Related and Ask memberships remain unchanged, with global output caps nonbinding for those eligible candidates",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryEmbedding.swift",
+        "Sources/ListenToMeCore/HistoryIndex.swift",
+        "Sources/ListenToMeCore/HistoryRanking.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryModelRankingTests.swift",
+          "test": "HistoryModelRankingTests/testOptionalPopulationCannotChangeLegacyRelevanceMean"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYGROUP-003",
+      "name": "Existing embedders retain one legacy relevance population",
+      "given": "an existing embedder provides multiple Apple language model tags and declares no independent relevance groups",
+      "when": "History searches and retrieves its indexed conversations",
+      "then": "the established single-population floor, mean and top-margin decisions stay unchanged; this is adopted compatibility coverage, not a new historical red",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryEmbedding.swift",
+        "Sources/ListenToMeCore/HistoryIndex.swift",
+        "Sources/ListenToMeCore/HistoryRanking.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryModelRankingTests.swift",
+          "test": "HistoryModelRankingTests/testExistingAppleModelTagsKeepLegacyPopulationBehavior"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYGROUP-004",
+      "name": "Cross-group order is independent of incomparable score scales",
+      "given": "two independently admitted relevance groups have identical within-group membership and rank, and global output caps are nonbinding",
+      "when": "only the optional group raw similarity scale changes between two values that both satisfy its unchanged admission rules",
+      "then": "combined Related and Ask conversation order stays the same because group ranks, not cross-group raw cosine magnitudes, determine fusion",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryEmbedding.swift",
+        "Sources/ListenToMeCore/HistoryIndex.swift",
+        "Sources/ListenToMeCore/HistoryRanking.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryModelRankingTests.swift",
+          "test": "HistoryModelRankingTests/testIndependentGroupScoreScalesCannotChangeFusedOrder"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYGROUP-005",
+      "name": "Native optional runtime preserves the fallback search population",
+      "given": "the real native optional model is installed beside a controlled fallback whose existing conversation qualifies by meaning",
+      "when": "many optional-model passages are indexed and the user searches or asks the same question with output caps nonbinding",
+      "then": "the fallback Related result and unchanged Ask passage remain eligible, with separate native runtime and delegated fallback relevance groups; controlled fallback scores do not prove Apple model quality",
+      "covers": [
+        "SharedPlatform/MultilingualHistoryEmbedder.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacMultilingualHistoryEmbedderTests.swift",
+          "test": "MacMultilingualHistoryEmbedderTests/testOptionalPassagesCannotEraseFallbackSearchOrAskResults"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MultilingualHistoryEmbedderTests.swift",
+          "test": "MultilingualHistoryEmbedderTests/testOptionalPassagesCannotEraseFallbackSearchOrAskResults"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYGROUP-006",
+      "name": "Tied multi-group passages have deterministic ranks",
+      "given": "multiple admitted relevance groups include two passages tied in score, date and ordinal, with output caps nonbinding",
+      "when": "the same archive is supplied in opposite tied-record input orders",
+      "then": "multi-group Related and Ask orders remain identical using stable passage identity, while single legacy-group tie behavior stays unchanged",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryIndex.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryModelRankingTests.swift",
+          "test": "HistoryModelRankingTests/testTiedMultiGroupPassagesHaveDeterministicOrderWithoutChangingLegacyTies"
+        }
+      ]
+    }
+  ]
+}

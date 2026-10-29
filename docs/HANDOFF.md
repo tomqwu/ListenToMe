@@ -1,3 +1,31 @@
+# Current follow-up: export provenance and History ranking — October 29, 2026
+
+The working follow-up to `bb50e673cf7892d64872c8e8ac4645b29214d6da` fixes two reproduced
+regressions in the existing draft PR #318. It is not merged or ready for distribution.
+
+- Markdown exports now distinguish manual edits from known AI corrections and legacy corrections
+  with unknown provenance. The first recognized wording remains intact. The exporter regression
+  failed two methods / 14 assertions before repair; all 20 exporter and golden tests then passed.
+- Independent History models no longer change each other's relevance mean or top-score cutoff.
+  Existing single-population behavior remains; independent admitted results combine by rank.
+  Five Core group contracts include a genuine tie-order regression. All 55 focused Core History
+  tests pass. The actual native composite reproduced five failures before its grouping override.
+  Strengthened persisted-vector checks pass in all seven runtime methods on both Mac and an
+  isolated iPhone simulator; simulator evidence does not establish physical acceptance.
+- Full current Core: **1,298 tests / seven optional skips / zero failures / 97.6913% coverage**, including
+  all **261 required Core BDD selectors**. All **244** scenarios pass structural checks; repository
+  `make lint` passes. Full combined validation,
+  installed/physical acceptance and exact follow-up CI remain outstanding. The three required
+  checks passed on the preceding `bb50e67` in
+  [run 40928129148](https://github.com/tomqwu/ListenToMe/actions/runs/40928129148).
+- The optional model's quality gate still fails: DE 2/8, ES 1/8, JA 4/8, KO 2/8. A separately frozen
+  sentence-window diagnostic reached 4/8, 3/8, 4/8, 3/8 respectively, below six-of-eight in every
+  language, with remaining negative/filler errors. That experiment is not integrated into the app.
+
+[History implementation and evidence](history-search-implementation.md). Correction evidence is
+retained under `/Users/tomwu/Documents/Codex/2026-10-29/listentome-manual-correction-export/`.
+No version bump, upload, review submission or new publication was performed.
+
 # In progress: History implementation and regression fixes — October 29, 2026
 
 This checkpoint adds actual #223 application/Core code on top of `57ac48f`; it is unmerged and

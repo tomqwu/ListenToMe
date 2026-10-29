@@ -89,7 +89,8 @@ public enum SessionExporter {
     private static func markdown(title: String, header: String?, transcript: [TranscriptSegment],
                                  legacyTranscript: String?, notes: String, listenerSummary: String,
                                  quickSuggestion: String, deepAnswer: String, attachments: [String],
-                                 timestamps: Bool, selectionSummaries: [SelectionSummary] = [], summaryInstructions: String = "") -> String {
+                                 timestamps: Bool, selectionSummaries: [SelectionSummary] = [],
+                                 summaryInstructions: String = "") -> String {
         var out = "# \(literalMarkdown(title))\n"
         if let header { out += "\n_\(header)_\n" }
 
@@ -113,7 +114,16 @@ public enum SessionExporter {
         out += "\n## Transcript\n\n\(transcriptBody)\n"
         let corrections = transcript.compactMap { segment -> String? in
             guard let original = segment.originalText else { return nil }
-            return "- Original: \(literalMarkdown(original))\n  AI correction: \(literalMarkdown(segment.text))"
+            let model = segment.correctionModel?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let label: String
+            if model == "Manual" {
+                label = "Manual correction"
+            } else if let model, !model.isEmpty {
+                label = "AI correction"
+            } else {
+                label = "Correction"
+            }
+            return "- Original: \(literalMarkdown(original))\n  \(label): \(literalMarkdown(segment.text))"
         }
         section("Speech corrections (original wording)", corrections.joined(separator: "\n"))
 
