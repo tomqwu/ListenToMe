@@ -1,0 +1,299 @@
+{
+  "kind": "native_topical_diagnostic_not_feature_acceptance",
+  "date": "2026-10-29",
+  "issue": 223,
+  "status": "observed_fixed_case_omissions_no_additional_language_feature",
+  "source": {
+    "adapterFreezeSHA256": "c4daeadce1cabbeef6098aa941b8b4fe233d48fc8fa7f30e23fa34a6261a5306",
+    "adapterInputs": 194,
+    "contentFreezeSHA256": "972f4b74f39cde3cfad5b1b739cf4fb9ac8a867c6f07a1a1b7504cb597896e58",
+    "contentInputs": 21,
+    "inputsUnchanged": true,
+    "productionRelevantSourceComparison": "Six current History index/ranking/question/embedding/chunker/index-file sources match the retained original snapshot; three external instrumentation edits reverse to exact originals. This is not execution of the installed application.",
+    "originalSnapshotSignature": "c89cb32a1284a8f28fc68b96fd8d313a6586ab3987c0330dd262798aa006c276"
+  },
+  "evidence": {
+    "originalTwoRecordFidelity": {
+      "receipt": "listentome-semantic223-fidelity-outcome-review/independent-fidelity-audit.json",
+      "sha256": "350a17871f88a3d598fca58e946ac27ccf6e71da6441e97f6c687ceec701f458",
+      "nativeMethodsPassed": 2,
+      "nativeFailures": 0,
+      "queryCalls": 2,
+      "extraPassageCallsDuringObservation": 0,
+      "providerInvocations": 0
+    },
+    "fourRunTerminalAudit": {
+      "receipt": "listentome-semantic223-topical-native-observations/terminal-observation-audit.json",
+      "sha256": "98f652734747cdb15536be240f99d95af5cf27347eee92f79e70ff4a40f89eda",
+      "nativeMethodsPassed": 8,
+      "failures": 0,
+      "skips": 0,
+      "rawFilesCopiedByteVerified": 24,
+      "ownedJobsAbsent": true
+    },
+    "fixedIntentComparison": {
+      "receipt": "listentome-semantic223-topical-native-observations/frozen-intent-comparison.json",
+      "sha256": "fd741385e6bb9367f043d11aaa5b9a84fce5e5e396770077f9c52643d13f8f08",
+      "queryContextCases": 80,
+      "comparison": "Exact native record/chunk/source/text hashes joined to already frozen revision3 topical intent labels; no rule fitting or new passing threshold."
+    },
+    "independentContentReviewSHA256": "9083faf6bd949a275dd6817393d8f2a2326d51c15754e6800b88fdb428d446fa"
+  },
+  "observedEmbeddingAvailability": {
+    "runtime": "macOS27.0.1 native Swift package, already-installed Apple APIs",
+    "en": "Six body passages produced w:en:1 vectors;48available score rows per8-query context.",
+    "es": "Six body passages produced w:es:1 vectors;48available score rows per8-query context.",
+    "de_ja_ko": "Each six-body context retained48explicit no_stored_vector score rows; semantic coverage incomplete. No general API-language support or exact missing-asset diagnosis inferred.",
+    "chunkLanguageHints": "Null on these synthetic SessionRecords; not an observed classifier-language failure.",
+    "downloadsOrNewModels": false
+  },
+  "groups": [
+    {
+      "runID": "topical-v1-en-fidelity",
+      "groupID": "s223t1-english-full",
+      "language": "en",
+      "projection": "seven-record-fidelity-with-title-control",
+      "queries": 8,
+      "candidateRecords": 7,
+      "semanticEligibleRecords": 6,
+      "coverage": "available_for_fixed_cases",
+      "relatedMemberships": {
+        "intended": 16,
+        "returnedIntended": 7,
+        "omittedIntended": 9,
+        "extraEligible": 0,
+        "exactQuerySets": 2
+      },
+      "askRequestContextMemberships": {
+        "askIntendedUsefulMemberships": 13,
+        "askUsefulMembershipsRetrieved": 7,
+        "askOmittedUsefulMemberships": 6,
+        "askOtherMembershipsRetrieved": 0,
+        "requestsBuilt": 7,
+        "noRequest": 1
+      }
+    },
+    {
+      "runID": "topical-v1-quality",
+      "groupID": "s223t1-english-full-quality-six",
+      "language": "en",
+      "projection": "six-nonempty-body",
+      "queries": 8,
+      "candidateRecords": 6,
+      "semanticEligibleRecords": 6,
+      "coverage": "available_for_fixed_cases",
+      "relatedMemberships": {
+        "intended": 16,
+        "returnedIntended": 7,
+        "omittedIntended": 9,
+        "extraEligible": 0,
+        "exactQuerySets": 2
+      },
+      "askRequestContextMemberships": {
+        "askIntendedUsefulMemberships": 13,
+        "askUsefulMembershipsRetrieved": 7,
+        "askOmittedUsefulMemberships": 6,
+        "askOtherMembershipsRetrieved": 0,
+        "requestsBuilt": 7,
+        "noRequest": 1
+      }
+    },
+    {
+      "runID": "topical-v1-four-language",
+      "groupID": "s223t2-de-full",
+      "language": "de",
+      "projection": "seven-record-fidelity-with-title-control",
+      "queries": 8,
+      "candidateRecords": 7,
+      "semanticEligibleRecords": 6,
+      "coverage": "incomplete_no_semantic_quality_verdict",
+      "relatedMemberships": null,
+      "askRequestContextMemberships": {
+        "askIntendedUsefulMemberships": 13,
+        "askUsefulMembershipsRetrieved": 1,
+        "askOmittedUsefulMemberships": 12,
+        "askOtherMembershipsRetrieved": 0,
+        "requestsBuilt": 1,
+        "noRequest": 7
+      }
+    },
+    {
+      "runID": "topical-v1-four-language",
+      "groupID": "s223t2-es-full",
+      "language": "es",
+      "projection": "seven-record-fidelity-with-title-control",
+      "queries": 8,
+      "candidateRecords": 7,
+      "semanticEligibleRecords": 6,
+      "coverage": "available_for_fixed_cases",
+      "relatedMemberships": {
+        "intended": 16,
+        "returnedIntended": 7,
+        "omittedIntended": 9,
+        "extraEligible": 0,
+        "exactQuerySets": 2
+      },
+      "askRequestContextMemberships": {
+        "askIntendedUsefulMemberships": 13,
+        "askUsefulMembershipsRetrieved": 7,
+        "askOmittedUsefulMemberships": 6,
+        "askOtherMembershipsRetrieved": 2,
+        "requestsBuilt": 7,
+        "noRequest": 1
+      }
+    },
+    {
+      "runID": "topical-v1-four-language",
+      "groupID": "s223t2-ja-full",
+      "language": "ja",
+      "projection": "seven-record-fidelity-with-title-control",
+      "queries": 8,
+      "candidateRecords": 7,
+      "semanticEligibleRecords": 6,
+      "coverage": "incomplete_no_semantic_quality_verdict",
+      "relatedMemberships": null,
+      "askRequestContextMemberships": {
+        "askIntendedUsefulMemberships": 13,
+        "askUsefulMembershipsRetrieved": 7,
+        "askOmittedUsefulMemberships": 6,
+        "askOtherMembershipsRetrieved": 5,
+        "requestsBuilt": 7,
+        "noRequest": 1
+      }
+    },
+    {
+      "runID": "topical-v1-four-language",
+      "groupID": "s223t2-ko-full",
+      "language": "ko",
+      "projection": "seven-record-fidelity-with-title-control",
+      "queries": 8,
+      "candidateRecords": 7,
+      "semanticEligibleRecords": 6,
+      "coverage": "incomplete_no_semantic_quality_verdict",
+      "relatedMemberships": null,
+      "askRequestContextMemberships": {
+        "askIntendedUsefulMemberships": 13,
+        "askUsefulMembershipsRetrieved": 1,
+        "askOmittedUsefulMemberships": 12,
+        "askOtherMembershipsRetrieved": 0,
+        "requestsBuilt": 1,
+        "noRequest": 7
+      }
+    },
+    {
+      "runID": "topical-v1-four-language-quality",
+      "groupID": "s223t2-de-full-quality-six",
+      "language": "de",
+      "projection": "six-nonempty-body",
+      "queries": 8,
+      "candidateRecords": 6,
+      "semanticEligibleRecords": 6,
+      "coverage": "incomplete_no_semantic_quality_verdict",
+      "relatedMemberships": null,
+      "askRequestContextMemberships": {
+        "askIntendedUsefulMemberships": 13,
+        "askUsefulMembershipsRetrieved": 1,
+        "askOmittedUsefulMemberships": 12,
+        "askOtherMembershipsRetrieved": 0,
+        "requestsBuilt": 1,
+        "noRequest": 7
+      }
+    },
+    {
+      "runID": "topical-v1-four-language-quality",
+      "groupID": "s223t2-es-full-quality-six",
+      "language": "es",
+      "projection": "six-nonempty-body",
+      "queries": 8,
+      "candidateRecords": 6,
+      "semanticEligibleRecords": 6,
+      "coverage": "available_for_fixed_cases",
+      "relatedMemberships": {
+        "intended": 16,
+        "returnedIntended": 7,
+        "omittedIntended": 9,
+        "extraEligible": 0,
+        "exactQuerySets": 2
+      },
+      "askRequestContextMemberships": {
+        "askIntendedUsefulMemberships": 13,
+        "askUsefulMembershipsRetrieved": 7,
+        "askOmittedUsefulMemberships": 6,
+        "askOtherMembershipsRetrieved": 2,
+        "requestsBuilt": 7,
+        "noRequest": 1
+      }
+    },
+    {
+      "runID": "topical-v1-four-language-quality",
+      "groupID": "s223t2-ja-full-quality-six",
+      "language": "ja",
+      "projection": "six-nonempty-body",
+      "queries": 8,
+      "candidateRecords": 6,
+      "semanticEligibleRecords": 6,
+      "coverage": "incomplete_no_semantic_quality_verdict",
+      "relatedMemberships": null,
+      "askRequestContextMemberships": {
+        "askIntendedUsefulMemberships": 13,
+        "askUsefulMembershipsRetrieved": 7,
+        "askOmittedUsefulMemberships": 6,
+        "askOtherMembershipsRetrieved": 5,
+        "requestsBuilt": 7,
+        "noRequest": 1
+      }
+    },
+    {
+      "runID": "topical-v1-four-language-quality",
+      "groupID": "s223t2-ko-full-quality-six",
+      "language": "ko",
+      "projection": "six-nonempty-body",
+      "queries": 8,
+      "candidateRecords": 6,
+      "semanticEligibleRecords": 6,
+      "coverage": "incomplete_no_semantic_quality_verdict",
+      "relatedMemberships": null,
+      "askRequestContextMemberships": {
+        "askIntendedUsefulMemberships": 13,
+        "askUsefulMembershipsRetrieved": 1,
+        "askOmittedUsefulMemberships": 12,
+        "askOtherMembershipsRetrieved": 0,
+        "requestsBuilt": 1,
+        "noRequest": 7
+      }
+    }
+  ],
+  "rankingGapEvidence": {
+    "enAndEsSeparatelyInEachProjection": "Seven of16 intended topical memberships returned; nine omitted; zero extra eligible Related memberships. Only museum-time and unrelated result sets matched completely.",
+    "enExamples": "Waterproofing returns roof inspection alone; rainwater cause returns gutter alone; seal/phone/conflicting-date queries return only one of the two related roof discussions.",
+    "esExamples": "Waterproofing returns no Related result; rainwater cause returns inspection and gutter but omits repair-date context; seal/phone/conflicting-date queries return one of the two related roof discussions.",
+    "existingGuardRecount": "Actual native scores reproduce unchanged floor, mean-gap and within-top-margin selection. Per-miss scores/failed guards retained externally; no parameter search or tuned values proposed.",
+    "missingGuardCountsNonexclusiveSixBody": {
+      "en": {
+        "below_unchanged_floor_0.5": 3,
+        "below_unchanged_mean_gap_0.1": 8,
+        "outside_unchanged_top_margin_0.08": 7
+      },
+      "es": {
+        "below_unchanged_floor_0.5": 6,
+        "below_unchanged_mean_gap_0.1": 8,
+        "outside_unchanged_top_margin_0.08": 8
+      }
+    },
+    "askSeparation": "EN requests include7of13 intended useful-context memberships and omit6, with no other passages. ES also includes7of13/omits6 but additionally includes sensor calibration for waterproofing and title-only queries. No answers were generated, so answerability/abstention/citation compliance was not tested."
+  },
+  "boundaries": {
+    "sevenRecordFidelity": "Title-only record is retained for lexical fidelity and always outside semantic eligibility. The boundary coverage flag counts available passages, not semantic eligibility of every record.",
+    "sixBodyProjection": "Separately fixed before observation; never a post-observation deletion of unavailable candidates.",
+    "newCorpus": "Authored, correlated synthetic EN/DE/ES/JA/KO cases, not blind heldout, independent replication or broad language-quality evidence.",
+    "allPriorNoGoHistoryRetained": true,
+    "newThresholdsOrRules": false,
+    "providerOrAnswerExecution": false,
+    "qualityEvaluatorOrFitting": false,
+    "appModelDependencySettingsVersionChanged": false,
+    "nativeApplicationIntegration": false,
+    "additionalLanguageFeatureImplemented": false,
+    "physicalAcceptance": false,
+    "heldoutQualityAcceptance": false
+  }
+}

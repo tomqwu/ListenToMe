@@ -1,3 +1,30 @@
+# Backlog evidence checkpoint — October 29, 2026
+
+The combined application/test source remains `02205d278197d67c0cb29606e3fa63b2c6547c00`.
+Its documentation follow-up `63a8ed182429b5793d53f13058ecef6a9dd3a93e` passed all three required
+checks in [CI run 40820682853](https://github.com/tomqwu/ListenToMe/actions/runs/40820682853).
+PR #318 remains draft and unmerged: installed Mac audio/interaction and the other acceptance gates
+below are incomplete. This later documentation-only checkpoint needs its own review/CI; it does
+not change application behavior, call a release or waive those gates.
+
+- **#236:** The unchanged after-assets Mac retry completed all 22 observations, five native tests
+  and the independently recounted scorer. All 16 target-presence comparisons showed zero gains or
+  losses. Retain the bounded decision against custom Dictation integration; actual-app physical
+  read-aloud/Add/language/personal-name acceptance remains incomplete. No further model search is
+  needed for that negative decision. [Updated evidence](vocabulary-biasing-evaluation.md).
+- **#223:** The actual Core export passed native noninterference tests. Fixed topical diagnostics
+  then found English and Spanish vectors on this Mac, while German/Japanese/Korean lacked stored
+  vectors. English and Spanish each returned 7 of 16 intended topical memberships, with nine
+  omissions and no extra eligible Related results. Prepared Ask requests are separate from answers;
+  no provider ran. No new language support or ranking change is implemented.
+  [Native baseline and limits](semantic-search-evaluation.md).
+- **#205:** Public pinned small/turbo assets and seven synthetic audio files are staged outside the
+  repository. An isolated unsigned iOS benchmark now compiles and packages all 72 staged asset files
+  byte-for-byte, after preserved async-enumeration and resource-packaging harness failures. It has
+  not been installed or run on a phone; auditory fidelity, physical compatibility and actual
+  accuracy/speed/battery measurements remain unverified. Compatibility-smoke preparation is separate
+  from the required benchmark. No production engine or model setting changed.
+
 # Combined PR #318: full automated validation passed on 02205d2 — October 29, 2026
 
 Exact combined source `02205d278197d67c0cb29606e3fa63b2c6547c00` completed

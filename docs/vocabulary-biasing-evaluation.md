@@ -1,7 +1,8 @@
-# Vocabulary biasing — #236 controlled evaluation, October 26, 2026
+# Vocabulary biasing — #236 controlled evaluations, October 26–29, 2026
 
 The [recorded measurements](evaluations/vocabulary-236-2026-10-26.json) preserve synthetic transcripts,
-scoring plans, native context/model metadata and source/fixture hashes.
+scoring plans, native context/model metadata and source/fixture hashes. The later
+[dynamic native record](evaluations/vocabulary-236-dynamic-2026-10-29.json) adds audited Mac context-update observations; it does not replace the physical file measurements below.
 
 ## Decision and remaining acceptance
 
@@ -32,6 +33,27 @@ All-target scoring uses 15 Medical and 17 Cloud terms in each voice: 64 opportun
 
 Each diagnostic platform produced 35 observations: 20 domain cases (four waveforms in five modes) plus ten ordinary-speech cases and five silence cases. The two 35-word ordinary controls had zero word edits in all tested control modes; no scored target was spuriously inserted. That does not test every trained phrase. All silence outputs were empty. Context operations reported zero errors and retained 100 terms after preparation. One run per case is not repeatability or broad safety/accuracy evidence.
 
+## Dynamic context-update observations — October 29
+
+The isolated Mac/macOS 27.0.1 SpeechTranscriber retry completed all 22 fixed observations: five native methods passed, zero skipped/failed, 29.468 seconds; native and supervisor exit codes were zero. All 211 frozen inputs matched, owned execution was reaped and absent, and an independent audit reproduced the unchanged scorer, phase target counts and ordinary word edits. The [sanitized record](evaluations/vocabulary-236-dynamic-2026-10-29.json) binds the exact source, input freeze, scorer, terminal receipt and audit hashes.
+
+For each domain/voice, two complete copies of the same WAV ran through the same analyzer with off/off, on/on or off/on context. Finite sequences were finalized through their actual consumed-last-sample time before the context update. Input frame conservation and exact native context readback were checked; this is not the actual app's continuous microphone/Add interaction.
+
+| Domain / voice | Phase 1 target presence | Phase 2 target presence |
+|---|---:|---:|
+| Medical / Daniel | 7/15 | 5/15 |
+| Medical / Samantha | 7/15 | 3/15 |
+| Software/Cloud / Daniel | 10/17 | 6/17 |
+| Software/Cloud / Samantha | 12/17 | 10/17 |
+
+Off, on and update conditions had the same counts within each phase: all 16 paired on/update-versus-off comparisons were usable, with zero gains and zero losses. These are descriptive historical target-presence scores, not domain WER or a new quality threshold. Ordinary sequential replay edits rose from 2/35 to 7/35 for Daniel and 0/35 to 12/35 for Samantha in both domain runs; context change and sequential replay are confounded, so this does not establish that vocabulary caused the degradation. Silence stayed empty and no scored target was inserted in the ordinary controls.
+
+The personal-priority case verified the 100-term cap and newest 60 synthetic personal terms before domain terms in actual context readback, using silence. It does not measure spoken-name benefit. Chinese silence with a native zh_CN module was followed by a separate fresh English analyzer with context reapplied; neither Chinese acoustic quality nor the actual app's continuous Automatic-language switch was tested. Cancellation after the first 16,000-frame buffer produced no finals or later publication; the intentional service invalidation remains recorded separately from spontaneous engine failures.
+
+The original 195-input attempt remains failed/incomplete because of frame loss and a future-time finalize wait, with escaped XCTest cleanup separately recorded. The first 211-input v2 attempt produced 20/22 observations after a combined locale guard skipped the Chinese/English cases; its scorer correctly refused evaluation. Neither attempt is a vocabulary-quality result. The completed after-assets retry preserved the same 211 inputs and labels; it does not overwrite those failures or imply a new production engine. Frozen preparation statements saying execution had not yet occurred remain historical preparation, distinct from the terminal receipts.
+
+These observations support retaining the bounded decision **not to integrate custom Dictation models from the measured evidence**. No further model search, new scoring threshold or research loop is needed for that negative integration decision. They do not fulfill or remove the live-app acceptance below.
+
 ## Custom model construction, cost and privacy
 
 Each model trained only the same capped 100 ActiveVocabulary phrases, PhraseCount 10 each, without full test paragraphs or reference audio; model weight used the OS default. There were phrase-only and phonetic variants for both domains. The pronunciation variant inserted only supported graphemes present in those terms; every X-SAMPA token was validated against the actual supported inventory. Token validity does not establish correct pronunciation. The compiled configuration was supplied through DictationTranscriber.ContentHint.customizedLanguage before input started.
@@ -57,4 +79,4 @@ release is claimed. Offline recounts independently reproduced every reported agg
 count, identical baseline pair and ordinary/silence control result; no new native/device inference was
 started for this documentation change.
 
-The issue's actual app read-aloud off/on comparison remains unfulfilled, including mid-recording additions, language switches and ordinary conversation. A future implementation would need observable native BDD for supported/unavailable engines, My-terms priority, context errors, locale changes, model preparation/cancellation, cache deletion and user controls; do not silently switch engines or weaken those gates to close the issue.
+The issue's actual app read-aloud off/on comparison remains unfulfilled on physical iPhone and installed Mac, including Add during continuous capture, natural Chinese-to-English switches, spoken My-terms personal-name benefit and ordinary conversation. Context delivery/readback, silence and isolated file inference do not replace these checks. Record any eventual positive or negative observations under the existing manual procedure; do not request participants again for the current release. A future implementation would need observable native BDD for supported/unavailable engines, My-terms priority, context errors, locale changes, model preparation/cancellation, cache deletion and user controls; do not silently switch engines or weaken those gates to close the issue.

@@ -1,5 +1,60 @@
 # Additional semantic-search languages — #223 evaluation
 
+## Native topical baseline, October 29, 2026
+
+The current native diagnostic exposes omissions in the existing Related behavior; it does not
+implement the additional-language feature. [The source-bound receipt](evaluations/semantic-223-native-topical-2026-10-29.json)
+records the exact 194-input adapter freeze, 21-input content freeze, native fidelity audit and raw
+observation hashes. The two original deterministic fidelity methods passed; four separately approved
+installed-Apple observations then passed eight native method invocations with no skips or failures.
+The external package exercises the actual Core index/ranking/request code with recorded instrumentation,
+not the installed app. All inputs remained unchanged and raw results were copied and byte-verified.
+
+On this Mac/runtime, English produced `w:en:1` and **Spanish produced `w:es:1`** stored vectors for
+all six body passages. An exclusive historical “English/French/Chinese only” description must not
+be treated as current availability evidence. German, Japanese and Korean retained explicit
+`no_stored_vector` rows; their semantic coverage is incomplete, not a passing result or a measured
+zero-accuracy language verdict. No model was downloaded or selected, and this observation does not
+establish a completed Spanish or other additional-language feature. The chunk language hints are
+null because these synthetic records carry no transcription-language metadata; that is not evidence
+that a language recognizer failed.
+
+The authored English cases and their correlated German/Spanish/Japanese/Korean counterparts were
+reviewed and frozen before these observations. They are **new synthetic diagnostics, not blind
+heldout data**. Each language has a seven-record fidelity context retaining a title-only lexical
+control, plus a prospectively separate six-body context. Title-only is always outside semantic
+eligibility; it is never credited as a rejected semantic negative. The two contexts are not
+independent replications. All 80 query/context cases remain in the external comparison.
+
+| Fixed context | Intended topical memberships | Returned intended | Omitted | Extra eligible Related results | Exact eligible Related sets |
+| --- | --- | --- | --- | --- | --- |
+| English, seven-record fidelity | 16 | 7 | 9 | 0 | 2/8 |
+| English, six-body projection | 16 | 7 | 9 | 0 | 2/8 |
+| Spanish, seven-record fidelity | 16 | 7 | 9 | 0 | 2/8 |
+| Spanish, six-body projection | 16 | 7 | 9 | 0 | 2/8 |
+
+These are descriptive membership counts against the frozen topical intent, with no new threshold
+or acceptance rule. Only the museum-time and unrelated query sets match completely. The broad
+waterproofing query returns only the roof inspection in English and nothing in Spanish, omitting
+other explicit building-weatherproofing discussions. Seal-work, contractor-phone and unresolved-date
+queries return only one of the two related roof discussions, even though Related should not require
+every result to contain the answer. Actual scores reproduce the existing floor, mean-gap and
+within-top-margin guards. The missing contexts therefore identify a topical-coverage gap under the
+current embedding/ranking combination; this does not show that changing one cutoff would repair it.
+The per-missing-context native scores and failed guards are retained without fitting new values.
+
+Ask remains a separate observation. In each English context, the built requests include 7 of 13
+intended useful-context memberships and omit 6, with no other passages. Spanish likewise includes
+7 and omits 6, but also includes the sensor-calibration passage for the waterproofing and title-only
+queries. Keyword and semantic result flags, retrieval order and exact request excerpts are retained
+per query. Japanese can build lexical requests despite having no stored semantic vectors, so a built
+request is not proof of semantic coverage. **No provider was invoked and no answer exists**:
+missing-phone abstention, unresolved-date handling, factual accuracy and citations were not tested.
+
+All earlier failed screens and no-go decisions below retain their original corpus, criteria and
+scope. The new observations neither reinterpret those outcomes nor establish general quality,
+additional-language support, native application integration or physical-device acceptance.
+
 ## Decision, October 26, 2026
 
 **No-go for the proposed four-language model integration.** The current app still uses Apple's
