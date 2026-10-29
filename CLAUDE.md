@@ -59,6 +59,15 @@ failing native test, implementation, passing test, then refactor. Bind Given/Whe
 red/green evidence in the PR. This applies to app code and build/release automation alike; the
 existing validation, independent review and publication gates remain required.
 
+## README screenshots
+
+Follow [the mandatory README gallery policy](AGENTS.md#readme-screenshot-gallery): review screenshots
+for every feature/fix, refresh changed UI in the same change, and update the gallery on every release
+train. Cover Mac, iPhone portrait and Duo, iPad wide layouts and the included Watch app. Use a balanced,
+responsive device-grouped layout with consistent thumbnails, captions, alt text and full-size links.
+Keep capture provenance and version/status labels accurate; inspect desktop/mobile rendering and
+image links. Captures saved elsewhere or uploaded only to Apple do not finish this requirement.
+
 ## Definition of Done
 
 A change is **not done** until ALL of the following are true. Treat this as a checklist on every task.
@@ -73,7 +82,8 @@ A change is **not done** until ALL of the following are true. Treat this as a ch
    change fully implements a known gap, **link and close the matching issue in the same PR**. Keep valid
    unimplemented enhancements open; close duplicates with a link and obsolete items with a reason. New ideas become
    issues (`enhancement` + `priority: P1/P2/P3`), never bullets in a markdown backlog.
-4. **The PR description states what was verified** (commands run + outcomes).
+4. **The PR description states what was verified** (commands run + outcomes), including the README
+   screenshot refresh/render check or the precise unchanged/blocked reason.
 
 ## Product principles (do not violate)
 

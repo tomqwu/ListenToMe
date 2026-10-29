@@ -64,7 +64,8 @@ and do not publish a release merely because a change merged.
    actual system-audio transcription labeled OTHERS; a permission toggle or microphone pickup is not
    proof.
 3. Update every affected doc, the release notes for the affected platform, and `CHANGELOG.md` under
-   that platform's unreleased heading.
+   that platform's unreleased heading. Refresh the affected `README.md` screenshots and gallery
+   layout for UI changes, following the screenshot requirements below.
 4. Commit and push the source, verify hosted CI, and merge the pull request.
 5. State in the pull request description what was verified: commands run and outcomes.
 
@@ -276,6 +277,30 @@ an authorized App Store submission, upload the current set to every applicable d
 slot and read back processing/status; screenshots saved locally are not proof Apple has them. Cover
 Watch only when embedded for distribution, and Mac when a Mac release is called. Never publish a
 store listing with stale screenshots or claim screenshot publication without upload verification.
+
+### README screenshot gallery
+
+The maintainer requires `README.md` screenshots to stay current and well laid out (2026-10-29).
+Review the gallery with every feature/fix, refresh affected screenshots in the same change whenever
+visible UI changes, and update the gallery from the fresh capture set on **every release train**.
+Saving images in evidence or uploading App Store media alone does not complete the README update.
+
+- Cover macOS, iPhone portrait, **iPhone Duo/landscape**, iPad wide layouts and Watch when included
+  in that version. Use actual rendered app captures and synthetic demonstration content; exclude
+  private conversations, keys, debug controls, clipped content and permission/error overlays.
+- Group images by device and workflow in a balanced GitHub-compatible layout: paired portrait or
+  Watch previews, wide rows for Duo/iPad/Mac, consistent thumbnail sizes within each group, concise
+  captions, meaningful alt text and clickable full-resolution images. Preserve aspect ratios and
+  readable spacing; inspect the rendered README at desktop and narrow/mobile widths.
+- Link the source/version/build capture manifest. Label public, TestFlight, unreleased candidate
+  and historical images accurately; never present an old screenshot as the latest UI. Move superseded
+  galleries into a clearly labelled archive or collapsed section instead of mixing versions silently.
+- Verify local image paths and hosted image availability, then record the gallery check in the PR.
+  If capture is blocked, identify the affected device/view and retain truthful historical labels;
+  leave that screenshot requirement open rather than claiming the refresh is complete.
+
+Documentation-only changes with no changed app appearance need gallery/link checks, not unrelated
+native recapture or a binary release. README previews and Apple listing uploads remain separate.
 
 ## macOS permissions
 

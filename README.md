@@ -85,40 +85,92 @@ make ios-test
 
 ## Screenshots
 
-**macOS**
+**iPhone, iPad and Apple Watch · TestFlight 1.20.2 (42)**
 
-![ListenToMe — four-pane meeting copilot](docs/images/screenshot.png)
+Native app previews use synthetic demonstration content; tap an image to view it at full resolution.
+The six release assets have recorded download/checksum verification. These previews do not update
+Apple's listing or establish physical-device or translation-quality acceptance.
+[Release notes and What to Test](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.2-build42) ·
+[Capture source and all 65 reviewed images](docs/images/ios/release-1.20.2-en-US.json).
 
-**Current iPhone, iPad and Watch previews — TestFlight 1.20.2 (42)**
+### iPhone
 
-These six native-resolution previews use synthetic content. Uploaded GitHub images were downloaded again and their SHA-256 matched; this gallery does not update the App Store listing.
-[Release notes and What to Test](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.2-build42) · [All 65 reviewed captures and QA classifications](docs/images/ios/release-1.20.2-en-US.json).
+<table>
+  <tr>
+    <th align="center">Live translation</th>
+    <th align="center">Translation options</th>
+  </tr>
+  <tr>
+    <td align="center"><a href="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/01-iphone-translation.png"><img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/01-iphone-translation.png" width="220" alt="iPhone live transcript with synthetic translated text, TestFlight 1.20.2 (42)."></a></td>
+    <td align="center"><a href="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/02-iphone-translation-options.png"><img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/02-iphone-translation-options.png" width="220" alt="iPhone on-device translation controls, TestFlight 1.20.2 (42)."></a></td>
+  </tr>
+</table>
 
-<p>
-<img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/01-iphone-translation.png" width="220" alt="iPhone translation layout — synthetic demonstration text.">
-<img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/02-iphone-translation-options.png" width="220" alt="iPhone live translation options.">
-<img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/03-ipad-summary-translation.png" width="220" alt="iPad Summary translation and original — synthetic demonstration text.">
-<img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/04-ipad-wide.png" width="440" alt="iPad wide Live workspace — sample conversation.">
-<img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/05-watch-46-recording.png" width="200" alt="Apple Watch 46 mm recording controls — simulated recording.">
-<img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/06-watch-49-recording.png" width="200" alt="Apple Watch Ultra 49 mm recording controls — simulated recording.">
+**Duo / landscape:** a clean build-42 gallery image is still pending. Its current captures are
+classified as diagnostic QA; the earlier layout is retained in the historical gallery below.
+
+### iPad
+
+<p align="center">
+  <a href="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/03-ipad-summary-translation.png"><img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/03-ipad-summary-translation.png" width="760" alt="iPad Summary with synthetic translation and the original summary, TestFlight 1.20.2 (42)."></a>
+  <br><sub>Summary translation with the original kept alongside.</sub>
 </p>
 
-**Historical iPhone and iPad screenshots** (1.18.2)
-
-<p>
-<img src="docs/images/ios/1.18.2/iphone-01-live.png" width="200" alt="Live transcript and Quick Summary">
-<img src="docs/images/ios/1.18.2/iphone-02-summary.png" width="200" alt="Summary with decisions and next steps">
-<img src="docs/images/ios/1.18.2/iphone-03-prompt.png" width="200" alt="Ask once or save summary instructions below Notes">
-<img src="docs/images/ios/1.18.2/ipad-01-workspace.png" width="300" alt="iPad transcript, Quick Summary and Summary workspace">
+<p align="center">
+  <a href="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/04-ipad-wide.png"><img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/04-ipad-wide.png" width="760" alt="iPad wide workspace with Live transcript, Quick Summary and Summary, TestFlight 1.20.2 (42)."></a>
+  <br><sub>Wide workspace for following the conversation and its summaries.</sub>
 </p>
 
-<img src="docs/images/ios/1.18.2/iphone-04-two-pane.png" width="600" alt="iPhone landscape with independent transcript and Quick Summary panes">
+### Apple Watch
 
-Live transcript with Quick Summary · Summary · conversation prompts · iPad workspace · two-pane iPhone.
-<img src="docs/images/ios/1.18.2/iphone-05-menu.png" width="200" alt="More menu with the restored Full summary icon">
+<table>
+  <tr>
+    <th align="center">46 mm</th>
+    <th align="center">Ultra · 49 mm</th>
+  </tr>
+  <tr>
+    <td align="center"><a href="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/05-watch-46-recording.png"><img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/05-watch-46-recording.png" width="180" alt="Apple Watch 46 mm recording and Stop controls in a simulator, TestFlight 1.20.2 (42)."></a></td>
+    <td align="center"><a href="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/06-watch-49-recording.png"><img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/06-watch-49-recording.png" width="180" alt="Apple Watch Ultra 49 mm recording and Stop controls in a simulator, TestFlight 1.20.2 (42)."></a></td>
+  </tr>
+</table>
 
-Native simulator captures use synthetic content; [capture provenance](docs/images/ios/release-1.18.2-en-US.json).
-The complete four-device release set is preserved locally for the next authorized App Store submission.
+Simulated recording controls; physical microphone, wrist-down and paired-transfer acceptance are separate.
+
+<details>
+<summary>Historical Mac and iPhone/iPad layouts</summary>
+
+**macOS · historical workspace**
+
+This older capture is retained for reference; it does not depict the latest Mac candidate.
+A fresh source-matched Mac gallery remains part of its release checklist.
+
+<p align="center">
+  <a href="docs/images/screenshot.png"><img src="docs/images/screenshot.png" width="760" alt="Historical macOS four-pane meeting workspace; not the latest candidate."></a>
+</p>
+
+**iPhone and iPad · 1.18.2**
+
+These older simulator captures use synthetic content. The Duo image includes partially scrolled
+content and is historical QA, not a clean current release preview.
+[Capture provenance](docs/images/ios/release-1.18.2-en-US.json).
+
+<p align="center">
+  <a href="docs/images/ios/1.18.2/iphone-01-live.png"><img src="docs/images/ios/1.18.2/iphone-01-live.png" width="200" alt="Historical 1.18.2 iPhone Live transcript and Quick Summary."></a>
+  <a href="docs/images/ios/1.18.2/iphone-02-summary.png"><img src="docs/images/ios/1.18.2/iphone-02-summary.png" width="200" alt="Historical 1.18.2 iPhone Summary with decisions and next steps."></a>
+  <a href="docs/images/ios/1.18.2/iphone-03-prompt.png"><img src="docs/images/ios/1.18.2/iphone-03-prompt.png" width="200" alt="Historical 1.18.2 iPhone conversation prompts below Notes."></a>
+</p>
+<p align="center">
+  <a href="docs/images/ios/1.18.2/iphone-04-two-pane.png"><img src="docs/images/ios/1.18.2/iphone-04-two-pane.png" width="760" alt="Historical 1.18.2 iPhone Duo landscape layout with partially scrolled content."></a>
+  <br><sub>Earlier two-pane iPhone layout.</sub>
+</p>
+<p align="center">
+  <a href="docs/images/ios/1.18.2/ipad-01-workspace.png"><img src="docs/images/ios/1.18.2/ipad-01-workspace.png" width="760" alt="Historical 1.18.2 iPad transcript, Quick Summary and Summary workspace."></a>
+</p>
+<p align="center">
+  <a href="docs/images/ios/1.18.2/iphone-05-menu.png"><img src="docs/images/ios/1.18.2/iphone-05-menu.png" width="200" alt="Historical 1.18.2 iPhone More menu with the Full summary icon."></a>
+</p>
+
+</details>
 
 ## Why ListenToMe
 
@@ -296,6 +348,9 @@ Maintainers and agents follow [AGENTS.md](AGENTS.md#release-trains-when-to-publi
 [CLAUDE.md](CLAUDE.md#testflight-and-official-app-store-review). Changes merge with validation and
 the required CI checks; publication is a separate, batched release train.
 
+- **README screenshots:** refresh the gallery for UI changes and every release train. Follow the
+  [device coverage, layout and provenance policy](AGENTS.md#readme-screenshot-gallery), including
+  Mac, iPhone Duo, iPad wide and embedded Watch. Check the rendered desktop/mobile layout and links.
 - **TestFlight:** use the [repository skill](.agents/skills/listentome-testflight/SKILL.md) and
   [iOS release runbook](docs/IOS-RELEASING.md). Complete the accepted upload, processing and existing
   tester-group verification, retain source/artifact receipts and report physical acceptance still

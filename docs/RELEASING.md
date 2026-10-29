@@ -346,6 +346,15 @@ gh release view v<version> --json tagName,targetCommitish,isDraft,isPrerelease
 git ls-remote --tags origin 'v<version>' 'v<version>^{}'   # must resolve to the artifact source commit
 ```
 
+## README release screenshots
+
+Every Mac release train also refreshes the Mac images in `README.md` from its reviewed candidate
+captures. Follow [the gallery policy](../AGENTS.md#readme-screenshot-gallery): give the Mac workspace
+room in a wide row, link the full-resolution original and source/version manifest, and inspect both
+desktop and narrow rendering. Keep iPhone/Duo, iPad and Watch images labelled with their own versions;
+a Mac release does not make those platform images current. Preserve historical images separately.
+An App Store media upload or a screenshot stored only in release evidence does not update the README.
+
 ## Compatibility acceptance
 
 [Device readiness](device-compatibility.md) is part of BDD and installed-app acceptance. Inspect

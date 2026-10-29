@@ -294,8 +294,12 @@ worktree. Screenshots do not replace physical-device acceptance.
    --output-path <screenshots-directory>`, or capture a rendered simulator with
    `xcrun simctl io <device-id> screenshot <file.png>`. Inspect every final image at native resolution
    for clipping, stale copy, keyboard/alert overlays and unintended status text. Do not stretch a
-   smaller image to satisfy a larger display-size requirement. Refresh README/product images when
-   they depict changed screens, while keeping the full release-resolution originals in evidence.
+   smaller image to satisfy a larger display-size requirement. Update the `README.md` gallery on every
+   train from the reviewed set, including iPhone portrait, Duo/landscape, iPad wide and embedded Watch.
+   Follow [the gallery layout and provenance policy](../AGENTS.md#readme-screenshot-gallery): group
+   devices, add captions/alt text/full-size links, retain truthful version/status labels and inspect
+   desktop/mobile rendering. Keep full native-resolution originals in evidence; README updates and
+   Apple listing uploads are separate deliverables.
 4. Before an **authorized App Store submission**, upload the selected current images to the matching
    app-version localization and device-size screenshot sets. Verify the current Apple requirements
    and the slots shown in App Store Connect at release time rather than relying on a fixed size list.
