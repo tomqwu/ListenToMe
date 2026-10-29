@@ -1,0 +1,158 @@
+{
+  "feature": "Explicit on-device History model assets",
+  "scenarios": [
+    {
+      "id": "HISTORYASSET-001",
+      "name": "Explicit installation only",
+      "given": "the optional search model is absent",
+      "when": "History checks readiness",
+      "then": "no download starts and the pinned public model inventory remains fixed",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryModelAssets.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryModelAssetsTests.swift",
+          "test": "HistoryModelAssetsTests/testReadinessNeverDownloadsAndProductionManifestIsPinned"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYASSET-002",
+      "name": "Verified local installation",
+      "given": "the user explicitly installs the optional model",
+      "when": "all pinned assets finish downloading",
+      "then": "only complete size/hash-verified files become available and a new owner can reopen them without downloading",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryModelAssets.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryModelAssetsTests.swift",
+          "test": "HistoryModelAssetsTests/testExplicitInstallPublishesOnlyVerifiedFilesAndReopensOffline"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYASSET-003",
+      "name": "Invalid download cleanup",
+      "given": "a public model download has wrong bytes or size",
+      "when": "verification completes",
+      "then": "the model stays unavailable and only this attempt staging is removed",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryModelAssets.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryModelAssetsTests.swift",
+          "test": "HistoryModelAssetsTests/testBadHashOrSizeNeverPublishesAndCleansOnlyOwnedStaging"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYASSET-004",
+      "name": "Cancelled download",
+      "given": "an optional model download is pending",
+      "when": "installation is cancelled before its late producer returns",
+      "then": "no model becomes available and temporary files are removed",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryModelAssets.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryModelAssetsTests.swift",
+          "test": "HistoryModelAssetsTests/testCancelledInstallCannotPublishLateDownload"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYASSET-005",
+      "name": "Removal revokes an in-flight installation",
+      "given": "a model download ignores cancellation until it returns",
+      "when": "the user removes the optional model",
+      "then": "the owned download finishes cleanup without restoring removed files or reporting late progress, and later explicit installation remains possible",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryModelAssets.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryModelAssetsTests.swift",
+          "test": "HistoryModelAssetsTests/testRemoveWaitsForOwnedDownloadAndPreventsLateReappearance"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYASSET-006",
+      "name": "Local integrity and removal",
+      "given": "an installed optional model has a corrupted, missing or symlinked asset",
+      "when": "History checks readiness and the user removes it",
+      "then": "it is unavailable without a download and removal leaves unrelated external bytes intact",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryModelAssets.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryModelAssetsTests.swift",
+          "test": "HistoryModelAssetsTests/testCorruptMissingAndSymlinkAssetsAreNotReady"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYASSET-007",
+      "name": "Model ownership never follows external links",
+      "given": "the model owner directory or a non-system ancestor is a symlink to an existing external model",
+      "when": "readiness, installation or removal is requested",
+      "then": "readiness stays unavailable, explicit actions refuse before downloading or deleting, and the external model remains unchanged",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryModelAssets.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryModelAssetsTests.swift",
+          "test": "HistoryModelAssetsTests/testSymlinkedOwnerOrAncestorCannotReadInstallOrRemoveExternalModel"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYASSET-008",
+      "name": "Downloaded links cannot modify other files",
+      "given": "a downloader returns a symbolic link to an external file",
+      "when": "installation verifies the downloaded file",
+      "then": "installation refuses without changing the external bytes or permissions",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryModelAssets.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryModelAssetsTests.swift",
+          "test": "HistoryModelAssetsTests/testDownloadedSymlinkIsRejectedBeforeChangingExternalPermissions"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYASSET-009",
+      "name": "Changed owner cannot redirect staging cleanup",
+      "given": "a public model download is pending in its owned staging folder",
+      "when": "the owner folder is moved and replaced with a link to an external folder containing a same-named stage",
+      "then": "installation refuses, external bytes remain intact and original staging is preserved for safe later cleanup",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryModelAssets.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryModelAssetsTests.swift",
+          "test": "HistoryModelAssetsTests/testChangedOwnerPreservesExternalStageAndQuarantinesOriginal"
+        }
+      ]
+    }
+  ]
+}

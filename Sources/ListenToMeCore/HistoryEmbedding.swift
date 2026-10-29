@@ -18,20 +18,22 @@ public struct HistoryVector: Sendable, Equatable {
 }
 
 /// Turns text into vectors on this device. Nothing here may contact a server.
+/// Async requirements allow a serial model runtime to suspend without blocking the index actor.
+/// Existing synchronous embedders remain valid witnesses; cancellation is fenced by the index.
 public protocol HistoryEmbedder: Sendable {
     /// Names the embedding method. Changing it invalidates every stored vector.
     var signature: String { get }
     /// The vector for a passage, or nil when no on-device model covers the passage's language.
-    func embed(_ text: String) -> HistoryVector?
+    func embed(_ text: String) async -> HistoryVector?
     /// The same, for a passage whose transcription language is known (a BCP-47 or locale identifier).
-    func embed(_ text: String, transcribedIn language: String) -> HistoryVector?
+    func embed(_ text: String, transcribedIn language: String) async -> HistoryVector?
     /// Vectors for a search query, one per stored model the query plausibly belongs to. Queries are
     /// short, so the language is chosen among the models the index already holds.
-    func embedQuery(_ query: String, models: Set<String>) -> [HistoryVector]
+    func embedQuery(_ query: String, models: Set<String>) async -> [HistoryVector]
 }
 
 public extension HistoryEmbedder {
-    func embed(_ text: String, transcribedIn language: String) -> HistoryVector? { embed(text) }
+    func embed(_ text: String, transcribedIn language: String) async -> HistoryVector? { await embed(text) }
 }
 
 /// Apple NaturalLanguage embeddings, entirely on device. A passage's language is detected per

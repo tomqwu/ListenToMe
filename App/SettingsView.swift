@@ -310,6 +310,9 @@ struct SettingsView: View {
             MacVaultSettings()
 
             Divider()
+            HistoryLanguageSettings()
+
+            Divider()
             MacVocabularySettings()
 
             Divider()

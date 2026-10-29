@@ -451,6 +451,8 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   history** answers the search text as a question from the best matching excerpts (never whole
   conversations) with the Deep pane's model and cites the conversations it used; on Ollama Cloud,
   Cloud AI or an OpenAI-compatible server the sheet says the excerpts are sent there first (#57).
+  The [optional multilingual model work](docs/history-search-implementation.md) is an unmerged
+  #223 implementation: language-quality acceptance is still failing, so it is not added language support.
 - **Export (⌘E).** Export the current conversation as Markdown; the Export menu also offers plain
   text, SRT and WebVTT subtitles, JSON, recap and PDF. Files are named after the conversation's title
   and date. Timestamps and subtitles need an engine that reports times: SpeechAnalyzer and WhisperKit

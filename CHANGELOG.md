@@ -32,6 +32,13 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased)
 
+- Refresh active History results after saved text finishes indexing, and prevent older indexing
+  batches from restoring cleared derived data. Model transitions keep exact-word search available
+  and wait before sending an Ask request. (#223)
+- Correct Settings to explain continued screen-lock recording and paused optional AI updates.
+- In progress: optional local History model download, cancellation, opt-in and removal. Additional
+  language quality has not passed; this draft feature is not ready for distribution. (#223)
+
 - Keep saved-audio labels and elapsed/duration readable at accessibility text sizes, with usable playback controls and transcript scrolling on iPhone and iPad.
 - Make essential translation explanations, setup status and recovery messages easier to read with stronger native foreground colors, preserving the existing layout and translation behavior. (#346)
 - Long-press an identified transcript line and choose **Rename speaker**. Save updates every line for that speaker in the conversation and Notes; Cancel leaves the name unchanged. Available in portrait, expanded transcript and Duo. (#334)
@@ -160,6 +167,12 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 - Settings → Privacy now explains that optional Ollama, Cloud AI and OpenAI-compatible requests send text and included context to the provider you choose; Apple Intelligence stays on-device. (#247)
 
 ## macOS (unreleased since 1.4.4)
+
+- Refresh active History results after saved text finishes indexing, and prevent older indexing
+  batches from restoring cleared derived data. Model transitions keep exact-word search available
+  and wait before sending an Ask request. (#223)
+- In progress: optional local History model download, cancellation, opt-in and removal. Additional
+  language quality has not passed; this draft feature is not ready for distribution. (#223)
 
 - Make essential translation explanations, setup status and recovery messages easier to read with stronger native foreground colors, preserving the existing layout and translation behavior. (#346)
 - Double-click an identified transcript speaker label, or choose **Rename speaker** from its context menu. Save updates that speaker across the conversation, including reopened conversations; Cancel leaves the name unchanged. (#334)

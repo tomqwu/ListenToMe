@@ -1,0 +1,22 @@
+{
+  "feature": "Accurate recording Settings disclosure",
+  "scenarios": [
+    {
+      "id": "RECORDINGCOPY-001",
+      "name": "Settings describes established background capture accurately",
+      "given": "the iPhone or iPad app supports continued user-started microphone capture while inactive",
+      "when": "the user reads the Recording explanation in Settings",
+      "then": "it explains that capture continues when the screen locks, optional AI pauses, and interruption behavior is distinct from backgrounding",
+      "covers": [
+        "iOS/MobileMeetingView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileRecordingContinuityUITests.swift",
+          "test": "MobileRecordingContinuityUITests/testSettingsDescribeContinuedScreenLockRecording"
+        }
+      ]
+    }
+  ]
+}

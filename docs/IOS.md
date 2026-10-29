@@ -5,6 +5,14 @@ The first iOS version is a standalone app, separate from the macOS release. It r
 **1.19.1 (39)** and the latest TestFlight version is **1.20.2 (42)**. See the
 [public availability observation](releases/ios-1.19.1-build39-public.json).
 
+## Unreleased History work
+
+The current draft adds explicit local model download/cancel/remove controls, safer asynchronous
+History indexing and refreshed search after saving. The optional multilingual backend still fails
+its language-quality gate; it is not ready for distribution. [Implementation and BDD evidence](history-search-implementation.md).
+Settings also corrects its screen-lock explanation to match continued user-started recording.
+No version or in-app release-note announcement has been advanced for this incomplete work.
+
 ## Current TestFlight beta — 1.20.2 (42)
 
 Apple accepted **1.20.2 (42)** through the official TestFlight helper at **2026-10-28T21:11:37.664213+00:00** from `a6b90e83f775cc9dc88df3c2805ecacedca044af`. Apple build `8967f095-470f-40c0-aba0-b1188bbb699c` is **VALID / IN_BETA_TESTING**. Readback at 2026-10-28T21:15:33.796221+00:00 confirms **en-US**, **Listen To Me - Real Time AI**, exact beta description/What to Test and unchanged access for the existing two-member Dev group. Access does not establish physical installation of build 42.

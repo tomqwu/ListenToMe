@@ -367,11 +367,14 @@ extension MobileMeetingView {
                 MobileVaultSettings(session: session)
                 MobileSavedAudioSettings(savedAudio: session.savedAudio)
                 MobileAutoTitleSettings()
+                Section { HistoryLanguageSettings() }
                 Section("Recording") {
-                    Text("This version records the microphone while the app is open. " +
-                         "Backgrounding or a call stops recording and saves the conversation, and the status line " +
-                         "says which. Recording resumes on its own when the system says the interruption is over. " +
+                    Text("After you start listening, microphone recording continues when the screen locks " +
+                         "or you switch apps. Tap Stop listening to end it. Optional AI updates pause while " +
+                         "the app is inactive and resume when you return. A call can interrupt recording; " +
+                         "your transcript is saved, and recording can resume when the system allows it. " +
                          "Connecting or disconnecting a microphone keeps recording on the input that remains.")
+                        .accessibilityIdentifier("recordingExplanation")
                     Text("System audio, call recording and Mac sync are not included.")
                 }
                 Section("Privacy") {

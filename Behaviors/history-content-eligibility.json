@@ -1,0 +1,76 @@
+{
+  "feature": "Capability-aware History content eligibility",
+  "scenarios": [
+    {
+      "id": "HISTORYCONTENT-001",
+      "name": "Lexically supported Spanish rejects non-topical speech",
+      "given": "Spanish lexical tagging is available on the device",
+      "when": "the optional History backend checks filler, a generic decision query and real topic content",
+      "then": "filler and generic queries are insufficient while topic passages and short topical queries remain eligible",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryContentEligibility.swift",
+        "SharedPlatform/MultilingualHistoryEmbedder.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryContentEligibilityTests.swift",
+          "test": "HistoryContentEligibilityTests/testSpanishSmallTalkAndGenericQueryAreRejectedButTopicsRemainEligible"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYCONTENT-002",
+      "name": "Unavailable lexical tagging remains unknown",
+      "given": "a language does not advertise lexical tagging on the current runtime",
+      "when": "filler or topic text is checked for History content eligibility",
+      "then": "neither fallback OtherWord tags nor missing tags are treated as known noun evidence; eligibility stays unknown",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryContentEligibility.swift",
+        "SharedPlatform/MultilingualHistoryEmbedder.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryContentEligibilityTests.swift",
+          "test": "HistoryContentEligibilityTests/testUnavailableLexicalTagsRemainUnknownForFillerAndTopics"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYCONTENT-003",
+      "name": "Existing English content rules remain intact",
+      "given": "English lexical tagging is available and language may be explicit or detected",
+      "when": "History content eligibility is checked",
+      "then": "existing generic meeting nouns and vague queries are insufficient, topic nouns remain eligible and empty text is insufficient",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryContentEligibility.swift",
+        "SharedPlatform/MultilingualHistoryEmbedder.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryContentEligibilityTests.swift",
+          "test": "HistoryContentEligibilityTests/testEnglishGenericNounsAndLanguageDetectionReuseExistingRules"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYCONTENT-004",
+      "name": "Unhinted single-word queries do not lose compatible model routing",
+      "given": "a short History query has one word and no explicit language hint",
+      "when": "language or lexical tagging could assign that word different meanings across languages",
+      "then": "content eligibility remains unknown so the query can reach compatible stored models; explicit language hints and real multiword insufficient content retain their policy",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryContentEligibility.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryContentEligibilityTests.swift",
+          "test": "HistoryContentEligibilityTests/testUnhintedSingleWordQueriesRemainUnknownButExplicitLanguageStillApplies"
+        }
+      ]
+    }
+  ]
+}

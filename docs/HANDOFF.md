@@ -1,3 +1,29 @@
+# In progress: History implementation and regression fixes — October 29, 2026
+
+This checkpoint adds actual #223 application/Core code on top of `57ac48f`; it is unmerged and
+**not ready for distribution**. Existing PR #318 remains the single draft. The earlier complete
+validation and installed acceptance below apply to their recorded sources, not this new work.
+
+- Added an asynchronous optional local model runtime, explicit verified asset installation and
+  Settings download/Cancel/opt-in/Remove controls for Mac and iPhone/iPad. Apple remains default;
+  no conversation/query upload or additional model download occurred during development.
+- Reproduced and fixed stale search results after saving, an older queued save restoring derived
+  data after Clear, failed model-switch recovery, legacy-cache reuse and short-query misrouting.
+  The real iOS Form also exposed an adjacent destructive-action tap hazard; separate rows repair it.
+  Settings now accurately describes screen-lock recording and paused optional AI work.
+- Current Core: **1,293 tests / seven optional skips / zero failures / 98.0316% coverage**.
+  Mac: **17 functional methods pass**; all **six actual-model runtime methods pass on iOS simulator**.
+  Three Settings journeys pass on iPhone and together on iPad; fresh QA screenshots are preserved
+  and inspected. **234 BDD scenarios** pass structural/change coverage against the actual PR base.
+- The separate real-model quality gate remains failed: DE **2/8**, ES **1/8**, JA **4/8**, KO **2/8**
+  paraphrases versus the unchanged six-of-eight requirement, with remaining filler/negative errors.
+  No threshold or corpus label was loosened. Additional language coverage is not established.
+- Full combined validation, exact-head CI, merge and affected installed/physical acceptance remain
+  open. No release version, TestFlight upload, App Store submission or listing-media upload was made.
+  Do not infer current production readiness from earlier source passes or this focused runtime work.
+
+[Implementation, BDD evidence and remaining limits](history-search-implementation.md).
+
 # Backlog evidence checkpoint — October 29, 2026
 
 The combined application/test source remains `02205d278197d67c0cb29606e3fa63b2c6547c00`.

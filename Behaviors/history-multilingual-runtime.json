@@ -1,0 +1,224 @@
+{
+  "feature": "Optional local multilingual history embedding runtime",
+  "scenarios": [
+    {
+      "id": "HISTORYMPNET-009",
+      "name": "Both apps include the optional runtime dependency licenses",
+      "given": "the optional History runtime is included in the Mac and iPhone/iPad applications",
+      "when": "their shared acknowledgements are packaged",
+      "then": "every resolved package, including the embedding, tensor-file and tokenizer packages, retains its matching revision and license",
+      "covers": [
+        "project.yml",
+        "Config/Package.resolved",
+        "App/ThirdPartyNotices.txt"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/ThirdPartyNoticesTests.swift",
+          "test": "ThirdPartyNoticesTests/testShippedNoticesCoverEveryResolvedPackage"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYMPNET-001",
+      "name": "Installed multilingual runtime produces comparable local vectors",
+      "given": "explicit verified local MPNet assets and short German, Spanish, Japanese and Korean history text",
+      "when": "the native adapter embeds passages and matching queries",
+      "then": "finite normalized 768-dimensional vectors share the pinned MPNet identity and queries never mix Apple model tags",
+      "covers": [
+        "SharedPlatform/MultilingualHistoryEmbedder.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacMultilingualHistoryEmbedderTests.swift",
+          "test": "MacMultilingualHistoryEmbedderTests/testInstalledRuntimeProducesPinnedLocalVectors"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MultilingualHistoryEmbedderTests.swift",
+          "test": "MultilingualHistoryEmbedderTests/testInstalledRuntimeProducesPinnedLocalVectors"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYMPNET-002",
+      "name": "Existing Apple routing remains the default",
+      "given": "no optional runtime or a language outside the four optional languages",
+      "when": "history text is embedded",
+      "then": "the existing Apple adapter receives unchanged text and language and its vector is retained",
+      "covers": [
+        "SharedPlatform/MultilingualHistoryEmbedder.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacMultilingualHistoryEmbedderTests.swift",
+          "test": "MacMultilingualHistoryEmbedderTests/testAbsentRuntimeAndOtherLanguagesKeepAppleRouting"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MultilingualHistoryEmbedderTests.swift",
+          "test": "MultilingualHistoryEmbedderTests/testAbsentRuntimeAndOtherLanguagesKeepAppleRouting"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYMPNET-003",
+      "name": "Oversized multilingual passages do not discard their tail",
+      "given": "a passage exceeding the 128-token model bound with a different topic at its end",
+      "when": "history requests its semantic vector",
+      "then": "no prefix-only vector is returned so complete original text remains eligible for keyword search",
+      "covers": [
+        "SharedPlatform/MultilingualHistoryEmbedder.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacMultilingualHistoryEmbedderTests.swift",
+          "test": "MacMultilingualHistoryEmbedderTests/testLongTailIsNotSilentlyTruncated"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MultilingualHistoryEmbedderTests.swift",
+          "test": "MultilingualHistoryEmbedderTests/testLongTailIsNotSilentlyTruncated"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYMPNET-004",
+      "name": "Cancelled and unavailable local runtimes do not publish vectors",
+      "given": "a cancelled request or an explicitly selected missing local model directory",
+      "when": "history requests an optional-language vector",
+      "then": "no vector or network fallback is produced and an unrelated stored model cannot receive a query vector",
+      "covers": [
+        "SharedPlatform/MultilingualHistoryEmbedder.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacMultilingualHistoryEmbedderTests.swift",
+          "test": "MacMultilingualHistoryEmbedderTests/testCancellationMissingAssetsAndModelIsolation"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MultilingualHistoryEmbedderTests.swift",
+          "test": "MultilingualHistoryEmbedderTests/testCancellationMissingAssetsAndModelIsolation"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYMPNET-005",
+      "name": "German meaning search retains the existing semantic acceptance contract",
+      "given": "explicit installed local MPNet assets and German translations of the existing eight-topic corpus, eight paraphrases, ten unrelated queries and three small-talk records",
+      "when": "actual HistoryIndex indexes and searches the corpus using unchanged production ranking parameters",
+      "then": "at least six paraphrases find the intended first Related conversation without keyword credit, unrelated queries yield no Related or meaning-only Ask passages, and the first two small-talk passages have no semantic vector",
+      "covers": [
+        "SharedPlatform/MultilingualHistoryEmbedder.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MultilingualHistoryQualityTests.swift",
+          "test": "MultilingualHistoryQualityTests/testGermanParaphrasesNegativesAndSmallTalk"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYMPNET-006",
+      "name": "Spanish meaning search retains the existing semantic acceptance contract",
+      "given": "explicit installed local MPNet assets and Spanish translations of the existing eight-topic corpus, eight paraphrases, ten unrelated queries and three small-talk records",
+      "when": "actual HistoryIndex indexes and searches the corpus using unchanged production ranking parameters",
+      "then": "at least six paraphrases find the intended first Related conversation without keyword credit, unrelated queries yield no Related or meaning-only Ask passages, and the first two small-talk passages have no semantic vector",
+      "covers": [
+        "SharedPlatform/MultilingualHistoryEmbedder.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MultilingualHistoryQualityTests.swift",
+          "test": "MultilingualHistoryQualityTests/testSpanishParaphrasesNegativesAndSmallTalk"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYMPNET-007",
+      "name": "Japanese meaning search retains the existing semantic acceptance contract",
+      "given": "explicit installed local MPNet assets and Japanese translations of the existing eight-topic corpus, eight paraphrases, ten unrelated queries and three small-talk records",
+      "when": "actual HistoryIndex indexes and searches the corpus using unchanged production ranking parameters",
+      "then": "at least six paraphrases find the intended first Related conversation without keyword credit, unrelated queries yield no Related or meaning-only Ask passages, and the first two small-talk passages have no semantic vector",
+      "covers": [
+        "SharedPlatform/MultilingualHistoryEmbedder.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MultilingualHistoryQualityTests.swift",
+          "test": "MultilingualHistoryQualityTests/testJapaneseParaphrasesNegativesAndSmallTalk"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYMPNET-008",
+      "name": "Korean meaning search retains the existing semantic acceptance contract",
+      "given": "explicit installed local MPNet assets and Korean translations of the existing eight-topic corpus, eight paraphrases, ten unrelated queries and three small-talk records",
+      "when": "actual HistoryIndex indexes and searches the corpus using unchanged production ranking parameters",
+      "then": "at least six paraphrases find the intended first Related conversation without keyword credit, unrelated queries yield no Related or meaning-only Ask passages, and the first two small-talk passages have no semantic vector",
+      "covers": [
+        "SharedPlatform/MultilingualHistoryEmbedder.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MultilingualHistoryQualityTests.swift",
+          "test": "MultilingualHistoryQualityTests/testKoreanParaphrasesNegativesAndSmallTalk"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYMPNET-010",
+      "name": "Short queries reach every compatible stored embedding model",
+      "given": "an explicitly installed MPNet runtime and an index containing both MPNet and Apple model tags",
+      "when": "German, Spanish, Japanese, Korean, English and ambiguous short queries are embedded",
+      "then": "each compatible stored model receives exactly one finite query vector regardless of the guessed query language, while unknown model tags receive none",
+      "covers": [
+        "SharedPlatform/MultilingualHistoryEmbedder.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacMultilingualHistoryEmbedderTests.swift",
+          "test": "MacMultilingualHistoryEmbedderTests/testStoredModelsReceiveShortAndAmbiguousQueriesWithoutLanguageGuessFiltering"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MultilingualHistoryEmbedderTests.swift",
+          "test": "MultilingualHistoryEmbedderTests/testStoredModelsReceiveShortAndAmbiguousQueriesWithoutLanguageGuessFiltering"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYMPNET-011",
+      "name": "Eligibility upgrades discard stale persisted semantic vectors",
+      "given": "a persisted history index containing filler vectors from the former mean128-v1 embedding policy",
+      "when": "the current optional runtime opens that index and synchronizes the same conversation",
+      "then": "legacy derived vectors are removed before reuse, unchanged original text is reconsidered under the new policy, and conversation content is preserved without downloading assets",
+      "covers": [
+        "SharedPlatform/MultilingualHistoryEmbedder.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacMultilingualHistoryEmbedderTests.swift",
+          "test": "MacMultilingualHistoryEmbedderTests/testEligibilityUpgradeInvalidatesPersistedLegacyVectorsBeforeReuse"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MultilingualHistoryEmbedderTests.swift",
+          "test": "MultilingualHistoryEmbedderTests/testEligibilityUpgradeInvalidatesPersistedLegacyVectorsBeforeReuse"
+        }
+      ]
+    }
+  ]
+}

@@ -2,6 +2,25 @@ import XCTest
 
 @MainActor
 final class MobileRecordingContinuityUITests: XCTestCase {
+    func testSettingsDescribeContinuedScreenLockRecording() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-mobileAIProvider", "apple", "-autoQuickSummary", "NO"]
+        app.launchEnvironment["LISTENTOME_HISTORY_MODEL_FIXTURE"] = "absent"
+        XCUIDevice.shared.orientation = .portrait
+        app.launchPastReleaseNotes()
+        defer { app.terminate() }
+        app.buttons["More"].tap(); app.buttons["Settings"].tap()
+        let explanation = app.staticTexts["recordingExplanation"]
+        revealSettingsControl(explanation, in: app.collectionViews["aiSettingsForm"])
+        XCTAssertTrue(explanation.isHittable)
+        XCTAssertTrue(explanation.label.contains("continues when the screen locks"))
+        XCTAssertTrue(explanation.label.contains("Optional AI updates pause"))
+        XCTAssertTrue(explanation.label.contains("A call can interrupt recording"))
+        XCTAssertTrue(explanation.label.contains("recording can resume when the system allows it"))
+        XCTAssertFalse(explanation.label.contains("Backgrounding or a call stops recording"))
+        capture(app, "Settings explains screen lock recording and optional AI")
+    }
+
     func testHomeReturnKeepsOneVisibleRecordingAndExplicitStopEndsIt() {
         let app = XCUIApplication()
         app.launchArguments = ["--recording-continuity-fixture", "-autoQuickSummary", "NO",

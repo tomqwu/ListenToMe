@@ -218,7 +218,8 @@ final class HistoryIndexTests: XCTestCase {
                                    segments: segments)
         try await index(recorder).sync([record])
         XCTAssertEqual(recorder.languages, [nil, "fr_FR"], "Summary detected; transcript lines use their language")
-        XCTAssertNotNil(TopicEmbedder().embed("budget", transcribedIn: "en"), "The protocol default detects")
+        let defaultVector = await TopicEmbedder().embed("budget", transcribedIn: "en")
+        XCTAssertNotNil(defaultVector, "The protocol default detects")
     }
 
     func testUpdateEmbedsOneSavedConversationAndLeavesTheRest() async throws {

@@ -1,5 +1,12 @@
 # Additional semantic-search languages — #223 evaluation
 
+## Unmerged implementation checkpoint, October 29, 2026
+
+The [optional-model implementation](history-search-implementation.md) now exercises the real native
+MPNet runtime and explicit asset controls in the applications. It is still incomplete: the translated
+original-style paraphrase/negative suites fail under unchanged ranking. These implementation results
+do not replace, relabel or waive any historical evaluation below, and do not establish added language support.
+
 ## Native topical baseline, October 29, 2026
 
 The current native diagnostic exposes omissions in the existing Related behavior; it does not

@@ -44,7 +44,7 @@ public actor HistoryIndex {
     static let fileExtension = "vectors"
 
     public nonisolated let directory: URL
-    private let embedder: any HistoryEmbedder
+    private var embedder: any HistoryEmbedder
     private let memoryBudget: Int
     private let parameters: HistoryRanking.Parameters
     private let fileManager = FileManager.default
@@ -55,6 +55,11 @@ public actor HistoryIndex {
     /// Bumped by every removal, so a sync that is still running with an older list of conversations
     /// stops at the next conversation instead of embedding ones that were deleted meanwhile.
     private var removals = 0
+    /// Publication revisions fence suspended searches; tokens make the latest save own its record.
+    private var revision = 0
+    private var pending: [String: UUID] = [:]
+    private var requestSerial = 0
+    private var requests: [String: Int] = [:]
     /// Conversations deleted while this index is open. Their IDs are never embedded again, whatever
     /// list of conversations a later call still carries.
     private var deleted: Set<String> = []
@@ -72,25 +77,48 @@ public actor HistoryIndex {
         archive.deletingLastPathComponent().appendingPathComponent(folderName, isDirectory: true)
     }
 
+    /// Replaces only the derived backend on this actor, so old suspended work cannot republish.
+    /// A storage failure leaves the old backend selected; its derived data may need rebuilding.
+    public func setEmbedder(_ replacement: any HistoryEmbedder) throws {
+        try Task.checkCancellation()
+        guard replacement.signature != embedder.signature else { return }
+        try wipe()
+        let previous = embedder
+        embedder = replacement
+        catalog = nil
+        do { try prepare() } catch {
+            embedder = previous
+            catalog = nil
+            throw error
+        }
+    }
+
     /// IDs that currently have vectors on disk.
     public func indexedIDs() throws -> Set<String> { Set(try load().keys) }
 
     // MARK: - Maintenance
 
     /// Brings the index in line with `records`: embeds new or changed conversations and drops the
-    /// vectors of conversations that are gone. Cancellation stops between conversations.
+    /// vectors of conversations that are gone. Cancellation never publishes a partial conversation.
     @discardableResult
     public func sync(_ records: [SessionRecord]) async throws -> HistoryIndexReport {
+        guard !Task.isCancelled else { return HistoryIndexReport() }
         let mine = removals
         var report = HistoryIndexReport()
         let wanted = Set(records.map(\.id))
+        requestSerial += 1
+        let request = requestSerial
+        // Reserve the whole archive snapshot before the first await, including unvisited records.
+        // A newer snapshot also revokes records absent from its archive.
+        for id in Set(requests.keys).union(wanted) { requests[id] = request }
+        for id in pending.keys where !wanted.contains(id) { pending[id] = nil }
         for id in try load().keys where !wanted.contains(id) {
             try deleteFile(id)
             report.removed += 1
         }
         for record in records {
             guard !Task.isCancelled, removals == mine else { break }
-            switch try embed(record) {
+            switch try await embed(record, request: request) {
             case .unchanged: report.unchanged += 1
             case .embedded: report.embedded += 1; await Task.yield()
             case .skipped: continue
@@ -102,16 +130,28 @@ public actor HistoryIndex {
     /// Embeds one saved conversation if its text changed. Leaves every other conversation alone,
     /// so it is the cheap call to make after each save. Returns true when new vectors were written.
     @discardableResult
-    public func update(_ record: SessionRecord) throws -> Bool {
+    public func update(_ record: SessionRecord) async throws -> Bool {
+        guard !Task.isCancelled, Self.isValidID(record.id), !deleted.contains(record.id) else { return false }
         _ = try load()
-        return try embed(record) == .embedded
+        requestSerial += 1
+        requests[record.id] = requestSerial
+        return try await embed(record, request: requestSerial) == .embedded
     }
 
     private enum Outcome { case unchanged, embedded, skipped }
 
-    /// Synchronous from the fingerprint check to the write, so a deletion cannot slip in between.
-    private func embed(_ record: SessionRecord) throws -> Outcome {
-        guard Self.isValidID(record.id), !deleted.contains(record.id) else { return .skipped }
+    /// Accumulates privately across suspension and publishes only while this save still owns its record.
+    private func embed(_ record: SessionRecord, request: Int) async throws -> Outcome {
+        guard !Task.isCancelled, Self.isValidID(record.id), !deleted.contains(record.id),
+              requests[record.id] == request else { return .skipped }
+        let token = UUID()
+        let generation = removals
+        pending[record.id] = token
+        defer { if pending[record.id] == token { pending[record.id] = nil } }
+        func isOwned() -> Bool {
+            !Task.isCancelled && removals == generation && pending[record.id] == token
+                && requests[record.id] == request && !deleted.contains(record.id)
+        }
         let chunks = HistoryChunker.chunks(for: record)
         let fingerprint = HistoryChunker.fingerprint(chunks, salt: embedder.signature)
         if catalog?[record.id]?.fingerprint == fingerprint { return .unchanged }
@@ -121,22 +161,29 @@ public actor HistoryIndex {
         var reusable = Dictionary(previous.map { ($0.fingerprint, $0) },
                                   uniquingKeysWith: { first, _ in first })
         var unavailable = Set<UInt64>()
-        let vectors = chunks.compactMap { chunk -> StoredChunkVector? in
+        var vectors: [StoredChunkVector] = []
+        for chunk in chunks {
             let passageFingerprint = HistoryChunker.fingerprint([chunk], salt: embedder.signature)
             if let stored = reusable[passageFingerprint] {
-                return StoredChunkVector(ordinal: chunk.ordinal, model: stored.model, scale: stored.scale,
-                                         values: stored.values, fingerprint: passageFingerprint)
+                vectors.append(StoredChunkVector(ordinal: chunk.ordinal, model: stored.model, scale: stored.scale,
+                                                values: stored.values, fingerprint: passageFingerprint))
+                continue
             }
-            guard !unavailable.contains(passageFingerprint) else { return nil }
-            let embedded = chunk.language.map { embedder.embed(chunk.text, transcribedIn: $0) }
-                ?? embedder.embed(chunk.text)
-            let vector = embedded
-                .map { StoredChunkVector(ordinal: chunk.ordinal, vector: $0, fingerprint: passageFingerprint) }
-            // Retry unavailable assets on a later changed save; only deduplicate this update.
+            guard !unavailable.contains(passageFingerprint) else { continue }
+            let embedded: HistoryVector?
+            if let language = chunk.language {
+                embedded = await embedder.embed(chunk.text, transcribedIn: language)
+            } else {
+                embedded = await embedder.embed(chunk.text)
+            }
+            guard isOwned() else { return .skipped }
+            let vector = embedded.map { StoredChunkVector(ordinal: chunk.ordinal, vector: $0,
+                                                         fingerprint: passageFingerprint) }
             if vector == nil { unavailable.insert(passageFingerprint) }
             reusable[passageFingerprint] = vector
-            return vector
+            if let vector { vectors.append(vector) }
         }
+        guard isOwned() else { return .skipped }
         try store(StoredRecordVectors(fingerprint: fingerprint, chunks: vectors), for: record.id)
         return .embedded
     }
@@ -153,6 +200,7 @@ public actor HistoryIndex {
     /// Drops every vector (Clear history). The folder and its version marker stay. The IDs indexed
     /// until now are never embedded again; a conversation saved afterwards is.
     public func removeAll() throws {
+        deleted.formUnion(requests.keys)
         deleted.formUnion((try? load().keys).map(Array.init) ?? [])
         try wipe()
     }
@@ -160,14 +208,15 @@ public actor HistoryIndex {
     /// Deletes every vector file; the conversations may be embedded again (rebuild).
     private func wipe() throws {
         removals += 1
+        revision += 1
+        pending.removeAll()
+        // Invalidate memory even if storage removal fails partway; the next read reloads disk.
+        defer { catalog = nil; cache = [:]; cachedBytes = 0 }
         try prepare()
         for url in try fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
         where url.pathExtension == Self.fileExtension {
             try fileManager.removeItem(at: url)
         }
-        catalog = [:]
-        cache = [:]
-        cachedBytes = 0
     }
 
     /// Discards everything and embeds `records` from scratch.
@@ -236,9 +285,11 @@ public actor HistoryIndex {
         forget(id)
         catalog?[id] = (vectors.fingerprint, Set(vectors.chunks.map(\.model)))
         remember(vectors, for: id)
+        revision += 1
     }
 
     private func deleteFile(_ id: String) throws {
+        revision += 1
         let url = location(id)
         if fileManager.fileExists(atPath: url.path) { try fileManager.removeItem(at: url) }
         catalog?[id] = nil
@@ -273,7 +324,9 @@ extension HistoryIndex {
     /// Hybrid search over `records` (the archive as the caller has it). Keyword matches are all
     /// kept; conversations found only by meaning are added within `HistoryRanking.Parameters`.
     /// Conversations whose language has no on-device model are found by keyword exactly as before.
-    public func search(_ query: String, in records: [SessionRecord]) -> [HistorySearchResult] {
+    public func search(_ query: String, in records: [SessionRecord]) async -> [HistorySearchResult] {
+        guard !Task.isCancelled else { return [] }
+        let records = records.filter { !deleted.contains($0.id) }
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             return records.sorted { $0.date > $1.date }
@@ -282,7 +335,9 @@ extension HistoryIndex {
         let terms = SessionSearch.fold(trimmed).split(whereSeparator: \.isWhitespace).map(String.init)
         let keyword = SessionSearch.search(records, query: trimmed)
         let byID = Dictionary(records.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-        let scan = semanticScan(trimmed, ids: Set(byID.keys))
+        let observed = revision
+        let scan = await semanticScan(trimmed, ids: Set(byID.keys))
+        guard !Task.isCancelled, revision == observed else { return [] }
 
         // Best first; a passage is only trusted while its conversation still has the text it was
         // computed from, so stale vectors are dropped *before* the best score is taken.
@@ -323,9 +378,13 @@ extension HistoryIndex {
     /// when its meaning passes the same relevance test as a "Related" search result; nothing below
     /// that is ever sent to a provider. Ranked by similarity plus the share of the words it holds.
     public func retrieve(_ question: String, in records: [SessionRecord], limit: Int = 6,
-                         perConversation: Int = 2) -> [HistoryPassage] {
+                         perConversation: Int = 2) async -> [HistoryPassage] {
+        guard !Task.isCancelled else { return [] }
+        let records = records.filter { !deleted.contains($0.id) }
+        let observed = revision
         let terms = HistoryQuestion.contentTerms(question)
-        let queries = queryVectors(question)
+        let queries = await queryVectors(question)
+        guard !Task.isCancelled, revision == observed else { return [] }
         struct Candidate { let passage: HistoryPassage; let words: Float; let meaning: Float? }
         var candidates: [Candidate] = []
         for record in records {
@@ -381,8 +440,8 @@ extension HistoryIndex {
         var sample = 0
     }
 
-    private func semanticScan(_ query: String, ids: Set<String>) -> Scan {
-        let queries = queryVectors(query)
+    private func semanticScan(_ query: String, ids: Set<String>) async -> Scan {
+        let queries = await queryVectors(query)
         guard !queries.isEmpty, let catalog else { return Scan() }
         var best: [String: (score: Float, ordinal: Int)] = [:]
         var total: Float = 0
@@ -401,12 +460,12 @@ extension HistoryIndex {
     }
 
     /// One query vector per stored model the query plausibly belongs to.
-    private func queryVectors(_ query: String) -> [String: [Float]] {
+    private func queryVectors(_ query: String) async -> [String: [Float]] {
         guard let catalog = try? load() else { return [:] }
         let models = catalog.values.reduce(into: Set<String>()) { $0.formUnion($1.models) }
         guard !models.isEmpty else { return [:] }
         var result: [String: [Float]] = [:]
-        for vector in embedder.embedQuery(query, models: models) { result[vector.model] = vector.values }
+        for vector in await embedder.embedQuery(query, models: models) { result[vector.model] = vector.values }
         return result
     }
 }
