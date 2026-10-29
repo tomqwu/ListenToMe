@@ -100,8 +100,8 @@ sandbox. Its independent visual/AX review preserves the distinction between capt
 input-event records. The completed Dev session was archived and cleaned only under its exact `.dev`
 identity. No source-specific acoustic/route gap is waived by these results.
 
-Final-source automated validation and the three hosted checks now pass on `b0b27c0`. The Mac is
-currently locked; remaining installed audio acceptance and Apple-distributed installation are not
+Final-source automated validation and the three hosted checks passed on `b0b27c0`. At that checkpoint,
+the Mac was locked; remaining installed audio acceptance and Apple-distributed installation are not
 implied by those checks. Prior GUI/signing evidence remains tied to the recorded `02528bf` binary.
 PR #318 still needs its remaining acceptance gates, final review and CI on the documentation follow-up
 before merge; no merge or publication is claimed here. This tooling/test repair does not change

@@ -87,21 +87,37 @@ final class ChunkFeed: @unchecked Sendable {
             }
             startsChunk = true
         }
-        guard let file, file.framePosition < file.length else {
-            file = nil; converter = nil; position += 1
-            return nil
+        guard let file else { return nil }
+        let output: AVAudioPCMBuffer
+        var finished = false
+        if file.framePosition >= file.length {
+            guard converter != nil else { finishChunk(); return nil }
+            // File EOF is not converter EOF: retained samples must be drained before
+            // releasing this converter or opening the next chunk.
+            (output, finished) = try convert(nil)
+            if !finished, output.frameLength == 0 {
+                throw LocalAudioFileError.message("Saved audio conversion stopped making progress at EOF.")
+            }
+        } else {
+            let source = file.processingFormat
+            let frames = AVAudioFrameCount(max(1, source.sampleRate.rounded()))
+            guard let buffer = AVAudioPCMBuffer(pcmFormat: source, frameCapacity: frames) else {
+                throw LocalAudioFileError.message("Could not read Saved audio.")
+            }
+            try file.read(into: buffer, frameCount: frames)
+            guard buffer.frameLength > 0 else {
+                throw LocalAudioFileError.message("Saved audio ended before all declared frames could be read.")
+            }
+            if converter != nil {
+                (output, finished) = try convert(buffer)
+                if finished {
+                    throw LocalAudioFileError.message("Saved audio conversion ended before source EOF.")
+                }
+            } else {
+                output = buffer
+            }
         }
-        let source = file.processingFormat
-        let frames = AVAudioFrameCount(max(1, source.sampleRate.rounded()))
-        guard let buffer = AVAudioPCMBuffer(pcmFormat: source, frameCapacity: frames) else {
-            throw LocalAudioFileError.message("Could not read Saved audio.")
-        }
-        try file.read(into: buffer, frameCount: frames)
-        guard buffer.frameLength > 0 else {
-            self.file = nil; converter = nil; position += 1
-            return nil
-        }
-        let output = try convert(buffer)
+        if finished { finishChunk() }
         guard output.frameLength > 0 else { return nil }
         var start: CMTime?
         if startsChunk {
@@ -113,22 +129,42 @@ final class ChunkFeed: @unchecked Sendable {
         return ChunkPCM(buffer: output, bufferStartTime: start)
     }
 
-    private func convert(_ buffer: AVAudioPCMBuffer) throws -> AVAudioPCMBuffer {
-        guard let converter else { return buffer }
-        let ratio = format.sampleRate / buffer.format.sampleRate
-        let capacity = AVAudioFrameCount(Double(buffer.frameLength) * ratio) + 1_024
+    private func finishChunk() {
+        file = nil
+        converter = nil
+        position += 1
+    }
+
+    /// A nil input supplies permanent EOF, unlike a temporarily exhausted input buffer.
+    private func convert(_ buffer: AVAudioPCMBuffer?) throws -> (AVAudioPCMBuffer, Bool) {
+        guard let converter else {
+            throw LocalAudioFileError.message("Saved audio converter is unavailable.")
+        }
+        let outputFrames = buffer.map { Double($0.frameLength) * format.sampleRate / $0.format.sampleRate }
+            ?? max(1, format.sampleRate.rounded())
+        let capacity = AVAudioFrameCount(outputFrames.rounded(.up)) + 1_024
         guard let output = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: capacity) else {
             throw LocalAudioFileError.message("Could not convert Saved audio.")
         }
         var consumed = false
         var error: NSError?
-        converter.convert(to: output, error: &error) { _, status in
+        let status = converter.convert(to: output, error: &error) { _, status in
+            guard let buffer else { status.pointee = .endOfStream; return nil }
             if consumed { status.pointee = .noDataNow; return nil }
             consumed = true
             status.pointee = .haveData
             return buffer
         }
         if let error { throw error }
-        return output
+        switch status {
+        case .error:
+            throw LocalAudioFileError.message("Could not convert Saved audio.")
+        case .endOfStream:
+            return (output, true)
+        case .haveData, .inputRanDry:
+            return (output, false)
+        @unknown default:
+            throw LocalAudioFileError.message("Saved audio conversion returned an unsupported state.")
+        }
     }
 }

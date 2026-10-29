@@ -1308,3 +1308,7 @@ service, progress must end after 45 seconds with recovery guidance; Translate/Re
 until the prior native request actually exits. A service that never exits requires app relaunch;
 no cloud fallback, automatic pack download or microphone action is permitted. Simulator held-service
 fixtures prove those controls; they do not establish actual physical translation success.
+
+## Saved-audio final words and chunk boundaries (#348)
+
+After the candidate is installed, use an explicitly opted-in saved recording with known final words close to EOF and distinct words around a chunk boundary. Re-transcribe and compare the ending/boundary against the original audio; preserve source files and verify Stop does not continue publishing results. Record device, source/build, audio format, expected/actual words and timestamps. Generated-PCM frame tests support file-feed conservation only: they do not replace this audible/recognition acceptance or the Mac actual OTHERS gate.

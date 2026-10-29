@@ -1,0 +1,5 @@
+UNRELEASED DRAFT — copy into the next selected version after its candidate checks.
+
+With Save audio recordings enabled, use a recording whose final words and chunk-boundary words you know. After Stop, re-transcribe the saved audio and compare the ending and boundaries with the original. Verify that cancelling or stopping does not continue processing later audio, and that your original recording is retained. Check Watch-imported saved audio separately when paired acceptance is available.
+
+Generated PCM tests confirm bounded frame/tail handling on native Mac and iOS simulator. Actual recognition quality, physical phone/Watch behavior and installed Mac audio acceptance remain pending; no additional provider or audio-upload route is introduced.

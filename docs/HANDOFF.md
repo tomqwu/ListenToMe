@@ -1,3 +1,22 @@
+# Mac PR #318: audio-feed #348 candidate — October 28, 2026
+
+The current candidate includes an unreleased shared saved-audio EOF fix. A faithful Int16-on-disk
+fixture reproduced 804 missing frames with one native method failing 65 assertions; the exact
+four-method Mac suite passed after the fix. Supplemental Int16 timeline/Stop and Float32 bypass
+coverage passed all four methods on Mac and all four on iOS simulator. The earlier Float32-only
+four-method pass is a baseline, not a red. [Scope and evidence](audio-file-feed-tail.md).
+Current full validation, exact-source CI, review and merge remain pending. The full `b0b27c0` pass
+below is historical source evidence, not a full pass for the new implementation.
+
+Resumed installed `b0b27c0` Dev acceptance remains incomplete: microphone active, system audio
+unavailable with ScreenCaptureKit -3801, zero transcript lines and no acceptance fixture played.
+System Settings required Touch ID/password before app selection; that attempt was cancelled
+without changing its toggles. Stop returned both channels stopped. The exact Dev bundle was moved
+to Trash and only its Dev TCC permissions reset; saved settings were restored and production
+permissions/data were untouched. The Mac is unlocked; OS authentication and actual OTHERS/route/audio
+acceptance gates remain open; do not request repeat acceptance or infer it from automated tests.
+No merge, new archive/upload, release or production-ready claim is made here.
+
 # Mac PR #318 automated recovery passed — October 28, 2026
 
 Fresh `make validate-local` on exact source `b0b27c0b5cc49fb63f7d808b02c0e36bea1acd34` completed
@@ -15,7 +34,7 @@ that synthetic inference result is not physical-phone or installed-app GUI accep
 `02528bf` aggregate remains **failed**, with its receipt and raw evidence preserved; this is a new
 full pass, not a relabeling of that run. [Recovery details](validation-pipeline-recovery.md).
 
-The Mac is currently locked. Prior signed Dev-sandbox GUI evidence remains scoped to `02528bf` and
+At that automated-recovery checkpoint, the Mac was locked. Prior signed Dev-sandbox GUI evidence remains scoped to `02528bf` and
 its recorded binary/signature. Independent near-end/overlap/repeated speech, routes/headphones,
 Stop recovery and delayed-line audio playback remain pending. Apple-distributed Mac Store installation
 and physical phone/Watch acceptance are unverified. Automated source validation does not make a

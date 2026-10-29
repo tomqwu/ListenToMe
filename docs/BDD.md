@@ -18,6 +18,8 @@ Integration preserves main's IDs and remaps only the unmerged Mac examples; thei
 evidence remains valid under that explicit mapping. Temporary-directory bookmark tests do not prove
 installed sandbox picker grants across relaunch, which remain manual acceptance.
 
+AUDIOFEED-001–004 bind native iOS `AudioChunkFeedTests` and Mac `MacAudioChunkFeedTests` to generated local PCM frame/tail, timeline, Stop and empty/error outcomes. The genuine Int16 regression and focused/supplemental results are recorded in [the audio-feed evidence](audio-file-feed-tail.md); structural validity and simulator/native converter checks are not speech-quality or physical acceptance.
+
 ## Working an issue
 
 `RELEASE-014` binds the locally testable Store sandbox configuration, unchanged production/Dev
