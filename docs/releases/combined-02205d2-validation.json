@@ -1,0 +1,160 @@
+{
+  "source": "02205d278197d67c0cb29606e3fa63b2c6547c00",
+  "base": "63628537cc12dc049dafb2d6251f6b0769b31139",
+  "tree": "6c92ea1ea00941e2ab2f059824d49dae88f6be01",
+  "status": "automated_pass",
+  "finishedAt": "2026-10-29T04:46:15.321273+00:00",
+  "aggregate": {
+    "returncode": 0,
+    "reaped": true,
+    "hardWallExceeded": false,
+    "elapsedSeconds": 2589.2306852909996
+  },
+  "frozenInputs": 1004,
+  "pinnedManifestMismatches": [],
+  "finalHashMismatches": [],
+  "suiteCounts": {
+    "core": {
+      "result": "passed",
+      "tests": 1266,
+      "skipped": 7,
+      "assertionFailures": 0
+    },
+    "ios-unit": {
+      "result": "passed",
+      "tests": 509,
+      "skipped": 7,
+      "assertionFailures": 0
+    },
+    "ios-ui": {
+      "result": "passed",
+      "tests": 90,
+      "skipped": 5,
+      "assertionFailures": 0
+    },
+    "mac-unit": {
+      "result": "passed",
+      "tests": 84,
+      "skipped": 0,
+      "assertionFailures": 0
+    },
+    "watch-unit": {
+      "result": "passed",
+      "tests": 29,
+      "skipped": 0,
+      "assertionFailures": 0
+    },
+    "watch-ui": {
+      "result": "passed",
+      "tests": 5,
+      "skipped": 0,
+      "assertionFailures": 0
+    }
+  },
+  "coverage": {
+    "percent": 98.2003739482705,
+    "floor": 95.0
+  },
+  "bdd": {
+    "structurallyValidScenarios": 185,
+    "requiredCoreNativeSelectors": 511,
+    "observedPassingSelectors": 511,
+    "missingSelectors": []
+  },
+  "helperSuites": {
+    "bdd": {
+      "methods": 21,
+      "outcome": "OK"
+    },
+    "make-pipelines": {
+      "methods": 6,
+      "outcome": "OK"
+    },
+    "ios-testflight": {
+      "methods": 29,
+      "outcome": "OK"
+    },
+    "contract-gate": {
+      "methods": 5,
+      "outcome": "OK"
+    },
+    "release-paths": {
+      "methods": 4,
+      "outcome": "OK"
+    },
+    "mac-appstore": {
+      "methods": 6,
+      "outcome": "OK"
+    }
+  },
+  "hotkeyRegressionPassed": true,
+  "realServerContracts": {
+    "OllamaContractE2ETests": 2,
+    "OpenAICompatibleContractE2ETests": 2
+  },
+  "nativeMacSyntheticTranslation": {
+    "branch": "installed-real-model",
+    "target": "zh-Hans",
+    "elapsedSeconds": 1.19383925,
+    "scope": "Synthetic native Mac inference; not physical iPhone quality or installed-app GUI/audio acceptance."
+  },
+  "rawResultPreservation": {
+    "bundles": 3,
+    "iosFiles": 1534,
+    "macFiles": 222,
+    "watchFiles": 126,
+    "totalFiles": 1882,
+    "allFilesByteVerified": true,
+    "originalsUntouched": true
+  },
+  "evidence": {
+    "directory": "listentome-translation346-plan/full-validation-recovery",
+    "independentTerminalAuditSHA256": "e9b21276d021e685d358fc921a976314380ba11be2ea606b03fe6894508fa4df",
+    "resourceAndPreservationReviewSHA256": "042afc7ae4788af44bd0b0f999036f6d52cb25882f6bc00eac9d2f97c0908232",
+    "rawPreservationManifestSHA256": "8c0a6cd24b3209354e9a4c7eaaf5bc96849a71887cf9ef3e93c28fe52e8903b5",
+    "referenceLogSHA256": "84e29bd4166797c5ac95e1e15c82aa6739d24536b9b1f763a3c16770667b615f",
+    "stateSHA256": "4931bc03cb0ffca1dae280c2f06686583f84432b94e68d3635f2bab3c0340343",
+    "runnerSHA256": "baa531201c2b4360d8b070fa24f7e9036ca335a3abd9dbe593824a1b4db5bf82"
+  },
+  "ownedProcesses": {
+    "validationParentMakeNativeAbsent": true,
+    "remainingRelevantBuildTestJobs": [],
+    "resourceReleaseReady": true
+  },
+  "completedDevCleanup": {
+    "status": "completed",
+    "finishedAt": "2026-10-29T04:52:45.659474+00:00",
+    "verifiedDevBundlesMovedToTrash": 3,
+    "exactBundleID": "com.tomwu.ListenToMe.dev",
+    "allMovedInventoriesMatched": true,
+    "appWasClosedByCleanup": false,
+    "noActiveDevSessionBeforeCleanup": true,
+    "appScopedTCCResetExitCode": 0,
+    "dataSettingsCredentialsTouched": false,
+    "receiptSHA256": "d47e353f46a96181b6563c7628bff97ba0e6a81d9977710a11c42023d1ef1c65",
+    "scope": "Completed test bundles only; no production identity/permissions, data or credentials changed. Cleanup is not installed acceptance."
+  },
+  "hostedCI": {
+    "source": "02205d278197d67c0cb29606e3fa63b2c6547c00",
+    "runID": 40820211886,
+    "url": "https://github.com/tomqwu/ListenToMe/actions/runs/40820211886",
+    "status": "pending_at_documentation_checkpoint",
+    "verifiedByThisDocumentationTask": false
+  },
+  "priorFailedCombinedRun": {
+    "source": "dafe4fa6bc2ee854f57d484e4a72379841aa8ba7",
+    "status": "failed",
+    "scope": "One largest-text speaker UI failure before editor; preserved unchanged, not relabeled."
+  },
+  "acceptance": {
+    "installedMac": "Incomplete: latest resumed signed Dev session had microphone active but ScreenCaptureKit -3801, zero transcript lines and no acceptance fixture played; OS authentication blocked recovery. Final-source actual OTHERS/routes/near-end/overlap/repeats/Stop recovery/playback and sandbox vault/reference relaunch remain pending.",
+    "physicalPhoneWatch": "pending",
+    "VoiceOverAndSpeakerProcessRelaunch": "unverified",
+    "MacIncreasedContrastPropagation": "unverified",
+    "AppleDistributedMacStoreInstallation": "unverified",
+    "productionReady": false,
+    "merged": false,
+    "published": false
+  },
+  "scope": "Sanitized source-bound automated validation summary. Documentation-only follow-up needs its own CI; no full rerun, merge, release upload or Apple submission implied."
+}

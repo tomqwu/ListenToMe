@@ -38,8 +38,13 @@ behavior is unchanged. The initial failed helper is retained rather than relabel
 
 The tests deliberately make no 44-point hit-region claim from AX glyph geometry. They also do not
 establish physical playback/recording, sharing delivery, VoiceOver, all locales, long durations or
-multiple recording parts. Full combined validation, hosted CI, installed acceptance and merge remain
-separate gates. These changes are not included in published TestFlight build 42.
+multiple recording parts. Full combined validation on exact source
+`02205d278197d67c0cb29606e3fa63b2c6547c00` passed: exit 0/reaped, all 1,004 inputs unchanged,
+185 structurally valid BDD scenarios and 511 bound Core/native selectors observed passing.
+[The sanitized audited receipt](releases/combined-02205d2-validation.json) records full counts and
+1,882 byte-verified raw result files. Hosted CI, installed/physical acceptance and merge remain
+separate gates; the earlier failed run remains failed. These changes are not included in published
+TestFlight build 42.
 
 ## Reproduce
 

@@ -2,8 +2,10 @@
 
 Essential translation explanations, availability/setup status and recovery captions now use the
 stronger native primary foreground. Caption sizes, wording, layout, translation state, language-pack
-consent, providers and originals are unchanged. This is a local implementation pending full
-validation, required CI, review and merge; it is not included in published TestFlight 42.
+consent, providers and originals are unchanged. Full automated validation passed on combined source
+`02205d278197d67c0cb29606e3fa63b2c6547c00`; [the source-bound receipt](releases/combined-02205d2-validation.json)
+records the independently audited outcome. Required hosted CI, final review, installed acceptance
+and merge remain separate; this is not included in published TestFlight 42.
 
 ## Contract and focused evidence
 
@@ -41,14 +43,15 @@ remains preserved. It did not establish Mac increased-contrast propagation; no u
 preference was changed and no forced environment is presented as native coverage.
 
 After the focused runs, four long diagnostic strings were wrapped without changing their content
-or assertions to satisfy lint. Lint then passed (989 warnings, zero errors). Full validation of the
-final committed source remains required. All seven raw result bundles are retained externally;
+or assertions to satisfy lint. Lint then passed (989 warnings, zero errors). The later full run on
+`02205d2` passed with all 1,004 inputs unchanged. All seven focused raw result bundles are retained externally;
 496 files were hashed before deleting only the two owned simulators.
 
 The first combined full run on `dafe4fa` later failed an offscreen speaker-renaming test, before its
 editor opened. Its original evidence remains failed. That inspection also found and reproduced a
 saved-audio AX5 layout defect, repaired with separate native red/green and final phone/iPad checks.
-See [combined validation recovery](saved-audio-accessibility.md); a fresh full pass is still required.
+See [combined validation recovery](saved-audio-accessibility.md). The new `02205d2` full run passed;
+its result does not relabel the failed attempt or waive installed/physical acceptance.
 
 ## Reproducing the focused checks
 

@@ -1,4 +1,34 @@
-# Combined validation recovery — October 28, 2026
+# Combined PR #318: full automated validation passed on 02205d2 — October 29, 2026
+
+Exact combined source `02205d278197d67c0cb29606e3fa63b2c6547c00` completed
+`make validate-local` with **exit 0 / child reaped** at **2026-10-29 04:46:15 UTC**.
+Independent terminal audit found no issues and matched all **1,004** frozen inputs. Core:
+**1,266 tests / 7 optional skips / 98.2004% coverage**; iOS: **509 unit + 90 UI tests**, with
+**587 passes / 12 optional skips**; Mac: **84 passed**; Watch: **29 unit + 5 UI passed**.
+All suites had zero failures. All **185** BDD scenarios were structurally valid and all **511**
+required Core/native selectors passed; six helper suites, the hotkey regression and four real-server
+contracts passed. [Sanitized source-bound receipt](releases/combined-02205d2-validation.json).
+All three raw native bundles were retained externally and **1,882 files** byte-verified. The owned
+validation jobs ended. The native Mac synthetic Chinese translation branch passed; it is not
+physical-phone or installed-app GUI/audio acceptance. The earlier `dafe4fa` aggregate remains failed.
+
+The existing draft PR #318 now carries this combined source. Exact-head hosted checks in
+[run 40820211886](https://github.com/tomqwu/ListenToMe/actions/runs/40820211886) were still running
+when this documentation checkpoint was prepared; no hosted pass is inferred. This docs-only
+follow-up needs separate review/CI. No merge, version bump, binary publication or Store submission
+is claimed.
+
+Installed/physical gates remain open: the latest resumed signed Dev session was unlocked, with
+microphone active but ScreenCaptureKit **-3801**, zero transcript lines and no acceptance fixture
+played; OS authentication blocked recovery. Final-source OTHERS/near-end/overlap/repeated speech,
+headphones/routes, Stop recovery/delayed playback, sandbox vault/reference relaunch, speaker
+process-relaunch/VoiceOver, physical phone/Watch and Apple-distributed Mac installation remain
+pending. Mac increased-contrast propagation is unverified. After automated testing, three exact
+`com.tomwu.ListenToMe.dev` bundles were moved to Trash with inventory checks and no active
+Dev session; the app-scoped permission reset returned 0. Production permissions, data, settings and
+credentials were untouched. This cleanup does not supply installed acceptance.
+
+# Historical combined validation recovery — October 28, 2026
 
 The clean `dafe4fa` combined full run failed one largest-text speaker UI method before its editor
 opened; Core and iOS units passed, while Mac/Watch/server stages were not reached. Raw results and
@@ -9,8 +39,8 @@ Rendered inspection also found a real saved-audio header layout defect at AX5. A
 layout failures, the iOS accessibility player now stacks its labels and keeps time on a separate
 line; standard iOS/Mac layouts and audio behavior are unchanged. Final three-method focused runs
 passed on both iPhone and iPad; harness/metric failures remain separately recorded.
-[Evidence and limits](saved-audio-accessibility.md). A fresh combined full run, exact-head CI,
-installed acceptance and merge remain required. No version bump or publication is claimed.
+[Evidence and limits](saved-audio-accessibility.md). The later full pass is recorded above; exact-head
+CI, installed acceptance and merge remain separate. No version bump or publication is claimed.
 
 # Translation caption legibility #346 — local implementation, October 28, 2026
 
@@ -19,7 +49,8 @@ layout, providers or state. The same two iOS contrast methods passed after genui
 the supported Mac supplement passed one method/four renders. Initial UI scroll-owner and Mac
 high-contrast propagation failures remain distinct and preserved. Five existing iPhone UI methods and three selected iPad methods passed with unchanged 1,002-file
 inputs, including wide/Duo and largest-text controls. [Evidence and scope](translation-legibility.md).
-Full validation on this changed source, required CI, final review and merge remain pending.
+The combined full pass on `02205d2` is recorded above; required CI, final review and merge remain
+pending.
 No version bump, binary publication, physical-device or VoiceOver acceptance is claimed.
 
 # Speaker rename integration with audio-feed #348 — October 28, 2026
