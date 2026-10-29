@@ -48,11 +48,13 @@ The following are focused results, not a full validation pass. External evidence
 | `HISTORYASSET-001`–`009` | Initial six tests failed eight assertions/stub errors. Separate late-progress, linked-owner/attribute and redirected-cleanup regressions failed before repair. Final nine Core tests passed using tiny injected files. `listentome-semantic223-assets/final-focused-outcome.json` and `independent-final-review.json`; real download transport was not exercised. |
 | `HISTORYASYNC-001`–`012` | Held inference exposed deletion, cancellation, backend and overlapping-snapshot ownership failures; later tests covered unvisited records and pre-cancelled backend selection. `listentome-history223-async/final-focused-outcome.json`, `cancelled-selection-outcome.json` and `independent-source-review.json` retain commands and scoped results. |
 | `HISTORYBACKEND-001`–`007`, `HISTORYMODELUI-001`–`004` | Actual shared-model tests exercise failed opt-out/storage recovery, current-record retries, stale search/answer fencing and controller consent/cancellation. The last functional batch passed seven transition and four controller methods. Raw commands/results are in `listentome-history223-native/`. |
-| `HISTORYCONTENT-001`–`004` | Three Core methods first failed 11 assertions, then passed. The native routing test subsequently exposed “comida” being rejected by a short-query language/POS guess. A corrected Core regression failed four assertions, then all four Core methods passed without skips. `listentome-history223-content-eligibility/single-query-outcome.json` preserves the initial incorrect explicit-word test assumption separately. |
+| `HISTORYCONTENT-001`–`005` | Three Core methods first failed 11 assertions, then passed. The native routing test subsequently exposed “comida” being rejected by a short-query language/POS guess. A corrected Core regression failed four assertions, then all four Core methods passed without skips. `listentome-history223-content-eligibility/single-query-outcome.json` preserves the initial incorrect explicit-word test assumption separately. |
 | `HISTORYMPNET-*`, `HISTORYMODELUI-005` | Real model/runtime and rendered Settings results remain bounded as described below. Fixtures do not prove downloaded-file integrity, model quality or physical-device behavior. |
 
-The final Core run reported **1,293 tests, seven optional skips, zero failures and
-98.0316% coverage**, including the single-word helper repair. It does not validate the app UI.
+The initial Core run reported **1,293 tests, seven optional skips, zero failures and
+98.0316% coverage**, including the single-word helper repair. After relocating installed-language
+checks as described below, the complete Core rerun passed **1,290 tests, seven optional skips,
+zero failures and 97.7364% coverage**. Neither run validates the app UI.
 The final native Mac batch passed all **17 functional methods** (seven transitions, four controllers
 and six runtime checks). Its separate four language-quality methods still fail; the overall batch
 therefore correctly exits 65. The earlier short-query failure and repair remain preserved.
@@ -97,3 +99,24 @@ owned phone and iPad simulator. Raw result files were hashed before deleting onl
 completed test devices. The unsigned Mac build was never launched and its exact `.dev` bundle
 was moved to Trash. No production application data or permissions changed. Cleanup receipts and
 the native-bundle preservation manifest remain with the external evidence.
+
+
+## Hosted-runner test placement repair
+
+The first hosted Core check on `ee4d25f` failed its BDD execution gate because the macOS 26
+runner lacked Spanish lexical assets: two required selectors skipped. This is an observed
+test-placement failure, not a product regression or a search-quality result. All original
+16 equality-assertion sites, expected values and fixture text remain intact. The independent
+unhinted-query check stays in Core; four installed-language/capability methods now run as required
+native Mac tests. Missing native prerequisites fail explicitly rather than satisfying acceptance.
+`HISTORYCONTENT-005` records the split explicit-language/multiword contract.
+
+The repaired local Core BDD runner passed all **253 required selectors**. The full Core rerun
+passed as recorded above, and all **four native eligibility methods** passed with no skips. These
+are additional to the 17 earlier functional methods, not a rerun of that whole native batch.
+Independent review verified every original assertion and unchanged runtime/quality source.
+Evidence: `eligibility-native-placement.*`, `eligibility-placement-core-bdd.log`,
+`core-after-placement.log`, `core-after-placement-coverage.json` and
+`independent-eligibility-ci-placement-review.json` under the external native evidence folder.
+There are now **235 BDD scenarios**. This repair changes no application behavior or quality rule;
+the four failing model-quality methods and all original acceptance gates remain open.

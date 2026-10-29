@@ -13,9 +13,9 @@
       ],
       "bindings": [
         {
-          "suite": "core",
-          "file": "Tests/ListenToMeCoreTests/HistoryContentEligibilityTests.swift",
-          "test": "HistoryContentEligibilityTests/testSpanishSmallTalkAndGenericQueryAreRejectedButTopicsRemainEligible"
+          "suite": "mac-unit",
+          "file": "macOSTests/MacHistoryContentEligibilityTests.swift",
+          "test": "MacHistoryContentEligibilityTests/testSpanishSmallTalkAndGenericQueryAreRejectedButTopicsRemainEligible"
         }
       ]
     },
@@ -31,9 +31,9 @@
       ],
       "bindings": [
         {
-          "suite": "core",
-          "file": "Tests/ListenToMeCoreTests/HistoryContentEligibilityTests.swift",
-          "test": "HistoryContentEligibilityTests/testUnavailableLexicalTagsRemainUnknownForFillerAndTopics"
+          "suite": "mac-unit",
+          "file": "macOSTests/MacHistoryContentEligibilityTests.swift",
+          "test": "MacHistoryContentEligibilityTests/testUnavailableLexicalTagsRemainUnknownForFillerAndTopics"
         }
       ]
     },
@@ -49,9 +49,9 @@
       ],
       "bindings": [
         {
-          "suite": "core",
-          "file": "Tests/ListenToMeCoreTests/HistoryContentEligibilityTests.swift",
-          "test": "HistoryContentEligibilityTests/testEnglishGenericNounsAndLanguageDetectionReuseExistingRules"
+          "suite": "mac-unit",
+          "file": "macOSTests/MacHistoryContentEligibilityTests.swift",
+          "test": "MacHistoryContentEligibilityTests/testEnglishGenericNounsAndLanguageDetectionReuseExistingRules"
         }
       ]
     },
@@ -60,7 +60,7 @@
       "name": "Unhinted single-word queries do not lose compatible model routing",
       "given": "a short History query has one word and no explicit language hint",
       "when": "language or lexical tagging could assign that word different meanings across languages",
-      "then": "content eligibility remains unknown so the query can reach compatible stored models; explicit language hints and real multiword insufficient content retain their policy",
+      "then": "content eligibility remains unknown without requiring installed lexical assets, so the query can reach compatible stored models",
       "covers": [
         "Sources/ListenToMeCore/HistoryContentEligibility.swift"
       ],
@@ -68,7 +68,24 @@
         {
           "suite": "core",
           "file": "Tests/ListenToMeCoreTests/HistoryContentEligibilityTests.swift",
-          "test": "HistoryContentEligibilityTests/testUnhintedSingleWordQueriesRemainUnknownButExplicitLanguageStillApplies"
+          "test": "HistoryContentEligibilityTests/testUnhintedSingleWordQueriesRemainUnknownWithoutInstalledLexicalAssets"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYCONTENT-005",
+      "name": "Explicit language and multiword queries retain native Spanish policy",
+      "given": "Spanish lexical tagging is installed on the native Mac test host",
+      "when": "a topical one-word query, a non-topical explicit-language word and an unhinted multiword decision query are checked",
+      "then": "the topical query stays eligible while the other two queries remain insufficient; short-query independence does not bypass explicit lexical evidence",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryContentEligibility.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacHistoryContentEligibilityTests.swift",
+          "test": "MacHistoryContentEligibilityTests/testExplicitLanguageAndMultiwordQueriesRetainSpanishPolicy"
         }
       ]
     }
