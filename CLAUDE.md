@@ -40,11 +40,14 @@ authorized workflow. For a due beta train, use the
 verification. Check the configured credentials before requesting sign-in; an unlocked Mac or
 connected phone is not required for the CLI/API beta-upload route. Record missing physical acceptance.
 
-For an explicitly authorized official submission, complete production acceptance, **en-US** metadata
+The maintainer’s **2026-10-28 (Toronto)** standing instruction authorizes review submission whenever
+an iOS (iPhone/iPad + embedded Watch) or macOS version is ready. Submit without renewed permission
+after the canonical readiness gates pass. Complete production acceptance, **en-US** metadata
 and localized-name readback, complete release notes, current reviewer/privacy details, selected-build
 verification and fresh screenshot uploads before submitting. Cover iPhone/iPad, Duo and embedded
-Watch, and Mac separately when authorized. Verify processed screenshot sets and downloaded images;
-local captures do not update Apple's listing. Preserve the intended release mode, reuse existing
+Watch, and Mac as a separate platform. Verify processed screenshot sets and downloaded images;
+local captures do not update Apple's listing. Preserve the existing release mode, including leaving
+manual-release versions pending after approval; submission authority is not a manual-release command. Reuse existing
 authorization for the version/platform, and operate the submission instead of handing the clicks
 back to the maintainer. Retain Apple's submission receipt and distinguish review submission,
 approval, pending manual release and public availability. A TestFlight beta or Mac GitHub DMG is

@@ -4,12 +4,15 @@ This document describes how the maintainer builds and publishes an official, sig
 **notarized** `.dmg` for ListenToMe on macOS. For the separate iPhone/iPad target, follow
 [iOS validation and distribution](IOS.md#validation-and-release).
 
-A GitHub DMG release does not submit the macOS app to the App Store. An explicitly authorized Mac
-App Store submission follows the separate
+A GitHub DMG release does not submit the macOS app to the App Store. The maintainer’s standing
+authorization of **2026-10-28 (Toronto)** directs submission of each ready Mac App Store version
+without renewed permission. Follow the separate
 [official review checklist](../AGENTS.md#official-app-store-review-and-public-release), with its own
 platform/build acceptance, en-US metadata, fresh Mac screenshots and Apple review receipt. An iOS
-submission does not submit Mac, and TestFlight/DMG authorization alone does not authorize production
-App Store submission.
+submission does not submit Mac. Production readiness still requires exact-source validation/CI,
+installed sandbox/actual OTHERS acceptance, complete metadata and processed screenshot verification.
+Preserve the existing release mode, including pending manual release after approval; standing review
+authority does not waive OS authentication or authorize a manual public release.
 
 ## Mac App Store distribution
 
