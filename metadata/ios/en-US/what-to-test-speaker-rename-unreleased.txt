@@ -1,1 +1,3 @@
 Long-press an identified transcript line and choose Rename speaker. Save a name, check every matching line and Notes, then reopen the conversation and export it. Other speakers must remain unchanged. Cancel an edited name; try a blank name. Repeat in portrait, expanded transcript, landscape Duo and with large text/VoiceOver.
+
+With saved audio, open the expanded transcript at standard and the largest accessibility text size. Check that Saved audio and Share audio are complete, elapsed/duration stays on one line, and playback controls remain usable. Scroll to an earlier speaker and rename or cancel without changing another identity. Repeat in the iPad sheet.

@@ -309,6 +309,13 @@ matrix after a torn native stdout event prevented the aggregate verifier from co
 
 ## Transcript speaker rename shortcuts (#334)
 
+`AUDIOVIEW-001` covers the retained-audio player above the expanded transcript at standard and
+largest text sizes: complete visible phrases, single-line time, usable controls and enough reading
+space to reveal the original speaker without playback. The real AX5 layout red, distinct test-harness
+failures and final phone/iPad passes are recorded in [the layout evidence](saved-audio-accessibility.md).
+The rename test explicitly reveals the same original row before its real long press; it does not
+replace an offscreen target with another speaker or weaken editor/keyboard assertions.
+
 `SPEAKER-017` binds native iPhone/iPad long-press, Save/Cancel, repeated identities, blank names,
 Notes synchronization, keyboard visibility, Duo and rotation. `SPEAKER-018` binds native Mac
 double-click versus single-click/disabled controls, accessibility activation and name validation.

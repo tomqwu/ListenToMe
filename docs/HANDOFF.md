@@ -1,3 +1,17 @@
+# Combined validation recovery — October 28, 2026
+
+The clean `dafe4fa` combined full run failed one largest-text speaker UI method before its editor
+opened; Core and iOS units passed, while Mac/Watch/server stages were not reached. Raw results and
+the exact source audit are preserved. An unchanged focused pass exposed flaky implicit scrolling.
+The corrected test reveals the same original speaker before pressing it and keeps all assertions.
+
+Rendered inspection also found a real saved-audio header layout defect at AX5. After six native
+layout failures, the iOS accessibility player now stacks its labels and keeps time on a separate
+line; standard iOS/Mac layouts and audio behavior are unchanged. Final three-method focused runs
+passed on both iPhone and iPad; harness/metric failures remain separately recorded.
+[Evidence and limits](saved-audio-accessibility.md). A fresh combined full run, exact-head CI,
+installed acceptance and merge remain required. No version bump or publication is claimed.
+
 # Translation caption legibility #346 — local implementation, October 28, 2026
 
 Essential translation guidance/status now uses native primary foreground without changing copy,

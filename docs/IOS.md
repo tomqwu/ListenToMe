@@ -1123,6 +1123,11 @@ share sheet). Each line shows its time; tapping the line or its time plays the p
 from that moment (`SavedAudioSeek`). History marks conversations with saved audio and offers **Share
 audio** in the touch-and-hold menu. Starting a recording stops playback.
 
+At accessibility text sizes, the player stacks its title and Share audio control and gives the
+elapsed/duration text its own line. This keeps complete words and useful transcript space in both
+the phone reader and the iPad sheet. Standard-size controls, playback and retention behavior are
+unchanged. [Native layout regression evidence](saved-audio-accessibility.md).
+
 Apple Watch (#225, TestFlight 1.19.0 (38)) uses the same opt-in library: before a batch is transcribed,
 `retainWatchAudio` copies each part with a stable recording/chunk filename and an atomic manifest.
 A failed copy or manifest write leaves inbox audio for retry. The inbox records committed copies and

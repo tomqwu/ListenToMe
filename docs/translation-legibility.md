@@ -45,6 +45,11 @@ or assertions to satisfy lint. Lint then passed (989 warnings, zero errors). Ful
 final committed source remains required. All seven raw result bundles are retained externally;
 496 files were hashed before deleting only the two owned simulators.
 
+The first combined full run on `dafe4fa` later failed an offscreen speaker-renaming test, before its
+editor opened. Its original evidence remains failed. That inspection also found and reproduced a
+saved-audio AX5 layout defect, repaired with separate native red/green and final phone/iPad checks.
+See [combined validation recovery](saved-audio-accessibility.md); a fresh full pass is still required.
+
 ## Reproducing the focused checks
 
 Use a dedicated owned simulator UUID in `SIM`; set `IOS_RESULT` and `MAC_RESULT` to new,

@@ -237,7 +237,8 @@ final class MobileSpeakerControlsUITests: XCTestCase {
         app.launchPastReleaseNotes()
         app.buttons["Expand transcript"].tap()
         let reader = app.scrollViews["expandedTranscriptScroll"]
-        reader.staticTexts["Speaker 1"].firstMatch.press(forDuration: 1)
+        guard let speaker = revealExactFirstSpeakerOne(in: reader, app: app) else { return }
+        speaker.press(forDuration: 1)
         app.buttons["Rename speaker…"].tap()
         let name = app.textFields["renameSpeakerName"]
         XCTAssertTrue(name.waitForExistence(timeout: 5))
@@ -257,6 +258,61 @@ final class MobileSpeakerControlsUITests: XCTestCase {
         add(capture)
         app.buttons["renameSpeakerCancel"].tap()
         XCTAssertTrue(reader.staticTexts["Speaker 1"].firstMatch.exists)
+        XCTAssertTrue(speaker.exists, "Cancel preserves the exact original speaker row")
+        XCTAssertEqual(speaker.label, "Speaker 1")
+    }
+
+    private func revealExactFirstSpeakerOne(in reader: XCUIElement, app: XCUIApplication,
+                                             file: StaticString = #filePath, line: UInt = #line) -> XCUIElement? {
+        guard reader.waitForExistence(timeout: 5) else {
+            XCTFail("Expanded transcript reader is missing", file: file, line: line)
+            attachRenameReadiness(app, name: "Missing expanded speaker reader")
+            return nil
+        }
+        let first = reader.staticTexts["Speaker 1"].firstMatch
+        guard first.waitForExistence(timeout: 5), first.identifier.hasPrefix("transcript-speaker-") else {
+            XCTFail("The original first Speaker 1 needs a stable transcript identity", file: file, line: line)
+            attachRenameReadiness(app, name: "Missing first speaker identity")
+            return nil
+        }
+        // Freeze the original row identity before scrolling; never substitute a later Speaker 1.
+        let speaker = reader.staticTexts.matching(identifier: first.identifier).firstMatch
+        var scrollTowardEarlierText = true
+        for attempt in 0...12 {
+            let viewport = reader.frame.intersection(app.frame).insetBy(dx: 2, dy: 2)
+            guard !viewport.isNull, viewport.width > 20, viewport.height > 60 else {
+                XCTFail("Expanded reader has no usable visible viewport", file: file, line: line)
+                break
+            }
+            if speaker.exists {
+                let frame = speaker.frame
+                if speaker.isHittable, frame.width > 0, frame.height > 0, viewport.contains(frame) {
+                    assertWholeRenameControl(speaker, inside: viewport, file: file, line: line)
+                    attachRenameReadiness(app, name: "Exact first speaker revealed at largest text")
+                    return speaker
+                }
+                if frame.minY < viewport.minY { scrollTowardEarlierText = true }
+                else if frame.maxY > viewport.maxY { scrollTowardEarlierText = false }
+                else {
+                    XCTFail("Speaker is inside the reader but blocked; scrolling must not hide that defect",
+                            file: file, line: line)
+                    break
+                }
+            }
+            guard attempt < 12 else { break }
+            // Stay inside the reader content; its rightmost strip belongs to the scroll indicator.
+            let origin = app.coordinate(withNormalizedOffset: .zero)
+            let x = viewport.minX + viewport.width * 0.85 - app.frame.minX
+            let low = viewport.minY + viewport.height * 0.30 - app.frame.minY
+            let high = viewport.minY + viewport.height * 0.75 - app.frame.minY
+            let from = origin.withOffset(CGVector(dx: x, dy: scrollTowardEarlierText ? low : high))
+            let to = origin.withOffset(CGVector(dx: x, dy: scrollTowardEarlierText ? high : low))
+            from.press(forDuration: 0.05, thenDragTo: to)
+        }
+        attachRenameReadiness(app, name: "Exact first speaker could not be revealed")
+        XCTFail("The same first Speaker 1 was not fully visible/hittable after bounded reader scrolling",
+                file: file, line: line)
+        return nil
     }
 
     private func openSettings(_ app: XCUIApplication) {

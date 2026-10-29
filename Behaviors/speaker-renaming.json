@@ -5,7 +5,7 @@
       "id": "SPEAKER-017",
       "name": "Long press an identified speaker to rename",
       "given": "an iPhone or iPad transcript contains identified participants",
-      "when": "the reader long presses a speaker, saves a new name, or cancels the editor",
+      "when": "the reader scrolls an earlier speaker fully into view if necessary, long presses that same speaker, saves a new name, or cancels the editor",
       "then": "the existing identity is renamed throughout the conversation and in Notes; other speakers remain unchanged and cancellation has no effect; Save and Cancel remain reachable at accessibility text sizes, and a saved name survives rotation; the landscape rename journey uses the actual two-pane workspace with simultaneously visible, nonoverlapping Transcript and Quick panes before editing and after the portrait/landscape roundtrip and Save; no stale speaker Retry control appears in Duo, and the expanded reader after rotation shows exactly two Speaker 1 lines, one renamed Sam line and no Speaker 2 line",
       "covers": [
         "iOS/MobileTranscriptReader.swift",

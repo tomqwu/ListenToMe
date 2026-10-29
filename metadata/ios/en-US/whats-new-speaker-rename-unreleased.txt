@@ -1,1 +1,3 @@
 Rename speakers directly from the transcript: touch and hold an identified line, choose Rename speaker, and save a name for that person throughout the conversation. Available on iPhone and iPad, including Duo.
+
+Saved-audio controls now keep their labels and elapsed time readable at accessibility text sizes.

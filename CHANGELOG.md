@@ -32,6 +32,7 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased)
 
+- Keep saved-audio labels and elapsed/duration readable at accessibility text sizes, with usable playback controls and transcript scrolling on iPhone and iPad.
 - Make essential translation explanations, setup status and recovery messages easier to read with stronger native foreground colors, preserving the existing layout and translation behavior. (#346)
 - Long-press an identified transcript line and choose **Rename speaker**. Save updates every line for that speaker in the conversation and Notes; Cancel leaves the name unchanged. Available in portrait, expanded transcript and Duo. (#334)
 - Preserve the final audio samples when converting saved recordings for re-transcription and Watch imports. Drain retained converter output before advancing to the next file; keep original files intact and maintain recording-time alignment. (#348)
