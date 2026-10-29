@@ -12,6 +12,7 @@ actor MultilingualHistoryEmbedder: HistoryEmbedder {
     nonisolated let signature: String
     private let fallback: any HistoryEmbedder
     private let directory: URL?
+    private let optionalLanguages: Set<String>
     private var bundle: XLMRoberta.ModelBundle?
     private var pending: Task<HistoryVector?, Never>?
     private var pendingID: UUID?
@@ -22,8 +23,14 @@ actor MultilingualHistoryEmbedder: HistoryEmbedder {
          fallback: any HistoryEmbedder = NaturalLanguageEmbedder()) {
         self.fallback = fallback
         directory = installedModelDirectory
+        let appleLanguages = installedModelDirectory == nil ? [] : Self.languages.filter {
+            (fallback as? NaturalLanguageEmbedder)?.supports(NLLanguage(rawValue: $0)) == true
+        }
+        optionalLanguages = Self.languages.subtracting(appleLanguages)
+        // Rebuilding the adapter after opt-in/relaunch also invalidates changed Apple coverage.
         signature = installedModelDirectory == nil ? fallback.signature
-            : Self.modelIdentifier + "+" + fallback.signature
+            : Self.modelIdentifier + "+" + fallback.signature + "+apple-first-v1:"
+                + appleLanguages.sorted().joined(separator: ",")
     }
 
     nonisolated func relevanceGroup(for model: String) -> String {
@@ -40,7 +47,7 @@ actor MultilingualHistoryEmbedder: HistoryEmbedder {
     func embed(_ text: String, transcribedIn language: String) async -> HistoryVector? {
         guard !Task.isCancelled else { return nil }
         let code = Locale(identifier: language).language.languageCode?.identifier
-        if directory != nil, code.map(Self.languages.contains) == true {
+        if directory != nil, code.map(optionalLanguages.contains) == true {
             return await multilingual(text, language: language)
         }
         let result = await fallback.embed(text, transcribedIn: language)
@@ -62,7 +69,7 @@ actor MultilingualHistoryEmbedder: HistoryEmbedder {
         guard directory != nil else { return false }
         let recognizer = NLLanguageRecognizer()
         recognizer.processString(text)
-        return recognizer.dominantLanguage.map { Self.languages.contains($0.rawValue) } == true
+        return recognizer.dominantLanguage.map { optionalLanguages.contains($0.rawValue) } == true
     }
 
     private func multilingual(_ text: String, language: String? = nil,

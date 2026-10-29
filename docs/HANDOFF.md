@@ -1,3 +1,15 @@
+# Preserve Apple History routing — October 29, 2026
+
+The current follow-up in draft PR #318 preserves installed Apple embeddings when the optional
+History model is enabled, and rebuilds stale derived vectors without altering conversations.
+Two new BDD/native regressions failed ten assertions before repair. All 24 selected functional
+Mac methods pass, and all nine iPhone simulator runtime methods pass with no skips. The simulator
+has no Apple Spanish model, so it verifies the optional route; the Mac verifies installed Apple
+Spanish. The four real MPNet quality methods still fail the same 15 assertions. Current CI is
+pending. Full validation and merge are still blocked by model
+quality and outstanding acceptance. [Evidence and limits](history-search-implementation.md#preserve-installed-apple-languages--october-29-follow-up).
+No UI changed; the README screenshots remain accurate for their explicitly labelled sources.
+
 # README Duo preview and bounded installed Mac checks — October 29, 2026
 
 `f3b35f430b9182c5df62f6cf2f420a2753d08351` adds a capture-only short example in the existing

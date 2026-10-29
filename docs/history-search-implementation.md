@@ -10,7 +10,8 @@ this implementation still needs full validation, current CI, completion of accep
 ## Implemented code
 
 Apple embeddings remain the default. The optional pinned MPNet backend targets German, Spanish,
-Japanese and Korean through the existing History index. It runs locally and keeps keyword fallback,
+Japanese and Korean only where Apple lacks an installed embedding model. Enabling it preserves
+Apple vectors and eligibility refusals for already-supported languages. It runs locally and keeps keyword fallback,
 existing ranking thresholds, passage-vector reuse and transcription-language hints. The runtime
 uses the verified XLM-RoBERTa tokenizer/mean-pooling recipe, serializes model work and returns no
 vector for input beyond its 128-token limit; the complete original text remains keyword-searchable.
@@ -201,3 +202,41 @@ that check. Maximum aggregation also gives longer parents more opportunities for
 The diagnostic therefore does not clear the original quality contract, justify threshold tuning,
 prove additional-language support or change the application. All earlier failed outcomes and
 original labels remain preserved; no sentence-window implementation has been integrated.
+
+## Preserve installed Apple languages — October 29 follow-up
+
+`HISTORYMPNET-012` and `HISTORYMPNET-013` reproduce an opt-in regression: this Mac has
+Apple Spanish word/sentence revision 1, but the optional adapter previously replaced its vectors
+and retained stale MPNet entries. The two new native methods failed **10 assertions** before the
+routing change. The initial Swift async-autoclosure compilation failure and a skipped run caused by
+missing test-runner environment forwarding are harness failures, not that regression red.
+
+The adapter now snapshots actual Apple coverage only when constructing an installed optional
+backend. Both detected and explicit language routes delegate supported languages exclusively to
+Apple, including nil eligibility results. Query routing still follows stored model tags. The new
+`apple-first-v1` signature includes sorted supported languages and invalidates old derived vectors;
+original conversation text and language remain intact. Coverage refresh occurs on reconstruction
+(relaunch or opt-out/on), not continuously while an existing adapter remains alive.
+
+The Mac run passed **24 functional methods** with no skips. Its four unchanged MPNet quality
+methods still failed **15 assertions**: DE 2/8, ES 1/8, JA 4/8, KO 2/8. The quality suite now
+explicitly uses an unavailable Apple fallback and asserts MPNet tags, so installed Apple Spanish
+cannot mask those failures. The combined run correctly exits 65.
+
+The first iPhone run exposed a test prerequisite error: the fresh iOS 26.5 simulator has no Apple
+Spanish embeddings, unlike this Mac. Its seven existing runtime methods passed while the two new
+Mac-assumption methods failed three assertions. `HISTORYMPNET-015` now tests the actual native
+capability branch, keeping the mandatory supported-Apple contract on Mac. All **nine iPhone runtime
+methods pass with no skips**, including actual pinned MPNet vectors, missing-assets refusal,
+nonempty compatible queries and persisted quantized-vector equality after migration. The observed
+iPhone branch is Apple-unavailable; it is not physical acceptance or proof of both branches on iOS.
+
+All 1,041 tracked inputs stayed unchanged in each native run. The owned simulator was deleted after
+268 native-result files were preserved; other simulators and production apps were untouched.
+Independent review confirms unchanged model-quality criteria and source-bound functional results.
+Current hosted CI is pending. No full-validation, merge or release claim is made.
+
+Evidence: `/Users/tomwu/Documents/Codex/2026-10-29/listentome-history223-apple-routing/` retains
+commands, complete native results, source hashes and separate harness failures. No model download,
+private conversation, provider change or UI change was involved. The current README gallery was
+reviewed; this routing correction does not alter its screens and requires no replacement image.

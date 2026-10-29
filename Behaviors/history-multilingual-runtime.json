@@ -23,7 +23,7 @@
     {
       "id": "HISTORYMPNET-001",
       "name": "Installed multilingual runtime produces comparable local vectors",
-      "given": "explicit verified local MPNet assets and short German, Spanish, Japanese and Korean history text",
+      "given": "explicit verified local MPNet assets and short German, Spanish, Japanese and Korean history text with no Apple coverage advertised by the fallback adapter",
       "when": "the native adapter embeds passages and matching queries",
       "then": "finite normalized 768-dimensional vectors share the pinned MPNet identity and queries never mix Apple model tags",
       "covers": [
@@ -111,7 +111,7 @@
     {
       "id": "HISTORYMPNET-005",
       "name": "German meaning search retains the existing semantic acceptance contract",
-      "given": "explicit installed local MPNet assets and German translations of the existing eight-topic corpus, eight paraphrases, ten unrelated queries and three small-talk records",
+      "given": "explicit installed local MPNet assets and German translations of the existing eight-topic corpus, eight paraphrases, ten unrelated queries and three small-talk records with Apple unavailable so the optional model itself is evaluated",
       "when": "actual HistoryIndex indexes and searches the corpus using unchanged production ranking parameters",
       "then": "at least six paraphrases find the intended first Related conversation without keyword credit, unrelated queries yield no Related or meaning-only Ask passages, and the first two small-talk passages have no semantic vector",
       "covers": [
@@ -128,7 +128,7 @@
     {
       "id": "HISTORYMPNET-006",
       "name": "Spanish meaning search retains the existing semantic acceptance contract",
-      "given": "explicit installed local MPNet assets and Spanish translations of the existing eight-topic corpus, eight paraphrases, ten unrelated queries and three small-talk records",
+      "given": "explicit installed local MPNet assets and Spanish translations of the existing eight-topic corpus, eight paraphrases, ten unrelated queries and three small-talk records with Apple unavailable so the optional model itself is evaluated",
       "when": "actual HistoryIndex indexes and searches the corpus using unchanged production ranking parameters",
       "then": "at least six paraphrases find the intended first Related conversation without keyword credit, unrelated queries yield no Related or meaning-only Ask passages, and the first two small-talk passages have no semantic vector",
       "covers": [
@@ -145,7 +145,7 @@
     {
       "id": "HISTORYMPNET-007",
       "name": "Japanese meaning search retains the existing semantic acceptance contract",
-      "given": "explicit installed local MPNet assets and Japanese translations of the existing eight-topic corpus, eight paraphrases, ten unrelated queries and three small-talk records",
+      "given": "explicit installed local MPNet assets and Japanese translations of the existing eight-topic corpus, eight paraphrases, ten unrelated queries and three small-talk records with Apple unavailable so the optional model itself is evaluated",
       "when": "actual HistoryIndex indexes and searches the corpus using unchanged production ranking parameters",
       "then": "at least six paraphrases find the intended first Related conversation without keyword credit, unrelated queries yield no Related or meaning-only Ask passages, and the first two small-talk passages have no semantic vector",
       "covers": [
@@ -162,7 +162,7 @@
     {
       "id": "HISTORYMPNET-008",
       "name": "Korean meaning search retains the existing semantic acceptance contract",
-      "given": "explicit installed local MPNet assets and Korean translations of the existing eight-topic corpus, eight paraphrases, ten unrelated queries and three small-talk records",
+      "given": "explicit installed local MPNet assets and Korean translations of the existing eight-topic corpus, eight paraphrases, ten unrelated queries and three small-talk records with Apple unavailable so the optional model itself is evaluated",
       "when": "actual HistoryIndex indexes and searches the corpus using unchanged production ranking parameters",
       "then": "at least six paraphrases find the intended first Related conversation without keyword credit, unrelated queries yield no Related or meaning-only Ask passages, and the first two small-talk passages have no semantic vector",
       "covers": [
@@ -217,6 +217,62 @@
           "suite": "ios-unit",
           "file": "iOSUnitTests/MultilingualHistoryEmbedderTests.swift",
           "test": "MultilingualHistoryEmbedderTests/testEligibilityUpgradeInvalidatesPersistedLegacyVectorsBeforeReuse"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYMPNET-012",
+      "name": "Additional languages preserve installed Apple support",
+      "given": "Apple Spanish assets and an explicitly selected local optional model, either present or missing",
+      "when": "History embeds detected or explicitly tagged Spanish and eligible or filler text",
+      "then": "Apple model tags and vectors remain unchanged, rejected filler stays absent, stored Apple queries stay compatible and cancelled work publishes no vector",
+      "covers": [
+        "SharedPlatform/MultilingualHistoryEmbedder.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacMultilingualHistoryEmbedderTests.swift",
+          "test": "MacMultilingualHistoryEmbedderTests/testInstalledOptionalModelPreservesAvailableAppleLanguage"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYMPNET-013",
+      "name": "Apple-first routing discards old overriding vectors",
+      "given": "an unchanged Spanish conversation has derived vectors from the prior optional-model routing policy",
+      "when": "the current native adapter opens and synchronizes that History index",
+      "then": "old optional vectors are discarded before reuse and rebuilt with the currently available model while original text and language are preserved; installed Apple support takes precedence",
+      "covers": [
+        "SharedPlatform/MultilingualHistoryEmbedder.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacMultilingualHistoryEmbedderTests.swift",
+          "test": "MacMultilingualHistoryEmbedderTests/testAppleRoutingUpgradeRebuildsOldOptionalVectorsWithoutChangingConversation"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MultilingualHistoryEmbedderTests.swift",
+          "test": "MultilingualHistoryEmbedderTests/testRoutingUpgradeRebuildsOldOptionalVectorsWithoutChangingConversation"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYMPNET-015",
+      "name": "iPhone History routing follows actual installed language support",
+      "given": "the iOS host may or may not have Apple Spanish embeddings and optional local assets are present or missing",
+      "when": "History embeds detected and explicitly tagged Spanish and queries the selected stored model",
+      "then": "available Apple vectors and eligibility decisions are preserved; otherwise installed MPNet supplies a normalized local vector and missing assets yield none; the selected model receives a nonempty query and pre-cancelled work yields nothing",
+      "covers": [
+        "SharedPlatform/MultilingualHistoryEmbedder.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MultilingualHistoryEmbedderTests.swift",
+          "test": "MultilingualHistoryEmbedderTests/testOptionalRoutingUsesActualAppleAvailability"
         }
       ]
     }

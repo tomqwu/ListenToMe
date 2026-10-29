@@ -22,7 +22,8 @@ final class MultilingualHistoryQualityTests: XCTestCase {
         guard let path = ProcessInfo.processInfo.environment["LISTENTOME_MPNET_TEST_ASSETS"], !path.isEmpty else {
             throw XCTSkip("Requires explicit installed local MPNet assets; never downloads")
         }
-        let embedder = QualityVectorObserver(base: MultilingualHistoryEmbedder(installedModelDirectory: URL(fileURLWithPath: path)))
+        let embedder = QualityVectorObserver(base: MultilingualHistoryEmbedder(
+            installedModelDirectory: URL(fileURLWithPath: path), fallback: UnavailableAppleRuntime()))
         let fixture = try XCTUnwrap(Self.fixtures[language])
         let ids = ["budget", "hiring", "outage", "travel", "design", "lunch", "legal", "family"]
         let records = fixture[0].enumerated().map { offset, text in
@@ -35,6 +36,8 @@ final class MultilingualHistoryQualityTests: XCTestCase {
         let index = HistoryIndex(directory: directory, embedder: embedder)
         try await index.sync(records)
         let observed = await embedder.passages
+        XCTAssertEqual(Set(observed.values.map(\.model)), [MultilingualHistoryEmbedder.modelIdentifier],
+                       "This quality gate must exercise MPNet even on hosts with Apple language assets")
         for record in records {
             let chunks = HistoryChunker.chunks(for: record)
             print("MPNet passage \(language) id=\(record.id) chunks=\(chunks.count) "
@@ -289,6 +292,13 @@ final class MultilingualHistoryQualityTests: XCTestCase {
             ],
         ],
     ]
+}
+
+/// Keep optional-model quality independent of this host's installed Apple languages.
+private struct UnavailableAppleRuntime: HistoryEmbedder {
+    let signature = "quality-without-apple"
+    func embed(_ text: String) -> HistoryVector? { nil }
+    func embedQuery(_ query: String, models: Set<String>) -> [HistoryVector] { [] }
 }
 
 /// Transparent recorder: delegates every actual call, changes neither inputs nor returned vectors.

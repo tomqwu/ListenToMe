@@ -38,6 +38,9 @@ does not show it again, and a fresh install does not see it at all; see
 
 - Identify manual transcript corrections accurately in Markdown; retain AI labels for named models
   and use neutral wording when legacy correction provenance is unknown. Original speech stays intact.
+- Preserve installed Apple language support when optional History languages are enabled; rebuild
+  stale derived vectors without changing saved conversations. Additional-model quality remains
+  unaccepted. (#223)
 - Keep eligible History search and Ask passages when an independent optional model is added;
   compare each model within its own relevance population and combine admitted ranks. (#223)
 
@@ -179,6 +182,9 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 
 - Identify manual transcript corrections accurately in Markdown; retain AI labels for named models
   and use neutral wording when legacy correction provenance is unknown. Original speech stays intact.
+- Preserve installed Apple language support when optional History languages are enabled; rebuild
+  stale derived vectors without changing saved conversations. Additional-model quality remains
+  unaccepted. (#223)
 - Keep eligible History search and Ask passages when an independent optional model is added;
   compare each model within its own relevance population and combine admitted ranks. (#223)
 

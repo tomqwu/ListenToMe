@@ -169,6 +169,70 @@ final class MacMultilingualHistoryEmbedderTests: XCTestCase {
                           adapter.relevanceGroup(for: GroupFallback.model))
     }
 
+    func testInstalledOptionalModelPreservesAvailableAppleLanguage() async throws {
+        let apple = NaturalLanguageEmbedder()
+        XCTAssertTrue(apple.supports(.spanish), "This native acceptance host must have Apple Spanish assets")
+        let text = "Reservemos vuelos y hoteles para la conferencia de Berlín. Dana se encarga de los visados y del reembolso del viaje."
+        let appleResult = await apple.embed(text, transcribedIn: "es-ES")
+        let expected = try XCTUnwrap(appleResult)
+        XCTAssertTrue(expected.model.hasPrefix("w:es:") || expected.model.hasPrefix("s:es:"))
+        for directory in [try assets(), URL(fileURLWithPath: "/missing-local-runtime")] {
+            let adapter = MultilingualHistoryEmbedder(installedModelDirectory: directory, fallback: apple)
+            let explicit = await adapter.embed(text, transcribedIn: "es-ES")
+            let detected = await adapter.embed(text)
+            XCTAssertEqual(explicit, expected, "Opting into additional languages must preserve existing Apple vectors")
+            XCTAssertEqual(detected, expected, "Detected and explicit Spanish must keep the same model")
+            let filler = "Vale, sí. Bueno, eh, veamos. Claro, claro. Me parece bien."
+            let appleFiller = await apple.embed(filler, transcribedIn: "es")
+            XCTAssertNil(appleFiller)
+            let rejected = await adapter.embed(filler, transcribedIn: "es")
+            XCTAssertNil(rejected, "An Apple eligibility refusal must not fall through to the optional model")
+            let queries = await adapter.embedQuery("aeropuerto", models: [expected.model])
+            let appleQueries = apple.embedQuery("aeropuerto", models: [expected.model])
+            XCTAssertEqual(try XCTUnwrap(appleQueries.first).model, expected.model)
+            XCTAssertEqual(queries, appleQueries)
+            let cancelled = Task {
+                withUnsafeCurrentTask { $0?.cancel() }
+                return await adapter.embed(text, transcribedIn: "es")
+            }
+            let late = await cancelled.value
+            XCTAssertNil(late)
+        }
+    }
+
+    func testAppleRoutingUpgradeRebuildsOldOptionalVectorsWithoutChangingConversation() async throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("AppleRouting-" + UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let text = "Reservemos vuelos y hoteles para la conferencia de Berlín. Dana se encarga de los visados y del reembolso del viaje."
+        let record = SessionRecord(id: "spanish", title: "Original", date: .distantPast, transcript: text, summary: "",
+                                   segments: [TranscriptSegment(source: .others, text: text, isFinal: true,
+                                                                start: 0, end: 1, language: "es-ES")])
+        let old = HistoryIndex(directory: folder, embedder: OverrideAppleRuntime())
+        _ = try await old.sync([record])
+        let saved = folder.appendingPathComponent(record.id + ".vectors")
+        let before = try Data(contentsOf: saved)
+        let oldFile = try XCTUnwrap(HistoryIndexFile.decode(before))
+        XCTAssertEqual(oldFile.chunks.map(\.model), [MultilingualHistoryEmbedder.modelIdentifier])
+        let apple = NaturalLanguageEmbedder()
+        let appleResult = await apple.embed(text, transcribedIn: "es-ES")
+        let expected = try XCTUnwrap(appleResult)
+        let adapter = MultilingualHistoryEmbedder(installedModelDirectory: try assets(), fallback: apple)
+        XCTAssertNotEqual(adapter.signature, OverrideAppleRuntime().signature)
+        let reopened = HistoryIndex(directory: folder, embedder: adapter)
+        let stale = try await reopened.indexedIDs()
+        XCTAssertTrue(stale.isEmpty, "Old optional vectors must be discarded before any search can reuse them")
+        let rebuilt = try await reopened.sync([record])
+        XCTAssertEqual(rebuilt.embedded, 1)
+        XCTAssertEqual(rebuilt.unchanged, 0)
+        let data = try Data(contentsOf: saved)
+        let file = try XCTUnwrap(HistoryIndexFile.decode(data))
+        XCTAssertEqual(file.chunks.map(\.model), [expected.model])
+        XCTAssertEqual(file.fingerprint, HistoryChunker.fingerprint(HistoryChunker.chunks(for: record), salt: adapter.signature))
+        XCTAssertNotEqual(data, before)
+        XCTAssertEqual(record.transcript, text)
+        XCTAssertEqual(record.segments?.first?.language, "es-ES")
+    }
+
     private func assets() throws -> URL {
         guard let path = ProcessInfo.processInfo.environment["LISTENTOME_MPNET_TEST_ASSETS"], !path.isEmpty else {
             throw XCTSkip("Optional actual MPNet runtime requires explicit local LISTENTOME_MPNET_TEST_ASSETS; never downloads")
@@ -210,4 +274,13 @@ private struct GroupFallback: HistoryEmbedder {
     func embedQuery(_ query: String, models: Set<String>) -> [HistoryVector] {
         models.contains(Self.model) ? [HistoryVector(model: Self.model, values: [1, 0])] : []
     }
+}
+
+/// Previously installed policy replaced Spanish even when Apple already supported it.
+private struct OverrideAppleRuntime: HistoryEmbedder {
+    let signature = "mpnet-4328cf26390c98c5e3c738b4460a05b95f4911f5-mean128-content-v2+nl-noun-mean+sentence-v2"
+    func embed(_ text: String) -> HistoryVector? {
+        HistoryVector(model: MultilingualHistoryEmbedder.modelIdentifier, values: [1, 0])
+    }
+    func embedQuery(_ query: String, models: Set<String>) -> [HistoryVector] { [] }
 }
