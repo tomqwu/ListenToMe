@@ -1,4 +1,28 @@
-# Mac PR #318 integration and validation recovery — October 28, 2026
+# Mac PR #318 automated recovery passed — October 28, 2026
+
+Fresh `make validate-local` on exact source `b0b27c0b5cc49fb63f7d808b02c0e36bea1acd34` completed
+with exit 0 and its owned child reaped at **2026-10-29 00:14:17 UTC** (October 28 local time).
+The independent terminal audit checked all 975 pinned inputs with no hash mismatches and reconciled
+the logs with all three native result summaries. [Exact audit receipt](releases/mac-candidate-b0b27c0-validation.json).
+Core: 1,266 tests / 7 skips / zero failures / **98.2003739482705%** line coverage. iOS: 504 unit +
+83 UI tests, **575 passed / 12 optional skips / zero failures**. Mac: 74 passed. Watch: 29 unit +
+5 UI passed, no skips. All 174 BDD scenarios were structurally valid and every required Core/native binding was observed
+passing; six helper suites, the hotkey regression and four real-server contracts passed. All three required hosted
+checks passed on the same source ([run 40788007120](https://github.com/tomqwu/ListenToMe/actions/runs/40788007120)).
+
+The native Mac suite also observed the real installed English-to-Simplified-Chinese model branch;
+that synthetic inference result is not physical-phone or installed-app GUI acceptance. The earlier
+`02528bf` aggregate remains **failed**, with its receipt and raw evidence preserved; this is a new
+full pass, not a relabeling of that run. [Recovery details](validation-pipeline-recovery.md).
+
+The Mac is currently locked. Prior signed Dev-sandbox GUI evidence remains scoped to `02528bf` and
+its recorded binary/signature. Independent near-end/overlap/repeated speech, routes/headphones,
+Stop recovery and delayed-line audio playback remain pending. Apple-distributed Mac Store installation
+and physical phone/Watch acceptance are unverified. Automated source validation does not make a
+Store artifact production-ready. PR #318 is not merged or published by this update; these docs-only
+changes still need review and hosted CI. No new archive, upload or release is claimed.
+
+# Historical first Mac PR #318 integration attempt — October 28, 2026
 
 The existing draft integrates `main` at `6362853` in `02528bf`, preserving published iOS 1.20.2 (42)
 translation recovery/recording continuity with the Mac sandbox/audio/transcript fixes. All three
@@ -8,9 +32,9 @@ returned zero after the piped native failure. All 970 frozen inputs match the so
 [independent failure receipt](releases/mac-candidate-02528bf-failed-validation.json) records each
 component result separately, including the later passing Mac, Watch and real-server stages.
 
-The current correction fixes make's failure propagation (#347) and the native Settings test's
-visibility/query defects. Genuine red/green evidence and independent review are retained; full
-validation must be repeated on the final correction. [Recovery evidence](validation-pipeline-recovery.md).
+The subsequent correction fixes make's failure propagation (#347) and the native Settings test's
+visibility/query defects. Genuine red/green evidence and independent review are retained; the fresh
+full run on `b0b27c0` passed as recorded above. [Recovery evidence](validation-pipeline-recovery.md).
 No earlier passing run is promoted to acceptance for this source.
 
 Installed signed Dev-sandbox checks on `02528bf` now cover #337's double-click, Copy, accessibility/

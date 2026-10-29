@@ -1,6 +1,29 @@
 # Local validation failure propagation and Settings recovery — #347
 
-The full integrated Mac candidate at `02528bf9529291d86232aef5a31bdb49e84ada1a` is **failed**.
+## Fresh full recovery passed on b0b27c0
+
+The corrected source `b0b27c0b5cc49fb63f7d808b02c0e36bea1acd34` completed the entire
+`make validate-local` with exit 0, owned child reaped, at **2026-10-29 00:14:17 UTC**.
+The [exact independent terminal audit](releases/mac-candidate-b0b27c0-validation.json) records
+975 pinned inputs with no mismatches, all native result cross-checks, and these outcomes:
+
+- Core: 1,266 tests, 7 skips, zero failures, 98.2003739482705% coverage (95% floor).
+- iOS: 504 unit tests / 7 skips and 83 UI tests / 5 skips; 575 passed, 12 optional skips, zero failures.
+- Mac: 74 passed, zero skips; Watch: 29 unit + 5 UI passed, zero skips.
+- All 174 BDD scenarios were structurally valid; all 489 required Core/native selectors were observed
+  passing, with none missing.
+- Six helper suites (BDD 21, make pipelines 6, TestFlight 29, contract gate 5, release paths 4,
+  Mac App Store 6 methods), the hotkey regression and four real-server contracts passed.
+
+The three required checks also passed on this exact source in
+[run 40788007120](https://github.com/tomqwu/ListenToMe/actions/runs/40788007120).
+The real installed Mac Chinese translation branch passed on synthetic text; it does not establish
+physical-phone quality or installed-app GUI/audio acceptance. This is the new recovery outcome;
+the original failed attempt below remains failed. A later documentation-only head needs its own CI.
+
+## Preserved failed first aggregate
+
+The full integrated Mac candidate at `02528bf9529291d86232aef5a31bdb49e84ada1a` remains **failed**.
 One iOS Save-to-folder UI test failed three assertions. Xcode reported failure, but Apple's GNU make
 3.81 returned zero and continued the later stages because it did not honor `.SHELLFLAGS`.
 The external supervisor inspected native events and rejected the run with exit 1. Its successful
@@ -63,8 +86,8 @@ both screenshots and caught the missing-form false-pass path before the final te
 After the explicit missing-form failure assertion, the final focused run passed: one test, zero
 failures, 25.514 seconds; native process exit 0/reaped in 33.5858 seconds, with all 687 native input
 hashes unchanged. Independent review viewed both final screenshots and cleared the correction.
-The full combined run still requires its own terminal result; these focused passes do not turn the
-original failed aggregate into a pass.
+The subsequent full combined run on `b0b27c0` passed as recorded above; these focused passes did
+not themselves turn the original failed aggregate into a pass.
 
 Evidence is retained under the same root in `vault-failed-attachments/` and `vault-ui-repair/`.
 These are simulator UI/harness checks, not physical folder-provider persistence or recording checks.
@@ -77,6 +100,9 @@ sandbox. Its independent visual/AX review preserves the distinction between capt
 input-event records. The completed Dev session was archived and cleaned only under its exact `.dev`
 identity. No source-specific acoustic/route gap is waived by these results.
 
-PR #318 still needs passing final-source local validation, independent review, required hosted CI
-and its remaining installed audio acceptance before merge. This tooling/test repair does not change
+Final-source automated validation and the three hosted checks now pass on `b0b27c0`. The Mac is
+currently locked; remaining installed audio acceptance and Apple-distributed installation are not
+implied by those checks. Prior GUI/signing evidence remains tied to the recorded `02528bf` binary.
+PR #318 still needs its remaining acceptance gates, final review and CI on the documentation follow-up
+before merge; no merge or publication is claimed here. This tooling/test repair does not change
 app behavior, require an app version bump, submit the Mac Store draft or publish another beta.

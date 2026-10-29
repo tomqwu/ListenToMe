@@ -50,6 +50,6 @@ persistence across relaunch, VoiceOver speech or delayed-row saved-audio playbac
 hashes, source/signature provenance and limitations. The original CUA captures are JPEG bytes and
 were renamed without changing them; they are QA evidence, not App Store media. The completed Dev
 bundle was archived, stopped and moved to Trash; only `com.tomwu.ListenToMe.dev` permissions were
-reset. Full integrated validation separately failed in the Settings test and is being corrected
-with [explicit failure evidence](validation-pipeline-recovery.md). #336's remaining acoustic/route/
+reset. The original integrated validation failed in the Settings test; the fresh full recovery on
+`b0b27c0` passed, with [both outcomes preserved](validation-pipeline-recovery.md). #336's remaining acoustic/route/
 playback acceptance and merge are still required; no publication is established.
