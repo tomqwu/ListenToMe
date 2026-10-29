@@ -302,11 +302,14 @@ the required CI checks; publication is a separate, batched release train.
   pending. A beta upload does not require a connected phone or an unlocked Mac for the CLI/API route.
 - **Official App Store review:** follow the
   [production submission checklist](AGENTS.md#official-app-store-review-and-public-release) when
-  explicitly authorized. Complete production acceptance, **English (US), `en-US`**, metadata and
+  ready under the maintainer’s standing authorization of **2026-10-28 (Toronto)**; no renewed
+  submission permission is needed for ready iOS or macOS versions. Complete production acceptance, **English (US), `en-US`**, metadata and
   localized-name readback, full release notes, privacy/reviewer details and fresh screenshot uploads.
   Include applicable iPhone/iPad sizes, iPhone Duo, iPad wide layouts and the embedded Watch companion;
-  handle Mac as a separate authorized platform. Verify Apple's image processing/order and downloaded
-  assets before submitting, preserve the intended release mode and retain the review receipt.
+  handle Mac as a separate platform. Verify Apple's image processing/order and downloaded
+  assets before submitting, preserve the existing release mode and retain the review receipt.
+  Manual-release versions stay pending after approval unless separately instructed; readiness gates
+  and OS authentication requirements remain in force.
 
 The agent completes an authorized upload/submission using existing configured credentials; the
 maintainer handles OS authentication when required. Report beta availability, review submission,

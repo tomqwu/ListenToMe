@@ -66,8 +66,11 @@ publish the app; equally, a merged iOS change does not by itself call for an upl
 
 For the separate official production review, use the canonical
 [App Store submission checklist](../AGENTS.md#official-app-store-review-and-public-release).
-It requires explicit version/platform authorization, production acceptance, en-US readback, fresh
-processed screenshots including Duo and embedded Watch, and an actual Apple review receipt.
+The maintainer’s standing authorization of **2026-10-28 (Toronto)** covers every ready iOS version;
+submit without renewed permission once production acceptance, exact-source validation/CI, en-US
+metadata/readback and fresh processed screenshots including Duo and embedded Watch are complete.
+Preserve the existing release mode, leave manual-release versions pending after approval and retain
+an actual Apple review receipt. OS authentication and readiness gates are not waived.
 TestFlight availability does not prove submission, approval or public release.
 
 **Cadence.** Publish when a batch of merged iOS work is complete, or when a single user-visible fix
@@ -302,7 +305,8 @@ worktree. Screenshots do not replace physical-device acceptance.
    not update listing screenshots. Resolve stale/missing sets before submission.
 5. For TestFlight-only trains, prepare and preserve the full fresh set for the next App Store version;
    report listing upload as pending unless it was actually completed. TestFlight upload does not
-   itself authorize public App Store submission. If the editable App Store version or upload access
+   itself satisfy production readiness. Once that version is ready, the standing review-submission
+   authorization applies without another permission request. If the editable App Store version or upload access
    is unavailable, preserve the set and name that specific blocker, without claiming Apple has it.
 
 ## App identity and prerequisites

@@ -1,0 +1,330 @@
+{
+  "source": "78b4fda2dbfaf65a1b36259eaaac6d13c2cd4dd7",
+  "base": "63628537cc12dc049dafb2d6251f6b0769b31139",
+  "tree": "ce8c96e97d11230d0a6c094044d5b73d3c22754d",
+  "status": "automated_pass",
+  "auditedAt": "2026-10-29T02:19:46.037544+00:00",
+  "evidenceRoot": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-audio-feed-tail/full-validation",
+  "process": {
+    "parentPID": 58723,
+    "startedAt": "2026-10-29T01:34:49.672673+00:00",
+    "status": "terminal",
+    "hardWallSeconds": 7200,
+    "hardWallExceeded": false,
+    "reaped": true,
+    "pid": 60815,
+    "childReturncode": 0,
+    "returncode": 0,
+    "elapsedSeconds": 2450.3487929580733,
+    "finishedAt": "2026-10-29T02:15:40.040781+00:00"
+  },
+  "recordedOuterStatus": "automated_pass",
+  "trackedInputs": 984,
+  "pinnedManifestMismatches": [],
+  "recordedFinalHashMismatches": [],
+  "currentCheckoutCompared": false,
+  "referenceLogSHA256": "1570a6d0f33301b0e90d1b437ed17e7d2608119f8b576b4fd6af30cfbf232095",
+  "stateSHA256": "3b153921391712738edfbaf351e689aa586166f90518de2cf45d0400003b53a6",
+  "runnerSHA256": "5f3662e3e609dae99814fee430f57eb515cdd2f19b9c163c3a754c6329990ba6",
+  "suiteCounts": {
+    "core": {
+      "result": "passed",
+      "tests": 1266,
+      "skipped": 7,
+      "assertionFailures": 0
+    },
+    "ios-unit": {
+      "result": "passed",
+      "tests": 508,
+      "skipped": 7,
+      "assertionFailures": 0
+    },
+    "ios-ui": {
+      "result": "passed",
+      "tests": 83,
+      "skipped": 5,
+      "assertionFailures": 0
+    },
+    "mac-unit": {
+      "result": "passed",
+      "tests": 78,
+      "skipped": 0,
+      "assertionFailures": 0
+    },
+    "watch-unit": {
+      "result": "passed",
+      "tests": 29,
+      "skipped": 0,
+      "assertionFailures": 0
+    },
+    "watch-ui": {
+      "result": "passed",
+      "tests": 5,
+      "skipped": 0,
+      "assertionFailures": 0
+    }
+  },
+  "nativeResults": {
+    "ios": {
+      "path": "/Users/tomwu/.codex/worktrees/checkpoint-work-134/ListenToMe/.build/ios/Logs/Test/Test-ListenToMeIOS-2026.10.28_21-35-55--0400.xcresult",
+      "result": "Passed",
+      "total": 591,
+      "passed": 579,
+      "skipped": 12,
+      "failedMethods": 0,
+      "failures": [],
+      "summarySHA256": "5be6987ce8d275e16e94c80ca2abb5af014e4862369774cd6b0020eacf9b923b",
+      "devices": [
+        {
+          "device": {
+            "architecture": "arm64",
+            "deviceId": "3843A9D3-0F30-44D0-9B8B-9E117D4A4C4D",
+            "deviceName": "ListenToMe348 validation iPhone",
+            "modelName": "iPhone 17 Pro",
+            "osBuildNumber": "23F77",
+            "osVersion": "26.5",
+            "platform": "iOS Simulator"
+          },
+          "expectedFailures": 0,
+          "failedTests": 0,
+          "passedTests": 579,
+          "skippedTests": 12,
+          "testPlanConfiguration": {
+            "configurationId": "1",
+            "configurationName": "Test Scheme Action"
+          }
+        }
+      ]
+    },
+    "mac": {
+      "path": "/Users/tomwu/.codex/worktrees/checkpoint-work-134/ListenToMe/.build/mac-native-tests/Logs/Test/Test-ListenToMeMacTests-2026.10.28_22-12-54--0400.xcresult",
+      "result": "Passed",
+      "total": 78,
+      "passed": 78,
+      "skipped": 0,
+      "failedMethods": 0,
+      "failures": [],
+      "summarySHA256": "422b7d83453810b6ddca0959f15706112f19bc6cf33588ba734f87b4269c9761",
+      "devices": [
+        {
+          "device": {
+            "architecture": "arm64",
+            "deviceId": "00006050-000951C40AF9401C",
+            "deviceName": "My Mac",
+            "modelName": "MacBook Pro",
+            "osBuildNumber": "26A434",
+            "osVersion": "27.0.1",
+            "platform": "macOS"
+          },
+          "expectedFailures": 0,
+          "failedTests": 0,
+          "passedTests": 78,
+          "skippedTests": 0,
+          "testPlanConfiguration": {
+            "configurationId": "1",
+            "configurationName": "Test Scheme Action"
+          }
+        }
+      ]
+    },
+    "watch": {
+      "path": "/Users/tomwu/.codex/worktrees/checkpoint-work-134/ListenToMe/.build/watch-native-tests/Logs/Test/Test-ListenToMeWatchTests-2026.10.28_22-13-15--0400.xcresult",
+      "result": "Passed",
+      "total": 34,
+      "passed": 34,
+      "skipped": 0,
+      "failedMethods": 0,
+      "failures": [],
+      "summarySHA256": "e3c92f68ac51b3e1e9192880b2db975d9f5b44f8f46d7fd21fc49edca2089e97",
+      "devices": [
+        {
+          "device": {
+            "architecture": "arm64",
+            "deviceId": "FA46EF52-68C2-4A7B-8C4C-1E4E2018AAC3",
+            "deviceName": "ListenToMe348 validation Watch",
+            "modelName": "Apple Watch Series 12",
+            "osBuildNumber": "24R362",
+            "osVersion": "27.0",
+            "platform": "watchOS Simulator"
+          },
+          "expectedFailures": 0,
+          "failedTests": 0,
+          "passedTests": 34,
+          "skippedTests": 0,
+          "testPlanConfiguration": {
+            "configurationId": "1",
+            "configurationName": "Test Scheme Action"
+          }
+        }
+      ]
+    }
+  },
+  "nativeSuiteCountCrossChecks": {
+    "ios": {
+      "consistent": true,
+      "logDerived": {
+        "total": 591,
+        "skipped": 12,
+        "failedMethods": 0,
+        "passed": 579
+      },
+      "nativeSummary": {
+        "total": 591,
+        "skipped": 12,
+        "failedMethods": 0,
+        "passed": 579
+      }
+    },
+    "mac": {
+      "consistent": true,
+      "logDerived": {
+        "total": 78,
+        "skipped": 0,
+        "failedMethods": 0,
+        "passed": 78
+      },
+      "nativeSummary": {
+        "total": 78,
+        "skipped": 0,
+        "failedMethods": 0,
+        "passed": 78
+      }
+    },
+    "watch": {
+      "consistent": true,
+      "logDerived": {
+        "total": 34,
+        "skipped": 0,
+        "failedMethods": 0,
+        "passed": 34
+      },
+      "nativeSummary": {
+        "total": 34,
+        "skipped": 0,
+        "failedMethods": 0,
+        "passed": 34
+      }
+    }
+  },
+  "hotkeyRegression": {
+    "marker": "PASS: Carbon identity filtering, repeat suppression, release, stop/restart, conflict and deinit",
+    "occurrences": 1
+  },
+  "coverage": {
+    "percent": 98.2003739482705,
+    "floor": 95.0
+  },
+  "bddScenarios": 178,
+  "boundNativeAndCoreSelectors": {
+    "core": {
+      "required": 228,
+      "passing": 228,
+      "missing": []
+    },
+    "ios-unit": {
+      "required": 123,
+      "passing": 123,
+      "missing": []
+    },
+    "ios-ui": {
+      "required": 34,
+      "passing": 34,
+      "missing": []
+    },
+    "mac-unit": {
+      "required": 78,
+      "passing": 78,
+      "missing": []
+    },
+    "watch-unit": {
+      "required": 29,
+      "passing": 29,
+      "missing": []
+    },
+    "watch-ui": {
+      "required": 5,
+      "passing": 5,
+      "missing": []
+    }
+  },
+  "audioFeedBindings": {
+    "ios-unit": {
+      "required": [
+        "AudioChunkFeedTests/testConvertedChunkTimestampsIncludeDrainedTails",
+        "AudioChunkFeedTests/testConvertedFileRetainsEveryFrameAndDistinctiveTail",
+        "AudioChunkFeedTests/testEmptyAndUnreadableInputsPreserveSourceAndFailure",
+        "AudioChunkFeedTests/testStopSuppressesPendingTailAndPreservesSource"
+      ],
+      "missing": []
+    },
+    "mac-unit": {
+      "required": [
+        "MacAudioChunkFeedTests/testConvertedChunkTimestampsIncludeDrainedTails",
+        "MacAudioChunkFeedTests/testConvertedFileRetainsEveryFrameAndDistinctiveTail",
+        "MacAudioChunkFeedTests/testEmptyAndUnreadableInputsPreserveSourceAndFailure",
+        "MacAudioChunkFeedTests/testStopSuppressesPendingTailAndPreservesSource"
+      ],
+      "missing": []
+    }
+  },
+  "helpers": {
+    "bdd": {
+      "methods": 21,
+      "outcome": "OK"
+    },
+    "make-pipelines": {
+      "methods": 6,
+      "outcome": "OK"
+    },
+    "ios-testflight": {
+      "methods": 29,
+      "outcome": "OK"
+    },
+    "contract-gate": {
+      "methods": 5,
+      "outcome": "OK"
+    },
+    "release-paths": {
+      "methods": 4,
+      "outcome": "OK"
+    },
+    "mac-appstore": {
+      "methods": 6,
+      "outcome": "OK"
+    }
+  },
+  "realServerContracts": {
+    "OllamaContractE2ETests": 2,
+    "OpenAICompatibleContractE2ETests": 2
+  },
+  "realInstalledTranslation": {
+    "observations": [
+      [
+        "installed-real-model",
+        "1.122327583 seconds"
+      ]
+    ],
+    "actualChineseInference": true,
+    "branch": "installed-real-model",
+    "elapsedObservation": "1.122327583 seconds",
+    "retainedNotes": [
+      {
+        "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-audio-feed-tail/full-validation/independent-terminal-audit/native-installed-translation/0B0CED07-45B9-4F92-93FC-F28D5D768EF0.txt",
+        "sha256": "679d833b342b57cdf62d3cc212707a1ad839ccdd176ad0ca02e70865f67f96c6",
+        "text": "Actual Apple Translation branch: installed-real-model; target: zh-Hans; elapsed: 1.122327583 seconds; isTranslating: false; isDraining: false\nDerived synthetic output:\n预算是120美元。\n\n团队将在周四审查预算。\n\n```swift\nlet budget = 120\n```"
+      }
+    ]
+  },
+  "failedMethods": [],
+  "issues": [],
+  "originalFailed025EvidenceSHA256": "e104a7ae59f0b993a6fd32d1dade0fde47755a16fc49c79949c0051dc13dec16",
+  "originalFailed025Preserved": true,
+  "acceptance": {
+    "physicalPhoneWatch": "pending",
+    "installedMac": "Resumed b0b27c0 GUI/audio attempt incomplete: ScreenCaptureKit -3801 and OS authentication blocked recovery; independent OTHERS/routes/playback acceptance remains separate.",
+    "AppleDistributedMacStoreInstallation": "unverified",
+    "productionReady": false,
+    "published": false
+  },
+  "scope": "Read-only terminal artifacts audit. No builds/tests/inference/app/permissions/repo changes. Native Chinese branch is Mac synthetic acceptance, not phone quality. A successful automated aggregate never waives installed/physical/review/CI gates."
+}

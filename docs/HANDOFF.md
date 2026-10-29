@@ -17,6 +17,39 @@ Only CHANGELOG and this handoff required conflict resolution; application/test a
 unchanged. No new combined validation, hosted CI, installed acceptance, PR or publication is claimed.
 Fresh combined checks and the pending installed Mac/VoiceOver/relaunch/audio gates still apply.
 
+# Mac PR #318: full automated validation passed on 78b4fda — October 28, 2026
+
+The full `make validate-local` run on exact source
+`78b4fda2dbfaf65a1b36259eaaac6d13c2cd4dd7` passed with exit 0 and its owned child reaped at
+**2026-10-29 02:15:40 UTC** (October 28 Toronto time). Independent audit matched all **984** frozen
+inputs, reconciled the three native result summaries, and observed all **497** required Core/native
+BDD bindings passing across **178** structurally valid scenarios.
+[Exact source-bound validation receipt](releases/mac-candidate-78b4fda-validation.json).
+
+Core: **1,266 tests / 7 optional skips / zero failures / 98.2004% line coverage**. iOS: **508 unit +
+83 UI tests**, with **579 passes / 12 optional skips / zero failures**. Mac: **78 passed**. Watch:
+**29 unit + 5 UI passed**, no skips. The six helper suites, hotkey regression and four real-server
+contracts passed. All three required hosted checks passed on the same source in
+[CI run 40800868710](https://github.com/tomqwu/ListenToMe/actions/runs/40800868710).
+The native Mac synthetic Chinese-translation branch also passed; this is not physical-phone or
+installed-app GUI/audio acceptance. Raw iOS/Mac/Watch result bundles were preserved externally and
+all **1,768 files** byte-verified. The owned build/test jobs ended; no simulator was deleted by the audit.
+
+Installed acceptance remains incomplete. The last resumed `b0b27c0` signed Dev session had an active
+microphone but system audio unavailable with ScreenCaptureKit **-3801**, zero transcript lines and
+no acceptance fixture played. Recovery required Touch ID/password and was cancelled before app
+selection; settings were restored and exact Dev-only cleanup completed. That is an OS-authentication
+blocker, not a current locked-Mac diagnosis. Actual OTHERS/near-end/overlap/repeated speech, route/
+headphone/recovery/playback and affected #348 installed file-import/re-transcription checks remain
+pending, along with physical phone/Watch and Apple-distributed Mac installation acceptance.
+
+The maintainer's standing authorization now directs App Store review submission whenever each iOS
+or macOS version meets production readiness; [the canonical gates](../AGENTS.md#official-app-store-review-and-public-release)
+still apply. No submission, manual public release or release-mode change follows from this docs-only
+update. Documentation head `c347066` also passed all three required checks in
+[CI run 40806385369](https://github.com/tomqwu/ListenToMe/actions/runs/40806385369). PR #318 remains
+unmerged and unpublished. Its source does not include the local #346 implementation recorded above.
+
 # Historical Mac PR #318: audio-feed #348 candidate — October 28, 2026
 
 That candidate includes an unreleased shared saved-audio EOF fix. A faithful Int16-on-disk
@@ -24,8 +57,8 @@ fixture reproduced 804 missing frames with one native method failing 65 assertio
 four-method Mac suite passed after the fix. Supplemental Int16 timeline/Stop and Float32 bypass
 coverage passed all four methods on Mac and all four on iOS simulator. The earlier Float32-only
 four-method pass is a baseline, not a red. [Scope and evidence](audio-file-feed-tail.md).
-Current full validation, exact-source CI, review and merge remain pending. The full `b0b27c0` pass
-below is historical source evidence, not a full pass for the new implementation.
+At this focused checkpoint, full validation and exact-source CI were pending; the later `78b4fda`
+result is recorded above. The earlier `b0b27c0` pass remains separate historical source evidence.
 
 Resumed installed `b0b27c0` Dev acceptance remains incomplete: microphone active, system audio
 unavailable with ScreenCaptureKit -3801, zero transcript lines and no acceptance fixture played.
@@ -36,7 +69,7 @@ permissions/data were untouched. The Mac is unlocked; OS authentication and actu
 acceptance gates remain open; do not request repeat acceptance or infer it from automated tests.
 No merge, new archive/upload, release or production-ready claim is made here.
 
-# Historical Mac PR #318 automated recovery passed — October 28, 2026
+# Historical Mac PR #318 automated recovery on b0b27c0 — October 28, 2026
 
 Fresh `make validate-local` on exact source `b0b27c0b5cc49fb63f7d808b02c0e36bea1acd34` completed
 with exit 0 and its owned child reaped at **2026-10-29 00:14:17 UTC** (October 28 local time).

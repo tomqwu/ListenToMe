@@ -108,7 +108,8 @@ Every major iOS release includes a validated TestFlight build (maintainer instru
 Publication itself stays authorized: when a train is due, run the workflow below without asking the
 maintainer to repeat "publish", including for work merged by another session. An explicit draft,
 investigation or local-only request overrides this. OS authentication such as Touch ID and Apple ID
-sign-in must be completed by the user. None of this authorizes a public production App Store release.
+sign-in must be completed by the user. App Store review submissions follow the separate standing
+authorization and production-readiness gates below; beta eligibility alone does not satisfy them.
 
 ## The verification ladder: candidate, verified, published
 
@@ -194,7 +195,7 @@ Current source permanently embeds the Watch companion. For a Watch-enabled beta,
 `IOS_RELEASE_FLAGS=--include-watch-beta`; use `IOS_RELEASE_FLAGS="--include-watch-beta --dry-run"`
 for a local preflight. Default mode rejects embedded Watch, and explicit Watch mode rejects a missing
 or malformed companion. Validate all three exported bundles and retain physical acceptance as pending
-until actually performed; the existing beta exception does not authorize production submission.
+until actually performed; the beta exception does not waive production acceptance for review submission.
 After the upload is accepted and the `ios-v<version>-build<build>` tag is pushed, publish a GitHub
 **pre-release** for that tag: `gh release create ios-v<version>-build<build> --verify-tag --prerelease
 --latest=false`, titled `ListenToMe iOS <version> (<build>) — TestFlight`, with that version's
@@ -219,12 +220,18 @@ not a successful upload.
 ## Official App Store review and public release
 
 TestFlight distribution, official App Store review submission, Apple approval and public availability
-are separate steps. The release-train authorization above covers TestFlight; it does not grant
-standing production submission or public-release authority. When the maintainer explicitly requests
-an official App Store submission, carry that authorized submission through Apple acceptance and
-status readback without asking them to upload or click Submit manually. Reuse authorization already
-given for that version and platform; OS authentication still belongs to the maintainer. A request to
-document this workflow alone does not call a release or submit an app.
+are separate steps. On **2026-10-28 (Toronto)**, the maintainer gave standing authorization:
+**“publish whenever version is ready to apple store for review.”** This covers each ready iOS version
+(iPhone/iPad and its embedded Watch companion) and each ready macOS App Store version separately.
+Once all production-readiness gates below are satisfied, submit that version for review and carry
+it through Apple's submission acceptance and status readback without asking for renewed permission
+or handing Submit back to the maintainer. Check for an existing submission before creating another.
+An explicit later hold, draft-only or local-only instruction still applies. OS authentication belongs
+to the maintainer; this authorization does not waive acceptance gates or change the existing release
+mode. In particular, leave a version set for manual release pending after approval; do not release it
+manually or change it to automatic without a separate instruction. An existing automatic mode stays
+unchanged. Documentation-only policy updates do not themselves create a ready version or require a
+new binary, version bump or upload.
 
 Before submitting an authorized production version:
 
