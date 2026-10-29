@@ -1,0 +1,128 @@
+{
+  "issue": 205,
+  "date": "2026-10-29",
+  "status": "blocked_by_native_device_lock_before_test_entry",
+  "scope": "one isolated physical local-assets compatibility-smoke attempt; not the offline mixed-language or battery benchmark",
+  "device": {
+    "model": "iPhone 17 Pro Max",
+    "iOS": "27.0.1",
+    "developerMode": "enabled",
+    "productionOrTestFlightAppChanged": false
+  },
+  "source": {
+    "benchmarkSHA256": "dfa610bf2b03fbbc010bcdbc119896157317960c92e469cbcbc5e4b8ef3d8a43",
+    "sourceManifestSHA256": "13fdfc820f4ad97592bb11fe4af5acf2eae7ba667d1dbf64a1a1fb9275d089d2",
+    "preparationInputs": 445,
+    "preparationInventorySHA256": "18a7bd9f4e159461f0aa64e4c57cc8e43526ddd2a45b124803260562aee0f350",
+    "executionInputs": 539,
+    "executionFreezeSHA256": "9640d1962ec702cb63a3ca7471c9f330b24667ddc781c3cf563dc6eda0068275",
+    "executionReviewSHA256": "f56b047ab6434fa3ff4d9c7e08795ac544b89dc0830fc1c8cee87bfec919c548",
+    "allInputsUnchanged": true,
+    "smokeConfigurationSHA256": "7bbe50942eb0bc853a8c825ceef1531bc77cdd4c92cec16541200c8fb3c01b93",
+    "runSHA256": "d9ebaa629f9e138f9eadada4c22dbfbecb165ac2a03a03a7eedfc418a92b0432",
+    "WhisperKitRevision": "e2adabbe7d98dc4d0ab9a5b75424ecc42a9cdbef",
+    "modelRepository": "argmaxinc/whisperkit-coreml",
+    "modelRevision": "0f63a7800b00dd0226abd051b906c246e1907482",
+    "tokenizerPins": [
+      {
+        "model": "whisper-small",
+        "repository": "openai/whisper-small",
+        "revision": "973afd24965f72e36ca33b3055d56a652f456b4d"
+      },
+      {
+        "model": "whisper-large-v3",
+        "repository": "openai/whisper-large-v3",
+        "revision": "06f233fe06e710322aca913c1bc4249a0d71fce1"
+      }
+    ]
+  },
+  "candidate": {
+    "signedDevelopmentBuild": true,
+    "isolatedHostBundle": "com.tomwu.ListenToMe.Whisper205Benchmark",
+    "testBundle": "com.tomwu.ListenToMe.Whisper205BenchmarkTests",
+    "strictHostAndTestSignaturesVerified": true,
+    "profileDeviceAndTeamVerifiedPrivately": true,
+    "builtAssetsFiles": 73,
+    "builtAssetsExact": true,
+    "signedBuildAuditSHA256": "bc0c8db4bbc54ee54b9b4a280fedc99b18547c493b424e3f2d0cdc291b4322c1",
+    "independentSignedArtifactReviewSHA256": "9399adc12de90caadc8d5d8e5c60811546e5244ab86245a8a6e4ed38f9e176fd",
+    "verificationScope": "signed build/static payload only; not physical inference acceptance"
+  },
+  "attempt": {
+    "selector": "Whisper205BenchmarkTests/Whisper205BenchmarkTests/testPhysicalLocalAssetsCompatibilitySmoke",
+    "modelSequence": [
+      "small",
+      "turbo"
+    ],
+    "fixture": "english01",
+    "networkCondition": "LAN connected; internet connectivity not controlled or asserted offline",
+    "outerBoundSeconds": 600,
+    "perModelCooperativeBoundSeconds": 120,
+    "supervisorStartedAt": "2026-10-29T06:21:13.538312+00:00",
+    "supervisorFinishedAt": "2026-10-29T06:27:42.003680+00:00",
+    "supervisorElapsedSeconds": 388.464114375,
+    "parentAndWrapperExitCode": 130,
+    "childReturncode": -15,
+    "hardWallExceeded": false,
+    "stopReason": "Actual Xcode recovery suggestion: cannot launch isolated test bundle because selected iPhone is locked. Root authorized SIGINT to exact owned supervisor for cleanup.",
+    "observedNativeTestStarts": 0,
+    "observedCompletedModelCases": 0,
+    "modelResults": [],
+    "installSucceeded": true,
+    "installProof": "Native installation session recorded installApplicationWithLaunchSession succeeded and exact remote path; current app record matched that path before cleanup.",
+    "source539Unchanged": true
+  },
+  "terminalAndCleanup": {
+    "supervisorReaped": true,
+    "ownedLocalParentAndChildAbsent": true,
+    "ownedLocalNativeProcessGroupAbsent": true,
+    "remoteHostAbsentReadbacks": 2,
+    "remoteCleanupConfirmed": true,
+    "quarantineCreated": false,
+    "ownedTemporaryAppUninstalled": true,
+    "uninstallAppleOutcome": "success",
+    "afterUninstallExactAppCount": 0,
+    "afterUninstallExactProcessCount": 0,
+    "otherAppsAppDataTestFlightPermissionsTCCAccountOrKeychainChanged": false,
+    "retryOrUserPrompt": false
+  },
+  "preservation": {
+    "rawFilesCopiedAndByteVerified": 319,
+    "rawXcresult": "partial Staging/Diagnostics only; Info.plist never finalized after pre-test cancellation",
+    "nativeSummaryToolExit": 64,
+    "attachmentExportToolExit": 64,
+    "nativeTestPassFailSkipTotals": "unavailable; do not manufacture counts from incomplete xcresult",
+    "rawRunHashManifestReceiptSHA256": "b4a720e7ea2fde842dbbf1f1888c218dec487221b9896b4b128cd3362affe08b",
+    "nativeLockEvidenceSHA256": "ee8231c9fe2f9d760eaf6e208b096464abb7a3b4fd247faf6b19c3672a3bdfc0",
+    "testPayloadTarReceiptSHA256": "3f0ce6ae3312e64efc0a80bc6d6734380abd0ae4985a7bb81c2c18f1a15537c1",
+    "originalSourceFailuresAndPrivateSignedPayloadRetained": true
+  },
+  "setupHistory": [
+    "Manual signing rejected existing Xcode-managed profile; failure preserved.",
+    "Local Automatic signing selected existing identity/profile; Documents FinderInfo caused signing failure, preserved.",
+    "Targeted attribute deletion did not remain absent; no broad attribute/settings reset.",
+    "Exact445 private-copy inputs remained attribute-free and signed build passed without new models or account updates.",
+    "First538 execution package missed an already-bound generated workspace lock; actual preflight refused it. Exact existing file was added, preserving all538 prior hashes, then539 freeze passed independent review."
+  ],
+  "acceptance": {
+    "modelLoadInferenceCompatibility": "not established",
+    "mixedLanguageAccuracy": "not run",
+    "speedRTF": "not measured",
+    "battery": "not run",
+    "auditoryFidelity": "unassessed",
+    "wholePhoneOffline": "not asserted",
+    "goNoGoDecision": "not established; device setup block is not a model quality outcome",
+    "productionIntegrationOrRelease": "none"
+  },
+  "nextAction": "Keep the same signed candidate and preserved evidence; when the device is available, perform fresh source/device/ownership checks and internal resource coordination before a fresh attempt. Existing testing authorization remains; no automatic restart or further participant prompt was made.",
+  "evidenceReceipt": {
+    "name": "physical-smoke-outcome/final-sanitized-report.json",
+    "sha256": "10b1ff31546cefe852099a1626b56aadec65dc357bd64edd7ce6a201b85e4f05"
+  },
+  "originalIssueAcceptance": "Measure Mandarin–English mixed-sentence accuracy, speed and battery on a recent iPhone with WhisperKit small and turbo; record a go/no-go decision in docs/IOS.md. Any eventual engine remains on-device and opt-in.",
+  "scopeNotes": [
+    "External isolated benchmark source, not production app implementation or a release.",
+    "Whole-phone disconnection, the six-phase battery schedule and numerical decision thresholds were prospective agent-selected controls, not extra requirements stated in issue205. No existing frozen protocol was changed by this documentation.",
+    "Earlier compile, missing resource packaging, signing and execution-inventory failures remain preserved; a later signed build does not turn those attempts into passes."
+  ]
+}

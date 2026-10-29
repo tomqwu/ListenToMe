@@ -139,6 +139,36 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 | The WhisperKit transcription engine | SpeechAnalyzer is the only iOS transcription engine. WhisperKit is linked into the app target (not the share extension or the watch app) for spoken-language detection only (#197), and FluidAudio for speaker identification only |
 | Mac↔iOS sync or a Mac companion mode | Out of scope product-wide — see [backlog](backlog.md) → "Intentionally out of scope" |
 
+## Mixed-language Whisper evaluation (#205) — October 29, 2026
+
+[#205](https://github.com/tomqwu/ListenToMe/issues/205) remains an evaluation of on-device,
+opt-in Mandarin–English transcription: compare WhisperKit **small** and **turbo** accuracy,
+speed and battery on a recent iPhone, then record a go/no-go decision. No iOS engine feature
+or release is established by this preparation.
+
+The separate development-signed benchmark host and test bundle passed signature and exact
+**73-file Assets** checks using pinned local models/tokenizers. Its physical compatibility
+attempt on iPhone 17 Pro Max / iOS 27.0.1 installed that isolated host, but the OS refused test
+launch while the phone was locked. **No native test start or completed model case was observed.**
+The owned run was cancelled early with exit **130** after **388.464 seconds** of its 600-second
+bound; all **539 frozen inputs** remained unchanged. Local processes were reaped, remote absence
+was confirmed, and the temporary benchmark app was uninstalled with absence readback. The
+production/TestFlight app and its data were unchanged.
+
+[The sanitized preflight receipt](evaluations/whisper-205-device-preflight-2026-10-29.json)
+binds the external source, model/tokenizer pins and retained evidence. It preserves the earlier
+compile, resource-packaging, signing and inventory failures separately. The partial result bundle
+has no finalized test summary. All 319 raw run files, including that bundle, were preserved;
+no pass/fail/skip totals are claimed. LAN connectivity was present; whole-phone offline operation
+is **not** asserted.
+
+Physical model compatibility remains blocked, not failed on model quality. Mixed-language accuracy,
+speed, battery and the go/no-go decision remain outstanding; synthetic-audio pronunciation has not
+been accepted from its input text alone. A future fresh compatibility attempt needs an available
+unlocked device, fresh source/device/ownership checks and internal resource coordination for the
+preserved candidate. Existing testing authorization remains; this does not replace the full
+measurement criteria.
+
 ## Version policy
 
 **The two apps keep independent version lines.** They are separate products in separate distribution

@@ -1,8 +1,8 @@
 # Backlog evidence checkpoint — October 29, 2026
 
 The combined application/test source remains `02205d278197d67c0cb29606e3fa63b2c6547c00`.
-Its documentation follow-up `63a8ed182429b5793d53f13058ecef6a9dd3a93e` passed all three required
-checks in [CI run 40820682853](https://github.com/tomqwu/ListenToMe/actions/runs/40820682853).
+Its documentation follow-up `a30aa535dcb809219eabd4fa89a67f03f17798a5` passed all three required
+checks in [CI run 40824605186](https://github.com/tomqwu/ListenToMe/actions/runs/40824605186).
 PR #318 remains draft and unmerged: installed Mac audio/interaction and the other acceptance gates
 below are incomplete. This later documentation-only checkpoint needs its own review/CI; it does
 not change application behavior, call a release or waive those gates.
@@ -18,12 +18,16 @@ not change application behavior, call a release or waive those gates.
   omissions and no extra eligible Related results. Prepared Ask requests are separate from answers;
   no provider ran. No new language support or ranking change is implemented.
   [Native baseline and limits](semantic-search-evaluation.md).
-- **#205:** Public pinned small/turbo assets and seven synthetic audio files are staged outside the
-  repository. An isolated unsigned iOS benchmark now compiles and packages all 72 staged asset files
-  byte-for-byte, after preserved async-enumeration and resource-packaging harness failures. It has
-  not been installed or run on a phone; auditory fidelity, physical compatibility and actual
-  accuracy/speed/battery measurements remain unverified. Compatibility-smoke preparation is separate
-  from the required benchmark. No production engine or model setting changed.
+- **#205:** The isolated benchmark now signs with existing local credentials and packages all 73
+  asset files exactly. It installed on the iPhone 17 Pro Max, but Xcode reported a locked-device
+  launch refusal before any observed test/model case. The owned attempt was stopped, all 539 frozen
+  inputs remained unchanged, and the temporary app was uninstalled with absence verified. The signed
+  candidate and raw diagnostics are preserved; no permission/account/TestFlight changes or repeated
+  participant request were made. Physical compatibility and the required mixed-language accuracy,
+  speed, battery and go/no-go decision remain outstanding. [Evidence and next steps](IOS.md#mixed-language-whisper-evaluation-205--october-29-2026).
+
+The two owned recovery-validation simulators were also deleted after all 1,882 retained native
+result files were rechecked. Other simulators, application data and worktrees were preserved.
 
 # Combined PR #318: full automated validation passed on 02205d2 — October 29, 2026
 
