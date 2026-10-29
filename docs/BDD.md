@@ -301,6 +301,16 @@ Mac review also reproduced a live-breakdown regression: a known participant with
 transcript lines could no longer be named. `testRenameLiveParticipantBeforeTranscriptAttribution`
 failed two native assertions before restoring participant-first lookup. The same adapter test group
 checks all restored lines change together and unknown IDs leave both labels and revision unchanged.
+The current integration adds `SPEAKER-019` for cold readiness and strengthens `SPEAKER-017` to
+require the actual two-pane workspace before/after rotation and Save. On base `6705543` plus the
+retained dirty test/scenario inputs, the two methods failed four assertions. The DEBUG simulator
+fixture then adopted the existing production lifecycle bridge; those exact tests passed unchanged.
+The six-method related rerun also passed, including largest text, opt-out, Notes and saved-audio
+controls. [The source-bound receipt](releases/speaker-rename-6705543-readiness.json) distinguishes
+these fixture controls from real diarization/Watch transfer/audio quality and keeps final combined
+validation, installed Mac, VoiceOver and disk-relaunch acceptance pending. No historical results
+are relabeled, and no release is implied by the fixture correction.
+
 ## Dual-channel audio and presentation
 
 `MACEDIT-001` hosts the production transcript row and sends native pointer events at actual glyphs.

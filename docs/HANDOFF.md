@@ -1,12 +1,29 @@
-# Speaker rename integration checkpoint — October 28, 2026
+# Speaker rename focused integration evidence — October 28, 2026
 
-The preserved `codex/speaker-rename-gestures` branch now integrates local PR #318 candidate
-`02528bf`, including current published iOS 1.20.2 (42) translation recovery, recording continuity
-and privacy/lifecycle fences. Rename gestures and stable speaker/segment identities are retained.
-Structural BDD passed all 174 scenarios against stacked base `02528bf`; lint and content/link checks
-also passed. Lint reports existing warnings. No new native, UI, audio or full-validation pass is claimed. Earlier source-specific evidence remains below.
-PR #318 keeps priority: no #334 feature PR, push, merge to main or publication is part of this step.
-Fresh combined native/full validation and installed rename acceptance remain required afterward.
+The preserved `codex/speaker-rename-gestures` branch integrates local PR #318 candidate `02528bf`
+at base `6705543054c481d556b4c3faadb25d2e0601a4c1`. The new focused results are **base plus the
+three retained dirty fixture/test/scenario hashes**, not clean `6705543` acceptance.
+[Source-bound receipt](releases/speaker-rename-6705543-readiness.json).
+
+Two native UI methods reproduced four assertions: cold speaker readiness stayed stale and the
+rotation journey did not establish actual Duo. Attaching the existing production lifecycle bridge
+to the DEBUG simulator fixture fixed those outcomes; the same two tests and scenario then passed
+unchanged. Only the fixture changed between the red and green runs. Independent review inspected
+the failure and all three green originals: ready portrait, actual side-by-side Duo and renamed Sam.
+These are synthetic QA captures, not listing or physical/model-quality acceptance.
+
+A subsequent related run passed all **six methods**, zero skips/failures (including the same two,
+not six additional tests). It covers largest-text actions, Save/Cancel and identity isolation,
+speaker opt-out/re-enable, Watch-labelled Notes and saved-audio Play/Pause/Share controls. Those
+controls do not prove audible playback quality or paired Watch transfer. Each run retained 978 input
+hashes with no run-time mismatches. The prior structural checkpoint passed 174 BDD scenarios and
+lint/content checks; no new full-validation result is claimed for this dirty source.
+
+Rename release notes remain under Unreleased. This is a fixture lifecycle repair, not a new public
+feature or release. PR #318 keeps priority; no #334 PR, commit/push, merge or publication is claimed
+by this evidence update. Final integration/full validation, current-source CI, installed Mac
+sheet/gesture acceptance, VoiceOver and disk persistence across relaunch remain pending.
+Earlier source-specific results remain below.
 
 # Historical speaker and transcript gesture integration — October 28, 2026
 

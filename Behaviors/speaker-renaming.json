@@ -6,7 +6,7 @@
       "name": "Long press an identified speaker to rename",
       "given": "an iPhone or iPad transcript contains identified participants",
       "when": "the reader long presses a speaker, saves a new name, or cancels the editor",
-      "then": "the existing identity is renamed throughout the conversation and in Notes; other speakers remain unchanged and cancellation has no effect; Save and Cancel remain reachable at accessibility text sizes, and a saved name survives rotation",
+      "then": "the existing identity is renamed throughout the conversation and in Notes; other speakers remain unchanged and cancellation has no effect; Save and Cancel remain reachable at accessibility text sizes, and a saved name survives rotation; the landscape rename journey uses the actual two-pane workspace with simultaneously visible, nonoverlapping Transcript and Quick panes before editing and after the portrait/landscape roundtrip and Save; no stale speaker Retry control appears in Duo, and the expanded reader after rotation shows exactly two Speaker 1 lines, one renamed Sam line and no Speaker 2 line",
       "covers": [
         "iOS/MobileTranscriptReader.swift",
         "iOS/MobileSelectableTranscript.swift",
@@ -93,6 +93,23 @@
           "Cancel a rename and verify no change; changing conversation while editing must not rename another conversation."
         ]
       }
+    },
+    {
+      "id": "SPEAKER-019",
+      "name": "Cold launch keeps speaker rename ready in the two-pane workspace",
+      "given": "a supported iPhone preview has an isolated synthetic conversation with identified speakers and no-download speaker models already available",
+      "when": "the app launches in portrait, rotates to landscape, and the reader opens and saves the identified speaker rename control",
+      "then": "foreground readiness shows speaker labels on without a stale Retry control before editing or after Save; the actual two-pane workspace has simultaneously visible, nonoverlapping Transcript and Quick panes and a readable transcript viewport, the entire speaker and rename controls are visible, and the expanded reader after Save shows exactly two Speaker 1 lines, one renamed Sam line and no Speaker 2 line; recording never starts",
+      "covers": [
+        "iOS/MobileWatchSpeakerFixture.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileSpeakerControlsUITests.swift",
+          "test": "MobileSpeakerControlsUITests/testColdLaunchReadinessKeepsDuoRenameControlsVisible"
+        }
+      ]
     }
   ]
 }

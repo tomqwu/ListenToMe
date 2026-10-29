@@ -1,0 +1,71 @@
+{
+  "recordedAt": "2026-10-29T00:36:56.808954+00:00",
+  "issue": 334,
+  "status": "focused_simulator_regression_and_related_controls_passed",
+  "source": {
+    "baseCommit": "6705543054c481d556b4c3faadb25d2e0601a4c1",
+    "cleanCommitOnly": false,
+    "dirtyInputSHA256": {
+      "Behaviors/speaker-renaming.json": "62aea75cd6b1339d807b3d2cd4bbc44eec87830a7a104ecd9a175453e7007b09",
+      "iOS/MobileWatchSpeakerFixture.swift": "06b12dbb8dccf3eb9324ad1e12fa7fa14b62e1b57039feac166953a6893220eb",
+      "iOSTests/MobileSpeakerControlsUITests.swift": "40d203877f5e2a036717ff0d57071a42a2f911d75f01d4ddd6830706d3dd47e5"
+    },
+    "frozenInputCountPerRun": 978,
+    "hashMismatches": []
+  },
+  "red": {
+    "methods": 2,
+    "failedMethods": 2,
+    "assertionFailures": 4,
+    "nativeExit": 65,
+    "productionFixtureMatchedBase": true
+  },
+  "sameTestGreen": {
+    "methods": 2,
+    "passed": 2,
+    "skipped": 0,
+    "nativeExit": 0,
+    "testsAndScenarioUnchangedFromRed": true,
+    "onlyChangedRunInput": "iOS/MobileWatchSpeakerFixture.swift"
+  },
+  "relatedRerun": {
+    "methods": 6,
+    "passed": 6,
+    "skipped": 0,
+    "failed": 0,
+    "nativeExit": 0,
+    "includesTheSameTwoMethods": true,
+    "selectors": [
+      "MobileSpeakerControlsUITests/testColdLaunchReadinessKeepsDuoRenameControlsVisible",
+      "MobileSpeakerControlsUITests/testLongPressRenamesSpeakerAndCancelPreservesLabels",
+      "MobileSpeakerControlsUITests/testRenameEditorActionsAtLargestTextSize",
+      "MobileSpeakerControlsUITests/testRenameInDuoSurvivesRotation",
+      "MobileSpeakerControlsUITests/testSpeakerOptOutIsReachableWhileListeningAndOptInWaitsForStop",
+      "MobileWatchSpeakerUITests/testWatchSpeakerLabelsRenderInTranscriptAndNotes"
+    ],
+    "reaped": true
+  },
+  "change": "DEBUG simulator Watch-speaker fixture uses existing production mobileSessionLifecycle and removes premature speaker preparation; no production layout/model/provider change between red and green.",
+  "observedScope": [
+    "Cold readiness, true side-by-side Duo, rename through rotation and expanded-reader identity isolation",
+    "Largest-text actions, Save/Cancel, speaker opt-out/re-enable flow",
+    "Watch-labelled transcript/Notes plus saved-audio Play/Pause/Share UI controls"
+  ],
+  "independentReview": "Two-method red/green and three originals reviewed; six-method related artifact review independently cleared all eight native PNGs. All images QA-only.",
+  "evidenceSHA256": {
+    "independent-red-green-review.json": "5ba075fe513bc723e485da63b87462be045af20baa1c9cd27d0126aed7b32fdb",
+    "readiness-native-red/result.json": "536948097073ad444c4b4411de909b6168d84784223bb11859aa0f0fb344e640",
+    "readiness-native-green/result.json": "c6fbde233012996d5ce85b2bab6a647e944d9da89490fdf60468b4b064f7dee0",
+    "readiness-related-green/result.json": "051fe11ad09b3290a97f2b25d91f0fde991572279dba11c050c0fc612bb5499f",
+    "readiness-related-green/independent-summary.json": "78441c3e5ec59a1a59c25118faa4ea4957791a5fd2bd0735f6b24ba8e6ddae66",
+    "readiness-related-green/native/runner-state.json": "10713ccd3f649a0d0eebd4a363dde3048775fc14043f27e5f39e922d153434ca",
+    "independent-related-suite-review.json": "80cae162a3875def91d33a85c026840c1d627ff55c6c407ec3ef2d8843bba20d"
+  },
+  "limits": [
+    "Synthetic simulator fixtures; not real diarization, Watch transfer, audible quality or physical acceptance",
+    "Save/Cancel/keyboard geometry is asserted natively; ready/after-save screenshots are QA-only, not listing media",
+    "No clean670 source claim: exact dirty hashes above identify tested inputs",
+    "Disk persistence across process relaunch, installed Mac gestures/sheet and VoiceOver remain pending",
+    "Final integration/full validation/CI/merge remain required; no new feature PR, release or publication"
+  ]
+}

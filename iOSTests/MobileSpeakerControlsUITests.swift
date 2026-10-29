@@ -2,6 +2,78 @@ import XCTest
 
 @MainActor
 final class MobileSpeakerControlsUITests: XCTestCase {
+    func testColdLaunchReadinessKeepsDuoRenameControlsVisible() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--watch-speakers-fixture", "-autoQuickSummary", "NO",
+                               "-mobileIdentifySpeakers", "YES", "-mobileCorrectTranscript", "NO"]
+        XCUIDevice.shared.orientation = .portrait
+        defer { XCUIDevice.shared.orientation = .portrait }
+        app.launchPastReleaseNotes()
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@", "Speaker labels on"),
+                                             object: app.staticTexts["captureStatus"])
+        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 5), .completed,
+                       "Cold launch must synchronize real scene readiness before offering the rename workspace")
+        XCTAssertFalse(app.staticTexts["Speaker labels: models not loaded"].exists)
+        XCTAssertFalse(app.buttons["Stop listening"].exists, "Readiness must not begin recording")
+        attachRenameReadiness(app, name: "Cold launch speaker rename readiness")
+
+        XCUIDevice.shared.orientation = .landscapeLeft
+        guard assertSpeakerDuoWorkspaceVisible(app) else { return }
+        attachRenameReadiness(app, name: "Landscape speaker rename readiness")
+        let reader = app.scrollViews["transcriptScroll"]
+        XCTAssertGreaterThan(reader.frame.height, 70, "Keep readable transcript space below the header")
+        let speaker = reader.staticTexts["Speaker 2"].firstMatch
+        XCTAssertTrue(speaker.waitForExistence(timeout: 5))
+        XCTAssertTrue(speaker.isHittable)
+        assertWholeRenameControl(speaker, inside: reader.frame)
+        speaker.press(forDuration: 1)
+        let rename = app.buttons["Rename speaker…"]
+        XCTAssertTrue(rename.waitForExistence(timeout: 5))
+        XCTAssertTrue(rename.isEnabled)
+        assertWholeRenameControl(rename, inside: app.frame)
+        rename.tap()
+        let name = app.textFields["renameSpeakerName"]
+        XCTAssertTrue(name.waitForExistence(timeout: 5))
+        name.tap()
+        name.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 30) + "Sam")
+        let save = app.buttons["renameSpeakerSave"]
+        let cancel = app.buttons["renameSpeakerCancel"]
+        XCTAssertTrue(save.isHittable)
+        XCTAssertTrue(cancel.isHittable)
+        assertWholeRenameControl(save, inside: app.frame)
+        assertWholeRenameControl(cancel, inside: app.frame)
+        if app.keyboards.firstMatch.exists {
+            XCTAssertLessThanOrEqual(save.frame.maxY, app.keyboards.firstMatch.frame.minY + 1)
+            XCTAssertLessThanOrEqual(cancel.frame.maxY, app.keyboards.firstMatch.frame.minY + 1)
+        }
+        save.tap()
+        XCTAssertTrue(reader.staticTexts["Sam"].waitForExistence(timeout: 5))
+        XCTAssertFalse(reader.staticTexts["Speaker 2"].exists)
+        guard assertSpeakerDuoWorkspaceVisible(app) else { return }
+        XCTAssertTrue(app.buttons["Start listening"].isEnabled)
+        XCTAssertFalse(app.buttons["Stop listening"].exists)
+        XCUIDevice.shared.orientation = .portrait
+        app.buttons["Expand transcript"].tap()
+        assertExpandedRenameIsolation(app)
+    }
+
+    private func assertWholeRenameControl(_ control: XCUIElement, inside viewport: CGRect,
+                                          file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertGreaterThan(control.frame.width, 0, file: file, line: line)
+        XCTAssertGreaterThan(control.frame.height, 0, file: file, line: line)
+        XCTAssertGreaterThanOrEqual(control.frame.minX, viewport.minX - 1, file: file, line: line)
+        XCTAssertGreaterThanOrEqual(control.frame.minY, viewport.minY - 1, file: file, line: line)
+        XCTAssertLessThanOrEqual(control.frame.maxX, viewport.maxX + 1, file: file, line: line)
+        XCTAssertLessThanOrEqual(control.frame.maxY, viewport.maxY + 1, file: file, line: line)
+    }
+
+    private func attachRenameReadiness(_ app: XCUIApplication, name: String) {
+        let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        screenshot.name = name; screenshot.lifetime = .keepAlways; add(screenshot)
+        let hierarchy = XCTAttachment(string: app.debugDescription)
+        hierarchy.name = name + " accessibility"; hierarchy.lifetime = .keepAlways; add(hierarchy)
+    }
+
     func testSpeakerOptOutIsReachableWhileListeningAndOptInWaitsForStop() {
         let app = XCUIApplication()
         app.launchArguments = ["--automatic-summary-fixture", "-autoQuickSummary", "NO",
@@ -92,6 +164,7 @@ final class MobileSpeakerControlsUITests: XCTestCase {
             app.frame.width > app.frame.height
         }, object: nil)
         XCTAssertEqual(XCTWaiter.wait(for: [rotated], timeout: 5), .completed)
+        guard assertSpeakerDuoWorkspaceVisible(app) else { return }
         let reader = app.scrollViews["transcriptScroll"]
         let speaker = reader.staticTexts["Speaker 2"].firstMatch
         XCTAssertTrue(speaker.waitForExistence(timeout: 5))
@@ -109,13 +182,51 @@ final class MobileSpeakerControlsUITests: XCTestCase {
         app.buttons["renameSpeakerSave"].tap()
         XCTAssertTrue(reader.staticTexts["Sam"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.otherElements["summary-panel-quick"].exists)
+        guard assertSpeakerDuoWorkspaceVisible(app) else { return }
         let capture = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         capture.name = "Speaker rename in two-pane layout"
         capture.lifetime = .keepAlways
         add(capture)
         XCUIDevice.shared.orientation = .portrait
         app.buttons["Expand transcript"].tap()
-        XCTAssertTrue(app.scrollViews["expandedTranscriptScroll"].staticTexts["Sam"].waitForExistence(timeout: 5))
+        assertExpandedRenameIsolation(app)
+    }
+
+    private func assertExpandedRenameIsolation(_ app: XCUIApplication,
+                                                file: StaticString = #filePath, line: UInt = #line) {
+        let reader = app.scrollViews["expandedTranscriptScroll"]
+        XCTAssertTrue(reader.waitForExistence(timeout: 5), file: file, line: line)
+        XCTAssertTrue(reader.staticTexts["Sam"].firstMatch.waitForExistence(timeout: 5), file: file, line: line)
+        XCTAssertEqual(reader.staticTexts.matching(identifier: "Speaker 1").count, 2,
+                       "Both lines of the other identity must keep their name", file: file, line: line)
+        XCTAssertEqual(reader.staticTexts.matching(identifier: "Sam").count, 1,
+                       "Only the selected identity's line is renamed", file: file, line: line)
+        XCTAssertFalse(reader.staticTexts["Speaker 2"].exists, file: file, line: line)
+    }
+
+    private func assertSpeakerDuoWorkspaceVisible(_ app: XCUIApplication,
+                                                  file: StaticString = #filePath, line: UInt = #line) -> Bool {
+        let duo = app.otherElements["twoPaneMeetingWorkspace"]
+        XCTAssertTrue(duo.waitForExistence(timeout: 5), "Rename must use actual Duo, not a stacked fallback",
+                      file: file, line: line)
+        guard duo.exists else {
+            attachRenameReadiness(app, name: "Missing Duo during speaker rename rotation")
+            return false
+        }
+        XCTAssertFalse(app.buttons["retrySpeakers"].exists,
+                       "Ready speaker labels must not leave a stale Retry control", file: file, line: line)
+        let transcript = app.otherElements["transcriptPanel"]
+        let quick = app.otherElements["summary-panel-quick"]
+        XCTAssertTrue(transcript.exists, file: file, line: line)
+        XCTAssertTrue(quick.exists, file: file, line: line)
+        assertWholeRenameControl(transcript, inside: app.frame, file: file, line: line)
+        assertWholeRenameControl(quick, inside: app.frame, file: file, line: line)
+        XCTAssertGreaterThanOrEqual(quick.frame.minX, transcript.frame.maxX - 1, file: file, line: line)
+        XCTAssertEqual(quick.frame.minY, transcript.frame.minY, accuracy: 2, file: file, line: line)
+        XCTAssertGreaterThan(app.scrollViews["transcriptScroll"].frame.height, 70, file: file, line: line)
+        XCTAssertTrue(app.scrollViews["transcriptScroll"].isHittable, file: file, line: line)
+        XCTAssertTrue(app.buttons["panel-model-quick"].isHittable, file: file, line: line)
+        return true
     }
 
     func testRenameEditorActionsAtLargestTextSize() {

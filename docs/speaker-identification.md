@@ -75,7 +75,11 @@ speaker; it does not split an incorrectly merged voice or create a reusable voic
 Unidentified Microphone/Apple Watch lines have no rename action. Existing Notes/Speakers
 editing remains available. The BDD shortcuts are `SPEAKER-017` and `SPEAKER-018` in
 [the rename contract](../Behaviors/speaker-renaming.json); installed Mac sheet/save and
-VoiceOver acceptance are separate from native callback tests.
+VoiceOver acceptance are separate from native callback tests. `SPEAKER-019` additionally checks
+cold fixture readiness and true Duo before renaming. The current integrated fixture has two-method
+red→green and a six-method related simulator pass, tied to base `6705543` plus retained dirty inputs;
+[the bounded receipt](releases/speaker-rename-6705543-readiness.json) records exact hashes and limits.
+This does not prove real speaker inference, disk persistence across relaunch or installed Mac use.
 
 ## Privacy and model provenance
 

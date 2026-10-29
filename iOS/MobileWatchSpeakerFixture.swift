@@ -8,7 +8,6 @@ struct MobileWatchSpeakerFixture: View {
     @State private var session: MobileSession = {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("WatchSpeakersUI-\(UUID())")
         let session = MobileSession(storageDirectory: root, recordingSupport: { _ in .ready })
-        session.prepareSpeakerModelsIfNeeded()
         var labels = WatchSpeakerLabels(existing: [])
         labels.append(DiarizedWindow(segments: [
             DiarizedSegment(speakerId: "a", start: 0, duration: 8),
@@ -45,6 +44,9 @@ struct MobileWatchSpeakerFixture: View {
         return session
     }()
 
-    var body: some View { MobileMeetingView(session: session) }
+    var body: some View {
+        MobileMeetingView(session: session)
+            .mobileSessionLifecycle(session)
+    }
 }
 #endif
