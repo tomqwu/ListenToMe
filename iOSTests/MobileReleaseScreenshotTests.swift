@@ -1,9 +1,69 @@
 import XCTest
+import UIKit
 
 /// Native-resolution release assets use only synthetic content in the real app views.
 /// Run this class on every release device in docs/IOS-RELEASING.md, then export attachments.
 @MainActor
 final class MobileReleaseScreenshotTests: XCTestCase {
+    func testCaptureCleanDuoPreview() throws {
+        guard UIDevice.current.userInterfaceIdiom == .phone else {
+            throw XCTSkip("Duo preview is an iPhone capture; iPad uses the separate wide-workspace release images")
+        }
+        let app = XCUIApplication()
+        app.launchArguments = ["--design-review-fixture", "--release-duo-fixture", "-autoQuickSummary", "NO",
+                               "-mobileAIProvider", "apple", "-mobileCorrectTranscript", "NO",
+                               "-mobileIdentifySpeakers", "YES"]
+        XCUIDevice.shared.orientation = .landscapeLeft
+        defer {
+            capture("Duo preview transcript and Quick visibility")
+            app.terminate()
+            XCUIDevice.shared.orientation = .portrait
+        }
+        app.launchPastReleaseNotes()
+        XCTAssertTrue(app.otherElements["twoPaneMeetingWorkspace"].waitForExistence(timeout: 10))
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@", "Speaker labels on"),
+                                             object: app.staticTexts["captureStatus"])
+        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 5), .completed)
+        let window = app.windows.firstMatch.frame
+        XCTAssertGreaterThan(window.width, window.height)
+        let transcript = app.otherElements["transcriptPanel"]
+        let quick = app.otherElements["summary-panel-quick"]
+        XCTAssertGreaterThanOrEqual(quick.frame.minX, transcript.frame.maxX)
+        XCTAssertEqual(quick.frame.minY, transcript.frame.minY, accuracy: 2)
+        let lines = transcript.staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH %@", "transcript-text-"))
+        XCTAssertEqual(lines.count, 2, "This preview has exactly two authored final lines, not a long history")
+        let wording = lines.allElementsBoundByIndex.map(\.label).joined(separator: " ")
+        XCTAssertTrue(wording.contains("Alex") && wording.contains("Thursday"))
+        let transcriptViewport = app.scrollViews["transcriptScroll"].frame.intersection(window)
+        for line in lines.allElementsBoundByIndex { assertWholePreviewText(line, in: transcriptViewport) }
+        let answer = app.staticTexts["output-quick"]
+        XCTAssertTrue(answer.waitForExistence(timeout: 5))
+        XCTAssertTrue(answer.label.contains("Alex") && answer.label.contains("Thursday"),
+                      "The authored answer must be present, rather than an empty-output placeholder")
+        assertWholePreviewText(answer, in: quick.scrollViews.firstMatch.frame.intersection(window))
+        XCTAssertTrue(app.buttons["Start listening"].isEnabled)
+        XCTAssertTrue(app.buttons["Start listening"].isHittable)
+        XCTAssertTrue(app.buttons["Notes"].isHittable)
+        XCTAssertTrue(window.contains(app.buttons["Start listening"].frame))
+        XCTAssertTrue(window.contains(app.buttons["Notes"].frame))
+        XCTAssertFalse(app.buttons["Stop listening"].exists)
+        XCTAssertFalse(app.buttons["Jump to latest transcript"].exists)
+        XCTAssertFalse(app.buttons["retrySpeakers"].exists)
+        XCTAssertFalse(app.staticTexts["recordingSupportReason"].exists)
+        XCTAssertFalse(app.buttons["fixture-grow"].exists)
+        XCTAssertFalse(app.buttons["releaseHeldTranslation"].exists)
+        XCTAssertEqual(app.alerts.count, 0)
+    }
+
+    private func assertWholePreviewText(_ element: XCUIElement, in viewport: CGRect,
+                                        file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertTrue(element.isHittable, file: file, line: line)
+        XCTAssertFalse(element.label.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, file: file, line: line)
+        XCTAssertFalse(element.frame.isEmpty, file: file, line: line)
+        let detail = "Preview text \(element.frame) must fit its viewport \(viewport): \(element.label)"
+        XCTAssertTrue(viewport.contains(element.frame), detail, file: file, line: line)
+    }
+
     func testCaptureReleaseScreens() {
         let app = XCUIApplication()
         app.launchArguments = ["--design-review-fixture", "-autoQuickSummary", "NO", "-mobileAIProvider", "apple",
@@ -12,7 +72,8 @@ final class MobileReleaseScreenshotTests: XCTestCase {
         defer { XCUIDevice.shared.orientation = .portrait }
         app.launchPastReleaseNotes()
         XCTAssertTrue(app.buttons["Notes"].waitForExistence(timeout: 5))
-        XCTAssertFalse(app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "Correction paused")).firstMatch.exists,
+        XCTAssertFalse(app.staticTexts.containing(
+            NSPredicate(format: "label CONTAINS %@", "Correction paused")).firstMatch.exists,
                        "Release captures must not inherit correction settings from another UI journey")
         app.scrollViews["transcriptScroll"].swipeDown()
         capture("01 Live portrait")
@@ -59,7 +120,8 @@ final class MobileReleaseScreenshotTests: XCTestCase {
         // Scroll the form's edge, avoiding the nested Notes and Prompt text editors on iPad.
         for _ in 0..<12 where !element.isHittable {
             form.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.85))
-                .press(forDuration: 0.05, thenDragTo: form.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.65)))
+                .press(forDuration: 0.05,
+                       thenDragTo: form.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.65)))
         }
     }
 
