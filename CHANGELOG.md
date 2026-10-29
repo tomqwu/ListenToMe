@@ -13,6 +13,10 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## Repository tooling (unreleased)
 
+- Require current README screenshots with device-grouped layouts, full-size links and capture
+  provenance. Add a concise native Duo preview and a BDD capture check that rejects clipped sample
+  text. Default fixtures and production layouts are unchanged; no binary release is required.
+
 - Propagate failed native build/test pipelines through Apple's GNU make 3.81, preserve diagnostics
   and stop later success checks. Add offline tests of the actual make recipes and bind the
   Save-to-folder UI journey, with full control/disclosure visibility after picker Cancel.

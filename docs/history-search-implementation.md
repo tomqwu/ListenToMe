@@ -1,7 +1,8 @@
 # Optional History search model — #223 implementation checkpoint
 
-October 29, 2026. Unmerged implementation checkpoint: the earlier `bb50e67` head has green
-required CI; the additional relevance-group changes below are still working-tree changes.
+October 29, 2026. Unmerged implementation checkpoint: application commit `ece5593` and its
+documentation follow-up `0f94823` both passed all three required CI checks. The relevance-group
+changes below are committed in existing draft PR #318.
 This is not a merged feature, a language-support claim or a release. The latest combined
 validation and installed acceptance recorded in [HANDOFF](HANDOFF.md) concern earlier source;
 this implementation still needs full validation, current CI, completion of acceptance and merge.
@@ -90,10 +91,10 @@ remain preserved.
   unchanged minimum of six. The aggregate exits 65; it is not a full pass.
 - iOS UI: three journeys pass on iPhone; three pass together on iPad. The later actual-runtime
   suite passes all seven methods without skips, including strengthened model-group persistence checks.
-- Full combined validation, current-change CI and merge have not completed for this checkpoint.
-  All three required checks passed on earlier `bb50e67` in run `40928129148`; that is not CI for
-  the current working-tree changes. The earlier unsigned native Mac application built but was
-  never installed or launched.
+- Full combined validation and merge remain incomplete. All three required checks passed on
+  `ece5593` in run `40934516059` and documentation head `0f94823` in run `40938355944`.
+  The newer Duo/README follow-up needs its own CI. The earlier unsigned native Mac application
+  was never launched; the later signed sandbox checks in HANDOFF establish only their stated paths.
 - Actual app installation, optional-download operation, device resource behavior, physical acceptance
   and source-matched release media remain separate. No new TestFlight/App Store publication is claimed.
 

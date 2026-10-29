@@ -1,3 +1,32 @@
+# README Duo preview and bounded installed Mac checks — October 29, 2026
+
+`f3b35f430b9182c5df62f6cf2f420a2753d08351` adds a capture-only short example in the existing
+DEBUG/simulator design fixture; production layouts and default fixtures are unchanged.
+`READMEPREVIEW-001` failed two genuine clipped-text assertions, then the same native test passed
+with both authored transcript lines and the complete Quick answer visible. The original six-screen
+capture journey also passed. All 1,039 inputs stayed unchanged in each run; independent code/pixel
+review cleared the result. The README now includes the native candidate image with full-size link
+and [source/binary/image provenance](images/ios/candidate-2026-10-29/manifest.json). It is not a new
+TestFlight build or Store upload. BDD now contains 245 scenarios. The owned simulator was deleted
+after all 138 retained evidence files were verified; other simulators were preserved.
+
+Signed sandbox Mac source `0f94823` also passed two bounded installed checks: History now renders
+the $120 → $125 edit as **Manual correction**, and a picker-selected external reference folder
+survives full process exit/relaunch with actual file content read by an existing local Ollama model.
+Opening another History conversation clears references by design and was recorded separately.
+No capture ran. Original provider/models were restored, references cleared, the exact Dev app moved
+to Trash and only its app-scoped permissions reset. The source/signature/payload and independent
+audit receipts are under `2026-10-29/listentome-mac318-gallery-acceptance/` in retained local evidence.
+Vault write/relaunch, identified-speaker interaction, real OTHERS audio and physical acceptance
+remain incomplete; these two checks do not establish full sandbox or production acceptance.
+
+All three hosted checks passed on `ece5593` and documentation head `0f94823`
+([40934516059](https://github.com/tomqwu/ListenToMe/actions/runs/40934516059),
+[40938355944](https://github.com/tomqwu/ListenToMe/actions/runs/40938355944)). This new follow-up
+still needs its own hosted CI. Full current validation remains blocked by the four real-model
+History quality failures below; supplying assets runs those required tests, while skipping them
+cannot satisfy BDD. No merge, version bump, upload or review submission is claimed.
+
 # Current follow-up: export provenance and History ranking — October 29, 2026
 
 The working follow-up to `bb50e673cf7892d64872c8e8ac4645b29214d6da` fixes two reproduced

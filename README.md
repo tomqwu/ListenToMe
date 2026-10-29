@@ -106,8 +106,16 @@ Apple's listing or establish physical-device or translation-quality acceptance.
   </tr>
 </table>
 
-**Duo / landscape:** a clean build-42 gallery image is still pending. Its current captures are
-classified as diagnostic QA; the earlier layout is retained in the historical gallery below.
+**Duo / landscape · unreleased candidate**
+
+<p align="center">
+  <a href="docs/images/ios/candidate-2026-10-29/iphone-duo.png"><img src="docs/images/ios/candidate-2026-10-29/iphone-duo.png" width="760" alt="Unreleased iPhone Duo candidate showing a concise synthetic transcript and Quick answer side by side in landscape."></a>
+  <br><sub>Follow the transcript and Quick answer together, with recording and Notes controls in reach.</sub>
+</p>
+
+Fresh native preview from `f3b35f4`, using a short synthetic example in the real app views.
+It is separate from the published build-42 images above; it changes no production layout.
+[Capture source, native resolution and BDD evidence](docs/images/ios/candidate-2026-10-29/manifest.json).
 
 ### iPad
 

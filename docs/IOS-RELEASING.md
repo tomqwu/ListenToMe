@@ -272,6 +272,15 @@ native pixel dimensions, capture command/test, and SHA-256 of each file in a man
 `dist/ios-<version>-build<build>-evidence/screenshots/`. Preserve this directory before archiving a
 worktree. Screenshots do not replace physical-device acceptance.
 
+For a concise README Duo preview, run
+`MobileReleaseScreenshotTests/testCaptureCleanDuoPreview` on an iPhone simulator. It uses the
+isolated `--design-review-fixture --release-duo-fixture` sample and checks complete authored
+transcript/Quick text inside their separate viewports before capture. `READMEPREVIEW-001` records
+its real clipping red and native green. The default six-screen release journey remains unchanged;
+this one preview does not replace the device matrix or long-content acceptance. Preserve native
+EXIF orientation and verify the rendered image, as stored pixel dimensions can be portrait while
+the displayed capture is landscape. [October 29 candidate](images/ios/candidate-2026-10-29/manifest.json).
+
 1. Check the candidate's supported device families and the current screenshot slots in App Store
    Connect. Capture **iPhone and iPad**, using native-resolution simulators/devices for every required
    display-size slot. Also inspect compact/large iPhones and compact/large iPads during layout tests;
