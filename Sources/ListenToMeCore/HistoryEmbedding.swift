@@ -101,7 +101,8 @@ public final class NaturalLanguageEmbedder: HistoryEmbedder, @unchecked Sendable
             return (tag, language, revision)
         }
         let languages = Set(requested.map(\.language))
-        guard !languages.isEmpty else { return [] }
+        guard !languages.isEmpty,
+              HistoryContentEligibility.evaluate(query, kind: .query) != .insufficientContent else { return [] }
         let chosen: [NLLanguage]
         if languages.count == 1 {
             chosen = Array(languages)

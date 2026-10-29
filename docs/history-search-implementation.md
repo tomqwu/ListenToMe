@@ -352,3 +352,46 @@ failed because the new simulator was still shut down. After booting that owned d
 unchanged build completed the runtime suite. That harness failure remains recorded separately.
 No Mac Dev session or permission change was needed. Independent source, terminal and documentation
 reviews cleared the bounded fix; exact commit CI and full acceptance remain separate gates.
+
+
+### Generic query parity — October 29 follow-up
+
+Installed Apple German/Spanish models admitted unrelated topics for generic planning questions.
+The native regressions use the **unchanged** eight-topic corpus: only its test visibility changed
+so the new methods can reuse it. `GENERICQUERY-001`–`008` require actual Related/retrieve/request
+outcomes, literal keyword preservation, real topics within the same framing, exact stored sentence
+routing, optional-model refusal, compounds and capability/one-word uncertainty. Native red executed
+six methods: **four failed / 36 assertions**; two positive controls already passed. The initial
+async-in-XCTUnwrap compile failure is a harness failure, not red. Core literal-term red failed seven
+assertions, then ten after adding polysemy controls, all before implementation.
+
+`HistoryQueryVocabulary` contains reviewed whole-token DE/ES equivalents of the existing English
+concepts, with explicit common inflections. Semantic query nouns and narrower Ask stopwords remain
+separate. Ask still retains question/project/day/month/year and decided equivalents. Contar-family
+account/story terms and German painting `malen` are not Ask exclusions. This is neither stemming nor
+a failed-phrase blacklist, and cannot distinguish every proper name from an identical generic word.
+The prospective concept mapping and both versions of its independent review are retained externally.
+
+Known insufficient multiword queries are refused by Apple word/sentence routes and the existing
+optional adapter. Unknown linguistic capability keeps its prior behavior; no Japanese/Korean support
+is inferred. An initial implementation incorrectly treated a stored-model language as a query hint
+and applied Ask localization to a single guessed word. Review reproduced **one native assertion and
+four Core assertions**. The final implementation evaluates Apple queries without a hint and applies
+new Ask exclusions only to multiword queries. Existing English exclusions remain unchanged.
+
+The final native selection passes **38 functional methods**, including all six new methods and
+actual optional inference, while four original quality methods still fail **12 assertions**
+(DE 2/8, ES 1/8, JA 4/8, KO 2/8). Aggregate exit 65 remains a failure. A separate focused final run
+passes 18 methods. Both greens preserve all **16** actual persisted passage hashes from a pre-fix
+baseline; no passage recipe, model signature, minimum or ranking cutoff changed. The new full-topic
+positive controls prove retention, not improved paraphrase recall. Core passes **1,300 tests / seven
+optional skips / zero failures**, with **97.9288%** coverage. Each final supervised native/Core run preserved
+all **1,048** tracked/new inputs. Nine iPhone simulator runtime methods also pass with no skips;
+build/runtime input inventories remain unchanged. All 263 Core BDD bindings, 264 structural scenarios,
+lint and diff checks pass. No provider request, private conversation or download was used.
+
+Evidence: `/Users/tomwu/Documents/Codex/2026-10-29/listentome-history223-generic-query/`; prospective
+mapping/review: sibling `listentome-history223-generic-query-plan/`. Exact commands, source inventories,
+original failures, xcresults, passage hashes and independent reviews are retained. No visible UI
+changed, so the README gallery keeps its source-labelled captures. Full validation, physical/device
+acceptance, exact commit CI and merge remain separate outstanding gates.

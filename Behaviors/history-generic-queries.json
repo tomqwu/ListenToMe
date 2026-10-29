@@ -1,0 +1,163 @@
+{
+  "feature": "Language-aware generic History query filtering",
+  "scenarios": [
+    {
+      "id": "GENERICQUERY-001",
+      "name": "German generic questions preserve literal search without invented topics",
+      "given": "German lexical and Apple embedding assets plus the unchanged saved topical corpus",
+      "when": "History searches generic meeting or temporal variations and asks about generic plans",
+      "then": "no semantic Related topics or plan-based Ask excerpts appear; an exact literal conversation remains searchable",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryContentEligibility.swift",
+        "Sources/ListenToMeCore/HistoryEmbedding.swift",
+        "Sources/ListenToMeCore/HistoryQuestion.swift",
+        "Sources/ListenToMeCore/HistoryQueryVocabulary.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacHistoryGenericQueryTests.swift",
+          "test": "MacHistoryGenericQueryTests/testGermanGenericQueriesDoNotInventRelatedTopicsOrAskExcerpts"
+        }
+      ]
+    },
+    {
+      "id": "GENERICQUERY-002",
+      "name": "Spanish generic questions preserve literal search without invented topics",
+      "given": "Spanish lexical and Apple embedding assets plus the unchanged saved topical corpus",
+      "when": "History searches generic meeting or temporal variations and asks about generic plans",
+      "then": "no semantic Related topics or plan-based Ask excerpts appear; an exact literal conversation remains searchable",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryContentEligibility.swift",
+        "Sources/ListenToMeCore/HistoryEmbedding.swift",
+        "Sources/ListenToMeCore/HistoryQuestion.swift",
+        "Sources/ListenToMeCore/HistoryQueryVocabulary.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacHistoryGenericQueryTests.swift",
+          "test": "MacHistoryGenericQueryTests/testSpanishGenericQueriesDoNotInventRelatedTopicsOrAskExcerpts"
+        }
+      ]
+    },
+    {
+      "id": "GENERICQUERY-003",
+      "name": "A genuine topic inside generic wording remains retrievable",
+      "given": "the same German and Spanish generic scaffolding with a saved travel topic added",
+      "when": "History searches and retrieves excerpts through actual Apple models",
+      "then": "the travel conversation remains Related and eligible for an Ask request; word and sentence queries survive and persisted vectors are unchanged",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryContentEligibility.swift",
+        "Sources/ListenToMeCore/HistoryEmbedding.swift",
+        "Sources/ListenToMeCore/HistoryQuestion.swift",
+        "Sources/ListenToMeCore/HistoryQueryVocabulary.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacHistoryGenericQueryTests.swift",
+          "test": "MacHistoryGenericQueryTests/testRealTopicsAddedToTheSameScaffoldingRemainSearchable"
+        }
+      ]
+    },
+    {
+      "id": "GENERICQUERY-004",
+      "name": "Stored sentence models enforce known generic-query refusal",
+      "given": "actual German and Spanish sentence model tags with installed lexical evidence",
+      "when": "History generates queries for generic meeting and temporal wording",
+      "then": "no sentence query bypasses known insufficient topic content",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryContentEligibility.swift",
+        "Sources/ListenToMeCore/HistoryEmbedding.swift",
+        "Sources/ListenToMeCore/HistoryQuestion.swift",
+        "Sources/ListenToMeCore/HistoryQueryVocabulary.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacHistoryGenericQueryTests.swift",
+          "test": "MacHistoryGenericQueryTests/testStoredSentenceModelsCannotBypassGenericQueryRefusal"
+        }
+      ]
+    },
+    {
+      "id": "GENERICQUERY-005",
+      "name": "Optional runtime respects generic refusal while preserving topic queries",
+      "given": "installed actual optional model assets and supported German and Spanish lexical tagging",
+      "when": "the optional adapter receives generic queries and the same wording plus real travel content",
+      "then": "generic queries produce no vectors while genuine topic queries retain actual finite optional-model vectors",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryContentEligibility.swift",
+        "Sources/ListenToMeCore/HistoryEmbedding.swift",
+        "Sources/ListenToMeCore/HistoryQuestion.swift",
+        "Sources/ListenToMeCore/HistoryQueryVocabulary.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacHistoryGenericQueryTests.swift",
+          "test": "MacHistoryGenericQueryTests/testOptionalRuntimeRefusesKnownGenericQueriesAndKeepsTopicVectors"
+        }
+      ]
+    },
+    {
+      "id": "GENERICQUERY-006",
+      "name": "Query filtering preserves compounds and uncertain capability",
+      "given": "German compounds, ambiguous unhinted single words and an actually unavailable lexical language",
+      "when": "History evaluates topic eligibility and literal terms",
+      "then": "whole compounds survive; unhinted one-word queries retain actual Apple compatibility; ambiguity and unavailable classification stay unknown without downloads",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryContentEligibility.swift",
+        "Sources/ListenToMeCore/HistoryEmbedding.swift",
+        "Sources/ListenToMeCore/HistoryQuestion.swift",
+        "Sources/ListenToMeCore/HistoryQueryVocabulary.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacHistoryGenericQueryTests.swift",
+          "test": "MacHistoryGenericQueryTests/testCompoundsAmbiguityAndUnavailableLexicalAssetsKeepTheirExistingBehavior"
+        }
+      ]
+    },
+    {
+      "id": "GENERICQUERY-007",
+      "name": "Ask excludes translated generic scaffolding but keeps concrete terms",
+      "given": "German and Spanish equivalents of existing English Ask stopword concepts",
+      "when": "Ask extracts candidate literal terms",
+      "then": "generic plan and week framing is removed while passport, compound, named topic and short Chinese terms remain",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryContentEligibility.swift",
+        "Sources/ListenToMeCore/HistoryEmbedding.swift",
+        "Sources/ListenToMeCore/HistoryQuestion.swift",
+        "Sources/ListenToMeCore/HistoryQueryVocabulary.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryQuestionTests.swift",
+          "test": "HistoryQuestionTests/testLocalizedQuestionTermsKeepTopicsAndDropGenericScaffolding"
+        }
+      ]
+    },
+    {
+      "id": "GENERICQUERY-008",
+      "name": "Single unhinted Ask terms retain prior lexical meaning",
+      "given": "one unhinted word that a language guess could classify as German or Spanish generic framing",
+      "when": "Ask extracts literal terms",
+      "then": "the new localized exclusions do not erase that ambiguous word; existing English exclusions remain unchanged",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryQuestion.swift",
+        "Sources/ListenToMeCore/HistoryQueryVocabulary.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryQuestionTests.swift",
+          "test": "HistoryQuestionTests/testUnhintedSingleWordAskTermsKeepExistingMeaning"
+        }
+      ]
+    }
+  ]
+}

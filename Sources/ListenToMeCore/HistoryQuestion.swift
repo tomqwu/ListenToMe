@@ -90,16 +90,24 @@ public enum HistoryQuestion {
     }
 
     /// Words of the question worth matching literally: folded, at least three characters (any
-    /// length for scripts without spaces), and not one of a few English question words.
+    /// length for scripts without spaces), excluding known question and generic framing words.
     public static func contentTerms(_ question: String) -> [String] {
         let tokenizer = NLTokenizer(unit: .word)
         tokenizer.string = question
+        let words = tokenizer.tokens(for: question.startIndex..<question.endIndex).filter { range in
+            question[range].contains { $0.isLetter || $0.isNumber }
+        }
+        // An unhinted single word can mean something different in another language.
+        let language = words.count > 1 ? NLLanguageRecognizer.dominantLanguage(for: question) : nil
+        let localized = language.flatMap { HistoryQueryVocabulary.askStopWords[$0] } ?? []
         var terms: [String] = []
         tokenizer.enumerateTokens(in: question.startIndex..<question.endIndex) { range, _ in
             let word = SessionSearch.fold(String(question[range]))
             // CJK, kana and Hangul words are short by nature; the length rule is for spaced scripts.
             let unspaced = word.unicodeScalars.contains { $0.value >= 0x2E80 }
-            if word.count >= 3 || unspaced, !stopWords.contains(word), !terms.contains(word) { terms.append(word) }
+            if word.count >= 3 || unspaced, !stopWords.contains(word), !localized.contains(word), !terms.contains(word) {
+                terms.append(word)
+            }
             return true
         }
         return terms

@@ -33,17 +33,19 @@ public enum HistoryContentEligibility {
         tagger.setLanguage(selected, range: text.startIndex..<text.endIndex)
         var count = 0
         var unknown = false
+        let queryNouns = kind == .query ? HistoryQueryVocabulary.genericNouns[selected] ?? [] : []
         tagger.enumerateTags(in: text.startIndex..<text.endIndex, unit: .word, scheme: .lexicalClass,
                              options: [.omitPunctuation, .omitWhitespace]) { tag, range in
             guard let tag else { unknown = true; return true }
             guard tag == .noun || tag == .otherWord else { return true }
             let word = text[range].lowercased()
             if selected == .english && NaturalLanguageEmbedder.genericNouns.contains(word) { return true }
+            if queryNouns.contains(word) { return true }
             count += 1
             return true
         }
         guard !unknown else { return .unknown }
-        // Same lexical classes, generic English exclusions and minima as NaturalLanguageEmbedder.
+        // Passage classes, English exclusions and minima stay unchanged; new exclusions are query-only.
         // Vocabulary membership is still the selected embedding model's responsibility.
         let minimum = kind == .passage ? NaturalLanguageEmbedder.minimumPassageWords : 1
         return count >= minimum ? .eligible : .insufficientContent

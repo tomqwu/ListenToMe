@@ -116,7 +116,7 @@ final class MultilingualHistoryQualityTests: XCTestCase {
               + "gapOK=\(passesGap) marginOK=\(expected.score >= top.score - parameters.margin)")
     }
 
-    private static let fixtures: [String: [[String]]] = [
+    static let fixtures: [String: [[String]]] = [
         "de": [
             [
                 "Wir haben das Quartalsbudget geprüft. Die Marketingausgaben liegen zwanzig Prozent darüber, deshalb will "

@@ -162,6 +162,27 @@ final class HistoryQuestionTests: XCTestCase {
         XCTAssertTrue(HistoryQuestion.contentTerms("预算").contains("预算"))
     }
 
+    func testLocalizedQuestionTermsKeepTopicsAndDropGenericScaffolding() {
+        for text in ["der Plan für nächste Woche", "unsere Pläne für die letzte Woche",
+                     "el plan para la próxima semana", "nuestros planes para la última semana"] {
+            XCTAssertTrue(HistoryQuestion.contentTerms(text).isEmpty, text)
+        }
+        XCTAssertEqual(HistoryQuestion.contentTerms("der Plan für den Reisepass"), ["reisepass"])
+        XCTAssertEqual(HistoryQuestion.contentTerms("el plan para el pasaporte"), ["pasaporte"])
+        XCTAssertEqual(HistoryQuestion.contentTerms("der Projektplan für Orion"), ["projektplan", "orion"])
+        XCTAssertEqual(HistoryQuestion.contentTerms("las cuentas del proyecto"), ["cuentas", "proyecto"])
+        XCTAssertEqual(HistoryQuestion.contentTerms("el cuento sobre el proyecto"), ["cuento", "proyecto"])
+        XCTAssertEqual(HistoryQuestion.contentTerms("was wir malen"), ["malen"])
+        XCTAssertTrue(HistoryQuestion.contentTerms("预算").contains("预算"))
+    }
+
+    func testUnhintedSingleWordAskTermsKeepExistingMeaning() {
+        for word in ["Woche", "Pläne", "planes", "reuniones", "male"] {
+            XCTAssertEqual(HistoryQuestion.contentTerms(word), [SessionSearch.fold(word)], word)
+        }
+        XCTAssertTrue(HistoryQuestion.contentTerms("plan").isEmpty, "Existing English exclusions remain unchanged")
+    }
+
     func testDisclosureNamesOffDeviceDestinationsOnly() {
         XCTAssertNil(HistoryQuestion.destination(for: .apple, label: "x"))
         XCTAssertNil(HistoryQuestion.destination(for: .local, label: "x"))

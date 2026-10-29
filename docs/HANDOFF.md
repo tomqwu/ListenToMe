@@ -1,3 +1,28 @@
+# Generic History queries — October 29, 2026
+
+The current PR #318 follow-up fixes reproduced German/Spanish generic-query false matches.
+`GENERICQUERY-001`–`008` cover actual Related/Ask paths, word/sentence and optional adapters,
+literal search, real topics, compounds and uncertainty. Native red: four methods/36 assertions;
+Core red: one method/seven assertions, expanded to ten before implementation. Review caught an
+introduced single-word ambiguity regression (one native/four Core assertions); that is repaired.
+The final native run passes **38 functional methods** while the same four optional-model quality
+methods still fail **12 assertions**. All 16 stored passage files are byte-for-byte unchanged.
+Core passes **1,300 tests / seven optional skips / zero failures / 97.9288% coverage**.
+Nine iPhone simulator runtime methods pass with no skips; build/runtime preserve all 1,048 inputs.
+All 263 Core BDD bindings, 264 structural scenarios, lint and diff checks pass. These simulator
+checks do not establish physical-device or additional-language quality acceptance.
+
+Queries now use whole-token equivalents of the existing English policies. Passage recipes,
+signatures, ranking cutoffs, literal History search and unsupported-language behavior stay intact.
+Ask keeps its narrower stopword policy; ambiguous account/story/painting terms remain searchable.
+This is not acceptance of additional-language quality. No visible UI changed; README retains its
+source-labelled gallery. Remaining validation, current CI, affected acceptance and merge are open.
+[Evidence and limits](history-search-implementation.md#generic-query-parity--october-29-follow-up).
+
+The preceding query-revision fix `34267ca` passed all three required checks in
+[run 40962403033](https://github.com/tomqwu/ListenToMe/actions/runs/40962403033).
+No version, upload, review submission or release is claimed.
+
 # Stored Apple query compatibility — October 29, 2026
 
 The current PR #318 follow-up preserves saved sentence-model History entries when word assets

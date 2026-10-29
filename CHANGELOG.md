@@ -36,6 +36,10 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased)
 
+- Avoid unrelated History suggestions and Ask excerpts from generic German/Spanish planning
+  questions when on-device language analysis is available. Preserve literal searches, real topics
+  and ambiguous single-word queries; saved conversation vectors are unchanged. (#223)
+
 - Keep saved Apple sentence search entries usable when word models become available; query each
   stored model type and revision without rewriting conversations or search vectors. (#223)
 
@@ -186,6 +190,10 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 - Settings → Privacy now explains that optional Ollama, Cloud AI and OpenAI-compatible requests send text and included context to the provider you choose; Apple Intelligence stays on-device. (#247)
 
 ## macOS (unreleased since 1.4.4)
+
+- Avoid unrelated History suggestions and Ask excerpts from generic German/Spanish planning
+  questions when on-device language analysis is available. Preserve literal searches, real topics
+  and ambiguous single-word queries; saved conversation vectors are unchanged. (#223)
 
 - Keep saved Apple sentence search entries usable when word models become available; query each
   stored model type and revision without rewriting conversations or search vectors. (#223)
