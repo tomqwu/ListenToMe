@@ -13,6 +13,11 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## Repository tooling (unreleased)
 
+- Propagate failed native build/test pipelines through Apple's GNU make 3.81, preserve diagnostics
+  and stop later success checks. Add offline tests of the actual make recipes and bind the
+  Save-to-folder UI journey, with full control/disclosure visibility after picker Cancel.
+  This changes validation only and requires no app version bump. (#347)
+
 - Support an explicit, validated manual TestFlight signing file when cloud-managed signing is unavailable. Preserve the automatic default, exact companion eligibility, stable versions/team, upload locks and acceptance receipts; upload from a private validated snapshot and record its hash, original path and signing mode. No app binary or privacy behavior changes. (#323)
 
 - Require Given/When/Then behavior contracts and changed native regression-test bindings for behavior
@@ -28,6 +33,7 @@ does not show it again, and a fresh install does not see it at all; see
 ## iOS (unreleased)
 
 - Long-press an identified transcript line and choose **Rename speaker**. Save updates every line for that speaker in the conversation and Notes; Cancel leaves the name unchanged. Available in portrait, expanded transcript and Duo. (#334)
+- Preserve the final audio samples when converting saved recordings for re-transcription and Watch imports. Drain retained converter output before advancing to the next file; keep original files intact and maintain recording-time alignment. (#348)
 
 ## iOS 1.20.2 (42) — 2026-10-28 (TestFlight)
 
@@ -154,6 +160,7 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 ## macOS (unreleased since 1.4.4)
 
 - Double-click an identified transcript speaker label, or choose **Rename speaker** from its context menu. Save updates that speaker across the conversation, including reopened conversations; Cancel leaves the name unchanged. (#334)
+- Preserve the final audio samples in the shared saved-audio conversion feed, including chunk timeline boundaries. Keep original recordings unchanged and stop explicitly on conversion failures. (#348)
 
 - Stop indefinite translation progress after a stalled on-device request, add Cancel translation and disable duplicate Translate/Retry actions until native work safely exits. Cancel the actual Apple session and reject late results/timers while preserving originals, language-pack consent and AI-provider choices. (#343)
 

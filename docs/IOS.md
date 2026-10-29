@@ -1614,6 +1614,8 @@ Settings Transcription and Speakers descriptions explicitly explain opt-in saved
 
 ## Re-transcribe saved audio (#224)
 
+Unreleased #348 corrects a shared saved-audio conversion tail loss affecting the feed used by re-transcription and Watch imports. The candidate drains converter output before advancing files and preserves saved originals and recording-time anchors. Focused generated-PCM tests passed; this is not a claim of changed transcription accuracy or physical acceptance. See [scope and evidence](audio-file-feed-tail.md).
+
 After stopping, open a conversation with saved audio and choose **More → Re-transcribe saved audio**.
 Choose its language and tap **Re-transcribe**. Apple speech recognition processes each saved track
 on-device; a language model may need a first-use download. Preview the result, then choose

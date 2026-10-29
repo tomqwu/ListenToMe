@@ -1,0 +1,105 @@
+{
+  "feature": "Saved audio PCM frame and tail conservation",
+  "scenarios": [
+    {
+      "id": "AUDIOFEED-001",
+      "name": "Converted files retain their final audio samples",
+      "given": "a saved mono 16kHz PCM file, stored as either Float32 or signed Int16, ends in a short buffer with distinctive final samples",
+      "when": "the raw file feed converts it to mono Int16 or reads matching Float32 without conversion and reaches EOF",
+      "then": "every source frame and the distinctive tail are emitted once, EOF remains stable, and the saved file bytes are unchanged",
+      "covers": [
+        "SharedPlatform/AudioChunkFileFeed.swift",
+        "SharedPlatform/LocalAudioFileTranscriber.swift",
+        "TestSupport/AudioChunkFeedAssertions.swift",
+        "project.yml"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/AudioChunkFeedTests.swift",
+          "test": "AudioChunkFeedTests/testConvertedFileRetainsEveryFrameAndDistinctiveTail"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacAudioChunkFeedTests.swift",
+          "test": "MacAudioChunkFeedTests/testConvertedFileRetainsEveryFrameAndDistinctiveTail"
+        }
+      ]
+    },
+    {
+      "id": "AUDIOFEED-002",
+      "name": "Drained chunk tails preserve recording time",
+      "given": "three saved PCM chunks stored as Float32 or signed Int16 overlap or have a real timeline gap",
+      "when": "the converted chunks are read sequentially through EOF",
+      "then": "all frames including each tail precede the next chunk, only first buffers carry anchors, overlap starts at the fully emitted preceding end and real gaps remain",
+      "covers": [
+        "SharedPlatform/AudioChunkFileFeed.swift",
+        "SharedPlatform/LocalAudioFileTranscriber.swift",
+        "TestSupport/AudioChunkFeedAssertions.swift",
+        "project.yml"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/AudioChunkFeedTests.swift",
+          "test": "AudioChunkFeedTests/testConvertedChunkTimestampsIncludeDrainedTails"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacAudioChunkFeedTests.swift",
+          "test": "MacAudioChunkFeedTests/testConvertedChunkTimestampsIncludeDrainedTails"
+        }
+      ]
+    },
+    {
+      "id": "AUDIOFEED-003",
+      "name": "Cancelling a feed suppresses its pending tail",
+      "given": "a saved Float32 or signed Int16 PCM file has observable final audio still undelivered and another chunk follows",
+      "when": "the feed is stopped before the remaining audio is requested",
+      "then": "no further PCM or next chunk is returned, cancellation preserves source bytes, and a supplied first failure remains observable",
+      "covers": [
+        "SharedPlatform/AudioChunkFileFeed.swift",
+        "SharedPlatform/LocalAudioFileTranscriber.swift",
+        "TestSupport/AudioChunkFeedAssertions.swift",
+        "project.yml"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/AudioChunkFeedTests.swift",
+          "test": "AudioChunkFeedTests/testStopSuppressesPendingTailAndPreservesSource"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacAudioChunkFeedTests.swift",
+          "test": "MacAudioChunkFeedTests/testStopSuppressesPendingTailAndPreservesSource"
+        }
+      ]
+    },
+    {
+      "id": "AUDIOFEED-004",
+      "name": "Empty and unreadable saved files end safely",
+      "given": "a file feed has no chunks, a valid zero-frame file, or an unreadable or invalid file",
+      "when": "the caller requests PCM",
+      "then": "empty inputs end without invented samples, read errors are retained and prevent later chunks from being read, and no source is modified",
+      "covers": [
+        "SharedPlatform/AudioChunkFileFeed.swift",
+        "SharedPlatform/LocalAudioFileTranscriber.swift",
+        "TestSupport/AudioChunkFeedAssertions.swift",
+        "project.yml"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/AudioChunkFeedTests.swift",
+          "test": "AudioChunkFeedTests/testEmptyAndUnreadableInputsPreserveSourceAndFailure"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacAudioChunkFeedTests.swift",
+          "test": "MacAudioChunkFeedTests/testEmptyAndUnreadableInputsPreserveSourceAndFailure"
+        }
+      ]
+    }
+  ]
+}

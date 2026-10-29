@@ -1,7 +1,9 @@
 .PHONY: gen build test lint run pre-push e2e release
 
-SHELL := /bin/bash
-.SHELLFLAGS := -eo pipefail -c
+# Apple's GNU Make 3.81 ignores .SHELLFLAGS. Keep failure policy in SHELL so a
+# failing native command cannot be hidden by tee or followed by later stages.
+SHELL := /bin/bash -eo pipefail
+.SHELLFLAGS := -c
 
 # Optional local signing override (gitignored) — define SIGN_FLAGS for a stable identity
 # so granted macOS permissions (TCC) persist across rebuilds. See signing.local.mk.example.
@@ -145,6 +147,7 @@ validate-local:
 	@test "$${GITHUB_ACTIONS:-false}" != true || { echo 'GUI/audio/device/e2e validation must run locally, not in GitHub Actions'; exit 1; }
 	$(MAKE) bdd-check
 	python3 scripts/test-bdd.py
+	python3 scripts/test-make-pipelines.py
 	bash -n scripts/ios-testflight.sh
 	python3 scripts/test-ios-testflight.py
 	python3 scripts/test-contract-gate.py

@@ -18,6 +18,8 @@ Integration preserves main's IDs and remaps only the unmerged Mac examples; thei
 evidence remains valid under that explicit mapping. Temporary-directory bookmark tests do not prove
 installed sandbox picker grants across relaunch, which remain manual acceptance.
 
+AUDIOFEED-001–004 bind native iOS `AudioChunkFeedTests` and Mac `MacAudioChunkFeedTests` to generated local PCM frame/tail, timeline, Stop and empty/error outcomes. The genuine Int16 regression and focused/supplemental results are recorded in [the audio-feed evidence](audio-file-feed-tail.md); structural validity and simulator/native converter checks are not speech-quality or physical acceptance.
+
 ## Working an issue
 
 `RELEASE-014` binds the locally testable Store sandbox configuration, unchanged production/Dev
@@ -181,6 +183,21 @@ The verifier now extracts the exact class/method from a complete passing XCTest 
 that framework prefix without accepting diagnostic mentions, other selectors, skipped/failed tests
 or incomplete records. The original run remains failed; new offline regression cases and the saved
 native log verify the parser fix before the full candidate validation is repeated.
+
+`DEV-009` covers an actual false-success boundary in Apple's GNU make 3.81: `.SHELLFLAGS` was
+ignored, so a failing native command piped into `tee` could return success and reach later stages.
+Six offline methods execute the repository Makefile and native recipes with harmless commands,
+checking failures, successful controls, preserved diagnostics, paths with spaces and refusal to
+run later verification. Bash flags now belong to `SHELL`, which the older make actually uses.
+The original native failure remains failed; these tooling tests do not accept any app behavior.
+
+`VAULTUI-001` adopts the existing Save-to-folder journey and its observed full-run failure. The
+native screenshot/AX showed the enabled toggle partly outside the viewport, while lower lazy rows
+had not appeared. The corrected test reveals complete controls/disclosure inside Settings and scopes
+text queries to that form; a first revised page-wide query incorrectly found the warning behind the
+sheet and is retained as a harness failure. Default-off, explicit picker, Cancel, enabled-but-needs-
+folder and reachable Choose folder assertions remain. No folder behavior changed. See
+[the combined evidence](validation-pipeline-recovery.md).
 
 ## Commands and enforcement
 

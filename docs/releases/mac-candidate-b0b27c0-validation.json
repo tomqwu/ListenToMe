@@ -1,0 +1,310 @@
+{
+  "source": "b0b27c0b5cc49fb63f7d808b02c0e36bea1acd34",
+  "base": "63628537cc12dc049dafb2d6251f6b0769b31139",
+  "tree": "e8f3920bbc9e45c6ae333d2c61d8373ed15dfe09",
+  "status": "automated_pass",
+  "auditedAt": "2026-10-29T00:15:46.654120+00:00",
+  "evidenceRoot": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-mac318-integration/recovery-b0b27c0",
+  "process": {
+    "parentPID": 7332,
+    "startedAt": "2026-10-28T23:33:59.022230+00:00",
+    "status": "terminal",
+    "hardWallSeconds": 7200,
+    "hardWallExceeded": false,
+    "reaped": true,
+    "pid": 8274,
+    "childReturncode": 0,
+    "returncode": 0,
+    "elapsedSeconds": 2417.984523165971,
+    "finishedAt": "2026-10-29T00:14:17.015391+00:00"
+  },
+  "recordedOuterStatus": "automated_pass",
+  "trackedInputs": 975,
+  "pinnedManifestMismatches": [],
+  "recordedFinalHashMismatches": [],
+  "currentCheckoutCompared": false,
+  "referenceLogSHA256": "d1691a16715dceef452dacef06afdcbfc3cd898a4aa5fb4fc0dd2765800c1b5d",
+  "stateSHA256": "08cc2aad5e9a99cc93b08e49a6d20e7cbe47334f757bbc270e497f38b6c41298",
+  "runnerSHA256": "78d53d74daac5548c1d309382987da3489c6f8258653f27f0c1b07ba318e47ec",
+  "suiteCounts": {
+    "core": {
+      "result": "passed",
+      "tests": 1266,
+      "skipped": 7,
+      "assertionFailures": 0
+    },
+    "ios-unit": {
+      "result": "passed",
+      "tests": 504,
+      "skipped": 7,
+      "assertionFailures": 0
+    },
+    "ios-ui": {
+      "result": "passed",
+      "tests": 83,
+      "skipped": 5,
+      "assertionFailures": 0
+    },
+    "mac-unit": {
+      "result": "passed",
+      "tests": 74,
+      "skipped": 0,
+      "assertionFailures": 0
+    },
+    "watch-unit": {
+      "result": "passed",
+      "tests": 29,
+      "skipped": 0,
+      "assertionFailures": 0
+    },
+    "watch-ui": {
+      "result": "passed",
+      "tests": 5,
+      "skipped": 0,
+      "assertionFailures": 0
+    }
+  },
+  "nativeResults": {
+    "ios": {
+      "path": "/Users/tomwu/.codex/worktrees/checkpoint-work-134/ListenToMe/.build/ios/Logs/Test/Test-ListenToMeIOS-2026.10.28_19-34-48--0400.xcresult",
+      "result": "Passed",
+      "total": 587,
+      "passed": 575,
+      "skipped": 12,
+      "failedMethods": 0,
+      "failures": [],
+      "summarySHA256": "a33ecab9a080dae2cfb2cba5f02e4b5b2d93019f51fe1c46d70481a9beaa0607",
+      "devices": [
+        {
+          "device": {
+            "architecture": "arm64",
+            "deviceId": "F9CA960D-A307-43A7-B4B6-1A418EF48BFA",
+            "deviceName": "ListenToMe318 recovery b0b27c0 iPhone",
+            "modelName": "iPhone 17 Pro",
+            "osBuildNumber": "23F77",
+            "osVersion": "26.5",
+            "platform": "iOS Simulator"
+          },
+          "expectedFailures": 0,
+          "failedTests": 0,
+          "passedTests": 575,
+          "skippedTests": 12,
+          "testPlanConfiguration": {
+            "configurationId": "1",
+            "configurationName": "Test Scheme Action"
+          }
+        }
+      ]
+    },
+    "mac": {
+      "path": "/Users/tomwu/.codex/worktrees/checkpoint-work-134/ListenToMe/.build/mac-native-tests/Logs/Test/Test-ListenToMeMacTests-2026.10.28_20-11-35--0400.xcresult",
+      "result": "Passed",
+      "total": 74,
+      "passed": 74,
+      "skipped": 0,
+      "failedMethods": 0,
+      "failures": [],
+      "summarySHA256": "7ef0b830888b4b6d58a8710f9f3ae7463ad443c7ad27e8cd822a9f2b30cea830",
+      "devices": [
+        {
+          "device": {
+            "architecture": "arm64",
+            "deviceId": "00006050-000951C40AF9401C",
+            "deviceName": "My Mac",
+            "modelName": "MacBook Pro",
+            "osBuildNumber": "26A434",
+            "osVersion": "27.0.1",
+            "platform": "macOS"
+          },
+          "expectedFailures": 0,
+          "failedTests": 0,
+          "passedTests": 74,
+          "skippedTests": 0,
+          "testPlanConfiguration": {
+            "configurationId": "1",
+            "configurationName": "Test Scheme Action"
+          }
+        }
+      ]
+    },
+    "watch": {
+      "path": "/Users/tomwu/.codex/worktrees/checkpoint-work-134/ListenToMe/.build/watch-native-tests/Logs/Test/Test-ListenToMeWatchTests-2026.10.28_20-11-56--0400.xcresult",
+      "result": "Passed",
+      "total": 34,
+      "passed": 34,
+      "skipped": 0,
+      "failedMethods": 0,
+      "failures": [],
+      "summarySHA256": "015295643edfc50c6eef663ec9dc164932946491775a3247460352803d353181",
+      "devices": [
+        {
+          "device": {
+            "architecture": "arm64",
+            "deviceId": "75D56C98-81B6-4F75-9538-5A1BC773E0CD",
+            "deviceName": "ListenToMe318 recovery b0b27c0 Watch",
+            "modelName": "Apple Watch Series 12",
+            "osBuildNumber": "24R362",
+            "osVersion": "27.0",
+            "platform": "watchOS Simulator"
+          },
+          "expectedFailures": 0,
+          "failedTests": 0,
+          "passedTests": 34,
+          "skippedTests": 0,
+          "testPlanConfiguration": {
+            "configurationId": "1",
+            "configurationName": "Test Scheme Action"
+          }
+        }
+      ]
+    }
+  },
+  "nativeSuiteCountCrossChecks": {
+    "ios": {
+      "consistent": true,
+      "logDerived": {
+        "total": 587,
+        "skipped": 12,
+        "failedMethods": 0,
+        "passed": 575
+      },
+      "nativeSummary": {
+        "total": 587,
+        "skipped": 12,
+        "failedMethods": 0,
+        "passed": 575
+      }
+    },
+    "mac": {
+      "consistent": true,
+      "logDerived": {
+        "total": 74,
+        "skipped": 0,
+        "failedMethods": 0,
+        "passed": 74
+      },
+      "nativeSummary": {
+        "total": 74,
+        "skipped": 0,
+        "failedMethods": 0,
+        "passed": 74
+      }
+    },
+    "watch": {
+      "consistent": true,
+      "logDerived": {
+        "total": 34,
+        "skipped": 0,
+        "failedMethods": 0,
+        "passed": 34
+      },
+      "nativeSummary": {
+        "total": 34,
+        "skipped": 0,
+        "failedMethods": 0,
+        "passed": 34
+      }
+    }
+  },
+  "hotkeyRegression": {
+    "marker": "PASS: Carbon identity filtering, repeat suppression, release, stop/restart, conflict and deinit",
+    "occurrences": 1
+  },
+  "coverage": {
+    "percent": 98.2003739482705,
+    "floor": 95.0
+  },
+  "bddScenarios": 174,
+  "boundNativeAndCoreSelectors": {
+    "core": {
+      "required": 228,
+      "passing": 228,
+      "missing": []
+    },
+    "ios-unit": {
+      "required": 119,
+      "passing": 119,
+      "missing": []
+    },
+    "ios-ui": {
+      "required": 34,
+      "passing": 34,
+      "missing": []
+    },
+    "mac-unit": {
+      "required": 74,
+      "passing": 74,
+      "missing": []
+    },
+    "watch-unit": {
+      "required": 29,
+      "passing": 29,
+      "missing": []
+    },
+    "watch-ui": {
+      "required": 5,
+      "passing": 5,
+      "missing": []
+    }
+  },
+  "helpers": {
+    "bdd": {
+      "methods": 21,
+      "outcome": "OK"
+    },
+    "make-pipelines": {
+      "methods": 6,
+      "outcome": "OK"
+    },
+    "ios-testflight": {
+      "methods": 29,
+      "outcome": "OK"
+    },
+    "contract-gate": {
+      "methods": 5,
+      "outcome": "OK"
+    },
+    "release-paths": {
+      "methods": 4,
+      "outcome": "OK"
+    },
+    "mac-appstore": {
+      "methods": 6,
+      "outcome": "OK"
+    }
+  },
+  "realServerContracts": {
+    "OllamaContractE2ETests": 2,
+    "OpenAICompatibleContractE2ETests": 2
+  },
+  "realInstalledTranslation": {
+    "observations": [
+      [
+        "installed-real-model",
+        "1.126363084 seconds"
+      ]
+    ],
+    "actualChineseInference": true,
+    "branch": "installed-real-model",
+    "elapsedObservation": "1.126363084 seconds",
+    "retainedNotes": [
+      {
+        "path": "/Users/tomwu/Documents/Codex/2026-10-28/listentome-mac318-integration/recovery-b0b27c0/independent-terminal-audit/native-installed-translation/075B1384-BDBF-4108-ABA2-1BD1A7D0C891.txt",
+        "sha256": "708ca4f4dcf97e1b1f898aa71bec322bcc2d8d03f4978e6dc181d33f0936ee36",
+        "text": "Actual Apple Translation branch: installed-real-model; target: zh-Hans; elapsed: 1.126363084 seconds; isTranslating: false; isDraining: false\nDerived synthetic output:\n预算是120美元。\n\n团队将在周四审查预算。\n\n```swift\nlet budget = 120\n```"
+      }
+    ]
+  },
+  "failedMethods": [],
+  "issues": [],
+  "originalFailed025EvidenceSHA256": "e104a7ae59f0b993a6fd32d1dade0fde47755a16fc49c79949c0051dc13dec16",
+  "originalFailed025Preserved": true,
+  "acceptance": {
+    "physicalPhoneWatch": "pending",
+    "installedMac": "Prior02528bfpartialGUI evidence only; independent near-end/overlap/repeatedspeech/routes/headphones/Stoprecovery/delayedplayback remain separate.",
+    "AppleDistributedMacStoreInstallation": "unverified",
+    "productionReady": false,
+    "published": false
+  },
+  "scope": "Read-only terminal artifacts audit. No builds/tests/inference/app/permissions/repo changes. Native Chinese branch is Mac synthetic acceptance, not phone quality. A successful automated aggregate never waives installed/physical/review/CI gates."
+}

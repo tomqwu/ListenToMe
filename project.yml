@@ -226,6 +226,9 @@ targets:
       - App/MacAnalyzerInputAdapter.swift
       - App/SpeechAnalyzerTranscriber.swift
       - SharedPlatform/SpeechVocabularyContext.swift
+      - SharedPlatform/AudioChunkFileFeed.swift
+      - SharedPlatform/LocalAudioFileTranscriber.swift
+      - TestSupport/AudioChunkFeedAssertions.swift
       - App/MacCapturePreflight.swift
       - App/MacCheckpointController.swift
       - App/MacMeetingEnvironment.swift
@@ -270,6 +273,7 @@ targets:
     deploymentTarget: "26.0"
     sources:
       - iOSUnitTests
+      - TestSupport/AudioChunkFeedAssertions.swift
     dependencies:
       - target: ListenToMeIOS
       - package: ListenToMeCore

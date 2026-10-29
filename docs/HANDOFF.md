@@ -1,6 +1,87 @@
-# Speaker rename focused integration evidence — October 28, 2026
+# Speaker rename integration with audio-feed #348 — October 28, 2026
 
-The preserved `codex/speaker-rename-gestures` branch integrates local PR #318 candidate `02528bf`
+This local integration merges PR #318 candidate `78b4fda2dbfaf65a1b36259eaaac6d13c2cd4dd7`
+into the preserved speaker-rename branch at `5074d0c4d1e9e3769a3ddf622d9a8cd364732e9c`.
+The #334 and #348 unreleased notes and both source-specific evidence histories are retained.
+Only CHANGELOG and this handoff required conflict resolution; application/test auto-merges are
+unchanged. No new combined validation, hosted CI, installed acceptance, PR or publication is claimed.
+Fresh combined checks and the pending installed Mac/VoiceOver/relaunch/audio gates still apply.
+
+# Historical Mac PR #318: audio-feed #348 candidate — October 28, 2026
+
+That candidate includes an unreleased shared saved-audio EOF fix. A faithful Int16-on-disk
+fixture reproduced 804 missing frames with one native method failing 65 assertions; the exact
+four-method Mac suite passed after the fix. Supplemental Int16 timeline/Stop and Float32 bypass
+coverage passed all four methods on Mac and all four on iOS simulator. The earlier Float32-only
+four-method pass is a baseline, not a red. [Scope and evidence](audio-file-feed-tail.md).
+Current full validation, exact-source CI, review and merge remain pending. The full `b0b27c0` pass
+below is historical source evidence, not a full pass for the new implementation.
+
+Resumed installed `b0b27c0` Dev acceptance remains incomplete: microphone active, system audio
+unavailable with ScreenCaptureKit -3801, zero transcript lines and no acceptance fixture played.
+System Settings required Touch ID/password before app selection; that attempt was cancelled
+without changing its toggles. Stop returned both channels stopped. The exact Dev bundle was moved
+to Trash and only its Dev TCC permissions reset; saved settings were restored and production
+permissions/data were untouched. The Mac is unlocked; OS authentication and actual OTHERS/route/audio
+acceptance gates remain open; do not request repeat acceptance or infer it from automated tests.
+No merge, new archive/upload, release or production-ready claim is made here.
+
+# Historical Mac PR #318 automated recovery passed — October 28, 2026
+
+Fresh `make validate-local` on exact source `b0b27c0b5cc49fb63f7d808b02c0e36bea1acd34` completed
+with exit 0 and its owned child reaped at **2026-10-29 00:14:17 UTC** (October 28 local time).
+The independent terminal audit checked all 975 pinned inputs with no hash mismatches and reconciled
+the logs with all three native result summaries. [Exact audit receipt](releases/mac-candidate-b0b27c0-validation.json).
+Core: 1,266 tests / 7 skips / zero failures / **98.2003739482705%** line coverage. iOS: 504 unit +
+83 UI tests, **575 passed / 12 optional skips / zero failures**. Mac: 74 passed. Watch: 29 unit +
+5 UI passed, no skips. All 174 BDD scenarios were structurally valid and every required Core/native binding was observed
+passing; six helper suites, the hotkey regression and four real-server contracts passed. All three required hosted
+checks passed on the same source ([run 40788007120](https://github.com/tomqwu/ListenToMe/actions/runs/40788007120)).
+
+The native Mac suite also observed the real installed English-to-Simplified-Chinese model branch;
+that synthetic inference result is not physical-phone or installed-app GUI acceptance. The earlier
+`02528bf` aggregate remains **failed**, with its receipt and raw evidence preserved; this is a new
+full pass, not a relabeling of that run. [Recovery details](validation-pipeline-recovery.md).
+
+At that automated-recovery checkpoint, the Mac was locked. Prior signed Dev-sandbox GUI evidence remains scoped to `02528bf` and
+its recorded binary/signature. Independent near-end/overlap/repeated speech, routes/headphones,
+Stop recovery and delayed-line audio playback remain pending. Apple-distributed Mac Store installation
+and physical phone/Watch acceptance are unverified. Automated source validation does not make a
+Store artifact production-ready. PR #318 is not merged or published by this update; these docs-only
+changes still need review and hosted CI. No new archive, upload or release is claimed.
+
+# Historical first Mac PR #318 integration attempt — October 28, 2026
+
+The existing draft integrates `main` at `6362853` in `02528bf`, preserving published iOS 1.20.2 (42)
+translation recovery/recording continuity with the Mac sandbox/audio/transcript fixes. All three
+hosted checks passed on that source. Its full local run **failed**: one iOS Save-to-folder UI method
+had three assertions; the outer wrapper rejected the run even though GNU make 3.81 incorrectly
+returned zero after the piped native failure. All 970 frozen inputs match the source. The
+[independent failure receipt](releases/mac-candidate-02528bf-failed-validation.json) records each
+component result separately, including the later passing Mac, Watch and real-server stages.
+
+The subsequent correction fixes make's failure propagation (#347) and the native Settings test's
+visibility/query defects. Genuine red/green evidence and independent review are retained; the fresh
+full run on `b0b27c0` passed as recorded above. [Recovery evidence](validation-pipeline-recovery.md).
+No earlier passing run is promoted to acceptance for this source.
+
+Installed signed Dev-sandbox checks on `02528bf` now cover #337's double-click, Copy, accessibility/
+context editing, Save/Cancel and narrow/wide reflow, plus real English-to-Simplified-Chinese Summary
+translation. [Bounded receipt](releases/mac-candidate-02528bf-installed.json). Independent near-end,
+overlap/repeated speech, physical routes/headphones, Stop during recovery and delayed-line audio
+playback remain incomplete for #336. The completed Dev session was archived, stopped and cleaned
+with only the exact Dev permission scope. No merge, new Mac upload or publication is claimed.
+
+The preserved #334 branch is integrated with this source; independent review found its Watch-speaker
+fixture missing scene lifecycle and a rotation test that did not establish real Duo. Observable
+regressions were prepared; native red and the fixture correction were then pending behind #318.
+The later source-specific speaker results below record their completion without claiming a combined full pass.
+The requested Impeccable audit also recorded a scoped light-mode translation-caption legibility
+finding as #346, with native resolved-color acceptance still required before a fix is claimed.
+
+# Historical speaker rename focused integration evidence — October 28, 2026
+
+At this focused checkpoint, the preserved `codex/speaker-rename-gestures` branch integrated local PR #318 candidate `02528bf`
 at base `6705543054c481d556b4c3faadb25d2e0601a4c1`. The new focused results are **base plus the
 three retained dirty fixture/test/scenario hashes**, not clean `6705543` acceptance.
 [Source-bound receipt](releases/speaker-rename-6705543-readiness.json).
@@ -27,7 +108,7 @@ Earlier source-specific results remain below.
 
 # Historical speaker and transcript gesture integration — October 28, 2026
 
-The existing speaker-rename branch now integrates PR #318's validated transcript candidate
+At this earlier checkpoint, the speaker-rename branch integrated PR #318's validated transcript candidate
 `a1eb0fb` (app/test source `d525760`). Both unreleased feature histories are retained. Native
 integration checks distinguish a speaker-label double-click from a transcript-word double-click:
 only the intended name sheet or line editor opens, and Escape cancels naming without changing
@@ -39,14 +120,6 @@ Evidence is under `2026-10-28/listentome-speaker334-edit337`. Native sheet bitma
 labels and is diagnostic only; it does not prove installed UI presentation. Fresh full combined
 validation, installed gesture/Copy/name-sheet acceptance and CI remain. Do not open the #334 PR
 before #318 completes its remaining installed audio/interaction gates. No feature release is claimed.
-
-# Mac PR #318 integration with published beta source — October 28, 2026
-
-The existing Mac draft is being brought up to `main` at `6362853` from `a1eb0fb`.
-The source retains the published iOS 1.20.2 (42) translation recovery and recording-continuity
-changes alongside the unmerged Mac sandbox, audio and transcript fixes. Earlier full-validation
-receipts apply only to their recorded source; fresh combined validation and installed #336/#337
-acceptance remain required before merge. No new publication is claimed.
 
 # Published translation-recovery beta — 1.20.2 (42)
 
