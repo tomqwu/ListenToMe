@@ -104,6 +104,12 @@ forwarding, safe drainage, actual controls, late completion/timer races and the 
 Held-service tests intentionally ignore cancellation; they prove bounded state without multiplying
 native work. See [evidence and acceptance limits](translation-recovery.md).
 
+`TRANSLATIONLEGIBILITY-001`–`003` bind essential translation text to actual iOS Summary/status
+renders and supported native Mac card/rail renders. Native environment, opaque surface, text bounds
+and measured glyph contrast are checked before a pass; a palette-only assertion is insufficient.
+The preserved initial scroll/appearance harness failures are separate from the genuine iOS contrast
+red. Mac increased-contrast propagation remains unverified. See [legibility evidence](translation-legibility.md).
+
 ## Watch durability and beta eligibility
 
 `WATCH-005`–`WATCH-014` exercise native AAC encoding/reading, crash recovery, metadata-first handoff, duplicate/conflicting chunks, end-marker storage failure, continued recording boundaries, pending counts, active-recording protection and Delete/relaunch. Transport and audio-session adapters isolate tests from real WatchConnectivity and microphone capture. Red evidence is retained separately from passing baseline adoption and test-harness failures; simulator assertions never prove physical delivery or wrist-down/battery acceptance.

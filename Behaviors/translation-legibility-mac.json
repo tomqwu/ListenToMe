@@ -1,0 +1,23 @@
+{
+  "feature": "Native Mac essential translation caption legibility",
+  "scenarios": [
+    {
+      "id": "TRANSLATIONLEGIBILITY-003",
+      "name": "Actual Mac translation availability guidance remains legible on native surfaces",
+      "given": "the production Mac translation status explains that speech is needed on the Summary card or Languages rail with standard system contrast",
+      "when": "the native view appears in supported Aqua or Dark Aqua appearance",
+      "then": "the actual standard-contrast appearance reaches SwiftUI, the caption fits its native host, the opaque background matches the resolved production surface, and the actual caption meets the 4.5:1 small-text benchmark with native render evidence retained",
+      "covers": [
+        "SharedPlatform/ConversationLanguageControls.swift",
+        "App/Theme.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacLanguageControlsTests.swift",
+          "test": "MacLanguageControlsTests/testActualTranslationStatusMeetsContrastOnMacSurfacesAndAppearances"
+        }
+      ]
+    }
+  ]
+}

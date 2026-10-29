@@ -1711,6 +1711,8 @@ See [Watch beta status](watch-beta.md). [Published to TestFlight](releases/ios-1
 
 ## Live and Summary translation (#330; TestFlight recovery #343)
 
+Unreleased #346 strengthens essential translation guidance/status foregrounds while preserving font sizes, layout, originals and translation behavior. Focused native contrast evidence and acceptance limits are [recorded separately](translation-legibility.md); this change is not part of published build 42.
+
 **More → Live translation** and **Notes → Live translation** control opt-in finalized-line translation
 on phone/iPad/Duo. **Summary → Translate summary** translates an existing completed summary into an
 independent target; it does not change summary generation language/provider. Originals stay available.

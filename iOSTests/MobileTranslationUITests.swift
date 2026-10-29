@@ -52,9 +52,15 @@ final class MobileTranslationUITests: XCTestCase {
     /// the owning scroll view, rechecking direction and full bounds before any action tap.
     private func revealSummary(_ target: XCUIElement, in app: XCUIApplication,
                                entirely: Bool = true, file: StaticString = #filePath, line: UInt = #line) -> Bool {
-        let scroll = app.scrollViews["dashboardScroll"]
-        guard target.waitForExistence(timeout: 5), scroll.waitForExistence(timeout: 5) else {
-            XCTFail("Summary target and scroll view must exist", file: file, line: line); return false
+        guard target.waitForExistence(timeout: 5) else {
+            XCTFail("Summary target must exist", file: file, line: line); return false
+        }
+        // Compact normal text uses the Summary panel's inner viewport; stacked/accessibility
+        // layouts use the dashboard. Select the actual owner before computing visible bounds.
+        let panelScroll = app.otherElements["summary-panel-summary"].scrollViews.firstMatch
+        let scroll = panelScroll.exists ? panelScroll : app.scrollViews["dashboardScroll"]
+        guard scroll.waitForExistence(timeout: 5) else {
+            XCTFail("Summary owning scroll view must exist", file: file, line: line); return false
         }
         for _ in 0..<20 {
             let viewport = scroll.frame.intersection(app.windows.firstMatch.frame).insetBy(dx: 2, dy: 2)
@@ -112,6 +118,52 @@ final class MobileTranslationUITests: XCTestCase {
         XCTAssertTrue(duo.waitForExistence(timeout: 3) || wide.exists)
         XCTAssertTrue(translated.waitForExistence(timeout: 5))
         capture(app, "Original transcript and translation in Duo or iPad wide layout")
+    }
+    /// Run on a dedicated simulator configured Light before launch. A nonwhite native crop fails
+    /// the environment precondition rather than silently counting a dark appearance as the red.
+    func testSummaryGuidanceAndSetupStatusMeetSmallTextContrast() throws {
+        let app = launch(["--translation-needs-packs"])
+        if app.buttons["Summary"].firstMatch.exists { app.buttons["Summary"].firstMatch.tap() }
+        let original = app.staticTexts["output-summary"]
+        XCTAssertTrue(original.waitForExistence(timeout: 5)); let originalText = original.label
+        let option = app.buttons["summaryTranslationOptions"]
+        guard revealSummary(option, in: app) else { return }; option.tap()
+        choose("summaryTranslationTargetPicker", "French", in: app)
+        let guidance = app.staticTexts["On-device translation keeps the original below. Check translated wording before sharing."]
+        guard revealSummary(guidance, in: app) else { return }
+        try assertTranslationCaptionContrast(guidance, name: "Summary preservation guidance", in: app)
+        let translate = app.buttons["translateSummary"]
+        guard revealSummary(translate, in: app) else { return }; translate.tap()
+        let prepare = app.buttons["prepareTranslationLanguages"]
+        XCTAssertTrue(prepare.waitForExistence(timeout: 5))
+        let status = app.staticTexts["Download the selected translation languages on this device first."]
+        guard revealSummary(status, in: app) else { return }
+        try assertTranslationCaptionContrast(status, name: "Summary setup status", in: app)
+        XCTAssertEqual(original.label, originalText)
+        XCTAssertFalse(app.staticTexts["translatedSummary"].exists)
+        XCTAssertFalse(app.staticTexts["Preparing translation languages…"].exists)
+        XCTAssertFalse(app.buttons["Stop listening"].exists)
+    }
+    private func assertTranslationCaptionContrast(_ element: XCUIElement, name: String,
+                                                  in app: XCUIApplication) throws {
+        let screenshot = XCUIScreen.main.screenshot()
+        TranslationContrastPixels.keep(screenshot.image, name: name + " full native screen", in: self)
+        let full = try XCTUnwrap(screenshot.image.cgImage)
+        let frame = element.frame
+        XCTAssertTrue(app.frame.contains(frame)); XCTAssertGreaterThan(frame.width, 20)
+        XCTAssertGreaterThan(frame.height, 8)
+        let sx = CGFloat(full.width) / app.frame.width, sy = CGFloat(full.height) / app.frame.height
+        XCTAssertEqual(sx, sy, accuracy: 0.01, "Screenshot must map to the actual portrait app frame")
+        let cropFrame = CGRect(x: (frame.minX - app.frame.minX) * sx,
+                               y: (frame.minY - app.frame.minY) * sy,
+                               width: frame.width * sx, height: frame.height * sy).integral
+        let crop = try XCTUnwrap(full.cropping(to: cropFrame))
+        TranslationContrastPixels.keep(UIImage(cgImage: crop), name: name + " exact AX text crop", in: self)
+        let measured = try TranslationContrastPixels.measure(crop)
+        let detail = XCTAttachment(string: "AX=\(frame), pixelCrop=\(cropFrame)\n" + measured.description)
+        detail.name = name + " native contrast"; detail.lifetime = .keepAlways; add(detail)
+        XCTAssertTrue(measured.background.allSatisfy { $0 >= 250 }, "Expected actual light Summary card surface")
+        XCTAssertGreaterThanOrEqual(measured.ratio, 4.5, "Essential small translation text: " + measured.description)
     }
     func testSummaryPageOffersExplicitTranslationAndKeepsOriginal() {
         let app = launch()

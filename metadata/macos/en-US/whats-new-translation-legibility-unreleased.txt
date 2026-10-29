@@ -1,0 +1,1 @@
+Improve the legibility of essential translation explanations and recovery captions while preserving native layout, originals and translation choices.

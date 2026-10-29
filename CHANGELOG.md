@@ -32,6 +32,7 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased)
 
+- Make essential translation explanations, setup status and recovery messages easier to read with stronger native foreground colors, preserving the existing layout and translation behavior. (#346)
 - Long-press an identified transcript line and choose **Rename speaker**. Save updates every line for that speaker in the conversation and Notes; Cancel leaves the name unchanged. Available in portrait, expanded transcript and Duo. (#334)
 - Preserve the final audio samples when converting saved recordings for re-transcription and Watch imports. Drain retained converter output before advancing to the next file; keep original files intact and maintain recording-time alignment. (#348)
 
@@ -159,6 +160,7 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 
 ## macOS (unreleased since 1.4.4)
 
+- Make essential translation explanations, setup status and recovery messages easier to read with stronger native foreground colors, preserving the existing layout and translation behavior. (#346)
 - Double-click an identified transcript speaker label, or choose **Rename speaker** from its context menu. Save updates that speaker across the conversation, including reopened conversations; Cancel leaves the name unchanged. (#334)
 - Preserve the final audio samples in the shared saved-audio conversion feed, including chunk timeline boundaries. Keep original recordings unchanged and stop explicitly on conversion failures. (#348)
 

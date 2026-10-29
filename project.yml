@@ -273,6 +273,7 @@ targets:
     deploymentTarget: "26.0"
     sources:
       - iOSUnitTests
+      - iOSTests/TranslationContrastPixels.swift
       - TestSupport/AudioChunkFeedAssertions.swift
     dependencies:
       - target: ListenToMeIOS

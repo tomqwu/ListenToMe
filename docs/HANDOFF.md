@@ -1,3 +1,13 @@
+# Translation caption legibility #346 — local implementation, October 28, 2026
+
+Essential translation guidance/status now uses native primary foreground without changing copy,
+layout, providers or state. The same two iOS contrast methods passed after genuine rendered red;
+the supported Mac supplement passed one method/four renders. Initial UI scroll-owner and Mac
+high-contrast propagation failures remain distinct and preserved. Five existing iPhone UI methods and three selected iPad methods passed with unchanged 1,002-file
+inputs, including wide/Duo and largest-text controls. [Evidence and scope](translation-legibility.md).
+Full validation on this changed source, required CI, final review and merge remain pending.
+No version bump, binary publication, physical-device or VoiceOver acceptance is claimed.
+
 # Speaker rename integration with audio-feed #348 — October 28, 2026
 
 This local integration merges PR #318 candidate `78b4fda2dbfaf65a1b36259eaaac6d13c2cd4dd7`

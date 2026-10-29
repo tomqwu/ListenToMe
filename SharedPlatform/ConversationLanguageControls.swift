@@ -17,7 +17,7 @@ import ListenToMeCore
                 TranslationLanguageChoices(selection: options.translationTarget)
             }.accessibilityIdentifier("translationTargetPicker")
             Text("Finalized speech is translated beneath the original using on-device language packs. Original text, speakers and audio stay unchanged.")
-                .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                .font(.caption).foregroundStyle(.primary).fixedSize(horizontal: false, vertical: true)
             if options.translateTranscript {
                 OnDeviceTranslationStatus(worker: translation, target: options.translationTarget, context: conversationID)
             }
@@ -52,15 +52,15 @@ struct TranslationLanguageChoices: View {
                 }
             } else if let action = worker.availability.setupAction, worker.preparationSource != nil {
                 Text(worker.availability.reason ?? "Prepare the selected languages.")
-                    .font(.caption).foregroundStyle(.secondary)
+                    .font(.caption).foregroundStyle(.primary)
                 Button(action, systemImage: "arrow.down.circle") { prepare() }
                     .accessibilityIdentifier("prepareTranslationLanguages")
             } else if let reason = worker.availability.reason {
-                Text(reason).font(.caption).foregroundStyle(.secondary).accessibilityIdentifier("translationAvailability")
+                Text(reason).font(.caption).foregroundStyle(.primary).accessibilityIdentifier("translationAvailability")
             } else if worker.isTranslating {
-                Text("Translating…").font(.caption).foregroundStyle(.secondary)
+                Text("Translating…").font(.caption).foregroundStyle(.primary)
             } else {
-                Text("Translation uses installed on-device languages.").font(.caption).foregroundStyle(.secondary)
+                Text("Translation uses installed on-device languages.").font(.caption).foregroundStyle(.primary)
             }
             if !worker.problems.isEmpty, !preparing {
                 Button("Retry translation", systemImage: "arrow.clockwise") { worker.retry() }
@@ -68,7 +68,7 @@ struct TranslationLanguageChoices: View {
                     .accessibilityIdentifier("retryTranslation")
             }
             if let preparationError {
-                Text(preparationError).font(.caption).foregroundStyle(.secondary)
+                Text(preparationError).font(.caption).foregroundStyle(.primary)
                     .accessibilityIdentifier("translationPreparationError")
             }
         }

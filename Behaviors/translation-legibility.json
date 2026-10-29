@@ -1,0 +1,40 @@
+{
+  "feature": "Essential translation text legibility",
+  "scenarios": [
+    {
+      "id": "TRANSLATIONLEGIBILITY-001",
+      "name": "Summary guidance and setup status remain legible on the actual light card",
+      "given": "the actual Summary translation controls on a light iPhone card with missing language packs and an original summary",
+      "when": "the user opens translation options and requests translation without preparing packs",
+      "then": "the rendered guidance and setup text each meet the4.5:1 small-text benchmark, preserve originals and do not start preparation or recording",
+      "covers": [
+        "SharedPlatform/SummaryTranslationPanel.swift",
+        "SharedPlatform/ConversationLanguageControls.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileTranslationUITests.swift",
+          "test": "MobileTranslationUITests/testSummaryGuidanceAndSetupStatusMeetSmallTextContrast"
+        }
+      ]
+    },
+    {
+      "id": "TRANSLATIONLEGIBILITY-002",
+      "name": "Native translation status stays legible across appearance and text size",
+      "given": "the actual production status view on its native card in light/dark, normal/increased contrast and normal/accessibility text sizes",
+      "when": "UIKit traits reach the SwiftUI environment and the actual text is rendered",
+      "then": "the resolved native surface matches the render and actual status text meets4.5:1 with native RGBA evidence retained",
+      "covers": [
+        "SharedPlatform/ConversationLanguageControls.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/TranslationLegibilityTests.swift",
+          "test": "TranslationLegibilityTests/testActualStatusRenderAndNativeEnvironmentContrastMatrix"
+        }
+      ]
+    }
+  ]
+}
