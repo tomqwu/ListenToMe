@@ -1,0 +1,61 @@
+{
+  "scope": "Focused explicit local Apple History refresh; full validation pending",
+  "baseCommit": "8dc8dd35be9474f9789e284fefe94c966d11d476",
+  "productionFileHashes": {
+    "Sources/ListenToMeCore/HistoryIndex.swift": "c7f5fabda4f9fca5f686ccde9ab85e869455e02644a5dca9a7d550faefeaa128",
+    "SharedPlatform/HistorySearchModel.swift": "af0c5f472a85ddf40c79df0471edb92c4c14c7e62a76665028838cff844ddcf6",
+    "SharedPlatform/HistoryRefreshControl.swift": "744b0e2eb915c052f43ddfe7db879bb00ac2c2093d2b520e930ada4666610604",
+    "App/SessionSearchView.swift": "15a832ce1dcec226131de6e75b539d4b3408e99a111e0d481451aa5b428b56e1",
+    "iOS/MobileHistoryView.swift": "0832b96edf2491b6cfbceff550f4e246ab802081e4bb2e4f982921f6d281eec4"
+  },
+  "core": {
+    "methods": 3,
+    "redFailedMethods": 2,
+    "redAssertionFailures": 6,
+    "greenPassed": 3
+  },
+  "nativeReadiness": {
+    "redFailedMethods": 1,
+    "redAssertionFailures": 5,
+    "sameRegressionGreen": true
+  },
+  "nativeQueuedMaintenance": {
+    "redFailedMethods": 2,
+    "redAssertionFailures": 7,
+    "greenTransitionMethods": 14
+  },
+  "iOSNoResultsLayout": {
+    "initialInteractionMethodsPassed": 2,
+    "newGeometryRedAssertions": 2,
+    "unchangedGreenMethods": 2,
+    "frozenInputCount": 1058,
+    "sourceUnchanged": true
+  },
+  "finalMac": {
+    "methodsPassed": 16,
+    "methodsSkipped": 0,
+    "failures": 0,
+    "exitCode": 0,
+    "reaped": true,
+    "elapsedSeconds": 15.520397208,
+    "frozenInputCount": 1058,
+    "inputMismatches": 0,
+    "appleBranch": "installed",
+    "archiveFileBytesPreserved": true,
+    "actualPointerBusyFailureRetry": true,
+    "postNativeTestRefactor": "Removed unused AX action/traversal helpers only; no changed assertions or production bytes"
+  },
+  "evidenceRoot": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-history223-local-refresh",
+  "limits": [
+    "No additional-language quality pass",
+    "No VoiceOver or physical-device pass",
+    "No installed full-app acceptance claim",
+    "Full local validation and current CI/review/merge pending"
+  ],
+  "nativeReceiptHashes": {
+    "inputs.json": "8c7c5c1a5dc4844eb8b4fc5aa13d7a16e8e493f94d59fcf6b8c3f06fa05a0f68",
+    "reference.log": "c8842ddd4fabf8347ef1449507e915b01aeb4d8a04d9df1b49aaf484c1780b39",
+    "runner-state.json": "1b2649004d9ea949604dab1f68cb9333402ca630c049738375573e9da21e4078",
+    "source-check.json": "f1f0659c4e2109cb7fcd0d83d5eafc04f021009a388f1ddcf5e20c4fc83d98ed"
+  }
+}

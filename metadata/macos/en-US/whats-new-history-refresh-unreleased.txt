@@ -1,0 +1,1 @@
+Refresh local History search with currently available Apple models. Saved conversations and exact-word search stay intact. If rebuilding fails, retry guidance stays visible and Ask waits for recovery. Refresh does not download language assets or change your AI provider.

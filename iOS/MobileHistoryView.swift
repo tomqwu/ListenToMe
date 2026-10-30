@@ -21,6 +21,9 @@ struct MobileHistoryView: View {
     var body: some View {
         NavigationStack {
             List {
+                Section {
+                    HistoryRefreshControl(search: session.historySearch) { session.reloadHistory() }
+                }
                 if let warning = session.archiveWarning {
                     Section {
                         VStack(alignment: .leading, spacing: 8) {
@@ -42,6 +45,12 @@ struct MobileHistoryView: View {
                     MobileHistoryAskSection(session: session, question: trimmedQuery, open: openConversation)
                 }
                 Section {
+                    if session.history.isEmpty && session.watchInboxRows.isEmpty {
+                        ContentUnavailableView("No saved conversations", systemImage: "clock",
+                                               description: Text("Save a conversation to return to its words, notes and summaries."))
+                    } else if results.isEmpty, !session.history.isEmpty, session.watchInboxRows.isEmpty {
+                        ContentUnavailableView.search(text: query)
+                    }
                     ForEach(results) { record in
                         row(record, result: hybrid?.first { $0.id == record.id })
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
@@ -98,14 +107,6 @@ struct MobileHistoryView: View {
                     .presentationDetents([.medium, .large])
             }
             .scrollContentBackground(.hidden).background(MobileStyle.canvas)
-            .overlay {
-                if session.history.isEmpty && session.watchInboxRows.isEmpty {
-                    ContentUnavailableView("No saved conversations", systemImage: "clock",
-                                           description: Text("Save a conversation to return to its words, notes and summaries."))
-                } else if results.isEmpty, !session.history.isEmpty, session.watchInboxRows.isEmpty {
-                    ContentUnavailableView.search(text: query)
-                }
-            }
             .onAppear {
                 session.reloadHistory()
                 session.refreshWatchInboxRows()

@@ -36,6 +36,14 @@ verification and actual accepted upload remain pending. Physical phone/Watch acc
 unverified; that limits production readiness, not an otherwise authorized beta upload.
 No version-43 upload, review submission or publication is claimed. Mac work remains unreleased.
 
+## Unreleased explicit local History refresh
+
+A new **Refresh search** action rebuilds only derived History vectors with a fresh local Apple
+adapter, including unchanged records that previously had no vector. It does not download assets,
+change providers or edit conversations. Exact-word search remains available; Ask waits until a
+current-archive rebuild succeeds, and storage failure offers a retry. This isolated follow-up is
+not part of the prepared 1.20.3 (43) release source. [Behavior, evidence and pending UI checks](history-local-refresh.md).
+
 ## Unreleased History repairs
 
 The merged batch keeps safer asynchronous History indexing, refreshed search after saving and

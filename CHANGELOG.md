@@ -38,7 +38,9 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased)
 
-The current batch is prepared under the 1.20.3 candidate below; no additional changes are listed.
+- Add explicit **Refresh search** in History to rebuild derived search data using currently available
+  Apple models. Preserve saved conversations and exact-word search; show retry guidance on failure
+  and keep Ask blocked until a current archive pass finishes. No language assets are downloaded. (#223)
 
 ## iOS 1.20.3 (43) — candidate, 2026-10-30
 
@@ -196,6 +198,10 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 - Settings → Privacy now explains that optional Ollama, Cloud AI and OpenAI-compatible requests send text and included context to the provider you choose; Apple Intelligence stays on-device. (#247)
 
 ## macOS (unreleased since 1.4.4)
+
+- Add explicit **Refresh search** in History to rebuild derived search data using currently available
+  Apple models. Preserve saved conversations and exact-word search; show retry guidance on failure
+  and keep Ask blocked until a current archive pass finishes. No language assets are downloaded. (#223)
 
 - Avoid unrelated History suggestions and Ask excerpts from generic German/Spanish planning
   questions when on-device language analysis is available. Preserve literal searches, real topics
