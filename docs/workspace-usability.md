@@ -58,6 +58,12 @@ Evidence is retained under
   reader and populated reader checks. The subsequent fix gives the reader its own stable identifiers
   and includes cloud/custom providers in the capability explanation.
 
+- The first `make validate-local` stopped at lint: the added existence assertion pushed
+  `MobileAppTests` one line over its existing type-size limit. The journey moved into the usability
+  suite and all BDD bindings followed it; no lint suppression was added. That aggregate attempt did
+  not reach coverage or native stages and remains failed. Compact Update assertions now explicitly
+  check its accessible name and target alongside complete Duo text.
+
 ## Installed Mac integration
 
 The signed Dev candidate was opened separately. Native screenshots and AX readback retain default,

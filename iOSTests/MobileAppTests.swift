@@ -197,21 +197,6 @@ final class MobileAppTests: XCTestCase {
         XCTAssertEqual(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", marker)).count, 2)
     }
 
-    func testEmptySummaryExplainsDisabledActionAndSupportsRecheck() {
-        let app = XCUIApplication()
-        app.launchPastReleaseNotes()
-        app.buttons["New"].tap()
-        app.buttons["More"].tap()
-        app.buttons["Full summary"].tap()
-        let reason = app.staticTexts["summaryBlockReason"]
-        XCTAssertTrue(reason.waitForExistence(timeout: 5))
-        XCTAssertTrue(reason.label.contains("Add notes"))
-        XCTAssertTrue(app.buttons["full-generate-summary"].exists, "The actual full-summary action must be present")
-        XCTAssertFalse(app.buttons["full-generate-summary"].isEnabled)
-        app.buttons["Check again"].tap()
-        app.buttons["Done"].tap()
-        XCTAssertTrue(app.staticTexts["sessionMessage"].label.contains("Add notes"))
-    }
 
     func testPrivacyExplainsEveryOptionalOffDeviceProvider() {
         let app = XCUIApplication()

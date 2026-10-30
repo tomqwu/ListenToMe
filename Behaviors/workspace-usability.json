@@ -65,8 +65,8 @@
         },
         {
           "suite": "ios-ui",
-          "file": "iOSTests/MobileAppTests.swift",
-          "test": "MobileAppTests/testEmptySummaryExplainsDisabledActionAndSupportsRecheck"
+          "file": "iOSTests/MobileUsabilityUITests.swift",
+          "test": "MobileUsabilityUITests/testEmptySummaryExplainsDisabledActionAndSupportsRecheck"
         }
       ]
     },
