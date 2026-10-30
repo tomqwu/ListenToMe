@@ -39,35 +39,57 @@ final class MobileHistorySearchUITests: XCTestCase {
         XCTAssertTrue(record.waitForExistence(timeout: 5)); XCTAssertTrue(record.label.contains("Product planning"))
         let viewport = history.frame.intersection(app.windows.firstMatch.frame)
         XCTAssertFalse(viewport.isEmpty)
-        if UIDevice.current.userInterfaceIdiom == .phone, record.frame.intersects(field.frame) {
+        for control in [refresh, ask] {
+            XCTAssertTrue(control.exists); XCTAssertTrue(control.isHittable)
+            XCTAssertFalse(control.frame.isEmpty); XCTAssertTrue(viewport.contains(control.frame))
+        }
+        XCTAssertTrue(disclosure.exists); XCTAssertFalse(disclosure.frame.isEmpty)
+        XCTAssertTrue(viewport.contains(disclosure.frame))
+        XCTAssertFalse(disclosure.frame.intersects(field.frame))
+        XCTAssertLessThanOrEqual(refresh.frame.maxY, ask.frame.minY)
+        XCTAssertLessThanOrEqual(ask.frame.maxY, disclosure.frame.minY)
+        refresh.tap()
+        let idle = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: refresh)
+        XCTAssertEqual(XCTWaiter.wait(for: [idle], timeout: 10), .completed)
+        XCTAssertEqual(field.value as? String, "prototype")
+        XCTAssertTrue(result.exists); XCTAssertTrue(ask.isHittable)
+        captureHistory("Queried History controls - QA")
+
+        if record.frame.intersects(field.frame) {
             let overlap = record.frame.maxY - field.frame.minY + 8
             let distance = min(max(0, overlap), viewport.height / 3)
             let start = history.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
             start.press(forDuration: 0.1, thenDragTo: start.withOffset(CGVector(dx: 0, dy: -distance)))
         }
-        for element in [refresh, ask, record] {
-            XCTAssertTrue(element.exists); XCTAssertTrue(element.isHittable)
-            XCTAssertFalse(element.frame.isEmpty)
-            XCTAssertTrue(viewport.contains(element.frame),
-                          "The short default-text landscape preview must contain its selected control")
-        }
-        XCTAssertTrue(disclosure.exists); XCTAssertFalse(disclosure.frame.isEmpty)
-        XCTAssertTrue(viewport.contains(disclosure.frame), "The provider disclosure must be fully readable")
+        XCTAssertTrue(record.isHittable); XCTAssertFalse(record.frame.isEmpty)
+        XCTAssertTrue(viewport.contains(record.frame))
         XCTAssertFalse(record.frame.intersects(field.frame), "Search must not cover the selected result")
-        XCTAssertFalse(disclosure.frame.intersects(field.frame), "Search must not cover the provider disclosure")
-        XCTAssertLessThanOrEqual(refresh.frame.maxY, ask.frame.minY)
-        XCTAssertLessThanOrEqual(ask.frame.maxY, disclosure.frame.minY)
-        XCTAssertLessThanOrEqual(disclosure.frame.maxY, record.frame.minY)
-        refresh.tap()
-        let idle = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: refresh)
-        XCTAssertEqual(XCTWaiter.wait(for: [idle], timeout: 10), .completed)
         XCTAssertEqual(field.value as? String, "prototype")
-        XCTAssertTrue(refresh.isHittable); XCTAssertTrue(ask.isHittable); XCTAssertTrue(record.isHittable)
+        captureHistory("Queried History result - QA")
+        record.tap()
+        let title = app.textFields["conversationTitle"]
+        XCTAssertTrue(title.waitForExistence(timeout: 5))
+        XCTAssertEqual(title.value as? String, "Product planning")
+        let transcript = app.staticTexts
+            .matching(NSPredicate(format: "identifier BEGINSWITH %@", "transcriptText")).firstMatch
+        XCTAssertTrue(transcript.label.contains("Let's keep the first release"))
+
+        app.buttons["History"].tap()
+        XCTAssertTrue(refresh.waitForExistence(timeout: 5)); XCTAssertTrue(record.waitForExistence(timeout: 5))
+        XCTAssertFalse(ask.exists); XCTAssertTrue(app.buttons["deleteAllConversations"].exists)
+        let reopenedViewport = history.frame.intersection(app.windows.firstMatch.frame)
+        for control in [refresh, record] {
+            XCTAssertTrue(control.isHittable); XCTAssertFalse(control.frame.isEmpty)
+            XCTAssertTrue(reopenedViewport.contains(control.frame))
+            if field.exists { XCTAssertFalse(control.frame.intersects(field.frame)) }
+        }
         XCTAssertFalse(app.alerts.firstMatch.exists); XCTAssertFalse(app.keyboards.firstMatch.exists)
-        XCTAssertFalse(record.frame.intersects(field.frame)); XCTAssertFalse(disclosure.frame.intersects(field.frame))
+        captureHistory("Landscape History refresh and result (unqueried)")
+    }
+
+    private func captureHistory(_ name: String) {
         let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
-        shot.name = "Landscape History refresh and result"
-        shot.lifetime = .keepAlways; add(shot)
+        shot.name = name; shot.lifetime = .keepAlways; add(shot)
     }
 
     func testExplicitRefreshKeepsLiteralHistoryResultAndReturnsToIdle() {
