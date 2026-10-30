@@ -42,11 +42,15 @@ does not show it again, and a fresh install does not see it at all; see
   Apple models. Preserve saved conversations and exact-word search; show retry guidance on failure
   and keep Ask blocked until a current archive pass finishes. No language assets are downloaded. (#223)
 
-## iOS 1.20.3 (43) — candidate, 2026-10-30
+## iOS 1.20.3 (43) — 2026-10-30 (TestFlight)
 
-Prepared from the merged PR #318 batch. **Not uploaded or published:** candidate validation,
-fresh release screenshots, signing/package verification and actual TestFlight acceptance remain
-pending. The latest accepted beta remains 1.20.2 (42), and public iOS remains 1.19.1 (39).
+Apple accepted the merged PR #318 release train through the official helper at
+**2026-10-30T17:10:34.841880+00:00**, from `97ef2461b86869405c1d0f4221816b790f0216fd`.
+Build `fe7d15fb-c6f2-487b-89b6-6f9d26985ccc` is **VALID / IN_BETA_TESTING**; en-US metadata
+and unchanged access for the existing two-member Dev group were read back. The exact transported
+IPA and all three distribution bundles were verified. [Publication receipt](docs/releases/ios-1.20.3-build43.json).
+Physical acceptance remains pending. Public iOS remains **1.19.1 (39)**; no public review or listing-media
+upload was performed. Mac changes remain unreleased; the GitHub pre-release is not Latest.
 
 - Give transcript and Quick Summary more reading room in compact landscape Duo, including shorter
   non-Max iPhones. Preserve existing content, 44-point controls and accessibility scrolling.

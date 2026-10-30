@@ -1,6 +1,21 @@
 # Publish an iOS build to TestFlight
 
-## Current TestFlight checkpoint — 1.20.2 (42)
+## Current TestFlight checkpoint — 1.20.3 (43)
+
+Apple accepted **1.20.3 (43)** through the official TestFlight helper at
+**2026-10-30T17:10:34.841880+00:00** from `97ef2461b86869405c1d0f4221816b790f0216fd`.
+Apple build `fe7d15fb-c6f2-487b-89b6-6f9d26985ccc` is **VALID / IN_BETA_TESTING**.
+Readback completed at **2026-10-30T17:16:53.246500+00:00** confirms **en-US**,
+**Listen To Me - Real Time AI**, exact beta description/What to Test and unchanged access for
+both existing Dev-group members. Access does not establish physical installation of build 43.
+
+[Publication receipt](releases/ios-1.20.3-build43.json) · [Composite validation](releases/ios-1.20.3-build43-validation.json) · [Release notes and What to Test](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.3-build43).
+
+Physical phone/iPad translation, screen-lock, multilingual and Watch acceptance remains pending.
+Public production remains **1.19.1 (39)**; this beta made no public review submission or listing-media
+upload. Mac changes remain unreleased, and **v1.4.4** remains GitHub Latest.
+
+## Historical TestFlight checkpoint — 1.20.2 (42)
 
 Apple accepted **1.20.2 (42)** through the official TestFlight helper at **2026-10-28T21:11:37.664213+00:00** from `a6b90e83f775cc9dc88df3c2805ecacedca044af`. Apple build `8967f095-470f-40c0-aba0-b1188bbb699c` is **VALID / IN_BETA_TESTING**. Readback at 2026-10-28T21:15:33.796221+00:00 confirms **en-US**, **Listen To Me - Real Time AI**, exact beta description/What to Test and unchanged access for the existing two-member Dev group. Access does not establish physical installation of build 42.
 

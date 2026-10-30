@@ -1,37 +1,48 @@
-# Merged batch and next TestFlight candidate — October 30, 2026
+# TestFlight 1.20.3 (43) published — October 30, 2026
 
-PR [#318](https://github.com/tomqwu/ListenToMe/pull/318) is **merged** as
-`388a5c7efcb0bf65e35a7db6ea08b5c59a7d8a1e`, tree-identical to validated `5f1e909`.
-The matching remote/local feature branches were deleted. Six issues closed: **#333, #335, #337,
-#346, #347 and #348**. Six remain open: **#181, #205, #223, #236, #334 and #336**.
-The optional MPNet delivery remains withdrawn, with source and negative results preserved; #334
-still needs installed Mac rename Save/relaunch, and #336 retains its near-end/overlap/routes matrix.
-These open gates do not turn the six completed fixes into unfinished code or prove Store readiness.
+Apple accepted **1.20.3 (43)** through the official TestFlight helper at
+**2026-10-30T17:10:34.841880+00:00** from `97ef2461b86869405c1d0f4221816b790f0216fd`.
+Apple build `fe7d15fb-c6f2-487b-89b6-6f9d26985ccc` is **VALID / IN_BETA_TESTING**.
+Readback completed at **2026-10-30T17:16:53.246500+00:00** confirms **en-US**,
+**Listen To Me - Real Time AI**, exact beta description/What to Test and unchanged access for
+both existing Dev-group members. Access does not establish physical installation of build 43.
 
-Full local validation on exact `5f1e909` passed, exit 0/reaped, all **1,044 inputs unchanged**:
-Core **1,291 tests / seven optional skips / zero failures / 98.0766% coverage**; iOS **590 passes /
-12 skips**; Mac **109 passes**, Watch **34 passes**, 236 BDD scenarios and four real-server contracts.
-All three required checks passed in [run 41078938853](https://github.com/tomqwu/ListenToMe/actions/runs/41078938853).
-The independently audited receipt is retained at
-`2026-10-30/listentome-backlog318-completion/full-validation-retry/independent-final-merge-audit.json`.
-The earlier 95ac failed aggregate stays failed; its pending status below is historical and superseded.
+[Publication receipt](releases/ios-1.20.3-build43.json) · [Composite validation](releases/ios-1.20.3-build43-validation.json) · [Release notes and What to Test](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.3-build43).
 
-The due single iOS train now prepares **1.20.3 (43)** across phone, Share and embedded Watch, with
-bundled notes and en-US copy. `RELEASE-004` genuinely failed two old-version/title assertions before
-the bump (exit 65/reaped). The frozen release-only candidate snapshot passed **seven native tests,
-zero failures/skips**: two release-note UI methods and five unit methods, exit 0/reaped, all **1,044
-inputs unchanged**. Evidence: `2026-10-30/listentome-ios1203-train/release-notes-green/`
-(`state.json`, `runner-state.json`, `reference.log`, `native.xcresult`). This focused delta check
-complements the prior full merge validation; it is not a new complete 43 aggregate pass.
-Fresh captures from candidate `8dc8dd3` passed **17 native tests, zero failures/skips**, across seven
-device profiles. All **57 original images** were inspected; seven suitable native originals now
-refresh the [README gallery](../README.md#screenshots), with the prior gallery preserved as history.
-[Source, checksums and visual assessments](images/ios/release-1.20.3/manifest.json) retain QA-only
-exclusions. Hosted desktop/mobile gallery checks, remaining candidate gates/CI, signing/package
-checks and actual TestFlight acceptance are still pending.
-Latest accepted beta remains **1.20.2 (42)**; public iOS remains **1.19.1 (39)**. This is merged work
-riding the next release train, not an uploaded 43 build. Mac remains unreleased; no review submission
-or production-ready claim is made. [Candidate notes and limits](IOS.md#next-testflight-candidate--1203-43).
+The exact transported IPA was preserved and its SHA-256, transport MD5 and byte count matched.
+Phone, Share and embedded Watch distribution signatures/profiles, versions, disabled debugging and
+fixture-payload checks passed. The GitHub pre-release targets exact source `97ef2461`, has no attached
+assets and is not Latest. PR [#349](https://github.com/tomqwu/ListenToMe/pull/349) merged as `3106bcd`;
+all three required checks passed on release source `97ef2461` in
+[run 41092176457](https://github.com/tomqwu/ListenToMe/actions/runs/41092176457).
+
+Validation is explicitly composite. Full `make validate-local` passed on functional baseline
+`5f1e909`, tree-identical to merged PR #318 (`388a5c7`): Core **1,291 tests / seven optional skips /
+zero failures / 98.0766% coverage**; iOS **590 passes / 12 skips**; Mac **109 passes**; Watch **34 passes**;
+236 BDD scenarios and four real-server contracts. The release-only version/notes delta then passed
+**seven native tests, zero failures/skips**, after a genuine two-assertion red. Candidate `8dc8dd3`
+keeps those app/config/test inputs; only documentation and gallery files changed before release
+source `97ef2461`. This does not claim a new full build-43 aggregate run.
+
+Fresh captures at `8dc8dd3` passed **17 native tests, zero failures/skips**, across seven profiles.
+All **57 native originals** were inspected; seven suitable originals refresh the
+[README gallery](../README.md#screenshots). [The manifest](images/ios/release-1.20.3/manifest.json)
+preserves native checksums, provenance and QA-only exclusions. Hosted gallery inspection passed at
+1280-pixel desktop and 390-pixel mobile widths on `97ef2461`. None of these 57 images was uploaded to
+Apple's listing. Original failed validation/preview attempts and the pre-extraction verifier field
+error remain preserved separately; the repaired verifier did not repeat the upload.
+
+PR [#318](https://github.com/tomqwu/ListenToMe/pull/318) closed **#333, #335, #337, #346, #347 and #348**.
+Six remain open: **#181, #205, #223, #236, #334 and #336**. Optional MPNet delivery remains excluded,
+with its source and negative results preserved. #334 still needs installed Mac rename Save/relaunch;
+#336 retains its near-end/overlap/routes matrix. These limits do not reopen completed fixes.
+
+Physical phone/iPad translation, screen-lock, multilingual and Watch acceptance remains pending.
+Public production remains **1.19.1 (39)**; this beta made no public review submission or listing-media
+upload. Mac changes remain unreleased, and **v1.4.4** remains GitHub Latest.
+
+Release evidence is retained under `2026-10-30/listentome-ios1203-train/`; the sanitized receipts above
+bind the helper acceptance, Apple/GitHub readbacks, full baseline, focused checks and uploaded bytes.
 
 Completed Dev sessions were closed after process-absence checks. Three exact `.dev` bundles were
 preserved and moved to Trash; two owned synthetic QA records were preserved before removal. Only
