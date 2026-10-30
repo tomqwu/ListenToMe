@@ -1,0 +1,1424 @@
+{
+  "schemaVersion": 1,
+  "status": "unpublished_candidate",
+  "candidateSource": "8dc8dd35be9474f9789e284fefe94c966d11d476",
+  "candidateTree": "0795d11951ae644d0405456bca2b069e57c981cb",
+  "version": "1.20.3",
+  "build": "43",
+  "locale": "en-US",
+  "capturedAt": {
+    "started": "2026-10-30T16:26:35.325446+00:00",
+    "finished": "2026-10-30T16:37:39.734034+00:00"
+  },
+  "captureKind": "Debug native simulator synthetic fixtures; not model quality or physical-device acceptance",
+  "configuration": "Debug",
+  "imageProcessing": "none; selected files are byte-identical native originals with EXIF orientation preserved",
+  "evidenceIdentifier": "2026-10-30/listentome-ios1203-train",
+  "externalCatalogSHA256": "ffb2dc395f5986995587298180b717a2997b72c23649116f45655a2ab7084c62",
+  "captureStateSHA256": "888be03263c18df0726b444459af2725fce5a3899d20bad038cc401798d3a053",
+  "allInspected": true,
+  "profileCount": 7,
+  "assetCount": 57,
+  "nativeTests": {
+    "passed": 17,
+    "failed": 0,
+    "skipped": 0
+  },
+  "sourceInputsUnchanged": true,
+  "physicalAcceptance": "unverified",
+  "listingUploaded": false,
+  "build43UploadAccepted": false,
+  "selected": [
+    {
+      "category": "iphone-max",
+      "path": "docs/images/ios/release-1.20.3/01-iphone-translation.png",
+      "originalEvidencePath": "captures/iphone-max/originals/4A1B31C2-E50B-4A60-B59E-A6E1AB1FEF3A.png",
+      "sha256": "c608840b42e8b46383bb18ab6b4f032b58d85ed71dcda72db8073a8b74baa802",
+      "nativePixels": [
+        1320,
+        2868
+      ],
+      "renderedOrientation": "portrait",
+      "processing": "none; original PNG bytes and EXIF preserved",
+      "listingSuitability": "suitable"
+    },
+    {
+      "category": "iphone-pro",
+      "path": "docs/images/ios/release-1.20.3/02-iphone-prompt.png",
+      "originalEvidencePath": "captures/iphone-pro/originals/4EEA0DD8-ACBC-4126-9C32-376E6E6F90B3.png",
+      "sha256": "0577a9f777d7aa4b5299f11d2ace9fe20cf7f24bea1463ef24b6ea575d967980",
+      "nativePixels": [
+        1206,
+        2622
+      ],
+      "renderedOrientation": "portrait",
+      "processing": "none; original PNG bytes and EXIF preserved",
+      "listingSuitability": "suitable"
+    },
+    {
+      "category": "iphone-pro",
+      "path": "docs/images/ios/release-1.20.3/03-iphone-duo.png",
+      "originalEvidencePath": "captures/iphone-pro/originals/B427FDE3-24CC-4F29-835F-C0CA11C28122.png",
+      "sha256": "87e3b9358cae767186a11ac2f0e68fe1b754d5143af402a1cc6de3d207b76ea2",
+      "nativePixels": [
+        1206,
+        2622
+      ],
+      "renderedOrientation": "landscape",
+      "processing": "none; original PNG bytes and EXIF preserved",
+      "listingSuitability": "suitable"
+    },
+    {
+      "category": "ipad-pro",
+      "path": "docs/images/ios/release-1.20.3/04-ipad-summary.png",
+      "originalEvidencePath": "captures/ipad-pro/originals/8E56E2BB-AF5D-4405-A790-77348CDDACB1.png",
+      "sha256": "421b32de593f9cc9ddbcfd12578adcbd94c81a0b17d760803a65900e74fa0fa4",
+      "nativePixels": [
+        2064,
+        2752
+      ],
+      "renderedOrientation": "portrait",
+      "processing": "none; original PNG bytes and EXIF preserved",
+      "listingSuitability": "suitable"
+    },
+    {
+      "category": "ipad-mini",
+      "path": "docs/images/ios/release-1.20.3/05-ipad-wide.png",
+      "originalEvidencePath": "captures/ipad-mini/originals/E1F7F384-1764-4821-8B8F-BF13F400353C.png",
+      "sha256": "01d7e42c85f0a71a11a0c3e791c53218b3ed4721ed01c583c925c5881f189767",
+      "nativePixels": [
+        1488,
+        2266
+      ],
+      "renderedOrientation": "landscape",
+      "processing": "none; original PNG bytes and EXIF preserved",
+      "listingSuitability": "suitable"
+    },
+    {
+      "category": "watch46",
+      "path": "docs/images/ios/release-1.20.3/06-watch-46-recording.png",
+      "originalEvidencePath": "captures/watch46/originals/60CDFEA8-6C11-461A-8BAF-C8884A4EBD9A.png",
+      "sha256": "d72cd99b83f3e50becf7b8fdbe90912f5e939c6d4cc39d03b4f7852141389dea",
+      "nativePixels": [
+        416,
+        496
+      ],
+      "renderedOrientation": "portrait",
+      "processing": "none; original PNG bytes and EXIF preserved",
+      "listingSuitability": "suitable"
+    },
+    {
+      "category": "watch49",
+      "path": "docs/images/ios/release-1.20.3/07-watch-49-recording.png",
+      "originalEvidencePath": "captures/watch49/originals/1780DEB5-3027-41F0-9000-46CA8C5F5D3E.png",
+      "sha256": "dae86adccd3888ad49fb28b8b3c7cdb65af4b77827b705e2a9f52ad366c52d94",
+      "nativePixels": [
+        422,
+        514
+      ],
+      "renderedOrientation": "portrait",
+      "processing": "none; original PNG bytes and EXIF preserved",
+      "listingSuitability": "suitable"
+    }
+  ],
+  "sets": [
+    {
+      "category": "iphone-pro",
+      "deviceType": "iPhone-17-Pro",
+      "runtime": "iOS-26-5",
+      "device": "E63E2E9A-CE8D-4804-929A-077D0D384570",
+      "expectedPixels": [
+        1206,
+        2622
+      ],
+      "startedAt": "2026-10-30T16:26:35.652358+00:00",
+      "finishedAt": "2026-10-30T16:28:31.693011+00:00",
+      "simulatorState": "Shutdown",
+      "simulatorDeleted": false,
+      "selectors": [
+        "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+        "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal",
+        "MobileTranslationUITests/testSummaryPageOffersExplicitTranslationAndKeepsOriginal",
+        "MobileReleaseScreenshotTests/testCaptureCleanDuoPreview"
+      ],
+      "nativeDevice": {
+        "architecture": "arm64",
+        "deviceId": "E63E2E9A-CE8D-4804-929A-077D0D384570",
+        "deviceName": "ListenToMe43 fresh capture iphone-pro",
+        "modelName": "iPhone 17 Pro",
+        "osBuildNumber": "23F77",
+        "osVersion": "26.5",
+        "platform": "iOS Simulator"
+      },
+      "tests": {
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0,
+        "runnerTerminal": true,
+        "runnerReaped": true,
+        "summarySHA256": "8bc4dcb3ad24dca94d2bb1ae1995cd5edea45fc9032206178ee1c2428e30c8b1",
+        "resultHashesManifestSHA256": "dc84f9581c79e49077a11a7d348eaf57fb73d317e2f0cbf09e93800c6a9d747c"
+      },
+      "binary": {
+        "bundleIdentifier": "com.tomwu.ListenToMe.ios",
+        "version": "1.20.3",
+        "build": "43",
+        "allRootDylibsPreserved": true,
+        "payloads": [
+          {
+            "evidencePath": "captures/iphone-pro/binary/ListenToMeIOS",
+            "sha256": "970eedea0ecb404f34a71bb3998f25be1635c96e8f4230d2d869d3bba037cecb"
+          },
+          {
+            "evidencePath": "captures/iphone-pro/binary/ListenToMeIOS.debug.dylib",
+            "sha256": "f846c76ad7a3dc2cdc78ac7b9b0976c11f3d9b3bbb20338d2ede6262c673f348"
+          },
+          {
+            "evidencePath": "captures/iphone-pro/binary/__preview.dylib",
+            "sha256": "7f095fad58b0f77f26f97b3799d0aa602738c24f523c876989bf5f76dd186f25"
+          },
+          {
+            "evidencePath": "captures/iphone-pro/binary/Info.plist",
+            "sha256": "cd648df12a9f4272e3f186bda281a7dc2ac3343077da8ac3922a488acee5ccad"
+          }
+        ]
+      },
+      "assets": [
+        {
+          "name": "Duo preview transcript and Quick visibility_0_FFBC9A3E-96E2-4CEF-9B4A-62233614A921.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureCleanDuoPreview",
+          "originalSHA256": "87e3b9358cae767186a11ac2f0e68fe1b754d5143af402a1cc6de3d207b76ea2",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "Clean Duo: complete two transcript lines and all three Quick lines fit, Start/Save/Notes visible, no overlays; preferred landscape gallery image.",
+          "originalEvidencePath": "captures/iphone-pro/originals/B427FDE3-24CC-4F29-835F-C0CA11C28122.png",
+          "selectedPath": "docs/images/ios/release-1.20.3/03-iphone-duo.png",
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "06 Settings_0_ECA86315-986D-4F00-91E9-3726B155D43C.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+          "originalSHA256": "f5c4d1b05418eea214da8dc5d0b94d58c01f885e0292a7c046ab5d742f510121",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "Settings labels and privacy disclosure readable; normal scroll continuation begins at bottom, without alert, key or diagnostic controls.",
+          "originalEvidencePath": "captures/iphone-pro/originals/0DC21F03-2176-4D6A-893A-DFC7FE9B98EB.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "05 Conversation history_0_DA42FEC0-2E27-4E31-B1E6-AB14C512B771.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+          "originalSHA256": "9869abcdcde5858dcb09a7b4d48aa025bf87f6153baab3d311cf4ae37eab5ad2",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "History title, dated synthetic conversation, intended ellipsized preview and search controls are readable; no diagnostic overlays.",
+          "originalEvidencePath": "captures/iphone-pro/originals/CBBEEAAE-2799-4317-9F30-9D6D064862CC.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "04 Summary portrait_0_61BEABB3-87B9-4214-B303-3FED625245EF.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+          "originalSHA256": "09a8f80b03b23022fb40d397a4d26b91652ba3a5e93fb80e1178428451bfe39f",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "reviewReason": "Main Decisions and Next steps are readable, but the Earlier deep analysis continuation is cut by the reader bottom; prefer an unclipped listing composition.",
+          "originalEvidencePath": "captures/iphone-pro/originals/FEC3C278-AFA0-4DA0-BAB4-50DA1D8D93E0.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "03 Conversation prompt_0_0D79AE38-44F9-4657-BA43-357F4CCDCEDC.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+          "originalSHA256": "0577a9f777d7aa4b5299f11d2ace9fe20cf7f24bea1463ef24b6ea575d967980",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "Notes, complete domain prompt, preset/save controls and saved-instruction guidance visible; no keyboard or error overlays; preferred portrait gallery image.",
+          "originalEvidencePath": "captures/iphone-pro/originals/4EEA0DD8-ACBC-4126-9C32-376E6E6F90B3.png",
+          "selectedPath": "docs/images/ios/release-1.20.3/02-iphone-prompt.png",
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "02 Live landscape_0_249BCD46-B341-43DB-8964-FEC2205DEF32.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+          "originalSHA256": "de128d8b1886a30194c6c3f261bf13768c40ff477f4ad7709dde39e83003907c",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "reviewReason": "Long transcript is cut mid-sentence and obscured by Latest overlay; Quick content continues below reader. Retain as long-content scroll evidence, use clean Duo for gallery.",
+          "originalEvidencePath": "captures/iphone-pro/originals/281CDAC0-DC58-437A-8E04-2778D3A53E54.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "01 Live portrait_0_D2376ACA-FBDB-42F3-A519-75AC956338FA.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+          "originalSHA256": "b103aba015b82c2fe27e1a7e589997d12ff7efc9f6221d526d022f0f6f71efeb",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "reviewReason": "Transcript shows only the first line fragment with Latest overlay covering its continuation. Quick content and controls are readable, but the transcript composition is unsuitable for listing.",
+          "originalEvidencePath": "captures/iphone-pro/originals/2ADF514A-C14E-45C7-B7D5-F11BB2CFF37F.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Original transcript and translation in Duo or iPad wide layout_0_83414CD7-1039-4688-94B2-503AD9C43580.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal",
+          "originalSHA256": "82edda0469564ae0c63618a7ebacfb1dbe3891a7d842411c3e73bc63b13fa102",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "reviewReason": "Scrolled transcript begins with isolated final word features; complete original is offscreen and Quick content continues beyond reader. Synthetic translation placement evidence only.",
+          "originalEvidencePath": "captures/iphone-pro/originals/B1F52B91-921B-4509-9393-101EFF03D7F9.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Original transcript and on-device translation portrait_0_00FE31AB-3991-4EBE-994D-8F49E334A64C.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal",
+          "originalSHA256": "c2fc02bad0ecfc75f21346eb3289c4cc637103025b4f49bbd7f711856a3fbbff",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "reviewReason": "Scrolled transcript shows isolated final word features and French translation without its full original. Useful placement evidence, not a complete listing composition.",
+          "originalEvidencePath": "captures/iphone-pro/originals/67DD6B3D-4DC7-4B7F-850E-E5770BF268B4.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Live translation options_0_F28FE30A-766B-40EB-B3DA-CCB644B4A3DB.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal",
+          "originalSHA256": "23fef780a48703ebb8642b7f5bc9926f7a1623b45fce7ac1cdf17239147448d8",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "Live-translation toggle, French target and full on-device/original-preservation guidance visible without clipping or overlays; depicts UI configuration only, not inference quality.",
+          "originalEvidencePath": "captures/iphone-pro/originals/3DCDC3AE-4EB8-4290-B309-E82C9B4592A7.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Summary page French translation beside original_0_1865E424-A81E-43EC-9A14-6E049E1F8D2A.png",
+          "testIdentifier": "MobileTranslationUITests/testSummaryPageOffersExplicitTranslationAndKeepsOriginal",
+          "originalSHA256": "4871ee3531c35adf9aadef4b90075e23f7edf9e4f0e6d2e228a5ad8780726ed8",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "reviewReason": "French translation continues past the bottom with Prochaines etapes heading clipped, and original summary is below viewport; synthetic UI evidence, not complete side-by-side listing composition.",
+          "originalEvidencePath": "captures/iphone-pro/originals/36A93666-FA8E-4F09-8185-A086441E3A66.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        }
+      ]
+    },
+    {
+      "category": "iphone-max",
+      "deviceType": "iPhone-17-Pro-Max",
+      "runtime": "iOS-26-5",
+      "device": "2D477D0D-2BBC-48EF-BF4A-295C45A016ED",
+      "expectedPixels": [
+        1320,
+        2868
+      ],
+      "startedAt": "2026-10-30T16:28:35.804710+00:00",
+      "finishedAt": "2026-10-30T16:31:02.050230+00:00",
+      "simulatorState": "Shutdown",
+      "simulatorDeleted": false,
+      "selectors": [
+        "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+        "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal",
+        "MobileTranslationUITests/testSummaryPageOffersExplicitTranslationAndKeepsOriginal",
+        "MobileReleaseScreenshotTests/testCaptureCleanDuoPreview"
+      ],
+      "nativeDevice": {
+        "architecture": "arm64",
+        "deviceId": "2D477D0D-2BBC-48EF-BF4A-295C45A016ED",
+        "deviceName": "ListenToMe43 fresh capture iphone-max",
+        "modelName": "iPhone 17 Pro Max",
+        "osBuildNumber": "23F77",
+        "osVersion": "26.5",
+        "platform": "iOS Simulator"
+      },
+      "tests": {
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0,
+        "runnerTerminal": true,
+        "runnerReaped": true,
+        "summarySHA256": "e35c0911f405a91f15e31d55538e1a8db8b670b908b822338e815a489a101af6",
+        "resultHashesManifestSHA256": "5dcdad054f4c4504acd493f7c66b0c22b22ec6b0a2cc3d54a173f62c8d05485e"
+      },
+      "binary": {
+        "bundleIdentifier": "com.tomwu.ListenToMe.ios",
+        "version": "1.20.3",
+        "build": "43",
+        "allRootDylibsPreserved": true,
+        "payloads": [
+          {
+            "evidencePath": "captures/iphone-max/binary/ListenToMeIOS",
+            "sha256": "9733139c008ad06f1ab829b9d489ba02b3f77f7ee1716f3151e5f9d800a60bb9"
+          },
+          {
+            "evidencePath": "captures/iphone-max/binary/ListenToMeIOS.debug.dylib",
+            "sha256": "f846c76ad7a3dc2cdc78ac7b9b0976c11f3d9b3bbb20338d2ede6262c673f348"
+          },
+          {
+            "evidencePath": "captures/iphone-max/binary/__preview.dylib",
+            "sha256": "7f095fad58b0f77f26f97b3799d0aa602738c24f523c876989bf5f76dd186f25"
+          },
+          {
+            "evidencePath": "captures/iphone-max/binary/Info.plist",
+            "sha256": "cd648df12a9f4272e3f186bda281a7dc2ac3343077da8ac3922a488acee5ccad"
+          }
+        ]
+      },
+      "assets": [
+        {
+          "name": "Duo preview transcript and Quick visibility_0_33C1D62B-4525-41AA-9DA0-584E6A49E7EB.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureCleanDuoPreview",
+          "originalSHA256": "a16bdaa699b52b1385afe294a9dbb46e856e4ab8b09d38f3f212901c8d142043",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "reviewReason": "Both authored transcript lines and Quick text fit, but Auto label/toggle is visibly clipped at the Quick reader bottom; use the Pro clean Duo instead.",
+          "originalEvidencePath": "captures/iphone-max/originals/7B7D0721-4D5B-40CD-9AFE-35BBE1547541.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "06 Settings_0_5ED6857A-A11E-4B8F-AD33-1BD10FADBA6C.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+          "originalSHA256": "651c3cec64b68961f8b909a94361448884c87879a5746eb3327d3d79fed42aff",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "reviewReason": "Top Settings and correction disclosure are clear, but Automatic-language explanation is cut mid-paragraph at the screen bottom; use a cleaner composition for listing.",
+          "originalEvidencePath": "captures/iphone-max/originals/5614B9AD-A5FE-4426-9D60-8295116BCA07.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "05 Conversation history_0_02773619-1C28-44C2-909A-582870E74CB0.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+          "originalSHA256": "5da270d9269785e6c5f5850593747499c8635408668ca13e493d9dd54eeaf27b",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "History title, synthetic conversation, intended ellipsized preview, guidance and search controls are readable with no diagnostic overlay.",
+          "originalEvidencePath": "captures/iphone-max/originals/889E35D2-CE4A-4716-AA08-3710CD58AC02.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "04 Summary portrait_0_575A454C-5411-4939-A1E7-3B810806EF88.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+          "originalSHA256": "c2daf76f755d22e4602fa5e8723d425e0092cf8a3e89dc6857d2395e0e5b56f4",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "Complete Decisions, Next steps and Earlier deep analysis card fit within the reader, with primary controls visible; preferred Summary portrait.",
+          "originalEvidencePath": "captures/iphone-max/originals/9EDA4924-2465-4283-B30F-D9347008F1C6.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "03 Conversation prompt_0_22922A07-8120-447A-B92C-CA6C7904C46B.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+          "originalSHA256": "695a258cdbd85513a4f7db987826a8869c698b278def0ac130963afb0616316b",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "Complete synthetic Notes and domain prompt, save guidance, preset controls and Live translation row are visible without keyboard or error overlays.",
+          "originalEvidencePath": "captures/iphone-max/originals/2B1F2959-3446-4AEF-B85B-388B559CBD47.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "02 Live landscape_0_04B698F2-DD11-4449-8738-28410C0353BF.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+          "originalSHA256": "af30e966901274ded198cc5b9813ff13cdf7e976ed733678d3485bffec0a1113",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "Complete first transcript paragraph and all Quick bullets fit; Latest is the normal reading-position control and does not cover that paragraph. Suitable wide workflow composition.",
+          "originalEvidencePath": "captures/iphone-max/originals/370A4FCB-5C99-44C9-BBE6-7A43A76FBDFA.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "01 Live portrait_0_BFF04434-A943-42CB-A8A0-51D9F02F8C46.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+          "originalSHA256": "80003e66a8d74ffebf373675f582b8095d0552e4aa5a056999f11d7f39c24719",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "reviewReason": "Transcript is cut mid-utterance under Latest overlay even though Quick and controls fit; preserve as long-content scroll evidence.",
+          "originalEvidencePath": "captures/iphone-max/originals/F7E6407A-D5E1-4490-98F7-1A564EFA8934.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Original transcript and translation in Duo or iPad wide layout_0_4667DEBF-E2CE-4D93-A4BA-E566104BD4D6.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal",
+          "originalSHA256": "a694d5abce958ae6ab3c709d573dab9b2fc3a430d72884407122b8be502ece12",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "Complete original utterance, French translated line and all Quick bullets are visible in landscape; synthetic placement example, not real inference evidence.",
+          "originalEvidencePath": "captures/iphone-max/originals/9317E627-E43B-44F9-863E-8469C5C27DF5.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Original transcript and on-device translation portrait_0_FF8FB93C-2BC7-404C-82C3-47FAF5B0F37C.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal",
+          "originalSHA256": "c608840b42e8b46383bb18ab6b4f032b58d85ed71dcda72db8073a8b74baa802",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "Complete original utterance, French translated line, Quick bullets and primary controls fit in portrait without obstructing overlays; synthetic placement example.",
+          "originalEvidencePath": "captures/iphone-max/originals/4A1B31C2-E50B-4A60-B59E-A6E1AB1FEF3A.png",
+          "selectedPath": "docs/images/ios/release-1.20.3/01-iphone-translation.png",
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Live translation options_0_6227FD9C-00FA-4778-BE20-ADDB103093D8.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal",
+          "originalSHA256": "942586875a08915b4652377d5ec0652e03f001a1bae29c256921d75c7a8314aa",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "Translation toggle, language target and complete on-device/original-preservation guidance fit with no overlays or clipping.",
+          "originalEvidencePath": "captures/iphone-max/originals/B39E7D71-2854-4B69-9B03-DAEA431D69E7.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Summary page French translation beside original_0_F63ED587-54C2-4DB3-8F9E-FADB7B714760.png",
+          "testIdentifier": "MobileTranslationUITests/testSummaryPageOffersExplicitTranslationAndKeepsOriginal",
+          "originalSHA256": "0feb4d235c53e5c7a786449fd14e1b09eb4d677029c4629944dbb9a28ddd2bbb",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "reviewReason": "French summary last bullet is cut by the reader bottom and original summary remains offscreen; retain as QA translation-state evidence.",
+          "originalEvidencePath": "captures/iphone-max/originals/20C41BBE-F6EC-4E03-9B37-DF802D697145.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        }
+      ]
+    },
+    {
+      "category": "ipad-mini",
+      "deviceType": "iPad-mini-A17-Pro",
+      "runtime": "iOS-26-5",
+      "device": "AAC077AF-2CE8-4DDB-8326-C732D9561C21",
+      "expectedPixels": [
+        1488,
+        2266
+      ],
+      "startedAt": "2026-10-30T16:31:06.124796+00:00",
+      "finishedAt": "2026-10-30T16:33:05.369199+00:00",
+      "simulatorState": "Shutdown",
+      "simulatorDeleted": false,
+      "selectors": [
+        "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+        "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal",
+        "MobileTranslationUITests/testSummaryPageOffersExplicitTranslationAndKeepsOriginal"
+      ],
+      "nativeDevice": {
+        "architecture": "arm64",
+        "deviceId": "AAC077AF-2CE8-4DDB-8326-C732D9561C21",
+        "deviceName": "ListenToMe43 fresh capture ipad-mini",
+        "modelName": "iPad mini (A17 Pro)",
+        "osBuildNumber": "23F77",
+        "osVersion": "26.5",
+        "platform": "iOS Simulator"
+      },
+      "tests": {
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0,
+        "runnerTerminal": true,
+        "runnerReaped": true,
+        "summarySHA256": "c9ad9e2820358d1584e3dbe58e41b0c992d03121018bdd4b83fef446704fd552",
+        "resultHashesManifestSHA256": "8ac4410b5a6e9b0c63a6c44634ce1a80097280f2d149d2f1769311e888f67d23"
+      },
+      "binary": {
+        "bundleIdentifier": "com.tomwu.ListenToMe.ios",
+        "version": "1.20.3",
+        "build": "43",
+        "allRootDylibsPreserved": true,
+        "payloads": [
+          {
+            "evidencePath": "captures/ipad-mini/binary/ListenToMeIOS",
+            "sha256": "ef9e7aad1c778d386bccb8bc3e211917af1adf6458b49b469f0afe340165aa96"
+          },
+          {
+            "evidencePath": "captures/ipad-mini/binary/ListenToMeIOS.debug.dylib",
+            "sha256": "f846c76ad7a3dc2cdc78ac7b9b0976c11f3d9b3bbb20338d2ede6262c673f348"
+          },
+          {
+            "evidencePath": "captures/ipad-mini/binary/__preview.dylib",
+            "sha256": "7f095fad58b0f77f26f97b3799d0aa602738c24f523c876989bf5f76dd186f25"
+          },
+          {
+            "evidencePath": "captures/ipad-mini/binary/Info.plist",
+            "sha256": "cd648df12a9f4272e3f186bda281a7dc2ac3343077da8ac3922a488acee5ccad"
+          }
+        ]
+      },
+      "assets": [
+        {
+          "name": "06 Settings_0_3F2CDBD3-6131-4B44-8591-3444DEB7F360.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+          "originalSHA256": "e12d7d56958bfadb51f979948ac9aaab869c8b917644ae33cbc33ffde593474b",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "reviewReason": "Settings controls and privacy disclosure are legible, but the correction explanation continues into the clipped bottom edge of the sheet; retain as QA evidence.",
+          "originalEvidencePath": "captures/ipad-mini/originals/9FCEB50D-22EE-40CC-99A1-11E766F7D011.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "05 Conversation history_0_E0D1C50D-A5D2-42AA-A864-02C5CAB848DF.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+          "originalSHA256": "e77948b72ec036d289148389e94f3f0db7fcddde76facbe7893524e90d34aa41",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "History sheet has readable title, conversation, timestamp and actions. Summary preview uses intentional ellipsis; no error or permission overlay.",
+          "originalEvidencePath": "captures/ipad-mini/originals/77136B7B-A987-4407-AAF7-CB6C91E89884.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "04 Summary portrait_0_20EA7FE0-4D00-43A9-B7BF-D39499CF8B16.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+          "originalSHA256": "3a301811e1173199119d05b7f67f92663a7ea541ae826417393dde7379ba717d",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "Complete Decisions, Next steps and Earlier deep analysis card fit with navigation and listening controls visible.",
+          "originalEvidencePath": "captures/ipad-mini/originals/021C4FA2-3A29-45A2-BE19-6CAD7E3F483F.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "03 Conversation prompt_0_50FDDB07-A285-460A-9A5A-1C73709E4B78.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+          "originalSHA256": "ac2eeba78b06e6b6fe369dbf4f55cac24268e7321c1d24d872611ebbe27a308e",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "reviewReason": "Full Prompt text and save guidance are readable, but the scrolled sheet starts partway through the Context card and ends partway through the photo-library row; use a cleaner portrait for the gallery.",
+          "originalEvidencePath": "captures/ipad-mini/originals/CE5FF84E-8800-4CD0-8269-B14FEA319B6E.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "02 Live landscape_0_5341E25D-BE12-43CB-AB5E-35053F418E6A.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+          "originalSHA256": "01d7e42c85f0a71a11a0c3e791c53218b3ed4721ed01c583c925c5881f189767",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "Wide layout shows both full transcript paragraphs, all Quick bullets, Auto guidance and bottom controls without clipping or overlays. Preferred mini wide view.",
+          "originalEvidencePath": "captures/ipad-mini/originals/E1F7F384-1764-4821-8B8F-BF13F400353C.png",
+          "selectedPath": "docs/images/ios/release-1.20.3/05-ipad-wide.png",
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "01 Live portrait_0_88032A90-4D2C-42EF-B223-6E369515E801.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+          "originalSHA256": "6a4f98704f25c18d64d34369cbb664dc9ee3af1394f88097256e61eb48dbf9df",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "Portrait split layout preserves the full transcript and Quick content with all visible controls and guidance legible.",
+          "originalEvidencePath": "captures/ipad-mini/originals/B52C2867-C2C0-483F-9115-603C369CB6F2.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Original transcript and translation in Duo or iPad wide layout_0_9EA08FC5-1723-479E-BD67-08BB9B9C706C.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal",
+          "originalSHA256": "80088e9aa2fcbccdad6fb64e954f3ecbc69c39f63431986e2df922cc1f527d48",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "Wide view shows both complete English transcript paragraphs and French translations beside complete Quick content and controls. Preferred translation wide view.",
+          "originalEvidencePath": "captures/ipad-mini/originals/72B8DBB2-3769-47CC-8E68-C5B777905EF9.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Original transcript and on-device translation portrait_0_C983C8D4-CF0C-414D-A4B3-B85E000F47C3.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal",
+          "originalSHA256": "27f90c3ac6a552eae549a48d04c4f2462f3dae8ee78169dc752f01a78b4e6430",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "Portrait view shows complete original and French transcript paragraphs with Quick content and controls; no clipping or overlays.",
+          "originalEvidencePath": "captures/ipad-mini/originals/8CFBE19F-7E2A-4C64-B473-4D08517B1A38.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Live translation options_0_8BE4854B-07A5-4F7B-9073-6D35187437E2.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal",
+          "originalSHA256": "3c0d1ef8359d0ede9ba7232ee4d653db0e17fa0353a281709c3e463fb475b8be",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "Live translation sheet fully shows toggle, French choice and all on-device/original-preservation guidance.",
+          "originalEvidencePath": "captures/ipad-mini/originals/A825D637-72B3-49E2-9EF2-8ED340F04224.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Summary page French translation beside original_0_1100CAD9-30DA-421E-80DB-221A2A7A3D87.png",
+          "testIdentifier": "MobileTranslationUITests/testSummaryPageOffersExplicitTranslationAndKeepsOriginal",
+          "originalSHA256": "7a6d63191b82a749f0ee9030afb2b4839f3391b14191710923303ea6fff28e97",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "French summary and complete original English summary both fit, including all next steps and Earlier deep analysis card; no obscured content.",
+          "originalEvidencePath": "captures/ipad-mini/originals/240BB82C-6D7F-442D-93F9-55B0CD652E68.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        }
+      ]
+    },
+    {
+      "category": "ipad-pro",
+      "deviceType": "iPad-Pro-13-inch-M5-12GB",
+      "runtime": "iOS-26-5",
+      "device": "DCBD22C9-BB66-4EBC-930F-F77530914FC5",
+      "expectedPixels": [
+        2064,
+        2752
+      ],
+      "startedAt": "2026-10-30T16:33:09.299720+00:00",
+      "finishedAt": "2026-10-30T16:35:08.882444+00:00",
+      "simulatorState": "Shutdown",
+      "simulatorDeleted": false,
+      "selectors": [
+        "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+        "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal",
+        "MobileTranslationUITests/testSummaryPageOffersExplicitTranslationAndKeepsOriginal"
+      ],
+      "nativeDevice": {
+        "architecture": "arm64",
+        "deviceId": "DCBD22C9-BB66-4EBC-930F-F77530914FC5",
+        "deviceName": "ListenToMe43 fresh capture ipad-pro",
+        "modelName": "iPad Pro 13-inch (M5)",
+        "osBuildNumber": "23F77",
+        "osVersion": "26.5",
+        "platform": "iOS Simulator"
+      },
+      "tests": {
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0,
+        "runnerTerminal": true,
+        "runnerReaped": true,
+        "summarySHA256": "d8eea0ca3921f553f67a157647c198a1b31a0ab813d9cd683c26ee22d0b3f89f",
+        "resultHashesManifestSHA256": "a48f87580aa39f12d2e77ad0120013b55524ec1280ff4acb6e25dc8dc8d8cdfc"
+      },
+      "binary": {
+        "bundleIdentifier": "com.tomwu.ListenToMe.ios",
+        "version": "1.20.3",
+        "build": "43",
+        "allRootDylibsPreserved": true,
+        "payloads": [
+          {
+            "evidencePath": "captures/ipad-pro/binary/ListenToMeIOS",
+            "sha256": "6fd2ac1143574a57bb9718b79d8356732d37ad287826a54b2cc5270ffa240d51"
+          },
+          {
+            "evidencePath": "captures/ipad-pro/binary/ListenToMeIOS.debug.dylib",
+            "sha256": "f846c76ad7a3dc2cdc78ac7b9b0976c11f3d9b3bbb20338d2ede6262c673f348"
+          },
+          {
+            "evidencePath": "captures/ipad-pro/binary/__preview.dylib",
+            "sha256": "7f095fad58b0f77f26f97b3799d0aa602738c24f523c876989bf5f76dd186f25"
+          },
+          {
+            "evidencePath": "captures/ipad-pro/binary/Info.plist",
+            "sha256": "cd648df12a9f4272e3f186bda281a7dc2ac3343077da8ac3922a488acee5ccad"
+          }
+        ]
+      },
+      "assets": [
+        {
+          "name": "06 Settings_0_D4F220F4-00EE-47C8-869A-2A3727B5DDA2.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+          "originalSHA256": "2ae58325b57c25e90947c2c5e8b4cd5819e6bbe5f6f71fd807eadbd9d272e184",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "reviewReason": "Settings controls and privacy disclosure are legible, but correction guidance is clipped at the bottom edge of the sheet.",
+          "originalEvidencePath": "captures/ipad-pro/originals/B988F400-58B0-42DE-8733-E0D03B872947.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "05 Conversation history_0_7A5F61C9-1277-44D0-AB46-A268A2CB1F5D.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+          "originalSHA256": "5b08fde90e41b3a408477e344c3dfce0f9b642ce42471b137abe5bbe71466a55",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "History sheet has readable conversation, timestamp, actions and normal intentional summary-preview ellipsis; no permission or error overlay.",
+          "originalEvidencePath": "captures/ipad-pro/originals/97F13DB3-3FE2-4062-9EC5-F0E98887E745.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "04 Summary portrait_0_E3EFE4E0-7E50-4C57-8ED0-C6AEEFF91294.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+          "originalSHA256": "421b32de593f9cc9ddbcfd12578adcbd94c81a0b17d760803a65900e74fa0fa4",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "Complete transcript, Quick Summary, Decisions and Next steps fit in the three-pane portrait layout; all controls and Earlier deep analysis card remain visible.",
+          "originalEvidencePath": "captures/ipad-pro/originals/8E56E2BB-AF5D-4405-A790-77348CDDACB1.png",
+          "selectedPath": "docs/images/ios/release-1.20.3/04-ipad-summary.png",
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "03 Conversation prompt_0_6AAB1E0E-8091-47E1-81A0-0D5A8C650450.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+          "originalSHA256": "e10bd8d4e7019fa33c259825b3ecec4a57457d938d7339a061dc689de84fd04e",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "reviewReason": "Prompt text and save guidance are complete, but the scrolled Notes sheet starts partway through the Context card and cuts the photo-library row at the bottom.",
+          "originalEvidencePath": "captures/ipad-pro/originals/DD2970F7-FDEF-4BE7-A8B6-A342E697FCD9.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "02 Live landscape_0_9040C5D6-2DC4-4FE2-BEAF-64008D1BA18C.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+          "originalSHA256": "73ad92267a2894522dcfd01054377175fe153f682e148b87958a7ea656b2ee54",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "Wide three-pane layout shows full transcript, Quick and full Summary with controls and guidance unobscured. Preferred large-iPad wide image.",
+          "originalEvidencePath": "captures/ipad-pro/originals/49AFBCF1-A632-47BD-AEA9-DFF3172F849B.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "01 Live portrait_0_042895BC-88CD-4B91-A9CE-1E0EEFEFE3AA.png",
+          "testIdentifier": "MobileReleaseScreenshotTests/testCaptureReleaseScreens",
+          "originalSHA256": "de057fc4ec2b4b43bff8268385939f4fc5a2401eee06b3edb5b5bef509321971",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "reviewReason": "A system Ready for Apple Intelligence notification covers the app header. Exclude from gallery and listing; use Summary portrait or Live landscape instead.",
+          "originalEvidencePath": "captures/ipad-pro/originals/DA28A57B-3D8D-4CFD-8AFA-143469203E45.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Original transcript and translation in Duo or iPad wide layout_0_E7F1F36F-4599-456D-B3A4-9CF7CC0C4F97.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal",
+          "originalSHA256": "e6774d6706294d1bab44a296aec789f68e7031b6d8ddf4dd91f3aca56bf10747",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "Wide layout shows both complete English transcript paragraphs with French translations, plus full Quick and Summary content and controls.",
+          "originalEvidencePath": "captures/ipad-pro/originals/BC0D24D4-7FCA-4938-9109-EF0321D3623E.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Original transcript and on-device translation portrait_0_15333E89-F8BA-4581-A384-20734762079F.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal",
+          "originalSHA256": "b1cea4854b4e1866f9e8fd1b123fb73b7d139c446745726440a7b45e33f1fd7e",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "reviewReason": "Portrait transcript begins mid-utterance at review the prototype on Thursday; the first sentence is outside the current viewport. Use the clean wide translation image.",
+          "originalEvidencePath": "captures/ipad-pro/originals/1F10C603-FEBE-4DC2-97C2-A05B314BACBF.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Live translation options_0_25B851E7-2001-4844-AAB0-3DE06B437EF7.png",
+          "testIdentifier": "MobileTranslationUITests/testLanguageControlsTranslateFinalSpeechInPortraitAndDuoWithoutChangingOriginal",
+          "originalSHA256": "e8d5ac95d35d2050624f3488111c3547541f107ab8d700dd8345bd0a420399e2",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "Live translation sheet shows complete toggle, French selector and all privacy/on-device guidance without clipping.",
+          "originalEvidencePath": "captures/ipad-pro/originals/42FFAD32-BC1D-44EA-A987-8A0B6848065E.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Summary page French translation beside original_0_D42C2AF6-FD98-4072-959E-69D4DBFB28CC.png",
+          "testIdentifier": "MobileTranslationUITests/testSummaryPageOffersExplicitTranslationAndKeepsOriginal",
+          "originalSHA256": "88eac67080b6fb90393b3043d4198915d2beeacb2ca46be51cafaff5555b483e",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "Complete French summary and original English summary fit beside full transcript and Quick Summary; all next steps and controls are visible.",
+          "originalEvidencePath": "captures/ipad-pro/originals/EA2574FD-E2CD-4C34-BB98-FF6ED53AB779.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        }
+      ]
+    },
+    {
+      "category": "watch42",
+      "deviceType": "Apple-Watch-Series-12-42mm",
+      "runtime": "watchOS-27-0",
+      "device": "050BC452-4047-4AF8-AC2F-90C91EF54073",
+      "expectedPixels": [
+        374,
+        446
+      ],
+      "startedAt": "2026-10-30T16:35:12.848054+00:00",
+      "finishedAt": "2026-10-30T16:36:01.122352+00:00",
+      "simulatorState": "Shutdown",
+      "simulatorDeleted": false,
+      "selectors": [
+        "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone"
+      ],
+      "nativeDevice": {
+        "architecture": "arm64",
+        "deviceId": "050BC452-4047-4AF8-AC2F-90C91EF54073",
+        "deviceName": "ListenToMe43 fresh capture watch42",
+        "modelName": "Apple Watch Series 12",
+        "osBuildNumber": "24R362",
+        "osVersion": "27.0",
+        "platform": "watchOS Simulator"
+      },
+      "tests": {
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "runnerTerminal": true,
+        "runnerReaped": true,
+        "summarySHA256": "e48d216e4f5826209e0de51ee434c64daaa24f340a6bb8028b1b5eb207ed5529",
+        "resultHashesManifestSHA256": "c0e7ee5420e368e3e8807b1b14807f7923e783b3740e6dd2e47c63cf5ea24701"
+      },
+      "binary": {
+        "bundleIdentifier": "com.tomwu.ListenToMe.ios.watchkitapp",
+        "version": "1.20.3",
+        "build": "43",
+        "allRootDylibsPreserved": true,
+        "payloads": [
+          {
+            "evidencePath": "captures/watch42/binary/ListenToMeWatch",
+            "sha256": "62bf81faa28182efb65c49f437f79cd2b74c5d619e41438a2711fd53a7a7d18d"
+          },
+          {
+            "evidencePath": "captures/watch42/binary/ListenToMeWatch.debug.dylib",
+            "sha256": "5ef1b32ef2dfba5261669c612ce4bf1c0de384547e59f196077dccf253f528bf"
+          },
+          {
+            "evidencePath": "captures/watch42/binary/__preview.dylib",
+            "sha256": "043538b135593aad4be72dc783e15d03524a8ad646a458e8fe12cfd312ed2184"
+          },
+          {
+            "evidencePath": "captures/watch42/binary/Info.plist",
+            "sha256": "3f6543e25caaf04a49f452216c5c0eb50eb9330456deb802bf4b1331f096e31c"
+          }
+        ]
+      },
+      "assets": [
+        {
+          "name": "Watch recording restored after background_0_791ADC26-E62F-451A-A507-B9A9A893E333.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone",
+          "originalSHA256": "73cb52b58a813bb4599a809e64e169c52546885a79bec5d54f2ad1e95da8ae0d",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "reviewReason": "Recording, elapsed time and Stop fully visible; synthetic simulator preview only. Compact 42 mm capture retained as QA; gallery selects 46 and 49 mm previews.",
+          "originalEvidencePath": "captures/watch42/originals/D4D74720-30BA-4F67-9992-26357D1D3C55.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Watch recording survives dismissal gesture_0_B732D494-A06A-467C-AF58-15C84BEF8A84.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone",
+          "originalSHA256": "6fb1bc26211ae9d8435fa26d57f0e4941b02b75cc046fddd2b6ee2eefa9afafd",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "reviewReason": "Recording, elapsed time and Stop fully visible; synthetic simulator preview only. Compact 42 mm capture retained as QA; gallery selects 46 and 49 mm previews.",
+          "originalEvidencePath": "captures/watch42/originals/CCAFD31B-B9B7-4520-8D12-1161F9B5BF09.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Watch recording and Stop_0_A6BA38D1-B37D-4520-9D35-E6787320CF05.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone",
+          "originalSHA256": "55165d5dec1716249217de0bb434f7b225d2301d32adfa920be4dab220d7364b",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "reviewReason": "Recording, elapsed time and Stop fully visible; synthetic simulator preview only. Compact 42 mm capture retained as QA; gallery selects 46 and 49 mm previews.",
+          "originalEvidencePath": "captures/watch42/originals/4141C80A-AEC4-4D23-AFB9-AE4D675397A4.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Watch recording consent_0_A4EA57F6-5904-4B74-B829-A61D238FF83B.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone",
+          "originalSHA256": "6316756caca9b9e0c3ec76d94f4f3d9cbea899512ef6c2914ce4cba6ccee67b3",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "reviewReason": "Consent is partially scrolled, or home shows unreachable-phone state; QA only. Compact 42 mm capture retained as QA; gallery selects 46 and 49 mm previews.",
+          "originalEvidencePath": "captures/watch42/originals/02873A5C-E2AF-4835-B806-494043D70496.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Watch ready home_0_5548BD39-59CC-47B0-AEF9-6DC47579A0B6.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone",
+          "originalSHA256": "04e07f6c4ba80ec6b7a70ffd9bb39156963eaca359146e23ba1ef8b4d096e579",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "reviewReason": "Consent is partially scrolled, or home shows unreachable-phone state; QA only. Compact 42 mm capture retained as QA; gallery selects 46 and 49 mm previews.",
+          "originalEvidencePath": "captures/watch42/originals/6BD63D21-58CF-4FF8-B92D-4E1BEFDF8487.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        }
+      ]
+    },
+    {
+      "category": "watch46",
+      "deviceType": "Apple-Watch-Series-12-46mm",
+      "runtime": "watchOS-27-0",
+      "device": "74D97AF9-8A83-42A6-96F1-66D9A779562A",
+      "expectedPixels": [
+        416,
+        496
+      ],
+      "startedAt": "2026-10-30T16:36:05.108270+00:00",
+      "finishedAt": "2026-10-30T16:36:49.816630+00:00",
+      "simulatorState": "Shutdown",
+      "simulatorDeleted": false,
+      "selectors": [
+        "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone"
+      ],
+      "nativeDevice": {
+        "architecture": "arm64",
+        "deviceId": "74D97AF9-8A83-42A6-96F1-66D9A779562A",
+        "deviceName": "ListenToMe43 fresh capture watch46",
+        "modelName": "Apple Watch Series 12",
+        "osBuildNumber": "24R362",
+        "osVersion": "27.0",
+        "platform": "watchOS Simulator"
+      },
+      "tests": {
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "runnerTerminal": true,
+        "runnerReaped": true,
+        "summarySHA256": "da7da597f96097e05836c54d36f9efd428fdee838180b165900dcd9bdb8089c2",
+        "resultHashesManifestSHA256": "1852a43c8c67801005022dd17355deb6f2ee4a94bb317a7b699067de10ac3de1"
+      },
+      "binary": {
+        "bundleIdentifier": "com.tomwu.ListenToMe.ios.watchkitapp",
+        "version": "1.20.3",
+        "build": "43",
+        "allRootDylibsPreserved": true,
+        "payloads": [
+          {
+            "evidencePath": "captures/watch46/binary/ListenToMeWatch",
+            "sha256": "62bf81faa28182efb65c49f437f79cd2b74c5d619e41438a2711fd53a7a7d18d"
+          },
+          {
+            "evidencePath": "captures/watch46/binary/ListenToMeWatch.debug.dylib",
+            "sha256": "5ef1b32ef2dfba5261669c612ce4bf1c0de384547e59f196077dccf253f528bf"
+          },
+          {
+            "evidencePath": "captures/watch46/binary/__preview.dylib",
+            "sha256": "043538b135593aad4be72dc783e15d03524a8ad646a458e8fe12cfd312ed2184"
+          },
+          {
+            "evidencePath": "captures/watch46/binary/Info.plist",
+            "sha256": "3f6543e25caaf04a49f452216c5c0eb50eb9330456deb802bf4b1331f096e31c"
+          }
+        ]
+      },
+      "assets": [
+        {
+          "name": "Watch recording restored after background_0_55B8361F-3BD6-4D62-B10E-9E4730A235B7.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone",
+          "originalSHA256": "23a4b5d5ec2bc3a497e33d3881c857254e0e5897d63f01ca9a510104d8643060",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "Recording, elapsed time and Stop fully visible; synthetic simulator preview only.",
+          "originalEvidencePath": "captures/watch46/originals/0D9E28DE-9ABE-44F6-8874-BE6E65661B5B.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Watch recording survives dismissal gesture_0_D4B6DADA-3C2D-4DC2-B207-CB831D0D79AA.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone",
+          "originalSHA256": "7bcd57ebe37fd6a39e28dba12972b20fe1c00fbea08d910c17219fabe3f414eb",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "Recording, elapsed time and Stop fully visible; synthetic simulator preview only.",
+          "originalEvidencePath": "captures/watch46/originals/D6A43B40-B37B-4FD0-9EEC-155E2B3DF4DA.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Watch recording and Stop_0_17827853-78C7-4816-B676-1380E704703E.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone",
+          "originalSHA256": "d72cd99b83f3e50becf7b8fdbe90912f5e939c6d4cc39d03b4f7852141389dea",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "Recording, elapsed time and Stop fully visible; synthetic simulator preview only.",
+          "originalEvidencePath": "captures/watch46/originals/60CDFEA8-6C11-461A-8BAF-C8884A4EBD9A.png",
+          "selectedPath": "docs/images/ios/release-1.20.3/06-watch-46-recording.png",
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Watch recording consent_0_BB6DABB2-EC97-4898-B7E8-073718C57955.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone",
+          "originalSHA256": "1ddcb1dc071f26905aafc532464bd7656fc65a42932cd59899a9c7920a075306",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "reviewReason": "Consent is partially scrolled, or home shows unreachable-phone state; QA only.",
+          "originalEvidencePath": "captures/watch46/originals/2E047B2D-F8C4-4B25-A631-206E411128EB.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Watch ready home_0_5A8B59DB-9226-49C8-A9F3-C5803DBCC00D.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone",
+          "originalSHA256": "b772ed7b95be26181545d6b2f7eba5debb25b0080a148a752a06cd33ca10630c",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "reviewReason": "Consent is partially scrolled, or home shows unreachable-phone state; QA only.",
+          "originalEvidencePath": "captures/watch46/originals/E7A109DA-78BF-4908-87FF-8F7DF6192948.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        }
+      ]
+    },
+    {
+      "category": "watch49",
+      "deviceType": "Apple-Watch-Ultra-4-49mm",
+      "runtime": "watchOS-27-0",
+      "device": "42861AB4-2248-4F6C-988E-806849FB8EBE",
+      "expectedPixels": [
+        422,
+        514
+      ],
+      "startedAt": "2026-10-30T16:36:53.680139+00:00",
+      "finishedAt": "2026-10-30T16:37:36.191212+00:00",
+      "simulatorState": "Shutdown",
+      "simulatorDeleted": false,
+      "selectors": [
+        "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone"
+      ],
+      "nativeDevice": {
+        "architecture": "arm64",
+        "deviceId": "42861AB4-2248-4F6C-988E-806849FB8EBE",
+        "deviceName": "ListenToMe43 fresh capture watch49",
+        "modelName": "Apple Watch",
+        "osBuildNumber": "24R362",
+        "osVersion": "27.0",
+        "platform": "watchOS Simulator"
+      },
+      "tests": {
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "runnerTerminal": true,
+        "runnerReaped": true,
+        "summarySHA256": "fd7d5d684e4d1c8699e26175aeb06dbf69f1f8efff53cb15695bbf1c8c8f64d8",
+        "resultHashesManifestSHA256": "fd989a921884a9916cf68b7e046ada145ec4ed718aaa47006b77d64fb114f94c"
+      },
+      "binary": {
+        "bundleIdentifier": "com.tomwu.ListenToMe.ios.watchkitapp",
+        "version": "1.20.3",
+        "build": "43",
+        "allRootDylibsPreserved": true,
+        "payloads": [
+          {
+            "evidencePath": "captures/watch49/binary/ListenToMeWatch",
+            "sha256": "62bf81faa28182efb65c49f437f79cd2b74c5d619e41438a2711fd53a7a7d18d"
+          },
+          {
+            "evidencePath": "captures/watch49/binary/ListenToMeWatch.debug.dylib",
+            "sha256": "5ef1b32ef2dfba5261669c612ce4bf1c0de384547e59f196077dccf253f528bf"
+          },
+          {
+            "evidencePath": "captures/watch49/binary/__preview.dylib",
+            "sha256": "043538b135593aad4be72dc783e15d03524a8ad646a458e8fe12cfd312ed2184"
+          },
+          {
+            "evidencePath": "captures/watch49/binary/Info.plist",
+            "sha256": "3f6543e25caaf04a49f452216c5c0eb50eb9330456deb802bf4b1331f096e31c"
+          }
+        ]
+      },
+      "assets": [
+        {
+          "name": "Watch recording restored after background_0_784AD938-1180-4D5A-A725-B545A7AA26F2.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone",
+          "originalSHA256": "8f37cc39c43cc264ff9f95cb5f36128f60e3f9d35c662f4e0ba6efec9bfd8094",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "Recording, elapsed time and Stop fully visible; synthetic simulator preview only.",
+          "originalEvidencePath": "captures/watch49/originals/83F8E695-7DE5-4748-9924-506F09F96AB4.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Watch recording survives dismissal gesture_0_C994FEDF-5904-4ECA-AA2C-EF584F3FC7C3.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone",
+          "originalSHA256": "7f21ae7e1c5da4dda9e7f3bd3b918c2a284b5f2d5a8ccbbd87978cba99c71a5a",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "Recording, elapsed time and Stop fully visible; synthetic simulator preview only.",
+          "originalEvidencePath": "captures/watch49/originals/E3DD3056-B6A9-4701-9651-B2F19B2F7AA0.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Watch recording and Stop_0_BB6ED131-77C8-49FC-9EDD-931E48B08756.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone",
+          "originalSHA256": "dae86adccd3888ad49fb28b8b3c7cdb65af4b77827b705e2a9f52ad366c52d94",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "suitable",
+          "reviewReason": "Recording, elapsed time and Stop fully visible; synthetic simulator preview only.",
+          "originalEvidencePath": "captures/watch49/originals/1780DEB5-3027-41F0-9000-46CA8C5F5D3E.png",
+          "selectedPath": "docs/images/ios/release-1.20.3/07-watch-49-recording.png",
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Watch recording consent_0_771E7C75-628A-4CEA-9CF9-99EF10CFD5DC.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone",
+          "originalSHA256": "990432f7762d06b9766174ded3ef19907415524924e1ed2e2847c4b372884c01",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "reviewReason": "Partially scrolled consent or unreachable-phone home state; QA only.",
+          "originalEvidencePath": "captures/watch49/originals/874A36D7-9831-4D00-8B3C-82DAEAD904A6.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        },
+        {
+          "name": "Watch ready home_0_231CE841-62CB-4497-984D-BFBE6B35A952.png",
+          "testIdentifier": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone",
+          "originalSHA256": "a5d2139b830f304ce13ffca4bc65e6e3565550c4830f08f6baa451d56fdfcc2a",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "visualStatus": "reviewed",
+          "listingSuitability": "qa-only",
+          "reviewReason": "Partially scrolled consent or unreachable-phone home state; QA only.",
+          "originalEvidencePath": "captures/watch49/originals/9711FBCE-928C-40C0-A41A-AAF87DE38627.png",
+          "selectedPath": null,
+          "processing": "none; native PNG and EXIF retained"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Synthetic simulator content does not establish model quality, microphone recording or physical-device acceptance.",
+    "QA-only images include clipped/scrolled content, sheet-edge clipping, setup/consent views, compact Watch views and an iPad system notification. They are retained as evidence and excluded from this gallery.",
+    "Listing suitability is a visual assessment, not Apple approval or proof of screenshot upload.",
+    "Native originals, native result bundles and executable/dylib/plist provenance are retained in the external evidence identified above. Only the seven selected originals are copied into this repository."
+  ]
+}
