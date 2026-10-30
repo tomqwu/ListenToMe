@@ -18,7 +18,7 @@ reports idle and permits Ask. The original ranking rules and language-quality as
 The shared control is [HistoryRefreshControl](../SharedPlatform/HistoryRefreshControl.swift), backed by
 [HistorySearchModel](../SharedPlatform/HistorySearchModel.swift) and the same
 [HistoryIndex](../Sources/ListenToMeCore/HistoryIndex.swift) actor. Contracts
-`HISTORYREFRESH-001`–`009` are in [the executable catalog](../Behaviors/history-capability-refresh.json).
+`HISTORYREFRESH-001`–`010` are in [the executable catalog](../Behaviors/history-capability-refresh.json).
 The [manual checks](manual-smoke-test.md#explicit-local-history-refresh-223-unreleased-follow-up)
 cover literal results, retries, no-results control reachability and deletion during Refresh.
 
@@ -63,8 +63,54 @@ proven by the native transition test's zero provider calls before recovery.
 failed a new hittability assertion on a noninteractive text match; targeting the actual existing
 record Button fixed this test-harness error without a production change. The native originals in
 [the README manifest](images/history/unreleased-2026-10-30/manifest.json) preserve a clean short-query
-preview and empty History, plus the clearly labelled isolated Mac component. No pixels were edited.
+preview and empty History. The installed Mac History sheet and full-window originals now supplement
+the clearly labelled isolated Mac component. No pixels were edited.
 
-Full local validation, current hosted CI, full-app Mac History screenshot, review and merge remain pending.
+## Full aggregate and installed Mac acceptance
+
+Full `make validate-local` passed on `c8fdcd29`, exit 0/reaped, with all **1,071 inputs** unchanged,
+including the separately pinned ignored Dev signing override. Core: **1,294 tests / seven optional
+skips / zero failures / 98.0768% coverage**. iOS: **509 unit tests / seven skips** and **96 UI tests /
+five skips**; Mac: **118 tests**; Watch: **29 unit + five UI tests**, with no Mac/Watch skips.
+All native suites had zero failures and their original result summaries agree with the logs.
+The **245-scenario catalog validated**; all **579 required bound selectors**, release/tooling
+helpers, the native hotkey check and both two-test real-server contracts passed. The Mac Chinese test explicitly used its installed
+real-model branch; this is not phone or general translation-quality acceptance.
+
+The source-matched signed normal Debug Dev app (**1.4.4 (14)**, as configured; Store configuration
+remains **1.5.0 (15)**) then passed actual installed History acceptance. A second exclusive synthetic
+record was added while History was open: the real Refresh changed the filtered result from one to
+two rows, showed busy/disabled then idle/enabled, preserved the query, repeated successfully and
+opened the new record after an actual Quit/relaunch. Two owned cache files contain real `w:en:1`
+Apple vectors. Root recorded eleven pre-existing archive files unchanged; all four owned QA/gallery
+records and derived vectors were preserved before removal, the Dev app quit/Trashed and only its
+app-scoped permissions cleaned. No Settings, Ask, download or recording action was exercised.
+The defaults comparison found **zero matching top-level keys**; it does not prove every setting
+was exhaustively checked or preserved. The removed backup/absent final snapshot prevents replay
+of that settings comparison. The original signed build still verifies; the later Trash copy has
+matching file bytes but now fails strict codesign for Finder metadata, a preserved cleanup-artifact
+limitation. Native images independently show only two synthetic Airship records, readable controls
+and an empty background, without private conversation or permission/error/debug overlays.
+
+[Sanitized aggregate/installed receipt](evaluations/history-local-refresh-validation-2026-10-30.json).
+The original focused receipt above retains its earlier pending status as historical evidence.
+Follow-up `13573f90` changes only the landscape test and BDD binding; production/build inputs
+remain byte-identical to full-tested `c8fdcd29`. Its focused native run passed **two test invocations,
+zero failures/skips**, one each on iPhone 17 Pro and iPad Pro 13-inch M5 / iOS 26.5, exit 0/reaped;
+all **1,074 inputs** matched. The final catalog has **246 scenarios**. Selected native originals show
+**unqueried History**, Refresh and a complete record card, with no keyboard. The phone's lower hint
+can sit behind the floating search toolbar and additional actions require normal scrolling; this
+is not an all-content-at-once image. Queried control/result frames remain QA-only. Stored portrait
+pixels and EXIF orientation 8 are preserved; the manifest separately records landscape display size.
+
+Initial app-only screenshots cropped landscape coordinates; an iPad test initially missed the normal
+collapsed search drawer. A later simultaneous-fit assertion after scrolling imposed an unjustified
+preview constraint, and `transcriptText` was a test selector typo. Those harness/constraint failures
+and all originals remain preserved; none is presented as a production regression red. No runtime
+or fixture content changed. The queried iPad disclosure's existing “this iPhone” wording remains a
+separately reported copy observation, not a fix or new language-support claim.
+
+Current exact-head CI, hosted final-gallery review and merge remain pending. This is composite
+validation (full runtime plus subsequent test-only coverage), not a newly repeated full aggregate.
 The retained failed multilingual quality results remain failed; this explicit Apple capability
 refresh is a separate bounded implementation slice, not completion of #223.
