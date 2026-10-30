@@ -46,9 +46,14 @@ The integrated `9a39a12` full attempt passed Core 1,294/seven skips, iOS 606/twe
 119 Mac tests, with 1,074 unchanged inputs, but **failed before Watch testing** when Xcode upgraded
 and its simulator framework versions no longer matched. Same-source signed Debug build and four
 real-server contracts passed separately. [Exact component receipt](releases/mac-speaker-name-overflow-9a39-validation.json).
-Xcode component installation requires OS administrator authentication; that owned attempt stopped
-and reaped at the authentication prompt. The corrected installed Mac/VoiceOver acceptance and README
-capture remain blocked by the locked console. No fixture was staged or permission reset requested.
+The maintainer completed Xcode setup; first-launch/simulator checks passed at 22:43 UTC on 27B52.
+Corrected installed Mac acceptance then passed double-click/context-menu rename, Save/Cancel, blank
+refusal, full relaunch persistence, full-name tooltip and actual VoiceOver activation/Cancel/Save.
+Fresh native README captures show readable transcript text with contained long names at two window
+widths. All eleven original archive files and the neighboring synthetic record remained unchanged.
+The owned app was quit and trashed; fixture removal and scoped Dev TCC cleanup are deferred because
+another session started its own Dev app. Do not interrupt that session or reset its permissions.
+Fresh full validation awaits its native resource release; the earlier aggregate remains failed.
 Local merge `7b19c69` integrates main `0714b9ec` docs/gallery only; runtime/tests/config are unchanged
 from the preserved `9a39a12` candidate. Required CI and PR merge remain pending; no release is claimed.
 
@@ -89,7 +94,7 @@ error remain preserved separately; the repaired verifier did not repeat the uplo
 PR [#318](https://github.com/tomqwu/ListenToMe/pull/318) closed **#333, #335, #337, #346, #347 and #348**.
 Six remain open: **#181, #205, #223, #236, #334 and #336**. Optional MPNet delivery remains excluded,
 with its source and negative results preserved. #334's installed rename/VoiceOver checks found the
-long-name layout regression described above; its corrected installed-layout acceptance remains pending;
+long-name layout regression described above; its corrected installed-layout acceptance subsequently passed;
 #336 retains its near-end/overlap/routes matrix. These limits do not reopen completed fixes.
 
 Physical phone/iPad translation, screen-lock, multilingual and Watch acceptance remains pending.

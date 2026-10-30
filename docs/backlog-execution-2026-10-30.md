@@ -14,7 +14,7 @@ does not perform a new Apple review submission or public-release readback.
 
 | Issue | Source and evidence | Remaining delivery work |
 | --- | --- | --- |
-| [#334](https://github.com/tomqwu/ListenToMe/issues/334) — speaker-name overflow | `codex/mac-speaker-name-overflow`, tested runtime `9a39a12`; genuine two-assertion rendered red followed by ten passing native methods. The integrated attempt passed Core 1,294/seven skips, iOS 606/twelve skips and Mac 119. **The aggregate failed before Watch testing**, after Xcode's simulator components became mismatched. Same-source signed build and four real-server contracts passed separately. | Complete the missing validation, corrected installed Mac/VoiceOver flow and README capture, then independent final review, required CI and merge. Keep this first in the PR queue. |
+| [#334](https://github.com/tomqwu/ListenToMe/issues/334) — speaker-name overflow | `codex/mac-speaker-name-overflow`, tested runtime `9a39a12`; genuine two-assertion rendered red followed by ten passing native methods. The integrated attempt passed Core 1,294/seven skips, iOS 606/twelve skips and Mac 119. **The aggregate failed before Watch testing** during the Xcode update. Same-source signed build and four real-server contracts passed separately. After setup recovery, corrected installed rename/VoiceOver, full relaunch, archive preservation and fresh README captures passed independent review. | Run fresh full validation when the other session releases native resources, finish final review, required CI and merge. Keep this first in the PR queue. Complete deferred Dev cleanup when the other session ends. |
 | [#336](https://github.com/tomqwu/ListenToMe/issues/336) — saved-audio ordering | `codex/mac-saved-audio-order`, docs head `bf0f2ae`, runtime `d36b212`; real native ordering red followed by three passing rendered methods and 145 Core tests. Playback keeps canonical source/offset identity, duplicate restored IDs and untimed/legacy boundaries. | Integrate final #334 main; finish full validation, installed playback/gallery, review, CI and merge. The original near-end/overlap/repeated-speech/headphone/route matrix remains required separately. |
 | [#181](https://github.com/tomqwu/ListenToMe/issues/181) — preserve Watch audio during redelivery | `codex/watch-inbox-redelivery`, docs head `105c91d`, runtime `5f52da6`; two unchanged iOS-source tests reproduced 18 assertions and then passed in a portable Mac host. The first durable audio/sidecar survives a duplicate transfer when the manifest is missing or corrupt. | Run the bound iOS tests and full validation after simulator repair, then review/CI/sequential merge. Portable filesystem tests do not establish iOS file protection, WatchConnectivity or physical Watch recording/reconnection/wrist-down/battery/storage acceptance. |
 
@@ -50,12 +50,16 @@ archive. Later docs-only commits must not be represented as fresh runtime valida
 
 ## Resume from the actual blockers
 
-Xcode updated to **27.2 (27B52)** during validation. Installed CoreSimulator **1174.9.2** does not
-match required **1174.21.0**. Apple's component installer stopped at administrator authentication;
-the owned attempt was stopped and reaped. One request to complete Xcode setup is already pending.
-The **22:35 UTC** read-only recheck still returned first-launch status 69 and a locked Mac console.
-Do not repeat the same unlock, permission or authentication request, reset permissions/services,
-or relabel the failed aggregate as passing.
+Xcode updated to **27.2 (27B52)** during validation. CoreSimulator initially mismatched and Apple's
+installer stopped at administrator authentication; the owned attempt was stopped and reaped. The
+22:35 UTC check returned first-launch 69 and a locked console. **The maintainer then completed setup**:
+the 22:43 UTC check returned first-launch 0 and working simulator inventory. Corrected #334 installed
+acceptance and native screenshots subsequently passed. Preserve the earlier failed aggregate.
+
+At 23:05 UTC another active session owned a Dev app and iOS native tests. Fresh full validation waits
+for those resources. The completed #334 app is quit and trashed; its two synthetic archive fixtures
+and scoped Dev permission reset remain deferred to protect that session. Do not repeat setup/unlock
+requests, reset shared permissions/services or interrupt another session's tests.
 
 The last bounded phone check timed out and reaped; it establishes **no current device lock state**.
 Resume the affected native/installed/device work after an actual environment change and resource-ownership check.

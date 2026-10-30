@@ -86,6 +86,21 @@ make ios-test
 
 ## Screenshots
 
+### Unreleased Mac speaker-name layout
+
+Long names stay within their column while complete transcript lines remain readable. These actual
+signed Dev-app captures use synthetic content with AI off; the fix is **unreleased**.
+[Source, native pixels and acceptance scope](docs/images/mac/speaker-rename-unreleased-2026-10-30/manifest.json).
+
+<p align="center"><a href="docs/images/mac/speaker-rename-unreleased-2026-10-30/109-wide.png"><img src="docs/images/mac/speaker-rename-unreleased-2026-10-30/109-wide.png" width="760" alt="Unreleased Mac speaker-name fix in a wide window: two truncated long-name labels, Jordan and three complete synthetic transcript lines."></a></p>
+
+<details>
+<summary>The same conversation in a narrower window</summary>
+
+<p align="center"><a href="docs/images/mac/speaker-rename-unreleased-2026-10-30/110-narrow.png"><img src="docs/images/mac/speaker-rename-unreleased-2026-10-30/110-narrow.png" width="760" alt="Unreleased Mac speaker-name fix in a narrower window, with long labels contained beside complete transcript lines and normal sidebar scrolling."></a></p>
+
+</details>
+
 ### Unreleased local History refresh
 
 These native previews show an **unreleased follow-up**, not the accepted TestFlight 1.20.3 (43)
@@ -273,7 +288,7 @@ production layout at that checkpoint. It predates the compact-landscape spacing 
 **macOS · historical workspace**
 
 This older capture is retained for reference; it does not depict the latest Mac candidate.
-A fresh source-matched Mac gallery remains part of its release checklist.
+Current unreleased Mac previews appear above.
 
 <p align="center">
   <a href="docs/images/screenshot.png"><img src="docs/images/screenshot.png" width="760" alt="Historical macOS four-pane meeting workspace; not the latest candidate."></a>
@@ -723,7 +738,7 @@ speaker models. Open **Speakers / edit names** to name voices, for example Speak
 double-click an identified speaker label in the Mac transcript, or long-press its line on iPhone/iPad
 and choose **Rename speaker**. Save applies the name throughout this conversation; Cancel discards the edit.
 The unreleased Mac layout keeps long names within the speaker column with an ellipsis; the tooltip
-and accessibility label retain the full name. [Native evidence and remaining installed checks](docs/speaker-rename-acceptance.md).
+and accessibility label retain the full name. [Native and installed acceptance](docs/speaker-rename-acceptance.md).
 
 Names appear in transcript lines and flow into subsequent AI prompts, refreshed listener summaries,
 saved-session search, and Markdown/PDF exports. Saving a name clears older Quick/Deep answers;

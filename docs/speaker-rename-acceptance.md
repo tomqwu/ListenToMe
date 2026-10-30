@@ -63,12 +63,38 @@ PR [#351](https://github.com/tomqwu/ListenToMe/pull/351) subsequently merged His
 `0714b9ec` with all three required checks green. Local merge `7b19c69` brings in only its final docs
 and gallery; this candidate's runtime, tests and build configuration remain identical to `9a39a12`.
 
+## Corrected installed acceptance — October 30, 23:04 UTC
+
+The maintainer completed Xcode setup. At 22:43 UTC, first-launch status and simulator inventory both
+returned zero on Xcode 27.2 (27B52). The earlier aggregate remains failed; a new full run is required.
+
+The installed normal Debug app from `9a39a12` passed double-click and context-menu rename,
+Save/Cancel, empty-name refusal, full quit/relaunch persistence and neighboring-conversation isolation.
+Both matching turns show the long name within the speaker column, with every transcript word readable
+at 2,200- and 1,672-point window widths. The complete name remains visible in the editor and tooltip.
+Actual VoiceOver captions read the full name and button role; VO Space opened the correct editor and
+activated Cancel and Save. VoiceOver was restored off. These are installed observations, separate from
+the native callback and bitmap tests above.
+
+Two synthetic conversations exercised the flow. All eleven original archive files remained
+byte-identical; the neighboring fixture was unchanged. Only the target's two matching speaker names
+and derived transcript changed. Canonical segment IDs, recording IDs, capture times, text and language
+were preserved. The owned app processes ended and its exact `.dev` bundle was moved to Trash.
+Another session then started a Dev app using the same archive, so removal of the two owned fixtures
+and the scoped Dev permission reset are deferred until that session finishes. Its app and permissions
+were left untouched. The deferred cleanup is not a completed reset.
+
+Fresh, unchanged native-resolution window captures refresh the README. Independent review inspected
+the rendered images, actual VoiceOver/input evidence, archive differences and source/signing receipt.
+[Capture provenance and originals](images/mac/speaker-rename-unreleased-2026-10-30/manifest.json) ·
+[Sanitized installed acceptance receipt](evaluations/mac-speaker-name-overflow-installed-2026-10-30.json).
+Some initial automation captures omitted the child sheet or captured an offset/black region; those
+remain diagnostics and were excluded. Full-screen dialog evidence and native window captures repaired
+the evidence gap without changing the app. No acoustic, Store-sandbox or physical iOS pass is claimed.
+
 ## Remaining work
 
-Complete the matching Xcode components and Watch stage, then recheck the signed installed candidate
-with a long name, visible tooltip and VoiceOver. The latest read-only Mac check still reported a
-locked console; no corrected installed acceptance or new fixture staging occurred. Capture that
-corrected full app for the README: the existing History captures do not show this long-name fix.
-Required CI and PR merge remain pending. Neither the focused native pass nor separate e2e pass
-establishes a merged fix or published Mac release. Existing authentication/unlock blockers are
-recorded; no repeated permission or local-test request is needed.
+Run fresh full validation after the other session releases the native test resources, obtain final
+review, pass required CI and merge. The corrected installed acceptance does not turn the interrupted
+aggregate into a pass or establish a published Mac release. Complete the recorded cleanup once safe;
+no repeated setup, unlock or permission request is needed.
