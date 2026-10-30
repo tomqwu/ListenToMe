@@ -77,12 +77,32 @@ expanded recording, and expanded model/session/Quick states. Actual language/eng
 remain unchanged; all six secondary actions are present. No microphone or AI request was needed
 for disclosure acceptance. Component test acceptance and installed integration are distinct evidence.
 
-## Completion gates
+## Validation and delivery record
 
-Final complete local validation, refreshed gallery/capture manifest, independent review, required
-hosted CI and PR merge are recorded in the final validation receipt. Until those are recorded this
-is an in-progress change, not merged or published. The README gallery must distinguish these
-unreleased images from public and TestFlight builds.
+[PR #353](https://github.com/tomqwu/ListenToMe/pull/353) records final commands, complete local-gate
+outcomes, independent review, required hosted CI and merge status. The complete gate is
+`make validate-local` with the owned iPhone and Watch simulator destinations; raw output and native
+result bundles remain in the evidence directory above. The final run is on `978caac`; later gallery
+and documentation changes preserve the app/test/config inputs. The retained frozen-input manifest
+permits exact before/after comparison. Earlier failed and interrupted attempts remain distinct.
+
+[Capture manifest](images/workspace/unreleased-2026-10-30/manifest.json) catalogs 45 simulator
+captures across seven device profiles, plus the selected native Mac workspace/options images.
+Nine approved native-resolution gallery assets preserve original hashes and EXIF-normalized RGB
+identity. The earlier Pro Live portrait and scrolled setup/consent captures remain QA-only; the Pro
+Max Live portrait, Pro full reader and clean Duo are selected. GFM-rendered gallery previews were
+inspected at 1,000 and 375 pixels: all seven inline images loaded and neither content width overflowed.
+Full-resolution links expose the other two selected Mac/options and iPad-mini assets. Historical
+galleries remain collapsed and all previews are labelled unreleased. Live fixtures inject synthetic
+summaries/Auto; normal Apple Intelligence remains manual-only.
+
+The completed installed Dev session was closed. Its strict-verified signed app, screenshots, AX
+readbacks and source/signing provenance were preserved; the exact `.dev` bundle was moved to Trash
+after checking no ListenToMe process remained. Only `com.tomwu.ListenToMe.dev` permissions were
+reset (exit 0). FinderInfo on the owned app/resource-bundle roots was removed before strict archive
+verification; signed files were unchanged. Other apps, production permissions, conversations,
+settings and credentials were preserved.
 
 Physical phone/iPad/Watch capture, paired transfer and full VoiceOver-device acceptance remain
-separate. No actual OTHERS audio acceptance or production-ready claim follows from this UI pass.
+separate. No actual OTHERS audio acceptance, production-ready claim or publication follows from
+this UI pass; merged work rides the next appropriate release train.

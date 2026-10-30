@@ -1,0 +1,827 @@
+{
+  "status": "unreleased candidate; no listing upload or distribution",
+  "source": "b4a06fbe5a1b58e17b445a836a9d5b40b7952d08",
+  "equivalentAppSource": "978caac",
+  "equivalence": "git diff b4a06fb 978caac -- App SharedPlatform iOS Watch Config project.yml is empty; only tests and documentation changed",
+  "scope": "Native Mac app and simulator previews; synthetic demonstration content. PreviewProvider supplies fixture summaries; these images do not establish Apple Intelligence automatic capability, inference quality or physical capture.",
+  "listingUploaded": false,
+  "assets": [
+    {
+      "file": "docs/images/workspace/unreleased-2026-10-30/mac-workspace.png",
+      "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/mac-final-default.png",
+      "originalSHA256": "a2b345ebb159449835f9ca4b5349764f019d862eff55e54a492819d7a6bcae4e",
+      "originalPixels": [
+        3344,
+        2000
+      ],
+      "exifOrientation": 1,
+      "pixels": [
+        3344,
+        2000
+      ],
+      "sha256": "da5088bdb71e3887dad0f08586a919438394a367e63d282bb03484ad966dda66",
+      "transform": "EXIF orientation then RGB; no crop or resampling",
+      "device": "Mac native signed Dev app",
+      "runtime": "macOS 27.0.1",
+      "state": "empty conversation; optional sections collapsed",
+      "visualStatus": "approved",
+      "source": "b4a06fbe5a1b58e17b445a836a9d5b40b7952d08"
+    },
+    {
+      "file": "docs/images/workspace/unreleased-2026-10-30/mac-options.png",
+      "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/mac-final-options.png",
+      "originalSHA256": "9f2e4afe35486f5e01e7a40b3aad75af417dbd4912c00320dc2ece02d438bf69",
+      "originalPixels": [
+        3344,
+        2000
+      ],
+      "exifOrientation": 1,
+      "pixels": [
+        3344,
+        2000
+      ],
+      "sha256": "3aea8be70ad97e18a4a3186d161a3d1e8981f2b418f8208739a9981f1fcc674e",
+      "transform": "EXIF orientation then RGB; no crop or resampling",
+      "device": "Mac native signed Dev app",
+      "runtime": "macOS 27.0.1",
+      "state": "unchanged selected models and all six secondary actions",
+      "visualStatus": "approved",
+      "source": "b4a06fbe5a1b58e17b445a836a9d5b40b7952d08"
+    },
+    {
+      "file": "docs/images/workspace/unreleased-2026-10-30/iphone-summary.png",
+      "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/final-focused-attachments/91E182D2-9F6D-4A8C-96F1-703210868E7E.png",
+      "originalSHA256": "ace71095782de1ebff9c69a8a9053ccf556f743efb153ba1d530e2e63d6b2647",
+      "originalPixels": [
+        1206,
+        2622
+      ],
+      "exifOrientation": 1,
+      "pixels": [
+        1206,
+        2622
+      ],
+      "sha256": "8f2c09d1021ae31c303b2fd183f25278e0b34ac0ede4d25ae4f9ff6f67680fb6",
+      "transform": "EXIF orientation then RGB; no crop or resampling",
+      "device": "iPhone 17 Pro",
+      "runtime": "iOS 26.5",
+      "state": "synthetic full summary and named Update action",
+      "visualStatus": "approved",
+      "source": "b4a06fbe5a1b58e17b445a836a9d5b40b7952d08"
+    },
+    {
+      "file": "docs/images/workspace/unreleased-2026-10-30/iphone-duo.png",
+      "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/final-focused-attachments/ED993501-9331-4255-BF9A-A82B58F3ED40.png",
+      "originalSHA256": "eb3358825a7742a23f12f24620f04a037f84204ccc5155c6e22b73cf7a3104b9",
+      "originalPixels": [
+        1206,
+        2622
+      ],
+      "exifOrientation": 8,
+      "pixels": [
+        2622,
+        1206
+      ],
+      "sha256": "8bba7a9b27c72c35a927a2689c639c336d0cff2ca71f0bccfdeee8fae1feb19a",
+      "transform": "EXIF orientation then RGB; no crop or resampling",
+      "device": "iPhone 17 Pro",
+      "runtime": "iOS 26.5",
+      "state": "short synthetic transcript and Quick output; complete native viewport assertions",
+      "visualStatus": "approved",
+      "source": "b4a06fbe5a1b58e17b445a836a9d5b40b7952d08"
+    },
+    {
+      "file": "docs/images/workspace/unreleased-2026-10-30/ipad-wide.png",
+      "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/ipad-attachments/1FFBBA50-C626-4A20-B1F7-6BC87E38FC9A.png",
+      "originalSHA256": "177dc03a96fb47f969d405228862b73f115e64dae87e5c4a261e2d3907a07b94",
+      "originalPixels": [
+        2064,
+        2752
+      ],
+      "exifOrientation": 8,
+      "pixels": [
+        2752,
+        2064
+      ],
+      "sha256": "75d4ed8b2c87a6a04c83843694989a9ee3557a7582db2552f7bc554339fbb189",
+      "transform": "EXIF orientation then RGB; no crop or resampling",
+      "device": "iPad Pro 13-inch M5",
+      "runtime": "iOS 26.5",
+      "state": "synthetic wide workspace with transcript, Quick and Summary",
+      "visualStatus": "approved",
+      "source": "b4a06fbe5a1b58e17b445a836a9d5b40b7952d08"
+    },
+    {
+      "file": "docs/images/workspace/unreleased-2026-10-30/watch-home.png",
+      "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/watch-attachments/87A342D3-F597-4A07-99BF-C2D5F027B5A3.png",
+      "originalSHA256": "a1070d1f5d314e1ecfc2b395df16b11778160d576223708b5045a1a69e742c85",
+      "originalPixels": [
+        416,
+        496
+      ],
+      "exifOrientation": 1,
+      "pixels": [
+        416,
+        496
+      ],
+      "sha256": "fd77a46f8b97777ca49be0cb6c50d681265dbcca45a2862c55a7f352e25f25cb",
+      "transform": "EXIF orientation then RGB; no crop or resampling",
+      "device": "Watch Series 12 46 mm",
+      "runtime": "watchOS 27.0",
+      "state": "local recording and disabled offline iPhone remote",
+      "visualStatus": "approved",
+      "source": "b4a06fbe5a1b58e17b445a836a9d5b40b7952d08"
+    },
+    {
+      "file": "docs/images/workspace/unreleased-2026-10-30/watch-recording.png",
+      "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/watch-attachments/FDE712FF-BE0A-486E-A087-C7D187EBCEB9.png",
+      "originalSHA256": "5c8e519fec717de7c4b3de0f37206edaa4454f3f65699012aaca2c8d5a2d658e",
+      "originalPixels": [
+        416,
+        496
+      ],
+      "exifOrientation": 1,
+      "pixels": [
+        416,
+        496
+      ],
+      "sha256": "6c23f21aea5690c3c3b826536b386c0dc0ef74ef94caf608867888864c3d2906",
+      "transform": "EXIF orientation then RGB; no crop or resampling",
+      "device": "Watch Series 12 46 mm",
+      "runtime": "watchOS 27.0",
+      "state": "microphone-free simulated recording with native Stop on Watch",
+      "visualStatus": "approved",
+      "source": "b4a06fbe5a1b58e17b445a836a9d5b40b7952d08"
+    },
+    {
+      "file": "docs/images/workspace/unreleased-2026-10-30/iphone-live.png",
+      "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/iphone-max-attachments/D15867E4-60B0-4ED8-A57F-3FE1ED8C5923.png",
+      "originalSHA256": "9fbf5a82de93e86825c1ad4351d34e180e02abd00ee835585d5d04dcf9c0d720",
+      "originalPixels": [
+        1320,
+        2868
+      ],
+      "exifOrientation": 1,
+      "pixels": [
+        1320,
+        2868
+      ],
+      "sha256": "7f07b778b16a1a37660378f2f5637a79f5310a527c6d794755a3cd20c2d8d6ad",
+      "transform": "EXIF orientation then RGB; no crop or resampling",
+      "device": "iPhone 17 Pro Max",
+      "runtime": "iOS 26.5",
+      "state": "complete synthetic transcript and Quick output in populated portrait",
+      "visualStatus": "approved",
+      "source": "b4a06fbe5a1b58e17b445a836a9d5b40b7952d08"
+    },
+    {
+      "file": "docs/images/workspace/unreleased-2026-10-30/ipad-mini.png",
+      "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/ipad-mini-attachments/129A97B2-5323-4DFB-983B-1A53F93E1261.png",
+      "originalSHA256": "9345cbb1e2e31a158f0c50574784f6588950b372836818c8cbe28b28c496ad69",
+      "originalPixels": [
+        1488,
+        2266
+      ],
+      "exifOrientation": 8,
+      "pixels": [
+        2266,
+        1488
+      ],
+      "sha256": "4a2637cd16f36d0198256dece12d584c26be928be0c8c0379cd277db58cef78b",
+      "transform": "EXIF orientation then RGB; no crop or resampling",
+      "device": "iPad mini A17 Pro",
+      "runtime": "iOS 26.5",
+      "state": "synthetic compact two-pane tablet workspace",
+      "visualStatus": "approved",
+      "source": "b4a06fbe5a1b58e17b445a836a9d5b40b7952d08"
+    }
+  ],
+  "limits": [
+    "The earlier iPhone 17 Pro Live portrait capture is QA-only because its independently scrolling readers show partial content; the approved Pro Max Live portrait, Pro full-reader portrait and clean Duo are selected.",
+    "No physical phone/iPad/Watch or real OTHERS audio acceptance is claimed.",
+    "Mac workspace keeps its existing 1100 point minimum window width."
+  ],
+  "additionalCaptureSource": "7ac3d7fec7d85c90e760f4622119f8cfb32b07d6",
+  "profiles": [
+    {
+      "profile": "final-focused",
+      "captures": [
+        {
+          "name": "Duo preview transcript and Quick visibility_0_A26CDFFA-8E84-4CF6-8B4C-AA028CD20A2C.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/final-focused-attachments/ED993501-9331-4255-BF9A-A82B58F3ED40.png",
+          "sha256": "eb3358825a7742a23f12f24620f04a037f84204ccc5155c6e22b73cf7a3104b9",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "exifOrientation": 8,
+          "test": "MobileReleaseScreenshotTests/testCaptureCleanDuoPreview()",
+          "deviceID": "129F7C8F-E6B9-4026-B290-7D6038B72D5C",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "Named full summary reader action_0_D8142811-BBB7-4521-B534-8FD1EC462E40.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/final-focused-attachments/91E182D2-9F6D-4A8C-96F1-703210868E7E.png",
+          "sha256": "ace71095782de1ebff9c69a8a9053ccf556f743efb153ba1d530e2e63d6b2647",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "exifOrientation": 1,
+          "test": "MobileUsabilityUITests/testConversationToolsAreNamedAndGroupedWithoutLosingNotes()",
+          "deviceID": "129F7C8F-E6B9-4026-B290-7D6038B72D5C",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "Named conversation tools_0_532DBF73-43BA-4814-AB03-B01A9A62E2B5.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/final-focused-attachments/391882C0-E422-456B-9A6E-4FFC6B790A46.png",
+          "sha256": "b6fcbc964d3a5148aad06a0b3ab54af4430d88a3524793773e3c1bc2c3293e15",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "exifOrientation": 1,
+          "test": "MobileUsabilityUITests/testConversationToolsAreNamedAndGroupedWithoutLosingNotes()",
+          "deviceID": "129F7C8F-E6B9-4026-B290-7D6038B72D5C",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "Transcript-first populated portrait_0_A15B3139-9255-4273-8ECE-D9E7DA12E950.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/final-focused-attachments/9CC2AA76-164B-4457-BE71-5F00206AB5F1.png",
+          "sha256": "7b0eaa1935dc000e06d0552aaa217a4124c551a45e9a1271862a82a7b4767a13",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "exifOrientation": 1,
+          "test": "MobileUsabilityUITests/testPopulatedTranscriptGetsReadingSpaceAndLabeledUpdateAndCorrectionAccess()",
+          "deviceID": "129F7C8F-E6B9-4026-B290-7D6038B72D5C",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "Auto availability before listening_0_0C8886BE-885A-40E4-BDED-654B41D0F3A6.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/final-focused-attachments/0959F159-B6DD-4A3A-8251-011E3E0B22C5.png",
+          "sha256": "a574bb2af7df0f83073f7de21958061b15143cac93e222afae8408cb44837b33",
+          "nativePixels": [
+            1206,
+            2622
+          ],
+          "exifOrientation": 1,
+          "test": "MobileUsabilityUITests/testUnavailableAutoExplainsManualUpdatesAndCanBeTurnedOffBeforeListening()",
+          "deviceID": "129F7C8F-E6B9-4026-B290-7D6038B72D5C",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        }
+      ]
+    },
+    {
+      "profile": "ipad",
+      "captures": [
+        {
+          "name": "06 Settings_0_FF063124-2C7A-4D9A-9A93-70513DB8F7F4.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/ipad-attachments/550D76E7-A6C2-478F-8C8D-1274EEB75D0B.png",
+          "sha256": "87e5bcb1068bfe9f9fcc3125af2aff9e1435e886e65af325be8e2efb58b380da",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "exifOrientation": 1,
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceID": "9EEB5652-5E15-4658-9D5C-A44715B8FC5E",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "05 Conversation history_0_47720389-9AAC-4A29-84A1-DD63E6246071.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/ipad-attachments/B80BE1BB-932F-40C1-A857-CEDB1411B40B.png",
+          "sha256": "d458c9c041d0f6f40f08480ab36aa424b09537370050844c2bf5ce59e98c5e05",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "exifOrientation": 1,
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceID": "9EEB5652-5E15-4658-9D5C-A44715B8FC5E",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "04 Summary portrait_0_B9E1A565-E924-43B8-B88F-074B7FA0E0E4.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/ipad-attachments/C9EE3C38-562E-4327-919D-6BEEF778B7E5.png",
+          "sha256": "44c226deac253db56017d0a0b7e2fe1dd60247708f8a0c4d0ef77cd8085b46b8",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "exifOrientation": 1,
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceID": "9EEB5652-5E15-4658-9D5C-A44715B8FC5E",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "03 Conversation prompt_0_3395CCBF-F014-4E23-9561-59B933AFFC26.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/ipad-attachments/6C5DC8A9-A4C2-4C0C-9FDD-4554FF0CE593.png",
+          "sha256": "08ce2a43bdb8133023c421f940ac12a45c85371d9b68452aa197fa9ca5bf334d",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "exifOrientation": 1,
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceID": "9EEB5652-5E15-4658-9D5C-A44715B8FC5E",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "02 Live landscape_0_5B049858-48EF-43E4-A4A4-F4BF8E94F7C4.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/ipad-attachments/1FFBBA50-C626-4A20-B1F7-6BC87E38FC9A.png",
+          "sha256": "177dc03a96fb47f969d405228862b73f115e64dae87e5c4a261e2d3907a07b94",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "exifOrientation": 8,
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceID": "9EEB5652-5E15-4658-9D5C-A44715B8FC5E",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "01 Live portrait_0_72D8A867-5A76-4D5E-9445-D0AE02C8CF20.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/ipad-attachments/67F676D5-777C-4C35-BF95-DC730A632A12.png",
+          "sha256": "44c226deac253db56017d0a0b7e2fe1dd60247708f8a0c4d0ef77cd8085b46b8",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "exifOrientation": 1,
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceID": "9EEB5652-5E15-4658-9D5C-A44715B8FC5E",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "Named full summary reader action_0_34697371-5B40-4BF9-B438-2AC1E0AC1FA0.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/ipad-attachments/758878E5-1EC7-46A3-B225-4A715D122478.png",
+          "sha256": "b4b13551da94fdbfdfc1ba00c73b930ad77a6f7aa9fd71f6b2f8cc160e2e0c6a",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "exifOrientation": 1,
+          "test": "MobileUsabilityUITests/testConversationToolsAreNamedAndGroupedWithoutLosingNotes()",
+          "deviceID": "9EEB5652-5E15-4658-9D5C-A44715B8FC5E",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "Named conversation tools_0_BEA08862-F905-44A1-9117-2611069216F6.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/ipad-attachments/6C68859B-A431-455C-AAC8-18AC8D7BFFF7.png",
+          "sha256": "8f5b97ca382c88094fe0214d48c72eab7830de3578cfa884999ecac174d1206c",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "exifOrientation": 1,
+          "test": "MobileUsabilityUITests/testConversationToolsAreNamedAndGroupedWithoutLosingNotes()",
+          "deviceID": "9EEB5652-5E15-4658-9D5C-A44715B8FC5E",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "Auto availability before listening_0_1F69E7EB-7324-4DBA-9E4D-648CB757AC8A.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/ipad-attachments/B91316DE-571F-4865-85F2-9212B4D6E539.png",
+          "sha256": "d49ff9fc692a9c1f7e82036b579ecbbe84f384ef98c1225c87d154d531f22a2a",
+          "nativePixels": [
+            2064,
+            2752
+          ],
+          "exifOrientation": 1,
+          "test": "MobileUsabilityUITests/testUnavailableAutoExplainsManualUpdatesAndCanBeTurnedOffBeforeListening()",
+          "deviceID": "9EEB5652-5E15-4658-9D5C-A44715B8FC5E",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        }
+      ]
+    },
+    {
+      "profile": "watch",
+      "captures": [
+        {
+          "name": "Explicit Watch Stop_0_8F5DDFAC-AF47-4034-977D-207B41AACBFC.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/watch-attachments/D11F950B-C450-4309-82E8-D1E7078A4BC1.png",
+          "sha256": "5c8e519fec717de7c4b3de0f37206edaa4454f3f65699012aaca2c8d5a2d658e",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "exifOrientation": 1,
+          "test": "WatchCapabilityUITests/testRecordingActionsNameTheirDeviceAndKeepOfflineRemoteSeparate()",
+          "deviceID": "13849EE9-0BFB-418D-9716-38D8EE150B7B",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "Explicit offline iPhone action_0_018EB579-FCA9-4AD5-9897-95887BEE40F2.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/watch-attachments/BD31F6B3-E9B4-4EA2-8028-A0EA1A07C615.png",
+          "sha256": "820ea5c87cedfebae29f7048b8f8c0358f5dbcc4834a2dd0620617dc3d614725",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "exifOrientation": 1,
+          "test": "WatchCapabilityUITests/testRecordingActionsNameTheirDeviceAndKeepOfflineRemoteSeparate()",
+          "deviceID": "13849EE9-0BFB-418D-9716-38D8EE150B7B",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "Explicit Watch recording action_0_A5F7A5CE-600A-4D49-B8B5-35D70F2FC11A.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/watch-attachments/6652A7EC-5F33-4FC0-9826-04BED481F557.png",
+          "sha256": "a1070d1f5d314e1ecfc2b395df16b11778160d576223708b5045a1a69e742c85",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "exifOrientation": 1,
+          "test": "WatchCapabilityUITests/testRecordingActionsNameTheirDeviceAndKeepOfflineRemoteSeparate()",
+          "deviceID": "13849EE9-0BFB-418D-9716-38D8EE150B7B",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "Watch recording restored after background_0_73301B43-630E-4A96-8D56-8AFE65A78D9C.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/watch-attachments/EF0B1758-B39D-4030-9788-D0FC9F7E042A.png",
+          "sha256": "5da1bb86a7819a473e65264802a2fc825efbb1d6d23b83af91284dbb62c390cd",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "exifOrientation": 1,
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceID": "13849EE9-0BFB-418D-9716-38D8EE150B7B",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "Watch recording survives dismissal gesture_0_4BFFD5E3-20EF-4B4A-A3E7-952C07C312FC.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/watch-attachments/5453C5EF-BBEE-46B2-BB39-B05CEFEA431B.png",
+          "sha256": "7f1d99e629856317660c2dddf07bcb744b18f52ff75d89d1c817c361485df595",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "exifOrientation": 1,
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceID": "13849EE9-0BFB-418D-9716-38D8EE150B7B",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "Watch recording and Stop_0_7829AADE-84D6-4CF8-B068-48B9ABF896D3.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/watch-attachments/FDE712FF-BE0A-486E-A087-C7D187EBCEB9.png",
+          "sha256": "5c8e519fec717de7c4b3de0f37206edaa4454f3f65699012aaca2c8d5a2d658e",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "exifOrientation": 1,
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceID": "13849EE9-0BFB-418D-9716-38D8EE150B7B",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "Watch recording consent_0_E75BC549-DFC9-44A3-8C35-BB1C8CB9A7EC.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/watch-attachments/026B5585-F650-492E-810F-FE119486AF1E.png",
+          "sha256": "0754d8d814032f7c27db0e2c78d4e668df339c2dbde69d5f9f7ebcf11fe9e366",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "exifOrientation": 1,
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceID": "13849EE9-0BFB-418D-9716-38D8EE150B7B",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "Watch ready home_0_8920149B-C621-4EF4-9166-A07D8D10EEC3.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/watch-attachments/87A342D3-F597-4A07-99BF-C2D5F027B5A3.png",
+          "sha256": "a1070d1f5d314e1ecfc2b395df16b11778160d576223708b5045a1a69e742c85",
+          "nativePixels": [
+            416,
+            496
+          ],
+          "exifOrientation": 1,
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceID": "13849EE9-0BFB-418D-9716-38D8EE150B7B",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        }
+      ]
+    },
+    {
+      "profile": "iphone-max",
+      "captures": [
+        {
+          "name": "Duo preview transcript and Quick visibility_0_1308CCD9-62D1-4A90-B562-C04062BE19E9.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/iphone-max-attachments/97BF0FDA-C1AE-4804-9D6F-C522FFEF5C4B.png",
+          "sha256": "6bf7eb21e32feb35fced58939f7be847f92be689fcade437b1efaddee45f1b7f",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "exifOrientation": 8,
+          "test": "MobileReleaseScreenshotTests/testCaptureCleanDuoPreview()",
+          "deviceID": "55F82A26-643C-41BA-BA05-19FB4743533E",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "06 Settings_0_D91D30FA-9F29-4C39-8727-D6A11465BA0A.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/iphone-max-attachments/31C64763-55A8-473D-8AC8-50BCE38B8AE1.png",
+          "sha256": "1bd94da1cddd4f09878e912a600ac2b8a4b9f9f694db5b6f1d2574f6faf0ee10",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "exifOrientation": 1,
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceID": "55F82A26-643C-41BA-BA05-19FB4743533E",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "05 Conversation history_0_D50E3C56-92CD-4C7E-839C-E7D242CC3CD6.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/iphone-max-attachments/3E909C43-226A-4B51-92F3-66752EAF8BE4.png",
+          "sha256": "3970209a274d305b4d586192d0cb6fa4c1e1bc72325a7e68f0fa6779837ad799",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "exifOrientation": 1,
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceID": "55F82A26-643C-41BA-BA05-19FB4743533E",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "04 Summary portrait_0_D9B8FAFB-9FBF-4C5D-AA8E-45670BCC568C.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/iphone-max-attachments/7BEE7855-B2CB-4397-934A-C7C8D443F8E5.png",
+          "sha256": "95e5b2a62d51ac17fd6a1a67666d3655a9630b8c1ba7fd14404941efbd5da7fa",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "exifOrientation": 1,
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceID": "55F82A26-643C-41BA-BA05-19FB4743533E",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "03 Conversation prompt_0_E8A40A20-CD6A-4002-98F6-E2D0AFFBD249.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/iphone-max-attachments/D39E7DEC-536B-4A19-9572-5CC65E299ED5.png",
+          "sha256": "2dacb02b5f0db15b654b063ec4911ce687ae744c57966434a91f12558f588e20",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "exifOrientation": 1,
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceID": "55F82A26-643C-41BA-BA05-19FB4743533E",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "02 Live landscape_0_100D0CE3-0C2C-4373-8F41-A5F720B01222.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/iphone-max-attachments/A894A750-67E6-4F89-8D55-6C8704C2D4E4.png",
+          "sha256": "76b6d97ea0386581e5edbfc212c6bde3a9317354a882781f598f38cd3f6d89d2",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "exifOrientation": 8,
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceID": "55F82A26-643C-41BA-BA05-19FB4743533E",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "01 Live portrait_0_E2CF311C-7326-4030-ACED-2AE291F24C03.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/iphone-max-attachments/D15867E4-60B0-4ED8-A57F-3FE1ED8C5923.png",
+          "sha256": "9fbf5a82de93e86825c1ad4351d34e180e02abd00ee835585d5d04dcf9c0d720",
+          "nativePixels": [
+            1320,
+            2868
+          ],
+          "exifOrientation": 1,
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceID": "55F82A26-643C-41BA-BA05-19FB4743533E",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        }
+      ]
+    },
+    {
+      "profile": "ipad-mini",
+      "captures": [
+        {
+          "name": "06 Settings_0_57429D03-FDC4-4490-ACB4-0E54E3485176.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/ipad-mini-attachments/682BA6EF-8F0E-4B3D-859A-5E06C5216E1D.png",
+          "sha256": "7262b116dff1054cd13c81c6b074b6a08ef360a2e9ebb3dbc1a39efe40287da1",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "exifOrientation": 1,
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceID": "7157FBA0-8D40-4F69-BEF4-FFF55B27AB53",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "05 Conversation history_0_1EF76166-D4BC-4DEE-8589-958A0BDD8982.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/ipad-mini-attachments/D66E0CE3-321C-4CCC-B40A-0C45D86CA283.png",
+          "sha256": "bd7560afca77c6202940b5cc87efba1545d2853041a594001b6c7d8d624957b3",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "exifOrientation": 1,
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceID": "7157FBA0-8D40-4F69-BEF4-FFF55B27AB53",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "04 Summary portrait_0_AD571212-2D24-491F-9014-11BEEE344426.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/ipad-mini-attachments/88D3C2FD-D8C3-4974-A3C7-BF6DBA2F9509.png",
+          "sha256": "2c6fe9038b64816989e6cbf155b3979112e2e2d272c3980ec0e558de3eeec89b",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "exifOrientation": 1,
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceID": "7157FBA0-8D40-4F69-BEF4-FFF55B27AB53",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "03 Conversation prompt_0_C0D7A6DD-F82B-4EA4-8FAC-44F223FC7B9E.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/ipad-mini-attachments/0AC82F92-B7F6-4D36-992B-751A9597B734.png",
+          "sha256": "228f496a2d441ead8ba53ffb49f03048ecbfb2922e986e2526344372ecfe8ac6",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "exifOrientation": 1,
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceID": "7157FBA0-8D40-4F69-BEF4-FFF55B27AB53",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "02 Live landscape_0_266C3453-CB23-4005-9DFC-62FBDB6F82DF.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/ipad-mini-attachments/129A97B2-5323-4DFB-983B-1A53F93E1261.png",
+          "sha256": "9345cbb1e2e31a158f0c50574784f6588950b372836818c8cbe28b28c496ad69",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "exifOrientation": 8,
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceID": "7157FBA0-8D40-4F69-BEF4-FFF55B27AB53",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "01 Live portrait_0_761D759E-98CB-42D7-B234-1967525C3166.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/ipad-mini-attachments/FE866471-2892-4253-844D-4B9228D78155.png",
+          "sha256": "ef3336161006fc3990dc504affb51d1e74d394da3f8a050427de3f100268570a",
+          "nativePixels": [
+            1488,
+            2266
+          ],
+          "exifOrientation": 1,
+          "test": "MobileReleaseScreenshotTests/testCaptureReleaseScreens()",
+          "deviceID": "7157FBA0-8D40-4F69-BEF4-FFF55B27AB53",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        }
+      ]
+    },
+    {
+      "profile": "watch42",
+      "captures": [
+        {
+          "name": "Watch recording restored after background_0_FF7BFF86-40A5-493C-966B-F4DA22FC7F58.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/watch42-attachments/34128455-4557-484E-89DC-AB8B47136FC5.png",
+          "sha256": "2bab23c61aaa121d61e9e0ef6796ef6df8e6e632a13c33bc7ad38564c7d5ed1c",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "exifOrientation": 1,
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceID": "BBBFBEFD-E8D9-4CE0-8244-FB9316DE4721",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "Watch recording survives dismissal gesture_0_93C43DC7-F7C4-4EB0-845B-12AEB6DD40AF.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/watch42-attachments/CAD40648-5CF9-45DD-AF24-F2210D17DD34.png",
+          "sha256": "f40628fc12403371ed6d90f31a6c006836c3be1620f71a9066b613a5455800bb",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "exifOrientation": 1,
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceID": "BBBFBEFD-E8D9-4CE0-8244-FB9316DE4721",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "Watch recording and Stop_0_9E4746C3-4A9B-4B43-A906-7DBDC59864E4.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/watch42-attachments/26C4F351-3270-4E36-B641-2E92CEFFF5EF.png",
+          "sha256": "8af8404e6c6b3adfabcdff2bc7c2119a9b3d292550cdc48317d2fbeed07f20fc",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "exifOrientation": 1,
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceID": "BBBFBEFD-E8D9-4CE0-8244-FB9316DE4721",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "Watch recording consent_0_BFA99F04-98DE-40C3-95ED-4C3B8D448899.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/watch42-attachments/746E99B3-D463-4D27-9DAD-A3E4D8B159F2.png",
+          "sha256": "6bdec359c34b85dab7e88c4151d3f1474f62ce073a95292fbef5953010c651d1",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "exifOrientation": 1,
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceID": "BBBFBEFD-E8D9-4CE0-8244-FB9316DE4721",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "Watch ready home_0_4EDF9D7D-ADAE-407A-853F-28962FF160FA.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/watch42-attachments/7FBC0F67-DB3C-43F1-AC77-4232ACF4623F.png",
+          "sha256": "19a1f440abd31b615ab6acee119b5717a707934296807ed5f3c483e33731bb5e",
+          "nativePixels": [
+            374,
+            446
+          ],
+          "exifOrientation": 1,
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceID": "BBBFBEFD-E8D9-4CE0-8244-FB9316DE4721",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        }
+      ]
+    },
+    {
+      "profile": "watch49",
+      "captures": [
+        {
+          "name": "Watch recording restored after background_0_D5C529AB-ACC8-408A-8C3B-A7D462E63525.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/watch49-attachments/6EA5A9C1-739E-4BF4-9E2E-FB15125E2511.png",
+          "sha256": "21527d7e00e6cd44fc5c01ac9bf6ce716e277318c472300bafdb4afcee59fb7b",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "exifOrientation": 1,
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceID": "B2291FA8-3AF1-4A19-A00D-73BBC3996362",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "Watch recording survives dismissal gesture_0_641EAD53-7EE3-4C8D-B2BD-548907725A8C.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/watch49-attachments/976A8518-0B4A-480B-A741-48E620DDCCD1.png",
+          "sha256": "30c0a87c11da7facf17ac3f8ab4a80b12bef423b1551e60dc172486cde746423",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "exifOrientation": 1,
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceID": "B2291FA8-3AF1-4A19-A00D-73BBC3996362",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "Watch recording and Stop_0_81EAF72C-CCD7-4559-AA54-06B31E7A6D73.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/watch49-attachments/43EBCDA2-1494-4A77-B203-9BE1C32C3198.png",
+          "sha256": "d1a4719ca910286d0699bc0bfbe5e41f0c6881f34e23c9df3a854da5294eed8c",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "exifOrientation": 1,
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceID": "B2291FA8-3AF1-4A19-A00D-73BBC3996362",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "Watch recording consent_0_20B4FF0C-8C8E-44D1-95B3-6DA99CD5B24F.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/watch49-attachments/6C59E7F6-BC2C-4BAA-9D18-16F1A129A430.png",
+          "sha256": "1545d12e830ab512a3a0c3bd03eee0263c313acff2a8d422205eca0c40b55f85",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "exifOrientation": 1,
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceID": "B2291FA8-3AF1-4A19-A00D-73BBC3996362",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        },
+        {
+          "name": "Watch ready home_0_B2F82EFA-E64C-4FF5-A082-22AA1BB8CDCC.png",
+          "original": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-gui-refinement/watch49-attachments/7E62F2A1-A85D-4A3B-8E0D-91C32C7C415D.png",
+          "sha256": "ee62ab96edf9069cd82c01146962e16aae4814b1325c8f87d43871d7f560df5d",
+          "nativePixels": [
+            422,
+            514
+          ],
+          "exifOrientation": 1,
+          "test": "WatchCapabilityUITests/testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone()",
+          "deviceID": "B2291FA8-3AF1-4A19-A00D-73BBC3996362",
+          "review": "Native preview reviewed; consent/settings/partially scrolled views are QA-only. Use selected gallery assets for publication."
+        }
+      ]
+    }
+  ]
+}
