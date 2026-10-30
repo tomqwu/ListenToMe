@@ -23,7 +23,9 @@ final class MobileHistorySearchUITests: XCTestCase {
                                                     object: app.keyboards.firstMatch)
         XCTAssertEqual(XCTWaiter.wait(for: [keyboardGone], timeout: 5), .completed,
                        "The native History preview must omit the software keyboard")
-        XCTAssertTrue(refresh.isHittable); XCTAssertTrue(result.isHittable)
+        let record = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "history-record-")).firstMatch
+        XCTAssertTrue(record.waitForExistence(timeout: 5)); XCTAssertTrue(record.label.contains("Product planning"))
+        XCTAssertTrue(refresh.isHittable); XCTAssertTrue(record.isHittable)
         XCTAssertFalse(app.alerts.firstMatch.exists)
         let shot = XCTAttachment(screenshot: app.screenshot()); shot.name = "History explicit local refresh"
         shot.lifetime = .keepAlways; add(shot)
