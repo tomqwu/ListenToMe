@@ -31,8 +31,12 @@ Release-note red evidence is retained in `2026-10-30/listentome-ios1203-train/re
 full merge evidence is in `2026-10-30/listentome-backlog318-completion/full-validation-retry/`.
 [What to Test](../metadata/ios/en-US/what-to-test-1.20.3.txt) and
 [cumulative App Store copy since public 1.19.1](../metadata/ios/en-US/whats-new-1.20.3.txt) are prepared
-in en-US. Fresh all-device captures/README refresh, candidate checks, signing/archive/package
-verification and actual accepted upload remain pending. Physical phone/Watch acceptance remains
+in en-US. Fresh candidate `8dc8dd3` captures passed **17 native tests, zero failures/skips**, across
+seven profiles. All **57 native originals** were visually inspected; seven suitable originals refresh
+the [README gallery](../README.md#screenshots). [Capture provenance and visual assessments](images/ios/release-1.20.3/manifest.json)
+preserve all image checksums and QA-only exclusions. Hosted desktop/mobile gallery checks, remaining
+candidate gates/CI, signing/archive/package verification and actual accepted upload remain pending.
+Physical phone/Watch acceptance remains
 unverified; that limits production readiness, not an otherwise authorized beta upload.
 No version-43 upload, review submission or publication is claimed. Mac work remains unreleased.
 

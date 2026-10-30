@@ -23,8 +23,12 @@ zero failures/skips**: two release-note UI methods and five unit methods, exit 0
 inputs unchanged**. Evidence: `2026-10-30/listentome-ios1203-train/release-notes-green/`
 (`state.json`, `runner-state.json`, `reference.log`, `native.xcresult`). This focused delta check
 complements the prior full merge validation; it is not a new complete 43 aggregate pass.
-Fresh seven-profile captures/README, remaining candidate gates/CI, signing/package checks and actual
-TestFlight acceptance are still pending.
+Fresh captures from candidate `8dc8dd3` passed **17 native tests, zero failures/skips**, across seven
+device profiles. All **57 original images** were inspected; seven suitable native originals now
+refresh the [README gallery](../README.md#screenshots), with the prior gallery preserved as history.
+[Source, checksums and visual assessments](images/ios/release-1.20.3/manifest.json) retain QA-only
+exclusions. Hosted desktop/mobile gallery checks, remaining candidate gates/CI, signing/package
+checks and actual TestFlight acceptance are still pending.
 Latest accepted beta remains **1.20.2 (42)**; public iOS remains **1.19.1 (39)**. This is merged work
 riding the next release train, not an uploaded 43 build. Mac remains unreleased; no review submission
 or production-ready claim is made. [Candidate notes and limits](IOS.md#next-testflight-candidate--1203-43).
