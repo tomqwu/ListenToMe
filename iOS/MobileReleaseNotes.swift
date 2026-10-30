@@ -48,6 +48,20 @@ enum MobileReleaseNotes {
         var id: String { version }
     }
     static let releases: [Release] = [
+        .init(version: "1.20.3", title: "Clearer conversations and controls", details: [
+            "Rename an identified speaker from the transcript and update that person throughout the conversation " +
+                "and Notes. Save or Cancel explicitly.",
+            "Keep transcript and Quick Summary readable together in landscape Duo, including shorter iPhones. " +
+                "Larger text retains its scrolling layout.",
+            "Read complete saved-audio labels, elapsed time and playback controls at accessibility text sizes. " +
+                "Preserve final audio samples during saved-audio and Watch imports.",
+            "Read translation guidance more clearly. Recording Settings explains screen-lock capture, paused " +
+                "optional AI updates and interruptions.",
+            "Keep History results current after saving and protect them from older indexing work. Preserve " +
+                "installed Apple model queries and avoid generic German or Spanish topic matches when language " +
+                "analysis is available.",
+            "Label manual transcript corrections accurately in Markdown while preserving the original wording."
+        ]),
         .init(version: "1.20.2", title: "Recover stalled translations", details: [
             "Cancel a pending summary translation while keeping the original summary visible.",
             "Translate stays unavailable while a request is running or stopping, so repeated taps cannot queue extra work.",

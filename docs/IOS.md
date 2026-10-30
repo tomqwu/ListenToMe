@@ -5,14 +5,49 @@ The first iOS version is a standalone app, separate from the macOS release. It r
 **1.19.1 (39)** and the latest TestFlight version is **1.20.2 (42)**. See the
 [public availability observation](releases/ios-1.19.1-build39-public.json).
 
-## Unreleased History work
+## Next TestFlight candidate — 1.20.3 (43)
 
-The current draft keeps safer asynchronous History indexing, refreshed search after saving and
+PR [#318](https://github.com/tomqwu/ListenToMe/pull/318) merged as
+`388a5c7efcb0bf65e35a7db6ea08b5c59a7d8a1e`, with a tree identical to validated `5f1e909`.
+The next single train prepares synchronized iPhone, Share and embedded Watch **1.20.3 (43)** and
+bundled “Clearer conversations and controls” notes. It includes speaker-rename shortcuts, compact
+Duo spacing, readable translation/saved-audio controls, complete converted audio tails, truthful
+correction exports and retained Apple History repairs. Optional MPNet installation/runtime is excluded.
+
+`RELEASE-004` updates the actual version/title UI assertions before implementation. The unchanged
+42 app failed exactly two assertions (exit 65, reaped, frozen inputs unchanged). The release-only
+candidate snapshot then passed **seven native tests, zero failures/skips**: two release-note UI
+methods and five unit methods, exit 0/reaped with all **1,044 inputs unchanged**. Evidence is retained
+at `2026-10-30/listentome-ios1203-train/release-notes-green/` (`state.json`, `runner-state.json`,
+`reference.log`, `native.xcresult`). This focused delta check complements the prior full result;
+it does not claim a newly run whole 43 aggregate. The prior functional source passed full
+`make validate-local`: Core 1,291 tests / seven
+optional skips / zero failures / 98.0766% coverage; iOS 590 passes / 12 skips; Mac 109 and Watch 34
+passes; 236 BDD scenarios and four real-server contracts. All three required checks passed on exact
+`5f1e909` in [run 41078938853](https://github.com/tomqwu/ListenToMe/actions/runs/41078938853).
+These are source-labelled merge results, not a new 43 artifact or upload.
+
+Release-note red evidence is retained in `2026-10-30/listentome-ios1203-train/release-notes-red/`;
+full merge evidence is in `2026-10-30/listentome-backlog318-completion/full-validation-retry/`.
+[What to Test](../metadata/ios/en-US/what-to-test-1.20.3.txt) and
+[cumulative App Store copy since public 1.19.1](../metadata/ios/en-US/whats-new-1.20.3.txt) are prepared
+in en-US. Fresh candidate `8dc8dd3` captures passed **17 native tests, zero failures/skips**, across
+seven profiles. All **57 native originals** were visually inspected; seven suitable originals refresh
+the [README gallery](../README.md#screenshots). [Capture provenance and visual assessments](images/ios/release-1.20.3/manifest.json)
+preserve all image checksums and QA-only exclusions. Hosted desktop/mobile gallery checks, remaining
+candidate gates/CI, signing/archive/package verification and actual accepted upload remain pending.
+Physical phone/Watch acceptance remains
+unverified; that limits production readiness, not an otherwise authorized beta upload.
+No version-43 upload, review submission or publication is claimed. Mac work remains unreleased.
+
+## Unreleased History repairs
+
+The merged batch keeps safer asynchronous History indexing, refreshed search after saving and
 repairs for installed Apple model queries. The optional multilingual experiment failed its quality
 gate and is excluded from the candidate, including its download controls and runtime. Its source
 and failed results are preserved for continuing #223. [Implementation and BDD evidence](history-search-implementation.md).
 Settings also corrects its screen-lock explanation to match continued user-started recording.
-No version or in-app release-note announcement has been advanced by this scope correction.
+The 1.20.3 candidate announces these retained repairs without claiming new language-model quality.
 
 ## Unreleased compact-landscape Duo spacing
 
@@ -34,9 +69,9 @@ lines. The focused runs preserved their recorded inputs without mismatches.
 Commands, native bundles, input checks and runner receipts are retained under
 `2026-10-30/listentome-backlog318-completion/{full-validation,duo-compact-red,duo-compact-green}/`
 in the external evidence directory. The earlier README preview was a fixture-only change at its
-capture checkpoint; this follow-up changes production layout. Fresh full validation, wider UI checks,
-current CI and affected installed acceptance remain pending. No release or new screenshot publication
-is claimed.
+capture checkpoint; this follow-up changes production layout. The final merged source subsequently passed full validation and exact-head CI as recorded above;
+affected installed/physical acceptance remains scoped separately. No release or Store screenshot
+publication is claimed.
 
 ## Current TestFlight beta — 1.20.2 (42)
 

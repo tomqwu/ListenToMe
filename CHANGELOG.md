@@ -38,6 +38,14 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased)
 
+The current batch is prepared under the 1.20.3 candidate below; no additional changes are listed.
+
+## iOS 1.20.3 (43) — candidate, 2026-10-30
+
+Prepared from the merged PR #318 batch. **Not uploaded or published:** candidate validation,
+fresh release screenshots, signing/package verification and actual TestFlight acceptance remain
+pending. The latest accepted beta remains 1.20.2 (42), and public iOS remains 1.19.1 (39).
+
 - Give transcript and Quick Summary more reading room in compact landscape Duo, including shorter
   non-Max iPhones. Preserve existing content, 44-point controls and accessibility scrolling.
 

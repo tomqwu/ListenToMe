@@ -1,3 +1,46 @@
+# Merged batch and next TestFlight candidate — October 30, 2026
+
+PR [#318](https://github.com/tomqwu/ListenToMe/pull/318) is **merged** as
+`388a5c7efcb0bf65e35a7db6ea08b5c59a7d8a1e`, tree-identical to validated `5f1e909`.
+The matching remote/local feature branches were deleted. Six issues closed: **#333, #335, #337,
+#346, #347 and #348**. Six remain open: **#181, #205, #223, #236, #334 and #336**.
+The optional MPNet delivery remains withdrawn, with source and negative results preserved; #334
+still needs installed Mac rename Save/relaunch, and #336 retains its near-end/overlap/routes matrix.
+These open gates do not turn the six completed fixes into unfinished code or prove Store readiness.
+
+Full local validation on exact `5f1e909` passed, exit 0/reaped, all **1,044 inputs unchanged**:
+Core **1,291 tests / seven optional skips / zero failures / 98.0766% coverage**; iOS **590 passes /
+12 skips**; Mac **109 passes**, Watch **34 passes**, 236 BDD scenarios and four real-server contracts.
+All three required checks passed in [run 41078938853](https://github.com/tomqwu/ListenToMe/actions/runs/41078938853).
+The independently audited receipt is retained at
+`2026-10-30/listentome-backlog318-completion/full-validation-retry/independent-final-merge-audit.json`.
+The earlier 95ac failed aggregate stays failed; its pending status below is historical and superseded.
+
+The due single iOS train now prepares **1.20.3 (43)** across phone, Share and embedded Watch, with
+bundled notes and en-US copy. `RELEASE-004` genuinely failed two old-version/title assertions before
+the bump (exit 65/reaped). The frozen release-only candidate snapshot passed **seven native tests,
+zero failures/skips**: two release-note UI methods and five unit methods, exit 0/reaped, all **1,044
+inputs unchanged**. Evidence: `2026-10-30/listentome-ios1203-train/release-notes-green/`
+(`state.json`, `runner-state.json`, `reference.log`, `native.xcresult`). This focused delta check
+complements the prior full merge validation; it is not a new complete 43 aggregate pass.
+Fresh captures from candidate `8dc8dd3` passed **17 native tests, zero failures/skips**, across seven
+device profiles. All **57 original images** were inspected; seven suitable native originals now
+refresh the [README gallery](../README.md#screenshots), with the prior gallery preserved as history.
+[Source, checksums and visual assessments](images/ios/release-1.20.3/manifest.json) retain QA-only
+exclusions. Hosted desktop/mobile gallery checks, remaining candidate gates/CI, signing/package
+checks and actual TestFlight acceptance are still pending.
+Latest accepted beta remains **1.20.2 (42)**; public iOS remains **1.19.1 (39)**. This is merged work
+riding the next release train, not an uploaded 43 build. Mac remains unreleased; no review submission
+or production-ready claim is made. [Candidate notes and limits](IOS.md#next-testflight-candidate--1203-43).
+
+Completed Dev sessions were closed after process-absence checks. Three exact `.dev` bundles were
+preserved and moved to Trash; two owned synthetic QA records were preserved before removal. Only
+`com.tomwu.ListenToMe.dev` permissions were reset, exit 0. Production permissions, existing user
+conversations/settings, credentials and evidence were preserved. The original disabled vault URL
+was not retained; the selected QA folder remains disabled as the documented restoration exception.
+Cleanup receipt: `2026-10-30/listentome-backlog318-completion/dev-cleanup/receipt.json`.
+Older checkpoints below retain their then-current source/status and are not current release claims.
+
 # Compact Duo layout recovery — October 30, 2026
 
 Full `make validate-local` on `95ac6387c112d82a083170caa95d6d88a3a893ed` failed the clean Duo

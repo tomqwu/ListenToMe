@@ -85,6 +85,66 @@ make ios-test
 
 ## Screenshots
 
+**iPhone, iPad and Apple Watch · candidate 1.20.3 (43)**
+
+Fresh native simulator previews from candidate source `8dc8dd3`, using synthetic demonstration
+content. Tap an image for the unchanged full-resolution original. All **57 images across seven
+device profiles** were inspected; the seven previews below passed visual selection. Build 43 has
+not been accepted by TestFlight, and these images have not been uploaded to Apple's listing.
+[Capture source, checksums and all visual assessments](docs/images/ios/release-1.20.3/manifest.json) ·
+[What to Test](metadata/ios/en-US/what-to-test-1.20.3.txt).
+
+### iPhone
+
+<table>
+  <tr>
+    <th align="center">Live translation</th>
+    <th align="center">Conversation instructions</th>
+  </tr>
+  <tr>
+    <td align="center"><a href="docs/images/ios/release-1.20.3/01-iphone-translation.png"><img src="docs/images/ios/release-1.20.3/01-iphone-translation.png" width="220" alt="Candidate 1.20.3 (43) on iPhone Pro Max: English transcript with French translation and Quick summary."></a></td>
+    <td align="center"><a href="docs/images/ios/release-1.20.3/02-iphone-prompt.png"><img src="docs/images/ios/release-1.20.3/02-iphone-prompt.png" width="220" alt="Candidate 1.20.3 (43) on iPhone Pro: Notes with a conversation prompt, domain presets and Save instructions."></a></td>
+  </tr>
+</table>
+
+**Duo / landscape**
+
+<p align="center">
+  <a href="docs/images/ios/release-1.20.3/03-iphone-duo.png"><img src="docs/images/ios/release-1.20.3/03-iphone-duo.png" width="760" alt="Candidate 1.20.3 (43) iPhone Pro Duo landscape: complete concise transcript and Quick answer beside Start, Save and Notes controls."></a>
+  <br><sub>Follow the transcript and Quick answer together.</sub>
+</p>
+
+### iPad
+
+<p align="center">
+  <a href="docs/images/ios/release-1.20.3/04-ipad-summary.png"><img src="docs/images/ios/release-1.20.3/04-ipad-summary.png" width="540" alt="Candidate 1.20.3 (43) on 13-inch iPad Pro: transcript, Quick Summary and full Summary with decisions and next steps."></a>
+  <br><sub>iPad Pro: transcript, Quick Summary and decisions in one workspace.</sub>
+</p>
+
+<p align="center">
+  <a href="docs/images/ios/release-1.20.3/05-ipad-wide.png"><img src="docs/images/ios/release-1.20.3/05-ipad-wide.png" width="760" alt="Candidate 1.20.3 (43) on iPad mini in landscape: complete transcript and Quick summary with listening controls."></a>
+  <br><sub>iPad mini: a wide view of the conversation and its key points.</sub>
+</p>
+
+### Apple Watch
+
+<table>
+  <tr>
+    <th align="center">46 mm</th>
+    <th align="center">Ultra · 49 mm</th>
+  </tr>
+  <tr>
+    <td align="center"><a href="docs/images/ios/release-1.20.3/06-watch-46-recording.png"><img src="docs/images/ios/release-1.20.3/06-watch-46-recording.png" width="180" alt="Candidate 1.20.3 (43) Apple Watch 46 mm simulator: Recording, elapsed time and Stop controls."></a></td>
+    <td align="center"><a href="docs/images/ios/release-1.20.3/07-watch-49-recording.png"><img src="docs/images/ios/release-1.20.3/07-watch-49-recording.png" width="180" alt="Candidate 1.20.3 (43) Apple Watch Ultra 49 mm simulator: Recording, elapsed time and Stop controls."></a></td>
+  </tr>
+</table>
+
+These synthetic previews do not establish physical microphone, wrist-down, paired-transfer or
+real translation-quality acceptance. Mac screenshots remain historical below; no Mac release is claimed.
+
+<details>
+<summary>Previous TestFlight 1.20.2 (42) and October 30 Duo checkpoint</summary>
+
 **iPhone, iPad and Apple Watch · TestFlight 1.20.2 (42)**
 
 Native app previews use synthetic demonstration content; tap an image to view it at full resolution.
@@ -106,7 +166,7 @@ Apple's listing or establish physical-device or translation-quality acceptance.
   </tr>
 </table>
 
-**Duo / landscape · unreleased candidate**
+**Duo / landscape · historical October 30 candidate checkpoint**
 
 <p align="center">
   <a href="docs/images/ios/candidate-2026-10-30/iphone-duo.png"><img src="docs/images/ios/candidate-2026-10-30/iphone-duo.png" width="760" alt="Unreleased iPhone Duo candidate showing a concise synthetic transcript and Quick answer side by side in landscape."></a>
@@ -145,6 +205,8 @@ images above; no new binary or App Store media upload is claimed.
 </table>
 
 Simulated recording controls; physical microphone, wrist-down and paired-transfer acceptance are separate.
+
+</details>
 
 <details>
 <summary>Historical Mac and iPhone/iPad layouts</summary>
