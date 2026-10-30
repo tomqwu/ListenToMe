@@ -202,10 +202,10 @@
     },
     {
       "id": "HISTORYREFRESH-010",
-      "name": "Read the short default-text History preview in landscape phone and wide iPad layouts",
-      "given": "the short synthetic prototype conversation is shown at default text size on a landscape iPhone Duo workspace or wide iPad workspace",
-      "when": "History is opened, its standard search drawer is revealed by a normal downward scroll if needed, a prototype search is entered, the keyboard is dismissed, one bounded normal scroll exposes the selected result above the search field if needed, and Refresh search completes",
-      "then": "in this short default-text preview the actual Refresh and Ask controls and matching record are reachable, their complete frames and the noninteractive provider disclosure fit inside the History viewport without overlap, the result and disclosure are not obscured by the search field, the query and result persist, and the native landscape screenshot is free of keyboard and alerts; this preview does not impose a no-scrolling requirement on long content or larger text sizes",
+      "name": "Reach History controls and open a matching conversation across landscape phone and wide iPad layouts",
+      "given": "the synthetic prototype conversation is shown at default text size on a landscape iPhone Duo workspace or wide iPad workspace",
+      "when": "History search is revealed by a normal downward scroll if needed, a prototype query is entered, Refresh search completes, the matching record is exposed by ordinary scrolling and tapped, and normal History is reopened",
+      "then": "Refresh, Ask and the provider disclosure are accessible before scrolling; Refresh preserves the query and result; the complete selected record is reachable without search-field obstruction and tapping it opens the matching title and transcript; reopened unqueried History shows unobscured Refresh and the complete record in its native gallery capture; queried phase captures remain separate QA evidence and this sequential flow does not require every control to fit simultaneously",
       "covers": [
         "iOS/MobileHistoryView.swift",
         "SharedPlatform/HistoryRefreshControl.swift",
