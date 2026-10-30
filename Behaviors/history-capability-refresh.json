@@ -148,6 +148,40 @@
           "test": "HistoryBackendTransitionTests/testQueuedOlderSaveCannotReplaceFreshlyReconciledText"
         }
       ]
+    },
+    {
+      "id": "HISTORYREFRESH-007",
+      "name": "Fresh History previews show the actual control and literal result without keyboard overlays",
+      "given": "the synthetic native History screen has an exact-word result for a short query",
+      "when": "the refreshed History view is captured for the README gallery",
+      "then": "the actual Refresh control and matching result are hittable, the software keyboard is dismissed and no alert covers the preview",
+      "covers": [
+        "iOS/MobileHistoryView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileHistorySearchUITests.swift",
+          "test": "MobileHistorySearchUITests/testExplicitRefreshKeepsLiteralHistoryResultAndReturnsToIdle"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYREFRESH-008",
+      "name": "Empty History keeps local Refresh reachable",
+      "given": "the user has cleared the synthetic fixture archive and sees no saved conversations",
+      "when": "Refresh search is activated from that same History screen",
+      "then": "the control remains hittable and returns to idle while empty guidance remains and Ask is absent",
+      "covers": [
+        "iOS/MobileHistoryView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileHistorySearchUITests.swift",
+          "test": "MobileHistorySearchUITests/testEmptyHistoryKeepsExplicitRefreshReachable"
+        }
+      ]
     }
   ]
 }

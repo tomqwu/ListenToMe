@@ -18,6 +18,12 @@ final class MobileHistorySearchUITests: XCTestCase {
         let result = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label CONTAINS %@", "review the prototype")).firstMatch
         XCTAssertTrue(result.waitForExistence(timeout: 10))
+        field.typeText("\n")
+        let keyboardGone = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"),
+                                                    object: app.keyboards.firstMatch)
+        XCTAssertEqual(XCTWaiter.wait(for: [keyboardGone], timeout: 5), .completed,
+                       "The native History preview must omit the software keyboard")
+        XCTAssertTrue(refresh.isHittable); XCTAssertTrue(result.isHittable)
         XCTAssertFalse(app.alerts.firstMatch.exists)
         let shot = XCTAttachment(screenshot: app.screenshot()); shot.name = "History explicit local refresh"
         shot.lifetime = .keepAlways; add(shot)
@@ -51,6 +57,25 @@ final class MobileHistorySearchUITests: XCTestCase {
         XCTAssertTrue(refresh.isHittable); XCTAssertFalse(app.alerts.firstMatch.exists)
         let after = XCTAttachment(screenshot: app.screenshot())
         after.name = "History no-results after Refresh"; after.lifetime = .keepAlways; add(after)
+    }
+
+    func testEmptyHistoryKeepsExplicitRefreshReachable() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--design-review-fixture", "-autoQuickSummary", "NO", "-mobileAIProvider", "apple"]
+        app.launchPastReleaseNotes(); app.buttons["History"].tap()
+        let delete = app.buttons["deleteAllConversations"]
+        XCTAssertTrue(delete.waitForExistence(timeout: 5)); delete.tap()
+        app.alerts.buttons["Delete all"].firstMatch.tap() // Only the fixture's isolated temporary archive.
+        let empty = app.staticTexts["No saved conversations"]
+        XCTAssertTrue(empty.waitForExistence(timeout: 5))
+        let refresh = app.buttons["history-refresh"]
+        XCTAssertTrue(refresh.isHittable); refresh.tap()
+        let idle = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: refresh)
+        XCTAssertEqual(XCTWaiter.wait(for: [idle], timeout: 10), .completed)
+        XCTAssertTrue(empty.exists); XCTAssertTrue(refresh.isHittable)
+        XCTAssertFalse(app.buttons["history-ask"].exists)
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "Empty History keeps Refresh reachable"; shot.lifetime = .keepAlways; add(shot)
     }
 
     func testSearchShowsASnippetAndSaysWhereAQuestionWouldGo() {
