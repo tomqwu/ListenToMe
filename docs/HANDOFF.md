@@ -1,3 +1,19 @@
+# Mac speaker-name overflow candidate — October 30, 2026
+
+Installed #334 acceptance on source `5f1e909` (Mac runtime identical to merged `97ef2461`) verified
+Save/Cancel, full quit/relaunch persistence, context-menu rename, neighbor isolation, VoiceOver
+activation and full-name tooltip. It also reproduced a real long-name label overlapping transcript
+words. The focused fix on `codex/mac-speaker-name-overflow`, based on `f26e655`, changes only native
+label compression and tail truncation. `SPEAKER-020` genuinely failed two native assertions before
+the fix; the unchanged regression plus related tests then passed **10 methods, zero failures/skips**,
+exit 0/reaped, all **1,059 inputs unchanged**. Only `App/MacSpeakerNameButton.swift` changed between
+red and green. The rendered name now stays within 100 points and changes zero pixels beyond its column.
+
+[Evidence and limitations](speaker-rename-acceptance.md) · [Exact source hashes](releases/mac-speaker-name-overflow-f26-validation.json).
+The corrected installed candidate, fresh README image and full local validation still need acceptance.
+Keep the fix behind the current #223 feature's validation/merge; no new PR, merge or release is claimed.
+The existing Mac gallery remains historical until that installed capture is refreshed.
+
 # TestFlight 1.20.3 (43) published — October 30, 2026
 
 Apple accepted **1.20.3 (43)** through the official TestFlight helper at
@@ -34,7 +50,8 @@ error remain preserved separately; the repaired verifier did not repeat the uplo
 
 PR [#318](https://github.com/tomqwu/ListenToMe/pull/318) closed **#333, #335, #337, #346, #347 and #348**.
 Six remain open: **#181, #205, #223, #236, #334 and #336**. Optional MPNet delivery remains excluded,
-with its source and negative results preserved. #334 still needs installed Mac rename Save/relaunch;
+with its source and negative results preserved. #334's installed rename/VoiceOver checks found the
+long-name layout regression described above; its corrected installed-layout acceptance remains pending;
 #336 retains its near-end/overlap/routes matrix. These limits do not reopen completed fixes.
 
 Physical phone/iPad translation, screen-lock, multilingual and Watch acceptance remains pending.

@@ -675,6 +675,8 @@ pressing Listen. The app analyzes captured system audio on-device about every 20
 speaker models. Open **Speakers / edit names** to name voices, for example Speaker 1 → Alice. You can also
 double-click an identified speaker label in the Mac transcript, or long-press its line on iPhone/iPad
 and choose **Rename speaker**. Save applies the name throughout this conversation; Cancel discards the edit.
+The unreleased Mac layout keeps long names within the speaker column with an ellipsis; the tooltip
+and accessibility label retain the full name. [Native evidence and remaining installed checks](docs/speaker-rename-acceptance.md).
 
 Names appear in transcript lines and flow into subsequent AI prompts, refreshed listener summaries,
 saved-session search, and Markdown/PDF exports. Saving a name clears older Quick/Deep answers;

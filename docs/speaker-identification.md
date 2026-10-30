@@ -81,6 +81,14 @@ red→green and a six-method related simulator pass, tied to base `6705543` plus
 [the bounded receipt](releases/speaker-rename-6705543-readiness.json) records exact hashes and limits.
 This does not prove real speaker inference, disk persistence across relaunch or installed Mac use.
 
+Separate installed Mac acceptance on October 30 verified Save/Cancel, context-menu rename, full
+quit/relaunch persistence, neighbor isolation, VoiceOver activation and the complete name tooltip.
+That inspection also found long native names covering transcript words. The unreleased fix permits
+the label to fit its column and truncates its display with an ellipsis; the full name remains in its
+tooltip and accessibility label. `SPEAKER-020` has an actual native raster red and unchanged-test green.
+[Current evidence and remaining installed-layout/full-validation gates](speaker-rename-acceptance.md)
+keep those checks separate from diarization accuracy and production publication.
+
 ## Privacy and model provenance
 
 Audio and inference remain on-device. Preparation downloads public weights from

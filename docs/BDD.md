@@ -309,6 +309,14 @@ matrix after a torn native stdout event prevented the aggregate verifier from co
 
 ## Transcript speaker rename shortcuts (#334)
 
+`SPEAKER-020` compares short and long names in the actual native Mac row: the label must visibly
+change within its column while the adjacent transcript's pixels, text and geometry remain intact.
+It also checks the full tooltip/accessibility name. The initial native run reproduced an expanded
+266-point label and 2,675 changed pixels beyond its 100-point column; the unchanged test passed with
+zero overflow after native compression and tail truncation. The ten-method related suite passed.
+[The source-bound receipt](releases/mac-speaker-name-overflow-f26-validation.json) retains both runs;
+installed acceptance of the corrected layout, a fresh README capture and full validation remain pending.
+
 `AUDIOVIEW-001` covers the retained-audio player above the expanded transcript at standard and
 largest text sizes: complete visible phrases, single-line time, usable controls and enough reading
 space to reveal the original speaker without playback. The real AX5 layout red, distinct test-harness
