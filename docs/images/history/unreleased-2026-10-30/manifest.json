@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "status": "unreleased_history_followup",
-  "candidateRuntimeSource": "09612d907ed4a11050d5862cf49e247dce501ff7",
+  "candidateRuntimeSource": "c8fdcd29d7db9bf200623b3ef10d50308e3f03a9",
   "notIncludedInAcceptedTestFlight43": true,
   "configuredIOSVersion": "1.20.3",
   "configuredIOSBuild": "43",
@@ -79,6 +79,106 @@
       "nativeReaped": true,
       "language": "English",
       "localeEvidence": "Read-only global default readback after capture; no explicit test locale override"
+    },
+    {
+      "file": "mac-history-window.png",
+      "sha256": "a60072165e5e4a81c2cad85afbc577c03728b7417a33c826a4fe843067f215d2",
+      "nativePixels": [
+        3680,
+        2268
+      ],
+      "pixelEditing": false,
+      "device": "Mac / macOS installed normal Debug Dev app",
+      "captureKind": "actual-installed-app-full-window",
+      "locale": "not explicitly pinned; visible English, local system environment",
+      "source": "c8fdcd29d7db9bf200623b3ef10d50308e3f03a9",
+      "visualStatus": "independently reviewed",
+      "readmeSuitability": "suitable",
+      "syntheticContent": true,
+      "query": "Airship workshop",
+      "visibleOwnedRows": 2,
+      "note": "AI off by process argument; no Ask/download/recording action. Actual Dev1.4.4(14), not Store distribution."
+    },
+    {
+      "file": "mac-history-sheet.png",
+      "sha256": "b1e9cff73358eb93106e27a1a3d3998ce140183d66837fc5bb51bf5c3e67ed6f",
+      "nativePixels": [
+        1360,
+        1080
+      ],
+      "pixelEditing": false,
+      "device": "Mac / macOS installed normal Debug Dev app",
+      "captureKind": "actual-installed-app-native-sheet-region",
+      "locale": "not explicitly pinned; visible English, local system environment",
+      "source": "c8fdcd29d7db9bf200623b3ef10d50308e3f03a9",
+      "visualStatus": "independently reviewed",
+      "readmeSuitability": "suitable",
+      "syntheticContent": true,
+      "query": "Airship workshop",
+      "visibleOwnedRows": 2,
+      "note": "AI off by process argument; no Ask/download/recording action. Actual Dev1.4.4(14), not Store distribution."
+    },
+    {
+      "file": "iphone-history-landscape.png",
+      "sha256": "8c7fb9857f4475c68c7d1f60c1f28ea821d8c3087008c3b343755a6222498a4f",
+      "nativePixels": [
+        1206,
+        2622
+      ],
+      "storedPixels": [
+        1206,
+        2622
+      ],
+      "exifOrientation": 8,
+      "displayPixels": [
+        2622,
+        1206
+      ],
+      "pixelEditing": false,
+      "device": "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro",
+      "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-26-5",
+      "locale": "not explicitly pinned; visible English",
+      "source": "13573f9041bd9f5a07ce0c444e2f597b34afdda8",
+      "runtimeSource": "c8fdcd29d7db9bf200623b3ef10d50308e3f03a9",
+      "testMethod": "MobileHistorySearchUITests/testLandscapeHistoryKeepsRefreshAskAndResultReachable",
+      "visualStatus": "root,independent reviewer and docs author viewed native original",
+      "readmeSuitability": "suitable for stated selected unqueried History scope",
+      "caption": "Unreleased candidate: unqueried History, Refresh search and complete saved-conversation row in iPhone landscape",
+      "note": "Selected Refresh control and complete record card unobscured; native intended summary ellipsis preserved. Normal lower-list hint/Delete scroll limitation remains; not an all-content-at-once image.",
+      "inputCount": 1074,
+      "nativeExit": 0,
+      "nativeReaped": true
+    },
+    {
+      "file": "ipad-history-wide.png",
+      "sha256": "7e408a6446b9ea239266aac7d875536f721272494ee68d13dac9a7c9772dc010",
+      "nativePixels": [
+        2064,
+        2752
+      ],
+      "storedPixels": [
+        2064,
+        2752
+      ],
+      "exifOrientation": 8,
+      "displayPixels": [
+        2752,
+        2064
+      ],
+      "pixelEditing": false,
+      "device": "com.apple.CoreSimulator.SimDeviceType.iPad-Pro-13-inch-M5-12GB",
+      "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-26-5",
+      "locale": "not explicitly pinned; visible English",
+      "source": "13573f9041bd9f5a07ce0c444e2f597b34afdda8",
+      "runtimeSource": "c8fdcd29d7db9bf200623b3ef10d50308e3f03a9",
+      "testMethod": "MobileHistorySearchUITests/testLandscapeHistoryKeepsRefreshAskAndResultReachable",
+      "visualStatus": "root,independent reviewer and docs author viewed native original",
+      "readmeSuitability": "suitable for stated selected unqueried History scope",
+      "caption": "Unreleased candidate: unqueried History, Refresh search and complete saved-conversation row in wide iPad layout",
+      "note": "Selected Refresh control and complete record card unobscured; native intended summary ellipsis preserved. Complete History sheet visible.",
+      "inputCount": 1074,
+      "nativeExit": 0,
+      "nativeReaped": true
     }
   ],
   "macCompiledSourceMatchesCandidate": {
@@ -135,12 +235,129 @@
           "sizeBytes": 33287728
         }
       ]
+    },
+    "mac-installed": {
+      "artifactKind": "normal-Debug-Dev-installed-app",
+      "source": "c8fdcd29d7db9bf200623b3ef10d50308e3f03a9",
+      "bundleIdentifier": "com.tomwu.ListenToMe.dev",
+      "version": "1.4.4",
+      "build": "14",
+      "sandbox": false,
+      "strictOriginalSignatureVerified": true,
+      "capturedPayloadNames": [
+        "ListenToMe",
+        "ListenToMe.debug.dylib",
+        "__preview.dylib"
+      ],
+      "payloads": [
+        {
+          "name": "ListenToMe",
+          "sha256": "2bf47e05d7d740a6b232348b44ca102c745ebe0be3b16a60e1aea606f1dce381",
+          "sizeBytes": 58960
+        },
+        {
+          "name": "ListenToMe.debug.dylib",
+          "sha256": "b9f278be30944fe5254564958f5e195e6447b35f46e2a8d9cf985e8e4f375813",
+          "sizeBytes": 37604448
+        },
+        {
+          "name": "__preview.dylib",
+          "sha256": "c377bcd1dd34803892213d8bb4f7de1216a1b1432e73f843b506ac0836f7fba3",
+          "sizeBytes": 34928
+        }
+      ]
+    },
+    "landscape-phone": {
+      "artifactKind": "simulator-app",
+      "source": "13573f9041bd9f5a07ce0c444e2f597b34afdda8",
+      "runtimeSource": "c8fdcd29d7db9bf200623b3ef10d50308e3f03a9",
+      "bundleIdentifier": "com.tomwu.ListenToMe.ios",
+      "version": "1.20.3",
+      "build": "43",
+      "infoPlistSHA256": "cd648df12a9f4272e3f186bda281a7dc2ac3343077da8ac3922a488acee5ccad",
+      "capturedPayloadNames": [
+        "ListenToMeIOS",
+        "ListenToMeIOS.debug.dylib",
+        "__preview.dylib"
+      ],
+      "payloads": [
+        {
+          "name": "ListenToMeIOS",
+          "sha256": "5acbd1b0bc9bb240a93d31f7a5b29b5a4c0dce69abe5b24f7e50c393e8092a8b",
+          "sizeBytes": 40496
+        },
+        {
+          "name": "ListenToMeIOS.debug.dylib",
+          "sha256": "a451da9c92637d7e01cfddd1fd2fb449ac95274be93706576072ff5222bc8561",
+          "sizeBytes": 36006224
+        },
+        {
+          "name": "__preview.dylib",
+          "sha256": "7f095fad58b0f77f26f97b3799d0aa602738c24f523c876989bf5f76dd186f25",
+          "sizeBytes": 16800
+        }
+      ],
+      "preservationReceiptSHA256": "d89d61544ee621bfbe7bba6aeeca52ca54b24df376e0313e2ceb79632da10a14"
+    },
+    "landscape-ipad": {
+      "artifactKind": "simulator-app",
+      "source": "13573f9041bd9f5a07ce0c444e2f597b34afdda8",
+      "runtimeSource": "c8fdcd29d7db9bf200623b3ef10d50308e3f03a9",
+      "bundleIdentifier": "com.tomwu.ListenToMe.ios",
+      "version": "1.20.3",
+      "build": "43",
+      "infoPlistSHA256": "cd648df12a9f4272e3f186bda281a7dc2ac3343077da8ac3922a488acee5ccad",
+      "capturedPayloadNames": [
+        "ListenToMeIOS",
+        "ListenToMeIOS.debug.dylib",
+        "__preview.dylib"
+      ],
+      "payloads": [
+        {
+          "name": "ListenToMeIOS",
+          "sha256": "35640a25912ae1737bbc4e385d3217c2a9d67254b64affd9278735a84773c1cb",
+          "sizeBytes": 40496
+        },
+        {
+          "name": "ListenToMeIOS.debug.dylib",
+          "sha256": "a451da9c92637d7e01cfddd1fd2fb449ac95274be93706576072ff5222bc8561",
+          "sizeBytes": 36006224
+        },
+        {
+          "name": "__preview.dylib",
+          "sha256": "7f095fad58b0f77f26f97b3799d0aa602738c24f523c876989bf5f76dd186f25",
+          "sizeBytes": 16800
+        }
+      ],
+      "preservationReceiptSHA256": "c2f736b3b22cfb08a274e7eebb4ab67c7e939c4747fab7eb70600ff54daaa166"
     }
   },
   "limits": [
-    "Mac image is a hosted production component, not a full app screenshot",
-    "Fresh installed full-app Mac History capture remains pending",
-    "No new language-quality, physical-device or VoiceOver acceptance claim",
-    "Full validation and required CI remain pending"
-  ]
+    "The isolated Mac component remains labelled as a test host; primary Mac gallery is now actual installed app.",
+    "No additional-language quality, physical-device, Store-distributed or VoiceOver acceptance.",
+    "Settings comparison had zero matching top-level keys; it is not exhaustive settings-preservation evidence.",
+    "The later Trash app copy has Finder metadata; preserved file bytes match while original signed build still verifies.",
+    "Composite: fullc8 passed; test-only13573 focused2passed; exact-head CI/merge and hosted final-gallery review remain pending.",
+    "Landscape images show unqueried History. Phone lower hint/actions require ordinary scrolling; no universal simultaneous-fit claim.",
+    "Prior cropped-screen, search-drawer, overstrict-fit and selector-typo outcomes are preserved harness/constraint failures, not product reds."
+  ],
+  "followupTestOnlySource": "13573f9041bd9f5a07ce0c444e2f597b34afdda8",
+  "validationLineage": {
+    "fullSource": "c8fdcd29d7db9bf200623b3ef10d50308e3f03a9",
+    "fullFrozenInputs": 1071,
+    "fullExit": 0,
+    "fullReaped": true,
+    "allFullInputsUnchanged": true,
+    "fullBDDScenarios": 245,
+    "fullRequiredBoundSelectors": 579,
+    "followupChangedPaths": [
+      "Behaviors/history-capability-refresh.json",
+      "iOSTests/MobileHistorySearchUITests.swift"
+    ],
+    "productionAndBuildConfigurationUnchanged": true,
+    "focusedLandscapeStatus": "Two passed invocations of one method, zero failures/skips;1074 inputs unchanged; exit0/reaped",
+    "focusedSource": "13573f9041bd9f5a07ce0c444e2f597b34afdda8",
+    "finalBDDScenarios": 246,
+    "focusedOutcomeSHA256": "7ba5c2f44933351a7c9825bb1181da81bd610cf615928d934ea5f61a02b973d6"
+  }
 }
