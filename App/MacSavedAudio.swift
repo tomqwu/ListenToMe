@@ -62,6 +62,15 @@ final class MacSavedAudio {
     var library: SavedAudioLibrary { runs.recorder.library }
     @ObservationIgnored private var activeObserver: (any NSObjectProtocol)?
 
+    /// Isolated native-view tests supply a temporary library; never open user storage,
+    /// install app observers or apply retention while constructing that test owner.
+    init(library: SavedAudioLibrary) {
+        enabled = false
+        retentionDays = 0
+        runs = MacSavedAudioRuns(recorder: SavedAudioRecorder(library: library))
+        playback = SavedAudioPlayback(library: library)
+    }
+
     private init() {
         enabled = SavedAudioPolicy.isEnabled()
         retentionDays = SavedAudioPolicy.retentionDays()
