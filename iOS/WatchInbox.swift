@@ -73,12 +73,10 @@ struct WatchInbox: Sendable {
                 ?? WatchCaptureLedger(recordingID: chunk.recordingID, startedAt: chunk.startedAt, at: now)
             guard ledger.receive(chunk, at: now) else { return .duplicate }
             let destination = chunkURL(recordingID: chunk.recordingID, index: chunk.index)
+            // Keep an earlier durable copy even if its manifest write failed; foreground tidy adopts it.
+            guard !FileManager.default.fileExists(atPath: destination.path) else { return .duplicate }
             do {
                 try PrivateStorage.createDirectory(at: folder(chunk.recordingID))
-                // A copy left by an earlier delivery whose manifest entry was never written.
-                if FileManager.default.fileExists(atPath: destination.path) {
-                    try FileManager.default.removeItem(at: destination)
-                }
                 try moveFile(url, destination)
             } catch {
                 Self.log.error("Chunk not stored: \(error.localizedDescription, privacy: .public)")
