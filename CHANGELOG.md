@@ -203,6 +203,10 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 
 ## macOS (unreleased since 1.4.4)
 
+- Show delayed saved-audio lines in stable chronological order within each recording in History's
+  **Play from a line** list. Keep each row linked to its original audio part and offset, including
+  restored duplicate IDs; preserve untimed/legacy boundaries and the saved transcript. (#336)
+
 - Add explicit **Refresh search** in History to rebuild derived search data using currently available
   Apple models. Preserve saved conversations and exact-word search; show retry guidance on failure
   and keep Ask blocked until a current archive pass finishes. No language assets are downloaded. (#223)

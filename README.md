@@ -86,6 +86,10 @@ make ios-test
 
 ## Screenshots
 
+The local Mac saved-audio ordering follow-up still needs a source-matched installed History
+capture before its gallery refresh is complete. Its native component images are QA evidence;
+the existing gallery is not a preview of that fix. See the [scoped evidence and pending acceptance](docs/dual-channel-capture.md#local-saved-audio-ordering-follow-up--october-30-2026).
+
 ### Unreleased local History refresh
 
 These native previews show an **unreleased follow-up**, not the accepted TestFlight 1.20.3 (43)

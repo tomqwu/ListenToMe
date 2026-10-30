@@ -1,3 +1,14 @@
+# Local Mac saved-audio ordering follow-up — October 30, 2026
+
+The #336 **Play from a line** ordering slice is locally green on `d36b212`, stacked on frozen
+#334 candidate `9a39a12`; it has no PR or merge yet. Genuine rendered-order red preceded the
+two-file fix. The unchanged three native methods and 145 existing Core tests pass, zero skips;
+both jobs exited 0/reaped with all 1,083 inputs unchanged. Playback keeps canonical source/offsets,
+including restored duplicate IDs. [Evidence and remaining gates](dual-channel-capture.md#local-saved-audio-ordering-follow-up--october-30-2026).
+Installed History playback/full-app README capture remains blocked by the locked Mac; component
+images are QA only. Full validation/CI/merge remain pending after #334. Near-end/overlap/repeated
+speech/headphones acceptance remains open; this does not close #336 or change iOS playback lookup.
+
 # Unreleased local History Refresh — October 30, 2026
 
 Explicit **Refresh search** rebuilds derived local Apple search data without changing conversations

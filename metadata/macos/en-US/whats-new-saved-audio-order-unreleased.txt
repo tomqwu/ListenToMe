@@ -1,0 +1,1 @@
+History's Play from a line list now shows delayed transcript lines in chronological order within each recording. Selecting a line still plays its original microphone or system-audio part at the correct position. Saved transcripts and audio files are unchanged.

@@ -84,3 +84,52 @@ does not close independent near-end, overlap/repeated speech, headphones/physica
 recovery or delayed-row audio playback. Its full integrated validation failed in a separate Settings
 UI test; [the recovery record](validation-pipeline-recovery.md) preserves that outcome and the make
 failure-propagation correction. Earlier acoustic evidence is not promoted to the new source.
+
+## Local saved-audio ordering follow-up — October 30, 2026
+
+History's separate **Play from a line** list still enumerated canonical arrival order. The local
+`d36b212c8288cbca26c03c721a7b54686699641e` follow-up uses the existing recording-aware projection
+while retaining each original array index for playback. Stable ties, explicit recording blocks,
+untimed boundaries and legacy arrival order keep the same policy. Restored duplicate segment IDs
+remain distinct rows with their original audio parts and offsets. Saved transcripts, audio files
+and retention choices do not change. The existing iOS `firstIndex(id:)` ambiguity for duplicate IDs
+is outside this Mac change; it is not repaired or claimed covered here.
+
+`AUDIOVIEW-002` binds three `MacSavedAudioOrderTests` methods. They host the actual production
+section with an isolated library and generated silent audio, expand its native disclosure, read
+the actual rendered row positions, click the rows, verify the real playback source/offset, and
+verify Stop on leaving plus unchanged archive/manifest/audio bytes. The injected owner avoids
+the shared settings/retention initializer. These are component checks, not installed-app or acoustic
+acceptance.
+
+- The first native attempt on `5fef840` failed on directory-URL equality and a title-center click
+  that did not expand the disclosure. It is preserved as a harness failure, not a product red.
+- Corrected test-only source `eec9a112` produced genuine red: two methods failed six ordering
+  assertions; the untimed/legacy control passed. Native images showed `0:20` before `0:17`,
+  `0:48` before `0:43`, and restored second-run `0:06` before `0:03`. Other source/offset,
+  actual-click, Stop and byte-preservation assertions completed without failure.
+- Applying the reviewed two-file fix gave **three native passes, zero failures/skips** on
+  `d36b212`. The tests, fixtures and assertions were byte-identical to red. Original-resolution
+  green images show stable `0:17, 0:17, 0:20` and separate `0:43, 0:48` rows; duplicate-ID rows
+  retain the correct recording boundaries. The untimed/legacy control image is byte-identical.
+- Sixteen existing Core suites passed **145 tests, zero failures/skips**: presentation/cache,
+  recording timelines/timestamps, readable/JSON/golden exports, vault output, summary/selection
+  paths and saved-audio seeks. `make bdd-check BDD_BASE=9a39a12f230b353fe400a2b17dc41f95a023497c`
+  validated 248 scenarios; scoped strict SwiftLint and `git diff --check` passed.
+
+Evidence is preserved under
+`/Users/tomwu/Documents/Codex/2026-10-30/listentome-mac336-saved-audio-order/` in
+`native-red-stacked-candidate`, `native-red-stacked-retry1` and `native-green-stacked`.
+Each native command selects only the three bound methods of `ListenToMeMacUnitTests/MacSavedAudioOrderTests`
+on `platform=macOS`; exact argument arrays are in `execution/command.json`. The Core command and
+16-suite filter are in `native-green-stacked/core-execution/command.json`. Both green commands
+ended exit 0/reaped within their 600-second bounds. All 1,083 frozen inputs and recorded Xcode/SDK
+metadata stayed unchanged. Original result bundles, logs, unmodified PNGs, test binaries and
+generated inputs are retained. The green receipt SHA-256 is
+`35282f484a3d47af5b4ce3810dd9f044544c4188adf453567d9ff8243fe9c4c0`.
+
+This is local work stacked on the frozen #334 candidate `9a39a12`, not a merged change or a full
+validation pass. PR/merge waits for #334. Source-matched installed History playback and a fresh
+full-app README screenshot remain pending while the Mac is locked; the native component images
+are QA evidence only. Independent near-end speech, overlap, genuinely repeated speech, headphones
+and physical route recovery remain separate #336 acceptance gates. This slice does not close #336.
