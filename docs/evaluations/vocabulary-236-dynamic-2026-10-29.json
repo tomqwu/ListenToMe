@@ -1,0 +1,276 @@
+{
+  "issue": 236,
+  "date": "2026-10-29",
+  "kind": "isolated native descriptive research; no product integration or physical app acceptance",
+  "status": "completed_descriptive_only",
+  "decision": "Do not integrate custom Dictation models from the existing physical and synthetic measurements; no additional research loop is required for this bounded negative integration decision.",
+  "platform": {
+    "name": "macOS",
+    "version": "27.0.1",
+    "sdk": "27.0",
+    "engine": "SpeechTranscriber"
+  },
+  "source": {
+    "baseCommit": "63628537cc12dc049dafb2d6251f6b0769b31139",
+    "frozenInputCount": 211,
+    "frozenSHA256": "f5b57835dd371ba9dc4acb55f9f521cbcf26b939e20e5bfc6715c5e205476bdb",
+    "inputsUnchanged": true,
+    "audioFeedSHA256": "cf02a31ca7e252056fc57e29f79c9364238a94454069b3a8c8772a1d90c665b4",
+    "audioFeedStateAtFreeze": "unmerged candidate copied with explicit provenance; not a current publication claim"
+  },
+  "execution": {
+    "startedAt": "2026-10-29T05:04:50.902112+00:00",
+    "finishedAt": "2026-10-29T05:05:34.031223+00:00",
+    "nativeMethods": 5,
+    "nativePassed": 5,
+    "nativeSkipped": 0,
+    "nativeFailures": 0,
+    "nativeSeconds": 29.468,
+    "nativeExitCode": 0,
+    "runnerExitCode": 0,
+    "ownedChildReaped": true,
+    "ownedProcessGroupGone": true,
+    "ownedXCTestProcessesGone": true
+  },
+  "measurement": {
+    "observationCount": 22,
+    "domainObservations": 12,
+    "ordinaryAndSilenceObservations": 6,
+    "personalPriorityObservations": 1,
+    "localeObservations": 2,
+    "cancellationObservations": 1,
+    "inputFramesAcrossAllObservations": 13352594,
+    "phases": "Two complete identical WAV copies through the same analyzer; off/off, on/on or off/on context. Finite sequences finalize through actual consumed-last-sample time before context update.",
+    "scoring": "Unchanged historical normalized target substring presence, not occurrence alignment or domain WER; descriptive gains/losses only.",
+    "pairedComparisons": 16,
+    "allComparisonsUsable": true,
+    "pairedResults": [
+      {
+        "domain": "medical",
+        "voice": "Daniel",
+        "targetsPerPhase": 15,
+        "offOnAndUpdateTargetPresenceByPhase": [
+          7,
+          5
+        ],
+        "pairedComparisons": 4,
+        "gains": 0,
+        "losses": 0
+      },
+      {
+        "domain": "medical",
+        "voice": "Samantha",
+        "targetsPerPhase": 15,
+        "offOnAndUpdateTargetPresenceByPhase": [
+          7,
+          3
+        ],
+        "pairedComparisons": 4,
+        "gains": 0,
+        "losses": 0
+      },
+      {
+        "domain": "software-cloud",
+        "voice": "Daniel",
+        "targetsPerPhase": 17,
+        "offOnAndUpdateTargetPresenceByPhase": [
+          10,
+          6
+        ],
+        "pairedComparisons": 4,
+        "gains": 0,
+        "losses": 0
+      },
+      {
+        "domain": "software-cloud",
+        "voice": "Samantha",
+        "targetsPerPhase": 17,
+        "offOnAndUpdateTargetPresenceByPhase": [
+          12,
+          10
+        ],
+        "pairedComparisons": 4,
+        "gains": 0,
+        "losses": 0
+      }
+    ]
+  },
+  "controls": {
+    "ordinaryAndSilence": [
+      {
+        "id": "control-medical-general-Daniel.wav",
+        "wordEditsByPhase": [
+          2,
+          7
+        ],
+        "referenceWords": 35,
+        "finalRowsByPhase": [
+          2,
+          2
+        ],
+        "scoredTargetInsertions": 0
+      },
+      {
+        "id": "control-medical-general-Samantha.wav",
+        "wordEditsByPhase": [
+          0,
+          12
+        ],
+        "referenceWords": 35,
+        "finalRowsByPhase": [
+          2,
+          2
+        ],
+        "scoredTargetInsertions": 0
+      },
+      {
+        "id": "control-medical-silence.wav",
+        "wordEditsByPhase": [
+          null,
+          null
+        ],
+        "referenceWords": null,
+        "finalRowsByPhase": [
+          0,
+          0
+        ],
+        "scoredTargetInsertions": 0
+      },
+      {
+        "id": "control-software-cloud-general-Daniel.wav",
+        "wordEditsByPhase": [
+          2,
+          7
+        ],
+        "referenceWords": 35,
+        "finalRowsByPhase": [
+          2,
+          2
+        ],
+        "scoredTargetInsertions": 0
+      },
+      {
+        "id": "control-software-cloud-general-Samantha.wav",
+        "wordEditsByPhase": [
+          0,
+          12
+        ],
+        "referenceWords": 35,
+        "finalRowsByPhase": [
+          2,
+          2
+        ],
+        "scoredTargetInsertions": 0
+      },
+      {
+        "id": "control-software-cloud-silence.wav",
+        "wordEditsByPhase": [
+          null,
+          null
+        ],
+        "referenceWords": null,
+        "finalRowsByPhase": [
+          0,
+          0
+        ],
+        "scoredTargetInsertions": 0
+      }
+    ],
+    "interpretation": "Ordinary edits worsen on sequential replay; context change and sequential replay are confounded, so this is not proof that vocabulary caused degradation."
+  },
+  "nativeMechanisms": {
+    "context": "Exact native readback before and after input;100-term cap; newest60 synthetic personal terms precede domain terms. Personal test uses silence, not spoken names.",
+    "locale": "Chinese silence with zh_CN/context readback, then a separate fresh English analyzer with context reapplied before English speech at2s offset. Not a continuous actual-app or spoken Chinese quality test.",
+    "cancellation": "Cancelled after first16000-frame input buffer; no finals or publication after cancellation. Intentional Cocoa4099 service invalidation is retained, not a spontaneous engine failure.",
+    "continuity": "All expected input frames conserved and phase attribution usable; enqueue, consumption and result evidence remain distinct."
+  },
+  "nativeBindings": [
+    {
+      "scenario": "DYNAMIC236-001",
+      "test": "DynamicVocabularyTests/testDomainPhaseContextsAndContinuity"
+    },
+    {
+      "scenario": "DYNAMIC236-002",
+      "test": "DynamicVocabularyTests/testPersonalPriorityCapAndNativeReadback"
+    },
+    {
+      "scenario": "DYNAMIC236-003",
+      "test": "DynamicVocabularyTests/testChineseToEnglishReplacementReappliesContext"
+    },
+    {
+      "scenario": "DYNAMIC236-004",
+      "test": "DynamicVocabularyTests/testOrdinaryAndSilenceControls"
+    },
+    {
+      "scenario": "DYNAMIC236-005",
+      "test": "DynamicVocabularyTests/testCancellationPreservesInputAndStopsPublication"
+    }
+  ],
+  "priorAttempts": [
+    {
+      "attempt": "original195-input dynamic attempt",
+      "outcome": "failed/incomplete; frame loss and future-time finalize wait; escaped XCTest separately cleaned; no quality result"
+    },
+    {
+      "attempt": "first211-input v2 attempt",
+      "outcome": "20/22 observations; combined locale availability guard skipped; scorer correctly refused; no trusted evaluation",
+      "missing": [
+        "locale-chinese",
+        "locale-english"
+      ]
+    }
+  ],
+  "privacy": "Local synthetic WAV input only; no microphone, private conversation or cloud inference in this experiment. No production setting or engine change. Native run requires installed assets; setup/metadata operations remain separate evidence.",
+  "remainingAcceptance": [
+    "Actual physical iPhone and installed Mac app medical/cloud read-aloud off/on",
+    "Add vocabulary during continuous capture without interruption and record observed spelling changes",
+    "Natural Chinese-to-English actual-app language switch with retained vocabulary",
+    "Spoken My-terms personal-name benefit",
+    "Ordinary actual-app conversation acceptance"
+  ],
+  "limits": [
+    "No contextual target improvement demonstrated in any16 paired comparison",
+    "Small fixed synthetic calibration corpus; no broad accuracy, repeatability or production acceptance claim",
+    "Dynamic run is Mac only; historical physical iPhone file inference is separate",
+    "No new model, threshold, corpus fitting or product red/green claim",
+    "Original failed/skipped attempts and unchanged labels/scorer retained",
+    "No new binary, release or issue-closure claim"
+  ],
+  "evidence": {
+    "canonicalDirectory": "listentome-vocabulary236-dynamic-v2-after-assets",
+    "independentAuditDirectory": "listentome-vocabulary236-after-assets-review",
+    "files": [
+      {
+        "name": "frozen.json",
+        "sha256": "f5b57835dd371ba9dc4acb55f9f521cbcf26b939e20e5bfc6715c5e205476bdb"
+      },
+      {
+        "name": "protocol.json",
+        "sha256": "4a551e5b4d02205438a6a9c0907ea555992316fd86ef05b4aaf696706fd8947f"
+      },
+      {
+        "name": "score.py",
+        "sha256": "eda8eb0eb70b620fe6dea9ed508b8e26bb2d987a91b057d008508b0cdac71deb"
+      },
+      {
+        "name": "runner-state.json",
+        "sha256": "36382be3bcf10f85fee773dddbecd0876992ebd91ab516b81e1dd4b1c8b5cd14"
+      },
+      {
+        "name": "evaluation.json",
+        "sha256": "3390d8963723b1a5ffaf73b464fb3cec5da861ff3bd963446a136ae520fe5747"
+      },
+      {
+        "name": "independent-outcome-audit.json",
+        "sha256": "7be0774cdbfe52a67a968070bc95375525f68a9bced630508789728504550679"
+      }
+    ]
+  },
+  "independentAudit": {
+    "status": "completed_descriptive_observations_audited",
+    "unchangedScorerRecountMatches": true,
+    "independentPhaseTargetAndWordEditRecountMatches": true,
+    "all16PairCountsAndGainsLossesMatched": true,
+    "originalIncompleteAttemptUnmodified": true
+  }
+}

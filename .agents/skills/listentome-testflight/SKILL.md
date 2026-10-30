@@ -20,7 +20,12 @@ full policy and the candidate → verified → published ladder.
 When a train is due, the maintainer's standing authorization applies: validate, then publish the beta
 without asking whether to publish or handing the upload back to the maintainer. This includes resumed
 tasks and features merged by another session. Respect an explicit draft or local-only instruction.
-This does not authorize a public App Store release or additional testers.
+Beta eligibility does not establish production readiness or authorize additional testers. Separately,
+the maintainer’s **2026-10-28 (Toronto)** standing instruction authorizes review submission whenever
+an iOS or macOS App Store version is ready. Follow the [canonical production checklist](../../../AGENTS.md#official-app-store-review-and-public-release)
+without asking for renewed submission permission: preserve acceptance gates, en-US metadata, fresh
+all-device screenshot processing/readback and the existing release mode. Manual-release versions
+remain pending after approval unless separately instructed; OS authentication remains user-owned.
 
 Read [the release runbook](../../../docs/IOS-RELEASING.md) for artifact validation, authentication,
 API status checks and metadata updates. Use this repository's current procedure over older notes

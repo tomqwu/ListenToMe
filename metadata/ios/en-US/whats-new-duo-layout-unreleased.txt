@@ -1,0 +1,1 @@
+Give transcript and Quick Summary more room in landscape Duo on shorter iPhones, while keeping familiar controls and accessibility scrolling.

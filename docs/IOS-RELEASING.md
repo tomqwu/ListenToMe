@@ -24,14 +24,53 @@ Apple accepted **1.20.0 (40)** through the official TestFlight helper (receipt r
 Physical phone/Watch acceptance and installed real-language-pair translation quality remain pending. The Mac translation feature remains unreleased. Public production remains 1.19.1 (39); this beta did not submit a new public version or upload listing screenshots. QA-only captures are not approved store assets.
 [Publication receipt](releases/ios-1.20.0-build40.json). Earlier dated checkpoints below retain historical submission states.
 
+## Public iOS availability — October 28, 2026, 01:12 UTC
+
+Apple's live version readback and independent US public lookup now confirm **iOS 1.19.1 (39)** is
+publicly available, released at **2026-10-28T00:12:55Z**, with primary locale **en-US**. This is the
+previously accepted Watch-enabled build 39 from `f1728150e3e66664e36d2506022c2918fa60a53c`.
+The exact Apple build ID and peeled tag match the upload receipt. See the
+[public observation](releases/ios-1.19.1-build39-public.json). No new upload, submission or release
+operation was performed for this readback. Physical Watch/phone acceptance remains unverified;
+public availability does not retroactively establish it. Mac 1.5.0 remains an unsubmitted draft
+with no selected build. Older draft and beta checkpoints below are historical.
+
+## Production approval and locale checkpoint — October 27, 01:42 UTC (historical)
+
+At that checkpoint, iOS **1.18.1 (36)** read **READY_FOR_SALE**, and its US review was **COMPLETE**. Following
+approval, Apple's primary-locale PATCH succeeded. Two subsequent GETs confirmed **en-US**;
+the immediate GET had briefly retained en-CA. The US listing and both beta records are en-US.
+No replacement binary was uploaded. Preserve the `post-approval-primary-*.json` receipts in the
+external `listentome-appstore-publication/locale-mac-correction/` evidence folder.
+Mac 1.5.0 still has no selected build or submitted review; its installed acceptance and fresh
+screenshots remain pending. The older locale/review states below are historical.
+
+## Earlier locale correction — October 26, 22:41 UTC
+
+The App Store en-US localization and its 24 processed screenshots did not change TestFlight's
+separate metadata. A live audit found build 36 had only en-CA beta records. The en-US What to Test
+record `bdb57918-4408-4912-8457-142e9271cccd` and beta description record
+`d6a94767-2be2-4fd1-a9f5-87e58b598f9e` were created and read back against the checked-in US copy.
+Other locales remain unchanged; no binary was uploaded. Evidence:
+`listentome-appstore-publication/locale-mac-correction/beta-en-US-corrected.json`.
+
+At that checkpoint, app-wide primary language still read en-CA. Apple's [change-primary-language requirements](https://developer.apple.com/help/app-store-connect/manage-app-information/localize-app-information)
+require prior approval of the new localization and screenshots for all supported platforms, not
+just successful processing. The iOS en-US submission was waiting for review, and the Mac platform
+still needs its own build, screenshots and acceptance. Do not withdraw a correct pending US iOS
+review merely to repeat a primary-locale PATCH before eligibility changes.
+
 This is the release runbook for ListenToMe on iPhone/iPad. Follow it when an iOS **release train** is
 due — not after every merged fix. Merging a PR, building an archive, or exporting an IPA does **not**
 publish the app; equally, a merged iOS change does not by itself call for an upload.
 
 For the separate official production review, use the canonical
 [App Store submission checklist](../AGENTS.md#official-app-store-review-and-public-release).
-It requires explicit version/platform authorization, production acceptance, en-US readback, fresh
-processed screenshots including Duo and embedded Watch, and an actual Apple review receipt.
+The maintainer’s standing authorization of **2026-10-28 (Toronto)** covers every ready iOS version;
+submit without renewed permission once production acceptance, exact-source validation/CI, en-US
+metadata/readback and fresh processed screenshots including Duo and embedded Watch are complete.
+Preserve the existing release mode, leave manual-release versions pending after approval and retain
+an actual Apple review receipt. OS authentication and readiness gates are not waived.
 TestFlight availability does not prove submission, approval or public release.
 
 **Cadence.** Publish when a batch of merged iOS work is complete, or when a single user-visible fix
@@ -233,12 +272,28 @@ native pixel dimensions, capture command/test, and SHA-256 of each file in a man
 `dist/ios-<version>-build<build>-evidence/screenshots/`. Preserve this directory before archiving a
 worktree. Screenshots do not replace physical-device acceptance.
 
+For a concise README Duo preview, run
+`MobileReleaseScreenshotTests/testCaptureCleanDuoPreview` on an iPhone simulator. It uses the
+isolated `--design-review-fixture --release-duo-fixture` sample and checks complete authored
+transcript/Quick text inside their separate viewports before capture. `READMEPREVIEW-001` records
+its real clipping red and native green. The default six-screen release journey remains unchanged;
+this one preview does not replace the device matrix or long-content acceptance. Preserve native
+EXIF orientation and verify the rendered image, as stored pixel dimensions can be portrait while
+the displayed capture is landscape. [October 29 candidate](images/ios/candidate-2026-10-29/manifest.json).
+
 1. Check the candidate's supported device families and the current screenshot slots in App Store
    Connect. Capture **iPhone and iPad**, using native-resolution simulators/devices for every required
    display-size slot. Also inspect compact/large iPhones and compact/large iPads during layout tests;
    this coverage is broader than the store's minimum upload slots. Do not assume a single iPhone
    screenshot covers tablets or every required size. When Watch is embedded in a distributed build,
-   add every applicable Watch screenshot category. Do not advertise the unshipped Watch feature.
+   add every applicable Watch screenshot category. Series 12 and Ultra 4 simulator profiles require
+   watchOS 27 or later; the 26.5 runtime cannot run them. Inspect the actual device/runtime profile
+   instead of substituting an older model name. The saved [native model previews](images/watch/1.18.1-preview/README.md)
+   are historical build-36 previews, not current listing assets. The Watch companion is included in
+   public **1.19.1 (39)** and TestFlight **1.20.2 (42)**. Preserve the build-38
+   [capture catalog](images/ios/release-1.19.0-en-US.json) and [Watch previews](images/watch/1.19.0/README.md)
+   as historical evidence; capture fresh candidate-source media for the next authorized listing.
+   Physical Watch acceptance and Apple screenshot upload remain separate gates.
 2. Capture a coherent set: Live transcript/Quick, Summary, Notes/context and prompts when present,
    History, and relevant settings. Include the iPhone landscape two-pane layout and iPad wide layout
    in acceptance evidence; use orientations accepted by each store slot for listing assets. Exercise
@@ -248,8 +303,12 @@ worktree. Screenshots do not replace physical-device acceptance.
    --output-path <screenshots-directory>`, or capture a rendered simulator with
    `xcrun simctl io <device-id> screenshot <file.png>`. Inspect every final image at native resolution
    for clipping, stale copy, keyboard/alert overlays and unintended status text. Do not stretch a
-   smaller image to satisfy a larger display-size requirement. Refresh README/product images when
-   they depict changed screens, while keeping the full release-resolution originals in evidence.
+   smaller image to satisfy a larger display-size requirement. Update the `README.md` gallery on every
+   train from the reviewed set, including iPhone portrait, Duo/landscape, iPad wide and embedded Watch.
+   Follow [the gallery layout and provenance policy](../AGENTS.md#readme-screenshot-gallery): group
+   devices, add captions/alt text/full-size links, retain truthful version/status labels and inspect
+   desktop/mobile rendering. Keep full native-resolution originals in evidence; README updates and
+   Apple listing uploads are separate deliverables.
 4. Before an **authorized App Store submission**, upload the selected current images to the matching
    app-version localization and device-size screenshot sets. Verify the current Apple requirements
    and the slots shown in App Store Connect at release time rather than relying on a fixed size list.
@@ -259,7 +318,8 @@ worktree. Screenshots do not replace physical-device acceptance.
    not update listing screenshots. Resolve stale/missing sets before submission.
 5. For TestFlight-only trains, prepare and preserve the full fresh set for the next App Store version;
    report listing upload as pending unless it was actually completed. TestFlight upload does not
-   itself authorize public App Store submission. If the editable App Store version or upload access
+   itself satisfy production readiness. Once that version is ready, the standing review-submission
+   authorization applies without another permission request. If the editable App Store version or upload access
    is unavailable, preserve the set and name that specific blocker, without claiming Apple has it.
 
 ## App identity and prerequisites

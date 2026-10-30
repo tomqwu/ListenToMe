@@ -9,6 +9,7 @@ Describe the user-visible problem and resulting behavior. Link the issue being c
 - Green: command and passing outcome after implementation:
 - Refactor and regression checks:
 - Manual/device acceptance, screenshots and remaining limits:
+- README gallery: refreshed images/device coverage, capture source/version, desktop/mobile render and link checks; or precise unchanged/blocked reason:
 
 For documentation-only changes, say so and record content/link checks. For adoption of an existing
 test, label it baseline adoption and never invent a red run. New/changed behavior still needs a

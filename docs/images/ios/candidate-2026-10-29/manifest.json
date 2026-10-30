@@ -1,0 +1,55 @@
+{
+  "purpose": "README native iPhone Duo preview",
+  "status": "unreleased candidate; not the published TestFlight build42 binary or an App Store listing upload",
+  "sourceCommit": "f3b35f430b9182c5df62f6cf2f420a2753d08351",
+  "captureBaseCommit": "0f94823c38f50a9b20a5cbbf7e43ceef5621cb96",
+  "sourceEquivalence": {
+    "verifiedInputCount": 1039,
+    "allCaptureInputsMatchCommittedSource": true
+  },
+  "configuredVersion": "1.20.2",
+  "configuredBuild": "42",
+  "configuration": "Debug simulator; isolated synthetic data and preview adapters",
+  "device": "iPhone 17 Pro Max",
+  "runtime": "iOS 26.5",
+  "locale": "en-US",
+  "orientation": "landscapeLeft",
+  "captureTest": "ListenToMeIOSUITests/MobileReleaseScreenshotTests/testCaptureCleanDuoPreview",
+  "scenario": "READMEPREVIEW-001",
+  "image": {
+    "file": "iphone-duo.png",
+    "sha256": "58d3c228f7a7113c6a5b0d6103444dbeca97f88676d742507effd6d1c7a2e9cb",
+    "storedPixels": [
+      1320,
+      2868
+    ],
+    "exifOrientation": 8,
+    "displayPixels": [
+      2868,
+      1320
+    ],
+    "edited": false
+  },
+  "binaryPayloads": {
+    "ListenToMeIOS": "89768f26173e047f3fef3a13c093dae883251254c799ba2778b250214af56ff6",
+    "ListenToMeIOS.debug.dylib": "ebdfd97aaa86d8f3c0b7840e2d6af4f206577e5cd0c5f88e0e3b8bda46866a04",
+    "__preview.dylib": "7f095fad58b0f77f26f97b3799d0aa602738c24f523c876989bf5f76dd186f25",
+    "Info.plist": "400979043645fb8f8d000781672da2b5bd7233bb5a64df6c1a7a37328c066f9b"
+  },
+  "validation": {
+    "red": "one native method, two genuine clipped-text assertions, exit65",
+    "green": "same method and assertions, zero failures, exit0",
+    "defaultFixtureRegression": "testCaptureReleaseScreens passed unchanged default journey, exit0",
+    "structuralBDD": 245,
+    "independentCodeAndPixelReview": "clear",
+    "githubRender": "pending in follow-up receipt after push"
+  },
+  "evidenceRoot": "/Users/tomwu/Documents/Codex/2026-10-29/listentome-readme-duo-capture",
+  "nativeOutcomeSHA256": "8c52aea85059ad63974e47f2b1996732f0a0f96dd32442ce3a40af8796dae27c",
+  "limitations": [
+    "Concise synthetic preview, not long-content acceptance.",
+    "No physical-device, live audio, speaker-quality or translation-quality acceptance.",
+    "No uploaded Store screenshots, new TestFlight binary or production release."
+  ],
+  "createdAt": "2026-10-29T19:42:43.441681+00:00"
+}

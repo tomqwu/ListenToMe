@@ -61,6 +61,26 @@ Foreground preparation loads both the live model and the separate existing offli
 An import cannot start their download or mutate the live stream. A partial preparation failure stays
 unavailable until retry; retry reaches both pipelines. No SwiftPM dependency version changed.
 
+## Renaming from the transcript
+
+On iPhone/iPad, long-press an identified transcript line and choose **Rename speaker**.
+This works in the compact reader, expanded transcript and Duo. On Mac, double-click the
+speaker label or use the row's **Rename speaker** context menu. The editor has explicit Save
+and Cancel actions; blank names and device labels cannot replace a participant. Names are
+normalized to one line and limited to 80 characters, matching the existing Notes editor.
+
+Save changes every line carrying that identity in the current conversation. Other identities
+remain separate, even if they have the same display name. This names an already identified
+speaker; it does not split an incorrectly merged voice or create a reusable voice profile.
+Unidentified Microphone/Apple Watch lines have no rename action. Existing Notes/Speakers
+editing remains available. The BDD shortcuts are `SPEAKER-017` and `SPEAKER-018` in
+[the rename contract](../Behaviors/speaker-renaming.json); installed Mac sheet/save and
+VoiceOver acceptance are separate from native callback tests. `SPEAKER-019` additionally checks
+cold fixture readiness and true Duo before renaming. The current integrated fixture has two-method
+red→green and a six-method related simulator pass, tied to base `6705543` plus retained dirty inputs;
+[the bounded receipt](releases/speaker-rename-6705543-readiness.json) records exact hashes and limits.
+This does not prove real speaker inference, disk persistence across relaunch or installed Mac use.
+
 ## Privacy and model provenance
 
 Audio and inference remain on-device. Preparation downloads public weights from

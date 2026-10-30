@@ -7,12 +7,67 @@ final class SessionExporterTests: XCTestCase {
         TranscriptSegment(source: .you, text: "Yes, with the hotfix.", isFinal: true, start: 0, end: 0)
     ]
 
+    func testManualEditsExportManualProvenanceAndKeepFirstOriginal() {
+        for priorModel in [nil, "llama3.2"] as [String?] {
+            let original = TranscriptSegment(source: .others, text: "The budget is $120.", isFinal: true,
+                start: 34, end: 36, speakerID: "speaker-1", speakerName: "Sam",
+                originalText: priorModel == nil ? nil : "The budget is 120.", correctionModel: priorModel)
+            let store = ConversationStore()
+            store.apply(original)
+            for corrected in ["The budget is $125.", "The budget is $130."] {
+                XCTAssertTrue(store.edit(id: original.id, text: corrected))
+                let beforeExport = store.utterances
+                let markdown = SessionExporter.markdown(title: "Budget", transcript: store.utterances)
+                let firstWording = original.originalText ?? original.text
+                XCTAssertTrue(markdown.contains("- Original: \(firstWording)\n  Manual correction: \(corrected)"),
+                              markdown)
+                XCTAssertFalse(markdown.contains("AI correction:"), markdown)
+                XCTAssertEqual(store.utterances, beforeExport)
+                XCTAssertEqual(store.utterances.first?.id, original.id)
+                XCTAssertEqual(store.utterances.first?.start, original.start)
+                XCTAssertEqual(store.utterances.first?.speakerID, original.speakerID)
+                XCTAssertEqual(store.utterances.first?.originalText, firstWording)
+                XCTAssertEqual(store.utterances.first?.correctionModel, "Manual")
+            }
+        }
+    }
+
+    func testKnownModelCorrectionRetainsAIAttribution() {
+        let segment = TranscriptSegment(source: .others, text: "The budget is $120.", isFinal: true,
+            start: 34, end: 36, originalText: "The budget is 120.", correctionModel: "llama3.2")
+        let markdown = SessionExporter.markdown(title: "Budget", transcript: [segment])
+        XCTAssertTrue(markdown.contains("- Original: The budget is 120.\n  AI correction: The budget is $120."),
+                      markdown)
+        XCTAssertFalse(markdown.contains("Manual correction:"), markdown)
+        XCTAssertEqual(segment.originalText, "The budget is 120.")
+        XCTAssertEqual(segment.correctionModel, "llama3.2")
+    }
+
+    func testLegacyUnknownCorrectionStaysNeutralAndUncorrectedLinesHaveNoEntry() {
+        for model in [nil, "", " \n "] as [String?] {
+            let segment = TranscriptSegment(source: .others, text: "The budget is $120.", isFinal: true,
+                start: 34, end: 36, originalText: "The budget is 120.", correctionModel: model)
+            let markdown = SessionExporter.markdown(title: "Budget", transcript: [segment])
+            XCTAssertTrue(markdown.contains("- Original: The budget is 120.\n  Correction: The budget is $120."),
+                          markdown)
+            XCTAssertFalse(markdown.contains("AI correction:"), markdown)
+            XCTAssertFalse(markdown.contains("Manual correction:"), markdown)
+            XCTAssertEqual(segment.correctionModel, model)
+        }
+        let uncorrected = TranscriptSegment(source: .others, text: "Unchanged", isFinal: true,
+            start: 0, end: 1, correctionModel: "Manual")
+        let markdown = SessionExporter.markdown(title: "Budget", transcript: [uncorrected])
+        XCTAssertTrue(markdown.contains("Others:** Unchanged"), markdown)
+        XCTAssertFalse(markdown.contains("Speech corrections"), markdown)
+    }
+
     func testTranscriptNamesAndCorrectionTextCannotInjectMarkdown() {
         let segment = TranscriptSegment(source: .others, text: "Please **ship**\n# Notes\n- now",
                                         isFinal: true, start: 0, end: 1, speakerID: "ann",
                                         speakerName: "Ann**\n# Owner",
                                         originalText: "Original [link](https://example.com)\n> quoted")
-        let markdown = SessionExporter.markdown(title: "Meeting", transcript: [segment], listenerSummary: "**Keep bold**")
+        let markdown = SessionExporter.markdown(title: "Meeting", transcript: [segment],
+                                               listenerSummary: "**Keep bold**")
         XCTAssertTrue(markdown.contains(##"Ann\*\* \# Owner"##), markdown)
         XCTAssertTrue(markdown.contains(##"Please \*\*ship\*\* \# Notes \- now"##), markdown)
         XCTAssertTrue(markdown.contains(##"Original \[link\](https://example.com) \> quoted"##), markdown)

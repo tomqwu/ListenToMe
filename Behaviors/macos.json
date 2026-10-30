@@ -48,6 +48,217 @@
           "test": "MeetingPaneBalanceTests/testNarrowPaneNeverSacrificesOtherPanesMinimum"
         }
       ]
+    },
+    {
+      "id": "MACAUDIO-002",
+      "name": "Finish or cancel a prepared import even when one speech channel received no audio",
+      "given": "native on-device speech channels are prepared with installed English assets and either one or neither channel receives audio",
+      "when": "the file ends or the user cancels the prepared import",
+      "then": "finalization returns promptly, closes result streams, retains the first and final spoken words with source and audio time, and creates no speech or failure status from intentionally unused channels",
+      "covers": [
+        "App/SpeechAnalyzerTranscriber.swift",
+        "project.yml"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacSpeechFinalizationTests.swift",
+          "test": "MacSpeechFinalizationTests/testPreparedChannelsWithoutAudioFinishAndCloseResults"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacSpeechFinalizationTests.swift",
+          "test": "MacSpeechFinalizationTests/testOneUsedChannelDoesNotLeaveTheOtherPreparedChannelOpen"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacSpeechFinalizationTests.swift",
+          "test": "MacSpeechFinalizationTests/testCancelledPreparedImportClosesResultsAndReturns"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacSpeechFinalizationTests.swift",
+          "test": "MacSpeechFinalizationTests/testSingleChannelImportRetainsFinalWordsAndTimestampsAtEOF"
+        }
+      ],
+      "manual": {
+        "reason": "Native transcriber tests do not inspect installed Start/New controls.",
+        "steps": [
+          "Import the synthetic Orion file once as Others and once as You; inspect final words and source labels.",
+          "Verify the import progress disappears and Start/New/Import controls become available.",
+          "Cancel a separate import and confirm controls return with incomplete-import guidance."
+        ]
+      }
+    },
+    {
+      "id": "MACAUDIO-003",
+      "name": "Present delayed channel results in recording order without changing capture identity",
+      "given": "a known recording has delayed finalized results from two channels, including identical times and lines with unavailable timestamps",
+      "when": "the user reads or exports the transcript and later reopens or edits a line",
+      "then": "timed lines within each explicit run display in stable chronological order, unknown boundaries remain intact, and capture IDs, times, source, saved arrival order and editing targets are preserved; duration sums known recording spans without mistaking a delayed channel for a new recording, while legacy records retain timestamp-based fallback",
+      "covers": [
+        "Sources/ListenToMeCore/TranscriptPresentation.swift",
+        "Sources/ListenToMeCore/Models.swift",
+        "Sources/ListenToMeCore/MeetingSession.swift",
+        "Sources/ListenToMeCore/ConversationStore.swift",
+        "Sources/ListenToMeCore/SessionExporter*",
+        "Sources/ListenToMeCore/MarkdownVault.swift",
+        "App/CommandCenterPanes.swift",
+        "Sources/ListenToMeCore/OnDemandGrounding.swift",
+        "Sources/ListenToMeCore/TranscriptTimestamp.swift",
+        "iOS/MobileTranscriptCorrection.swift",
+        "iOS/MobileSession+LiveSnapshot.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/TranscriptPresentationTests.swift",
+          "test": "TranscriptPresentationTests/testDelayedChannelsDisplayChronologicallyWithoutChangingCanonicalIdentity"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/TranscriptPresentationTests.swift",
+          "test": "TranscriptPresentationTests/testStableTiesAndExplicitRunsNeverCrossUntimedOrUnknownBoundaries"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/TranscriptPresentationTests.swift",
+          "test": "TranscriptPresentationTests/testRunSurvivesCodingShiftingAndLegacyDecoding"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/TranscriptPresentationTests.swift",
+          "test": "TranscriptPresentationTests/testReadableExportsOrderKnownRunsWhileJSONKeepsCanonicalOrder"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/MeetingSessionTimelineTests.swift",
+          "test": "MeetingSessionTimelineTests/testLiveRunsReceiveDistinctPersistentIdentityWithoutReorderingArrival"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/OnDemandGroundingTests.swift",
+          "test": "OnDemandGroundingTests/testShorteningProvisionalSpeechPreservesItsTagAndMinimumEvidence"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/TranscriptPresentationTests.swift",
+          "test": "TranscriptPresentationTests/testDurationUsesExplicitRunsAndLegacyFallbackWithoutSplittingLateChannels"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/MeetingSessionTimelineTests.swift",
+          "test": "MeetingSessionTimelineTests/testSecondRecordingContinuesTheConversationTimeline"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileLiveSnapshotTests.swift",
+          "test": "MobileLiveSnapshotTests/testCorrectionsAndProvisionalSnapshotsPreserveRecordingIdentity"
+        }
+      ],
+      "manual": {
+        "reason": "Core projection assertions do not prove rendered Mac rows or physical echo suppression.",
+        "steps": [
+          "Install the source-matched candidate; reproduce delayed two-channel finalization and inspect chronological rendered text.",
+          "Confirm edit, speaker rename and saved-audio selection still address the intended line after display order changes.",
+          "Keep playback echo acceptance separate; do not mark issue336 complete on ordering tests alone."
+        ]
+      }
+    },
+    {
+      "id": "MACAUDIO-004",
+      "name": "Protect microphone capture from device playback echo and clean up failed or stopped engines",
+      "given": "Mac listening uses microphone and system audio, or the input route changes or setup fails",
+      "when": "the microphone starts, recovers from a stopped engine, or the user presses Stop",
+      "then": "echo control is configured before the tap format is read; failure never silently starts raw input; only unchanged route, tap format and voice profile configuration notifications do not restart capture; failed setup cleans the tap and Stop prevents future recovery; a real route failure inside the recovery cooldown suspends unsafe input and retries after the cooldown unless Stop intervenes",
+      "covers": [
+        "App/MacMicrophoneCapture.swift",
+        "App/DualChannelCapture.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacMicrophoneCaptureTests.swift",
+          "test": "MacMicrophoneCaptureTests/testListeningEnablesEchoControlBeforeReadingFormatAndInstallingTap"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacMicrophoneCaptureTests.swift",
+          "test": "MacMicrophoneCaptureTests/testEchoFailureNeverStartsAnUnprotectedMicrophoneAndStartFailureCleansTap"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacMicrophoneCaptureTests.swift",
+          "test": "MacMicrophoneCaptureTests/testHealthyConfigurationNotificationDoesNotRestartAndStopCannotResurrectCapture"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacMicrophoneCaptureTests.swift",
+          "test": "MacMicrophoneCaptureTests/testRunningEngineWithChangedRouteOrVoiceProfileRebuildsItsTap"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacMicrophoneCaptureTests.swift",
+          "test": "MacMicrophoneCaptureTests/testStopDuringEngineStartCleansUpBeforeReturningAndQueuedRecoveryStaysStopped"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacMicrophoneCaptureTests.swift",
+          "test": "MacMicrophoneCaptureTests/testSecondRouteFailureDuringCooldownStopsUnsafeInputThenRecoversUnlessStopped"
+        }
+      ],
+      "manual": {
+        "reason": "Injected engine tests prove setup and lifecycle, not acoustic echo attenuation or native route compatibility.",
+        "steps": [
+          "Confirm Listening and both channels active before synthetic playback. Playback-only speech must appear as OTHERS without duplicate YOU.",
+          "Verify independent microphone speech and overlapping or genuinely repeated speech remain; do not remove transcripts by matching words.",
+          "Check headphone and speaker routes, route changes, Stop and setup failure recovery in the installed signed candidate."
+        ]
+      }
+    },
+    {
+      "id": "MACEDIT-001",
+      "name": "Open a final transcript line editor with a native double click while retaining text selection",
+      "given": "two finalized transcript lines and an unfinished line are rendered in the Mac transcript with selectable text",
+      "when": "the user double clicks a finalized line, selects and copies text, or uses the accessible edit action",
+      "then": "the intended final line opens its editor without changing adjacent text or metadata, copying retains the selected phrase, and unfinished text cannot be edited; wrapped Latin and CJK lines remain fully visible across resize and a same-text refresh preserves the active selection",
+      "covers": [
+        "App/EditableTranscriptRow.swift",
+        "App/NativeTranscriptText.swift",
+        "App/CommandCenterLabels.swift",
+        "App/CommandCenter.swift",
+        "project.yml"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacTranscriptInteractionTests.swift",
+          "test": "MacTranscriptInteractionTests/testDoubleClickFinalRowOpensOnlyThatLineEditor"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacTranscriptInteractionTests.swift",
+          "test": "MacTranscriptInteractionTests/testPartialRowCannotOpenEditor"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacTranscriptInteractionTests.swift",
+          "test": "MacTranscriptInteractionTests/testNativeSelectionCopiesOnlySelectedPhraseAndAccessibleActionOpensEditor"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacTranscriptInteractionTests.swift",
+          "test": "MacTranscriptInteractionTests/testWrappedTextFitsAfterResizeAndSelectionSurvivesSameTextRefresh"
+        }
+      ],
+      "manual": {
+        "reason": "Native hosted event tests do not establish installed app pointer, keyboard, layout or saved-conversation acceptance.",
+        "steps": [
+          "Double-click actual selectable final text in the installed signed candidate; verify the editor contains only that line.",
+          "Select and copy a phrase, cancel and save a correction; inspect original timestamp/source and adjacent rows.",
+          "Verify partial text has no edit action and capture screenshots; preserve evidence and clean the completed Dev session."
+        ]
+      }
     }
   ]
 }

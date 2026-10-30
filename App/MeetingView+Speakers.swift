@@ -157,13 +157,12 @@ extension MeetingView {
         // Keep names on one line in prompts/exports; blank edits leave the current label intact.
         let cleaned = name.components(separatedBy: .whitespacesAndNewlines)
             .filter { !$0.isEmpty }.joined(separator: " ")
-        guard !cleaned.isEmpty, let index = speakerParticipants.firstIndex(where: { $0.id == id }) else { return }
+        guard !cleaned.isEmpty else { return }
         let normalized = String(cleaned.prefix(80))
-        let source = speakerParticipants[index].source
-        speakerParticipants[index].name = normalized
+        guard let source = SpeakerParticipant.rename(id: id, to: normalized,
+            participants: &speakerParticipants, store: store) else { return }
         speakerTrackers[source]?.rename(id: id, name: normalized)
         speakerIdentities[source]?[id]?.name = normalized
-        store.renameSpeaker(id: id, name: normalized)
         session.speakerNamesChanged()
         speakerCheckpoint.start(load: { await session.waitForResponse(.listener) }, apply: { _ in
             saveSessionIfEnabled(session: session, force: true)

@@ -21,6 +21,7 @@ struct MobileWorkspaceView<Header: View>: View {
     /// presented from a view that survives layout changes (the panel itself is rebuilt on rotation).
     @State private var panelRequest: MobileSelectionRequest?
     @State private var expandedRequest: MobileSelectionRequest?
+    @State private var speakerRenameRequest: MobileSpeakerRenameRequest?
     @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
@@ -34,7 +35,7 @@ struct MobileWorkspaceView<Header: View>: View {
                     summaryPanel(.summary)
                 }.accessibilityElement(children: .contain).accessibilityIdentifier("wideMeetingWorkspace")
             } else {
-                VStack(spacing: 14) {
+                VStack(spacing: layout == .twoPane ? 6 : 14) {
                     HStack(spacing: 8) {
                         Picker("Workspace", selection: $selection) {
                             ForEach(MobileWorkspace.allCases, id: \.self) { page in
@@ -88,11 +89,16 @@ struct MobileWorkspaceView<Header: View>: View {
                 MobileSelectionSummarySheet(session: session, request: request).presentationDetents([.medium, .large])
             }
         }
+        .sheet(item: $speakerRenameRequest) { request in
+            MobileSpeakerRenameSheet(session: session, request: request)
+        }
         .sheet(item: $panelRequest) { request in
             MobileSelectionSummarySheet(session: session, request: request).presentationDetents([.medium, .large])
         }
         .onChange(of: showTranscript) { _, shown in if !shown { selectingTranscript = false; transcriptSelection.clear() } }
-        .onChange(of: session.id) { selectingTranscript = false; transcriptSelection.clear() }
+        .onChange(of: session.id) {
+            selectingTranscript = false; transcriptSelection.clear(); speakerRenameRequest = nil
+        }
         .sheet(isPresented: $showSpeechSettings) {
             NavigationStack {
                 Form {
@@ -186,7 +192,10 @@ struct MobileWorkspaceView<Header: View>: View {
                     .accessibilityIdentifier("latestTranscriptPreview")
             } else {
                 MobileSelectableTranscript(session: session, selection: $transcriptSelection,
-                                           selecting: $selectingTranscript, request: $panelRequest, selectable: false,
+                                           selecting: $selectingTranscript, request: $panelRequest,
+                                           requestSpeakerRename: { line in
+                                               speakerRenameRequest = .init(line: line, conversationID: session.id)
+                                           }, selectable: false,
                                            startSelecting: { showTranscript = true }).id(session.id)
             }
         }.frame(maxWidth: .infinity, maxHeight: scrolling ? nil : .infinity, alignment: .topLeading)
@@ -246,7 +255,8 @@ struct MobileWorkspaceView<Header: View>: View {
                         Text(reason).font(.caption).foregroundStyle(MobileStyle.muted)
                             .accessibilityIdentifier("reason-\(mode.rawValue)")
                     }
-                }.frame(maxWidth: .infinity, alignment: .leading).padding(16)
+                }.frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16).padding(.vertical, compact ? 8 : 16)
             }
         }.frame(maxWidth: .infinity, maxHeight: scrolling ? nil : .infinity, alignment: .topLeading)
             .modifier(MobileCard())
@@ -341,7 +351,10 @@ struct MobileWorkspaceView<Header: View>: View {
         }
     }
 
-    private func modelButton(_ mode: MobileSummaryMode) -> some View {
+}
+
+private extension MobileWorkspaceView {
+    func modelButton(_ mode: MobileSummaryMode) -> some View {
         Button { chooseModel(mode) } label: {
             HStack(spacing: 4) {
                 Text(session.ai.provider == .apple ? "Apple Intelligence" :
@@ -355,7 +368,7 @@ struct MobileWorkspaceView<Header: View>: View {
         }.buttonStyle(.plain).accessibilityIdentifier("panel-model-\(mode.rawValue)")
     }
 
-    private var autoToggle: some View {
+    var autoToggle: some View {
         Toggle("Auto", isOn: $session.autoQuick).font(.caption)
             .accessibilityLabel("Auto summaries")
             .accessibilityHint(session.ai.provider != .apple

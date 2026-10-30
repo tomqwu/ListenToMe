@@ -56,6 +56,8 @@ the paired phone after transcription; Watch recording and transfer compatibility
 
 ## Verification boundaries
 
+Unreleased #346 strengthens essential guidance and recovery captions. Actual iOS text renders and supported native Mac surfaces have focused legibility coverage; Mac increased-contrast propagation and broader acceptance remain separate. See [the legibility record](translation-legibility.md).
+
 `TRANSLATE-001`–`TRANSLATE-014` bind original preservation, archive/checkpoint behavior, native pair
 adapters, stale-result/cancellation/background handling and native controls to XCTest. UI previews
 use explicit DEBUG-only synthetic translations; they prove placement and controls, not model quality.

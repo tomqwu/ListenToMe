@@ -46,6 +46,8 @@ final class HistorySearchModel {
     @ObservationIgnored var records: @MainActor () -> [SessionRecord] = { [] }
     @ObservationIgnored let index: HistoryIndex
     @ObservationIgnored private var maintenance: Task<Void, Never>?
+    @ObservationIgnored private var intendedEmbedder: (any HistoryEmbedder)?
+    @ObservationIgnored private var semanticReady = true
     @ObservationIgnored private var removal: Task<Void, Never>?
     /// Bumped by Clear history / Delete all: index work queued before it is dropped.
     @ObservationIgnored private var epoch = 0
@@ -65,9 +67,49 @@ final class HistorySearchModel {
     static func shared(besideArchive archive: URL) -> HistorySearchModel {
         let key = archive.standardizedFileURL.path
         if let existing = shared[key] { return existing }
-        let model = HistorySearchModel(index: HistoryIndex(directory: HistoryIndex.directory(besideArchive: archive)))
+        let model = HistorySearchModel(index: HistoryIndex(directory: HistoryIndex.directory(besideArchive: archive),
+                                                         embedder: NaturalLanguageEmbedder()))
         shared[key] = model
         return model
+    }
+
+    /// Switch the same index actor so a late old backend cannot write into a replacement's files.
+    func setEmbedder(_ embedder: any HistoryEmbedder) {
+        intendedEmbedder = embedder
+        semanticReady = false
+        epoch += 1
+        pendingSync?.cancel(); pendingUpdate?.cancel(); pendingUpdates = [:]
+        maintenance?.cancel(); searchTask?.cancel()
+        clearAnswer()
+        generation += 1; results = nil; resultsQuery = ""
+        let epoch = epoch
+        maintenance = Task { [weak self] in
+            guard let self, self.epoch == epoch, !Task.isCancelled else { return }
+            _ = await self.prepareBackend(for: epoch)
+            guard self.epoch == epoch, !Task.isCancelled else { return }
+            self.historyChanged()
+        }
+    }
+
+    /// A failed switch must not silently keep an optional backend active after opt-out.
+    /// Preserve the intended choice for the next save/sync; only a complete rebuild opens Ask.
+    private func prepareBackend(for expectedEpoch: Int) async -> Bool {
+        guard epoch == expectedEpoch, !Task.isCancelled else { return false }
+        if semanticReady { return true }
+        guard let replacement = intendedEmbedder else { return false }
+        do {
+            try await index.setEmbedder(replacement)
+            guard epoch == expectedEpoch, !Task.isCancelled else { return false }
+            try await index.sync(records())
+            guard epoch == expectedEpoch, !Task.isCancelled else { return false }
+            semanticReady = true
+            intendedEmbedder = nil
+            historyChanged()
+            return true
+        } catch {
+            // Current archive text is still searchable by words; never query the previous backend.
+            return false
+        }
     }
 
     init(index: HistoryIndex, syncDelay: Duration = .seconds(5), searchDelay: Duration = .milliseconds(250)) {
@@ -86,10 +128,13 @@ final class HistorySearchModel {
         let delay = syncDelay
         pendingSync = Task { [weak self] in
             do { try await Task.sleep(for: delay) } catch { return }
-            self?.enqueue { [weak self] index in
+            guard let self else { return }
+            let epoch = self.epoch
+            self.enqueue { [weak self] index in
                 let report = try? await index.sync(records)
-                guard (report?.embedded ?? 0) + (report?.removed ?? 0) > 0 else { return }
-                await self?.historyChanged()
+                guard let self, self.epoch == epoch, !Task.isCancelled,
+                      (report?.embedded ?? 0) + (report?.removed ?? 0) > 0 else { return }
+                self.historyChanged()
             }
         }
     }
@@ -106,7 +151,16 @@ final class HistorySearchModel {
             guard let self else { return }
             let records = Array(self.pendingUpdates.values)
             self.pendingUpdates = [:]
-            self.enqueue { index in for record in records { _ = try? await index.update(record) } }
+            let epoch = self.epoch
+            self.enqueue { [weak self] index in
+                var published = false
+                for record in records {
+                    guard let self, self.epoch == epoch, !Task.isCancelled else { return }
+                    if (try? await index.update(record)) == true { published = true }
+                }
+                guard published, let self, self.epoch == epoch, !Task.isCancelled else { return }
+                self.historyChanged()
+            }
         }
     }
 
@@ -135,13 +189,18 @@ final class HistorySearchModel {
     }
 
     /// Runs `work` in order behind earlier maintenance, unless History was cleared since.
-    private func enqueue(_ work: @escaping @Sendable (HistoryIndex) async -> Void) {
+    private func enqueue(_ work: @escaping @MainActor @Sendable (HistoryIndex) async -> Void) {
         let previous = maintenance
         let index = index
         let epoch = epoch
         maintenance = Task { [weak self] in
             await previous?.value
             guard let self, self.epoch == epoch, !Task.isCancelled else { return }
+            guard await self.prepareBackend(for: epoch) else {
+                guard self.epoch == epoch, !Task.isCancelled else { return }
+                self.historyChanged()
+                return
+            }
             await work(index)
         }
     }
@@ -179,7 +238,15 @@ final class HistorySearchModel {
             do { try await Task.sleep(for: delay) } catch { return }
             guard let self else { return }
             let generation = self.generation
-            let found = await index.search(trimmed, in: self.records())
+            let current = self.records()
+            let found: [HistorySearchResult]
+            if self.semanticReady {
+                found = await index.search(trimmed, in: current)
+            } else {
+                found = SessionSearch.search(current, query: trimmed).map {
+                    HistorySearchResult(record: $0, matchesWords: true, isRelated: false, snippet: nil)
+                }
+            }
             guard !Task.isCancelled, generation == self.generation, trimmed == self.activeQuery else { return }
             self.results = found
             self.resultsQuery = trimmed
@@ -202,6 +269,12 @@ final class HistorySearchModel {
              describe: @escaping (Error) -> String = { $0.localizedDescription }) {
         let trimmed = question.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, !isAsking else { return }
+        guard semanticReady else {
+            askError = "The History search model is not ready. Exact-word search is available; "
+                + "save or reload History to retry before asking."
+            answerQuestion = trimmed
+            return
+        }
         if let reason = route.unavailable { askError = reason; answerQuestion = trimmed; return }
         askTask?.cancel()
         askToken += 1
@@ -262,6 +335,18 @@ final class HistorySearchModel {
     func waitForSync() async {
         await pendingSync?.value
         await waitForMaintenance()
+    }
+
+    /// Waits for the pending debounced saves and their queued index work.
+    func waitForUpdates() async {
+        await pendingUpdate?.value
+        await waitForMaintenance()
+    }
+
+    /// Captures queued saves before testing cancellation of a later maintenance wrapper.
+    func waitForUpdateEnqueue() async -> Task<Void, Never>? {
+        await pendingUpdate?.value
+        return maintenance
     }
 
     /// Waits for the search being computed, if any.

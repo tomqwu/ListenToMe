@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-30",
+  "baseSource": "08521d5f2bf7d5e20410359e6560bd2d5c066eb6",
+  "scope": "Withdraw unaccepted optional MPNet product integration from PR318; retain independently tested Apple and index fixes. Issue223 stays open.",
+  "stages": {
+    "settings-red": {
+      "exit": 65,
+      "reaped": true,
+      "logSHA256": "5412a47cfc25c1ab67b87239f8ee918c126b20edf69c1c9f3d212bcc39761394"
+    },
+    "settings-green": {
+      "exit": 0,
+      "reaped": true,
+      "logSHA256": "a9405f15351cf395874577647dfb4edead6a88d414c9df3e7c3dbf2a6d6e581c"
+    },
+    "migration-native": {
+      "exit": 70,
+      "reaped": true,
+      "logSHA256": "8b45a25d35df5384a2788e3f383d6eef9841bc325484bede2fea3f3132bee4ba"
+    },
+    "migration-native-retry": {
+      "exit": 0,
+      "reaped": true,
+      "logSHA256": "7f6d76415e532a40d0f86aee674739643123f1084e3a7f8c57d5e013b3d2191c"
+    }
+  },
+  "settingsRed": "One native UI method reached Recording and failed one assertion on the visible heading and download button. 1049 inputs unchanged.",
+  "settingsGreen": "Same assertion method passed after withdrawal. 1039 inputs unchanged.",
+  "migration": "One native production-composition migration test passed first execution after a corrected target selector. The exit70 attempt executed no test and is not a product red. Archive and dormant sentinels retained; old derived vectors invalidated; literal History preserved.",
+  "qualityAcceptance": false,
+  "physicalAcceptance": false,
+  "fullValidation": "pending",
+  "independentReview": "No blocking findings; preserved corpus exactly equal, retained dependencies and Apple/indexing sources unchanged.",
+  "gallery": "Current gallery does not depict removed optional Settings controls. Inspected native Settings captures are scrolled QA evidence, not clean release media; existing source-labelled gallery retained. Fresh release gallery remains required.",
+  "externalEvidence": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-backlog318-completion"
+}

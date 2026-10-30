@@ -6,9 +6,10 @@ import ListenToMeCore
 struct MobileDesignFixture: View {
     @State private var session: MobileSession = {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("DesignUI-\(UUID())")
+        let duoPreview = ProcessInfo.processInfo.arguments.contains("--release-duo-fixture")
         // Synthetic release visuals explicitly represent a compatible recording device.
         // The ordinary simulator app keeps its actual unavailable capture status.
-        let answer = """
+        let answer = duoPreview ? "## Next steps\n- Alex owns onboarding.\n- Review Thursday." : """
         ## A focused first release
         - Keep the scope small and useful.
         - **Alex** owns onboarding.
@@ -30,12 +31,14 @@ struct MobileDesignFixture: View {
         session.title = "Product planning"
         session.segments = [
             TranscriptSegment(source: .you,
-                              text: "Let's keep the first release focused on the essentials. " +
-                                  "We can review the prototype on Thursday.",
+                              text: duoPreview ? "Alex owns onboarding." :
+                                  "Let's keep the first release focused on the essentials. " +
+                                      "We can review the prototype on Thursday.",
                               isFinal: true, start: 0, end: 12),
             TranscriptSegment(source: .you,
-                              text: "Alex will own the onboarding flow. " +
-                                  "We'll collect feedback before adding more features.",
+                              text: duoPreview ? "Review the prototype Thursday." :
+                                  "Alex will own the onboarding flow. " +
+                                      "We'll collect feedback before adding more features.",
                               isFinal: true, start: 12, end: 25)
         ]
         session.quickSummary = answer

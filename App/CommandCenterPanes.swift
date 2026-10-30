@@ -173,7 +173,7 @@ extension MeetingView {
                             systemImage: "waveform",
                             text: "Press Start listening to start transcribing the conversation.")
                     }
-                    ForEach(store.utterances) { transcriptRow(for: $0) }
+                    ForEach(store.presentedUtterances) { transcriptRow(for: $0) }
                     ForEach([SpeakerSource.you, .others], id: \.self) { source in
                         if let partial = store.partials[source] { transcriptRow(for: partial).opacity(0.7) }
                     }
@@ -225,13 +225,18 @@ extension MeetingView {
     private func transcriptRow(for seg: TranscriptSegment) -> some View {
         EditableTranscriptRow(segment: seg, speakerLabel: speakerRowLabel(for: seg),
             copyTranscript: {
-                let lines = store.utterances + [SpeakerSource.you, .others].compactMap { store.partials[$0] }
+                let lines = store.presentedUtterances + [SpeakerSource.you, .others].compactMap { store.partials[$0] }
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(lines.map { "\($0.speakerLabel): \($0.text)" }
                     .joined(separator: "\n"), forType: .string)
             }, edit: { editTranscriptLine(seg, text: $0) },
             delete: { deleteTranscriptLine(seg) },
-            addTerm: { vocabulary.termSourceLine = seg.text }, translatedText: session.liveTranslation.text(for: seg))
+            addTerm: { vocabulary.termSourceLine = seg.text }, translatedText: session.liveTranslation.text(for: seg),
+            renameSpeaker: { name in
+                guard let id = seg.speakerID,
+                      store.utterances.contains(where: { $0.id == seg.id && $0.speakerID == id }) else { return }
+                renameSpeaker(id: id, name: name)
+            })
     }
 
     /// Channel/speaker label for a transcript row: "YOU" for the mic; for the Others channel the

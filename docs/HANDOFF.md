@@ -1,3 +1,464 @@
+# Compact Duo layout recovery — October 30, 2026
+
+Full `make validate-local` on `95ac6387c112d82a083170caa95d6d88a3a893ed` failed the clean Duo
+preview on the shorter **iPhone 17 Pro / iOS 26.5 simulator**: transcript and Quick text crossed
+their reader viewports. The owned run was interrupted after genuine assertions and ended exit 2,
+reaped. Its iOS bundle has **50 passed, five skipped, one genuinely failed and one canceled** test;
+the canceled test is not a second product failure, and the aggregate did not pass.
+
+The same strengthened `READMEPREVIEW-001` test reproduced two clipping assertions in the focused
+red run (exit 65). A minimal production spacing fix then passed the unchanged test: **one case,
+zero failures, exit 0, reaped**, with recorded inputs unchanged. The native image was inspected:
+both authored transcript lines and all three Quick lines are visible. Content and 44-point controls
+are preserved; accessibility scrolling remains. The earlier README preview changed only fixture data
+at that checkpoint; this follow-up changes compact-landscape production spacing.
+
+On committed `cb4cd313f8f85ae9d1214f0a2ecf2194de255c1a`, follow-up native UI passed **six tests,
+zero failures/skips**: five on iPhone 17 Pro (portrait/rotation, compact controls, accessibility
+scrolling, synthetic recording/Stop and clean Duo), plus clean Duo on Pro Max, both iOS 26.5.
+Both runs ended exit 0/reaped with all **1,043 frozen inputs unchanged**. The unchanged native Pro
+image refreshes the local README preview; the older Max image remains labelled historical.
+[Current image and both run receipts](images/ios/candidate-2026-10-30/manifest.json).
+
+Evidence: `2026-10-30/listentome-backlog318-completion/full-validation/`, `duo-compact-red/`,
+`duo-compact-green/` and `duo-focused-preparation/`. [Behavior and limits](IOS.md#unreleased-compact-landscape-duo-spacing).
+Fresh full validation, exact-head CI, hosted README rendering and affected installed acceptance
+remain pending. PR #318 remains unmerged; no release, review submission or Store-media upload is claimed.
+
+# Backlog completion scope — October 30, 2026
+
+PR #318 is being narrowed to its completed fixes and independently tested Apple History/indexing
+repairs. The optional MPNet installer, runtime and Settings controls are withdrawn from this
+candidate because their unchanged language-quality gate failed. Their complete source/tests remain
+preserved in `08521d5f2bf7d5e20410359e6560bd2d5c066eb6`; external native results and independent
+reviews remain intact. Issue #223 stays open. This is not a model-quality pass or a waiver.
+
+The candidate retains #333–#337 and #346–#348, correction-export provenance, screen-lock Settings
+copy, current README policy/gallery and the Apple vocabulary/query, indexing and generic-query
+repairs. Fresh local validation, independent review, hosted CI and affected installed acceptance
+are required before merge. No merge or release is yet claimed. Release-monitor automation remains
+paused while the explicitly resumed backlog work proceeds.
+
+The older checkpoints below describe their recorded sources. Their optional-runtime controls and
+quality-gate failures are historical for this narrowed candidate, not statements that those
+controls will be shipped. [Scope and preserved evidence](history-search-implementation.md).
+
+# Generic History queries — October 29, 2026
+
+The current PR #318 follow-up fixes reproduced German/Spanish generic-query false matches.
+`GENERICQUERY-001`–`008` cover actual Related/Ask paths, word/sentence and optional adapters,
+literal search, real topics, compounds and uncertainty. Native red: four methods/36 assertions;
+Core red: one method/seven assertions, expanded to ten before implementation. Review caught an
+introduced single-word ambiguity regression (one native/four Core assertions); that is repaired.
+The final native run passes **38 functional methods** while the same four optional-model quality
+methods still fail **12 assertions**. All 16 stored passage files are byte-for-byte unchanged.
+Core passes **1,300 tests / seven optional skips / zero failures / 97.9288% coverage**.
+Nine iPhone simulator runtime methods pass with no skips; build/runtime preserve all 1,048 inputs.
+All 263 Core BDD bindings, 264 structural scenarios, lint and diff checks pass. These simulator
+checks do not establish physical-device or additional-language quality acceptance.
+
+Queries now use whole-token equivalents of the existing English policies. Passage recipes,
+signatures, ranking cutoffs, literal History search and unsupported-language behavior stay intact.
+Ask keeps its narrower stopword policy; ambiguous account/story/painting terms remain searchable.
+This is not acceptance of additional-language quality. No visible UI changed; README retains its
+source-labelled gallery. Remaining validation, current CI, affected acceptance and merge are open.
+[Evidence and limits](history-search-implementation.md#generic-query-parity--october-29-follow-up).
+
+The preceding query-revision fix `34267ca` passed all three required checks in
+[run 40962403033](https://github.com/tomqwu/ListenToMe/actions/runs/40962403033).
+No version, upload, review submission or release is claimed.
+
+# Stored Apple query compatibility — October 29, 2026
+
+The current PR #318 follow-up preserves saved sentence-model History entries when word assets
+become available for the same language. Queries now respect each stored type and exact revision;
+passage recipes, stored bytes, minima and relevance cutoffs stay unchanged. `APPLEQUERY-001`–`003`
+include a real persisted-vector regression, mixed representations, malformed tags and unsupported
+revisions. Two methods/five assertions failed before repair; all three now pass. The wider run
+passes **32 functional methods** but still fails the same four MPNet quality methods/12 assertions.
+Core passes 1,298 tests with seven optional skips and 97.6489% coverage; all 261 Core BDD bindings
+and 256 structural scenarios pass. Nine iPhone simulator runtime methods pass without skips; lint
+and diff checks pass. Full validation, hosted CI, affected acceptance and merge remain open.
+No visible UI changed; the README gallery keeps its source-labelled captures.
+[Evidence and limits](history-search-implementation.md#stored-apple-query-representations--october-29-follow-up).
+
+The preceding `f82c60f` passed all three hosted checks in
+[run 40958000664](https://github.com/tomqwu/ListenToMe/actions/runs/40958000664).
+No merge, version bump, upload or review submission is claimed.
+
+# Apple word lookup and installed Copy acceptance — October 29, 2026
+
+The current PR #318 follow-up fixes a reproduced Apple History vocabulary defect. German models
+loaded successfully but lowercasing removed all five in-vocabulary nouns from the unchanged travel
+sample. The adapter now preserves non-English spelling with lowercase fallback and rebuilds stale
+empty caches. `APPLEWORD-001`–`005`: two methods/six assertions red, five methods green; **29 Mac
+functional methods pass**, while the four MPNet quality methods still fail 12 assertions. The
+separate Apple German baseline now has real vectors but remains **4/8** with one negative-query
+error. No quality criterion was relaxed. [Evidence and limits](history-search-implementation.md#case-sensitive-apple-vocabulary-regression--october-29-follow-up).
+
+All three hosted checks passed on the preceding `b8ebe86` in
+[run 40953710186](https://github.com/tomqwu/ListenToMe/actions/runs/40953710186). This new source needs
+its own CI. Core passes 1,298 tests (seven optional skips, zero failures), 97.6925% coverage;
+all 261 Core BDD bindings pass. Nine iPhone simulator runtime methods pass with no skips.
+All 253 BDD scenarios and lint pass. Full validation, affected acceptance, merge and release remain open.
+No visible UI changed; the README gallery keeps its existing source-labelled captures.
+
+Fresh signed sandbox source `b8ebe86` also passed installed transcript pointer selection, keyboard
+selection, Command-C and Edit-menu Copy with exact paste readback, accessibility Edit line and
+Cancel preserving the original rows. The existing synthetic conversation was used; no capture or
+provider request ran. Inline screenshots were inspected, but the native screenshot shortcut saved
+no Desktop image, so there is no saved-image claim. Actual VoiceOver and live-audio acceptance are
+separate. Source/signature and all 32 payload files verified; the completed Dev app was moved to
+Trash and only its app-scoped permissions reset. Independent review cleared the bounded receipt in
+`2026-10-29/listentome-mac337-copy-acceptance/`. No production permissions or data were changed.
+
+# Preserve Apple History routing — October 29, 2026
+
+Draft PR #318 preserves installed Apple embeddings when optional History languages are enabled and
+rebuilds stale derived vectors without altering conversations. Two new native regressions failed ten
+assertions before repair. All three hosted checks passed on application commit `f5edcc5` in
+[run 40951031804](https://github.com/tomqwu/ListenToMe/actions/runs/40951031804).
+
+A later official Apple asset request made German lexical tags and sentence embeddings available;
+Japanese timed out and Korean was not requested. This exposed an insufficient-content smoke sample,
+which was corrected without changing production code or the quality corpus. The final focused runs
+pass **24 Mac functional methods and nine iPhone simulator runtime methods**, no skips. Actual model
+quality still fails four methods / **12 assertions**, with unchanged DE 2/8, ES 1/8, JA 4/8, KO 2/8
+retrieval. The earlier 15-assertion outcome belongs to the prior asset state. This fixture/docs
+follow-up needs its own CI. Full validation, installed/physical acceptance and merge remain open.
+[Evidence and limits](history-search-implementation.md#preserve-installed-apple-languages--october-29-follow-up).
+
+No visible UI changed; the README screenshots remain accurate for their explicitly labelled sources.
+No new PR, version, upload, review submission or release was created.
+
+# README Duo preview and bounded installed Mac checks — October 29, 2026
+
+`f3b35f430b9182c5df62f6cf2f420a2753d08351` adds a capture-only short example in the existing
+DEBUG/simulator design fixture; production layouts and default fixtures are unchanged.
+`READMEPREVIEW-001` failed two genuine clipped-text assertions, then the same native test passed
+with both authored transcript lines and the complete Quick answer visible. The original six-screen
+capture journey also passed. All 1,039 inputs stayed unchanged in each run; independent code/pixel
+review cleared the result. The README now includes the native candidate image with full-size link
+and [source/binary/image provenance](images/ios/candidate-2026-10-29/manifest.json). It is not a new
+TestFlight build or Store upload. BDD now contains 245 scenarios. The owned simulator was deleted
+after all 138 retained evidence files were verified; other simulators were preserved.
+
+Signed sandbox Mac source `0f94823` also passed two bounded installed checks: History now renders
+the $120 → $125 edit as **Manual correction**, and a picker-selected external reference folder
+survives full process exit/relaunch with actual file content read by an existing local Ollama model.
+Opening another History conversation clears references by design and was recorded separately.
+No capture ran. Original provider/models were restored, references cleared, the exact Dev app moved
+to Trash and only its app-scoped permissions reset. The source/signature/payload and independent
+audit receipts are under `2026-10-29/listentome-mac318-gallery-acceptance/` in retained local evidence.
+Vault write/relaunch, identified-speaker interaction, real OTHERS audio and physical acceptance
+remain incomplete; these two checks do not establish full sandbox or production acceptance.
+
+All three hosted checks passed on `ece5593` and documentation head `0f94823`
+([40934516059](https://github.com/tomqwu/ListenToMe/actions/runs/40934516059),
+[40938355944](https://github.com/tomqwu/ListenToMe/actions/runs/40938355944)). This new follow-up
+still needs its own hosted CI. Full current validation remains blocked by the four real-model
+History quality failures below; supplying assets runs those required tests, while skipping them
+cannot satisfy BDD. No merge, version bump, upload or review submission is claimed.
+
+# Current follow-up: export provenance and History ranking — October 29, 2026
+
+The working follow-up to `bb50e673cf7892d64872c8e8ac4645b29214d6da` fixes two reproduced
+regressions in the existing draft PR #318. It is not merged or ready for distribution.
+
+- Markdown exports now distinguish manual edits from known AI corrections and legacy corrections
+  with unknown provenance. The first recognized wording remains intact. The exporter regression
+  failed two methods / 14 assertions before repair; all 20 exporter and golden tests then passed.
+- Independent History models no longer change each other's relevance mean or top-score cutoff.
+  Existing single-population behavior remains; independent admitted results combine by rank.
+  Five Core group contracts include a genuine tie-order regression. All 55 focused Core History
+  tests pass. The actual native composite reproduced five failures before its grouping override.
+  Strengthened persisted-vector checks pass in all seven runtime methods on both Mac and an
+  isolated iPhone simulator; simulator evidence does not establish physical acceptance.
+- Full current Core: **1,298 tests / seven optional skips / zero failures / 97.6913% coverage**, including
+  all **261 required Core BDD selectors**. All **244** scenarios pass structural checks; repository
+  `make lint` passes. Full combined validation,
+  installed/physical acceptance and exact follow-up CI remain outstanding. The three required
+  checks passed on the preceding `bb50e67` in
+  [run 40928129148](https://github.com/tomqwu/ListenToMe/actions/runs/40928129148).
+- The optional model's quality gate still fails: DE 2/8, ES 1/8, JA 4/8, KO 2/8. A separately frozen
+  sentence-window diagnostic reached 4/8, 3/8, 4/8, 3/8 respectively, below six-of-eight in every
+  language, with remaining negative/filler errors. That experiment is not integrated into the app.
+
+[History implementation and evidence](history-search-implementation.md). Correction evidence is
+retained under `/Users/tomwu/Documents/Codex/2026-10-29/listentome-manual-correction-export/`.
+No version bump, upload, review submission or new publication was performed.
+
+# In progress: History implementation and regression fixes — October 29, 2026
+
+This checkpoint adds actual #223 application/Core code on top of `57ac48f`; it is unmerged and
+**not ready for distribution**. Existing PR #318 remains the single draft. The earlier complete
+validation and installed acceptance below apply to their recorded sources, not this new work.
+
+- Added an asynchronous optional local model runtime, explicit verified asset installation and
+  Settings download/Cancel/opt-in/Remove controls for Mac and iPhone/iPad. Apple remains default;
+  no conversation/query upload or additional model download occurred during development.
+- Reproduced and fixed stale search results after saving, an older queued save restoring derived
+  data after Clear, failed model-switch recovery, legacy-cache reuse and short-query misrouting.
+  The real iOS Form also exposed an adjacent destructive-action tap hazard; separate rows repair it.
+  Settings now accurately describes screen-lock recording and paused optional AI work.
+- Current Core after test placement repair: **1,290 tests / seven optional skips / zero failures / 97.7364% coverage**.
+  Mac: **17 functional methods pass**; all **six actual-model runtime methods pass on iOS simulator**.
+  Three Settings journeys pass on iPhone and together on iPad; fresh QA screenshots are preserved
+  and inspected. **235 BDD scenarios** pass structural/change coverage against the actual PR base.
+  The first hosted Core check lacked Spanish lexical assets; all original assertions now remain
+  required in the appropriate Core/native suite. Local Core BDD passes all 253 selectors, and the
+  four moved native eligibility methods pass without skips. No runtime or quality rule changed.
+- The separate real-model quality gate remains failed: DE **2/8**, ES **1/8**, JA **4/8**, KO **2/8**
+  paraphrases versus the unchanged six-of-eight requirement, with remaining filler/negative errors.
+  No threshold or corpus label was loosened. Additional language coverage is not established.
+- Full combined validation, exact-head CI, merge and affected installed/physical acceptance remain
+  open. No release version, TestFlight upload, App Store submission or listing-media upload was made.
+  Do not infer current production readiness from earlier source passes or this focused runtime work.
+
+[Implementation, BDD evidence and remaining limits](history-search-implementation.md).
+
+# Backlog evidence checkpoint — October 29, 2026
+
+The combined application/test source remains `02205d278197d67c0cb29606e3fa63b2c6547c00`.
+Its documentation follow-up `a30aa535dcb809219eabd4fa89a67f03f17798a5` passed all three required
+checks in [CI run 40824605186](https://github.com/tomqwu/ListenToMe/actions/runs/40824605186).
+PR #318 remains draft and unmerged: installed Mac audio/interaction and the other acceptance gates
+below are incomplete. This later documentation-only checkpoint needs its own review/CI; it does
+not change application behavior, call a release or waive those gates.
+
+- **#236:** The unchanged after-assets Mac retry completed all 22 observations, five native tests
+  and the independently recounted scorer. All 16 target-presence comparisons showed zero gains or
+  losses. Retain the bounded decision against custom Dictation integration; actual-app physical
+  read-aloud/Add/language/personal-name acceptance remains incomplete. No further model search is
+  needed for that negative decision. [Updated evidence](vocabulary-biasing-evaluation.md).
+- **#223:** The actual Core export passed native noninterference tests. Fixed topical diagnostics
+  then found English and Spanish vectors on this Mac, while German/Japanese/Korean lacked stored
+  vectors. English and Spanish each returned 7 of 16 intended topical memberships, with nine
+  omissions and no extra eligible Related results. Prepared Ask requests are separate from answers;
+  no provider ran. No new language support or ranking change is implemented.
+  [Native baseline and limits](semantic-search-evaluation.md).
+- **#205:** The isolated benchmark now signs with existing local credentials and packages all 73
+  asset files exactly. It installed on the iPhone 17 Pro Max, but Xcode reported a locked-device
+  launch refusal before any observed test/model case. The owned attempt was stopped, all 539 frozen
+  inputs remained unchanged, and the temporary app was uninstalled with absence verified. The signed
+  candidate and raw diagnostics are preserved; no permission/account/TestFlight changes or repeated
+  participant request were made. Physical compatibility and the required mixed-language accuracy,
+  speed, battery and go/no-go decision remain outstanding. [Evidence and next steps](IOS.md#mixed-language-whisper-evaluation-205--october-29-2026).
+
+The two owned recovery-validation simulators were also deleted after all 1,882 retained native
+result files were rechecked. Other simulators, application data and worktrees were preserved.
+
+# Combined PR #318: full automated validation passed on 02205d2 — October 29, 2026
+
+Exact combined source `02205d278197d67c0cb29606e3fa63b2c6547c00` completed
+`make validate-local` with **exit 0 / child reaped** at **2026-10-29 04:46:15 UTC**.
+Independent terminal audit found no issues and matched all **1,004** frozen inputs. Core:
+**1,266 tests / 7 optional skips / 98.2004% coverage**; iOS: **509 unit + 90 UI tests**, with
+**587 passes / 12 optional skips**; Mac: **84 passed**; Watch: **29 unit + 5 UI passed**.
+All suites had zero failures. All **185** BDD scenarios were structurally valid and all **511**
+required Core/native selectors passed; six helper suites, the hotkey regression and four real-server
+contracts passed. [Sanitized source-bound receipt](releases/combined-02205d2-validation.json).
+All three raw native bundles were retained externally and **1,882 files** byte-verified. The owned
+validation jobs ended. The native Mac synthetic Chinese translation branch passed; it is not
+physical-phone or installed-app GUI/audio acceptance. The earlier `dafe4fa` aggregate remains failed.
+
+The existing draft PR #318 now carries this combined source. Exact-head hosted checks in
+[run 40820211886](https://github.com/tomqwu/ListenToMe/actions/runs/40820211886) were still running
+when this documentation checkpoint was prepared; no hosted pass is inferred. This docs-only
+follow-up needs separate review/CI. No merge, version bump, binary publication or Store submission
+is claimed.
+
+Installed/physical gates remain open: the latest resumed signed Dev session was unlocked, with
+microphone active but ScreenCaptureKit **-3801**, zero transcript lines and no acceptance fixture
+played; OS authentication blocked recovery. Final-source OTHERS/near-end/overlap/repeated speech,
+headphones/routes, Stop recovery/delayed playback, sandbox vault/reference relaunch, speaker
+process-relaunch/VoiceOver, physical phone/Watch and Apple-distributed Mac installation remain
+pending. Mac increased-contrast propagation is unverified. After automated testing, three exact
+`com.tomwu.ListenToMe.dev` bundles were moved to Trash with inventory checks and no active
+Dev session; the app-scoped permission reset returned 0. Production permissions, data, settings and
+credentials were untouched. This cleanup does not supply installed acceptance.
+
+# Historical combined validation recovery — October 28, 2026
+
+The clean `dafe4fa` combined full run failed one largest-text speaker UI method before its editor
+opened; Core and iOS units passed, while Mac/Watch/server stages were not reached. Raw results and
+the exact source audit are preserved. An unchanged focused pass exposed flaky implicit scrolling.
+The corrected test reveals the same original speaker before pressing it and keeps all assertions.
+
+Rendered inspection also found a real saved-audio header layout defect at AX5. After six native
+layout failures, the iOS accessibility player now stacks its labels and keeps time on a separate
+line; standard iOS/Mac layouts and audio behavior are unchanged. Final three-method focused runs
+passed on both iPhone and iPad; harness/metric failures remain separately recorded.
+[Evidence and limits](saved-audio-accessibility.md). The later full pass is recorded above; exact-head
+CI, installed acceptance and merge remain separate. No version bump or publication is claimed.
+
+# Translation caption legibility #346 — local implementation, October 28, 2026
+
+Essential translation guidance/status now uses native primary foreground without changing copy,
+layout, providers or state. The same two iOS contrast methods passed after genuine rendered red;
+the supported Mac supplement passed one method/four renders. Initial UI scroll-owner and Mac
+high-contrast propagation failures remain distinct and preserved. Five existing iPhone UI methods and three selected iPad methods passed with unchanged 1,002-file
+inputs, including wide/Duo and largest-text controls. [Evidence and scope](translation-legibility.md).
+The combined full pass on `02205d2` is recorded above; required CI, final review and merge remain
+pending.
+No version bump, binary publication, physical-device or VoiceOver acceptance is claimed.
+
+# Speaker rename integration with audio-feed #348 — October 28, 2026
+
+This local integration merges PR #318 candidate `78b4fda2dbfaf65a1b36259eaaac6d13c2cd4dd7`
+into the preserved speaker-rename branch at `5074d0c4d1e9e3769a3ddf622d9a8cd364732e9c`.
+The #334 and #348 unreleased notes and both source-specific evidence histories are retained.
+Only CHANGELOG and this handoff required conflict resolution; application/test auto-merges are
+unchanged. No new combined validation, hosted CI, installed acceptance, PR or publication is claimed.
+Fresh combined checks and the pending installed Mac/VoiceOver/relaunch/audio gates still apply.
+
+# Mac PR #318: full automated validation passed on 78b4fda — October 28, 2026
+
+The full `make validate-local` run on exact source
+`78b4fda2dbfaf65a1b36259eaaac6d13c2cd4dd7` passed with exit 0 and its owned child reaped at
+**2026-10-29 02:15:40 UTC** (October 28 Toronto time). Independent audit matched all **984** frozen
+inputs, reconciled the three native result summaries, and observed all **497** required Core/native
+BDD bindings passing across **178** structurally valid scenarios.
+[Exact source-bound validation receipt](releases/mac-candidate-78b4fda-validation.json).
+
+Core: **1,266 tests / 7 optional skips / zero failures / 98.2004% line coverage**. iOS: **508 unit +
+83 UI tests**, with **579 passes / 12 optional skips / zero failures**. Mac: **78 passed**. Watch:
+**29 unit + 5 UI passed**, no skips. The six helper suites, hotkey regression and four real-server
+contracts passed. All three required hosted checks passed on the same source in
+[CI run 40800868710](https://github.com/tomqwu/ListenToMe/actions/runs/40800868710).
+The native Mac synthetic Chinese-translation branch also passed; this is not physical-phone or
+installed-app GUI/audio acceptance. Raw iOS/Mac/Watch result bundles were preserved externally and
+all **1,768 files** byte-verified. The owned build/test jobs ended; no simulator was deleted by the audit.
+
+Installed acceptance remains incomplete. The last resumed `b0b27c0` signed Dev session had an active
+microphone but system audio unavailable with ScreenCaptureKit **-3801**, zero transcript lines and
+no acceptance fixture played. Recovery required Touch ID/password and was cancelled before app
+selection; settings were restored and exact Dev-only cleanup completed. That is an OS-authentication
+blocker, not a current locked-Mac diagnosis. Actual OTHERS/near-end/overlap/repeated speech, route/
+headphone/recovery/playback and affected #348 installed file-import/re-transcription checks remain
+pending, along with physical phone/Watch and Apple-distributed Mac installation acceptance.
+
+The maintainer's standing authorization now directs App Store review submission whenever each iOS
+or macOS version meets production readiness; [the canonical gates](../AGENTS.md#official-app-store-review-and-public-release)
+still apply. No submission, manual public release or release-mode change follows from this docs-only
+update. Documentation head `c347066` also passed all three required checks in
+[CI run 40806385369](https://github.com/tomqwu/ListenToMe/actions/runs/40806385369). PR #318 remains
+unmerged and unpublished. Its source does not include the local #346 implementation recorded above.
+
+# Historical Mac PR #318: audio-feed #348 candidate — October 28, 2026
+
+That candidate includes an unreleased shared saved-audio EOF fix. A faithful Int16-on-disk
+fixture reproduced 804 missing frames with one native method failing 65 assertions; the exact
+four-method Mac suite passed after the fix. Supplemental Int16 timeline/Stop and Float32 bypass
+coverage passed all four methods on Mac and all four on iOS simulator. The earlier Float32-only
+four-method pass is a baseline, not a red. [Scope and evidence](audio-file-feed-tail.md).
+At this focused checkpoint, full validation and exact-source CI were pending; the later `78b4fda`
+result is recorded above. The earlier `b0b27c0` pass remains separate historical source evidence.
+
+Resumed installed `b0b27c0` Dev acceptance remains incomplete: microphone active, system audio
+unavailable with ScreenCaptureKit -3801, zero transcript lines and no acceptance fixture played.
+System Settings required Touch ID/password before app selection; that attempt was cancelled
+without changing its toggles. Stop returned both channels stopped. The exact Dev bundle was moved
+to Trash and only its Dev TCC permissions reset; saved settings were restored and production
+permissions/data were untouched. The Mac is unlocked; OS authentication and actual OTHERS/route/audio
+acceptance gates remain open; do not request repeat acceptance or infer it from automated tests.
+No merge, new archive/upload, release or production-ready claim is made here.
+
+# Historical Mac PR #318 automated recovery on b0b27c0 — October 28, 2026
+
+Fresh `make validate-local` on exact source `b0b27c0b5cc49fb63f7d808b02c0e36bea1acd34` completed
+with exit 0 and its owned child reaped at **2026-10-29 00:14:17 UTC** (October 28 local time).
+The independent terminal audit checked all 975 pinned inputs with no hash mismatches and reconciled
+the logs with all three native result summaries. [Exact audit receipt](releases/mac-candidate-b0b27c0-validation.json).
+Core: 1,266 tests / 7 skips / zero failures / **98.2003739482705%** line coverage. iOS: 504 unit +
+83 UI tests, **575 passed / 12 optional skips / zero failures**. Mac: 74 passed. Watch: 29 unit +
+5 UI passed, no skips. All 174 BDD scenarios were structurally valid and every required Core/native binding was observed
+passing; six helper suites, the hotkey regression and four real-server contracts passed. All three required hosted
+checks passed on the same source ([run 40788007120](https://github.com/tomqwu/ListenToMe/actions/runs/40788007120)).
+
+The native Mac suite also observed the real installed English-to-Simplified-Chinese model branch;
+that synthetic inference result is not physical-phone or installed-app GUI acceptance. The earlier
+`02528bf` aggregate remains **failed**, with its receipt and raw evidence preserved; this is a new
+full pass, not a relabeling of that run. [Recovery details](validation-pipeline-recovery.md).
+
+At that automated-recovery checkpoint, the Mac was locked. Prior signed Dev-sandbox GUI evidence remains scoped to `02528bf` and
+its recorded binary/signature. Independent near-end/overlap/repeated speech, routes/headphones,
+Stop recovery and delayed-line audio playback remain pending. Apple-distributed Mac Store installation
+and physical phone/Watch acceptance are unverified. Automated source validation does not make a
+Store artifact production-ready. PR #318 is not merged or published by this update; these docs-only
+changes still need review and hosted CI. No new archive, upload or release is claimed.
+
+# Historical first Mac PR #318 integration attempt — October 28, 2026
+
+The existing draft integrates `main` at `6362853` in `02528bf`, preserving published iOS 1.20.2 (42)
+translation recovery/recording continuity with the Mac sandbox/audio/transcript fixes. All three
+hosted checks passed on that source. Its full local run **failed**: one iOS Save-to-folder UI method
+had three assertions; the outer wrapper rejected the run even though GNU make 3.81 incorrectly
+returned zero after the piped native failure. All 970 frozen inputs match the source. The
+[independent failure receipt](releases/mac-candidate-02528bf-failed-validation.json) records each
+component result separately, including the later passing Mac, Watch and real-server stages.
+
+The subsequent correction fixes make's failure propagation (#347) and the native Settings test's
+visibility/query defects. Genuine red/green evidence and independent review are retained; the fresh
+full run on `b0b27c0` passed as recorded above. [Recovery evidence](validation-pipeline-recovery.md).
+No earlier passing run is promoted to acceptance for this source.
+
+Installed signed Dev-sandbox checks on `02528bf` now cover #337's double-click, Copy, accessibility/
+context editing, Save/Cancel and narrow/wide reflow, plus real English-to-Simplified-Chinese Summary
+translation. [Bounded receipt](releases/mac-candidate-02528bf-installed.json). Independent near-end,
+overlap/repeated speech, physical routes/headphones, Stop during recovery and delayed-line audio
+playback remain incomplete for #336. The completed Dev session was archived, stopped and cleaned
+with only the exact Dev permission scope. No merge, new Mac upload or publication is claimed.
+
+The preserved #334 branch is integrated with this source; independent review found its Watch-speaker
+fixture missing scene lifecycle and a rotation test that did not establish real Duo. Observable
+regressions were prepared; native red and the fixture correction were then pending behind #318.
+The later source-specific speaker results below record their completion without claiming a combined full pass.
+The requested Impeccable audit also recorded a scoped light-mode translation-caption legibility
+finding as #346, with native resolved-color acceptance still required before a fix is claimed.
+
+# Historical speaker rename focused integration evidence — October 28, 2026
+
+At this focused checkpoint, the preserved `codex/speaker-rename-gestures` branch integrated local PR #318 candidate `02528bf`
+at base `6705543054c481d556b4c3faadb25d2e0601a4c1`. The new focused results are **base plus the
+three retained dirty fixture/test/scenario hashes**, not clean `6705543` acceptance.
+[Source-bound receipt](releases/speaker-rename-6705543-readiness.json).
+
+Two native UI methods reproduced four assertions: cold speaker readiness stayed stale and the
+rotation journey did not establish actual Duo. Attaching the existing production lifecycle bridge
+to the DEBUG simulator fixture fixed those outcomes; the same two tests and scenario then passed
+unchanged. Only the fixture changed between the red and green runs. Independent review inspected
+the failure and all three green originals: ready portrait, actual side-by-side Duo and renamed Sam.
+These are synthetic QA captures, not listing or physical/model-quality acceptance.
+
+A subsequent related run passed all **six methods**, zero skips/failures (including the same two,
+not six additional tests). It covers largest-text actions, Save/Cancel and identity isolation,
+speaker opt-out/re-enable, Watch-labelled Notes and saved-audio Play/Pause/Share controls. Those
+controls do not prove audible playback quality or paired Watch transfer. Each run retained 978 input
+hashes with no run-time mismatches. The prior structural checkpoint passed 174 BDD scenarios and
+lint/content checks; no new full-validation result is claimed for this dirty source.
+
+Rename release notes remain under Unreleased. This is a fixture lifecycle repair, not a new public
+feature or release. PR #318 keeps priority; no #334 PR, commit/push, merge or publication is claimed
+by this evidence update. Final integration/full validation, current-source CI, installed Mac
+sheet/gesture acceptance, VoiceOver and disk persistence across relaunch remain pending.
+Earlier source-specific results remain below.
+
+# Historical speaker and transcript gesture integration — October 28, 2026
+
+At this earlier checkpoint, the speaker-rename branch integrated PR #318's validated transcript candidate
+`a1eb0fb` (app/test source `d525760`). Both unreleased feature histories are retained. Native
+integration checks distinguish a speaker-label double-click from a transcript-word double-click:
+only the intended name sheet or line editor opens, and Escape cancels naming without changing
+name or text. All nine focused Mac tests pass (exit 0); BDD151 and lint pass. These are additional
+integration checks, not invented historical reds. The first invocation used an invalid test-target
+selector; a second assumed SwiftUI's Cancel was an NSButton. Both harness failures are preserved.
+
+Evidence is under `2026-10-28/listentome-speaker334-edit337`. Native sheet bitmap capture omits button
+labels and is diagnostic only; it does not prove installed UI presentation. Fresh full combined
+validation, installed gesture/Copy/name-sheet acceptance and CI remain. Do not open the #334 PR
+before #318 completes its remaining installed audio/interaction gates. No feature release is claimed.
+
 # Published translation-recovery beta — 1.20.2 (42)
 
 Apple accepted **1.20.2 (42)** through the official TestFlight helper at **2026-10-28T21:11:37.664213+00:00** from `a6b90e83f775cc9dc88df3c2805ecacedca044af`. Apple build `8967f095-470f-40c0-aba0-b1188bbb699c` is **VALID / IN_BETA_TESTING**. Readback at 2026-10-28T21:15:33.796221+00:00 confirms **en-US**, **Listen To Me - Real Time AI**, exact beta description/What to Test and unchanged access for the existing two-member Dev group. Access does not establish physical installation of build 42.
@@ -107,6 +568,149 @@ Merge, exact-source archive/export verification, helper upload and Apple tester 
 copy. Evidence: `2026-10-28/listentome-ios120-train/`. Physical translation quality and Watch/phone
 acceptance remain unverified; this preparation does not publish a build or waive Mac acceptance.
 
+# Historical Mac transcript candidate validation — October 28, 2026, 05:08 UTC
+
+PR #318 source `d525760` passed the complete `make validate-local` command: exit 0, reaped,
+2,851.15 seconds and all 934 tracked input hashes unchanged. All three required hosted checks
+passed on that source. Independent review verified Core 1,262 tests/7 skips/98.2376439% coverage;
+iOS 79 UI/5 skips and 461 unit/7 skips; Mac 69; Watch 29 unit/5 UI; all native bindings and four
+real-server contracts. Xcode's Watch diagnostic collection delayed completion but returned normally.
+[Audited receipt](releases/mac-candidate-d525760-validation.json). Installed #337 interaction and
+remaining #336 real-audio acceptance still prevent merge. No new release is claimed.
+
+A separate read-only Apple check confirms that public iOS 1.19.1 (39) retains all 60 processed
+screenshots in 10 sets with matching IDs, order and checksums, including US Watch and Duo images.
+[Media readback](releases/ios-1.19.1-build39-media-readback.json). This verifies App Store Connect
+association; downloaded image identity comes from the earlier upload receipt, and fresh public
+storefront rendering was not inspected. No upload or review mutation occurred.
+
+# Transcript editing regression — October 28, 2026
+
+Installed #336 acceptance exposed [#337](https://github.com/tomqwu/ListenToMe/issues/337):
+double-clicking selectable transcript text selected a word instead of opening the editor. The
+candidate now gives selection and editing to one native text control. Four production-row tests
+pass, including actual glyph clicks, partial refusal, Copy/accessibility and multiline/CJK resize
+with selection preservation. Independent review cleared the code and inspected both captures.
+BDD149, lint and a strictly signed sandbox build passed; full validation and CI subsequently passed
+on `d525760`, as recorded above.
+Native automation reported the Mac locked before installed candidate acceptance. No recording,
+permission changes, new installed pass, merge or release is claimed. Preserve the candidate and
+continue PR #318 before opening #334. [Evidence and remaining gates](transcript-interaction.md).
+
+# Full validation completed — October 28, 2026, 02:35 UTC
+
+PR #318 app/test source `95aaeaf` passed the complete `make validate-local` command: exit 0,
+child reaped, 2,237.75 seconds and all 929 tracked input hashes unchanged. Independent outcome
+review verified Core 1,262 tests/7 skips/98.2376439% coverage; iOS 79 UI/5 skips and 461 unit/7 skips;
+Mac 65; Watch 29 unit plus 5 UI; all native BDD bindings, helper checks and four real-server contracts.
+There were no failures. All three hosted checks passed on `95aaeaf`; documentation follow-ups do
+not change those tested application inputs. [Audited receipt](releases/mac-candidate-95aaeaf-validation.json).
+
+Remaining #336 installed near-end/overlap/repeated-speech/headphone/route and rendered edit/playback
+acceptance still prevents merge; the playback-only pass is insufficient. A later startup attempt
+had idle channels, no playback and working Stop; its permission readback and Dev cleanup exception
+are preserved in [the audio evidence](dual-channel-capture.md). No new release is claimed.
+
+The queued #223 8B reference screen then stopped before model inference because the slow tokenizer
+omitted the published fast tokenizer's terminal end-of-text token. Preserve its failed logs and
+frozen protocol; no language-quality result exists. Diagnose and review a separate corrected
+protocol before retrying. The #334 branch now includes `95aaeaf` at `e85733b`, with four focused
+native integration methods, BDD150 and lint passing plus independent review; fresh full integration
+validation and installed rename acceptance remain. No #334 PR is opened ahead of #318.
+
+# Validation follow-up — October 28, 2026
+
+The `086d89e` full validation ended with make exit 2 and unchanged input hashes: Core passed,
+iOS unit tests passed (461 with seven skips), but one of 79 iOS UI tests failed after its blind
+swipes overscrolled the Translate button at the largest accessibility text size. Mac, Watch and
+real-server stages were not reached. A stronger whole-button visibility assertion reproduced the
+harness defect; bounded direction-aware scrolling now passes all four translation UI methods and
+the largest-text journey on both iPhone and iPad. Screenshots were inspected. This changes tests,
+not translation behavior; [the evidence record](translation-validation.md) preserves both failures.
+Fresh full validation and exact-source CI remain required. Mac #336 still needs its independent
+near-end/overlap/headphone/route and rendered delayed-line edit/playback acceptance before merge.
+The separate #223 model scheduler correctly refused to start after the failed aggregate; no
+inference or added-language support is claimed. Continue PR #318 before opening #334.
+
+# Public iOS availability — October 28, 2026, 01:12 UTC
+
+Apple's live version readback and independent US public lookup now confirm **iOS 1.19.1 (39)** is
+publicly available, released at **2026-10-28T00:12:55Z**, with primary locale **en-US**. This is the
+previously accepted Watch-enabled build 39 from `f1728150e3e66664e36d2506022c2918fa60a53c`.
+The exact Apple build ID and peeled tag match the upload receipt. See the
+[public observation](releases/ios-1.19.1-build39-public.json). No new upload, submission or release
+operation was performed for this readback. Physical Watch/phone acceptance remains unverified;
+public availability does not retroactively establish it. Mac 1.5.0 remains an unsubmitted draft
+with no selected build. Older draft and beta checkpoints below are historical.
+
+# Mac dual-channel regression — October 27, 2026
+
+[#336](https://github.com/tomqwu/ListenToMe/issues/336) reproduced duplicate YOU/OTHERS playback and
+out-of-order timestamps during PR #318 acceptance. The current candidate adds chronological
+presentation with persistent run identity and native microphone echo control. Focused red/green
+coverage and independent review are recorded in [the evidence note](dual-channel-capture.md).
+A signed Studio Display playback check now yields all five Orion sentences as OTHERS with zero
+YOU finals and working Stop. Independent near-end/overlap/headphone/route-change acceptance,
+rendered delayed-line edit/playback and fresh full validation/CI/merge remain. This does not close
+#336 or establish a production-ready Mac build. Keep working in PR #318 before opening #334.
+The completed Dev sessions were archived and moved to Trash, only `.dev` permissions reset, and
+prior provider/engine/speaker/saving preferences restored. User history and API keys remain intact.
+
+# Mac import finalization regression — October 27, 2026
+
+Installed sandbox acceptance on validated source `44d8765` passed native export and Calendar lookup,
+and actual French live translation retained the English original. Import exposed [#335](https://github.com/tomqwu/ListenToMe/issues/335):
+unused prepared SpeechAnalyzer channels left Finalizing/Stopping active. The native BDD regression
+reproduces the timeout, and the corrected lifecycle passes real first/final words, source/time and
+zero-input/cancellation cases. See [native speech lifecycle evidence](speech-input-timing.md).
+A success-status assertion also passed before the defensive cancellation-error suppression; it is
+additional coverage, not a fabricated red. Required review, fresh full validation and corrected
+installed control/audio acceptance remain; no new merge/upload/publication is claimed.
+
+Speaker rename [#334](https://github.com/tomqwu/ListenToMe/issues/334) is preserved on
+`codex/speaker-rename-gestures` at `df2b24f`, app/test source `8d335e4`. Its complete local validation
+passed (1,254 Core tests, 542 iOS tests including 12 skips, 47 Mac tests, 34 Watch tests and four
+real-server contracts). Installed Mac editor/accessibility acceptance, CI/merge and release remain.
+Finish current PR #318 before opening that feature PR; do not rebuild the feature from scratch.
+
+# Mac SpeechAnalyzer regression during acceptance — October 27, 2026
+
+Installed SandboxAcceptance source `7f8e00f` opened with the existing stable Dev signature and
+verified sandbox entitlements. Real external folder selection plus a local-model request read its
+unique synthetic token; a recreated vault writer updated the same note after app relaunch, with no
+duplicate. No complete sandbox acceptance is claimed: recording exposed
+[#333](https://github.com/tomqwu/ListenToMe/issues/333), a native SpeechAnalyzer timestamp-overlap
+failure while both channels were active. Stop worked; no audio fixture had been played.
+
+The [timing correction](speech-input-timing.md) now uses separate raw and exact converted clocks,
+with bound native conversion/frame/gap/cancellation tests. The valid native regression produced
+eleven failures; tiny valid input separately reproduced conversionFailed; a separate replay of the earlier cancelled-converter guard produced two. Harness
+format/isolation/pointer-lifetime failures remain separately preserved. The `7f8e00f` aggregate was
+stopped/reaped before the necessary source fix, unchanged/clean with all 917 file hashes matching;
+it remains incomplete. Fresh corrected-source full validation and installed audio acceptance are
+still required. PR #318 remains the single feature draft; #333 will close through that PR only
+when its gates pass. No new upload/review, production-ready claim or permission reset.
+
+# Mac Store sandbox acceptance — October 27, 2026
+
+Existing draft [PR #318](https://github.com/tomqwu/ListenToMe/pull/318) now integrates current main,
+including translation and the canonical distribution instructions. Source `8067048` archived and
+exported a universal, strictly signed 1.5.0 (15) Store package; profile, entitlements and en-US
+checks passed. Direct local launch failed with taskgated/amfid **No matching profile found**.
+That is a preserved provisioning failure, not a permission failure or an installed acceptance pass.
+
+A separate `SandboxAcceptance` configuration retains release optimization and the Store's public
+sandbox entitlements under the existing `.dev` identity. `RELEASE-014` reproduced missing settings/
+build guidance before implementation; generated settings and the no-signing early-exit tests now
+pass. Native Mac UI is accessible again, but actual sandbox picker/relaunch/audio acceptance is
+still pending. The first new aggregate was deliberately stopped/reaped on unchanged `8067048`
+before this necessary configuration change; it remains incomplete, not a pass.
+
+Evidence: `/Users/tomwu/Documents/Codex/2026-10-27/listentome-mac318-acceptance/`. A fresh full
+validation, installed Dev sandbox checks, required CI and merge remain. Rebuild the distribution
+artifact from the exact final merged source before upload. No new Mac upload/review submission,
+production-ready claim or permission reset occurred. See [local sandbox acceptance](RELEASING.md#local-sandbox-acceptance).
+
 # Translation #330 implementation — October 27, 2026
 
 [PR #331](https://github.com/tomqwu/ListenToMe/pull/331) adds opt-in on-device live translation and
@@ -174,6 +778,53 @@ Known working upload route: configured API key plus explicit `IOS_EXPORT_OPTIONS
 Physical Watch installation, microphone capture, paired transfer, wrist-down and battery/storage acceptance remain unverified. This is an authorized beta, not a production-ready claim. Public iOS remains 1.18.1; no new public App Store submission or screenshot listing upload was performed by this train. Mac Store draft #318 stays separate.
 
 Completed test-session cleanup: no inactive owned `.dev` bundles remained to move; app-scoped Dev permissions reset successfully after confirming no active Dev session/build. Seven owned simulators were deleted and verified absent, with every other simulator ID preserved. Raw results, all original captures, captured runtime/source inputs and the exact uploaded IPA remain preserved; conversation data, settings and keys were retained.
+
+## Mac Store draft validation — October 27, 13:06 UTC
+
+The existing [PR #318](https://github.com/tomqwu/ListenToMe/pull/318) integrated main
+`67ec009a064e5868225a4491f7a684ee54d48872` as **`f8e8b723b2e851b9b480dcccbe0bf6e0e17636f4`**.
+It preserves permanent Watch embedding, manual beta-signing safeguards and published en-US evidence,
+while adding the separate sandboxed Mac configuration and scoped vault/reference persistence.
+Mac scenarios are **RELEASE-010–RELEASE-013**, preserving main's RELEASE-006–RELEASE-009.
+Original draft red/green evidence retains its former IDs with the explicit mapping in [BDD.md](BDD.md);
+integration/renumbering is not a new regression reproduction.
+
+Fresh **`make validate-local` exited 0** on clean, unchanged `f8e8b723`: **127 BDD contracts**,
+Core **1,241 tests / 7 optional skips / 98.2504679% coverage**, iOS **529 total / 517 passes / 12
+optional skips**, Mac **42 passes**, Watch **33 passes**, 29 TestFlight-helper and four Mac Store
+configuration tests, plus four real Ollama/OpenAI-compatible contracts. Independent review matched
+every required native binding to passing records; none was satisfied by a skip. All three required
+checks passed on that exact source ([CI](https://github.com/tomqwu/ListenToMe/actions/runs/40502834155)).
+This documentation checkpoint changes no application/test input; its own hosted checks remain required.
+
+The current AppStore configuration also compiled for **Intel and Apple silicon**, with actual-product
+identity `com.tomwu.ListenToMe.ios`, **1.5.0 (15)** and **en-US** verified. This artifact is unsigned
+for distribution (automatic linker ad-hoc signature only), not distribution-signing or installed-app
+acceptance. Both compiled architectures, executable hash, unchanged project/dependency lock and
+terminal/reaped receipts were independently checked. Full logs, all three hash-verified raw native
+result bundles/screenshots, binary/source/runtime provenance and reviews remain under
+`/Users/tomwu/Documents/Codex/2026-10-26/listentome-mac318-main-integration/`.
+
+Completed session cleanup: no active Dev app/build was running; the exact `.dev` bundle and signing
+provenance were preserved, then that inactive bundle was moved to Trash. Only
+`com.tomwu.ListenToMe.dev` permissions were reset, with exit 0. Both owned simulators were deleted and
+verified absent, every other simulator ID remained present, and production/Store permissions,
+conversation data, settings and keys were preserved. The initial cleanup-helper syntax error ran no
+actions and remains external harness evidence; it does not change the successful aggregate result.
+
+The earlier universal signed **1.5.0 (15)** candidate from `c05c6335c182cdff3ec8e6ca6f5bb8829f35a1be`
+and package SHA-256 `b16b66ab4c7ca370fd867e98f180d3ad2969d86e4345511d59d4c06cc88b7f47`
+remain historical signing/Apple-validation evidence, not an upload receipt or eligible current-source
+package. Preserve its original failed aggregate and successful focused resumptions in
+`listentome-appstore-publication/locale-mac-correction/`; rebuild from the exact merged source.
+
+**Still pending:** installed sandbox microphone/actual OTHERS capture, external vault/reference
+picker grants across quit/relaunch, provider/Calendar/import/export acceptance, fresh Mac screenshots,
+source-matched distribution archive and Apple upload/review. Native automation again reports the Mac
+locked; no new unlock or permission-repair request was made. Read-only Apple verification at
+**13:06 UTC** confirms Mac **1.5.0 PREPARE_FOR_SUBMISSION**, no selected build, iOS **1.18.1 (36)
+READY_FOR_SALE**, and primary **en-US**. This draft is not merged or published; Watch-enabled beta
+1.19.0 (38) remains separately published. No new public submission or binary release occurred.
 
 ## Historical signing recovery — October 27, 07:35 UTC
 

@@ -41,7 +41,7 @@ public enum MarkdownVaultOutcome: Equatable, Sendable {
 }
 
 /// Writes notes into one user-chosen folder, identified by a bookmark so access survives relaunch
-/// (on iOS the bookmark carries the document picker's security scope). An actor: writes happen off
+/// (using an app-scoped bookmark on macOS and the document picker's scope on iOS). An actor: writes happen off
 /// the main thread, one at a time, and two saves of the same conversation never race.
 public actor MarkdownVaultWriter {
     public typealias Write = @Sendable (Data, URL) throws -> Void
@@ -61,21 +61,34 @@ public actor MarkdownVaultWriter {
     /// A bookmark for a folder the user just picked. On iOS call it while the picked URL's
     /// security-scoped access is held.
     public static func makeBookmark(for folder: URL) throws -> Data {
+        #if os(macOS)
+        return try folder.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
+        #else
         try folder.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
+        #endif
+    }
+
+    private static func resolve(_ bookmark: Data, stale: inout Bool) throws -> URL {
+        #if os(macOS)
+        if let scoped = try? URL(resolvingBookmarkData: bookmark, options: .withSecurityScope,
+                                 relativeTo: nil, bookmarkDataIsStale: &stale) { return scoped }
+        // Existing DMG bookmarks predate sandboxing. Resolving one cannot grant new access:
+        // the OS still denies an inaccessible folder, which save reports as a reselect failure.
+        #endif
+        return try URL(resolvingBookmarkData: bookmark, options: [], relativeTo: nil, bookmarkDataIsStale: &stale)
     }
 
     /// The folder's display name, or nil when the bookmark no longer resolves.
     public static func folderName(for bookmark: Data) -> String? {
         var stale = false
-        return (try? URL(resolvingBookmarkData: bookmark, options: [], relativeTo: nil, bookmarkDataIsStale: &stale))?
+        return (try? resolve(bookmark, stale: &stale))?
             .lastPathComponent
     }
 
     /// Creates or atomically replaces the conversation's note.
     public func save(_ note: MarkdownVaultNote) -> MarkdownVaultOutcome {
         var stale = false
-        guard let folder = try? URL(resolvingBookmarkData: bookmark, options: [], relativeTo: nil,
-                                    bookmarkDataIsStale: &stale) else {
+        guard let folder = try? Self.resolve(bookmark, stale: &stale) else {
             return .failed(Self.missing(nil))
         }
         // `false` only means the URL needs no scope (macOS, unsandboxed); a real loss of access

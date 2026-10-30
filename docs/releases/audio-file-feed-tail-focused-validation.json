@@ -1,0 +1,181 @@
+{
+  "status": "focused_red_green_and_supplemental_matrix_clear",
+  "findings": [],
+  "sourceBase": "9fc7c6010b5d04ca45276d6b2638a5b432f4b88d",
+  "productionSHA256": "cf02a31ca7e252056fc57e29f79c9364238a94454069b3a8c8772a1d90c665b4",
+  "inputCountPerRun": 980,
+  "allRunHashMismatches": [],
+  "currentInputMismatches": [],
+  "runs": {
+    "mac-red": {
+      "tests": 4,
+      "passed": 4,
+      "failedMethods": 0,
+      "skipped": 0,
+      "nativeExit": 0,
+      "reaped": true,
+      "elapsedSeconds": 10.03559441678226,
+      "selectors": [
+        [
+          "testConvertedChunkTimestampsIncludeDrainedTails",
+          "passed"
+        ],
+        [
+          "testConvertedFileRetainsEveryFrameAndDistinctiveTail",
+          "passed"
+        ],
+        [
+          "testEmptyAndUnreadableInputsPreserveSourceAndFailure",
+          "passed"
+        ],
+        [
+          "testStopSuppressesPendingTailAndPreservesSource",
+          "passed"
+        ]
+      ],
+      "referenceLogSHA256": "9af40f974294aeb8f07f8ee2f060c117d22646105c356de07bf72ce903283cce",
+      "resultSHA256": "3837e87d8b55b6ff9bf34d3a942dc5b64d081ef42cf690831169e7d857900045",
+      "xcresultSummarySHA256": "37aa50a0045032f612ce49edb39965db7d2ce73a29c09449cdb501f928717191"
+    },
+    "mac-int16-red": {
+      "tests": 4,
+      "passed": 3,
+      "failedMethods": 1,
+      "skipped": 0,
+      "nativeExit": 65,
+      "reaped": true,
+      "elapsedSeconds": 9.319902916904539,
+      "selectors": [
+        [
+          "testConvertedChunkTimestampsIncludeDrainedTails",
+          "passed"
+        ],
+        [
+          "testConvertedFileRetainsEveryFrameAndDistinctiveTail",
+          "failed"
+        ],
+        [
+          "testEmptyAndUnreadableInputsPreserveSourceAndFailure",
+          "passed"
+        ],
+        [
+          "testStopSuppressesPendingTailAndPreservesSource",
+          "passed"
+        ]
+      ],
+      "referenceLogSHA256": "fab2c4ca98b7ca0d5db4b4f44dc65eca4d3bc4fbddbd1263efd96a6a16ee9eab",
+      "resultSHA256": "b39681ac8763f7eaae763a2d4958ae9ddd50ea55f399e63d95b07cd282cd6f01",
+      "xcresultSummarySHA256": "31a344d615b7162b725e3333d4ca7f16351cfe0b66e80f3dfd5709ebe5a240e0"
+    },
+    "mac-green": {
+      "tests": 4,
+      "passed": 4,
+      "failedMethods": 0,
+      "skipped": 0,
+      "nativeExit": 0,
+      "reaped": true,
+      "elapsedSeconds": 12.703015082981437,
+      "selectors": [
+        [
+          "testConvertedChunkTimestampsIncludeDrainedTails",
+          "passed"
+        ],
+        [
+          "testConvertedFileRetainsEveryFrameAndDistinctiveTail",
+          "passed"
+        ],
+        [
+          "testEmptyAndUnreadableInputsPreserveSourceAndFailure",
+          "passed"
+        ],
+        [
+          "testStopSuppressesPendingTailAndPreservesSource",
+          "passed"
+        ]
+      ],
+      "referenceLogSHA256": "67985badfa160996647c7165485ba9ce02f6f3459224a2338e8d8bcf43085273",
+      "resultSHA256": "2aeb577bd5b6842956c1ab3f699fc717818e8ac10d47b58438d44f5639d9ff43",
+      "xcresultSummarySHA256": "957ce07bb4512a4e730bfe8a98a2c3debd2c33720375c7845b7f11de8f2fe8a3"
+    },
+    "mac-supplemental-green": {
+      "tests": 4,
+      "passed": 4,
+      "failedMethods": 0,
+      "skipped": 0,
+      "nativeExit": 0,
+      "reaped": true,
+      "elapsedSeconds": 8.530060457997024,
+      "selectors": [
+        [
+          "testConvertedChunkTimestampsIncludeDrainedTails",
+          "passed"
+        ],
+        [
+          "testConvertedFileRetainsEveryFrameAndDistinctiveTail",
+          "passed"
+        ],
+        [
+          "testEmptyAndUnreadableInputsPreserveSourceAndFailure",
+          "passed"
+        ],
+        [
+          "testStopSuppressesPendingTailAndPreservesSource",
+          "passed"
+        ]
+      ],
+      "referenceLogSHA256": "42c175cb0c68ac40b99ac99f9b3485a7745c5594d05f66cb7c840a17a0fca171",
+      "resultSHA256": "ec213275a9f1ca9cb0bd1bce45c4a53a60aa271a8c946fe08a8ff7adf4f04852",
+      "xcresultSummarySHA256": "588a8f565a392f24df224776e1d3289c260abc6c98c358f86aa995ab43fa392b"
+    },
+    "ios-green": {
+      "tests": 4,
+      "passed": 4,
+      "failedMethods": 0,
+      "skipped": 0,
+      "nativeExit": 0,
+      "reaped": true,
+      "elapsedSeconds": 19.501725167036057,
+      "selectors": [
+        [
+          "testConvertedChunkTimestampsIncludeDrainedTails",
+          "passed"
+        ],
+        [
+          "testConvertedFileRetainsEveryFrameAndDistinctiveTail",
+          "passed"
+        ],
+        [
+          "testEmptyAndUnreadableInputsPreserveSourceAndFailure",
+          "passed"
+        ],
+        [
+          "testStopSuppressesPendingTailAndPreservesSource",
+          "passed"
+        ]
+      ],
+      "referenceLogSHA256": "207c30ab90c14130addb577444f439ececaf54020d6901f7b023e314d7d13ca0",
+      "resultSHA256": "becb1a9754e2d43442c3e28582dad3b21c8c2197691d37cc7f2e294b437659d4",
+      "xcresultSummarySHA256": "c6ac30407865d408035bdf0508584e9f69e85161baf56cadcc6f57505fede32d"
+    }
+  },
+  "classification": {
+    "mac-red": "BaselineFloat32fourpass, NOT a behavioralred.",
+    "mac-int16-red": "Genuine unchanged-productionInt16disk regression: full500900sourceframes/directread, feed500096, onefailedmethod65assertions=onecount+64tail.",
+    "mac-green": "Exactredtest/scenario/project inputspassed; onlyproductionfeedchanged.",
+    "mac-supplemental-green": "Additivecoverage, NOT additionalhistoricalred: Int16timeline+progressStop and Float32sameformat sampleexact bypass.",
+    "ios-green": "Same980inputsassupplementalMac, allfourmethods passed on iOSsimulator."
+  },
+  "supplementalAssertionAssessment": [
+    "Float32+Int16timeline cases requireallframes/tailsbefore nextchunk andexactfirstanchors, overlapclampedtofullyemittedend/realtimegappreserved.",
+    "Stopusesboundedobservablepartialprogress, notfixedpullcount; bothdiskformatsretainundeliveredaudio, thennil/nolaterchunk/sourcepreservation/firsterror behaviorchecked.",
+    "SameformatFloat32controlassertsequalprocessing/targetformat, every sample exact, totalcount, onefirstanchor, stableEOF andsourcebytes.",
+    "EOF/missing/invalid source tests preservefailure/noinventedframes; no model/microphone/SpeechAnalyzer invocation required by assertions."
+  ],
+  "productionReview": "cf02EOFdrain source previously reviewed withnoimplementationfindings; source unchanged through same-test andsupplementalgreens.",
+  "reviewActions": "Read-only source/log/JSON/hash review andcompleted xcresult summary extraction only; no builds/native tests/model execution/source edits.",
+  "pending": [
+    "Fullfinal-source makevalidate-local/coverage/lint/appbuild andthreehostedCI checks",
+    "Installedaffectedfile-import/retranscription/audioGUIacceptance andremainingPR318gates",
+    "Merge; no publication/physicalquality/broadresampling claim"
+  ]
+}

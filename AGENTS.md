@@ -64,7 +64,8 @@ and do not publish a release merely because a change merged.
    actual system-audio transcription labeled OTHERS; a permission toggle or microphone pickup is not
    proof.
 3. Update every affected doc, the release notes for the affected platform, and `CHANGELOG.md` under
-   that platform's unreleased heading.
+   that platform's unreleased heading. Refresh the affected `README.md` screenshots and gallery
+   layout for UI changes, following the screenshot requirements below.
 4. Commit and push the source, verify hosted CI, and merge the pull request.
 5. State in the pull request description what was verified: commands run and outcomes.
 
@@ -108,7 +109,8 @@ Every major iOS release includes a validated TestFlight build (maintainer instru
 Publication itself stays authorized: when a train is due, run the workflow below without asking the
 maintainer to repeat "publish", including for work merged by another session. An explicit draft,
 investigation or local-only request overrides this. OS authentication such as Touch ID and Apple ID
-sign-in must be completed by the user. None of this authorizes a public production App Store release.
+sign-in must be completed by the user. App Store review submissions follow the separate standing
+authorization and production-readiness gates below; beta eligibility alone does not satisfy them.
 
 ## The verification ladder: candidate, verified, published
 
@@ -155,6 +157,28 @@ Rules that hold at every rung:
 certificate and the `notarytool` keychain profile live, how to check each one, what to do when one is
 missing or rejected, and which steps only the maintainer can perform.
 
+## Native Mac App Store submissions
+
+For local sandbox acceptance, use `make mac-sandbox-build` with the existing stable Dev signing
+override and verify its exact `.dev` identifier, signature and sandbox entitlements before launch.
+This release-optimized configuration preserves the Store artifact and production permissions;
+keep development sandbox results separate from Apple-distributed installation acceptance.
+A Store-profile launch failure is not a TCC failure. Follow normal Dev cleanup after the session.
+
+The maintainer requested native Mac App Store distribution on October 26, 2026. Follow
+[the Mac App Store procedure](docs/RELEASING.md#mac-app-store-distribution) for its separate sandboxed
+configuration, shared App Store bundle ID, local installer signing, package verification and en-US
+listing. The existing Developer ID DMG is not an App Store artifact. This request does not call a
+new DMG train or authorize changing its stable production identity.
+
+Keep the same source/BDD/local-validation/review/three-CI and installed Mac GUI/actual OTHERS gates.
+Also accept sandboxed external vault and reference selection across app relaunch. Native scope
+tests, a successful archive/export or a valid installer signature cannot replace that acceptance.
+Preserve fresh source-matched Mac screenshots and verify their processing before review submission.
+An accepted upload, submitted review, Apple approval and public availability are separate states;
+report each from Apple readback and never call an unsubmitted draft published. Store signing uses
+separate local credentials; never reset existing keychains or production permissions to repair it.
+
 ## Publishing an iOS release train
 
 Use **English (US), `en-US`**, for TestFlight and App Store release metadata (maintainer instruction,
@@ -172,7 +196,7 @@ Current source permanently embeds the Watch companion. For a Watch-enabled beta,
 `IOS_RELEASE_FLAGS=--include-watch-beta`; use `IOS_RELEASE_FLAGS="--include-watch-beta --dry-run"`
 for a local preflight. Default mode rejects embedded Watch, and explicit Watch mode rejects a missing
 or malformed companion. Validate all three exported bundles and retain physical acceptance as pending
-until actually performed; the existing beta exception does not authorize production submission.
+until actually performed; the beta exception does not waive production acceptance for review submission.
 After the upload is accepted and the `ios-v<version>-build<build>` tag is pushed, publish a GitHub
 **pre-release** for that tag: `gh release create ios-v<version>-build<build> --verify-tag --prerelease
 --latest=false`, titled `ListenToMe iOS <version> (<build>) — TestFlight`, with that version's
@@ -197,12 +221,18 @@ not a successful upload.
 ## Official App Store review and public release
 
 TestFlight distribution, official App Store review submission, Apple approval and public availability
-are separate steps. The release-train authorization above covers TestFlight; it does not grant
-standing production submission or public-release authority. When the maintainer explicitly requests
-an official App Store submission, carry that authorized submission through Apple acceptance and
-status readback without asking them to upload or click Submit manually. Reuse authorization already
-given for that version and platform; OS authentication still belongs to the maintainer. A request to
-document this workflow alone does not call a release or submit an app.
+are separate steps. On **2026-10-28 (Toronto)**, the maintainer gave standing authorization:
+**“publish whenever version is ready to apple store for review.”** This covers each ready iOS version
+(iPhone/iPad and its embedded Watch companion) and each ready macOS App Store version separately.
+Once all production-readiness gates below are satisfied, submit that version for review and carry
+it through Apple's submission acceptance and status readback without asking for renewed permission
+or handing Submit back to the maintainer. Check for an existing submission before creating another.
+An explicit later hold, draft-only or local-only instruction still applies. OS authentication belongs
+to the maintainer; this authorization does not waive acceptance gates or change the existing release
+mode. In particular, leave a version set for manual release pending after approval; do not release it
+manually or change it to automatic without a separate instruction. An existing automatic mode stays
+unchanged. Documentation-only policy updates do not themselves create a ready version or require a
+new binary, version bump or upload.
 
 Before submitting an authorized production version:
 
@@ -247,6 +277,30 @@ an authorized App Store submission, upload the current set to every applicable d
 slot and read back processing/status; screenshots saved locally are not proof Apple has them. Cover
 Watch only when embedded for distribution, and Mac when a Mac release is called. Never publish a
 store listing with stale screenshots or claim screenshot publication without upload verification.
+
+### README screenshot gallery
+
+The maintainer requires `README.md` screenshots to stay current and well laid out (2026-10-29).
+Review the gallery with every feature/fix, refresh affected screenshots in the same change whenever
+visible UI changes, and update the gallery from the fresh capture set on **every release train**.
+Saving images in evidence or uploading App Store media alone does not complete the README update.
+
+- Cover macOS, iPhone portrait, **iPhone Duo/landscape**, iPad wide layouts and Watch when included
+  in that version. Use actual rendered app captures and synthetic demonstration content; exclude
+  private conversations, keys, debug controls, clipped content and permission/error overlays.
+- Group images by device and workflow in a balanced GitHub-compatible layout: paired portrait or
+  Watch previews, wide rows for Duo/iPad/Mac, consistent thumbnail sizes within each group, concise
+  captions, meaningful alt text and clickable full-resolution images. Preserve aspect ratios and
+  readable spacing; inspect the rendered README at desktop and narrow/mobile widths.
+- Link the source/version/build capture manifest. Label public, TestFlight, unreleased candidate
+  and historical images accurately; never present an old screenshot as the latest UI. Move superseded
+  galleries into a clearly labelled archive or collapsed section instead of mixing versions silently.
+- Verify local image paths and hosted image availability, then record the gallery check in the PR.
+  If capture is blocked, identify the affected device/view and retain truthful historical labels;
+  leave that screenshot requirement open rather than claiming the refresh is complete.
+
+Documentation-only changes with no changed app appearance need gallery/link checks, not unrelated
+native recapture or a binary release. README previews and Apple listing uploads remain separate.
 
 ## macOS permissions
 

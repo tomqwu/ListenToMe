@@ -122,12 +122,29 @@ final class SavedAudioPlayback: NSObject, AVAudioPlayerDelegate {
 /// A compact player: part picker, play/pause, position, and Share audio for the share sheet.
 struct SavedAudioPlayerView: View {
     let playback: SavedAudioPlayback
+    #if os(iOS)
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    #endif
+
+    private var usesAccessibleLayout: Bool {
+        #if os(iOS)
+        dynamicTypeSize.isAccessibilitySize
+        #else
+        false
+        #endif
+    }
+
+    private var headerLayout: AnyLayout {
+        usesAccessibleLayout
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+            : AnyLayout(HStackLayout())
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
+            headerLayout {
                 Label("Saved audio", systemImage: "waveform").font(.subheadline.weight(.semibold))
-                Spacer()
+                if !usesAccessibleLayout { Spacer() }
                 ShareLink(items: playback.fileURLs) {
                     Label("Share audio", systemImage: "square.and.arrow.up")
                 }.accessibilityIdentifier("shareSavedAudio")
@@ -141,21 +158,18 @@ struct SavedAudioPlayerView: View {
                     }
                 }.accessibilityIdentifier("savedAudioPart")
             }
-            HStack(spacing: 12) {
-                Button(playback.isPlaying ? "Pause" : "Play",
-                       systemImage: playback.isPlaying ? "pause.fill" : "play.fill") { playback.togglePlay() }
-                    .labelStyle(.iconOnly).font(.title3).frame(minWidth: 44, minHeight: 44)
-                    .disabled(playback.duration <= 0)
-                    .accessibilityIdentifier("savedAudioPlay")
+            if usesAccessibleLayout {
                 TimelineView(.animation(minimumInterval: 0.5, paused: !playback.isPlaying)) { _ in
-                    HStack(spacing: 8) {
-                        Slider(value: Binding(get: { playback.currentTime }, set: { playback.seek(to: $0) }),
-                               in: 0...max(1, playback.duration))
-                            .accessibilityLabel("Playback position")
-                            .accessibilityValue(SavedAudioPolicy.timeLabel(playback.currentTime))
-                        Text("\(SavedAudioPolicy.timeLabel(playback.currentTime)) / "
-                             + SavedAudioPolicy.timeLabel(playback.duration))
-                            .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 12) { playButton; positionSlider }
+                        positionLabel
+                    }
+                }
+            } else {
+                HStack(spacing: 12) {
+                    playButton
+                    TimelineView(.animation(minimumInterval: 0.5, paused: !playback.isPlaying)) { _ in
+                        HStack(spacing: 8) { positionSlider; positionLabel }
                     }
                 }
             }
@@ -165,5 +179,26 @@ struct SavedAudioPlayerView: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("savedAudioPlayer")
+    }
+
+    private var playButton: some View {
+        Button(playback.isPlaying ? "Pause" : "Play",
+               systemImage: playback.isPlaying ? "pause.fill" : "play.fill") { playback.togglePlay() }
+            .labelStyle(.iconOnly).font(.title3).frame(minWidth: 44, minHeight: 44)
+            .disabled(playback.duration <= 0)
+            .accessibilityIdentifier("savedAudioPlay")
+    }
+
+    private var positionSlider: some View {
+        Slider(value: Binding(get: { playback.currentTime }, set: { playback.seek(to: $0) }),
+               in: 0...max(1, playback.duration))
+            .accessibilityLabel("Playback position")
+            .accessibilityValue(SavedAudioPolicy.timeLabel(playback.currentTime))
+    }
+
+    private var positionLabel: some View {
+        Text("\(SavedAudioPolicy.timeLabel(playback.currentTime)) / "
+             + SavedAudioPolicy.timeLabel(playback.duration))
+            .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
     }
 }

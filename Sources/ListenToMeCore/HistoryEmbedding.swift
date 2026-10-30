@@ -18,20 +18,26 @@ public struct HistoryVector: Sendable, Equatable {
 }
 
 /// Turns text into vectors on this device. Nothing here may contact a server.
+/// Async requirements allow a serial model runtime to suspend without blocking the index actor.
+/// Existing synchronous embedders remain valid witnesses; cancellation is fenced by the index.
 public protocol HistoryEmbedder: Sendable {
     /// Names the embedding method. Changing it invalidates every stored vector.
     var signature: String { get }
+    /// Models whose relevance scores share one population. Independent backends must
+    /// not change each other's mean or top-score cutoff merely by adding conversations.
+    func relevanceGroup(for model: String) -> String
     /// The vector for a passage, or nil when no on-device model covers the passage's language.
-    func embed(_ text: String) -> HistoryVector?
+    func embed(_ text: String) async -> HistoryVector?
     /// The same, for a passage whose transcription language is known (a BCP-47 or locale identifier).
-    func embed(_ text: String, transcribedIn language: String) -> HistoryVector?
+    func embed(_ text: String, transcribedIn language: String) async -> HistoryVector?
     /// Vectors for a search query, one per stored model the query plausibly belongs to. Queries are
     /// short, so the language is chosen among the models the index already holds.
-    func embedQuery(_ query: String, models: Set<String>) -> [HistoryVector]
+    func embedQuery(_ query: String, models: Set<String>) async -> [HistoryVector]
 }
 
 public extension HistoryEmbedder {
-    func embed(_ text: String, transcribedIn language: String) -> HistoryVector? { embed(text) }
+    func relevanceGroup(for model: String) -> String { "legacy" }
+    func embed(_ text: String, transcribedIn language: String) async -> HistoryVector? { await embed(text) }
 }
 
 /// Apple NaturalLanguage embeddings, entirely on device. A passage's language is detected per
@@ -44,10 +50,10 @@ public extension HistoryEmbedder {
 /// has to keep finding and the unrelated set it must not. Languages with neither model get no
 /// vector, and their conversations stay reachable through keyword search.
 public final class NaturalLanguageEmbedder: HistoryEmbedder, @unchecked Sendable {
-    public let signature = "nl-noun-mean+sentence-v2"
+    public let signature = "nl-noun-case+sentence-v3"
     private let lock = NSLock()
-    private var words: [NLLanguage: NLEmbedding?] = [:]
-    private var sentences: [NLLanguage: NLEmbedding?] = [:]
+    private var words: [String: NLEmbedding?] = [:]
+    private var sentences: [String: NLEmbedding?] = [:]
     private static let contentClasses: Set<NLTag> = [.noun, .otherWord]
     /// A passage needs this many content words (or, for a sentence model, twice as many words).
     static let minimumPassageWords = 3
@@ -87,8 +93,16 @@ public final class NaturalLanguageEmbedder: HistoryEmbedder, @unchecked Sendable
     }
 
     public func embedQuery(_ query: String, models: Set<String>) -> [HistoryVector] {
-        let languages = Set(models.compactMap(Self.language(of:)))
-        guard !languages.isEmpty else { return [] }
+        let requested = models.sorted().compactMap { tag -> (tag: String, language: NLLanguage, revision: Int)? in
+            let parts = tag.split(separator: ":", omittingEmptySubsequences: false)
+            guard parts.count == 3, parts[0] == "w" || parts[0] == "s", !parts[1].isEmpty,
+                  let revision = Int(parts[2]), revision >= 0, String(revision) == parts[2],
+                  let language = Self.language(of: tag) else { return nil }
+            return (tag, language, revision)
+        }
+        let languages = Set(requested.map(\.language))
+        guard !languages.isEmpty,
+              HistoryContentEligibility.evaluate(query, kind: .query) != .insufficientContent else { return [] }
         let chosen: [NLLanguage]
         if languages.count == 1 {
             chosen = Array(languages)
@@ -100,7 +114,19 @@ public final class NaturalLanguageEmbedder: HistoryEmbedder, @unchecked Sendable
             let top = hypotheses.max { $0.value < $1.value }?.key
             chosen = hypotheses.filter { $0.value >= 0.25 || $0.key == top }.map(\.key)
         }
-        return chosen.compactMap { embed(query, language: $0) }.filter { models.contains($0.model) }
+        return requested.compactMap { request in
+            guard chosen.contains(request.language) else { return nil }
+            if request.tag.hasPrefix("w:") {
+                guard let model = wordModel(request.language, revision: request.revision),
+                      model.revision == request.revision else { return nil }
+                return meanWordVector(query, language: request.language, model: model, minimumWords: 1)
+                    .map { HistoryVector(model: request.tag, values: $0) }
+            }
+            guard wordCount(query) >= 2,
+                  let model = sentenceModel(request.language, revision: request.revision),
+                  model.revision == request.revision, let values = model.vector(for: query) else { return nil }
+            return HistoryVector(model: request.tag, values: values.map(Float.init))
+        }
     }
 
     /// The vector for `text` in `language`, or nil when that language has no model or `text` has
@@ -144,9 +170,12 @@ public final class NaturalLanguageEmbedder: HistoryEmbedder, @unchecked Sendable
                              options: [.omitPunctuation, .omitWhitespace]) { tag, range in
             // Languages the tagger cannot classify yield nil tags: every word counts there.
             if let tag, !Self.contentClasses.contains(tag) { return true }
-            let word = text[range].lowercased()
+            let original = String(text[range])
+            let word = original.lowercased()
             if language == .english && Self.genericNouns.contains(word) { return true }
-            if let vector = model.vector(for: word) {
+            // German topic nouns can exist only with their original capitalization.
+            let lookup = language == .english ? word : original
+            if let vector = model.vector(for: lookup) ?? (lookup == word ? nil : model.vector(for: word)) {
                 for index in vector.indices { sum[index] += vector[index] }
                 count += 1
             }
@@ -155,19 +184,25 @@ public final class NaturalLanguageEmbedder: HistoryEmbedder, @unchecked Sendable
         return count < max(minimumWords, 1) ? nil : sum.map { Float($0 / Double(count)) }
     }
 
-    private func wordModel(_ language: NLLanguage) -> NLEmbedding? {
+    private func wordModel(_ language: NLLanguage, revision: Int? = nil) -> NLEmbedding? {
         lock.lock(); defer { lock.unlock() }
-        if let cached = words[language] { return cached }
-        let model = NLEmbedding.wordEmbedding(for: language)
-        words[language] = model
+        let key = "\(language.rawValue):\(revision.map(String.init) ?? "current")"
+        if let cached = words[key] { return cached }
+        let model: NLEmbedding?
+        if let revision { model = NLEmbedding.wordEmbedding(for: language, revision: revision) }
+        else { model = NLEmbedding.wordEmbedding(for: language) }
+        words[key] = model
         return model
     }
 
-    private func sentenceModel(_ language: NLLanguage) -> NLEmbedding? {
+    private func sentenceModel(_ language: NLLanguage, revision: Int? = nil) -> NLEmbedding? {
         lock.lock(); defer { lock.unlock() }
-        if let cached = sentences[language] { return cached }
-        let model = NLEmbedding.sentenceEmbedding(for: language)
-        sentences[language] = model
+        let key = "\(language.rawValue):\(revision.map(String.init) ?? "current")"
+        if let cached = sentences[key] { return cached }
+        let model: NLEmbedding?
+        if let revision { model = NLEmbedding.sentenceEmbedding(for: language, revision: revision) }
+        else { model = NLEmbedding.sentenceEmbedding(for: language) }
+        sentences[key] = model
         return model
     }
 }

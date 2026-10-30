@@ -141,7 +141,7 @@ public enum MarkdownVault {
     /// records that kept only flattened text are written as they were saved.
     static func transcript(_ record: SessionRecord) -> String {
         guard let segments = record.segments, !segments.isEmpty else { return record.transcript }
-        return segments.compactMap { segment -> String? in
+        return TranscriptPresentation.ordered(segments).compactMap { segment -> String? in
             let text = segment.text.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !text.isEmpty else { return nil }
             let stamp = TranscriptTimestamp.isTimed(segment) ? "[\(TranscriptTimestamp.clock(segment.start))] " : ""

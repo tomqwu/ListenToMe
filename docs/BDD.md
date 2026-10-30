@@ -11,7 +11,22 @@ test selector, so there is no duplicate Cucumber implementation or dependency to
 
 `RELEASE-009` binds explicit manual TestFlight signing to offline upload decisions, invalid-file/field refusal, dry runs, exact phone/Share/Watch profile maps, unchanged automatic defaults, private options snapshots that survive changes to the original file, and accepted-receipt provenance. Exported native signatures/profiles and Apple upload/processing/tester readback remain separate release gates.
 
+The Mac Store draft uses `RELEASE-010`–`RELEASE-013` for its generated sandbox configuration,
+existing DMG/Dev identities, vault bookmarks and selected-file/folder reference scopes. These were
+`RELEASE-006`–`RELEASE-009` on the draft before the Watch train added its own scenarios to main.
+Integration preserves main's IDs and remaps only the unmerged Mac examples; their original red/green
+evidence remains valid under that explicit mapping. Temporary-directory bookmark tests do not prove
+installed sandbox picker grants across relaunch, which remain manual acceptance.
+
+AUDIOFEED-001–004 bind native iOS `AudioChunkFeedTests` and Mac `MacAudioChunkFeedTests` to generated local PCM frame/tail, timeline, Stop and empty/error outcomes. The genuine Int16 regression and focused/supplemental results are recorded in [the audio-feed evidence](audio-file-feed-tail.md); structural validity and simulator/native converter checks are not speech-quality or physical acceptance.
+
 ## Working an issue
+
+`RELEASE-014` binds the locally testable Store sandbox configuration, unchanged production/Dev
+identities, release optimization and fail-before-build missing-signing outcome to generated native
+settings and an actual make invocation. CI's explicit unsigned build proves compilation only.
+Installed Dev sandbox picker/relaunch/audio checks and Apple-distributed installation remain
+separate outcomes; the recorded Store-profile launch failure is not a permission failure.
 
 Finish the current change through validation, review, CI and merge before opening another feature
 PR. Future work stays in GitHub Issues. Work down existing drafts sequentially and consolidate
@@ -89,11 +104,17 @@ forwarding, safe drainage, actual controls, late completion/timer races and the 
 Held-service tests intentionally ignore cancellation; they prove bounded state without multiplying
 native work. See [evidence and acceptance limits](translation-recovery.md).
 
+`TRANSLATIONLEGIBILITY-001`–`003` bind essential translation text to actual iOS Summary/status
+renders and supported native Mac card/rail renders. Native environment, opaque surface, text bounds
+and measured glyph contrast are checked before a pass; a palette-only assertion is insufficient.
+The preserved initial scroll/appearance harness failures are separate from the genuine iOS contrast
+red. Mac increased-contrast propagation remains unverified. See [legibility evidence](translation-legibility.md).
+
 ## Watch durability and beta eligibility
 
 `WATCH-005`–`WATCH-014` exercise native AAC encoding/reading, crash recovery, metadata-first handoff, duplicate/conflicting chunks, end-marker storage failure, continued recording boundaries, pending counts, active-recording protection and Delete/relaunch. Transport and audio-session adapters isolate tests from real WatchConnectivity and microphone capture. Red evidence is retained separately from passing baseline adoption and test-harness failures; simulator assertions never prove physical delivery or wrist-down/battery acceptance.
 
-`RELEASE-003`, `RELEASE-006` and `RELEASE-007` separately cover default embedding, explicit Watch beta selection and refusal of unintended or malformed companions. A generated PBX configuration, a built embedded app and a distribution-signed exported IPA are separate checks. Current AGENTS.md permits authorized beta distribution with physical acceptance recorded as pending; it does not authorize a public App Store submission.
+`RELEASE-003`, `RELEASE-006` and `RELEASE-007` separately cover default embedding, explicit Watch beta selection and refusal of unintended or malformed companions. A generated PBX configuration, a built embedded app and a distribution-signed exported IPA are separate checks. Current AGENTS.md permits beta distribution with physical acceptance recorded as pending. Its separate standing review-submission authorization applies only when production-readiness gates, including affected-device acceptance, are satisfied; beta eligibility does not waive them.
 
 `WATCH-015` preserves a device/runtime regression that the iOS 26.5 simulator tests missed: that runtime accepted
 Float32 `AnalyzerInput` buffers while iOS 27.0.1 trapped with a signed-integer precondition. Native AAC
@@ -148,7 +169,18 @@ iPhone/iPad with a synthetic phrase played only after native Listening confirmat
 harness repair, not an invented product-regression red. Retain the earlier failures and distinguish
 Play/Pause-control acceptance from audible playback quality, and basic capture from speaker accuracy.
 
+`MACAUDIO-002` runs the actual native SpeechAnalyzer through prepared-but-empty, single-source,
+cancelled and real speech-file completion. It asserts bounded completion and result-stream closure,
+with first/final words and native audio times retained. Installed Start/New recovery remains a separate
+manual check; a missing installed English model skips the test and cannot satisfy BDD acceptance.
+
 ## Native log evidence
+
+`MACAUDIO-001` covers the actual native PCM-to-`AnalyzerInput` boundary exposed by #333, beyond the
+older scalar `BATCH-291` timeline tests. Nine methods exercise real conversion, separate raw/sample
+clocks, exact frame accounting, gaps after accumulated drift, invalid input and cancellation/queue
+ownership. See [the timing evidence](speech-input-timing.md); native buffer construction is not
+recognition quality or installed OTHERS acceptance.
 
 `DEV-008` covers a real aggregate-validation failure: macOS joined a timestamped framework diagnostic
 to a complete XCTest pass record. The native result bundle reported all 39 Mac tests passing, but
@@ -157,6 +189,21 @@ The verifier now extracts the exact class/method from a complete passing XCTest 
 that framework prefix without accepting diagnostic mentions, other selectors, skipped/failed tests
 or incomplete records. The original run remains failed; new offline regression cases and the saved
 native log verify the parser fix before the full candidate validation is repeated.
+
+`DEV-009` covers an actual false-success boundary in Apple's GNU make 3.81: `.SHELLFLAGS` was
+ignored, so a failing native command piped into `tee` could return success and reach later stages.
+Six offline methods execute the repository Makefile and native recipes with harmless commands,
+checking failures, successful controls, preserved diagnostics, paths with spaces and refusal to
+run later verification. Bash flags now belong to `SHELL`, which the older make actually uses.
+The original native failure remains failed; these tooling tests do not accept any app behavior.
+
+`VAULTUI-001` adopts the existing Save-to-folder journey and its observed full-run failure. The
+native screenshot/AX showed the enabled toggle partly outside the viewport, while lower lazy rows
+had not appeared. The corrected test reveals complete controls/disclosure inside Settings and scopes
+text queries to that form; a first revised page-wide query incorrectly found the warning behind the
+sheet and is retained as a harness failure. Default-off, explicit picker, Cancel, enabled-but-needs-
+folder and reachable Choose folder assertions remain. No folder behavior changed. See
+[the combined evidence](validation-pipeline-recovery.md).
 
 ## Commands and enforcement
 
@@ -259,3 +306,76 @@ Native UI fixtures prove placement and control behavior; installed-model quality
 real-model acceptance. The [validation record](translation-validation.md) distinguishes genuine
 regression reds from test-harness failures and records the complete unchanged-source component
 matrix after a torn native stdout event prevented the aggregate verifier from completing.
+
+## Transcript speaker rename shortcuts (#334)
+
+`AUDIOVIEW-001` covers the retained-audio player above the expanded transcript at standard and
+largest text sizes: complete visible phrases, single-line time, usable controls and enough reading
+space to reveal the original speaker without playback. The real AX5 layout red, distinct test-harness
+failures and final phone/iPad passes are recorded in [the layout evidence](saved-audio-accessibility.md).
+The rename test explicitly reveals the same original row before its real long press; it does not
+replace an offscreen target with another speaker or weaken editor/keyboard assertions.
+
+`SPEAKER-017` binds native iPhone/iPad long-press, Save/Cancel, repeated identities, blank names,
+Notes synchronization, keyboard visibility, Duo and rotation. `SPEAKER-018` binds native Mac
+double-click versus single-click/disabled controls, accessibility activation and name validation.
+Mac installed sheet/save/reopen and VoiceOver remain explicit acceptance steps.
+
+The initial native reds were a missing Rename speaker menu on iOS and no callback on Mac double-click.
+Duo then reproduced a real editor-dismissal failure when the keyboard changed the workspace layout;
+the sheet now belongs to a stable parent and retains the original conversation/line identity.
+Large-text screenshot inspection found clipping despite passing hittability checks; those earlier
+passes are not evidence of acceptable rendering. Preserve before/after captures with release evidence.
+
+Mac review also reproduced a live-breakdown regression: a known participant without attributed
+transcript lines could no longer be named. `testRenameLiveParticipantBeforeTranscriptAttribution`
+failed two native assertions before restoring participant-first lookup. The same adapter test group
+checks all restored lines change together and unknown IDs leave both labels and revision unchanged.
+The current integration adds `SPEAKER-019` for cold readiness and strengthens `SPEAKER-017` to
+require the actual two-pane workspace before/after rotation and Save. On base `6705543` plus the
+retained dirty test/scenario inputs, the two methods failed four assertions. The DEBUG simulator
+fixture then adopted the existing production lifecycle bridge; those exact tests passed unchanged.
+The six-method related rerun also passed, including largest text, opt-out, Notes and saved-audio
+controls. [The source-bound receipt](releases/speaker-rename-6705543-readiness.json) distinguishes
+these fixture controls from real diarization/Watch transfer/audio quality and keeps final combined
+validation, installed Mac, VoiceOver and disk-relaunch acceptance pending. No historical results
+are relabeled, and no release is implied by the fixture correction.
+
+## Dual-channel audio and presentation
+
+`MACEDIT-001` hosts the production transcript row and sends native pointer events at actual glyphs.
+It checks the correct editor, partial-line refusal, selected-text Copy serialization, an accessible
+Edit action, and complete multiline/CJK layout after resizing while preserving selection on refresh.
+Programmatic selection in that native Copy test does not prove pointer-drag selection; installed
+signed-app drag/keyboard/menu and Save/Cancel acceptance remains separate. See
+[the regression evidence](transcript-interaction.md).
+
+`MACAUDIO-003` and `MACAUDIO-004` distinguish chronological display/persistent line identity from
+microphone echo control. The native lifecycle tests cover setup failures and route/profile state changes through injected drivers,
+recovery cooldown and terminal Stop. Playback-only OTHERS success is insufficient: separately
+accept independent microphone speech and overlapping speech, without text-based duplicate removal.
+See [the #336 evidence and remaining acceptance](dual-channel-capture.md).
+
+The #334/#336 integration extends the restored-identity native test with delayed channel finals:
+renaming preserves chronological presentation and canonical line/run IDs, capture times and text.
+It passed on first execution and is recorded as integration coverage, not a new regression red.
+
+## Combined speaker and transcript gestures
+
+On the speaker-rename branch, `SPEAKER-018` also hosts the production row alongside `MACEDIT-001`.
+Native pointer events on transcript glyphs open only the line editor; speaker-label events open
+only the name sheet, and its Escape shortcut dismisses without changing the name or transcript.
+These additional integration assertions do not replace installed pointer, keyboard, menu, VoiceOver
+or persistence acceptance. The native sheet bitmap is diagnostic: missing button-label rendering
+prevents treating it as a complete visual pass.
+
+## Withdrawing an unaccepted optional feature
+
+`HISTORYDELIVERY-001` traverses real iPhone Settings through Recording and rejects the withdrawn
+optional-model controls. It failed on the visible heading/download button, then the same method
+passed after removal. `HISTORYDELIVERY-002` exercises the shared default History composition with
+old optional derived vectors: Apple/keyword behavior preserves original archive bytes and dormant
+asset/preference sentinels. The latter is new baseline coverage, not a historical regression red.
+Optional-only runtime tests remain preserved with their source at `08521d5`; removing that product
+scope does not turn its failed quality gate into a pass or complete #223. Apple/indexing contracts
+remain required. [Focused evidence](evaluations/history-delivery-scope-2026-10-30.json).

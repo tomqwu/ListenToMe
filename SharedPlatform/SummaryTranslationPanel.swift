@@ -26,9 +26,9 @@ import ListenToMeCore
                     TranslationLanguageChoices(selection: target)
                 }.accessibilityIdentifier("summaryTranslationTargetPicker")
                 Text("On-device translation keeps the original below. Check translated wording before sharing.")
-                    .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    .font(.caption).foregroundStyle(.primary).fixedSize(horizontal: false, vertical: true)
                 if let problem = translation.problem {
-                    Text(problem).font(.caption).foregroundStyle(.secondary)
+                    Text(problem).font(.caption).foregroundStyle(.primary)
                 }
                 Button("Translate", systemImage: "translate") { update(); translation.request() }
                     .disabled(!translation.canRequest)
@@ -53,7 +53,7 @@ import ListenToMeCore
                         }.padding(12).background(.quaternary, in: RoundedRectangle(cornerRadius: 10))
                     }
                 }
-                Text("Original summary").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                Text("Original summary").font(.caption.weight(.semibold)).foregroundStyle(.primary)
             }
         }.frame(maxWidth: .infinity, alignment: .leading)
             .onAppear { update() }

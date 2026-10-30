@@ -1,0 +1,124 @@
+{
+  "feature": "History backend transitions preserve consent and current records",
+  "scenarios": [
+    {
+      "id": "HISTORYBACKEND-001",
+      "name": "Failed opt-out never resumes an old semantic backend",
+      "given": "an optional backend is indexed and storage prevents switching it off",
+      "when": "storage recovers before a later archive sync retries the intended fallback",
+      "then": "exact-word search remains available but semantic results and Ask dispatch stay blocked until the fallback is installed; no old optional backend resumes",
+      "covers": [
+        "SharedPlatform/HistorySearchModel.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/HistoryBackendTransitionTests.swift",
+          "test": "HistoryBackendTransitionTests/testFailedSwitchBlocksOldSemanticsAndAskUntilSyncRetry"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYBACKEND-002",
+      "name": "A saved conversation retries the intended backend",
+      "given": "a backend transition failed while derived storage was unavailable",
+      "when": "storage returns and the current conversation is saved",
+      "then": "the intended backend is installed and current records are indexed without reverting to the old backend",
+      "covers": [
+        "SharedPlatform/HistorySearchModel.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/HistoryBackendTransitionTests.swift",
+          "test": "HistoryBackendTransitionTests/testSaveRetriesIntendedBackendAfterStorageRecovery"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYBACKEND-003",
+      "name": "Late old searches cannot restore replaced or deleted history",
+      "given": "a search is suspended in an old backend",
+      "when": "the backend changes and the current archive replaces the old conversation",
+      "then": "the current conversation is indexed and shown by the new backend and the old completion restores neither text nor results",
+      "covers": [
+        "SharedPlatform/HistorySearchModel.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/HistoryBackendTransitionTests.swift",
+          "test": "HistoryBackendTransitionTests/testHeldOldSearchCannotRestorePreviousConversationAfterSwitch"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYBACKEND-004",
+      "name": "Backend changes revoke old answers and citations",
+      "given": "Ask is streaming an answer from the previous backend's retrieved excerpts",
+      "when": "the backend and current archive change before the old provider completes",
+      "then": "the old answer and citations clear immediately and its late output cannot replace a new answer grounded in current records",
+      "covers": [
+        "SharedPlatform/HistorySearchModel.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/HistoryBackendTransitionTests.swift",
+          "test": "HistoryBackendTransitionTests/testHeldOldAnswerCannotReplaceCurrentAnswerAfterSwitch"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYBACKEND-005",
+      "name": "Saved vectors refresh the current semantic query",
+      "given": "a nonlexical History search is active and a new or edited conversation is waiting to finish embedding",
+      "when": "the save publishes its new vectors without another keystroke",
+      "then": "the current search reruns and shows the saved conversation and current snippet",
+      "covers": [
+        "SharedPlatform/HistorySearchModel.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/HistoryBackendTransitionTests.swift",
+          "test": "HistoryBackendTransitionTests/testNewAndEditedSavesRefreshActiveSemanticSearchWithoutRetyping"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYBACKEND-006",
+      "name": "A superseded save cannot refresh a newer backend epoch",
+      "given": "a save is awaiting its previous backend",
+      "when": "the backend and current conversation change before the old save returns",
+      "then": "the old completion cannot change the current query results or search generation",
+      "covers": [
+        "SharedPlatform/HistorySearchModel.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/HistoryBackendTransitionTests.swift",
+          "test": "HistoryBackendTransitionTests/testSupersededHeldSaveCannotRefreshNewBackendEpoch"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYBACKEND-007",
+      "name": "Clear revokes an older save batch hidden behind queued work",
+      "given": "an older multi-record save batch is suspended and a newer maintenance wrapper is queued behind it",
+      "when": "History is cleared before the older inference finishes",
+      "then": "neither unvisited old records nor stale refresh callbacks return after clear",
+      "covers": [
+        "SharedPlatform/HistorySearchModel.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/HistoryBackendTransitionTests.swift",
+          "test": "HistoryBackendTransitionTests/testClearRevokesOlderSaveBatchBehindQueuedMaintenance"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,229 @@
+{
+  "feature": "Asynchronous on-device history indexing ownership",
+  "scenarios": [
+    {
+      "id": "HISTORYASYNC-001",
+      "name": "Async embeddings retain language and query behavior",
+      "given": "an on-device embedder suspends while producing passage and query vectors",
+      "when": "a conversation with a known transcription language is indexed and searched",
+      "then": "language metadata reaches the embedder and semantic search and Ask retrieval remain usable",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryEmbedding.swift",
+        "Sources/ListenToMeCore/HistoryIndex.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryIndexAsyncTests.swift",
+          "test": "HistoryIndexAsyncTests/testAsyncPassagesAndQueriesPreserveLanguageAndResults"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYASYNC-002",
+      "name": "Deletion wins over suspended indexing",
+      "given": "a new conversation is awaiting a passage embedding",
+      "when": "that conversation is deleted before inference completes",
+      "then": "late work writes no vector file and neither lexical nor semantic results expose its text",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryEmbedding.swift",
+        "Sources/ListenToMeCore/HistoryIndex.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryIndexAsyncTests.swift",
+          "test": "HistoryIndexAsyncTests/testDeletionDuringHeldEmbeddingNeverRestoresVectorsOrText"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYASYNC-003",
+      "name": "Clear history revokes pending conversations",
+      "given": "an archive snapshot has a held conversation and a later unvisited conversation",
+      "when": "history is cleared before inference completes",
+      "then": "neither known old conversation can return from late work or a stale retry, while a newly saved conversation can be indexed",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryEmbedding.swift",
+        "Sources/ListenToMeCore/HistoryIndex.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryIndexAsyncTests.swift",
+          "test": "HistoryIndexAsyncTests/testClearDuringHeldEmbeddingRejectsOldRecordButAllowsNewRecord"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryIndexAsyncTests.swift",
+          "test": "HistoryIndexAsyncTests/testClearAlsoRevokesUnvisitedSnapshotRecords"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYASYNC-004",
+      "name": "Cancellation cannot publish a partial conversation",
+      "given": "one passage is embedded and a second passage is awaiting inference",
+      "when": "the indexing task is cancelled and inference then finishes",
+      "then": "no partial vector record publishes and a later uncancelled save can succeed",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryEmbedding.swift",
+        "Sources/ListenToMeCore/HistoryIndex.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryIndexAsyncTests.swift",
+          "test": "HistoryIndexAsyncTests/testCancellationDuringSecondPassagePublishesNoPartialRecord"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYASYNC-005",
+      "name": "A later save wins over older inference",
+      "given": "an earlier version of a conversation is awaiting inference",
+      "when": "a newer version is saved before the old inference finishes",
+      "then": "only the newer version remains indexed and retrievable",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryEmbedding.swift",
+        "Sources/ListenToMeCore/HistoryIndex.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryIndexAsyncTests.swift",
+          "test": "HistoryIndexAsyncTests/testNewerUpdateWinsOverHeldOlderUpdate"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYASYNC-006",
+      "name": "Rebuild supersedes an old sync",
+      "given": "a sync is awaiting an old conversation embedding",
+      "when": "the index is rebuilt from the current archive before old inference finishes",
+      "then": "the old sync cannot restore removed content or overwrite the rebuilt index",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryEmbedding.swift",
+        "Sources/ListenToMeCore/HistoryIndex.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryIndexAsyncTests.swift",
+          "test": "HistoryIndexAsyncTests/testRebuildSupersedesHeldSync"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYASYNC-007",
+      "name": "Late queries cannot return deleted text",
+      "given": "a semantic search or Ask retrieval is awaiting its query embedding",
+      "when": "its conversation is deleted or cleared while the query is suspended",
+      "then": "the resumed request returns no stale conversation text or passage",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryEmbedding.swift",
+        "Sources/ListenToMeCore/HistoryIndex.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryIndexAsyncTests.swift",
+          "test": "HistoryIndexAsyncTests/testDeletionAndClearDuringHeldQueriesReturnNoText"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYASYNC-008",
+      "name": "Cancelled queries publish no results",
+      "given": "a search or Ask retrieval is awaiting a query embedding",
+      "when": "the request is cancelled before inference completes",
+      "then": "late inference produces no lexical or semantic result or Ask passage",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryEmbedding.swift",
+        "Sources/ListenToMeCore/HistoryIndex.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryIndexAsyncTests.swift",
+          "test": "HistoryIndexAsyncTests/testCancelledHeldQueriesReturnNoResults"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYASYNC-009",
+      "name": "Changing backend revokes old inference",
+      "given": "a conversation is awaiting the old embedding backend",
+      "when": "the backend is atomically replaced on the same index and current records are synced",
+      "then": "late old inference cannot restore or overwrite new-backend vectors",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryEmbedding.swift",
+        "Sources/ListenToMeCore/HistoryIndex.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryIndexAsyncTests.swift",
+          "test": "HistoryIndexAsyncTests/testBackendReplacementRejectsHeldOldInference"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYASYNC-010",
+      "name": "Backend failure preserves coherent ownership",
+      "given": "an indexed conversation has valid vectors",
+      "when": "the same backend is selected or storage prevents switching to another backend",
+      "then": "same-signature selection preserves vectors and a failed switch retains the prior usable backend",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryEmbedding.swift",
+        "Sources/ListenToMeCore/HistoryIndex.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryIndexAsyncTests.swift",
+          "test": "HistoryIndexAsyncTests/testSameBackendIsNoOpAndFailedReplacementKeepsOldBackend"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYASYNC-011",
+      "name": "Old archive snapshots cannot overwrite later saves",
+      "given": "a multi-conversation sync is suspended before visiting a later conversation",
+      "when": "that later conversation is saved or a newer archive snapshot is synced before old inference finishes",
+      "then": "the newer vectors remain current and the older snapshot cannot restore or overwrite them",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryIndex.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryIndexAsyncTests.swift",
+          "test": "HistoryIndexAsyncTests/testOlderSyncCannotOverwriteLaterSaveForUnvisitedRecord"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryIndexAsyncTests.swift",
+          "test": "HistoryIndexAsyncTests/testOverlappingSyncSnapshotsKeepNewerArchive"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYASYNC-012",
+      "name": "A cancelled backend selection cannot change the current index",
+      "given": "the current backend has valid indexed conversations",
+      "when": "a backend-selection task is cancelled before the index actor handles it",
+      "then": "the current backend and its stored vectors remain unchanged and the cancelled choice is refused",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryIndex.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryIndexAsyncTests.swift",
+          "test": "HistoryIndexAsyncTests/testCancelledBackendSelectionLeavesCurrentBackendAndRecordsUntouched"
+        }
+      ]
+    }
+  ]
+}

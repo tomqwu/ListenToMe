@@ -1,9 +1,22 @@
 # Device and feature compatibility
 
+For Mac Store acceptance, distinguish a locally runnable development-signed sandbox build from a
+production Store package whose profile may be ineligible for direct local launch. Use
+[SandboxAcceptance](RELEASING.md#local-sandbox-acceptance) with the existing Dev identity and retain
+the OS provisioning failure separately from microphone/system-audio capability. Never infer a
+permission problem or change permissions from a profile-launch failure.
+
 The iPhone/iPad compatibility changes below are published in [TestFlight 1.18.0 (35)](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.0-build35).
 Current-source physical acceptance remains pending. Mac changes are merged but unreleased, with
 installed GUI/OTHERS acceptance explicitly deferred by the maintainer; see [HANDOFF](HANDOFF.md).
 TestFlight 1.19.0 (38) includes the [Watch beta](watch-beta.md), with uploaded-package signatures and Apple’s processed identity verified; physical acceptance remains pending. Native lifecycle tests check cancellation/Stop and readiness again after permission returns, before audio activation.
+
+The native Mac App Store configuration is being prepared separately. It uses
+`com.tomwu.ListenToMe.ios` with App Sandbox; the existing DMG and Dev identities are unchanged.
+Its microphone, system-audio and Calendar grants, container data and selected-file access must be
+checked for that identity. Do not infer them from checked permissions on the DMG or Dev app. Vault
+and reference file/folder access use persisted security-scoped bookmarks. Actual sandbox
+picker/relaunch and GUI/OTHERS acceptance remain pending; see [the Store procedure](RELEASING.md#mac-app-store-distribution).
 
 An OS version alone does not establish feature support. The apps require version 26 or later of
 their platform OS, then query the actual framework, selected language, permission and model state.

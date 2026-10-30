@@ -1,0 +1,1 @@
+Preserve the ending of saved recordings during audio conversion for re-transcription and Watch imports, while preserving original audio and recording-time alignment.

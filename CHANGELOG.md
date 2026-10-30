@@ -9,9 +9,20 @@ iOS entries are drawn from [`iOS/MobileReleaseNotes.swift`](iOS/MobileReleaseNot
 in-app "What's New" copy shown once per set of bundled release notes — a build that changes no notes
 does not show it again, and a fresh install does not see it at all; see
 [`docs/IOS.md`](docs/IOS.md) for the fuller per-build technical notes and
-[`metadata/ios/en-US/`](metadata/ios/en-US/) for TestFlight "What to Test" text.
+[`metadata/ios/en-US/`](metadata/ios/en-US/) for current TestFlight "What to Test" text.
 
 ## Repository tooling (unreleased)
+
+- Require current README screenshots with device-grouped layouts, full-size links and capture
+  provenance. Add a concise native Duo preview and a BDD capture check that rejects clipped sample
+  text. That earlier preview changed only its optional short fixture; default fixture data and
+  production layouts were unchanged at that checkpoint. The later compact-landscape app fix is
+  listed under iOS below.
+
+- Propagate failed native build/test pipelines through Apple's GNU make 3.81, preserve diagnostics
+  and stop later success checks. Add offline tests of the actual make recipes and bind the
+  Save-to-folder UI journey, with full control/disclosure visibility after picker Cancel.
+  This changes validation only and requires no app version bump. (#347)
 
 - Support an explicit, validated manual TestFlight signing file when cloud-managed signing is unavailable. Preserve the automatic default, exact companion eligibility, stable versions/team, upload locks and acceptance receipts; upload from a private validated snapshot and record its hash, original path and signing mode. No app binary or privacy behavior changes. (#323)
 
@@ -26,6 +37,33 @@ does not show it again, and a fresh install does not see it at all; see
   as passing.
 
 ## iOS (unreleased)
+
+- Give transcript and Quick Summary more reading room in compact landscape Duo, including shorter
+  non-Max iPhones. Preserve existing content, 44-point controls and accessibility scrolling.
+
+- Avoid unrelated History suggestions and Ask excerpts from generic German/Spanish planning
+  questions when on-device language analysis is available. Preserve literal searches, real topics
+  and ambiguous single-word queries; saved conversation vectors are unchanged. (#223)
+
+- Keep saved Apple sentence search entries usable when word models become available; query each
+  stored model type and revision without rewriting conversations or search vectors. (#223)
+
+- Preserve case-sensitive words recognized by installed Apple History models and rebuild stale
+  empty search vectors without changing saved conversations. Existing content minima, English
+  normalization and relevance cutoffs stay unchanged. (#223)
+
+- Identify manual transcript corrections accurately in Markdown; retain AI labels for named models
+  and use neutral wording when legacy correction provenance is unknown. Original speech stays intact.
+
+- Refresh active History results after saved text finishes indexing, and prevent older indexing
+  batches from restoring cleared derived data. Model transitions keep exact-word search available
+  and wait before sending an Ask request. (#223)
+- Correct Settings to explain continued screen-lock recording and paused optional AI updates.
+
+- Keep saved-audio labels and elapsed/duration readable at accessibility text sizes, with usable playback controls and transcript scrolling on iPhone and iPad.
+- Make essential translation explanations, setup status and recovery messages easier to read with stronger native foreground colors, preserving the existing layout and translation behavior. (#346)
+- Long-press an identified transcript line and choose **Rename speaker**. Save updates every line for that speaker in the conversation and Notes; Cancel leaves the name unchanged. Available in portrait, expanded transcript and Duo. (#334)
+- Preserve the final audio samples when converting saved recordings for re-transcription and Watch imports. Drain retained converter output before advancing to the next file; keep original files intact and maintain recording-time alignment. (#348)
 
 ## iOS 1.20.2 (42) — 2026-10-28 (TestFlight)
 
@@ -83,6 +121,12 @@ Apple accepted **1.19.0 (38)** at **2026-10-27T08:31:46.551678+00:00**, from `e4
 Apple accepted **1.18.2 (37)** at **2026-10-27T03:39:12.147449+00:00**, from `9494d024b9eee577b40695292aaf5e7dab9434eb`. Processing is **VALID**, internal state **IN_BETA_TESTING**, and both existing Dev testers have accepted group access. Primary locale, localized name, beta description and What to Test were read back in **en-US**. [Complete release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.2-build37). No privacy or audio-retention change. Fresh screenshots are captured; the public listing was not updated. Physical-device acceptance was not performed for this beta; it is not a production-ready claim. Public iOS 1.18.1 remains READY_FOR_SALE; 1.18.2 has not been submitted to the public App Store. Watch is excluded and the separate Mac Store draft #318 remains unsubmitted.
 
 ## iOS 1.18.1 (36) — 2026-10-26 (TestFlight)
+
+October 26 correction: the en-US TestFlight description and What to Test were created and read back
+for build 36, without a binary re-upload. All 24 fresh en-US App Store screenshots are COMPLETE and
+the iOS version is waiting for review. The app-wide primary locale remains en-CA until Apple approves
+the new US localization/screenshots; submitted localization and primary language are separate.
+The original upload checkpoint below retains its historical locale and then-pending screenshot state.
 
 Published from `7643b204def6acea0b616a2c2de2bade2fc4c7c9`; Apple accepted the upload at 2026-10-26T17:29:24.328646+00:00. Processing is VALID, internal state is IN_BETA_TESTING, both existing Dev testers have group access, and en-CA metadata was read back. [Full release notes](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.1-build36). Physical-device accuracy/performance and original tester audio remain unverified; three-person separation is not established. App Store listing screenshot upload remains pending. Watch is excluded and Mac publication remains paused.
 
@@ -145,9 +189,55 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 
 ## macOS (unreleased since 1.4.4)
 
+- Avoid unrelated History suggestions and Ask excerpts from generic German/Spanish planning
+  questions when on-device language analysis is available. Preserve literal searches, real topics
+  and ambiguous single-word queries; saved conversation vectors are unchanged. (#223)
+
+- Keep saved Apple sentence search entries usable when word models become available; query each
+  stored model type and revision without rewriting conversations or search vectors. (#223)
+
+- Preserve case-sensitive words recognized by installed Apple History models and rebuild stale
+  empty search vectors without changing saved conversations. Existing content minima, English
+  normalization and relevance cutoffs stay unchanged. (#223)
+
+- Identify manual transcript corrections accurately in Markdown; retain AI labels for named models
+  and use neutral wording when legacy correction provenance is unknown. Original speech stays intact.
+
+- Refresh active History results after saved text finishes indexing, and prevent older indexing
+  batches from restoring cleared derived data. Model transitions keep exact-word search available
+  and wait before sending an Ask request. (#223)
+
+- Make essential translation explanations, setup status and recovery messages easier to read with stronger native foreground colors, preserving the existing layout and translation behavior. (#346)
+- Double-click an identified transcript speaker label, or choose **Rename speaker** from its context menu. Save updates that speaker across the conversation, including reopened conversations; Cancel leaves the name unchanged. (#334)
+- Preserve the final audio samples in the shared saved-audio conversion feed, including chunk timeline boundaries. Keep original recordings unchanged and stop explicitly on conversion failures. (#348)
+
 - Stop indefinite translation progress after a stalled on-device request, add Cancel translation and disable duplicate Translate/Retry actions until native work safely exits. Cancel the actual Apple session and reject late results/timers while preserving originals, language-pack consent and AI-provider choices. (#343)
 
+- Restore double-click editing directly on finalized transcript text, with native phrase selection,
+  Copy and an accessible Edit line action. Keep wrapped text visible after resizing and retain
+  selections through unchanged-text refreshes. Partial recognition remains read-only. (#337)
 
+- Add native microphone echo control to reduce system playback appearing again as YOU. Refuse
+  unprotected input when setup fails, and keep Stop authoritative across route recovery. (#336)
+- Present delayed Mac channel results chronologically within explicit recording runs, preserving
+  line identity and canonical storage; keep readable exports and recorded duration consistent.
+  Preserve run metadata through prompt shortening and mobile correction/undo. (#336)
+
+- Fix audio imports remaining at Finalizing or Stopping when a prepared speech channel received
+  no audio. Close unused channels promptly while preserving final words and timestamps. (#335)
+
+- Prevent live SpeechAnalyzer input from stopping on overlapping buffer timestamps caused by
+  resampling and small capture-clock jitter. Preserve source offsets, real gaps and converted frames;
+  reject stale input explicitly and discard converters cancelled during conversion. (#333)
+- Prepare a separate sandboxed Mac App Store configuration, sharing the iOS listing's bundle ID
+  while preserving the existing DMG and Dev identities. The preliminary 1.5.0 (15) archive builds
+  for Intel and Apple silicon with US English. This is not an App Store upload or submission.
+- Add a release-optimized local sandbox acceptance build under the existing Dev identity, with
+  explicit signing setup, separate output and normal app-scoped cleanup. Store distribution
+  artifacts and their provisioning remain untouched; local checks do not establish Store installation.
+- Persist native security-scoped grants for the selected Markdown vault and reference files/folders,
+  retain access throughout reads, and show reselection guidance for broken saved reference grants.
+  Sandboxed picker/relaunch, recording and fresh Mac screenshot acceptance remain required.
 - Add opt-in on-device translation beneath finalized transcript lines, plus **Translate summary**
   on the Summary page with its own target language and original summary retained. Check exact
   installed language pairs, offer explicit preparation and preserve original speech, speakers,

@@ -62,35 +62,60 @@ actor SpeechAnalyzerTranscriber: Transcribing {
         // Normally already warm from prepare(); this also recreates a pipeline whose results
         // stream ended mid-session.
         guard let pipeline = await ensurePipeline(for: chunk.source) else { return }
-        guard let buffer = pipeline.convert(chunk) else { return }
         guard !stopped, !Task.isCancelled, pipelines[chunk.source]?.id == pipeline.id else { return }
-        let start = chunk.timestamp.isFinite && chunk.timestamp >= 0 ? chunk.timestamp : 0
-        pipeline.inputContinuation.yield(AnalyzerInput(buffer: buffer,
-            bufferStartTime: CMTime(seconds: start, preferredTimescale: 1_000_000)))
+        do {
+            if try pipeline.inputAdapter.send(chunk, to: pipeline.inputContinuation) {
+                pipeline.hasInput = true
+            }
+        } catch {
+            pipeline.inputAdapter.stop()
+            pipeline.inputContinuation.finish()
+            failedSources.insert(chunk.source)
+            statusContinuation.yield("Transcription failed: \(error.localizedDescription)")
+        }
     }
 
     func finish() async {
         stopped = true
-        for pipeline in pipelines.values {
+        let finishing = Array(pipelines.values)
+        // Close every source before awaiting one; another warmed channel may never receive audio.
+        for pipeline in finishing {
+            pipeline.inputAdapter.stop()
             pipeline.inputContinuation.finish()
-            let analyzer = pipeline.analyzer
-            do {
-                try await withTaskCancellationHandler {
-                    try Task.checkCancellation()
-                    try await analyzer.finalizeAndFinishThroughEndOfInput()
-                } onCancel: {
-                    Task { await analyzer.cancelAndFinishNow() }
-                }
-            } catch {
-                if !Task.isCancelled {
-                    statusContinuation.yield("Transcript finalization failed: \(error.localizedDescription)")
-                }
-            }
-            await pipeline.resultsTask.value   // drain finalized results; the stream ends after finalize
         }
+        for pipeline in finishing { await finish(pipeline) }
         pipelines.removeAll()
         continuation.finish()
         statusContinuation.finish()
+    }
+
+    private func finish(_ pipeline: Pipeline) async {
+        let analyzer = pipeline.analyzer
+        // An analyzer that received no input has no final words to flush. Its results sequence
+        // can remain open after normal finalization, including after a prepared import is cancelled.
+        guard pipeline.hasInput, !Task.isCancelled else {
+            pipeline.resultsTask.cancel()
+            await analyzer.cancelAndFinishNow()
+            await pipeline.resultsTask.value
+            return
+        }
+        do {
+            try await withTaskCancellationHandler {
+                try Task.checkCancellation()
+                try await analyzer.finalizeAndFinishThroughEndOfInput()
+                await pipeline.resultsTask.value // Preserve final words from channels that had audio.
+            } onCancel: {
+                pipeline.resultsTask.cancel()
+                Task { await analyzer.cancelAndFinishNow() }
+            }
+        } catch {
+            pipeline.resultsTask.cancel()
+            await analyzer.cancelAndFinishNow()
+            await pipeline.resultsTask.value
+            if !Task.isCancelled {
+                statusContinuation.yield("Transcript finalization failed: \(error.localizedDescription)")
+            }
+        }
     }
 
     /// Returns the live pipeline for a source, building it on first use. Returns nil when setup
@@ -102,9 +127,11 @@ actor SpeechAnalyzerTranscriber: Transcribing {
         guard let created = await makePipeline(for: source) else { return nil }
         guard !stopped else {
             // stop() ran during async setup — tear down the just-created pipeline.
+            created.inputAdapter.stop()
             created.inputContinuation.finish()
-            try? await created.analyzer.finalizeAndFinishThroughEndOfInput()
             created.resultsTask.cancel()
+            await created.analyzer.cancelAndFinishNow()
+            await created.resultsTask.value
             return nil
         }
         pipelines[source] = created
@@ -160,8 +187,10 @@ actor SpeechAnalyzerTranscriber: Transcribing {
                     Self.emit(result, from: source, to: cont)
                 }
             } catch {
-                self?.statusContinuation.yield("Transcription failed: \(error.localizedDescription). Stop and restart.")
-                await self?.markFailed(source)
+                if !Task.isCancelled {
+                    self?.statusContinuation.yield("Transcription failed: \(error.localizedDescription). Stop and restart.")
+                    await self?.markFailed(source)
+                }
             }
             // Stream ended (error or completion): drop this pipeline so the next feed recreates it.
             await self?.resultsEnded(source: source, id: id)
@@ -221,6 +250,7 @@ actor SpeechAnalyzerTranscriber: Transcribing {
 
     private func resultsEnded(source: SpeakerSource, id: UUID) {
         guard !stopped, pipelines[source]?.id == id else { return }
+        pipelines[source]?.inputAdapter.stop()
         pipelines[source] = nil
     }
 
@@ -255,7 +285,9 @@ private final class Pipeline: @unchecked Sendable {
     let inputContinuation: AsyncStream<AnalyzerInput>.Continuation
     let format: AVAudioFormat
     let resultsTask: Task<Void, Never>
-    private var converter: AVAudioConverter?
+    let inputAdapter: MacAnalyzerInputAdapter
+    /// Mutated only by the owning transcriber actor after an actual native input was enqueued.
+    var hasInput = false
 
     init(
         id: UUID,
@@ -270,42 +302,8 @@ private final class Pipeline: @unchecked Sendable {
         self.analyzer = analyzer
         self.inputContinuation = inputContinuation
         self.format = format
+        self.inputAdapter = MacAnalyzerInputAdapter(format: format)
         self.resultsTask = resultsTask
     }
 
-    /// Convert a mono-Float32 chunk into the analyzer's expected format.
-    func convert(_ chunk: AudioChunk) -> AVAudioPCMBuffer? {
-        guard !chunk.samples.isEmpty,
-              let srcFormat = AVAudioFormat(
-                commonFormat: .pcmFormatFloat32,
-                sampleRate: chunk.sampleRate,
-                channels: 1,
-                interleaved: false
-              ),
-              let srcBuf = AVAudioPCMBuffer(
-                pcmFormat: srcFormat,
-                frameCapacity: AVAudioFrameCount(chunk.samples.count)
-              ) else { return nil }
-        srcBuf.frameLength = AVAudioFrameCount(chunk.samples.count)
-        for (index, sample) in chunk.samples.enumerated() {
-            srcBuf.floatChannelData![0][index] = sample
-        }
-        if srcFormat == format { return srcBuf }
-        if converter?.inputFormat != srcFormat {
-            converter = AVAudioConverter(from: srcFormat, to: format)
-            converter?.primeMethod = .none
-        }
-        guard let converter else { return nil }
-        let ratio = format.sampleRate / srcFormat.sampleRate
-        let capacity = AVAudioFrameCount(Double(chunk.samples.count) * ratio) + 1_024
-        guard let outBuf = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: capacity) else { return nil }
-        var consumed = false
-        var convError: NSError?
-        converter.convert(to: outBuf, error: &convError) { _, status in
-            if consumed { status.pointee = .noDataNow; return nil }
-            consumed = true; status.pointee = .haveData; return srcBuf
-        }
-        if convError != nil { return nil }
-        return outBuf
-    }
 }

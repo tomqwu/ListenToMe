@@ -6,6 +6,9 @@ plus real-time AI via Ollama (local + cloud), with per-pane model selection and 
 - **Engine** logic lives in `Sources/ListenToMeCore` (SwiftPM library, **has tests** in `Tests/ListenToMeCoreTests`).
 - **UI** lives in `App/` (SwiftUI; **no UI tests** — headless adapter tests run through `make mac-test`; verify UI changes with `make build` plus a manual `make run`).
 - Build: `make build`. Run: `make run`. Full check (build + bundle path + `OllamaProvider` contract test): `make e2e`.
+- Store sandbox acceptance: `make mac-sandbox-build` with stable Dev signing; follow
+  [the local sandbox runbook](docs/RELEASING.md#local-sandbox-acceptance). This uses the existing
+  `.dev` identity and requires normal Dev cleanup; it is not a Store installation/upload pass.
 
 ## Canonical release workflow
 
@@ -37,11 +40,14 @@ authorized workflow. For a due beta train, use the
 verification. Check the configured credentials before requesting sign-in; an unlocked Mac or
 connected phone is not required for the CLI/API beta-upload route. Record missing physical acceptance.
 
-For an explicitly authorized official submission, complete production acceptance, **en-US** metadata
+The maintainer’s **2026-10-28 (Toronto)** standing instruction authorizes review submission whenever
+an iOS (iPhone/iPad + embedded Watch) or macOS version is ready. Submit without renewed permission
+after the canonical readiness gates pass. Complete production acceptance, **en-US** metadata
 and localized-name readback, complete release notes, current reviewer/privacy details, selected-build
 verification and fresh screenshot uploads before submitting. Cover iPhone/iPad, Duo and embedded
-Watch, and Mac separately when authorized. Verify processed screenshot sets and downloaded images;
-local captures do not update Apple's listing. Preserve the intended release mode, reuse existing
+Watch, and Mac as a separate platform. Verify processed screenshot sets and downloaded images;
+local captures do not update Apple's listing. Preserve the existing release mode, including leaving
+manual-release versions pending after approval; submission authority is not a manual-release command. Reuse existing
 authorization for the version/platform, and operate the submission instead of handing the clicks
 back to the maintainer. Retain Apple's submission receipt and distinguish review submission,
 approval, pending manual release and public availability. A TestFlight beta or Mac GitHub DMG is
@@ -52,6 +58,15 @@ failing native test, implementation, passing test, then refactor. Bind Given/Whe
 `Behaviors/` to concrete test methods, run `make bdd-check`, and include scenario IDs plus actual
 red/green evidence in the PR. This applies to app code and build/release automation alike; the
 existing validation, independent review and publication gates remain required.
+
+## README screenshots
+
+Follow [the mandatory README gallery policy](AGENTS.md#readme-screenshot-gallery): review screenshots
+for every feature/fix, refresh changed UI in the same change, and update the gallery on every release
+train. Cover Mac, iPhone portrait and Duo, iPad wide layouts and the included Watch app. Use a balanced,
+responsive device-grouped layout with consistent thumbnails, captions, alt text and full-size links.
+Keep capture provenance and version/status labels accurate; inspect desktop/mobile rendering and
+image links. Captures saved elsewhere or uploaded only to Apple do not finish this requirement.
 
 ## Definition of Done
 
@@ -67,7 +82,8 @@ A change is **not done** until ALL of the following are true. Treat this as a ch
    change fully implements a known gap, **link and close the matching issue in the same PR**. Keep valid
    unimplemented enhancements open; close duplicates with a link and obsolete items with a reason. New ideas become
    issues (`enhancement` + `priority: P1/P2/P3`), never bullets in a markdown backlog.
-4. **The PR description states what was verified** (commands run + outcomes).
+4. **The PR description states what was verified** (commands run + outcomes), including the README
+   screenshot refresh/render check or the precise unchanged/blocked reason.
 
 ## Product principles (do not violate)
 

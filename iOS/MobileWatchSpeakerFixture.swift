@@ -7,7 +7,7 @@ import ListenToMeCore
 struct MobileWatchSpeakerFixture: View {
     @State private var session: MobileSession = {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("WatchSpeakersUI-\(UUID())")
-        let session = MobileSession(storageDirectory: root)
+        let session = MobileSession(storageDirectory: root, recordingSupport: { _ in .ready })
         var labels = WatchSpeakerLabels(existing: [])
         labels.append(DiarizedWindow(segments: [
             DiarizedSegment(speakerId: "a", start: 0, duration: 8),
@@ -16,6 +16,8 @@ struct MobileWatchSpeakerFixture: View {
         let lines = [
             TranscriptSegment(source: .you, text: "We will test the release on Friday.", isFinal: true,
                               start: 1, end: 6, speakerName: MobileFileTranscriber.speakerName),
+            TranscriptSegment(source: .you, text: "Please include the speaker rename check.", isFinal: true,
+                              start: 6.2, end: 7.8, speakerName: MobileFileTranscriber.speakerName),
             TranscriptSegment(source: .you, text: "I will prepare the checklist.", isFinal: true,
                               start: 11, end: 16, speakerName: MobileFileTranscriber.speakerName)
         ].map { labels.label($0) }
@@ -42,6 +44,9 @@ struct MobileWatchSpeakerFixture: View {
         return session
     }()
 
-    var body: some View { MobileMeetingView(session: session) }
+    var body: some View {
+        MobileMeetingView(session: session)
+            .mobileSessionLifecycle(session)
+    }
 }
 #endif

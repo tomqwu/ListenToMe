@@ -1,5 +1,8 @@
 # Listen To Me — iPhone and iPad support
 
+For the native Mac app, see [Mac support](macos-support.md). The Mac App Store version is in preparation;
+it has not been submitted. The instructions below apply to iPhone/iPad.
+
 Contact **[tom@cloudnativity.io](mailto:tom@cloudnativity.io)** for help. Include your iOS version, device model, and the app version shown in Settings → About. Do not include API keys or private transcripts.
 
 ## Getting started

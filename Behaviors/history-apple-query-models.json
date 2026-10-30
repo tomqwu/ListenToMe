@@ -1,0 +1,56 @@
+{
+  "feature": "Apple query dispatch respects stored representations",
+  "scenarios": [
+    {
+      "id": "APPLEQUERY-001",
+      "name": "Saved sentence vectors remain searchable when word assets appear",
+      "given": "real saved German sentence vectors and both current German word and sentence models available",
+      "when": "History reopens the unchanged index and searches the identical multiword topic",
+      "then": "the compatible actual sentence query is emitted and the saved conversation remains Related without re-embedding or changing persisted vectors",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryEmbedding.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacHistoryStoredModelQueryTests.swift",
+          "test": "MacHistoryStoredModelQueryTests/testStoredSentencePassageRemainsRelatedWhenWordModelIsAvailable"
+        }
+      ]
+    },
+    {
+      "id": "APPLEQUERY-002",
+      "name": "Each requested current representation receives its own compatible query",
+      "given": "both German word and sentence model tags are stored",
+      "when": "History embeds a compatible multiword query",
+      "then": "both actual current model tags and normalized values are returned once in stable order; word-only behavior remains unchanged",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryEmbedding.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacHistoryStoredModelQueryTests.swift",
+          "test": "MacHistoryStoredModelQueryTests/testBothStoredGermanRepresentationsReceiveExactCurrentQueries"
+        }
+      ]
+    },
+    {
+      "id": "APPLEQUERY-003",
+      "name": "Query dispatch preserves model revision and minimum-word refusals",
+      "given": "current German word and sentence models with malformed tags, empty tag fields, and negative or unavailable positive stored revisions",
+      "when": "History requests a one-word sentence query or incompatible stored revisions",
+      "then": "the existing two-word sentence-query minimum and exact revision compatibility remain enforced without suppressing an eligible word-model query",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryEmbedding.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacHistoryStoredModelQueryTests.swift",
+          "test": "MacHistoryStoredModelQueryTests/testSentenceMinimumAndStaleRevisionRefusalRemainUnchanged"
+        }
+      ]
+    }
+  ]
+}

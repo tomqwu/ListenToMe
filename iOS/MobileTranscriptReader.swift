@@ -10,6 +10,7 @@ struct MobileTranscriptReader: View {
     var restoreOriginal: ((UUID) -> Void)?
     /// Shows who said each line once speaker identification has labeled any of them (issue #180).
     var showsSpeakers = false
+    var renameSpeaker: ((TranscriptSegment) -> Void)?
     /// Select mode (issue #234): tapping a final line toggles it; dragging its circle extends a range.
     var selection: Binding<TranscriptSelection>?
     var selecting = false
@@ -94,6 +95,16 @@ struct MobileTranscriptReader: View {
                 }
             }
         }
+        .onChange(of: segments.map(\.speakerName)) {
+            guard var snapshot = readingSnapshot else { return }
+            let current = Dictionary(uniqueKeysWithValues: segments.map { ($0.id, $0) })
+            for index in snapshot.indices {
+                if let line = current[snapshot[index].id], line.speakerID == snapshot[index].speakerID {
+                    snapshot[index].speakerName = line.speakerName
+                }
+            }
+            readingSnapshot = snapshot
+        }
         .sheet(item: $addingFrom) { segment in
             MobileAddTermSheet(line: segment.text) { addTerm?($0) }
         }
@@ -149,6 +160,10 @@ struct MobileTranscriptReader: View {
     /// when no provider can run.
     @ViewBuilder
     private func lineMenu(_ segment: TranscriptSegment) -> some View {
+        if segment.speakerID != nil, renameSpeaker != nil {
+            Button("Rename speaker…", systemImage: "person.text.rectangle") { renameSpeaker?(segment) }
+                .accessibilityIdentifier("renameTranscriptSpeaker")
+        }
         if let text = translation?(segment) {
             Button("Copy translation", systemImage: "doc.on.doc") { UIPasteboard.general.string = text }
         }
@@ -183,6 +198,11 @@ struct MobileTranscriptReader: View {
                 Text(segment.speakerLabel).font(.caption.weight(.semibold))
                     .foregroundStyle(segment.speakerID == nil ? MobileStyle.muted : MobileStyle.accent)
                     .accessibilityIdentifier("transcript-speaker-\(segment.id)")
+                    .accessibilityActions {
+                        if segment.speakerID != nil, renameSpeaker != nil, !selecting {
+                            Button("Rename speaker") { renameSpeaker?(segment) }
+                        }
+                    }
             }
             lineText(segment, selectable: selectable)
             if let text = translation?(segment) {

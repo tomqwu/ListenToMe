@@ -9,6 +9,8 @@ struct EditableTranscriptRow: View {
     let delete: () -> Void
     let addTerm: () -> Void
     var translatedText: String?
+    var renameSpeaker: ((String) -> Void)?
+    @State private var renamingSpeaker = false
     @State private var editing = false
     @State private var draft = ""
     @State private var confirmingDelete = false
@@ -18,9 +20,14 @@ struct EditableTranscriptRow: View {
             Text(CommandCenterLabels.stamp(segment.start))
                 .font(.system(size: 10.5, design: .monospaced)).foregroundStyle(Theme.ink3)
                 .frame(width: 40, alignment: .leading)
-            Text(speakerLabel).font(.system(size: 11, weight: .bold))
-                .foregroundStyle(segment.source == .you ? Theme.you : Theme.others)
-                .frame(width: 100, alignment: .leading).lineLimit(2).help(segment.speakerLabel)
+            if segment.speakerID != nil, renameSpeaker != nil {
+                MacSpeakerRenameLabel(text: speakerLabel) { renamingSpeaker = true }
+                    .frame(width: 100, height: 28, alignment: .leading)
+            } else {
+                Text(speakerLabel).font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(segment.source == .you ? Theme.you : Theme.others)
+                    .frame(width: 100, alignment: .leading).lineLimit(2).help(segment.speakerLabel)
+            }
             if editing {
                 VStack(alignment: .leading) {
                     TextField("Transcript text", text: $draft, axis: .vertical)
@@ -33,15 +40,21 @@ struct EditableTranscriptRow: View {
                 }
             } else {
                 VStack(alignment: .leading, spacing: 5) {
-                    Text(segment.text).font(.system(size: 12.5)).foregroundStyle(Theme.ink)
-                        .textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
-                        .onTapGesture(count: 2) { beginEditing() }
+                    NativeTranscriptText(text: segment.text, canEdit: segment.isFinal, edit: beginEditing)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .alignmentGuide(.firstTextBaseline) { _ in NSFont.systemFont(ofSize: 12.5).ascender }
                     if let translatedText { TranslatedTranscriptText(text: translatedText) }
                 }
             }
         }
         .padding(.vertical, 3)
+        .sheet(isPresented: $renamingSpeaker) {
+            SpeakerRenameEditor(name: segment.speakerLabel) { renameSpeaker?($0) }
+        }
         .contextMenu {
+            if segment.speakerID != nil, renameSpeaker != nil {
+                Button("Rename speaker…") { renamingSpeaker = true }
+            }
             Button("Copy line") {
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(segment.text, forType: .string)

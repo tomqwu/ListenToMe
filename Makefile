@@ -1,7 +1,9 @@
 .PHONY: gen build test lint run pre-push e2e release
 
-SHELL := /bin/bash
-.SHELLFLAGS := -eo pipefail -c
+# Apple's GNU Make 3.81 ignores .SHELLFLAGS. Keep failure policy in SHELL so a
+# failing native command cannot be hidden by tee or followed by later stages.
+SHELL := /bin/bash -eo pipefail
+.SHELLFLAGS := -c
 
 # Optional local signing override (gitignored) — define SIGN_FLAGS for a stable identity
 # so granted macOS permissions (TCC) persist across rebuilds. See signing.local.mk.example.
@@ -60,6 +62,27 @@ e2e: build
 # dmg (with a warning) when DEVELOPER_ID_APP is unset. See docs/RELEASING.md.
 release:
 	bash scripts/release.sh
+
+# A separate sandboxed archive for the shared App Store Connect listing. No upload is implicit.
+MAC_STORE_ARCHIVE ?= dist/ListenToMe-Mac-AppStore.xcarchive
+.PHONY: mac-appstore-archive
+mac-appstore-archive: gen
+	xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMe -configuration AppStore \
+		-destination 'generic/platform=macOS' -archivePath '$(MAC_STORE_ARCHIVE)' \
+		-derivedDataPath .build/mac-appstore -onlyUsePackageVersionsFromResolvedFile \
+		-allowProvisioningUpdates $(MAC_STORE_SIGN_FLAGS) archive
+
+# Exercise the Store's sandbox with the existing Dev identity; never upload this build.
+MAC_SANDBOX_DERIVED ?= .build/mac-sandbox
+.PHONY: mac-sandbox-build
+mac-sandbox-build:
+	@if [ -z "$(strip $(SIGN_FLAGS))" ]; then \
+		echo "mac-sandbox-build: configure stable Dev signing in signing.local.mk first"; exit 1; \
+	fi
+	$(MAKE) gen
+	xcodebuild -project ListenToMe.xcodeproj -scheme ListenToMe -configuration SandboxAcceptance \
+		-destination 'platform=macOS' -derivedDataPath '$(MAC_SANDBOX_DERIVED)' \
+		-onlyUsePackageVersionsFromResolvedFile $(SIGN_FLAGS) build
 
 # iPhone/iPad target (iOS 26+). Override IOS_DESTINATION with a connected device/simulator.
 IOS_DESTINATION ?= platform=iOS Simulator,name=iPhone 17 Pro
@@ -124,11 +147,13 @@ validate-local:
 	@test "$${GITHUB_ACTIONS:-false}" != true || { echo 'GUI/audio/device/e2e validation must run locally, not in GitHub Actions'; exit 1; }
 	$(MAKE) bdd-check
 	python3 scripts/test-bdd.py
+	python3 scripts/test-make-pipelines.py
 	bash -n scripts/ios-testflight.sh
 	python3 scripts/test-ios-testflight.py
 	python3 scripts/test-contract-gate.py
 	bash -n scripts/release.sh scripts/release-paths.sh
 	python3 scripts/test-release-paths.py
+	python3 scripts/test-mac-appstore.py
 	bash scripts/test-hotkey.sh
 	$(MAKE) lint
 	./scripts/check-coverage.sh 95

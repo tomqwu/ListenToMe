@@ -42,6 +42,8 @@ public struct TranscriptSegment: Identifiable, Sendable, Equatable, Codable {
     /// The transcription language this line was recognized in (BCP-47 or a locale identifier), when
     /// the app knows it (issue #206). Absent for lines saved before it was kept.
     public var language: String?
+    /// Explicit capture/import run, absent in legacy records. Never inferred from clock regressions.
+    public var recordingID: UUID?
 
     public var speakerLabel: String { speakerName ?? (source == .you ? "You" : "Others") }
 
@@ -51,7 +53,8 @@ public struct TranscriptSegment: Identifiable, Sendable, Equatable, Codable {
         guard offset != 0, start > 0 || end > 0 else { return self }
         return TranscriptSegment(id: id, source: source, text: text, isFinal: isFinal, start: start + offset,
                                  end: end + offset, speakerID: speakerID, speakerName: speakerName,
-                                 originalText: originalText, correctionModel: correctionModel, language: language)
+                                 originalText: originalText, correctionModel: correctionModel, language: language,
+                                 recordingID: recordingID)
     }
 
     /// What one segment costs in an assembled prompt: `"<label>: <text>"` plus the newline that
@@ -63,7 +66,8 @@ public struct TranscriptSegment: Identifiable, Sendable, Equatable, Codable {
     public init(id: UUID = UUID(), source: SpeakerSource, text: String,
                 isFinal: Bool, start: TimeInterval, end: TimeInterval,
                 speakerID: String? = nil, speakerName: String? = nil,
-                originalText: String? = nil, correctionModel: String? = nil, language: String? = nil) {
+                originalText: String? = nil, correctionModel: String? = nil, language: String? = nil,
+                recordingID: UUID? = nil) {
         self.id = id
         self.source = source
         self.text = text
@@ -75,5 +79,6 @@ public struct TranscriptSegment: Identifiable, Sendable, Equatable, Codable {
         self.originalText = originalText
         self.correctionModel = correctionModel
         self.language = language
+        self.recordingID = recordingID
     }
 }

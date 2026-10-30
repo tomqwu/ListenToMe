@@ -1,0 +1,115 @@
+{
+  "feature": "Rename identified speakers from transcript gestures",
+  "scenarios": [
+    {
+      "id": "SPEAKER-017",
+      "name": "Long press an identified speaker to rename",
+      "given": "an iPhone or iPad transcript contains identified participants",
+      "when": "the reader scrolls an earlier speaker fully into view if necessary, long presses that same speaker, saves a new name, or cancels the editor",
+      "then": "the existing identity is renamed throughout the conversation and in Notes; other speakers remain unchanged and cancellation has no effect; Save and Cancel remain reachable at accessibility text sizes, and a saved name survives rotation; the landscape rename journey uses the actual two-pane workspace with simultaneously visible, nonoverlapping Transcript and Quick panes before editing and after the portrait/landscape roundtrip and Save; no stale speaker Retry control appears in Duo, and the expanded reader after rotation shows exactly two Speaker 1 lines, one renamed Sam line and no Speaker 2 line",
+      "covers": [
+        "iOS/MobileTranscriptReader.swift",
+        "iOS/MobileSelectableTranscript.swift",
+        "SharedPlatform/SpeakerRenameEditor.swift",
+        "iOS/MobileWatchSpeakerFixture.swift",
+        "iOS/MobileWorkspaceView.swift",
+        "iOS/MobileSavedAudioViews.swift",
+        "iOS/MobileSpeakerRenameSheet.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileSpeakerControlsUITests.swift",
+          "test": "MobileSpeakerControlsUITests/testLongPressRenamesSpeakerAndCancelPreservesLabels"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileSpeakerControlsUITests.swift",
+          "test": "MobileSpeakerControlsUITests/testRenameInDuoSurvivesRotation"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileSpeakerControlsUITests.swift",
+          "test": "MobileSpeakerControlsUITests/testRenameEditorActionsAtLargestTextSize"
+        }
+      ],
+      "manual": {
+        "reason": "Device layout and gesture usability require rendered inspection",
+        "steps": [
+          "Inspect compact, expanded and Duo transcript rename controls with VoiceOver and large text."
+        ]
+      }
+    },
+    {
+      "id": "SPEAKER-018",
+      "name": "Double click an identified Mac speaker",
+      "given": "a Mac transcript has an identified speaker label",
+      "when": "the user double clicks that label or opens Rename speaker from its menu",
+      "then": "the speaker editor opens for that identity; ordinary single clicks and disabled labels cannot request a rename; live breakdown voices remain nameable before transcript attribution, restored identities update all matching lines, and unknown identities change nothing; delayed finalized lines retain chronological display order, recording identity, capture times and editing identity after renaming; double-clicking transcript words opens only the line editor while double-clicking the speaker label opens only the name sheet, and cancelling that sheet preserves both name and text",
+      "covers": [
+        "App/MacSpeakerNameButton.swift",
+        "App/EditableTranscriptRow.swift",
+        "App/CommandCenterPanes.swift",
+        "App/MeetingView+Speakers.swift",
+        "project.yml",
+        "App/SpeakerParticipant.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacSpeakerRenameTests.swift",
+          "test": "MacSpeakerRenameTests/testDoubleClickRenamesButSingleClickAndDisabledLabelDoNot"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacSpeakerRenameTests.swift",
+          "test": "MacSpeakerRenameTests/testAccessibilityRenameAndNameValidation"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacSpeakerRenameTests.swift",
+          "test": "MacSpeakerRenameTests/testRenameLiveParticipantBeforeTranscriptAttribution"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacSpeakerRenameTests.swift",
+          "test": "MacSpeakerRenameTests/testRenameRestoredSpeakerAndIgnoreUnknownIdentity"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacTranscriptInteractionTests.swift",
+          "test": "MacTranscriptInteractionTests/testDoubleClickFinalRowOpensOnlyThatLineEditor"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacTranscriptInteractionTests.swift",
+          "test": "MacTranscriptInteractionTests/testSpeakerDoubleClickOpensNameSheetAndCancelKeepsTranscript"
+        }
+      ],
+      "manual": {
+        "reason": "Native control tests do not prove the complete installed SwiftUI sheet binding",
+        "steps": [
+          "Double click an identified speaker label in the installed Mac transcript, save a new name, and verify all matching lines and a reopened conversation use it.",
+          "Cancel a rename and verify no change; changing conversation while editing must not rename another conversation."
+        ]
+      }
+    },
+    {
+      "id": "SPEAKER-019",
+      "name": "Cold launch keeps speaker rename ready in the two-pane workspace",
+      "given": "a supported iPhone preview has an isolated synthetic conversation with identified speakers and no-download speaker models already available",
+      "when": "the app launches in portrait, rotates to landscape, and the reader opens and saves the identified speaker rename control",
+      "then": "foreground readiness shows speaker labels on without a stale Retry control before editing or after Save; the actual two-pane workspace has simultaneously visible, nonoverlapping Transcript and Quick panes and a readable transcript viewport, the entire speaker and rename controls are visible, and the expanded reader after Save shows exactly two Speaker 1 lines, one renamed Sam line and no Speaker 2 line; recording never starts",
+      "covers": [
+        "iOS/MobileWatchSpeakerFixture.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileSpeakerControlsUITests.swift",
+          "test": "MobileSpeakerControlsUITests/testColdLaunchReadinessKeepsDuoRenameControlsVisible"
+        }
+      ]
+    }
+  ]
+}

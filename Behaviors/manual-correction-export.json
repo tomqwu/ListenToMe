@@ -1,0 +1,32 @@
+{
+  "feature": "Truthful correction provenance in transcript exports",
+  "scenarios": [
+    {
+      "id": "CORRECTIONEXPORT-001",
+      "name": "Manual edits are not attributed to AI",
+      "given": "a finalized transcript line has recognized wording and may already have an AI correction",
+      "when": "the user edits it, edits it again and exports Markdown",
+      "then": "the correction is explicitly manual, the first recognized wording and latest edited wording remain available, and exporting changes no transcript identity or provenance",
+      "covers": ["Sources/ListenToMeCore/SessionExporter.swift"],
+      "bindings": [{"suite": "core", "file": "Tests/ListenToMeCoreTests/SessionExporterTests.swift", "test": "SessionExporterTests/testManualEditsExportManualProvenanceAndKeepFirstOriginal"}]
+    },
+    {
+      "id": "CORRECTIONEXPORT-002",
+      "name": "Known AI corrections retain their attribution",
+      "given": "a transcript correction has a named AI model and original wording",
+      "when": "the conversation is exported as Markdown",
+      "then": "the original and corrected wording remain present with AI attribution and the stored model provenance is unchanged",
+      "covers": ["Sources/ListenToMeCore/SessionExporter.swift"],
+      "bindings": [{"suite": "core", "file": "Tests/ListenToMeCoreTests/SessionExporterTests.swift", "test": "SessionExporterTests/testKnownModelCorrectionRetainsAIAttribution"}]
+    },
+    {
+      "id": "CORRECTIONEXPORT-003",
+      "name": "Legacy corrections do not invent an author",
+      "given": "legacy corrected lines have absent or blank correction provenance, or a line has no original wording",
+      "when": "their Markdown is exported",
+      "then": "legacy original and corrected wording remain under a neutral correction label without inventing AI or manual attribution, and an uncorrected line has no correction entry",
+      "covers": ["Sources/ListenToMeCore/SessionExporter.swift"],
+      "bindings": [{"suite": "core", "file": "Tests/ListenToMeCoreTests/SessionExporterTests.swift", "test": "SessionExporterTests/testLegacyUnknownCorrectionStaysNeutralAndUncorrectedLinesHaveNoEntry"}]
+    }
+  ]
+}

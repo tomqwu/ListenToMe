@@ -1,0 +1,5 @@
+Preserve case-sensitive words recognized by installed Apple History models and rebuild stale empty search entries without changing saved conversations.
+
+Keep saved Apple sentence search entries usable when word models become available, without rewriting saved conversations.
+
+Reduce irrelevant History suggestions from generic German and Spanish questions while keeping keyword searches, specific topics and ambiguous single-word queries.

@@ -1,4 +1,9 @@
 name: ListenToMe
+configs:
+  Debug: debug
+  Release: release
+  AppStore: release
+  SandboxAcceptance: release
 # Every iOS build includes its Watch companion. TestFlight upload requires the explicit
 # --include-watch-beta mode until physical production acceptance is complete (#181).
 options:
@@ -52,6 +57,36 @@ targets:
         Debug:
           PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMe.dev
           BUNDLE_DISPLAY_NAME: "ListenToMe (Dev)"
+        # The Mac platform in App Store Connect shares the iOS app record and bundle id.
+        # Keep the existing DMG and Dev identities independent, including their TCC grants.
+        AppStore:
+          PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMe.ios
+          DEVELOPMENT_TEAM: T32FW7PZ3S
+          DEVELOPMENT_LANGUAGE: en-US
+          MARKETING_VERSION: "1.5.0"
+          CURRENT_PROJECT_VERSION: "15"
+          CODE_SIGN_ENTITLEMENTS: App/ListenToMeAppStore.entitlements
+          ENABLE_APP_SANDBOX: YES
+          ENABLE_HARDENED_RUNTIME: YES
+          ENABLE_OUTGOING_NETWORK_CONNECTIONS: YES
+          ENABLE_RESOURCE_ACCESS_AUDIO_INPUT: YES
+          ENABLE_RESOURCE_ACCESS_CALENDARS: YES
+          ENABLE_USER_SELECTED_FILES: readwrite
+        # Local sandbox acceptance uses the existing stable Dev identity/signing override.
+        # Release optimization and the Store's public sandbox boundaries remain identical.
+        SandboxAcceptance:
+          PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMe.dev
+          BUNDLE_DISPLAY_NAME: "ListenToMe (Dev)"
+          DEVELOPMENT_LANGUAGE: en-US
+          MARKETING_VERSION: "1.5.0"
+          CURRENT_PROJECT_VERSION: "15"
+          CODE_SIGN_ENTITLEMENTS: App/ListenToMeAppStore.entitlements
+          ENABLE_APP_SANDBOX: YES
+          ENABLE_HARDENED_RUNTIME: YES
+          ENABLE_OUTGOING_NETWORK_CONNECTIONS: YES
+          ENABLE_RESOURCE_ACCESS_AUDIO_INPUT: YES
+          ENABLE_RESOURCE_ACCESS_CALENDARS: YES
+          ENABLE_USER_SELECTED_FILES: readwrite
   ListenToMeIOS:
     type: application
     platform: iOS
@@ -170,6 +205,9 @@ targets:
     deploymentTarget: "26.0"
     # Compile the actual native adapters and menu state without launching the app or user data.
     sources:
+      - SharedPlatform/SpeakerRenameEditor.swift
+      - App/MacSpeakerNameButton.swift
+      - App/SpeakerParticipant.swift
       - path: macOSTests
         excludes: [Fixtures]
       - SharedPlatform/SpeakerDiarizer.swift
@@ -177,8 +215,20 @@ targets:
       - iOS/MobileSpeakerFileWait.swift
       - iOS/MobileConversationDiarizer.swift
       - SharedPlatform/SpeakerAudioBuffer.swift
+      - App/EditableTranscriptRow.swift
+      - App/NativeTranscriptText.swift
+      - App/Theme.swift
+      - App/CommandCenterLabels.swift
       - App/HotkeyMonitor.swift
       - App/MacOperationErrors.swift
+      - App/ReferenceSelectionStore.swift
+      - App/MacMicrophoneCapture.swift
+      - App/MacAnalyzerInputAdapter.swift
+      - App/SpeechAnalyzerTranscriber.swift
+      - SharedPlatform/SpeechVocabularyContext.swift
+      - SharedPlatform/AudioChunkFileFeed.swift
+      - SharedPlatform/LocalAudioFileTranscriber.swift
+      - TestSupport/AudioChunkFeedAssertions.swift
       - App/MacCapturePreflight.swift
       - App/MacCheckpointController.swift
       - App/MacMeetingEnvironment.swift
@@ -192,6 +242,8 @@ targets:
       - SharedPlatform/AppleIntelligenceProvider.swift
       - SharedPlatform/AppleTranscriptTranslator.swift
       - SharedPlatform/ConversationLanguageControls.swift
+      - SharedPlatform/HistorySearchModel.swift
+      - TestSupport/HistoryTopicFixtures.swift
     dependencies:
       - package: ListenToMeCore
         product: ListenToMeCore
@@ -223,6 +275,8 @@ targets:
     deploymentTarget: "26.0"
     sources:
       - iOSUnitTests
+      - iOSTests/TranslationContrastPixels.swift
+      - TestSupport/AudioChunkFeedAssertions.swift
     dependencies:
       - target: ListenToMeIOS
       - package: ListenToMeCore

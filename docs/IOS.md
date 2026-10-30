@@ -1,7 +1,42 @@
 # ListenToMe for iPhone and iPad
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
-26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`, latest TestFlight version 1.20.2 (42).
+26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`. Public App Store version is
+**1.19.1 (39)** and the latest TestFlight version is **1.20.2 (42)**. See the
+[public availability observation](releases/ios-1.19.1-build39-public.json).
+
+## Unreleased History work
+
+The current draft keeps safer asynchronous History indexing, refreshed search after saving and
+repairs for installed Apple model queries. The optional multilingual experiment failed its quality
+gate and is excluded from the candidate, including its download controls and runtime. Its source
+and failed results are preserved for continuing #223. [Implementation and BDD evidence](history-search-implementation.md).
+Settings also corrects its screen-lock explanation to match continued user-started recording.
+No version or in-app release-note announcement has been advanced by this scope correction.
+
+## Unreleased compact-landscape Duo spacing
+
+Compact, non-accessibility landscape now uses less space between the workspace tabs and panes,
+below the workspace and around Quick content. This gives the actual transcript and Quick readers
+more room on shorter, non-Max iPhones. The two authored transcript lines and three-line Quick
+answer are unchanged, as are the 44-point controls, transcript scrolling and accessibility fallback.
+Portrait and wide iPad spacing are unchanged.
+
+`READMEPREVIEW-001` binds `MobileReleaseScreenshotTests/testCaptureCleanDuoPreview` to complete
+sample text inside both actual reader viewports. Full validation of `95ac6387c112d82a083170caa95d6d88a3a893ed`
+failed this check on an **iPhone 17 Pro / iOS 26.5 simulator** and was interrupted after the genuine
+assertion failure. Its bundle records 50 passed, five skipped, one genuinely failed and one canceled
+test; the cancellation is not a second product failure. A focused replay then failed the same test
+with two clipping assertions (exit 65). After the spacing fix, the unchanged strengthened test passed
+one case (exit 0, reaped); the inspected native image shows both transcript lines and all three Quick
+lines. The focused runs preserved their recorded inputs without mismatches.
+
+Commands, native bundles, input checks and runner receipts are retained under
+`2026-10-30/listentome-backlog318-completion/{full-validation,duo-compact-red,duo-compact-green}/`
+in the external evidence directory. The earlier README preview was a fixture-only change at its
+capture checkpoint; this follow-up changes production layout. Fresh full validation, wider UI checks,
+current CI and affected installed acceptance remain pending. No release or new screenshot publication
+is claimed.
 
 ## Current TestFlight beta — 1.20.2 (42)
 
@@ -54,7 +89,7 @@ that captures system or call audio. The 1.20.1 (41) beta declares audio backgrou
 established user-started microphone recording continues through screen lock; new capture still
 requires active use. Optional AI pauses. See [continuity limits and acceptance](recording-continuity.md).
 
-Apple Watch recording ([#181](https://github.com/tomqwu/ListenToMe/issues/181)) is included in **TestFlight 1.20.2 (42)**. Its phone/Share/Watch distribution package and Apple beta access were verified; physical microphone, paired transfer, wrist-down and battery/storage acceptance remain pending. See [Watch installation and evidence](watch-beta.md) and the [accepted beta receipt](releases/ios-1.20.2-build42.json). Dated earlier-build publication evidence remains in the Watch guide.
+Apple Watch recording ([#181](https://github.com/tomqwu/ListenToMe/issues/181)) is included in public iOS **1.19.1 (39)** and **TestFlight 1.20.2 (42)**. Its phone/Share/Watch distribution package and Apple beta access were verified; physical microphone, paired transfer, wrist-down and battery/storage acceptance remain pending. See [Watch installation and evidence](watch-beta.md), the [accepted beta receipt](releases/ios-1.20.2-build42.json) and the [public availability observation](releases/ios-1.19.1-build39-public.json). Dated earlier-build publication evidence remains in the Watch guide.
 
 ## Parity with macOS
 
@@ -137,6 +172,36 @@ The prompt *fences* are shared; the prompt *text* is not entirely. macOS assembl
 | The WhisperKit transcription engine | SpeechAnalyzer is the only iOS transcription engine. WhisperKit is linked into the app target (not the share extension or the watch app) for spoken-language detection only (#197), and FluidAudio for speaker identification only |
 | Mac↔iOS sync or a Mac companion mode | Out of scope product-wide — see [backlog](backlog.md) → "Intentionally out of scope" |
 
+## Mixed-language Whisper evaluation (#205) — October 29, 2026
+
+[#205](https://github.com/tomqwu/ListenToMe/issues/205) remains an evaluation of on-device,
+opt-in Mandarin–English transcription: compare WhisperKit **small** and **turbo** accuracy,
+speed and battery on a recent iPhone, then record a go/no-go decision. No iOS engine feature
+or release is established by this preparation.
+
+The separate development-signed benchmark host and test bundle passed signature and exact
+**73-file Assets** checks using pinned local models/tokenizers. Its physical compatibility
+attempt on iPhone 17 Pro Max / iOS 27.0.1 installed that isolated host, but the OS refused test
+launch while the phone was locked. **No native test start or completed model case was observed.**
+The owned run was cancelled early with exit **130** after **388.464 seconds** of its 600-second
+bound; all **539 frozen inputs** remained unchanged. Local processes were reaped, remote absence
+was confirmed, and the temporary benchmark app was uninstalled with absence readback. The
+production/TestFlight app and its data were unchanged.
+
+[The sanitized preflight receipt](evaluations/whisper-205-device-preflight-2026-10-29.json)
+binds the external source, model/tokenizer pins and retained evidence. It preserves the earlier
+compile, resource-packaging, signing and inventory failures separately. The partial result bundle
+has no finalized test summary. All 319 raw run files, including that bundle, were preserved;
+no pass/fail/skip totals are claimed. LAN connectivity was present; whole-phone offline operation
+is **not** asserted.
+
+Physical model compatibility remains blocked, not failed on model quality. Mixed-language accuracy,
+speed, battery and the go/no-go decision remain outstanding; synthetic-audio pronunciation has not
+been accepted from its input text alone. A future fresh compatibility attempt needs an available
+unlocked device, fresh source/device/ownership checks and internal resource coordination for the
+preserved candidate. Existing testing authorization remains; this does not replace the full
+measurement criteria.
+
 ## Version policy
 
 **The two apps keep independent version lines.** They are separate products in separate distribution
@@ -171,6 +236,11 @@ waiting/Canadian-primary states below are historical. Both beta localization rec
 
 ### Submission checkpoint — October 26, 21:13 UTC (historical)
 
+Later locale audit: build 36's separate TestFlight records initially still had only en-CA. The en-US
+What to Test and beta description are now created and read back, with no binary upload. The app-wide
+primary remained en-CA at that audit, pending Apple approval of the new US localization and platform screenshots.
+See [the correction receipt and requirements](IOS-RELEASING.md#earlier-locale-correction--october-26-2241-utc).
+
 The **English (US)** listing **Listen To Me - Real Time AI**, **1.18.1 (36)**, was resubmitted with
 24 fresh US-region screenshots and accepted for App Review at **21:13:50 UTC**. Review
 `4e63cda8-70db-4d67-9928-63409df4dbda` was WAITING_FOR_REVIEW and set to release after approval;
@@ -187,7 +257,9 @@ saved separately for maintainer review. macOS distribution is separate. See
 
 ## App Store Connect platform mapping
 
-The iOS platform covers this universal iPhone/iPad app (`TARGETED_DEVICE_FAMILY=1,2`); no separate iPadOS platform is added. The Watch companion belongs to the same iOS app record and must actually be embedded in an uploaded build before it can be installed. TestFlight 1.19.1 (39) includes it; public 1.18.1 excludes it. The accepted Watch beta has verified package identity and existing-tester-access evidence; physical acceptance remains a production gate, not an authorized beta-upload blocker. macOS requires its own compatible archive and distribution; the current native Mac app is distributed as a signed/notarized DMG, and Mac publication remains paused. Adding a platform does not convert a DMG or include an unembedded Watch target. See [Apple’s platform guide](https://developer.apple.com/help/app-store-connect/create-an-app-record/add-platforms/).
+The native Mac App Store platform is prepared separately as a sandboxed **1.5.0 (15)** archive under the shared listing and bundle ID. The Mac draft has US metadata but no selected build or submitted review. The earlier signed candidate predates this main integration and is not eligible for upload; rebuild from the exact merged source after installed sandbox/OTHERS acceptance. See [Mac Store distribution](RELEASING.md#mac-app-store-distribution). The current public Mac distribution remains the signed/notarized DMG.
+
+The iOS platform covers this universal iPhone/iPad app (`TARGETED_DEVICE_FAMILY=1,2`); no separate iPadOS platform is added. The Watch companion belongs to the same iOS app record and must actually be embedded in an uploaded build before it can be installed. Public iOS 1.19.1 (39) and its TestFlight build include it; older public 1.18.1 excludes it. The accepted Watch beta has verified package identity and existing-tester-access evidence; physical acceptance remains a production gate, not an authorized beta-upload blocker. macOS requires its own compatible archive and distribution; the current native Mac app is distributed as a signed/notarized DMG, and Mac publication remains paused. Adding a platform does not convert a DMG or include an unembedded Watch target. See [Apple’s platform guide](https://developer.apple.com/help/app-store-connect/create-an-app-record/add-platforms/).
 
 ## Full summary menu icon (#319, published TestFlight 1.18.2)
 
@@ -211,7 +283,7 @@ with stable recording-scoped identities, bounded prediction history and final ta
 The Settings switch can turn identification off while listening, releasing its audio and blocking
 late labels; re-enabling waits until Stop. Mac capture and Watch/file
 imports retain the existing offline pipeline. The [model contract and evidence limits](speaker-identification.md)
-and [What to Test](../metadata/ios/en-CA/what-to-test-1.18.1.txt) describe real-model gates and pending
+and [What to Test](../metadata/ios/en-US/what-to-test-1.18.1.txt) describe real-model gates and pending
 original-recording / physical-device acceptance. Apple accepted the upload at 2026-10-26T17:29:24.328646+00:00; processing is VALID, internal state is IN_BETA_TESTING, existing Dev access and en-CA metadata were read back. [Release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.18.1-build36). All 24 source-matched native screenshots were inspected; App Store listing upload remains pending.
 
 ## iOS 1.18.0 (35) — published TestFlight beta
@@ -663,7 +735,7 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
   while the models are unavailable.
   Speaker identification saves no audio. Lines are matched to speakers by SpeechAnalyzer's audio time ranges and become
   **Speaker 1**, **Speaker 2**…; a line no speaker covers for at least 30% of its length keeps
-  **Microphone**. **Notes → Speakers** renames a speaker everywhere: the saved conversation, the
+  **Microphone**. **Notes → Speakers**, or long-press an identified transcript line → **Rename speaker**, renames a speaker everywhere: the saved conversation, the
   transcript in History, search and exports all use the name. Renaming or relabeling starts no AI
   work, and Auto summaries do not re-read lines whose only change is the label; summaries pick the
   names up the next time they are generated. Prompts keep **Microphone** lines as `You` and pass
@@ -1113,6 +1185,11 @@ opens the expanded transcript with the player (part picker, play/pause, position
 share sheet). Each line shows its time; tapping the line or its time plays the part that recorded it
 from that moment (`SavedAudioSeek`). History marks conversations with saved audio and offers **Share
 audio** in the touch-and-hold menu. Starting a recording stops playback.
+
+At accessibility text sizes, the player stacks its title and Share audio control and gives the
+elapsed/duration text its own line. This keeps complete words and useful transcript space in both
+the phone reader and the iPad sheet. Standard-size controls, playback and retention behavior are
+unchanged. [Native layout regression evidence](saved-audio-accessibility.md).
 
 Apple Watch (#225, TestFlight 1.19.0 (38)) uses the same opt-in library: before a batch is transcribed,
 `retainWatchAudio` copies each part with a stable recording/chunk filename and an atomic manifest.
@@ -1605,6 +1682,8 @@ Settings Transcription and Speakers descriptions explicitly explain opt-in saved
 
 ## Re-transcribe saved audio (#224)
 
+Unreleased #348 corrects a shared saved-audio conversion tail loss affecting the feed used by re-transcription and Watch imports. The candidate drains converter output before advancing files and preserves saved originals and recording-time anchors. Focused generated-PCM tests passed; this is not a claim of changed transcription accuracy or physical acceptance. See [scope and evidence](audio-file-feed-tail.md).
+
 After stopping, open a conversation with saved audio and choose **More → Re-transcribe saved audio**.
 Choose its language and tap **Re-transcribe**. Apple speech recognition processes each saved track
 on-device; a language model may need a first-use download. Preview the result, then choose
@@ -1699,6 +1778,8 @@ native red/green evidence; physical paired transfer/wrist-down acceptance remain
 See [Watch beta status](watch-beta.md). [Published to TestFlight](releases/ios-1.19.1-build39.json); complete physical/production acceptance remains unverified.
 
 ## Live and Summary translation (#330; TestFlight recovery #343)
+
+Unreleased #346 strengthens essential translation guidance/status foregrounds while preserving font sizes, layout, originals and translation behavior. Focused native contrast evidence and acceptance limits are [recorded separately](translation-legibility.md); this change is not part of published build 42.
 
 **More → Live translation** and **Notes → Live translation** control opt-in finalized-line translation
 on phone/iPad/Duo. **Summary → Translate summary** translates an existing completed summary into an

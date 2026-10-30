@@ -1,0 +1,29 @@
+{
+  "feature": "Saved audio reader layout",
+  "scenarios": [
+    {
+      "id": "AUDIOVIEW-001",
+      "name": "Read and share retained audio at standard and largest text sizes",
+      "given": "an idle conversation has retained synthetic audio and identified transcript speakers, in portrait at standard or largest accessibility text size",
+      "when": "the full transcript reader opens and the first identified speaker is brought into view with ordinary reader scrolling",
+      "then": "Saved audio and Share audio show complete words without clipping or truncation, elapsed and duration remain on one line, Play, position and Share are wholly visible and usable, and enough transcript remains visible to reach the same first speaker without starting playback",
+      "covers": [
+        "SharedPlatform/SavedAudioPlayer.swift",
+        "iOS/MobileSavedAudioViews.swift",
+        "iOSTests/MobileSavedAudioUITests.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileSavedAudioUITests.swift",
+          "test": "MobileSavedAudioUITests/testSavedAudioHeaderAtDefaultTextKeepsTranscriptUsable"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileSavedAudioUITests.swift",
+          "test": "MobileSavedAudioUITests/testSavedAudioHeaderAtLargestTextKeepsTranscriptUsable"
+        }
+      ]
+    }
+  ]
+}

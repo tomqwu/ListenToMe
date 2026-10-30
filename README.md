@@ -85,40 +85,112 @@ make ios-test
 
 ## Screenshots
 
-**macOS**
+**iPhone, iPad and Apple Watch · TestFlight 1.20.2 (42)**
 
-![ListenToMe — four-pane meeting copilot](docs/images/screenshot.png)
+Native app previews use synthetic demonstration content; tap an image to view it at full resolution.
+The six release assets have recorded download/checksum verification. These previews do not update
+Apple's listing or establish physical-device or translation-quality acceptance.
+[Release notes and What to Test](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.2-build42) ·
+[Capture source and all 65 reviewed images](docs/images/ios/release-1.20.2-en-US.json).
 
-**Current iPhone, iPad and Watch previews — TestFlight 1.20.2 (42)**
+### iPhone
 
-These six native-resolution previews use synthetic content. Uploaded GitHub images were downloaded again and their SHA-256 matched; this gallery does not update the App Store listing.
-[Release notes and What to Test](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.2-build42) · [All 65 reviewed captures and QA classifications](docs/images/ios/release-1.20.2-en-US.json).
+<table>
+  <tr>
+    <th align="center">Live translation</th>
+    <th align="center">Translation options</th>
+  </tr>
+  <tr>
+    <td align="center"><a href="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/01-iphone-translation.png"><img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/01-iphone-translation.png" width="220" alt="iPhone live transcript with synthetic translated text, TestFlight 1.20.2 (42)."></a></td>
+    <td align="center"><a href="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/02-iphone-translation-options.png"><img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/02-iphone-translation-options.png" width="220" alt="iPhone on-device translation controls, TestFlight 1.20.2 (42)."></a></td>
+  </tr>
+</table>
 
-<p>
-<img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/01-iphone-translation.png" width="220" alt="iPhone translation layout — synthetic demonstration text.">
-<img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/02-iphone-translation-options.png" width="220" alt="iPhone live translation options.">
-<img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/03-ipad-summary-translation.png" width="220" alt="iPad Summary translation and original — synthetic demonstration text.">
-<img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/04-ipad-wide.png" width="440" alt="iPad wide Live workspace — sample conversation.">
-<img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/05-watch-46-recording.png" width="200" alt="Apple Watch 46 mm recording controls — simulated recording.">
-<img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/06-watch-49-recording.png" width="200" alt="Apple Watch Ultra 49 mm recording controls — simulated recording.">
+**Duo / landscape · unreleased candidate**
+
+<p align="center">
+  <a href="docs/images/ios/candidate-2026-10-30/iphone-duo.png"><img src="docs/images/ios/candidate-2026-10-30/iphone-duo.png" width="760" alt="Unreleased iPhone Duo candidate showing a concise synthetic transcript and Quick answer side by side in landscape."></a>
+  <br><sub>Follow the transcript and Quick answer together, with recording and Notes controls in reach.</sub>
 </p>
 
-**Historical iPhone and iPad screenshots** (1.18.2)
+Native iPhone 17 Pro preview from `cb4cd31`, using a short synthetic example in the real app views.
+The candidate improves compact-landscape spacing; the Pro and Pro Max focused runs passed six tests.
+Configured version 1.20.2 (42) is unreleased candidate source, separate from the published build-42
+images above; no new binary or App Store media upload is claimed.
+[Capture source, native resolution and test evidence](docs/images/ios/candidate-2026-10-30/manifest.json).
 
-<p>
-<img src="docs/images/ios/1.18.2/iphone-01-live.png" width="200" alt="Live transcript and Quick Summary">
-<img src="docs/images/ios/1.18.2/iphone-02-summary.png" width="200" alt="Summary with decisions and next steps">
-<img src="docs/images/ios/1.18.2/iphone-03-prompt.png" width="200" alt="Ask once or save summary instructions below Notes">
-<img src="docs/images/ios/1.18.2/ipad-01-workspace.png" width="300" alt="iPad transcript, Quick Summary and Summary workspace">
+### iPad
+
+<p align="center">
+  <a href="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/03-ipad-summary-translation.png"><img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/03-ipad-summary-translation.png" width="760" alt="iPad Summary with synthetic translation and the original summary, TestFlight 1.20.2 (42)."></a>
+  <br><sub>Summary translation with the original kept alongside.</sub>
 </p>
 
-<img src="docs/images/ios/1.18.2/iphone-04-two-pane.png" width="600" alt="iPhone landscape with independent transcript and Quick Summary panes">
+<p align="center">
+  <a href="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/04-ipad-wide.png"><img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/04-ipad-wide.png" width="760" alt="iPad wide workspace with Live transcript, Quick Summary and Summary, TestFlight 1.20.2 (42)."></a>
+  <br><sub>Wide workspace for following the conversation and its summaries.</sub>
+</p>
 
-Live transcript with Quick Summary · Summary · conversation prompts · iPad workspace · two-pane iPhone.
-<img src="docs/images/ios/1.18.2/iphone-05-menu.png" width="200" alt="More menu with the restored Full summary icon">
+### Apple Watch
 
-Native simulator captures use synthetic content; [capture provenance](docs/images/ios/release-1.18.2-en-US.json).
-The complete four-device release set is preserved locally for the next authorized App Store submission.
+<table>
+  <tr>
+    <th align="center">46 mm</th>
+    <th align="center">Ultra · 49 mm</th>
+  </tr>
+  <tr>
+    <td align="center"><a href="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/05-watch-46-recording.png"><img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/05-watch-46-recording.png" width="180" alt="Apple Watch 46 mm recording and Stop controls in a simulator, TestFlight 1.20.2 (42)."></a></td>
+    <td align="center"><a href="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/06-watch-49-recording.png"><img src="https://github.com/tomqwu/ListenToMe/releases/download/ios-v1.20.2-build42/06-watch-49-recording.png" width="180" alt="Apple Watch Ultra 49 mm recording and Stop controls in a simulator, TestFlight 1.20.2 (42)."></a></td>
+  </tr>
+</table>
+
+Simulated recording controls; physical microphone, wrist-down and paired-transfer acceptance are separate.
+
+<details>
+<summary>Historical Mac and iPhone/iPad layouts</summary>
+
+**iPhone Duo · October 29 candidate checkpoint**
+
+This earlier Pro Max preview from `f3b35f4` used a concise synthetic fixture without changing
+production layout at that checkpoint. It predates the compact-landscape spacing fix above.
+[Original capture manifest](docs/images/ios/candidate-2026-10-29/manifest.json).
+
+<p align="center">
+  <a href="docs/images/ios/candidate-2026-10-29/iphone-duo.png"><img src="docs/images/ios/candidate-2026-10-29/iphone-duo.png" width="760" alt="Historical October 29 iPhone Pro Max Duo candidate before the compact-landscape spacing fix."></a>
+</p>
+
+**macOS · historical workspace**
+
+This older capture is retained for reference; it does not depict the latest Mac candidate.
+A fresh source-matched Mac gallery remains part of its release checklist.
+
+<p align="center">
+  <a href="docs/images/screenshot.png"><img src="docs/images/screenshot.png" width="760" alt="Historical macOS four-pane meeting workspace; not the latest candidate."></a>
+</p>
+
+**iPhone and iPad · 1.18.2**
+
+These older simulator captures use synthetic content. The Duo image includes partially scrolled
+content and is historical QA, not a clean current release preview.
+[Capture provenance](docs/images/ios/release-1.18.2-en-US.json).
+
+<p align="center">
+  <a href="docs/images/ios/1.18.2/iphone-01-live.png"><img src="docs/images/ios/1.18.2/iphone-01-live.png" width="200" alt="Historical 1.18.2 iPhone Live transcript and Quick Summary."></a>
+  <a href="docs/images/ios/1.18.2/iphone-02-summary.png"><img src="docs/images/ios/1.18.2/iphone-02-summary.png" width="200" alt="Historical 1.18.2 iPhone Summary with decisions and next steps."></a>
+  <a href="docs/images/ios/1.18.2/iphone-03-prompt.png"><img src="docs/images/ios/1.18.2/iphone-03-prompt.png" width="200" alt="Historical 1.18.2 iPhone conversation prompts below Notes."></a>
+</p>
+<p align="center">
+  <a href="docs/images/ios/1.18.2/iphone-04-two-pane.png"><img src="docs/images/ios/1.18.2/iphone-04-two-pane.png" width="760" alt="Historical 1.18.2 iPhone Duo landscape layout with partially scrolled content."></a>
+  <br><sub>Earlier two-pane iPhone layout.</sub>
+</p>
+<p align="center">
+  <a href="docs/images/ios/1.18.2/ipad-01-workspace.png"><img src="docs/images/ios/1.18.2/ipad-01-workspace.png" width="760" alt="Historical 1.18.2 iPad transcript, Quick Summary and Summary workspace."></a>
+</p>
+<p align="center">
+  <a href="docs/images/ios/1.18.2/iphone-05-menu.png"><img src="docs/images/ios/1.18.2/iphone-05-menu.png" width="200" alt="Historical 1.18.2 iPhone More menu with the Full summary icon."></a>
+</p>
+
+</details>
 
 ## Why ListenToMe
 
@@ -156,6 +228,9 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
 ## Features
 
 **Live capture & transcription**
+- Current Mac source fixes a live Apple-transcription timestamp error during resampling and small
+  clock jitter, while preserving source offsets and real pauses. See the
+  [timing contract and acceptance limits](docs/speech-input-timing.md) (#333, unreleased).
 - Dual-channel capture: your mic + the other participants' system audio, source-labeled.
 - On-device transcription via **Apple SpeechAnalyzer** (default) or the legacy **SpeechRecognizer**.
 - **Transcription-language** picker listing every language your Mac can transcribe on-device, and
@@ -169,7 +244,10 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
   reporting "Mic: active" while recording silence.
 
 **Four-pane AI copilot**
-- **Transcript** — live, source-labeled, no model.
+- **Transcript** — live, source-labeled, no model. The next Mac candidate adds native microphone
+  echo control and stable chronological presentation for delayed channel results. YOU/OTHERS are
+  input channels; individual speaker identification is separate. See the
+  [dual-channel behavior and acceptance limits](docs/dual-channel-capture.md).
 - **Summary** (the Listener) — rolling summary plus open questions / action items.
 - **Quick** — fast suggestions on the global hotkey, buttons, or proactively when someone asks a
   question. **Proactive** (the checkbox in the Quick pane header, on by default) answers a finalized
@@ -274,6 +352,10 @@ Distilled from [`docs/competition-analysis.md`](docs/competition-analysis.md); f
   [macOS (unreleased since 1.4.4)](CHANGELOG.md#macos-unreleased-since-144) and are available only
   when you build from source until the next release.
 
+- A sandboxed Mac App Store build is being prepared under the same listing as iPhone/iPad.
+  It has not been submitted. Its separate storage and permissions do not automatically migrate
+  an existing DMG installation. See [Mac App Store preparation](docs/RELEASING.md#mac-app-store-distribution).
+
 **Build from source**
 ```bash
 brew install xcodegen
@@ -286,17 +368,23 @@ Maintainers and agents follow [AGENTS.md](AGENTS.md#release-trains-when-to-publi
 [CLAUDE.md](CLAUDE.md#testflight-and-official-app-store-review). Changes merge with validation and
 the required CI checks; publication is a separate, batched release train.
 
+- **README screenshots:** refresh the gallery for UI changes and every release train. Follow the
+  [device coverage, layout and provenance policy](AGENTS.md#readme-screenshot-gallery), including
+  Mac, iPhone Duo, iPad wide and embedded Watch. Check the rendered desktop/mobile layout and links.
 - **TestFlight:** use the [repository skill](.agents/skills/listentome-testflight/SKILL.md) and
   [iOS release runbook](docs/IOS-RELEASING.md). Complete the accepted upload, processing and existing
   tester-group verification, retain source/artifact receipts and report physical acceptance still
   pending. A beta upload does not require a connected phone or an unlocked Mac for the CLI/API route.
 - **Official App Store review:** follow the
   [production submission checklist](AGENTS.md#official-app-store-review-and-public-release) when
-  explicitly authorized. Complete production acceptance, **English (US), `en-US`**, metadata and
+  ready under the maintainer’s standing authorization of **2026-10-28 (Toronto)**; no renewed
+  submission permission is needed for ready iOS or macOS versions. Complete production acceptance, **English (US), `en-US`**, metadata and
   localized-name readback, full release notes, privacy/reviewer details and fresh screenshot uploads.
   Include applicable iPhone/iPad sizes, iPhone Duo, iPad wide layouts and the embedded Watch companion;
-  handle Mac as a separate authorized platform. Verify Apple's image processing/order and downloaded
-  assets before submitting, preserve the intended release mode and retain the review receipt.
+  handle Mac as a separate platform. Verify Apple's image processing/order and downloaded
+  assets before submitting, preserve the existing release mode and retain the review receipt.
+  Manual-release versions stay pending after approval unless separately instructed; readiness gates
+  and OS authentication requirements remain in force.
 
 The agent completes an authorized upload/submission using existing configured credentials; the
 maintainer handles OS authentication when required. Report beta availability, review submission,
@@ -305,6 +393,11 @@ Apple approval and actual public release separately. A saved draft, local screen
 does not itself publish or submit a build.
 
 ## Build & run
+
+For Mac App Store sandbox testing, use `make mac-sandbox-build` with your existing stable Dev
+signing configuration. This creates a separate development-signed sandbox acceptance build;
+[verify its identity and cleanup requirements](docs/RELEASING.md#local-sandbox-acceptance).
+It does not upload an app or prove Store/TestFlight installation.
 
 ```bash
 make test     # run the ListenToMeCore test suite (unit + integration)
@@ -433,6 +526,8 @@ once. macOS asks each binary for keychain access the first time it reads the ite
   history** answers the search text as a question from the best matching excerpts (never whole
   conversations) with the Deep pane's model and cites the conversations it used; on Ollama Cloud,
   Cloud AI or an OpenAI-compatible server the sheet says the excerpts are sent there first (#57).
+  The [optional multilingual model experiment](docs/history-search-implementation.md) remains open
+  under #223. Its quality gate failed; its download controls and runtime are excluded from this candidate.
 - **Export (⌘E).** Export the current conversation as Markdown; the Export menu also offers plain
   text, SRT and WebVTT subtitles, JSON, recap and PDF. Files are named after the conversation's title
   and date. Timestamps and subtitles need an engine that reports times: SpeechAnalyzer and WhisperKit
@@ -513,7 +608,9 @@ Automatic mode, have no `language` field.
 In Settings, enable **Automatic speaker identification** and choose **WhisperKit** before
 pressing Listen. The app analyzes captured system audio on-device about every 20 seconds
 (longer when analysis takes more time), and runs a final pass after Stop. The first use downloads
-speaker models. Open **Speakers / edit names** to name voices, for example Speaker 1 → Alice.
+speaker models. Open **Speakers / edit names** to name voices, for example Speaker 1 → Alice. You can also
+double-click an identified speaker label in the Mac transcript, or long-press its line on iPhone/iPad
+and choose **Rename speaker**. Save applies the name throughout this conversation; Cancel discards the edit.
 
 Names appear in transcript lines and flow into subsequent AI prompts, refreshed listener summaries,
 saved-session search, and Markdown/PDF exports. Saving a name clears older Quick/Deep answers;
@@ -631,8 +728,12 @@ only, not the whole product. `make mac-test` exercises selected native macOS ada
 file-loading, audio-buffer resampling, capability/preflight and checkpoint behavior; it does not
 measure all App code or replace SwiftUI, real capture or permission acceptance. Native Mac and Watch
 suites run locally through `make validate-local`, alongside SwiftLint, iOS simulator unit/UI tests,
-GUI/audio acceptance, and
-distribution checks require local validation via [`docs/manual-smoke-test.md`](docs/manual-smoke-test.md).
+release-helper tests and real-server contracts. Installed GUI/audio and physical-device acceptance
+remain separate gates in [`docs/manual-smoke-test.md`](docs/manual-smoke-test.md).
+The make shell policy preserves failed pipeline exits on Apple's GNU make 3.81; offline tests
+exercise the actual native recipes and their logging/verification boundaries. A passed bound-selector
+check does not excuse a failure elsewhere in a full native suite. See
+[the validation recovery evidence](docs/validation-pipeline-recovery.md).
 
 `make e2e` runs the checks CI can't (it needs a real Mac + Ollama): it builds the app target,
 verifies `make run`'s app-path resolution, and runs a real LLM contract test against your local
@@ -796,8 +897,14 @@ with AI off (#129).
 MOV. Choose **Others** (the default) or **You** in the file picker to label the imported speech. Movie
 imports decode only their first audio track on-device; video frames are not transcribed and a movie
 with no audio produces a clear error. These imports use the selected transcription language and the
-same progress/Cancel controls as audio files. Importing does not upload the recording (#128).
+same progress/Cancel controls as audio files. Prepared channels without audio are closed promptly at
+EOF or Cancel; used channels drain their final words before import completes. Importing does not
+upload the recording (#128, #335).
 On Mac, select transcript text or use its row menu to copy a line or the transcript. Double-click a finalized line (or choose **Edit line…**) to correct it, then Save or Cancel. **Delete line…** asks for confirmation. Corrections retain the recognized original in exports. Existing summaries rebuild from edited text; Auto off does not create a first summary. Audio recordings and previously exported files are unchanged.
+
+The pending Mac update restores double-click editing on the selectable text itself. Drag to select
+a phrase for Copy; finalized text also exposes an accessible **Edit line** action. Partial recognition
+cannot be edited. This correction is tracked in [#337](https://github.com/tomqwu/ListenToMe/issues/337).
 
 The Mac transcript follows incoming speech and wrapped/resized rows until you scroll back to read. Choose **Latest** to resume following. SpeechAnalyzer timestamps come from recognition audio ranges on each capture timeline, not from result delivery time.
 On Mac, expand **Engine → Compute details** to inspect the selected/active transcription engine’s configured compute policy. WhisperKit shows allowed units for audio features, encoder, decoder and prefill; Apple Speech manages its own policy. **Runtime accelerator** says Not running, Preparing or Not exposed. Allowing GPU/Neural Engine does not establish that a request used it.

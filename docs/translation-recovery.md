@@ -54,9 +54,17 @@ they do not identify the cause of the phone's original stall. No packs were requ
 
 The connected iPhone was initially locked. A compiled, signed isolated probe was later preserved after a scoped signing repair (the original xcodebuild exited 65), but Apple’s device service could not confirm a usable connection; no phone installation or execution occurred. The native desktop tool
 also reported the Mac locked. No unlock, authentication or permission-change request was sent to
-the maintainer; their TestFlight app and private conversations were left intact. Installed Mac GUI
-and physical iPhone translation acceptance remain unverified. Simulator UI and real Mac model
+the maintainer; their TestFlight app and private conversations were left intact. At that checkpoint,
+installed Mac GUI and physical iPhone translation acceptance were unverified. Simulator UI and real Mac model
 tests do not establish the phone's behavior, broad language quality or production readiness.
+
+A subsequent signed Mac sandbox session on `02528bf` translated a saved synthetic English summary
+to Simplified Chinese through the actual Summary UI. Native AX contains the complete translated
+output and retained original; the saved viewport shows its first translated line. Independent visual/
+AX review corroborates those scoped results. [Installed receipt](releases/mac-candidate-02528bf-installed.json).
+This remains separate from the original physical iPhone failure: the latest isolated-phone preflight
+reports a passcode required, so no diagnostic app was installed or launched. No repeated user test
+or permission-reset request was made, and no phone acceptance is claimed.
 
 Focused evidence is retained under
 `/Users/tomwu/Documents/Codex/2026-10-28/listentome-translation-recovery/`: Core red/green logs,

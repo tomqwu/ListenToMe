@@ -1,5 +1,44 @@
 # ListenToMe — Manual Smoke Test
 
+## Mac App Store sandbox acceptance
+
+For [#333](speech-input-timing.md), require both active channels and no transcription failure before
+playing a known synthetic fixture. Verify finalized OTHERS text, Stop and a second recording. Keep
+the initial timestamp failure and all incomplete runs; a functioning RMS meter alone is not a pass.
+
+For [#336](dual-channel-capture.md), playback-only synthetic speech must produce OTHERS without
+matching YOU lines. Then independently verify nearby microphone speech, simultaneous near-end and
+playback speech, genuine repeated words, headphones and input/output changes. Stop during recovery
+must leave capture stopped. Check delayed finalized timestamps in rendered order, edit the intended
+line and seek its saved audio; never use only the presence of OTHERS as a complete pass. Preserve
+separate evidence for each case and identify any untested physical route.
+
+First run `make mac-sandbox-build` with existing stable Dev signing and verify the exact `.dev`
+identity, signature and actual sandbox entitlements before launch; follow
+[the local runbook](RELEASING.md#local-sandbox-acceptance). The release-optimized local configuration
+retains the Store's public sandbox boundaries. A Store package rejected for an ineligible profile
+is not a TCC failure: preserve it without permission resets or re-signing. Dev sandbox results
+do not establish Apple-distributed installation. Preserve native screenshots and complete the
+normal app-scoped Dev cleanup at the end of the session.
+
+The `AppStore` configuration uses the shared store bundle ID, sandboxed storage and separate OS
+permissions. Its generated settings and native temporary-folder scope tests do not replace this
+installed-app check. Preserve source/signing evidence and fresh native-resolution Mac screenshots.
+
+1. In the signed sandboxed candidate, verify actual microphone and system-audio transcription
+   labeled OTHERS, Stop/cancellation, the explicit local/remote provider, Calendar and file imports/exports.
+2. Choose an external vault, save a conversation, quit/relaunch and save it again. No duplicate note
+   is created. Delete/revoke the folder and verify reselection guidance.
+3. Attach an external file and folder; verify their contents, quit/relaunch and verify both again.
+   Delete/revoke one and verify the missing-access warning and same-path reselection. Clear and cancel
+   while a read is in progress: no late context returns and saved reference grants are removed.
+4. Confirm the existing DMG/Dev installations' bundle identities, data and permissions are intact.
+   Do not reset them as a shortcut for the new Store identity.
+
+Native Mac UI is available again on October 27; these checks and fresh Mac captures remain pending.
+No Mac App Store
+upload or review submission is established by the preliminary archive.
+
 For changed behavior, start from its [BDD scenario](BDD.md) and record source-matched acceptance
 against the stated Given/When/Then outcome. Run `make bdd-check` before the existing local gates;
 `make bdd-manual` lists hardware acceptance obligations without marking them passed. The catalog
@@ -1110,6 +1149,11 @@ as part of this UI check. Capture onboarding, warning and ready-state screenshot
 
 With Auto off, record or reopen several finalized lines. Select and copy a phrase; use Copy line and Copy transcript. Double-click a line, change a name, Cancel, and verify no change; repeat with Save. Empty edits must be disabled. Confirm timestamps, speaker and language survive, and export lists original and corrected wording. Edit an existing summary and verify its replacement uses the corrected text. Edit before any summary and verify no AI request starts. Delete a line, first cancelling then confirming; verify other lines remain and the reopened History/export/search reflect deletion. Delete the final line of a saved conversation with empty notes, reopen it, and verify the empty transcript stays empty. During a later capture run, delete an earlier-run line and verify speaker labels still cover the current run. Saved audio and previously exported files remain unchanged. Capture native screenshots of editing and confirmation.
 
+For #337, double-click an actual word, not row whitespace. Drag across a phrase and use Command-C;
+verify only that phrase is copied. Test the text's own context menu and accessible Edit line action,
+then resize a long multiline/CJK transcript and verify no clipping or overlap with the next row.
+An unchanged-text refresh must retain the selection; a partial line must never open an editor.
+
 ## Capture timeline and follow-latest (#68)
 
 With SpeechAnalyzer, record known alternating microphone and system audio separated by silence. Verify OTHERS transcription and line timestamps against saved audio, including delayed finalization, Stop/Listen again, and line playback in the second run. Cancel during preparation and confirm no late line enters the next conversation. While partials grow on both channels, resize the window and confirm Latest remains followed. Scroll up during bursts; the view must not jump to the bottom. Use Latest and confirm following resumes. Preserve screenshots and actual-audio evidence; Core timing tests and a signed build are not substitutes for this acceptance.
@@ -1243,6 +1287,26 @@ on the completed summary and Close returns to original reading. Change source/ta
 background/return on phone and close/reopen the Mac window. No stale result or background backlog
 may publish. This text-only acceptance is separate from existing real OTHERS-audio gates.
 
+## Transcript speaker rename shortcuts
+
+- On iPhone/iPad, long-press an identified line, choose Rename speaker, edit and Save. Verify all
+  lines for that identity, Notes, reopened History and exports use the name; other speakers stay unchanged.
+- Repeat in portrait, expanded transcript and landscape Duo. At the largest text size with the
+  keyboard open, inspect the entire field and Save/Cancel controls; use VoiceOver's Rename speaker action.
+- On Mac, double-click a speaker label and verify the editor appears; a single click must not open it.
+  Repeat through the context menu and on a reopened conversation. Check long names via the full-name tooltip.
+- Cancel an edited name and verify no change. Blank/device names must disable Save. Switch conversation
+  while an editor is pending and verify a stale save cannot rename another conversation.
+
+### Prepared speech channel import completion (#335)
+
+Use the synthetic `macOSTests/Fixtures/Imports/orion.aiff` through More → Import audio or video.
+Import once as Others and once as You, starting a fresh conversation for each. Wait for finalization:
+progress must disappear, Start/New/Import must be enabled, and the transcript must include both
+Project Orion and the final project-folder sentence with the chosen source and original time range.
+Cancel a separate import and verify it releases the controls with incomplete-import guidance; no
+unused-channel recognition failure should appear. Also Start then Stop before any speech and verify
+a later recording can start. Native `MACAUDIO-002` tests complement this installed-control check.
 
 ### Translation recovery (#343)
 
@@ -1254,3 +1318,7 @@ service, progress must end after 45 seconds with recovery guidance; Translate/Re
 until the prior native request actually exits. A service that never exits requires app relaunch;
 no cloud fallback, automatic pack download or microphone action is permitted. Simulator held-service
 fixtures prove those controls; they do not establish actual physical translation success.
+
+## Saved-audio final words and chunk boundaries (#348)
+
+After the candidate is installed, use an explicitly opted-in saved recording with known final words close to EOF and distinct words around a chunk boundary. Re-transcribe and compare the ending/boundary against the original audio; preserve source files and verify Stop does not continue publishing results. Record device, source/build, audio format, expected/actual words and timestamps. Generated-PCM frame tests support file-feed conservation only: they do not replace this audible/recognition acceptance or the Mac actual OTHERS gate.
