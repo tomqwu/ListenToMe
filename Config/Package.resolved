@@ -1,5 +1,5 @@
 {
-  "originHash" : "607dd2c7849e294fa1fc84fde96c64dd976336223f2f86be5d8e65089614ecfe",
+  "originHash" : "fec7fc8327f90586d9101e8ce08844ece956bd356aa057098fc4fd00e4221e3b",
   "pins" : [
     {
       "identity" : "fluidaudio",
@@ -47,39 +47,12 @@
       }
     },
     {
-      "identity" : "swift-embeddings",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/jkrukowski/swift-embeddings.git",
-      "state" : {
-        "revision" : "b4df611ec614ef36149c4a926a47b539724ef01a",
-        "version" : "0.0.23"
-      }
-    },
-    {
       "identity" : "swift-jinja",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/huggingface/swift-jinja.git",
       "state" : {
         "revision" : "0b67ecb79139f6addef8699eff3622808aa6c7dc",
         "version" : "2.3.6"
-      }
-    },
-    {
-      "identity" : "swift-safetensors",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/jkrukowski/swift-safetensors.git",
-      "state" : {
-        "revision" : "3852f0bd561071588361c26c49c016d344234c60",
-        "version" : "0.1.1"
-      }
-    },
-    {
-      "identity" : "swift-sentencepiece",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/jkrukowski/swift-sentencepiece",
-      "state" : {
-        "revision" : "36a8b2b45733f6adb3092100f16e4c7d38a10a7c",
-        "version" : "0.0.6"
       }
     },
     {

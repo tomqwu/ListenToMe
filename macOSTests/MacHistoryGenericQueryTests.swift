@@ -22,7 +22,7 @@ final class MacHistoryGenericQueryTests: XCTestCase {
     }
 
     private func records(_ code: String) throws -> [SessionRecord] {
-        let fixture = try XCTUnwrap(MultilingualHistoryQualityTests.fixtures[code])
+        let fixture = try XCTUnwrap(HistoryTopicFixtures.fixtures[code])
         let ids = ["budget", "hiring", "outage", "travel", "design", "lunch", "legal", "family"]
         return zip(ids, fixture[0]).map { id, text in
             SessionRecord(id: id, title: id, date: .distantPast, transcript: text, summary: "")
@@ -109,24 +109,6 @@ final class MacHistoryGenericQueryTests: XCTestCase {
         }
     }
 
-    func testOptionalRuntimeRefusesKnownGenericQueriesAndKeepsTopicVectors() async throws {
-        let path = try XCTUnwrap(ProcessInfo.processInfo.environment["LISTENTOME_MPNET_TEST_ASSETS"])
-        let adapter = MultilingualHistoryEmbedder(installedModelDirectory: URL(fileURLWithPath: path),
-                                                fallback: GenericQueryNoApple())
-        for code in ["de", "es"] {
-            _ = try prerequisites(code)
-            for query in try XCTUnwrap(queries[code]) {
-                let vectors = await adapter.embedQuery(query, models: [MultilingualHistoryEmbedder.modelIdentifier])
-                XCTAssertTrue(vectors.isEmpty, "\(code) \(query)")
-            }
-            let topic = try XCTUnwrap(records(code).first { $0.id == "travel" }).transcript
-            let query = try XCTUnwrap(queries[code]?.first) + ": " + topic
-            let vectors = await adapter.embedQuery(query, models: [MultilingualHistoryEmbedder.modelIdentifier])
-            XCTAssertEqual(vectors.map(\.model), [MultilingualHistoryEmbedder.modelIdentifier])
-            XCTAssertTrue(vectors.allSatisfy { $0.values.count == 768 && $0.values.allSatisfy(\.isFinite) })
-        }
-    }
-
     func testCompoundsAmbiguityAndUnavailableLexicalAssetsKeepTheirExistingBehavior() throws {
         _ = try prerequisites("de")
         for word in ["Plan", "plan", "comida"] {
@@ -151,10 +133,4 @@ final class MacHistoryGenericQueryTests: XCTestCase {
         }
         XCTAssertGreaterThan(unavailable, 0, "Missing-capability branch must actually execute")
     }
-}
-
-private struct GenericQueryNoApple: HistoryEmbedder {
-    let signature = "generic-query-without-apple"
-    func embed(_ text: String) -> HistoryVector? { nil }
-    func embedQuery(_ query: String, models: Set<String>) -> [HistoryVector] { [] }
 }

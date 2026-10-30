@@ -1,5 +1,29 @@
 # Optional History search model — #223 implementation checkpoint
 
+## Current delivery scope — October 30, 2026
+
+The optional MPNet runtime, installer and Settings controls are withdrawn from the current PR #318
+candidate because their language-quality gate failed. The complete experimental source and original
+tests remain in commit `08521d5f2bf7d5e20410359e6560bd2d5c066eb6`; the failed native results and
+independent evaluations remain preserved. This is a scope withdrawal, **not a passing quality result
+or completion of #223**. No threshold, corpus label or original acceptance criterion is relaxed.
+
+The candidate retains independently tested Apple vocabulary/query compatibility and generic-query
+repairs, indexing cancellation/save/Clear guards and relevance-group isolation. Both applications
+use Apple embeddings with keyword fallback. Old experimental preferences and downloaded files are
+left intact but cannot activate the withdrawn runtime. A fresh candidate validation is required;
+historical passes below do not establish its result.
+
+The actual Settings scope regression failed one assertion, then passed unchanged after withdrawal.
+The new native cache-migration baseline passed on first execution after correcting a test-target
+selector; that selector error is not a product regression. Independent review cleared the narrow
+boundary. BDD236, lint and diff checks pass; full combined validation and current CI remain pending.
+[Source-bound focused evidence](evaluations/history-delivery-scope-2026-10-30.json).
+
+The following sections describe the preserved experimental checkpoint, not currently shipped controls.
+
+## Historical implementation — October 29, 2026
+
 October 29, 2026. Unmerged implementation checkpoint: application commit `ece5593` and its
 documentation follow-up `0f94823` both passed all three required CI checks. The relevance-group
 changes below are committed in existing draft PR #318.
@@ -15,18 +39,18 @@ Apple vectors and eligibility refusals for already-supported languages. It runs 
 existing ranking thresholds, passage-vector reuse and transcription-language hints. The runtime
 uses the verified XLM-RoBERTa tokenizer/mean-pooling recipe, serializes model work and returns no
 vector for input beyond its 128-token limit; the complete original text remains keyword-searchable.
-See [the runtime](../SharedPlatform/MultilingualHistoryEmbedder.swift) and
+See [the runtime](https://github.com/tomqwu/ListenToMe/blob/08521d5f2bf7d5e20410359e6560bd2d5c066eb6/SharedPlatform/MultilingualHistoryEmbedder.swift) and
 [the index](../Sources/ListenToMeCore/HistoryIndex.swift).
 
-[The asset owner](../Sources/ListenToMeCore/HistoryModelAssets.swift) downloads only on an explicit
+[The asset owner](https://github.com/tomqwu/ListenToMe/blob/08521d5f2bf7d5e20410359e6560bd2d5c066eb6/Sources/ListenToMeCore/HistoryModelAssets.swift) downloads only on an explicit
 install action: six immutable public files, **1,126,353,221 bytes** (1.13 GB), at revision
 `4328cf26390c98c5e3c738b4460a05b95f4911f5`. Readiness checks never download. Size and streamed SHA-256
 checks precede activation; staging, cancellation, removal and unsafe-path refusal preserve unrelated
 files. Storage uses the existing protection and backup-exclusion policy. No additional model assets
 were downloaded during this implementation turn; native tests reused retained local research assets.
 
-[Shared Settings](../SharedPlatform/HistoryLanguageSettings.swift) exposes download, progress,
-Cancel, opt-in and Remove. [Its owner](../SharedPlatform/HistoryLanguageModel.swift) fences late
+[Shared Settings](https://github.com/tomqwu/ListenToMe/blob/08521d5f2bf7d5e20410359e6560bd2d5c066eb6/SharedPlatform/HistoryLanguageSettings.swift) exposes download, progress,
+Cancel, opt-in and Remove. [Its owner](https://github.com/tomqwu/ListenToMe/blob/08521d5f2bf7d5e20410359e6560bd2d5c066eb6/SharedPlatform/HistoryLanguageModel.swift) fences late
 completion. Backend transitions clear old answers/results and retain the intended choice for retry
 when index storage is unavailable. Exact-word search stays available while a transition is blocked;
 Ask waits for that transition. This changes neither the selected summary provider nor its disclosure:

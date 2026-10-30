@@ -67,19 +67,10 @@ final class HistorySearchModel {
     static func shared(besideArchive archive: URL) -> HistorySearchModel {
         let key = archive.standardizedFileURL.path
         if let existing = shared[key] { return existing }
-        let setup = HistoryLanguageModel.shared
-        let embedder = MultilingualHistoryEmbedder(installedModelDirectory: setup.activeDirectory)
         let model = HistorySearchModel(index: HistoryIndex(directory: HistoryIndex.directory(besideArchive: archive),
-                                                         embedder: embedder))
+                                                         embedder: NaturalLanguageEmbedder()))
         shared[key] = model
-        setup.refreshIfNeeded()
         return model
-    }
-
-    static func useMultilingualModel(at directory: URL?) {
-        for model in shared.values {
-            model.setEmbedder(MultilingualHistoryEmbedder(installedModelDirectory: directory))
-        }
     }
 
     /// Switch the same index actor so a late old backend cannot write into a replacement's files.

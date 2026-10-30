@@ -1,3 +1,21 @@
+# Backlog completion scope — October 30, 2026
+
+PR #318 is being narrowed to its completed fixes and independently tested Apple History/indexing
+repairs. The optional MPNet installer, runtime and Settings controls are withdrawn from this
+candidate because their unchanged language-quality gate failed. Their complete source/tests remain
+preserved in `08521d5f2bf7d5e20410359e6560bd2d5c066eb6`; external native results and independent
+reviews remain intact. Issue #223 stays open. This is not a model-quality pass or a waiver.
+
+The candidate retains #333–#337 and #346–#348, correction-export provenance, screen-lock Settings
+copy, current README policy/gallery and the Apple vocabulary/query, indexing and generic-query
+repairs. Fresh local validation, independent review, hosted CI and affected installed acceptance
+are required before merge. No merge or release is yet claimed. Release-monitor automation remains
+paused while the explicitly resumed backlog work proceeds.
+
+The older checkpoints below describe their recorded sources. Their optional-runtime controls and
+quality-gate failures are historical for this narrowed candidate, not statements that those
+controls will be shipped. [Scope and preserved evidence](history-search-implementation.md).
+
 # Generic History queries — October 29, 2026
 
 The current PR #318 follow-up fixes reproduced German/Spanish generic-query false matches.

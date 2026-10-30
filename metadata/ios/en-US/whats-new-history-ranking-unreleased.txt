@@ -1,5 +1,3 @@
-History search and Ask now preserve eligible results when independent local models are combined. Existing keyword search and relevance cutoffs stay unchanged.
-
 Preserve case-sensitive words recognized by installed Apple History models and rebuild stale empty search entries without changing saved conversations.
 
 Keep saved Apple sentence search entries usable when word models become available, without rewriting saved conversations.

@@ -49,18 +49,11 @@ does not show it again, and a fresh install does not see it at all; see
 
 - Identify manual transcript corrections accurately in Markdown; retain AI labels for named models
   and use neutral wording when legacy correction provenance is unknown. Original speech stays intact.
-- Preserve installed Apple language support when optional History languages are enabled; rebuild
-  stale derived vectors without changing saved conversations. Additional-model quality remains
-  unaccepted. (#223)
-- Keep eligible History search and Ask passages when an independent optional model is added;
-  compare each model within its own relevance population and combine admitted ranks. (#223)
 
 - Refresh active History results after saved text finishes indexing, and prevent older indexing
   batches from restoring cleared derived data. Model transitions keep exact-word search available
   and wait before sending an Ask request. (#223)
 - Correct Settings to explain continued screen-lock recording and paused optional AI updates.
-- In progress: optional local History model download, cancellation, opt-in and removal. Additional
-  language quality has not passed; this draft feature is not ready for distribution. (#223)
 
 - Keep saved-audio labels and elapsed/duration readable at accessibility text sizes, with usable playback controls and transcript scrolling on iPhone and iPad.
 - Make essential translation explanations, setup status and recovery messages easier to read with stronger native foreground colors, preserving the existing layout and translation behavior. (#346)
@@ -204,17 +197,10 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 
 - Identify manual transcript corrections accurately in Markdown; retain AI labels for named models
   and use neutral wording when legacy correction provenance is unknown. Original speech stays intact.
-- Preserve installed Apple language support when optional History languages are enabled; rebuild
-  stale derived vectors without changing saved conversations. Additional-model quality remains
-  unaccepted. (#223)
-- Keep eligible History search and Ask passages when an independent optional model is added;
-  compare each model within its own relevance population and combine admitted ranks. (#223)
 
 - Refresh active History results after saved text finishes indexing, and prevent older indexing
   batches from restoring cleared derived data. Model transitions keep exact-word search available
   and wait before sending an Ask request. (#223)
-- In progress: optional local History model download, cancellation, opt-in and removal. Additional
-  language quality has not passed; this draft feature is not ready for distribution. (#223)
 
 - Make essential translation explanations, setup status and recovery messages easier to read with stronger native foreground colors, preserving the existing layout and translation behavior. (#346)
 - Double-click an identified transcript speaker label, or choose **Rename speaker** from its context menu. Save updates that speaker across the conversation, including reopened conversations; Cancel leaves the name unchanged. (#334)

@@ -1,0 +1,41 @@
+{
+  "feature": "Accepted History search delivery scope",
+  "scenarios": [
+    {
+      "id": "HISTORYDELIVERY-001",
+      "name": "Release Settings does not offer an unaccepted search model",
+      "given": "the optional additional-language search model has not passed its required quality gate",
+      "when": "the user reads Settings from the initial viewport through the Recording explanation",
+      "then": "no additional-language model heading, download, enable, cancel or remove control is offered, while the Recording explanation remains reachable",
+      "covers": [
+        "App/SettingsView.swift",
+        "iOS/MobileMeetingView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileHistoryModelUITests.swift",
+          "test": "MobileHistoryModelUITests/testReleaseSettingsDoNotOfferUnacceptedSearchModel"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYDELIVERY-002",
+      "name": "Shared Apple History rebuilds only stale derived optional vectors",
+      "given": "an owned archive has old optional-model vector files beside separately retained legacy preference and asset sentinels",
+      "when": "the application's shared default History model opens and rebuilds its index",
+      "then": "stale vectors are discarded, only installed Apple vectors or truthful missing vectors are retained, literal History finds the original record, and archive bytes, identities, timing, notes and sentinels remain unchanged",
+      "covers": [
+        "SharedPlatform/HistorySearchModel.swift",
+        "Sources/ListenToMeCore/HistoryIndex.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/HistoryDefaultBackendTests.swift",
+          "test": "HistoryDefaultBackendTests/testSharedAppleBaselineDiscardsOnlyStaleOptionalVectorsAndKeepsLiteralHistory"
+        }
+      ]
+    }
+  ]
+}

@@ -368,3 +368,14 @@ only the name sheet, and its Escape shortcut dismisses without changing the name
 These additional integration assertions do not replace installed pointer, keyboard, menu, VoiceOver
 or persistence acceptance. The native sheet bitmap is diagnostic: missing button-label rendering
 prevents treating it as a complete visual pass.
+
+## Withdrawing an unaccepted optional feature
+
+`HISTORYDELIVERY-001` traverses real iPhone Settings through Recording and rejects the withdrawn
+optional-model controls. It failed on the visible heading/download button, then the same method
+passed after removal. `HISTORYDELIVERY-002` exercises the shared default History composition with
+old optional derived vectors: Apple/keyword behavior preserves original archive bytes and dormant
+asset/preference sentinels. The latter is new baseline coverage, not a historical regression red.
+Optional-only runtime tests remain preserved with their source at `08521d5`; removing that product
+scope does not turn its failed quality gate into a pass or complete #223. Apple/indexing contracts
+remain required. [Focused evidence](evaluations/history-delivery-scope-2026-10-30.json).

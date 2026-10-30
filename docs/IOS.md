@@ -7,11 +7,12 @@ The first iOS version is a standalone app, separate from the macOS release. It r
 
 ## Unreleased History work
 
-The current draft adds explicit local model download/cancel/remove controls, safer asynchronous
-History indexing and refreshed search after saving. The optional multilingual backend still fails
-its language-quality gate; it is not ready for distribution. [Implementation and BDD evidence](history-search-implementation.md).
+The current draft keeps safer asynchronous History indexing, refreshed search after saving and
+repairs for installed Apple model queries. The optional multilingual experiment failed its quality
+gate and is excluded from the candidate, including its download controls and runtime. Its source
+and failed results are preserved for continuing #223. [Implementation and BDD evidence](history-search-implementation.md).
 Settings also corrects its screen-lock explanation to match continued user-started recording.
-No version or in-app release-note announcement has been advanced for this incomplete work.
+No version or in-app release-note announcement has been advanced by this scope correction.
 
 ## Current TestFlight beta — 1.20.2 (42)
 

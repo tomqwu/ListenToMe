@@ -125,9 +125,5 @@ final class ThirdPartyNoticesTests: XCTestCase {
         }
         XCTAssertTrue(notices.contains { $0.identity == "whisperkit" })
         XCTAssertTrue(notices.contains { $0.identity == "fluidaudio" })
-        for identity in ["swift-embeddings", "swift-safetensors", "swift-sentencepiece"] {
-            XCTAssertTrue(notices.contains { $0.identity == identity },
-                          "The optional local History runtime ships its dependency licenses")
-        }
     }
 }

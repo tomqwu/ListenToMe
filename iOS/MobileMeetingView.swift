@@ -367,7 +367,6 @@ extension MobileMeetingView {
                 MobileVaultSettings(session: session)
                 MobileSavedAudioSettings(savedAudio: session.savedAudio)
                 MobileAutoTitleSettings()
-                Section { HistoryLanguageSettings() }
                 Section("Recording") {
                     Text("After you start listening, microphone recording continues when the screen locks " +
                          "or you switch apps. Tap Stop listening to end it. Optional AI updates pause while " +

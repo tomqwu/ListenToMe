@@ -20,9 +20,6 @@ packages:
   FluidAudio:
     url: https://github.com/FluidInference/FluidAudio.git
     from: "0.12.4"
-  Embeddings:
-    url: https://github.com/jkrukowski/swift-embeddings.git
-    exactVersion: "0.0.23"
 targets:
   ListenToMe:
     type: application
@@ -37,8 +34,6 @@ targets:
         product: WhisperKit
       - package: FluidAudio
         product: FluidAudio
-      - package: Embeddings
-        product: Embeddings
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMe
@@ -112,8 +107,6 @@ targets:
         product: ListenToMeCore
       - package: FluidAudio
         product: FluidAudio
-      - package: Embeddings
-        product: Embeddings
       # On-device spoken-language detection (issue #197). The app only; never the watch or share extension.
       - package: WhisperKit
         product: WhisperKit
@@ -249,9 +242,8 @@ targets:
       - SharedPlatform/AppleIntelligenceProvider.swift
       - SharedPlatform/AppleTranscriptTranslator.swift
       - SharedPlatform/ConversationLanguageControls.swift
-      - SharedPlatform/MultilingualHistoryEmbedder.swift
-      - SharedPlatform/HistoryLanguageModel.swift
       - SharedPlatform/HistorySearchModel.swift
+      - TestSupport/HistoryTopicFixtures.swift
     dependencies:
       - package: ListenToMeCore
         product: ListenToMeCore
@@ -259,8 +251,6 @@ targets:
         product: WhisperKit
       - package: FluidAudio
         product: FluidAudio
-      - package: Embeddings
-        product: Embeddings
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tomwu.ListenToMeMacUnitTests

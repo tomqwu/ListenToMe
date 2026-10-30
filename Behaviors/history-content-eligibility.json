@@ -5,11 +5,10 @@
       "id": "HISTORYCONTENT-001",
       "name": "Lexically supported Spanish rejects non-topical speech",
       "given": "Spanish lexical tagging is available on the device",
-      "when": "the optional History backend checks filler, a generic decision query and real topic content",
+      "when": "History content eligibility checks filler, a generic decision query and real topic content",
       "then": "filler and generic queries are insufficient while topic passages and short topical queries remain eligible",
       "covers": [
-        "Sources/ListenToMeCore/HistoryContentEligibility.swift",
-        "SharedPlatform/MultilingualHistoryEmbedder.swift"
+        "Sources/ListenToMeCore/HistoryContentEligibility.swift"
       ],
       "bindings": [
         {
@@ -26,8 +25,7 @@
       "when": "filler or topic text is checked for History content eligibility",
       "then": "neither fallback OtherWord tags nor missing tags are treated as known noun evidence; eligibility stays unknown",
       "covers": [
-        "Sources/ListenToMeCore/HistoryContentEligibility.swift",
-        "SharedPlatform/MultilingualHistoryEmbedder.swift"
+        "Sources/ListenToMeCore/HistoryContentEligibility.swift"
       ],
       "bindings": [
         {
@@ -44,8 +42,7 @@
       "when": "History content eligibility is checked",
       "then": "existing generic meeting nouns and vague queries are insufficient, topic nouns remain eligible and empty text is insufficient",
       "covers": [
-        "Sources/ListenToMeCore/HistoryContentEligibility.swift",
-        "SharedPlatform/MultilingualHistoryEmbedder.swift"
+        "Sources/ListenToMeCore/HistoryContentEligibility.swift"
       ],
       "bindings": [
         {

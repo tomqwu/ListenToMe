@@ -78,28 +78,6 @@
       ]
     },
     {
-      "id": "HISTORYGROUP-005",
-      "name": "Native optional runtime preserves the fallback search population",
-      "given": "the real native optional model is installed beside a controlled fallback whose existing conversation qualifies by meaning",
-      "when": "many optional-model passages are indexed and the user searches or asks the same question with output caps nonbinding",
-      "then": "the fallback Related result and unchanged Ask passage remain eligible, with separate native runtime and delegated fallback relevance groups; controlled fallback scores do not prove Apple model quality",
-      "covers": [
-        "SharedPlatform/MultilingualHistoryEmbedder.swift"
-      ],
-      "bindings": [
-        {
-          "suite": "mac-unit",
-          "file": "macOSTests/MacMultilingualHistoryEmbedderTests.swift",
-          "test": "MacMultilingualHistoryEmbedderTests/testOptionalPassagesCannotEraseFallbackSearchOrAskResults"
-        },
-        {
-          "suite": "ios-unit",
-          "file": "iOSUnitTests/MultilingualHistoryEmbedderTests.swift",
-          "test": "MultilingualHistoryEmbedderTests/testOptionalPassagesCannotEraseFallbackSearchOrAskResults"
-        }
-      ]
-    },
-    {
       "id": "HISTORYGROUP-006",
       "name": "Tied multi-group passages have deterministic ranks",
       "given": "multiple admitted relevance groups include two passages tied in score, date and ordinal, with output caps nonbinding",

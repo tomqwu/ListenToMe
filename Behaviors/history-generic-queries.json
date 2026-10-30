@@ -11,7 +11,8 @@
         "Sources/ListenToMeCore/HistoryContentEligibility.swift",
         "Sources/ListenToMeCore/HistoryEmbedding.swift",
         "Sources/ListenToMeCore/HistoryQuestion.swift",
-        "Sources/ListenToMeCore/HistoryQueryVocabulary.swift"
+        "Sources/ListenToMeCore/HistoryQueryVocabulary.swift",
+        "TestSupport/HistoryTopicFixtures.swift"
       ],
       "bindings": [
         {
@@ -31,7 +32,8 @@
         "Sources/ListenToMeCore/HistoryContentEligibility.swift",
         "Sources/ListenToMeCore/HistoryEmbedding.swift",
         "Sources/ListenToMeCore/HistoryQuestion.swift",
-        "Sources/ListenToMeCore/HistoryQueryVocabulary.swift"
+        "Sources/ListenToMeCore/HistoryQueryVocabulary.swift",
+        "TestSupport/HistoryTopicFixtures.swift"
       ],
       "bindings": [
         {
@@ -51,7 +53,8 @@
         "Sources/ListenToMeCore/HistoryContentEligibility.swift",
         "Sources/ListenToMeCore/HistoryEmbedding.swift",
         "Sources/ListenToMeCore/HistoryQuestion.swift",
-        "Sources/ListenToMeCore/HistoryQueryVocabulary.swift"
+        "Sources/ListenToMeCore/HistoryQueryVocabulary.swift",
+        "TestSupport/HistoryTopicFixtures.swift"
       ],
       "bindings": [
         {
@@ -71,33 +74,14 @@
         "Sources/ListenToMeCore/HistoryContentEligibility.swift",
         "Sources/ListenToMeCore/HistoryEmbedding.swift",
         "Sources/ListenToMeCore/HistoryQuestion.swift",
-        "Sources/ListenToMeCore/HistoryQueryVocabulary.swift"
+        "Sources/ListenToMeCore/HistoryQueryVocabulary.swift",
+        "TestSupport/HistoryTopicFixtures.swift"
       ],
       "bindings": [
         {
           "suite": "mac-unit",
           "file": "macOSTests/MacHistoryGenericQueryTests.swift",
           "test": "MacHistoryGenericQueryTests/testStoredSentenceModelsCannotBypassGenericQueryRefusal"
-        }
-      ]
-    },
-    {
-      "id": "GENERICQUERY-005",
-      "name": "Optional runtime respects generic refusal while preserving topic queries",
-      "given": "installed actual optional model assets and supported German and Spanish lexical tagging",
-      "when": "the optional adapter receives generic queries and the same wording plus real travel content",
-      "then": "generic queries produce no vectors while genuine topic queries retain actual finite optional-model vectors",
-      "covers": [
-        "Sources/ListenToMeCore/HistoryContentEligibility.swift",
-        "Sources/ListenToMeCore/HistoryEmbedding.swift",
-        "Sources/ListenToMeCore/HistoryQuestion.swift",
-        "Sources/ListenToMeCore/HistoryQueryVocabulary.swift"
-      ],
-      "bindings": [
-        {
-          "suite": "mac-unit",
-          "file": "macOSTests/MacHistoryGenericQueryTests.swift",
-          "test": "MacHistoryGenericQueryTests/testOptionalRuntimeRefusesKnownGenericQueriesAndKeepsTopicVectors"
         }
       ]
     },

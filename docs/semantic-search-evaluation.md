@@ -1,5 +1,24 @@
 # Additional semantic-search languages — #223 evaluation
 
+## Delivery decision — October 30, 2026
+
+The optional MPNet integration is excluded from the current PR #318 candidate; #223 remains open.
+Its complete source and quality tests are preserved at `08521d5`, with all failed observations intact.
+The candidate keeps independently tested Apple/indexing repairs and uses Apple embeddings plus
+keyword fallback. Removing an unaccepted feature from a release does not establish its quality.
+
+The later native export on that exact source reproduced DE **2/8**, ES **1/8**, JA **4/8**, KO **2/8**
+paraphrase retrieval and 12 original contract violations. Independent review checked all 588 scored
+Float32 values, 72 query observations and persisted-vector membership. A bounded all-order analysis
+then proved the current vectors cannot meet the unchanged gate using one shared floor/gap pair
+with the other declared ranking rules fixed. This is a no-go for that family, not all representations.
+No new parameter or production model was selected. Export controls passing are not quality acceptance.
+
+Native and independent audit receipts remain under the October 29 external
+`listentome-history223-current-score-export-audit` and
+`listentome-history223-admission-evaluator-outcome-review` evidence directories. The experimental
+implementation history below remains available for continued work after the current fixes merge.
+
 ## Unmerged implementation checkpoint, October 29, 2026
 
 The [optional-model implementation](history-search-implementation.md) now exercises the real native
