@@ -125,7 +125,9 @@ struct MobileWorkspaceView<Header: View>: View {
 
     private func livePanels(height: CGFloat) -> some View {
         VStack(spacing: 16) {
-            transcriptPanel().frame(height: min(260, max(160, (height - 16) * 0.34)))
+            transcriptPanel().frame(height: session.allSegments.isEmpty
+                ? min(260, max(160, (height - 16) * 0.34))
+                : min(360, max(200, (height - 16) * 0.46)))
             summaryPanel(.quick).frame(maxHeight: .infinity)
         }
     }
@@ -139,28 +141,21 @@ struct MobileWorkspaceView<Header: View>: View {
                 if session.state == .recording {
                     Circle().fill(.red).frame(width: 6, height: 6).accessibilityLabel("Recording")
                 }
-                if !compact, session.segments.contains(where: \.isFinal) {
-                    // Selecting happens in the full-height transcript, where the selection bar fits (#234).
-                    Button("Select lines", systemImage: "checklist") { selectingTranscript = true; showTranscript = true }
-                        .labelStyle(.iconOnly).buttonStyle(.plain).foregroundStyle(MobileStyle.muted)
-                        .frame(minWidth: 44, minHeight: 44).accessibilityIdentifier("selectTranscriptLines")
-                }
-                if compact {
+                if compact || !session.allSegments.isEmpty || session.canPlaySavedAudio {
                     Menu {
                         if session.segments.contains(where: \.isFinal) {
                             Button("Select lines", systemImage: "checklist") { selectingTranscript = true; showTranscript = true }
+                                .accessibilityIdentifier("selectTranscriptLines")
                         }
                         Button("Speech correction settings", systemImage: "sparkles") { showSpeechSettings = true }
                         if session.canPlaySavedAudio {
                             Button("Play recording", systemImage: "play.circle") { showTranscript = true }
+                                .accessibilityIdentifier("playSavedAudio")
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle").frame(minWidth: 44, minHeight: 44)
-                    }.accessibilityLabel("Transcript actions").accessibilityIdentifier("duoTranscriptActions")
-                } else if session.canPlaySavedAudio {
-                    Button("Play recording", systemImage: "play.circle") { showTranscript = true }
-                        .labelStyle(.iconOnly).buttonStyle(.plain).foregroundStyle(MobileStyle.accent)
-                        .frame(minWidth: 44, minHeight: 44).accessibilityIdentifier("playSavedAudio")
+                    }.accessibilityLabel("Transcript actions")
+                        .accessibilityIdentifier(compact ? "duoTranscriptActions" : "transcriptOptions")
                 }
                 Button("Expand transcript", systemImage: "arrow.up.left.and.arrow.down.right") { showTranscript = true }
                     .labelStyle(.iconOnly).buttonStyle(.plain)
@@ -168,7 +163,7 @@ struct MobileWorkspaceView<Header: View>: View {
                     .frame(minWidth: 44, minHeight: 44)
             }.padding(.horizontal, compact ? 12 : 16).padding(.vertical, compact ? 4 : 8)
             Rectangle().fill(MobileStyle.line).frame(height: 0.75).padding(.horizontal, 16)
-            if !compact {
+            if !compact && (session.allSegments.isEmpty || session.ai.correctTranscript) {
                 Button { showSpeechSettings = true } label: {
                     Label(session.ai.correctTranscript ? session.speechCorrectionStatus : "Improve speech · Set up AI correction",
                           systemImage: session.speechCorrection.working ? "ellipsis" : "sparkles")
@@ -343,10 +338,13 @@ struct MobileWorkspaceView<Header: View>: View {
                 .frame(minWidth: 44, minHeight: 44).accessibilityLabel("Cancel \(mode.title)")
         } else {
             Button { session.requestSummary(for: mode) } label: {
-                Image(systemName: session.output(for: mode).isEmpty ? "sparkles" : "arrow.clockwise")
-                    .font(.system(size: 18, weight: .semibold)).frame(minWidth: 32, minHeight: 32)
+                Label(session.output(for: mode).isEmpty ? "Generate" : "Update",
+                      systemImage: session.output(for: mode).isEmpty ? "sparkles" : "arrow.clockwise")
+                    .font(.callout.weight(.semibold)).frame(minHeight: 34)
             }.buttonStyle(.bordered).controlSize(.small).tint(MobileStyle.tint(for: mode))
-                .accessibilityLabel("Generate \(mode.title)")
+                .frame(minHeight: 44)
+                .accessibilityLabel("\(session.output(for: mode).isEmpty ? "Generate" : "Update") \(mode.title)")
+                .accessibilityIdentifier("generate-\(mode.rawValue)")
                 .disabled(session.summaryBlockReason(for: mode) != nil)
         }
     }
@@ -371,11 +369,12 @@ private extension MobileWorkspaceView {
     var autoToggle: some View {
         Toggle("Auto", isOn: $session.autoQuick).font(.caption)
             .accessibilityLabel("Auto summaries")
+            .disabled(session.automaticQuickAvailability != nil && !session.autoQuick)
             .accessibilityHint(session.ai.provider != .apple
                 ? "New speech triggers Quick evaluation and relevant Summary reviews using their "
                   + "selected models on \(session.ai.summaryEndpointLabel)."
                 : "Continuous evaluation requires Ollama, a cloud AI service or an OpenAI-compatible server. "
-                  + "Apple Intelligence summaries are available with Refresh.")
+                  + "Apple Intelligence summaries are available with Generate or Update.")
     }
 
     @ViewBuilder

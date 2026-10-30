@@ -19,6 +19,26 @@ final class MobileAICapabilityTests: XCTestCase {
         for (key, value) in previous { UserDefaults.standard.set(value, forKey: key) }
     }
 
+    func testIdleAutoExplainsUnavailableProviderWithoutChangingSavedChoice() throws {
+        UserDefaults.standard.set("apple", forKey: "mobileAIProvider")
+        let ai = MobileAISettings(appleAvailability: { nil })
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let session = MobileSession(storageDirectory: root, ai: ai)
+        let reason = try XCTUnwrap(session.automaticQuickAvailability)
+        XCTAssertTrue(reason.contains("cloud AI"), "Name all supported provider categories, not only Ollama")
+        for enabled in [false, true] {
+            session.autoQuick = enabled
+            XCTAssertTrue(session.autoQuickStatus.contains(reason), session.autoQuickStatus)
+            XCTAssertTrue(session.automaticReviewStatus(.summary).contains(reason))
+            XCTAssertFalse(session.autoQuickStatus.contains("Checks new speech"))
+            XCTAssertEqual(ai.provider, .apple)
+            XCTAssertEqual(session.autoQuick, enabled, "Keep the preference; do not silently change providers or Auto")
+            XCTAssertNil(session.generatingMode)
+            XCTAssertEqual(session.state, .idle)
+        }
+    }
+
     func testUnavailableAppleSelectionKeepsExplicitProviderAndServerChoices() {
         let reason = "Apple Intelligence is unavailable on this device."
         let ai = MobileAISettings(appleAvailability: { reason })

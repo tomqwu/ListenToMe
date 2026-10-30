@@ -1,0 +1,7 @@
+Before listening with Apple Intelligence selected, check that Auto explains manual-only updates. A saved enabled Auto preference can be turned off, but unavailable Auto cannot be switched on. Your provider must stay selected. Check a configured remote provider separately; this update must not select or contact one automatically.
+
+Read a populated transcript in iPhone portrait, landscape Duo and iPad wide layouts, including large text and dark mode. Open Transcript actions for Select lines, Play recording (when audio was saved) and Speech correction settings. Expand the transcript and return; Generate/Update and Cancel must remain reachable.
+
+Open More > Notes, prompts & files, use the Ask AI section and return to the same conversation. Check existing sharing and export actions.
+
+On Watch, distinguish Record on Watch from Start on iPhone; an offline iPhone must remain disabled. Stop on Watch must remain reachable. Simulator fixtures do not establish physical capture or paired transfer.

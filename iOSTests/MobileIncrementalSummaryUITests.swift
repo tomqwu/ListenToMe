@@ -20,7 +20,7 @@ final class MobileIncrementalSummaryUITests: XCTestCase {
         reviewTab("Summary", app: app)
         wait(app.staticTexts["output-summary"], contains: "automatically")
         capture(app, "Evaluation automatically updates Summary")
-        app.buttons["Generate Summary"].tap()
+        app.buttons["generate-summary"].tap()
         wait(app.staticTexts["output-summary"], contains: "manually")
         XCTAssertFalse(app.staticTexts["review-suggestion-summary"].exists)
         liveTab(app)
@@ -79,7 +79,7 @@ final class MobileIncrementalSummaryUITests: XCTestCase {
         XCTAssertLessThanOrEqual(app.staticTexts["output-quick"].label.count, 480)
         capture(app, "First topic and unanswered question are visible without any decision")
         reviewTab("Summary", app: app)
-        app.buttons["Generate Summary"].tap()
+        app.buttons["generate-summary"].tap()
         wait(app.staticTexts["output-summary"], contains: "manually")
         XCTAssertFalse(app.staticTexts["output-deep"].exists, "No Deep pane on iOS (#235)")
         liveTab(app)
@@ -153,12 +153,12 @@ final class MobileIncrementalSummaryUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["backgroundRecordingNotice"].exists)
         speech("speechLiveDecision", app: app)
         reviewTab("Summary", app: app)
-        app.buttons["Generate Summary"].tap()
+        app.buttons["generate-summary"].tap()
         wait(app.staticTexts["output-summary"], contains: "Recognition is provisional.")
         capture(app, "Manual Summary includes tagged live recognition")
         speech("speechDecision", app: app)
         reviewTab("Summary", app: app)
-        app.buttons["Generate Summary"].tap()
+        app.buttons["generate-summary"].tap()
         let finalized = XCTNSPredicateExpectation(
             predicate: NSPredicate(format: "label CONTAINS %@ AND NOT (label CONTAINS %@)",
                                    "reviewed manually.", "Recognition is provisional."),
@@ -191,7 +191,7 @@ final class MobileIncrementalSummaryUITests: XCTestCase {
                            "The requested workspace must actually be selected before using its controls")
         }
         if name == "Summary" {
-            let generate = app.buttons["Generate Summary"]
+            let generate = app.buttons["generate-summary"]
             let visible = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in generate.isHittable }, object: nil)
             XCTAssertEqual(XCTWaiter.wait(for: [visible], timeout: 5), .completed)
         }

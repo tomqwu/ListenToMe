@@ -1,0 +1,138 @@
+{
+  "feature": "Native workspace usability",
+  "scenarios": [
+    {
+      "id": "UX-001",
+      "name": "Explain Auto capability before listening",
+      "given": "Apple Intelligence is selected and Auto is saved on or off",
+      "when": "the idle workspace opens and the enabled preference is turned off",
+      "then": "manual-only guidance is visible before recording, unavailable Auto cannot be enabled, and the provider, stored preference and recording remain under user control",
+      "covers": [
+        "iOS/MobileSession.swift",
+        "iOS/MobileWorkspaceView.swift",
+        "SharedPlatform/AppleIntelligenceProvider.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileAICapabilityTests.swift",
+          "test": "MobileAICapabilityTests/testIdleAutoExplainsUnavailableProviderWithoutChangingSavedChoice"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileUsabilityUITests.swift",
+          "test": "MobileUsabilityUITests/testUnavailableAutoExplainsManualUpdatesAndCanBeTurnedOffBeforeListening"
+        }
+      ]
+    },
+    {
+      "id": "UX-002",
+      "name": "Prioritize phone speech and name summary actions",
+      "given": "a portrait conversation contains speech and summary output with correction off",
+      "when": "the workspace appears and correction settings are opened from transcript options",
+      "then": "the transcript occupies at least 43 percent of combined panel height, optional correction setup does not consume reading space, Update is labeled with a 44 point target, and expanding or configuring speech stays reachable; its accessible name matches the visible Update action; compact Duo keeps the authored transcript and Quick text entirely within their readers with the same 44-point Update target",
+      "covers": [
+        "iOS/MobileWorkspaceView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileUsabilityUITests.swift",
+          "test": "MobileUsabilityUITests/testPopulatedTranscriptGetsReadingSpaceAndLabeledUpdateAndCorrectionAccess"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileReleaseScreenshotTests.swift",
+          "test": "MobileReleaseScreenshotTests/testCaptureCleanDuoPreview"
+        }
+      ]
+    },
+    {
+      "id": "UX-003",
+      "name": "Name and group conversation tools",
+      "given": "a conversation has notes and optional AI tools",
+      "when": "More opens Notes, prompts & files and returns",
+      "then": "notes and a named Ask AI section are reachable without changing the familiar Notes shortcut or starting capture; the full-summary reader exposes its own present, correctly labeled action and explains disabled empty input",
+      "covers": [
+        "iOS/MobileMeetingView.swift",
+        "iOS/MobileNotesView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileUsabilityUITests.swift",
+          "test": "MobileUsabilityUITests/testConversationToolsAreNamedAndGroupedWithoutLosingNotes"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileAppTests.swift",
+          "test": "MobileAppTests/testEmptySummaryExplainsDisabledActionAndSupportsRecheck"
+        }
+      ]
+    },
+    {
+      "id": "UX-004",
+      "name": "Name the recording device on Watch",
+      "given": "Watch local recording is available while the phone is offline",
+      "when": "home and the remote section are read and local recording starts and stops",
+      "then": "Record on Watch and Start on iPhone distinguish the devices, offline remote stays disabled, and Stop on Watch remains reachable",
+      "covers": [
+        "Watch/WatchRootView.swift",
+        "Watch/RemoteControlView.swift",
+        "Watch/WatchRecordingView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "watch-ui",
+          "file": "WatchUITests/WatchCapabilityUITests.swift",
+          "test": "WatchCapabilityUITests/testRecordingActionsNameTheirDeviceAndKeepOfflineRemoteSeparate"
+        }
+      ]
+    },
+    {
+      "id": "UX-005",
+      "name": "Keep optional Mac configuration collapsed and reachable",
+      "given": "optional Mac language controls are in a workspace disclosure with an explicit French target",
+      "when": "the workspace opens and a native settings disclosure is activated",
+      "then": "the content starts collapsed, a native pointer action reveals the actual language controls, and opening them preserves the saved choices without a save or translation request",
+      "covers": [
+        "App/MacWorkspaceSection.swift",
+        "App/CommandCenterPanes.swift",
+        "project.yml"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacWorkspaceUsabilityTests.swift",
+          "test": "MacWorkspaceUsabilityTests/testOptionalSettingsStartCollapsedAndNativeDisclosureRevealsThem"
+        }
+      ],
+      "manual": {
+        "reason": "The native component test does not establish full workspace integration or actual AI requests.",
+        "steps": [
+          "In the source-matched installed Dev app open and close Recording settings, AI models, Session details and More Quick actions.",
+          "Verify engine/language/model choices remain unchanged and every secondary action remains visible after expansion; do not invoke a provider just to inspect controls.",
+          "Retain native screenshots, AX readback and source/signing provenance; physical capture acceptance remains separate."
+        ]
+      }
+    },
+    {
+      "id": "UX-006",
+      "name": "Keep playback reachable without recognized speech",
+      "given": "a saved portrait conversation contains notes and retained audio but no recognized transcript lines",
+      "when": "Transcript actions opens the saved audio reader and returns",
+      "then": "Play recording, the player and audio sharing remain reachable without starting capture",
+      "covers": [
+        "iOS/MobileWorkspaceView.swift",
+        "iOS/MobileSavedAudioFixture.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileSavedAudioUITests.swift",
+          "test": "MobileSavedAudioUITests/testNotesOnlySavedRecordingStillOffersPlaybackInPortrait"
+        }
+      ]
+    }
+  ]
+}

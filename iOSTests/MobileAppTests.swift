@@ -52,7 +52,7 @@ final class MobileAppTests: XCTestCase {
         XCTAssertFalse(tabs.buttons["Deep"].exists)
         XCTAssertFalse(app.buttons["Generate Deep Summary"].exists)
         tabs.buttons["Summary"].tap()
-        XCTAssertTrue(app.buttons["Generate Summary"].isHittable)
+        XCTAssertTrue(app.buttons["generate-summary"].isHittable)
         XCTAssertFalse(app.staticTexts["Live transcript"].exists)
         XCTAssertTrue(app.buttons["Start listening"].isHittable)
         app.segmentedControls["workspaceTabs"].buttons["Live"].tap()
@@ -67,7 +67,7 @@ final class MobileAppTests: XCTestCase {
         defer { XCUIDevice.shared.orientation = .portrait }
         XCTAssertTrue(app.scrollViews["dashboardScroll"].exists)
         app.segmentedControls["workspaceTabs"].buttons["Summary"].tap()
-        XCTAssertTrue(app.buttons["Generate Summary"].exists)
+        XCTAssertTrue(app.buttons["generate-summary"].exists)
         XCTAssertTrue(app.buttons["Start listening"].isHittable)
         let window = app.windows.firstMatch
         XCTAssertGreaterThan(window.frame.width, window.frame.height)
@@ -206,7 +206,8 @@ final class MobileAppTests: XCTestCase {
         let reason = app.staticTexts["summaryBlockReason"]
         XCTAssertTrue(reason.waitForExistence(timeout: 5))
         XCTAssertTrue(reason.label.contains("Add notes"))
-        XCTAssertFalse(app.buttons["Generate Summary"].isEnabled)
+        XCTAssertTrue(app.buttons["full-generate-summary"].exists, "The actual full-summary action must be present")
+        XCTAssertFalse(app.buttons["full-generate-summary"].isEnabled)
         app.buttons["Check again"].tap()
         app.buttons["Done"].tap()
         XCTAssertTrue(app.staticTexts["sessionMessage"].label.contains("Add notes"))
@@ -296,11 +297,11 @@ final class MobileAppTests: XCTestCase {
         app.buttons["Full summary"].tap()
         app.buttons["summaryMode"].tap()
         app.buttons["Quick Summary"].tap()
-        XCTAssertTrue(app.buttons["Generate Quick Summary"].exists)
+        XCTAssertTrue(app.buttons["full-generate-quick"].exists)
         app.buttons["summaryMode"].tap()
         XCTAssertFalse(app.buttons["summary-option-deep"].exists, "No Deep output on iOS (#235)")
         app.buttons["summary-option-summary"].tap()
-        XCTAssertTrue(app.buttons["Generate Summary"].exists)
+        XCTAssertTrue(app.buttons["full-generate-summary"].exists)
         app.buttons["Done"].tap()
         app.buttons["History"].tap()
         let row = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch

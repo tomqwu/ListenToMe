@@ -79,14 +79,14 @@ final class MobileLiveCloudTests: XCTestCase {
         app.buttons["More"].tap()
         app.buttons["Full summary"].tap()
         var outputs: [String: String] = [:]
-        app.buttons["Generate Summary"].tap()
+        app.buttons["full-generate-summary"].tap()
         let full = app.staticTexts["savedSummary"]
         XCTAssertTrue(full.waitForExistence(timeout: 180))
         outputs["Summary"] = full.label
         app.buttons["Done"].tap()
         for mode in [("Quick Summary", "quick")] {
             app.segmentedControls["workspaceTabs"].buttons["Live"].tap()
-            app.buttons["Generate \(mode.0)"].tap()
+            app.buttons["generate-\(mode.1)"].tap()
             let output = app.staticTexts["output-\(mode.1)"]
             let completed = XCTNSPredicateExpectation(
                 predicate: NSPredicate(format: "NOT label BEGINSWITH %@", "Your "), object: output)

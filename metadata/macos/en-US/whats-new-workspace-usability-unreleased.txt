@@ -1,0 +1,1 @@
+Optional recording settings, AI model choices and session details now use native disclosures so the transcript stays central. The two common Quick actions remain visible, with six additional actions under More Quick actions. Recording, saved content and provider choices are unchanged.
