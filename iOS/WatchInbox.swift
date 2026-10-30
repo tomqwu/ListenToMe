@@ -37,6 +37,10 @@ struct WatchInbox: Sendable {
     var writeFile: @Sendable (Data, URL) throws -> Void = { data, url in
         try data.write(to: url, options: PrivateStorage.writingOptions)
     }
+    /// Audio-file ownership transfer. Tests can fail this boundary after valid delivery preflight.
+    var moveFile: @Sendable (URL, URL) throws -> Void = { source, destination in
+        try FileManager.default.moveItem(at: source, to: destination)
+    }
 
     static var defaultRoot: URL {
         URL.applicationSupportDirectory.appendingPathComponent("WatchInbox", isDirectory: true)
@@ -75,7 +79,7 @@ struct WatchInbox: Sendable {
                 if FileManager.default.fileExists(atPath: destination.path) {
                     try FileManager.default.removeItem(at: destination)
                 }
-                try FileManager.default.moveItem(at: url, to: destination)
+                try moveFile(url, destination)
             } catch {
                 Self.log.error("Chunk not stored: \(error.localizedDescription, privacy: .public)")
                 return refuse("An Apple Watch recording part could not be stored on this iPhone, so it is missing "
