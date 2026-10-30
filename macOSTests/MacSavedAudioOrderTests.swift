@@ -164,6 +164,10 @@ extension MacSavedAudioOrderTests {
         XCTAssertFalse(rendered.contains { $0.text.contains("UNTIMED BOUNDARY") }, "Untimed lines have no seek control")
         XCTAssertEqual(found.sorted { $0.rendered.bounds.midY > $1.rendered.bounds.midY }.map { $0.expected.text },
                        expected.map(\.text), "Actual rendered rows must follow recording-aware presentation order")
+        for (previous, next) in zip(found, found.dropFirst()) {
+            XCTAssertGreaterThan(previous.rendered.bounds.midY, next.rendered.bounds.midY,
+                                 "Each expected line must occupy a distinct row in presentation order")
+        }
         for item in found {
             try await checkTarget(item.expected, bounds: item.rendered.bounds,
                                   owner: owner, host: host, window: window)
