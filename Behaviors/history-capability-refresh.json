@@ -204,7 +204,7 @@
       "id": "HISTORYREFRESH-010",
       "name": "Read the short default-text History preview in landscape phone and wide iPad layouts",
       "given": "the short synthetic prototype conversation is shown at default text size on a landscape iPhone Duo workspace or wide iPad workspace",
-      "when": "History is opened, a prototype search is entered, the keyboard is dismissed and Refresh search completes",
+      "when": "History is opened, its standard search drawer is revealed by a normal downward scroll if needed, a prototype search is entered, the keyboard is dismissed and Refresh search completes",
       "then": "in this short default-text preview the actual Refresh and Ask controls and matching record are reachable, their complete frames and the noninteractive provider disclosure fit inside the History viewport without overlap, the query and result persist, and the native landscape screenshot is free of keyboard and alerts; this preview does not impose a no-scrolling requirement on long content or larger text sizes",
       "covers": [
         "iOS/MobileHistoryView.swift",
