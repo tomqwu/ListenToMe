@@ -15,7 +15,7 @@ struct HistoryRefreshControl: View {
             .disabled(search.isRefreshing)
             .accessibilityIdentifier("history-refresh")
             if let issue = search.refreshIssue {
-                Text(issue).font(.caption).foregroundStyle(.secondary)
+                Text(issue).font(.caption).foregroundStyle(.primary)
                     .accessibilityIdentifier("history-refresh-issue")
             }
         }

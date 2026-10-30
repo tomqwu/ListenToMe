@@ -182,6 +182,23 @@
           "test": "MobileHistorySearchUITests/testEmptyHistoryKeepsExplicitRefreshReachable"
         }
       ]
+    },
+    {
+      "id": "HISTORYREFRESH-009",
+      "name": "Recovery guidance stays legible in the actual Mac control",
+      "given": "a local History refresh fails on the native Aqua card surface",
+      "when": "the actual shared control renders its recovery caption below the button",
+      "then": "the opaque native caption glyphs meet the existing 4.5:1 small-text contrast benchmark while the retry action remains usable",
+      "covers": [
+        "SharedPlatform/HistoryRefreshControl.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacHistoryRefreshControlsTests.swift",
+          "test": "MacHistoryRefreshControlsTests/testActualControlDisablesHeldRefreshAndShowsFailureWithUsableRetry"
+        }
+      ]
     }
   ]
 }

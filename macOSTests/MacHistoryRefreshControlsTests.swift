@@ -29,32 +29,6 @@ private actor HostedRefreshEmbedder: HistoryEmbedder {
     }
 }
 
-/// SwiftUI's observed AccessibilityNode is not a full NSAccessibilityProtocol adopter.
-/// Retain advertised public NSObject attributes for diagnostics without becoming a system AX client.
-@MainActor private struct HistoryAXNode {
-    let object: NSObject
-    private var modern: (any NSAccessibilityProtocol)? { object as? any NSAccessibilityProtocol }
-    private func attribute(_ name: String) -> Any? {
-        let key = NSAccessibility.Attribute(rawValue: name)
-        guard object.accessibilityAttributeNames().contains(key) else { return nil }
-        return object.accessibilityAttributeValue(key)
-    }
-    func accessibilityRole() -> NSAccessibility.Role? {
-        if let modern { return modern.accessibilityRole() }
-        return (attribute("AXRole") as? String).map { NSAccessibility.Role(rawValue: $0) }
-    }
-    func accessibilityIdentifier() -> String? {
-        modern?.accessibilityIdentifier() ?? attribute("AXIdentifier") as? String
-    }
-    func accessibilityTitle() -> String? { modern?.accessibilityTitle() ?? attribute("AXTitle") as? String }
-    func accessibilityLabel() -> String? { modern?.accessibilityLabel() ?? attribute("AXDescription") as? String }
-    func accessibilityValue() -> Any? { modern?.accessibilityValue() ?? attribute("AXValue") }
-    func accessibilityChildren() -> [Any] {
-        modern?.accessibilityChildren() ?? attribute("AXChildren") as? [Any] ?? []
-    }
-
-}
-
 @MainActor private final class HistoryRefreshRenderState {
     var appeared = false
     var accessibilityEnabled = false
@@ -287,7 +261,13 @@ final class MacHistoryRefreshControlsTests: XCTestCase {
         let button = try XCTUnwrap(failureRendered.buttonFrame)
         XCTAssertGreaterThan(content.height, button.height,
                              "Actual production failure guidance must occupy rendered space below the control")
-        try capture(failureHost, name: "Actual History refresh failure guidance and usable retry")
+        let failureImage = try capture(failureHost, name: "Actual History refresh failure guidance and usable retry")
+        let caption = CGRect(x: content.minX, y: button.maxY, width: content.width,
+                             height: content.maxY - button.maxY)
+        let contrast = try HistoryRecoveryContrast.measure(failureImage, caption: caption, host: failureHost.bounds.size)
+        let measurement = XCTAttachment(string: contrast.description)
+        measurement.name = "Actual History recovery caption contrast"; measurement.lifetime = .keepAlways; add(measurement)
+        XCTAssertGreaterThanOrEqual(contrast.ratio, 4.5, "Actual essential recovery caption must remain readable")
         try FileManager.default.removeItem(at: folder); try FileManager.default.moveItem(at: saved, to: folder)
         try await clickRefresh(failureHost, window: failureWindow, observed: failureRendered)
         try await waitForAction { failureReloads == 2 }
@@ -361,30 +341,67 @@ final class MacHistoryRefreshControlsTests: XCTestCase {
             DispatchQueue.main.async { continuation.resume() }
         }
     }
-    private func accessibilityTree(_ value: Any, depth: Int = 0) -> String {
-        guard depth < 12 else { return "depth limit" }
-        let prefix = String(repeating: "  ", count: depth)
-        guard let object = value as? NSObject else {
-            return prefix + "non-NSObject " + String(describing: type(of: value))
-        }
-        let node = HistoryAXNode(object: object)
-        let own = "\(prefix)\(type(of: value)) role=\(String(describing: node.accessibilityRole())) "
-            + "id=\(String(describing: node.accessibilityIdentifier())) "
-            + "title=\(String(describing: node.accessibilityTitle())) "
-            + "label=\(String(describing: node.accessibilityLabel())) "
-            + "value=\(String(describing: node.accessibilityValue()))"
-        let children = node.accessibilityChildren().map { accessibilityTree($0, depth: depth + 1) }
-        return ([own] + children).joined(separator: "\n")
-    }
-
-    private func capture(_ host: NSView, name: String) throws {
-        let tree = XCTAttachment(string: accessibilityTree(host))
-        tree.name = name + " actual AX readback"; tree.lifetime = .keepAlways; add(tree)
+    @discardableResult private func capture(_ host: NSView, name: String) throws -> CGImage {
         host.layoutSubtreeIfNeeded()
         let bitmap = try XCTUnwrap(host.bitmapImageRepForCachingDisplay(in: host.bounds))
         host.cacheDisplay(in: host.bounds, to: bitmap)
         let png = try XCTUnwrap(bitmap.representation(using: .png, properties: [:]))
         let image = XCTAttachment(data: png, uniformTypeIdentifier: "public.png")
         image.name = name; image.lifetime = .keepAlways; add(image)
+        return try XCTUnwrap(bitmap.cgImage)
+    }
+}
+
+/// Measures only the actual production caption below the observed Button rectangle.
+/// No fake Text, token-color resolution or synthetic palette can satisfy this check.
+private enum HistoryRecoveryContrast {
+    enum Invalid: Error { case bounds, bitmap, transparent, flat }
+    struct Measurement {
+        let ratio: Double
+        let foreground: Int
+        let background: Int
+        let inkPixels: Int
+        var description: String {
+            "actual caption foregroundRGB=\(foreground), backgroundRGB=\(background), "
+                + "contrast=\(ratio), solidInkPixels=\(inkPixels)"
+        }
+    }
+    static func measure(_ image: CGImage, caption: CGRect, host: CGSize) throws -> Measurement {
+        guard host.width > 0, host.height > 0 else { throw Invalid.bounds }
+        let rect = CGRect(x: caption.minX * CGFloat(image.width) / host.width,
+                          y: caption.minY * CGFloat(image.height) / host.height,
+                          width: caption.width * CGFloat(image.width) / host.width,
+                          height: caption.height * CGFloat(image.height) / host.height).integral
+        guard rect.width > 0, rect.height > 0,
+              CGRect(x: 0, y: 0, width: image.width, height: image.height).contains(rect),
+              let crop = image.cropping(to: rect), let space = CGColorSpace(name: CGColorSpace.sRGB) else {
+            throw Invalid.bounds
+        }
+        var bytes = [UInt8](repeating: 0, count: crop.width * crop.height * 4)
+        let rendered = bytes.withUnsafeMutableBytes { raw -> Bool in
+            guard let context = CGContext(data: raw.baseAddress, width: crop.width, height: crop.height,
+                bitsPerComponent: 8, bytesPerRow: crop.width * 4, space: space,
+                bitmapInfo: CGBitmapInfo.byteOrder32Big.rawValue | CGImageAlphaInfo.premultipliedLast.rawValue) else {
+                return false
+            }
+            context.draw(crop, in: CGRect(x: 0, y: 0, width: crop.width, height: crop.height)); return true
+        }
+        guard rendered else { throw Invalid.bitmap }
+        var histogram: [Int: Int] = [:]
+        for offset in stride(from: 0, to: bytes.count, by: 4) {
+            guard bytes[offset + 3] == 255 else { throw Invalid.transparent }
+            let key = Int(bytes[offset]) << 16 | Int(bytes[offset + 1]) << 8 | Int(bytes[offset + 2])
+            histogram[key, default: 0] += 1
+        }
+        let colors = histogram.sorted { $0.value == $1.value ? $0.key < $1.key : $0.value > $1.value }
+        guard colors.count >= 2, colors[1].value >= 20 else { throw Invalid.flat }
+        func luminance(_ value: Int) -> Double {
+            let channels = [(value >> 16) & 255, (value >> 8) & 255, value & 255].map { Double($0) / 255 }
+            let linear = channels.map { $0 <= 0.04045 ? $0 / 12.92 : pow(($0 + 0.055) / 1.055, 2.4) }
+            return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+        }
+        let a = luminance(colors[0].key), b = luminance(colors[1].key)
+        return Measurement(ratio: (max(a, b) + 0.05) / (min(a, b) + 0.05), foreground: colors[1].key,
+                           background: colors[0].key, inkPixels: colors[1].value)
     }
 }

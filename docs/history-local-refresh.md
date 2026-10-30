@@ -18,7 +18,7 @@ reports idle and permits Ask. The original ranking rules and language-quality as
 The shared control is [HistoryRefreshControl](../SharedPlatform/HistoryRefreshControl.swift), backed by
 [HistorySearchModel](../SharedPlatform/HistorySearchModel.swift) and the same
 [HistoryIndex](../Sources/ListenToMeCore/HistoryIndex.swift) actor. Contracts
-`HISTORYREFRESH-001`–`006` are in [the executable catalog](../Behaviors/history-capability-refresh.json).
+`HISTORYREFRESH-001`–`009` are in [the executable catalog](../Behaviors/history-capability-refresh.json).
 The [manual checks](manual-smoke-test.md#explicit-local-history-refresh-223-unreleased-follow-up)
 cover literal results, retries, no-results control reachability and deletion during Refresh.
 
@@ -35,7 +35,8 @@ Evidence is retained outside the repository under
 | Deletion during rebuild | The held two-record native method failed five assertions; after reconciliation, the same method passed with the other eleven transition methods. |
 | Older queued maintenance | Two new held tests failed seven assertions: an older sync dropped a new record and an older save replaced current evidence. Resolving current records when queued work executes made all fourteen transition methods pass. |
 | iPhone no-results layout | Initial two-method run passed tapping assertions; image inspection exposed an overlapping overlay. Two strengthened geometric assertions failed, then the same two methods passed after moving empty guidance into the results section. |
-| Mac actual shared control | Final `mac-controls-native-release` passed all sixteen methods (fourteen transition + two control), zero skips, exit 0/reaped after 15.520 seconds; 1,058 frozen inputs matched. |
+| Mac actual shared control | `mac-controls-native-release` passed all sixteen methods (fourteen transition + two control), zero skips, exit 0/reaped after 15.520 seconds; 1,058 frozen inputs matched. |
+| Recovery caption contrast | The actual caption failed one assertion at 3.949:1. Changing only its native foreground from secondary to primary made the unchanged test pass at 14.938:1. `mac-caption-green` passed all sixteen methods, exit 0/reaped after 14.849 seconds; 1,067 inputs matched. This is Aqua coverage, not every appearance or accessibility setting. |
 
 The final Mac native tests deliver pointer events to the actual production control through an owned
 AppKit window and event loop. They prove one held attempt, disabled duplicate activation, rendered
