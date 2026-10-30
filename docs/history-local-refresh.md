@@ -58,6 +58,13 @@ longer overlap the guidance. The long test query extends below the keyboard and 
 those images are QA evidence, not clean README media. Ask blocking after failed refresh is separately
 proven by the native transition test's zero provider calls before recovery.
 
-Full local validation, current hosted CI, affected README screenshots, review and merge remain pending.
+`ios-gallery-final` passed all three phone methods with zero skips, exit 0/reaped after 51.327 seconds;
+1,069 inputs matched. Empty History coverage passed on first execution. One earlier capture attempt
+failed a new hittability assertion on a noninteractive text match; targeting the actual existing
+record Button fixed this test-harness error without a production change. The native originals in
+[the README manifest](images/history/unreleased-2026-10-30/manifest.json) preserve a clean short-query
+preview and empty History, plus the clearly labelled isolated Mac component. No pixels were edited.
+
+Full local validation, current hosted CI, full-app Mac History screenshot, review and merge remain pending.
 The retained failed multilingual quality results remain failed; this explicit Apple capability
 refresh is a separate bounded implementation slice, not completion of #223.

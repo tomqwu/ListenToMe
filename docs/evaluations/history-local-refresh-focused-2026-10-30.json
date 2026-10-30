@@ -82,5 +82,17 @@
     "scope": "actual opaque Aqua native recovery-caption glyphs",
     "testBytesIdentical": true,
     "onlyChangedBetweenRuns": "SharedPlatform/HistoryRefreshControl.swift secondary to primary"
+  },
+  "finalIOS": {
+    "source": "09612d907ed4a11050d5862cf49e247dce501ff7",
+    "methodsPassed": 3,
+    "methodsSkipped": 0,
+    "failures": 0,
+    "exitCode": 0,
+    "reaped": true,
+    "frozenInputCount": 1069,
+    "inputMismatches": 0,
+    "scope": "actual Refresh/literal result, no-results separation/reachability and empty History",
+    "priorCaptureHarnessFailure": "A new hittability assertion targeted noninteractive Any text; corrected to actual history-record Button, no production change"
   }
 }

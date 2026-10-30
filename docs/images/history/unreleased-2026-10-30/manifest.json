@@ -1,0 +1,146 @@
+{
+  "schemaVersion": 1,
+  "status": "unreleased_history_followup",
+  "candidateRuntimeSource": "09612d907ed4a11050d5862cf49e247dce501ff7",
+  "notIncludedInAcceptedTestFlight43": true,
+  "configuredIOSVersion": "1.20.3",
+  "configuredIOSBuild": "43",
+  "syntheticContent": true,
+  "publicationScope": "README only; no App Store or TestFlight media upload",
+  "assets": [
+    {
+      "file": "iphone-history.png",
+      "sha256": "5b779eaef245e48ddb96f927cb2f35f57592fce4fd34685a13118776e9f1187b",
+      "nativePixels": [
+        1206,
+        2622
+      ],
+      "pixelEditing": false,
+      "device": "iPhone 17 Pro / iOS 26.5 simulator",
+      "locale": "en_CA",
+      "testMethod": "MobileHistorySearchUITests/testExplicitRefreshKeepsLiteralHistoryResultAndReturnsToIdle",
+      "visualStatus": "reviewed",
+      "readmeSuitability": "suitable",
+      "note": "Search is active, so the navigation title is intentionally hidden; the summary excerpt uses its normal ellipsis.",
+      "captureWorkingTreeBase": "09612d907ed4a11050d5862cf49e247dce501ff7",
+      "captureWorkingTreeWasDirty": false,
+      "matchingCommittedRuntime": "09612d907ed4a11050d5862cf49e247dce501ff7",
+      "inputCount": 1069,
+      "inputManifestSHA256": "5535972a8354e3f0401e248983535e5d778db04867ffc132d09e327652474d44",
+      "nativeExit": 0,
+      "nativeReaped": true,
+      "language": "English",
+      "localeEvidence": "Read-only global default readback after capture; no explicit test locale override"
+    },
+    {
+      "file": "iphone-empty-history.png",
+      "sha256": "21ef42d25ea5821a9eba6a5432df1b7a9f6f395cbe4563e72796fdf46c3be397",
+      "nativePixels": [
+        1206,
+        2622
+      ],
+      "pixelEditing": false,
+      "device": "iPhone 17 Pro / iOS 26.5 simulator",
+      "locale": "en_CA",
+      "testMethod": "MobileHistorySearchUITests/testEmptyHistoryKeepsExplicitRefreshReachable",
+      "visualStatus": "reviewed",
+      "readmeSuitability": "suitable",
+      "note": "Actual empty History after clearing only the isolated synthetic fixture archive.",
+      "captureWorkingTreeBase": "09612d907ed4a11050d5862cf49e247dce501ff7",
+      "captureWorkingTreeWasDirty": false,
+      "matchingCommittedRuntime": "09612d907ed4a11050d5862cf49e247dce501ff7",
+      "inputCount": 1069,
+      "inputManifestSHA256": "5535972a8354e3f0401e248983535e5d778db04867ffc132d09e327652474d44",
+      "nativeExit": 0,
+      "nativeReaped": true,
+      "language": "English",
+      "localeEvidence": "Read-only global default readback after capture; no explicit test locale override"
+    },
+    {
+      "file": "mac-recovery-control.png",
+      "sha256": "894d1f37f9fd06baf5eda6460d2d8dda1de3b0ea7f8fba655e2bf69726f07f59",
+      "nativePixels": [
+        840,
+        360
+      ],
+      "pixelEditing": false,
+      "device": "macOS native AppKit host / Aqua",
+      "locale": "en_CA",
+      "testMethod": "MacHistoryRefreshControlsTests/testActualControlDisablesHeldRefreshAndShowsFailureWithUsableRetry",
+      "visualStatus": "reviewed",
+      "readmeSuitability": "suitable",
+      "note": "Isolated production control, not a full installed Mac app capture; caption contrast 14.938:1.",
+      "captureWorkingTreeBase": "5ad2dc546b132ecc485e05aebbb942d98a43169b",
+      "captureWorkingTreeWasDirty": true,
+      "matchingCommittedRuntime": "09612d907ed4a11050d5862cf49e247dce501ff7",
+      "inputCount": 1067,
+      "inputManifestSHA256": "a1189ae77657b574b7d4126e4d6ca0055b9c48f741f17811d4b59492a5e59fbd",
+      "nativeExit": 0,
+      "nativeReaped": true,
+      "language": "English",
+      "localeEvidence": "Read-only global default readback after capture; no explicit test locale override"
+    }
+  ],
+  "macCompiledSourceMatchesCandidate": {
+    "Sources/ListenToMeCore/HistoryIndex.swift": "c7f5fabda4f9fca5f686ccde9ab85e869455e02644a5dca9a7d550faefeaa128",
+    "SharedPlatform/HistorySearchModel.swift": "af0c5f472a85ddf40c79df0471edb92c4c14c7e62a76665028838cff844ddcf6",
+    "SharedPlatform/HistoryRefreshControl.swift": "607548a0d02d2b2ede0b789ba2df87deff3892d71ddf71b070763524187df02b",
+    "App/SessionSearchView.swift": "15a832ce1dcec226131de6e75b539d4b3408e99a111e0d481451aa5b428b56e1",
+    "iOS/MobileHistoryView.swift": "0832b96edf2491b6cfbceff550f4e246ab802081e4bb2e4f982921f6d281eec4",
+    "macOSTests/MacHistoryRefreshControlsTests.swift": "8df6357b087bf95e26d8f65b4b3524331b978de457bdc45518e85a68e0a059ca"
+  },
+  "binaryProfiles": {
+    "iphone": {
+      "artifactKind": "simulator-app",
+      "bundleIdentifier": "com.tomwu.ListenToMe.ios",
+      "version": "1.20.3",
+      "build": "43",
+      "infoPlistSHA256": "cd648df12a9f4272e3f186bda281a7dc2ac3343077da8ac3922a488acee5ccad",
+      "capturedPayloadNames": [
+        "ListenToMeIOS",
+        "ListenToMeIOS.debug.dylib",
+        "__preview.dylib"
+      ],
+      "payloads": [
+        {
+          "name": "ListenToMeIOS",
+          "sha256": "db7c738cc8a51ec36a07fe74c2e6275e2d328e567ba098bea76af159011cbaa4",
+          "sizeBytes": 40496
+        },
+        {
+          "name": "ListenToMeIOS.debug.dylib",
+          "sha256": "3b9976511aa30413792d66825cf8892414718c4def6a1f67fe9cc5c0fd852cb5",
+          "sizeBytes": 35981200
+        },
+        {
+          "name": "__preview.dylib",
+          "sha256": "7f095fad58b0f77f26f97b3799d0aa602738c24f523c876989bf5f76dd186f25",
+          "sizeBytes": 16800
+        }
+      ]
+    },
+    "mac-control": {
+      "artifactKind": "native-test-host-not-full-app",
+      "bundleIdentifier": "com.tomwu.ListenToMeMacUnitTests",
+      "version": null,
+      "build": null,
+      "infoPlistSHA256": "66ad82fa9cfe5f9aea82378cef9b18214e60158fa8b53b9455d0963e50226227",
+      "capturedPayloadNames": [
+        "ListenToMeMacUnitTests"
+      ],
+      "payloads": [
+        {
+          "name": "ListenToMeMacUnitTests",
+          "sha256": "e5163fed2866931df7fa098130124174a92e92b6f7489fed554fd29f42580141",
+          "sizeBytes": 33287728
+        }
+      ]
+    }
+  },
+  "limits": [
+    "Mac image is a hosted production component, not a full app screenshot",
+    "Fresh installed full-app Mac History capture remains pending",
+    "No new language-quality, physical-device or VoiceOver acceptance claim",
+    "Full validation and required CI remain pending"
+  ]
+}

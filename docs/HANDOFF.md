@@ -1,4 +1,17 @@
-# TestFlight 1.20.3 (43) published — October 30, 2026
+# Unreleased local History Refresh — October 30, 2026
+
+Explicit **Refresh search** rebuilds derived local Apple search data without changing conversations
+or downloading assets. Focused evidence: three Core methods green; sixteen Mac methods green,
+including current-archive races and actual native controls; three phone methods green, including
+no-results and empty History. Recovery-caption contrast went from 3.949:1 red to 14.938:1 green.
+[Scoped evidence and pending gates](history-local-refresh.md) ·
+[Fresh README previews and provenance](images/history/unreleased-2026-10-30/manifest.json).
+
+This follow-up is **not included in accepted TestFlight 1.20.3 (43)**. Full local validation, current
+CI, full installed Mac History capture, review and merge remain pending. Additional-language quality
+remains open under #223; the negative experiments are preserved without a passing quality claim.
+
+## TestFlight 1.20.3 (43) published — October 30, 2026
 
 Apple accepted **1.20.3 (43)** through the official TestFlight helper at
 **2026-10-30T17:10:34.841880+00:00** from `97ef2461b86869405c1d0f4221816b790f0216fd`.
