@@ -5,3 +5,5 @@ Read a populated transcript in iPhone portrait, landscape Duo and iPad wide layo
 Open More > Notes, prompts & files, use the Ask AI section and return to the same conversation. Check existing sharing and export actions.
 
 On Watch, distinguish Record on Watch from Start on iPhone; an offline iPhone must remain disabled. Stop on Watch must remain reachable. Simulator fixtures do not establish physical capture or paired transfer.
+
+With an automatic provider, interrupt connectivity and confirm the complete Quick error appears above Status details inside its panel. Restore connectivity and check that retry updates the output and clears the error.

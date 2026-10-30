@@ -823,5 +823,10 @@
         }
       ]
     }
-  ]
+  ],
+  "conditionalRenderEquivalence": {
+    "target": "PR #353 error-priority correction; exact final source recorded in the PR validation receipt",
+    "condition": "All nine selected gallery states have quickSummaryError == nil, or are Mac/Watch views.",
+    "evidence": "The correction only moves Status details after the optional error in iOS/MobileWorkspaceView.swift. With no error, visible children and order are unchanged. Mac and Watch app inputs are unchanged. Independently reviewed; this does not claim byte-identical iOS app source."
+  }
 }

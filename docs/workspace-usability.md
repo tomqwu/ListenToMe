@@ -70,6 +70,12 @@ Evidence is retained under
   unavailable-provider refusal remains independently asserted. The failed aggregate was interrupted
   after the recorded failure and is not counted as complete local validation.
 
+- The third aggregate caught a genuine portrait regression: the complete automatic-summary error
+  ended six points below its Quick panel. `error-priority-red` reproduced the existing clipping
+  assertion and a new assertion that errors precede optional Status details. The correction moves
+  only that diagnostic button below the error, preserving transcript allocation and retry behavior.
+  This interrupted aggregate remains failed; final completion is recorded in PR #353.
+
 ## Installed Mac integration
 
 The signed Dev candidate was opened separately. Native screenshots and AX readback retain default,
@@ -82,9 +88,10 @@ for disclosure acceptance. Component test acceptance and installed integration a
 [PR #353](https://github.com/tomqwu/ListenToMe/pull/353) records final commands, complete local-gate
 outcomes, independent review, required hosted CI and merge status. The complete gate is
 `make validate-local` with the owned iPhone and Watch simulator destinations; raw output and native
-result bundles remain in the evidence directory above. The final run is on `978caac`; later gallery
-and documentation changes preserve the app/test/config inputs. The retained frozen-input manifest
-permits exact before/after comparison. Earlier failed and interrupted attempts remain distinct.
+result bundles remain in the evidence directory above. The third run used `978caac` with byte-identical app/test/config inputs through `9179753`.
+The error-priority correction has its own final source, focused red/green and complete-gate receipt
+in the PR. Retained frozen-input manifests permit exact comparisons; earlier failed and interrupted
+attempts remain distinct.
 
 [Capture manifest](images/workspace/unreleased-2026-10-30/manifest.json) catalogs 45 simulator
 captures across seven device profiles, plus the selected native Mac workspace/options images.
@@ -94,7 +101,9 @@ Max Live portrait, Pro full reader and clean Duo are selected. GFM-rendered gall
 inspected at 1,000 and 375 pixels: all seven inline images loaded and neither content width overflowed.
 Full-resolution links expose the other two selected Mac/options and iPad-mini assets. Historical
 galleries remain collapsed and all previews are labelled unreleased. Live fixtures inject synthetic
-summaries/Auto; normal Apple Intelligence remains manual-only.
+summaries/Auto; normal Apple Intelligence remains manual-only. The later error-priority fix changes
+only error-present rendering: all selected gallery states have no error and emit the same visible
+children in the same order. This is conditional render equivalence, not byte-identical app source.
 
 The completed installed Dev session was closed. Its strict-verified signed app, screenshots, AX
 readbacks and source/signing provenance were preserved; the exact `.dev` bundle was moved to Trash

@@ -35,7 +35,7 @@
       "name": "Prioritize phone speech and name summary actions",
       "given": "a portrait conversation contains speech and summary output with correction off",
       "when": "the workspace appears and correction settings are opened from transcript options",
-      "then": "the transcript occupies at least 43 percent of combined panel height, optional correction setup does not consume reading space, Update is labeled with a 44 point target, and expanding or configuring speech stays reachable; its accessible name matches the visible Update action; compact Duo keeps the authored transcript and Quick text entirely within their readers with the same 44-point Update target",
+      "then": "the transcript occupies at least 43 percent of combined panel height, optional correction setup does not consume reading space, Update is labeled with a 44 point target, and expanding or configuring speech stays reachable; its accessible name matches the visible Update action; compact Duo keeps the authored transcript and Quick text entirely within their readers with the same 44-point Update target; when automatic generation fails, the complete error appears above optional Status details within the Quick panel and a successful retry clears it",
       "covers": [
         "iOS/MobileWorkspaceView.swift"
       ],
@@ -49,6 +49,11 @@
           "suite": "ios-ui",
           "file": "iOSTests/MobileReleaseScreenshotTests.swift",
           "test": "MobileReleaseScreenshotTests/testCaptureCleanDuoPreview"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileNativeInteractionTests.swift",
+          "test": "MobileNativeInteractionTests/testAutomaticFailureIsVisibleAndRetriesWithoutRefresh"
         }
       ]
     },

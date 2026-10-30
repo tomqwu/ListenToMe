@@ -264,16 +264,16 @@ struct MobileWorkspaceView<Header: View>: View {
 
             Text(session.autoQuickStatus).font(.caption).foregroundStyle(MobileStyle.muted)
                 .accessibilityIdentifier("autoQuickStatus")
+            if let error = session.quickSummaryError {
+                Label(error, systemImage: "exclamationmark.circle").font(.caption)
+                    .foregroundStyle(.secondary).accessibilityIdentifier("quickSummaryError")
+            }
             Button("Status details") { showQuickStatus = true }
                 .font(.caption).accessibilityIdentifier("quickStatusDetails")
                 .alert("Quick Summary status", isPresented: $showQuickStatus) {
                     Button("Copy") { UIPasteboard.general.string = session.quickDiagnostics }
                     Button("Close", role: .cancel) {}
                 } message: { Text(session.quickDiagnostics) }
-            if let error = session.quickSummaryError {
-                Label(error, systemImage: "exclamationmark.circle").font(.caption)
-                    .foregroundStyle(.secondary).accessibilityIdentifier("quickSummaryError")
-            }
             if session.autoQuick && session.ai.provider != .apple {
                 Text("New speech triggers Quick evaluation; related words are batched briefly. "
                      + "Auto also updates Summary when relevant. Both use the selected "

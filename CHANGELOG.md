@@ -41,7 +41,8 @@ does not show it again, and a fresh install does not see it at all; see
 - Explain unavailable automatic summaries before listening, retain explicit provider choices and
   allow a saved Auto preference to be turned off. Give populated portrait transcripts more reading
   space, move optional speech tools into Transcript actions, label Generate/Update, and group
-  conversation tools, sharing and app actions. Watch recording controls name Watch or iPhone.
+  conversation tools, sharing and app actions. Keep automatic-summary errors above optional
+  diagnostics inside the Quick panel. Watch recording controls name Watch or iPhone.
 
 - Add explicit **Refresh search** in History to rebuild derived search data using currently available
   Apple models. Preserve saved conversations and exact-word search; show retry guidance on failure
