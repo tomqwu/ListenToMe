@@ -15,6 +15,34 @@ Physical phone/iPad translation, screen-lock, multilingual and Watch acceptance 
 Public production remains **1.19.1 (39)**; this beta made no public review submission or listing-media
 upload. Mac changes remain unreleased, and **v1.4.4** remains GitHub Latest.
 
+## Unreleased phone inbox redelivery repair
+
+On local source `5f52da6a3099778a812ff7ce52793f1312350cc3`, a redelivered Watch chunk no longer
+replaces an earlier durable copy when the inbox ledger is missing or corrupt. The phone keeps the
+first audio and exact metadata sidecar, returns duplicate, and lets foreground `tidy` recover the
+original offsets, duration and final marker. The receive callback still only files bytes; it does
+not start audio or transcription. Saving/retention consent and transfer protocol are unchanged.
+This repair is **not included in TestFlight 1.20.3 (43)**.
+
+`WATCHINBOX-001` binds the two `WatchInboxRedeliveryTests` methods for missing and corrupt ledgers.
+A supplemental macOS Swift package copied `iOS/WatchInbox.swift` and both methods byte-for-byte,
+using only local Core. Before the fix, the two methods failed **18 assertions**: deleting the first
+64-byte copy before the injected move failure lost the audio and prevented ledger recovery.
+After the duplicate guard, the unchanged tests passed **2/2, zero failures/skips**. Both runs were
+terminal/reaped within their 600-second bounds (12.292 s red; 10.292 s green), with all 163 pinned
+inputs unchanged per run. The raw logs, separate test binaries and source hashes are retained at
+`/Users/tomwu/Documents/Codex/2026-10-30/listentome-watch181-focused-review/`;
+`independent-portable-red-green-review.json` has SHA-256
+`f6ed065e03f9eddaaa802916980288710a133979439cab8c0eb9b8bc248737ab`.
+
+This proves the portable filesystem regression, **not iOS runtime/file protection, WatchConnectivity
+or physical paired-Watch acceptance**. iOS simulator execution and full validation remain pending
+the current Xcode component/authentication setup blocker. Pairing/reconnection, wrist-down,
+low-storage and opt-in retention acceptance remain open; recovering index 2 does not prove
+transcription/drain completion while earlier chunks are missing. No visible UI changed, so the
+existing README gallery needs link verification rather than unrelated recapture. #181 remains open;
+CI, PR/merge and publication are not established by these focused runs.
+
 ## Historical TestFlight checkpoint — 1.20.2 (42)
 
 Apple accepted **1.20.2 (42)** through the official TestFlight helper at **2026-10-28T21:11:37.664213+00:00** from `a6b90e83f775cc9dc88df3c2805ecacedca044af`. Apple build `8967f095-470f-40c0-aba0-b1188bbb699c` is **VALID / IN_BETA_TESTING**. Readback at 2026-10-28T21:15:33.796221+00:00 confirms **en-US**, **Listen To Me - Real Time AI**, exact beta description/What to Test and unchanged access for the existing two-member Dev group. Access does not establish physical installation of build 42.

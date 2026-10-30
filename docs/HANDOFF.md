@@ -1,3 +1,13 @@
+# Local Watch inbox redelivery repair — October 30, 2026
+
+Source `5f52da6` preserves the first durable audio/sidecar when a duplicate arrives before missing
+or corrupt ledger recovery. Supplemental macOS filesystem evidence: two original methods went
+from 18 assertion failures to two passes, zero skips; both runs reaped with 163 unchanged inputs.
+[Evidence and limits](watch-beta.md#unreleased-phone-inbox-redelivery-repair).
+iOS simulator/full validation await Xcode component/authentication setup; paired-Watch acceptance,
+CI, PR/merge and publication remain pending. This is outside accepted TestFlight 1.20.3 (43), does
+not change visible UI, and does not close #181.
+
 # Unreleased local History Refresh — October 30, 2026
 
 Explicit **Refresh search** rebuilds derived local Apple search data without changing conversations

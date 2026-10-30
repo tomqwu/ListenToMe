@@ -45,6 +45,16 @@ Physical phone/iPad translation, screen-lock, multilingual and Watch acceptance 
 Public production remains **1.19.1 (39)**; this beta made no public review submission or listing-media
 upload. Mac changes remain unreleased, and **v1.4.4** remains GitHub Latest.
 
+## Unreleased Watch inbox redelivery repair
+
+The phone keeps the first filed Watch audio and metadata when a duplicate arrives before a missing
+or corrupt inbox ledger has been recovered. Foreground recovery retains the original timeline;
+receive still does not start transcription. This is not in TestFlight 1.20.3 (43).
+[Scoped evidence and pending platform gates](watch-beta.md#unreleased-phone-inbox-redelivery-repair):
+the byte-identical portable macOS filesystem tests reproduced 18 assertions, then passed both
+unchanged methods. iOS simulator/full validation remain blocked by Xcode setup; paired-Watch and
+physical retention/reconnection acceptance remain pending. No new release or #181 closure is claimed.
+
 ## Unreleased explicit local History refresh
 
 A new **Refresh search** action rebuilds only derived History vectors with a fresh local Apple

@@ -1,0 +1,5 @@
+Unreleased; not included in TestFlight 1.20.3 (43).
+
+On a candidate build with this repair, verify that Watch recordings still arrive once after reconnection and retain the original timing. Exercise interrupted phone inbox recovery and low-storage retry without losing an earlier received part. Verify Save audio recordings on/off retention after transcription.
+
+The missing/corrupt-ledger regression currently has supplemental macOS filesystem red/green evidence only. iOS simulator/full validation and physical paired-Watch acceptance remain pending; no production readiness is claimed.
