@@ -1,5 +1,21 @@
 # Optional History search model — #223 implementation checkpoint
 
+Explicit local Apple **Refresh search** is a separate October 30 follow-up, described in
+[its implementation and acceptance checkpoint](history-local-refresh.md). It does not restore the
+withdrawn optional model or establish additional-language quality.
+
+## Separate German sentence-only screen — October 30, 2026
+
+The prospective fixed topical diagnostic at
+`/Users/tomwu/Documents/Codex/2026-10-30/listentome-semantic223-german-sentence/`
+([retained plan](/Users/tomwu/Documents/Codex/2026-10-30/listentome-semantic223-german-sentence/plan.json))
+used source `97ef2461b86869405c1d0f4221816b790f0216fd` and frozen corpus `ad74aec5772a03739b78f88c2bf25a6d8ffbfc064e503a06d80c23a365036220`.
+Actual installed Apple `s:de:1` vectors had 640 dimensions. It returned **0/8** expected Related
+results (only **1/8** expected raw top results), rejected **8/10** unrelated queries and produced no
+vectors for all three smalltalk fillers. The single native case failed three assertions, exit 1,
+reaped after 25.697 seconds with network denied and inputs unchanged. This is a retained negative
+diagnostic, with no app integration or passing language-quality claim; #223 remains open.
+
 ## Current delivery scope — October 30, 2026
 
 The optional MPNet runtime, installer and Settings controls are withdrawn from the current PR #318

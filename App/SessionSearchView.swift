@@ -85,7 +85,11 @@ struct SessionSearchView: View {
             }
             if records.isEmpty && store.errorText == nil { Text("Saved conversations will appear here.") }
             HStack {
-                Button("Refresh") { records = store.all() }
+                if let search = store.historySearch {
+                    HistoryRefreshControl(search: search) { records = store.all() }
+                } else {
+                    Button("Refresh") { records = store.all() }
+                }
                 Spacer()
                 Button("Clear history…", role: .destructive) { confirmClear = true }.disabled(records.isEmpty)
             }

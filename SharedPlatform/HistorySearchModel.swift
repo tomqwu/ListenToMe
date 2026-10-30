@@ -28,6 +28,8 @@ struct HistoryAskRoute {
 /// generation are never shown, so a deleted or cleared conversation cannot come back on screen.
 @MainActor @Observable
 final class HistorySearchModel {
+    private(set) var isRefreshing = false
+    private(set) var refreshIssue: String?
     private(set) var answer = ""
     private(set) var answerQuestion = ""
     private(set) var citations: [HistoryCitation] = []
@@ -45,10 +47,13 @@ final class HistorySearchModel {
     /// The current History records, read when a search or a question runs.
     @ObservationIgnored var records: @MainActor () -> [SessionRecord] = { [] }
     @ObservationIgnored let index: HistoryIndex
+    @ObservationIgnored private let makeFreshEmbedder: @MainActor () -> any HistoryEmbedder
     @ObservationIgnored private var maintenance: Task<Void, Never>?
+    @ObservationIgnored private var forceRefreshPending = false
     @ObservationIgnored private var intendedEmbedder: (any HistoryEmbedder)?
     @ObservationIgnored private var semanticReady = true
     @ObservationIgnored private var removal: Task<Void, Never>?
+    @ObservationIgnored private var removalRevision = 0
     /// Bumped by Clear history / Delete all: index work queued before it is dropped.
     @ObservationIgnored private var epoch = 0
     @ObservationIgnored private var pendingSync: Task<Void, Never>?
@@ -73,9 +78,18 @@ final class HistorySearchModel {
         return model
     }
 
+    /// Explicit local capability refresh; no asset request or provider call.
+    func refreshLocalModels(using replacement: (any HistoryEmbedder)? = nil) {
+        guard !isRefreshing else { return }
+        setEmbedder(replacement ?? makeFreshEmbedder(), forceRefresh: true)
+    }
+
     /// Switch the same index actor so a late old backend cannot write into a replacement's files.
-    func setEmbedder(_ embedder: any HistoryEmbedder) {
+    func setEmbedder(_ embedder: any HistoryEmbedder, forceRefresh: Bool = false) {
         intendedEmbedder = embedder
+        forceRefreshPending = forceRefresh
+        isRefreshing = forceRefresh
+        refreshIssue = nil
         semanticReady = false
         epoch += 1
         pendingSync?.cancel(); pendingUpdate?.cancel(); pendingUpdates = [:]
@@ -98,24 +112,44 @@ final class HistorySearchModel {
         if semanticReady { return true }
         guard let replacement = intendedEmbedder else { return false }
         do {
-            try await index.setEmbedder(replacement)
+            try await index.setEmbedder(replacement, forceRefresh: forceRefreshPending)
             guard epoch == expectedEpoch, !Task.isCancelled else { return false }
-            try await index.sync(records())
-            guard epoch == expectedEpoch, !Task.isCancelled else { return false }
+            // A deletion can stop sync between records. Keep readiness closed until a
+            // stable pass has covered the current archive after all observed removals.
+            while true {
+                let revision = removalRevision
+                await removal?.value
+                guard epoch == expectedEpoch, !Task.isCancelled else { return false }
+                guard revision == removalRevision else { continue }
+                let snapshot = records()
+                try await index.sync(snapshot)
+                guard epoch == expectedEpoch, !Task.isCancelled else { return false }
+                if revision == removalRevision && snapshot == records() { break }
+            }
             semanticReady = true
             intendedEmbedder = nil
+            forceRefreshPending = false
+            isRefreshing = false
+            refreshIssue = nil
             historyChanged()
             return true
         } catch {
+            guard epoch == expectedEpoch, !Task.isCancelled else { return false }
+            isRefreshing = false
+            if forceRefreshPending {
+                refreshIssue = "Local search could not be refreshed. Exact-word search is available. Try Refresh again."
+            }
             // Current archive text is still searchable by words; never query the previous backend.
             return false
         }
     }
 
-    init(index: HistoryIndex, syncDelay: Duration = .seconds(5), searchDelay: Duration = .milliseconds(250)) {
+    init(index: HistoryIndex, syncDelay: Duration = .seconds(5), searchDelay: Duration = .milliseconds(250),
+         makeFreshEmbedder: @escaping @MainActor () -> any HistoryEmbedder = { NaturalLanguageEmbedder() }) {
         self.index = index
         self.syncDelay = syncDelay
         self.searchDelay = searchDelay
+        self.makeFreshEmbedder = makeFreshEmbedder
     }
 
     // MARK: Index maintenance
@@ -131,8 +165,10 @@ final class HistorySearchModel {
             guard let self else { return }
             let epoch = self.epoch
             self.enqueue { [weak self] index in
-                let report = try? await index.sync(records)
-                guard let self, self.epoch == epoch, !Task.isCancelled,
+                guard let self, self.epoch == epoch, !Task.isCancelled else { return }
+                // A queued notification may predate the archive reconciled by Refresh.
+                let report = try? await index.sync(self.records())
+                guard self.epoch == epoch, !Task.isCancelled,
                       (report?.embedded ?? 0) + (report?.removed ?? 0) > 0 else { return }
                 self.historyChanged()
             }
@@ -154,9 +190,10 @@ final class HistorySearchModel {
             let epoch = self.epoch
             self.enqueue { [weak self] index in
                 var published = false
-                for record in records {
+                for queued in records {
                     guard let self, self.epoch == epoch, !Task.isCancelled else { return }
-                    if (try? await index.update(record)) == true { published = true }
+                    guard let current = self.records().first(where: { $0.id == queued.id }) else { continue }
+                    if (try? await index.update(current)) == true { published = true }
                 }
                 guard published, let self, self.epoch == epoch, !Task.isCancelled else { return }
                 self.historyChanged()
@@ -178,6 +215,8 @@ final class HistorySearchModel {
     /// History was cleared: every vector goes, the running sync is cancelled and anything queued
     /// before the clear is dropped.
     func forgetAll() {
+        isRefreshing = false
+        refreshIssue = nil
         epoch += 1
         pendingSync?.cancel()
         pendingUpdate?.cancel()
@@ -208,6 +247,7 @@ final class HistorySearchModel {
     /// Removals do not wait for maintenance: the index actor runs them at the running sync's next
     /// step, and they run in the order they were asked for.
     private func removeNow(_ work: @escaping @Sendable (HistoryIndex) async -> Void) {
+        removalRevision += 1
         let previous = removal
         let index = index
         removal = Task {
@@ -335,6 +375,12 @@ final class HistorySearchModel {
     func waitForSync() async {
         await pendingSync?.value
         await waitForMaintenance()
+    }
+
+    /// Captures a debounced full-sync wrapper without waiting for earlier held maintenance.
+    func waitForSyncEnqueue() async -> Task<Void, Never>? {
+        await pendingSync?.value
+        return maintenance
     }
 
     /// Waits for the pending debounced saves and their queued index work.

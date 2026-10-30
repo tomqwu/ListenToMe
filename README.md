@@ -86,6 +86,34 @@ make ios-test
 
 ## Screenshots
 
+### Unreleased local History refresh
+
+These native previews show an **unreleased follow-up**, not the accepted TestFlight 1.20.3 (43)
+binary. Refresh rebuilds local search data without downloading models or changing conversations.
+[Source, original pixels and scope](docs/images/history/unreleased-2026-10-30/manifest.json) ·
+[Behavior and validation](docs/history-local-refresh.md).
+
+<table>
+  <tr><th align="center">iPhone · active search</th><th align="center">iPhone · empty History</th></tr>
+  <tr>
+    <td align="center"><a href="docs/images/history/unreleased-2026-10-30/iphone-history.png"><img src="docs/images/history/unreleased-2026-10-30/iphone-history.png" width="220" alt="Unreleased iPhone History with Refresh search, a short prototype query and its bounded summary excerpt; keyboard dismissed."></a></td>
+    <td align="center"><a href="docs/images/history/unreleased-2026-10-30/iphone-empty-history.png"><img src="docs/images/history/unreleased-2026-10-30/iphone-empty-history.png" width="220" alt="Unreleased iPhone empty History with reachable Refresh search and complete no-saved-conversations guidance."></a></td>
+  </tr>
+</table>
+
+Search is active in the first image, so its navigation title is intentionally hidden. The excerpt's
+ellipsis is the normal bounded preview.
+
+<details>
+<summary>Mac recovery control · isolated native test host</summary>
+
+This is the actual shared control rendered in a native host, **not a full installed Mac app**.
+A fresh full-app Mac History screenshot remains pending.
+
+<p align="center"><a href="docs/images/history/unreleased-2026-10-30/mac-recovery-control.png"><img src="docs/images/history/unreleased-2026-10-30/mac-recovery-control.png" width="520" alt="Actual unreleased Mac History control with Refresh search and readable local-search failure and retry guidance, in an isolated native host."></a></p>
+
+</details>
+
 **iPhone, iPad and Apple Watch · TestFlight 1.20.3 (43)**
 
 Fresh native simulator previews from candidate source `8dc8dd3`, using synthetic demonstration

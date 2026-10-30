@@ -1,4 +1,17 @@
-# Mac speaker-name overflow candidate — October 30, 2026
+# Unreleased local History Refresh — October 30, 2026
+
+Explicit **Refresh search** rebuilds derived local Apple search data without changing conversations
+or downloading assets. Focused evidence: three Core methods green; sixteen Mac methods green,
+including current-archive races and actual native controls; three phone methods green, including
+no-results and empty History. Recovery-caption contrast went from 3.949:1 red to 14.938:1 green.
+[Scoped evidence and pending gates](history-local-refresh.md) ·
+[Fresh README previews and provenance](images/history/unreleased-2026-10-30/manifest.json).
+
+This follow-up is **not included in accepted TestFlight 1.20.3 (43)**. Full local validation, current
+CI, full installed Mac History capture, review and merge remain pending. Additional-language quality
+remains open under #223; the negative experiments are preserved without a passing quality claim.
+
+## Mac speaker-name overflow candidate — October 30, 2026
 
 Installed #334 acceptance on source `5f1e909` (Mac runtime identical to merged `97ef2461`) verified
 Save/Cancel, full quit/relaunch persistence, context-menu rename, neighbor isolation, VoiceOver
@@ -12,9 +25,11 @@ red and green. The rendered name now stays within 100 points and changes zero pi
 [Evidence and limitations](speaker-rename-acceptance.md) · [Exact source hashes](releases/mac-speaker-name-overflow-f26-validation.json).
 The corrected installed candidate, fresh README image and full local validation still need acceptance.
 Keep the fix behind the current #223 feature's validation/merge; no new PR, merge or release is claimed.
-The existing Mac gallery remains historical until that installed capture is refreshed.
+The full-app Mac gallery remains historical; the new History component preview does not show this fix.
+The branch integrates reviewed History head `c8fdcd29`; the focused speaker result remains tied to its
+recorded inputs on base `f26e655`, with no combined native-validation pass claimed.
 
-# TestFlight 1.20.3 (43) published — October 30, 2026
+## TestFlight 1.20.3 (43) published — October 30, 2026
 
 Apple accepted **1.20.3 (43)** through the official TestFlight helper at
 **2026-10-30T17:10:34.841880+00:00** from `97ef2461b86869405c1d0f4221816b790f0216fd`.

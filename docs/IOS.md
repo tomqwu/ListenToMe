@@ -45,6 +45,14 @@ Physical phone/iPad translation, screen-lock, multilingual and Watch acceptance 
 Public production remains **1.19.1 (39)**; this beta made no public review submission or listing-media
 upload. Mac changes remain unreleased, and **v1.4.4** remains GitHub Latest.
 
+## Unreleased explicit local History refresh
+
+A new **Refresh search** action rebuilds only derived History vectors with a fresh local Apple
+adapter, including unchanged records that previously had no vector. It does not download assets,
+change providers or edit conversations. Exact-word search remains available; Ask waits until a
+current-archive rebuild succeeds, and storage failure offers a retry. This isolated follow-up is
+not included in the accepted TestFlight 1.20.3 (43) build. [Behavior, evidence and pending UI checks](history-local-refresh.md).
+
 ## History repairs in TestFlight 1.20.3
 
 The merged batch keeps safer asynchronous History indexing, refreshed search after saving and
