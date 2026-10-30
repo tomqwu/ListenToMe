@@ -6,7 +6,7 @@
       "name": "A failed redelivery cannot destroy the first durable chunk or its timeline",
       "given": "a Watch chunk and its metadata are already filed on the paired iPhone but its ledger is missing after a write failure or is corrupt",
       "when": "a valid duplicate arrives before foreground recovery and its audio move would fail for lack of storage, then the system removes that temporary delivery and the inbox recovers",
-      "then": "the first audio bytes and sidecar metadata remain unchanged, the duplicate is reported as already filed, and foreground recovery restores exactly one chunk with the original recording identity, start offset, duration and final boundary without decoding audio in the receive callback",
+      "then": "the first audio bytes and sidecar metadata remain unchanged, the duplicate is reported as already filed, and foreground recovery restores exactly one chunk with the original recording identity, start offset, duration and final boundary without requiring successful audio decoding",
       "covers": [
         "iOS/WatchInbox.swift",
         "iOS/PhoneWatchLink.swift"
