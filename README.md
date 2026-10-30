@@ -86,6 +86,53 @@ make ios-test
 
 ## Screenshots
 
+### Unreleased local History refresh
+
+These native previews show an **unreleased follow-up**, not the accepted TestFlight 1.20.3 (43)
+binary. Refresh rebuilds local search data without downloading models or changing conversations.
+[Source, original pixels and scope](docs/images/history/unreleased-2026-10-30/manifest.json) ·
+[Behavior and validation](docs/history-local-refresh.md).
+
+<table>
+  <tr><th align="center">iPhone · active search</th><th align="center">iPhone · empty History</th></tr>
+  <tr>
+    <td align="center"><a href="docs/images/history/unreleased-2026-10-30/iphone-history.png"><img src="docs/images/history/unreleased-2026-10-30/iphone-history.png" width="220" alt="Unreleased iPhone History with Refresh search, a short prototype query and its bounded summary excerpt; keyboard dismissed."></a></td>
+    <td align="center"><a href="docs/images/history/unreleased-2026-10-30/iphone-empty-history.png"><img src="docs/images/history/unreleased-2026-10-30/iphone-empty-history.png" width="220" alt="Unreleased iPhone empty History with reachable Refresh search and complete no-saved-conversations guidance."></a></td>
+  </tr>
+</table>
+
+Search is active in the first image, so its navigation title is intentionally hidden. The excerpt's
+ellipsis is the normal bounded preview.
+
+**iPhone landscape · unqueried History**
+
+<p align="center"><a href="docs/images/history/unreleased-2026-10-30/iphone-history-landscape.png"><img src="docs/images/history/unreleased-2026-10-30/iphone-history-landscape.png" width="760" alt="Unreleased iPhone landscape History with Refresh search and a complete synthetic Product planning record card; no query or keyboard."></a></p>
+
+Normal landscape History; scroll for additional actions. The summary excerpt keeps its intended ellipsis.
+
+**iPad wide · unqueried History**
+
+<p align="center"><a href="docs/images/history/unreleased-2026-10-30/ipad-history-wide.png"><img src="docs/images/history/unreleased-2026-10-30/ipad-history-wide.png" width="760" alt="Unreleased wide iPad History sheet with Refresh search, a complete synthetic Product planning record and normal list actions over the demonstration workspace."></a></p>
+
+**Mac · actual installed History**
+
+<p align="center"><a href="docs/images/history/unreleased-2026-10-30/mac-history-sheet.png"><img src="docs/images/history/unreleased-2026-10-30/mac-history-sheet.png" width="680" alt="Actual unreleased installed Mac History sheet with Refresh search and two synthetic Airship workshop conversations; AI is off."></a></p>
+
+Native sheet-region capture from the signed Dev app, with synthetic content and AI off.
+[Full installed window](docs/images/history/unreleased-2026-10-30/mac-history-window.png) ·
+[Source, native pixels and acceptance scope](docs/images/history/unreleased-2026-10-30/manifest.json).
+
+<details>
+<summary>Mac recovery control · isolated native test host</summary>
+
+This is the actual shared control rendered in a native host, **not a full installed Mac app**.
+The installed History images above are separate full-app acceptance; this component shows the
+recovery state exercised in the native test.
+
+<p align="center"><a href="docs/images/history/unreleased-2026-10-30/mac-recovery-control.png"><img src="docs/images/history/unreleased-2026-10-30/mac-recovery-control.png" width="520" alt="Actual unreleased Mac History control with Refresh search and readable local-search failure and retry guidance, in an isolated native host."></a></p>
+
+</details>
+
 **iPhone, iPad and Apple Watch · TestFlight 1.20.3 (43)**
 
 Fresh native simulator previews from candidate source `8dc8dd3`, using synthetic demonstration

@@ -429,6 +429,24 @@ pickup labeled YOU or an enabled toggle alone as proof of system-audio capture.
    `~/Library/Application Support/ListenToMe Dev/Search Index/` holds only `index.json` (the
    Release build uses `ListenToMe/Search Index/`).
 
+## Explicit local History refresh (#223, unreleased follow-up)
+
+Use disposable synthetic conversations and preserve their original archive files. In Mac and phone
+History, activate **Refresh search**: it must be disabled while its attempt is active and return to
+idle afterward. Search an exact word before and after; its conversation and original saved bytes
+must remain. A refresh with no installed embedding support may still finish without producing
+vectors; that is not language acceptance. If Apple assets become available independently, refresh
+again and verify a suitable paraphrase using those actual local assets. Refresh itself must never
+request a download or change AI settings.
+
+Search an unmatched string on iPhone: retain the no-results guidance, tap the visible Refresh action
+and verify it stays reachable afterward. On storage failure, exact-word results remain usable, the
+screen explains retry, and Ask must not send excerpts until a successful retry. While a refresh is
+held, delete its first of two conversations: the survivor must be searchable before idle/Ask resumes;
+deleted content must not return. Clear history or close obsolete work: no late result may restore it.
+Native deterministic coverage and outstanding rendered checks are recorded in
+[the scoped checkpoint](history-local-refresh.md); these steps are not a claim of completed acceptance.
+
 ## macOS lifecycle and UX papercuts (#136, #147)
 
 1. **Engine label follows the live run.** Start listening with **SpeechAnalyzer**, then open
@@ -762,6 +780,9 @@ physical device.
    than about ten minutes): the summary answers and the sheet says the selection was shortened.
 
 ## iPhone History search by meaning and Ask your history (#57)
+
+Also exercise the [unreleased explicit Refresh checks](#explicit-local-history-refresh-223-unreleased-follow-up),
+including the no-results screen.
 
 Simulator or device; the Apple Intelligence answer in step 3 needs an eligible device.
 

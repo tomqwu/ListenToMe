@@ -1,0 +1,98 @@
+{
+  "scope": "Focused explicit local Apple History refresh; full validation pending",
+  "baseCommit": "8dc8dd35be9474f9789e284fefe94c966d11d476",
+  "productionFileHashes": {
+    "Sources/ListenToMeCore/HistoryIndex.swift": "c7f5fabda4f9fca5f686ccde9ab85e869455e02644a5dca9a7d550faefeaa128",
+    "SharedPlatform/HistorySearchModel.swift": "af0c5f472a85ddf40c79df0471edb92c4c14c7e62a76665028838cff844ddcf6",
+    "SharedPlatform/HistoryRefreshControl.swift": "607548a0d02d2b2ede0b789ba2df87deff3892d71ddf71b070763524187df02b",
+    "App/SessionSearchView.swift": "15a832ce1dcec226131de6e75b539d4b3408e99a111e0d481451aa5b428b56e1",
+    "iOS/MobileHistoryView.swift": "0832b96edf2491b6cfbceff550f4e246ab802081e4bb2e4f982921f6d281eec4"
+  },
+  "core": {
+    "methods": 3,
+    "redFailedMethods": 2,
+    "redAssertionFailures": 6,
+    "greenPassed": 3
+  },
+  "nativeReadiness": {
+    "redFailedMethods": 1,
+    "redAssertionFailures": 5,
+    "sameRegressionGreen": true
+  },
+  "nativeQueuedMaintenance": {
+    "redFailedMethods": 2,
+    "redAssertionFailures": 7,
+    "greenTransitionMethods": 14
+  },
+  "iOSNoResultsLayout": {
+    "initialInteractionMethodsPassed": 2,
+    "newGeometryRedAssertions": 2,
+    "unchangedGreenMethods": 2,
+    "frozenInputCount": 1058,
+    "inputsUnchangedWithinEachRun": true
+  },
+  "finalMac": {
+    "methodsPassed": 16,
+    "methodsSkipped": 0,
+    "failures": 0,
+    "exitCode": 0,
+    "reaped": true,
+    "elapsedSeconds": 14.849283209,
+    "frozenInputCount": 1067,
+    "inputMismatches": 0,
+    "appleBranch": "installed",
+    "archiveFileBytesPreserved": true,
+    "actualPointerBusyFailureRetry": true,
+    "postNativeTestRefactor": null
+  },
+  "evidenceRoot": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-history223-local-refresh",
+  "limits": [
+    "No additional-language quality pass",
+    "No VoiceOver or physical-device pass",
+    "No installed full-app acceptance claim",
+    "Full local validation and current CI/review/merge pending"
+  ],
+  "nativeReceiptHashes": {
+    "inputs.json": "a1189ae77657b574b7d4126e4d6ca0055b9c48f741f17811d4b59492a5e59fbd",
+    "reference.log": "13f59a89d0460b33448299c33e87288e842dddc93398a189e13470b213ae558d",
+    "runner-state.json": "8c9b4e39c62237b2d7617bf8622b46944bb5ef5895adc38c0b16a4cc7c4f993b",
+    "source-check.json": "b851e242899fc0bafc45ac946c84264cd64ed7c88f1bc07812bd3e93b539d128"
+  },
+  "priorFunctionalMac": {
+    "methodsPassed": 16,
+    "methodsSkipped": 0,
+    "failures": 0,
+    "exitCode": 0,
+    "reaped": true,
+    "elapsedSeconds": 15.520397208,
+    "frozenInputCount": 1058,
+    "inputMismatches": 0,
+    "appleBranch": "installed",
+    "archiveFileBytesPreserved": true,
+    "actualPointerBusyFailureRetry": true,
+    "postNativeTestRefactor": "Removed unused AX action/traversal helpers only; no changed assertions or production bytes"
+  },
+  "nativeRecoveryContrast": {
+    "redExitCode": 65,
+    "redFailedAssertions": 1,
+    "redRatio": 3.9494396480491156,
+    "greenExitCode": 0,
+    "greenRatio": 14.938418916797357,
+    "threshold": 4.5,
+    "scope": "actual opaque Aqua native recovery-caption glyphs",
+    "testBytesIdentical": true,
+    "onlyChangedBetweenRuns": "SharedPlatform/HistoryRefreshControl.swift secondary to primary"
+  },
+  "finalIOS": {
+    "source": "09612d907ed4a11050d5862cf49e247dce501ff7",
+    "methodsPassed": 3,
+    "methodsSkipped": 0,
+    "failures": 0,
+    "exitCode": 0,
+    "reaped": true,
+    "frozenInputCount": 1069,
+    "inputMismatches": 0,
+    "scope": "actual Refresh/literal result, no-results separation/reachability and empty History",
+    "priorCaptureHarnessFailure": "A new hittability assertion targeted noninteractive Any text; corrected to actual history-record Button, no production change"
+  }
+}

@@ -1,0 +1,223 @@
+{
+  "feature": "Explicit local Apple History refresh",
+  "scenarios": [
+    {
+      "id": "HISTORYREFRESH-001",
+      "name": "Refresh replaces an unchanged nil cache using fresh local capabilities",
+      "given": "saved unchanged conversations previously produced no local vectors",
+      "when": "the user explicitly refreshes local History search after Apple assets become usable",
+      "then": "the same index owner re-embeds unchanged records with a fresh adapter even with the same recipe, preserves original conversation values and retains ordinary incremental reuse on normal saves",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryIndex.swift",
+        "SharedPlatform/HistorySearchModel.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryCapabilityRefreshTests.swift",
+          "test": "HistoryCapabilityRefreshTests/testExplicitRefreshReembedsUnchangedNilCacheWithEqualRecipe"
+        },
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryCapabilityRefreshTests.swift",
+          "test": "HistoryCapabilityRefreshTests/testOrdinarySameRecipeSyncStillReusesStoredPassages"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYREFRESH-002",
+      "name": "Delete and newer work win over a held refresh",
+      "given": "an explicit local refresh or earlier answer is held",
+      "when": "the conversation is deleted, history cleared or current work replaces it",
+      "then": "deleted vectors and obsolete answers cannot return; storage failure retains exact-word search and can retry",
+      "covers": [
+        "Sources/ListenToMeCore/HistoryIndex.swift",
+        "SharedPlatform/HistorySearchModel.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "core",
+          "file": "Tests/ListenToMeCoreTests/HistoryCapabilityRefreshTests.swift",
+          "test": "HistoryCapabilityRefreshTests/testDeletionDuringHeldExplicitRefreshCannotRestoreRecord"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/HistoryBackendTransitionTests.swift",
+          "test": "HistoryBackendTransitionTests/testSameRecipeRefreshFailureShowsIssueAndBlocksAskUntilExplicitRetry"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/HistoryBackendTransitionTests.swift",
+          "test": "HistoryBackendTransitionTests/testHeldSameRecipeRefreshCoalescesDuplicateAndClearRejectsLatePublication"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/HistoryBackendTransitionTests.swift",
+          "test": "HistoryBackendTransitionTests/testOldAnswerCannotReturnThroughEqualRecipeExplicitRefresh"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/HistoryBackendTransitionTests.swift",
+          "test": "HistoryBackendTransitionTests/testExplicitRefreshReadsCurrentArchiveInsteadOfInvocationSnapshot"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYREFRESH-003",
+      "name": "Explicit local Refresh is usable on Mac and phone History",
+      "given": "History is open on Mac or iPhone with saved synthetic conversations",
+      "when": "Refresh search is activated",
+      "then": "the actual shared control owns one local attempt and returns to normal idle or retains a retryable failure; literal results remain reachable without asset requests or provider dispatch; the test reports installed versus unavailable Apple branch without a language-quality claim",
+      "covers": [
+        "SharedPlatform/HistoryRefreshControl.swift",
+        "App/SessionSearchView.swift",
+        "iOS/MobileHistoryView.swift",
+        "project.yml"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacHistoryRefreshControlsTests.swift",
+          "test": "MacHistoryRefreshControlsTests/testActualSharedControlRefreshesLocalAppleAndPreservesLiteralSearch"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileHistorySearchUITests.swift",
+          "test": "MobileHistorySearchUITests/testExplicitRefreshKeepsLiteralHistoryResultAndReturnsToIdle"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacHistoryRefreshControlsTests.swift",
+          "test": "MacHistoryRefreshControlsTests/testActualControlDisablesHeldRefreshAndShowsFailureWithUsableRetry"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYREFRESH-004",
+      "name": "A surviving conversation is rebuilt after a deletion interrupts Refresh",
+      "given": "an explicit refresh has cleared old derived vectors and is held on the first of two conversations",
+      "when": "that first conversation is deleted before its held inference returns",
+      "then": "Refresh reconciles the current archive before returning ready, the surviving conversation is Related and supplies Ask evidence, and the deleted one cannot return",
+      "covers": [
+        "SharedPlatform/HistorySearchModel.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/HistoryBackendTransitionTests.swift",
+          "test": "HistoryBackendTransitionTests/testRefreshDeletionRebuildsSurvivingConversationBeforeReadyAndAsk"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYREFRESH-005",
+      "name": "No-results guidance leaves local Refresh reachable",
+      "given": "phone History contains saved fixture conversations and an unmatched query shows no-results guidance",
+      "when": "the user activates Refresh search through that same History screen",
+      "then": "no-results guidance is laid out after Ask and its disclosure without overlap; the actual Refresh control is hittable and can return to idle without losing the query or showing an alert; the no-results state and its control remain visible",
+      "covers": [
+        "iOS/MobileHistoryView.swift",
+        "SharedPlatform/HistoryRefreshControl.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileHistorySearchUITests.swift",
+          "test": "MobileHistorySearchUITests/testNoResultsGuidanceLeavesExplicitRefreshReachable"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYREFRESH-006",
+      "name": "Older queued indexing cannot undo the current archive rebuilt by Refresh",
+      "given": "Refresh is held while an older full sync or saved text is queued behind it",
+      "when": "the current archive gains a conversation or receives newer text before Refresh resumes",
+      "then": "older maintenance cannot remove the newly reconciled conversation or replace its current semantic excerpts; Related and Ask use the current saved evidence before the next save debounce",
+      "covers": [
+        "SharedPlatform/HistorySearchModel.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/HistoryBackendTransitionTests.swift",
+          "test": "HistoryBackendTransitionTests/testQueuedSnapshotCannotRemoveFreshlyReconciledRecord"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/HistoryBackendTransitionTests.swift",
+          "test": "HistoryBackendTransitionTests/testQueuedOlderSaveCannotReplaceFreshlyReconciledText"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYREFRESH-007",
+      "name": "Fresh History previews show the actual control and literal result without keyboard overlays",
+      "given": "the synthetic native History screen has an exact-word result for a short query",
+      "when": "the refreshed History view is captured for the README gallery",
+      "then": "the actual Refresh control and matching result are hittable, the software keyboard is dismissed and no alert covers the preview",
+      "covers": [
+        "iOS/MobileHistoryView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileHistorySearchUITests.swift",
+          "test": "MobileHistorySearchUITests/testExplicitRefreshKeepsLiteralHistoryResultAndReturnsToIdle"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYREFRESH-008",
+      "name": "Empty History keeps local Refresh reachable",
+      "given": "the user has cleared the synthetic fixture archive and sees no saved conversations",
+      "when": "Refresh search is activated from that same History screen",
+      "then": "the control remains hittable and returns to idle while empty guidance remains and Ask is absent",
+      "covers": [
+        "iOS/MobileHistoryView.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileHistorySearchUITests.swift",
+          "test": "MobileHistorySearchUITests/testEmptyHistoryKeepsExplicitRefreshReachable"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYREFRESH-009",
+      "name": "Recovery guidance stays legible in the actual Mac control",
+      "given": "a local History refresh fails on the native Aqua card surface",
+      "when": "the actual shared control renders its recovery caption below the button",
+      "then": "the opaque native caption glyphs meet the existing 4.5:1 small-text contrast benchmark while the retry action remains usable",
+      "covers": [
+        "SharedPlatform/HistoryRefreshControl.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacHistoryRefreshControlsTests.swift",
+          "test": "MacHistoryRefreshControlsTests/testActualControlDisablesHeldRefreshAndShowsFailureWithUsableRetry"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYREFRESH-010",
+      "name": "Reach History controls and open a matching conversation across landscape phone and wide iPad layouts",
+      "given": "the synthetic prototype conversation is shown at default text size on a landscape iPhone Duo workspace or wide iPad workspace",
+      "when": "History search is revealed by a normal downward scroll if needed, a prototype query is entered, Refresh search completes, the matching record is exposed by ordinary scrolling and tapped, and normal History is reopened",
+      "then": "Refresh, Ask and the provider disclosure are accessible before scrolling; Refresh preserves the query and result; the complete selected record is reachable without search-field obstruction and tapping it opens the matching title and transcript; reopened unqueried History shows unobscured Refresh and the complete record in its native gallery capture; queried phase captures remain separate QA evidence and this sequential flow does not require every control to fit simultaneously",
+      "covers": [
+        "iOS/MobileHistoryView.swift",
+        "SharedPlatform/HistoryRefreshControl.swift",
+        "iOSTests/MobileHistorySearchUITests.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileHistorySearchUITests.swift",
+          "test": "MobileHistorySearchUITests/testLandscapeHistoryKeepsRefreshAskAndResultReachable"
+        }
+      ]
+    }
+  ]
+}

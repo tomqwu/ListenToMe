@@ -1,0 +1,211 @@
+{
+  "schemaVersion": 1,
+  "scope": "Explicit local Apple History Refresh; automated aggregate plus bounded installed Mac acceptance; no additional-language quality or publication claim",
+  "fullValidation": {
+    "source": "c8fdcd29d7db9bf200623b3ef10d50308e3f03a9",
+    "base": "f26e655ed9fadd418eaee631eaeaa31b6a780d44",
+    "exitCode": 0,
+    "reaped": true,
+    "frozenInputsIncludingIgnoredSigning": 1071,
+    "inputMismatches": 0,
+    "ignoredDevSigningSHA256": "9344979f8b260004bd3630cede6cb1be52ad1d2ef8d8e9a2f4cf8cd1e0caa1d3",
+    "suiteCounts": {
+      "core": {
+        "result": "passed",
+        "tests": 1294,
+        "skipped": 7,
+        "assertionFailures": 0
+      },
+      "ios-unit": {
+        "result": "passed",
+        "tests": 509,
+        "skipped": 7,
+        "assertionFailures": 0
+      },
+      "ios-ui": {
+        "result": "passed",
+        "tests": 96,
+        "skipped": 5,
+        "assertionFailures": 0
+      },
+      "mac-unit": {
+        "result": "passed",
+        "tests": 118,
+        "skipped": 0,
+        "assertionFailures": 0
+      },
+      "watch-unit": {
+        "result": "passed",
+        "tests": 29,
+        "skipped": 0,
+        "assertionFailures": 0
+      },
+      "watch-ui": {
+        "result": "passed",
+        "tests": 5,
+        "skipped": 0,
+        "assertionFailures": 0
+      }
+    },
+    "nativeSummaryCountsAgree": true,
+    "coreCoveragePercent": 98.07677689091601,
+    "bddScenarios": 245,
+    "requiredBindings": {
+      "core": 256,
+      "ios-unit": 124,
+      "ios-ui": 47,
+      "mac-unit": 118,
+      "watch-unit": 29,
+      "watch-ui": 5
+    },
+    "allRequiredBindingsPassed": true,
+    "helpers": {
+      "bdd": {
+        "methods": 21,
+        "outcome": "OK"
+      },
+      "make-pipelines": {
+        "methods": 6,
+        "outcome": "OK"
+      },
+      "ios-testflight": {
+        "methods": 29,
+        "outcome": "OK"
+      },
+      "contract-gate": {
+        "methods": 5,
+        "outcome": "OK"
+      },
+      "release-paths": {
+        "methods": 4,
+        "outcome": "OK"
+      },
+      "mac-appstore": {
+        "methods": 6,
+        "outcome": "OK"
+      }
+    },
+    "hotkeyMarkerPassed": true,
+    "realServerContracts": {
+      "OllamaContractE2ETests": 2,
+      "OpenAICompatibleContractE2ETests": 2
+    },
+    "installedChineseBranch": "installed-real-model",
+    "nativeOriginalFileCounts": {
+      "ios": 1558,
+      "mac": 300,
+      "watch": 126
+    },
+    "auditReceiptSHA256": "aaf756a04a1210461adb510d6a1402ac27bce5723f3dd2ecede5c07f993e9ef9",
+    "preservationReceiptSHA256": "c6fe2edd26a910c014cd70103879efdb1459accfc9e977583bfe0f262340e033",
+    "referenceLogSHA256": "64bf2a6a2c152f18df3904440f73c8bdfd9df6008e72b0924d2344bb94f34c5e"
+  },
+  "followupTestOnlySource": {
+    "source": "13573f9041bd9f5a07ce0c444e2f597b34afdda8",
+    "changedPathsFromFull": [
+      "Behaviors/history-capability-refresh.json",
+      "iOSTests/MobileHistorySearchUITests.swift"
+    ],
+    "productionAndBuildConfigurationUnchanged": true,
+    "bddCatalogAfterAddedScenario": 246,
+    "focusedLandscapeExecution": {
+      "failures": 0,
+      "skips": 0,
+      "profiles": [
+        "iPhone17 Pro/iOS26.5 simulator",
+        "iPad Pro13-inch M5/iOS26.5 simulator"
+      ],
+      "frozenInputs": 1074,
+      "inputMismatches": 0,
+      "exitCode": 0,
+      "reaped": true,
+      "outcomeReceiptSHA256": "7ba5c2f44933351a7c9825bb1181da81bd610cf615928d934ea5f61a02b973d6",
+      "perProfile": [
+        {
+          "profile": "phone",
+          "returncode": 0,
+          "terminalReaped": true,
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "runnerStateSHA256": "1d0cb9d013a7e9f2b29acafbf3a8748ad6a9db0b6365e2ccda8c51957f74e66a",
+          "summarySHA256": "5f1beff1cb3ac9d4970e4e25a395e7e4f2422ca7508d6686190815fd0660395b",
+          "preservationSHA256": "d89d61544ee621bfbe7bba6aeeca52ca54b24df376e0313e2ceb79632da10a14"
+        },
+        {
+          "profile": "ipad",
+          "returncode": 0,
+          "terminalReaped": true,
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "runnerStateSHA256": "c04ebaf46f33637ce3a023ebc2aa2819093d4fbddac64c499d2d687bcdb9dc4d",
+          "summarySHA256": "434418ffa8c0373e76e1c458585de550682d00ebbe9f3e6a6a7733f31b87ddcd",
+          "preservationSHA256": "c2f736b3b22cfb08a274e7eebb4ab67c7e939c4747fab7eb70600ff54daaa166"
+        }
+      ],
+      "testInvocationsPassed": 2,
+      "uniqueMethods": 1
+    },
+    "priorCaptureAttempts": [
+      "Initial iPad harness did not reveal the normal collapsed search drawer; initial app.screenshot image cropped landscape coordinates.",
+      "f296 simultaneous-fit assertion after ordinary scrolling was an unjustified added preview constraint, not a product regression.",
+      "dc001 transcriptText selector was a test typo; actual production transcript-text- identifier verified in source and saved hierarchy."
+    ],
+    "priorAttemptsAreProductRedEvidence": false,
+    "captureScope": "Selected unqueried History gallery. Queried controls/results are sequential QA evidence, not simultaneously unobscured phone media. Phone lower hint/actions retain ordinary scroll limitations."
+  },
+  "installedMac": {
+    "source": "c8fdcd29d7db9bf200623b3ef10d50308e3f03a9",
+    "artifactKind": "normal signed Debug Dev app, not Store distribution",
+    "identifier": "com.tomwu.ListenToMe.dev",
+    "actualVersion": "1.4.4",
+    "actualBuild": "14",
+    "configuredStoreVersion": "1.5.0",
+    "configuredStoreBuild": "15",
+    "sourceMatchedPayloads": [
+      {
+        "name": "ListenToMe",
+        "sha256": "2bf47e05d7d740a6b232348b44ca102c745ebe0be3b16a60e1aea606f1dce381"
+      },
+      {
+        "name": "ListenToMe.debug.dylib",
+        "sha256": "b9f278be30944fe5254564958f5e195e6447b35f46e2a8d9cf985e8e4f375813"
+      },
+      {
+        "name": "__preview.dylib",
+        "sha256": "c377bcd1dd34803892213d8bb4f7de1216a1b1432e73f843b506ac0836f7fba3"
+      }
+    ],
+    "captureAndFlow": {
+      "rowsBeforeReload": 1,
+      "rowsAfterReload": 2,
+      "busyDisabledObserved": true,
+      "idleEnabledObserved": true,
+      "repeatedSuccessfully": true,
+      "queryPreserved": true,
+      "newRecordOpenedAfterRelaunch": "History Refresh QA \u2014 Contract"
+    },
+    "quitRelaunchVerifiedRecorded": true,
+    "originalArchiveFilesUnchangedRecorded": 11,
+    "originalArchiveJSONRecords": 10,
+    "fourOwnedSyntheticRecordsPreservedThenRemoved": true,
+    "devAppQuitTrashedAndAppScopedTCCCleanupRecorded": true,
+    "settingsCheck": {
+      "matchedTopLevelKeys": 0,
+      "scope": "No matching top-level provider/model/endpoint/cloud/key/token/AI/vault/reference keys in the checked Dev defaults comparison; no Settings actions. AI off was process-only.",
+      "allSettingsPreservationEstablished": false,
+      "afterSnapshotAndHashNotRetained": true
+    },
+    "postCleanupArtifactLimit": "All retained Trash file bytes match prelaunch payload. Current Trash strict codesign rejects Finder metadata; original build still verifies strictly. No attribute changes were made. This does not substitute for or invalidate the recorded prelaunch signature check.",
+    "installedReceiptSHA256": "4386ee462d2d6f71257d59b46da4ffbfaf308114bb0a0c52b1192a7f7d78f953",
+    "independentReviewSHA256": "0efd29ca3f2c4500c9575c557570c75c5b049b1e7d6ff60d6bcb21d427d90dc0"
+  },
+  "limits": [
+    "Additional-language quality remains failed/open under223.",
+    "No new physical-phone/Watch, Store-distributed or VoiceOver acceptance.",
+    "No Ask/provider, recording or download flow exercised by installed History acceptance.",
+    "Not included in accepted TestFlight1.20.3(43); no release/upload/listing claim.",
+    "Current exact-head CI, hosted final-gallery review and merge remain pending; full c8 plus later test-only focused capture is composite validation."
+  ]
+}

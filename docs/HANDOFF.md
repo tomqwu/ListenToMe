@@ -1,4 +1,25 @@
-# TestFlight 1.20.3 (43) published — October 30, 2026
+# Unreleased local History Refresh — October 30, 2026
+
+Explicit **Refresh search** rebuilds derived local Apple search data without changing conversations
+or downloading assets. Focused evidence: three Core methods green; sixteen Mac methods green,
+including current-archive races and actual native controls; three phone methods green, including
+no-results and empty History. Recovery-caption contrast went from 3.949:1 red to 14.938:1 green.
+[Scoped evidence and pending gates](history-local-refresh.md) ·
+[Fresh README previews and provenance](images/history/unreleased-2026-10-30/manifest.json).
+
+This follow-up is **not included in accepted TestFlight 1.20.3 (43)**. Full validation passed on
+`c8fdcd29`: Core 1,294 tests/seven skips/98.0768% coverage; iOS 605 tests/twelve skips; Mac 118 and
+Watch 34, zero failures. All 1,071 frozen inputs and all required BDD bindings matched. Actual signed
+Debug Dev History Refresh, repeat, new-row reload and Quit/relaunch passed with two synthetic records;
+fresh installed Mac images were inspected. [Aggregate/installed receipt](evaluations/history-local-refresh-validation-2026-10-30.json).
+`13573f90` adds only landscape test/catalog coverage to the unchanged app: two native cases passed
+on phone/iPad, zero failures/skips, all 1,074 inputs unchanged. Fresh unqueried landscape/iPad and
+installed Mac gallery images were inspected; phone additional actions retain normal scrolling.
+Current exact-head CI, hosted final-gallery review and merge remain pending. Detailed preservation
+and prior capture-harness limits are in the linked evidence. Additional-language quality remains
+open under #223; negative experiments remain failed.
+
+## TestFlight 1.20.3 (43) published — October 30, 2026
 
 Apple accepted **1.20.3 (43)** through the official TestFlight helper at
 **2026-10-30T17:10:34.841880+00:00** from `97ef2461b86869405c1d0f4221816b790f0216fd`.

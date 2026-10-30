@@ -81,9 +81,9 @@ public actor HistoryIndex {
 
     /// Replaces only the derived backend on this actor, so old suspended work cannot republish.
     /// A storage failure leaves the old backend selected; its derived data may need rebuilding.
-    public func setEmbedder(_ replacement: any HistoryEmbedder) throws {
+    public func setEmbedder(_ replacement: any HistoryEmbedder, forceRefresh: Bool = false) throws {
         try Task.checkCancellation()
-        guard replacement.signature != embedder.signature else { return }
+        guard forceRefresh || replacement.signature != embedder.signature else { return }
         try wipe()
         let previous = embedder
         embedder = replacement

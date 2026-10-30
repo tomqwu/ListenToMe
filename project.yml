@@ -243,6 +243,7 @@ targets:
       - SharedPlatform/AppleTranscriptTranslator.swift
       - SharedPlatform/ConversationLanguageControls.swift
       - SharedPlatform/HistorySearchModel.swift
+      - SharedPlatform/HistoryRefreshControl.swift
       - TestSupport/HistoryTopicFixtures.swift
     dependencies:
       - package: ListenToMeCore
