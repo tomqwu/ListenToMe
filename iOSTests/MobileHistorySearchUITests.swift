@@ -1,8 +1,59 @@
 import XCTest
+import UIKit
 
 /// History search with snippets and the "Ask your history" control (issue #57).
 @MainActor
 final class MobileHistorySearchUITests: XCTestCase {
+
+    func testLandscapeHistoryKeepsRefreshAskAndResultReachable() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--design-review-fixture", "-autoQuickSummary", "NO", "-mobileAIProvider", "apple"]
+        XCUIDevice.shared.orientation = .landscapeLeft
+        defer { app.terminate(); XCUIDevice.shared.orientation = .portrait }
+        app.launchPastReleaseNotes()
+        let landscape = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            app.windows.firstMatch.frame.width > app.windows.firstMatch.frame.height
+        }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [landscape], timeout: 5), .completed)
+        let workspace = UIDevice.current.userInterfaceIdiom == .phone
+            ? "twoPaneMeetingWorkspace" : "wideMeetingWorkspace"
+        XCTAssertTrue(app.otherElements[workspace].waitForExistence(timeout: 5))
+        app.buttons["History"].tap()
+        let field = app.searchFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 5)); field.tap(); field.typeText("prototype")
+        let result = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label CONTAINS %@", "review the prototype")).firstMatch
+        XCTAssertTrue(result.waitForExistence(timeout: 10))
+        field.typeText("\n")
+        let keyboardGone = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"),
+                                                    object: app.keyboards.firstMatch)
+        XCTAssertEqual(XCTWaiter.wait(for: [keyboardGone], timeout: 5), .completed)
+        let refresh = app.buttons["history-refresh"], ask = app.buttons["history-ask"]
+        let disclosure = app.staticTexts["history-ask-disclosure"]
+        let record = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "history-record-")).firstMatch
+        XCTAssertTrue(record.waitForExistence(timeout: 5)); XCTAssertTrue(record.label.contains("Product planning"))
+        let viewport = app.collectionViews.firstMatch.frame.intersection(app.windows.firstMatch.frame)
+        XCTAssertFalse(viewport.isEmpty)
+        for element in [refresh, ask, record] {
+            XCTAssertTrue(element.exists); XCTAssertTrue(element.isHittable)
+            XCTAssertFalse(element.frame.isEmpty)
+            XCTAssertTrue(viewport.contains(element.frame),
+                          "The short default-text landscape preview must contain its selected control")
+        }
+        XCTAssertTrue(disclosure.exists); XCTAssertFalse(disclosure.frame.isEmpty)
+        XCTAssertTrue(viewport.contains(disclosure.frame), "The provider disclosure must be fully readable")
+        XCTAssertLessThanOrEqual(refresh.frame.maxY, ask.frame.minY)
+        XCTAssertLessThanOrEqual(ask.frame.maxY, disclosure.frame.minY)
+        XCTAssertLessThanOrEqual(disclosure.frame.maxY, record.frame.minY)
+        refresh.tap()
+        let idle = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: refresh)
+        XCTAssertEqual(XCTWaiter.wait(for: [idle], timeout: 10), .completed)
+        XCTAssertEqual(field.value as? String, "prototype")
+        XCTAssertTrue(refresh.isHittable); XCTAssertTrue(ask.isHittable); XCTAssertTrue(record.isHittable)
+        XCTAssertFalse(app.alerts.firstMatch.exists); XCTAssertFalse(app.keyboards.firstMatch.exists)
+        let shot = XCTAttachment(screenshot: app.screenshot()); shot.name = "Landscape History refresh and result"
+        shot.lifetime = .keepAlways; add(shot)
+    }
 
     func testExplicitRefreshKeepsLiteralHistoryResultAndReturnsToIdle() {
         let app = XCUIApplication()
