@@ -1,4 +1,13 @@
-# Unreleased local History Refresh — October 30, 2026
+# Active backlog delivery — October 30, 2026
+
+Six issues remain open. Three local fixes have real focused red/green evidence: Mac long-name
+layout (#334), saved-audio ordering (#336), and Watch inbox redelivery data preservation (#181).
+Their required delivery gates are incomplete; they are not merged or in TestFlight 43. Spanish
+semantic-search candidates still fail the fixed quality requirement; physical #205/#236 and Watch
+acceptance also remain open. Continue the exact work below rather than treating an unchanged board
+as an idle queue. [Sources, tested outcomes, blockers and next actions](backlog-execution-2026-10-30.md).
+
+## Unreleased local History Refresh — October 30, 2026
 
 Explicit **Refresh search** rebuilds derived local Apple search data without changing conversations
 or downloading assets. Focused evidence: three Core methods green; sixteen Mac methods green,
