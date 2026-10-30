@@ -67,11 +67,14 @@ final class MobileHistorySearchUITests: XCTestCase {
         XCTAssertEqual(field.value as? String, "prototype")
         captureHistory("Queried History result - QA")
         record.tap()
+        let closed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: history)
+        XCTAssertEqual(XCTWaiter.wait(for: [closed], timeout: 5), .completed)
         let title = app.textFields["conversationTitle"]
-        XCTAssertTrue(title.waitForExistence(timeout: 5))
+        XCTAssertTrue(title.waitForExistence(timeout: 5)); XCTAssertTrue(title.isHittable)
         XCTAssertEqual(title.value as? String, "Product planning")
         let transcript = app.staticTexts
-            .matching(NSPredicate(format: "identifier BEGINSWITH %@", "transcriptText")).firstMatch
+            .matching(NSPredicate(format: "identifier BEGINSWITH %@", "transcript-text-")).firstMatch
+        XCTAssertTrue(transcript.waitForExistence(timeout: 5))
         XCTAssertTrue(transcript.label.contains("Let's keep the first release"))
 
         app.buttons["History"].tap()
