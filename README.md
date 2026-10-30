@@ -32,12 +32,13 @@ macOS-only, and there is no Mac↔iOS sync. See
 [parity with macOS](docs/IOS.md#parity-with-macos) and
 [the version policy](docs/IOS.md#version-policy).
 
-**TestFlight 1.20.2 (42)** includes continued user-started microphone recording through screen lock,
+**TestFlight 1.20.3 (43)** includes clearer Duo, translation and saved-audio controls, speaker-rename
+shortcuts and retained Apple History repairs. It also includes continued user-started microphone recording through screen lock,
 while optional AI waits for active use. Stop and genuine audio interruptions still end capture;
 a background launch cannot start it. See [recording continuity](docs/recording-continuity.md)
 and [language replay/recovery](docs/language-replay-progress.md). Saving audio stays opt-in and data
 protection is unchanged. Physical lock-screen acceptance remains pending.
-[Accepted beta receipt](docs/releases/ios-1.20.2-build42.json).
+[Accepted beta receipt](docs/releases/ios-1.20.3-build43.json).
 
 The standalone iOS/iPadOS 26 app is the **ListenToMeIOS** target: microphone transcription, a live
 transcript with Quick Summary plus a Summary tab (Deep is macOS-only; a Deep analysis saved by an earlier
@@ -69,10 +70,10 @@ Education & Research) and your own **My terms** list help recognition, AI speech
 summaries on both platforms; after about a minute of speech the phone may suggest one, decided on the
 device. Meeting use-case presets, reference files, audio-file import and WhisperKit transcription are macOS-only.
 Editable domain prompt presets are available on both platforms.
-The public iPhone/iPad app is [1.19.1](docs/releases/ios-1.19.1-build39-public.json). The latest TestFlight beta is **1.20.2 (42)**, including translation, the Apple Watch companion and recording/language continuity fixes; see the [accepted publication receipt](docs/releases/ios-1.20.2-build42.json).
+The public iPhone/iPad app is [1.19.1](docs/releases/ios-1.19.1-build39-public.json). The latest TestFlight beta is **1.20.3 (43)**, including translation, the Apple Watch companion and recording/language continuity fixes; see the [accepted publication receipt](docs/releases/ios-1.20.3-build43.json).
 [Watch installation and limits](docs/watch-beta.md) and [historical Watch previews](docs/images/watch/1.19.1/README.md)
 are available; physical Watch acceptance remains pending. All 49 build-39 release images were inspected.
-The [1.19.1 media readback](docs/releases/ios-1.19.1-build39-media-readback.json) confirms 60 processed screenshots across both English locales, including Watch and landscape Duo; downloaded image identity was verified in the original upload receipt. Translation is included in the current TestFlight **1.20.2 (42)**. Physical acceptance and real translation quality remain pending; this beta does not update the public listing.
+The [1.19.1 media readback](docs/releases/ios-1.19.1-build39-media-readback.json) confirms 60 processed screenshots across both English locales, including Watch and landscape Duo; downloaded image identity was verified in the original upload receipt. Translation is included in the current TestFlight **1.20.3 (43)**. Physical acceptance and real translation quality remain pending; this beta does not update the public listing.
 See [iOS setup, validation and distribution](docs/IOS.md). Device and language support are checked
 per feature; Apple Intelligence is independent of recording. The [compatibility support](docs/device-compatibility.md)
 includes local dictation fallback for compatible older iPads and explicit unavailable-feature recovery
@@ -85,14 +86,15 @@ make ios-test
 
 ## Screenshots
 
-**iPhone, iPad and Apple Watch · candidate 1.20.3 (43)**
+**iPhone, iPad and Apple Watch · TestFlight 1.20.3 (43)**
 
 Fresh native simulator previews from candidate source `8dc8dd3`, using synthetic demonstration
 content. Tap an image for the unchanged full-resolution original. All **57 images across seven
-device profiles** were inspected; the seven previews below passed visual selection. Build 43 has
-not been accepted by TestFlight, and these images have not been uploaded to Apple's listing.
+device profiles** were inspected; the seven previews below passed visual selection. Their app inputs
+match published source `97ef2461`. Apple accepted build 43; these images have not been uploaded to
+Apple's listing or attached as GitHub release assets.
 [Capture source, checksums and all visual assessments](docs/images/ios/release-1.20.3/manifest.json) ·
-[What to Test](metadata/ios/en-US/what-to-test-1.20.3.txt).
+[Release notes and What to Test](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.3-build43).
 
 ### iPhone
 
@@ -102,27 +104,27 @@ not been accepted by TestFlight, and these images have not been uploaded to Appl
     <th align="center">Conversation instructions</th>
   </tr>
   <tr>
-    <td align="center"><a href="docs/images/ios/release-1.20.3/01-iphone-translation.png"><img src="docs/images/ios/release-1.20.3/01-iphone-translation.png" width="220" alt="Candidate 1.20.3 (43) on iPhone Pro Max: English transcript with French translation and Quick summary."></a></td>
-    <td align="center"><a href="docs/images/ios/release-1.20.3/02-iphone-prompt.png"><img src="docs/images/ios/release-1.20.3/02-iphone-prompt.png" width="220" alt="Candidate 1.20.3 (43) on iPhone Pro: Notes with a conversation prompt, domain presets and Save instructions."></a></td>
+    <td align="center"><a href="docs/images/ios/release-1.20.3/01-iphone-translation.png"><img src="docs/images/ios/release-1.20.3/01-iphone-translation.png" width="220" alt="TestFlight 1.20.3 (43) simulator preview on iPhone Pro Max: English transcript with French translation and Quick summary."></a></td>
+    <td align="center"><a href="docs/images/ios/release-1.20.3/02-iphone-prompt.png"><img src="docs/images/ios/release-1.20.3/02-iphone-prompt.png" width="220" alt="TestFlight 1.20.3 (43) simulator preview on iPhone Pro: Notes with a conversation prompt, domain presets and Save instructions."></a></td>
   </tr>
 </table>
 
 **Duo / landscape**
 
 <p align="center">
-  <a href="docs/images/ios/release-1.20.3/03-iphone-duo.png"><img src="docs/images/ios/release-1.20.3/03-iphone-duo.png" width="760" alt="Candidate 1.20.3 (43) iPhone Pro Duo landscape: complete concise transcript and Quick answer beside Start, Save and Notes controls."></a>
+  <a href="docs/images/ios/release-1.20.3/03-iphone-duo.png"><img src="docs/images/ios/release-1.20.3/03-iphone-duo.png" width="760" alt="TestFlight 1.20.3 (43) simulator preview iPhone Pro Duo landscape: complete concise transcript and Quick answer beside Start, Save and Notes controls."></a>
   <br><sub>Follow the transcript and Quick answer together.</sub>
 </p>
 
 ### iPad
 
 <p align="center">
-  <a href="docs/images/ios/release-1.20.3/04-ipad-summary.png"><img src="docs/images/ios/release-1.20.3/04-ipad-summary.png" width="540" alt="Candidate 1.20.3 (43) on 13-inch iPad Pro: transcript, Quick Summary and full Summary with decisions and next steps."></a>
+  <a href="docs/images/ios/release-1.20.3/04-ipad-summary.png"><img src="docs/images/ios/release-1.20.3/04-ipad-summary.png" width="540" alt="TestFlight 1.20.3 (43) simulator preview on 13-inch iPad Pro: transcript, Quick Summary and full Summary with decisions and next steps."></a>
   <br><sub>iPad Pro: transcript, Quick Summary and decisions in one workspace.</sub>
 </p>
 
 <p align="center">
-  <a href="docs/images/ios/release-1.20.3/05-ipad-wide.png"><img src="docs/images/ios/release-1.20.3/05-ipad-wide.png" width="760" alt="Candidate 1.20.3 (43) on iPad mini in landscape: complete transcript and Quick summary with listening controls."></a>
+  <a href="docs/images/ios/release-1.20.3/05-ipad-wide.png"><img src="docs/images/ios/release-1.20.3/05-ipad-wide.png" width="760" alt="TestFlight 1.20.3 (43) simulator preview on iPad mini in landscape: complete transcript and Quick summary with listening controls."></a>
   <br><sub>iPad mini: a wide view of the conversation and its key points.</sub>
 </p>
 
@@ -134,8 +136,8 @@ not been accepted by TestFlight, and these images have not been uploaded to Appl
     <th align="center">Ultra · 49 mm</th>
   </tr>
   <tr>
-    <td align="center"><a href="docs/images/ios/release-1.20.3/06-watch-46-recording.png"><img src="docs/images/ios/release-1.20.3/06-watch-46-recording.png" width="180" alt="Candidate 1.20.3 (43) Apple Watch 46 mm simulator: Recording, elapsed time and Stop controls."></a></td>
-    <td align="center"><a href="docs/images/ios/release-1.20.3/07-watch-49-recording.png"><img src="docs/images/ios/release-1.20.3/07-watch-49-recording.png" width="180" alt="Candidate 1.20.3 (43) Apple Watch Ultra 49 mm simulator: Recording, elapsed time and Stop controls."></a></td>
+    <td align="center"><a href="docs/images/ios/release-1.20.3/06-watch-46-recording.png"><img src="docs/images/ios/release-1.20.3/06-watch-46-recording.png" width="180" alt="TestFlight 1.20.3 (43) simulator preview Apple Watch 46 mm: Recording, elapsed time and Stop controls."></a></td>
+    <td align="center"><a href="docs/images/ios/release-1.20.3/07-watch-49-recording.png"><img src="docs/images/ios/release-1.20.3/07-watch-49-recording.png" width="180" alt="TestFlight 1.20.3 (43) simulator preview Apple Watch Ultra 49 mm: Recording, elapsed time and Stop controls."></a></td>
   </tr>
 </table>
 
@@ -769,7 +771,7 @@ saying so. Press **Speakers / edit names** to retry once the network is availabl
 - **`iOS/`**: iPhone/iPad SwiftUI app, active-started microphone capture with the supported on-device
   speech module, Apple Intelligence (Foundation Models) summaries by default on capable devices.
   TestFlight 1.20.1 (41) continues established capture through screen lock with optional AI paused.
-- **`Watch/`**: Apple Watch companion, embedded in the default iOS project; [beta installation and pending device acceptance](docs/watch-beta.md). Included in TestFlight 1.20.2 (42) and public iOS 1.19.1 (39); physical acceptance remains pending.
+- **`Watch/`**: Apple Watch companion, embedded in the default iOS project; [beta installation and pending device acceptance](docs/watch-beta.md). Included in TestFlight 1.20.3 (43) and public iOS 1.19.1 (39); physical acceptance remains pending.
 - **`App/`**: macOS glue — `DualChannelCapture`, `SpeechRecognizerTranscriber`, SwiftUI UI, hotkey.
 
 See [`docs/reviews/2026-09-10/design-and-gap-review.md`](docs/reviews/2026-09-10/design-and-gap-review.md)
@@ -1003,4 +1005,4 @@ speech in another language beneath the original. On **Summary**, choose **Transl
 a separate target and explicit translation of the existing summary. Apple Translation uses installed
 on-device packs; missing pairs offer explicit Prepare languages and unsupported pairs explain why.
 Originals, audio timing, AI providers and normal exports stay authoritative. Watch text can translate
-after import on the phone. TestFlight 1.20.2 (42) adds Cancel, disables duplicate requests and explains stalled native work while preserving originals. See [translation and its verification limits](docs/translation.md).
+after import on the phone. TestFlight 1.20.3 (43) includes Cancel, disables duplicate requests and explains stalled native work while preserving originals. See [translation and its verification limits](docs/translation.md).
