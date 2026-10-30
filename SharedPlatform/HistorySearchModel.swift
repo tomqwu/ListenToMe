@@ -270,6 +270,7 @@ final class HistorySearchModel {
     func search(_ query: String) {
         searchTask?.cancel()
         activeQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        if activeQuery != answerQuestion { clearAnswer() }
         guard !activeQuery.isEmpty else { results = nil; resultsQuery = ""; return }
         let trimmed = activeQuery
         let delay = searchDelay

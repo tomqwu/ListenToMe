@@ -425,7 +425,10 @@ pickup labeled YOU or an enabled toggle alone as proof of system-audio capture.
    "What did we decide about the budget?": the answer cites `[1]`, and clicking the source opens that
    conversation; the line beside **Ask your history** must say nothing leaves the Mac. Switch to AI
    off: the button is disabled with the reason. Switch to Ollama Cloud: the line must name Ollama
-   Cloud as receiving the excerpts. **Clear history**, then confirm
+   Cloud as receiving the excerpts. While an answer streams, change its question: the partial
+   answer must clear and Ask must become available for the new question without waiting for the
+   old provider. Clearing the query must also stop the hidden answer; adding only outer whitespace
+   must preserve it. Late old output must not replace the next answer or sources. **Clear history**, then confirm
    `~/Library/Application Support/ListenToMe Dev/Search Index/` holds only `index.json` (the
    Release build uses `ListenToMe/Search Index/`).
 
@@ -795,7 +798,10 @@ Simulator or device; the Apple Intelligence answer in step 3 needs an eligible d
    the matching excerpts (not whole conversations) and your question to …" before anything is sent.
 3. **Answer and sources.** With Apple Intelligence the footer says the answer stays on this iPhone. Tap
    Ask: the answer cites `[1]`, and tapping a source opens that conversation.
-4. **Deletion.** Delete the budget conversation: searching `money` no longer finds it.
+4. **Question changes.** While an answer streams, change or clear the search field: the old answer
+   clears and a new question can be asked immediately. Late old output must not replace it. Adding
+   only outer whitespace preserves the current request. Recheck the named provider disclosure.
+5. **Deletion.** Delete the budget conversation: searching `money` no longer finds it.
 
 ## iPhone Delete all conversations (#220)
 

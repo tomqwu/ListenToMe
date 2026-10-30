@@ -1,0 +1,1 @@
+Changing or clearing a History question stops its in-progress answer, so you can ask the next question immediately. Late output from the old request cannot replace the new answer. Adding only outer whitespace keeps the current answer running. Your chosen AI provider and excerpt-sharing disclosure are unchanged.

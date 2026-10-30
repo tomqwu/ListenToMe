@@ -1,0 +1,56 @@
+{
+  "feature": "History questions follow the current search field",
+  "scenarios": [
+    {
+      "id": "HISTORYASKCANCEL-001",
+      "name": "Changed question revokes the old answer",
+      "given": "Ask is streaming retrieved excerpts for a saved budget conversation",
+      "when": "the user changes the History search field to Berlin",
+      "then": "the old consumer cancels, partial output clears, Ask can answer Berlin immediately, and a late old provider cannot overwrite its answer or citations; only Berlin excerpts reach the new provider",
+      "covers": [
+        "SharedPlatform/HistorySearchModel.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/HistoryAskQueryCancellationTests.swift",
+          "test": "HistoryAskQueryCancellationTests/testChangingQuestionCancelsOldProviderAndAllowsNewAnswerWithoutLateOverwrite"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYASKCANCEL-002",
+      "name": "Empty query cancels a hidden answer",
+      "given": "Ask is streaming and its answer is visible",
+      "when": "the user clears the History search field",
+      "then": "the old consumer cancels and its answer clears even though the Ask panel disappears; the next question can run without waiting for the old server",
+      "covers": [
+        "SharedPlatform/HistorySearchModel.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/HistoryAskQueryCancellationTests.swift",
+          "test": "HistoryAskQueryCancellationTests/testClearingQuestionCancelsHiddenAnswerAndAllowsNextQuestion"
+        }
+      ]
+    },
+    {
+      "id": "HISTORYASKCANCEL-003",
+      "name": "Whitespace edits preserve the same question",
+      "given": "Ask is streaming an answer for budget",
+      "when": "the user adds only leading and trailing whitespace to the History query",
+      "then": "the same request and partial answer remain active and finish with their original citation",
+      "covers": [
+        "SharedPlatform/HistorySearchModel.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/HistoryAskQueryCancellationTests.swift",
+          "test": "HistoryAskQueryCancellationTests/testTrimEquivalentQuestionKeepsCurrentStreamAndAnswer"
+        }
+      ]
+    }
+  ]
+}
