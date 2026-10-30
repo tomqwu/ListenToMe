@@ -15,9 +15,11 @@ fresh installed Mac images were inspected. [Aggregate/installed receipt](evaluat
 `13573f90` adds only landscape test/catalog coverage to the unchanged app: two native cases passed
 on phone/iPad, zero failures/skips, all 1,074 inputs unchanged. Fresh unqueried landscape/iPad and
 installed Mac gallery images were inspected; phone additional actions retain normal scrolling.
-Current exact-head CI, hosted final-gallery review and merge remain pending. Detailed preservation
-and prior capture-harness limits are in the linked evidence. Additional-language quality remains
-open under #223; negative experiments remain failed.
+PR [#351](https://github.com/tomqwu/ListenToMe/pull/351) merged this work at `0714b9ec` after all
+three required checks passed on head `aa7ec24`. The hosted gallery passed desktop/mobile review;
+matching local/remote branches were deleted and tracking refs pruned. This is merged but unreleased.
+Detailed preservation and prior capture-harness limits are in the linked evidence. Additional-language
+quality remains open under #223; negative experiments remain failed.
 
 ## Mac speaker-name overflow candidate — October 30, 2026
 
@@ -31,11 +33,15 @@ exit 0/reaped, all **1,059 inputs unchanged**. Only `App/MacSpeakerNameButton.sw
 red and green. The rendered name now stays within 100 points and changes zero pixels beyond its column.
 
 [Evidence and limitations](speaker-rename-acceptance.md) · [Exact source hashes](releases/mac-speaker-name-overflow-f26-validation.json).
-The corrected installed candidate, fresh README image and full local validation still need acceptance.
-Keep the fix behind the current #223 feature's validation/merge; no new PR, merge or release is claimed.
-The full-app Mac gallery remains historical; the new History component preview does not show this fix.
-The branch integrates reviewed History head `c8fdcd29`; the focused speaker result remains tied to its
-recorded inputs on base `f26e655`, with no combined native-validation pass claimed.
+The integrated `9a39a12` full attempt passed Core 1,294/seven skips, iOS 606/twelve skips and all
+119 Mac tests, with 1,074 unchanged inputs, but **failed before Watch testing** when Xcode upgraded
+and its simulator framework versions no longer matched. Same-source signed Debug build and four
+real-server contracts passed separately. [Exact component receipt](releases/mac-speaker-name-overflow-9a39-validation.json).
+Xcode component installation requires OS administrator authentication; that owned attempt stopped
+and reaped at the authentication prompt. The corrected installed Mac/VoiceOver acceptance and README
+capture remain blocked by the locked console. No fixture was staged or permission reset requested.
+Local merge `7b19c69` integrates main `0714b9ec` docs/gallery only; runtime/tests/config are unchanged
+from the preserved `9a39a12` candidate. Required CI and PR merge remain pending; no release is claimed.
 
 ## TestFlight 1.20.3 (43) published — October 30, 2026
 
