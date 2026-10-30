@@ -94,6 +94,7 @@ final class MobileAppTests: XCTestCase {
 
     func testAutoSummaryPreferenceSurvivesRelaunch() throws {
         let app = XCUIApplication()
+        app.launchArguments = ["--design-review-fixture"]
         app.launchPastReleaseNotes()
         let toggle = app.switches["Auto summaries"].switches.firstMatch
         XCTAssertTrue(toggle.waitForExistence(timeout: 15))

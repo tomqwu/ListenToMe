@@ -64,6 +64,12 @@ Evidence is retained under
   not reach coverage or native stages and remains failed. Compact Update assertions now explicitly
   check its accessible name and target alongside complete Duo text.
 
+- The next full aggregate passed the core suite/coverage and reached native iOS, where the legacy
+  Auto-persistence journey tried to enable an unavailable provider. That genuine failed assertion
+  exposed an outdated test setup. The journey now uses the existing supported-provider fixture;
+  unavailable-provider refusal remains independently asserted. The failed aggregate was interrupted
+  after the recorded failure and is not counted as complete local validation.
+
 ## Installed Mac integration
 
 The signed Dev candidate was opened separately. Native screenshots and AX readback retain default,

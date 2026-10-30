@@ -6,7 +6,7 @@
       "name": "Explain Auto capability before listening",
       "given": "Apple Intelligence is selected and Auto is saved on or off",
       "when": "the idle workspace opens and the enabled preference is turned off",
-      "then": "manual-only guidance is visible before recording, unavailable Auto cannot be enabled, and the provider, stored preference and recording remain under user control",
+      "then": "manual-only guidance is visible before recording, unavailable Auto cannot be enabled, and the provider, stored preference and recording remain under user control; with an available synthetic provider, explicit Auto toggles persist across relaunch",
       "covers": [
         "iOS/MobileSession.swift",
         "iOS/MobileWorkspaceView.swift",
@@ -22,6 +22,11 @@
           "suite": "ios-ui",
           "file": "iOSTests/MobileUsabilityUITests.swift",
           "test": "MobileUsabilityUITests/testUnavailableAutoExplainsManualUpdatesAndCanBeTurnedOffBeforeListening"
+        },
+        {
+          "suite": "ios-ui",
+          "file": "iOSTests/MobileAppTests.swift",
+          "test": "MobileAppTests/testAutoSummaryPreferenceSurvivesRelaunch"
         }
       ]
     },
