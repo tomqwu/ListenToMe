@@ -13,10 +13,17 @@ both authored transcript lines and all three Quick lines are visible. Content an
 are preserved; accessibility scrolling remains. The earlier README preview changed only fixture data
 at that checkpoint; this follow-up changes compact-landscape production spacing.
 
-Evidence: `2026-10-30/listentome-backlog318-completion/full-validation/`, `duo-compact-red/` and
-`duo-compact-green/`. [Behavior and limits](IOS.md#unreleased-compact-landscape-duo-spacing).
-Fresh full validation, wider UI coverage, exact-head CI and affected installed acceptance remain
-pending. PR #318 remains unmerged; no release, review submission or refreshed README media is claimed.
+On committed `cb4cd313f8f85ae9d1214f0a2ecf2194de255c1a`, follow-up native UI passed **six tests,
+zero failures/skips**: five on iPhone 17 Pro (portrait/rotation, compact controls, accessibility
+scrolling, synthetic recording/Stop and clean Duo), plus clean Duo on Pro Max, both iOS 26.5.
+Both runs ended exit 0/reaped with all **1,043 frozen inputs unchanged**. The unchanged native Pro
+image refreshes the local README preview; the older Max image remains labelled historical.
+[Current image and both run receipts](images/ios/candidate-2026-10-30/manifest.json).
+
+Evidence: `2026-10-30/listentome-backlog318-completion/full-validation/`, `duo-compact-red/`,
+`duo-compact-green/` and `duo-focused-preparation/`. [Behavior and limits](IOS.md#unreleased-compact-landscape-duo-spacing).
+Fresh full validation, exact-head CI, hosted README rendering and affected installed acceptance
+remain pending. PR #318 remains unmerged; no release, review submission or Store-media upload is claimed.
 
 # Backlog completion scope — October 30, 2026
 

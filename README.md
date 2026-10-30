@@ -109,13 +109,15 @@ Apple's listing or establish physical-device or translation-quality acceptance.
 **Duo / landscape · unreleased candidate**
 
 <p align="center">
-  <a href="docs/images/ios/candidate-2026-10-29/iphone-duo.png"><img src="docs/images/ios/candidate-2026-10-29/iphone-duo.png" width="760" alt="Unreleased iPhone Duo candidate showing a concise synthetic transcript and Quick answer side by side in landscape."></a>
+  <a href="docs/images/ios/candidate-2026-10-30/iphone-duo.png"><img src="docs/images/ios/candidate-2026-10-30/iphone-duo.png" width="760" alt="Unreleased iPhone Duo candidate showing a concise synthetic transcript and Quick answer side by side in landscape."></a>
   <br><sub>Follow the transcript and Quick answer together, with recording and Notes controls in reach.</sub>
 </p>
 
-Fresh native preview from `f3b35f4`, using a short synthetic example in the real app views.
-It is separate from the published build-42 images above; it changes no production layout.
-[Capture source, native resolution and BDD evidence](docs/images/ios/candidate-2026-10-29/manifest.json).
+Native iPhone 17 Pro preview from `cb4cd31`, using a short synthetic example in the real app views.
+The candidate improves compact-landscape spacing; the Pro and Pro Max focused runs passed six tests.
+Configured version 1.20.2 (42) is unreleased candidate source, separate from the published build-42
+images above; no new binary or App Store media upload is claimed.
+[Capture source, native resolution and test evidence](docs/images/ios/candidate-2026-10-30/manifest.json).
 
 ### iPad
 
@@ -146,6 +148,16 @@ Simulated recording controls; physical microphone, wrist-down and paired-transfe
 
 <details>
 <summary>Historical Mac and iPhone/iPad layouts</summary>
+
+**iPhone Duo · October 29 candidate checkpoint**
+
+This earlier Pro Max preview from `f3b35f4` used a concise synthetic fixture without changing
+production layout at that checkpoint. It predates the compact-landscape spacing fix above.
+[Original capture manifest](docs/images/ios/candidate-2026-10-29/manifest.json).
+
+<p align="center">
+  <a href="docs/images/ios/candidate-2026-10-29/iphone-duo.png"><img src="docs/images/ios/candidate-2026-10-29/iphone-duo.png" width="760" alt="Historical October 29 iPhone Pro Max Duo candidate before the compact-landscape spacing fix."></a>
+</p>
 
 **macOS · historical workspace**
 

@@ -1,0 +1,104 @@
+{
+  "purpose": "README native iPhone compact-landscape Duo preview",
+  "status": "unreleased candidate; configured version matches42 but this is not the published TestFlight binary or uploaded AppStore media",
+  "sourceCommit": "cb4cd313f8f85ae9d1214f0a2ecf2194de255c1a",
+  "configuredVersion": "1.20.2",
+  "configuredBuild": "42",
+  "configuration": "Debug simulator; isolated synthetic content and preview adapters",
+  "device": "iPhone 17 Pro",
+  "runtime": "iOS26.5",
+  "locale": "en-US authored synthetic copy",
+  "orientation": "landscapeLeft",
+  "captureTest": "ListenToMeIOSUITests/MobileReleaseScreenshotTests/testCaptureCleanDuoPreview",
+  "scenario": "READMEPREVIEW-001",
+  "sourceIntegrity": {
+    "frozenInputCount": 1043,
+    "unchangedDuringBothRuns": true,
+    "headUnchangedDuringBothRuns": true
+  },
+  "image": {
+    "file": "iphone-duo.png",
+    "sha256": "25d83ab4bbaa2d7b53e4dc5da45b1e61eb7cdbf5dfbc2cf6a46c2856772eb0ce",
+    "storedPixels": [
+      1206,
+      2622
+    ],
+    "exifOrientation": 8,
+    "displayPixels": [
+      2622,
+      1206
+    ],
+    "edited": false,
+    "originalAttachment": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-backlog318-completion/duo-focused-preparation/pro-focused/independent-attachments/F5E48C26-5361-4AD2-97AB-85BE2CEC691B.png"
+  },
+  "selection": "Pro original chosen for complete short transcript/Quick composition. Max content test passed but its partially visible Auto control makes that attachment QA-only for this gallery choice.",
+  "validation": {
+    "focusedRed": "one native method, two genuine clipping assertions, exit65/reaped",
+    "initialFocusedGreen": "same strengthened method, one pass, exit0/reaped",
+    "followupTotal": {
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0
+    },
+    "runs": [
+      {
+        "profile": "pro-focused",
+        "sourceCommit": "cb4cd313f8f85ae9d1214f0a2ecf2194de255c1a",
+        "device": "iPhone 17 Pro",
+        "runtime": "iOS 26.5",
+        "frozenInputCount": 1043,
+        "inputHashMismatches": [],
+        "returncode": 0,
+        "reaped": true,
+        "elapsedSeconds": 99.780248958,
+        "passedTests": 5,
+        "failedTests": 0,
+        "skippedTests": 0,
+        "evidenceDirectory": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-backlog318-completion/duo-focused-preparation/pro-focused",
+        "filesSHA256": {
+          "command.json": "80ebfbbd2b8571e31c362401cd3dba60ba5a43391c9f5c3d2206c40deea296f2",
+          "inputs.json": "6b512c0280ffb043a19fcd68640961b3fd2653bf04098de07a6ee40fcb7edc63",
+          "source-check.json": "e041e3fa0736bb8e583f43e024e075f9bb71169a8ceee9e62228ace1acb7e9b9",
+          "runner-state.json": "78be3cd8835a2161e879ff2c75634a2bc0ac6da5373b30160d1dd2301e2b31ca",
+          "reference.log": "c42fd033dd4ae6cfcd736884bd6d52207228d5d8dcd4e05526847e2f0de3d4f4"
+        }
+      },
+      {
+        "profile": "pro-max-clean",
+        "sourceCommit": "cb4cd313f8f85ae9d1214f0a2ecf2194de255c1a",
+        "device": "iPhone 17 Pro Max",
+        "runtime": "iOS 26.5",
+        "frozenInputCount": 1043,
+        "inputHashMismatches": [],
+        "returncode": 0,
+        "reaped": true,
+        "elapsedSeconds": 29.274065209,
+        "passedTests": 1,
+        "failedTests": 0,
+        "skippedTests": 0,
+        "evidenceDirectory": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-backlog318-completion/duo-focused-preparation/pro-max-clean",
+        "filesSHA256": {
+          "command.json": "092bea42bf1a998a9a80181a7502c9712757203d53bc2f84924bd080ed7e359c",
+          "inputs.json": "54e1a28d64542a86ab76d9315782e2dbe5589a72d1d7ea7c8d7c2e89bcf7acd8",
+          "source-check.json": "e041e3fa0736bb8e583f43e024e075f9bb71169a8ceee9e62228ace1acb7e9b9",
+          "runner-state.json": "90f8d49f1dc2476b1d8982507ec9757a3275026fafb1f301716d82fffdb6df6a",
+          "reference.log": "740670de188d4a01a41b39189bed05324f35e9d123226300c5186d9eab2c5c22"
+        }
+      }
+    ],
+    "independentProReview": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-backlog318-completion/duo-focused-preparation/pro-focused/independent-review.json",
+    "independentProReviewSHA256": "9848cde073d5d17d83452846e3f8050b9b47a19b3e9b759795034c4feca9071e",
+    "imageReview": "Root and independent reviewer inspected clean Pro content; raw bytes retained.",
+    "fullValidation": "fresh run pending; prior95ac aggregate failed1genuine/canceled1",
+    "currentCI": "pending for current source; preceding95ac all3green",
+    "githubRender": "pending after commit/push"
+  },
+  "previousPreview": "../candidate-2026-10-29/manifest.json",
+  "limitations": [
+    "Concise synthetic content, not all long transcript/status controls fit.",
+    "Simulator native UI; no physical-device or installed Mac/capture acceptance.",
+    "No new binary upload, AppStore media upload, review submission or publication."
+  ],
+  "createdAt": "2026-10-30T15:13:50.251354+00:00",
+  "simulatorLocale": "not independently read back"
+}
