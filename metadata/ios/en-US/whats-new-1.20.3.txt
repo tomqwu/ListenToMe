@@ -1,0 +1,13 @@
+Updates since 1.19.1:
+
+• Translate completed speech and summaries on-device while keeping the original text and speaker labels. Choose a separate target on the Summary page. Prepare missing language packs only when you choose; unsupported pairs show guidance.
+• Cancel pending summary translation. Duplicate requests stay unavailable while native work is running or stopping. Stalled requests show recovery guidance; late results cannot replace newer work.
+• Keep an established microphone recording active through screen lock or app switching until Stop or an audio interruption. Improve live-word continuity across automatic language changes, attempt bounded recovery after a stall and show a possible-gap notice when needed. Optional AI pauses while inactive; audio saving stays your choice.
+• Rename an identified speaker from the transcript throughout that conversation and Notes. Save explicitly or cancel without changing names. Available on iPhone and iPad, including Duo.
+• Give transcript and Quick Summary more reading room in landscape Duo on shorter iPhones. Preserve large-text scrolling and usable recording controls.
+• Keep saved-audio labels, time and playback controls readable at accessibility sizes. Preserve the final audio samples when re-transcribing saved audio or importing Watch recordings.
+• Make essential translation guidance easier to read. Correct Settings to explain screen-lock recording, optional AI pauses and interruptions.
+• Refresh History results after saving, protect cleared or newer data from older indexing work and preserve installed Apple query models. Improve case-sensitive word lookup and reject generic German/Spanish planning matches when on-device language analysis is available.
+• Identify manual, AI and unknown transcript-correction provenance accurately in Markdown while retaining original wording.
+
+Review translated wording before sharing. Language support and accuracy depend on the device and installed packs. Translation and language analysis stay on-device; optional AI providers and audio saving remain your explicit choices.

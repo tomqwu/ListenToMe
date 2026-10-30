@@ -63,10 +63,10 @@
     },
     {
       "id": "RELEASE-004",
-      "name": "Identify the translation recovery beta and bundled changes accurately",
-      "given": "a user updates to the Watch-enabled translation recovery beta using standard or the largest accessibility text",
+      "name": "Identify the conversation-controls beta and bundled changes accurately",
+      "given": "a user updates to the Watch-enabled conversation-controls beta using standard or the largest accessibility text",
       "when": "What\u2019s New appears or is reopened",
-      "then": "the app identifies version 1.20.2 build 42 with its Recover stalled translations notes, acknowledges the update once, and keeps the oldest release heading and Continue usable at the largest text size",
+      "then": "the app identifies version 1.20.3 build 43 with its Clearer conversations and controls notes, acknowledges the update once, and keeps the oldest release heading and Continue usable at the largest text size",
       "covers": [
         "project.yml",
         "iOS/MobileReleaseNotes.swift",
