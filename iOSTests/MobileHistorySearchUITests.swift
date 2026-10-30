@@ -19,7 +19,12 @@ final class MobileHistorySearchUITests: XCTestCase {
             ? "twoPaneMeetingWorkspace" : "wideMeetingWorkspace"
         XCTAssertTrue(app.otherElements[workspace].waitForExistence(timeout: 5))
         app.buttons["History"].tap()
+        let history = app.collectionViews.containing(.button, identifier: "history-refresh").firstMatch
+        XCTAssertTrue(history.waitForExistence(timeout: 5))
         let field = app.searchFields.firstMatch
+        if !field.waitForExistence(timeout: 2) {
+            history.swipeDown() // Reveal the standard collapsed search drawer on iPad.
+        }
         XCTAssertTrue(field.waitForExistence(timeout: 5)); field.tap(); field.typeText("prototype")
         let result = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label CONTAINS %@", "review the prototype")).firstMatch
@@ -32,7 +37,7 @@ final class MobileHistorySearchUITests: XCTestCase {
         let disclosure = app.staticTexts["history-ask-disclosure"]
         let record = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "history-record-")).firstMatch
         XCTAssertTrue(record.waitForExistence(timeout: 5)); XCTAssertTrue(record.label.contains("Product planning"))
-        let viewport = app.collectionViews.firstMatch.frame.intersection(app.windows.firstMatch.frame)
+        let viewport = history.frame.intersection(app.windows.firstMatch.frame)
         XCTAssertFalse(viewport.isEmpty)
         for element in [refresh, ask, record] {
             XCTAssertTrue(element.exists); XCTAssertTrue(element.isHittable)
@@ -51,7 +56,8 @@ final class MobileHistorySearchUITests: XCTestCase {
         XCTAssertEqual(field.value as? String, "prototype")
         XCTAssertTrue(refresh.isHittable); XCTAssertTrue(ask.isHittable); XCTAssertTrue(record.isHittable)
         XCTAssertFalse(app.alerts.firstMatch.exists); XCTAssertFalse(app.keyboards.firstMatch.exists)
-        let shot = XCTAttachment(screenshot: app.screenshot()); shot.name = "Landscape History refresh and result"
+        let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        shot.name = "Landscape History refresh and result"
         shot.lifetime = .keepAlways; add(shot)
     }
 
