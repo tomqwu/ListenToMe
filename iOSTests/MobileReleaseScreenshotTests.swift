@@ -12,7 +12,8 @@ final class MobileReleaseScreenshotTests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["--design-review-fixture", "--release-duo-fixture", "-autoQuickSummary", "NO",
                                "-mobileAIProvider", "apple", "-mobileCorrectTranscript", "NO",
-                               "-mobileIdentifySpeakers", "YES"]
+                               "-mobileIdentifySpeakers", "YES",
+                               "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryL"]
         XCUIDevice.shared.orientation = .landscapeLeft
         defer {
             capture("Duo preview transcript and Quick visibility")
@@ -44,6 +45,8 @@ final class MobileReleaseScreenshotTests: XCTestCase {
         XCTAssertTrue(app.buttons["Start listening"].isEnabled)
         XCTAssertTrue(app.buttons["Start listening"].isHittable)
         XCTAssertTrue(app.buttons["Notes"].isHittable)
+        XCTAssertGreaterThanOrEqual(app.buttons["Start listening"].frame.height, 44)
+        XCTAssertGreaterThanOrEqual(app.buttons["Notes"].frame.height, 44)
         XCTAssertTrue(window.contains(app.buttons["Start listening"].frame))
         XCTAssertTrue(window.contains(app.buttons["Notes"].frame))
         XCTAssertFalse(app.buttons["Stop listening"].exists)

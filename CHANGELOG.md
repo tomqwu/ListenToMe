@@ -15,7 +15,9 @@ does not show it again, and a fresh install does not see it at all; see
 
 - Require current README screenshots with device-grouped layouts, full-size links and capture
   provenance. Add a concise native Duo preview and a BDD capture check that rejects clipped sample
-  text. Default fixtures and production layouts are unchanged; no binary release is required.
+  text. That earlier preview changed only its optional short fixture; default fixture data and
+  production layouts were unchanged at that checkpoint. The later compact-landscape app fix is
+  listed under iOS below.
 
 - Propagate failed native build/test pipelines through Apple's GNU make 3.81, preserve diagnostics
   and stop later success checks. Add offline tests of the actual make recipes and bind the
@@ -35,6 +37,9 @@ does not show it again, and a fresh install does not see it at all; see
   as passing.
 
 ## iOS (unreleased)
+
+- Give transcript and Quick Summary more reading room in compact landscape Duo, including shorter
+  non-Max iPhones. Preserve existing content, 44-point controls and accessibility scrolling.
 
 - Avoid unrelated History suggestions and Ask excerpts from generic German/Spanish planning
   questions when on-device language analysis is available. Preserve literal searches, real topics

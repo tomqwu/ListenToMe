@@ -35,7 +35,8 @@ struct MobileMeetingView: View {
                 MobileWorkspaceView(session: session, selection: $workspace, chooseModel: { role in
                     if session.ai.provider == .apple { showSettings = true } else { modelRole = role }
                 }, accessibilityHeader: { status })
-                    .padding(.horizontal, 20).padding(.bottom, 12)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, verticalSizeClass == .compact && !dynamicTypeSize.isAccessibilitySize ? 4 : 12)
             }
             .background {
                 LinearGradient(colors: [MobileStyle.accent.opacity(0.07), .clear], startPoint: .top, endPoint: .center)

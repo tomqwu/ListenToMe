@@ -4,11 +4,13 @@
     {
       "id": "READMEPREVIEW-001",
       "name": "A concise synthetic conversation is readable in the Duo preview",
-      "given": "the isolated simulator preview has two finalized synthetic transcript lines and an authored Quick answer at standard text size",
-      "when": "its iPhone workspace is opened in landscape for a README screenshot",
-      "then": "the real Duo layout shows both complete authored lines and the complete Quick answer in their separate viewports, with usable idle Start and Notes controls and no debug, recovery or alert overlay; this does not require all scrollable status controls or long conversations to fit",
+      "given": "the isolated simulator preview has two finalized synthetic transcript lines and an authored Quick answer at standard text size on an iPhone 17 Pro or Pro Max",
+      "when": "its iPhone workspace is opened in landscape for a README screenshot, including the shorter non-Max viewport",
+      "then": "the real Duo layout shows both complete authored lines and the complete Quick answer in their separate viewports, with idle Start and Notes controls at least 44 points high and no debug, recovery or alert overlay; this does not require all scrollable status controls or long conversations to fit",
       "covers": [
         "iOS/MobileDesignFixture.swift",
+        "iOS/MobileMeetingView.swift",
+        "iOS/MobileWorkspaceView.swift",
         "iOSTests/MobileReleaseScreenshotTests.swift"
       ],
       "bindings": [

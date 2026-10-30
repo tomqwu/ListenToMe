@@ -35,7 +35,7 @@ struct MobileWorkspaceView<Header: View>: View {
                     summaryPanel(.summary)
                 }.accessibilityElement(children: .contain).accessibilityIdentifier("wideMeetingWorkspace")
             } else {
-                VStack(spacing: 14) {
+                VStack(spacing: layout == .twoPane ? 6 : 14) {
                     HStack(spacing: 8) {
                         Picker("Workspace", selection: $selection) {
                             ForEach(MobileWorkspace.allCases, id: \.self) { page in
@@ -255,7 +255,8 @@ struct MobileWorkspaceView<Header: View>: View {
                         Text(reason).font(.caption).foregroundStyle(MobileStyle.muted)
                             .accessibilityIdentifier("reason-\(mode.rawValue)")
                     }
-                }.frame(maxWidth: .infinity, alignment: .leading).padding(16)
+                }.frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16).padding(.vertical, compact ? 8 : 16)
             }
         }.frame(maxWidth: .infinity, maxHeight: scrolling ? nil : .infinity, alignment: .topLeading)
             .modifier(MobileCard())

@@ -1,3 +1,23 @@
+# Compact Duo layout recovery — October 30, 2026
+
+Full `make validate-local` on `95ac6387c112d82a083170caa95d6d88a3a893ed` failed the clean Duo
+preview on the shorter **iPhone 17 Pro / iOS 26.5 simulator**: transcript and Quick text crossed
+their reader viewports. The owned run was interrupted after genuine assertions and ended exit 2,
+reaped. Its iOS bundle has **50 passed, five skipped, one genuinely failed and one canceled** test;
+the canceled test is not a second product failure, and the aggregate did not pass.
+
+The same strengthened `READMEPREVIEW-001` test reproduced two clipping assertions in the focused
+red run (exit 65). A minimal production spacing fix then passed the unchanged test: **one case,
+zero failures, exit 0, reaped**, with recorded inputs unchanged. The native image was inspected:
+both authored transcript lines and all three Quick lines are visible. Content and 44-point controls
+are preserved; accessibility scrolling remains. The earlier README preview changed only fixture data
+at that checkpoint; this follow-up changes compact-landscape production spacing.
+
+Evidence: `2026-10-30/listentome-backlog318-completion/full-validation/`, `duo-compact-red/` and
+`duo-compact-green/`. [Behavior and limits](IOS.md#unreleased-compact-landscape-duo-spacing).
+Fresh full validation, wider UI coverage, exact-head CI and affected installed acceptance remain
+pending. PR #318 remains unmerged; no release, review submission or refreshed README media is claimed.
+
 # Backlog completion scope — October 30, 2026
 
 PR #318 is being narrowed to its completed fixes and independently tested Apple History/indexing

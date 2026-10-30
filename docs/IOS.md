@@ -14,6 +14,30 @@ and failed results are preserved for continuing #223. [Implementation and BDD ev
 Settings also corrects its screen-lock explanation to match continued user-started recording.
 No version or in-app release-note announcement has been advanced by this scope correction.
 
+## Unreleased compact-landscape Duo spacing
+
+Compact, non-accessibility landscape now uses less space between the workspace tabs and panes,
+below the workspace and around Quick content. This gives the actual transcript and Quick readers
+more room on shorter, non-Max iPhones. The two authored transcript lines and three-line Quick
+answer are unchanged, as are the 44-point controls, transcript scrolling and accessibility fallback.
+Portrait and wide iPad spacing are unchanged.
+
+`READMEPREVIEW-001` binds `MobileReleaseScreenshotTests/testCaptureCleanDuoPreview` to complete
+sample text inside both actual reader viewports. Full validation of `95ac6387c112d82a083170caa95d6d88a3a893ed`
+failed this check on an **iPhone 17 Pro / iOS 26.5 simulator** and was interrupted after the genuine
+assertion failure. Its bundle records 50 passed, five skipped, one genuinely failed and one canceled
+test; the cancellation is not a second product failure. A focused replay then failed the same test
+with two clipping assertions (exit 65). After the spacing fix, the unchanged strengthened test passed
+one case (exit 0, reaped); the inspected native image shows both transcript lines and all three Quick
+lines. The focused runs preserved their recorded inputs without mismatches.
+
+Commands, native bundles, input checks and runner receipts are retained under
+`2026-10-30/listentome-backlog318-completion/{full-validation,duo-compact-red,duo-compact-green}/`
+in the external evidence directory. The earlier README preview was a fixture-only change at its
+capture checkpoint; this follow-up changes production layout. Fresh full validation, wider UI checks,
+current CI and affected installed acceptance remain pending. No release or new screenshot publication
+is claimed.
+
 ## Current TestFlight beta — 1.20.2 (42)
 
 Apple accepted **1.20.2 (42)** through the official TestFlight helper at **2026-10-28T21:11:37.664213+00:00** from `a6b90e83f775cc9dc88df3c2805ecacedca044af`. Apple build `8967f095-470f-40c0-aba0-b1188bbb699c` is **VALID / IN_BETA_TESTING**. Readback at 2026-10-28T21:15:33.796221+00:00 confirms **en-US**, **Listen To Me - Real Time AI**, exact beta description/What to Test and unchanged access for the existing two-member Dev group. Access does not establish physical installation of build 42.
