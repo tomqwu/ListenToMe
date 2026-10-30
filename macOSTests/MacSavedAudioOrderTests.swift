@@ -95,6 +95,7 @@ extension MacSavedAudioOrderTests {
     private struct RenderedText {
         let text: String
         let bounds: CGRect // Vision's normalized lower-left origin.
+        let disclosureChevron: CGRect?
     }
 
     private func line(_ text: String, _ start: TimeInterval, run: UUID?,
@@ -129,7 +130,7 @@ extension MacSavedAudioOrderTests {
         let owner = MacSavedAudio(library: library)
         defer { owner.playback.stop() }
         XCTAssertTrue(owner.library === library)
-        XCTAssertEqual(owner.playback.library.root, root.appendingPathComponent("Audio"))
+        XCTAssertEqual(owner.playback.library.root.path, root.appendingPathComponent("Audio").path)
         XCTAssertFalse(owner.enabled)
         XCTAssertEqual(owner.retentionDays, 0)
         XCTAssertNil(owner.runs.recorder.recordingConversation)
@@ -158,7 +159,10 @@ extension MacSavedAudioOrderTests {
         try await Task.sleep(for: .milliseconds(150))
         let collapsed = try recognize(host, name: "Saved-audio collapsed real History section")
         let disclosure = try unique("Play from a line", in: collapsed)
-        try await click(disclosure.bounds, host: host, window: window)
+        XCTAssertFalse(expandedLineList(in: host))
+        let chevron = try XCTUnwrap(disclosure.disclosureChevron, "Locate the rendered disclosure glyph")
+        try await click(chevron, host: host, window: window)
+        try await waitUntil { expandedLineList(in: host) }
         let rendered = try recognize(host, name: "Saved-audio expanded real History section")
         let found = try expected.map { (expected: $0, rendered: try unique($0.text, in: rendered)) }
         XCTAssertFalse(rendered.contains { $0.text.contains("UNTIMED BOUNDARY") }, "Untimed lines have no seek control")
@@ -230,10 +234,18 @@ extension MacSavedAudioOrderTests {
         request.usesLanguageCorrection = false
         try VNImageRequestHandler(cgImage: XCTUnwrap(bitmap.cgImage), options: [:]).perform([request])
         let result = (request.results ?? []).compactMap { observation -> RenderedText? in
-            guard let text = observation.topCandidates(1).first?.string else { return nil }
-            return RenderedText(text: text, bounds: observation.boundingBox)
+            guard let candidate = observation.topCandidates(1).first else { return nil }
+            let text = candidate.string
+            var chevron: CGRect?
+            if text.hasPrefix(">") {
+                let first = text.startIndex..<text.index(after: text.startIndex)
+                chevron = try? candidate.boundingBox(for: first)?.boundingBox
+            }
+            return RenderedText(text: text, bounds: observation.boundingBox, disclosureChevron: chevron)
         }
-        let observed = XCTAttachment(string: result.map { "\($0.text) \($0.bounds)" }.joined(separator: "\n"))
+        let observed = XCTAttachment(string: result.map {
+            "\($0.text) \($0.bounds) chevron=\(String(describing: $0.disclosureChevron))"
+        }.joined(separator: "\n"))
         observed.name = name + " observed text positions"; observed.lifetime = .keepAlways; add(observed)
         return result
     }
@@ -244,6 +256,12 @@ extension MacSavedAudioOrderTests {
         return try XCTUnwrap(matches.count == 1 ? matches.first : nil)
     }
 
+    private func expandedLineList(in view: NSView) -> Bool {
+        if let scroll = view as? NSScrollView, !scroll.isHiddenOrHasHiddenAncestor,
+           scroll.visibleRect.height > 0, scroll.documentVisibleRect.height > 0 { return true }
+        return view.subviews.contains { expandedLineList(in: $0) }
+    }
+
     private func click(_ bounds: CGRect, host: NSView, window: NSWindow) async throws {
         XCTAssertGreaterThan(bounds.width, 0); XCTAssertGreaterThan(bounds.height, 0)
         let local = NSPoint(x: bounds.midX * host.bounds.width,
@@ -251,6 +269,8 @@ extension MacSavedAudioOrderTests {
         XCTAssertTrue(host.bounds.contains(local))
         _ = try XCTUnwrap(host.hitTest(local), "Rendered row must have a native hit target")
         let point = host.convert(local, to: nil), time = ProcessInfo.processInfo.systemUptime
+        let mapping = XCTAttachment(string: "normalized=\(bounds), hostPoint=\(local), windowPoint=\(point)")
+        mapping.name = "Actual native pointer mapping"; mapping.lifetime = .keepAlways; add(mapping)
         let down = try XCTUnwrap(NSEvent.mouseEvent(with: .leftMouseDown, location: point, modifierFlags: [],
             timestamp: time, windowNumber: window.windowNumber, context: nil,
             eventNumber: 1, clickCount: 1, pressure: 1))
