@@ -223,8 +223,10 @@ struct MacSavedAudioSection: View {
     }
 
     private var seekableLines: [SeekableLine] {
-        (record.segments ?? []).enumerated().compactMap { index, segment in
-            audio.playback.target(for: segment, index: index).map {
+        let canonical = record.segments ?? []
+        return TranscriptPresentation.orderedIndices(canonical).compactMap { index in
+            let segment = canonical[index]
+            return audio.playback.target(for: segment, index: index).map {
                 SeekableLine(id: index, segment: segment, target: $0)
             }
         }
