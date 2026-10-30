@@ -1,0 +1,218 @@
+{
+  "version": "1.20.3",
+  "build": "43",
+  "source": "97ef2461b86869405c1d0f4221816b790f0216fd",
+  "sourceTree": "a1b8f49c59ebd5b47de4f771d034a6c25c45c69d",
+  "mergeCommit": "3106bcd880c2ae888fe31051df36a87bdc70e764",
+  "status": "composite_automated_pass",
+  "fullValidationRerunFor43": false,
+  "scope": "Reuse the full validated functional baseline, then validate the release notes/version delta, fresh device captures, exact-source CI and actual signed packages. No new complete make validate-local run is claimed on build 43.",
+  "fullBaseline": {
+    "source": "5f1e9092c2b26b99ab5bce98f8b700767197cecf",
+    "treeIdenticalMergedCommit": "388a5c7efcb0bf65e35a7db6ea08b5c59a7d8a1e",
+    "tree": "d568a319674947413eded14cebdbc8da6bce2c24",
+    "command": "make validate-local",
+    "returncode": 0,
+    "reaped": true,
+    "inputCount": 1044,
+    "hashMismatches": [],
+    "core": {
+      "tests": 1291,
+      "optionalSkips": 7,
+      "failures": 0,
+      "coveragePercent": 98.07663068268208
+    },
+    "native": {
+      "ios": {
+        "total": 602,
+        "passed": 590,
+        "skipped": 12,
+        "failed": 0
+      },
+      "mac": {
+        "total": 109,
+        "passed": 109,
+        "skipped": 0,
+        "failed": 0
+      },
+      "watch": {
+        "total": 34,
+        "passed": 34,
+        "skipped": 0,
+        "failed": 0
+      }
+    },
+    "bddScenarios": 236,
+    "realServerContracts": 4,
+    "requiredCIRun": 41078938853,
+    "auditSHA256": "39f55f45b12bd800a9d2b4b237f1c0328573ce1f7c454572f4b106817a0d5663",
+    "evidenceIdentifier": "2026-10-30/listentome-backlog318-completion/full-validation-retry"
+  },
+  "releaseDelta": {
+    "candidateSource": "8dc8dd35be9474f9789e284fefe94c966d11d476",
+    "runtimeConfigToolingInputsCompared": 421,
+    "changedRuntimePaths": [
+      "iOS/MobileReleaseNotes.swift"
+    ],
+    "projectOnlyThreeMobileVersionBuildPairs": true,
+    "macVersionSettingsUnchanged": true,
+    "red": {
+      "exit": 65,
+      "reaped": true,
+      "assertionFailures": 2
+    },
+    "green": {
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "exit": 0,
+      "reaped": true,
+      "frozenInputs": 1044,
+      "hashMismatches": [],
+      "selectors": [
+        "MobileReleaseNotesTests/testCurrentReleaseNotesMatchTheInstalledMarketingVersion",
+        "MobileReleaseNotesTests/testFirstInstallSeedsTheAcknowledgementInsteadOfPresentingAnUpdate",
+        "MobileReleaseNotesTests/testNewestBundledReleaseIsLabelledAsThisUpdate",
+        "MobileReleaseNotesTests/testNotesIdentityTracksTheNewestBundledReleaseNotTheBuildNumber",
+        "MobileReleaseNotesTests/testOnlyChangedReleaseNotesPresentAgainAndAcknowledgementPersists",
+        "MobileReleaseNotesUITests/testLargeTextKeepsContinueReachableAndHistoryScrollable",
+        "MobileReleaseNotesUITests/testUpdateShowsVersionOnceAndChangelogCanBeReopened"
+      ]
+    },
+    "candidateAppConfigTestHashesMatchGreen": true,
+    "documentationUpdatedAfterGreen": [
+      "docs/HANDOFF.md",
+      "docs/IOS.md"
+    ],
+    "independentReviewSHA256": "7414fb07b8ddbb096c0e3efa4694f31ab19dcf65bebb611a161883d985a6c7bd",
+    "greenStateSHA256": "51eb5c0b51e0beb071361e8cbb88c643cd80707413dafbb508f28898c063c749"
+  },
+  "captures": {
+    "source": "8dc8dd35be9474f9789e284fefe94c966d11d476",
+    "profiles": 7,
+    "images": 57,
+    "nativeTests": {
+      "passed": 17,
+      "failed": 0,
+      "skipped": 0
+    },
+    "allInspected": true,
+    "selectedREADMEImages": 7,
+    "catalog": "../images/ios/release-1.20.3/manifest.json",
+    "externalCatalogSHA256": "ffb2dc395f5986995587298180b717a2997b72c23649116f45655a2ab7084c62",
+    "reviewReceiptSHA256": "6f70e9e00a326315e34ce4757001e15420dd56ed297bd50c74b727b42c676483",
+    "listingUploaded": false
+  },
+  "hostedGallery": {
+    "source": "97ef2461b86869405c1d0f4221816b790f0216fd",
+    "status": "passed",
+    "viewportWidths": [
+      1280,
+      390
+    ],
+    "allHostedImagesLoaded": 29,
+    "newGalleryImages": 7,
+    "nativeImagesUnchanged": true,
+    "visualReviewSHA256": "0c94133bb9dda1a813d1d38b8dfc9057904bba8810b907e7a19e312cb2f2d4ff"
+  },
+  "requiredCI": {
+    "source": "97ef2461b86869405c1d0f4221816b790f0216fd",
+    "run": 41092176457,
+    "url": "https://github.com/tomqwu/ListenToMe/actions/runs/41092176457",
+    "checks": {
+      "ListenToMeCore tests + coverage": "SUCCESS",
+      "macOS 26 app build": "SUCCESS",
+      "iOS 26 app build": "SUCCESS"
+    },
+    "checkedAt": "2026-10-30T17:07:02.041726+00:00",
+    "releaseSourceReceiptSHA256": "dae9f67d6d8566d1ee97d027d08905b23bc3d10139bce0bea25d1b84ad279d92"
+  },
+  "distribution": {
+    "source": "97ef2461b86869405c1d0f4221816b790f0216fd",
+    "captureSource": "8dc8dd35be9474f9789e284fefe94c966d11d476",
+    "changesAfterCapture": [
+      "README.md",
+      "docs/HANDOFF.md",
+      "docs/IOS.md",
+      "docs/images/ios/release-1.20.3/01-iphone-translation.png",
+      "docs/images/ios/release-1.20.3/02-iphone-prompt.png",
+      "docs/images/ios/release-1.20.3/03-iphone-duo.png",
+      "docs/images/ios/release-1.20.3/04-ipad-summary.png",
+      "docs/images/ios/release-1.20.3/05-ipad-wide.png",
+      "docs/images/ios/release-1.20.3/06-watch-46-recording.png",
+      "docs/images/ios/release-1.20.3/07-watch-49-recording.png",
+      "docs/images/ios/release-1.20.3/manifest.json"
+    ],
+    "localExportDestination": "export",
+    "localExportIPASHA256": "0f965ccd47c2daa1f08c03d511b037ed3bd5bd3fbc0925f36771e458a640e248",
+    "localPackageVerificationSHA256": "1130415f9915b358a98bef705a61fca00414ac5f0e64385e1054eb48fb1d8bf4",
+    "uploadedIPASHA256": "1e08e6d18a4fa478d5cc06d535fdefed3c2b76f9b7fd3e5d9168d24e6c190d87",
+    "uploadedIPABytes": 11462879,
+    "transportMD5": "d607f683fc63842ccf78a8cba42b59f4",
+    "transportChecksumMatched": true,
+    "uploadedPackageVerificationSHA256": "7ea3b9b3d2594d185aadcb7b1486f02bf21152b828b7ae2aeeffb156358e4765",
+    "helperReceiptSHA256": "5610534f817bda848b819686d2eca1e6133e5479bf762e99deaa5228bee60034",
+    "bundles": [
+      {
+        "bundleID": "com.tomwu.ListenToMe.ios",
+        "version": "1.20.3",
+        "build": "43",
+        "platform": "iPhoneOS",
+        "family": [
+          1,
+          2
+        ],
+        "minimumOS": "26.0",
+        "signatureVerified": true,
+        "get-task-allow": false
+      },
+      {
+        "bundleID": "com.tomwu.ListenToMe.ios.share",
+        "version": "1.20.3",
+        "build": "43",
+        "platform": "iPhoneOS",
+        "family": [
+          1,
+          2
+        ],
+        "minimumOS": "26.0",
+        "signatureVerified": true,
+        "get-task-allow": false
+      },
+      {
+        "bundleID": "com.tomwu.ListenToMe.ios.watchkitapp",
+        "version": "1.20.3",
+        "build": "43",
+        "platform": "WatchOS",
+        "family": [
+          4
+        ],
+        "minimumOS": "26.0",
+        "signatureVerified": true,
+        "get-task-allow": false
+      }
+    ],
+    "testPayloadScan": "pass",
+    "scannedMachO": [
+      "ListenToMeIOS",
+      "Watch/ListenToMeWatch.app/ListenToMeWatch",
+      "PlugIns/ListenToMeShare.appex/ListenToMeShare"
+    ],
+    "verifierRepair": {
+      "initialResult": "KeyError tree before extraction; failed receipt preserved",
+      "repair": "Read existing sourceTree receipt field; no other verifier change and no reupload",
+      "repairedVerifierSHA256": "595596def1447c54598941c14ed1b6efe58814a40758613d4d71514125785f59"
+    }
+  },
+  "physicalAcceptance": false,
+  "productionReady": false,
+  "uploaded": true,
+  "publicationReceipt": "ios-1.20.3-build43.json",
+  "evidenceIdentifier": "2026-10-30/listentome-ios1203-train",
+  "limitations": [
+    "Baseline full-run optional skips retain their original scope.",
+    "Fresh simulator fixtures establish layout and controls, not real translation quality or physical-device acceptance.",
+    "The README capture set has not been uploaded to an Apple listing.",
+    "Earlier failed validation, preview and verifier attempts remain preserved as failures."
+  ]
+}

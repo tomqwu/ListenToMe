@@ -2,54 +2,61 @@
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
 26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`. Public App Store version is
-**1.19.1 (39)** and the latest TestFlight version is **1.20.2 (42)**. See the
+**1.19.1 (39)** and the latest TestFlight version is **1.20.3 (43)**. See the
 [public availability observation](releases/ios-1.19.1-build39-public.json).
 
-## Next TestFlight candidate — 1.20.3 (43)
+<a id="next-testflight-candidate--1203-43"></a>
 
-PR [#318](https://github.com/tomqwu/ListenToMe/pull/318) merged as
-`388a5c7efcb0bf65e35a7db6ea08b5c59a7d8a1e`, with a tree identical to validated `5f1e909`.
-The next single train prepares synchronized iPhone, Share and embedded Watch **1.20.3 (43)** and
-bundled “Clearer conversations and controls” notes. It includes speaker-rename shortcuts, compact
-Duo spacing, readable translation/saved-audio controls, complete converted audio tails, truthful
-correction exports and retained Apple History repairs. Optional MPNet installation/runtime is excluded.
+## Current TestFlight beta — 1.20.3 (43)
 
-`RELEASE-004` updates the actual version/title UI assertions before implementation. The unchanged
-42 app failed exactly two assertions (exit 65, reaped, frozen inputs unchanged). The release-only
-candidate snapshot then passed **seven native tests, zero failures/skips**: two release-note UI
-methods and five unit methods, exit 0/reaped with all **1,044 inputs unchanged**. Evidence is retained
-at `2026-10-30/listentome-ios1203-train/release-notes-green/` (`state.json`, `runner-state.json`,
-`reference.log`, `native.xcresult`). This focused delta check complements the prior full result;
-it does not claim a newly run whole 43 aggregate. The prior functional source passed full
-`make validate-local`: Core 1,291 tests / seven
-optional skips / zero failures / 98.0766% coverage; iOS 590 passes / 12 skips; Mac 109 and Watch 34
-passes; 236 BDD scenarios and four real-server contracts. All three required checks passed on exact
-`5f1e909` in [run 41078938853](https://github.com/tomqwu/ListenToMe/actions/runs/41078938853).
-These are source-labelled merge results, not a new 43 artifact or upload.
+Apple accepted **1.20.3 (43)** through the official TestFlight helper at
+**2026-10-30T17:10:34.841880+00:00** from `97ef2461b86869405c1d0f4221816b790f0216fd`.
+Apple build `fe7d15fb-c6f2-487b-89b6-6f9d26985ccc` is **VALID / IN_BETA_TESTING**.
+Readback completed at **2026-10-30T17:16:53.246500+00:00** confirms **en-US**,
+**Listen To Me - Real Time AI**, exact beta description/What to Test and unchanged access for
+both existing Dev-group members. Access does not establish physical installation of build 43.
 
-Release-note red evidence is retained in `2026-10-30/listentome-ios1203-train/release-notes-red/`;
-full merge evidence is in `2026-10-30/listentome-backlog318-completion/full-validation-retry/`.
-[What to Test](../metadata/ios/en-US/what-to-test-1.20.3.txt) and
-[cumulative App Store copy since public 1.19.1](../metadata/ios/en-US/whats-new-1.20.3.txt) are prepared
-in en-US. Fresh candidate `8dc8dd3` captures passed **17 native tests, zero failures/skips**, across
-seven profiles. All **57 native originals** were visually inspected; seven suitable originals refresh
-the [README gallery](../README.md#screenshots). [Capture provenance and visual assessments](images/ios/release-1.20.3/manifest.json)
-preserve all image checksums and QA-only exclusions. Hosted desktop/mobile gallery checks, remaining
-candidate gates/CI, signing/archive/package verification and actual accepted upload remain pending.
-Physical phone/Watch acceptance remains
-unverified; that limits production readiness, not an otherwise authorized beta upload.
-No version-43 upload, review submission or publication is claimed. Mac work remains unreleased.
+[Publication receipt](releases/ios-1.20.3-build43.json) · [Composite validation](releases/ios-1.20.3-build43-validation.json) · [Release notes and What to Test](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.3-build43).
 
-## Unreleased History repairs
+This train includes speaker-rename shortcuts, compact Duo spacing, readable translation/saved-audio
+controls, complete converted audio tails, truthful correction exports and retained Apple History
+repairs. Optional MPNet installation/runtime is excluded. Phone, Share and embedded Watch all use
+**1.20.3 (43)**. The preserved uploaded IPA passed transport checksum and all three distribution
+bundle checks; the exact-source GitHub pre-release has no assets and is not Latest.
+
+The [validation receipt](releases/ios-1.20.3-build43-validation.json) separates the full functional
+baseline at `5f1e909` (tree-identical merged `388a5c7`) from seven passing release-note tests on the
+snapshot committed as `8dc8dd3`. The genuine red had two version/title failures. The baseline passed
+Core 1,291 tests / seven optional skips / zero failures / 98.0766% coverage; iOS 590 passes / 12 skips;
+Mac 109 and Watch 34 passes; 236 BDD scenarios and four real-server contracts. No new full build-43
+aggregate is claimed. Release source `97ef2461` differs from the capture source only in documentation
+and gallery files; all three required checks passed in
+[run 41092176457](https://github.com/tomqwu/ListenToMe/actions/runs/41092176457).
+
+Fresh `8dc8dd3` captures passed **17 native tests, zero failures/skips**, across seven device profiles.
+All **57 originals** were inspected; seven suitable images appear in the [README gallery](../README.md#screenshots).
+[Capture provenance and visual assessments](images/ios/release-1.20.3/manifest.json) retain all
+checksums and QA-only exclusions. Hosted desktop/mobile inspection passed on `97ef2461`; these
+images have not been uploaded to Apple's listing. [What to Test](../metadata/ios/en-US/what-to-test-1.20.3.txt)
+was read back in en-US; [cumulative What's New since public 1.19.1](../metadata/ios/en-US/whats-new-1.20.3.txt)
+is ready for a future production submission.
+
+Physical phone/iPad translation, screen-lock, multilingual and Watch acceptance remains pending.
+Public production remains **1.19.1 (39)**; this beta made no public review submission or listing-media
+upload. Mac changes remain unreleased, and **v1.4.4** remains GitHub Latest.
+
+## History repairs in TestFlight 1.20.3
 
 The merged batch keeps safer asynchronous History indexing, refreshed search after saving and
 repairs for installed Apple model queries. The optional multilingual experiment failed its quality
-gate and is excluded from the candidate, including its download controls and runtime. Its source
+gate and is excluded from build 43, including its download controls and runtime. Its source
 and failed results are preserved for continuing #223. [Implementation and BDD evidence](history-search-implementation.md).
 Settings also corrects its screen-lock explanation to match continued user-started recording.
-The 1.20.3 candidate announces these retained repairs without claiming new language-model quality.
+TestFlight 1.20.3 includes these retained repairs without claiming new language-model quality.
 
-## Unreleased compact-landscape Duo spacing
+<a id="unreleased-compact-landscape-duo-spacing"></a>
+
+## Compact-landscape Duo spacing in TestFlight 1.20.3
 
 Compact, non-accessibility landscape now uses less space between the workspace tabs and panes,
 below the workspace and around Quick content. This gives the actual transcript and Quick readers
@@ -70,10 +77,10 @@ Commands, native bundles, input checks and runner receipts are retained under
 `2026-10-30/listentome-backlog318-completion/{full-validation,duo-compact-red,duo-compact-green}/`
 in the external evidence directory. The earlier README preview was a fixture-only change at its
 capture checkpoint; this follow-up changes production layout. The final merged source subsequently passed full validation and exact-head CI as recorded above;
-affected installed/physical acceptance remains scoped separately. No release or Store screenshot
-publication is claimed.
+affected installed/physical acceptance remains scoped separately. This fix is included in TestFlight
+1.20.3 (43); no Store screenshot publication is claimed.
 
-## Current TestFlight beta — 1.20.2 (42)
+## Historical TestFlight beta — 1.20.2 (42)
 
 Apple accepted **1.20.2 (42)** through the official TestFlight helper at **2026-10-28T21:11:37.664213+00:00** from `a6b90e83f775cc9dc88df3c2805ecacedca044af`. Apple build `8967f095-470f-40c0-aba0-b1188bbb699c` is **VALID / IN_BETA_TESTING**. Readback at 2026-10-28T21:15:33.796221+00:00 confirms **en-US**, **Listen To Me - Real Time AI**, exact beta description/What to Test and unchanged access for the existing two-member Dev group. Access does not establish physical installation of build 42.
 
@@ -124,7 +131,7 @@ that captures system or call audio. The 1.20.1 (41) beta declares audio backgrou
 established user-started microphone recording continues through screen lock; new capture still
 requires active use. Optional AI pauses. See [continuity limits and acceptance](recording-continuity.md).
 
-Apple Watch recording ([#181](https://github.com/tomqwu/ListenToMe/issues/181)) is included in public iOS **1.19.1 (39)** and **TestFlight 1.20.2 (42)**. Its phone/Share/Watch distribution package and Apple beta access were verified; physical microphone, paired transfer, wrist-down and battery/storage acceptance remain pending. See [Watch installation and evidence](watch-beta.md), the [accepted beta receipt](releases/ios-1.20.2-build42.json) and the [public availability observation](releases/ios-1.19.1-build39-public.json). Dated earlier-build publication evidence remains in the Watch guide.
+Apple Watch recording ([#181](https://github.com/tomqwu/ListenToMe/issues/181)) is included in public iOS **1.19.1 (39)** and **TestFlight 1.20.3 (43)**. Its phone/Share/Watch distribution package and Apple beta access were verified; physical microphone, paired transfer, wrist-down and battery/storage acceptance remain pending. See [Watch installation and evidence](watch-beta.md), the [accepted beta receipt](releases/ios-1.20.3-build43.json) and the [public availability observation](releases/ios-1.19.1-build39-public.json). Dated earlier-build publication evidence remains in the Watch guide.
 
 ## Parity with macOS
 

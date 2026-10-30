@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "status": "unpublished_candidate",
+  "status": "published_testflight_source_matched_previews",
   "candidateSource": "8dc8dd35be9474f9789e284fefe94c966d11d476",
   "candidateTree": "0795d11951ae644d0405456bca2b069e57c981cb",
   "version": "1.20.3",
@@ -27,7 +27,7 @@
   "sourceInputsUnchanged": true,
   "physicalAcceptance": "unverified",
   "listingUploaded": false,
-  "build43UploadAccepted": false,
+  "build43UploadAccepted": true,
   "selected": [
     {
       "category": "iphone-max",
@@ -1420,5 +1420,17 @@
     "QA-only images include clipped/scrolled content, sheet-edge clipping, setup/consent views, compact Watch views and an iPad system notification. They are retained as evidence and excluded from this gallery.",
     "Listing suitability is a visual assessment, not Apple approval or proof of screenshot upload.",
     "Native originals, native result bundles and executable/dylib/plist provenance are retained in the external evidence identified above. Only the seven selected originals are copied into this repository."
-  ]
+  ],
+  "publication": {
+    "source": "97ef2461b86869405c1d0f4221816b790f0216fd",
+    "sourceTree": "a1b8f49c59ebd5b47de4f771d034a6c25c45c69d",
+    "appInputsMatchCaptureSource": true,
+    "onlyDocumentationAndGalleryChangedAfterCapture": true,
+    "receipt": "../../../releases/ios-1.20.3-build43.json",
+    "releaseURL": "https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.3-build43",
+    "acceptedAt": "2026-10-30T17:10:34.841880+00:00",
+    "verifiedAt": "2026-10-30T17:16:53.246500+00:00",
+    "listingUploaded": false,
+    "githubReleaseAssetCount": 0
+  }
 }
