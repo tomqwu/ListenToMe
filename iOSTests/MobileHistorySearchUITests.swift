@@ -39,6 +39,12 @@ final class MobileHistorySearchUITests: XCTestCase {
         XCTAssertTrue(record.waitForExistence(timeout: 5)); XCTAssertTrue(record.label.contains("Product planning"))
         let viewport = history.frame.intersection(app.windows.firstMatch.frame)
         XCTAssertFalse(viewport.isEmpty)
+        if UIDevice.current.userInterfaceIdiom == .phone, record.frame.intersects(field.frame) {
+            let overlap = record.frame.maxY - field.frame.minY + 8
+            let distance = min(max(0, overlap), viewport.height / 3)
+            let start = history.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+            start.press(forDuration: 0.1, thenDragTo: start.withOffset(CGVector(dx: 0, dy: -distance)))
+        }
         for element in [refresh, ask, record] {
             XCTAssertTrue(element.exists); XCTAssertTrue(element.isHittable)
             XCTAssertFalse(element.frame.isEmpty)
@@ -47,6 +53,8 @@ final class MobileHistorySearchUITests: XCTestCase {
         }
         XCTAssertTrue(disclosure.exists); XCTAssertFalse(disclosure.frame.isEmpty)
         XCTAssertTrue(viewport.contains(disclosure.frame), "The provider disclosure must be fully readable")
+        XCTAssertFalse(record.frame.intersects(field.frame), "Search must not cover the selected result")
+        XCTAssertFalse(disclosure.frame.intersects(field.frame), "Search must not cover the provider disclosure")
         XCTAssertLessThanOrEqual(refresh.frame.maxY, ask.frame.minY)
         XCTAssertLessThanOrEqual(ask.frame.maxY, disclosure.frame.minY)
         XCTAssertLessThanOrEqual(disclosure.frame.maxY, record.frame.minY)
@@ -56,6 +64,7 @@ final class MobileHistorySearchUITests: XCTestCase {
         XCTAssertEqual(field.value as? String, "prototype")
         XCTAssertTrue(refresh.isHittable); XCTAssertTrue(ask.isHittable); XCTAssertTrue(record.isHittable)
         XCTAssertFalse(app.alerts.firstMatch.exists); XCTAssertFalse(app.keyboards.firstMatch.exists)
+        XCTAssertFalse(record.frame.intersects(field.frame)); XCTAssertFalse(disclosure.frame.intersects(field.frame))
         let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         shot.name = "Landscape History refresh and result"
         shot.lifetime = .keepAlways; add(shot)
