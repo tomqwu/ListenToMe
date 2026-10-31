@@ -44,6 +44,10 @@ does not show it again, and a fresh install does not see it at all; see
   conversation tools, sharing and app actions. Keep automatic-summary errors above optional
   diagnostics inside the Quick panel. Watch recording controls name Watch or iPhone.
 
+- Preserve the first filed Watch recording part and its original timing metadata when a duplicate
+  arrives before a missing or corrupt inbox ledger has recovered. Avoid losing that durable audio
+  if moving the redelivered temporary file would fail. (#181)
+
 - Add explicit **Refresh search** in History to rebuild derived search data using currently available
   Apple models. Preserve saved conversations and exact-word search; show retry guidance on failure
   and keep Ask blocked until a current archive pass finishes. No language assets are downloaded. (#223)

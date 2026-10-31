@@ -130,9 +130,9 @@ generated inputs are retained. The green receipt SHA-256 is
 `35282f484a3d47af5b4ce3810dd9f044544c4188adf453567d9ff8243fe9c4c0`.
 
 The focused results above used the earlier #334 candidate `9a39a12`. This branch now integrates
-merged main `946cb7e`; all four saved-audio runtime/test/catalog files remain byte-identical to
-focused candidate `bf0f2ae`. The main integration passed 254 BDD scenarios and diff checks, but
-combined full validation and PR/merge follow pending Watch PR #355. No integrated native pass
+merged Watch main `0177431`; all four saved-audio runtime/test/catalog files remain byte-identical
+to focused candidate `bf0f2ae`. The integration passed 255 BDD scenarios and diff checks;
+combined full validation and PR/merge are next. No integrated native pass
 is claimed yet. Source-matched installed History playback and a fresh
 full-app README screenshot remain pending while the Mac is locked; the native component images
 are QA evidence only. Independent near-end speech, overlap, genuinely repeated speech, headphones

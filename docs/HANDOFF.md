@@ -6,24 +6,25 @@ validation passed on combined source `89e9226`; all three required checks passed
 head `19d152f`. Matching local/remote feature branches were deleted and tracking refs pruned.
 This is merged but unreleased, with combined installed/publication acceptance still separate.
 
-Continue sequentially with the Watch inbox preservation fix (#181), saved-audio ordering (#336),
-and the shared History Ask cancellation fix (#223). All three have focused red/green evidence;
-Watch redelivery also completed its actual two-method iOS simulator run.
-The current Watch branch integrates exact main `946cb7e`; its full validation/review/CI/merge remain.
+Watch inbox preservation merged in [PR #355](https://github.com/tomqwu/ListenToMe/pull/355) at
+`0177431`, October 31, 04:09 UTC. Full local validation passed on `989a6b4`; independent review and
+all three final checks passed on docs head `f0f8d26`. Matching local/remote branches were deleted.
+It is merged but unreleased. Continue sequentially with saved-audio ordering (#336), then shared
+History Ask cancellation (#223); both have focused red/green evidence.
 Language-search quality and the recorded physical #205/#236/Watch/audio checks remain unresolved.
 [Sources, tested outcomes, blockers and next actions](backlog-execution-2026-10-30.md).
 
 ## Local Mac saved-audio ordering follow-up — October 30, 2026
 
 The #336 **Play from a line** ordering slice has focused red/green evidence on `d36b212`.
-This branch now integrates main `946cb7e`, including the merged workspace and long-name fixes;
+This branch now integrates main `0177431`, including the merged workspace, long-name and Watch inbox fixes;
 its three native methods and runtime change remain unchanged. Genuine rendered-order red preceded
 the two-file fix. Three native methods and 145 existing Core tests passed, zero skips, with all
 1,083 frozen inputs unchanged. Playback keeps canonical source/offsets, including restored duplicate
 IDs. [Evidence and remaining gates](dual-channel-capture.md#local-saved-audio-ordering-follow-up--october-30-2026).
 
 Installed History playback/full-app README capture remains blocked by the locked Mac; component
-images are QA only. Full combined validation, review, CI and merge follow pending Watch PR #355.
+images are QA only. Full combined validation, review, CI and merge are next; Watch PR #355 is merged.
 The original near-end/overlap/repeated-speech/headphones acceptance remains open; this bounded fix
 does not close #336 or change iOS playback lookup. No second feature PR is open.
 
@@ -38,8 +39,8 @@ The existing Mac minimum window width remains 1100 points. No provider choice or
 [source-bound gallery](images/workspace/unreleased-2026-10-30/manifest.json) distinguish test results,
 installed Mac inspection, simulator previews and physical acceptance. PR #353 merged at `5e1a8f4` on October 31, 01:34 UTC after its complete local validation, independent
 review and all three required checks on `1b275b1`. Its final native run uses `c2c450e`; later
-documentation-only commits preserve its frozen app/test/config inputs. The #334 branch now integrates
-that exact main. Only README/HANDOFF conflicted; both galleries and acceptance histories were retained.
+documentation-only commits preserve its frozen app/test/config inputs. The #334 branch integrated
+that exact main before its merge. Only README/HANDOFF conflicted; both galleries and acceptance histories were retained.
 The existing captures retain their source labels. The combined #334 checkpoint below links its
 [exact validation evidence and remaining gates](speaker-rename-acceptance.md). The original #334
 regression and `9a39a12` installed acceptance are not relabelled as acceptance of the combined
@@ -48,6 +49,32 @@ and all three required checks on `19d152f`; the combined installed-capture limit
 Earlier failed aggregates remain failed, including the corrected error clipping and legacy test
 expectations. Physical phone/iPad/Watch capture, paired transfer, full VoiceOver and real OTHERS
 acceptance remain pending. This work is unreleased and is not in TestFlight 1.20.3 (43).
+
+## Local Watch inbox redelivery repair — October 30, 2026
+
+Source `5f52da6` preserves the first durable audio/sidecar when a duplicate arrives before missing
+or corrupt ledger recovery. Supplemental macOS filesystem evidence: two original methods went
+from 18 assertion failures to two passes, zero skips; both runs reaped with 163 unchanged inputs.
+[Evidence and limits](watch-beta.md#unreleased-phone-inbox-redelivery-repair).
+After setup recovery, actual iOS simulator execution on `105c91dd` passed both bound methods with
+zero failures/skips and **1,083 unchanged inputs**, October 31 **01:32:10–01:33:24 UTC**. Exit 0/reaped,
+owned simulator shutdown and independent result/binary/source audit are recorded in the
+[sanitized native receipt](evaluations/watch-inbox-redelivery-native-2026-10-30.json).
+Candidate `42479af` adds only documentation to native-tested `105c91dd`; its app/test/config inputs
+are unchanged. This is a focused native pass, not a new full aggregate validation result.
+Full `make validate-local` then passed on integrated source `989a6b4`, base `946cb7e`, October 31
+**02:56:46–03:45:26 UTC**: Core **1,294/seven skips/98.0768% coverage**; iOS **512 unit/seven skips
+and 101 UI/five skips**; Mac **120**; Watch **29 unit and six UI**; zero failures. Both redelivery
+methods passed again without skips. The 254-scenario catalog validated and all 593 required bound
+selectors, 71 helper methods and four real local-server contracts passed. All **1,109 inputs** and
+**2,033 original native-result files** matched; the run reaped, owned processes were absent and
+both owned simulators were confirmed Shutdown. [Audited full receipt](evaluations/watch-inbox-redelivery-full-2026-10-31.json).
+All three required checks passed on `989a6b4` in [run 41163072169](https://github.com/tomqwu/ListenToMe/actions/runs/41163072169).
+Final documentation head `f0f8d26` passed independent review and all three checks in
+[run 41166381562](https://github.com/tomqwu/ListenToMe/actions/runs/41166381562). PR #355 merged at
+`0177431`; its tree equals the checked head, and matching local/remote branches were deleted.
+Publication and physical file-protection/paired-Watch acceptance remain separate and open.
+The fix is outside accepted TestFlight 1.20.3 (43), does not change visible UI, and does not close #181.
 
 ## Unreleased local History Refresh — October 30, 2026
 
@@ -72,7 +99,7 @@ matching local/remote branches were deleted and tracking refs pruned. This is me
 Detailed preservation and prior capture-harness limits are in the linked evidence. Additional-language
 quality remains open under #223; negative experiments remain failed.
 
-## Mac speaker-name overflow candidate — October 30, 2026
+## Merged Mac speaker-name overflow fix — October 30, 2026
 
 Installed #334 acceptance on source `5f1e909` (Mac runtime identical to merged `97ef2461`) verified
 Save/Cancel, full quit/relaunch persistence, context-menu rename, neighbor isolation, VoiceOver
@@ -105,7 +132,7 @@ Its runtime/tests/config matched `9a39a12`. The October 31, 00:42–00:43 UTC se
 refused by the ownership guard before `make` or tests; all 1,085 inputs matched and both owned devices
 shut down. That refusal and the failed `9a39a12` aggregate remain preserved as distinct outcomes.
 
-The validated combined source `89e9226` integrates workspace main `5e1a8f4`. The speaker
+The merged #334 candidate was validated at `89e9226`, integrating workspace main `5e1a8f4`. The speaker
 control, production row and bound bitmap-test files remain byte-identical to `9a39a12`; the whole
 workspace is changed. Exact-source full validation: **passed (exit 0)**.
 [The canonical acceptance record](speaker-rename-acceptance.md) contains the complete suite counts,
@@ -115,9 +142,10 @@ Its source-labelled hosted README passed at 1,280/390 pixels, with all 44 images
 assets/manifests downloaded byte-identical. The combined installed Mac long-name flow and full-app
 capture remain open while the Mac is locked; the prior installed captures and fresh native row
 attachments are not substitutes. No repeated unlock request is needed. Final documentation/gallery
-checks and independent review passed on `19d152f`, as did all three required checks in
-[CI run 41160705656](https://github.com/tomqwu/ListenToMe/actions/runs/41160705656). PR #354 merged
-at `946cb7e`; its matching branches were removed. This is merged but unreleased.
+checks and independent review passed on `19d152f`, with all three checks
+green in [run 41160705656](https://github.com/tomqwu/ListenToMe/actions/runs/41160705656). PR #354 merged
+at `946cb7e`; #334 closed and its matching local/remote branches were deleted and refs pruned.
+No new release or production acceptance is claimed.
 
 ## TestFlight 1.20.3 (43) published — October 30, 2026
 
