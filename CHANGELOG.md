@@ -36,7 +36,7 @@ does not show it again, and a fresh install does not see it at all; see
   local BDD-verification failure; it does not change an app feature or count a failed aggregate run
   as passing.
 
-## iOS (unreleased)
+## iOS 1.20.4 (44) — candidate, not uploaded
 
 - Cancel an in-progress History answer when its question changes or is cleared, so the next
   question can start immediately and late output cannot replace it. Whitespace-only edits keep

@@ -5,6 +5,19 @@ The first iOS version is a standalone app, separate from the macOS release. It r
 **1.19.1 (39)** and the latest TestFlight version is **1.20.3 (43)**. See the
 [public availability observation](releases/ios-1.19.1-build39-public.json).
 
+## Next TestFlight train — 1.20.4 (44), in preparation
+
+This train combines merged local History refresh, question-change cancellation, clearer workspace
+controls and duplicate Watch-inbox preservation. It includes the Watch companion; it does not add
+an experimental multilingual embedding model. Current accepted beta remains **1.20.3 (43)**.
+Apple readback on October 31, 06:57 UTC found no build 44. The public US version remains **1.19.1**,
+with the **en-US** name **Listen To Me - Real Time AI**. No upload or production acceptance is claimed.
+
+The release-note regression, complete local validation, fresh iPhone/Duo/iPad/Watch captures,
+README gallery review and all three required CI checks must pass before distribution. Physical
+phone/iPad and paired-Watch acceptance remain separate production gates. Mac release and its
+installed audio acceptance remain separate from this iOS train.
+
 <a id="next-testflight-candidate--1203-43"></a>
 
 ## Current TestFlight beta — 1.20.3 (43)
@@ -76,7 +89,8 @@ Full validation passed on `c8fdcd29` with 605 iOS tests (twelve optional skips),
 The later `13573f90` test/catalog-only addition passed two landscape native cases on phone/iPad
 with 1,074 unchanged inputs. Production/build inputs remain identical to the full-tested runtime.
 The selected gallery is unqueried History; additional phone actions retain normal scrolling.
-Current exact-head CI, hosted final-gallery review and merge remain pending.
+PR #351 subsequently merged the local-refresh change; the next train includes it.
+Its original capture labels and acceptance limitations remain recorded in the linked evidence.
 
 ## History repairs in TestFlight 1.20.3
 
