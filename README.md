@@ -32,13 +32,14 @@ macOS-only, and there is no Mac↔iOS sync. See
 [parity with macOS](docs/IOS.md#parity-with-macos) and
 [the version policy](docs/IOS.md#version-policy).
 
-**TestFlight 1.20.3 (43)** includes clearer Duo, translation and saved-audio controls, speaker-rename
-shortcuts and retained Apple History repairs. It also includes continued user-started microphone recording through screen lock,
+**TestFlight 1.20.4 (44)** adds History **Refresh search**, cancellation when a History question changes,
+clearer workspace controls and preservation of duplicate Watch deliveries. It retains translation,
+saved-audio and speaker-rename improvements, plus continued user-started microphone recording through screen lock,
 while optional AI waits for active use. Stop and genuine audio interruptions still end capture;
 a background launch cannot start it. See [recording continuity](docs/recording-continuity.md)
 and [language replay/recovery](docs/language-replay-progress.md). Saving audio stays opt-in and data
 protection is unchanged. Physical lock-screen acceptance remains pending.
-[Accepted beta receipt](docs/releases/ios-1.20.3-build43.json).
+[Accepted beta receipt](docs/releases/ios-1.20.4-build44.json).
 
 The standalone iOS/iPadOS 26 app is the **ListenToMeIOS** target: microphone transcription, a live
 transcript with Quick Summary plus a Summary tab (Deep is macOS-only; a Deep analysis saved by an earlier
@@ -70,10 +71,10 @@ Education & Research) and your own **My terms** list help recognition, AI speech
 summaries on both platforms; after about a minute of speech the phone may suggest one, decided on the
 device. Meeting use-case presets, reference files, audio-file import and WhisperKit transcription are macOS-only.
 Editable domain prompt presets are available on both platforms.
-The public iPhone/iPad app is [1.19.1](docs/releases/ios-1.19.1-build39-public.json). The latest TestFlight beta is **1.20.3 (43)**, including translation, the Apple Watch companion and recording/language continuity fixes; see the [accepted publication receipt](docs/releases/ios-1.20.3-build43.json).
+The public iPhone/iPad baseline is [1.19.1](docs/releases/ios-1.19.1-build39-public.json). The latest TestFlight beta is **1.20.4 (44)**, including the Apple Watch companion; Apple reports **VALID / IN_BETA_TESTING** with unchanged existing Dev group access. See the [accepted publication receipt](docs/releases/ios-1.20.4-build44.json).
 [Watch installation and limits](docs/watch-beta.md) and [historical Watch previews](docs/images/watch/1.19.1/README.md)
 are available; physical Watch acceptance remains pending. All 49 build-39 release images were inspected.
-The [1.19.1 media readback](docs/releases/ios-1.19.1-build39-media-readback.json) confirms 60 processed screenshots across both English locales, including Watch and landscape Duo; downloaded image identity was verified in the original upload receipt. Translation is included in the current TestFlight **1.20.3 (43)**. Physical acceptance and real translation quality remain pending; this beta does not update the public listing.
+The [1.19.1 media readback](docs/releases/ios-1.19.1-build39-media-readback.json) confirms 60 processed screenshots across both English locales, including Watch and landscape Duo; downloaded image identity was verified in the original upload receipt. Translation is included in the current TestFlight **1.20.4 (44)**. Physical acceptance and real translation quality remain pending; this beta does not update the public listing.
 See [iOS setup, validation and distribution](docs/IOS.md). Device and language support are checked
 per feature; Apple Intelligence is independent of recording. The [compatibility support](docs/device-compatibility.md)
 includes local dictation fallback for compatible older iPads and explicit unavailable-feature recovery
@@ -86,11 +87,13 @@ make ios-test
 
 ## Screenshots
 
-### iPhone, iPad and Apple Watch · 1.20.4 (44) candidate
+### iPhone, iPad and Apple Watch · TestFlight 1.20.4 (44)
 
-Fresh native simulator previews show the build 44 candidate with synthetic demonstration content.
-Tap any preview for its original resolution. Build 44 has not been uploaded; the accepted beta remains
-1.20.3 (43). [Capture source, checksums and review scope](docs/images/ios/release-1.20.4/manifest.json).
+These native simulator previews use synthetic demonstration content captured on `ca7ab57`.
+The published build uses `08810e8`, whose changes from that capture source are documentation and
+gallery files only. Tap any preview for its original resolution. The original
+[capture manifest](docs/images/ios/release-1.20.4/manifest.json) preserves its pre-upload status;
+the later [publication receipt](docs/releases/ios-1.20.4-build44.json) records accepted TestFlight delivery.
 
 **iPhone · live reading and conversation instructions**
 

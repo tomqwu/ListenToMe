@@ -49,7 +49,16 @@ does not show it again, and a fresh install does not see it at all; see
   local BDD-verification failure; it does not change an app feature or count a failed aggregate run
   as passing.
 
-## iOS 1.20.4 (44) — candidate, not uploaded
+## iOS 1.20.4 (44) — 2026-10-31 (TestFlight)
+
+Apple accepted the official helper upload at **2026-10-31T14:08:38.174679+00:00** from
+`08810e8aca007fd97f2f4633e3fbeea5c1f92731`. Build 44 is **VALID / IN_BETA_TESTING**;
+en-US metadata and unchanged existing Dev group access were read back. The exact transported IPA
+and all three phone/Share/Watch distribution bundles were verified.
+[Publication receipt](docs/releases/ios-1.20.4-build44.json) ·
+[GitHub pre-release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.4-build44).
+Physical acceptance remains pending. This beta made no public App Store submission or listing-media
+upload; macOS v1.4.4 remains Latest and Mac changes remain unreleased.
 
 - Cancel an in-progress History answer when its question changes or is cleared, so the next
   question can start immediately and late output cannot replace it. Whitespace-only edits keep

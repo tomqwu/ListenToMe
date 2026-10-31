@@ -1,6 +1,16 @@
 # Active backlog delivery — October 31, 2026
 
-## Build 44 — complete candidate capture set; TestFlight delivery pending
+## Build 44 — TestFlight published October 31, 2026
+
+Apple accepted **1.20.4 (44)** at **14:08:38 UTC** from merged source
+`08810e8aca007fd97f2f4633e3fbeea5c1f92731` (PR #358). All three required checks passed on that exact
+source in [run 41206744106](https://github.com/tomqwu/ListenToMe/actions/runs/41206744106).
+Readback at **14:15 UTC** confirmed **VALID / IN_BETA_TESTING**, en-US metadata, the unchanged
+US app name and existing Dev group membership/access. The exact transported IPA and all three
+phone/Share/Watch distribution bundles passed verification. The
+[GitHub pre-release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.4-build44) is verified,
+has no binary assets and leaves macOS `v1.4.4` as Latest.
+[Sanitized publication receipt](releases/ios-1.20.4-build44.json).
 
 Candidate source `ca7ab57`, based on merged main `09adc703`, has fresh native captures across
 seven profiles: iPhone Pro and Pro Max, iPad mini and Pro, and 42/46/49 mm Watch. All **21 capture
@@ -32,10 +42,13 @@ extended about 17 points beyond Quick. The successful harness now uses a meaning
 and bounded Quick scrolling while retaining complete-text, containment, exact-query and reopen
 assertions. [Historical capture failure](evaluations/ios-1.20.4-history-capture-failure-2026-10-31.json).
 
-Final hosted README inspection, CI/merge and accepted TestFlight upload are separate remaining
-gates. Build 44 has not been uploaded. Physical iPhone/iPad recording, translation quality,
+Hosted README inspection, CI/merge and accepted TestFlight delivery are complete. Release source
+`08810e8` differs from full-tested/captured `ca7ab57` only in documentation and gallery files;
+the original capture/full receipts retain their pre-publication state. Physical iPhone/iPad recording, translation quality,
 screen-lock and paired Watch/wrist-down acceptance, plus combined installed Mac/actual OTHERS
 acceptance, remain open. Simulator fixtures and beta eligibility do not establish production readiness.
+This train made no public App Store submission or listing-media upload; the recorded public baseline
+remains 1.19.1 (39). Existing group access is not evidence of build-44 installation.
 
 Five issues remain open: **#181, #205, #223, #236 and #336**. PR [#354](https://github.com/tomqwu/ListenToMe/pull/354)
 merged the Mac long-name correction at `946cb7e` on October 31, 02:49 UTC and closed #334. Full local
@@ -46,7 +59,7 @@ This is merged but unreleased, with combined installed/publication acceptance st
 Watch inbox preservation merged in [PR #355](https://github.com/tomqwu/ListenToMe/pull/355) at
 `0177431`, October 31, 04:09 UTC. Full local validation passed on `989a6b4`; independent review and
 all three final checks passed on docs head `f0f8d26`. Matching local/remote branches were deleted.
-It is merged but unreleased. Saved-audio ordering merged in PR #356 at `63e1777`, October 31,
+The phone-side repair is distributed in TestFlight 1.20.4 (44). Saved-audio ordering merged in PR #356 at `63e1777`, October 31,
 05:30 UTC, after all three final checks on `eee22fe` and independent review. Its matching branches
 were deleted and tracking refs pruned. Shared History Ask cancellation (#223) also merged:
 its one-line fix has portable streaming and actual iOS completed-answer red/green proof, and now
@@ -59,7 +72,7 @@ PR [#357](https://github.com/tomqwu/ListenToMe/pull/357) merged at `09adc703`, O
 ([run 41177389419](https://github.com/tomqwu/ListenToMe/actions/runs/41177389419)).
 Matching local/remote branches were deleted and tracking refs pruned. [Audited full receipt and acceptance limits](evaluations/history-ask-query-cancellation-full-2026-10-31.json).
 The existing native History control captures are QA only; installed/physical streaming interaction
-and the next release train remain separate. This change is not included in accepted beta 43.
+remains separate. The iPhone/iPad repair is distributed in build 44; the Mac repair remains unreleased.
 Language-search quality and the recorded physical #205/#236/Watch/audio checks remain unresolved.
 [Sources, tested outcomes, blockers and next actions](backlog-execution-2026-10-30.md).
 
@@ -83,7 +96,7 @@ README capture remain blocked by the locked Mac; component images are QA only.
 The original near-end/overlap/repeated-speech/headphone/route matrix remains open. This bounded fix
 does not close #336 or change iOS playback lookup. It is merged but unreleased.
 
-## Unreleased workspace usability refinements — October 30, 2026
+## Workspace usability refinements — iOS build 44; Mac unreleased
 
 [PR #353](https://github.com/tomqwu/ListenToMe/pull/353) carries the cross-platform workspace pass:
 more populated portrait transcript space, capability-aware Auto controls, named Generate/Update,
@@ -103,7 +116,8 @@ installed app. PR #354 subsequently merged at `946cb7e` after full validation, i
 and all three required checks on `19d152f`; the combined installed-capture limitation remains open.
 Earlier failed aggregates remain failed, including the corrected error clipping and legacy test
 expectations. Physical phone/iPad/Watch capture, paired transfer, full VoiceOver and real OTHERS
-acceptance remain pending. This work is unreleased and is not in TestFlight 1.20.3 (43).
+acceptance remain pending. The iPhone/iPad and Watch changes are distributed in TestFlight 1.20.4 (44);
+the Mac changes remain unreleased.
 
 ## Local Watch inbox redelivery repair — October 30, 2026
 
@@ -128,10 +142,10 @@ All three required checks passed on `989a6b4` in [run 41163072169](https://githu
 Final documentation head `f0f8d26` passed independent review and all three checks in
 [run 41166381562](https://github.com/tomqwu/ListenToMe/actions/runs/41166381562). PR #355 merged at
 `0177431`; its tree equals the checked head, and matching local/remote branches were deleted.
-Publication and physical file-protection/paired-Watch acceptance remain separate and open.
-The fix is outside accepted TestFlight 1.20.3 (43), does not change visible UI, and does not close #181.
+The phone-side fix is distributed in TestFlight 1.20.4 (44). Physical file-protection/paired-Watch
+acceptance remains open; publication does not close #181. The inbox repair does not change visible UI.
 
-## Unreleased local History Refresh — October 30, 2026
+## Local History Refresh — iOS build 44; Mac unreleased
 
 Explicit **Refresh search** rebuilds derived local Apple search data without changing conversations
 or downloading assets. Focused evidence: three Core methods green; sixteen Mac methods green,
@@ -140,7 +154,7 @@ no-results and empty History. Recovery-caption contrast went from 3.949:1 red to
 [Scoped evidence and pending gates](history-local-refresh.md) ·
 [Fresh README previews and provenance](images/history/unreleased-2026-10-30/manifest.json).
 
-This follow-up is **not included in accepted TestFlight 1.20.3 (43)**. Full validation passed on
+This follow-up is **included in TestFlight 1.20.4 (44) on iPhone/iPad**; Mac publication remains separate. Full validation passed on
 `c8fdcd29`: Core 1,294 tests/seven skips/98.0768% coverage; iOS 605 tests/twelve skips; Mac 118 and
 Watch 34, zero failures. All 1,071 frozen inputs and all required BDD bindings matched. Actual signed
 Debug Dev History Refresh, repeat, new-row reload and Quit/relaunch passed with two synthetic records;
@@ -150,7 +164,7 @@ on phone/iPad, zero failures/skips, all 1,074 inputs unchanged. Fresh unqueried 
 installed Mac gallery images were inspected; phone additional actions retain normal scrolling.
 PR [#351](https://github.com/tomqwu/ListenToMe/pull/351) merged this work at `0714b9ec` after all
 three required checks passed on head `aa7ec24`. The hosted gallery passed desktop/mobile review;
-matching local/remote branches were deleted and tracking refs pruned. This is merged but unreleased.
+matching local/remote branches were deleted and tracking refs pruned. The Mac change remains merged but unreleased.
 Detailed preservation and prior capture-harness limits are in the linked evidence. Additional-language
 quality remains open under #223; negative experiments remain failed.
 
@@ -1522,9 +1536,9 @@ The #127 full run at `0464e9d` exposed a shared iOS test synchronization race: t
 
 | Surface | Latest published | State of `main` |
 | --- | --- | --- |
-| iPhone/iPad (TestFlight) | **1.19.0 (38)**, published 2026-10-27 UTC, tag `ios-v1.19.0-build38` at `e43244f` | Watch-enabled beta and Summary-icon fix available to Dev in en-US. Physical acceptance remains pending. |
-| macOS | **1.4.4 (14)**, 2026-09-14, tag `v1.4.4` | **Releases paused on the maintainer's decision.** About 50 commits of Mac work are merged but unreleased; see [CHANGELOG → macOS (unreleased since 1.4.4)](../CHANGELOG.md#macos-unreleased-since-144). Do not start a macOS train yourself; the maintainer calls it. |
-| Apple Watch | Included in **TestFlight 1.19.0 (38)** | Accepted/VALID package and processed Watch identity verified; [installation](watch-beta.md). Physical installation/recording/paired transfer/wrist-down/battery/storage remain pending; no public Watch App Store release. |
+| iPhone/iPad (TestFlight) | **1.20.4 (44)**, published 2026-10-31 UTC, tag `ios-v1.20.4-build44` at `08810e8` | VALID / IN_BETA_TESTING; en-US metadata and unchanged Dev access verified. Physical acceptance remains pending. [Receipt](releases/ios-1.20.4-build44.json). |
+| macOS | **1.4.4 (14)**, 2026-09-14, tag `v1.4.4` | **Releases paused on the maintainer's decision.** Mac work remains merged but unreleased; see [CHANGELOG → macOS (unreleased since 1.4.4)](../CHANGELOG.md#macos-unreleased-since-144). Do not start a macOS train yourself; the maintainer calls it. |
+| Apple Watch | Included in **TestFlight 1.20.4 (44)**; public companion recorded with **1.19.1 (39)** | Phone/Share/Watch distribution package verified; [installation](watch-beta.md). Physical installation/recording/paired transfer/wrist-down/battery/storage remain pending. Build 44 made no public submission. |
 
 Recent iOS trains (full text in [CHANGELOG.md](../CHANGELOG.md)):
 
