@@ -34,9 +34,20 @@ final class MobileReleaseScreenshotTests: XCTestCase {
         for line in portraitLines.allElementsBoundByIndex { assertWholePreviewText(line, in: portraitViewport) }
         let portraitAnswer = app.staticTexts["output-quick"]
         XCTAssertTrue(portraitAnswer.waitForExistence(timeout: 5))
+        let portraitQuick = app.otherElements["summary-panel-quick"].scrollViews.firstMatch
+        let answerViewport = portraitQuick.frame.intersection(portraitWindow)
+        if !answerViewport.contains(portraitAnswer.frame) {
+            // Status precedes the answer in this panel's normal scroll view.
+            let overflow = portraitAnswer.frame.maxY - answerViewport.maxY + 8
+            let distance = min(max(44, overflow), answerViewport.height / 3)
+            let start = portraitQuick.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.8))
+            start.press(forDuration: 0.1, thenDragTo: start.withOffset(CGVector(dx: 0, dy: -distance)))
+        }
         XCTAssertTrue(portraitAnswer.label.contains("Alex") && portraitAnswer.label.contains("Thursday"))
-        let portraitQuick = app.otherElements["summary-panel-quick"].scrollViews.firstMatch.frame
-        assertWholePreviewText(portraitAnswer, in: portraitQuick.intersection(portraitWindow))
+        let settledWindow = app.windows.firstMatch.frame
+        assertWholePreviewText(portraitAnswer, in: portraitQuick.frame.intersection(settledWindow))
+        let settledTranscript = app.scrollViews["transcriptScroll"].frame.intersection(settledWindow)
+        for line in portraitLines.allElementsBoundByIndex { assertWholePreviewText(line, in: settledTranscript) }
         capture("Clean portrait transcript and Quick visibility")
         XCUIDevice.shared.orientation = .landscapeLeft
         XCTAssertTrue(app.otherElements["twoPaneMeetingWorkspace"].waitForExistence(timeout: 10))

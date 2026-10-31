@@ -64,5 +64,39 @@
     "The observed failure remains failed; no historical product regression or gesture-threshold cause is invented.",
     "Before/after native images show readable row glyphs and a lower card background/search intersection; no explicit AX frame dump was attached.",
     "The whole seven-profile capture and README refresh are incomplete; no physical, installed, quality, upload or publication acceptance follows."
-  ]
+  ],
+  "portraitBaselineFailure": {
+    "source": "8462c2e17c782efc73ecd80412dfa54538a21921",
+    "device": "iPhone 17 Pro, iOS 26.5",
+    "selectedMethods": 2,
+    "history": "Passed",
+    "portraitAndDuoMethod": "Failed: one portrait answer containment assertion; no other assertion logged",
+    "nativeExit": 65,
+    "sourceGeneratedPinsUnchanged": 1130,
+    "rawOriginalMirrorPairs": 47,
+    "compiledOriginalPreservedPairs": 120,
+    "answerFrame": [
+      36,
+      694.3333333333334,
+      188.66666666666666,
+      67
+    ],
+    "viewportFrame": [
+      20,
+      609.6666666666666,
+      362,
+      134.33333333333337
+    ],
+    "bottomOverflowPointsApproximate": 17.33333333333337,
+    "receipt": "/Users/tomwu/Documents/Codex/2026-10-31/listentome-ios1204-train/history-scroll-focused-preparation/pro/focused-failure-result-and-preservation.json",
+    "receiptSHA256": "5d5337a2de5faae3c4be377d4000229b8e4b0c54e3e569f441460e65e1e7bdc1",
+    "independentAuditSHA256": "f28a7ad8b41a8f64c688a1e9e0d6a1cea504404d4bead0717e4b83886f3d9fca",
+    "scope": "New portrait baseline exposed initially offscreen text in the normal Quick scroll view, not an established app defect. Max passed both methods. The failed Pro portrait is not gallery-ready."
+  },
+  "portraitQuickScrollCorrection": {
+    "status": "prepared_not_executed",
+    "interaction": "Only if answer is not contained, one ordinary upward drag inside Quick, minimum44 points capped at one third of viewport, then fresh answer/viewport and both transcript checks.",
+    "assertionsRelaxed": false,
+    "productionOrFixtureChanged": false
+  }
 }

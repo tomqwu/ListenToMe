@@ -9,12 +9,13 @@ Pro Max's landscape History row/search separation assertion after a 13-point dra
 methods passed; both owned simulators shut down and all evidence was preserved. The remaining
 iPad/Watch profiles were not started. [Failure receipt](evaluations/ios-1.20.4-history-capture-failure-2026-10-31.json).
 
-The test-only correction uses a meaningful bounded scroll and retains every outcome assertion.
-The same concise preview fixture now also checks a complete portrait transcript and Quick answer
-before its existing Duo phase; this is added baseline coverage, not a historical red. The two-method
-focused Pro/Pro Max run is pending; the earlier full pass does not validate either changed test.
-Fresh captures, README review, final validation/CI/merge and upload remain separate gates.
-No production layout change, capture completion or publication is claimed.
+The History correction passed on both phones. The added portrait-first concise preview passed
+on Max but failed on Pro because its complete Quick answer extended about 17 points below the
+panel's initial viewport. That failure is preserved; the smaller phone's image is not gallery-ready.
+The test now uses a bounded ordinary scroll inside Quick if needed, rechecks the whole answer and
+both transcript lines, then retains the original Duo phase. The corrected focused run is pending;
+the earlier full pass does not validate the changed test. Fresh captures, README review, final
+validation/CI/merge and upload remain separate gates. No production or fixture change is claimed.
 
 Five issues remain open: **#181, #205, #223, #236 and #336**. PR [#354](https://github.com/tomqwu/ListenToMe/pull/354)
 merged the Mac long-name correction at `946cb7e` on October 31, 02:49 UTC and closed #334. Full local

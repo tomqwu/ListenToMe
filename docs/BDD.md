@@ -184,11 +184,13 @@ without relaxing whole-row containment, nonintersection, exact-query or open/reo
 The changed test still needs native execution; the successful full run on `3a83918` predates it.
 [Preserved failure and capture limits](evaluations/ios-1.20.4-history-capture-failure-2026-10-31.json).
 
-`READMEPREVIEW-001` now captures the existing concise fixture first in portrait, requiring both
+`READMEPREVIEW-001` captures the existing concise fixture first in portrait, requiring both
 complete transcript lines and the complete Quick answer, then retains its original Duo checks.
-This is added baseline coverage of existing UI, not an invented historical red. Both methods
-still need the prepared Pro/Pro Max native run; longer translation/live fixtures are not substitutes
-for a clean portrait gallery image when their text continues beyond the viewport.
+That added baseline passed on Max but exposed an unscrolled answer about 17 points below its
+Quick viewport on Pro; the History method passed on both. The correction uses one bounded scroll
+inside Quick only when needed, re-reads its viewport and rechecks both transcript lines afterward.
+All text/containment assertions remain. Native execution of this correction is pending; longer
+translation/live fixtures are not substitutes for a clean portrait gallery image.
 
 `ENDPOINTUI-001` and `ENDPOINTUI-002` bind rejected-address recovery, exact replacement and honest
 server/privacy labels to native Settings controls and the corresponding persistence policies.
