@@ -20,10 +20,15 @@ endpoint/Save/History/preview methods passed once; the same-source focused Pro r
 the conditional Quick-scroll path. [Audited full receipt and scoped renders](evaluations/ios-1.20.4-full-9460f00-2026-10-31.json).
 
 The later mini capture exposed an incorrect test assumption that all iPads use the full wide layout.
-Its existing compact-height Duo layout is now recognized; the corrected source still needs focused
-mini acceptance and a new final full run. [Preserved failure](evaluations/ios-1.20.4-ipad-mini-capture-failure-2026-10-31.json).
-Fresh iPhone/Duo/iPad/Watch captures, README gallery review, final CI/merge and validated distribution
-remain pending. Physical phone/iPad and paired-Watch acceptance remain separate production gates.
+Its existing compact-height Duo layout is now recognized. Corrected source `ca7ab57` passed the
+focused mini History method, all 21 capture methods across seven device profiles and a new full
+local run, October 31 **12:31–13:17 UTC**: Core 1,294, iOS 614, Mac 126 and Watch 35, zero failures
+with documented skips. All 71 native images were inspected; the README selects eight unchanged
+originals and preserves earlier galleries separately. [Current full receipt](evaluations/ios-1.20.4-full-ca7ab57-2026-10-31.json) ·
+[Fresh captures](evaluations/ios-1.20.4-release-captures-2026-10-31.json) ·
+[Preserved failure](evaluations/ios-1.20.4-ipad-mini-capture-failure-2026-10-31.json).
+Hosted README review, final CI/merge and validated distribution remain pending.
+Physical phone/iPad and paired-Watch acceptance remain separate production gates.
 Mac release and its installed audio acceptance remain separate from this iOS train.
 
 <a id="next-testflight-candidate--1203-43"></a>
@@ -55,7 +60,7 @@ and gallery files; all three required checks passed in
 [run 41092176457](https://github.com/tomqwu/ListenToMe/actions/runs/41092176457).
 
 Fresh `8dc8dd3` captures passed **17 native tests, zero failures/skips**, across seven device profiles.
-All **57 originals** were inspected; seven suitable images appear in the [README gallery](../README.md#screenshots).
+All **57 originals** were inspected; seven suitable images are retained in the [archived README gallery](images/gallery-history-2026-10-31.md).
 [Capture provenance and visual assessments](images/ios/release-1.20.3/manifest.json) retain all
 checksums and QA-only exclusions. Hosted desktop/mobile inspection passed on `97ef2461`; these
 images have not been uploaded to Apple's listing. [What to Test](../metadata/ios/en-US/what-to-test-1.20.3.txt)

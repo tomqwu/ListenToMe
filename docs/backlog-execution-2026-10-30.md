@@ -84,10 +84,15 @@ Fresh passive readbacks at **06:08 UTC, October 31** still found the phone requi
 and the Mac locked. No app, permission or authentication state changed and no repeated request was made.
 Preserve the exact candidates; #334, Watch inbox preservation and saved-audio ordering are merged.
 Ask cancellation subsequently merged in PR #357 at `09adc703`, after independent review and all
-three final checks on `00639a5`; its matching branches were deleted. Build 44 candidate `9460f00`
-then passed complete local validation and the same-source focused Pro History/preview checks.
-[Current full receipt](evaluations/ios-1.20.4-full-9460f00-2026-10-31.json). Fresh release captures, README review, final train CI/merge
-and upload remain pending, with physical and installed/audio acceptance recorded separately.
+three final checks on `00639a5`; its matching branches were deleted. Historical build 44 source
+`9460f00` passed complete local validation and focused Pro History/preview checks. Current candidate
+`ca7ab57` also corrects the iPad mini adaptive-workspace test precondition and passed its focused
+method, all 21 fresh capture methods and the complete full-local gate, October 31 **12:31–13:17 UTC**.
+[Current full receipt](evaluations/ios-1.20.4-full-ca7ab57-2026-10-31.json) ·
+[Seven-profile capture receipt](evaluations/ios-1.20.4-release-captures-2026-10-31.json).
+All 71 native screenshots were inspected; eight selected originals now populate the README gallery.
+Hosted README review, final train CI/merge and upload remain pending, with physical and
+installed/audio acceptance recorded separately. Earlier failures and source-bound passes remain preserved.
 
 [Current handoff](HANDOFF.md) · [Speaker acceptance](speaker-rename-acceptance.md) ·
 [Semantic evaluation](semantic-search-evaluation.md) · [iOS acceptance](IOS.md) ·
