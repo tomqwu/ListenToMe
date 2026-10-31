@@ -13,8 +13,8 @@ labels. [Capture receipt and limits](evaluations/ios-1.20.4-release-captures-202
 
 Complete local validation on `ca7ab57` passed October 31, **12:31–13:17 UTC**: Core **1,294**
 (seven optional skips, **98.0771% coverage**), iOS **614** (602 passed, twelve skips), Mac **126**
-and Watch **35**, zero failures. The full gate also passed all **261 scenarios**, **602 required
-bindings**, **71 release-helper tests**, four real local-server contracts and the final Mac build.
+and Watch **35**, zero failures. The full gate validated the **261-scenario catalog** and passed
+all **602 required bindings**, **71 release-helper tests**, four real local-server contracts and the final Mac build.
 The runner exited zero and was reaped. Independent audit verified all **1,129 unchanged inputs**, **2,099 raw file pairs**, 111 native payload files and the original/extracted signed Debug artifact.
 [Full source-bound receipt and acceptance limits](evaluations/ios-1.20.4-full-ca7ab57-2026-10-31.json).
 
