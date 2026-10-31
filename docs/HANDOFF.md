@@ -8,8 +8,9 @@ This is merged but unreleased, with combined installed/publication acceptance st
 
 Continue sequentially with the Watch inbox preservation fix (#181), saved-audio ordering (#336),
 and the shared History Ask cancellation fix (#223). All three have focused red/green evidence;
-Watch redelivery also completed its actual two-method iOS simulator run.
-The current Watch branch integrates exact main `946cb7e`; its full validation/review/CI/merge remain.
+Watch redelivery completed full local validation on `989a6b4`, integrating exact main `946cb7e`,
+and all three required checks passed on that source. PR [#355](https://github.com/tomqwu/ListenToMe/pull/355)
+awaits final documentation review/checks and merge; physical Watch acceptance remains open.
 Language-search quality and the recorded physical #205/#236/Watch/audio checks remain unresolved.
 [Sources, tested outcomes, blockers and next actions](backlog-execution-2026-10-30.md).
 
@@ -46,8 +47,16 @@ owned simulator shutdown and independent result/binary/source audit are recorded
 [sanitized native receipt](evaluations/watch-inbox-redelivery-native-2026-10-30.json).
 Candidate `42479af` adds only documentation to native-tested `105c91dd`; its app/test/config inputs
 are unchanged. This is a focused native pass, not a new full aggregate validation result.
-Full validation, physical file protection/paired-Watch acceptance, CI, PR/merge and publication
-remain pending. This branch follows the completed #334 merge and now integrates exact main `946cb7e`.
+Full `make validate-local` then passed on integrated source `989a6b4`, base `946cb7e`, October 31
+**02:56:46–03:45:26 UTC**: Core **1,294/seven skips/98.0768% coverage**; iOS **512 unit/seven skips
+and 101 UI/five skips**; Mac **120**; Watch **29 unit and six UI**; zero failures. Both redelivery
+methods passed again without skips. The 254-scenario catalog validated and all 593 required bound
+selectors, 71 helper methods and four real local-server contracts passed. All **1,109 inputs** and
+**2,033 original native-result files** matched; the run reaped, owned processes were absent and
+both owned simulators were confirmed Shutdown. [Audited full receipt](evaluations/watch-inbox-redelivery-full-2026-10-31.json).
+All three required checks passed on `989a6b4` in [run 41163072169](https://github.com/tomqwu/ListenToMe/actions/runs/41163072169).
+Final documentation review/checks, PR #355 merge and publication remain pending. Physical file
+protection/paired-Watch acceptance is separate and remains open.
 The fix is outside accepted TestFlight 1.20.3 (43), does not change visible UI, and does not close #181.
 
 ## Unreleased local History Refresh — October 30, 2026

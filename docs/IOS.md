@@ -55,8 +55,13 @@ the byte-identical portable macOS filesystem tests reproduced 18 assertions, the
 unchanged methods. After setup recovery, actual iOS simulator execution on `105c91dd` passed both
 bound methods with zero failures/skips and 1,083 stable inputs; the independently audited run was
 terminal/reaped at October 31, 01:33 UTC. [Native receipt](evaluations/watch-inbox-redelivery-native-2026-10-30.json).
-Full validation, physical file protection and paired-Watch retention/reconnection acceptance remain
-pending. No new release or #181 closure is claimed.
+Full `make validate-local` then passed on integrated `989a6b4`, base `946cb7e`: Core 1,294/seven skips/
+98.0768% coverage; iOS 512 unit/seven skips and 101 UI/five skips; Mac 120; Watch 35; zero failures.
+Both redelivery methods passed without skips; all 1,109 inputs matched and the process reaped.
+[Audited full receipt](evaluations/watch-inbox-redelivery-full-2026-10-31.json).
+All three required checks passed on `989a6b4` in [run 41163072169](https://github.com/tomqwu/ListenToMe/actions/runs/41163072169).
+Final documentation review/checks and PR #355 merge remain. Physical file protection and paired-Watch
+retention/reconnection acceptance remain pending. No new release or #181 closure is claimed.
 
 ## Unreleased explicit local History refresh
 

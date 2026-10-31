@@ -45,12 +45,25 @@ process groups. [Sanitized native result and independent audit](evaluations/watc
 The green duplicate guard avoids the injected failing move; no move error is claimed during green.
 The earlier portable red/green and initial platform blocker remain historical evidence.
 
+Full `make validate-local` subsequently passed on `989a6b4`, integrating main `946cb7e`, on
+October 31 **02:56:46–03:45:26 UTC**. Core: **1,294 tests/seven optional skips/98.0768% coverage**;
+iOS: **512 unit/seven skips and 101 UI/five skips**; Mac: **120**; Watch: **29 unit and six UI**;
+all zero failures. Both redelivery methods passed again with zero skips. The **254-scenario** catalog
+validated; all **593 required bound selectors**, **71 helper methods** and **four real local-server
+contracts** passed. All **1,109 frozen inputs** and **2,033 original native-result files** matched.
+The supervised process reaped and both owned simulators were confirmed Shutdown; the three copied
+result bundles' derived SQLite summary caches are recorded separately from the original files.
+[Audited full result and source/artifact preservation](evaluations/watch-inbox-redelivery-full-2026-10-31.json).
+All three required checks passed on `989a6b4` in [run 41163072169](https://github.com/tomqwu/ListenToMe/actions/runs/41163072169).
+PR [#355](https://github.com/tomqwu/ListenToMe/pull/355) remains open for final documentation review/checks
+and merge; later docs-only changes do not imply a new full runtime run.
+
 This adds **iOS simulator** filesystem coverage, not physical file-protection, WatchConnectivity
-or paired-Watch acceptance. Full validation, pairing/reconnection, wrist-down,
+or paired-Watch acceptance. Pairing/reconnection, wrist-down,
 low-storage and opt-in retention acceptance remain open; recovering index 2 does not prove
 transcription/drain completion while earlier chunks are missing. No visible UI changed, so the
 existing README gallery needs link verification rather than unrelated recapture. #181 remains open;
-CI, PR/merge and publication are not established by these focused runs.
+PR merge and publication are not established by these tests or CI.
 
 ## Historical TestFlight checkpoint — 1.20.2 (42)
 
