@@ -309,6 +309,21 @@ matrix after a torn native stdout event prevented the aggregate verifier from co
 
 ## Transcript speaker rename shortcuts (#334)
 
+`SPEAKER-020` compares short and long names in the actual native Mac row: the label must visibly
+change within its column while the adjacent transcript's pixels, text and geometry remain intact.
+It also checks the full tooltip/accessibility name. The initial native run reproduced an expanded
+266-point label and 2,675 changed pixels beyond its 100-point column; the unchanged test passed with
+zero overflow after native compression and tail truncation. The ten-method related suite passed.
+[The source-bound receipt](releases/mac-speaker-name-overflow-f26-validation.json) retains both runs.
+Corrected installed rename, full quit/relaunch, tooltip and VoiceOver acceptance passed on `9a39a12`,
+with source-labelled native README captures. The later `89e9226` candidate also includes PR #353's
+workspace changes; the speaker control, production row and bound bitmap-test files remain
+byte-identical to that earlier source, not the whole app. Combined validation: passed (exit 0).
+[Current evidence](speaker-rename-acceptance.md) records the complete counts, source audit and fresh
+native attachment inspection while preserving the separate source scopes and failed runs.
+Combined installed acceptance and a fresh full-app Mac long-name gallery capture remain open;
+the locked Mac blocks that capture, and diagnostic test images do not replace it.
+
 `AUDIOVIEW-001` covers the retained-audio player above the expanded transcript at standard and
 largest text sizes: complete visible phrases, single-line time, usable controls and enough reading
 space to reveal the original speaker without playback. The real AX5 layout red, distinct test-harness
@@ -331,15 +346,16 @@ Mac review also reproduced a live-breakdown regression: a known participant with
 transcript lines could no longer be named. `testRenameLiveParticipantBeforeTranscriptAttribution`
 failed two native assertions before restoring participant-first lookup. The same adapter test group
 checks all restored lines change together and unknown IDs leave both labels and revision unchanged.
-The current integration adds `SPEAKER-019` for cold readiness and strengthens `SPEAKER-017` to
+The earlier integration added `SPEAKER-019` for cold readiness and strengthened `SPEAKER-017` to
 require the actual two-pane workspace before/after rotation and Save. On base `6705543` plus the
 retained dirty test/scenario inputs, the two methods failed four assertions. The DEBUG simulator
 fixture then adopted the existing production lifecycle bridge; those exact tests passed unchanged.
 The six-method related rerun also passed, including largest text, opt-out, Notes and saved-audio
 controls. [The source-bound receipt](releases/speaker-rename-6705543-readiness.json) distinguishes
-these fixture controls from real diarization/Watch transfer/audio quality and keeps final combined
-validation, installed Mac, VoiceOver and disk-relaunch acceptance pending. No historical results
-are relabeled, and no release is implied by the fixture correction.
+these fixture controls from real diarization/Watch transfer/audio quality. At that checkpoint,
+combined validation, installed Mac, VoiceOver and disk-relaunch acceptance were pending; the later
+source-specific results are recorded above and in [current acceptance](speaker-rename-acceptance.md).
+No historical results are relabelled, and no release is implied by the fixture correction.
 
 ## Dual-channel audio and presentation
 

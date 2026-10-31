@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-30",
+  "source": "9a39a12f230b353fe400a2b17dc41f95a023497c",
+  "status": "unreleased_local_macOS_fix",
+  "version": "1.4.4",
+  "build": "14",
+  "versionScope": "The existing runtime version is retained; these are not screenshots of a newly published release.",
+  "bundleIdentifier": "com.tomwu.ListenToMe.dev",
+  "configuration": "signed normal Debug Dev, actual installed app",
+  "locale": "English (US) visible app content",
+  "data": "Synthetic demonstration conversation; AI off and recording idle.",
+  "captureMethod": "Native screencapture -x -o -l window capture; original PNG pixels unchanged.",
+  "images": [
+    {
+      "file": "109-wide.png",
+      "sha256": "ece3cf125e26434f516583c6a3f9b249d9ba13b7b4cba7621484a95368f04a18",
+      "width": 4400,
+      "height": 2200,
+      "windowSizePoints": {
+        "width": 2200,
+        "height": 1100
+      },
+      "pixelsPerPoint": 2,
+      "layout": "wide",
+      "alt": "Unreleased macOS speaker-name fix in a wide window: two truncated Alexandra Montgomery-Wellington labels, Jordan and three complete synthetic transcript lines.",
+      "editedCroppedResized": false,
+      "captureReceiptSHA256": "26f3dc45fafbcebcc3f5871dad675fb04c81843ad6aab8f600f1aad2664f3464",
+      "boundsReceiptSHA256": "39037ceeb7867268650d326227a1b2a802f25d71bece14f77c36f43a29dba733",
+      "visualReview": "accepted: complete transcript and contained long-name labels; no private conversation or overlay"
+    },
+    {
+      "file": "110-narrow.png",
+      "sha256": "3c9092d059e522e9fd6e70d46f85a6f2dcd65a096fc7d29c66162041dfc88156",
+      "width": 3344,
+      "height": 2000,
+      "windowSizePoints": {
+        "width": 1672,
+        "height": 1000
+      },
+      "pixelsPerPoint": 2,
+      "layout": "narrower",
+      "alt": "Unreleased macOS speaker-name fix in a narrower window: two truncated Alexandra Montgomery-Wellington labels, Jordan and three complete synthetic transcript lines.",
+      "editedCroppedResized": false,
+      "captureReceiptSHA256": "109cdd2b6a54b95e0e4e8c0c6063da86f3911d321e1575313917a887b840a333",
+      "boundsReceiptSHA256": "9217aadeff7456dd9a73479fc0bbf9e5844133b0e1669b71e457d5532bf2cef4",
+      "visualReview": "accepted: complete transcript and contained long-name labels; no private conversation or overlay"
+    }
+  ],
+  "artifactPayloadManifestSHA256": "10028b344e2b6dbf25d888b6f851f679decb45062919a085ce4bd1d86e16e762",
+  "installedAcceptanceReceiptSHA256": "531de6f0a55be62a476cd93dbb4617bfcc8e852da226ea0961ca3e92f6263647",
+  "independentReviewSHA256": "5aee00fc32dfb32e0b474f6efc179feded515d929d8ca33ec9154d1406172bf6",
+  "acceptanceScope": "Installed speaker rename/layout/VoiceOver/persistence accepted; no acoustic, Store or physical-device acceptance.",
+  "validationScope": "The earlier aggregate failed before Watch testing; fresh full validation, required CI and merge remain pending.",
+  "cleanupScope": "Owned app quit/trashed and VoiceOver restored off; fixture removal and Dev permission reset deferred during another active Dev session.",
+  "galleryScope": "Only these two final window originals are selected. Earlier black/offset or omitted-sheet captures remain QA evidence, not gallery assets."
+}

@@ -1315,7 +1315,9 @@ may publish. This text-only acceptance is separate from existing real OTHERS-aud
 - Repeat in portrait, expanded transcript and landscape Duo. At the largest text size with the
   keyboard open, inspect the entire field and Save/Cancel controls; use VoiceOver's Rename speaker action.
 - On Mac, double-click a speaker label and verify the editor appears; a single click must not open it.
-  Repeat through the context menu and on a reopened conversation. Check long names via the full-name tooltip.
+  Repeat through the context menu and on a reopened conversation. Use a long name and verify its
+  visible label stays inside the speaker column without covering transcript words; inspect the full-name tooltip
+  and VoiceOver label, then confirm the name editor still contains the complete name.
 - Cancel an edited name and verify no change. Blank/device names must disable Save. Switch conversation
   while an editor is pending and verify a stale save cannot rename another conversation.
 

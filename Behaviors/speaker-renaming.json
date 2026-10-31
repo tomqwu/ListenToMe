@@ -2,6 +2,24 @@
   "feature": "Rename identified speakers from transcript gestures",
   "scenarios": [
     {
+      "id": "SPEAKER-020",
+      "name": "Long Mac speaker names remain inside their transcript column",
+      "given": "an actual native Mac transcript row has an identified speaker beside unchanged conversation text",
+      "when": "the speaker name grows from a short label to a long full name",
+      "then": "the actual rendered name changes visibly within its 100-point column without painting any changed pixels beyond that column over the adjacent transcript; the complete name remains in tooltip and accessibility metadata and the original transcript and its layout remain unchanged",
+      "covers": [
+        "App/MacSpeakerNameButton.swift",
+        "App/EditableTranscriptRow.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacTranscriptInteractionTests.swift",
+          "test": "MacTranscriptInteractionTests/testLongSpeakerNameDoesNotPaintOverAdjacentTranscript"
+        }
+      ]
+    },
+    {
       "id": "SPEAKER-017",
       "name": "Long press an identified speaker to rename",
       "given": "an iPhone or iPad transcript contains identified participants",
