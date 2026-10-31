@@ -42,6 +42,12 @@ does not show it again, and a fresh install does not see it at all; see
   question can start immediately and late output cannot replace it. Whitespace-only edits keep
   the current answer running; provider selection and excerpt-only disclosure are unchanged. (#223)
 
+- Explain unavailable automatic summaries before listening, retain explicit provider choices and
+  allow a saved Auto preference to be turned off. Give populated portrait transcripts more reading
+  space, move optional speech tools into Transcript actions, label Generate/Update, and group
+  conversation tools, sharing and app actions. Keep automatic-summary errors above optional
+  diagnostics inside the Quick panel. Watch recording controls name Watch or iPhone.
+
 - Add explicit **Refresh search** in History to rebuild derived search data using currently available
   Apple models. Preserve saved conversations and exact-word search; show retry guidance on failure
   and keep Ask blocked until a current archive pass finishes. No language assets are downloaded. (#223)
@@ -211,6 +217,9 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
   question can start immediately and late output cannot replace it. Whitespace-only edits keep
   the current answer running; provider selection and excerpt-only disclosure are unchanged. (#223)
 
+- Keep optional recording settings, AI models and session details in native disclosures. Leave
+  answer and recap directly visible while placing six secondary Quick actions under More Quick actions.
+
 - Add explicit **Refresh search** in History to rebuild derived search data using currently available
   Apple models. Preserve saved conversations and exact-word search; show retry guidance on failure
   and keep Ask blocked until a current archive pass finishes. No language assets are downloaded. (#223)
@@ -235,6 +244,8 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 
 - Make essential translation explanations, setup status and recovery messages easier to read with stronger native foreground colors, preserving the existing layout and translation behavior. (#346)
 - Double-click an identified transcript speaker label, or choose **Rename speaker** from its context menu. Save updates that speaker across the conversation, including reopened conversations; Cancel leaves the name unchanged. (#334)
+- Keep long Mac speaker names inside their transcript column, using an ellipsis while preserving
+  the full name in the tooltip and accessibility label. Adjacent transcript text stays readable. (#334)
 - Preserve the final audio samples in the shared saved-audio conversion feed, including chunk timeline boundaries. Keep original recordings unchanged and stop explicitly on conversion failures. (#348)
 
 - Stop indefinite translation progress after a stalled on-device request, add Cancel translation and disable duplicate Translate/Retry actions until native work safely exits. Cancel the actual Apple session and reject late results/timers while preserving originals, language-pack consent and AI-provider choices. (#343)

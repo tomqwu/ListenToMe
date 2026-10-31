@@ -1,6 +1,7 @@
 # History answers follow the current query
 
-Local candidate based on `0714b9ec`, not merged or released. This reliability fix does not
+Local candidate now integrates main `946cb7e`; focused red/green below used base `0714b9ec`.
+The shared-model/test/catalog bytes remain unchanged. This fix is not merged or released. This reliability fix does not
 establish additional-language search quality or close #223.
 
 Mac and iPhone/iPad already pass search-field changes to the shared `HistorySearchModel.search`.
@@ -25,7 +26,8 @@ assertions; the whitespace control passed. The unchanged three methods passed wi
 under `run-focused.py green` after the one-line shared fix. Both supervised runs exited/reaped
 inside 600 seconds and all 159 pinned repository inputs matched before/after their respective run.
 This focused headless proof is not a full Mac/iOS suite, rendered interaction or installed/device
-acceptance. Those checks, full validation, independent review, CI and merge remain pending.
+acceptance. Those checks, full validation, final independent review, CI and merge follow the
+Watch and saved-audio fixes in the sequential queue; no feature PR is open for this change.
 
 For manual Mac and phone checks, see [the smoke test](manual-smoke-test.md). No view appearance
 changed, so the existing README gallery remains applicable; gallery links still need checking.

@@ -12,7 +12,7 @@ struct RemoteControlView: View {
                     .font(.footnote)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity)
-                Button(isRecording ? "Stop" : "Start") {
+                Button(isRecording ? "Stop on iPhone" : "Start on iPhone") {
                     let command: WatchCommand = isRecording ? .stop : .start
                     Task { await link.send(command) }
                 }

@@ -45,6 +45,10 @@ final class MobileReleaseScreenshotTests: XCTestCase {
         XCTAssertTrue(app.buttons["Start listening"].isEnabled)
         XCTAssertTrue(app.buttons["Start listening"].isHittable)
         XCTAssertTrue(app.buttons["Notes"].isHittable)
+        let update = app.buttons["generate-quick"]
+        XCTAssertTrue(update.isHittable)
+        XCTAssertEqual(update.label, "Update Quick Summary")
+        XCTAssertGreaterThanOrEqual(update.frame.height, 44)
         XCTAssertGreaterThanOrEqual(app.buttons["Start listening"].frame.height, 44)
         XCTAssertGreaterThanOrEqual(app.buttons["Notes"].frame.height, 44)
         XCTAssertTrue(window.contains(app.buttons["Start listening"].frame))

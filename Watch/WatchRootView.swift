@@ -5,9 +5,9 @@ import WatchKit
 /// the iPhone, and below them the Slice 1 remote for the iPhone's own recorder.
 struct WatchRootView: View {
     static let consentKey = "watchRecordingConsentShownV2"
-    static let consentText = "Only record people who have agreed to be recorded. The audio goes only to your "
-        + "iPhone when connected. It transcribes on-device and keeps audio for playback only when "
-        + "\"Save audio recordings\" is on; otherwise it deletes audio after transcription."
+    static let consentText = "Record only with everyone's agreement.\n\nWatch audio waits for your iPhone, "
+        + "which transcribes it on-device. Audio is kept for playback only if \"Save audio recordings\" "
+        + "is on; otherwise it is deleted after transcription."
 
     let link: WatchLinkClient
     let recorder: WatchRecorder
@@ -23,7 +23,7 @@ struct WatchRootView: View {
         ScrollView {
             VStack(spacing: 10) {
                 Button(action: record) {
-                    Label("Record", systemImage: "mic.fill")
+                    Label("Record on Watch", systemImage: "mic.fill")
                         .frame(maxWidth: .infinity)
                 }
                 .tint(.red)
@@ -67,7 +67,7 @@ struct WatchRootView: View {
                 .interactiveDismissDisabled(recorder.isRecording)
         }
         .alert("Before you record", isPresented: $showConsent) {
-            Button("Record") {
+            Button("Record on Watch") {
                 consentShown = true
                 start()
             }

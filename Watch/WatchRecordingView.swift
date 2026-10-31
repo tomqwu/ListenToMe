@@ -24,7 +24,7 @@ struct WatchRecordingView: View {
                     Text(WatchLink.elapsedText(context.date.timeIntervalSince(startedAt)))
                         .font(.title2.monospacedDigit())
                         .accessibilityIdentifier("watchRecordingElapsed")
-                    Button("Stop", action: stop)
+                    Button("Stop on Watch", action: stop)
                         .tint(.red)
                 case .stopped(let reason, let canContinue):
                     ScrollView {
