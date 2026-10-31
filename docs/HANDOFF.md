@@ -16,17 +16,22 @@ Language-search quality and the recorded physical #205/#236/Watch/audio checks r
 
 ## Local Mac saved-audio ordering follow-up — October 30, 2026
 
-The #336 **Play from a line** ordering slice has focused red/green evidence on `d36b212`.
-This branch now integrates main `0177431`, including the merged workspace, long-name and Watch inbox fixes;
-its three native methods and runtime change remain unchanged. Genuine rendered-order red preceded
-the two-file fix. Three native methods and 145 existing Core tests passed, zero skips, with all
-1,083 frozen inputs unchanged. Playback keeps canonical source/offsets, including restored duplicate
-IDs. [Evidence and remaining gates](dual-channel-capture.md#local-saved-audio-ordering-follow-up--october-30-2026).
+The #336 **Play from a line** ordering slice completed full local validation on `347ed05`,
+integrating Watch main `0177431`, October 31 **04:14–05:02 UTC**. Core **1,294**, iOS **613**,
+Mac **123** and Watch **35** tests completed with zero failures; optional skips and exact coverage
+are recorded in the [audited full receipt](evaluations/mac-saved-audio-order-full-2026-10-31.json).
+All three Saved Audio methods passed, and the run owner and root independently inspected their
+fresh expanded native renders. The independent audit verified **1,112 unchanged inputs** and
+**2,093 original/preserved native-result files**. The runner reaped and its owned simulators were
+confirmed Shutdown before the next job. Historical genuine red, the three focused passes and
+145 Core checks remain preserved in the [scope and evidence](dual-channel-capture.md#local-saved-audio-ordering-follow-up--october-30-2026).
 
-Installed History playback/full-app README capture remains blocked by the locked Mac; component
-images are QA only. Full combined validation, review, CI and merge are next; Watch PR #355 is merged.
-The original near-end/overlap/repeated-speech/headphones acceptance remains open; this bounded fix
-does not close #336 or change iOS playback lookup. No second feature PR is open.
+All three required checks passed on `347ed05` in [run 41167693082](https://github.com/tomqwu/ListenToMe/actions/runs/41167693082).
+PR [#356](https://github.com/tomqwu/ListenToMe/pull/356) remains open; later documentation commits
+require their own hosted checks and do not imply another binary run. Installed History playback
+and the full-app README capture remain blocked by the locked Mac; component images are QA only.
+The original near-end/overlap/repeated-speech/headphone/route matrix remains open. This bounded fix
+does not close #336 or change iOS playback lookup, and it is not merged or published.
 
 ## Unreleased workspace usability refinements — October 30, 2026
 
