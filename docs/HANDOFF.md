@@ -1,12 +1,18 @@
 # Active backlog delivery — October 30, 2026
 
-Six issues remain open after workspace PR #353 closed #352. Three local fixes have real focused
-red/green evidence: Mac long-name
-layout (#334), saved-audio ordering (#336), and Watch inbox redelivery data preservation (#181).
-Their required delivery gates are incomplete; they are not merged or in TestFlight 43. Spanish
-semantic-search candidates still fail the fixed quality requirement; physical #205/#236 and Watch
-acceptance also remain open. Continue the exact work below rather than treating an unchanged board
-as an idle queue. [Sources, tested outcomes, blockers and next actions](backlog-execution-2026-10-30.md).
+Five issues remain open: **#181, #205, #223, #236 and #336**. PR [#354](https://github.com/tomqwu/ListenToMe/pull/354)
+merged the Mac long-name correction at `946cb7e` on October 31, 02:49 UTC and closed #334. Full local
+validation passed on combined source `89e9226`; all three required checks passed on documentation
+head `19d152f`. Matching local/remote feature branches were deleted and tracking refs pruned.
+This is merged but unreleased, with combined installed/publication acceptance still separate.
+
+Continue sequentially with the Watch inbox preservation fix (#181), saved-audio ordering (#336),
+and the shared History Ask cancellation fix (#223). All three have focused red/green evidence;
+Watch redelivery completed full local validation on `989a6b4`, integrating exact main `946cb7e`,
+and all three required checks passed on that source. PR [#355](https://github.com/tomqwu/ListenToMe/pull/355)
+awaits final documentation review/checks and merge; physical Watch acceptance remains open.
+Language-search quality and the recorded physical #205/#236/Watch/audio checks remain unresolved.
+[Sources, tested outcomes, blockers and next actions](backlog-execution-2026-10-30.md).
 
 ## Unreleased workspace usability refinements — October 30, 2026
 
@@ -19,15 +25,39 @@ The existing Mac minimum window width remains 1100 points. No provider choice or
 [source-bound gallery](images/workspace/unreleased-2026-10-30/manifest.json) distinguish test results,
 installed Mac inspection, simulator previews and physical acceptance. PR #353 merged at `5e1a8f4` on October 31, 01:34 UTC after its complete local validation, independent
 review and all three required checks on `1b275b1`. Its final native run uses `c2c450e`; later
-documentation-only commits preserve its frozen app/test/config inputs. The #334 branch now integrates
-that exact main. Only README/HANDOFF conflicted; both galleries and acceptance histories were retained.
+documentation-only commits preserve its frozen app/test/config inputs. The #334 branch integrated
+that exact main before its merge. Only README/HANDOFF conflicted; both galleries and acceptance histories were retained.
 The existing captures retain their source labels. The combined #334 checkpoint below links its
 [exact validation evidence and remaining gates](speaker-rename-acceptance.md). The original #334
 regression and `9a39a12` installed acceptance are not relabelled as acceptance of the combined
-installed app; final review and merge remain pending.
+installed app. Final review and all three checks passed on `19d152f`; PR #354 merged at `946cb7e`.
 Earlier failed aggregates remain failed, including the corrected error clipping and legacy test
 expectations. Physical phone/iPad/Watch capture, paired transfer, full VoiceOver and real OTHERS
 acceptance remain pending. This work is unreleased and is not in TestFlight 1.20.3 (43).
+
+## Local Watch inbox redelivery repair — October 30, 2026
+
+Source `5f52da6` preserves the first durable audio/sidecar when a duplicate arrives before missing
+or corrupt ledger recovery. Supplemental macOS filesystem evidence: two original methods went
+from 18 assertion failures to two passes, zero skips; both runs reaped with 163 unchanged inputs.
+[Evidence and limits](watch-beta.md#unreleased-phone-inbox-redelivery-repair).
+After setup recovery, actual iOS simulator execution on `105c91dd` passed both bound methods with
+zero failures/skips and **1,083 unchanged inputs**, October 31 **01:32:10–01:33:24 UTC**. Exit 0/reaped,
+owned simulator shutdown and independent result/binary/source audit are recorded in the
+[sanitized native receipt](evaluations/watch-inbox-redelivery-native-2026-10-30.json).
+Candidate `42479af` adds only documentation to native-tested `105c91dd`; its app/test/config inputs
+are unchanged. This is a focused native pass, not a new full aggregate validation result.
+Full `make validate-local` then passed on integrated source `989a6b4`, base `946cb7e`, October 31
+**02:56:46–03:45:26 UTC**: Core **1,294/seven skips/98.0768% coverage**; iOS **512 unit/seven skips
+and 101 UI/five skips**; Mac **120**; Watch **29 unit and six UI**; zero failures. Both redelivery
+methods passed again without skips. The 254-scenario catalog validated and all 593 required bound
+selectors, 71 helper methods and four real local-server contracts passed. All **1,109 inputs** and
+**2,033 original native-result files** matched; the run reaped, owned processes were absent and
+both owned simulators were confirmed Shutdown. [Audited full receipt](evaluations/watch-inbox-redelivery-full-2026-10-31.json).
+All three required checks passed on `989a6b4` in [run 41163072169](https://github.com/tomqwu/ListenToMe/actions/runs/41163072169).
+Final documentation review/checks, PR #355 merge and publication remain pending. Physical file
+protection/paired-Watch acceptance is separate and remains open.
+The fix is outside accepted TestFlight 1.20.3 (43), does not change visible UI, and does not close #181.
 
 ## Unreleased local History Refresh — October 30, 2026
 
@@ -52,7 +82,7 @@ matching local/remote branches were deleted and tracking refs pruned. This is me
 Detailed preservation and prior capture-harness limits are in the linked evidence. Additional-language
 quality remains open under #223; negative experiments remain failed.
 
-## Mac speaker-name overflow candidate — October 30, 2026
+## Merged Mac speaker-name overflow fix — October 30, 2026
 
 Installed #334 acceptance on source `5f1e909` (Mac runtime identical to merged `97ef2461`) verified
 Save/Cancel, full quit/relaunch persistence, context-menu rename, neighbor isolation, VoiceOver
@@ -85,7 +115,7 @@ Its runtime/tests/config matched `9a39a12`. The October 31, 00:42–00:43 UTC se
 refused by the ownership guard before `make` or tests; all 1,085 inputs matched and both owned devices
 shut down. That refusal and the failed `9a39a12` aggregate remain preserved as distinct outcomes.
 
-The current combined candidate `89e9226` integrates workspace main `5e1a8f4`. The speaker
+The merged #334 candidate was validated at `89e9226`, integrating workspace main `5e1a8f4`. The speaker
 control, production row and bound bitmap-test files remain byte-identical to `9a39a12`; the whole
 workspace is changed. Exact-source full validation: **passed (exit 0)**.
 [The canonical acceptance record](speaker-rename-acceptance.md) contains the complete suite counts,
@@ -95,7 +125,10 @@ Its source-labelled hosted README passed at 1,280/390 pixels, with all 44 images
 assets/manifests downloaded byte-identical. The combined installed Mac long-name flow and full-app
 capture remain open while the Mac is locked; the prior installed captures and fresh native row
 attachments are not substitutes. No repeated unlock request is needed. Final documentation/gallery
-checks, exact final-head CI, review and PR #354 merge remain; no merge or publication is claimed.
+checks and independent review passed on `19d152f`, with all three checks
+green in [run 41160705656](https://github.com/tomqwu/ListenToMe/actions/runs/41160705656). PR #354 merged
+at `946cb7e`; #334 closed and its matching local/remote branches were deleted and refs pruned.
+No new release or production acceptance is claimed.
 
 ## TestFlight 1.20.3 (43) published — October 30, 2026
 
