@@ -1,0 +1,96 @@
+{
+  "at": "2026-10-30T21:12:42.927843+00:00",
+  "source": "9a39a12f230b353fe400a2b17dc41f95a023497c",
+  "base": "13573f9041bd9f5a07ce0c444e2f597b34afdda8",
+  "tree": "d5285628fffa65df70b5f1b4f8ef641f2c240b07",
+  "frozenInputCount": 1074,
+  "hashMismatches": [],
+  "aggregate": {
+    "command": "make validate-local",
+    "status": "failed",
+    "exit": 2,
+    "reaped": true,
+    "reason": "Watch destination error70 after CoreSimulator1174.9.2 vs required1174.21.0 mismatch",
+    "receiptSHA256": "7ea1e9b5f58ebbf1c00b9795705909eca7f178c2055d364ad69853da0ea153ae"
+  },
+  "components": [
+    {
+      "name": "release helpers, hotkey, lint, BDD",
+      "status": "passed before native stages",
+      "evidence": "validation/reference.log"
+    },
+    {
+      "name": "Core",
+      "total": 1294,
+      "skipped": 7,
+      "failed": 0,
+      "coveragePercent": 98.07677689091601,
+      "status": "passed",
+      "evidence": "validation/reference.log"
+    },
+    {
+      "name": "ios",
+      "status": "passed",
+      "counts": {
+        "result": "Passed",
+        "totalTestCount": 606,
+        "passedTests": 594,
+        "failedTests": 0,
+        "skippedTests": 12,
+        "expectedFailures": 0
+      },
+      "xcresult": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-mac334-name-overflow/full-validation-preparation-9a39a12/native-results/ios-Test-ListenToMeIOS-2026.10.30_16-10-21--0400.xcresult",
+      "toolchainBuild": "27A9275"
+    },
+    {
+      "name": "mac",
+      "status": "passed",
+      "counts": {
+        "result": "Passed",
+        "totalTestCount": 119,
+        "passedTests": 119,
+        "failedTests": 0,
+        "skippedTests": 0,
+        "expectedFailures": 0
+      },
+      "xcresult": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-mac334-name-overflow/full-validation-preparation-9a39a12/native-results/mac-Test-ListenToMeMacTests-2026.10.30_16-53-07--0400.xcresult",
+      "toolchainBuild": "27B52"
+    },
+    {
+      "name": "Watch",
+      "status": "not run; setup blocked",
+      "reason": "PackageKit component installation awaits user OS authentication; owned first-launch attempt stopped/reaped143",
+      "evidence": "xcode-first-launch-recovery/authentication-blocker.json"
+    },
+    {
+      "name": "Mac Debug build + real-server e2e",
+      "status": "passed",
+      "exit": 0,
+      "reaped": true,
+      "tests": 4,
+      "skipped": 0,
+      "failed": 0,
+      "toolchainBuild": "27B52",
+      "model": "qwen3:0.6b already installed",
+      "receiptSHA256": "cf0f46b271621050be5eaceed341f2a784cb3a0c4b099eb26f7779b95fd8d507"
+    }
+  ],
+  "completeComponentMatrix": false,
+  "aggregatePass": false,
+  "installedCorrectedMacAcceptance": "pending; verified artifact handed to root",
+  "preservedDevAppReceiptSHA256": "57547f36ae7e84cc48ad499253f4ef19af1618aeebbfa9d7ddb130c236da7962",
+  "toolchainNote": "Xcode changed during aggregate: passing iOS606 used27A9275; passing Mac119 and later normal Dev/e2e used27B52. Same source does not imply same toolchain.",
+  "remaining": [
+    "Watch tests after user-authenticated Xcode component setup; original aggregate remains failed.",
+    "Individual shutdown of nine verified owned simulator UUIDs after simctl recovery.",
+    "Installed corrected long-name Mac UI/VoiceOver/gallery acceptance; Mac remained locked on latest read-only check.",
+    "Required CI and sequential PR merge; no PR or publication yet."
+  ],
+  "sourceReceiptSHA256": "ce24d6a26d292923b0f706bd8b60d6d1e2dbd227cb2a358e0592ede1fb6beb16",
+  "mainIntegration": {
+    "mergedMain": "0714b9ec849080e4ac399d66f4573cda6afa4abd",
+    "localMerge": "7b19c69bfb3f71d3b74a55f0589c7c6100376387",
+    "delta": "README/docs/gallery only; runtime/tests/config unchanged from9a39a12"
+  },
+  "latestAvailabilityReceiptSHA256": "f0740a50da319850d6937983870baa6e488977d045b2d390f49e5c304364862a"
+}

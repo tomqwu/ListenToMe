@@ -7,6 +7,55 @@ import ListenToMeCore
 /// provider, or callback shortcut participates in this interaction contract.
 @MainActor
 final class MacTranscriptInteractionTests: XCTestCase {
+    func testLongSpeakerNameDoesNotPaintOverAdjacentTranscript() {
+        let state = SpeakerNameRenderState()
+        let text = "The synthetic cedar meeting starts at noon."
+        let fullName = "Dana QA334 Full Name Regression Check"
+        let row = SpeakerNameRenderRow(state: state, text: text)
+            .frame(width: 572, height: 100, alignment: .topLeading).background(Color.white)
+        host(row, width: 600) { window, view, finish in
+            do {
+                window.appearance = NSAppearance(named: .aqua); view.appearance = window.appearance
+                let label = try XCTUnwrap(self.descendants(view).compactMap { $0 as? MacSpeakerNameButton }.first)
+                let transcript = try XCTUnwrap(self.descendants(view).compactMap { $0 as? TranscriptTextView }.first)
+                let labelFrame = label.convert(label.bounds, to: view)
+                let textFrame = transcript.convert(transcript.bounds, to: view)
+                XCTAssertEqual(labelFrame.width, 100, accuracy: 0.5)
+                XCTAssertLessThan(labelFrame.maxX, textFrame.minX)
+                XCTAssertEqual(transcript.string, text)
+                let short = try self.speakerRaster(view, name: "Short speaker beside original transcript")
+                state.name = fullName
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    defer { finish() }
+                    do {
+                        view.layoutSubtreeIfNeeded()
+                        XCTAssertEqual(label.title, fullName.uppercased(), "The actual native label must update")
+                        XCTAssertEqual(label.convert(label.bounds, to: view), labelFrame)
+                        XCTAssertEqual(transcript.convert(transcript.bounds, to: view), textFrame)
+                        XCTAssertEqual(transcript.string, text)
+                        XCTAssertEqual(label.toolTip, fullName.uppercased() + " — Double-click to rename this speaker")
+                        XCTAssertEqual(label.accessibilityLabel(), "Rename speaker " + fullName.uppercased())
+                        let long = try self.speakerRaster(view, name: "Long speaker beside original transcript")
+                        let changes = try self.speakerPixelChanges(short, long, label: labelFrame,
+                                                                  transcript: textFrame, in: view)
+                        let evidence = XCTAttachment(string: "label=\(labelFrame), transcript=\(textFrame), "
+                            + "changed name pixels inside=\(changes.inside), beyond column=\(changes.outside), "
+                            + "original transcript ink=\(changes.transcriptInk)")
+                        evidence.name = "Actual speaker glyph containment"; evidence.lifetime = .keepAlways
+                        self.add(evidence)
+                        XCTAssertGreaterThan(changes.inside, 24,
+                                             "A blank or unchanged label cannot satisfy the render check")
+                        XCTAssertGreaterThan(changes.transcriptInk, 24, "The original transcript must actually render")
+                        XCTAssertEqual(changes.outside, 0,
+                            "A longer speaker name must not paint beyond its column over the original transcript")
+                    } catch { XCTFail("Speaker render measurement failed: \(error)") }
+                }
+            } catch {
+                XCTFail("Speaker render setup failed: \(error)"); finish()
+            }
+        }
+    }
+
     func testWrappedTextFitsAfterResizeAndSelectionSurvivesSameTextRefresh() {
         let state = TranscriptRefreshState()
         let long = TranscriptSegment(source: .others,
@@ -172,6 +221,56 @@ final class MacTranscriptInteractionTests: XCTestCase {
         [view] + view.subviews.flatMap { descendants($0) }
     }
 
+    private func speakerRaster(_ view: NSView, name: String) throws -> NSBitmapImageRep {
+        view.layoutSubtreeIfNeeded()
+        let bitmap = try XCTUnwrap(view.bitmapImageRepForCachingDisplay(in: view.bounds))
+        view.cacheDisplay(in: view.bounds, to: bitmap)
+        let png = try XCTUnwrap(bitmap.representation(using: .png, properties: [:]))
+        let attachment = XCTAttachment(data: png, uniformTypeIdentifier: "public.png")
+        attachment.name = name; attachment.lifetime = .keepAlways; add(attachment)
+        return bitmap
+    }
+
+    private func speakerPixelChanges(
+        _ short: NSBitmapImageRep, _ long: NSBitmapImageRep, label: CGRect, transcript: CGRect, in view: NSView
+    ) throws -> (inside: Int, outside: Int, transcriptInk: Int) {
+        XCTAssertEqual(short.pixelsWide, long.pixelsWide)
+        XCTAssertEqual(short.pixelsHigh, long.pixelsHigh)
+        let scaleX = CGFloat(long.pixelsWide) / view.bounds.width
+        let scaleY = CGFloat(long.pixelsHigh) / view.bounds.height
+        let top = view.isFlipped ? label.minY - view.bounds.minY : view.bounds.maxY - label.maxY
+        let x0 = Int(ceil((label.minX - view.bounds.minX) * scaleX))
+        let boundary = Int(ceil((label.maxX - view.bounds.minX) * scaleX))
+        let textStart = Int(ceil((transcript.minX - view.bounds.minX) * scaleX))
+        let y0 = Int(ceil(top * scaleY)), y1 = Int(floor((top + label.height) * scaleY))
+        XCTAssertGreaterThanOrEqual(x0, 0); XCTAssertLessThan(boundary, long.pixelsWide)
+        XCTAssertGreaterThanOrEqual(y0, 0); XCTAssertLessThanOrEqual(y1, long.pixelsHigh)
+        guard x0 >= 0, boundary < long.pixelsWide, y0 >= 0, y1 <= long.pixelsHigh, y0 < y1 else {
+            throw NSError(domain: "SpeakerRenderBounds", code: 1)
+        }
+        var inside = 0, outside = 0, transcriptInk = 0
+        for y in y0..<y1 {
+            for x in x0..<long.pixelsWide {
+                let before = try XCTUnwrap(short.colorAt(x: x, y: y)?.usingColorSpace(.sRGB))
+                let after = try XCTUnwrap(long.colorAt(x: x, y: y)?.usingColorSpace(.sRGB))
+                if x >= textStart, before.alphaComponent > 0.99,
+                   max(max(before.redComponent, before.greenComponent), before.blueComponent) < 0.7 {
+                    transcriptInk += 1
+                }
+                let difference = max(max(abs(before.redComponent - after.redComponent),
+                                         abs(before.greenComponent - after.greenComponent)),
+                                     max(abs(before.blueComponent - after.blueComponent),
+                                         abs(before.alphaComponent - after.alphaComponent)))
+                if difference > 0.02 {
+                    if x < boundary { inside += 1 }
+                    // Ignore one physical antialias pixel at the measured column edge.
+                    else if x > boundary { outside += 1 }
+                }
+            }
+        }
+        return (inside, outside, transcriptInk)
+    }
+
     private func assertCompleteLayout(_ text: NSTextView, adjacent: String, in view: NSView) {
         guard let layout = text.layoutManager, let container = text.textContainer,
               let next = descendants(view).compactMap({ $0 as? NSTextView })
@@ -276,6 +375,22 @@ final class MacTranscriptInteractionTests: XCTestCase {
 
 @MainActor private final class TranscriptRefreshState: ObservableObject {
     @Published var dark = false
+}
+
+@MainActor private final class SpeakerNameRenderState: ObservableObject {
+    @Published var name = "Dana"
+    let lineID = UUID()
+}
+
+private struct SpeakerNameRenderRow: View {
+    @ObservedObject var state: SpeakerNameRenderState
+    let text: String
+    var body: some View {
+        let segment = TranscriptSegment(id: state.lineID, source: .others, text: text,
+            isFinal: true, start: 34, end: 36, speakerID: "synthetic-speaker", speakerName: state.name)
+        EditableTranscriptRow(segment: segment, speakerLabel: state.name.uppercased(),
+            copyTranscript: {}, edit: { _ in }, delete: {}, addTerm: {}, renameSpeaker: { _ in })
+    }
 }
 
 private struct RefreshingTranscriptRows: View {

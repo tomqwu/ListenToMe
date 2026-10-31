@@ -218,3 +218,11 @@ The Watch does not run translation. After on-device transcription on iPhone, the
 text can use the phone's optional live translation. A completed Summary has a separate Translate
 summary action. These use installed phone language packs; transfer, recording and retained-audio
 consent are unchanged. See [translation](translation.md).
+
+## Unreleased workspace wording
+
+The home action is **Record on Watch**. The separate iPhone remote uses **Start on iPhone** and
+**Stop on iPhone**; local capture uses **Stop on Watch**. Offline remote readiness, local microphone
+readiness, consent, cancellation and durable transfer retain their existing rules. These wording
+changes do not establish physical Watch or paired-device acceptance. Consent uses shorter paragraphs
+while retaining agreement, on-device phone transcription and opt-in audio-retention details.

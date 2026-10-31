@@ -86,6 +86,7 @@ final class MobilePhysicalCaptureUITests: XCTestCase {
         print("LTM_PHYSICAL_RECORDING_STOPPED")
         app.buttons["Stop listening"].tap()
         XCTAssertTrue(start.waitForExistence(timeout: 30))
+        app.buttons["transcriptOptions"].tap()
         let play = app.buttons["playSavedAudio"]
         XCTAssertTrue(play.waitForExistence(timeout: 10), "Opt-in real capture must retain playable audio")
         guard play.exists else { return }

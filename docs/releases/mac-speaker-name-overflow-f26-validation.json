@@ -1,0 +1,82 @@
+{
+  "issue": 334,
+  "status": "focused_native_pass_installed_layout_recheck_pending",
+  "scenario": "SPEAKER-020",
+  "source": {
+    "baseCommit": "f26e655ed9fadd418eaee631eaeaa31b6a780d44",
+    "cleanCommitOnly": false,
+    "branch": "codex/mac-speaker-name-overflow",
+    "inputHashes": {
+      "App/MacSpeakerNameButton.swift": "51fb0924fc278a9e3b24e222c421787b58d37c1ee578b9ed258a1b53151c5dc1",
+      "macOSTests/MacTranscriptInteractionTests.swift": "67a7d7d344883d0a22b5b6ceaf89951abd049a1c75895f231478db37e7b63841",
+      "Behaviors/speaker-renaming.json": "a31c30a3e968b87c6033f416d101141f41d674974b07b75372c4a34dd36996cf"
+    }
+  },
+  "red": {
+    "methods": 1,
+    "failedMethods": 1,
+    "assertionFailures": 2,
+    "nativeExit": 65,
+    "reaped": true,
+    "nativeLabelWidthBefore": 100,
+    "nativeLabelWidthAfter": 266,
+    "changedPixelsBeyondColumn": 2675
+  },
+  "green": {
+    "methods": 10,
+    "passed": 10,
+    "failed": 0,
+    "skipped": 0,
+    "nativeExit": 0,
+    "reaped": true,
+    "nativeLabelWidth": 100,
+    "changedNamePixelsInsideColumn": 1201,
+    "changedPixelsBeyondColumn": 0,
+    "originalTranscriptInkPixels": 2888
+  },
+  "frozenInputsPerRun": 1059,
+  "inputMismatches": [],
+  "testAndScenarioUnchangedBetweenRedAndGreen": true,
+  "onlyChangedInputBetweenRedAndGreen": [
+    "App/MacSpeakerNameButton.swift"
+  ],
+  "implementation": "Allow the native label to fit its proposed width and truncate its displayed title at the tail; preserve its full title, tooltip and accessibility label.",
+  "observed": [
+    "Actual native row raster comparison, not just cell property or accessibility bounds",
+    "Visible name and original transcript ink; adjacent transcript text and geometry unchanged",
+    "Double-click, single-click/disabled refusal, accessible activation, Cancel, restored identity isolation, text selection and multiline reflow"
+  ],
+  "nativeCaptures": {
+    "redLongNameSHA256": "abef9c16bbbb6b94d41bf20a2b49027b632a21fe80d38e6cc1806b94b1a8f032",
+    "greenLongNameSHA256": "0070245a98b86b615d289d0a66b698ee8f5ec1aaf60c901a66e30ba66b4e91f4",
+    "greenShortNameSHA256": "e3c0a5268d1574955ca9dc395536be3e6bd5f1837053f8aa03182db8a8e974f9",
+    "visualStatus": "reviewed; QA-only native control renders, not listing or README images"
+  },
+  "priorInstalledAcceptance": {
+    "binarySource": "5f1e9092c2b26b99ab5bce98f8b700767197cecf",
+    "matchingMergedMacSource": "97ef2461b86869405c1d0f4221816b790f0216fd",
+    "normalDebugNotStoreSandbox": true,
+    "receiptSHA256": "7a22ab21e47220d2b4d3aa8267862d04e2cae1ecb714842e2f96b67b16740fa9",
+    "voiceOverReceiptSHA256": "cf55ffe9d0697955128759f9e5b407b6077d133ade11a8ca12450eeb4c2a1b84",
+    "observed": [
+      "Save/Cancel and blank rejection",
+      "Actual speaker-label context menu",
+      "Full process quit/relaunch with matching names and neighbor isolation",
+      "VoiceOver label/name/editor/Cancel/Save using native caption readback",
+      "Visible full-name tooltip",
+      "New conversation dismisses pending editor without saving its draft"
+    ],
+    "limitation": "This earlier installed source reproduced the overflow; it does not accept the new layout fix."
+  },
+  "fullValidationPassedForThisFix": false,
+  "installedLayoutFixAccepted": false,
+  "readmeGalleryRefreshedForThisFix": false,
+  "merged": false,
+  "published": false,
+  "evidenceIdentifier": "2026-10-30/listentome-mac334-name-overflow",
+  "pending": [
+    "Installed fixed candidate long-name/tooltip/VoiceOver recheck and fresh README capture",
+    "Full local validation after current #223 feature merge",
+    "Independent review, required CI and merge; no new PR ahead of #223"
+  ]
+}

@@ -1,0 +1,1 @@
+Keep long speaker names within their transcript column, using an ellipsis without covering the conversation text. The full name remains available in the tooltip and accessibility label, and Rename speaker still edits the complete name.

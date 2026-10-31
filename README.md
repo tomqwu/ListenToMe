@@ -86,6 +86,73 @@ make ios-test
 
 ## Screenshots
 
+### Unreleased workspace refinement
+
+These native previews show the **unreleased** reading-space and action-label improvements; they
+are separate from TestFlight 1.20.3 (43). Mac optional controls start collapsed, summary actions
+say Generate/Update, and Watch actions name the recording device. Tap any preview for its native
+resolution. These captures and the earlier speaker-name captures below come from separate sources;
+they do not establish acceptance of the combined candidate. [Source, checksums and capture limits](docs/images/workspace/unreleased-2026-10-30/manifest.json) ·
+[Behavior and validation](docs/workspace-usability.md).
+
+A fresh full-app Mac capture combining this workspace with the long-name fix remains blocked
+while the Mac is locked. The earlier installed captures retain their original source labels;
+native row-test images are diagnostics and do not complete this gallery refresh.
+[Combined validation and outstanding installed/capture acceptance](docs/speaker-rename-acceptance.md).
+
+**Mac · focused workspace and optional controls**
+
+<p align="center"><a href="docs/images/workspace/unreleased-2026-10-30/mac-workspace.png"><img src="docs/images/workspace/unreleased-2026-10-30/mac-workspace.png" width="760" alt="Unreleased Mac workspace with optional recording settings, AI models, session details and secondary Quick actions collapsed; empty demonstration conversation."></a></p>
+
+[Expanded model choices and all six secondary actions](docs/images/workspace/unreleased-2026-10-30/mac-options.png)
+remain available through native disclosures.
+
+**iPhone · full summary and Duo reading**
+
+<p align="center"><a href="docs/images/workspace/unreleased-2026-10-30/iphone-live.png"><img src="docs/images/workspace/unreleased-2026-10-30/iphone-live.png" width="240" alt="Unreleased iPhone Pro Max populated portrait workspace with more transcript space, Transcript actions and labeled Update; complete synthetic speech and Quick output."></a>
+<a href="docs/images/workspace/unreleased-2026-10-30/iphone-summary.png"><img src="docs/images/workspace/unreleased-2026-10-30/iphone-summary.png" width="240" alt="Unreleased iPhone full-summary reader with an explicitly labeled Update Summary button and complete synthetic decisions and next steps."></a></p>
+
+<p align="center"><a href="docs/images/workspace/unreleased-2026-10-30/iphone-duo.png"><img src="docs/images/workspace/unreleased-2026-10-30/iphone-duo.png" width="760" alt="Unreleased iPhone Duo landscape with two complete synthetic transcript lines, all Quick Summary bullets and labeled Update action inside their reading areas."></a></p>
+
+**iPad · transcript and summaries together**
+
+<p align="center"><a href="docs/images/workspace/unreleased-2026-10-30/ipad-wide.png"><img src="docs/images/workspace/unreleased-2026-10-30/ipad-wide.png" width="760" alt="Unreleased native iPad wide workspace showing synthetic transcript, Quick Summary and full Summary with named Update buttons."></a></p>
+
+[Compact iPad mini layout](docs/images/workspace/unreleased-2026-10-30/ipad-mini.png) keeps transcript
+and Quick Summary side by side in its narrower window.
+
+**Watch · local recording and the separate iPhone remote**
+
+<p align="center">
+<a href="docs/images/workspace/unreleased-2026-10-30/watch-home.png"><img src="docs/images/workspace/unreleased-2026-10-30/watch-home.png" width="180" alt="Unreleased Watch home with Record on Watch and disabled Start on iPhone while the phone is offline."></a>
+<a href="docs/images/workspace/unreleased-2026-10-30/watch-recording.png"><img src="docs/images/workspace/unreleased-2026-10-30/watch-recording.png" width="180" alt="Unreleased Watch microphone-free recording preview with elapsed time and explicit Stop on Watch."></a>
+</p>
+
+Simulator summaries and Watch recording use explicit synthetic fixtures. The Live previews inject
+synthetic summaries and simulated Auto; in normal use, Apple Intelligence supports manual
+Generate/Update, while Auto requires a configured supported service. These images establish
+layout, not real model quality, physical recording or paired transfer. No Apple listing upload or
+release is implied.
+
+<details>
+<summary>Earlier speaker-name, History and TestFlight galleries · source-specific acceptance</summary>
+
+### Mac speaker-name acceptance · before workspace refinement
+
+Long names stay within their column while complete transcript lines remain readable. These actual
+signed Dev-app captures use synthetic content with AI off and predate the workspace refinement above.
+The contained-name behavior is **unreleased**; these images preserve its source-specific acceptance.
+[Source, native pixels and acceptance scope](docs/images/mac/speaker-rename-unreleased-2026-10-30/manifest.json).
+
+<p align="center"><a href="docs/images/mac/speaker-rename-unreleased-2026-10-30/109-wide.png"><img src="docs/images/mac/speaker-rename-unreleased-2026-10-30/109-wide.png" width="760" alt="Unreleased Mac speaker-name fix in a wide window: two truncated long-name labels, Jordan and three complete synthetic transcript lines."></a></p>
+
+<details>
+<summary>The same conversation in a narrower window</summary>
+
+<p align="center"><a href="docs/images/mac/speaker-rename-unreleased-2026-10-30/110-narrow.png"><img src="docs/images/mac/speaker-rename-unreleased-2026-10-30/110-narrow.png" width="760" alt="Unreleased Mac speaker-name fix in a narrower window, with long labels contained beside complete transcript lines and normal sidebar scrolling."></a></p>
+
+</details>
+
 ### Unreleased local History refresh
 
 These native previews show an **unreleased follow-up**, not the accepted TestFlight 1.20.3 (43)
@@ -273,7 +340,7 @@ production layout at that checkpoint. It predates the compact-landscape spacing 
 **macOS · historical workspace**
 
 This older capture is retained for reference; it does not depict the latest Mac candidate.
-A fresh source-matched Mac gallery remains part of its release checklist.
+Current unreleased Mac previews appear above.
 
 <p align="center">
   <a href="docs/images/screenshot.png"><img src="docs/images/screenshot.png" width="760" alt="Historical macOS four-pane meeting workspace; not the latest candidate."></a>
@@ -300,6 +367,8 @@ content and is historical QA, not a clean current release preview.
 <p align="center">
   <a href="docs/images/ios/1.18.2/iphone-05-menu.png"><img src="docs/images/ios/1.18.2/iphone-05-menu.png" width="200" alt="Historical 1.18.2 iPhone More menu with the Full summary icon."></a>
 </p>
+
+</details>
 
 </details>
 
@@ -722,6 +791,8 @@ pressing Listen. The app analyzes captured system audio on-device about every 20
 speaker models. Open **Speakers / edit names** to name voices, for example Speaker 1 → Alice. You can also
 double-click an identified speaker label in the Mac transcript, or long-press its line on iPhone/iPad
 and choose **Rename speaker**. Save applies the name throughout this conversation; Cancel discards the edit.
+The unreleased Mac layout keeps long names within the speaker column with an ellipsis; the tooltip
+and accessibility label retain the full name. [Native and installed acceptance](docs/speaker-rename-acceptance.md).
 
 Names appear in transcript lines and flow into subsequent AI prompts, refreshed listener summaries,
 saved-session search, and Markdown/PDF exports. Saving a name clears older Quick/Deep answers;

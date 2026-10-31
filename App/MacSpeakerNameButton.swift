@@ -29,6 +29,8 @@ struct MacSpeakerRenameLabel: NSViewRepresentable {
     func makeNSView(context: Context) -> MacSpeakerNameButton {
         let button = MacSpeakerNameButton(frame: .zero)
         button.isBordered = false
+        button.lineBreakMode = .byTruncatingTail
+        button.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         button.alignment = .left
         button.font = .systemFont(ofSize: 11, weight: .bold)
         button.contentTintColor = .controlAccentColor

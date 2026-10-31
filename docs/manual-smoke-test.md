@@ -61,7 +61,7 @@ Prereq: Ollama running with at least one chat-capable model installed (local or 
    Microphone, Speech Recognition and Screen Recording (system audio) in System Settings →
    Privacy & Security. The global hotkey needs no Accessibility grant. Reopen the in-app Permissions sheet anytime via
    **More → Permissions…**. Re-click **Listen** after granting if needed.
-3. In the **left status rail**, under **Models**, confirm a **model picker** per pane is populated
+3. In the **left status rail**, expand **AI models** and confirm a **model picker** per pane is populated
    with your installed Ollama models (the pane header only shows the current selection as text).
    Set different models per pane if you like (e.g. a fast model for **Quick**, a heavier one for
    **Deep**, `deepseek-v4-flash:cloud` for any). **More → Refresh models** re-scans models.
@@ -1102,13 +1102,13 @@ are not native acceptance. Preserve source, OS, device, native screenshots and a
 - On the connected older iPad, verify actual new microphone words using dictation, then Stop. Check
   fixed language and the default Automatic mode separately, and the advanced path on iPhone. Play
   synthetic speech only after the test confirms Listening; stop sound immediately if capture stops.
-- With saving on, use the Live transcript Play icon after Stop (Transcript actions → Play recording
-  in compact Duo), verify Play/Pause and audible playback. With saving off, retain no new audio.
+- With saving on, open Live transcript **Transcript actions → Play recording** after Stop, then
+  verify Play/Pause and audible playback. With saving off, retain no new audio.
   Enabling saving later cannot recover earlier audio. Preserve existing conversations and keys.
 - On unsupported Apple hardware or while its model is not ready, inspect Settings: Apple must not be
   offered as working. Preserve an old saved Apple choice with its reason. Explicitly configure an
   alternate provider, destination, model and key; never auto-route. Refresh after setup/foreground.
-- On Mac, inspect engine choices and Start for the selected language and permissions. Unsupported
+- On Mac, expand **Recording settings** and inspect engine choices and Start for the selected language and permissions. Unsupported
   engines are not selectable; a saved unavailable engine remains explanatory with alternatives.
   AI gating must not disable supported capture. Verify actual microphone and system-audio OTHERS
   text on the supported route. Leave an OS permission request unanswered, then Stop, New or close:
@@ -1315,7 +1315,9 @@ may publish. This text-only acceptance is separate from existing real OTHERS-aud
 - Repeat in portrait, expanded transcript and landscape Duo. At the largest text size with the
   keyboard open, inspect the entire field and Save/Cancel controls; use VoiceOver's Rename speaker action.
 - On Mac, double-click a speaker label and verify the editor appears; a single click must not open it.
-  Repeat through the context menu and on a reopened conversation. Check long names via the full-name tooltip.
+  Repeat through the context menu and on a reopened conversation. Use a long name and verify its
+  visible label stays inside the speaker column without covering transcript words; inspect the full-name tooltip
+  and VoiceOver label, then confirm the name editor still contains the complete name.
 - Cancel an edited name and verify no change. Blank/device names must disable Save. Switch conversation
   while an editor is pending and verify a stale save cannot rename another conversation.
 
