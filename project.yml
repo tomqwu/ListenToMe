@@ -224,6 +224,9 @@ targets:
       - App/MacOperationErrors.swift
       - App/ReferenceSelectionStore.swift
       - App/MacMicrophoneCapture.swift
+      - App/MacSavedAudio.swift
+      - SharedPlatform/SavedAudioPlayer.swift
+      - SharedPlatform/SavedAudioWriter.swift
       - App/MacAnalyzerInputAdapter.swift
       - App/SpeechAnalyzerTranscriber.swift
       - SharedPlatform/SpeechVocabularyContext.swift

@@ -6,13 +6,32 @@ validation passed on combined source `89e9226`; all three required checks passed
 head `19d152f`. Matching local/remote feature branches were deleted and tracking refs pruned.
 This is merged but unreleased, with combined installed/publication acceptance still separate.
 
-Continue sequentially with the Watch inbox preservation fix (#181), saved-audio ordering (#336),
-and the shared History Ask cancellation fix (#223). All three have focused red/green evidence;
-Watch redelivery completed full local validation on `989a6b4`, integrating exact main `946cb7e`,
-and all three required checks passed on that source. PR [#355](https://github.com/tomqwu/ListenToMe/pull/355)
-awaits final documentation review/checks and merge; physical Watch acceptance remains open.
+Watch inbox preservation merged in [PR #355](https://github.com/tomqwu/ListenToMe/pull/355) at
+`0177431`, October 31, 04:09 UTC. Full local validation passed on `989a6b4`; independent review and
+all three final checks passed on docs head `f0f8d26`. Matching local/remote branches were deleted.
+It is merged but unreleased. Continue sequentially with saved-audio ordering (#336), then shared
+History Ask cancellation (#223); both have focused red/green evidence.
 Language-search quality and the recorded physical #205/#236/Watch/audio checks remain unresolved.
 [Sources, tested outcomes, blockers and next actions](backlog-execution-2026-10-30.md).
+
+## Local Mac saved-audio ordering follow-up — October 30, 2026
+
+The #336 **Play from a line** ordering slice completed full local validation on `347ed05`,
+integrating Watch main `0177431`, October 31 **04:14–05:02 UTC**. Core **1,294**, iOS **613**,
+Mac **123** and Watch **35** tests completed with zero failures; optional skips and exact coverage
+are recorded in the [audited full receipt](evaluations/mac-saved-audio-order-full-2026-10-31.json).
+All three Saved Audio methods passed, and the run owner and root independently inspected their
+fresh expanded native renders. The independent audit verified **1,112 unchanged inputs** and
+**2,093 original/preserved native-result files**. The runner reaped and its owned simulators were
+confirmed Shutdown before the next job. Historical genuine red, the three focused passes and
+145 Core checks remain preserved in the [scope and evidence](dual-channel-capture.md#local-saved-audio-ordering-follow-up--october-30-2026).
+
+All three required checks passed on `347ed05` in [run 41167693082](https://github.com/tomqwu/ListenToMe/actions/runs/41167693082).
+PR [#356](https://github.com/tomqwu/ListenToMe/pull/356) remains open; later documentation commits
+require their own hosted checks and do not imply another binary run. Installed History playback
+and the full-app README capture remain blocked by the locked Mac; component images are QA only.
+The original near-end/overlap/repeated-speech/headphone/route matrix remains open. This bounded fix
+does not close #336 or change iOS playback lookup, and it is not merged or published.
 
 ## Unreleased workspace usability refinements — October 30, 2026
 
@@ -30,7 +49,8 @@ that exact main before its merge. Only README/HANDOFF conflicted; both galleries
 The existing captures retain their source labels. The combined #334 checkpoint below links its
 [exact validation evidence and remaining gates](speaker-rename-acceptance.md). The original #334
 regression and `9a39a12` installed acceptance are not relabelled as acceptance of the combined
-installed app. Final review and all three checks passed on `19d152f`; PR #354 merged at `946cb7e`.
+installed app. PR #354 subsequently merged at `946cb7e` after full validation, independent review
+and all three required checks on `19d152f`; the combined installed-capture limitation remains open.
 Earlier failed aggregates remain failed, including the corrected error clipping and legacy test
 expectations. Physical phone/iPad/Watch capture, paired transfer, full VoiceOver and real OTHERS
 acceptance remain pending. This work is unreleased and is not in TestFlight 1.20.3 (43).
@@ -55,8 +75,10 @@ selectors, 71 helper methods and four real local-server contracts passed. All **
 **2,033 original native-result files** matched; the run reaped, owned processes were absent and
 both owned simulators were confirmed Shutdown. [Audited full receipt](evaluations/watch-inbox-redelivery-full-2026-10-31.json).
 All three required checks passed on `989a6b4` in [run 41163072169](https://github.com/tomqwu/ListenToMe/actions/runs/41163072169).
-Final documentation review/checks, PR #355 merge and publication remain pending. Physical file
-protection/paired-Watch acceptance is separate and remains open.
+Final documentation head `f0f8d26` passed independent review and all three checks in
+[run 41166381562](https://github.com/tomqwu/ListenToMe/actions/runs/41166381562). PR #355 merged at
+`0177431`; its tree equals the checked head, and matching local/remote branches were deleted.
+Publication and physical file-protection/paired-Watch acceptance remain separate and open.
 The fix is outside accepted TestFlight 1.20.3 (43), does not change visible UI, and does not close #181.
 
 ## Unreleased local History Refresh — October 30, 2026

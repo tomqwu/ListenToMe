@@ -860,6 +860,12 @@ Mac (`make run`; macOS releases are paused, so this is for the build only):
    audio parts that play.
 2. With SpeechAnalyzer or WhisperKit, **Play from a line** lists the lines and plays each from its time;
    legacy SpeechRecognizer lines remain untimed.
+   For the [saved-audio ordering follow-up](dual-channel-capture.md#local-saved-audio-ordering-follow-up--october-30-2026),
+   inspect delayed same-recording rows in chronological order, stable equal timestamps and distinct
+   later recordings. Click each visible line and confirm its original microphone/system part and
+   recording-relative position. Untimed and legacy boundaries stay in place; leaving History stops
+   playback. Preserve a clean installed full-app capture for README. Native silent-fixture checks
+   do not complete this installed or acoustic acceptance.
 3. **Clear history** deletes the audio too; **Delete all saved audio** in Settings keeps history.
 4. Record two runs in one conversation with WhisperKit (Stop, Listen again): a line from the second run
    plays its own words, not the first run's.

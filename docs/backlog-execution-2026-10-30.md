@@ -7,21 +7,22 @@ October 31, 01:34 UTC. PR #354 then merged at `946cb7e` and closed #334 at 02:49
 **five** open: #181, #205, #223, #236 and #336. Do not duplicate completed work.
 This is a delivery checkpoint, not a replacement for implementation, acceptance or the sequential PR queue.
 
-PRs #318, #349, #350, #351, #353 and #354 merged. #318 closed #333, #335, #337, #346, #347 and #348; #225
+PRs #318, #349, #350, #351, #353, #354 and #355 merged. #318 closed #333, #335, #337, #346, #347 and #348; #225
 was already closed. TestFlight **1.20.3 (43)** was accepted from `97ef2461` and verified for the
 existing Dev group. The subsequent History Refresh in #351 is merged but unreleased. The last
 recorded public-release readback is iOS **1.19.1 (39)** and macOS DMG **1.4.4**; this checkpoint
 does not perform a new Apple review submission or public-release readback.
 
-## Implemented local candidates
+## Implemented fixes and remaining candidates
 
 | Issue | Source and evidence | Remaining delivery work |
 | --- | --- | --- |
-| [#181](https://github.com/tomqwu/ListenToMe/issues/181) — preserve Watch audio during redelivery | `codex/watch-inbox-redelivery`, integrated source `989a6b4` on main `946cb7e`, runtime fix `5f52da6`. Portable red reproduced 18 assertions, then both unchanged methods passed; actual focused iOS `105c91dd` also passed both without skips. Full `989a6b4` validation passed: Core 1,294/seven skips/98.0768%; iOS 613/twelve skips; Mac 120; Watch 35; zero failures, 1,109 inputs unchanged. [Audited full receipt](evaluations/watch-inbox-redelivery-full-2026-10-31.json). | All three required checks passed on `989a6b4` ([run 41163072169](https://github.com/tomqwu/ListenToMe/actions/runs/41163072169)); PR [#355](https://github.com/tomqwu/ListenToMe/pull/355) awaits final docs review/checks and merge. Physical file protection, WatchConnectivity and recording/reconnection/wrist-down/battery/storage acceptance remain separate; [Watch scope](watch-beta.md). #181 remains open and the fix is unreleased. |
-| [#336](https://github.com/tomqwu/ListenToMe/issues/336) — saved-audio ordering | `codex/mac-saved-audio-order`, clean integrated source `b2f531c` on main `946cb7e`, runtime `d36b212`; real native ordering red followed by three passing rendered methods and 145 Core tests. Playback keeps canonical source/offset identity, duplicate restored IDs and untimed/legacy boundaries. | After Watch merges, integrate that exact main; finish full validation, installed playback/gallery, review, CI and merge. The original near-end/overlap/repeated-speech/headphone/route matrix remains required separately. |
-| [#223](https://github.com/tomqwu/ListenToMe/issues/223) — cancel a stale History answer | Local `codex/history-ask-query-cancellation`, clean integrated source `5fef9ac` on main `946cb7e`; original `ac90083` has three actual shared-model tests in a temporary host. Two methods failed twelve assertions before the one-line fix, then all three passed. Query changes/clearing cancel old output and allow the next question; trimmed-equivalent edits preserve it. | Follow Watch and saved-audio merges; integrate their final main, run generated native/full validation and inspect affected controls, then review/CI/merge. This does not resolve the separate language-quality gap. |
+| [#181](https://github.com/tomqwu/ListenToMe/issues/181) — preserve Watch audio during redelivery | `codex/watch-inbox-redelivery`, integrated source `989a6b4` on main `946cb7e`, runtime fix `5f52da6`. Portable red reproduced 18 assertions, then both unchanged methods passed; actual focused iOS `105c91dd` also passed both without skips. Full `989a6b4` validation passed: Core 1,294/seven skips/98.0768%; iOS 613/twelve skips; Mac 120; Watch 35; zero failures, 1,109 inputs unchanged. [Audited full receipt](evaluations/watch-inbox-redelivery-full-2026-10-31.json). | PR [#355](https://github.com/tomqwu/ListenToMe/pull/355) merged at `0177431` after independent review and all three final checks on `f0f8d26` ([run 41166381562](https://github.com/tomqwu/ListenToMe/actions/runs/41166381562)); matching branches were deleted. Physical file protection, WatchConnectivity and recording/reconnection/wrist-down/battery/storage acceptance remain separate; [Watch scope](watch-beta.md). #181 remains open and the fix is unreleased. |
+| [#336](https://github.com/tomqwu/ListenToMe/issues/336) — saved-audio ordering | `codex/mac-saved-audio-order`, full-tested integrated source `347ed05` on Watch main `0177431`, runtime `d36b212`. Full validation passed with zero failures, 1,112 unchanged inputs, all three actual Saved Audio methods passing and fresh native renders independently inspected. [Audited full receipt](evaluations/mac-saved-audio-order-full-2026-10-31.json). Historical ordering red and focused green remain preserved. | PR [#356](https://github.com/tomqwu/ListenToMe/pull/356) is open; all three checks passed on `347ed05` ([run 41167693082](https://github.com/tomqwu/ListenToMe/actions/runs/41167693082)). Finish final documentation review, exact-head CI and merge. Installed playback/gallery and the original near-end/overlap/repeated-speech/headphone/route matrix remain open; this slice does not close #336. |
+| [#223](https://github.com/tomqwu/ListenToMe/issues/223) — cancel a stale History answer | Local `codex/history-ask-query-cancellation` has focused shared-model red/green evidence: two methods failed twelve assertions before the one-line fix, then all three passed. A subsequent actual iOS regression run reproduced the failure and passed after the fix, with independent review completed. Query changes/clearing cancel stale output and allow the next question; trimmed-equivalent edits preserve it. | Integrate the final saved-audio main, complete full validation and affected-control inspection, then review/CI/merge. The focused iOS result is not a combined full pass and does not resolve the separate language-quality gap. |
 
-These remaining candidates are **not merged or included in beta 43**. The #334 fix is merged but
+The saved-audio and Ask candidates are **not merged or included in beta 43**. Watch #355 is merged
+but unreleased. The #334 fix is also merged but
 unreleased: full `89e9226` validation, independently reviewed `19d152f` documentation, all three CI
 checks and branch cleanup are complete. [Evidence and remaining publication gates](speaker-rename-acceptance.md). Their source, native results and
 independent reviews are retained in `2026-10-30/listentome-mac334-name-overflow/`,
@@ -79,10 +80,18 @@ Earlier phone checks timed out without establishing lock state. A fresh direct r
 October 31 reached the iPhone 17 Pro Max and reported `passcodeRequired: true`; the Mac
 also reported its screen locked. Resume affected installed/device work after an actual environment
 change and ownership check, without repeating unchanged unlock requests.
-Preserve the exact candidates; #334 is complete and Watch inbox redelivery is next. After every merge,
+Preserve the exact candidates; #334 and the bounded Watch inbox repair are merged. Saved-audio ordering is next. After every merge,
 verify CI and delete only that PR's safe matching feature branches. Publication remains a later
 batched step with separate production acceptance and screenshot requirements.
 
 [Current handoff](HANDOFF.md) · [Speaker acceptance](speaker-rename-acceptance.md) ·
 [Semantic evaluation](semantic-search-evaluation.md) · [iOS acceptance](IOS.md) ·
 [Watch acceptance](watch-beta.md)
+
+Saved-audio integration checkpoint: full-tested source `347ed05` includes Watch main `0177431`,
+preserving the focused runtime/test/catalog bytes from `bf0f2ae`. The two HANDOFF/backlog conflicts
+retained both workflows and source-labelled evidence. Combined validation, independent source/artifact
+audit and all three checks on that source passed; [the full receipt](evaluations/mac-saved-audio-order-full-2026-10-31.json)
+also binds the root's fresh rendered inspection. Final documentation review, exact-head CI and PR #356
+merge remain. Installed playback/gallery remains blocked: the passive 04:06 UTC readback reported
+the Mac locked. No new unlock or permission request was made.
