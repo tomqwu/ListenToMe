@@ -181,16 +181,29 @@ iPads. The build-44 capture attempt passed all five methods on iPhone 17 Pro, th
 History row/search separation assertion on Pro Max after a 13-point upward drag; its other four
 methods passed. The test now requests at least 44 points, capped at one third of the viewport,
 without relaxing whole-row containment, nonintersection, exact-query or open/reopen assertions.
-The changed test still needs native execution; the successful full run on `3a83918` predates it.
+The corrected History method passed on both phones. Final source `9460f00` then passed the
+complete local validation, including this method on Pro Max; the same-source focused Pro run also
+passed. [Current full receipt and scoped render evidence](evaluations/ios-1.20.4-full-9460f00-2026-10-31.json).
 [Preserved failure and capture limits](evaluations/ios-1.20.4-history-capture-failure-2026-10-31.json).
+
+The subsequent `9460f00` capture passed both phones but exposed an incorrect iPad precondition:
+mini's actual 1,093-by-415-point landscape content correctly used Duo, while the test expected
+the full wide workspace from device idiom alone. Only that initial assertion failed; all later
+History checks completed. The test now recognizes the existing adaptive Duo or wide container,
+as the translation journey already does, without changing the app or any History outcome assertion.
+The corrected mini execution and final full validation are pending; the prior full pass remains
+bound to `9460f00`. [Preserved mini failure](evaluations/ios-1.20.4-ipad-mini-capture-failure-2026-10-31.json).
 
 `READMEPREVIEW-001` captures the existing concise fixture first in portrait, requiring both
 complete transcript lines and the complete Quick answer, then retains its original Duo checks.
 That added baseline passed on Max but exposed an unscrolled answer about 17 points below its
 Quick viewport on Pro; the History method passed on both. The correction uses one bounded scroll
 inside Quick only when needed, re-reads its viewport and rechecks both transcript lines afterward.
-All text/containment assertions remain. Native execution of this correction is pending; longer
-translation/live fixtures are not substitutes for a clean portrait gallery image.
+All text/containment assertions remain. The same-source focused Pro retry passed both methods
+on `9460f00`, exercising the conditional Quick scroll; the complete local run also passed both on
+Pro Max, where the portrait answer fits without scrolling. These native images are bounded QA;
+fresh release captures and gallery inspection remain separate. Longer translation/live fixtures
+are not substitutes for a clean portrait gallery image.
 
 `ENDPOINTUI-001` and `ENDPOINTUI-002` bind rejected-address recovery, exact replacement and honest
 server/privacy labels to native Settings controls and the corresponding persistence policies.

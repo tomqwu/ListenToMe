@@ -7,7 +7,7 @@ October 31, 01:34 UTC. PR #354 then merged at `946cb7e` and closed #334 at 02:49
 **five** open: #181, #205, #223, #236 and #336. Do not duplicate completed work.
 This is a delivery checkpoint, not a replacement for implementation, acceptance or the sequential PR queue.
 
-PRs #318, #349, #350, #351, #353, #354, #355 and #356 merged. #318 closed #333, #335, #337, #346, #347 and #348; #225
+PRs #318, #349, #350, #351, #353, #354, #355, #356 and #357 merged. #318 closed #333, #335, #337, #346, #347 and #348; #225
 was already closed. TestFlight **1.20.3 (43)** was accepted from `97ef2461` and verified for the
 existing Dev group. The subsequent History Refresh in #351 is merged but unreleased. The last
 recorded public-release readback is iOS **1.19.1 (39)** and macOS DMG **1.4.4**; this checkpoint
@@ -83,9 +83,11 @@ change and ownership check, without repeating unchanged unlock requests.
 Fresh passive readbacks at **06:08 UTC, October 31** still found the phone requiring its passcode
 and the Mac locked. No app, permission or authentication state changed and no repeated request was made.
 Preserve the exact candidates; #334, Watch inbox preservation and saved-audio ordering are merged.
-Ask cancellation passed its combined full run and independent audit; final docs/CI/merge are next. After every merge,
-verify CI and delete only that PR's safe matching feature branches. Publication remains a later
-batched step with separate production acceptance and screenshot requirements.
+Ask cancellation subsequently merged in PR #357 at `09adc703`, after independent review and all
+three final checks on `00639a5`; its matching branches were deleted. Build 44 candidate `9460f00`
+then passed complete local validation and the same-source focused Pro History/preview checks.
+[Current full receipt](evaluations/ios-1.20.4-full-9460f00-2026-10-31.json). Fresh release captures, README review, final train CI/merge
+and upload remain pending, with physical and installed/audio acceptance recorded separately.
 
 [Current handoff](HANDOFF.md) · [Speaker acceptance](speaker-rename-acceptance.md) ·
 [Semantic evaluation](semantic-search-evaluation.md) · [iOS acceptance](IOS.md) ·

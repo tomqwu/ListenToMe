@@ -15,9 +15,9 @@ final class MobileHistorySearchUITests: XCTestCase {
             app.windows.firstMatch.frame.width > app.windows.firstMatch.frame.height
         }, object: nil)
         XCTAssertEqual(XCTWaiter.wait(for: [landscape], timeout: 5), .completed)
-        let workspace = UIDevice.current.userInterfaceIdiom == .phone
-            ? "twoPaneMeetingWorkspace" : "wideMeetingWorkspace"
-        XCTAssertTrue(app.otherElements[workspace].waitForExistence(timeout: 5))
+        let duo = app.otherElements["twoPaneMeetingWorkspace"]
+        let wide = app.otherElements["wideMeetingWorkspace"]
+        XCTAssertTrue(duo.waitForExistence(timeout: 5) || wide.exists)
         app.buttons["History"].tap()
         let history = app.collectionViews.containing(.button, identifier: "history-refresh").firstMatch
         XCTAssertTrue(history.waitForExistence(timeout: 5))

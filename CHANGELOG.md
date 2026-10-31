@@ -13,6 +13,9 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## Repository tooling (unreleased)
 
+- Recognize the iPad mini's existing compact-height Duo layout before the landscape History
+  journey, retaining every search, Refresh and open/reopen assertion. The app layout is unchanged.
+
 - Use a meaningful ordinary scroll in landscape History capture tests on compact and larger
   iPhones, retaining complete-row visibility, search separation and open/reopen assertions.
   Add a clean portrait preview before Duo using the same concise synthetic fixture, scrolling

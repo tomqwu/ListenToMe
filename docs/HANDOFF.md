@@ -1,21 +1,32 @@
 # Active backlog delivery — October 31, 2026
 
-## Build 44 capture follow-up — current local work
+## Build 44 — iPad capture precondition correction; delivery pending
 
-Full validation passed on `3a83918` before this test-only follow-up: Core **1,294**, iOS **614**,
-Mac **126**, Watch **35** and four real local-server contracts, with zero failures and documented
-skips. The seven-profile capture attempt then passed five methods on iPhone 17 Pro but failed
-Pro Max's landscape History row/search separation assertion after a 13-point drag. Its other four
-methods passed; both owned simulators shut down and all evidence was preserved. The remaining
-iPad/Watch profiles were not started. [Failure receipt](evaluations/ios-1.20.4-history-capture-failure-2026-10-31.json).
+The fresh `9460f00` capture passed all five methods on each phone, then mini failed only the initial
+History workspace assertion. Its actual compact-height content correctly uses Duo; the test had
+assumed all iPads use the full wide layout. All subsequent History assertions and the other three
+mini methods passed. The minimal test/catalog correction recognizes either existing adaptive
+container; app and fixture bytes are unchanged. Focused mini, all-profile captures and a new final
+full run remain pending. The earlier full result below remains a pass on its stated source.
+[Preserved mini failure and scope](evaluations/ios-1.20.4-ipad-mini-capture-failure-2026-10-31.json).
 
-The History correction passed on both phones. The added portrait-first concise preview passed
-on Max but failed on Pro because its complete Quick answer extended about 17 points below the
-panel's initial viewport. That failure is preserved; the smaller phone's image is not gallery-ready.
-The test now uses a bounded ordinary scroll inside Quick if needed, rechecks the whole answer and
-both transcript lines, then retains the original Duo phase. The corrected focused run is pending;
-the earlier full pass does not validate the changed test. Fresh captures, README review, final
-validation/CI/merge and upload remain separate gates. No production or fixture change is claimed.
+Previously full-tested source `9460f00`, based on merged Ask main `09adc703`, passed complete local validation on
+October 31, **11:00–11:47 UTC**: Core **1,294**, iOS **614**, Mac **126**, Watch **35** and four real
+local-server contracts, with zero failures and documented skips. Independent audit verified
+**1,127 unchanged inputs**, **2,099 original/preserved native-result files**, all 15 focused journey
+methods and the preserved signed Debug artifact. [Current full receipt and acceptance limits](evaluations/ios-1.20.4-full-9460f00-2026-10-31.json).
+
+The same-source focused Pro retry passed History and the concise portrait/Duo preview, including
+the bounded inner Quick scroll; the full run passed both on Pro Max without needing that scroll.
+Whole-text, containment, exact-query and open/reopen assertions remain intact. This is test-harness
+work with no production or fixture change. Fresh seven-profile captures, README review, final
+CI/merge and upload remain separate gates; physical and installed/audio acceptance remain pending.
+
+Earlier failures are preserved: the `3a83918` capture attempt passed five methods on Pro but failed
+Pro Max History separation after a 13-point drag, and the added unscrolled Pro portrait baseline
+extended about 17 points beyond Quick. Those failed images remain QA evidence, not gallery approval.
+The historical full `3a83918` pass is separate from the current `9460f00` result.
+[Preserved capture failure](evaluations/ios-1.20.4-history-capture-failure-2026-10-31.json).
 
 Five issues remain open: **#181, #205, #223, #236 and #336**. PR [#354](https://github.com/tomqwu/ListenToMe/pull/354)
 merged the Mac long-name correction at `946cb7e` on October 31, 02:49 UTC and closed #334. Full local

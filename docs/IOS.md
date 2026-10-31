@@ -13,10 +13,18 @@ an experimental multilingual embedding model. Current accepted beta remains **1.
 Apple readback on October 31, 06:57 UTC found no build 44. The public US version remains **1.19.1**,
 with the **en-US** name **Listen To Me - Real Time AI**. No upload or production acceptance is claimed.
 
-The release-note regression, complete local validation, fresh iPhone/Duo/iPad/Watch captures,
-README gallery review and all three required CI checks must pass before distribution. Physical
-phone/iPad and paired-Watch acceptance remain separate production gates. Mac release and its
-installed audio acceptance remain separate from this iOS train.
+Previously full-tested source `9460f00` on base `09adc703` passed complete local validation on October 31,
+**11:00–11:47 UTC**, with zero failures: Core 1,294/seven skips, iOS 614/twelve skips, Mac 126 and
+Watch 35, plus four real local-server contracts. All seven release-note methods and eight
+endpoint/Save/History/preview methods passed once; the same-source focused Pro run also passed
+the conditional Quick-scroll path. [Audited full receipt and scoped renders](evaluations/ios-1.20.4-full-9460f00-2026-10-31.json).
+
+The later mini capture exposed an incorrect test assumption that all iPads use the full wide layout.
+Its existing compact-height Duo layout is now recognized; the corrected source still needs focused
+mini acceptance and a new final full run. [Preserved failure](evaluations/ios-1.20.4-ipad-mini-capture-failure-2026-10-31.json).
+Fresh iPhone/Duo/iPad/Watch captures, README gallery review, final CI/merge and validated distribution
+remain pending. Physical phone/iPad and paired-Watch acceptance remain separate production gates.
+Mac release and its installed audio acceptance remain separate from this iOS train.
 
 <a id="next-testflight-candidate--1203-43"></a>
 
