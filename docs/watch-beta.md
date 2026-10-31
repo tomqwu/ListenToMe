@@ -1,5 +1,14 @@
 # Apple Watch companion (#181)
 
+## App Store review — 1.20.4 (44)
+
+The embedded Watch companion was included in the iOS submission Apple accepted on October 31 at
+**17:01 UTC**. Both submission and version read **WAITING_FOR_REVIEW**, with en-US primary,
+46 verified screenshots including Watch and **MANUAL** release preserved. The maintainer explicitly
+deferred physical acceptance; installation, recording, paired transfer, wrist-down and battery/storage
+checks remain unverified. No new public release is claimed.
+[Review receipt](releases/ios-1.20.4-build44-review.json).
+
 ## Current companion — TestFlight 1.20.4 (44)
 
 Apple accepted **1.20.4 (44)** from merged source `08810e8` on October 31, **14:08:38 UTC**.

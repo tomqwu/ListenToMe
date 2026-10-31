@@ -19,6 +19,13 @@ authority does not waive OS authentication or authorize a manual public release.
 The maintainer requested Mac App Store submission on October 26, 2026. The same App Store Connect
 record as iOS (`6811155732`) has a Mac platform draft, now prepared as **1.5.0** with en-US copy
 under [`metadata/macos/en-US`](../metadata/macos/en-US). It has **no selected build or submitted review**.
+
+On October 31 a fresh **1.5.0 (15)** archive/export from merged `0c50a63` passed strict distribution
+app/installer signing, sandbox/profile, en-US region and Intel/Apple silicon architecture checks.
+The dedicated signing keychain was removed from the temporary search list and relocked after export.
+This [local candidate](evaluations/mac-appstore-1.5.0-candidate-2026-10-31.json) is not uploaded or
+submitted. Fresh Mac screenshots and the installed acceptance below remain pending. The maintainer's
+later physical-acceptance deferral applies to iOS/Watch build 44 only.
 The `AppStore` Xcode configuration uses the listing's shared bundle ID `com.tomwu.ListenToMe.ios`,
 native App Sandbox and its own entitlements. The DMG's `Release` identity and the `Debug` Dev identity
 remain unchanged. The different Store identity means separate container data, preferences and OS

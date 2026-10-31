@@ -41,6 +41,11 @@ and [language replay/recovery](docs/language-replay-progress.md). Saving audio s
 protection is unchanged. Physical lock-screen acceptance remains pending.
 [Accepted beta receipt](docs/releases/ios-1.20.4-build44.json).
 
+**App Store review:** Apple accepted **1.20.4 (44)**, including Watch, on October 31 at
+**17:01 UTC**; its state is **WAITING_FOR_REVIEW**. English (US), all 46 verified screenshots and
+**MANUAL** release are preserved. The maintainer explicitly deferred physical-device acceptance;
+approval and public availability are still pending. [Review receipt](docs/releases/ios-1.20.4-build44-review.json).
+
 The standalone iOS/iPadOS 26 app is the **ListenToMeIOS** target: microphone transcription, a live
 transcript with Quick Summary plus a Summary tab (Deep is macOS-only; a Deep analysis saved by an earlier
 build stays readable under **Earlier deep analysis**), an opt-in **Auto** (off by default; with Ollama, a

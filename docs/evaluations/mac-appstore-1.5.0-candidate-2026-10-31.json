@@ -1,0 +1,31 @@
+{
+  "checkedAt": "2026-10-31T16:59:18.471542+00:00",
+  "source": "0c50a638334ef426360bcb4812cf563dd5c8793f",
+  "version": "1.5.0",
+  "build": "15",
+  "bundleIdentifier": "com.tomwu.ListenToMe.ios",
+  "developmentRegion": "en-US",
+  "architectures": [
+    "x86_64",
+    "arm64"
+  ],
+  "installerSignatureValid": true,
+  "installerStatus": "signed by a developer certificate issued by Apple (Development)",
+  "installerIdentity": "3rd Party Mac Developer Installer: Qiang Wu (T32FW7PZ3S)",
+  "appDistributionSignatureAndStrictDeepVerify": true,
+  "sandbox": true,
+  "debuggingEntitlement": false,
+  "profileName": "ListenToMe Mac App Store",
+  "packageBytes": 20426841,
+  "packageSHA256": "325ada1650b16f76fbea7363b468f75cccca91e64852bd11ee7f18bdc739722d",
+  "installed": false,
+  "uploaded": false,
+  "reviewSubmitted": false,
+  "screenshots": "fresh Mac screenshots pending",
+  "productionAcceptance": "sandbox GUI, actual OTHERS and external selections across relaunch remain pending",
+  "packageFile": "ListenToMe.pkg",
+  "evidenceIdentifier": "2026-10-31/listentome-mac-store-prepare-165442Z",
+  "exportKeychainRestoredAndRelocked": true,
+  "fullValidationReuse": "App/test/config/dependency bytes match full-tested ca7ab57; only26 documentation/gallery/metadata paths differ.",
+  "requiredCI": "All three checks passed at merged0c50a638334ef426360bcb4812cf563dd5c8793f"
+}

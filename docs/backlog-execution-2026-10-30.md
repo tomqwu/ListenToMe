@@ -2,15 +2,14 @@
 
 ## Paused checkpoint — October 31, 2026
 
-The maintainer requested the current Store review submission, then a pause: **“after this publish
-to store review, let's pause this work”.** Submission cannot proceed while production-acceptance
-gates remain open; preserve the prepared draft and pause with that limitation. Do not interpret
-the historical next steps below as authorization for another run or feature. TestFlight 1.20.4
-(44) is published; [the current handoff](HANDOFF.md#pause-checkpoint--october-31-2026-after-1503-utc)
-records the separate PREPARE_FOR_SUBMISSION, MANUAL/build-44 Store draft. All 46 screenshot assets
-are COMPLETE, downloaded, pixel-matched and verified in final order. Physical acceptance still blocks
-submission; standing review authorization remains in place and no review was submitted. The release
-monitor was already PAUSED; its configuration was read back without changing the setting.
+The maintainer requested the current Store review submission, then a pause, and later explicitly
+directed **“Submit iOS/Watch now; defer physical acceptance”.** Apple accepted **1.20.4 (44)**
+for review on October 31 at **17:01 UTC**; both submission and version read **WAITING_FOR_REVIEW**.
+English (US), all 46 verified screenshots and **MANUAL** release remain preserved.
+[Review receipt](releases/ios-1.20.4-build44-review.json). Physical acceptance is deferred, not passed;
+the exception does not establish Mac readiness or complete the five issues below. Backlog work stays
+paused, the release monitor has been deleted and no recurring job was recreated. The historical next
+steps below do not authorize another feature or native experiment.
 
 | Preserved work | Exact stopping point and remaining gate |
 | --- | --- |

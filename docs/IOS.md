@@ -5,6 +5,14 @@ The first iOS version is a standalone app, separate from the macOS release. It r
 **1.19.1 (39)** in the recorded public baseline and the latest TestFlight version is **1.20.4 (44)**. See the
 [public availability observation](releases/ios-1.19.1-build39-public.json).
 
+## App Store review — 1.20.4 (44)
+
+Apple accepted the iPhone/iPad and embedded-Watch submission on October 31 at **17:01 UTC**;
+both submission and version read **WAITING_FOR_REVIEW**. The maintainer explicitly deferred
+physical acceptance for this submission. English (US), all 46 verified screenshots and **MANUAL**
+release are preserved; public availability remains the recorded 1.19.1 baseline.
+[Review receipt](releases/ios-1.20.4-build44-review.json).
+
 ## TestFlight 1.20.4 (44) — published October 31, 2026
 
 This train combines merged local History refresh, question-change cancellation, clearer workspace
@@ -367,7 +375,7 @@ saved separately for maintainer review. macOS distribution is separate. See
 
 ## App Store Connect platform mapping
 
-The native Mac App Store platform is prepared separately as a sandboxed **1.5.0 (15)** archive under the shared listing and bundle ID. The Mac draft has US metadata but no selected build or submitted review. The earlier signed candidate predates this main integration and is not eligible for upload; rebuild from the exact merged source after installed sandbox/OTHERS acceptance. See [Mac Store distribution](RELEASING.md#mac-app-store-distribution). The current public Mac distribution remains the signed/notarized DMG.
+The native Mac App Store platform has a fresh sandboxed **1.5.0 (15)** archive/export from merged `0c50a63`, with distribution/installer signatures, profile and both architectures verified. The Mac draft has US metadata but no selected build or submitted review. Fresh Mac screenshots and installed sandbox/OTHERS/external-selection acceptance remain pending. See the [candidate receipt](evaluations/mac-appstore-1.5.0-candidate-2026-10-31.json) and [Mac Store distribution](RELEASING.md#mac-app-store-distribution). The current public Mac distribution remains the signed/notarized DMG.
 
 The iOS platform covers this universal iPhone/iPad app (`TARGETED_DEVICE_FAMILY=1,2`); no separate iPadOS platform is added. The Watch companion belongs to the same iOS app record and must actually be embedded in an uploaded build before it can be installed. Public iOS 1.19.1 (39) and its TestFlight build include it; older public 1.18.1 excludes it. The accepted Watch beta has verified package identity and existing-tester-access evidence; physical acceptance remains a production gate, not an authorized beta-upload blocker. macOS requires its own compatible archive and distribution; the current native Mac app is distributed as a signed/notarized DMG, and Mac publication remains paused. Adding a platform does not convert a DMG or include an unembedded Watch target. See [Apple’s platform guide](https://developer.apple.com/help/app-store-connect/create-an-app-record/add-platforms/).
 

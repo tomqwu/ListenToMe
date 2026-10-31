@@ -1,5 +1,15 @@
 # Publish an iOS build to TestFlight
 
+## Current App Store review — 1.20.4 (44)
+
+Apple accepted the iPhone/iPad and embedded-Watch submission at **2026-10-31T17:01:17Z**.
+Submission `6048f839-fd00-43f6-be16-21a87b0d1252` and the selected version read
+**WAITING_FOR_REVIEW**. The maintainer explicitly directed **“Submit iOS/Watch now; defer physical
+acceptance”** for this build. This is a scoped exception, not a completed physical test or a general
+change to the gates below. English (US), build 44, all 46 verified images and **MANUAL** release are
+preserved. No approval, manual public release or new public availability is claimed.
+[Review receipt](releases/ios-1.20.4-build44-review.json).
+
 ## Current TestFlight checkpoint — 1.20.4 (44)
 
 Apple accepted **1.20.4 (44)** through the official TestFlight helper at
@@ -18,11 +28,12 @@ bundles passed verification; group access is not physical installation evidence.
 Full-tested/captured `ca7ab57` and released `08810e8` differ only in documentation/gallery files.
 The verified GitHub pre-release has no binary assets and does not replace macOS **v1.4.4** as
 Latest. Physical iPhone/iPad and paired-Watch acceptance remains pending. The beta upload itself
-made no public review submission or listing-media upload. The later Store draft is
+made no public review submission or listing-media upload. The later pre-submission Store draft was
 **PREPARE_FOR_SUBMISSION**, selects build 44 for **MANUAL** release and has all **46 screenshots
 COMPLETE**, downloaded, matched to the original RGB pixels and verified in final set order, with
 zero processing errors. Physical acceptance remains incomplete. Standing review authorization is
-unchanged, but no review was submitted. See the
+unchanged. That draft checkpoint preceded the explicit exception and accepted review submission
+recorded above. See the
 [Store draft receipt](evaluations/ios-1.20.4-store-draft-2026-10-31.json) and
 [pause handoff](HANDOFF.md#pause-checkpoint--october-31-2026-after-1503-utc).
 Backlog work is paused at the maintainer's request. Production-readiness requirements below remain
