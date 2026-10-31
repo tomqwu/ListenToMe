@@ -52,8 +52,11 @@ or corrupt inbox ledger has been recovered. Foreground recovery retains the orig
 receive still does not start transcription. This is not in TestFlight 1.20.3 (43).
 [Scoped evidence and pending platform gates](watch-beta.md#unreleased-phone-inbox-redelivery-repair):
 the byte-identical portable macOS filesystem tests reproduced 18 assertions, then passed both
-unchanged methods. iOS simulator/full validation remain blocked by Xcode setup; paired-Watch and
-physical retention/reconnection acceptance remain pending. No new release or #181 closure is claimed.
+unchanged methods. After setup recovery, actual iOS simulator execution on `105c91dd` passed both
+bound methods with zero failures/skips and 1,083 stable inputs; the independently audited run was
+terminal/reaped at October 31, 01:33 UTC. [Native receipt](evaluations/watch-inbox-redelivery-native-2026-10-30.json).
+Full validation, physical file protection and paired-Watch retention/reconnection acceptance remain
+pending. No new release or #181 closure is claimed.
 
 ## Unreleased explicit local History refresh
 

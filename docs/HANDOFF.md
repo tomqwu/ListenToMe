@@ -4,9 +4,13 @@ Source `5f52da6` preserves the first durable audio/sidecar when a duplicate arri
 or corrupt ledger recovery. Supplemental macOS filesystem evidence: two original methods went
 from 18 assertion failures to two passes, zero skips; both runs reaped with 163 unchanged inputs.
 [Evidence and limits](watch-beta.md#unreleased-phone-inbox-redelivery-repair).
-iOS simulator/full validation await Xcode component/authentication setup; paired-Watch acceptance,
-CI, PR/merge and publication remain pending. This is outside accepted TestFlight 1.20.3 (43), does
-not change visible UI, and does not close #181.
+After setup recovery, actual iOS simulator execution on `105c91dd` passed both bound methods with
+zero failures/skips and **1,083 unchanged inputs**, October 31 **01:32:10–01:33:24 UTC**. Exit 0/reaped,
+owned simulator shutdown and independent result/binary/source audit are recorded in the
+[sanitized native receipt](evaluations/watch-inbox-redelivery-native-2026-10-30.json).
+Full validation, physical file protection/paired-Watch acceptance, CI, PR/merge and publication
+remain pending. This local branch follows #334 in the delivery queue. The fix is outside accepted
+TestFlight 1.20.3 (43), does not change visible UI, and does not close #181.
 
 # Unreleased local History Refresh — October 30, 2026
 

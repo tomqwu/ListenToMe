@@ -35,9 +35,18 @@ inputs unchanged per run. The raw logs, separate test binaries and source hashes
 `independent-portable-red-green-review.json` has SHA-256
 `f6ed065e03f9eddaaa802916980288710a133979439cab8c0eb9b8bc248737ab`.
 
-This proves the portable filesystem regression, **not iOS runtime/file protection, WatchConnectivity
-or physical paired-Watch acceptance**. iOS simulator execution and full validation remain pending
-the current Xcode component/authentication setup blocker. Pairing/reconnection, wrist-down,
+After Xcode setup recovered, the same two bound methods passed in the actual iOS app/test targets
+on source `105c91dd1d7b8e2b68dea5a89c0ae7e483e25bcf`: **2 passed, zero failures/skips**, on an
+arm64 iPhone 17 Pro / iOS 26.5 simulator. The October 31 **01:32:10–01:33:24 UTC** run preserved
+all **1,083** frozen inputs, finished exit 0/reaped, and shut down its owned simulator successfully.
+Independent audit re-read the xcresult, checked exact method names and target inclusion, rehashed
+34 result files and all six original/preserved app/test payload files, and verified absent owned
+process groups. [Sanitized native result and independent audit](evaluations/watch-inbox-redelivery-native-2026-10-30.json).
+The green duplicate guard avoids the injected failing move; no move error is claimed during green.
+The earlier portable red/green and initial platform blocker remain historical evidence.
+
+This adds **iOS simulator** filesystem coverage, not physical file-protection, WatchConnectivity
+or paired-Watch acceptance. Full validation, pairing/reconnection, wrist-down,
 low-storage and opt-in retention acceptance remain open; recovering index 2 does not prove
 transcription/drain completion while earlier chunks are missing. No visible UI changed, so the
 existing README gallery needs link verification rather than unrelated recapture. #181 remains open;
