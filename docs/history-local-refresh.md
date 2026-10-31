@@ -3,6 +3,21 @@
 October 30, 2026: implementation in an isolated follow-up checkout, not merged or released.
 This does not restore the withdrawn MPNet runtime or establish additional-language search quality.
 
+## Build 44 landscape capture follow-up — October 31
+
+The full run on `3a83918` passed before the seven-profile capture attempt. iPhone 17 Pro passed
+all five capture methods; Pro Max failed the selected History row/search nonintersection assertion
+after a 13-point upward drag, while its other four methods passed. Its native before/after images,
+activity tree and original results are preserved. iPad and Watch capture profiles were not started.
+[Sanitized failure receipt](evaluations/ios-1.20.4-history-capture-failure-2026-10-31.json).
+
+`HISTORYREFRESH-010` now explicitly includes compact and larger phones and wide iPads. Its test uses
+a minimum 44-point upward drag, capped at one third of the viewport. Whole-row containment,
+search separation, exact query and conversation open/reopen assertions remain intact; diagnostic
+failure text includes both frames. Focused execution on the same owned Pro and Pro Max is pending.
+This changes only the test interaction, not app layout. Earlier full results do not validate this
+changed test source, and the build-44 gallery and distribution remain incomplete.
+
 **Refresh search** in Mac and iPhone/iPad History replaces the local Apple embedding adapter and
 rebuilds derived vectors, including unchanged records previously cached without vectors. Ordinary
 saves still reuse unchanged vectors. Refresh does not request language assets, download a model,

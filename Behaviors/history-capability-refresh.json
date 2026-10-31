@@ -203,8 +203,8 @@
     {
       "id": "HISTORYREFRESH-010",
       "name": "Reach History controls and open a matching conversation across landscape phone and wide iPad layouts",
-      "given": "the synthetic prototype conversation is shown at default text size on a landscape iPhone Duo workspace or wide iPad workspace",
-      "when": "History search is revealed by a normal downward scroll if needed, a prototype query is entered, Refresh search completes, the matching record is exposed by ordinary scrolling and tapped, and normal History is reopened",
+      "given": "the synthetic prototype conversation is shown at default text size on a compact or larger landscape iPhone Duo workspace, or a wide iPad workspace",
+      "when": "History search is revealed by a normal downward scroll if needed, a prototype query is entered, Refresh search completes, an ordinary upward scroll exposes the matching record even when it only slightly overlaps Search, the record is tapped, and normal History is reopened",
       "then": "Refresh, Ask and the provider disclosure are accessible before scrolling; Refresh preserves the query and result; the complete selected record is reachable without search-field obstruction and tapping it opens the matching title and transcript; reopened unqueried History shows unobscured Refresh and the complete record in its native gallery capture; queried phase captures remain separate QA evidence and this sequential flow does not require every control to fit simultaneously",
       "covers": [
         "iOS/MobileHistoryView.swift",

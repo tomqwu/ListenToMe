@@ -1,5 +1,19 @@
 # Active backlog delivery — October 31, 2026
 
+## Build 44 capture follow-up — current local work
+
+Full validation passed on `3a83918` before this test-only follow-up: Core **1,294**, iOS **614**,
+Mac **126**, Watch **35** and four real local-server contracts, with zero failures and documented
+skips. The seven-profile capture attempt then passed five methods on iPhone 17 Pro but failed
+Pro Max's landscape History row/search separation assertion after a 13-point drag. Its other four
+methods passed; both owned simulators shut down and all evidence was preserved. The remaining
+iPad/Watch profiles were not started. [Failure receipt](evaluations/ios-1.20.4-history-capture-failure-2026-10-31.json).
+
+The test-only correction uses a meaningful bounded scroll and retains every outcome assertion.
+Its focused Pro/Pro Max execution is pending; the earlier full pass does not validate the changed
+test source. Fresh captures, README review, final validation/CI/merge and upload remain separate
+gates. No production layout change, capture completion or publication is claimed.
+
 Five issues remain open: **#181, #205, #223, #236 and #336**. PR [#354](https://github.com/tomqwu/ListenToMe/pull/354)
 merged the Mac long-name correction at `946cb7e` on October 31, 02:49 UTC and closed #334. Full local
 validation passed on combined source `89e9226`; all three required checks passed on documentation

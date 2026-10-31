@@ -176,6 +176,14 @@ manual check; a missing installed English model skips the test and cannot satisf
 
 ## Native log evidence
 
+`HISTORYREFRESH-010` covers ordinary scrolling on compact and larger landscape iPhones and wide
+iPads. The build-44 capture attempt passed all five methods on iPhone 17 Pro, then failed the
+History row/search separation assertion on Pro Max after a 13-point upward drag; its other four
+methods passed. The test now requests at least 44 points, capped at one third of the viewport,
+without relaxing whole-row containment, nonintersection, exact-query or open/reopen assertions.
+The changed test still needs native execution; the successful full run on `3a83918` predates it.
+[Preserved failure and capture limits](evaluations/ios-1.20.4-history-capture-failure-2026-10-31.json).
+
 `ENDPOINTUI-001` and `ENDPOINTUI-002` bind rejected-address recovery, exact replacement and honest
 server/privacy labels to native Settings controls and the corresponding persistence policies.
 During build 44 validation, the Ollama journey reached its HTTPS rejection notice but failed because

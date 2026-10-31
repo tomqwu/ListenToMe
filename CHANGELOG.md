@@ -13,6 +13,10 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## Repository tooling (unreleased)
 
+- Use a meaningful ordinary scroll in landscape History capture tests on compact and larger
+  iPhones, retaining complete-row visibility, search separation and open/reopen assertions.
+  Preserve the observed Pro Max capture failure; app layout and release notes are unchanged.
+
 - Reopen Settings with a checked empty draft in endpoint UI tests, keeping exact replacement,
   saved-destination, recovery and privacy assertions independent of transient editing menus.
   Add explicit Ollama and OpenAI-compatible endpoint BDD scenarios; app behavior is unchanged.

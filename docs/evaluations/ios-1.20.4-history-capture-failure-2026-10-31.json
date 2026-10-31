@@ -1,0 +1,68 @@
+{
+  "status": "actual_capture_assertion_failure_preserved",
+  "source": "3a839184c09a1c7db5b69cdc4d676546052eb768",
+  "version": "1.20.4",
+  "build": "44",
+  "sourceFullValidation": "Passed before this capture; subsequent test interaction change is not validated by that earlier run.",
+  "scenario": "HISTORYREFRESH-010",
+  "device": "iPhone 17 Pro Max, iOS 26.5",
+  "ownedSimulator": "2B63B06F-983E-4039-83F7-8D7B3D424948",
+  "method": "MobileHistorySearchUITests/testLandscapeHistoryKeepsRefreshAskAndResultReachable",
+  "nativeResult": {
+    "selectedMethods": 5,
+    "passed": 4,
+    "failed": 1,
+    "skipped": 0,
+    "assertions": 1,
+    "assertionLine": 66,
+    "message": "Search must not cover the selected result",
+    "nativeExit": 65,
+    "outerCaptureExit": 1,
+    "reaped": true
+  },
+  "actualGesture": {
+    "direction": "up",
+    "requestedPoints": 13,
+    "gestureStartedAtEpochSeconds": 1793441485.065,
+    "assertionAtEpochSeconds": 1793441486.168,
+    "postAssertionScreenshotAtEpochSeconds": 1793441486.493
+  },
+  "preservation": {
+    "root": "/Users/tomwu/Documents/Codex/2026-10-31/listentome-ios1204-train/captures",
+    "receiptSHA256": "d117c2ed40981285b09121689002e629aa5d00eb518f7f2de74f80e61002ce73",
+    "failureReceipt": "/Users/tomwu/Documents/Codex/2026-10-31/listentome-ios1204-train/captures/failed-capture-result-and-preservation.json",
+    "boundaryEvidence": "/Users/tomwu/Documents/Codex/2026-10-31/listentome-ios1204-train/captures/iphone-max/assertion-boundary-evidence.json",
+    "boundarySHA256": "19bde6558e090b7e9aecd54171aa6e6dc7117e8e41fccf780836c12547ab07ae",
+    "rawOriginalAndMirroredFiles": 85,
+    "appPayloadFiles": 4,
+    "testHostFiles": 7,
+    "exportedAttachmentFiles": 24,
+    "nativePNGs": 14,
+    "allBytesVerified": true,
+    "ownedProAndProMaxShutdown": true,
+    "simulatorsDeleted": false
+  },
+  "otherProfiles": {
+    "iPhone17Pro": "Five methods passed, 14 images preserved; visual review separate.",
+    "iPadMini_iPadPro_Watch42_Watch46_Watch49": "NOT_STARTED"
+  },
+  "testOnlyCorrection": {
+    "status": "prepared_not_executed",
+    "gesture": "At least 44 points upward when the record intersects Search, capped at one third of the viewport.",
+    "assertionsPreserved": [
+      "whole record contained in viewport",
+      "record does not intersect Search",
+      "exact query preserved",
+      "correct record opens",
+      "normal History reopens with complete record"
+    ],
+    "diagnostics": "Overlap failure message now includes record and Search frames.",
+    "productionChanged": false,
+    "futureFocus": "Same owned Pro and Pro Max; exact existing method. Needs source-pinned root-reviewed run before any GREEN claim."
+  },
+  "limits": [
+    "The observed failure remains failed; no historical product regression or gesture-threshold cause is invented.",
+    "Before/after native images show readable row glyphs and a lower card background/search intersection; no explicit AX frame dump was attached.",
+    "The whole seven-profile capture and README refresh are incomplete; no physical, installed, quality, upload or publication acceptance follows."
+  ]
+}
