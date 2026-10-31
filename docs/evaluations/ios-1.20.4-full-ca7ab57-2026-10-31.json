@@ -1,0 +1,602 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-31T13:21:13.705249+00:00",
+  "status": "ACTUAL_FULL_LOCAL_AUTOMATED_PASS_INDEPENDENT_AUDIT_PENDING",
+  "platformVersion": {
+    "platform": "iOS with embedded Watch",
+    "version": "1.20.4",
+    "build": "44"
+  },
+  "source": {
+    "commit": "ca7ab571f2b25eb3b9e1a67f4af2e17b734e97ab",
+    "base": "09adc703a801d6f50dc11291ed8095c9218cebda",
+    "tree": "d38eb79a755bd82b3ba69de6723539b6a603eaa7",
+    "branch": "codex/ios-1-20-4-train",
+    "cleanAtStartAndTerminal": true,
+    "trackedUntrackedAndIgnoredSigningInputCount": 1129,
+    "allInputHashesUnchanged": true,
+    "ignoredStableDevSigningSHA256": "9344979f8b260004bd3630cede6cb1be52ad1d2ef8d8e9a2f4cf8cd1e0caa1d3",
+    "fullInputMap": {
+      "path": "validation-state.json",
+      "sha256": "1717ba7e7f6d02611210fef8e28cd4a6480eaa1151c405a1f36151b9103cca18"
+    }
+  },
+  "execution": {
+    "session": 68827,
+    "command": [
+      "make",
+      "-C",
+      "SOURCE_CHECKOUT",
+      "validate-local",
+      "BDD_BASE=09adc703a801d6f50dc11291ed8095c9218cebda",
+      "IOS_DESTINATION=platform=iOS Simulator,id=2B63B06F-983E-4039-83F7-8D7B3D424948",
+      "WATCH_DESTINATION=platform=watchOS Simulator,id=BB6AAF4F-7C2B-4189-94DA-938EA89EFC66",
+      "IOS_SIGN_FLAGS=CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- -collect-test-diagnostics never"
+    ],
+    "startedAt": "2026-10-31T12:31:26.910103+00:00",
+    "finishedAt": "2026-10-31T13:17:35.651751+00:00",
+    "elapsedSeconds": 2768.7265133750625,
+    "hardWallSeconds": 7200,
+    "hardWallExceeded": false,
+    "outerExit": 0,
+    "nativeExit": 0,
+    "reaped": true,
+    "ownedParentPID": 8293,
+    "ownedProcessGroup": 8320,
+    "ownedParentAndGroupAbsent": true,
+    "processCheckScope": "Only this completed run; later separately authorized work is not excluded.",
+    "runner": {
+      "path": "run-validation.py",
+      "sha256": "9ac5bc95e3d5e5dfb22b9f3c7d6ef4d16e675f55beb6d2e7093867165259463c"
+    },
+    "supervisor": {
+      "path": "supervisor.py",
+      "sha256": "abf78e85502e095baa6d88c7858ef3ab2d54ad42b7a73b61b137265d116a4ed7"
+    },
+    "grant": {
+      "path": "execution-review.json",
+      "sha256": "1a9c20b261a1c205e62435df6841954bac576e0539a79f20fd5b826c214506ae"
+    },
+    "independentRunnerReview": {
+      "path": "independent-static-review.json",
+      "sha256": "61d42d2fca779f16f9741220c2dfe75f8eff9efc05fe281a42eb2ff5580fbe84"
+    },
+    "childEnvironmentNames": [
+      "HOME",
+      "LANG",
+      "LC_ALL",
+      "LC_CTYPE",
+      "LOGNAME",
+      "LTM_E2E_MODEL",
+      "PATH",
+      "SHELL",
+      "TMPDIR",
+      "USER"
+    ],
+    "preservationRunnerFinishedAt": "2026-10-31T13:17:38.076827+00:00",
+    "releaseParentOwnershipGuard": "Reviewed native_slot_clear includes anchored archive44/upload44 parent detection; original six controls plus added seventh method passed before grant. No archive/upload action authorized by this run."
+  },
+  "results": {
+    "core": {
+      "total": 1294,
+      "skipped": 7,
+      "failed": 0,
+      "coveragePercent": 98.07706924070837,
+      "coverageFloorPercent": 95
+    },
+    "iosUnit": {
+      "total": 513,
+      "skipped": 7,
+      "failed": 0
+    },
+    "iosUI": {
+      "total": 101,
+      "skipped": 5,
+      "failed": 0
+    },
+    "iosCombined": {
+      "total": 614,
+      "skipped": 12,
+      "failed": 0
+    },
+    "mac": {
+      "total": 126,
+      "skipped": 0,
+      "failed": 0
+    },
+    "watchUnit": {
+      "total": 29,
+      "skipped": 0,
+      "failed": 0
+    },
+    "watchUI": {
+      "total": 6,
+      "skipped": 0,
+      "failed": 0
+    },
+    "realContracts": {
+      "ollama": 2,
+      "openAICompatibleViaOllama": 2,
+      "failed": 0,
+      "model": "qwen3:0.6b",
+      "separateFromCoreAggregate": true
+    }
+  },
+  "skippedMethods": [
+    "-[ListenToMeCoreTests.CloudAIPresetLiveTests testRealVendorListsModelsStreamsASummaryAndHoldsTheQuickContract]",
+    "-[ListenToMeCoreTests.OllamaCloudCatalogTests testLiveAPICatalog]",
+    "-[ListenToMeCoreTests.OllamaContractE2ETests testLocalFourKDefaultExpandsAndReadsTheOpeningOfALongPrompt]",
+    "-[ListenToMeCoreTests.OllamaContractE2ETests testRealOllamaStreamingProducesContent]",
+    "-[ListenToMeCoreTests.OpenAICompatibleContractE2ETests testConfiguredSmallWindowAcceptsShortInputAndRejectsOversizedInput]",
+    "-[ListenToMeCoreTests.OpenAICompatibleContractE2ETests testRealServerListsModelsAndStreamsACompleteAnswer]",
+    "-[ListenToMeCoreTests.SummaryContractE2ETests testEarlyMiddleAndLateActionsSurviveRealModelSummary]",
+    "-[ListenToMeIOSUITests.MobileAttachmentJourneyTests testLocalFileImportPreviewAndExtractText]",
+    "-[ListenToMeIOSUITests.MobileCalendarUITests testImportStagedEventThroughPreviewIntoNotes]",
+    "-[ListenToMeIOSUITests.MobileLiveCloudTests testUserCloudJourney]",
+    "-[ListenToMeIOSUITests.MobileMarkdownUITests testSavedSummariesRenderOnDashboardAndFullSummary]",
+    "-[ListenToMeIOSUITests.MobilePhysicalCaptureUITests testPhysicalMicrophoneTranscriptionAndSavedAudioPlayback]",
+    "-[ListenToMeIOSUnitTests.MobileAITests testLiveCloudCatalogConnectionAndSummary]",
+    "-[ListenToMeIOSUnitTests.MobileCalendarTests testStageOrRemoveCalendarUIFixture]",
+    "-[ListenToMeIOSUnitTests.MobileCorrectionLiveTests testLiveFlashCorrectionThroughRecordingSaveAndRestore]",
+    "-[ListenToMeIOSUnitTests.MobileFileTranscriberTests testCancellationThrowsAndDeliversNothingAfterIt]",
+    "-[ListenToMeIOSUnitTests.MobileFileTranscriberTests testTranscribesOrderedChunksWithRecordingRelativeTimes]",
+    "-[ListenToMeIOSUnitTests.MobileQuickLiveTests testLiveFlashEvaluatesKeepsRevisesAndSuggestsReview]",
+    "-[ListenToMeIOSUnitTests.MobileSpeechFallbackTests testPhysicalSpeechCapabilityReport]"
+  ],
+  "behaviorContracts": {
+    "suiteBindings": {
+      "core": 256,
+      "ios-unit": 129,
+      "ios-ui": 56,
+      "mac-unit": 126,
+      "watch-unit": 29,
+      "watch-ui": 6
+    },
+    "coreReadOnlyLogVerification": {
+      "path": "post-run-core-binding-verification.txt",
+      "sha256": "b183f7dffc224f98137827730935dc952669b0e3b2ca6aa7955b3ecd4a67e355"
+    },
+    "scope": "Binding verification checks the actual run logs; it is not a new native execution.",
+    "requiredBoundSelectorsPassed": 602,
+    "catalogScenariosValidated": 261
+  },
+  "helpersAndBuild": {
+    "pythonHelperTestsPassed": 71,
+    "groups": [
+      21,
+      6,
+      29,
+      5,
+      4,
+      6
+    ],
+    "shellHotkeyChecksPassed": true,
+    "lintPassed": true,
+    "normalDebugBuildPassed": true,
+    "rawLog": {
+      "path": "validation/reference.log",
+      "sha256": "84b8278e6131f0d2762f9b6e6bdcd4f7f5b5aab03f75ade7783b05f328e825d8"
+    }
+  },
+  "toolchain": {
+    "at": "2026-10-31T13:18:54.853116+00:00",
+    "scope": "Post-terminal read-only identity, not an immutable pre-run snapshot.",
+    "xcode": "Xcode 27.2\nBuild version 27B52",
+    "swift": "Apple Swift version 6.4.2 (swiftlang-6.4.2.1.9 clang-2100.4.1.1)\nTarget: arm64-apple-macosx27.0.0",
+    "macOSSDK": "27.2",
+    "iOSSimulatorSDK": "27.2",
+    "WatchSimulatorSDK": "27.2",
+    "host": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0.1\nBuildVersion:\t\t26A434",
+    "architecture": "arm64"
+  },
+  "destinations": {
+    "ios": {
+      "device": "iPhone 17 Pro Max",
+      "name": "ListenToMe44 fresh capture iphone-max",
+      "runtime": "iOS Simulator 26.5",
+      "runtimeBuild": "23F77"
+    },
+    "watch": {
+      "scope": "watchOS simulator, not paired physical-device acceptance"
+    }
+  },
+  "nativeIntegrity": {
+    "sourceAndSigningPinsVerified": 1129,
+    "originalAndMirroredRawFiles": 2099,
+    "rawOriginalsUnchanged": true,
+    "derivedMirrorSQLiteCaches": {
+      "ios": {
+        "database.sqlite3": "84ec41f28b7e4519e04f999893b7169c10f888fdec8fe279c587d28b8b2d9fbf"
+      },
+      "mac": {
+        "database.sqlite3": "c16a2a4d38023c236ca932b344d1c762d1fe1f037507bbe355d8fe76ff1b4d44"
+      },
+      "watch": {
+        "database.sqlite3": "a6a28437878b9c2f77d0f0f7cb06ceaf563ba2f01966329306fb5513a721c179"
+      }
+    },
+    "compiledPayloadFiles": 111,
+    "testBundles": 6,
+    "normalDebugPayloadFiles": 34,
+    "normalDebugIdentifier": "com.tomwu.ListenToMe.dev",
+    "normalDebugVersion": "1.4.4",
+    "normalDebugBuild": "14",
+    "normalDebugLaunched": false,
+    "originalAndArchiveExtractedStrictSignatureExit": 0,
+    "signatureScope": "Retained native strict-signature readbacks; independent audit rehashed the original, archive and extracted bytes without rerunning codesign. This is the normal Mac Dev build, not an iOS distribution archive.",
+    "debugArchiveSHA256": "2c0d4b1cda85a4e092cc6e810106d96233365762f5a1c709306c0dad16ca15e2",
+    "postTerminalPreservation": {
+      "path": "post-terminal-source-and-native-preservation.json",
+      "sha256": "064faec70b1c3a1a4aca73e826675dcd634648b622f6a5526bd3e644bba19b47"
+    },
+    "compiledPreservation": {
+      "path": "native-payloads/preservation.json",
+      "sha256": "ea17e77ad25980486a6451b982ec3eb121c1c8646431550efc6ff34e00dc9aef"
+    },
+    "normalDebugPreservation": {
+      "path": "normal-debug-artifact/receipt.json",
+      "sha256": "5dc42f1c54c297ab079510c3df4024d2211ec8d895f8e351c507cdef5c3aa9e6"
+    }
+  },
+  "exactChangedJourneyEvidence": {
+    "methodsPassedOnce": [
+      {
+        "method": "MobileReleaseNotesUITests/testUpdateShowsVersionOnceAndChangelogCanBeReopened()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 17.233099937438965,
+        "detail": "release-notes-native-details/update.json",
+        "sha256": "09a7b577b9803029255ee5b6678896952ff5d5acf1d6e75e62fe77527e8c236c"
+      },
+      {
+        "method": "MobileReleaseNotesUITests/testLargeTextKeepsContinueReachableAndHistoryScrollable()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 307.3608009815216,
+        "detail": "release-notes-native-details/largest-text.json",
+        "sha256": "c2c54b176a462eb7710134bb970770cf7ba3b6aa77260079928bcd57a55e16a6"
+      },
+      {
+        "method": "MobileReleaseNotesTests/testFirstInstallSeedsTheAcknowledgementInsteadOfPresentingAnUpdate()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 0.0020949840545654297,
+        "detail": "release-notes-native-details/unit-1.json",
+        "sha256": "7f07496f1e41f797384ba6add714f37687ad7d339d988e1dd31e19bf5043aa07"
+      },
+      {
+        "method": "MobileReleaseNotesTests/testOnlyChangedReleaseNotesPresentAgainAndAcknowledgementPersists()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 0.0026830434799194336,
+        "detail": "release-notes-native-details/unit-2.json",
+        "sha256": "436ac1eda09aa28efc145d65ea41775dd1a4fab6ef35a14c1eac3a822ea33c04"
+      },
+      {
+        "method": "MobileReleaseNotesTests/testNotesIdentityTracksTheNewestBundledReleaseNotTheBuildNumber()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 0.0003699064254760742,
+        "detail": "release-notes-native-details/unit-3.json",
+        "sha256": "216588daf0044e5f3870025226fc3620f5ace6f64a234b08fff09e02ee0fe842"
+      },
+      {
+        "method": "MobileReleaseNotesTests/testNewestBundledReleaseIsLabelledAsThisUpdate()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 0.0003020763397216797,
+        "detail": "release-notes-native-details/unit-4.json",
+        "sha256": "decedc06dfe14934e1c2a4593a6e4293d41fba9b53b12b5eb69d4af1cd79a7ec"
+      },
+      {
+        "method": "MobileReleaseNotesTests/testCurrentReleaseNotesMatchTheInstalledMarketingVersion()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 0.00043904781341552734,
+        "detail": "release-notes-native-details/unit-5.json",
+        "sha256": "fb0ba4a7b28cd51327b220f88fe495855300846489693b3350e7cdd2cf461215"
+      },
+      {
+        "method": "MobileOllamaEndpointUITests/testRejectedHTTPAndOmittedURLPartsAreExplained()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 39.58202302455902,
+        "detail": "endpoint-save-history-preview-native-details/ollama-ui.json",
+        "sha256": "5fa7b0443940740bb613d9645ca26a4c26f7663dc896de673567719e65e9cf7d"
+      },
+      {
+        "method": "MobileOpenAISettingsUITests/testOpenAICompatibleServerIsExplicitAndHonestlyLabelled()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 59.02644395828247,
+        "detail": "endpoint-save-history-preview-native-details/openai-ui.json",
+        "sha256": "daf70addbdfc07abc065c6e0dcda9d7bc2091e8cd3cc2441f90dd7e55e71a217"
+      },
+      {
+        "method": "MobileOllamaEndpointTests/testHTTPAddressPolicyPreservesPreviousServerOnRejection()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 0.007597088813781738,
+        "detail": "endpoint-save-history-preview-native-details/ollama-policy.json",
+        "sha256": "acffb369763eaf1af32ac2c29ac759777bdc44d21892d657b84bf59ee0de13b0"
+      },
+      {
+        "method": "MobileOllamaEndpointTests/testOmittedURLPartsAreExplainedWithoutEchoingSensitiveValues()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 0.003751039505004883,
+        "detail": "endpoint-save-history-preview-native-details/ollama-omission.json",
+        "sha256": "9e27185c52e220986f7cf5d00e16a8624374543f9e961dacae071a54dad5d75e"
+      },
+      {
+        "method": "MobileOpenAISettingsTests/testServerValidationKeepsThePreviousServerAndLabelsTheDestinationHonestly()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 0.008047938346862793,
+        "detail": "endpoint-save-history-preview-native-details/openai-policy.json",
+        "sha256": "599d7b152d848eb1518d1868e889d9fe1171062e9845607c41a4f895a81e72d2"
+      },
+      {
+        "method": "MobileNativeInteractionTests/testBottomSaveConfirmsPersistenceAndShareCopiesReadableText()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 30.140623092651367,
+        "detail": "endpoint-save-history-preview-native-details/save.json",
+        "sha256": "79619caab39a0ca5d1ff09fb94b9d2052f106679bc2b543053bc9d0df9171882"
+      },
+      {
+        "method": "MobileHistorySearchUITests/testLandscapeHistoryKeepsRefreshAskAndResultReachable()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 32.24075996875763,
+        "detail": "endpoint-save-history-preview-native-details/history.json",
+        "sha256": "324c41724b6517535dc2b7bf1780e0033f241ed3696e65b08dc2ccf72a39c693"
+      },
+      {
+        "method": "MobileReleaseScreenshotTests/testCaptureCleanDuoPreview()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 14.289938926696777,
+        "detail": "endpoint-save-history-preview-native-details/portrait-duo.json",
+        "sha256": "11906402581406141058a8a4e1153d64e1476103a21bcbe6a79ddb75ff4db742"
+      }
+    ],
+    "releaseNotesMethodCount": 7,
+    "endpointSaveHistoryPreviewMethodCount": 8,
+    "releaseNotesExport": {
+      "path": "release-notes-native-details/export-receipt.json",
+      "sha256": "a6f05fb0452358254bd11151474e7694f0bb652e55fea36b553794e523ba7f27"
+    },
+    "otherJourneyExport": {
+      "path": "endpoint-save-history-preview-native-details/export-receipt.json",
+      "sha256": "fa29a5550cb2e4b09f2e828c2c6c5b3fe220bb007fea85a5490ee1cb36b122f7"
+    },
+    "attachmentFileCount": 19,
+    "nativePNGCount": 12,
+    "attachmentPreservation": {
+      "path": "fresh-release-endpoint-history-preview-attachments/preservation.json",
+      "sha256": "11e349b7a6801457d90e75a11c8194eda7adbb273c73d770af20e5206369437f"
+    },
+    "ownerRenderedReview": {
+      "path": "fresh-native-render-review.json",
+      "sha256": "8ed3f8160c81a742197e57862e4e49123b288c17739267f98737fb789629e118"
+    },
+    "ownerViewedOriginalPNGs": [
+      {
+        "path": "fresh-release-endpoint-history-preview-attachments/portrait-duo/55956A45-B8DC-4DB4-8A29-248F83EF8CCD.png",
+        "sha256": "42526d4b6872950316acf6763fb3db4a328ebec23dd57c23488da07744d59f7f"
+      },
+      {
+        "path": "fresh-release-endpoint-history-preview-attachments/portrait-duo/ACA07800-3881-484A-A31F-9A2492AA2AE1.png",
+        "sha256": "6bf7eb21e32feb35fced58939f7be847f92be689fcade437b1efaddee45f1b7f"
+      },
+      {
+        "path": "fresh-release-endpoint-history-preview-attachments/history/323E13DB-D61B-45C8-B118-321D07AA40B7.png",
+        "sha256": "54381a1f62adb4b260ec814ef2037c95f24682d4ce6d761bdb0cf898f5d84d8c"
+      },
+      {
+        "path": "fresh-release-endpoint-history-preview-attachments/update/5185AFDF-B4C5-4967-86DC-F5C8663CB856.png",
+        "sha256": "db90b2128f78ed1329c1569f43beb6be410cc555346651fbc954d1d60da650db"
+      },
+      {
+        "path": "fresh-release-endpoint-history-preview-attachments/largest-text/A716FD97-DCB2-488D-B131-5EEB3ACA5284.png",
+        "sha256": "a1b7ddf328ad4be895acc046dc721328b1f6ce62b014772edbeac064c137bd59"
+      }
+    ],
+    "findings": {
+      "portrait": "Complete short transcript and Quick answer plus status/controls visible on unscrolled ProMax.",
+      "duo": "Complete text and Start/Notes visible; optional Auto partially clipped at lower Quick viewport. QA only; separately reviewed Pro release capture supplies clean Duo.",
+      "history": "Whole queried record clear of Search after ordinary scroll, Refresh/Ask/disclosure and exact prototype query readable.",
+      "releaseNotes": "Current44 title/version/bullets/Continue readable; largest-text historical heading/Continue visible with expected body scrolling."
+    },
+    "renderLimits": "5 of12 fresh full-run PNGs viewed. Actual same-source seven-profile71-original capture/visual reviews are separate; no physical/installed/publication claim.",
+    "sameSourceReleaseCapture": {
+      "evidenceIdentifier": "captures-adaptive-ipad",
+      "technicalReceiptSHA256": "85af6a8674875c3c1f3345032409eb2cb08d86c060aecf6907f42b853ab6c2bd",
+      "independentAuditSHA256": "f1869dbdd1cb99e89bbbabacf19d12ef6751f18892fb1b92a7c8c16507ab5a27",
+      "reviewedCatalogSHA256": "148b91c9ca638d39416e9d391439a0da33ee70e33827e32d95d8eb6f9252fe28",
+      "profiles": 7,
+      "methodsPassed": 21,
+      "nativeOriginalPNGs": 71,
+      "allOriginalsVisuallyInspected": true,
+      "suitable": 40,
+      "QAOnly": 31,
+      "scope": "Pro conditional Quick scroll and Max unscrolled portrait both exercised on exact ca7 source; gallery selection/hosted review and Apple listing remain separate.",
+      "repoCaptureReceipt": "ios-1.20.4-release-captures-2026-10-31.json",
+      "repoREADMEManifest": "../images/ios/release-1.20.4/manifest.json"
+    }
+  },
+  "cleanup": {
+    "ownedParentAndGroupReaped": true,
+    "ownedDevicesAtOwnerTerminalAudit": {
+      "ios": {
+        "state": "Shutdown"
+      },
+      "watch": {
+        "state": "Shutdown"
+      }
+    },
+    "shutdownExit149MeansAlreadyShutdown": true,
+    "laterDeviceStateNotQueriedByIndependentReviewer": true,
+    "noErasePermissionResetOrInstalledAppSession": true,
+    "nativeLaneReleased": true
+  },
+  "provenance": {
+    "externalEvidenceIdentifier": "listentome-ios1204-train/full-validation-adaptive-ipad-final",
+    "pathScope": "Evidence path fields below are relative to this external retained evidence directory unless explicitly described as repository paths.",
+    "ownerReceipt": {
+      "path": "full-result-and-preservation.json",
+      "sha256": "418c5ec61b462a073baf2c04e5603edda3faa9365270a48509bd1a2d2bc1ea1a"
+    },
+    "independentTerminalAudit": "Pending at canonical creation; a separate immutable independent receipt will bind this exact canonical.",
+    "supervisorTerminal": {
+      "path": "validation/runner-state.json",
+      "sha256": "6860ce8fa227e849e169d5800af5f59882f6a0a583ec8902e2f2439db55148e1"
+    },
+    "validationState": {
+      "path": "validation-state.json",
+      "sha256": "1717ba7e7f6d02611210fef8e28cd4a6480eaa1151c405a1f36151b9103cca18"
+    },
+    "historicalFull9460": {
+      "evidenceIdentifier": "full-validation-history-portrait-final",
+      "canonicalSHA256": "b1d94fa554653f2c65c2364950b049f1d7d8c8dafafd7bc0024d2a85970253cf",
+      "scope": "Historical ancestor pass; remains unchanged and is not used as current ca7 full proof."
+    }
+  },
+  "boundaries": [
+    "All earlier failed Save/endpoint/full/capture and compact-phone portrait attempts remain preserved; no outcome is relabelled.",
+    "This is actual complete ca7 local automated validation. The separate exact-source seven-profile capture passed 21 methods and preserved 71 originals, all individually inspected: 40 suitable and 31 QA-only. README assembly and hosted final-source checks remain separate.",
+    "No installed-app, actual system-audio OTHERS, paired physical Watch, physical iPhone/iPad, production-readiness, archive/export, accepted upload, merge or publication claim.",
+    "Final source/docs/CI/review/merge/release remain separately evidenced. No acceptance waiver."
+  ],
+  "focusedReleaseNotes": {
+    "scenarioIDs": [
+      "RELEASE-004"
+    ],
+    "purpose": "Actual native version/title RED followed by unchanged-test version44 GREEN; exact native argv recovered from original before.json, not reconstructed from prose.",
+    "pathNormalization": {
+      "SOURCE_CHECKOUT": "The release source checkout recorded in the original private before.json.",
+      "EVIDENCE_ROOT": "listentome-ios1204-train external evidence root.",
+      "policy": "Only absolute local path prefixes normalized; all original flags/targets/destinations/order preserved."
+    },
+    "red": {
+      "source": "09adc703a801d6f50dc11291ed8095c9218cebda",
+      "sourceState": "Only reviewed delivery scenario and first UI expectation patch; app version/notes still1.20.3(43).",
+      "nativeCommand": [
+        "xcodebuild",
+        "-project",
+        "SOURCE_CHECKOUT/ListenToMe.xcodeproj",
+        "-scheme",
+        "ListenToMeIOS",
+        "-configuration",
+        "Debug",
+        "-destination",
+        "platform=iOS Simulator,id=FA274EC0-52A9-49B3-A463-8A73F2768A3B",
+        "-derivedDataPath",
+        "SOURCE_CHECKOUT/.build/ios1204-release-notes-red",
+        "-clonedSourcePackagesDirPath",
+        "SOURCE_CHECKOUT/.build/ios/SourcePackages",
+        "-onlyUsePackageVersionsFromResolvedFile",
+        "-disableAutomaticPackageResolution",
+        "-parallel-testing-enabled",
+        "NO",
+        "-collect-test-diagnostics",
+        "never",
+        "-testLanguage",
+        "en",
+        "-testRegion",
+        "US",
+        "-resultBundlePath",
+        "EVIDENCE_ROOT/release-notes-red-preparation/execution/native.xcresult",
+        "-only-testing:ListenToMeIOSUITests/MobileReleaseNotesUITests/testUpdateShowsVersionOnceAndChangelogCanBeReopened",
+        "CODE_SIGNING_ALLOWED=YES",
+        "CODE_SIGN_IDENTITY=-",
+        "test"
+      ],
+      "recordedCommandEvidenceIdentifier": "release-notes-red-preparation/execution/before.json",
+      "recordedCommandEvidenceSHA256": "3f947c45bf4bbbc9c98387ece9e5562d24998237eae737e76b0d99d28a4219b8",
+      "receiptEvidenceIdentifier": "release-notes-red-result-and-preservation.json",
+      "receiptSHA256": "20f0e2de14de594d8c6d398ee03970b78b6b64be7959d2ef8ebd92398defa5d5",
+      "session": 93601,
+      "nativeExit": 65,
+      "methods": 1,
+      "passed": 0,
+      "failed": 1,
+      "assertions": 2,
+      "unexpectedFailures": 0,
+      "skipped": 0,
+      "reaped": true,
+      "allInputsUnchanged": true,
+      "firstReleaseUITestFileSHA256": "0d5583780573d6b99b605bd3ed54919ea0043a2d9e3d21e346ecd9c16fbdbba3",
+      "observedVersion": "Version 1.20.3 \u00b7 Build 43",
+      "expectedVersion": "Version 1.20.4 \u00b7 Build 44",
+      "missingExpectedTitle": "Clearer History and recording controls",
+      "assertionLines": [
+        11,
+        12
+      ]
+    },
+    "green": {
+      "source": "db953793ac5412cb54305a13ef4f3f81c1876ee3",
+      "sourceState": "Clean committed version/notes source; exact tested bytes preserved.",
+      "nativeCommand": [
+        "xcodebuild",
+        "-project",
+        "SOURCE_CHECKOUT/ListenToMe.xcodeproj",
+        "-scheme",
+        "ListenToMeIOS",
+        "-configuration",
+        "Debug",
+        "-destination",
+        "platform=iOS Simulator,id=FA274EC0-52A9-49B3-A463-8A73F2768A3B",
+        "-derivedDataPath",
+        "SOURCE_CHECKOUT/.build/ios1204-release-notes-green",
+        "-clonedSourcePackagesDirPath",
+        "SOURCE_CHECKOUT/.build/ios/SourcePackages",
+        "-onlyUsePackageVersionsFromResolvedFile",
+        "-disableAutomaticPackageResolution",
+        "-parallel-testing-enabled",
+        "NO",
+        "-collect-test-diagnostics",
+        "never",
+        "-testLanguage",
+        "en",
+        "-testRegion",
+        "US",
+        "-resultBundlePath",
+        "EVIDENCE_ROOT/release-notes-green-preparation/execution/native.xcresult",
+        "CODE_SIGNING_ALLOWED=YES",
+        "CODE_SIGN_IDENTITY=-",
+        "-only-testing:ListenToMeIOSUITests/MobileReleaseNotesUITests",
+        "-only-testing:ListenToMeIOSUnitTests/MobileReleaseNotesTests",
+        "test"
+      ],
+      "recordedCommandEvidenceIdentifier": "release-notes-green-preparation/execution/before.json",
+      "recordedCommandEvidenceSHA256": "a104a68ec85ae1a04a679e0027141a29f31a7192e8c05447bc7e8382b2408a7f",
+      "receiptEvidenceIdentifier": "release-notes-green-result-and-preservation.json",
+      "receiptSHA256": "c5ee115c6fa39364dee5ae0564b7bca90177d4a49d0deb0d8ca47babcaf775f9",
+      "session": 37032,
+      "nativeExit": 0,
+      "methods": 7,
+      "passed": 7,
+      "failed": 0,
+      "assertions": 0,
+      "unexpectedFailures": 0,
+      "skipped": 0,
+      "reaped": true,
+      "allInputsUnchanged": true,
+      "firstReleaseUITestFileSHA256": "0d5583780573d6b99b605bd3ed54919ea0043a2d9e3d21e346ecd9c16fbdbba3",
+      "methodStatuses": {
+        "ListenToMeIOSUITests.MobileReleaseNotesUITests/testUpdateShowsVersionOnceAndChangelogCanBeReopened": "passed",
+        "ListenToMeIOSUITests.MobileReleaseNotesUITests/testLargeTextKeepsContinueReachableAndHistoryScrollable": "passed",
+        "ListenToMeIOSUnitTests.MobileReleaseNotesTests/testFirstInstallSeedsTheAcknowledgementInsteadOfPresentingAnUpdate": "passed",
+        "ListenToMeIOSUnitTests.MobileReleaseNotesTests/testOnlyChangedReleaseNotesPresentAgainAndAcknowledgementPersists": "passed",
+        "ListenToMeIOSUnitTests.MobileReleaseNotesTests/testNotesIdentityTracksTheNewestBundledReleaseNotTheBuildNumber": "passed",
+        "ListenToMeIOSUnitTests.MobileReleaseNotesTests/testNewestBundledReleaseIsLabelledAsThisUpdate": "passed",
+        "ListenToMeIOSUnitTests.MobileReleaseNotesTests/testCurrentReleaseNotesMatchTheInstalledMarketingVersion": "passed"
+      }
+    },
+    "unchangedFirstReleaseUITestFileAcrossRedGreenCurrentCa7": true,
+    "scope": "Historical actual focused RED/GREEN on the recorded sources. The current ca7 complete full run separately passed the same seven release methods; no historical outcome is relabelled."
+  }
+}

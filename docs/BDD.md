@@ -176,6 +176,51 @@ manual check; a missing installed English model skips the test and cannot satisf
 
 ## Native log evidence
 
+`HISTORYREFRESH-010` covers ordinary scrolling on compact and larger landscape iPhones and adaptive
+Duo or wide iPad workspaces. The build-44 capture attempt passed all five methods on iPhone 17 Pro, then failed the
+History row/search separation assertion on Pro Max after a 13-point upward drag; its other four
+methods passed. The test now requests at least 44 points, capped at one third of the viewport,
+without relaxing whole-row containment, nonintersection, exact-query or open/reopen assertions.
+The corrected History method passed on both phones. Historical source `9460f00` then passed the
+complete local validation, including this method on Pro Max; the same-source focused Pro run also
+passed. [Historical full receipt and scoped render evidence](evaluations/ios-1.20.4-full-9460f00-2026-10-31.json).
+[Preserved failure and capture limits](evaluations/ios-1.20.4-history-capture-failure-2026-10-31.json).
+
+The subsequent `9460f00` capture passed both phones but exposed an incorrect iPad precondition:
+mini's actual 1,093-by-415-point landscape content correctly used Duo, while the test expected
+the full wide workspace from device idiom alone. Only that initial assertion failed; all later
+History checks completed. The test now recognizes the existing adaptive Duo or wide container,
+as the translation journey already does, without changing the app or any History outcome assertion.
+The corrected mini method passed on `ca7ab57`, followed by all 21 methods in the same-source
+seven-profile capture. All 71 native originals were preserved and individually inspected; QA-only
+frames remain distinct from selected gallery media. Final complete `make validate-local` then passed
+on `ca7ab57`: the 261-scenario catalog validated and all 602 required bound selectors passed. The
+[final full receipt](evaluations/ios-1.20.4-full-ca7ab57-2026-10-31.json) and [capture receipt](evaluations/ios-1.20.4-release-captures-2026-10-31.json)
+record current proof; the prior full pass stays bound to historical `9460f00`. [Preserved mini failure](evaluations/ios-1.20.4-ipad-mini-capture-failure-2026-10-31.json).
+
+`READMEPREVIEW-001` captures the existing concise fixture first in portrait, requiring both
+complete transcript lines and the complete Quick answer, then retains its original Duo checks.
+That added baseline passed on Max but exposed an unscrolled answer about 17 points below its
+Quick viewport on Pro; the History method passed on both. The correction uses one bounded scroll
+inside Quick only when needed, re-reads its viewport and rechecks both transcript lines afterward.
+All text/containment assertions remain. The same-source focused Pro retry passed both methods
+on `9460f00`, exercising the conditional Quick scroll; the complete local run also passed both on
+Pro Max, where the portrait answer fits without scrolling. These native images are bounded QA;
+the complete fresh `ca7ab57` capture and individual visual reviews are separately preserved.
+The [README capture manifest](images/ios/release-1.20.4/manifest.json) preserves selected clean captures and their
+source/version provenance; hosted final-source gallery review remains separate. Longer translation/live
+fixtures are not substitutes for the selected concise portrait gallery image.
+
+`ENDPOINTUI-001` and `ENDPOINTUI-002` bind rejected-address recovery, exact replacement and honest
+server/privacy labels to native Settings controls and the corresponding persistence policies.
+During build 44 validation, the Ollama journey reached its HTTPS rejection notice but failed because
+the transient **Select All** menu was absent. Later normalization/privacy assertions were not reached.
+A native keyboard selection attempt also failed its exact-value assertions. Both journeys now
+close and reopen Settings, verify its discarded draft is empty, then enter the corrected address
+and retain all outcome assertions. The Ollama UI also verifies its saved destination survived the
+rejection and reopen. This is a harness repair with observed harness failures, not a claimed product
+regression, in-place text-editing acceptance or an invented red for adopted unit tests.
+
 `MACAUDIO-001` covers the actual native PCM-to-`AnalyzerInput` boundary exposed by #333, beyond the
 older scalar `BATCH-291` timeline tests. Nine methods exercise real conversion, separate raw/sample
 clocks, exact frame accounting, gaps after accumulated drift, invalid input and cancellation/queue

@@ -1,5 +1,42 @@
 # Active backlog delivery — October 31, 2026
 
+## Build 44 — complete candidate capture set; TestFlight delivery pending
+
+Candidate source `ca7ab57`, based on merged main `09adc703`, has fresh native captures across
+seven profiles: iPhone Pro and Pro Max, iPad mini and Pro, and 42/46/49 mm Watch. All **21 capture
+methods passed** with zero failures or skips. Independent technical audit verified **1,129 unchanged
+inputs**, **399 original/preserved file pairs**, all **71 native screenshots** and the preserved
+root app payloads. Visual review classified **40 images as suitable** and **31 as QA-only**; the
+README gallery selects eight unchanged originals and retains earlier galleries with their source
+labels. [Capture receipt and limits](evaluations/ios-1.20.4-release-captures-2026-10-31.json) ·
+[Gallery source and checksums](images/ios/release-1.20.4/manifest.json).
+
+Complete local validation on `ca7ab57` passed October 31, **12:31–13:17 UTC**: Core **1,294**
+(seven optional skips, **98.0771% coverage**), iOS **614** (602 passed, twelve skips), Mac **126**
+and Watch **35**, zero failures. The full gate validated the **261-scenario catalog** and passed
+all **602 required bindings**, **71 release-helper tests**, four real local-server contracts and the final Mac build.
+The runner exited zero and was reaped. Independent audit verified all **1,129 unchanged inputs**, **2,099 raw file pairs**, 111 native payload files and the original/extracted signed Debug artifact.
+[Full source-bound receipt and acceptance limits](evaluations/ios-1.20.4-full-ca7ab57-2026-10-31.json).
+
+The iPad mini correction accepts either of the app's existing adaptive containers, Duo or the wide
+iPad workspace. Its focused History check and the fresh all-profile capture passed without changing
+app/fixture bytes or the later History assertions. The previous failure, where a correct compact-height
+Duo layout was tested as wide-only, remains preserved in the
+[mini failure receipt](evaluations/ios-1.20.4-ipad-mini-capture-failure-2026-10-31.json).
+The earlier full `9460f00` pass and failed captures remain source-specific historical evidence;
+they are not relabelled as the current source's result.
+
+Earlier failures also remain preserved: the `3a83918` capture passed five methods on Pro but failed
+Pro Max History separation after a 13-point drag, and the added unscrolled Pro portrait baseline
+extended about 17 points beyond Quick. The successful harness now uses a meaningful History drag
+and bounded Quick scrolling while retaining complete-text, containment, exact-query and reopen
+assertions. [Historical capture failure](evaluations/ios-1.20.4-history-capture-failure-2026-10-31.json).
+
+Final hosted README inspection, CI/merge and accepted TestFlight upload are separate remaining
+gates. Build 44 has not been uploaded. Physical iPhone/iPad recording, translation quality,
+screen-lock and paired Watch/wrist-down acceptance, plus combined installed Mac/actual OTHERS
+acceptance, remain open. Simulator fixtures and beta eligibility do not establish production readiness.
+
 Five issues remain open: **#181, #205, #223, #236 and #336**. PR [#354](https://github.com/tomqwu/ListenToMe/pull/354)
 merged the Mac long-name correction at `946cb7e` on October 31, 02:49 UTC and closed #334. Full local
 validation passed on combined source `89e9226`; all three required checks passed on documentation
@@ -11,14 +48,16 @@ Watch inbox preservation merged in [PR #355](https://github.com/tomqwu/ListenToM
 all three final checks passed on docs head `f0f8d26`. Matching local/remote branches were deleted.
 It is merged but unreleased. Saved-audio ordering merged in PR #356 at `63e1777`, October 31,
 05:30 UTC, after all three final checks on `eee22fe` and independent review. Its matching branches
-were deleted and tracking refs pruned. Continue with shared History Ask cancellation (#223):
+were deleted and tracking refs pruned. Shared History Ask cancellation (#223) also merged:
 its one-line fix has portable streaming and actual iOS completed-answer red/green proof, and now
 integrates that exact Saved Audio main. Full validation passed on `3c8cc37`, **05:35–06:24 UTC**:
 Core **1,294**, iOS **614**, Mac **126** and Watch **35**, zero failures with documented optional
 skips. All four new Ask methods passed; independent audit verified **1,121 unchanged inputs** and
 **2,099 original/preserved native-result files**. Three required checks passed on that head.
-PR [#357](https://github.com/tomqwu/ListenToMe/pull/357) is completing documentation review and final
-CI before merge. [Audited full receipt and acceptance limits](evaluations/history-ask-query-cancellation-full-2026-10-31.json).
+PR [#357](https://github.com/tomqwu/ListenToMe/pull/357) merged at `09adc703`, October 31,
+06:50 UTC, after independent review and all three final checks on `00639a5`
+([run 41177389419](https://github.com/tomqwu/ListenToMe/actions/runs/41177389419)).
+Matching local/remote branches were deleted and tracking refs pruned. [Audited full receipt and acceptance limits](evaluations/history-ask-query-cancellation-full-2026-10-31.json).
 The existing native History control captures are QA only; installed/physical streaming interaction
 and the next release train remain separate. This change is not included in accepted beta 43.
 Language-search quality and the recorded physical #205/#236/Watch/audio checks remain unresolved.

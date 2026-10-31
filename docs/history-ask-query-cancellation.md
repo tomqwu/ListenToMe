@@ -1,10 +1,10 @@
 # History answers follow the current query
 
-Local candidate now integrates Saved Audio main `63e1777`; focused red/green below used base `0714b9ec`.
+The merged fix integrates Saved Audio main `63e1777`; focused red/green below used base `0714b9ec`.
 The shared runtime fix and three original Mac test methods remain unchanged. A complementary
 iOS test uses the actual phone session to check clearing a completed answer and its nonempty
 citations/count, plus whitespace preservation. Its genuine native red/green passed as recorded below.
-This reliability fix is in PR #357 and remains unreleased. It does not establish additional-language
+This reliability fix merged in PR #357 at `09adc703` and remains unreleased. It does not establish additional-language
 search quality or close #223.
 
 Mac and iPhone/iPad already pass search-field changes to the shared `HistorySearchModel.search`.
@@ -32,8 +32,9 @@ under `run-focused.py green` after the one-line shared fix. Both supervised runs
 inside 600 seconds and all 159 pinned repository inputs matched before/after their respective run.
 This focused headless proof is not a full Mac/iOS suite, rendered interaction or installed/device
 acceptance. The subsequent combined full validation and scoped control inspection passed as recorded
-below. Watch #355 and Saved Audio #356 are merged; PR #357 carries this change through final
-documentation review, required CI and merge.
+below. PR #357 merged after independent review and all three final checks on `00639a5`
+([run 41177389419](https://github.com/tomqwu/ListenToMe/actions/runs/41177389419)).
+Its matching feature branches were deleted and tracking refs pruned.
 
 For manual Mac and phone checks, see [the smoke test](manual-smoke-test.md). No view appearance
 changed, so the existing README gallery remains applicable. Local links and all 32 hosted local
@@ -79,5 +80,5 @@ scroll position obscure some lower content, so these are scoped QA captures, not
 release-gallery images. They do not demonstrate editing during a streaming answer. The exact native
 model assertions establish that behavior separately; installed Mac and physical phone interaction
 remain production-acceptance gates. The unchanged README gallery remains source-labelled; final
-documentation adds no runtime/test/config change. No language-quality, merge or publication claim
-follows from this validation receipt.
+documentation adds no runtime/test/config change. The later merge is recorded above. No language-quality or publication claim follows from this
+validation receipt.

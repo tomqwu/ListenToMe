@@ -18,10 +18,15 @@ final class MobileOllamaEndpointUITests: XCTestCase {
         XCTAssertTrue(status.label.contains("Use https://"))
         XCTAssertTrue(status.label.contains("previous server is kept"))
         capture(app, "HTTP address rejected with recovery instructions")
-        revealSettingsControl(field, in: form, towardTop: true)
-        field.tap(); field.press(forDuration: 1)
-        if app.menuItems["Select All"].waitForExistence(timeout: 2) { app.menuItems["Select All"].tap() }
-        else { app.buttons["Select All"].tap() }
+        app.buttons["Done"].tap()
+        app.buttons["More"].tap(); app.buttons["Settings"].tap()
+        revealSettingsControl(field, in: form)
+        XCTAssertEqual(app.staticTexts["ollamaServer"].label, "Server: https://studio.local:11434")
+        guard let draft = field.value as? String, draft.isEmpty || draft == field.placeholderValue else {
+            XCTFail("Reopening Settings must discard the rejected address draft")
+            return
+        }
+        field.tap()
         field.typeText("https://studio.local:11434/ollama?token=test-value")
         XCTAssertEqual(field.value as? String, "https://studio.local:11434/ollama?token=test-value")
         field.typeText("\n")

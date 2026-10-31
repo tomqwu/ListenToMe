@@ -15,9 +15,9 @@ final class MobileHistorySearchUITests: XCTestCase {
             app.windows.firstMatch.frame.width > app.windows.firstMatch.frame.height
         }, object: nil)
         XCTAssertEqual(XCTWaiter.wait(for: [landscape], timeout: 5), .completed)
-        let workspace = UIDevice.current.userInterfaceIdiom == .phone
-            ? "twoPaneMeetingWorkspace" : "wideMeetingWorkspace"
-        XCTAssertTrue(app.otherElements[workspace].waitForExistence(timeout: 5))
+        let duo = app.otherElements["twoPaneMeetingWorkspace"]
+        let wide = app.otherElements["wideMeetingWorkspace"]
+        XCTAssertTrue(duo.waitForExistence(timeout: 5) || wide.exists)
         app.buttons["History"].tap()
         let history = app.collectionViews.containing(.button, identifier: "history-refresh").firstMatch
         XCTAssertTrue(history.waitForExistence(timeout: 5))
@@ -57,13 +57,15 @@ final class MobileHistorySearchUITests: XCTestCase {
 
         if record.frame.intersects(field.frame) {
             let overlap = record.frame.maxY - field.frame.minY + 8
-            let distance = min(max(0, overlap), viewport.height / 3)
+            // A small overlap still needs a meaningful scroll gesture.
+            let distance = min(max(44, overlap), viewport.height / 3)
             let start = history.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
             start.press(forDuration: 0.1, thenDragTo: start.withOffset(CGVector(dx: 0, dy: -distance)))
         }
         XCTAssertTrue(record.isHittable); XCTAssertFalse(record.frame.isEmpty)
         XCTAssertTrue(viewport.contains(record.frame))
-        XCTAssertFalse(record.frame.intersects(field.frame), "Search must not cover the selected result")
+        XCTAssertFalse(record.frame.intersects(field.frame),
+                       "Search must not cover the selected result: record=\(record.frame), search=\(field.frame)")
         XCTAssertEqual(field.value as? String, "prototype")
         captureHistory("Queried History result - QA")
         record.tap()

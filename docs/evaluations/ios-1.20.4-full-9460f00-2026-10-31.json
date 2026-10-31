@@ -1,0 +1,474 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-31T11:55:17.076684+00:00",
+  "status": "ACTUAL_FULL_LOCAL_AUTOMATED_PASS_INDEPENDENTLY_AUDITED",
+  "platformVersion": {
+    "platform": "iOS with embedded Watch",
+    "version": "1.20.4",
+    "build": "44"
+  },
+  "source": {
+    "commit": "9460f00ad512872d59c55ee44057bfdf4521fa71",
+    "base": "09adc703a801d6f50dc11291ed8095c9218cebda",
+    "tree": "5f2f2db2f1f2a292aebae8b3a5455defde7f85c6",
+    "branch": "codex/ios-1-20-4-train",
+    "cleanAtStartAndTerminal": true,
+    "trackedUntrackedAndIgnoredSigningInputCount": 1127,
+    "allInputHashesUnchanged": true,
+    "ignoredStableDevSigningSHA256": "9344979f8b260004bd3630cede6cb1be52ad1d2ef8d8e9a2f4cf8cd1e0caa1d3",
+    "fullInputMap": {
+      "path": "validation-state.json",
+      "sha256": "f28561eaa425e50f16b9a9e128a7912a0bdda3701a91aa8db0ffb983dbda2ad5"
+    }
+  },
+  "execution": {
+    "session": 32269,
+    "command": [
+      "make",
+      "-C",
+      "SOURCE_CHECKOUT",
+      "validate-local",
+      "BDD_BASE=09adc703a801d6f50dc11291ed8095c9218cebda",
+      "IOS_DESTINATION=platform=iOS Simulator,id=2B63B06F-983E-4039-83F7-8D7B3D424948",
+      "WATCH_DESTINATION=platform=watchOS Simulator,id=BB6AAF4F-7C2B-4189-94DA-938EA89EFC66",
+      "IOS_SIGN_FLAGS=CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- -collect-test-diagnostics never"
+    ],
+    "startedAt": "2026-10-31T11:00:45.162266+00:00",
+    "finishedAt": "2026-10-31T11:47:01.453678+00:00",
+    "elapsedSeconds": 2776.283924958,
+    "hardWallSeconds": 7200,
+    "hardWallExceeded": false,
+    "outerExit": 0,
+    "nativeExit": 0,
+    "reaped": true,
+    "ownedParentPID": 78558,
+    "ownedProcessGroup": 78591,
+    "ownedParentAndGroupAbsent": true,
+    "processCheckScope": "Only this completed run; later separately authorized work is not excluded.",
+    "runner": {
+      "path": "run-validation.py",
+      "sha256": "41e8387ea39f65157e4b22d2d52b605d557de9d8240b4dc10132ff15f9c87756"
+    },
+    "supervisor": {
+      "path": "supervisor.py",
+      "sha256": "abf78e85502e095baa6d88c7858ef3ab2d54ad42b7a73b61b137265d116a4ed7"
+    },
+    "grant": {
+      "path": "execution-review.json",
+      "sha256": "f139bd59178321fd6f095fb748c0e06405a77cf8e95cd3b1e166a429fa40eabb"
+    },
+    "independentRunnerReview": {
+      "path": "independent-static-full-runner-delta-review.json",
+      "sha256": "8e64557bd2af0ac7f2004498e5911fa12332f62fddcf7c9db1651e721d20a5d8"
+    },
+    "releaseParentPreflight": {
+      "path": "release-parent-preflight.json",
+      "sha256": "28e42cec8b8f58668a08853821c43e4a37c2091a32ddd8c044f1cbf405911743"
+    },
+    "childEnvironmentNames": [
+      "HOME",
+      "LANG",
+      "LC_ALL",
+      "LC_CTYPE",
+      "LOGNAME",
+      "LTM_E2E_MODEL",
+      "PATH",
+      "SDKROOT",
+      "SHELL",
+      "TMPDIR",
+      "USER"
+    ]
+  },
+  "results": {
+    "core": {
+      "total": 1294,
+      "skipped": 7,
+      "failed": 0,
+      "coveragePercent": 98.07706924070837,
+      "coverageFloorPercent": 95
+    },
+    "iosUnit": {
+      "total": 513,
+      "skipped": 7,
+      "failed": 0
+    },
+    "iosUI": {
+      "total": 101,
+      "skipped": 5,
+      "failed": 0
+    },
+    "iosCombined": {
+      "total": 614,
+      "skipped": 12,
+      "failed": 0
+    },
+    "mac": {
+      "total": 126,
+      "skipped": 0,
+      "failed": 0
+    },
+    "watchUnit": {
+      "total": 29,
+      "skipped": 0,
+      "failed": 0
+    },
+    "watchUI": {
+      "total": 6,
+      "skipped": 0,
+      "failed": 0
+    },
+    "realContracts": {
+      "ollama": 2,
+      "openAICompatibleViaOllama": 2,
+      "failed": 0,
+      "model": "qwen3:0.6b",
+      "separateFromCoreAggregate": true
+    }
+  },
+  "skippedMethods": [
+    "-[ListenToMeCoreTests.CloudAIPresetLiveTests testRealVendorListsModelsStreamsASummaryAndHoldsTheQuickContract]",
+    "-[ListenToMeCoreTests.OllamaCloudCatalogTests testLiveAPICatalog]",
+    "-[ListenToMeCoreTests.OllamaContractE2ETests testLocalFourKDefaultExpandsAndReadsTheOpeningOfALongPrompt]",
+    "-[ListenToMeCoreTests.OllamaContractE2ETests testRealOllamaStreamingProducesContent]",
+    "-[ListenToMeCoreTests.OpenAICompatibleContractE2ETests testConfiguredSmallWindowAcceptsShortInputAndRejectsOversizedInput]",
+    "-[ListenToMeCoreTests.OpenAICompatibleContractE2ETests testRealServerListsModelsAndStreamsACompleteAnswer]",
+    "-[ListenToMeCoreTests.SummaryContractE2ETests testEarlyMiddleAndLateActionsSurviveRealModelSummary]",
+    "-[ListenToMeIOSUITests.MobileAttachmentJourneyTests testLocalFileImportPreviewAndExtractText]",
+    "-[ListenToMeIOSUITests.MobileCalendarUITests testImportStagedEventThroughPreviewIntoNotes]",
+    "-[ListenToMeIOSUITests.MobileLiveCloudTests testUserCloudJourney]",
+    "-[ListenToMeIOSUITests.MobileMarkdownUITests testSavedSummariesRenderOnDashboardAndFullSummary]",
+    "-[ListenToMeIOSUITests.MobilePhysicalCaptureUITests testPhysicalMicrophoneTranscriptionAndSavedAudioPlayback]",
+    "-[ListenToMeIOSUnitTests.MobileAITests testLiveCloudCatalogConnectionAndSummary]",
+    "-[ListenToMeIOSUnitTests.MobileCalendarTests testStageOrRemoveCalendarUIFixture]",
+    "-[ListenToMeIOSUnitTests.MobileCorrectionLiveTests testLiveFlashCorrectionThroughRecordingSaveAndRestore]",
+    "-[ListenToMeIOSUnitTests.MobileFileTranscriberTests testCancellationThrowsAndDeliversNothingAfterIt]",
+    "-[ListenToMeIOSUnitTests.MobileFileTranscriberTests testTranscribesOrderedChunksWithRecordingRelativeTimes]",
+    "-[ListenToMeIOSUnitTests.MobileQuickLiveTests testLiveFlashEvaluatesKeepsRevisesAndSuggestsReview]",
+    "-[ListenToMeIOSUnitTests.MobileSpeechFallbackTests testPhysicalSpeechCapabilityReport]"
+  ],
+  "behaviorContracts": {
+    "catalogScenarios": 261,
+    "requiredNativeBindingsObservedPassed": 602,
+    "suiteBindings": {
+      "core": 256,
+      "ios-unit": 129,
+      "ios-ui": 56,
+      "mac-unit": 126,
+      "watch-unit": 29,
+      "watch-ui": 6
+    },
+    "coreReadOnlyLogVerification": {
+      "path": "post-run-core-binding-verification.txt",
+      "sha256": "1be3425144754f96587c2ccb73be7da4db32b3123003977ae87c67881b773a58"
+    },
+    "scope": "Binding verification checks the actual run logs; it is not a new native execution."
+  },
+  "helpersAndBuild": {
+    "pythonHelperTestsPassed": 71,
+    "groups": [
+      21,
+      6,
+      29,
+      5,
+      4,
+      6
+    ],
+    "shellHotkeyChecksPassed": true,
+    "lintPassed": true,
+    "normalDebugBuildPassed": true,
+    "rawLog": {
+      "path": "validation/reference.log",
+      "sha256": "d380ef1aa0fac1d9071320876daf887ff819e9a63fe0a88a9fa4ad16529b1589"
+    }
+  },
+  "toolchain": {
+    "at": "2026-10-31T11:49:25.235281+00:00",
+    "scope": "Post-terminal read-only toolchain identity, not an immutable pre-run snapshot.",
+    "xcode": "Xcode 27.2\nBuild version 27B52",
+    "swift": "Apple Swift version 6.4.2 (swiftlang-6.4.2.1.9 clang-2100.4.1.1)\nTarget: arm64-apple-macosx27.0.0",
+    "macOSSDK": "27.2",
+    "iOSSimulatorSDK": "27.2",
+    "WatchSimulatorSDK": "27.2",
+    "host": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0.1\nBuildVersion:\t\t26A434",
+    "architecture": "arm64"
+  },
+  "destinations": {
+    "ios": {
+      "device": "iPhone 17 Pro Max",
+      "name": "ListenToMe44 fresh capture iphone-max",
+      "runtime": "iOS Simulator 26.5",
+      "runtimeBuild": "23F77"
+    },
+    "watch": {
+      "scope": "watchOS simulator, not paired physical-device acceptance"
+    }
+  },
+  "nativeIntegrity": {
+    "sourceAndSigningPinsVerified": 1127,
+    "originalAndMirroredRawFiles": 2099,
+    "rawOriginalsUnchanged": true,
+    "derivedMirrorSQLiteCaches": {
+      "ios": {
+        "database.sqlite3": "e8a99f1b7000f4f69ad6564d0e7af663470ffcbf8d90b82b8027f2c4b6b673ba"
+      },
+      "mac": {
+        "database.sqlite3": "c555f137e7e41fb139022b9cb08b46e6545c4e47f2f146fb92d11d85f263c370"
+      },
+      "watch": {
+        "database.sqlite3": "a288c23d80a50521c1bfcec35492a0466b5e91ec8704aeab6929efc90f0bf3f1"
+      }
+    },
+    "compiledPayloadFiles": 111,
+    "testBundles": 6,
+    "normalDebugPayloadFiles": 34,
+    "normalDebugIdentifier": "com.tomwu.ListenToMe.dev",
+    "normalDebugVersion": "1.4.4",
+    "normalDebugBuild": "14",
+    "normalDebugLaunched": false,
+    "originalAndArchiveExtractedStrictSignatureExit": 0,
+    "signatureScope": "Retained native strict-signature readbacks; independent audit rehashed the original, archive and extracted bytes without rerunning codesign. This is the normal Mac Dev build, not an iOS distribution archive.",
+    "debugArchiveSHA256": "62cf3b9efec4b30e2b4af9b9012396ce3058420ccaa1a11b6154cabd409b7e65",
+    "postTerminalPreservation": {
+      "path": "post-terminal-source-and-native-preservation.json",
+      "sha256": "160e3a981915ee200faed0031d398fae6554c82e5b50d1f5dfeee84ec48d40e1"
+    },
+    "compiledPreservation": {
+      "path": "native-payloads/preservation.json",
+      "sha256": "86029a2c1f949c3cb6f6c82c2651fecf37fc9fff17c42d7b7b330694d533970a"
+    },
+    "normalDebugPreservation": {
+      "path": "normal-debug-artifact/receipt.json",
+      "sha256": "5da9cb5aec3e930287c783991404b6c5e587544865f64d813c3440e630f2ed4d"
+    }
+  },
+  "exactChangedJourneyEvidence": {
+    "methodsPassedOnce": [
+      {
+        "method": "MobileReleaseNotesUITests/testUpdateShowsVersionOnceAndChangelogCanBeReopened()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 17.444769024848938,
+        "detail": "release-notes-native-details/update.json",
+        "sha256": "d9691948f24797936aa52e19aa4d9305e4bb366b21e2ba90e36d2a4d24bf5783"
+      },
+      {
+        "method": "MobileReleaseNotesUITests/testLargeTextKeepsContinueReachableAndHistoryScrollable()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 308.9839640855789,
+        "detail": "release-notes-native-details/largest-text.json",
+        "sha256": "96da5fe9153236aee9d4b509d7ee151b593f82c4744f3b1abf6db28676413c18"
+      },
+      {
+        "method": "MobileReleaseNotesTests/testFirstInstallSeedsTheAcknowledgementInsteadOfPresentingAnUpdate()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 0.0018349885940551758,
+        "detail": "release-notes-native-details/unit-1.json",
+        "sha256": "33399a23b15cc499eac20857360c071c06ce5c74e2f36b0bc6eb52d4decd3887"
+      },
+      {
+        "method": "MobileReleaseNotesTests/testOnlyChangedReleaseNotesPresentAgainAndAcknowledgementPersists()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 0.00233304500579834,
+        "detail": "release-notes-native-details/unit-2.json",
+        "sha256": "746eb82a96de13bef776ea5bb6e8c15b3afc91a54eda915d3d5a75648898dd36"
+      },
+      {
+        "method": "MobileReleaseNotesTests/testNotesIdentityTracksTheNewestBundledReleaseNotTheBuildNumber()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 0.0003160238265991211,
+        "detail": "release-notes-native-details/unit-3.json",
+        "sha256": "25207c0c7a071fd415a0b123b3ca9137a166f31e7f9de3efdec18e1690c4f298"
+      },
+      {
+        "method": "MobileReleaseNotesTests/testNewestBundledReleaseIsLabelledAsThisUpdate()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 0.0002919435501098633,
+        "detail": "release-notes-native-details/unit-4.json",
+        "sha256": "34219d84ec31e8a8aa39af44c4442e590636c2c25f62b0ba23dd0ac164c87bf2"
+      },
+      {
+        "method": "MobileReleaseNotesTests/testCurrentReleaseNotesMatchTheInstalledMarketingVersion()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 0.0004069805145263672,
+        "detail": "release-notes-native-details/unit-5.json",
+        "sha256": "5a6a850e57ce33ffe51bc642f5cefb8681413660b2b5b70eb94c4fb80e717549"
+      },
+      {
+        "method": "MobileOllamaEndpointUITests/testRejectedHTTPAndOmittedURLPartsAreExplained()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 37.40277290344238,
+        "detail": "endpoint-save-history-preview-native-details/ollama-ui.json",
+        "sha256": "4f6e0bb2d80bc2152d837626390155169ad034411d33616ef2506385f9ff642d"
+      },
+      {
+        "method": "MobileOpenAISettingsUITests/testOpenAICompatibleServerIsExplicitAndHonestlyLabelled()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 58.99596095085144,
+        "detail": "endpoint-save-history-preview-native-details/openai-ui.json",
+        "sha256": "44583cfe58828362c7d7e2e38caac7a9e2c0625cfc1e70051173a546be91d70c"
+      },
+      {
+        "method": "MobileOllamaEndpointTests/testHTTPAddressPolicyPreservesPreviousServerOnRejection()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 0.007704019546508789,
+        "detail": "endpoint-save-history-preview-native-details/ollama-policy.json",
+        "sha256": "ce6439edb5164a442dc4e2604e525c52eaaa9d6514e3dc7d9a6f6f2bf8ee1027"
+      },
+      {
+        "method": "MobileOllamaEndpointTests/testOmittedURLPartsAreExplainedWithoutEchoingSensitiveValues()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 0.0037200450897216797,
+        "detail": "endpoint-save-history-preview-native-details/ollama-omission.json",
+        "sha256": "9422a5e13c62f0109eaed1a2a7c95fe51058d94111514d5e25cbc2d3f2e76859"
+      },
+      {
+        "method": "MobileOpenAISettingsTests/testServerValidationKeepsThePreviousServerAndLabelsTheDestinationHonestly()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 0.00824594497680664,
+        "detail": "endpoint-save-history-preview-native-details/openai-policy.json",
+        "sha256": "a4ba8574cb7f4503bdb4bd717b1675bce0a5baf15a624d6ca2b773cbcfcd7084"
+      },
+      {
+        "method": "MobileNativeInteractionTests/testBottomSaveConfirmsPersistenceAndShareCopiesReadableText()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 30.03104794025421,
+        "detail": "endpoint-save-history-preview-native-details/save.json",
+        "sha256": "642af8ab7182f04d470088fab82c94908e805acd4822c7437d34e278c12b642a"
+      },
+      {
+        "method": "MobileHistorySearchUITests/testLandscapeHistoryKeepsRefreshAskAndResultReachable()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 32.37801706790924,
+        "detail": "endpoint-save-history-preview-native-details/history.json",
+        "sha256": "36272e0752cc7400ce07c66b80a457d562cd035ee5d2c742e1d30904153c0c5b"
+      },
+      {
+        "method": "MobileReleaseScreenshotTests/testCaptureCleanDuoPreview()",
+        "result": "Passed",
+        "runs": 1,
+        "durationSeconds": 14.217213988304138,
+        "detail": "endpoint-save-history-preview-native-details/portrait-duo.json",
+        "sha256": "24051a8be86f6e533ebb99046573af823039cd2cd9abf4f33d85e23b1ef3299d"
+      }
+    ],
+    "releaseNotesMethodCount": 7,
+    "endpointSaveHistoryPreviewMethodCount": 8,
+    "releaseNotesExport": {
+      "path": "release-notes-native-details/export-receipt.json",
+      "sha256": "7af12f8cc6ca9a9820aeed97f00f2604f7ee78d61b0e5cdc1ff695845f864ec6"
+    },
+    "otherJourneyExport": {
+      "path": "endpoint-save-history-preview-native-details/export-receipt.json",
+      "sha256": "fc9cbd952f75aaf7f85ee6e245feddca02ada9dc2bfd646226a93ef54e83dc8b"
+    },
+    "attachmentFileCount": 19,
+    "nativePNGCount": 12,
+    "attachmentPreservation": {
+      "path": "fresh-release-endpoint-history-preview-attachments/preservation.json",
+      "sha256": "752644f5137e78fc86a0e66fc62a3ac9703a39e9eb03334377636b197db663e5"
+    },
+    "ownerRenderedReview": {
+      "path": "fresh-native-render-review.json",
+      "sha256": "0530517bfcce451efa4a3c9998dbcda2d23efa2244c0db88e8287a95a408cb76"
+    },
+    "ownerViewedOriginalPNGs": [
+      {
+        "path": "fresh-release-endpoint-history-preview-attachments/portrait-duo/4F0A1D60-391E-460D-AB6A-8C2D0C88E14E.png",
+        "sha256": "7b21ce5b42e123d8e12816c3de31942f84496843d3475e06a6fa47e85f5a7692"
+      },
+      {
+        "path": "fresh-release-endpoint-history-preview-attachments/portrait-duo/829B44E9-9B74-4906-9813-458569220C94.png",
+        "sha256": "6bf7eb21e32feb35fced58939f7be847f92be689fcade437b1efaddee45f1b7f"
+      },
+      {
+        "path": "fresh-release-endpoint-history-preview-attachments/history/D3F57FAA-89B8-458F-9252-0D55D6218ECB.png",
+        "sha256": "8e0b2128919d85e861a12bcda0632c7733e5bd08486d2717e1944ab59692dc06"
+      },
+      {
+        "path": "fresh-release-endpoint-history-preview-attachments/history/27E7EDEA-E1BD-4DC2-8566-7FF6FAED220C.png",
+        "sha256": "43944b35063d9f596e4bb67c835e54c3726d53b3a97f87ee86453ce40d32de86"
+      },
+      {
+        "path": "fresh-release-endpoint-history-preview-attachments/update/1AB6249B-8FCE-4DF7-A939-2205F7F516C5.png",
+        "sha256": "6ca9f2e08849f218dc1948ed327e31b007d81409d1da21fe6b4032ddf410aef0"
+      },
+      {
+        "path": "fresh-release-endpoint-history-preview-attachments/largest-text/26939D8C-2D80-4EF5-ACCF-4FFDF2286524.png",
+        "sha256": "791179f2bc8bddbabb1f39a695a925b4e802ee0109b0658f376984122ab6b082"
+      },
+      {
+        "path": "fresh-release-endpoint-history-preview-attachments/save/DA9E3D2F-EA3D-45B3-97EA-04DD30F87AF9.png",
+        "sha256": "423ad4117d05e1cba6f03d256cfbaa2fb72eba51c2f84a966d80ddb3928db2a8"
+      }
+    ],
+    "findings": {
+      "portrait": "Both concise transcript lines and complete Quick answer/status/controls visible on unscrolled ProMax; no content overlay.",
+      "duo": "Complete transcript/Quick answer and Start/Notes visible. Optional Auto is partially clipped at lower Quick viewport; QA only for this frame, not a clean whole-control gallery claim.",
+      "history": "Queried complete row clear of Search after normal scroll. Unqueried Refresh+complete record visible; lower Delete-all behind Search/below viewport. Sequential QA, not all controls simultaneously visible.",
+      "releaseNotes": "44 title/version and full current bullets/Continue readable at default text; large-text historical heading/Continue reachable, expected body scrolling/clipping.",
+      "copy": "Readable synthetic copied text visible without Markdown markers; no private content."
+    },
+    "renderLimits": "7 of12 preserved PNGs inspected; no seven-profile gallery, physical/installed/acoustic/publication acceptance.",
+    "sameSourceSmallPhoneFocusedEvidence": {
+      "path": "../history-scroll-focused-preparation/pro-quick-scroll-retry/independent-focused-green-terminal-and-render-review.json",
+      "sha256": "c5b2b07288e3fd5b7878884832cce178f8e4bd85a3018a271a6198ba6dd6ba90",
+      "scope": "Same9460 source: exact History and portrait/Duo methods passed; small Pro conditional inner Quick scroll exercised. Full run uses ProMax where the complete portrait answer is visible without that scroll."
+    }
+  },
+  "cleanup": {
+    "ownedParentAndGroupReaped": true,
+    "ownedDevicesAtOwnerTerminalAudit": {
+      "ios": {
+        "state": "Shutdown"
+      },
+      "watch": {
+        "state": "Shutdown"
+      }
+    },
+    "shutdownExit149MeansAlreadyShutdown": true,
+    "laterDeviceStateNotQueriedByIndependentReviewer": true,
+    "noErasePermissionResetOrInstalledAppSession": true
+  },
+  "provenance": {
+    "ownerReceipt": {
+      "path": "full-result-and-preservation.json",
+      "sha256": "151979e73d944240cc441621ecade060c766c59e22fbd856ef2356ed1e6c567e"
+    },
+    "independentTerminalAudit": {
+      "path": "independent-terminal-audit.json",
+      "sha256": "c9fda405e243f3441322e198b8d856e7c6b568a77af837df86ce832ca6d8e74e"
+    },
+    "supervisorTerminal": {
+      "path": "validation/runner-state.json",
+      "sha256": "7a2d06d57cddc260e1b271c23a5bf7c7f3abe8c642cc5ff008625c7cc908dffc"
+    },
+    "validationState": {
+      "path": "validation-state.json",
+      "sha256": "f28561eaa425e50f16b9a9e128a7912a0bdda3701a91aa8db0ffb983dbda2ad5"
+    },
+    "historicalFull3a": {
+      "path": "../full-validation-reopen-3a83918/repo-ready/docs/evaluations/ios-1.20.4-full-2026-10-31.json",
+      "sha256": "3d6b7759c3cfdea4cfeee10a7b1e15e3e259b2e666c2560b18c8b10e1d011322",
+      "scope": "Historical source3a result remains unchanged; it is not the current9460 proof."
+    }
+  },
+  "boundaries": [
+    "All prior failed Save/endpoint/full/capture and small-Pro portrait baseline outcomes remain preserved; none is relabelled a pass.",
+    "This is current9460 complete local automated validation and bounded native rendered QA. It does not establish the new seven-profile capture set or README gallery acceptance.",
+    "No installed-app, actual system-audio OTHERS, paired physical Watch, physical iPhone/iPad, production-readiness, archive/export, accepted upload, merge or publication claim.",
+    "Final source/docs/CI/review/merge and release/capture steps remain separately evidenced. No acceptance waiver is introduced."
+  ]
+}

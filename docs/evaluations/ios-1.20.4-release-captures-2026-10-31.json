@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 1,
+  "status": "native_capture_and_visual_review_passed",
+  "source": "ca7ab571f2b25eb3b9e1a67f4af2e17b734e97ab",
+  "sourceTree": "d38eb79a755bd82b3ba69de6723539b6a603eaa7",
+  "base": "09adc703a801d6f50dc11291ed8095c9218cebda",
+  "version": "1.20.4",
+  "build": "44",
+  "locale": "en-US",
+  "startedAt": "2026-10-31T12:15:20.191043+00:00",
+  "finishedAt": "2026-10-31T12:27:21.333583+00:00",
+  "evidenceIdentifier": "2026-10-31/listentome-ios1204-train",
+  "captureDirectory": "captures-adaptive-ipad",
+  "configuration": "Debug",
+  "nativeMethodResults": {
+    "passed": 21,
+    "failed": 0,
+    "skipped": 0
+  },
+  "profiles": [
+    {
+      "category": "iphone-pro",
+      "deviceType": "iPhone-17-Pro",
+      "runtime": "iOS-26-5",
+      "device": "F2602A8B-2837-4120-B5C7-2399794D87C3",
+      "nativeMethodsPassed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "nativeOriginalCount": 15,
+      "ownedSimulatorState": "Shutdown",
+      "sourceMatchedRootPayloadFiles": 4
+    },
+    {
+      "category": "iphone-max",
+      "deviceType": "iPhone-17-Pro-Max",
+      "runtime": "iOS-26-5",
+      "device": "44C8D2FC-9BE1-4F38-836B-AEDF5D96903E",
+      "nativeMethodsPassed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "nativeOriginalCount": 15,
+      "ownedSimulatorState": "Shutdown",
+      "sourceMatchedRootPayloadFiles": 4
+    },
+    {
+      "category": "ipad-mini",
+      "deviceType": "iPad-mini-A17-Pro",
+      "runtime": "iOS-26-5",
+      "device": "4489327D-C1F5-4C63-8155-9B8A87897167",
+      "nativeMethodsPassed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "nativeOriginalCount": 13,
+      "ownedSimulatorState": "Shutdown",
+      "sourceMatchedRootPayloadFiles": 4
+    },
+    {
+      "category": "ipad-pro",
+      "deviceType": "iPad-Pro-13-inch-M5-12GB",
+      "runtime": "iOS-26-5",
+      "device": "447B89B4-4DAE-40A7-97E5-A26F01AC2463",
+      "nativeMethodsPassed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "nativeOriginalCount": 13,
+      "ownedSimulatorState": "Shutdown",
+      "sourceMatchedRootPayloadFiles": 4
+    },
+    {
+      "category": "watch42",
+      "deviceType": "Apple-Watch-Series-12-42mm",
+      "runtime": "watchOS-27-0",
+      "device": "40CE4E3B-FD7A-428A-9174-3AFD490C35A0",
+      "nativeMethodsPassed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "nativeOriginalCount": 5,
+      "ownedSimulatorState": "Shutdown",
+      "sourceMatchedRootPayloadFiles": 4
+    },
+    {
+      "category": "watch46",
+      "deviceType": "Apple-Watch-Series-12-46mm",
+      "runtime": "watchOS-27-0",
+      "device": "0215507C-39DC-4DB7-B504-635B5218150D",
+      "nativeMethodsPassed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "nativeOriginalCount": 5,
+      "ownedSimulatorState": "Shutdown",
+      "sourceMatchedRootPayloadFiles": 4
+    },
+    {
+      "category": "watch49",
+      "deviceType": "Apple-Watch-Ultra-4-49mm",
+      "runtime": "watchOS-27-0",
+      "device": "2DF21C34-1988-4FC2-8823-188447B40200",
+      "nativeMethodsPassed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "nativeOriginalCount": 5,
+      "ownedSimulatorState": "Shutdown",
+      "sourceMatchedRootPayloadFiles": 4
+    }
+  ],
+  "preservation": {
+    "unchangedSourceInputs": 1129,
+    "unchangedControlInputs": 6,
+    "rawOriginalAndMirrorFilePairs": 399,
+    "separateDerivedSQLiteFiles": 7,
+    "perProfileRootAppPayloadFiles": 28,
+    "nativeOriginalPNGs": 71,
+    "ownedSupervisedChildGroupsReaped": 56,
+    "ownerAndAllGroupsAbsent": true,
+    "allOwnedSimulatorsShutdown": true,
+    "pendingOriginalCatalogPreserved": true
+  },
+  "visualReview": {
+    "all71Viewed": true,
+    "suitable": 40,
+    "qaOnly": 31,
+    "selectedNativeOriginals": 8,
+    "inlineREADMEPreviews": 7,
+    "pngBytesAndEXIFUnchanged": true,
+    "galleryManifest": "../images/ios/release-1.20.4/manifest.json",
+    "hostedREADMERendering": "pending; source not yet pushed"
+  },
+  "evidenceSHA256": {
+    "captureHelper": "f9db71fa80c5ea9cba4eafdc50f920046135077ccc17395f920364a0ea9c16bf",
+    "captureState": "33466a5652d52dad49fbe6606130b7cd1028e47a3fd3a4d0e138e885cf5815e9",
+    "originalPendingCatalog": "d5faa050bfa8b0f179bcb01911eaec0e53b7030bbda273c552a47b8f893795b5",
+    "reviewedCatalog": "148b91c9ca638d39416e9d391439a0da33ee70e33827e32d95d8eb6f9252fe28",
+    "technicalPreservation": "85af6a8674875c3c1f3345032409eb2cb08d86c060aecf6907f42b853ab6c2bd",
+    "independentTerminalAudit": "f1869dbdd1cb99e89bbbabacf19d12ef6751f18892fb1b92a7c8c16507ab5a27",
+    "independentGalleryStagingReview": "9682c651da0635c370778cb26f0d096df8ef56abea9ca89840ed425a45c9d56e",
+    "galleryManifest": "d95cbfc054f28ff6296251043abb366c3c5e57e9080c6ca7184b386950edf6e1"
+  },
+  "limitations": [
+    "The prior failed capture attempts and focused outcomes remain unchanged; this is a separate fresh seven-profile run on ca7ab57.",
+    "Native synthetic fixtures prove layout and asserted interactions, not microphone, language-model or translation quality.",
+    "Watch fixtures do not establish physical wrist-down recording, hardware microphone capture or paired transfer.",
+    "The current complete local validation run is separate and was still running when this capture receipt was prepared.",
+    "These files do not prove archive/export validation, TestFlight upload acceptance, App Store screenshot upload or production readiness."
+  ]
+}

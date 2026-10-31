@@ -22,17 +22,14 @@ final class MobileOpenAISettingsUITests: XCTestCase {
         let status = app.staticTexts["ollamaStatus"]
         revealSettingsControl(status, in: form)
         XCTAssertTrue(status.label.contains("Plain http:// is only allowed"), status.label)
-        revealSettingsControl(field, in: form, towardTop: true)
-        // A refused address stays in the field so it can be corrected; clear it first.
-        // Tapping a long URL can put the caret in its middle on larger phones. Select all
-        // rather than assuming repeated backspaces start at the end of the rejected address.
-        field.press(forDuration: 1.2)
-        let selectAll = app.menuItems["Select All"].firstMatch
-        let selectAllButton = app.buttons["Select All"].firstMatch
-        if selectAll.waitForExistence(timeout: 3) { selectAll.tap() } else {
-            XCTAssertTrue(selectAllButton.waitForExistence(timeout: 3))
-            selectAllButton.tap()
+        app.buttons["Done"].tap()
+        app.buttons["More"].tap(); app.buttons["Settings"].tap()
+        revealSettingsControl(field, in: form)
+        guard let draft = field.value as? String, draft.isEmpty || draft == field.placeholderValue else {
+            XCTFail("Reopening Settings must discard the rejected address draft")
+            return
         }
+        field.tap()
         field.typeText("http://studio.local:1234")
         XCTAssertEqual(field.value as? String, "http://studio.local:1234")
         app.buttons["saveOpenAIBaseURL"].tap()

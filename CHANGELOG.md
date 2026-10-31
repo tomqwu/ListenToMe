@@ -13,6 +13,19 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## Repository tooling (unreleased)
 
+- Recognize the iPad mini's existing compact-height Duo layout before the landscape History
+  journey, retaining every search, Refresh and open/reopen assertion. The app layout is unchanged.
+
+- Use a meaningful ordinary scroll in landscape History capture tests on compact and larger
+  iPhones, retaining complete-row visibility, search separation and open/reopen assertions.
+  Add a clean portrait preview before Duo using the same concise synthetic fixture, scrolling
+  only inside Quick when its complete answer needs to be brought into view. Preserve
+  the observed Pro Max capture failure; app layout and release notes are unchanged.
+
+- Reopen Settings with a checked empty draft in endpoint UI tests, keeping exact replacement,
+  saved-destination, recovery and privacy assertions independent of transient editing menus.
+  Add explicit Ollama and OpenAI-compatible endpoint BDD scenarios; app behavior is unchanged.
+
 - Require current README screenshots with device-grouped layouts, full-size links and capture
   provenance. Add a concise native Duo preview and a BDD capture check that rejects clipped sample
   text. That earlier preview changed only its optional short fixture; default fixture data and
@@ -36,7 +49,7 @@ does not show it again, and a fresh install does not see it at all; see
   local BDD-verification failure; it does not change an app feature or count a failed aggregate run
   as passing.
 
-## iOS (unreleased)
+## iOS 1.20.4 (44) — candidate, not uploaded
 
 - Cancel an in-progress History answer when its question changes or is cleared, so the next
   question can start immediately and late output cannot replace it. Whitespace-only edits keep

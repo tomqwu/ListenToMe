@@ -48,6 +48,18 @@ enum MobileReleaseNotes {
         var id: String { version }
     }
     static let releases: [Release] = [
+        .init(version: "1.20.4", title: "Clearer History and recording controls", details: [
+            "Refresh History search with the Apple models already on your device. Keep saved conversations " +
+                "and exact-word search available.",
+            "Change or clear a History question to clear the old answer and ask the next question. " +
+                "Whitespace-only edits keep the current answer.",
+            "Read more of your transcript in portrait and find common actions more easily. Automatic " +
+                "summaries explain when they are unavailable.",
+            "Keep an already received Watch recording safe when the same recording arrives again. Saved audio " +
+                "remains your choice.",
+            "Keep your chosen AI provider and audio-saving settings. Refresh does not download language packs " +
+                "or send conversations to a new service."
+        ]),
         .init(version: "1.20.3", title: "Clearer conversations and controls", details: [
             "Rename an identified speaker from the transcript and update that person throughout the conversation " +
                 "and Notes. Save or Cancel explicitly.",

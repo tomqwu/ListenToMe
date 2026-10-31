@@ -14,13 +14,42 @@ final class MobileReleaseScreenshotTests: XCTestCase {
                                "-mobileAIProvider", "apple", "-mobileCorrectTranscript", "NO",
                                "-mobileIdentifySpeakers", "YES",
                                "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryL"]
-        XCUIDevice.shared.orientation = .landscapeLeft
+        XCUIDevice.shared.orientation = .portrait
         defer {
             capture("Duo preview transcript and Quick visibility")
             app.terminate()
             XCUIDevice.shared.orientation = .portrait
         }
         app.launchPastReleaseNotes()
+        XCTAssertTrue(app.buttons["Notes"].waitForExistence(timeout: 10))
+        let portraitWindow = app.windows.firstMatch.frame
+        XCTAssertGreaterThan(portraitWindow.height, portraitWindow.width)
+        let portraitTranscript = app.otherElements["transcriptPanel"]
+        let portraitLines = portraitTranscript.staticTexts
+            .matching(NSPredicate(format: "identifier BEGINSWITH %@", "transcript-text-"))
+        XCTAssertEqual(portraitLines.count, 2)
+        let portraitWording = portraitLines.allElementsBoundByIndex.map(\.label).joined(separator: " ")
+        XCTAssertTrue(portraitWording.contains("Alex") && portraitWording.contains("Thursday"))
+        let portraitViewport = app.scrollViews["transcriptScroll"].frame.intersection(portraitWindow)
+        for line in portraitLines.allElementsBoundByIndex { assertWholePreviewText(line, in: portraitViewport) }
+        let portraitAnswer = app.staticTexts["output-quick"]
+        XCTAssertTrue(portraitAnswer.waitForExistence(timeout: 5))
+        let portraitQuick = app.otherElements["summary-panel-quick"].scrollViews.firstMatch
+        let answerViewport = portraitQuick.frame.intersection(portraitWindow)
+        if !answerViewport.contains(portraitAnswer.frame) {
+            // Status precedes the answer in this panel's normal scroll view.
+            let overflow = portraitAnswer.frame.maxY - answerViewport.maxY + 8
+            let distance = min(max(44, overflow), answerViewport.height / 3)
+            let start = portraitQuick.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.8))
+            start.press(forDuration: 0.1, thenDragTo: start.withOffset(CGVector(dx: 0, dy: -distance)))
+        }
+        XCTAssertTrue(portraitAnswer.label.contains("Alex") && portraitAnswer.label.contains("Thursday"))
+        let settledWindow = app.windows.firstMatch.frame
+        assertWholePreviewText(portraitAnswer, in: portraitQuick.frame.intersection(settledWindow))
+        let settledTranscript = app.scrollViews["transcriptScroll"].frame.intersection(settledWindow)
+        for line in portraitLines.allElementsBoundByIndex { assertWholePreviewText(line, in: settledTranscript) }
+        capture("Clean portrait transcript and Quick visibility")
+        XCUIDevice.shared.orientation = .landscapeLeft
         XCTAssertTrue(app.otherElements["twoPaneMeetingWorkspace"].waitForExistence(timeout: 10))
         let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@", "Speaker labels on"),
                                              object: app.staticTexts["captureStatus"])

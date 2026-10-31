@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "status": "preserved_capture_failure_not_a_complete_release_capture",
+  "source": "9460f00ad512872d59c55ee44057bfdf4521fa71",
+  "version": "1.20.4",
+  "build": "44",
+  "session": 7345,
+  "outerExit": 1,
+  "nativeExit": 65,
+  "sourcePinsUnchanged": 1127,
+  "controlPinsUnchanged": 6,
+  "profiles": {
+    "iphonePro": {
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "images": 15
+    },
+    "iphoneMax": {
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "images": 15
+    },
+    "ipadMini": {
+      "passed": 3,
+      "failed": 1,
+      "skipped": 0,
+      "images": 13
+    },
+    "notStarted": [
+      "ipad-pro",
+      "watch42",
+      "watch46",
+      "watch49"
+    ]
+  },
+  "failure": {
+    "method": "MobileHistorySearchUITests/testLandscapeHistoryKeepsRefreshAskAndResultReachable",
+    "file": "iOSTests/MobileHistorySearchUITests.swift",
+    "line": 20,
+    "assertion": "wideMeetingWorkspace expected solely because the device idiom is iPad",
+    "actualAccessibilityContainer": "twoPaneMeetingWorkspace",
+    "actualWorkspaceFrame": [
+      20,
+      213,
+      1093,
+      415
+    ],
+    "windowFrame": [
+      0,
+      0,
+      1133,
+      744
+    ],
+    "laterHistoryAssertions": "completed without failure",
+    "classification": "incorrect test layout precondition; no product layout defect established"
+  },
+  "preservation": {
+    "evidenceIdentifier": "2026-10-31/listentome-ios1204-train/captures-history-portrait",
+    "receipt": "failed-capture-result-and-preservation.json",
+    "receiptSHA256": "3b52ef0188bd0462dee072450772f8d06898fdb8b0419b39e3e4b8faea318040",
+    "miniRawOriginalMirrorPairs": 93,
+    "miniCompiledPayloadPairs": 120,
+    "miniAttachments": 43,
+    "ownedProcessesReaped": true,
+    "allThreeOwnedSimulatorsShutdown": true
+  },
+  "correction": {
+    "scope": "Recognize the existing adaptive Duo or wide workspace before entering History, matching the existing translation test pattern.",
+    "unchanged": [
+      "production layout",
+      "fixture content",
+      "all later History query, Refresh, disclosure, complete-row, unobstructed-search, open and reopen assertions"
+    ],
+    "nativeGreen": "pending",
+    "newFinalFull": "pending"
+  },
+  "limits": [
+    "Historical full9460 and phone profile passes remain valid only for their recorded source and scope.",
+    "The failed overall capture is not a 71-image release pass; no upload or physical acceptance is claimed."
+  ]
+}

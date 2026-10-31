@@ -1,0 +1,8 @@
+Clearer History and recording controls
+
+• Refresh History search with the Apple models already on your device. Keep saved conversations and exact-word search available.
+• Change or clear a History question to clear the old answer and ask the next question. Whitespace-only edits keep the current answer.
+• Read more of your transcript in portrait and find common actions more easily. Automatic summaries explain when they are unavailable.
+• Keep an already received Watch recording safe when the same recording arrives again. Saved audio remains your choice.
+
+Privacy: Your chosen AI provider and audio-saving preferences stay unchanged. History refresh is local and does not download language packs. Ask sends matching excerpts only when you choose it and your selected provider allows it. Changing the question stops local consumption; it cannot recall text already sent or guarantee a remote server stops computing.
