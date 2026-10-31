@@ -7,8 +7,10 @@ private final class CitingProvider: LLMProvider, @unchecked Sendable {
     let id = "citing-test"
     let response: String
     private(set) var request: LLMRequest?
+    private(set) var callCount = 0
     init(response: String) { self.response = response }
     func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
+        callCount += 1
         self.request = request
         let response = response
         return AsyncThrowingStream { continuation in continuation.yield(response); continuation.finish() }
@@ -65,6 +67,53 @@ final class MobileHistorySearchTests: XCTestCase {
         let sent = try XCTUnwrap(provider.request?.messages.first?.content)
         XCTAssertTrue(sent.contains("forty thousand dollars"))
         XCTAssertFalse(sent.contains("Berlin"), "A conversation that does not match is never sent")
+    }
+
+    func testChangedOrClearedQuestionRemovesCompletedAnswerButWhitespaceKeepsIt() async throws {
+        let (session, root) = makeSession()
+        let model = session.historySearch
+        let original = session.ai.provider
+        defer {
+            model.cancelAsk()
+            session.ai.provider = original
+            session.onDeviceProviderOverride = nil
+            try? FileManager.default.removeItem(at: root)
+        }
+        let budget = try XCTUnwrap(session.history.first { $0.title == "Budget review" })
+        await model.waitForSync()
+        await model.waitForUpdates()
+        try await model.index.sync(session.history)
+        session.ai.provider = .apple
+
+        for changedQuery in ["Berlin", "  \n "] {
+            let provider = CitingProvider(response: "Forty thousand dollars [1].")
+            session.onDeviceProviderOverride = provider
+            model.search("budget")
+            session.askHistory("budget")
+            await model.waitForAnswer()
+            XCTAssertEqual(model.answer, "Forty thousand dollars [1].")
+            XCTAssertEqual(model.citations.map(\.recordID), [budget.id])
+            XCTAssertGreaterThan(model.sentPassages, 0)
+            XCTAssertEqual(provider.callCount, 1)
+
+            model.search("  budget  ")
+            await model.waitForSearch()
+            XCTAssertEqual(model.answer, "Forty thousand dollars [1].")
+            XCTAssertEqual(model.answerQuestion, "budget")
+            XCTAssertEqual(model.citations.map(\.recordID), [budget.id])
+            XCTAssertGreaterThan(model.sentPassages, 0)
+            XCTAssertEqual(provider.callCount, 1, "Whitespace must not send another request")
+
+            model.search(changedQuery)
+            XCTAssertEqual(model.answer, "")
+            XCTAssertEqual(model.answerQuestion, "")
+            XCTAssertTrue(model.citations.isEmpty)
+            XCTAssertEqual(model.sentPassages, 0)
+            XCTAssertNil(model.askError)
+            XCTAssertFalse(model.isAsking)
+            await model.waitForSearch()
+            XCTAssertEqual(provider.callCount, 1, "Changing or clearing the query must not ask automatically")
+        }
     }
 
     func testAnOffDeviceProviderIsNamedBeforeAnythingIsSent() {

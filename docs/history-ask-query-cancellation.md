@@ -1,7 +1,9 @@
 # History answers follow the current query
 
-Local candidate now integrates main `946cb7e`; focused red/green below used base `0714b9ec`.
-The shared-model/test/catalog bytes remain unchanged. This fix is not merged or released. This reliability fix does not
+Local candidate now integrates main `0177431`; focused red/green below used base `0714b9ec`.
+The shared runtime fix and three original Mac test methods remain unchanged. A complementary
+iOS test uses the actual phone session to check clearing a completed answer and its nonempty
+citations/count, plus whitespace preservation; its native red/green is still pending. This fix is not merged or released. This reliability fix does not
 establish additional-language search quality or close #223.
 
 Mac and iPhone/iPad already pass search-field changes to the shared `HistorySearchModel.search`.
@@ -14,8 +16,10 @@ consumption; it cannot recall excerpts already sent or guarantee a remote server
 
 `HISTORYASKCANCEL-001`–`003` in
 [the behavior contract](../Behaviors/history-ask-query-cancellation.json) bind three native Mac
-methods in `HistoryAskQueryCancellationTests`. The same test file and actual shared production
-model were compiled byte-identically in a temporary SwiftPM test target with copied Core sources.
+`HistoryAskQueryCancellationTests` methods. `HISTORYASKCANCEL-004` separately binds the
+completed-answer journey in `MobileHistorySearchTests` on iOS. The original test file and actual
+shared production model were compiled byte-identically in a temporary SwiftPM test target
+with copied Core sources; that recorded result predates the complementary iOS test.
 A keyword-only fake embedder and held local providers exercise real index retrieval, partial
 answers, cancellation, new-question excerpts/citations and attempted late publication. No
 embedding model, network provider, microphone, Xcode project or GUI was used.

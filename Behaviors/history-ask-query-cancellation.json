@@ -51,6 +51,23 @@
           "test": "HistoryAskQueryCancellationTests/testTrimEquivalentQuestionKeepsCurrentStreamAndAnswer"
         }
       ]
+    },
+    {
+      "id": "HISTORYASKCANCEL-004",
+      "name": "A new phone question clears the completed answer and its citations",
+      "given": "the iPhone or iPad has finished answering a saved budget question with a citation and a nonzero sent-passage count",
+      "when": "the user changes or clears the History query, or only adds surrounding whitespace",
+      "then": "a different or empty query immediately clears the old answer, question, citations and count without starting another answer; surrounding whitespace preserves the completed answer and citation",
+      "covers": [
+        "SharedPlatform/HistorySearchModel.swift"
+      ],
+      "bindings": [
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileHistorySearchTests.swift",
+          "test": "MobileHistorySearchTests/testChangedOrClearedQuestionRemovesCompletedAnswerButWhitespaceKeepsIt"
+        }
+      ]
     }
   ]
 }
