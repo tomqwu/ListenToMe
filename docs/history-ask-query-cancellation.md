@@ -1,6 +1,6 @@
 # History answers follow the current query
 
-Local candidate now integrates main `0177431`; focused red/green below used base `0714b9ec`.
+Local candidate now integrates Saved Audio main `63e1777`; focused red/green below used base `0714b9ec`.
 The shared runtime fix and three original Mac test methods remain unchanged. A complementary
 iOS test uses the actual phone session to check clearing a completed answer and its nonempty
 citations/count, plus whitespace preservation. Its genuine native red/green passed as recorded below.
@@ -31,8 +31,8 @@ assertions; the whitespace control passed. The unchanged three methods passed wi
 under `run-focused.py green` after the one-line shared fix. Both supervised runs exited/reaped
 inside 600 seconds and all 159 pinned repository inputs matched before/after their respective run.
 This focused headless proof is not a full Mac/iOS suite, rendered interaction or installed/device
-acceptance. Those checks, full validation, final independent review, CI and merge follow the
-Watch and saved-audio fixes in the sequential queue; no feature PR is open for this change.
+acceptance. Combined full validation, affected-control inspection, final independent review, CI and merge
+are next. Watch #355 and Saved Audio #356 are merged; no feature PR is open for this change.
 
 For manual Mac and phone checks, see [the smoke test](manual-smoke-test.md). No view appearance
 changed, so the existing README gallery remains applicable; gallery links still need checking.
