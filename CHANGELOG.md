@@ -15,7 +15,8 @@ does not show it again, and a fresh install does not see it at all; see
 
 - Use a meaningful ordinary scroll in landscape History capture tests on compact and larger
   iPhones, retaining complete-row visibility, search separation and open/reopen assertions.
-  Preserve the observed Pro Max capture failure; app layout and release notes are unchanged.
+  Add a clean portrait preview before Duo using the same concise synthetic fixture. Preserve
+  the observed Pro Max capture failure; app layout and release notes are unchanged.
 
 - Reopen Settings with a checked empty draft in endpoint UI tests, keeping exact replacement,
   saved-destination, recovery and privacy assertions independent of transient editing menus.

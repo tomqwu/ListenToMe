@@ -10,9 +10,11 @@ methods passed; both owned simulators shut down and all evidence was preserved. 
 iPad/Watch profiles were not started. [Failure receipt](evaluations/ios-1.20.4-history-capture-failure-2026-10-31.json).
 
 The test-only correction uses a meaningful bounded scroll and retains every outcome assertion.
-Its focused Pro/Pro Max execution is pending; the earlier full pass does not validate the changed
-test source. Fresh captures, README review, final validation/CI/merge and upload remain separate
-gates. No production layout change, capture completion or publication is claimed.
+The same concise preview fixture now also checks a complete portrait transcript and Quick answer
+before its existing Duo phase; this is added baseline coverage, not a historical red. The two-method
+focused Pro/Pro Max run is pending; the earlier full pass does not validate either changed test.
+Fresh captures, README review, final validation/CI/merge and upload remain separate gates.
+No production layout change, capture completion or publication is claimed.
 
 Five issues remain open: **#181, #205, #223, #236 and #336**. PR [#354](https://github.com/tomqwu/ListenToMe/pull/354)
 merged the Mac long-name correction at `946cb7e` on October 31, 02:49 UTC and closed #334. Full local

@@ -14,13 +14,31 @@ final class MobileReleaseScreenshotTests: XCTestCase {
                                "-mobileAIProvider", "apple", "-mobileCorrectTranscript", "NO",
                                "-mobileIdentifySpeakers", "YES",
                                "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryL"]
-        XCUIDevice.shared.orientation = .landscapeLeft
+        XCUIDevice.shared.orientation = .portrait
         defer {
             capture("Duo preview transcript and Quick visibility")
             app.terminate()
             XCUIDevice.shared.orientation = .portrait
         }
         app.launchPastReleaseNotes()
+        XCTAssertTrue(app.buttons["Notes"].waitForExistence(timeout: 10))
+        let portraitWindow = app.windows.firstMatch.frame
+        XCTAssertGreaterThan(portraitWindow.height, portraitWindow.width)
+        let portraitTranscript = app.otherElements["transcriptPanel"]
+        let portraitLines = portraitTranscript.staticTexts
+            .matching(NSPredicate(format: "identifier BEGINSWITH %@", "transcript-text-"))
+        XCTAssertEqual(portraitLines.count, 2)
+        let portraitWording = portraitLines.allElementsBoundByIndex.map(\.label).joined(separator: " ")
+        XCTAssertTrue(portraitWording.contains("Alex") && portraitWording.contains("Thursday"))
+        let portraitViewport = app.scrollViews["transcriptScroll"].frame.intersection(portraitWindow)
+        for line in portraitLines.allElementsBoundByIndex { assertWholePreviewText(line, in: portraitViewport) }
+        let portraitAnswer = app.staticTexts["output-quick"]
+        XCTAssertTrue(portraitAnswer.waitForExistence(timeout: 5))
+        XCTAssertTrue(portraitAnswer.label.contains("Alex") && portraitAnswer.label.contains("Thursday"))
+        let portraitQuick = app.otherElements["summary-panel-quick"].scrollViews.firstMatch.frame
+        assertWholePreviewText(portraitAnswer, in: portraitQuick.intersection(portraitWindow))
+        capture("Clean portrait transcript and Quick visibility")
+        XCUIDevice.shared.orientation = .landscapeLeft
         XCTAssertTrue(app.otherElements["twoPaneMeetingWorkspace"].waitForExistence(timeout: 10))
         let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@", "Speaker labels on"),
                                              object: app.staticTexts["captureStatus"])

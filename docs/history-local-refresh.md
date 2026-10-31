@@ -14,9 +14,11 @@ activity tree and original results are preserved. iPad and Watch capture profile
 `HISTORYREFRESH-010` now explicitly includes compact and larger phones and wide iPads. Its test uses
 a minimum 44-point upward drag, capped at one third of the viewport. Whole-row containment,
 search separation, exact query and conversation open/reopen assertions remain intact; diagnostic
-failure text includes both frames. Focused execution on the same owned Pro and Pro Max is pending.
-This changes only the test interaction, not app layout. Earlier full results do not validate this
-changed test source, and the build-44 gallery and distribution remain incomplete.
+failure text includes both frames. The prepared run also covers a portrait-first concise preview
+before its existing Duo capture, adopting existing UI behavior without a claimed historical red.
+Both methods still need focused execution on the same owned Pro and Pro Max. These changes affect
+only tests, not app layout. Earlier full results do not validate the changed test source, and the
+build-44 gallery and distribution remain incomplete.
 
 **Refresh search** in Mac and iPhone/iPad History replaces the local Apple embedding adapter and
 rebuilds derived vectors, including unchanged records previously cached without vectors. Ordinary
