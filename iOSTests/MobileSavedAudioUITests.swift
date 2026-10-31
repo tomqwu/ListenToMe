@@ -33,11 +33,30 @@ final class MobileSavedAudioUITests: XCTestCase {
         toggle.switches.firstMatch.tap()   // leave the simulator's setting off
     }
 
+    func testNotesOnlySavedRecordingStillOffersPlaybackInPortrait() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--saved-audio-fixture", "--saved-audio-without-speech", "-mobileCorrectTranscript", "NO"]
+        app.launchPastReleaseNotes()
+        let actions = app.buttons["transcriptOptions"]
+        XCTAssertTrue(actions.waitForExistence(timeout: 10), "Saved audio without recognized speech still needs its playback action")
+        guard actions.exists else { return }
+        actions.tap()
+        let play = app.buttons["playSavedAudio"]
+        XCTAssertTrue(play.waitForExistence(timeout: 5))
+        play.tap()
+        XCTAssertTrue(app.otherElements["savedAudioPlayer"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["shareSavedAudio"].exists)
+        XCTAssertTrue(app.buttons["Play"].isHittable)
+        app.buttons["Done"].tap()
+        XCTAssertFalse(app.buttons["Stop listening"].exists)
+    }
+
     /// The fixture's audio is a synthetic tone written by the real writer; the microphone is never used.
     func testSavedAudioPlaysFromATappedLineAndCanBeShared() {
         let app = XCUIApplication()
         app.launchArguments = ["--saved-audio-fixture", "-mobileCorrectTranscript", "NO"]
         app.launchPastReleaseNotes()
+        app.buttons["transcriptOptions"].tap()
         let open = app.buttons["playSavedAudio"]
         XCTAssertTrue(open.waitForExistence(timeout: 10), "A conversation with saved audio offers Play recording")
         open.tap()

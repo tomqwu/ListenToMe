@@ -92,8 +92,9 @@ History's separate **Play from a line** list still enumerated canonical arrival 
 while retaining each original array index for playback. Stable ties, explicit recording blocks,
 untimed boundaries and legacy arrival order keep the same policy. Restored duplicate segment IDs
 remain distinct rows with their original audio parts and offsets. Saved transcripts, audio files
-and retention choices do not change. The existing iOS `firstIndex(id:)` ambiguity for duplicate IDs
-is outside this Mac change; it is not repaired or claimed covered here.
+and retention choices do not change. iOS playback lookup is outside this Mac change. Its normal
+phone/Watch recordings do not use the index-anchored manifests affected here; a separate iOS
+duplicate-ID playback failure has not been established.
 
 `AUDIOVIEW-002` binds three `MacSavedAudioOrderTests` methods. They host the actual production
 section with an isolated library and generated silent audio, expand its native disclosure, read
@@ -128,8 +129,11 @@ metadata stayed unchanged. Original result bundles, logs, unmodified PNGs, test 
 generated inputs are retained. The green receipt SHA-256 is
 `35282f484a3d47af5b4ce3810dd9f044544c4188adf453567d9ff8243fe9c4c0`.
 
-This is local work stacked on the frozen #334 candidate `9a39a12`, not a merged change or a full
-validation pass. PR/merge waits for #334. Source-matched installed History playback and a fresh
+The focused results above used the earlier #334 candidate `9a39a12`. This branch now integrates
+merged main `946cb7e`; all four saved-audio runtime/test/catalog files remain byte-identical to
+focused candidate `bf0f2ae`. The main integration passed 254 BDD scenarios and diff checks, but
+combined full validation and PR/merge follow pending Watch PR #355. No integrated native pass
+is claimed yet. Source-matched installed History playback and a fresh
 full-app README screenshot remain pending while the Mac is locked; the native component images
 are QA evidence only. Independent near-end speech, overlap, genuinely repeated speech, headphones
 and physical route recovery remain separate #336 acceptance gates. This slice does not close #336.

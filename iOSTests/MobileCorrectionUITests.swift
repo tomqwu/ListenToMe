@@ -7,7 +7,8 @@ final class MobileCorrectionUITests: XCTestCase {
         app.launchArguments = ["--speech-correction-fixture", "-mobileCorrectTranscript", "NO", "-autoQuickSummary", "NO"]
         app.launchPastReleaseNotes()
         app.buttons["Start listening"].tap()
-        let setup = app.buttons["speechCorrectionSettings"]
+        app.buttons["transcriptOptions"].tap()
+        let setup = app.buttons["Speech correction settings"]
         XCTAssertTrue(setup.waitForExistence(timeout: 30))
         setup.tap()
         let toggle = app.switches["correctSpeechToggle"].switches.firstMatch

@@ -105,13 +105,17 @@ final class MobileWorkspaceUITests: XCTestCase {
         capture(app, "iPhone two-pane Live workspace")
         let latest = transcript.staticTexts["The latest phrase."]
         let latestY = latest.frame.minY
-        let auto = quick.switches["Auto summaries"].firstMatch
+        let auto = quick.switches["Auto summaries"].switches.firstMatch
         quick.scrollViews.firstMatch.swipeUp()
         // XCTest scrolls the requested control into view before tapping; arbitrary full swipes
         // can jump past a control in the short landscape reading area.
-        let priorAuto = auto.value as? String
+        XCTAssertTrue(auto.exists, app.debugDescription)
+        XCTAssertTrue(auto.isEnabled, app.debugDescription)
+        XCTAssertEqual(auto.value as? String, "0")
         auto.tap()
-        XCTAssertNotEqual(auto.value as? String, priorAuto, "Auto remains usable below the answer")
+        let changed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", "1"), object: auto)
+        XCTAssertEqual(XCTWaiter.wait(for: [changed], timeout: 5), .completed,
+                       "Auto remains usable below the answer")
         XCTAssertEqual(latest.frame.minY, latestY, accuracy: 2, "Quick scrolling must not move the transcript")
         app.buttons["Expand transcript"].tap()
         XCTAssertTrue(app.navigationBars["Transcript"].waitForExistence(timeout: 5))

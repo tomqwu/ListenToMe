@@ -219,6 +219,7 @@ targets:
       - App/NativeTranscriptText.swift
       - App/Theme.swift
       - App/CommandCenterLabels.swift
+      - App/MacWorkspaceSection.swift
       - App/HotkeyMonitor.swift
       - App/MacOperationErrors.swift
       - App/ReferenceSelectionStore.swift
