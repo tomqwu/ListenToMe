@@ -13,8 +13,8 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## Repository tooling (unreleased)
 
-- Select rejected server addresses with the native keyboard command in endpoint UI tests, keeping
-  exact replacement, recovery and privacy assertions independent of transient editing menus.
+- Reopen Settings with a checked empty draft in endpoint UI tests, keeping exact replacement,
+  saved-destination, recovery and privacy assertions independent of transient editing menus.
   Add explicit Ollama and OpenAI-compatible endpoint BDD scenarios; app behavior is unchanged.
 
 - Require current README screenshots with device-grouped layouts, full-size links and capture

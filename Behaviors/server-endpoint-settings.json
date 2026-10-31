@@ -5,7 +5,7 @@
       "id": "ENDPOINTUI-001",
       "name": "Correct a rejected Ollama address and explain omitted URL parts",
       "given": "an explicit Ollama server is saved and Settings is open",
-      "when": "the user submits a disallowed HTTP address and then replaces it with an HTTPS address containing a path and query",
+      "when": "the user submits a disallowed HTTP address, closes and reopens Settings, and enters an HTTPS address containing a path and query into the empty draft",
       "then": "the rejection explains HTTPS recovery and preserves the previous server; the corrected address is entered exactly, only its scheme, host and port are saved, and the omission notice does not expose the query value",
       "covers": ["iOS/MobileAISettings.swift", "iOS/MobileAISettingsView.swift", "iOSTests/MobileOllamaEndpointUITests.swift"],
       "bindings": [
@@ -18,7 +18,7 @@
       "id": "ENDPOINTUI-002",
       "name": "Correct an OpenAI-compatible address and identify the chosen server",
       "given": "the user explicitly chooses an unconfigured OpenAI-compatible provider",
-      "when": "Settings rejects a numeric HTTP address and the user replaces it with a local server address",
+      "when": "Settings rejects a numeric HTTP address and the user closes and reopens Settings before entering a local server address into the empty draft",
       "then": "the rejection has a recovery reason, the replacement is entered exactly, the saved destination is labelled as the user's server rather than on-device AI, and context capacity and server removal remain available",
       "covers": ["iOS/MobileOpenAISettings.swift", "iOS/MobileOpenAISettingsView.swift", "iOSTests/MobileOpenAISettingsUITests.swift"],
       "bindings": [

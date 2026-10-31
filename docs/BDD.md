@@ -180,9 +180,11 @@ manual check; a missing installed English model skips the test and cannot satisf
 server/privacy labels to native Settings controls and the corresponding persistence policies.
 During build 44 validation, the Ollama journey reached its HTTPS rejection notice but failed because
 the transient **Select All** menu was absent. Later normalization/privacy assertions were not reached.
-The test now uses the native keyboard selection command and retains all outcome assertions; the
-OpenAI-compatible sibling uses the same interaction. This is a harness repair with an observed
-harness failure, not a claimed product regression or an invented red for adopted unit tests.
+A native keyboard selection attempt also failed its exact-value assertions. Both journeys now
+close and reopen Settings, verify its discarded draft is empty, then enter the corrected address
+and retain all outcome assertions. The Ollama UI also verifies its saved destination survived the
+rejection and reopen. This is a harness repair with observed harness failures, not a claimed product
+regression, in-place text-editing acceptance or an invented red for adopted unit tests.
 
 `MACAUDIO-001` covers the actual native PCM-to-`AnalyzerInput` boundary exposed by #333, beyond the
 older scalar `BATCH-291` timeline tests. Nine methods exercise real conversion, separate raw/sample

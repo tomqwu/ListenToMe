@@ -22,10 +22,14 @@ final class MobileOpenAISettingsUITests: XCTestCase {
         let status = app.staticTexts["ollamaStatus"]
         revealSettingsControl(status, in: form)
         XCTAssertTrue(status.label.contains("Plain http:// is only allowed"), status.label)
-        revealSettingsControl(field, in: form, towardTop: true)
+        app.buttons["Done"].tap()
+        app.buttons["More"].tap(); app.buttons["Settings"].tap()
+        revealSettingsControl(field, in: form)
+        guard let draft = field.value as? String, draft.isEmpty || draft == field.placeholderValue else {
+            XCTFail("Reopening Settings must discard the rejected address draft")
+            return
+        }
         field.tap()
-        // Select the entire address without depending on the transient editing menu or caret position.
-        field.typeKey("a", modifierFlags: .command)
         field.typeText("http://studio.local:1234")
         XCTAssertEqual(field.value as? String, "http://studio.local:1234")
         app.buttons["saveOpenAIBaseURL"].tap()
