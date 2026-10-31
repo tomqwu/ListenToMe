@@ -1,4 +1,4 @@
-# Active backlog delivery — October 30, 2026
+# Active backlog delivery — October 31, 2026
 
 Five issues remain open: **#181, #205, #223, #236 and #336**. PR [#354](https://github.com/tomqwu/ListenToMe/pull/354)
 merged the Mac long-name correction at `946cb7e` on October 31, 02:49 UTC and closed #334. Full local
@@ -13,7 +13,14 @@ It is merged but unreleased. Saved-audio ordering merged in PR #356 at `63e1777`
 05:30 UTC, after all three final checks on `eee22fe` and independent review. Its matching branches
 were deleted and tracking refs pruned. Continue with shared History Ask cancellation (#223):
 its one-line fix has portable streaming and actual iOS completed-answer red/green proof, and now
-integrates that exact Saved Audio main. Combined full validation is next.
+integrates that exact Saved Audio main. Full validation passed on `3c8cc37`, **05:35–06:24 UTC**:
+Core **1,294**, iOS **614**, Mac **126** and Watch **35**, zero failures with documented optional
+skips. All four new Ask methods passed; independent audit verified **1,121 unchanged inputs** and
+**2,099 original/preserved native-result files**. Three required checks passed on that head.
+PR [#357](https://github.com/tomqwu/ListenToMe/pull/357) is completing documentation review and final
+CI before merge. [Audited full receipt and acceptance limits](evaluations/history-ask-query-cancellation-full-2026-10-31.json).
+The existing native History control captures are QA only; installed/physical streaming interaction
+and the next release train remain separate. This change is not included in accepted beta 43.
 Language-search quality and the recorded physical #205/#236/Watch/audio checks remain unresolved.
 [Sources, tested outcomes, blockers and next actions](backlog-execution-2026-10-30.md).
 
