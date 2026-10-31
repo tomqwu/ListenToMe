@@ -1,0 +1,197 @@
+{
+  "schemaVersion": 1,
+  "scope": "Mac startup route reconciliation and Stop observer/task ownership; exact integrated-source automated full validation, without installed or acoustic acceptance",
+  "scenario": "MACAUDIO-004",
+  "source": "76f47c475d93d13e1906aea0186a741b18ad8bbd",
+  "base": "08810e8aca007fd97f2f4633e3fbeea5c1f92731",
+  "startedUTC": "2026-10-31T14:16:20.983851+00:00",
+  "finishedUTC": "2026-10-31T15:03:56.509135+00:00",
+  "command": "make validate-local BDD_BASE=08810e8aca007fd97f2f4633e3fbeea5c1f92731",
+  "result": {
+    "exit": 0,
+    "terminalReaped": true,
+    "elapsedSeconds": 2852.129691750277,
+    "allFrozenInputsUnchanged": 1143,
+    "sourceClean": true,
+    "failedNativeCases": 0
+  },
+  "tests": {
+    "core": {
+      "total": 1294,
+      "passed": 1287,
+      "skipped": 7,
+      "failed": 0,
+      "lineCoveragePercent": 98.07706924070837,
+      "requiredFloorPercent": 95
+    },
+    "iosUnit": {
+      "total": 513,
+      "passed": 506,
+      "skipped": 7,
+      "failed": 0
+    },
+    "iosUI": {
+      "total": 101,
+      "passed": 96,
+      "skipped": 5,
+      "failed": 0
+    },
+    "mac": {
+      "total": 129,
+      "passed": 129,
+      "skipped": 0,
+      "failed": 0
+    },
+    "watchUnit": {
+      "total": 29,
+      "passed": 29,
+      "skipped": 0,
+      "failed": 0
+    },
+    "watchUI": {
+      "total": 6,
+      "passed": 6,
+      "skipped": 0,
+      "failed": 0
+    },
+    "toolingHelperMethods": 71,
+    "nativeHotkeyChecks": "passed",
+    "lint": "passed with warnings",
+    "realLocalLLMContracts": {
+      "model": "qwen3:0.6b",
+      "OllamaContractE2ETests": 2,
+      "OpenAICompatibleContractE2ETests": 2,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "bdd": {
+    "catalogScenarios": 261,
+    "catalogAndBehaviorPaths": "valid",
+    "requiredStartupAndMicrophoneMethodsPassed": 9,
+    "requiredStartupAndMicrophoneMethodsSkipped": 0
+  },
+  "focusedMethods": [
+    {
+      "test": "ListenToMeMacUnitTests.MacMicrophoneCaptureTests/testListeningEnablesEchoControlBeforeReadingFormatAndInstallingTap",
+      "result": "Passed",
+      "nativeExecutionCount": 1,
+      "detailSHA256": "e1f2c33193e2c8eac0fd3c01590bd720aa657467f20a43ecbf53cb1f1eaef9c8"
+    },
+    {
+      "test": "ListenToMeMacUnitTests.MacMicrophoneCaptureTests/testEchoFailureNeverStartsAnUnprotectedMicrophoneAndStartFailureCleansTap",
+      "result": "Passed",
+      "nativeExecutionCount": 1,
+      "detailSHA256": "2138ccc346af80c00c8d920abe90895eac2bd7e05a0d76fbd7b2e5302f081ecb"
+    },
+    {
+      "test": "ListenToMeMacUnitTests.MacMicrophoneCaptureTests/testHealthyConfigurationNotificationDoesNotRestartAndStopCannotResurrectCapture",
+      "result": "Passed",
+      "nativeExecutionCount": 1,
+      "detailSHA256": "5d21669b2fcea755789799d7fb117ca8156f063b5fd5fbd8934e4a723db909e3"
+    },
+    {
+      "test": "ListenToMeMacUnitTests.MacMicrophoneCaptureTests/testRunningEngineWithChangedRouteOrVoiceProfileRebuildsItsTap",
+      "result": "Passed",
+      "nativeExecutionCount": 1,
+      "detailSHA256": "c02e03226be060d05a9fb01f2a5de9851353b3b29d3b2fb01b4618b29ae75810"
+    },
+    {
+      "test": "ListenToMeMacUnitTests.MacMicrophoneCaptureTests/testStopDuringEngineStartCleansUpBeforeReturningAndQueuedRecoveryStaysStopped",
+      "result": "Passed",
+      "nativeExecutionCount": 1,
+      "detailSHA256": "e594cb2f0c8c5ef1d284c89c65e6fcb1f4cef5bd7622f0c54737e0ade9466cc4"
+    },
+    {
+      "test": "ListenToMeMacUnitTests.MacMicrophoneCaptureTests/testSecondRouteFailureDuringCooldownStopsUnsafeInputThenRecoversUnlessStopped",
+      "result": "Passed",
+      "nativeExecutionCount": 1,
+      "detailSHA256": "d2c3932811b99585a64914c51157a59a5df79f12ac542a0bb6dc8c99d44c2313"
+    },
+    {
+      "test": "ListenToMeMacUnitTests.DualChannelStartupTests/testStartupRouteChangeBeforeObservationRecoversWithoutAnotherNotification",
+      "result": "Passed",
+      "nativeExecutionCount": 1,
+      "detailSHA256": "111efe29b058493c0b5b2b8f6fc575892b9a488b893d921e474776190a2d9fd5"
+    },
+    {
+      "test": "ListenToMeMacUnitTests.DualChannelStartupTests/testStartupReconciliationKeepsHealthyCaptureAndReportsRecoveryFailure",
+      "result": "Passed",
+      "nativeExecutionCount": 1,
+      "detailSHA256": "3ef604b36d7e6cc69a0e956f68e60cae86732bbcad01d65737672f421d5dcca0"
+    },
+    {
+      "test": "ListenToMeMacUnitTests.DualChannelStartupTests/testStopBeforeStartupSubscriptionsAndTaskAssignmentKeepsCaptureStopped",
+      "result": "Passed",
+      "nativeExecutionCount": 1,
+      "detailSHA256": "4c3ea95593acdc94a62d06be44c8fd18b3476aad7b9f1355e7a7503ba09224a9"
+    }
+  ],
+  "skipScope": "Seven Core skips include four real contracts that later passed in the explicit e2e invocations. Twelve iOS skips remain skips. No required Mac method was skipped.",
+  "integrity": {
+    "sourceFilesCopiedAndVerified": 1143,
+    "terminalEvidenceFilesCopiedAndVerified": 12,
+    "originalAndPreservedNativeResultPairs": 2109,
+    "executedTestBundlesPreserved": 6,
+    "testAndHostPayloadFiles": 111,
+    "ownedProcessesAbsent": true,
+    "ownedSimulatorsConfirmedShutdown": true,
+    "shutdownCommand149": "Devices were already Shutdown; post-terminal inventory confirmed both Shutdown."
+  },
+  "normalMacDebugArtifact": {
+    "bundleIdentifier": "com.tomwu.ListenToMe.dev",
+    "version": "1.4.4",
+    "build": "14",
+    "payloadFiles": 34,
+    "archiveSHA256": "577d22b2bd2381685a1aba816f0fc138027b73f9798e66d2aa486428d6b93e4d",
+    "originalAndExtractedStrictSignatureExits": [
+      0,
+      0
+    ],
+    "bytesModesSymlinksVerified": true,
+    "launchedDuringPreservation": false
+  },
+  "independentAudit": "clear",
+  "evidenceIdentifier": "2026-10-31/listentome-dual-channel336-start-observation-red/full-validation-preparation-76f47c4",
+  "evidenceHashes": {
+    "full-result-and-preservation.json": "3b487bb70dde1058f919daf93bbf87597b9aa397e40b97e0eeadd41de5f29e9c",
+    "independent-terminal-audit.json": "ec3a30290e707a9dee46a7f9aeeab6450943433d3df8f390004f31f4591ee2e3",
+    "independent-combined-receipt-addendum.json": "c58681b24d85748ff4c0a713ccddb06347ce5dffc7aa07375a9b6d9641dc4415",
+    "validation-state.json": "52fa6d1a085ac94a4e4df2a69f2749602bbf0dc37a4e3d4595d0e040a9f366b4",
+    "validation/runner-state.json": "9f8c1137cf1f38b925f69cb7feb5a9571d36f26f37a0e35f8796e8e91a8f628f",
+    "validation/reference.log": "ebbe64e40fa122d749c5d1b1501844e5bc1af7fd89fab14842bf8f7901e53cc4",
+    "post-terminal-source-and-native-preservation.json": "e7ec591066fc87ef900e0f2d2d894d3e58f32d441fda865c62fec343d0974d20",
+    "native-payloads/preservation.json": "5edc50d87458a481cb4d0eedab59385f0aa981deba0a1678cd0a371e35587774",
+    "normal-debug-artifact/receipt.json": "f1d046f69b9c4f46086afefdc79b53ce745e5448f6925b779f1e21ddb0ccf826",
+    "mac336-native-details/inspection.json": "9ce5b387fb240806f2334b87df3b4331b9ba582c2733d05ecbebe619eb40f8e2",
+    "preserved-source.json": "abfba85cc860ef0bb0c01300743a59ff3e9781d0a343fef060de990d4415a7b7",
+    "preserved-terminal-evidence.json": "85c7f3eafd0b8cf2042cda639b97a944f30157a5af2614fb2e21be0241f1b0e7",
+    "dev-session-cleanup.json": "dd72a65ed5c17adf8b49fad6e47f9926d5bf85b5b5e75a47ce9c5d1d2d6e8463"
+  },
+  "preservedEarlierEvidence": {
+    "genuineFocusedREDSource": "60093ec",
+    "focusedGREENSource": "92811f5450a0d543dd5d0daa2493e657890c66ae",
+    "focusedREDMethods": "six pass, three fail, twelve assertions",
+    "focusedGREENMethods": "nine pass, no skips or failures",
+    "setupFailureSeparate": "The earlier nested-sandbox setup failure ran no methods and is not a product RED."
+  },
+  "acceptanceLimits": [
+    "Source-matched installed system-audio transcription labelled OTHERS and GUI acceptance remain incomplete.",
+    "Original near-end, overlapping/repeated speech, headphone and physical route-recovery matrix remains open.",
+    "The branch is unmerged; final hosted CI and merge are not established by this receipt.",
+    "No physical iPhone/iPad/Watch, production-readiness or publication claim.",
+    "Backlog paused at the maintainer request; no subsequent #236 full run or #223 adoption RED was started."
+  ],
+  "devSessionCleanup": {
+    "timestampUTC": "2026-10-31T15:18:04Z",
+    "bundleIdentifier": "com.tomwu.ListenToMe.dev",
+    "verifiedPayloadFiles": 34,
+    "preservedArchiveSHA256": "577d22b2bd2381685a1aba816f0fc138027b73f9798e66d2aa486428d6b93e4d",
+    "noActiveAppOrNativeTestProcess": true,
+    "movedOnlyExactDevAppToTrash": true,
+    "originalDerivedDataAppIntentionallyAbsentAfterCleanup": true,
+    "devOnlyPermissionResetExit": 0,
+    "productionDataSettingsCredentialsAndEvidenceUntouched": true,
+    "historicalIntegrityAuditsUnchanged": true
+  }
+}

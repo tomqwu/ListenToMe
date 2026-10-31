@@ -1,4 +1,67 @@
-# Active backlog delivery — October 31, 2026
+# Delivery handoff — October 31, 2026
+
+## Pause checkpoint — October 31, 2026, after 15:03 UTC
+
+The maintainer requested: **“after this publish to store review, let's pause this work”.** The
+requested next delivery is the current Store review submission, followed by a backlog pause.
+Submission cannot proceed while the production-acceptance gates remain open: preserve the prepared
+draft and pause with that limitation explicit. Keep unfinished candidates and their evidence; do not
+start another feature, native test run, semantic experiment or release train. TestFlight
+**1.20.4 (44)** is published as recorded below; it is separate from a Store review submission.
+The release monitor was already **PAUSED**, verified from its configuration without changing it.
+
+**Store draft and media verified; production acceptance remains incomplete.** The iOS 1.20.4
+version readback at **15:53:46 UTC** is **PREPARE_FOR_SUBMISSION**, selects build 44 and retains
+**MANUAL** release. Both English
+localizations have metadata read back. All **46 screenshot assets** are **COMPLETE**, downloaded
+and verified to match the original RGB pixels, with final set order verified and zero processing
+errors. These cover the 23 original images in both localizations. The earlier partial readbacks
+remain historical evidence.
+[Sanitized draft checkpoint](evaluations/ios-1.20.4-store-draft-2026-10-31.json).
+
+Standing authorization to submit a ready version for review remains in place; missing physical
+acceptance is a readiness gate, not missing permission. No review was submitted and no new public
+release is claimed. Preserve this verified draft and media while backlog work is paused.
+
+The already-running #336 full validation finished successfully on `76f47c4`, based on release main
+`08810e8`, at **15:03 UTC**. Core **1,294** (seven skips, **98.0771% coverage**), iOS **614**
+(602 passed, twelve skips), Mac **129** and Watch **35** completed with zero failures. All nine
+startup/microphone methods passed without skips, alongside the 261-scenario BDD catalog, 71 Python
+helper methods, native hotkey checks and four real local-server contracts. Independent audit verified
+1,143 unchanged source inputs, 2,109 original/mirrored result files, six executed test bundles and
+the signed Debug artifact. The run is reaped and its owned simulators are shut down.
+[Sanitized full receipt](evaluations/mac-336-full-2026-10-31.json).
+
+At **15:18:04 UTC**, end-session cleanup verified all 34 Debug app files and its signature against
+the preserved archive, confirmed no active app/native test process, then moved only the exact
+`com.tomwu.ListenToMe.dev` app to Trash. The Dev-only permission reset succeeded. Production
+permissions, conversation data, settings, keys and evidence were untouched. The original DerivedData
+app path is intentionally absent after cleanup; earlier integrity audits remain unchanged.
+
+The #336 startup route/Stop fix remains **unmerged** on `codex/mac-startup-route-recovery`.
+Actual source-matched installed system audio labelled OTHERS, the acoustic overlap/headphone/route
+matrix, final review/CI and merge remain open. The automated pass is not installed audio acceptance.
+The last recorded passive Mac check at **14:17:50 UTC** still found the console locked; the
+**13:48:49 UTC** phone readback required its passcode. No repeated unlock request or production
+permission change was made.
+
+- **#236:** `codex/vocabulary-live-context-order` is preserved at `b1efc9a`, based on `08810e8`.
+  The twelve focused Mac/iOS ordering tests passed on their recorded source. Its integrated full
+  packet is reviewed but **not started or granted**; source-matched actual OTHERS acceptance,
+  full validation, CI and merge remain open. Empty-analyzer tests do not establish vocabulary
+  recognition quality.
+- **#223:** the original 128-item CPU/GPU diagnostic, eight real parity controls and fake-vector
+  cost screen are preserved as separate evidence. They do not establish calibrated search quality.
+  The prepared real-backend adoption RED has **not run**; no new bank-adoption, calibration,
+  threshold selection or holdout acceptance is authorized by those results.
+- **#181/#205:** physical Watch acceptance and recent-phone Whisper accuracy/speed/battery results
+  remain incomplete. The prepared #205 measurement recipes and objective audio-byte audit are not
+  completed device measurements or audible-fidelity acceptance.
+
+The [backlog checkpoint](backlog-execution-2026-10-30.md#paused-checkpoint--october-31-2026)
+identifies the preserved packets. Resume only after the maintainer resumes backlog work; keep the
+existing source, labels, acceptance criteria and failed-run evidence intact. The following dated
+sections retain their original release and test scope.
 
 ## Build 44 — TestFlight published October 31, 2026
 

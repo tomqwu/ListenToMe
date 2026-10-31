@@ -1,0 +1,256 @@
+{
+  "status": "DRAFT_METADATA_MEDIA_COMPLETE_REVIEW_NOT_SUBMITTED_PHYSICAL_ACCEPTANCE_PENDING",
+  "checkedAt": "2026-10-31T15:53:46.849006+00:00",
+  "method": "GET_ONLY_EXISTING_API_HELPER",
+  "version": "1.20.4",
+  "build": "44",
+  "versionId": "1283d670-5337-4ca3-a3de-105097770162",
+  "buildId": "688d5133-1488-410e-809f-3df04ec08bab",
+  "state": "PREPARE_FOR_SUBMISSION",
+  "releaseType": "MANUAL",
+  "artifactSourceFromReviewedReleaseEvidence": "08810e8aca007fd97f2f4633e3fbeea5c1f92731",
+  "captureSource": "ca7ab571f2b25eb3b9e1a67f4af2e17b734e97ab",
+  "sourceAttribution": "Apple build relationship verified; Git source comes from existing reviewed artifact evidence, not Apple metadata.",
+  "primaryLocale": "en-US",
+  "localizedNames": [
+    [
+      "en-CA",
+      "Listen To Me"
+    ],
+    [
+      "en-US",
+      "Listen To Me - Real Time AI"
+    ]
+  ],
+  "metadataLocales": [
+    "en-US",
+    "en-CA"
+  ],
+  "descriptionSHA256": "72e5f8a71c8ecd438522e46a89f5ca3ad535c2f087ad280b1aa169fa096d0051",
+  "whatsNewSHA256": "85a9dbae3beae00821e9d60a014a81bdb2310f66c5325a2703dad130abdebd32",
+  "reviewNotesAndContactsReadbackMatch": true,
+  "selectedOriginals": 23,
+  "processedScreenshots": 46,
+  "processedDownloadedRGBMatches": 46,
+  "sets": [
+    {
+      "locale": "en-US",
+      "slot": "APP_WATCH_ULTRA",
+      "count": 2,
+      "ids": [
+        "14c00019-5f9f-8d14-800b-1229e1c71e3e",
+        "2c000019-5f9f-8d14-8029-3e932159f0da"
+      ]
+    },
+    {
+      "locale": "en-US",
+      "slot": "APP_IPHONE_61",
+      "count": 4,
+      "ids": [
+        "d4400019-5f9f-8d14-8027-6943966a13cc",
+        "50000019-5f9f-8d14-8035-f5d4595c735f",
+        "cf800019-5f9f-8d14-8005-0f2490e7640e",
+        "e5400019-5f9f-8d14-8016-b2b94f16545a"
+      ]
+    },
+    {
+      "locale": "en-US",
+      "slot": "APP_IPHONE_67",
+      "count": 5,
+      "ids": [
+        "2ac00019-5f9f-8d14-800b-e03df87cc207",
+        "02800019-5f9f-8d14-8019-9ec6254974f9",
+        "d9000019-5f9f-8d14-8016-0abde51382c5",
+        "e6800019-5f9f-8d14-803a-f7b996172680",
+        "e3800019-5f9f-8d14-803d-d791896a6d2f"
+      ]
+    },
+    {
+      "locale": "en-US",
+      "slot": "APP_IPAD_PRO_3GEN_11",
+      "count": 6,
+      "ids": [
+        "6d000019-5f9f-8d14-802c-09a8f70858d2",
+        "7b000019-5f9f-8d14-8016-e2b2983ae459",
+        "47800019-5f9f-8d14-8038-0f6d6838d7e2",
+        "f1c00019-5f9f-8d14-8017-4e673d7c6f2d",
+        "d5000019-5f9f-8d14-801b-3b68fc548d37",
+        "0c000019-5f9f-8d14-800d-c357fba098ed"
+      ]
+    },
+    {
+      "locale": "en-US",
+      "slot": "APP_IPAD_PRO_3GEN_129",
+      "count": 6,
+      "ids": [
+        "52c00019-5f9f-8d14-8038-418de4cca100",
+        "2b800019-5f9f-8d14-801f-0cbb9f861857",
+        "3ac00019-5f9f-8d14-8025-04f33f0db7f1",
+        "c1000019-5f9f-8d14-803f-0f101bf4cc26",
+        "a2000019-5f9f-8d14-8007-f352b4eeb83e",
+        "4e000019-5f9f-8d14-803c-2aafe6c3ebd6"
+      ]
+    },
+    {
+      "locale": "en-CA",
+      "slot": "APP_IPHONE_61",
+      "count": 4,
+      "ids": [
+        "52800019-5f9f-8d14-8008-403cd50d3f87",
+        "7f000019-5f9f-8d14-803d-97a8e361dcc1",
+        "81000019-5f9f-8d14-8014-ac7f891f056b",
+        "28000019-5f9f-8d14-8002-c3109514de72"
+      ]
+    },
+    {
+      "locale": "en-CA",
+      "slot": "APP_IPAD_PRO_3GEN_129",
+      "count": 6,
+      "ids": [
+        "1fc00019-5f9f-8d14-8002-9c78b9f1a3f5",
+        "52800019-5f9f-8d14-8026-e7cb283170f7",
+        "a9800019-5f9f-8d14-803e-f0703f2de6a6",
+        "fd800019-5f9f-8d14-802f-f28c14f69f73",
+        "a0800019-5f9f-8d14-802a-95619ca2f11d",
+        "06800019-5f9f-8d14-801d-d6ecfb5525a3"
+      ]
+    },
+    {
+      "locale": "en-CA",
+      "slot": "APP_WATCH_ULTRA",
+      "count": 2,
+      "ids": [
+        "6ec00019-5f9f-8d14-8021-a3a24aab757c",
+        "ed400019-5f9f-8d14-8011-b5a230e2f42b"
+      ]
+    },
+    {
+      "locale": "en-CA",
+      "slot": "APP_IPHONE_67",
+      "count": 5,
+      "ids": [
+        "89400019-5f9f-8d14-8012-a1b466438146",
+        "9b800019-5f9f-8d14-8014-5c7e7d17c4f5",
+        "dd800019-5f9f-8d14-8027-035dc5253db4",
+        "32c00019-5f9f-8d14-8002-ee752c1876d8",
+        "47800019-5f9f-8d14-802e-148377fe47ca"
+      ]
+    },
+    {
+      "locale": "en-CA",
+      "slot": "APP_IPAD_PRO_3GEN_11",
+      "count": 6,
+      "ids": [
+        "f8800019-5f9f-8d14-803e-9a2a2b7c7313",
+        "7ec00019-5f9f-8d14-8033-83500fe71956",
+        "c1c00019-5f9f-8d14-802a-cfff26879bcc",
+        "5e800019-5f9f-8d14-8037-aca9def9db39",
+        "dc800019-5f9f-8d14-8011-299d24eb6a1d",
+        "44800019-5f9f-8d14-8034-ba7d272b1150"
+      ]
+    }
+  ],
+  "public1191VersionMetadataAndScreenshotsUnchanged": true,
+  "mac150DraftVersionBuildAndLocalizationAttributesUnchanged": true,
+  "standingReviewAuthorization": true,
+  "reviewSubmissionReady": false,
+  "reviewSubmitted": false,
+  "draftAttachedToReviewSubmission": false,
+  "remainingGate": "Actual source-matched physical iPhone/iPad and paired-Watch acceptance required before production review submission. Simulator/capture/full validation and beta acceptance do not waive it.",
+  "apiWritesByThisReadback": 0,
+  "evidence": {
+    "operationScriptSHA256": "0ba0ee563a695b6a65b9f0ccefffb93e7a928e99ef47ca0c68fb5a30fd084dcc",
+    "operationPlanSHA256": "10f695ab14f03fa2a4d97681d70ec7de708db6945f3ce4c04b123e77cc4587d6",
+    "verifiedMediaSHA256": "5172bac46807daf5c83d711d27c212dbda17dc0dc507fa3a67785d288a7df9f9",
+    "readbackScriptSHA256": "9b964f6f6e5f8caf892b331c59bb9d1528f43e5c252b5c3d35cbb15c3327ec7e",
+    "rawGETReadbackSHA256": "8de44f0b4222e01a81abe82e75b63b984425545175d3379d919a62726782d581",
+    "rootDownloadedVisualInspectionSHA256": "d104fb228c952523a862cab03cf9fbe73f8511daac1d219b3375eb28cb034960"
+  },
+  "reviewStates": [
+    {
+      "id": "b86709e2-e582-488b-9a23-5ee60c51c05b",
+      "platform": "IOS",
+      "state": "COMPLETE",
+      "versionIds": [
+        "c188472f-35f2-47e2-927a-16700b473a3f"
+      ]
+    },
+    {
+      "id": "4e63cda8-70db-4d67-9928-63409df4dbda",
+      "platform": "IOS",
+      "state": "COMPLETE",
+      "versionIds": [
+        "c60352d3-eb78-479b-970c-d6ed6faa3242"
+      ]
+    },
+    {
+      "id": "89b4c261-b37d-4b24-aaee-20f8238d1663",
+      "platform": "IOS",
+      "state": "COMPLETE",
+      "versionIds": [
+        "c60352d3-eb78-479b-970c-d6ed6faa3242"
+      ]
+    },
+    {
+      "id": "25ae4878-c462-4528-a48e-01b12b028f39",
+      "platform": "IOS",
+      "state": "COMPLETE",
+      "versionIds": [
+        "c60352d3-eb78-479b-970c-d6ed6faa3242"
+      ]
+    },
+    {
+      "id": "03747aac-731a-430a-82a7-c28041b2206c",
+      "platform": "IOS",
+      "state": "COMPLETE",
+      "versionIds": [
+        "3b0f88f5-a984-4763-a19e-5c0e165af030"
+      ]
+    },
+    {
+      "id": "9e3a995c-8e47-44da-b473-d5a84bb9c4a2",
+      "platform": "IOS",
+      "state": "COMPLETE",
+      "versionIds": [
+        "894def2d-30af-4702-a434-5a4a78db5214"
+      ]
+    },
+    {
+      "id": "78e7c1bc-3893-4e7a-9884-67e9556d3cc2",
+      "platform": "IOS",
+      "state": "COMPLETE",
+      "versionIds": [
+        "3788427d-c23f-4595-8cf9-1ba034629969"
+      ]
+    },
+    {
+      "id": "6aa89384-9311-4d27-8a83-8bbad3daa42a",
+      "platform": "IOS",
+      "state": "COMPLETE",
+      "versionIds": [
+        "3788427d-c23f-4595-8cf9-1ba034629969"
+      ]
+    }
+  ],
+  "rootDownloadedVisualInspection": {
+    "imagesViewed": 4,
+    "views": [
+      "iPhone Notes",
+      "iPad wide workspace",
+      "iPhone Max Duo with translation",
+      "Watch recording"
+    ],
+    "finding": "Readable rendered app UI, no error/debug overlays; agrees with prior native inspection.",
+    "physicalDeviceAcceptance": false,
+    "evidenceIdentifier": "store-review-draft-preparation/root-downloaded-visual-inspection.json"
+  },
+  "all46MediaVerified": true,
+  "finalOrderVerified": true,
+  "physicalDeviceAcceptanceVerified": false,
+  "preservedHistory": {
+    "firstUploadSchemaFailure": "upload-media-first.log; missing child reverse-parent field before cleanup/upload",
+    "firstAndSecondVerification": "ordinary processing-pending exit3; timestamped receipts/progress retained",
+    "partialReadbackSHA256": "b9cd32762e4512ced34b5f46d46da866680cb9b35187175517b65f3a39241e29",
+    "historyDoesNotReplaceFinalProof": true
+  }
+}

@@ -1,5 +1,32 @@
 # Backlog execution — October 30, 2026
 
+## Paused checkpoint — October 31, 2026
+
+The maintainer requested the current Store review submission, then a pause: **“after this publish
+to store review, let's pause this work”.** Submission cannot proceed while production-acceptance
+gates remain open; preserve the prepared draft and pause with that limitation. Do not interpret
+the historical next steps below as authorization for another run or feature. TestFlight 1.20.4
+(44) is published; [the current handoff](HANDOFF.md#pause-checkpoint--october-31-2026-after-1503-utc)
+records the separate PREPARE_FOR_SUBMISSION, MANUAL/build-44 Store draft. All 46 screenshot assets
+are COMPLETE, downloaded, pixel-matched and verified in final order. Physical acceptance still blocks
+submission; standing review authorization remains in place and no review was submitted. The release
+monitor was already PAUSED; its configuration was read back without changing the setting.
+
+| Preserved work | Exact stopping point and remaining gate |
+| --- | --- |
+| #336 startup route/Stop repair | `codex/mac-startup-route-recovery` at `76f47c4`, based on `08810e8`: full local validation passed, all nine required Mac methods passed unskipped, source/results/payloads preserved and independently audited. [Sanitized receipt](evaluations/mac-336-full-2026-10-31.json). Actual installed OTHERS/acoustic acceptance, final review/CI and merge remain open. |
+| #236 live vocabulary ordering | `codex/vocabulary-live-context-order` at `b1efc9a`, based on `08810e8`: twelve focused methods passed on their recorded source. `2026-10-31/listentome-vocabulary236-live-context-order/full-validation-preparation-b1efc9a` is reviewed preparation only, with no grant or run. Full validation and source-matched installed OTHERS remain required before merge. |
+| #223 local History quality | `2026-10-30/listentome-semantic223-background-admission-prospective` retains original failures, the separate completed 128-item CPU/GPU diagnostic, eight-control parity and fake-vector cost evidence. `stage2-real-backend-adoption-preparation` is still test-only preparation: its next RED has not run. No bank reuse, calibrated policy or language-quality acceptance follows. |
+| #205 Whisper measurement | `2026-10-31/listentome-whisper205-full-measurement-preparation` retains the recipes and objective audio audit as preparation. Audible fixture fidelity and actual recent-phone accuracy/speed/battery measurements are incomplete; the old compatibility smoke is not that full measurement. |
+| #181 Watch | Build 44 distributes the phone-side inbox preservation repair. Physical recording, wrist-down, reconnection, file protection, battery and storage acceptance remain separate and open. |
+
+No #236 full run or next #223 adoption RED was started. The active #336 full run was allowed to
+finish, then reaped and preserved; it is not a new backlog job after the pause. All five issues stay
+open. Current Mac/phone lock observations are recorded in HANDOFF without repeating unchanged
+unlock requests. Evidence directories and unmerged branches must be retained for an explicit resume.
+
+## Historical delivery record
+
 The 22:22 UTC open-issue readback contained **#181, #205, #223, #236, #334 and #336**.
 The subsequently opened [#352](https://github.com/tomqwu/ListenToMe/issues/352) is separately owned
 cross-platform GUI refinement. PR #353 subsequently merged at `5e1a8f4` and closed #352 on

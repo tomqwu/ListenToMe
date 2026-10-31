@@ -1,6 +1,34 @@
 # Publish an iOS build to TestFlight
 
-## Current TestFlight checkpoint — 1.20.3 (43)
+## Current TestFlight checkpoint — 1.20.4 (44)
+
+Apple accepted **1.20.4 (44)** through the official TestFlight helper at
+**2026-10-31T14:08:38.174679+00:00** from merged source
+`08810e8aca007fd97f2f4633e3fbeea5c1f92731`. Apple build
+`688d5133-1488-410e-809f-3df04ec08bab` read **VALID / IN_BETA_TESTING** at **14:15 UTC**.
+The en-US name **Listen To Me - Real Time AI**, intended beta metadata and the existing two-member
+Dev group access were verified unchanged. The transported IPA and phone/Share/Watch distribution
+bundles passed verification; group access is not physical installation evidence.
+
+[Publication receipt](releases/ios-1.20.4-build44.json) ·
+[Full validation](evaluations/ios-1.20.4-full-ca7ab57-2026-10-31.json) ·
+[Seven-profile captures](evaluations/ios-1.20.4-release-captures-2026-10-31.json) ·
+[Release notes and What to Test](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.4-build44).
+
+Full-tested/captured `ca7ab57` and released `08810e8` differ only in documentation/gallery files.
+The verified GitHub pre-release has no binary assets and does not replace macOS **v1.4.4** as
+Latest. Physical iPhone/iPad and paired-Watch acceptance remains pending. The beta upload itself
+made no public review submission or listing-media upload. The later Store draft is
+**PREPARE_FOR_SUBMISSION**, selects build 44 for **MANUAL** release and has all **46 screenshots
+COMPLETE**, downloaded, matched to the original RGB pixels and verified in final set order, with
+zero processing errors. Physical acceptance remains incomplete. Standing review authorization is
+unchanged, but no review was submitted. See the
+[Store draft receipt](evaluations/ios-1.20.4-store-draft-2026-10-31.json) and
+[pause handoff](HANDOFF.md#pause-checkpoint--october-31-2026-after-1503-utc).
+Backlog work is paused at the maintainer's request. Production-readiness requirements below remain
+unchanged.
+
+## Historical TestFlight checkpoint — 1.20.3 (43)
 
 Apple accepted **1.20.3 (43)** through the official TestFlight helper at
 **2026-10-30T17:10:34.841880+00:00** from `97ef2461b86869405c1d0f4221816b790f0216fd`.
