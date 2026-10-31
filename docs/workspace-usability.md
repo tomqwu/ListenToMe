@@ -76,6 +76,15 @@ Evidence is retained under
   only that diagnostic button below the error, preserving transcript allocation and retry behavior.
   This interrupted aggregate remains failed; final completion is recorded in PR #353.
 
+- The complete iOS stage on `b43490d` passed 510 unit tests (seven environment skips), but
+  failed two UI assertions. The legacy transcript test still required the old smaller panel; its
+  allocation assertion now requires the approved 43–50 percent share and retains every scrolling/
+  reading-position assertion. The Duo toggle journey now targets the actual inner native switch,
+  as the other Auto tests do, checks enabled state and waits for the exact off-to-on value change after
+  tapping. The injected provider is supported; unavailable Auto is not accepted as success.
+  No production behavior is changed for these test corrections. The failed full result and its
+  screenshots remain `full-attempt4`; the focused result is `baseline-alignment-green`.
+
 ## Installed Mac integration
 
 The signed Dev candidate was opened separately. Native screenshots and AX readback retain default,
