@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "scope": "Unreleased Watch phone-inbox redelivery filesystem repair; actual iOS simulator focused result only",
+  "source": "105c91dd1d7b8e2b68dea5a89c0ae7e483e25bcf",
+  "runtimeFixSource": "5f52da6a3099778a812ff7ce52793f1312350cc3",
+  "scenario": "WATCHINBOX-001",
+  "startedUTC": "2026-10-31T01:32:10.525766+00:00",
+  "finishedUTC": "2026-10-31T01:33:24.214942+00:00",
+  "device": {
+    "architecture": "arm64",
+    "modelName": "iPhone 17 Pro",
+    "osVersion": "26.5",
+    "osBuildNumber": "23F77",
+    "platform": "iOS Simulator"
+  },
+  "tests": [
+    "WatchInboxRedeliveryTests/testCorruptLedgerRedeliveryMoveFailureKeepsFirstAudioAndSidecar()",
+    "WatchInboxRedeliveryTests/testMissingLedgerRedeliveryMoveFailureKeepsFirstAudioAndSidecar()"
+  ],
+  "result": {
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0,
+    "expectedFailures": 0,
+    "runtimeWarnings": 0,
+    "xcodebuildExit": 0,
+    "reaped": true,
+    "ownedGroupsAbsent": true,
+    "ownedSimulatorShutdownExit": 0
+  },
+  "sourceAndArtifactIntegrity": {
+    "frozenInputs": 1083,
+    "unchanged": true,
+    "sourceHashes": {
+      "iOS/WatchInbox.swift": "12570a18a1e9d1f35f2e90d1969828b532aa0eae83e679be054f8804c3be2378",
+      "iOSUnitTests/WatchInboxRedeliveryTests.swift": "7c3c5342472ce9819d4a64c5ca5bd80406f9484dafb589243c5ce6679de3b56a",
+      "Behaviors/watch-inbox-redelivery.json": "12e8dd04111893b7ad9c0c360f6b552d2615c03d0bea83d8eb115e4d534c1de5",
+      "project.yml": "d5ea37850247661c549c4b0358c274ca5f52741bb6b5ad7cee2dcfd972f8ca3c",
+      "Config/Package.resolved": "211b111264dbf510115192ce4c78c54b5761c2cf604408ee1181ad1e5779ac57"
+    },
+    "generatedAppIncludes": "iOS/WatchInbox.swift",
+    "generatedTestTargetIncludes": "iOSUnitTests/WatchInboxRedeliveryTests.swift",
+    "xcresultFilesRehashed": 34,
+    "binaryFiles": [
+      {
+        "bundle": "app",
+        "name": "Info.plist",
+        "sha256": "5e1d26e4c0c4c4a4b4ac99c29c223e6b7b4f99dcc7f5cc4408aa1b4c155c8095"
+      },
+      {
+        "bundle": "app",
+        "name": "ListenToMeIOS",
+        "sha256": "431baa1a1b20450bd009c0ea5a189349ff02e3c391044925f35661c6af577bfd"
+      },
+      {
+        "bundle": "app",
+        "name": "ListenToMeIOS.debug.dylib",
+        "sha256": "82d422a66d4d51ccb4184af3cf725d0c918ade65b7734eb11dfb25f4601153ab"
+      },
+      {
+        "bundle": "app",
+        "name": "__preview.dylib",
+        "sha256": "ee3ed109958dc8b830e49474576123040e57e48496d5e95874057bd691640f49"
+      },
+      {
+        "bundle": "tests",
+        "name": "Info.plist",
+        "sha256": "83f87f23bb3b9368d9863d153fb215f3f044d9d30de655cb91664b7f7396c341"
+      },
+      {
+        "bundle": "tests",
+        "name": "ListenToMeIOSUnitTests",
+        "sha256": "7abd7c94f4f24b8139ed4e6de81138e8783676eb30ada778cf577c5301abce30"
+      }
+    ]
+  },
+  "independentAudit": {
+    "verdict": "clear_for_exact_two_iOS_simulator_redelivery_methods_only",
+    "receipt": "native-green-105c91d/independent-native-outcome-review.json",
+    "sha256": "e52f3aa73ab825489717f12ab2e0c7b81eafd17148baadc3d1f8c378dcb2e05e",
+    "checks": [
+      "Fresh xcresult exports match saved exact-method/device/result data",
+      "All frozen inputs and source/test/config hashes match",
+      "Generated target inclusion and actual native compile entries checked",
+      "Original and preserved executable, Info.plist and all root dylib bytes match",
+      "All three supervised groups terminal/reaped and absent"
+    ],
+    "environmentBoundary": "Root outer execve used the nine recorded ordinary environment names. The unchanged supervisor inherits that restricted parent environment; it does not enforce an internal allowlist. No raw child-environment snapshot is claimed."
+  },
+  "preservedHistoricalEvidence": {
+    "portableRed": "2 methods failed 18 assertions before fix; terminal/reaped, 163 stable inputs",
+    "portableGreen": "Same 2 methods passed with 0 skips after fix; terminal/reaped, 163 stable inputs",
+    "portableIndependentReviewSHA256": "f6ed065e03f9eddaaa802916980288710a133979439cab8c0eb9b8bc248737ab",
+    "earlierXcodeSetupBlocker": "Historical; setup recovered before this native run"
+  },
+  "interpretation": [
+    "Actual iOS WatchInbox preserves first durable audio and exact sidecar on missing/corrupt-ledger redelivery and tidy restores one original ledger entry",
+    "Green refuses duplicate before invoking the injected failing move; green is not a claim that move failed",
+    "Opaque bytes show receipt/recovery does not require successful audio decoding; index2 recovery does not prove drain completion"
+  ],
+  "readmeGallery": {
+    "changed": false,
+    "reason": "Filesystem ownership repair has no visible UI change; existing source-labelled gallery and local links are retained, with no unrelated recapture or new hosted-preview claim"
+  },
+  "notEstablished": [
+    "physical WatchConnectivity/reconnection/wrist-down/battery/low-storage acceptance",
+    "physical iOS file protection",
+    "actual audio transcription/drain",
+    "full validate-local",
+    "CI for this repair",
+    "PR merge or release"
+  ],
+  "evidenceHashes": {
+    "state.json": "993b8fe5671eab567b779432baae83c6ece47c55189fd969ad27646fc5d6837c",
+    "native/reference.log": "7b6cd371ef15b81d219cad2a0f1afd1c097001c7c50f89a725733e08678c91a9",
+    "native/runner-state.json": "e2f80740d367af61af6a4873fdd9927ca53e20d5d6a190acbdbeab79cab3f78b",
+    "native/reaped-group.json": "152f9e2abdf53a68428a372fd2ad8ee83df071e295efeab79c6f4c3a30ead42f",
+    "native-summary.json": "c3323fc271fe025303d90c4f280a5a71b3adc2c5fb869ead4da7c82928fd4e85",
+    "native-tests.json": "5faa79ba4cd914117af93b982ae01ca8361ce4c81f3900e9642da421bac3efc0",
+    "frozen-inputs.json": "5a4bb30d7eb55b465df865d6cb08617800abe9e7492b771853003bb9684ced82",
+    "native-binaries.json": "d9fad0c0d35e05662bdf616cfa2f725d17cbed72566b184a7355b94fb4b0c32f"
+  }
+}

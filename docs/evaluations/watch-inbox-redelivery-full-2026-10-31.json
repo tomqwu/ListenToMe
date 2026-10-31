@@ -1,0 +1,137 @@
+{
+  "schemaVersion": 1,
+  "scope": "Watch phone-inbox duplicate delivery preserves first durable audio/metadata; complete local validation on exact integrated source",
+  "scenario": "WATCHINBOX-001",
+  "source": "989a6b4eb8157580422b15973109b5deacc4f65e",
+  "base": "946cb7ed2283a29facae648bf5f008d87e156a55",
+  "sourceTree": "309940244af5fe8cf6e2d3584b9e65c26b99bfb6",
+  "startedUTC": "2026-10-31T02:56:46.633180+00:00",
+  "finishedUTC": "2026-10-31T03:45:26.759574+00:00",
+  "command": "make validate-local BDD_BASE=946cb7ed2283a29facae648bf5f008d87e156a55",
+  "result": {
+    "exit": 0,
+    "terminalReaped": true,
+    "elapsedSeconds": 2916.401127833,
+    "allFrozenInputsUnchanged": 1109,
+    "failedNativeCases": 0
+  },
+  "tests": {
+    "core": {
+      "tests": 1294,
+      "skipped": 7,
+      "failed": 0,
+      "coveragePercent": 98.07677689091601
+    },
+    "iosUnit": {
+      "tests": 512,
+      "skipped": 7,
+      "failed": 0
+    },
+    "iosUI": {
+      "tests": 101,
+      "skipped": 5,
+      "failed": 0
+    },
+    "mac": {
+      "tests": 120,
+      "skipped": 0,
+      "failed": 0
+    },
+    "watchUnit": {
+      "tests": 29,
+      "skipped": 0,
+      "failed": 0
+    },
+    "watchUI": {
+      "tests": 6,
+      "skipped": 0,
+      "failed": 0
+    },
+    "toolingHelperMethods": 71,
+    "localLLMContracts": {
+      "OllamaContractE2ETests": 2,
+      "OpenAICompatibleContractE2ETests": 2,
+      "model": "qwen3:0.6b",
+      "failed": 0
+    }
+  },
+  "bdd": {
+    "catalogScenarios": 254,
+    "passingRequiredBoundSelectors": {
+      "ios-unit": 127,
+      "ios-ui": 55,
+      "mac-unit": 120,
+      "watch-unit": 29,
+      "watch-ui": 6,
+      "core": 256
+    },
+    "totalRequiredBoundSelectors": 593,
+    "catalogVsExecution": "Catalog structure and passing binding verification are distinct checks."
+  },
+  "focusedMethods": [
+    {
+      "test": "WatchInboxRedeliveryTests/testCorruptLedgerRedeliveryMoveFailureKeepsFirstAudioAndSidecar()",
+      "result": "Passed",
+      "durationSeconds": 0.005177021026611328,
+      "detailSHA256": "7afef3cb601c5836788ddb0372982c483a1d45bf1d341b4133a08f44f3730513",
+      "mediaAttachments": false
+    },
+    {
+      "test": "WatchInboxRedeliveryTests/testMissingLedgerRedeliveryMoveFailureKeepsFirstAudioAndSidecar()",
+      "result": "Passed",
+      "durationSeconds": 0.004143953323364258,
+      "detailSHA256": "616bf2cc8b43aef2f6cdd267e9b3c2c152b8b75273820730b3170abf6f73dff7",
+      "mediaAttachments": false
+    }
+  ],
+  "integrity": {
+    "originalNativeResultFilesVerified": 2033,
+    "allOriginalAndPreservedFileBytesMatch": true,
+    "derivedSummarySQLiteCachesSeparatelyRecorded": 3,
+    "iOSAppTestPayloadFilesPreserved": 6,
+    "stableDevSigningSHA256": "9344979f8b260004bd3630cede6cb1be52ad1d2ef8d8e9a2f4cf8cd1e0caa1d3",
+    "ownedProcessesAbsent": true,
+    "ownedSimulatorsConfirmedShutdown": true,
+    "shutdownCommand149": "Already Shutdown; verified by fresh available-device readback."
+  },
+  "normalMacDebugArtifact": {
+    "bundleIdentifier": "com.tomwu.ListenToMe.dev",
+    "version": "1.4.4",
+    "build": "14",
+    "strictDeepSignatureExit": 0,
+    "payloadFiles": 34,
+    "preservedArchiveSHA256": "6d6189e7c29d57c3f0087dd6fe3ebf1092b78f33248a316b0fc39b07789b3b4d",
+    "notLaunched": true
+  },
+  "requiredCI": {
+    "source": "989a6b4eb8157580422b15973109b5deacc4f65e",
+    "runURL": "https://github.com/tomqwu/ListenToMe/actions/runs/41163072169",
+    "threeRequiredChecks": "SUCCESS",
+    "readbackUTC": "2026-10-31T03:22:41.850229+00:00"
+  },
+  "historicalEvidencePreserved": [
+    "Portable filesystem RED:2methods18assertions; unchanged2methodsGREEN0skip.",
+    "Actual focused iOS105c91dd:2passed0skip1083stableinputs.",
+    "Older Xcode/setup/ownership failures remain distinct historical failures; none relabelled as product pass."
+  ],
+  "readmeGallery": "No visible UI change; existing source-labelled README gallery retained. Two new filesystem methods have no media attachments. No new UI capture or gallery refresh claimed.",
+  "acceptanceLimits": [
+    "Paired physical WatchConnectivity, real recording/reconnection/wrist-down/battery or low-storage acceptance",
+    "Physical iOS file protection or audio transcription/drain from opaque-byte tests",
+    "PR merge, issue181completion, release or production readiness"
+  ],
+  "evidenceRoot": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-watch181-focused-review/full-validation-preparation-989a6b4/",
+  "independentTerminalAuditSHA256": "42536786059ce57d27aeb68219c9be79ec3188a0fc065e47f54818b2ee54a711",
+  "evidenceHashes": {
+    "validation-state.json": "49d8c2aecb697a4c7c65ac3cc63603194f5b33b490f77c0d08a23510ea87b54d",
+    "validation/runner-state.json": "a4356c9773f874e0ad63c7ae7bf5c16c8d3e9328c659e50622b71c0db4944b02",
+    "validation/reference.log": "28822e27ab01027ae570ddb3c1a032b40f3ab021fdba89919ec21b50161ad069",
+    "post-terminal-source-and-native-preservation.json": "65b9b4421fbdc0cc57e437d7ddefe1c3dc3512854ad4d16507a7ed76c101b225",
+    "native-payloads/preservation.json": "53ced9b5e080051e66d9d383cb3276471e922aac9a8b6e63d5fff0a20417e8c6",
+    "post-run-core-binding-verification.txt": "c422cadafa3134dfaece3aa6f66a86f6298b45b93aab6dc1d03bc4d63b38244b",
+    "normal-debug-artifact/receipt.json": "86aa218e5f991774228980058cabeba28ffda92760995fcbe88376cbafbc0381",
+    "watch-redelivery-native-details/tests.json": "dc0a80ded9ae756bb870fe648dc9c5c1c83aaa9e46a4e4204adc53d7f68fb421",
+    "watch-redelivery-native-details/corrupt.json": "7afef3cb601c5836788ddb0372982c483a1d45bf1d341b4133a08f44f3730513",
+    "watch-redelivery-native-details/missing.json": "616bf2cc8b43aef2f6cdd267e9b3c2c152b8b75273820730b3170abf6f73dff7"
+  }
+}

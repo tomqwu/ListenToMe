@@ -136,10 +136,15 @@ The existing source-labelled hosted README passed inspection at 1,280- and 390-p
 44 images loaded at each width, and 11 downloaded assets/manifests matched local bytes. The recorded
 review is `docs-gallery-corrected/readme-89e9226/visual-review.json` in the external evidence directory.
 This verifies the existing gallery's rendering and links, not a new combined installed screenshot.
-Final documentation changes still need content/link checks, final gallery review and their own CI.
+Final documentation head `19d152f` subsequently passed independent review, all 265 local links and
+the hosted 1,280/390-pixel gallery check: 44 images at each width and eleven byte-identical downloads.
+All three required checks passed in [run 41160705656](https://github.com/tomqwu/ListenToMe/actions/runs/41160705656).
 
-PR [#354](https://github.com/tomqwu/ListenToMe/pull/354) remains open; final review and merge remain.
+PR [#354](https://github.com/tomqwu/ListenToMe/pull/354) merged at `946cb7e` on October 31, 02:49 UTC,
+closing #334. The matching local/remote feature branches were deleted and tracking refs pruned;
+other active checkouts, release tags and validation evidence were preserved.
 Combined installed Mac acceptance and a fresh full-app long-name capture remain open while the Mac
 is locked. Preserve the source-labelled earlier gallery and its capture manifest; do not substitute
 native component diagnostics or repeat unchanged unlock requests. Installed acceptance and release
-screenshots remain separate publication gates. No merge, production-ready or publication claim is made.
+screenshots remain separate publication gates. This fix is merged but unreleased, with no new
+production-ready or publication claim.

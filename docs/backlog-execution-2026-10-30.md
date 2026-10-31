@@ -3,10 +3,11 @@
 The 22:22 UTC open-issue readback contained **#181, #205, #223, #236, #334 and #336**.
 The subsequently opened [#352](https://github.com/tomqwu/ListenToMe/issues/352) is separately owned
 cross-platform GUI refinement. PR #353 subsequently merged at `5e1a8f4` and closed #352 on
-October 31, 01:34 UTC, leaving the original **six** open; do not duplicate that completed work.
+October 31, 01:34 UTC. PR #354 then merged at `946cb7e` and closed #334 at 02:49 UTC, leaving
+**five** open: #181, #205, #223, #236 and #336. Do not duplicate completed work.
 This is a delivery checkpoint, not a replacement for implementation, acceptance or the sequential PR queue.
 
-PRs #318, #349, #350 and #351 merged. #318 closed #333, #335, #337, #346, #347 and #348; #225
+PRs #318, #349, #350, #351, #353 and #354 merged. #318 closed #333, #335, #337, #346, #347 and #348; #225
 was already closed. TestFlight **1.20.3 (43)** was accepted from `97ef2461` and verified for the
 existing Dev group. The subsequent History Refresh in #351 is merged but unreleased. The last
 recorded public-release readback is iOS **1.19.1 (39)** and macOS DMG **1.4.4**; this checkpoint
@@ -16,11 +17,13 @@ does not perform a new Apple review submission or public-release readback.
 
 | Issue | Source and evidence | Remaining delivery work |
 | --- | --- | --- |
-| [#334](https://github.com/tomqwu/ListenToMe/issues/334) — speaker-name overflow | `codex/mac-speaker-name-overflow`, combined source `89e9226` on main `5e1a8f4`. Original genuine two-assertion red/ten-method green and the failed `9a39a12` aggregate remain preserved. Corrected installed rename/VoiceOver, full relaunch, archive preservation and native captures passed on `9a39a12`; the speaker control/row/bitmap-test files remain byte-identical after workspace integration. Combined full result: **passed (exit 0)**; [source-bound evidence](speaker-rename-acceptance.md). | All three required checks passed on `89e9226` ([run 41156133221](https://github.com/tomqwu/ListenToMe/actions/runs/41156133221)); PR #354 remains open. Deferred cleanup completed October 31, 00:36 UTC. Final docs/gallery checks, final-head CI, review and merge remain. Combined installed acceptance and a fresh full-app long-name capture remain blocked/open while the Mac is locked; the existing hosted gallery passed 44-image/11-download checks without establishing that capture. Keep this first in the PR queue. |
-| [#336](https://github.com/tomqwu/ListenToMe/issues/336) — saved-audio ordering | `codex/mac-saved-audio-order`, docs head `bf0f2ae`, runtime `d36b212`; real native ordering red followed by three passing rendered methods and 145 Core tests. Playback keeps canonical source/offset identity, duplicate restored IDs and untimed/legacy boundaries. | Integrate final #334 main; finish full validation, installed playback/gallery, review, CI and merge. The original near-end/overlap/repeated-speech/headphone/route matrix remains required separately. |
-| [#181](https://github.com/tomqwu/ListenToMe/issues/181) — preserve Watch audio during redelivery | `codex/watch-inbox-redelivery`, docs head `42479af`, runtime fix `5f52da6`. Portable red/green reproduced 18 assertions, then passed both unchanged methods. Actual iOS simulator source `105c91dd` subsequently passed both bound methods, zero failures/skips, with 1,083 unchanged inputs; `42479af` changes only documentation. The first durable audio/sidecar survives duplicate delivery before missing/corrupt-ledger recovery. | Integrate final #334 main, then complete full validation, review, CI and sequential merge. The focused filesystem result does not establish physical file protection, WatchConnectivity or recording/reconnection/wrist-down/battery/storage acceptance; [Watch scope and remaining physical acceptance](watch-beta.md). #181 remains open. |
+| [#181](https://github.com/tomqwu/ListenToMe/issues/181) — preserve Watch audio during redelivery | `codex/watch-inbox-redelivery`, integrated source `989a6b4` on main `946cb7e`, runtime fix `5f52da6`. Portable red reproduced 18 assertions, then both unchanged methods passed; actual focused iOS `105c91dd` also passed both without skips. Full `989a6b4` validation passed: Core 1,294/seven skips/98.0768%; iOS 613/twelve skips; Mac 120; Watch 35; zero failures, 1,109 inputs unchanged. [Audited full receipt](evaluations/watch-inbox-redelivery-full-2026-10-31.json). | All three required checks passed on `989a6b4` ([run 41163072169](https://github.com/tomqwu/ListenToMe/actions/runs/41163072169)); PR [#355](https://github.com/tomqwu/ListenToMe/pull/355) awaits final docs review/checks and merge. Physical file protection, WatchConnectivity and recording/reconnection/wrist-down/battery/storage acceptance remain separate; [Watch scope](watch-beta.md). #181 remains open and the fix is unreleased. |
+| [#336](https://github.com/tomqwu/ListenToMe/issues/336) — saved-audio ordering | `codex/mac-saved-audio-order`, clean integrated source `b2f531c` on main `946cb7e`, runtime `d36b212`; real native ordering red followed by three passing rendered methods and 145 Core tests. Playback keeps canonical source/offset identity, duplicate restored IDs and untimed/legacy boundaries. | After Watch merges, integrate that exact main; finish full validation, installed playback/gallery, review, CI and merge. The original near-end/overlap/repeated-speech/headphone/route matrix remains required separately. |
+| [#223](https://github.com/tomqwu/ListenToMe/issues/223) — cancel a stale History answer | Local `codex/history-ask-query-cancellation`, clean integrated source `5fef9ac` on main `946cb7e`; original `ac90083` has three actual shared-model tests in a temporary host. Two methods failed twelve assertions before the one-line fix, then all three passed. Query changes/clearing cancel old output and allow the next question; trimmed-equivalent edits preserve it. | Follow Watch and saved-audio merges; integrate their final main, run generated native/full validation and inspect affected controls, then review/CI/merge. This does not resolve the separate language-quality gap. |
 
-These candidates are **not merged or included in beta 43**. Their source, native results and
+These remaining candidates are **not merged or included in beta 43**. The #334 fix is merged but
+unreleased: full `89e9226` validation, independently reviewed `19d152f` documentation, all three CI
+checks and branch cleanup are complete. [Evidence and remaining publication gates](speaker-rename-acceptance.md). Their source, native results and
 independent reviews are retained in `2026-10-30/listentome-mac334-name-overflow/`,
 `listentome-mac336-saved-audio-order/` and `listentome-watch181-focused-review/` in the local evidence
 archive. Later docs-only commits must not be represented as fresh runtime validation.
@@ -76,7 +79,7 @@ Earlier phone checks timed out without establishing lock state. A fresh direct r
 October 31 reached the iPhone 17 Pro Max and reported `passcodeRequired: true`; the Mac
 also reported its screen locked. Resume affected installed/device work after an actual environment
 change and ownership check, without repeating unchanged unlock requests.
-Preserve the exact candidates; finish #334 before opening the next feature PR. After every merge,
+Preserve the exact candidates; #334 is complete and Watch inbox redelivery is next. After every merge,
 verify CI and delete only that PR's safe matching feature branches. Publication remains a later
 batched step with separate production acceptance and screenshot requirements.
 

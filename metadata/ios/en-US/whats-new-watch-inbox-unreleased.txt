@@ -1,0 +1,1 @@
+Keep an already-filed Apple Watch recording part and its original timing metadata when the same part arrives again before inbox recovery. A failed replacement no longer deletes the first copy.
