@@ -80,9 +80,13 @@ Two synthetic conversations exercised the flow. All eleven original archive file
 byte-identical; the neighboring fixture was unchanged. Only the target's two matching speaker names
 and derived transcript changed. Canonical segment IDs, recording IDs, capture times, text and language
 were preserved. The owned app processes ended and its exact `.dev` bundle was moved to Trash.
-Another session then started a Dev app using the same archive, so removal of the two owned fixtures
-and the scoped Dev permission reset are deferred until that session finishes. Its app and permissions
-were left untouched. The deferred cleanup is not a completed reset.
+At 23:05 UTC another session started a Dev app using the same archive, so removal of the two owned
+fixtures and the scoped Dev reset were deferred; its app and permissions were left untouched.
+The **October 31, 00:36 UTC follow-up** preserved and removed the two owned conversation files and
+their two derived vector files. All eleven original archive files remained byte-identical; the target's
+post-quit serialization changed no decoded content. No Dev process remained, the owned app was
+already trashed, and the later session had already completed the scoped Dev reset. No reset was
+repeated. The original deferred event and completed follow-up are both retained in the receipt.
 
 Fresh, unchanged native-resolution window captures refresh the README. Independent review inspected
 the rendered images, actual VoiceOver/input evidence, archive differences and source/signing receipt.
@@ -94,7 +98,11 @@ the evidence gap without changing the app. No acoustic, Store-sandbox or physica
 
 ## Remaining work
 
-Run fresh full validation after the other session releases the native test resources, obtain final
-review, pass required CI and merge. The corrected installed acceptance does not turn the interrupted
-aggregate into a pass or establish a published Mac release. Complete the recorded cleanup once safe;
-no repeated setup, unlock or permission request is needed.
+All three required checks passed on exact `f108857` in
+[run 41143536177](https://github.com/tomqwu/ListenToMe/actions/runs/41143536177); runtime/tests/config
+remain unchanged from `9a39a12`. PR [#354](https://github.com/tomqwu/ListenToMe/pull/354) is open.
+The October 31, 00:42–00:43 UTC fresh setup attempt was refused by the resource guard after simulator
+preparation, before make/tests. All 1,085 inputs matched and both owned devices shut down. The
+reviewed retry waits for the foreign native run to finish. Fresh full validation, final review and
+merge remain pending. Neither CI nor installed acceptance turns the original failed aggregate into
+a full pass or establishes a release. Cleanup is complete; no repeated setup/unlock/reset is needed.

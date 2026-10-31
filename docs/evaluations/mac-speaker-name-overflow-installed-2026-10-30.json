@@ -50,17 +50,70 @@
   "cleanup": {
     "ownedAppQuitAndTrashed": true,
     "VoiceOverRestoredOff": true,
-    "ownedFixtureRemoval": "deferred while another Dev session uses the shared archive",
-    "appScopedDevPermissionReset": "deferred while another Dev session is active",
-    "foreignAppAndProductionPermissionsUntouched": true
+    "ownedFixtureRemoval": "completed at 2026-10-31T00:36:45.334525+00:00; two owned conversation files and two derived vector files preserved before removal",
+    "appScopedDevPermissionReset": "already completed by the later owned session; no repeated reset",
+    "foreignAppAndProductionPermissionsUntouched": true,
+    "originalDeferredEvent": {
+      "at": "2026-10-30T23:05:00.685836+00:00",
+      "ownedFixtureRemoval": "deferred while another Dev session uses the shared archive",
+      "appScopedDevPermissionReset": "deferred while another Dev session is active",
+      "foreignAppAndProductionPermissionsUntouched": true
+    },
+    "followUp": {
+      "at": "2026-10-31T00:36:45.334525+00:00",
+      "receiptSHA256": "fada43d13d909c429f7c9c77674e63bd398cd7e79ff933b890310b279ef88bac",
+      "evidenceDirectory": "2026-10-30/listentome-mac334-name-overflow/corrected-installed-acceptance-9a39/deferred-cleanup-completed",
+      "removedOwnedConversationFiles": 2,
+      "removedOwnedVectorFiles": 2,
+      "originalArchiveFilesByteIdentical": 11,
+      "targetPostQuitSerializationOnly": true,
+      "targetDecodedContentUnchanged": true,
+      "macDevProcessAbsent": true,
+      "ownedAppAlreadyTrashed": true,
+      "laterSessionDevTCCCleanupReceiptSHA256": "2b2e48fce357b7d0f4a0b4223950d11c14ef71c502fd86133018f462d776bf03",
+      "laterSessionDevTCCCleanupExit": 0,
+      "noRepeatedTCCReset": true,
+      "settingsKeysProductionAndForeignSourceUntouched": true
+    }
   },
   "delivery": {
     "merged": false,
     "published": false,
     "remaining": [
-      "Finish deferred cleanup safely after the other Dev session ends.",
-      "Fresh full validation, required CI and PR merge.",
-      "Hosted README desktop/mobile check after the gallery is pushed."
-    ]
+      "Fresh full local validation, final review and PR merge; exact later-head CI remains required."
+    ],
+    "pullRequest": "https://github.com/tomqwu/ListenToMe/pull/354",
+    "hostedGallery": {
+      "source": "f108857707904efc02d5690d8fcd5a08f435f4e9",
+      "desktopWidth": 1280,
+      "mobileWidth": 390,
+      "inlineImagesLoaded": 37,
+      "newImagesAndManifestDownloadedByteIdentically": true,
+      "evidenceDirectory": "2026-10-30/listentome-mac334-name-overflow/docs-gallery-corrected/readme-f108857-settled-v2"
+    }
+  },
+  "requiredCI": {
+    "source": "f108857707904efc02d5690d8fcd5a08f435f4e9",
+    "readAt": "2026-10-30T23:45:37.157146+00:00",
+    "runURL": "https://github.com/tomqwu/ListenToMe/actions/runs/41143536177",
+    "checks": {
+      "macOS 26 app build": "SUCCESS",
+      "iOS 26 app build": "SUCCESS",
+      "ListenToMeCore tests + coverage": "SUCCESS"
+    },
+    "readbackSHA256": "5684aca0ef37556b299edbb982d4e60a20ae37162a64cbbaf9715b2a40c8d22f",
+    "runtimeTestsConfigUnchangedFromInstalledSource": true,
+    "localFullValidationPass": false
+  },
+  "freshFullValidation": {
+    "status": "pending_after_setup_refusal",
+    "source": "f108857707904efc02d5690d8fcd5a08f435f4e9",
+    "setupAttemptStartedAt": "2026-10-31T00:42:02.267779+00:00",
+    "setupAttemptFinishedAt": "2026-10-31T00:43:05.279374+00:00",
+    "reason": "Resource owner guard refused after simulator preparation, before make or validation tests",
+    "frozenInputsUnchanged": 1085,
+    "bothOwnedDevicesShutdownExit0": true,
+    "originalSetupReceiptSHA256": "3ffe62e4cdd5d9b4143288154f439b981405659f0d50ebd16360079c4f01c4e0",
+    "retry": "Reviewed retry prepared for the next free native slot; no test result yet."
   }
 }

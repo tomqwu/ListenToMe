@@ -1,8 +1,9 @@
 # Backlog execution — October 30, 2026
 
-GitHub's open-issue query was read back at 22:22 UTC: **#181, #205, #223, #236, #334 and #336**.
-They remain open because the outcomes below are incomplete. This is a delivery checkpoint, not a
-replacement for implementation, acceptance or the sequential PR queue.
+The 22:22 UTC open-issue readback contained **#181, #205, #223, #236, #334 and #336**.
+The subsequently opened [#352](https://github.com/tomqwu/ListenToMe/issues/352) is separately owned
+cross-platform GUI refinement, bringing the current queue to **seven**; do not duplicate that work.
+This is a delivery checkpoint, not a replacement for implementation, acceptance or the sequential PR queue.
 
 PRs #318, #349, #350 and #351 merged. #318 closed #333, #335, #337, #346, #347 and #348; #225
 was already closed. TestFlight **1.20.3 (43)** was accepted from `97ef2461` and verified for the
@@ -14,7 +15,7 @@ does not perform a new Apple review submission or public-release readback.
 
 | Issue | Source and evidence | Remaining delivery work |
 | --- | --- | --- |
-| [#334](https://github.com/tomqwu/ListenToMe/issues/334) — speaker-name overflow | `codex/mac-speaker-name-overflow`, tested runtime `9a39a12`; genuine two-assertion rendered red followed by ten passing native methods. The integrated attempt passed Core 1,294/seven skips, iOS 606/twelve skips and Mac 119. **The aggregate failed before Watch testing** during the Xcode update. Same-source signed build and four real-server contracts passed separately. After setup recovery, corrected installed rename/VoiceOver, full relaunch, archive preservation and fresh README captures passed independent review. | Run fresh full validation when the other session releases native resources, finish final review, required CI and merge. Keep this first in the PR queue. Complete deferred Dev cleanup when the other session ends. |
+| [#334](https://github.com/tomqwu/ListenToMe/issues/334) — speaker-name overflow | `codex/mac-speaker-name-overflow`, tested runtime `9a39a12`; genuine two-assertion rendered red followed by ten passing native methods. The integrated attempt passed Core 1,294/seven skips, iOS 606/twelve skips and Mac 119. **The aggregate failed before Watch testing** during the Xcode update. Same-source signed build and four real-server contracts passed separately. After setup recovery, corrected installed rename/VoiceOver, full relaunch, archive preservation and fresh README captures passed independent review. | All three required checks passed on `f108857` ([run 41143536177](https://github.com/tomqwu/ListenToMe/actions/runs/41143536177)); PR #354 is open. Deferred cleanup completed at October 31, 00:36 UTC. Fresh full validation/review/merge remain; the later setup attempt was refused before make/tests. Keep this first in the PR queue. |
 | [#336](https://github.com/tomqwu/ListenToMe/issues/336) — saved-audio ordering | `codex/mac-saved-audio-order`, docs head `bf0f2ae`, runtime `d36b212`; real native ordering red followed by three passing rendered methods and 145 Core tests. Playback keeps canonical source/offset identity, duplicate restored IDs and untimed/legacy boundaries. | Integrate final #334 main; finish full validation, installed playback/gallery, review, CI and merge. The original near-end/overlap/repeated-speech/headphone/route matrix remains required separately. |
 | [#181](https://github.com/tomqwu/ListenToMe/issues/181) — preserve Watch audio during redelivery | `codex/watch-inbox-redelivery`, docs head `105c91d`, runtime `5f52da6`; two unchanged iOS-source tests reproduced 18 assertions and then passed in a portable Mac host. The first durable audio/sidecar survives a duplicate transfer when the manifest is missing or corrupt. | Run the bound iOS tests and full validation after simulator repair, then review/CI/sequential merge. Portable filesystem tests do not establish iOS file protection, WatchConnectivity or physical Watch recording/reconnection/wrist-down/battery/storage acceptance. |
 
@@ -56,13 +57,22 @@ installer stopped at administrator authentication; the owned attempt was stopped
 the 22:43 UTC check returned first-launch 0 and working simulator inventory. Corrected #334 installed
 acceptance and native screenshots subsequently passed. Preserve the earlier failed aggregate.
 
-At 23:05 UTC another active session owned a Dev app and iOS native tests. Fresh full validation waits
-for those resources. The completed #334 app is quit and trashed; its two synthetic archive fixtures
-and scoped Dev permission reset remain deferred to protect that session. Do not repeat setup/unlock
-requests, reset shared permissions/services or interrupt another session's tests.
+At 23:05 UTC another session owned a Dev app and iOS native tests, so cleanup was deferred.
+The October 31, 00:36 UTC follow-up preserved and removed both owned fixtures and their two vector
+files, with all eleven original archive files unchanged. The later session had already completed
+the app-scoped Dev reset; it was not repeated. The original deferred event remains in the evidence.
 
-The last bounded phone check timed out and reaped; it establishes **no current device lock state**.
-Resume the affected native/installed/device work after an actual environment change and resource-ownership check.
+The 00:42–00:43 UTC fresh validation setup then met a new foreign native owner after preparing its
+simulators. The guard refused **before make/tests**; all 1,085 inputs matched and both owned devices
+shut down. The reviewed retry reuses these owned destinations and waits for the foreign run to reap.
+This is a failed setup attempt, not a product test failure or a full pass. The original `9a39a12`
+aggregate remains failed. Do not repeat setup/unlock requests, reset shared services or interrupt
+another session's tests. [Installed/cleanup receipt](evaluations/mac-speaker-name-overflow-installed-2026-10-30.json).
+
+Earlier phone checks timed out without establishing lock state. A fresh direct readback at
+October 31 reached the iPhone 17 Pro Max and reported `passcodeRequired: true`; the Mac
+also reported its screen locked. Resume affected installed/device work after an actual environment
+change and ownership check, without repeating unchanged unlock requests.
 Preserve the exact candidates; finish #334 before opening the next feature PR. After every merge,
 verify CI and delete only that PR's safe matching feature branches. Publication remains a later
 batched step with separate production acceptance and screenshot requirements.

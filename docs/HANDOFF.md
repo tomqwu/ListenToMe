@@ -1,6 +1,7 @@
 # Active backlog delivery — October 30, 2026
 
-Six issues remain open. Three local fixes have real focused red/green evidence: Mac long-name
+Seven issues remain open, including the separately owned GUI refinement
+[#352](https://github.com/tomqwu/ListenToMe/issues/352). Three local fixes have real focused red/green evidence: Mac long-name
 layout (#334), saved-audio ordering (#336), and Watch inbox redelivery data preservation (#181).
 Their required delivery gates are incomplete; they are not merged or in TestFlight 43. Spanish
 semantic-search candidates still fail the fixed quality requirement; physical #205/#236 and Watch
@@ -51,11 +52,19 @@ Corrected installed Mac acceptance then passed double-click/context-menu rename,
 refusal, full relaunch persistence, full-name tooltip and actual VoiceOver activation/Cancel/Save.
 Fresh native README captures show readable transcript text with contained long names at two window
 widths. All eleven original archive files and the neighboring synthetic record remained unchanged.
-The owned app was quit and trashed; fixture removal and scoped Dev TCC cleanup are deferred because
-another session started its own Dev app. Do not interrupt that session or reset its permissions.
-Fresh full validation awaits its native resource release; the earlier aggregate remains failed.
-Local merge `7b19c69` integrates main `0714b9ec` docs/gallery only; runtime/tests/config are unchanged
-from the preserved `9a39a12` candidate. Required CI and PR merge remain pending; no release is claimed.
+The owned app was quit and trashed. Cleanup was deferred at 23:05 UTC to protect another Dev
+session; the follow-up at **October 31, 00:36 UTC** completed removal of the two owned fixtures and
+two derived vector files after preservation. All eleven original archive files remained byte-identical;
+the target's later serialization changed no decoded content. The later session had already completed
+the scoped Dev permission reset, so no reset was repeated. [Cleanup follow-up](evaluations/mac-speaker-name-overflow-installed-2026-10-30.json).
+
+All three required checks passed on exact `f108857` in [CI run 41143536177](https://github.com/tomqwu/ListenToMe/actions/runs/41143536177)
+for open PR [#354](https://github.com/tomqwu/ListenToMe/pull/354). Runtime/tests/config remain unchanged
+from `9a39a12`. Fresh full validation is still pending: the October 31, 00:42–00:43 UTC attempt was
+refused by the ownership guard after simulator preparation, before `make` or tests; all 1,085 inputs
+matched and both owned devices shut down. The reviewed retry waits for the foreign native run.
+Neither this setup refusal nor passing CI turns the earlier failed aggregate into a full pass;
+PR merge and any later release remain pending.
 
 ## TestFlight 1.20.3 (43) published — October 30, 2026
 
@@ -92,7 +101,8 @@ Apple's listing. Original failed validation/preview attempts and the pre-extract
 error remain preserved separately; the repaired verifier did not repeat the upload.
 
 PR [#318](https://github.com/tomqwu/ListenToMe/pull/318) closed **#333, #335, #337, #346, #347 and #348**.
-Six remain open: **#181, #205, #223, #236, #334 and #336**. Optional MPNet delivery remains excluded,
+At that release checkpoint, six remained open: **#181, #205, #223, #236, #334 and #336**; the later
+separately owned **#352** brings the current count to seven. Optional MPNet delivery remains excluded,
 with its source and negative results preserved. #334's installed rename/VoiceOver checks found the
 long-name layout regression described above; its corrected installed-layout acceptance subsequently passed;
 #336 retains its near-end/overlap/routes matrix. These limits do not reopen completed fixes.
