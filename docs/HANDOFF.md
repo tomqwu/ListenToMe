@@ -1,4 +1,4 @@
-# Active backlog delivery — October 30, 2026
+# Active backlog delivery — October 31, 2026
 
 Five issues remain open: **#181, #205, #223, #236 and #336**. PR [#354](https://github.com/tomqwu/ListenToMe/pull/354)
 merged the Mac long-name correction at `946cb7e` on October 31, 02:49 UTC and closed #334. Full local
@@ -9,8 +9,18 @@ This is merged but unreleased, with combined installed/publication acceptance st
 Watch inbox preservation merged in [PR #355](https://github.com/tomqwu/ListenToMe/pull/355) at
 `0177431`, October 31, 04:09 UTC. Full local validation passed on `989a6b4`; independent review and
 all three final checks passed on docs head `f0f8d26`. Matching local/remote branches were deleted.
-It is merged but unreleased. Continue sequentially with saved-audio ordering (#336), then shared
-History Ask cancellation (#223); both have focused red/green evidence.
+It is merged but unreleased. Saved-audio ordering merged in PR #356 at `63e1777`, October 31,
+05:30 UTC, after all three final checks on `eee22fe` and independent review. Its matching branches
+were deleted and tracking refs pruned. Continue with shared History Ask cancellation (#223):
+its one-line fix has portable streaming and actual iOS completed-answer red/green proof, and now
+integrates that exact Saved Audio main. Full validation passed on `3c8cc37`, **05:35–06:24 UTC**:
+Core **1,294**, iOS **614**, Mac **126** and Watch **35**, zero failures with documented optional
+skips. All four new Ask methods passed; independent audit verified **1,121 unchanged inputs** and
+**2,099 original/preserved native-result files**. Three required checks passed on that head.
+PR [#357](https://github.com/tomqwu/ListenToMe/pull/357) is completing documentation review and final
+CI before merge. [Audited full receipt and acceptance limits](evaluations/history-ask-query-cancellation-full-2026-10-31.json).
+The existing native History control captures are QA only; installed/physical streaming interaction
+and the next release train remain separate. This change is not included in accepted beta 43.
 Language-search quality and the recorded physical #205/#236/Watch/audio checks remain unresolved.
 [Sources, tested outcomes, blockers and next actions](backlog-execution-2026-10-30.md).
 
@@ -27,11 +37,12 @@ confirmed Shutdown before the next job. Historical genuine red, the three focuse
 145 Core checks remain preserved in the [scope and evidence](dual-channel-capture.md#local-saved-audio-ordering-follow-up--october-30-2026).
 
 All three required checks passed on `347ed05` in [run 41167693082](https://github.com/tomqwu/ListenToMe/actions/runs/41167693082).
-PR [#356](https://github.com/tomqwu/ListenToMe/pull/356) remains open; later documentation commits
-require their own hosted checks and do not imply another binary run. Installed History playback
-and the full-app README capture remain blocked by the locked Mac; component images are QA only.
+PR [#356](https://github.com/tomqwu/ListenToMe/pull/356) merged at `63e1777` after independent review
+and all three final checks on docs-only head `eee22fe` ([run 41172229981](https://github.com/tomqwu/ListenToMe/actions/runs/41172229981)).
+Its matching local/remote branches were deleted. Installed History playback and the full-app
+README capture remain blocked by the locked Mac; component images are QA only.
 The original near-end/overlap/repeated-speech/headphone/route matrix remains open. This bounded fix
-does not close #336 or change iOS playback lookup, and it is not merged or published.
+does not close #336 or change iOS playback lookup. It is merged but unreleased.
 
 ## Unreleased workspace usability refinements — October 30, 2026
 

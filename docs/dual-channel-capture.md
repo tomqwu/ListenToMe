@@ -154,11 +154,13 @@ owned temporary directory passed strict signature checks, with 34 payload files 
 Documents copy's metadata-related signature failure and a postprocessing helper incompatibility
 remain separately recorded; neither changes the successful original build or native test result.
 All three required checks passed on `347ed05` in [run 41167693082](https://github.com/tomqwu/ListenToMe/actions/runs/41167693082).
-PR [#356](https://github.com/tomqwu/ListenToMe/pull/356) remains open; later documentation commits
-need their own hosted checks and are not a fresh runtime validation.
+PR [#356](https://github.com/tomqwu/ListenToMe/pull/356) merged at `63e1777`, October 31, 05:30 UTC,
+after independent final review and all three checks on docs-only `eee22fe` ([run 41172229981](https://github.com/tomqwu/ListenToMe/actions/runs/41172229981)).
+The merge tree equals that reviewed head; matching local/remote branches were deleted and tracking
+refs pruned. The documentation follow-up is not a fresh runtime validation.
 
 Source-matched installed History playback and a fresh full-app README screenshot remain pending
 while the Mac is locked; the native component images are QA evidence only. No repeated unlock
 request was made. Independent near-end speech, overlap, genuinely repeated speech, headphones
 and physical route recovery remain separate #336 acceptance gates. This slice does not close #336,
-and no merge, publication or production-readiness claim is made.
+and it is merged but unreleased, without a production-readiness claim.

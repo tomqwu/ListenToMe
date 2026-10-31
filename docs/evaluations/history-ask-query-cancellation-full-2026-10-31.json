@@ -1,0 +1,237 @@
+{
+  "schemaVersion": 1,
+  "scope": "History Ask clears and cancels stale output when the trimmed query changes, preserves whitespace-equivalent requests, and clears completed phone answer state; full local validation on exact Saved Audio-integrated source",
+  "scenarios": [
+    "HISTORYASKCANCEL-001",
+    "HISTORYASKCANCEL-002",
+    "HISTORYASKCANCEL-003",
+    "HISTORYASKCANCEL-004"
+  ],
+  "source": "3c8cc37231163bbb7134e9229205aa25273920fb",
+  "base": "63e1777887c3083d3fe18f76f7a25c1d7016286a",
+  "sourceTree": "de9e7a0ac315d83916f919d7b2a2655193399cf3",
+  "startedUTC": "2026-10-31T05:35:18.933333+00:00",
+  "finishedUTC": "2026-10-31T06:24:00.687542+00:00",
+  "command": "make validate-local BDD_BASE=63e1777887c3083d3fe18f76f7a25c1d7016286a",
+  "result": {
+    "exit": 0,
+    "terminalReaped": true,
+    "elapsedSeconds": 2918.189251208,
+    "allFrozenInputsUnchanged": 1121,
+    "failedNativeCases": 0
+  },
+  "tests": {
+    "core": {
+      "tests": 1294,
+      "skipped": 7,
+      "failed": 0,
+      "coveragePercent": 98.07706924070837
+    },
+    "iosUnit": {
+      "tests": 513,
+      "skipped": 7,
+      "failed": 0
+    },
+    "iosUI": {
+      "tests": 101,
+      "skipped": 5,
+      "failed": 0
+    },
+    "mac": {
+      "tests": 126,
+      "skipped": 0,
+      "failed": 0
+    },
+    "watchUnit": {
+      "tests": 29,
+      "skipped": 0,
+      "failed": 0
+    },
+    "watchUI": {
+      "tests": 6,
+      "skipped": 0,
+      "failed": 0
+    },
+    "toolingHelperMethods": 71,
+    "hotkeyShellChecks": "passed",
+    "localLLMContracts": {
+      "OllamaContractE2ETests": 2,
+      "OpenAICompatibleContractE2ETests": 2,
+      "model": "qwen3:0.6b",
+      "failed": 0
+    }
+  },
+  "bdd": {
+    "catalogScenarios": 259,
+    "passingRequiredBoundSelectors": {
+      "ios-unit": 128,
+      "ios-ui": 55,
+      "mac-unit": 126,
+      "watch-unit": 29,
+      "watch-ui": 6,
+      "core": 256
+    },
+    "totalRequiredBoundSelectors": 600,
+    "catalogVsExecution": "Catalog structure and passing binding verification are distinct; Core bindings additionally verified from the completed full log without rerunning tests."
+  },
+  "focusedMethods": [
+    {
+      "scenario": "HISTORYASKCANCEL-001",
+      "test": "HistoryAskQueryCancellationTests/testChangingQuestionCancelsOldProviderAndAllowsNewAnswerWithoutLateOverwrite()",
+      "result": "Passed",
+      "durationSeconds": 0.04804205894470215,
+      "nativeExecutionCount": 1,
+      "mediaAttachments": false,
+      "detailSHA256": "c3fdafbf40844e1592dacc50cfe9414768f64371dd3d265ab0986b791ec02dab"
+    },
+    {
+      "scenario": "HISTORYASKCANCEL-002",
+      "test": "HistoryAskQueryCancellationTests/testClearingQuestionCancelsHiddenAnswerAndAllowsNextQuestion()",
+      "result": "Passed",
+      "durationSeconds": 0.04268205165863037,
+      "nativeExecutionCount": 1,
+      "mediaAttachments": false,
+      "detailSHA256": "359e9b1df0154bc5a5cd038e64e995503ab713e9d2bf77b59d45aad687e0b0ab"
+    },
+    {
+      "scenario": "HISTORYASKCANCEL-003",
+      "test": "HistoryAskQueryCancellationTests/testTrimEquivalentQuestionKeepsCurrentStreamAndAnswer()",
+      "result": "Passed",
+      "durationSeconds": 0.0265350341796875,
+      "nativeExecutionCount": 1,
+      "mediaAttachments": false,
+      "detailSHA256": "f70133902c9de3a77bafd44fdc333d0bc36f6e64293b63d71e60cbd07371cd59"
+    },
+    {
+      "scenario": "HISTORYASKCANCEL-004",
+      "test": "MobileHistorySearchTests/testChangedOrClearedQuestionRemovesCompletedAnswerButWhitespaceKeepsIt()",
+      "result": "Passed",
+      "durationSeconds": 5.847273945808411,
+      "nativeExecutionCount": 1,
+      "mediaAttachments": false,
+      "detailSHA256": "fe1ce7b0a6a82943ca0a1253d422cff372795c67378c6d6a4cd13f136b6b51ce"
+    }
+  ],
+  "integrity": {
+    "originalNativeResultFilesVerified": 2099,
+    "allOriginalAndPreservedFileBytesMatch": true,
+    "derivedSummarySQLiteCachesSeparatelyRecorded": 3,
+    "executedTestBundlesPreserved": 6,
+    "testAndHostPayloadFilesPreserved": 111,
+    "stableDevSigningSHA256": "9344979f8b260004bd3630cede6cb1be52ad1d2ef8d8e9a2f4cf8cd1e0caa1d3",
+    "ownedProcessesAbsent": true,
+    "ownedSimulatorsConfirmedShutdown": true,
+    "shutdownCommand149": "Both devices were already Shutdown; confirmed by fresh readback before the next lane owner."
+  },
+  "normalMacDebugArtifact": {
+    "bundleIdentifier": "com.tomwu.ListenToMe.dev",
+    "version": "1.4.4",
+    "build": "14",
+    "strictDeepSignatureExit": 0,
+    "archiveExtractedSignatureExit": 0,
+    "payloadFiles": 34,
+    "preservedArchiveSHA256": "58ddb0fdae5a79454ae6c3874a660e6756bc3ae529a390ca1c5dc14d30357a46",
+    "archiveBytesModesSymlinksVerified": true,
+    "archiveExtractedPayloadBytesVerified": true,
+    "notLaunched": true,
+    "scope": "Current full-run normal Debug Dev build; archive verified directly and after extraction into an owned temporary directory. No install, permission change or distribution acceptance."
+  },
+  "requiredCI": {
+    "source": "3c8cc37231163bbb7134e9229205aa25273920fb",
+    "runURL": "https://github.com/tomqwu/ListenToMe/actions/runs/41173088745",
+    "threeRequiredChecks": "SUCCESS",
+    "readbackUTC": "2026-10-31T05:52:56.738Z"
+  },
+  "freshHistoryControls": {
+    "source": "3c8cc37231163bbb7134e9229205aa25273920fb",
+    "preservedPNGCount": 8,
+    "visuallyInspectedPNGCount": 3,
+    "images": [
+      {
+        "file": "fresh-history-ui-attachments/D8C81143-73E6-4823-BFFE-A4316FAD58E0.png",
+        "SHA256": "ef57b08e8054b5f484549dd4ff82655e25e3ddc5bcb3f1f2c3ad532758b10ec1",
+        "review": "Landscape queried controls: Refresh, Ask and disclosure legible; lower result extends behind the bottom search drawer in this control-focused scroll state.",
+        "rawPNGWidth": 1206,
+        "rawPNGHeight": 2622,
+        "exifOrientation": 8,
+        "orientedDisplayWidth": 2622,
+        "orientedDisplayHeight": 1206
+      },
+      {
+        "file": "fresh-history-ui-attachments/C7D6E469-96D8-4A01-BAA8-3F33327DD1FE.png",
+        "SHA256": "49dd34e19701ef247820fc3eace4d5915ffac3187790363a88cc597b6a1ba53b",
+        "review": "Portrait queried state: Refresh, Ask, provider disclosure and matching snippet visible; software keyboard present.",
+        "rawPNGWidth": 1206,
+        "rawPNGHeight": 2622,
+        "exifOrientation": 1,
+        "orientedDisplayWidth": 1206,
+        "orientedDisplayHeight": 2622
+      },
+      {
+        "file": "fresh-history-ui-attachments/384FA532-E718-463B-8DAB-46F9F3B45A4E.png",
+        "SHA256": "5ce886c9945141d1954ede1a15f476f6d26cc49df348103f575185a40e2cfd1e",
+        "review": "Portrait no-results state: Refresh, Ask and provider disclosure visible; lower empty-state guidance is partly behind the search drawer and keyboard.",
+        "rawPNGWidth": 1206,
+        "rawPNGHeight": 2622,
+        "exifOrientation": 1,
+        "orientedDisplayWidth": 1206,
+        "orientedDisplayHeight": 2622
+      }
+    ],
+    "scope": "Existing simulator History UI tests render Refresh, Ask and provider disclosure in queried portrait/landscape and no-results states. The four new regression methods themselves have no media attachments.",
+    "limits": [
+      "Existing simulator History fixture captures only; the four new regression methods have no media attachments.",
+      "Images establish rendered controls, not streaming cancellation gesture execution, installed Mac acceptance, physical iPhone acceptance or model-language answer quality.",
+      "No README substitution or full-page/gallery-readiness claim: keyboard and scroll-covered lower content are retained.",
+      "Exact native cancellation/completed-answer assertions separately passed in the actual full suites."
+    ],
+    "reviewers": [
+      "review_merge_acceptance",
+      "root"
+    ],
+    "orientationNote": "Original width/height fields describe stored PNG pixels. The landscape file carries EXIF8, so the image tool displays2622x1206 from raw1206x2622. Portrait files carry EXIF1."
+  },
+  "historicalEvidencePreserved": [
+    "Original focused shared-model RED had two failing methods and twelve assertions; whitespace control passed, then all three unchanged methods passed after the one-line fix.",
+    "Actual iOS RED d36f3ed failed eight assertions in one method; GREEN d7c7124 passed unchanged method with zero skips. Existing source-bound iOS receipt and independent audit remain unchanged.",
+    "This is a fresh combined full run, not a relabelled historical focused, installed or physical acceptance result."
+  ],
+  "readmeGallery": "No view appearance changed. Existing source-labelled README gallery remains applicable; these QA captures are not a README replacement or fresh gallery publication claim.",
+  "acceptanceLimits": [
+    "Source-matched installed Mac and physical iPhone/iPad checks of editing/clearing during an answer remain separate; simulator state assertions and existing control captures do not establish that manual gesture flow.",
+    "Cancellation stops local consumption and fences late publication; it cannot recall already-sent excerpts or guarantee remote server computation stops.",
+    "No additional-language search/answer quality or original issue223 closure claim; provider, ranking, archive and model-selection behavior are unchanged.",
+    "Existing physical paired-Watch and original acoustic acceptance remain separate.",
+    "This receipt does not itself establish PR357 merge, any publication, App Store submission or production readiness."
+  ],
+  "evidenceRoot": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-history-ask-query-cancellation/full-validation-preparation-3c8cc37/",
+  "evidenceHashes": {
+    "validation-state.json": "26759996c3d9988c40da2c4b88d34fec28426fb60f9e1d762a717d90456dd803",
+    "validation/runner-state.json": "4abcc9972177a569954ee61d888506710819e6ba151f7d535e2943e8e46cec9e",
+    "validation/reference.log": "6701d0bee2e0d3b2813a438454d23101eeed0d3a5190463064d0c6a7a0f77ec1",
+    "source-freeze.json": "4a2b1b824c54e1ac7568d25586f1ed3e9d9c8d25cf4022503c51af8a802af8ca",
+    "execution-authorization.json": "f4c9d68e3c702f1f52a2f756da0d16ada7f33abe99dabd725993bb79f3fe52af",
+    "independent-runner-delta-review.json": "356f516cbdf1df9bb7bdd2fe03727c797242003d40e0658af00dace3f32b45b5",
+    "post-terminal-source-and-native-preservation.json": "39f7dcf8d902469d5c32d8a345c00dfc176932741288209d70974a5d7ac7b7ce",
+    "native-payloads/preservation.json": "87043e0c3d3505487cde87e0e27c56d8d59d5ee510f237be0324d2e4c4dd6f89",
+    "normal-debug-artifact/receipt.json": "136b1a12c1fc0b98223a28bbe2d216e56c1bd3909378ddec7202e1b691bd97b9",
+    "post-run-core-binding-verification.txt": "a62187462453168d1ba9ac6a116e2a18127a77259254b6c98c5edb3e27cfc674",
+    "ask-native-details/export-receipt.json": "8e728407f81b4c26764782e1de485bee272b8161086aeebca1c4524751493271",
+    "ask-native-details/mac-tests.json": "8312fe67fa19ab9aefd0bb0320428ed13e78cade5f2436f3eaa10cf42e6732bb",
+    "ask-native-details/ios-tests.json": "8f1bc6faa8e2d318175ef541df22b3ab2d1bbc6ff0dd5d216adce70b3dc13381",
+    "history-ui-export.json": "3e8f694f98f3174e48d803956c6753b5447ed78c7b285e03c14db205dc2faa75",
+    "fresh-history-ui-attachments/manifest.json": "1bed320f6a7865206d453b35fd9e08d36bcbca80fcb9af45bad62d7c3e044c5f",
+    "history-controls-render-review.json": "cfc144f086eb56bcef365a09100efe146dd116ab65a423c6533cbc14248053c1",
+    "hosted-ci-readback.json": "ed7df056294e8d5ecf7fe3a33995d998d28be4125c1cfacb2b314f51bed2a55a",
+    "lane-release.json": "bbbbd32541d54241de819abb69453d6e4899f3f17aa8338bc1056966f224a95e",
+    "ask-native-details/changed.json": "c3fdafbf40844e1592dacc50cfe9414768f64371dd3d265ab0986b791ec02dab",
+    "ask-native-details/cleared.json": "359e9b1df0154bc5a5cd038e64e995503ab713e9d2bf77b59d45aad687e0b0ab",
+    "ask-native-details/whitespace.json": "f70133902c9de3a77bafd44fdc333d0bc36f6e64293b63d71e60cbd07371cd59",
+    "ask-native-details/phone-completed.json": "fe1ce7b0a6a82943ca0a1253d422cff372795c67378c6d6a4cd13f136b6b51ce",
+    "root-rendered-history-review.json": "6a614599d7696411eab4f06cc30a2b884b2806799ff40c6649228051c6756ede",
+    "history-image-orientation-addendum.json": "ef7fa45aba791fb8792e5f71aa8190c5b55880567997a6953940c6db399aa142",
+    "independent-terminal-audit.json": "4ed4ae085e01f496d79f966c7b81210e6ce78173eb7f7186568d77c94c11434e"
+  },
+  "rootRenderedHistoryReviewSHA256": "6a614599d7696411eab4f06cc30a2b884b2806799ff40c6649228051c6756ede",
+  "independentTerminalAuditSHA256": "4ed4ae085e01f496d79f966c7b81210e6ce78173eb7f7186568d77c94c11434e"
+}

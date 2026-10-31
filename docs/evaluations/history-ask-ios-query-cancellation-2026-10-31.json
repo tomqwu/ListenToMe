@@ -1,0 +1,56 @@
+{
+  "status": "focused native iOS red-green passed",
+  "scenario": "HISTORYASKCANCEL-004",
+  "selector": "MobileHistorySearchTests/testChangedOrClearedQuestionRemovesCompletedAnswerButWhitespaceKeepsIt",
+  "red": {
+    "source": "d36f3edd9c838a1c5cfa27e5ee91535ebb749386",
+    "tests": 1,
+    "failedMethods": 1,
+    "failedAssertions": 8,
+    "skips": 0,
+    "inputPins": 1120,
+    "terminalReaped": true,
+    "simulatorShutdown": true,
+    "testSourceSHA256": "0eb2c59160096877d7fdb3f9d12092e276dde05ddb8fae88d69221263b33fdcc",
+    "runtimeSHA256": "af0c5f472a85ddf40c79df0471edb92c4c14c7e62a76665028838cff844ddcf6",
+    "summarySHA256": "344a2235eaa7fa88ef293041fb0b038bf583f1529f261e6bf681e7a56dd73812",
+    "nativeLogSHA256": "1a559c06004fdc5b7cf6af1ddb06a883a2e482404ffa26d0d557916f48e8eb09",
+    "archiveSHA256": "5e92d6c797151059a7cd81be81c0926e39e0592f7e032049bfae754fecd53ff9",
+    "archiveFiles": 113
+  },
+  "green": {
+    "source": "d7c712457b7e74de09b3d6a2938b923f6b6657c4",
+    "tests": 1,
+    "failures": 0,
+    "skips": 0,
+    "inputPins": 1120,
+    "terminalReaped": true,
+    "simulatorShutdown": true,
+    "testSourceSHA256": "0eb2c59160096877d7fdb3f9d12092e276dde05ddb8fae88d69221263b33fdcc",
+    "runtimeSHA256": "5b5ffbe388aa16407c40dfbb40342f66e58e8981f53a37d844049d9407b45900",
+    "summarySHA256": "8a80390b5552e65acb4e6a63141bc0ec5417aa9dc35f6f80255876f64ca3e432",
+    "nativeLogSHA256": "b50c696d0a7d57b9d8936e3e80990ad7165d52b595dd1184a0632eccec14b98e",
+    "archiveSHA256": "48e1a32c7482e9b0095a262eb2d7fb8ff343be6a2ba63d27065450371c68f124",
+    "archiveFiles": 113
+  },
+  "commands": {
+    "red": "python3 ios-completed-answer-native-preparation/run-native.py",
+    "green": "python3 ios-completed-answer-native-green/run-native.py"
+  },
+  "nativeCommand": "xcodebuild -scheme ListenToMeIOS -configuration Debug -only-testing:ListenToMeIOSUnitTests/MobileHistorySearchTests/testChangedOrClearedQuestionRemovesCompletedAnswerButWhitespaceKeepsIt test (iPhone 17 Pro simulator, iOS 26.5; full command preserved externally)",
+  "independentReview": {
+    "file": "ios-completed-answer-native-green/independent-native-red-green-review.json",
+    "sha256": "8f91bec66ccdd311e0f64da5f00535cf945502f9cfe8cf309b4d06316b81218e"
+  },
+  "evidenceRoot": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-history-ask-query-cancellation",
+  "outcomes": [
+    "Changed and cleared query each remove old completed answer, question, nonempty citations and passage count.",
+    "Whitespace-equivalent query preserves the completed answer.",
+    "All search edits leave provider request count unchanged; Ask remains explicit."
+  ],
+  "limits": [
+    "Simulator state test, not physical-device or installed UI acceptance.",
+    "Three Mac streaming/cancellation cases have separate portable proof; combined native full validation remains pending.",
+    "No semantic-language quality or publication claim."
+  ]
+}

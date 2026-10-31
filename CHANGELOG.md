@@ -38,6 +38,10 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased)
 
+- Cancel an in-progress History answer when its question changes or is cleared, so the next
+  question can start immediately and late output cannot replace it. Whitespace-only edits keep
+  the current answer running; provider selection and excerpt-only disclosure are unchanged. (#223)
+
 - Explain unavailable automatic summaries before listening, retain explicit provider choices and
   allow a saved Auto preference to be turned off. Give populated portrait transcripts more reading
   space, move optional speech tools into Transcript actions, label Generate/Update, and group
@@ -212,6 +216,10 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 - Settings → Privacy now explains that optional Ollama, Cloud AI and OpenAI-compatible requests send text and included context to the provider you choose; Apple Intelligence stays on-device. (#247)
 
 ## macOS (unreleased since 1.4.4)
+
+- Cancel an in-progress History answer when its question changes or is cleared, so the next
+  question can start immediately and late output cannot replace it. Whitespace-only edits keep
+  the current answer running; provider selection and excerpt-only disclosure are unchanged. (#223)
 
 - Show delayed saved-audio lines in stable chronological order within each recording in History's
   **Play from a line** list. Keep each row linked to its original audio part and offset, including
