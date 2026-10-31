@@ -2,16 +2,21 @@
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
 26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`. Public App Store version is
-**1.19.1 (39)** and the latest TestFlight version is **1.20.3 (43)**. See the
+**1.19.1 (39)** in the recorded public baseline and the latest TestFlight version is **1.20.4 (44)**. See the
 [public availability observation](releases/ios-1.19.1-build39-public.json).
 
-## Next TestFlight train — 1.20.4 (44), in preparation
+## TestFlight 1.20.4 (44) — published October 31, 2026
 
 This train combines merged local History refresh, question-change cancellation, clearer workspace
 controls and duplicate Watch-inbox preservation. It includes the Watch companion; it does not add
-an experimental multilingual embedding model. Current accepted beta remains **1.20.3 (43)**.
-Apple readback on October 31, 06:57 UTC found no build 44. The public US version remains **1.19.1**,
-with the **en-US** name **Listen To Me - Real Time AI**. No upload or production acceptance is claimed.
+an experimental multilingual embedding model. Apple accepted the official helper upload at
+**14:08:38 UTC** from merged source `08810e8`; subsequent readback confirmed **VALID / IN_BETA_TESTING**,
+**en-US**, **Listen To Me - Real Time AI**, exact What to Test/beta description and unchanged existing
+Dev group access. The exact transported IPA and phone/Share/Watch distribution bundles passed verification.
+[Publication receipt](releases/ios-1.20.4-build44.json) ·
+[Complete GitHub pre-release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.4-build44).
+Group access does not establish installation of build 44. The recorded public baseline is **1.19.1 (39)**;
+this train did not submit a public version or upload App Store listing screenshots.
 
 Previously full-tested source `9460f00` on base `09adc703` passed complete local validation on October 31,
 **11:00–11:47 UTC**, with zero failures: Core 1,294/seven skips, iOS 614/twelve skips, Mac 126 and
@@ -27,7 +32,10 @@ with documented skips. All 71 native images were inspected; the README selects e
 originals and preserves earlier galleries separately. [Current full receipt](evaluations/ios-1.20.4-full-ca7ab57-2026-10-31.json) ·
 [Fresh captures](evaluations/ios-1.20.4-release-captures-2026-10-31.json) ·
 [Preserved failure](evaluations/ios-1.20.4-ipad-mini-capture-failure-2026-10-31.json).
-Hosted README review, final CI/merge and validated distribution remain pending.
+Hosted README review passed. PR #358 merged at `08810e8`, with all three required checks green on
+that exact source. Its changes from `ca7ab57` are documentation/gallery only; capture manifests and
+earlier failures retain their original source/status. TestFlight publication is now accepted, and the
+GitHub pre-release is not Latest and contains no binary assets.
 Physical phone/iPad and paired-Watch acceptance remain separate production gates.
 Mac release and its installed audio acceptance remain separate from this iOS train.
 
@@ -191,7 +199,7 @@ that captures system or call audio. The 1.20.1 (41) beta declares audio backgrou
 established user-started microphone recording continues through screen lock; new capture still
 requires active use. Optional AI pauses. See [continuity limits and acceptance](recording-continuity.md).
 
-Apple Watch recording ([#181](https://github.com/tomqwu/ListenToMe/issues/181)) is included in public iOS **1.19.1 (39)** and **TestFlight 1.20.3 (43)**. Its phone/Share/Watch distribution package and Apple beta access were verified; physical microphone, paired transfer, wrist-down and battery/storage acceptance remain pending. See [Watch installation and evidence](watch-beta.md), the [accepted beta receipt](releases/ios-1.20.3-build43.json) and the [public availability observation](releases/ios-1.19.1-build39-public.json). Dated earlier-build publication evidence remains in the Watch guide.
+Apple Watch recording ([#181](https://github.com/tomqwu/ListenToMe/issues/181)) is included in public iOS **1.19.1 (39)** and **TestFlight 1.20.4 (44)**. Build 44 adds duplicate-inbox preservation and clearer device-named controls. Its phone/Share/Watch distribution package and Apple beta access were verified; physical microphone, paired transfer, wrist-down and battery/storage acceptance remain pending. See [Watch installation and evidence](watch-beta.md), the [accepted beta receipt](releases/ios-1.20.4-build44.json) and the [public availability observation](releases/ios-1.19.1-build39-public.json). Dated earlier-build publication evidence remains in the Watch guide.
 
 ## Parity with macOS
 

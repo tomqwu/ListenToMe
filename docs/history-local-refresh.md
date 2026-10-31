@@ -1,7 +1,8 @@
 # Explicit local History refresh — #223
 
-The original October 30 implementation subsequently merged in PR #351. The build-44 follow-up
-below is locally validated and remains unpublished.
+The original October 30 implementation subsequently merged in PR #351. Its iPhone/iPad behavior is
+distributed in [TestFlight 1.20.4 (44)](releases/ios-1.20.4-build44.json); the Mac feature remains unreleased.
+The capture follow-up below is included in the validated release source; physical acceptance remains separate.
 This does not restore the withdrawn MPNet runtime or establish additional-language search quality.
 
 ## Build 44 landscape capture follow-up — October 31
@@ -33,7 +34,9 @@ every image suitable for a listing. Final complete `make validate-local` then pa
 `ca7ab57` source: the 261-scenario catalog validated and all 602 required bound selectors passed.
 [Current full receipt](evaluations/ios-1.20.4-full-ca7ab57-2026-10-31.json), [capture receipt](evaluations/ios-1.20.4-release-captures-2026-10-31.json) and
 [README capture manifest](images/ios/release-1.20.4/manifest.json) preserve those separate source-bound results.
-Final documentation/CI/merge, hosted README inspection and distribution remain separate gates.
+Final documentation/CI/merge and hosted README inspection passed; build 44 is accepted in TestFlight
+from `08810e8`, whose changes from `ca7ab57` are documentation/gallery only. The original capture
+receipts remain unchanged, and publication does not establish physical or language-quality acceptance.
 
 **Refresh search** in Mac and iPhone/iPad History replaces the local Apple embedding adapter and
 rebuilds derived vectors, including unchanged records previously cached without vectors. Ordinary

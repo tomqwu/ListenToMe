@@ -4,8 +4,9 @@ The merged fix integrates Saved Audio main `63e1777`; focused red/green below us
 The shared runtime fix and three original Mac test methods remain unchanged. A complementary
 iOS test uses the actual phone session to check clearing a completed answer and its nonempty
 citations/count, plus whitespace preservation. Its genuine native red/green passed as recorded below.
-This reliability fix merged in PR #357 at `09adc703` and remains unreleased. It does not establish additional-language
-search quality or close #223.
+This reliability fix merged in PR #357 at `09adc703`. Its iPhone/iPad behavior is distributed in
+[TestFlight 1.20.4 (44)](releases/ios-1.20.4-build44.json); the Mac fix remains unreleased.
+Publication does not establish installed/physical acceptance, additional-language search quality or close #223.
 
 Mac and iPhone/iPad already pass search-field changes to the shared `HistorySearchModel.search`.
 That callback now clears the previous question's answer through the existing cancellation and

@@ -1,6 +1,19 @@
 # Apple Watch companion (#181)
 
-## Current companion — TestFlight 1.20.3 (43)
+## Current companion — TestFlight 1.20.4 (44)
+
+Apple accepted **1.20.4 (44)** from merged source `08810e8` on October 31, **14:08:38 UTC**.
+Readback confirms **VALID / IN_BETA_TESTING**, en-US metadata and unchanged existing Dev group
+access. The exact transported phone/Share/Watch package passed verification. Build 44 includes
+the inbox redelivery repair below and clearer device-named Watch controls.
+[Publication receipt](releases/ios-1.20.4-build44.json) ·
+[Release notes and What to Test](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.4-build44).
+
+Physical installation, microphone capture, paired transfer/reconnection, wrist-down and battery/storage
+acceptance remain pending. Group access does not prove installation. This beta made no public
+review submission or listing-media upload; the recorded public companion baseline is 1.19.1 (39).
+
+## Historical companion — TestFlight 1.20.3 (43)
 
 Apple accepted **1.20.3 (43)** through the official TestFlight helper at
 **2026-10-30T17:10:34.841880+00:00** from `97ef2461b86869405c1d0f4221816b790f0216fd`.
@@ -15,14 +28,16 @@ Physical phone/iPad translation, screen-lock, multilingual and Watch acceptance 
 Public production remains **1.19.1 (39)**; this beta made no public review submission or listing-media
 upload. Mac changes remain unreleased, and **v1.4.4** remains GitHub Latest.
 
-## Unreleased phone inbox redelivery repair
+<a id="unreleased-phone-inbox-redelivery-repair"></a>
+
+## Phone inbox redelivery repair — included in build 44
 
 On local source `5f52da6a3099778a812ff7ce52793f1312350cc3`, a redelivered Watch chunk no longer
 replaces an earlier durable copy when the inbox ledger is missing or corrupt. The phone keeps the
 first audio and exact metadata sidecar, returns duplicate, and lets foreground `tidy` recover the
 original offsets, duration and final marker. The receive callback still only files bytes; it does
 not start audio or transcription. Saving/retention consent and transfer protocol are unchanged.
-This repair is **not included in TestFlight 1.20.3 (43)**.
+This repair is **included in TestFlight 1.20.4 (44)**; it was not in build 43.
 
 `WATCHINBOX-001` binds the two `WatchInboxRedeliveryTests` methods for missing and corrupt ledgers.
 A supplemental macOS Swift package copied `iOS/WatchInbox.swift` and both methods byte-for-byte,
@@ -65,7 +80,7 @@ or paired-Watch acceptance. Pairing/reconnection, wrist-down,
 low-storage and opt-in retention acceptance remain open; recovering index 2 does not prove
 transcription/drain completion while earlier chunks are missing. No visible UI changed, so the
 existing README gallery needs link verification rather than unrelated recapture. #181 remains open;
-The merge is confirmed separately; this fix is not yet published.
+The merged fix is distributed in build 44; that publication does not complete physical acceptance.
 
 ## Historical TestFlight checkpoint — 1.20.2 (42)
 
